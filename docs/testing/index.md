@@ -6,13 +6,19 @@ See the [testing policy](../best-practices/testing-policy.md) for what must be t
 
 `scripts/check.sh` on `main` runs every automated check:
 
-1. `cargo test --release` — all unit tests.
+1. `cargo test --release` — all unit tests (146 at main `cf374a7`).
 2. `cargo build --release`.
 3. `openinterceptor --check --no-original` — the original-free packs load and validate.
 4. `openinterceptor --data <data> --check` — when the player's data is found
-   (`OPENINTERCEPTOR_DATA` or `./game`): every original mesh, texture, cockpit and rule loads,
-   every scenario builds a world. Skipped with a message otherwise.
-5. A guard that fails if any original asset file type is tracked by git.
+   (`OPENINTERCEPTOR_DATA` or `./game`): every rule, ship model, debris model, texture,
+   cockpit image, sound and scenario loads, and every original mesh and texture decodes
+   (reference CD: 2 packs, 34 ship classes, 99 models, 272 textures, 3 images, 20 sounds,
+   5 scenarios, 1 096 original resources, 0 errors). Skipped with a message otherwise.
+5. A guard that fails if any original asset file type (`exe dll cab smk aif aiff wav mps`) is
+   tracked by git.
+
+Also kept clean before every commit (project rule): `cargo clippy --all-targets` with no
+warnings and `cargo fmt --check` (settings in `rustfmt.toml`: width 120).
 
 ```sh
 scripts/check.sh                                 # everything
@@ -25,3 +31,8 @@ OPENINTERCEPTOR_DATA=~/Games/Interceptor scripts/check.sh
 
 - [Unit tests](unit-tests.md): what each module's tests cover.
 - [Manual tests](manual-tests.md): playtest cases, per stage, with results.
+
+## Cross-platform check
+
+From macOS, `cargo check --target x86_64-unknown-linux-gnu` type-checks the Linux code paths
+(`platform::linux`) without a Linux machine; running needs Linux (manual case MT-1-21).

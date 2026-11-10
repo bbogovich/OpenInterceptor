@@ -1,55 +1,71 @@
 # Scenarios and missions
 
-A scenario places objects in a space arena. In Stage 1 scenarios are the testbed's live test
-environments; in Stage 3 the same files gain objectives and triggers and become missions.
+A scenario is a playable arena in a pack's `scenarios/*.ini`. The testbed's live test
+environments are scenarios; Stage 3 missions extend the same format with objectives and
+scripts. A later pack's scenario with the same `id` replaces the earlier one. Keys from
+`src/content/scenario.rs`:
+
+## `[scenario]`
+
+| Key | Default | Meaning |
+|---|---|---|
+| `id` | — (required) | Unique id; used by `--scenario`. |
+| `title` | the id | Launcher title. |
+| `description` | empty | Launcher text. |
+| `order` | 100 | Launcher sort key (lower first; ties sorted by title). |
+| `player` | `choose` | A ship class id, or `choose` to let the launcher pick among playable classes. |
+| `player_position` | 0, 0, 0 | Metres. |
+| `player_rotation` | 0, 0, 0 | Yaw, pitch, roll in degrees (positive yaw turns left). |
+| `sun` | −0.4, 0.5, −0.8 | Direction *towards* the sun (normalised). |
+| `starfield_seed` | 1 | The same seed always gives the same sky. |
+| `music` | none | Read but not played yet (Stage 5). |
+
+## `[object.<name>]`
+
+| Key | Default | Meaning |
+|---|---|---|
+| `class` | — (required) | Ship or object class id. |
+| `faction` | the class's | Override the side. |
+| `position` | 0, 0, 0 | Metres. The player starts facing −Z, so negative Z is "ahead". |
+| `rotation` | 0, 0, 0 | Yaw, pitch, roll in degrees. |
+| `ai` | `idle` | `wingman` (formation on `leader`), `enemy` (hunts hostiles), `target` (slow circles, never fires), `idle` (does nothing). The player is set with `player =`, not `ai = player`. |
+| `leader` | none | Another object's `<name>`, or `player`. |
+| `offset` | −60, 0, 30 | Formation slot relative to the leader, in the leader's frame (x right, y up, +z behind). |
+| `speed` | 0 | Initial speed, m/s (also sets the throttle). |
+
+## `[nav.<name>]`
+
+`position = x, y, z` — a navigation point (an engine extension, see DEV-002). `N` cycles them;
+the selected one shows on the MFD Nav page and as a blue diamond on screen.
+
+## Example
 
 ```ini
 [scenario]
-id = flight-test
-title = Flight test: station patrol
-description = Fly around the X-COM base with two wingmen; one of each enemy type nearby.
-environment = deep-space        ; backdrop: starfield, sun direction, nebula
-player = choose                 ; a ship id, or "choose" to pick in the launcher
-requires = interceptor          ; packs needed
+id = ambush
+title = Ambush at the ring
+player = dart
+starfield_seed = 4
 
-[object.player]
-class = choose
-side = xcom
-position = 0, 0, 0
-heading = 0, 0              ; yaw, pitch in degrees
-ai = player
+[object.ring]
+class = ring_station
+position = 0, 0, -2000
 
-[object.alpha2]
-class = ship:lightning
-side = xcom
-position = -60, 0, 40
+[object.wing]
+class = dart
 ai = wingman
 leader = player
-formation = left
+offset = 50, 0, 30
 
-[object.base]
-class = object:xcom-base
-side = xcom
-position = 0, -200, -3000
-ai = idle
-
-[object.wraith]
-class = ship:wraith
-side = alien
-position = 800, 100, -2500
+[object.r1]
+class = raider
 ai = enemy
+position = 600, 200, -4000
+speed = 300
 
-[nav.1]                     ; optional nav point (engine extension)
-name = Patrol point
-position = 0, 0, -8000
+[nav.ring]
+position = 0, 0, -2000
 ```
 
-| `ai` | Behaviour (Stage 1) |
-|---|---|
-| `player` | Controlled by the player |
-| `wingman` | Holds formation on `leader`; attacks the leader's target when ordered |
-| `enemy` | Basic pursuit and attack (full per-class AI in Stage 2) |
-| `idle` | Drifts or holds position (targets, stations) |
-| `turret` | Fixed; turns to fire (Stage 2) |
-
-Positions are metres; −Z is "ahead" of the default heading.
+`--check` spawns every scenario (with every playable ship when `player = choose`) and reports
+unknown classes, factions or leaders.

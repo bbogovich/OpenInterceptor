@@ -20,7 +20,7 @@ Read in order; each page builds on the previous one.
 | [Platforms with `cfg`](cfg.md) | macOS / Linux / other code paths |
 | [Testing in Rust](testing.md) | `#[test]`, `#[cfg(test)]`, unit vs integration tests |
 | [Cargo](cargo.md) | `Cargo.toml`, profiles, `Cargo.lock`, pinned versions, `build.rs` |
-| [Async and the macroquad loop](async-loop.md) | `#[macroquad::main]`, `next_frame().await` |
+| [Async and the macroquad loop](async-loop.md) | `macroquad::Window::from_config`, `next_frame().await`, the fixed-timestep accumulator |
 
 Further reading: *The Rust Programming Language* (the "Book", free at doc.rust-lang.org/book)
 covers each topic in depth; *Rust by Example* has runnable snippets.

@@ -13,7 +13,7 @@ shared freely, because it contains nothing of MicroProse's.
 flowchart LR
     CD[("player's CD<br/>(optional)")] --> I["pack: interceptor<br/>rules + scenarios"]
     S["pack: sample<br/>original-free"]
-    M1["mods/my-campaign"]
+    M1["mods/my-campaign<br/>(user mods folder)"]
     M2["mods/balance-tweak"]
     I --> L{{"layered ruleset<br/>later packs override earlier"}}
     S --> L
@@ -26,7 +26,7 @@ flowchart LR
 
 | Stage | You can change |
 |---|---|
-| 1 (now) | Ships (model, cockpit, flight model, mounts, hit points), beam weapons, missiles, stations and objects, factions, scenarios with any mix of objects, replacement or additional models (OBJ) and textures (PNG/TGA) |
+| 1 (now) | Ships (model, cockpit, flight model, mounts, hull/armour/shields, energy), beam weapons, missiles, stations and objects, factions, cockpits and instrument layout, event sounds, scenarios with any mix of objects and nav points, replacement or additional models (OBJ) and textures (PNG/TGA), re-skins of original textures |
 | 2 | AI behaviours per class, shields/armour, special systems, mines and probes, effects, sounds |
 | 3 | Missions with objectives and triggers, wingman chatter, **scripts** |
 | 4 | Star map, bases and modules, research tree, manufacturing, economy, enemy strategy |
@@ -34,7 +34,8 @@ flowchart LR
 
 ## Pages
 
-- [Packs](packs.md): folder layout and `pack.ini`.
+- [Make your first mod](first-mod.md): a walkthrough starting from the `sample` pack.
+- [Packs](packs.md): folder layout, `pack.ini`, asset references, re-skinning.
 - [Rulesets and layering](rulesets.md): the rule format and how mods override.
 - [Models and textures](models.md): bringing your own art.
 - [Scenarios and missions](scenarios.md): placing ships and stations.

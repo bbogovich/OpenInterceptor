@@ -12,7 +12,9 @@ edition = "2021"          # language edition
 rust-version = "1.86"     # oldest compiler supported
 
 [dependencies]
-macroquad = "=0.4.14"     # "=" pins this exact version
+macroquad = { version = "=0.4.14", features = ["audio"] }   # "=" pins this exact version
+glam = "=0.27.0"                                            # maths (already in macroquad's tree)
+image = { version = "=0.24.9", default-features = false, features = ["png"] }
 
 [profile.dev]
 opt-level = 1             # debug builds still fast enough to fly
@@ -38,13 +40,21 @@ every build of a given commit uses the same code.
 
 ## Features
 
-Optional parts of a crate, switched on in `Cargo.toml`. We use macroquad's defaults; if we
-ever disable its audio, it would be `default-features = false`.
+Optional parts of a crate, switched on in `Cargo.toml`. macroquad 0.4.14 does **not** enable
+sound by default, so we turn on its `audio` feature (it logs "audio feature disabled" if you
+forget). For `image` we do the opposite: `default-features = false` and only `png`, so no other
+decoders are compiled.
 
 ## `build.rs`
 
 A program Cargo runs before compiling the crate. Ours compiles the macOS gamepad shim and tells
 Cargo which frameworks to link (`cargo:rustc-link-lib=framework=GameController`).
+
+## Library and binary
+
+`src/lib.rs` makes the package a library crate named `openinterceptor`; `src/main.rs` is the
+binary of the same name, which uses the library like any other crate would. `cargo test` runs
+the library's tests.
 
 ## Everyday commands
 

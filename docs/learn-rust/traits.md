@@ -5,62 +5,73 @@ A **trait** is a set of methods a type promises to have — like an interface.
 ## Traits we implement
 
 ```rust
-impl Default for Controls {
-    fn default() -> Self {
-        Controls { pitch: 0.0, yaw: 0.0, roll: 0.0, throttle: ThrottleCommand::Hold,
-                   fire_beams: false, fire_missile: false, afterburner: false }
-    }
-}
-
-impl std::fmt::Display for FormatError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+// src/formats/mod.rs
+impl fmt::Display for FormatError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FormatError::Truncated => write!(f, "data ends early"),
+            FormatError::Truncated { offset, wanted, len } => {
+                write!(f, "data truncated: needed {wanted} bytes at offset {offset}, have {len}")
+            }
+            FormatError::BadMagic { expected } => write!(f, "bad signature, expected {expected}"),
             …
         }
     }
 }
+impl std::error::Error for FormatError {}
 ```
 
-`Display` is what `println!("{err}")` uses; `Debug` (usually derived) is `{err:?}`.
+`Display` is what `println!("{err}")` and `err.to_string()` use; `Debug` (usually derived) is
+`{err:?}`. Most traits here are **derived** (`Debug, Clone, Copy, PartialEq, Eq, Hash,
+Default`); `Default` is written by hand only when the default is not "all zeros", as for
+`Bindings` (its default is the original key layout) and `ChaseOrbit`.
 
-## A trait from macroquad: `Camera`
+## A trait from macroquad: `Camera` — `src/render/camera.rs`
 
-macroquad draws with whatever implements its `Camera` trait. We can supply our own:
+macroquad draws with whatever implements its `Camera` trait. We supply our own:
 
 ```rust
-impl macroquad::camera::Camera for CockpitCamera {
-    fn matrix(&self) -> Mat4 { self.projection * self.view }
+impl macroquad::camera::Camera for SpaceCamera {
+    fn matrix(&self) -> Mat4 { self.view_projection() }
     fn depth_enabled(&self) -> bool { true }
-    fn render_pass(&self) -> Option<RenderPass> { None }
+    fn render_pass(&self) -> Option<macroquad::texture::RenderPass> { None }
     fn viewport(&self) -> Option<(i32, i32, i32, i32)> { None }
 }
 ```
 
-## Generics
+So `set_camera(&cam)` accepts our camera, and its projection uses our own near/far planes.
 
-A generic function works for any type that meets its trait bounds:
+## Generics and `impl Trait`
+
+A generic function works for any type that meets its trait bounds. In this codebase generics
+mostly appear as `impl Trait` in argument or return position:
 
 ```rust
-/// Merge `later` into `earlier`; later keys win. Works for any key/value types that can be
-/// compared and cloned.
-fn layer<K: Eq + Hash + Clone, V: Clone>(earlier: &mut HashMap<K, V>, later: &HashMap<K, V>) {
-    for (k, v) in later {
-        earlier.insert(k.clone(), v.clone());
-    }
-}
+// src/hud/mod.rs — accept anything that converts into a String
+pub fn push(&mut self, now: f64, text: impl Into<String>) { … }
+
+// src/formats/obj.rs — a const generic: N is a number known at compile time
+fn floats<const N: usize>(words: &mut SplitWhitespace, line: usize) -> FResult<[f32; N]> { … }
 ```
 
 The compiler generates a specialised copy per type used (*monomorphisation*), so generics cost
 nothing at run time.
 
-## `From` and `into()`
+## Trait objects: `dyn Fn`
 
-`impl From<FormatError> for AssetError` lets `?` convert a format error into an asset error
-automatically — see [Error handling](errors.md).
+`rules::build` must look up sections of original INI files, but the rules module should not
+know where files live. It takes a *function* as a trait object:
+
+```rust
+pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
+pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Vec<String>) { … }
+```
+
+`Content::load` passes a closure reading the player's CD; the tests pass one that reads an
+in-memory string.
 
 ## When we avoid traits
 
-Engine code prefers plain structs and enums over trait objects (`Box<dyn Trait>`). An `enum`
-of AI behaviours, for example, is easier to read, to `match` and to save than a hierarchy of
-behaviour objects.
+Engine code prefers plain structs and enums over trait objects (`Box<dyn Trait>`). AI behaviours
+are an `enum Behaviour { Idle, Target, Wingman, Enemy }` and the app's screens an
+`enum Screen { Launcher(..), Viewer(..), Flight(..) }`: easier to read and to `match` than a
+hierarchy of objects, and no heap allocation for dynamic dispatch.

@@ -3,45 +3,50 @@
 An **iterator** produces values one at a time; adapters like `map` and `filter` build pipelines
 that compile down to plain loops.
 
-## Turning a polygon into triangles
-
-An original polygon is a convex fan of `n` corners; the GPU wants triangles:
+## Triangles of a model — `src/model.rs`
 
 ```rust
-/// Corner indices of a convex polygon → triangle index triples (a fan from corner 0).
-fn fan(corners: &[u16]) -> impl Iterator<Item = [u16; 3]> + '_ {
-    (1..corners.len().saturating_sub(1)).map(move |i| [corners[0], corners[i], corners[i + 1]])
-}
-
-let indices: Vec<u16> = fan(&poly).flatten().collect();
-```
-
-`move |i| …` is a **closure**: an anonymous function that can capture variables from where it is
-written (here `corners`).
-
-## Picking the closest enemy
-
-```rust
-let closest = world
-    .ships()
-    .filter(|s| s.side.is_hostile_to(player.side) && s.alive())
-    .min_by(|a, b| {
-        let da = a.body.position.distance_squared(player.body.position);
-        let db = b.body.position.distance_squared(player.body.position);
-        da.total_cmp(&db)
+pub fn triangles(&self) -> impl Iterator<Item = [Vec3; 3]> + '_ {
+    self.groups.iter().flat_map(move |g| {
+        g.indices.chunks_exact(3).map(move |t| {
+            [
+                self.vertices[t[0] as usize].position,
+                self.vertices[t[1] as usize].position,
+                self.vertices[t[2] as usize].position,
+            ]
+        })
     })
-    .map(|s| s.id);
+}
 ```
 
-Compare with a hand-written loop: same speed, but the intent ("hostile, alive, minimum distance")
-is in the code's shape.
+`move |t| …` is a **closure**: an anonymous function that can capture variables from where it is
+written (here `self`). The collision mesh for a station is just
+`model.collision_lod().triangles().collect()`.
+
+## Picking the nearest hostile — `src/sim/targeting.rs`
+
+```rust
+pub fn nearest_hostile(w: &World, me: ShipId) -> Option<ShipId> {
+    let my_faction = w.get(me)?.faction;
+    others(w, me)                       // Vec<(ShipId, distance)>
+        .into_iter()
+        .filter(|(id, _)| w.rules.hostile(my_faction, w.ships[id.index as usize].faction))
+        .min_by(|a, b| a.1.total_cmp(&b.1))
+        .map(|(id, _)| id)
+}
+```
+
+Compare with a hand-written loop: same speed, but the intent ("hostile, minimum distance") is
+in the code's shape. `total_cmp` gives floats a total order (floats have no `Ord` because of
+NaN).
 
 ## When we use a plain `for` loop
 
 When the loop body mutates several things, has early exits, or is clearer as steps — e.g.
-`World::step`. Iterators are a tool, not a rule.
+`World::step`, `combat::move_bolts`, `wav::decode_ms_adpcm`. Iterators are a tool, not a rule.
 
 ## `collect`
 
-`collect()` builds a collection from an iterator; the target type decides which:
-`Vec<_>`, `HashMap<_, _>`, `String`, or even `Result<Vec<_>, E>` (stops at the first error).
+`collect()` builds a collection from an iterator; the target type decides which: `Vec<_>`,
+`HashMap<_, _>`, `String`, or even `Result<Vec<_>, E>` (stops at the first error) — see
+[Error handling](errors.md).

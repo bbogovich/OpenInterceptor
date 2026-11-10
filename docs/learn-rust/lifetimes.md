@@ -3,48 +3,73 @@
 A **lifetime** is the compiler's name for "how long a reference is valid". Usually it is
 inferred. You see it written (`'a`) when a struct *holds* a reference.
 
-The format readers parse 28 MB DLLs. Copying every resource out would waste memory, so the
-resource table hands out **slices that borrow the DLL's bytes**:
+The original resource DLLs are up to 46 MB. Copying every resource out would waste memory, so
+the readers work on **slices that borrow** the file's bytes.
+
+## `Reader<'a>` — `src/formats/mod.rs`
 
 ```rust
-/// A cursor over borrowed bytes. `'a` = the lifetime of those bytes.
+/// A bounds-checked little-endian reader over a borrowed byte slice.
+#[derive(Clone, Copy)]
 pub struct Reader<'a> {
-    bytes: &'a [u8],
-    pos: usize,
+    data: &'a [u8],
 }
 
 impl<'a> Reader<'a> {
-    pub fn new(bytes: &'a [u8]) -> Self { Reader { bytes, pos: 0 } }
+    pub fn new(data: &'a [u8]) -> Self {
+        Reader { data }
+    }
 
-    /// Read a little-endian u32, or report that the data ended early.
-    pub fn u32(&mut self) -> Result<u32, FormatError> {
-        let end = self.pos.checked_add(4).ok_or(FormatError::Truncated)?;
-        let chunk = self.bytes.get(self.pos..end).ok_or(FormatError::Truncated)?;
-        self.pos = end;
-        Ok(u32::from_le_bytes(chunk.try_into().unwrap())) // 4 bytes: cannot fail
+    /// Returns `n` bytes starting at `offset`, or a `FormatError::Truncated`.
+    pub fn bytes(&self, offset: usize, n: usize) -> FResult<&'a [u8]> {
+        let end = offset.checked_add(n).ok_or(/* Truncated … */)?;
+        self.data.get(offset..end).ok_or(/* Truncated … */)
+    }
+
+    pub fn u32(&self, offset: usize) -> FResult<u32> {
+        let b = self.bytes(offset, 4)?;
+        Ok(u32::from_le_bytes(b.try_into().unwrap())) // exactly 4 bytes: cannot fail
     }
 }
 ```
 
-`Reader<'a>` promises it will never outlive the bytes it reads. If you tried to keep a `Reader`
-after dropping the `Vec<u8>` it came from, the program would not compile.
+`Reader<'a>` promises it will never outlive the bytes it reads. If you kept a `Reader` after
+dropping the `Vec<u8>` it came from, the program would not compile. Note that `bytes` returns
+`&'a [u8]` — a slice of the *original buffer*, not of the `Reader` — so the result stays valid
+even after the small `Reader` value itself is gone. The `Reader` is `Copy` (just a pointer and
+a length), so passing it around is free.
+
+## Borrowing out of an owner — `src/formats/pe.rs`
 
 ```rust
-impl ResourceTable {
-    /// The resource's bytes, borrowed from `dll` — no copy.
-    pub fn get<'d>(&self, dll: &'d [u8], kind: &str, name: &str) -> Option<&'d [u8]> { … }
+pub struct ResourceFile {
+    bytes: Vec<u8>,                // owns the DLL's bytes
+    entries: Vec<ResourceEntry>,
+    index: HashMap<(ResId, ResId), usize>,
+}
+
+impl ResourceFile {
+    /// The resource's bytes, borrowed from this file — no copy.
+    pub fn find(&self, kind: &ResId, id: &ResId) -> Option<&[u8]> { … }
 }
 ```
 
-Read the signature as: "the returned slice lives as long as `dll`".
+The signature has no explicit lifetime because of *elision*: with one reference input
+(`&self`), the output borrows from it. Written out it is
+`fn find<'s>(&'s self, …) -> Option<&'s [u8]>`: "the slice lives as long as the
+`ResourceFile`".
 
 ## Owned output
 
-The parsed `Mesh`, by contrast, **owns** its data (`Vec<Vertex>`), so it can outlive the DLL
-bytes. This is the pattern throughout `formats`: *borrowed input, owned output*. It keeps
-lifetimes inside the reader and out of the rest of the engine.
+The parsed `XmshMesh`, by contrast, **owns** its data (`Vec<XVertex>`, `Vec<Polygon>` …), so it
+can outlive the DLL bytes. This is the pattern throughout `formats`: *borrowed input, owned
+output*. It keeps lifetimes inside the readers and out of the rest of the engine.
 
-## Elision
+## A lifetime on an iterator — `src/model.rs`
 
-Most functions need no lifetime annotations because of the *elision rules*: with one reference
-input, the output borrows from it. `fn name(&self) -> &str` is `fn name<'a>(&'a self) -> &'a str`.
+```rust
+pub fn triangles(&self) -> impl Iterator<Item = [Vec3; 3]> + '_ { … }
+```
+
+`'_` says "this iterator borrows from `self`": you cannot drop or change the `ModelLod` while
+iterating its triangles.

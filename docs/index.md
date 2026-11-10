@@ -14,10 +14,13 @@ is in the repository, ever.
        campaign: new ships, weapons, stations, missions and a tech tree, written as data packs
        and scripts. The most likely use is a campaign that uses **none** of the original assets.
        *Interceptor* is the worked example that proves the engine is complete.
-    2. **Play X-COM: Interceptor** from the player's data on current systems.
-    3. **Be an example of good Rust practice** for a 3D application or game engine: clear
-       layering, small dependencies, documented modules and thorough tests. See
-       [Learn Rust with this codebase](learn-rust/index.md) and [Best practices](best-practices/index.md).
+    2. **Be an example of good Rust practice** for a 3D application or game engine: clear
+       layering, small dependencies, modules commented for a Rust beginner, and unit tests for
+       all code. See [Learn Rust with this codebase](learn-rust/index.md) and
+       [Best practices](best-practices/index.md).
+    3. **Play X-COM: Interceptor** from the player's data on current systems.
+
+    The same order is in the repository's `CLAUDE.md` project rules.
 
 ## Where things are
 
@@ -31,7 +34,9 @@ is in the repository, ever.
 ## Status
 
 Stage 0 (foundation and format analysis) is **complete**. Stage 1 (the flight simulator testbed)
-is **in progress**. See [implementation status](implementation-status.md) and the
+is **implemented** — every original ship, station and cockpit flies or renders from the
+player's CD, and the original-free sample pack plays without it — and awaits its recorded
+manual test pass. See [implementation status](implementation-status.md) and the
 [plan](implementation-plan/index.md).
 
 ## Specification

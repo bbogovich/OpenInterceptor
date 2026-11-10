@@ -3,14 +3,36 @@
 A game draws a frame, waits for the display, and repeats. macroquad expresses that wait with
 Rust's **async/await**, so the loop reads like straight-line code.
 
+## Starting the window only when needed — `src/main.rs`
+
+Many macroquad programs use the `#[macroquad::main]` attribute, which opens the window before
+`main` runs. OpenInterceptor has modes that must **not** open a window (`--help`, `--list`,
+`--check`), so it uses a plain `main` and creates the window explicitly:
+
 ```rust
-#[macroquad::main(window_conf)]   // macroquad creates the window, then runs this function
-async fn main() {
-    let mut testbed = Testbed::new(config);
+fn main() {
+    let options = cli::parse(&args, std::env::var("OPENINTERCEPTOR_DATA").ok())?;
+    if let Some(code) = headless(&options) {       // --help, --list, --check
+        std::process::exit(code);
+    }
+    let conf = window_conf(options.fullscreen);
+    macroquad::Window::from_config(conf, app::run(options));   // runs the async app
+}
+```
+
+## The loop — `src/app/mod.rs`
+
+```rust
+pub async fn run(options: Options) {
+    let content = Content::load(&options.content_config())?;   // (error screen on failure)
+    let renderer = Renderer::new()?;
+    let sounds = SoundBank::load(&content).await;               // macroquad's loader is async
+    let mut ctx = AppContext { content, renderer, sounds, … };
+    let mut screen = Screen::Launcher(launcher::Launcher::new(&ctx));
     loop {
-        testbed.update();          // input, simulation steps
-        testbed.draw();            // 3D scene, HUD
-        next_frame().await;        // hand control back until the next frame
+        let next = match &mut screen { … => s.frame(&mut ctx) };  // input, sim, draw
+        // switch screens according to `next` …
+        next_frame().await;                                      // wait for the next frame
     }
 }
 ```
@@ -18,26 +40,30 @@ async fn main() {
 ## What `async` and `.await` mean here
 
 An `async fn` returns a *future*: a computation that can pause. `.await` pauses it until the
-awaited thing is ready. macroquad runs our `main` future on its own tiny executor, resuming it
+awaited thing is ready. macroquad runs our `run` future on its own tiny executor, resuming it
 once per frame. There are no threads involved and no async runtime such as Tokio.
 
 ## Consequences
 
-- Anything that waits a frame must be `async` too (`async fn run_flight(...)`) and `.await`ed.
-- Long work (loading 300 models) blocks the frame. We load in chunks across frames with a
-  progress bar, or before opening the scenario.
-- Simulation code is **not** async: `World::step` is a normal function called from the loop,
-  which keeps it testable without a window.
+- Anything that waits for a frame must be `async` and `.await`ed. Only `app::run` and
+  `SoundBank::load` are async in this codebase.
+- Screen `frame` functions and `World::step` are **ordinary** functions called from the loop,
+  which keeps them testable without a window.
 
-## Fixed timestep inside a variable frame rate
+## Fixed timestep inside a variable frame rate — `src/app/flight.rs`
 
 ```rust
-self.accumulator += get_frame_time();
-while self.accumulator >= SIM_DT {         // SIM_DT = 1/60 s
-    self.world.step(SIM_DT, &controls);
-    self.accumulator -= SIM_DT;
+let dt = get_frame_time().min(MAX_FRAME);   // cap stalls at 0.25 s
+self.accumulator += dt;
+while self.accumulator >= TICK {            // TICK = 1/60 s
+    self.world.step();
+    // … effects, sounds and messages from this tick's events
+    self.accumulator -= TICK;
 }
 ```
 
 The display may run at 60, 120 or 144 Hz; the simulation always advances in 1/60 s steps, so
-behaviour does not depend on the machine. See [Architectural design](../best-practices/architecture.md).
+behaviour does not depend on the machine. A side effect worth knowing: at 120 Hz about half the
+frames run **no** tick, so a key press seen in such a frame must be kept until a tick consumes
+it — that is `Controls::carry_unconsumed` in `src/sim/mod.rs`. See
+[Architectural design](../best-practices/architecture.md).

@@ -15,13 +15,23 @@ fn load() {
 Assigning or passing a value **moves** it: the old name can no longer be used.
 
 ```rust
-let world = World::from_scenario(&scenario, &rules, &assets)?;
-let session = FlightSession { world, view: View::Cockpit }; // `world` moved into the session
-// world.step(...)  // error: value moved
+// src/app/flight.rs, FlightSession::start (simplified)
+let (world, player) = World::from_scenario(&scenario, rules.clone(), Arc::new(shapes), choice)?;
+let session = FlightSession { world, player, … }; // `world` moved into the session
+// world.step();  // error: value moved
 ```
 
 This is how OpenInterceptor makes ownership obvious: the `FlightSession` owns its `World`; the
-`Assets` own the GPU textures. Nobody else can free them by accident.
+`Renderer`'s `ModelCache` owns the GPU meshes and textures. Nobody else can free them by
+accident.
+
+## Sharing: `Arc` and `Rc`
+
+Sometimes several owners really do need the same data. The `World` and the session share one
+read-only `Ruleset` through `Arc<Ruleset>` (*atomically reference-counted*): cloning an `Arc`
+copies a pointer and bumps a counter; the ruleset is freed when the last owner goes. The model
+cache hands out `Rc<GpuModel>` — the cheaper single-threaded version — because rendering
+happens on one thread.
 
 Small plain values (`f32`, `u32`, `Vec3`, our `ShipId`) implement `Copy`, so they are copied
 instead of moved.
@@ -34,13 +44,14 @@ Instead of moving, you can **borrow**:
 - `&mut T` — an exclusive, writable reference. Only one may exist, and no `&T` at the same time.
 
 ```rust
-impl Scene {
-    // Drawing only reads the world and the assets, and changes the scene's scratch buffers.
-    pub fn draw(&mut self, world: &World, assets: &Assets, camera: &CameraState) { … }
+impl Renderer {
+    // Drawing only reads the world; it changes the renderer's own caches and buffers.
+    pub fn draw_world(&mut self, content: &Content, world: &World, effects: &Effects,
+                      cam: &SpaceCamera, sun: Vec3, hide: Option<ShipId>) { … }
 }
 impl World {
     // Stepping changes the world.
-    pub fn step(&mut self, dt: f32, player: &Controls) { … }
+    pub fn step(&mut self) { … }
 }
 ```
 
@@ -55,6 +66,14 @@ let ship = &mut world.ships[0];
 let target = &world.ships[1];   // error: world.ships is already borrowed mutably
 ```
 
-Fixes used in this codebase: work with **indices** (`ShipId`) instead of long-lived references,
-copy out the small values you need first (`let target_pos = world.ships[1].body.position;`), or
-split the slice (`split_at_mut`). See [Data model](../best-practices/data-model.md).
+Fixes used in this codebase:
+
+- Work with **indices** (`ShipId`) instead of long-lived references.
+- Copy out the small values you need first (`let target_pos = t.position;`).
+- Borrow **different fields** at the same time — allowed, because the compiler can see they do
+  not overlap. `combat::fire_beams` holds `&mut w.ships[i]` while pushing into `w.bolts`.
+- Read first, write later: `ai::think` computes every decision into a list, then applies it.
+- Hold your own handle: `World::step` does `let rules = self.rules.clone();` (an `Arc` clone) so
+  it can borrow a ship class from `rules` while mutably iterating `self.ships`.
+
+See [Data model](../best-practices/data-model.md).

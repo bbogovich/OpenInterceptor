@@ -5,27 +5,39 @@ add content, and they are the habits a larger engine needs.
 
 ## Pre-baked GPU meshes per texture
 
-At load, each model LOD is converted once into one `MeshPart` per texture: triangle lists with
-`u16` indices. Drawing is then one `draw_mesh` per part, with no parsing or triangulation per
-frame.
+At load, each model LOD is converted once (`Model::from_xmsh` / `from_obj`, then
+`render::gpu::split_lod`) into one chunk per texture: triangle lists with `u16` indices. Drawing
+is then one `draw_mesh` per chunk, with no parsing or triangulation per frame.
+
+## Flattened arrays instead of per-item allocations
+
+An XMSH polygon does not own a `Vec` of its vertex indices. All polygons' indices go into one
+shared `Lod::polygon_vertices: Vec<u32>`, and each `Polygon` stores `first` and `count` into
+it. Thousands of tiny heap allocations become one, and iterating polygons reads contiguous
+memory. `ObjMesh` does the same with face corners.
 
 ## LOD selection
 
-Each original model has four LODs with switch distances. The renderer picks the LOD from the
-camera distance (scaled by the field of view), cutting triangle counts for distant ships and
-stations by 4–10×.
+Each original model has four LODs with switch distances from the file (e.g. 75, 150, 450 m and
+"always" for the Lightning II; 4.2, 8.4, 25 km for the X-COM base). `GpuModel::lod(distance)`
+picks the first LOD whose switch distance exceeds the camera distance, cutting triangle counts
+for distant objects several-fold (the base goes from 659 to 126 polygons).
 
 ## Camera-relative precision
 
-Positions are stored with enough range for a whole arena; before drawing, the camera position is
-subtracted, and only then are values converted to `f32` vertices. The camera is at the origin
-of render space, so nearby geometry is exact and does not jitter even tens of kilometres out.
+Positions are `f32` metres. Before drawing, the camera position is subtracted on the CPU
+(`SpaceCamera::model_matrix`), and the view matrix is rotation-only, so the camera sits at the
+origin of render space: nearby geometry is precise and does not jitter even tens of kilometres
+out.
 
 ## No per-frame allocation
 
-Per-frame buffers (transformed vertices, visible-object lists, HUD text) live in the `Scene` or
-`Hud` and are `clear()`ed, not recreated. `Vec::clear` keeps capacity, so after the first frames
-the steady state allocates nothing.
+The glow and sky geometry is rebuilt every frame into `Vec`s owned by the `Renderer`.
+They are `clear()`ed (which keeps capacity), moved into a `Mesh` with `std::mem::take`, drawn,
+and moved back — so after the first frame they allocate nothing. In `World::step` the ruleset
+is reached through a cloned `Arc` rather than by cloning a ship class per ship per tick.
+Remaining small per-frame allocations (HUD text, engine-glow attachment lists) are known and
+cheap; they are candidates if profiling ever shows them.
 
 ## Index handles instead of references
 
@@ -35,12 +47,14 @@ they serialise naturally for saves.
 
 ## Structure of arrays where it matters
 
-Most objects are few (tens of ships) and stored as an array of structs (`Vec<Ship>`) — simplest
-and fast enough. Where counts are large and loops touch one field — the starfield, projectiles
-and particles — data is laid out as a structure of arrays (`positions: Vec<Vec3>`,
-`ages: Vec<f32>`) so the hot loop reads contiguous memory. Choose by measuring, not by habit.
+Everything in Stage 1 is an array of structs (`Vec<Ship>`, `Vec<Bolt>`, `Vec<Star>`): counts are
+tens to a few thousand, and AoS is the simplest. Where counts grow large and a hot loop touches
+only one field, a structure of arrays (`positions: Vec<Vec3>`, `ages: Vec<f32>`) reads
+contiguous memory and is the next step. Choose by measuring, not by habit.
 
 ## Measure first
 
-The F12 overlay reports frame time, draw calls and triangles. Optimise what it shows, and keep
-the simple version when it is fast enough.
+Optimise what a profiler shows, and keep the simple version when it is fast enough. A developer
+overlay with frame time, draw calls and triangle counts is planned (Stage 2); until then, the
+model viewer reports triangles per LOD and macOS Instruments or `perf` profile the release
+build.

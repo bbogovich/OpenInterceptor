@@ -1,33 +1,42 @@
 # Manual tests
 
-Playtest cases for behaviour unit tests cannot show. Each stage's cases must be run and recorded
-as passed before the stage is complete. Record results in the table (date, tester, platform,
-result, notes); keep earlier rows when re-running.
+Playtest cases for behaviour that unit tests cannot show (what is drawn, how it feels, sound,
+real devices). Each stage's cases must be run and recorded as passed before the stage is
+complete. Record results in the table (date, tester, platform, result, notes); keep earlier
+rows when re-running a case.
 
-**How to run**: build with `cargo build --release`, then `target/release/openinterceptor --data game`.
-Every case names its testbed scenario; `--scenario <id> --ship <id>` jumps straight to it.
+**How to run**: `cargo build --release`, then `target/release/openinterceptor --data game`
+(the folder with your *Interceptor* CD contents). Every case names its launcher entry; to jump
+straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside view). Ship ids:
+`lightning`, `firestar`, `avenger`. Keys are the defaults on [Controls](../original-game/controls.md).
 
 ## Stage 1 results
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
 |---|---|---|---|---|---|---|
-| MT-1-01 | Launcher lists scenarios | Launcher | not run | | | |
-| MT-1-02 | Ship selection: all three hulls | Flight test | not run | | | |
-| MT-1-03 | Model viewer browses all meshes | Model viewer | not run | | | |
-| MT-1-04 | Keyboard flight: attitude | Flight school | not run | | | |
-| MT-1-05 | Keyboard flight: throttle | Flight school | not run | | | |
-| MT-1-06 | Mouse flight | Flight school | not run | | | |
-| MT-1-07 | Gamepad flight | Flight school | not run | | | |
-| MT-1-08 | Cockpit per hull | Flight test | not run | | | |
-| MT-1-09 | Views | Flight test | not run | | | |
-| MT-1-10 | Targeting and target MFD | Flight test | not run | | | |
-| MT-1-11 | Beams, energy and link modes | Gunnery range | not run | | | |
-| MT-1-12 | Missile lock and hit | Gunnery range | not run | | | |
-| MT-1-13 | Enemy destruction | Flight test | not run | | | |
-| MT-1-14 | Wingmen hold formation | Flight test | not run | | | |
-| MT-1-15 | Station visible and collidable | Flight test | not run | | | |
-| MT-1-16 | Sample pack runs without original data | Sample pack arena | not run | | | |
-| MT-1-17 | Pause and quit | Any | not run | | | |
+| MT-1-01 | Launcher lists scenarios | Launcher | partial | 2026-11-10 | developer / macOS | Seen with data; `--no-original` run seen in sample arena |
+| MT-1-02 | Ship selection: all three hulls | `flight-test` | partial | 2026-11-10 | developer / macOS | Preview seen; Lightning, Firestar, Avenger flown |
+| MT-1-03 | Model viewer | Model viewer | partial | 2026-11-10 | developer / macOS | Browsing and zoom checked |
+| MT-1-04 | Keyboard flight: attitude | `flight-test` | partial | 2026-11-10 | developer / macOS | Yaw checked |
+| MT-1-05 | Keyboard flight: throttle and afterburner | `flight-test` | partial | 2026-11-10 | developer / macOS | Full throttle checked |
+| MT-1-06 | Mouse flight | `flight-test` | not run | | | |
+| MT-1-07 | Gamepad flight | `flight-test` | not run | | | Needs a physical controller |
+| MT-1-08 | Cockpit per hull | `flight-test` | partial | 2026-11-10 | developer / macOS | A and C seen |
+| MT-1-09 | Views F1–F8 | `flight-test` | partial | 2026-11-10 | developer / macOS | F1, F7 seen |
+| MT-1-10 | Targeting, brackets and target MFD | `gunnery-range` | partial | 2026-11-10 | developer / macOS | R, G, MFD, off-screen arrow seen |
+| MT-1-11 | Beams, energy and link modes | `gunnery-range` | partial | 2026-11-10 | developer / macOS | Beams and energy drain seen |
+| MT-1-12 | Missile lock and hit | `gunnery-range` | partial | 2026-11-10 | developer / macOS | Lock seen |
+| MT-1-13 | Destroying enemies, debris | `flight-test` | not run | | | |
+| MT-1-14 | Wingmen formation and orders | `flight-test` | not run | | | |
+| MT-1-15 | Station collision | `station-tour` | not run | | | |
+| MT-1-16 | Hostile AI | `combat-test` | partial | 2026-11-10 | developer / macOS | Hostile fire seen in cockpit C |
+| MT-1-17 | Nav points | `flight-test` | not run | | | |
+| MT-1-18 | Sound effects | `gunnery-range` | not run | | | |
+| MT-1-19 | Original-free sample pack | `sample-arena` | partial | 2026-11-10 | developer / macOS | Runs without data |
+| MT-1-20 | Pause, menu, restart, death | any | not run | | | |
+| MT-1-21 | Linux build and run | `flight-test` | not run | | | Type-checks for Linux; not yet run on Linux |
+
+"partial" = seen working during development; the full steps below still need a recorded pass.
 
 ## Stage 1 cases
 
@@ -36,167 +45,167 @@ Every case names its testbed scenario; `--scenario <id> --ship <id>` jumps strai
 | Field | |
 |---|---|
 | Scenario | Launcher |
-| Preconditions | Original data in `game/` (or `--data`). |
-| Steps | 1. Run `openinterceptor --data game`.<br>2. Look at the scenario list.<br>3. Run again with `--no-original`. |
-| Expected | With data: Model viewer, Flight test, Flight school, Gunnery range and Sample pack arena are listed, each with a title and description. With `--no-original`: only the Sample pack arena (and Model viewer showing sample models); a note says the Interceptor pack was skipped. |
-| Pass / fail | |
+| Preconditions | Original data available. |
+| Steps | 1. Run `openinterceptor --data game`.<br>2. Look at the list; move with Up/Down; read each description.<br>3. Quit (Esc) and run `openinterceptor --no-original`. |
+| Expected | With data: Model viewer, Flight test: station patrol, Combat test: hostile arena, Gunnery range, Station tour, Sample pack arena (no original data). The packs line names both packs. With `--no-original`: Model viewer and the Sample pack arena only, and an orange note that the Interceptor pack was skipped. Clicking a line selects it; clicking it again starts it. |
 
 ### MT-1-02 — Ship selection: all three hulls
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | Launcher open. |
-| Steps | 1. Choose Flight test.<br>2. Select X-1A Lightning II; start; note the ship and cockpit; Esc → Back.<br>3. Repeat with S-2 Firestar and M-3 Super Avenger. |
-| Expected | Each hull starts the scenario as the player's ship. The F7 chase view shows the chosen hull's model. Handling differs: Lightning turns fastest, Avenger slowest. |
-| Pass / fail | |
+| Scenario | Flight test: station patrol |
+| Steps | 1. Select the scenario.<br>2. Press Left/Right repeatedly.<br>3. For each hull press Enter, fly briefly, Esc → L back. |
+| Expected | A turning model, name, description and stats for X-1A Lightning II, S-2 Firestar and M-3 Super Avenger, wrapping round. Each starts the scenario in that hull (the MFD Status page shows its name). Scenarios with a fixed ship (Sample arena) show no choice. |
 
-### MT-1-03 — Model viewer browses all meshes
+### MT-1-03 — Model viewer
 
 | Field | |
 |---|---|
 | Scenario | Model viewer |
-| Preconditions | Original data present. |
-| Steps | 1. Open Model viewer.<br>2. Step through models with Left/Right (hold to scroll).<br>3. Orbit with the mouse; zoom with the wheel.<br>4. Toggle LOD with `L` and textures with `T`. |
-| Expected | Every original mesh (297) and every sample-pack model can be shown. Textures appear correctly oriented (no mirrored text). LOD toggle visibly reduces detail. No crash on any model. |
-| Pass / fail | |
+| Steps | 1. Open it. 2. PgDn/PgUp (or N/B) through the list. 3. Arrows or mouse drag to orbit; +/− or wheel to zoom. 4. L several times. 5. Space. 6. Esc. |
+| Expected | Ship classes first (name and id), then every original mesh (`mesh NAME`). Each model is framed fully and textured; zoom never enters the model and does not run away. L cycles auto → LOD 0 → 1 → 2 → 3 → auto with visibly simpler models and the info line showing the forced LOD. Attachment points show as small RGB axes. Space stops/starts the spin. Esc returns to the launcher. |
 
 ### MT-1-04 — Keyboard flight: attitude
 
 | Field | |
 |---|---|
-| Scenario | Flight school |
-| Preconditions | Any hull, cockpit view (F1). |
-| Steps | 1. Press Up arrow, then Down arrow.<br>2. Press Left / Right arrow.<br>3. Press NumPad 7 / NumPad 9. |
-| Expected | Up = nose down, Down = nose up; Left/Right yaw; NumPad 7/9 roll left/right. Rates fall noticeably at high speed and recover when slowing. |
-| Pass / fail | |
+| Scenario | `flight-test`, Lightning II |
+| Steps | 1. Press Up, then Down. 2. Left, Right. 3. Kp7/Q and Kp9/E. 4. Repeat at full throttle. |
+| Expected | Up lowers the nose, Down raises it; Left/Right turn; Kp7/Q roll left, Kp9/E roll right. Response builds up smoothly and stops smoothly. At full throttle pitch and yaw are noticeably slower than at rest (roll is not). The Avenger turns more slowly than the Lightning. |
 
-### MT-1-05 — Keyboard flight: throttle
+### MT-1-05 — Keyboard flight: throttle and afterburner
 
 | Field | |
 |---|---|
-| Scenario | Flight school |
-| Preconditions | Any hull, speed gauge visible. |
-| Steps | 1. Press `+` five times, then `-` twice.<br>2. Press Backspace.<br>3. Press `\`.<br>4. Press `Z`, then `+` a few times; press `Z` again.<br>5. Hold Tab for 3 seconds at full throttle, release.<br>6. Target a ship and press `M`. |
-| Expected | `+`/`-` change set speed in 10 % steps of MaxSpeed (50 %, then 30 %). Backspace = 100 %; `\` = 0 and the ship slows to a stop. Reverse moves backwards. Tab raises speed above MaxSpeed and drains energy (gauge falls), which recovers after release. `M` matches the target's speed. |
-| Pass / fail | |
+| Scenario | `flight-test`, any hull |
+| Steps | 1. Press `=` (or keypad +) three times, `-` once. 2. Backspace. 3. Hold Tab. 4. `\`. 5. Z, then Backspace. 6. Target a moving drone (R) and press M. |
+| Expected | THR reads 30 %, 20 %, then 100 %; speed climbs to the hull's MaxSpeed (600 m/s) along the nose. Tab: BURN shown, speed above max, energy gauge falls; released or out of energy, it stops. `\` decelerates to 0. Z shows REV and the ship backs up at half the throttle speed. M sets the throttle to the target's speed. A single key press always changes the throttle exactly once. |
 
 ### MT-1-06 — Mouse flight
 
 | Field | |
 |---|---|
-| Scenario | Flight school |
-| Preconditions | Mouse connected. |
-| Steps | 1. Move the mouse forward/back/left/right.<br>2. Click left and right buttons. |
-| Expected | Forward = nose down, back = nose up, left/right turn. Left button fires beams; right button fires a missile. |
-| Pass / fail | |
+| Scenario | `flight-test` |
+| Steps | 1. Press C. 2. Move the cursor up, down, left, right of centre. 3. Left button, right button. 4. Press C again. |
+| Expected | The cursor hides and is confined; the caption says "mouse flight (C)". Cursor **down = nose down**, up = nose up, left/right turn, proportional to the distance from centre. Left button fires beams; right button fires a missile. C again restores the cursor. |
 
 ### MT-1-07 — Gamepad flight
 
 | Field | |
 |---|---|
-| Scenario | Flight school |
-| Preconditions | A controller connected (Xbox/PlayStation style) before starting. |
-| Steps | 1. Use the left stick, right stick, triggers and bumpers.<br>2. Hold A; press B, X, Y; D-pad up/down.<br>3. Disconnect and reconnect the controller. |
-| Expected | Left stick pitch/yaw, right stick roll; RT beams, LT missile; bumpers cycle targets; A afterburner, B closest enemy, X match speed, Y cycles view; D-pad changes throttle. Reconnecting resumes control without restarting. (Run on macOS and on Linux.) |
-| Pass / fail | |
+| Scenario | `flight-test`; Xbox/PlayStation-style controller connected before starting |
+| Steps | Use the left stick, right stick, triggers, shoulders, A/B/X/Y, D-pad, Back, Start; in the launcher use the D-pad and A. |
+| Expected | Per [Controls → gamepad](../original-game/controls.md#openinterceptor-gamepad-defaults): left stick forward = nose down, sideways = yaw; right stick = roll and vertical slide (VCT hulls); RT beams, LT missile; RB/LB next/previous target; A afterburner; B nearest enemy; X match speed; Y chase view; D-pad throttle and MFD pages; Back link mode; Start pause. Small stick movements inside the dead zone do nothing. |
 
 ### MT-1-08 — Cockpit per hull
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | — |
-| Steps | 1. Start with each hull in turn in the F1 view. |
-| Expected | Each hull shows its own cockpit frame (A, B, C). The space view shows through the window area with no cyan pixels. On a wide window the frame is centred and the 3D view fills the sides. |
-| Pass / fail | |
+| Scenario | `flight-test` |
+| Steps | Start once with each hull; stay in F1. |
+| Expected | Lightning II → cockpit A, Firestar → B, Avenger → C, centred and scaled to the window height with no cyan fringe. Both radar scopes, the MFD, the four gauges (speed, energy, shields, hull) and the message line sit inside the art's instrument faces. |
 
-### MT-1-09 — Views
+### MT-1-09 — Views F1–F8
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | — |
-| Steps | 1. Press F1, F2, F3–F6, F7, F8.<br>2. In F8, use Ins/Del, PgUp/PgDn, Home/End, NumPad 5. |
-| Expected | F1 cockpit forward; F2 full forward without frame (minimal HUD); F3–F6 look left/right/rear; F7 chase camera follows; F8 chase camera moves and zooms with the keys and resets with NumPad 5. |
-| Pass / fail | |
+| Scenario | `flight-test` |
+| Steps | Press F1 … F8; in F8 use Insert/Delete, PageUp/PageDown, Home/End, Kp5. |
+| Expected | F1 cockpit art; F2 full forward with glass instruments; F3/F4 look left/right; F5/F6 rear-left/rear-right; F7 chase camera behind and above showing the ship with its engine glow; F8 orbit camera that moves with the keys and resets with Kp5. The caption names the view. Target brackets show only in F1, F2 and F7. |
 
-### MT-1-10 — Targeting and target MFD
+### MT-1-10 — Targeting, brackets and target MFD
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | — |
-| Steps | 1. Press `T` repeatedly, then `Y`.<br>2. Press `R`.<br>3. Point the nose at a ship and press `G`. |
-| Expected | `T`/`Y` cycle through targets forwards/backwards; `R` selects the closest enemy; `G` selects the ship nearest the reticle. The MFD shows the target's name, distance, hull state and model; a bracket marks it in space; an off-screen arrow points to it. |
-| Pass / fail | |
+| Scenario | `gunnery-range` |
+| Steps | 1. T several times, Y. 2. R. 3. Point the nose at a drone, G. 4. Turn away so the target leaves the screen. 5. `.` and `,` to cycle MFD pages. |
+| Expected | Each target change shows "TARGET: NAME" and a click; brackets in the faction colour sized to the target, with name and range and a lead circle. R picks the nearest hostile; G picks the one nearest the reticle. Off screen, an arrow on a ring points to it. MFD pages: Target (name, faction, range, speed, shields, armour, hull, lock state), Weapons, Status, Nav. On the radar the target is boxed. |
 
 ### MT-1-11 — Beams, energy and link modes
 
 | Field | |
 |---|---|
-| Scenario | Gunnery range |
-| Preconditions | Hull with ≥ 2 beams. |
-| Steps | 1. Hold Enter; watch the energy gauge.<br>2. Press `X` and fire in each mode.<br>3. Fire at a drone until it is destroyed. |
-| Expected | Bolts leave the beam mounts at the weapon's rate and speed; energy falls per shot and recharges when not firing; firing stops when energy is too low. `X` cycles Link (alternate guns) / Full (all together) / Unlink (one gun), shown on the message line. Hits flash; the drone is destroyed when its hit points are gone. |
-| Pass / fail | |
+| Scenario | `gunnery-range`, Firestar (four beams) |
+| Steps | 1. Hold Enter (or LeftControl) at a drone. 2. Press X three times, firing in each mode. 3. Fire until energy runs out. |
+| Expected | Coloured bolts leave the guns with sound and travel to their range. "WEAPONS FULL", "WEAPONS UNLINKED", "WEAPONS LINKED" messages; Linked fires pairs, Full all mounts, Unlinked one at a time. The energy gauge falls while firing and refills when not. At low energy "INSUFFICIENT POWER" and a denied sound; firing resumes once energy recovers. Hits flash the target and show sparks (blue on shields, orange on hull). |
 
 ### MT-1-12 — Missile lock and hit
 
 | Field | |
 |---|---|
-| Scenario | Gunnery range |
-| Preconditions | A drone targeted. |
-| Steps | 1. Keep the target inside the reticle cone.<br>2. Watch the lock indicator; press Space when locked.<br>3. Try firing before lock. |
-| Expected | A lock tone/indicator completes after the sensor's lock time (2.5 s with the standard sensor). The missile homes and hits, damaging the target. Breaking the cone resets the lock. Unlocked missiles fly straight. |
-| Pass / fail | |
+| Scenario | `gunnery-range` |
+| Steps | 1. R, keep the drone near the reticle. 2. Watch the lock ring. 3. Space when locked. 4. W to change missile type; fire one without a lock. |
+| Expected | A red ring closes in on the target, then a red diamond with "LOCK" and "MISSILE LOCK" plus a lock tone; the MFD shows "locking", then "LOCKED". A locked missile homes in and explodes on the drone. W moves the `>` marker on the Weapons page. An unlocked missile flies straight and expires after its duration. Rack counts go down; an empty rack reports "NO MISSILES". |
 
-### MT-1-13 — Enemy destruction
+### MT-1-13 — Destroying enemies, debris
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | — |
-| Steps | 1. Destroy one enemy of each type with beams and missiles. |
-| Expected | Each enemy takes damage and is destroyed with an explosion; it is removed from the target list; a message names it. |
-| Pass / fail | |
+| Scenario | `flight-test` |
+| Steps | Destroy one of each kind of enemy (beams and missiles). |
+| Expected | Shields, then armour, then hull fall on the target MFD. At zero hull: an explosion (bigger for bigger ships), a sound, tumbling debris chunks of that ship that fade after about 12 s, "NAME DESTROYED", and the target is cleared. |
 
-### MT-1-14 — Wingmen hold formation
+### MT-1-14 — Wingmen formation and orders
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | — |
-| Steps | 1. Fly straight, then turn hard, change speed and use the afterburner.<br>2. Look with F7. |
-| Expected | Two wingmen keep their slots on either side, catching up after turns and speed changes, without colliding with the player or each other. |
-| Pass / fail | |
+| Scenario | `flight-test` (two Lightning wingmen, alpha2/alpha3) |
+| Steps | 1. Fly turns at several throttles; F7 to watch. 2. Shift+F near the aliens. 3. Shift+I. 4. Target an enemy, Shift+A. |
+| Expected | Wingmen hold slots beside and slightly behind the player, match speed and catch up with afterburner when far. Messages "WINGMEN: FIRE AT WILL", "WINGMEN: FORM ON ME", "WINGMEN: ATTACK MY TARGET"; they attack accordingly and return to formation. |
 
-### MT-1-15 — Station visible and collidable
+### MT-1-15 — Station collision
 
 | Field | |
 |---|---|
-| Scenario | Flight test |
-| Preconditions | — |
-| Steps | 1. Fly toward the X-COM base from far away.<br>2. Fly into it slowly. |
-| Expected | The station is visible from far (lower LOD) and gains detail as you approach. Flying into it stops or bounces the ship and causes damage; you cannot pass through it. |
-| Pass / fail | |
+| Scenario | `station-tour` |
+| Steps | Fly past each station; then fly slowly into the X-COM base's arms and hull. |
+| Expected | Every station type renders textured with plausible LOD changes as you approach. Flying into the structure (not just its bounding sphere) bounces the ship back with a collision sound and hull damage; flying through the gaps between arms does not collide. |
 
-### MT-1-16 — Sample pack runs without original data
+### MT-1-16 — Hostile AI
+
+| Field | |
+|---|---|
+| Scenario | `combat-test` |
+| Steps | Fly towards the aliens and pirates; dogfight. |
+| Expected | Enemies close in, lead their shots, fire beams and missiles, break off when about to ram, and jink sideways when targeted (VCT ships). The player can be destroyed (MT-1-20). |
+
+### MT-1-17 — Nav points
+
+| Field | |
+|---|---|
+| Scenario | `flight-test` |
+| Steps | Press N three times; MFD Nav page (`,`/`.`). |
+| Expected | "NAV BASE", "NAV ALIENS", "NAV PIRATES" cycle; a blue diamond with the name marks the point on screen; the Nav page shows its name and range. |
+
+### MT-1-18 — Sound effects
+
+| Field | |
+|---|---|
+| Scenario | `gunnery-range` |
+| Steps | Fire each weapon, get a lock, hit and destroy a drone, collide gently, run out of energy, change target. |
+| Expected | Original sounds play: beam sounds per weapon, missile launch, lock tone, shield/hull hits, explosions, collision, denied, target click. Distant events are quieter. |
+
+### MT-1-19 — Original-free sample pack
 
 | Field | |
 |---|---|
 | Scenario | Sample pack arena |
-| Preconditions | Run with `--no-original` (or no `game/`). |
-| Steps | 1. Start the Sample pack arena with each sample ship. |
-| Expected | The scenario runs entirely on sample-pack models, textures and rules; flight, weapons and HUD work; no original file is read. |
-| Pass / fail | |
+| Steps | Run `openinterceptor --no-original` (or without `--data`); start the arena; fight. |
+| Expected | The Dart (no cockpit art: glass instruments), two Dart wingmen, the textured ring station and three red raiders that attack. Everything works without any original file. The Model viewer lists only dart, raider and ring station. |
 
-### MT-1-17 — Pause and quit
+### MT-1-20 — Pause, menu, restart, death
 
 | Field | |
 |---|---|
-| Scenario | Any |
-| Preconditions | — |
-| Steps | 1. Press `P`, wait, press `P`.<br>2. Press Esc and choose Back to launcher.<br>3. Press Alt+Q. |
-| Expected | `P` freezes the simulation (HUD shows PAUSED) and resumes exactly. Esc menu returns to the launcher. Alt+Q quits the application. |
-| Pass / fail | |
+| Scenario | `combat-test` |
+| Steps | 1. P, P. 2. Esc, Esc. 3. Esc, R. 4. Get destroyed; press Enter. 5. Esc, L. |
+| Expected | P freezes the simulation ("PAUSED (P)"). Esc dims the screen with the menu and a key summary; Esc resumes; R restarts the scenario with the same ship. On death: "SHIP DESTROYED", the camera orbits the wreck, Enter restarts. L returns to the launcher. |
+
+### MT-1-21 — Linux build and run
+
+| Field | |
+|---|---|
+| Scenario | `flight-test` |
+| Preconditions | Linux with `libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev`; an Xbox-style pad at `/dev/input/js0` if available. |
+| Steps | `scripts/check.sh`, then run MT-1-01, 04, 07, 08, 18. |
+| Expected | The gate passes; the cases behave as on macOS; `bindings.ini` is created under `~/.local/share/openinterceptor/`. |

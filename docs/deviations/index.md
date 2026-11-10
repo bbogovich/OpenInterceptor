@@ -1,14 +1,26 @@
 # Deviations
 
-Where OpenInterceptor knowingly differs from the original game or from the shared design, and
-why. A deviation on the record is a decision; an undocumented one looks like a bug.
+Where OpenInterceptor knowingly differs from the original game, or uses an engine value where
+the original's is unknown, and why. A deviation on the record is a decision; an undocumented
+one looks like a bug.
 
 | ID | Deviation | Why | Stage |
 |---|---|---|---|
-| DEV-001 | **Match speed** has a default key, `M`. | The action exists in the original's bindable list, but its release default key is not documented anywhere found. | 1 |
-| DEV-002 | **Navigation points** can be placed in scenarios, with a nav-select key and HUD marker. | The original has no in-mission nav points (travel happens on the strategy map). Mods need them for custom missions; the Interceptor pack does not use them. | 1 |
-| DEV-003 | **Gamepad** support with an XInput-style layout. | The original supported DirectInput joysticks and rudders only. A modern pad layout is added; the joystick-plus-rudder layout and Alt+J swap stay available. | 1 |
-| DEV-004 | **Mouse controls are rebindable.** | The original fixed them. | 1 |
-| DEV-005 | **Rendering is hardware 3D with per-vertex lighting** instead of the 16 shade palettes. | The shade palettes exist for the 1998 software renderer. Palette 0 (full brightness) is used as the texture's colours; light is applied by the GPU. | 1 |
-| DEV-006 | **Wide-screen**: the 640×480 cockpit art is scaled to the window height and centred; the 3D view fills the whole window. | Modern displays are not 4:3. | 1 |
-| DEV-007 | **Multiplayer** is deferred and may never be implemented. | Not needed for the single-player game or for modding. | 7 |
+| DEV-001 | **Default keys for actions the original left undocumented**: `M` match speed, `W` cycle missile, `Kp4/6/8/2` VCT slides, `Q`/`E` roll, `LeftControl` also fires beams, `C` mouse flight. | These actions exist in the original's bindable list but their release defaults are not documented anywhere found; Q/E and LeftControl help keyboards without a keypad. | 1 |
+| DEV-002 | **Navigation points** in scenarios (`[nav.<name>]`), cycled with `N`, shown on the MFD Nav page and as an on-screen marker. | The original has no in-mission nav points (travel happens on the strategy map). Mods need them; the test arenas use them to find the alien and pirate groups. | 1 |
+| DEV-003 | **Gamepad** support with an XInput-style layout. | The original supported DirectInput joysticks and rudders only. | 1 |
+| DEV-004 | **Mouse controls are rebindable** (beams/missile via the bindings; steering range via `[mouse] range`) and mouse flight is a toggle (`C`). | The original fixed them; a toggle avoids the mouse fighting the menus. Steering direction follows the readme (cursor down = nose down). | 1 |
+| DEV-005 | **Hardware 3D with per-vertex lighting** instead of the 16 shade palettes. | The shade palettes served the 1998 software renderer; palette 0 (full brightness) gives the texture colours. | 1 |
+| DEV-006 | **Wide-screen**: 640×480 cockpit art scaled to the window height and centred; the 3D view fills the window. | Modern displays are not 4:3. | 1 |
+| DEV-007 | **Multiplayer** deferred, possibly never implemented. | Not needed for single player or modding. | 7 |
+| DEV-008 | **Beam `Range` read as kilometres** (`Range = 4` → 4 000 m); `RangeMetres` overrides. | The original's 1–6 values have no documented unit; kilometres matches the documented sensor ranges (3–5 km). | 1 |
+| DEV-009 | **Missile `TurnRate` and `LockTime` are engine values** set in the Interceptor pack. | The original stores no turn rate per missile; lock time depends on the targeting system (Stage 4 equipment). | 1 |
+| DEV-010 | **Proximity fuse fires on a near miss**: inside `ProximityRadius` *and* moving away from the target. A hit inside the target's collision shape deals `ImpactDamage`. | Firing as soon as the radius was entered meant impacts never happened. | 1 |
+| DEV-011 | **Hull `Shields`, `Armor`, `Energy`, `EnergyRecharge`, `Acceleration` are engine values per hull** in the Interceptor pack. | In the original they come from fitted equipment (ShieldType*, ArmorType*, EngineType*), which arrives with the equipment system. | 1 → 4 |
+| DEV-012 | **Alien, freighter and capital flight values are estimates** (MaxSpeed, turn rates, acceleration). | The original file has flight values only for the three X-COM hulls; the others were coded per class. | 1 → 2 |
+| DEV-013 | **Missile lock cone is 10°** (`[flight] LockAngleDegrees`). | The original's `SensorsSetting LockAngle` units are not decoded. | 1 |
+| DEV-014 | **Cockpit ↔ hull mapping** A = Lightning II, B = Firestar, C = Super Avenger. | Derived (one cockpit per hull), not confirmed. | 1 |
+| DEV-015 | **One-shot inputs are carried across frames** that run no simulation tick (`Controls::carry_unconsumed`). | On high-refresh displays some frames run no tick; a key press would otherwise be lost. Not an original behaviour, an engine correctness fix. | 1 |
+| DEV-016 | **Esc opens a pause menu** (resume, restart, back to launcher) instead of resetting the MFD. | The testbed needs a way back to the launcher; MFD pages cycle with `<`/`>`. | 1 |
+| DEV-017 | **Keyed cockpit pixels become transparent black**, not transparent cyan. | Filtering would otherwise blend cyan into the edges of the art. Visual result matches the original. | 1 |
+| DEV-018 | **"Ignore my target" and "retreat" wingman orders both mean "form on me"**; "evasive" is not bound. | Distinct behaviours arrive with the Stage 2 AI. | 1 → 2 |

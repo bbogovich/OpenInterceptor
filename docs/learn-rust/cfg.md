@@ -1,30 +1,54 @@
 # Platforms with `cfg`
 
-`#[cfg(...)]` includes code only when a condition holds at compile time. Code for another OS is
-not compiled at all — not just skipped at run time.
+`#[cfg(...)]` includes code only when a condition holds at **compile time**. Code for another OS
+is not compiled at all — not just skipped at run time.
+
+## `src/platform/mod.rs`
 
 ```rust
-// src/platform/mod.rs
-#[cfg(target_os = "macos")]
-mod macos;
 #[cfg(target_os = "linux")]
 mod linux;
+#[cfg(target_os = "macos")]
+mod macos;
 
-/// State of controller `index`, or None. Works everywhere.
-pub fn pad_state(index: u32) -> Option<PadState> {
-    #[cfg(target_os = "macos")]
-    return macos::pad_state(index);
+#[derive(Default)]
+pub struct Gamepads {
     #[cfg(target_os = "linux")]
-    return linux::pad_state(index);
-    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    {
-        let _ = index; // silence "unused" on other platforms
-        None
+    linux: linux::JoystickReader,   // this field only exists in Linux builds
+}
+
+impl Gamepads {
+    pub fn poll(&mut self) -> Option<PadState> {
+        #[cfg(target_os = "macos")]
+        {
+            macos::pad_state(0)
+        }
+        #[cfg(target_os = "linux")]
+        {
+            self.linux.poll()
+        }
+        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        {
+            None
+        }
     }
 }
 ```
 
-Every caller writes `platform::pad_state(0)` and never sees `cfg`.
+Every caller writes `gamepads.poll()` and never sees `cfg`. Notice that even a *struct field*
+can be conditional: on macOS, `Gamepads` is an empty struct.
+
+## `cfg!` in ordinary code — `src/cli.rs`
+
+`cfg!(…)` is a macro that evaluates to `true`/`false`; both branches are still compiled:
+
+```rust
+if cfg!(target_os = "macos") {
+    Some(home.join("Library/Application Support/OpenInterceptor"))
+} else {
+    Some(base.join("openinterceptor"))
+}
+```
 
 ## In `build.rs`
 
@@ -32,9 +56,14 @@ A build script runs on the build machine, so it checks the *target* with environ
 
 ```rust
 if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
-    compile_shim(); // xcrun clang … oi_platform.m; link GameController, AppKit
+    macos_shim(); // xcrun clang … oi_platform.m; link GameController and Foundation
 }
 ```
+
+## Checking another platform's code
+
+`cargo check --target x86_64-unknown-linux-gnu` type-checks the Linux paths from a Mac (after
+`rustup target add x86_64-unknown-linux-gnu`) without building or running them.
 
 ## `cfg(test)`
 

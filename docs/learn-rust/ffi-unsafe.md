@@ -42,18 +42,30 @@ is correct. We confine it to one small function and explain why it is sound:
 ```rust
 pub fn pad_state(index: u32) -> Option<PadState> {
     let mut raw = OiPad::default();
-    // SAFETY: `raw` is a valid, writable OiPad with the shim's exact C layout; the shim
-    // checks `index` and writes only on success; it is called on the main thread.
-    let ok = unsafe { oi_pad_state(index, &mut raw) } == 1;
-    ok.then(|| PadState::from(raw))
+    // SAFETY: `raw` is a valid, writable `OiPad` with the shim's exact C layout
+    // (`#[repr(C)]`, same field order and types); the shim writes it only on success and
+    // keeps no pointer to it after returning.
+    let connected = unsafe { oi_pad_state(index, &mut raw) } == 1;
+    connected.then_some(PadState { buttons: raw.buttons, lt: raw.lt, rt: raw.rt, … })
 }
 ```
 
 ## Our rules for `unsafe`
 
-1. Only in `src/platform/`. No other module contains the word.
-2. Each `unsafe` block is as small as possible and has a `// SAFETY:` comment.
-3. A safe function wraps it, so callers never need `unsafe`.
+1. Only where there is no safe alternative. There are exactly **two** `unsafe` blocks:
+   - `src/platform/macos.rs` — the FFI call above;
+   - `src/render/mod.rs`, `unsafe_gl()` — macroquad's `get_internal_gl()` is marked `unsafe`
+     because the returned reference must not be held across `next_frame().await`; we use it
+     immediately to push and pop the model matrix and never keep it.
+2. Each block is as small as possible and has a `// SAFETY:` comment saying why it is sound.
+3. A safe function wraps it, so callers never write `unsafe`.
 
-The Linux joystick reader needs **no** `unsafe`: it reads 8-byte events from
-`/dev/input/js0` with ordinary file I/O and decodes them with `from_le_bytes`.
+The Linux joystick reader needs **no** `unsafe`: it opens `/dev/input/js0` non-blocking
+(`OpenOptionsExt::custom_flags`) and decodes 8-byte events with `from_le_bytes`.
+
+## Compiling the C side — `build.rs`
+
+The Objective-C file is compiled by the build script with the system toolchain
+(`xcrun clang -c -fobjc-arc …`, then `xcrun ar crs liboi_platform.a`), and the script prints
+`cargo:rustc-link-lib=static=oi_platform` and `cargo:rustc-link-lib=framework=GameController`
+so Cargo links them. No extra crate is needed.

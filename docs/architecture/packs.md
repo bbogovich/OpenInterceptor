@@ -1,56 +1,74 @@
 # Packs, VFS and rules
 
-`src/packs/`: turns folders and original data into one namespace (`Vfs`), one layered rule set
-(`Rules`) and loaded scenarios. See [Modding: packs](../modding/packs.md) for the user's view.
+`src/content/`: answers "what is in the game?". Loads packs in dependency order, indexes the
+player's original data, builds the typed `Ruleset`, parses scenarios, and loads individual
+assets on demand as plain CPU data. Plan: Stage 1. The user-facing side is in
+[Modding](../modding/index.md).
 
 ## Architecture Overview
 
 ```mermaid
-flowchart LR
-    D1[("packs/interceptor")] --> L["Pack::load<br/>pack.ini"]
-    D2[("packs/sample")] --> L
-    D3[("mods/*")] --> L
-    L --> O["load order<br/>depends, order.txt"]
-    O --> V["Vfs<br/>mounts newest first"]
-    CD[("original DLLs/INI")] --> V
-    V --> R["Rules::build<br/>inherit, override, delete"]
-    V --> S["Scenario::load"]
+flowchart TD
+    CFG["ContentConfig<br/>pack_dirs, mods_dir, original, no_original"] --> D["pack::discover<br/>folders with pack.ini"]
+    D --> SK{"requires_original<br/>and no data?"}
+    SK -->|skip + warning| W["warnings"]
+    SK -->|keep| O["pack::order<br/>stable topological sort"]
+    CFG --> OD["vfs::OriginalData::open<br/>index files by name, open DLLs"]
+    O --> RS["rules/*.ini of every pack"]
+    RS --> B["rules::build<br/>merge → resolve inherit → typed structs"]
+    OD -->|"original:File.ini/Section"| B
+    B --> RU["Ruleset"]
+    O --> SC["scenarios/*.ini → Scenario<br/>later pack replaces same id"]
 ```
 
-Logic flow for rules: for each pack in order, parse every `rules/*.ini` → for each typed section,
-merge keys into the existing entry (or create it; or delete it on `delete = yes`) → after all
-packs, resolve `inherit` chains (with cycle detection) → convert entries into typed structs
-(`ShipClass`, `BeamClass`, …), reporting unknown references.
+Logic flow of `rules::build`: merge every file in load order (`Ini::merge_from`, key by key),
+remembering which pack last touched each section → resolve `inherit` chains (other sections or
+`original:` sections; depth limit 16 catches cycles) → drop sections with `delete = yes` →
+build factions, beams, missiles, then ships (which refer to the others by id) → cockpits,
+`[flight]`, `[sounds]`. Every problem is collected as a message; a broken definition is skipped,
+the rest still load.
+
+Asset loading (`Content::load_*`) parses an `AssetRef`: pack-relative paths resolve in the pack
+that defined them; `original:` references go to `OriginalData`. Textures named inside a model
+look for `textures/<name>.png|.tga` in every pack (latest first) before the original `XTXR` —
+that is how a mod re-skins an original ship.
 
 ## Key Symbols
 
 | Symbol | What it is |
 |---|---|
-| `Pack` | One loaded `pack.ini`: id, name, version, dependencies, folder. |
-| `Vfs` | Answers "give me `models/inttypea.obj`" or "give me mesh `inttypea`" by searching mounts. Holds the original DLL bytes and their resource tables. |
-| `Rules` | All typed entries: `ships`, `beams`, `launchers`, `missiles`, `objects`, `factions`, `cockpits`, each a `HashMap<String, T>` keyed by id. |
-| `ShipClass` | A ship's definition: model, cockpit, side, `FlightSpec` (rates, LockSpeed, MaxSpeed…), mounts, hit points, loadout. |
-| `BeamClass`, `MissileClass` | Weapon definitions with the original's fields (damage, energy cost, rate of fire, speed, range; lock, duration). |
-| `Scenario` | Title, environment and a list of `Placement`s (class, side, position, heading, ai). |
+| `Content` | Loaded packs, `original: Option<OriginalData>`, `rules: Ruleset`, `scenarios`, `warnings`. |
+| `ContentConfig` | Where to look; built from the command line by `cli::Options::content_config`. |
+| `pack::PackInfo` | A parsed `pack.ini`: `id`, `name`, `version`, `description`, `depends`, `requires_original`, `dir`. |
+| `vfs::AssetRef` | `PackFile(String)` or `Original { file, resource }`. Parsing normalises `..` inside the pack and refuses paths that leave it. |
+| `vfs::OriginalData` | Lower-case file name → path for every file under the data folder (any CD/install layout), plus the opened resource DLLs. |
+| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `cockpits`, `flight: FlightRules`, `sounds`. |
+| `ShipClassId`, `BeamId`, `MissileId`, `FactionId` | Newtype indices (`u16`) into the ruleset's vectors. |
+| `rules::ShipClass` | A craft or object: model reference, durability, flight model, power, weapons, debris. `kind: ShipKind` (Fighter, Freighter, Capital, Drone, Station, Probe, Mine, Debris). |
+| `rules::BeamClass`, `MissileClass`, `Faction`, `FlightRules`, `CockpitDef` | The other definitions. |
+| `scenario::Scenario`, `Placement`, `AiRole`, `NavPoint` | A playable arena and its objects. |
 
 ## API Reference
 
-- `Vfs::new(original_data: Option<&Path>, packs: &[Pack]) -> Result<Vfs>`.
-- `Vfs::read(path) -> Option<Vec<u8>>` (pack files), `Vfs::mesh(name)`, `Vfs::texture(name)`.
-- `Rules::build(&Vfs) -> (Rules, Vec<Diagnostic>)`: diagnostics are warnings and errors with
-  pack, file and section.
-- `Scenario::load(&Vfs, id) -> Result<Scenario>`; `Scenario::list(&Vfs)`.
-
-### Rule keys read in Stage 1
-
-`ship:` `name`, `model`, `cockpit`, `side`, `playable`, `RollRate`, `YawRate`, `PitchRate`,
-`AngularDamp`, `LockSpeed`, `MaxSpeed`, `HitPoints`, `MaxBeamWeapons`, `MaxMissileWeapons`,
-`beams`, `missiles`, `ai`. `beam:` `name`, `Damage`, `EnergyCost`, `RateOfFire`, `Speed`,
-`Range`, `colour`. `missile:` `name`, `Speed`, `Duration`, `ImpactDamage`, `ProximityDamage`,
-`locktime`, `lockangle`. `object:` `name`, `model`, `HitPoints`. The final list is kept here as
-the code lands.
+- `Content::load(&ContentConfig) -> Result<Content, String>`.
+- `content.load_model(reference, pack, scale) -> Result<Model, String>`.
+- `content.load_texture(name, pack)`, `content.load_image(reference, pack, colour_key)` →
+  `Result<Image, String>`; `content.load_sound(reference, pack) -> Result<Pcm, String>`.
+- `content.scenario(id)`, `content.original_mesh_names()`, `content.read_pack_file(pack, path)`.
+- `ruleset.ship_id(id)`, `.ship(ShipClassId)`, `.beam(..)`, `.missile(..)`, `.faction(..)`,
+  `.faction_id(id)`, `.cockpit(id)`, `.hostile(a, b)`, `.playable_ships()`.
+- `rules::build(&[RulesSource], &OriginalLookup) -> (Ruleset, Vec<String>)` — pure, tested with
+  an in-memory lookup.
+- `Scenario::parse(text, pack) -> Result<Scenario, String>`; `PackInfo::parse(text, dir)`;
+  `pack::discover(dir)`; `pack::order(Vec<PackInfo>)`.
+- `OriginalData::open(&Path)`, `.file_path(name)`, `.read_file(name)`,
+  `.resource(kind, dll, name)` (a digit-only name is tried as a name, then as a number),
+  `.resource_names(kind)`.
 
 ## Debugging
 
-`--verbose` prints the mount order and every override (`pack X overrides ship:lightning.MaxSpeed`).
-`--check` lists unknown keys and references.
+- `--check` prints every rules error as `[kind:id]: message`, plus model, texture, image, sound
+  and scenario failures. `--list` shows what loaded.
+- "pack 'x' skipped" means it needs `--data` (or a dependency was skipped).
+- A key that "does nothing": check the section id prefix (`ship:` vs `object:`) and that a
+  later pack does not override it; keys are case-insensitive, values are not.

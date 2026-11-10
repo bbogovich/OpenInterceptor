@@ -77,6 +77,7 @@ nav:
           - "Object and ship table": original-game/formats/object-table.md
   - "Modding":
       - modding/index.md
+      - "Make your first mod": modding/first-mod.md
       - "Packs": modding/packs.md
       - "Rulesets and layering": modding/rulesets.md
       - "Models and textures": modding/models.md

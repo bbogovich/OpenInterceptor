@@ -2,9 +2,11 @@
 
 ## Layering
 
+```text
+formats → model → content → sim → input/platform → render/hud/audio → app   (+ check, cli)
 ```
-formats  →  packs / rules / assets  →  sim  →  render / hud / audio / input  →  testbed
-```
+
+The order is written at the top of `src/lib.rs`.
 
 Each layer depends only on layers to its left. Consequences:
 
@@ -28,8 +30,10 @@ flowchart LR
     S --> R["render + hud (every display frame)"]
 ```
 
-The simulation is the single source of truth. Rendering is a view of it; two views (cockpit and
-model viewer) can draw the same world.
+The simulation is the single source of truth. Rendering is a view of it. The player and the AI
+both drive ships through the same `Controls`, so the AI obeys the same flight model, and the
+simulation reports what happened as `SimEvent`s that effects, sound and the message line
+consume — none of which can change the battle.
 
 ## Fixed timestep
 
@@ -39,9 +43,12 @@ laptop and a 144 Hz monitor, and a recorded input sequence replays identically.
 
 ## One owner per resource
 
-Each long-lived resource has one owner: the `Testbed` owns the `Vfs`, `Rules` and `Assets`; a
-`FlightSession` owns its `World`. Everything else borrows. No reference counting is needed in
-the core, and lifetimes stay simple.
+Each long-lived resource has one owner: the `AppContext` owns the `Content` (packs, original
+data, rules, scenarios), the `Renderer` (shaders, model and texture caches), the `SoundBank`
+and the `Bindings`; a `FlightSession` owns its `World`. Everything else borrows. Shared,
+read-only data uses reference counting where several owners really exist: the `World` shares
+the `Ruleset` and collision shapes through `Arc`, ships of one class share a `GpuModel` through
+`Rc`.
 
 ## Errors are values, diagnostics are collected
 

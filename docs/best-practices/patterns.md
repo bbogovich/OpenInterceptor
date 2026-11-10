@@ -3,52 +3,70 @@
 ## Newtype ids
 
 ```rust
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub struct ModelId(u32);
+// src/content/rules.rs
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ShipClassId(pub u16);
 ```
 
-Ids are small, `Copy`, and typed: a `ModelId` cannot be confused with a `TextureId`. For ships,
-which are created and destroyed, the id carries a **generation** so a stale id is detected:
+Ids are small, `Copy`, and typed: a `BeamId` cannot be confused with a `MissileId`. Ships are
+created and destroyed, so their id carries a **generation** and a stale id is detected:
 
 ```rust
-pub struct ShipId { index: u32, generation: u32 }
+// src/sim/mod.rs
+pub struct ShipId { pub index: u32, pub generation: u32 }
+
+pub fn get(&self, id: ShipId) -> Option<&Ship> {
+    let i = id.index as usize;
+    (self.generations.get(i) == Some(&id.generation)).then(|| &self.ships[i]).filter(|s| s.alive)
+}
 ```
 
 ## Plain-data structs
 
-Prefer structs with public fields and no hidden behaviour for data that is just data (`Body`,
-`Controls`, `FlightSpec`). Construct with struct literals and `..Default::default()`:
+Prefer structs with public fields and no hidden behaviour for data that is just data
+(`Controls`, `ShipClass`, `Bolt`, `Placement`). Construct with struct literals and
+`..Default::default()`:
 
 ```rust
-let spec = FlightSpec { max_speed: 600.0, lock_speed: 1000.0, ..Default::default() };
+let c = Controls { throttle_set: Some(1.0), fire_beams: true, ..Default::default() };
 ```
 
-A builder is used only when construction has rules to enforce (e.g. a `World` from a
-scenario, which validates every placement).
+A constructor function is used only when construction has rules to enforce (e.g.
+`World::from_scenario`, which validates every placement and resolves leaders).
 
 ## Explicit ownership of GPU resources
 
-GPU textures and meshes are owned by `Assets` and referenced by id. Nothing else holds a
-`Texture2D` long-term. Unloading a pack means dropping its entries in one place.
+GPU meshes and textures are owned by the `Renderer`'s `ModelCache`, keyed by asset reference
+and pack. Drawing code borrows an `Rc<GpuModel>` for the frame; nothing else holds a `Texture2D`
+long-term except the flight session's cockpit image.
 
 ## No global mutable state
 
 No `static mut`, no lazily-initialised global singletons for engine state. State is passed in:
-`fn draw(&mut self, world: &World, assets: &Assets)`. This keeps functions testable and makes
-data flow visible in signatures. (macroquad itself keeps a global context for the window; we
+`renderer.draw_world(&content, &world, &effects, &cam, sun, hide)`. This keeps functions
+testable and makes data flow visible in signatures. (macroquad itself keeps a global context for the window; we
 treat it as the platform and touch it only in presentation code.)
 
 ## Error types per layer
 
-`FormatError` in `formats`, `PackError` in `packs`, `AssetError` in `assets`; each wraps the
-layer below with `From`. Messages read as a path from the user's action down to the byte.
+`FormatError` in `formats` (an enum, because callers can branch on it). Above it, errors are
+only ever shown to people, so they are `String`s built with context
+(`map_err(|e| format!("mesh {name}: {e}"))`): messages read as a path from the user's action
+down to the byte. A typed error enum is introduced the day a caller needs to branch on one.
 
 ## Small functions with names that say what they do
 
-`turn_rates(spec, speed)`, `fan(corners)`, `closest_enemy(world, ship)`. Pure helpers are free
-functions so they can be unit tested without constructing a world.
+`flight::turn_factor(speed, lock_speed)`, `targeting::nearest_hostile(world, me)`,
+`hud::radar_point(local, front)`, `app::flight::view_pose(view, …)`. Pure helpers are free
+functions so they can be unit tested without constructing a world or a window.
+
+## Separate logic from presentation inside a module
+
+Where a module must draw, the decisions are pure functions and the drawing is a thin layer on
+top: `hud::mfd_lines` (tested) vs `hud::draw::draw_instruments` (painted);
+`app::launcher::Menu` (tested) vs `Launcher::draw`.
 
 ## Enums over flags
 
-`View::Chase { manual: bool }` rather than `is_chase: bool, is_manual: bool` — impossible
-states cannot be represented.
+`enum LinkMode { Linked, Full, Unlinked }` rather than two booleans; `enum Pilot { External,
+Ai(AiState) }` so AI memory exists only for AI ships — impossible states cannot be represented.

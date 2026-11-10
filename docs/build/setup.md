@@ -11,8 +11,10 @@
 
 ## Dependencies
 
-One crate: **macroquad `=0.4.14`**, pinned exactly (the version ArenaVM and Looking Glass use).
-Everything else is in the crate. See the [dependency policy](../best-practices/dependencies.md).
+Three crates, pinned exactly: **macroquad `=0.4.14`** with the `audio` feature (the version
+ArenaVM and Looking Glass use), plus **glam `=0.27.0`** and **image `=0.24.9`** (`png`), both
+already part of macroquad's tree. Everything else is in the crate. See the
+[dependency policy](../best-practices/dependencies.md).
 
 ## Layout of a checkout
 
@@ -22,7 +24,10 @@ OpenInterceptor/
   src/                 the engine (see Architecture)
   packs/interceptor/   rules + scenarios binding the original CD data
   packs/sample/        an original-free example pack
-  macos/shim/          the Objective-C gamepad shim
+  tools/               make_sample_models.py (generates the sample pack's models)
+  macos/shim/          the Objective-C gamepad shim (oi_platform.m)
+  CLAUDE.md            project rules (objectives, no original content, quality bar)
+  rustfmt.toml         formatting (width 120)
   scripts/check.sh     the quality gate
   game/                your CD copy (git-ignored)
   engine-docs/         worktree of the docs branch (git-ignored on main)
@@ -33,7 +38,10 @@ OpenInterceptor/
 ```sh
 cargo run --release -- --data game          # launcher
 cargo test                                  # unit tests
+cargo clippy --all-targets                  # lints (kept at zero warnings)
+cargo fmt                                   # formatting
 scripts/check.sh                            # everything the gate runs
+cargo check --target x86_64-unknown-linux-gnu   # type-check the Linux paths from macOS
 ```
 
 `OPENINTERCEPTOR_DATA` points the gate at a data folder other than `game/`.

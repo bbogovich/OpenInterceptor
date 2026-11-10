@@ -1,29 +1,42 @@
 # Audio
 
-`src/audio.rs`: plays sound effects through macroquad's audio. Plan: Stage 1 (weapons), grown in
-Stage 2 (`soundfx.ini`) and Stage 5 (music).
+`src/audio.rs`: sound effects driven by simulation events. Plan: Stage 1 (event sounds);
+music loops and CD audio are Stage 5.
 
 ## Architecture Overview
 
 ```mermaid
 flowchart LR
-    V["Vfs: SoundFX/*.wav or pack sounds"] --> W["formats::wav<br/>ADPCM → PCM"]
-    W --> E["re-encode as PCM WAV bytes"]
-    E --> S["macroquad Sound"]
-    EV["sim events"] --> P["Audio::play(event)"]
-    S --> P
+    R["Ruleset: [sounds], beam Sound, missile Sound"] --> L["SoundBank::load (async)<br/>Content::load_sound → wav::decode (PCM / MS ADPCM / IMA ADPCM)<br/>→ Pcm::to_wav_bytes → load_sound_from_bytes"]
+    EV["world.events"] --> ES["event_sound(world, event, listener, ear)<br/>→ (SoundKey, volume)"]
+    ES --> P["SoundBank::play"]
+    L --> P
 ```
+
+`event_sound` is pure and tested: beam and missile sounds use the firing ship's weapon;
+hits use `shield_hit` or `hull_hit`; destruction uses `big_explosion` for objects with radius
+over 100 m, else `explosion` (always at least 15 % volume); `lock` and `denied` only for the
+listener; everything else is attenuated by distance (`attenuate`: full within 50 m, half at
+about 350 m).
+
+Playback uses macroquad's `audio` feature (quad-snd: CoreAudio on macOS, ALSA on Linux).
 
 ## Key Symbols
 
 | Symbol | What it is |
 |---|---|
-| `Audio` | Loaded sounds by name; `play(name, volume)`. Missing sounds are silently skipped (logged once). |
+| `SoundKey` | `Named(&'static str)`, `Beam(u16)`, `Missile(u16)`. |
+| `NAMED` | The ten event names: `explosion`, `big_explosion`, `shield_hit`, `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`. |
+| `SoundBank` | Decoded sounds by key, and `errors` for sounds that failed. |
 
 ## API Reference
 
-- `Audio::load(&Vfs, &Rules)`; `Audio::on_event(&Event)`.
+- `SoundBank::load(&Content).await`, `bank.play(&SoundKey, volume)`,
+  `bank.play_events(&World, listener, ear)`.
+- `event_sound(&World, &SimEvent, ShipId, Vec3) -> Option<(SoundKey, f32)>`, `attenuate(distance)`.
 
 ## Debugging
 
-`--no-audio` disables sound for a run.
+- Sounds that fail to load are printed at start-up as `sound: …` lines; `--check` loads every
+  referenced sound too.
+- No sound at all on Linux: the build needs the ALSA development package (`libasound2-dev`).
