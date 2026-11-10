@@ -16,7 +16,7 @@
 //!
 //! ```text
 //!  packs/interceptor ─┐                     ┌─> Ruleset (ships, beams, …)
-//!  packs/sample ──────┼─> Content::load ────┼─> Vec<Scenario>
+//!  packs/default ─────┼─> Content::load ────┼─> Vec<Scenario>
 //!  mods/…  ───────────┘        │            └─> asset loaders (Model, Image, Pcm)
 //!  player's CD ────────────────┘
 //! ```
