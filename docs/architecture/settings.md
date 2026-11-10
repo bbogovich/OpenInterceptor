@@ -10,13 +10,13 @@ An installed OpenInterceptor separates **what ships with the program** from **wh
 the player**:
 
 ```text
-OpenInterceptor-0.2.0.app/Contents/          (the program — safe to share)
+OpenInterceptor-0.2.2.app/Contents/           (the program — safe to share)
   MacOS/openinterceptor
-  Resources/packs/interceptor, packs/sample  (built-in packs: no original content)
+  Resources/packs/interceptor, packs/default  (built-in packs: no original content)
 
 ~/Library/Application Support/OpenInterceptor/      (macOS)
 $XDG_DATA_HOME/openinterceptor/ or ~/.local/share/openinterceptor/   (Linux)
-  settings.ini     [paths] original, mods; [packs] disabled
+  settings.ini     [paths] original, mods; [packs] disabled; [game] campaign
   bindings.ini     controls (created on first run)
   original/        optional copy of the CD (tools/build_bundle.py --install-data)
   mods/            one folder per mod
@@ -36,7 +36,9 @@ flowchart TD
 
 The mods folder is `--mods`, else `settings.ini` `[paths] mods`, else `<user data>/mods`.
 `[packs] disabled` lists pack ids to switch off (whole-pack activation, like XWVM's Game
-Content screen).
+Content screen). `[game] campaign` is the campaign to load; the launcher's campaign switch
+(Tab) writes it (`app::remember_campaign`), and `--campaign` overrides it for one run. Empty
+means the default choice (`interceptor` if its data is available, else `default`).
 
 ```ini
 ; settings.ini
@@ -46,6 +48,9 @@ mods =
 
 [packs]
 disabled = hd-cockpit-test
+
+[game]
+campaign = default
 ```
 
 `tools/build_bundle.py` presets `[paths] original` to the checkout's `game/` folder (or
@@ -55,7 +60,7 @@ disabled = hd-cockpit-test
 
 | Symbol | What it is |
 |---|---|
-| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`. |
+| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`. |
 | `settings::Source` | Which rule found the data: `CommandLine`, `Environment`, `SettingsFile`, `UserDataFolder`, `DevelopmentTree`. |
 | `cli::user_data_dir()` | The per-user folder for this platform. |
 | `cli::find_packs_dir(exe)` | `./packs`, next to the program, `../Resources/packs` inside an app bundle, then the source tree. |
@@ -66,10 +71,13 @@ disabled = hd-cockpit-test
   `settings.to_ini_text()`, `settings.save(dir)`.
 - `resolve_original(cli, env, &settings, user_dir, dev_tree) -> Option<(PathBuf, Source)>` —
   pure apart from `is_dir` checks; tested with temporary folders.
-- `cli::Options::content_config()` assembles a `ContentConfig` from all of the above.
+- `cli::Options::content_config()` assembles a `ContentConfig` from all of the above
+  (`campaign` = `--campaign`, else `settings.ini [game] campaign`).
 
 ## Debugging
 
 - `openinterceptor --list` shows which packs loaded; if `interceptor` is missing, no data
   folder was found — check `settings.ini` or pass `--data`.
+- The launcher always loads the last campaign chosen there; if a campaign seems "stuck", look
+  at `[game] campaign` (or pass `--campaign`). `--list` marks the loaded campaign with `*`.
 - Unknown keys in `settings.ini` are ignored, so a newer file still works with an older build.

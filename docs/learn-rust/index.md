@@ -10,11 +10,11 @@ Read in order; each page builds on the previous one.
 |---|---|
 | [Ownership and borrowing](ownership.md) | Who owns the World, the meshes, the textures; why `&` and `&mut` matter |
 | [Lifetimes and borrowed bytes](lifetimes.md) | The format readers, which parse a DLL without copying it |
-| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match` |
+| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`) |
 | [Traits and generics](traits.md) | `Default`, `Debug`, `From`, `Iterator`, macroquad's `Camera` |
 | [Error handling](errors.md) | `Result`, `?`, per-layer error enums; why bad data never panics |
 | [Modules and visibility](modules.md) | The `src/` tree, `mod`, `pub`, `pub(crate)` |
-| [Iterators and closures](iterators.md) | Rule merging, polygon triangulation, target selection |
+| [Iterators and closures](iterators.md) | Rule merging, polygon triangulation, target selection; returning `impl Iterator` (`pack::needs`) |
 | [Collections](collections.md) | `Vec`, `HashMap`, when to use which |
 | [FFI, `repr(C)` and `unsafe`](ffi-unsafe.md) | The macOS gamepad shim |
 | [Platforms with `cfg`](cfg.md) | macOS / Linux / other code paths |

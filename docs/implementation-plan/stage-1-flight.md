@@ -1,6 +1,6 @@
 # Stage 1 — Flight simulator
 
-**Version 0.2.0. Status: implemented; manual sign-off pending** ([status](../implementation-status.md)). The core of the application: fly any playable ship in a
+**Version 0.2.0. Status: done — signed off by the developer's playtest on 2026-11-10** ([status](../implementation-status.md)). The core of the application: fly any playable ship in a
 live arena with the original's cockpit, controls, navigation, speed management and weapons.
 
 ## Exit scenario
@@ -53,6 +53,9 @@ needed extraction and per-asset replacement (HD and 3D cockpits) in the XWVM man
 | Sample pack arena (no original data) | `sample-arena` | Original-free ships and station from the `sample` pack, a 3D cockpit, hostile raiders |
 
 The planned "Flight school" was folded into `flight-test` (practice targets and nav points).
+
+In Stage 2 the `sample` pack became the `default` campaign and `sample-arena` was retired;
+`rocket-vs-saucer` covers the same ground (original-free ships, 3D cockpit, wingmen, hostiles).
 
 ## Done when
 

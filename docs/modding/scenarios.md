@@ -32,6 +32,8 @@ scripts. A later pack's scenario with the same `id` replaces the earlier one. Ke
 | `leader` | none | Another object's `<name>`, or `player`. |
 | `offset` | −60, 0, 30 | Formation slot relative to the leader, in the leader's frame (x right, y up, +z behind). |
 | `speed` | 0 | Initial speed, m/s (also sets the throttle). |
+| `destroyed_systems` | none | Comma-separated system kinds or ids that start **destroyed** (case-insensitive). `engines, manoeuvring` starts the ship disabled — a capture target. |
+| `hull` | 1 | Starting hull as a fraction of the class's `HitPoints` (0.01–1). |
 
 ## `[nav.<name>]`
 
@@ -40,30 +42,39 @@ the selected one shows on the MFD Nav page and as a blue diamond on screen.
 
 ## Example
 
+Using the `default` campaign's classes:
+
 ```ini
 [scenario]
 id = ambush
-title = Ambush at the ring
-player = dart
+title = Ambush at the station
+player = comet
 starfield_seed = 4
 
-[object.ring]
-class = ring_station
+[object.station]
+class = guard_station
 position = 0, 0, -2000
 
 [object.wing]
-class = dart
+class = comet
 ai = wingman
 leader = player
 offset = 50, 0, 30
 
-[object.r1]
-class = raider
+[object.s1]
+class = scout_saucer
 ai = enemy
 position = 600, 200, -4000
 speed = 300
 
-[nav.ring]
+[object.wreck]              ; a crippled saucer to tow home with the tractor ray
+class = raider_saucer
+faction = dominion
+position = 0, 0, -900
+destroyed_systems = engines, manoeuvring
+hull = 0.5
+
+[nav.station]
 position = 0, 0, -2000
 ```
 

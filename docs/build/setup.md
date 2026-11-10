@@ -23,8 +23,10 @@ OpenInterceptor/
   Cargo.toml  Cargo.lock  build.rs
   src/                 the engine (see Architecture)
   packs/interceptor/   rules + scenarios binding the original CD data
-  packs/sample/        an original-free example pack
-  tools/               make_sample_models.py (generates the sample pack's models)
+  packs/default/       the original-free default campaign, Perils of the Void
+  tools/               default_assets/ (generates the default campaign's models, textures
+                       and sounds: python3 tools/default_assets/make_all.py [--check]),
+                       build_bundle.py (macOS app bundle)
   macos/shim/          the Objective-C gamepad shim (oi_platform.m)
   CLAUDE.md            project rules (objectives, no original content, quality bar)
   rustfmt.toml         formatting (width 120)

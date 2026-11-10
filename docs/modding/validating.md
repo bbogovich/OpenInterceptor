@@ -19,4 +19,7 @@ It ends with a summary line and exits with status 1 if there were errors, so it 
 script or CI. Warnings (such as a pack skipped for lack of original data) do not fail it.
 
 The repository's own gate (`scripts/check.sh`) runs `--check --no-original` on every build, so
-the `sample` pack — the template for mods — always validates.
+the `default` campaign — the template for mods — always validates. `--check` checks **every
+campaign separately**, each with its own active set of packs (its parent chain, the addons that
+target it and their dependencies), so an addon is validated with each campaign it applies to;
+`--check --campaign <id>` checks just one.

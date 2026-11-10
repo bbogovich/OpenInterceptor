@@ -16,7 +16,10 @@ flowchart LR
 `event_sound` is pure and tested: beam and missile sounds use the firing ship's weapon;
 hits use `shield_hit` or `hull_hit`; destruction uses `big_explosion` for objects with radius
 over 100 m, else `explosion` (always at least 15 % volume); `lock` and `denied` only for the
-listener; everything else is attenuated by distance (`attenuate`: full within 50 m, half at
+listener; since Stage 2, `system_damage` when one of the listener's systems is damaged
+(`SystemChanged`, not repairs), `tractor` / `cloak` / `ecm` when a switchable system goes on or
+off (`Switched`; quieter when switching off, attenuated for other ships) and `hyperspace` when a
+ship jumps out (`Departed`); everything else is attenuated by distance (`attenuate`: full within 50 m, half at
 about 350 m).
 
 Playback uses macroquad's `audio` feature (quad-snd: CoreAudio on macOS, ALSA on Linux).
@@ -26,7 +29,7 @@ Playback uses macroquad's `audio` feature (quad-snd: CoreAudio on macOS, ALSA on
 | Symbol | What it is |
 |---|---|
 | `SoundKey` | `Named(&'static str)`, `Beam(u16)`, `Missile(u16)`. |
-| `NAMED` | The ten event names: `explosion`, `big_explosion`, `shield_hit`, `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`. |
+| `NAMED` | The fifteen event names: `explosion`, `big_explosion`, `shield_hit`, `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`, and since Stage 2 `system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`. |
 | `SoundBank` | Decoded sounds by key, and `errors` for sounds that failed. |
 
 ## API Reference

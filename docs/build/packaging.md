@@ -23,10 +23,10 @@ python3 tools/build_bundle.py --skip-build       # reuse the last release build
 `dist/OpenInterceptor-<version>.app` (`dist/` is git-ignored), and signs it ad hoc:
 
 ```text
-OpenInterceptor-0.2.0.app/Contents/
+OpenInterceptor-0.2.2.app/Contents/
   Info.plist                 identifier io.github.bbogovich.openinterceptor, version, game category
   MacOS/openinterceptor
-  Resources/packs/           interceptor and sample packs
+  Resources/packs/           interceptor and default packs
   Resources/LICENSE-MIT
 ```
 
@@ -42,13 +42,15 @@ the working directory (verified: the bundled binary run from `/` loads both pack
 
 Like ArenaVM's per-phase apps, versions follow the implementation stages:
 `0.<stage + 1>.<build>`. The version is `Cargo.toml`'s; bump the last number for each new
-build of a stage.
+build of a stage. From Stage 2 on, a stage's in-progress deliveries continue the previous
+stage's numbering and the stage's own `0.<stage + 1>.0` marks it complete: the first Stage 2
+delivery is **0.2.2**, and **0.3.0** will be Stage 2 complete.
 
 | Stage | Versions | Builds |
 |---|---|---|
 | 0 Foundation | 0.1.x | (no app; analysis, formats, docs) |
 | 1 Flight simulator | 0.2.x | **0.2.0** — first app: newtonian flight, overrides, `--extract`, HD/3D cockpits, asset browser; **0.2.1** — mesh rendering fixes (tiled textures, back-face culling, overlay layers), viewer mesh tools and `--model`, bolt streaks, radar alignment |
-| 2 Combat, objects and behaviours | 0.3.x | — |
+| 2 Combat, objects and behaviours | 0.3.x | **0.2.2** (in progress) — mod kinds and campaign choice, ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman orders, controls menu and gamepad chords, `power`/`systems` instruments, default campaign *Perils of the Void*, `--screenshot` |
 | 3 Missions, environments and conditions | 0.4.x | — |
 | 4 Strategy layer | 0.5.x | — |
 | 5 Campaigns | 0.6.x | — |

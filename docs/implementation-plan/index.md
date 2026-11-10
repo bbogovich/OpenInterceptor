@@ -7,8 +7,8 @@ playtest one component at a time. Later stages add scenarios; none are removed.
 | Stage | Version | Delivers | Status |
 |---|---|---|---|
 | [0 Foundation](stage-0-foundation.md) | 0.1.0 | Repository, SpecItOut, docs site, format analysis, feasibility | Done |
-| [1 Flight simulator](stage-1-flight.md) | 0.2.0 | Packs and rules, model loading, rendering, cockpits and HUD, controls, flight model, weapons, targeting, wingmen, testbed | In progress |
-| [2 Combat, objects and behaviours](stage-2-combat.md) | 0.3.0 | Mod kinds and `parent`; model sets (damage, construction states, debris); full damage, power and special systems; behaviours with difficulty variants; missiles, mines, probes, stations; effects, sound | Planned |
+| [1 Flight simulator](stage-1-flight.md) | 0.2.0 | Packs and rules, model loading, rendering, cockpits and HUD, controls, flight model, weapons, targeting, wingmen, testbed | Done (signed off 2026-11-10) |
+| [2 Combat, objects and behaviours](stage-2-combat.md) | 0.3.0 | Mod kinds and `parent`; model sets (damage, construction states, debris); full damage, power and special systems; behaviours with difficulty variants; missiles, mines, probes, stations; effects, sound | In progress |
 | [3 Missions, environments and conditions](stage-3-missions.md) | 0.4.0 | Condition/action language; mission types; space and **atmospheric/ground** environments with terrain; comms; hyperspace; debrief; Tier 2 script decision | Planned |
 | [4 Strategy layer](stage-4-strategy.md) | 0.5.0 | Interactive star map, squadrons and sensors, economy, research, bases and modules, ships and loadouts, pilots, functional screens, saves | Planned |
 | [5 Campaigns](stage-5-campaign.md) | 0.6.0 | Events, arcs, rival plans, strategist, dynamic relations, endings: **both campaigns playable start to finish** | Planned |
@@ -46,7 +46,7 @@ Tech 3 game: no levels, no skeletal animation, no scripting VM to reproduce.
 | No original content in the repository | `game/`, `dist/` and every original asset type are git-ignored; the gate fails if one is tracked. |
 | Engine, not game | Nothing *Interceptor*-specific is hard-coded: it lives in the `interceptor` pack as rules and scenarios. |
 | Original programs are data | `Interceptor.exe` and the DLLs are parsed, never executed. |
-| Modding first | Each feature is reachable from a pack before it is called done; the `sample` pack exercises it without original data. |
+| Modding first | Each feature is reachable from a pack before it is called done; the original-free `default` campaign (the `sample` pack in Stage 1) exercises it without original data. |
 | Tests before done | Unit tests for every module; manual cases for what only a playtest shows ([testing policy](../best-practices/testing-policy.md)). |
 
 ## Checks for every stage

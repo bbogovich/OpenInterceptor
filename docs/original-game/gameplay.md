@@ -13,12 +13,27 @@ Three layers: **shields** (fore and aft facings), then **armour**, then **hull**
 reports per-system damage and repair (shield generator, manoeuvring, sensors, engines,
 hyperdrive, tractor, cloak, VCT, damage control, ECM). (derived from cockpit strings)
 
+**In OpenInterceptor (Stage 2, implemented):** every fitted system has hit points; damage past
+the armour also strikes one system at random; systems work at full, half or no effect, can be
+destroyed for the battle, and are repaired worst first (faster with a damage control computer).
+Engines and manoeuvring both out leaves a ship *disabled*. The thresholds are engine values
+(DEV-029). Rules: [Rulesets › systems](../modding/rulesets.md); behaviour:
+[Simulation › systems](../architecture/sim.md).
+
 ### Power
 
 One power supply feeds **beam weapons** and **shields**. Each has a recharge setting with five
 steps (A–E) cycled with F9 / F10; `;` and `'` move power between them; `S` cycles shield balance
 (equal / full forward / full aft). Tractor, cloak and ECM also draw power; beams cannot fire
 while the tractor is on. (GameSettings.ini `BeamRechargeRate`, `ShieldRechargeRate`; strings)
+
+**In OpenInterceptor (Stage 2, implemented):** all of the above, with the original's keys
+([Controls](controls.md)). The charge tables are the original's (verified); how many steps may be
+high at once — the power budget — and the start levels are engine values (DEV-024). The tractor
+beam tows a target and a disabled ship held at the moment of a hyperjump is captured; the cloak
+hides the ship from enemy sensors beyond its range and is dropped by firing (DEV-025); ECM and
+the cloak make homing missiles lose their target; the hyperdrive counts down and can be aborted
+(DEV-026). Wingmen obey all five orders of the comms menu plus a status report.
 
 ### Flight model
 

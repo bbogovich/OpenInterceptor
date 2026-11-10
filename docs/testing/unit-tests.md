@@ -1,6 +1,7 @@
 # Unit tests
 
-Every module's tests, as of main `bcd7706` (build 0.2.1): **175 tests**, all passing (`cargo test`). Tests
+Every module's tests, as of the first Stage 2 delivery (build 0.2.2, working tree after main
+`bcd7706`): **207 tests** on macOS (208 on Linux), run with `cargo test` by the gate. Tests
 live next to the code in `#[cfg(test)] mod tests` blocks and use **synthetic data built in the
 test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.
 
@@ -9,7 +10,7 @@ so it is not in the count from macOS.
 
 Not unit-tested, by design, and covered by [manual tests](manual-tests.md) instead: the
 `hud::draw` painting, the `Renderer`'s draw calls and shaders, macroquad device reading, sound
-playback, the 3D cockpit pass, the asset browser's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.
+playback, the 3D cockpit pass, the asset browser's and controls menu's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.
 
 ## Summary
 
@@ -25,34 +26,37 @@ playback, the 3D cockpit pass, the asset browser's drawing and the macOS gamepad
 | `formats::obj` | 3 | Positions/uvs/normals/faces/materials/negative indices, bad indices and short faces, MTL parsing |
 | `model` | 9 | XMSH → engine model (mirroring, triangulation, groups, colours, bounds), outward winding after mirroring, **face table** (corner ranges, groups surviving empty-group removal), **overlay layers** (later face on top, overlay flag beats file order, touching or back-to-back faces not layered, OBJ duplicate face layered), LOD by distance, OBJ conversion, empty OBJ |
 | `content` | 5 | Loading packs/rules/scenarios/models from temp folders, skipping packs that need the CD, scenario replacement, **per-asset overrides** of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs |
-| `content::pack` | 5 | Manifest parsing and validation, dependency ordering, missing/duplicate/cyclic dependencies, discovery |
+| `content::pack` | 7 | Manifest parsing and validation, **kind, parent, targets and format** (and their errors), **the active set for a chosen campaign** (parent chain, targeting addons, dependencies), dependency ordering, missing/duplicate/cyclic dependencies, discovery |
 | `content::rules` | 3 | Typed definitions with original-section inheritance, variants, defaults, sounds, hostility, flight model and arena defaults, cockpits with `Image = none`, `Model`, `ModelOffset`, `Design`; later-pack override and delete; every error reported (incl. unknown flight `Model`) |
-| `content::scenario` | 3 | Objects and nav points, `player = choose`, error messages naming the section |
+| `content::equipment` | 3 | System kinds round trip and built-ins exist, `[system:<id>]` overriding built-ins, `[power]` parsing and validation (level counts, start levels) |
+| `content::scenario` | 3 | Objects and nav points (incl. `destroyed_systems` and `hull`), `player = choose`, error messages naming the section |
 | `content::vfs` | 4 | Asset reference parsing and `..` normalisation, refusing escaping paths, **override path naming**, original data found by name in any layout, digit-named resources, resource and file listing |
-| `settings` | 2 | settings.ini parse/save round trip incl. `[packs] disabled`; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths) |
+| `settings` | 2 | settings.ini parse/save round trip incl. `[packs] disabled` and `[game] campaign`; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths) |
 | `sim` | 8 | Generational handles, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold |
 | `sim::flight` | 15 | Helpers (turn factor, damping, approach, approach_vec); **newtonian**: acceleration to the cap and coasting, half throttle, reverse thrust, brake stops exactly, turning keeps the velocity, speed hold and drift cancelling, afterburner cap and bleed-off, VCT thrust; pitch/yaw/roll directions and speed falloff; **assisted** model end to end; recharge; static objects; arena edge |
-| `sim::combat` | 11 | Beams (energy, cooldown, hits on the aft shield), **bolt streak never trails behind the muzzle**, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate_towards, collisions with ships and a station mesh |
-| `sim::ai` | 6 | Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, target and idle behaviours |
+| `sim::combat` | 11 | Beams (energy, cooldown, hits on the aft shield), **bolt streak never trails behind the muzzle**, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions |
+| `sim::ai` | 8 | Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders (attack), **evasive ending after 10 s and retreat jumping out**, **disabled ships drift**, target and idle behaviours |
+| `sim::systems` | 13 | **Power**: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; **damage**: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; **hyperspace** countdown, abort and departure; **tractor** hold and capture on jump, and its refusals (power, fitting, range); **cloak** hides from enemy sensors beyond range; **ECM** makes missiles lose their target |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
 | `sim::collision` | 3 | Segment–sphere, segment–triangle, shapes with meshes in model space and the broad phase |
-| `input` | 8 | Original default layout incl. brake, one-shot commands and Shift chords, gamepad sticks/buttons/presses and dead zone, mouse flight direction, chase keys, bindings.ini override and round trip, view names, chord parsing |
+| `input` | 13 | Original default layout incl. brake, **power and equipment keys**, one-shot commands and Shift chords, **a Shift chord does not trigger the plain held key**, gamepad sticks/buttons/presses and dead zone, **pad modifier layer reaches every power control**, **every action reachable from the keyboard and flight actions from the pad**, **stick layouts and mouse inversion**, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing |
+| `input::editor` | 5 | Rows grouped with headers skipped, capturing a key rebinds and takes it from other actions, capturing plain pad presses and chords, clear / reset / settings, pretty names |
 | `input::gamepad` | 2 | Button names and bits round trip, axis normalisation |
 | `render` | 3 | Billboard and streak geometry, colour helpers, overlay depth bias pasted into the shader |
 | `render::camera` | 4 | Projection to screen and behind-camera, rotation, near plane changes depth only, camera-relative model matrices |
 | `render::effects` | 3 | Events create sparks/explosions/debris that age and expire, explosion curve, jitter range |
 | `render::gpu` | 3 | Per-texture chunks with local u16 indices and the overlay flag, splitting huge groups, engine glow points |
 | `render::starfield` | 1 | Same seed same sky, unit directions, uniform hemispheres |
-| `hud` | 5 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages, message expiry |
-| `audio` | 2 | Distance attenuation, event → sound and volume choices |
+| `hud` | 6 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), **power readout and system lamps**, message expiry |
+| `audio` | 2 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`) |
 | `app::assets` | 2 | Tab cycling; empty lists without original data |
 | `app::devices` | 2 | Key names match the bindings vocabulary |
-| `app::flight` | 4 | Camera pose for every view, chase orbit, targeting and wing-order commands, pilot messages from events |
-| `app::launcher` | 3 | Menu entries (viewer, asset browser, scenarios) and wrapping, ship choice only when choosing, text wrapping |
+| `app::flight` | 5 | Camera pose for every view, **3D cockpit field of view widens only on narrow screens**, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages) |
+| `app::launcher` | 3 | Menu entries (viewer, asset browser, controls, scenarios) and wrapping, ship choice only when choosing, **next campaign**, text wrapping |
 | `app::viewer` | 8 | Orbit pose and clamping, entries for every class, wheel steps, **display-mode cycle, fitted near plane, face info line, finding a model by ship id or mesh name** |
-| `check` | 2 | The sample pack passes; broken definitions become errors |
+| `check` | 2 | The **default campaign** passes; broken definitions become errors |
 | `extract` | 3 | OBJ export round-trips through the mod loader (positions, triangles, uvs, materials, flat colours), PNG encoding round trip, a full extraction of a synthetic CD writes every override path (incl. cockpit cyan → alpha) |
-| `cli` | 4 | Every option incl. `--extract`, `--view` and `--model`, environment variable precedence, unknown/incomplete options, packs folder discovery |
+| `cli` | 4 | Every option incl. `--extract`, `--view`, `--model`, `--campaign`, `--screenshot`, `--frames`, environment variable precedence, unknown/incomplete options, packs folder discovery |
 
 ## Test names
 
@@ -60,7 +64,7 @@ playback, the 3D cockpit pass, the asset browser's drawing and the macOS gamepad
 
 **`app::devices`**: `key_names_match_the_bindings_vocabulary`, `known_names_are_real_keycodes`
 
-**`app::flight`**: `chase_orbit_responds_and_resets`, `commands_target_and_order_wingmen`, `events_become_pilot_messages`, `views_place_the_camera`
+**`app::flight`**: `chase_orbit_responds_and_resets`, `cockpit_fov_widens_only_on_narrow_screens`, `commands_target_and_order_wingmen`, `events_become_pilot_messages`, `views_place_the_camera`
 
 **`app::launcher`**: `menu_lists_viewer_and_scenarios_and_wraps`, `scenarios_start_with_the_chosen_ship_only_when_choosing`, `wrapping_text`
 
@@ -68,11 +72,13 @@ playback, the 3D cockpit pass, the asset browser's drawing and the macOS gamepad
 
 **`audio`**: `attenuation_falls_with_distance`, `events_choose_sounds_and_volumes`
 
-**`check`**: `broken_definitions_are_errors`, `the_sample_pack_passes`
+**`check`**: `broken_definitions_are_errors`, `the_default_campaign_passes`
 
 **`cli`**: `environment_supplies_data_and_flags_override_it`, `errors_for_unknown_or_incomplete_options`, `finds_the_source_tree_packs`, `parses_every_option`
 
-**`content::pack`**: `detects_missing_duplicate_and_cyclic_dependencies`, `discovers_pack_folders`, `orders_dependencies_first_and_keeps_order_otherwise`, `parses_a_manifest`, `rejects_bad_manifests`
+**`content::equipment`**: `kinds_round_trip_and_builtins_exist`, `power_section_parses_and_validates`, `system_sections_override_builtins`
+
+**`content::pack`**: `detects_missing_duplicate_and_cyclic_dependencies`, `discovers_pack_folders`, `manifests_declare_kind_parent_targets_and_format`, `orders_dependencies_first_and_keeps_order_otherwise`, `parses_a_manifest`, `rejects_bad_manifests`, `the_active_set_follows_the_chosen_campaign`
 
 **`content::rules`**: `builds_typed_definitions_with_inheritance`, `later_packs_override_and_delete`, `reports_every_error_and_keeps_going`
 
@@ -100,11 +106,13 @@ playback, the 3D cockpit pass, the asset browser's drawing and the macOS gamepad
 
 **`formats::xtxr`**: `decodes_pixels_through_palette_zero`, `expands_rgb555_to_full_range`, `rejects_bad_data`
 
-**`hud`**: `gauges_sweep_and_read_the_ship`, `layout_scales_by_height_and_centres`, `messages_expire_and_keep_the_newest`, `mfd_pages_cycle_and_describe`, `radar_places_contacts_by_angle`
+**`hud`**: `gauges_sweep_and_read_the_ship`, `layout_scales_by_height_and_centres`, `messages_expire_and_keep_the_newest`, `mfd_pages_cycle_and_describe`, `power_and_system_readouts`, `radar_places_contacts_by_angle`
+
+**`input::editor`**: `capturing_a_key_rebinds_and_steals_it_from_others`, `capturing_pad_plain_presses_and_chords`, `clear_reset_and_settings`, `pretty_names`, `rows_are_grouped_and_headers_are_skipped`
 
 **`input::gamepad`**: `axes_are_normalised`, `buttons_round_trip_names_and_bits`
 
-**`input`**: `bindings_file_overrides_and_round_trips`, `chase_camera_keys`, `chord_parsing_and_dead_zone`, `default_keys_follow_the_original_layout`, `gamepad_sticks_buttons_and_presses`, `mouse_flight_only_when_enabled`, `one_shot_commands_and_shift_chords`, `view_names_parse`
+**`input`**: `a_shift_chord_does_not_also_trigger_the_plain_held_key`, `bindings_file_overrides_and_round_trips`, `chase_camera_keys`, `chord_parsing_and_dead_zone`, `default_keys_follow_the_original_layout`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`, `gamepad_sticks_buttons_and_presses`, `mouse_flight_only_when_enabled`, `one_shot_commands_and_shift_chords`, `pad_modifier_layer_reaches_every_power_control`, `power_and_equipment_keys_follow_the_original`, `stick_layouts_and_mouse_inversion`, `view_names_parse`
 
 **`model`**: `empty_obj_has_zero_bounds`, `faces_record_their_corners_and_group`, `faces_that_only_touch_or_face_away_are_not_layered`, `later_overlapping_face_is_layered_on_top`, `lod_selection_by_distance`, `mirrored_triangles_keep_outward_winding`, `obj_models_use_materials_scale_and_flip_v`, `overlay_flag_beats_file_order`, `xmsh_is_triangulated_grouped_and_mirrored`
 
@@ -120,13 +128,15 @@ playback, the 3D cockpit pass, the asset browser's drawing and the macOS gamepad
 
 **`settings`**: `parses_and_round_trips`, `resolution_order_prefers_explicit_and_existing`
 
-**`sim::ai`**: `enemy_hunts_and_damages_a_hostile`, `lead_point_anticipates_motion`, `orders_switch_wingmen_to_attack`, `steering_turns_towards_points`, `target_drones_circle_and_idle_ships_sit`, `wingman_closes_on_its_slot`
+**`sim::ai`**: `disabled_ships_drift`, `enemy_hunts_and_damages_a_hostile`, `evasive_ends_and_retreat_jumps_out`, `lead_point_anticipates_motion`, `orders_switch_wingmen_to_attack`, `steering_turns_towards_points`, `target_drones_circle_and_idle_ships_sit`, `wingman_closes_on_its_slot`
 
 **`sim::collision`**: `segment_sphere_hits_misses_and_inside`, `segment_triangle_hits_inside_only`, `shapes_use_mesh_in_model_space`
 
 **`sim::combat`**: `a_new_bolt_streak_never_reaches_behind_the_muzzle`, `beams_fire_cost_energy_respect_cooldown_and_hit`, `beams_need_energy`, `damage_layers_and_aft_shield`, `empty_racks_report_and_cycle`, `fighters_bounce_off_each_other_and_stations`, `link_modes_cycle_and_change_how_many_fire`, `lock_builds_in_the_cone_and_missile_homes_in`, `lock_is_lost_outside_the_cone_and_dumbfire_works`, `proximity_fuse_fires_on_a_near_miss`, `rotate_towards_limits_the_turn`
 
 **`sim::flight`**: `afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off`, `assisted_model_holds_throttle_speed_and_damps_drift`, `brake_stops_against_the_direction_of_travel`, `energy_and_shields_recharge_up_to_capacity`, `half_throttle_is_half_the_acceleration`, `helpers`, `newtonian_accelerates_to_the_cap_and_coasts`, `pitching_up_raises_the_nose_and_rates_fall_with_speed`, `reverse_thrust_slows_and_then_backs_up`, `speed_hold_matches_speed_and_cancels_drift`, `static_objects_do_not_move`, `the_arena_edge_halts_outward_motion`, `turning_does_not_steer_the_velocity`, `vct_thrusts_sideways`, `yaw_right_and_roll_right_turn_the_expected_way`
+
+**`sim::systems`**: `balance_caps_and_message`, `cloaked_ships_vanish_from_enemy_sensors_beyond_range`, `cycling_wraps_to_a`, `damage_knocks_systems_out_and_repairs_bring_them_back`, `disabled_when_engines_and_manoeuvring_are_out`, `ecm_makes_incoming_missiles_lose_their_target`, `hyperspace_counts_down_aborts_and_departs`, `raising_takes_power_from_the_other_setting`, `requests_change_power_and_balance`, `shield_balance_moves_points_forward_and_recharge_follows_power`, `systems_can_be_destroyed_beyond_repair`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`, `tractor_needs_power_a_fitting_and_a_target_in_range`
 
 **`sim::targeting`**: `cycles_forwards_and_backwards_with_wraparound`, `in_sights_picks_the_most_central`, `nearest_hostile_ignores_friends`, `nothing_to_target`
 

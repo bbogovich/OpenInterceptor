@@ -9,9 +9,17 @@ rows when re-running a case.
 found automatically — see [Settings](../architecture/settings.md)), or open
 `dist/OpenInterceptor-<version>.app` built by `python3 tools/build_bundle.py`. Every case names its launcher entry; to jump
 straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside view). Ship ids:
-`lightning`, `firestar`, `avenger`. Keys are the defaults on [Controls](../original-game/controls.md).
+`lightning`, `firestar`, `avenger` (`interceptor` campaign); `comet`, `meteor`, `thunderbolt`
+(`default` campaign — add `--campaign default`, or `--no-original`). Keys are the defaults on
+[Controls](../original-game/controls.md).
 
 ## Stage 1 results
+
+**Stage 1 was signed off by the developer's playtest on 2026-11-10.** The rows below keep what
+was recorded case by case during development. In Stage 2 the `sample` pack became the `default`
+campaign and `sample-arena` was retired: re-run MT-1-19 as MT-2-13, MT-1-24 in
+`rocket-vs-saucer` (the default campaign also has `ArenaRadius = 30000`), MT-1-26 as MT-2-14;
+MT-1-36 is retired with the Dart and ring station.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
 |---|---|---|---|---|---|---|
@@ -63,7 +71,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | Scenario | Launcher |
 | Preconditions | Original data available. |
 | Steps | 1. Run `openinterceptor --data game`.<br>2. Look at the list; move with Up/Down; read each description.<br>3. Quit (Esc) and run `openinterceptor --no-original`. |
-| Expected | With data: Model viewer, Flight test: station patrol, Combat test: hostile arena, Gunnery range, Station tour, Sample pack arena (no original data). The packs line names both packs. With `--no-original`: Model viewer and the Sample pack arena only, and an orange note that the Interceptor pack was skipped. Clicking a line selects it; clicking it again starts it. |
+| Expected | With data: Model viewer, Flight test: station patrol, Combat test: hostile arena, Gunnery range, Station tour, Sample pack arena (no original data) — since Stage 2 one campaign's scenarios at a time (see MT-2-12). The packs line names both packs. With `--no-original`: Model viewer and the Sample pack arena only, and an orange note that the Interceptor pack was skipped. Clicking a line selects it; clicking it again starts it. |
 
 ### MT-1-02 — Ship selection: all three hulls
 
@@ -205,7 +213,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 
 | Field | |
 |---|---|
-| Scenario | Sample pack arena |
+| Scenario | Sample pack arena (retired in Stage 2 — see MT-2-13) |
 | Steps | Run `openinterceptor --no-original` (or without `--data`); start the arena; fight. |
 | Expected | The Dart (3D cockpit, see MT-1-26), two Dart wingmen, the textured ring station and three red raiders that attack. Everything works without any original file. The Model viewer lists only dart, raider and ring station. |
 
@@ -246,7 +254,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 
 | Field | |
 |---|---|
-| Scenario | `sample-arena` (ArenaRadius 30 000 m) |
+| Scenario | `rocket-vs-saucer` (ArenaRadius 30 000 m; was `sample-arena`) |
 | Steps | Full throttle with afterburner in one direction for about a minute (or use a test mod with `ArenaRadius = 3000`). |
 | Expected | "ARENA BOUNDARY" appears once on the message line; the ship stops moving outwards at the edge but can still slide along it and fly back in. |
 
@@ -263,7 +271,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 
 | Field | |
 |---|---|
-| Scenario | `sample-arena` (no original data needed) |
+| Scenario | `sample-arena` (retired in Stage 2; the 3D cockpit is now tested by MT-2-14) |
 | Steps | Start the arena; look around the cockpit view (F1); fly towards the ring station; switch to F7 and back. |
 | Expected | A 3D cockpit around the pilot: dashboard slab, side consoles, canopy struts meeting above the nose, an overhead hoop, two green screens. It never disappears behind or into world objects (the station, other ships), struts directly ahead are not clipped, and it turns with the ship. Instruments are drawn in the 1280×720 layout along the bottom (radars at the corners, MFD left of centre, gauges right). F7 shows the Dart from outside without the cockpit. |
 
@@ -343,6 +351,145 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 
 | Field | |
 |---|---|
-| Scenario | `sample-arena`, `--no-original`, chase view |
+| Scenario | `sample-arena`, `--no-original`, chase view (retired with the `sample` pack) |
 | Steps | Fly around the ring station and past the wingmen's Darts; open the model viewer on `ring` and `dart`. |
 | Expected | The ring is solid from every side (no missing walls); the Dart's canopy fin shows from both sides; the 3D cockpit is unchanged. |
+
+## Stage 2 results
+
+First delivery: build 0.2.2. Cases run in both campaigns where a scenario exists in both:
+`systems-trial`. Fitted equipment — `interceptor`: tractor on the Firestar and Super Avenger,
+cloak on the Super Avenger, ECM on all three (advanced ECM on the Avenger); `default`: tractor
+on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rockets.
+
+| ID | Case | Scenario | Result | Date | Tester / platform | Notes |
+|---|---|---|---|---|---|---|
+| MT-2-01 | Power keys and the `power` instrument | `systems-trial` | not run | | | |
+| MT-2-02 | Shield balance | `systems-trial` | not run | | | |
+| MT-2-03 | System damage and repair: messages and lamps | `rocket-vs-saucer` | not run | | | |
+| MT-2-04 | Tractor tow and capture | `systems-trial` | not run | | | |
+| MT-2-05 | Cloak and enemy sensors | `systems-trial` | not run | | | |
+| MT-2-06 | ECM against missiles | `dominion-raid` | not run | | | |
+| MT-2-07 | Hyperspace countdown and abort | `systems-trial` | not run | | | |
+| MT-2-08 | Wingman menu and orders | `rocket-vs-saucer` | not run | | | |
+| MT-2-09 | Controls menu: keyboard rebinding and saving | Launcher → Controls | not run | | | |
+| MT-2-10 | Gamepad chord capture and modifier layer | Launcher → Controls | not run | | | Needs a physical controller |
+| MT-2-11 | Stick layout and mouse invert | `rocket-vs-saucer` | not run | | | Gamepad part needs a controller |
+| MT-2-12 | Campaign switch | Launcher | not run | | | |
+| MT-2-13 | Default campaign look: cockpit and ships | `rocket-vs-saucer`, `dominion-raid`, `black-comet-ambush` | not run | | | Replaces MT-1-19 |
+| MT-2-14 | 3D cockpit on 4:3 and 16:9 windows | `rocket-vs-saucer` | not run | | | Replaces MT-1-26 |
+
+## Stage 2 cases
+
+### MT-2-01 — Power keys and the `power` instrument
+
+| Field | |
+|---|---|
+| Scenario | `systems-trial` (either campaign), cockpit view |
+| Steps | 1. Press F9 five times, watching the message line and the `power` instrument. 2. Press F10 five times. 3. Press `'` (power to beams) until it refuses, then `;` (power to shields) until it refuses. 4. Open the MFD Status page (`.` / `,`). 5. Fly from a cockpit without `power` rectangles (any `interceptor` hull). |
+| Expected | 1–2: each press shows "BEAMS x n%  SHIELDS y n%" and steps the `B-<level>` / `S-<level>` column; after E it wraps to A. 3: raising one setting lowers the other once the budget is full; at the top it says "BEAM/SHIELD CHARGE AT MAXIMUM", and "INSUFFICIENT POWER" when the budget cannot be met; `used/budget` shows in yellow when the budget is full. 4: Status shows `BEAM x SHLD y PWR used/budget`. Beam capacitor and shield recharge visibly slow at A. 5: the power and systems panels appear at the top right of the cockpit's design space with a dark backdrop. |
+
+### MT-2-02 — Shield balance
+
+| Field | |
+|---|---|
+| Scenario | `systems-trial`, cockpit view, shields full |
+| Steps | Press `S` three times, waiting a few seconds after each; watch the F and A bars of the `power` instrument. |
+| Expected | "SHIELDS FULL FORWARD": the F label turns white, points flow from aft to fore and the fore bar can grow above the aft. "SHIELDS FULL AFT": the reverse. "SHIELDS BALANCED": both settle at equal capacity. The MFD Status line shows `FWD`, `AFT` or `EVEN`. |
+
+### MT-2-03 — System damage and repair: messages and lamps
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer`, cockpit view; let the saucers hit you after your shields are down |
+| Steps | 1. Take hull hits; watch the message line, the `systems` lamps and the MFD Systems page. 2. Break away and wait. 3. Press `L` after a message has faded. |
+| Expected | 1: a hit past the armour plays the system-damage sound and shows "… DAMAGED: HALF EFFICIENCY" (amber lamp, `DMG n%`) or "… INOPERATIVE: REPAIRS UNDERWAY" (red lamp, `OUT`); a damaged engine slows acceleration, damaged manoeuvring slows turns. 2: one system at a time is repaired, worst first (its red lamp blinks, `*` on the Systems page); an inoperative system comes "BACK ON-LINE" only after some repair, later "… REPAIRED" (green). 3: the last message is shown again. If engines and manoeuvring both go out: "ENGINES AND THRUSTERS OUT: SHIP DISABLED" and `DISABLED` in the status strip. |
+
+### MT-2-04 — Tractor tow and capture
+
+| Field | |
+|---|---|
+| Scenario | `systems-trial`; `default`: Meteor or Thunderbolt; `interceptor`: Super Avenger or Firestar |
+| Steps | 1. Target the crippled ship (T) and press Shift+T from far away. 2. Close to within 250 m and press Shift+T. 3. Fly around for a while; try to fire beams. 4. Press H and wait for the jump. 5. Restart, tow the prize, then press Shift+T again. |
+| Expected | 1: "NO TARGET IN TRACTOR RANGE". 2: "TRACTOR BEAM ON", the tractor sound, `TRACTOR` in the status strip and a cyan `TRC` lamp; the target follows at a fixed distance. 3: "BEAMS OFF-LINE: TRACTOR BEAM ON". 4: countdown, then "JUMPED TO HYPERSPACE" with "Captured: <ship>" on the end screen. 5: "TRACTOR BEAM OFF"; the prize drifts. A ship without a tractor gets "NO TRACTOR BEAM FITTED". |
+
+### MT-2-05 — Cloak and enemy sensors
+
+| Field | |
+|---|---|
+| Scenario | `systems-trial`; `default`: Thunderbolt; `interceptor`: Super Avenger |
+| Steps | 1. Press Shift+C with the budget full, then lower a setting and press it again. 2. Fly away from the enemies, then close in. 3. Fire beams. 4. Watch an enemy cloaker (the Shade or a raider saucer) from a distance and close. |
+| Expected | 1: "INSUFFICIENT POWER FOR …", then "… ON", the cloak sound and `CLOAKED`. 2: beyond the cloak's range enemies lose you ("TARGET LOST" on their side; they stop attacking); close in they find you again. 3: "CLOAK DROPPED". 4: a cloaked enemy vanishes from your radar and target cycling beyond its range and reappears nearer. |
+
+### MT-2-06 — ECM against missiles
+
+| Field | |
+|---|---|
+| Scenario | `dominion-raid` in a Comet (ECM fitted), or `combat-test` in any `interceptor` hull |
+| Steps | 1. Let enemies lock and fire missiles with ECM off; note how often they hit. 2. Press Shift+J and repeat. 3. Watch your own lock time on an enemy with ECM on (if any). |
+| Expected | 2: "… ON", the ECM sound and `ECM` in the status strip; incoming missiles more often lose their lock and fly past. 3: locking onto a jamming ship takes about twice as long. |
+
+### MT-2-07 — Hyperspace countdown and abort
+
+| Field | |
+|---|---|
+| Scenario | `systems-trial` |
+| Steps | 1. Press H; press H again after two seconds. 2. Press H and wait. 3. (If possible) start a countdown with a damaged hyperdrive. |
+| Expected | 1: "HYPERDRIVE ACTIVATED: JUMP IN n S", `JUMP n` in the status strip, then "HYPERJUMP ABORTED". 2: "JUMP IN 5" … "JUMP IN 1", the hyperspace sound, "HYPERJUMP COMPLETE" and the "JUMPED TO HYPERSPACE" end screen (Enter flies again, Esc menu). Countdown: 10 s in `interceptor`, 8 s in `default`. 3: twice as long; a hyperdrive knocked out during the countdown aborts it ("HYPERJUMP ABORTED: HYPERDRIVE DAMAGED"). |
+
+### MT-2-08 — Wingman menu and orders
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer` (two wingmen) |
+| Steps | 1. Press `]`; choose 6 (status report). 2. `]`, 2 (attack my target) with a saucer targeted. 3. Shift+F (fire at will). 4. Shift+E (evasive). 5. Shift+I (ignore my target). 6. Shift+R (retreat). 7. With a gamepad: LB + left stick click, d-pad, A. |
+| Expected | 1: a menu of six entries; one status line per wingman (name, hull %, shields %, order). 2: "WINGMEN: ATTACK MY TARGET"; both attack your target. 3: they engage saucers near you. 4: they weave unpredictably for about 10 s, then form up. 5: they return to formation and ignore your target. 6: they run and jump out ("… JUMPED OUT"). 7: the d-pad moves the highlight and A chooses; while the menu is open the d-pad does not change throttle or MFD; B closes it. Pressing `E` (roll) alone still rolls; Shift+E does not roll. |
+
+### MT-2-09 — Controls menu: keyboard rebinding and saving
+
+| Field | |
+|---|---|
+| Scenario | Launcher → *Controls (keyboard, gamepad, mouse)*; later the pause menu (Esc, K) in any scenario |
+| Steps | 1. Select *Fire missile*, Key column, Enter, press `V`. 2. Select *Cloaking device*, Alt key column, Enter, press Shift+`B`. 3. Select *Brake*, Key column, Enter, press `V`. 4. Delete on a cell; D on an action; Shift+D. 5. Change *Mouse flight range* with Left/Right. 6. Esc; fly; open `bindings.ini`. 7. Restart the game. |
+| Expected | 1: the cell shows V; the status line confirms. 2: the cell shows Shift+B. 3: V moves to Brake and the status line says it was taken from *Fire missile* (whose cell is now empty). 4: the cell clears; D restores that action's defaults; Shift+D restores all. 6: the new bindings work at once; `bindings.ini` contains them. 7: they persist. Esc during a capture cancels it; a capture with no input gives up after 8 s. |
+
+### MT-2-10 — Gamepad chord capture and modifier layer
+
+| Field | |
+|---|---|
+| Preconditions | An XInput-style controller. |
+| Scenario | Launcher → Controls; then `systems-trial` |
+| Steps | 1. On *ECM*, Gamepad column, press A (pad) to capture, then hold RB and press Y. 2. On *Next MFD page*, Alt gamepad column, capture a plain X (press and release). 3. Fly: hold LB and press each of A, B, X, Y, Back and the d-pad. 4. Press LB alone. 5. Press RB alone, then RB + Y. |
+| Expected | 1: the cell shows the RB+Y chord. 2: plain X. 3: LB + A hyperspace, LB + B shield balance, LB + X tractor, LB + Y cloak, LB + Back ECM, LB + d-pad power controls (see Controls). 4: nothing happens (LB is a modifier). 5: RB is now a modifier too, so RB alone no longer cycles targets; RB + Y switches the ECM. Restore defaults with Y in the menu. |
+
+### MT-2-11 — Stick layout and mouse invert
+
+| Field | |
+|---|---|
+| Scenario | Launcher → Controls, then `rocket-vs-saucer` |
+| Steps | 1. Set *Gamepad stick layout* to `aircraft`; fly with the left stick. 2. Set it back to `space`. 3. Toggle *Mouse flight: up = nose down*; press C in flight and move the mouse up and down. |
+| Expected | 1: left stick X rolls, right stick X yaws. 2: left stick X yaws, right stick X rolls. 3: with the option off, moving the cursor down lowers the nose; with it on, moving it up lowers the nose. |
+
+### MT-2-12 — Campaign switch
+
+| Field | |
+|---|---|
+| Scenario | Launcher, with original data available |
+| Steps | 1. Start the game; read the header. 2. Press Tab (pad Y). 3. Quit and start again. 4. Run `openinterceptor --list`, then `--campaign interceptor`. 5. Run with `--no-original`. |
+| Expected | 1: "Campaign: X-COM: Interceptor (original data)   (Tab: switch campaign)" (or the last campaign chosen). 2: content reloads; the header says *Perils of the Void* and the scenario list shows the default campaign's scenarios only. 3: the last choice is remembered (`settings.ini [game] campaign`). 4: `--list` marks the loaded campaign with `*`; `--campaign` overrides the remembered choice. 5: only *Perils of the Void*; no Tab hint. |
+
+### MT-2-13 — Default campaign look: cockpit and ships
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer`, `dominion-raid`, `black-comet-ambush`; the model viewer; `--no-original` |
+| Steps | 1. Fly each scenario in each rocket (Comet, Meteor, Thunderbolt), cockpit view and chase view. 2. Open the model viewer and step through every default-campaign class. 3. Destroy a few ships. 4. Listen. |
+| Expected | 1: the art-deco Guard cockpit around the pilot with instruments in its bezels; rockets, flying saucers, robot sentinels, freighters and stations read as a 1950s film serial; faction colours on the radar. 2: every model solid from all sides, textured, no missing faces. 3: debris pieces and explosions. 4: the generated sounds (weapons, explosions, hits, tractor, cloak, ECM, hyperspace). No original file is needed. |
+
+### MT-2-14 — 3D cockpit on 4:3 and 16:9 windows
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer`, cockpit view (F1) |
+| Steps | 1. Start in the default 1280×960 (4:3) window. 2. Resize the window to 16:9 (or go full screen on a 16:9 display). 3. Optionally: `openinterceptor --no-original --scenario rocket-vs-saucer --ship comet --screenshot pit.png`. |
+| Expected | 1: the whole dashboard is visible, side to side; radars, MFD, gauges, message bar, `power` and `systems` sit inside their bezels (the view widens to fit the 16:9 design). 2: the normal 60° field; instruments still in their bezels. The cockpit never disappears into world objects and turns with the ship; F7 shows the rocket without the cockpit. 3: the PNG matches what step 1 shows. |

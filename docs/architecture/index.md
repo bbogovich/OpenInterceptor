@@ -35,7 +35,7 @@ flowchart TB
         PL["platform<br/>Gamepads (macOS shim, Linux js)"]
     end
     subgraph L4["4 · Simulation"]
-        S["sim<br/>World, flight, combat, ai, targeting, collision"]
+        S["sim<br/>World, flight, combat, systems, ai, targeting, collision"]
     end
     subgraph L3["3 · Content"]
         C["content<br/>Content, vfs, pack, rules, scenario"]
@@ -92,7 +92,7 @@ flowchart TD
     C --> D["apply commands now<br/>targeting, views, MFD, wing orders, pause"]
     D --> E["player.controls = controls.carry_unconsumed(&previous)"]
     E --> F{"accumulator ≥ TICK (1/60 s)?"}
-    F -->|yes| G["World::step()<br/>ai → flight → combat → collisions"]
+    F -->|yes| G["World::step()<br/>ai → requests → flight → combat → collisions → systems"]
     G --> H["world.events → Effects::on_events,<br/>SoundBank::play_events, event_messages"]
     H --> F
     F -->|no| I["view_pose → SpaceCamera"]
@@ -121,7 +121,7 @@ flowchart LR
 |---|---|---|
 | `main` | `src/main.rs` | Parses the command line; runs `--help`/`--list`/`--check` without a window, otherwise opens one with `macroquad::Window::from_config` and runs `app::run`. |
 | `Content` | `src/content/mod.rs` | Everything loaded: packs, the original data, the `Ruleset`, the scenarios; plus asset loaders. |
-| `Ruleset` | `src/content/rules.rs` | Every ship, beam, missile, faction and cockpit after all packs are layered. |
+| `Ruleset` | `src/content/rules.rs` | Every ship, beam, missile, faction, system and cockpit, plus the flight, power and damage rules, after all packs of the chosen campaign are layered. |
 | `Model` | `src/model.rs` | A format-neutral 3D model (from XMSH or OBJ): right-handed, −Z forward, LODs, per-texture triangle groups. |
 | `World` | `src/sim/mod.rs` | The battle: ships, bolts, missiles, events. Changed only by `World::step`. |
 | `Renderer` | `src/render/mod.rs` | Owns shaders and GPU caches; draws a `World` from a `SpaceCamera`. |

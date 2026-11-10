@@ -12,7 +12,7 @@ shared freely, because it contains nothing of MicroProse's.
 ```mermaid
 flowchart LR
     CD[("player's CD<br/>(optional)")] --> I["pack: interceptor<br/>rules + scenarios"]
-    S["pack: sample<br/>original-free"]
+    S["campaign: default<br/>original-free"]
     M1["mods/my-campaign<br/>(user mods folder)"]
     M2["mods/balance-tweak"]
     I --> L{{"layered ruleset<br/>later packs override earlier"}}
@@ -26,8 +26,8 @@ flowchart LR
 
 | Stage | You can change |
 |---|---|
-| 1 (now) | Ships (model, cockpit, flight values, mounts, hull/armour/shields, energy), the flight model itself (`newtonian` or `assisted`) and arena size, beam weapons, missiles, stations and objects, factions, cockpits (2D art at any resolution, own design space, 3D cockpit models), instrument layout, event sounds, scenarios with any mix of objects and nav points, additional models (OBJ) and textures (PNG/TGA), **per-asset replacement of any original model, texture, image or sound** |
-| 2 | AI behaviours per class, shields/armour, special systems, mines and probes, effects, sounds |
+| 1 | Ships (model, cockpit, flight values, mounts, hull/armour/shields, energy), the flight model itself (`newtonian` or `assisted`) and arena size, beam weapons, missiles, stations and objects, factions, cockpits (2D art at any resolution, own design space, 3D cockpit models), instrument layout, event sounds, scenarios with any mix of objects and nav points, additional models (OBJ) and textures (PNG/TGA), **per-asset replacement of any original model, texture, image or sound** |
+| 2 (in progress) | **Done:** mod kinds (`campaign`, `addon`, `library`) with `parent`, `targets`, `format`; ship systems and special equipment (`[system:<id>]`, `Systems`, `Systems.add`), power sharing (`[power]`), damage to systems and repair (`[damage]`), capture (`Capturable`), hyperspace time, crippled scenario objects (`destroyed_systems`, `hull`), the `power` and `systems` instruments. **To come:** AI behaviours per class, mines and probes, effects |
 | 3 | Missions with objectives and triggers, wingman chatter, **scripts** |
 | 4 | Star map, bases and modules, research tree, manufacturing, economy, enemy strategy |
 | 5 | Menus, videos, music |
@@ -69,7 +69,7 @@ is read once, deterministically, at start-up.
 
 ## Pages
 
-- [Make your first mod](first-mod.md): a walkthrough starting from the `sample` pack.
+- [Make your first mod](first-mod.md): a walkthrough starting from the `default` campaign.
 - [Packs](packs.md): folder layout, `pack.ini`, asset references, re-skinning.
 - [Rulesets and layering](rulesets.md): the rule format and how mods override.
 - [Models and textures](models.md): bringing your own art.

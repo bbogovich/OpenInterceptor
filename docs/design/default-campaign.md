@@ -1,7 +1,9 @@
 # The default campaign
 
-**Status: design; built up stage by stage ([plan](../implementation-plan/index.md)).** Mod id
-`default`, kind `campaign`, **no original content**. Working title: ***Perils of the Void***.
+**Status: design; built up stage by stage ([plan](../implementation-plan/index.md)). First
+playable content delivered in Stage 2** (`packs/default`, which replaced the Stage 1 `sample`
+pack). Mod id `default`, kind `campaign`, **no original content**. Working title: ***Perils of
+the Void***.
 
 It is what the engine runs when no CD is present, the reference implementation of a complete
 campaign, and the template a modder copies to make their own. It uses every format construct
@@ -126,7 +128,7 @@ recognition (funding at 0 for 60 days).
 
 | Asset | How | Tool |
 |---|---|---|
-| Rockets, saucers, robots, stations, modules, probes, mines | Procedural low-poly OBJ from parametric parts: lathed hulls (rocket bodies, saucer discs, domes), fins, portholes, antennae, rings; LODs, slots and overlay groups | `tools/default_assets/models.py` (the `make_sample_models.py` approach, grown) |
+| Rockets, saucers, robots, stations, modules, probes, mines | Procedural low-poly OBJ from parametric parts: lathed hulls (rocket bodies, saucer discs, domes), fins, portholes, antennae, rings; LODs, slots and overlay groups | `tools/default_assets/models.py` (replaced the Stage 1 `make_sample_models.py`) |
 | Debris families | Each model cut procedurally into 3–5 pieces along planes, giving the `Piece.n` models | same tool |
 | Textures | Procedural two-tone paint with chrome trim, rivets, porthole glow, faction insignia, scorch overlays for damage states | `tools/default_assets/textures.py` (PNG, standard library) |
 | Cockpits | A 3D cockpit per rocket (chrome dash, round dials, radar scope) and one 2D art-deco cockpit image | models.py / textures.py |
@@ -139,6 +141,26 @@ All tools are Python standard library only and deterministic (fixed seeds); thei
 committed so the mod works without running them. Everything is MIT-licensed with the engine.
 Names, characters and designs are original to this project; the serial genre is the
 inspiration, not any specific work.
+
+### Delivered so far (Stage 2, first delivery)
+
+`python3 tools/default_assets/make_all.py` regenerates everything below (`--check` builds twice
+and proves the output is byte-identical); `common.py` validates every model (closed solids wound
+outward, no degenerate faces, triangle budgets) before it is written.
+
+| Asset | Delivered |
+|---|---|
+| Ships | Guard rockets Comet, Meteor and Thunderbolt (playable) and the Victory; Dominion scout and raider saucers, the Dreadnought disc, the robot sentinel, the Grappler and the cargo orb; Senate patrol rocket, Cartel freighter, Prospector hauler, Black Comet hot-rod |
+| Stations | Guard station, Dominion outpost, cosmium asteroid |
+| Debris | Three to five pieces per class, plus generic rubble chunks |
+| Textures | Hull paint per faction plus *scorched* and *burnt* damage variants |
+| Cockpit | The 3D art-deco Guard cockpit `guard` (no 2D art), with bezels for every instrument including `power` and `systems`; rectangles measured by projecting the bezels with the cockpit camera |
+| Sounds | Synthesised weapon, explosion, hit, lock, afterburner, saucer hum, theremin sting, UI, and Stage 2 system sounds (system damage, tractor, cloak, hyperspace; ECM reuses the target click) |
+| Rules | Seven factions, six beams and two missiles, systems and power rules (`rules/systems.ini`), equipment fits by `Systems.add`, flight rules (`HyperspaceTime = 8`) |
+| Scenarios | `rocket-vs-saucer`, `dominion-raid`, `black-comet-ambush`, `systems-trial` |
+
+Not yet: model sets with damage states, behaviours with difficulty variants, the 2D cockpit, UI
+art, music, text.
 
 ## Built up by stage
 

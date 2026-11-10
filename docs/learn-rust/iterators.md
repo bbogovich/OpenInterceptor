@@ -40,6 +40,28 @@ Compare with a hand-written loop: same speed, but the intent ("hostile, minimum 
 in the code's shape. `total_cmp` gives floats a total order (floats have no `Ord` because of
 NaN).
 
+## Returning an iterator: `impl Iterator` — `src/content/pack.rs`
+
+A pack must load after its `parent` and after every pack it `depends` on. Two places need "the
+packs this one needs", so it is one small function — and it returns an *iterator*, not a
+`Vec`:
+
+```rust
+fn needs(p: &PackInfo) -> impl Iterator<Item = &String> {
+    p.parent.iter().chain(p.depends.iter())
+}
+```
+
+`impl Iterator<Item = &String>` means "some iterator over `&String`; the caller need not know
+which". The real type (a `Chain` of an `Option` iterator and a slice iterator) is long and an
+implementation detail. `Option::iter()` yields zero or one item, which is how an optional
+parent and a list of dependencies become one sequence. Nothing is allocated: the callers just
+loop or ask a question —
+`needs(p).all(|d| out.iter().any(|q| &q.id == d))` ("is every need already placed?").
+
+The returned iterator borrows from `p`, so it cannot outlive it; with one reference parameter
+the compiler infers that lifetime (compare `triangles` above, which spells it `+ '_`).
+
 ## When we use a plain `for` loop
 
 When the loop body mutates several things, has early exits, or is clearer as steps — e.g.

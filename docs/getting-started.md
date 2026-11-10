@@ -32,7 +32,7 @@ a copy of it), `settings.ini`, `bindings.ini` and `mods/` in the user data folde
 ## Build the macOS app
 
 ```sh
-python3 tools/build_bundle.py            # dist/OpenInterceptor-0.2.0.app
+python3 tools/build_bundle.py            # dist/OpenInterceptor-0.2.2.app
 ```
 
 The app contains the engine and the built-in packs, never game data. The script points
@@ -46,8 +46,12 @@ folder instead, as a real install would. Open the app from Finder. See
 # The testbed launcher (the original data is found automatically):
 target/release/openinterceptor
 
-# Only original-free packs (the sample pack, your own mods):
+# Only original-free packs (the default campaign, your own mods):
 target/release/openinterceptor --no-original
+
+# Choose the campaign (default: the last one chosen in the launcher, else interceptor
+# when the CD is found, else default):
+target/release/openinterceptor --campaign default
 
 # Go straight to one scenario with one ship:
 target/release/openinterceptor --data game --scenario flight-test --ship lightning
@@ -55,9 +59,12 @@ target/release/openinterceptor --data game --scenario flight-test --ship lightni
 # ... and start in the chase view:
 target/release/openinterceptor --data game --scenario flight-test --ship firestar --view chase
 
-# Headless validation of every pack, model and texture; list what loaded:
+# Headless validation of every campaign, pack, model and texture; list what loaded:
 target/release/openinterceptor --check
 target/release/openinterceptor --list
+
+# Render a scenario's starting screen to a PNG and exit:
+target/release/openinterceptor --no-original --scenario rocket-vs-saucer --ship comet --screenshot shot.png
 
 # Open the model viewer on one model (ship id or original mesh name):
 target/release/openinterceptor --model XBASE7
@@ -77,13 +84,16 @@ scripts/check.sh
 | `--mods <DIR>` | Folder of user mods (default: `settings.ini` `[paths] mods`, else `mods/` in the user data folder). |
 | `--packs <DIR>` | Folder of built-in packs (default: `packs/` next to the program, or the source tree). |
 | `--no-original` | Ignore the original data even if available. |
+| `--campaign <ID>` | Load this campaign (default: the last one chosen in the launcher, else `interceptor` when the data is available, else `default`). |
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
-| `--model <NAME>` | Open the model viewer on this model: a ship class id (`dart`) or an original mesh name (`XBASE7`). |
-| `--check` | Validate all content without a window, then exit (status 1 on errors). |
+| `--model <NAME>` | Open the model viewer on this model: a ship class id (`comet`) or an original mesh name (`XBASE7`). |
+| `--screenshot <PNG>` | With `--scenario` or `--model`: render the starting screen for `--frames` frames, save it as a PNG and exit. |
+| `--frames <N>` | Frames to run before `--screenshot` (default 120). |
+| `--check` | Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; `--campaign` checks one. |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](modding/overrides.md)), then exit. |
-| `--list` | List packs, playable ships and scenarios, then exit. |
+| `--list` | List campaigns (`*` = loaded), packs, playable ships and scenarios, then exit. |
 | `--windowed` / `--fullscreen` | Window mode (windowed is the default). |
 | `--help` | Usage. |
 

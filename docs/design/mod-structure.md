@@ -1,7 +1,11 @@
 # Mod structure
 
-**Status: design.** Extends the Stage 1 [pack format](../modding/packs.md): every existing
-`pack.ini` stays valid (a pack without `kind` is an `addon`).
+**Status: partly implemented (Stage 2).** `kind`, `parent`, `targets`, `format`, the active
+set built from the chosen campaign and its load order are **implemented** (see
+[Packs](../modding/packs.md#mod-kinds-and-the-active-set)); `conflicts`, `[load] order`, saves
+naming their mods, `Key.remove`, text keys and the other sections below are still design.
+Extends the Stage 1 [pack format](../modding/packs.md): every existing `pack.ini` stays valid
+(a pack without `kind` is an `addon`).
 
 ## Mod kinds
 
@@ -35,12 +39,12 @@ format = 1                    ; mod format version this mod was written for
 | Key | Applies to | Meaning |
 |---|---|---|
 | `id`, `name`, `version`, `description`, `authors`, `licence` | all | As today; `authors` and `licence` are informational. |
-| `kind` | all | `campaign`, `addon` (default) or `library`. |
-| `parent` | campaign | Another campaign this one **extends**: the parent's whole content loads first, then this mod's files override and add. Chains are allowed (`remastered` → `interceptor`); a cycle is an error. |
-| `targets` | addon | Comma-separated campaign ids the addon applies to (`targets = interceptor`). An addon targeting `interceptor` also applies to every campaign whose parent chain contains `interceptor`. `targets = *` applies to all. |
+| `kind` | all | `campaign`, `addon` (default) or `library`. **Implemented.** |
+| `parent` | campaign | Another campaign this one **extends**: the parent's whole content loads first, then this mod's files override and add. Chains are allowed (`remastered` → `interceptor`); a cycle is an error. **Implemented.** |
+| `targets` | addon | Comma-separated campaign ids the addon applies to (`targets = interceptor`). An addon targeting `interceptor` also applies to every campaign whose parent chain contains `interceptor`. `targets = *` applies to all. **Implemented** (empty `targets` also applies to all, for Stage 1 packs). |
 | `depends` | all | Libraries (or other addons) that must load before this mod. |
 | `requires_original` | all | `yes` when the mod reads the player's CD. Inherited through `parent`. |
-| `format` | all | The mod-format version. The engine loads older formats through compatibility rules and refuses newer ones with a clear message. |
+| `format` | all | The mod-format version. The engine loads older formats through compatibility rules and refuses newer ones with a clear message. **Implemented** (current format 1). |
 | `conflicts` | addon | Ids that must not be active at the same time. |
 
 ## Which mods load
@@ -69,8 +73,11 @@ The order is computed once, deterministically, and **written into every save**, 
 names exactly the mods (and versions) it was made with. Loading a save with a missing mod is
 refused with the list of what is missing; with a different version it warns.
 
-The testbed launcher keeps showing every pack's scenarios, as today; campaign selection is a
-Stage 4 screen.
+As implemented in Stage 2, the testbed launcher shows the scenarios of the active set only, and
+**Tab** switches campaign (remembered in `settings.ini [game] campaign`; `--campaign` on the
+command line). Libraries and dependencies load first, then the parent chain root first, then
+the addons — the `[load] order` tie-break is not implemented yet (addons keep folder-name
+order). A full campaign selection screen is still Stage 4.
 
 ## Folder layout
 
@@ -108,7 +115,8 @@ a rules folder is loaded, in file-name order).
 - `inherit = <kind>:<id>` copies another definition first (variants); `inherit =
   original:<file>/<section>` copies an original INI section (Stage 1).
 - **List keys** can be replaced or edited: `Beams = a, b` replaces; `Beams.add = c` and
-  `Beams.remove = a` edit the inherited list without restating it. This matters for addons
+  `Beams.remove = a` edit the inherited list without restating it. (Implemented so far for
+  `Systems.add` only.) This matters for addons
   (adding one research topic's unlock without copying the topic).
 - **Text is never in rules.** A rule names a text key (`Name = @ship.lightning.name`); the
   string lives in `text/<language>/`. A plain value without `@` is used as written, so small

@@ -49,6 +49,56 @@ pub enum AssetRef {
 }
 ```
 
+### Enums as decisions — `src/sim/systems.rs`
+
+A tractor beam changes *another* ship's velocity. Changing ship B while iterating over ship A
+would need two mutable borrows of `world.ships` at once, which Rust refuses. So the update runs
+in two phases: first read the world and record each decision as a value, then apply them. An
+enum whose variants carry data is the natural record:
+
+```rust
+enum Tow {
+    /// Drag ship .0 towards velocity .1, changing it by at most .2 m/s².
+    Pull(ShipId, glam::Vec3, f32),
+    /// The beam of ship .0 lost its hold and switches off.
+    Release(ShipId),
+}
+
+// Phase 1 (shared borrows only): tows.push(Tow::Pull(target, wanted, pull)) …
+// Phase 2 (one mutable borrow at a time):
+for tow in tows {
+    match tow {
+        Tow::Pull(t, wanted, pull) => { /* change ship t's velocity */ }
+        Tow::Release(captor) => { /* switch captor's beam off */ }
+    }
+}
+```
+
+The same pattern drives `ai::think`. As a bonus, the result no longer depends on the order the
+ships are visited.
+
+### Tables built at compile time: `const fn` — `src/input/mod.rs`
+
+Every bindable action is one row of a `const` table: its `bindings.ini` name, default keys and
+pad buttons, menu group and label. The rows are built by a small constructor marked `const fn`,
+which the compiler may run while compiling, so the whole table is a constant baked into the
+program — no start-up code, no allocation:
+
+```rust
+const fn a(name: &'static str, action: Action, keys: &'static str, pad: &'static str,
+           group: Group, label: &'static str) -> ActionInfo {
+    ActionInfo { name, action, keys, pad, group, label }
+}
+
+pub const ACTIONS: &[ActionInfo] = &[
+    a("hyperspace", A::Hyperspace, "H", "LeftShoulder+A", G::Power, "Hyperspace out / abort"),
+    …
+];
+```
+
+`&'static str` fields fit because string literals live for the whole program. One table feeds
+parsing, defaults, the controls menu and the docs, so they cannot disagree.
+
 ## `match`: handle every case — `src/app/flight.rs`
 
 ```rust

@@ -34,10 +34,13 @@ is in the repository, ever.
 ## Status
 
 Stage 0 (foundation and format analysis) is **complete**. Stage 1 (the flight simulator testbed)
-is **implemented** as app build **0.2.0** — every original ship, station and cockpit flies or
-renders from the player's CD, the original-free sample pack plays without it, any original
-asset can be replaced by a mod file (with `--extract` producing editable copies), and cockpits
-can be HD repaints or 3D models — and awaits its recorded manual test pass. See [implementation status](implementation-status.md) and the
+is **complete**, signed off on 2026-11-10 — every original ship, station and cockpit flies or
+renders from the player's CD, an original-free pack plays without it, any original asset can be
+replaced by a mod file (with `--extract` producing editable copies), and cockpits can be HD
+repaints or 3D models. Stage 2 is **in progress** (build **0.2.2**): one campaign at a time —
+the original `interceptor` or the original-free default campaign *Perils of the Void* — with
+ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman orders and an
+in-game controls menu. See [implementation status](implementation-status.md) and the
 [plan](implementation-plan/index.md).
 
 ## Specification

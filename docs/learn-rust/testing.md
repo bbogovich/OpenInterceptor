@@ -73,7 +73,7 @@ pack into `std::env::temp_dir()` with a unique name (the process id), run, and d
 
 Files in a `tests/` folder are compiled as separate crates and see only the public API. This
 project does not need them yet: unit tests plus `--check` against the real packs cover the
-pipelines (`check::tests::the_sample_pack_passes` loads the repository's own `packs/`).
+pipelines (`check::tests::the_default_campaign_passes` loads the repository's own `packs/`).
 
 ## Useful forms
 

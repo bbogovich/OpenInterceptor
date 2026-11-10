@@ -6,17 +6,21 @@ See the [testing policy](../best-practices/testing-policy.md) for what must be t
 
 `scripts/check.sh` on `main` runs every automated check:
 
-1. `cargo test --release` — all unit tests (164 at main `909d687`, build 0.2.0).
+1. `cargo test --release` — all unit tests (207 on macOS at build 0.2.2).
 2. `cargo build --release`.
-3. `openinterceptor --check --no-original` — the original-free packs load and validate.
+3. `openinterceptor --check --no-original` — the original-free `default` campaign loads and
+   validates. Since Stage 2 `--check` validates every campaign separately, each with its own
+   active set of packs.
 4. `openinterceptor --data <data> --check` — when the player's data is found
    (`OPENINTERCEPTOR_DATA` or `./game`): every rule, ship model, debris model, texture,
    cockpit image, sound and scenario loads, and every original mesh and texture decodes
-   (reference CD: 2 packs, 34 ship classes, 100 models incl. the sample pack's 3D cockpit,
-   272 textures, 3 images, 20 sounds, 5 scenarios, 1 096 original resources, 0 errors).
+   (reference CD at build 0.2.0: 2 packs, 34 ship classes, 100 models incl. the then `sample`
+   pack's 3D cockpit, 272 textures, 3 images, 20 sounds, 5 scenarios, 1 096 original
+   resources, 0 errors; the Stage 2 counts are per campaign).
    Skipped with a message otherwise.
 5. A guard that fails if any original asset file type (`exe dll cab smk aif aiff wav mps`) is
-   tracked by git.
+   tracked by git — except `packs/default/sounds/*.wav`, the default campaign's own generated
+   sounds.
 
 Also kept clean before every commit (project rule): `cargo clippy --all-targets` with no
 warnings and `cargo fmt --check` (settings in `rustfmt.toml`: width 120).
