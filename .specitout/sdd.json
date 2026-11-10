@@ -1,0 +1,19 @@
+{
+  "forge": "none",
+  "project": "OpenInterceptor",
+  "kind": "implementation",
+  "spec": null,
+  "specVersion": null,
+  "labels": [
+    { "name": "formats", "description": "Readers for the original data: PE resources, XMSH meshes, XTXR textures, TGA, ADPCM WAV, INI, Smacker" },
+    { "name": "packs", "description": "Content packs, the virtual file system, rulesets and mod layering" },
+    { "name": "flight", "description": "Space simulation: flight model, physics, collisions, navigation" },
+    { "name": "combat", "description": "Weapons, damage, shields, missiles, AI pilots and enemy types" },
+    { "name": "render", "description": "3D rendering, effects, starfield, cockpit and HUD drawing" },
+    { "name": "input", "description": "Keyboard, mouse and gamepad bindings" },
+    { "name": "testbed", "description": "The scenario launcher and live test environments" },
+    { "name": "campaign", "description": "Strategy layer, missions, tech tree, scripting" },
+    { "name": "platform", "description": "macOS, Linux and Windows builds, packaging" },
+    { "name": "docs", "description": "The documentation site on the docs branch" }
+  ]
+}

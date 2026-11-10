@@ -1,0 +1,30 @@
+# The player's own game data — NEVER committed (copyrighted MicroProse content).
+/game/
+/dist/
+/build/
+/target/
+# The docs branch is checked out here as a worktree.
+/engine-docs/
+# Local, never-committed working files.
+/private/
+/.plan/
+# Safety net: original asset types must never enter Git, wherever they are.
+*.exe
+*.dll
+*.cab
+*.smk
+*.SMK
+*.aiff
+*.aif
+*.wav
+*.WAV
+*.tga
+*.mps
+*.xmsh
+*.xtxr
+# Except test fixtures created from scratch by this project.
+!/packs/sample/**/*.tga
+.DS_Store
+site/
+__pycache__/
+*.pyc

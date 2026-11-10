@@ -1,0 +1,21 @@
+[package]
+name = "openinterceptor"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+publish = false
+license = "MIT"
+description = "Moddable space-combat simulator engine; plays X-COM: Interceptor from the player's own data"
+
+# Dependencies are avoided by default (see docs: Architecture > Dependencies).
+# macroquad: window, OpenGL, input, textures, audio — the same pinned version ArenaVM and
+# Looking Glass use. Everything else (PE resources, meshes, textures, INI, ADPCM, OBJ) is
+# implemented in this crate.
+[dependencies]
+macroquad = "=0.4.14"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = "thin"
