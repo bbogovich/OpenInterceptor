@@ -80,6 +80,46 @@ impl AssetRef {
     }
 }
 
+/// What kind of asset an original reference is being loaded as.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AssetKind {
+    Model,
+    Texture,
+    Image,
+    Sound,
+}
+
+/// Where a pack may put a file that **overrides** an original asset (XWVM-style
+/// replacement, per asset). Paths are pack-relative and lower-case; the first that
+/// exists in the highest-priority pack wins. This is also exactly where `--extract`
+/// writes each asset, so an extracted file dropped into a mod replaces the original.
+///
+/// | Original asset | Override file |
+/// |---|---|
+/// | mesh `INTTYPEA` | `models/inttypea.obj` |
+/// | texture `CUBETOP` | `textures/cubetop.png` (or `.tga`) |
+/// | image `CockpitA.dll#12000` | `images/cockpita/12000.png` (or `.tga`) |
+/// | loose image `Setup.bmp`-style file | `images/<file stem>.png` |
+/// | sound `Xwinder.wav` | `sounds/xwinder.wav` |
+pub fn override_paths(kind: AssetKind, file: Option<&str>, resource: Option<&str>) -> Vec<String> {
+    let stem = |f: &str| {
+        let name = f.rsplit(['/', '\\']).next().unwrap_or(f);
+        name.rsplit_once('.').map(|(s, _)| s).unwrap_or(name).to_ascii_lowercase()
+    };
+    let res = resource.map(str::to_ascii_lowercase);
+    match (kind, file, res) {
+        (AssetKind::Model, _, Some(r)) => vec![format!("models/{r}.obj")],
+        (AssetKind::Texture, _, Some(r)) => vec![format!("textures/{r}.png"), format!("textures/{r}.tga")],
+        (AssetKind::Image, Some(f), Some(r)) => {
+            vec![format!("images/{}/{r}.png", stem(f)), format!("images/{}/{r}.tga", stem(f))]
+        }
+        (AssetKind::Image, Some(f), None) => vec![format!("images/{}.png", stem(f)), format!("images/{}.tga", stem(f))],
+        (AssetKind::Image, None, Some(r)) => vec![format!("images/{r}.png"), format!("images/{r}.tga")],
+        (AssetKind::Sound, Some(f), _) => vec![format!("sounds/{}.wav", stem(f))],
+        _ => Vec::new(),
+    }
+}
+
 /// The player's original game data, indexed.
 pub struct OriginalData {
     /// The folder the player pointed us at.
@@ -155,6 +195,32 @@ impl OriginalData {
         })
     }
 
+    /// Every resource of a type in every DLL, as `(dll file name, resource id, bytes)`.
+    /// Numeric ids are returned as their decimal text.
+    pub fn resources_of(&self, kind: &str) -> Vec<(String, String, &[u8])> {
+        let kind = ResId::name(kind);
+        let mut out = Vec::new();
+        for (dll, f) in &self.dlls {
+            for e in f.entries().iter().filter(|e| e.kind == kind) {
+                let id = match &e.id {
+                    ResId::Num(n) => n.to_string(),
+                    ResId::Name(n) => n.clone(),
+                };
+                out.push((dll.clone(), id, f.data(e)));
+            }
+        }
+        out
+    }
+
+    /// Paths of every original file with the given extension (case-insensitive), sorted.
+    pub fn files_with_extension(&self, ext: &str) -> Vec<PathBuf> {
+        let suffix = format!(".{}", ext.to_ascii_lowercase());
+        let mut v: Vec<PathBuf> =
+            self.files.iter().filter(|(n, _)| n.ends_with(&suffix)).map(|(_, p)| p.clone()).collect();
+        v.sort();
+        v
+    }
+
     /// Names of every resource of a type across all DLLs, sorted (e.g. all meshes).
     pub fn resource_names(&self, kind: &str) -> Vec<String> {
         let kind = ResId::name(kind);
@@ -206,6 +272,18 @@ mod tests {
     }
 
     #[test]
+    fn override_paths_follow_the_convention() {
+        use AssetKind::*;
+        assert_eq!(override_paths(Model, None, Some("INTTYPEA")), vec!["models/inttypea.obj"]);
+        assert_eq!(override_paths(Texture, None, Some("CubeTop"))[0], "textures/cubetop.png");
+        assert_eq!(override_paths(Image, Some("CockpitA.dll"), Some("12000"))[0], "images/cockpita/12000.png");
+        assert_eq!(override_paths(Image, Some("Setup.bmp"), None)[1], "images/setup.tga");
+        assert_eq!(override_paths(Image, None, Some("12"))[0], "images/12.png");
+        assert_eq!(override_paths(Sound, Some("SoundFX\\target lock.wav"), None), vec!["sounds/target lock.wav"]);
+        assert!(override_paths(Model, Some("x.dll"), None).is_empty());
+    }
+
+    #[test]
     fn refuses_paths_that_escape_the_pack() {
         for bad in ["", "../x", "a/../../x", "/etc/passwd", "C:/x", "original:", "a/.."] {
             assert!(AssetRef::parse(bad).is_err(), "{bad} should be refused");
@@ -228,6 +306,8 @@ mod tests {
         assert_eq!(o.resource("XMSH", Some("cockpita.dll"), "SHIP"), None);
         assert_eq!(o.resource_names("XMSH"), vec!["SHIP".to_string()]);
         assert_eq!(o.resource("XTXR", None, "999"), Some(&b"t"[..]), "digit names are tried as names first");
+        assert_eq!(o.resources_of("XMSH"), vec![("xobjects1.dll".to_string(), "SHIP".to_string(), &b"m"[..])]);
+        assert_eq!(o.files_with_extension("INI").len(), 1);
         assert!(o.read_file("missing.txt").is_err());
         std::fs::remove_dir_all(&root).unwrap();
         // A folder without the game files is rejected with a helpful message.

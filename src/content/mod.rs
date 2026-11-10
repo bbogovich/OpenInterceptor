@@ -30,7 +30,7 @@ use pack::PackInfo;
 use rules::{RulesSource, Ruleset};
 use scenario::Scenario;
 use std::path::{Path, PathBuf};
-use vfs::{AssetRef, OriginalData};
+use vfs::{AssetKind, AssetRef, OriginalData};
 
 /// Where to look for content, as chosen on the command line.
 #[derive(Debug, Clone, Default)]
@@ -44,6 +44,9 @@ pub struct ContentConfig {
     /// Skip packs that need original data even if it is available (tests the
     /// original-free path).
     pub no_original: bool,
+    /// Ids of packs switched off (from `settings.ini` `[packs] disabled`), like XWVM's
+    /// per-pack activation: a disabled mod's overrides and rules are not loaded.
+    pub disabled: Vec<String>,
 }
 
 /// Everything loaded: the result of [`Content::load`].
@@ -79,6 +82,14 @@ impl Content {
             (Some(path), false) => Some(OriginalData::open(path)?),
             _ => None,
         };
+        // Packs the player switched off.
+        found.retain(|p| {
+            let off = cfg.disabled.iter().any(|d| d.eq_ignore_ascii_case(&p.id));
+            if off {
+                warnings.push(format!("pack '{}' is disabled in settings", p.id));
+            }
+            !off
+        });
         // Packs that need the original data are skipped when it is missing.
         found.retain(|p| {
             let keep = !p.requires_original || original.is_some();
@@ -148,11 +159,31 @@ impl Content {
         std::fs::read(&full).map_err(|e| format!("{}: {e}", full.display()))
     }
 
+    /// The highest-priority pack file that overrides an original asset, as
+    /// `(pack index, pack-relative path)` (see [`vfs::override_paths`]).
+    pub fn find_override(
+        &self,
+        kind: AssetKind,
+        file: Option<&str>,
+        resource: Option<&str>,
+    ) -> Option<(usize, String)> {
+        let candidates = vfs::override_paths(kind, file, resource);
+        self.packs
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(i, p)| candidates.iter().find(|c| p.dir.join(c.as_str()).is_file()).map(|c| (i, c.clone())))
+    }
+
     /// Loads a model from a reference written in `pack`'s rules.
     pub fn load_model(&self, reference: &str, pack: usize, scale: f32) -> Result<Model, String> {
         match AssetRef::parse(reference)? {
             AssetRef::Original { file, resource } => {
                 let name = resource.ok_or("a model reference needs a resource name")?;
+                // A pack may replace the original mesh with `models/<name>.obj`.
+                if let Some((p, rel)) = self.find_override(AssetKind::Model, file.as_deref(), Some(&name)) {
+                    return self.load_model(&rel, p, scale);
+                }
                 let data = self
                     .original()?
                     .resource("XMSH", file.as_deref(), &name)
@@ -191,13 +222,8 @@ impl Content {
         if name.contains('.') {
             return self.load_image(name, pack, false);
         }
-        for (i, _) in self.packs.iter().enumerate().rev() {
-            for ext in ["png", "tga"] {
-                let rel = format!("textures/{}.{ext}", name.to_ascii_lowercase());
-                if self.packs[i].dir.join(&rel).is_file() {
-                    return self.load_image(&rel, i, false);
-                }
-            }
+        if let Some((p, rel)) = self.find_override(AssetKind::Texture, None, Some(name)) {
+            return self.load_image(&rel, p, false);
         }
         let data = self.original()?.resource("XTXR", None, name).ok_or(format!("texture {name} not found"))?;
         let t = xtxr::parse(data).map_err(|e| format!("texture {name}: {e}"))?;
@@ -211,6 +237,10 @@ impl Content {
         let key = colour_key.then_some(tga::COCKPIT_KEY_555);
         match AssetRef::parse(reference)? {
             AssetRef::Original { file, resource } => {
+                // Replacement art in a pack wins (it carries its own alpha, so no colour key).
+                if let Some((p, rel)) = self.find_override(AssetKind::Image, file.as_deref(), resource.as_deref()) {
+                    return decode_image_file(&rel, &self.read_pack_file(p, &rel)?, None);
+                }
                 let o = self.original()?;
                 let data = match resource {
                     Some(r) => o
@@ -232,7 +262,11 @@ impl Content {
     pub fn load_sound(&self, reference: &str, pack: usize) -> Result<wav::Pcm, String> {
         let bytes = match AssetRef::parse(reference)? {
             AssetRef::Original { file, .. } => {
-                self.original()?.read_file(file.as_deref().ok_or("sound needs a file name")?)?
+                let file = file.ok_or("sound needs a file name")?;
+                match self.find_override(AssetKind::Sound, Some(&file), None) {
+                    Some((p, rel)) => self.read_pack_file(p, &rel)?,
+                    None => self.original()?.read_file(&file)?,
+                }
             }
             AssetRef::PackFile(path) => self.read_pack_file(pack, &path)?,
         };
@@ -354,6 +388,64 @@ mod tests {
         assert!(c.load_model("original:X", 0, 1.0).unwrap_err().contains("original"));
         assert!(c.load_model("models/missing.obj", 0, 1.0).is_err());
         assert!(c.original_mesh_names().is_empty());
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn pack_files_override_original_assets() {
+        // A fake CD with one mesh, one image and one sound, plus a mod that replaces all
+        // three with files at the conventional override paths.
+        let root = std::env::temp_dir().join(format!("oi-override-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let cd = root.join("cd");
+        std::fs::create_dir_all(&cd).unwrap();
+        std::fs::write(cd.join("GameSettings.ini"), "[x]\n").unwrap();
+        let v = [0.0f32; 8];
+        let mesh =
+            crate::formats::xmsh::build_test_xmsh(&[v, v, v], &[(0, 1), (1, 2), (2, 0)], &[], &[(0, &[1, 2, 3])]);
+        let tga = crate::formats::tga::build_test_tga(1, 1, 24, true, &[1, 2, 3]);
+        let pe = crate::formats::pe::build_test_pe(&[("XMSH", "SHIP", &mesh), ("TARG", "art", &tga)]);
+        std::fs::write(cd.join("xobjects1.dll"), &pe).unwrap();
+        std::fs::write(cd.join("cockpita.dll"), &pe).unwrap();
+        let pcm = wav::Pcm { sample_rate: 8000, channels: 1, samples: vec![1, 2] };
+        std::fs::write(cd.join("Boom.wav"), pcm.to_wav_bytes()).unwrap();
+        let packs = root.join("packs");
+        let m = packs.join("hd");
+        for d in ["models", "images/cockpita", "sounds"] {
+            std::fs::create_dir_all(m.join(d)).unwrap();
+        }
+        std::fs::write(m.join("pack.ini"), "[pack]\nid=hd\n").unwrap();
+        std::fs::create_dir_all(packs.join("base")).unwrap();
+        std::fs::write(packs.join("base/pack.ini"), "[pack]\nid=base\n").unwrap();
+        let cfg = |disabled: Vec<String>| ContentConfig {
+            pack_dirs: vec![packs.clone()],
+            original: Some(cd.clone()),
+            disabled,
+            ..Default::default()
+        };
+        // Before any override files exist: originals load.
+        let c = Content::load(&cfg(vec![])).unwrap();
+        assert_eq!(c.load_model("original:SHIP", 0, 1.0).unwrap().name, "test");
+        assert_eq!(c.load_image("original:CockpitA.dll#art", 0, false).unwrap().rgba, vec![3, 2, 1, 255]);
+        assert_eq!(c.load_sound("original:boom.wav", 0).unwrap().samples, vec![1, 2]);
+        assert!(c.find_override(AssetKind::Model, None, Some("SHIP")).is_none());
+        // Add the overrides.
+        std::fs::write(m.join("models/ship.obj"), "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n").unwrap();
+        std::fs::write(
+            m.join("images/cockpita/art.tga"),
+            crate::formats::tga::build_test_tga(1, 1, 24, true, &[9, 9, 9]),
+        )
+        .unwrap();
+        let louder = wav::Pcm { sample_rate: 8000, channels: 1, samples: vec![7] };
+        std::fs::write(m.join("sounds/boom.wav"), louder.to_wav_bytes()).unwrap();
+        let c = Content::load(&cfg(vec![])).unwrap();
+        assert_eq!(c.load_model("original:SHIP", 0, 1.0).unwrap().name, "models/ship.obj", "mod mesh wins");
+        assert_eq!(c.load_image("original:CockpitA.dll#art", 0, true).unwrap().rgba, vec![9, 9, 9, 255]);
+        assert_eq!(c.load_sound("original:Boom.wav", 0).unwrap().samples, vec![7]);
+        // Switching the pack off restores the originals.
+        let c = Content::load(&cfg(vec!["HD".into()])).unwrap();
+        assert_eq!(c.load_model("original:SHIP", 0, 1.0).unwrap().name, "test");
+        assert!(c.warnings.iter().any(|w| w.contains("disabled")));
         std::fs::remove_dir_all(&root).unwrap();
     }
 

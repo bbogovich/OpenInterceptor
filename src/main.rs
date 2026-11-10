@@ -4,7 +4,7 @@
 //! `--list`, `--check`), otherwise open the window and hand over to the testbed app.
 //! All real work lives in the library crate (`src/lib.rs`).
 
-use openinterceptor::{app, check, cli, content::Content};
+use openinterceptor::{app, check, cli, content::Content, extract};
 
 /// Window settings.
 fn window_conf(fullscreen: bool) -> macroquad::conf::Conf {
@@ -32,7 +32,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
         print!("{}", cli::USAGE);
         return Some(0);
     }
-    if !(options.check || options.list) {
+    if !(options.check || options.list || options.extract.is_some()) {
         return None;
     }
     let content = match Content::load(&options.content_config()) {
@@ -42,6 +42,21 @@ fn headless(options: &cli::Options) -> Option<i32> {
             return Some(1);
         }
     };
+    if let Some(out) = &options.extract {
+        return Some(match extract::run(&content, out) {
+            Ok(r) => {
+                for e in &r.errors {
+                    println!("error: {e}");
+                }
+                println!("extract: {} -> {}", r.summary(), out.display());
+                i32::from(!r.errors.is_empty())
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                1
+            }
+        });
+    }
     if options.list {
         for p in &content.packs {
             println!("pack     {:<14} {}", p.id, p.name);

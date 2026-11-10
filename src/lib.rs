@@ -15,13 +15,14 @@
 //! 6. [`render`], [`hud`] and [`audio`] — presentation: they read the simulation.
 //! 7. [`app`] — the testbed: launcher, model viewer and flight sessions.
 //!
-//! Plus [`check`] (headless content validation), [`cli`] (command-line options) and
+//! Plus [`check`] (headless content validation), [`extract`] (original assets → OBJ/PNG/WAV), [`cli`] (command-line options) and
 //! [`settings`] (the user data folder and where the original data is found).
 pub mod app;
 pub mod audio;
 pub mod check;
 pub mod cli;
 pub mod content;
+pub mod extract;
 pub mod formats;
 pub mod hud;
 pub mod input;

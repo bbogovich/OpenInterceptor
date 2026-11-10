@@ -32,6 +32,8 @@ use std::path::{Path, PathBuf};
 pub struct Settings {
     pub original: Option<PathBuf>,
     pub mods: Option<PathBuf>,
+    /// Ids of packs switched off (`[packs] disabled = a, b`).
+    pub disabled_packs: Vec<String>,
 }
 
 impl Settings {
@@ -39,7 +41,15 @@ impl Settings {
     pub fn parse(text: &str) -> Settings {
         let ini = Ini::parse(text);
         let path = |k: &str| ini.get("paths", k).filter(|v| !v.is_empty()).map(PathBuf::from);
-        Settings { original: path("original"), mods: path("mods") }
+        let disabled_packs = ini
+            .get("packs", "disabled")
+            .unwrap_or("")
+            .split(',')
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_string)
+            .collect();
+        Settings { original: path("original"), mods: path("mods"), disabled_packs }
     }
 
     /// Reads `<dir>/settings.ini`, or returns defaults if it does not exist.
@@ -53,10 +63,18 @@ impl Settings {
         format!(
             "; OpenInterceptor settings. Paths may be absolute or relative to this folder.\n[paths]\n\
              ; Your X-COM: Interceptor CD, or a folder copied from it.\noriginal = {}\n\
-             ; Folder of mods (empty = the mods folder next to this file).\nmods = {}\n",
+             ; Folder of mods (empty = the mods folder next to this file).\nmods = {}\n\n\
+             [packs]\n; Pack ids switched off (comma-separated). The launcher's Packs screen edits this.\ndisabled = {}\n",
             show(&self.original),
-            show(&self.mods)
+            show(&self.mods),
+            self.disabled_packs.join(", ")
         )
+    }
+
+    /// Writes `<dir>/settings.ini`, creating the folder if needed.
+    pub fn save(&self, dir: &Path) -> std::io::Result<()> {
+        std::fs::create_dir_all(dir)?;
+        std::fs::write(dir.join("settings.ini"), self.to_ini_text())
     }
 }
 
@@ -103,10 +121,17 @@ mod tests {
 
     #[test]
     fn parses_and_round_trips() {
-        let s = Settings::parse("[paths]\noriginal = /cd\nmods =\n");
-        assert_eq!(s, Settings { original: Some("/cd".into()), mods: None });
+        let s = Settings::parse("[paths]\noriginal = /cd\nmods =\n[packs]\ndisabled = a, b\n");
+        assert_eq!(
+            s,
+            Settings { original: Some("/cd".into()), mods: None, disabled_packs: vec!["a".into(), "b".into()] }
+        );
         assert_eq!(Settings::parse(&s.to_ini_text()), s);
         assert_eq!(Settings::load(Path::new("/no/such/dir")), Settings::default());
+        let dir = std::env::temp_dir().join(format!("oi-settings-save-{}", std::process::id()));
+        s.save(&dir).unwrap();
+        assert_eq!(Settings::load(&dir), s);
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]
@@ -117,7 +142,7 @@ mod tests {
             std::fs::create_dir_all(d).unwrap();
         }
         let none = Settings::default();
-        let with_cd = Settings { original: Some(cd.clone()), mods: None };
+        let with_cd = Settings { original: Some(cd.clone()), ..Default::default() };
         let r = |cli: Option<&Path>, env: Option<&Path>, s: &Settings| {
             resolve_original(cli, env, s, Some(&user), Some(&dev))
         };
@@ -129,7 +154,7 @@ mod tests {
         assert_eq!(r(None, None, &none).unwrap(), (dev.join("game"), Source::DevelopmentTree));
         // A relative settings path is relative to the user data folder.
         std::fs::create_dir_all(user.join("disc")).unwrap();
-        let rel = Settings { original: Some("disc".into()), mods: None };
+        let rel = Settings { original: Some("disc".into()), ..Default::default() };
         assert_eq!(r(None, None, &rel).unwrap(), (user.join("disc"), Source::SettingsFile));
         std::fs::remove_dir_all(dev.join("game")).unwrap();
         assert_eq!(resolve_original(None, None, &none, Some(&user), Some(&dev)), None);

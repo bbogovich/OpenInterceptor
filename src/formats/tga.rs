@@ -2,8 +2,9 @@
 //!
 //! The original cockpits, HUD pieces and menu screens are uncompressed 16-bit TGA images
 //! (stored as `TARG` resources). Mods can also ship TGA textures. This reader supports
-//! the common uncompressed variants: 16-bit (RGB555), 24-bit and 32-bit true colour,
-//! plus run-length-encoded (RLE) versions of the same.
+//! the common variants: 16-bit (RGB555), 24-bit and 32-bit true colour, 8-bit
+//! colour-mapped (palettised — used by the original sprites), and the run-length-encoded
+//! (RLE) versions of each.
 //!
 //! A TGA file is an 18-byte header, an optional id string, then pixels. Bit 5 of the
 //! *descriptor* byte says whether rows run top-to-bottom; otherwise they are stored
@@ -36,22 +37,49 @@ pub fn decode(data: &[u8], key555: Option<u16>) -> FResult<Image> {
     let height = r.u16(14)? as u32;
     let bpp = r.bytes(16, 1)?[0];
     let descriptor = r.bytes(17, 1)?[0];
-    if colour_map_type != 0 {
-        return Err(FormatError::Unsupported("colour-mapped TGA".into()));
-    }
-    let rle = match image_type {
-        2 => false,
-        10 => true,
+    // Image types: 2 true colour, 10 true colour RLE, 1 colour-mapped, 9 colour-mapped RLE.
+    let (rle, mapped) = match image_type {
+        2 => (false, false),
+        10 => (true, false),
+        1 => (false, true),
+        9 => (true, true),
         t => return Err(FormatError::Unsupported(format!("TGA image type {t}"))),
     };
-    let bytes_pp = match bpp {
-        16 | 15 => 2,
-        24 => 3,
-        32 => 4,
-        b => return Err(FormatError::Unsupported(format!("TGA {b} bits per pixel"))),
+    if mapped != (colour_map_type == 1) {
+        return Err(FormatError::Invalid("TGA colour map does not match the image type".into()));
+    }
+    let bytes_pp = match (mapped, bpp) {
+        (true, 8) => 1,
+        (false, 16 | 15) => 2,
+        (false, 24) => 3,
+        (false, 32) => 4,
+        (_, b) => return Err(FormatError::Unsupported(format!("TGA {b} bits per pixel"))),
+    };
+    // The colour map (palette), if any, sits between the id string and the pixels.
+    let mut src = 18 + id_len;
+    let palette: Vec<[u8; 4]> = if colour_map_type == 1 {
+        let first = r.u16(3)? as usize;
+        let len = r.u16(5)? as usize;
+        let entry_bytes = (r.bytes(7, 1)?[0] as usize).div_ceil(8);
+        let mut pal = vec![[0, 0, 0, 255]; first + len];
+        for (i, entry) in pal.iter_mut().skip(first).enumerate() {
+            let e = r.bytes(src + i * entry_bytes, entry_bytes)?;
+            *entry = match entry_bytes {
+                2 => {
+                    let [r, g, b] = super::xtxr::rgb555(u16::from_le_bytes([e[0], e[1]]));
+                    [r, g, b, 255]
+                }
+                3 => [e[2], e[1], e[0], 255],
+                4 => [e[2], e[1], e[0], e[3]],
+                n => return Err(FormatError::Unsupported(format!("TGA {n}-byte palette entries"))),
+            };
+        }
+        src += len * entry_bytes;
+        pal
+    } else {
+        Vec::new()
     };
     let pixel_count = (width as usize) * (height as usize);
-    let mut src = 18 + id_len;
     // Step 1: gather the raw pixels (expanding RLE packets if needed).
     let raw: Vec<u8> = if rle {
         let mut out = Vec::with_capacity(pixel_count * bytes_pp);
@@ -88,6 +116,7 @@ pub fn decode(data: &[u8], key555: Option<u16>) -> FResult<Image> {
             let d = (y * w + x) * 4;
             let px = &raw[s..s + bytes_pp];
             let colour = match bytes_pp {
+                1 => *palette.get(px[0] as usize).ok_or(FormatError::Invalid(format!("palette index {}", px[0])))?,
                 2 => {
                     let v = u16::from_le_bytes([px[0], px[1]]);
                     let [r, g, b] = super::xtxr::rgb555(v);
@@ -154,16 +183,44 @@ mod tests {
         assert_eq!(img.rgba, vec![7, 8, 9, 255, 7, 8, 9, 255, 3, 2, 1, 255]);
     }
 
+    /// A colour-mapped TGA: `palette` entries are 24-bit BGR.
+    fn mapped(w: u16, h: u16, palette: &[[u8; 3]], rle: bool, pixels: &[u8]) -> Vec<u8> {
+        let mut d = vec![0u8; 18];
+        d[1] = 1;
+        d[2] = if rle { 9 } else { 1 };
+        d[5..7].copy_from_slice(&(palette.len() as u16).to_le_bytes());
+        d[7] = 24;
+        d[12..14].copy_from_slice(&w.to_le_bytes());
+        d[14..16].copy_from_slice(&h.to_le_bytes());
+        d[16] = 8;
+        d[17] = 0x20;
+        for p in palette {
+            d.extend_from_slice(p);
+        }
+        d.extend_from_slice(pixels);
+        d
+    }
+
+    #[test]
+    fn decodes_colour_mapped_images() {
+        let pal = [[0, 0, 255], [255, 0, 0]]; // BGR: red, blue
+        let img = decode(&mapped(2, 1, &pal, false, &[1, 0]), None).unwrap();
+        assert_eq!(img.rgba, vec![0, 0, 255, 255, 255, 0, 0, 255]);
+        let img = decode(&mapped(3, 1, &pal, true, &[0x82, 1]), None).unwrap();
+        assert_eq!(img.rgba, [0, 0, 255, 255].repeat(3));
+        assert!(matches!(decode(&mapped(1, 1, &pal, false, &[7]), None), Err(FormatError::Invalid(_))));
+    }
+
     #[test]
     fn rejects_unsupported_and_truncated() {
         let mut d = build_test_tga(1, 1, 8, true, &[0]);
         assert!(matches!(decode(&d, None), Err(FormatError::Unsupported(_))));
         d[16] = 24;
-        d[2] = 1;
+        d[2] = 3;
         assert!(matches!(decode(&d, None), Err(FormatError::Unsupported(_))));
         d[2] = 2;
         d[1] = 1;
-        assert!(matches!(decode(&d, None), Err(FormatError::Unsupported(_))));
+        assert!(matches!(decode(&d, None), Err(FormatError::Invalid(_))), "map present but true-colour type");
         assert!(decode(&build_test_tga(4, 4, 24, true, &[0; 5]), None).is_err());
     }
 }

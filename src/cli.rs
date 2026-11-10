@@ -27,6 +27,8 @@ OPTIONS:
     --view <VIEW>       Start view for --scenario: cockpit, forward, left, right,
                         rear-left, rear-right, chase, chase-manual
     --check             Validate all content without opening a window, then exit
+    --extract <DIR>     Convert the original data to OBJ/PNG/WAV at override paths
+                        (personal modding use only), then exit
     --list              List packs, playable ships and scenarios, then exit
     --windowed          Start in a window instead of full screen (default)
     --fullscreen        Start full screen
@@ -44,6 +46,7 @@ pub struct Options {
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
     pub check: bool,
+    pub extract: Option<PathBuf>,
     pub list: bool,
     pub fullscreen: bool,
     pub help: bool,
@@ -70,6 +73,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             }
             "--no-original" => o.no_original = true,
             "--check" => o.check = true,
+            "--extract" => o.extract = Some(PathBuf::from(value("--extract")?)),
             "--list" => o.list = true,
             "--fullscreen" => o.fullscreen = true,
             "--windowed" => o.fullscreen = false,
@@ -116,9 +120,10 @@ impl Options {
         let original = resolve_original(self.data.as_deref(), None, &settings, user.as_deref(), Some(dev_tree));
         ContentConfig {
             pack_dirs: self.packs.clone().or_else(|| find_packs_dir(exe.as_deref())).into_iter().collect(),
-            mods_dir: self.mods.clone().or(settings.mods).or_else(|| user.map(|d| d.join("mods"))),
+            mods_dir: self.mods.clone().or(settings.mods.clone()).or_else(|| user.map(|d| d.join("mods"))),
             original: original.map(|(p, _)| p),
             no_original: self.no_original,
+            disabled: settings.disabled_packs,
         }
     }
 }
@@ -159,6 +164,7 @@ mod tests {
         assert!(parse(&args("--bogus"), None).unwrap_err().contains("unknown option"));
         assert!(parse(&args("--data"), None).unwrap_err().contains("needs a value"));
         assert!(parse(&args("--view sideways"), None).unwrap_err().contains("unknown view"));
+        assert_eq!(parse(&args("--extract out"), None).unwrap().extract, Some(PathBuf::from("out")));
         assert_eq!(parse(&args("--view chase"), None).unwrap().view, Some(crate::input::View::Chase));
     }
 
