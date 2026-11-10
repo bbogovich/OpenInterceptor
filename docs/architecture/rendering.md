@@ -12,8 +12,24 @@ flowchart LR
     CL["clear_background"] --> SKY["draw_sky<br/>2 500 stars + sun<br/>sky material: no depth, additive"]
     SKY --> SOL["draw_world<br/>ships, stations, debris<br/>lit material: depth test + write"]
     SOL --> GLO["draw_glows<br/>engines, bolts, missiles, sparks, explosions<br/>glow material: depth test, no write, additive"]
-    GLO --> HUD["2D HUD (hud::draw)"]
+    GLO --> CP["draw_cockpit_model (3D cockpit, cockpit view only)<br/>flush + clear depth; 5 cm near plane"]
+    CP --> HUD["2D HUD (hud::draw)"]
 ```
+
+### The 3D cockpit pass
+
+A cockpit definition may name a `Model` (see [Cockpits](../modding/cockpits.md)). It must always
+appear in front of the world and may sit centimetres from the pilot's eye, which the normal
+1 m near plane would clip. So `Renderer::draw_cockpit_model`:
+
+1. flushes macroquad's batched draws (`InternalGlContext::flush`) so the world is on the GPU;
+2. clears **only the depth buffer** (`quad_context.clear(None, Some(1.0), None)`) — the world's
+   colour stays, but nothing in it can hide the cockpit;
+3. draws the model with the lit material using `SpaceCamera::with_near(0.05)`, placed at the
+   eye plus `ModelOffset` (in the eye's frame), always at LOD 0.
+
+This and the model-matrix stack are the only uses of macroquad's internal GL state
+(`unsafe_gl_context`, one documented `unsafe` block).
 
 ### Camera-relative rendering
 
@@ -43,7 +59,7 @@ Objects entirely behind the camera are skipped.
 | Symbol | What it is |
 |---|---|
 | `Renderer` | Owns the three materials, a generated radial `glow_texture`, `models: ModelCache`, the star list, and reusable vertex/index buffers. |
-| `camera::SpaceCamera` | `position`, `rotation`, `fov_y`, `aspect`; implements macroquad's `Camera` trait; `project` (world → screen pixels) and `local_direction` for the HUD. |
+| `camera::SpaceCamera` | `position`, `rotation`, `fov_y`, `aspect`, `z_near`; `new(...)`, `with_near(..)`; implements macroquad's `Camera` trait; `project` (world → screen pixels) and `local_direction` for the HUD. |
 | `effects::Effects` | `explosions`, `sparks`, `debris`, created by `on_events(&World)` and aged by `update(dt)`. |
 | `starfield::Star`, `starfield::generate(seed, count)` | Seeded, uniform-on-the-sphere star directions. |
 | `push_billboard`, `push_streak` | Build camera-facing quads into the reusable buffers. |
@@ -53,7 +69,8 @@ Objects entirely behind the camera are skipped.
 - `Renderer::new() -> Result<Renderer, String>` (fails only if a shader is rejected).
 - `draw_sky(&cam, seed, sun)`, `begin_solid(&cam, sun)`, `draw_model(&cam, &GpuModel, pos, rot, tint)`,
   `draw_model_lod(.., force_lod: Option<usize>)`, `draw_world(&Content, &World, &Effects, &cam, sun, hide)`,
-  `draw_glows(&Content, &World, &Effects, &cam, hide)`, `draw_axes`, `ship_model`.
+  `draw_glows(&Content, &World, &Effects, &cam, hide)`, `draw_cockpit_model(&cam, &GpuModel, offset, sun)`,
+  `draw_axes`, `ship_model`.
 - `effects::explosion_curve(t) -> (size, brightness)`; `effects::DEBRIS_LIFE`, `SPARK_LIFE`.
 
 ## Debugging
@@ -62,4 +79,7 @@ Objects entirely behind the camera are skipped.
   `std::mem::take`, draw, then move them back — no allocation after the first frame.
 - If a scene is black except the HUD, check the shader compile error returned by
   `Renderer::new` (shown on the start-up error screen).
-- Engine glows come from rear-facing model attachments, else the back of the bounding box.
+- Engine glows come from rear-facing model attachments, else the back of the bounding box;
+  `GpuModel::engines` is computed once at load, so drawing glows allocates nothing per frame.
+- A 3D cockpit that is invisible usually sits behind the eye: check `ModelOffset` and that the
+  model's front faces −Z.

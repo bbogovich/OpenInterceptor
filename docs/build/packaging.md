@@ -1,18 +1,55 @@
 # Packaging
 
-!!! warning "Builds containing game data are never shared"
-    A build that bundles the player's data is for that player only. Distributable builds
-    contain the engine and the original-free packs, nothing else.
+!!! warning "Game data is never inside a build"
+    The app contains the engine and the built-in packs (which hold no original content). The
+    player's CD, settings and mods live in the user data folder.
 
 ## Plain build
 
-`cargo build --release` produces `target/release/openinterceptor`. Run it with `--data`.
+`cargo build --release` produces `target/release/openinterceptor`. It finds the original data
+automatically ([Settings and data discovery](../architecture/settings.md)).
 
-## macOS app (Stage 7)
+## macOS app
 
-A script will assemble `dist/OpenInterceptor-<version>.app` with the binary, the built-in packs
-and an icon. An optional local-only variant copies the player's data into the bundle, the way
-ArenaVM's per-phase apps do; that variant lives in `dist/` (git-ignored) and is never published.
+```sh
+python3 tools/build_bundle.py                    # app + settings.ini pointing at ./game
+python3 tools/build_bundle.py --data /Volumes/CD # settings point at another copy
+python3 tools/build_bundle.py --install-data     # clone the CD into <user data>/original
+python3 tools/build_bundle.py --no-settings      # leave settings.ini alone
+python3 tools/build_bundle.py --skip-build       # reuse the last release build
+```
+
+`tools/build_bundle.py` (standard-library Python) builds the release binary, assembles
+`dist/OpenInterceptor-<version>.app` (`dist/` is git-ignored), and signs it ad hoc:
+
+```text
+OpenInterceptor-0.2.0.app/Contents/
+  Info.plist                 identifier io.github.bbogovich.openinterceptor, version, game category
+  MacOS/openinterceptor
+  Resources/packs/           interceptor and sample packs
+  Resources/LICENSE-MIT
+```
+
+Then it prepares the user data folder `~/Library/Application Support/OpenInterceptor/`:
+`settings.ini` `[paths] original` is set to `./game` (or `--data`), keeping any other
+settings; `--install-data` instead clones the CD into `original/` (an APFS clone costs almost no
+disk) and points the settings there; `mods/` is created. The program finds its packs at
+`../Resources/packs` relative to the executable, so it works when Finder starts it with `/` as
+the working directory (verified: the bundled binary run from `/` loads both packs and the CD,
+`--check` 0 errors).
+
+### Build numbers
+
+Like ArenaVM's per-phase apps, versions follow the implementation stages:
+`0.<stage + 1>.<build>`. The version is `Cargo.toml`'s; bump the last number for each new
+build of a stage.
+
+| Stage | Versions | Builds |
+|---|---|---|
+| 0 Foundation | 0.1.x | (no app; analysis, formats, docs) |
+| 1 Flight simulator | 0.2.x | **0.2.0** — first app: newtonian flight, overrides, `--extract`, HD/3D cockpits, asset browser |
+| 2 Enemies and combat | 0.3.x | — |
+| 3 Missions and scripting | 0.4.x | — |
 
 ## Linux (Stage 7)
 

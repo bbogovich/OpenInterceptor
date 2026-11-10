@@ -22,7 +22,7 @@ load order; this page lists every key the engine reads (from `src/content/rules.
 | `[beam:<id>]` | A beam weapon. |
 | `[missile:<id>]` | A missile or torpedo. |
 | `[faction:<id>]` | A side. |
-| `[cockpit:<id>]` | Cockpit art and instrument positions. |
+| `[cockpit:<id>]` | Cockpit art and/or 3D model, design space, instrument positions. |
 | `[flight]` | Global flight and sensor settings. |
 | `[sounds]` | Event sounds. |
 
@@ -110,13 +110,21 @@ A definition with an error is skipped and reported; everything else still loads.
 
 | Key | Meaning |
 |---|---|
-| `Image` | Cockpit art reference (640×480 design size). Original cockpits use their cyan colour key for the window. |
-| `Instrument.<name> = x, y, w, h` | Instrument rectangle in 640×480 design pixels. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1` (speed), `gauge2` (energy), `gauge3` (shields), `gauge4` (hull). |
+| `Image` | Cockpit art reference, or `none`. Stretched over the design space whatever its pixel size. Original cockpits use their cyan colour key for the window; pack images use alpha. |
+| `Design = w, h` | The instruments' coordinate space; default `640, 480`. |
+| `Model` | Optional 3D cockpit model, drawn around the pilot's eye. |
+| `ModelOffset = x, y, z` | Metres from the eye; default `0, 0, 0`. |
+| `ModelScale` | Model units → metres; default `1`. |
+| `Instrument.<name> = x, y, w, h` | Instrument rectangle in design-space pixels. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1` (speed), `gauge2` (energy), `gauge3` (shields), `gauge4` (hull). |
+
+A cockpit needs an `Image`, a `Model`, or both. Full guide: [Cockpits](cockpits.md).
 
 ## `[flight]`
 
 | Key | Default | Meaning |
 |---|---|---|
+| `Model` | `newtonian` | Flight model: `newtonian` (throttle is thrust, ships coast, `Z` reverses thrust, `B` brakes) or `assisted` (throttle is a target speed with automatic slowing — arcade). See [Simulation](../architecture/sim.md#flight-model-simflight). |
+| `ArenaRadius` | 60000 | Metres from the arena centre at which ships are halted against the edge; `0` = unlimited. |
 | `Boost` | 150 | Afterburner speed bonus, m/s (the original `[Afterburners]` key). |
 | `Cost` | 50 | Afterburner energy per second. |
 | `LockAngleDegrees` | 10 | Missile lock cone half-angle. |

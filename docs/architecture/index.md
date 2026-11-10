@@ -6,7 +6,9 @@ library, so every module can be unit-tested with `cargo test`. The engine is bui
 **layers**: each layer uses only the layers below it.
 
 !!! note "Status"
-    Updated to the code as built at the end of the Stage 1 implementation (main `edd57aa`).
+    Updated to the code as built in Stage 1, build 0.2.0 (main `909d687`): Newtonian flight,
+    settings and data discovery, per-asset overrides, the extractor, HD/3D cockpits, the asset
+    browser and the macOS app bundle.
     No specification exists yet, so plan stages are cited instead of requirement IDs.
 
 ## Architecture Overview
@@ -18,9 +20,10 @@ The order is the one written at the top of `src/lib.rs`:
 ```mermaid
 flowchart TB
     subgraph L7["7 · Application"]
-        APP["app<br/>launcher, viewer, flight session"]
+        APP["app<br/>launcher, viewer, asset browser, flight session"]
         CK["check<br/>headless validation"]
-        CLI["cli<br/>options"]
+        EX["extract<br/>CD → OBJ/PNG/WAV"]
+        CLI["cli + settings<br/>options, user data folder"]
     end
     subgraph L6["6 · Presentation"]
         R["render<br/>camera, gpu, effects, starfield"]

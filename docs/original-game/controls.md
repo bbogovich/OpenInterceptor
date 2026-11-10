@@ -52,10 +52,11 @@ Key names are those used in `bindings.ini` (case does not matter).
 | `yaw_left` / `yaw_right` | `Left` / `Right` | as original |
 | `roll_left` / `roll_right` | `Kp7`, `Q` / `Kp9`, `E` | Q/E added for keyboards without a keypad |
 | `slide_left` / `slide_right` / `slide_up` / `slide_down` | `Kp4` / `Kp6` / `Kp8` / `Kp2` | VCT; engine default (ships with `VCT = yes` only) |
-| `throttle_up` / `throttle_down` | `Equal`, `KpAdd` / `Minus`, `KpSubtract` | 10 % per press |
-| `throttle_full` / `throttle_zero` | `Backspace` / `Backslash` | as original |
-| `reverse` | `Z` | toggle |
-| `match_speed` | `M` | engine default ([DEV-001](../deviations/index.md)) |
+| `throttle_up` / `throttle_down` | `Equal`, `KpAdd` / `Minus`, `KpSubtract` | 10 % thrust per press |
+| `throttle_full` / `throttle_zero` | `Backspace` / `Backslash` | as original. With the default newtonian flight model, zero throttle means *no thrust*: the ship coasts |
+| `reverse` | `Z` | toggle: thrust points backwards along the nose (slows, then backs up) |
+| `brake` | `B` | hold: retro-thrust against the direction of travel until stopped ([DEV-019](../deviations/index.md)) |
+| `match_speed` | `M` | engine default ([DEV-001](../deviations/index.md)); engages the speed hold (`HOLD n` on the HUD) until any throttle input |
 | `afterburner` | `Tab` | hold |
 | `fire_beams` | `Enter`, `LeftControl` | hold; LeftControl added |
 | `fire_missile` | `Space` | |
@@ -96,14 +97,16 @@ XInput layout on every platform ([Platform layer](../architecture/platform.md)).
 | Right trigger / left trigger | Fire beams / fire missile |
 | Right / left shoulder | Next / previous target |
 | A | Afterburner (hold) |
-| B | Nearest enemy |
+| B | Brake (hold) |
 | X | Match speed |
 | Y | Chase view |
 | D-pad up / down | Throttle up / down 10 % |
 | D-pad left / right | Previous / next MFD page |
 | Back | Beam link mode |
 | Start | Pause |
-| Left stick click / right stick click | Cycle missile / target in sights |
+| Left stick click / right stick click | Cycle missile / nearest enemy |
+
+Target in sights has no default gamepad button (bind one in `bindings.ini`).
 
 In the launcher: D-pad chooses, A or Start starts, Back quits.
 

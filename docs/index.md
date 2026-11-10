@@ -34,9 +34,10 @@ is in the repository, ever.
 ## Status
 
 Stage 0 (foundation and format analysis) is **complete**. Stage 1 (the flight simulator testbed)
-is **implemented** — every original ship, station and cockpit flies or renders from the
-player's CD, and the original-free sample pack plays without it — and awaits its recorded
-manual test pass. See [implementation status](implementation-status.md) and the
+is **implemented** as app build **0.2.0** — every original ship, station and cockpit flies or
+renders from the player's CD, the original-free sample pack plays without it, any original
+asset can be replaced by a mod file (with `--extract` producing editable copies), and cockpits
+can be HD repaints or 3D models — and awaits its recorded manual test pass. See [implementation status](implementation-status.md) and the
 [plan](implementation-plan/index.md).
 
 ## Specification

@@ -28,3 +28,9 @@
 shown (pack order, rules, scenarios, the launcher list) iterates a `Vec` that is sorted
 explicitly — `pack::discover` sorts folders, `files_with_ext` sorts file names, scenarios are
 sorted by `order` then title, `OriginalData::resource_names` sorts names.
+
+When the output of a map is *written out*, a `BTreeMap` (kept sorted by key) is the simpler
+choice. The extractor (`src/extract.rs`, `model_to_obj`) collects the materials of a model in
+a `BTreeMap<String, String>` and writes them with `into_values()`: the `.mtl` file is
+byte-for-byte the same on every run, so extracting twice and comparing — or keeping the files
+in version control of your own art project — shows only real changes.

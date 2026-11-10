@@ -82,6 +82,26 @@ match me.target.and_then(|t| world.get(t)) {
 }
 ```
 
+Longer chains read like a sentence. The flight session's cockpit setup
+(`FlightSession::start`, `src/app/flight.rs`) loads a 3D cockpit only if the ship *has* a
+cockpit, that cockpit *has* a `Model`, and the model *loads*:
+
+```rust
+let cockpit_model = cockpit_def.and_then(|c| {
+    let model = c.model.as_ref()?;          // `?` on an Option: return None early
+    let gpu = ctx.renderer.models.get(content, model, c.image_pack, c.model_scale)?;
+    Some((gpu, Vec3::from(c.model_offset)))
+});
+// `filter` keeps a Some only if the condition holds:
+let (instruments, design) = match cockpit_def.filter(|_| has_cockpit) {
+    Some(c) => (c.instruments.clone(), Vec2::from(c.design)),
+    None => (hud::default_instruments(), hud::DESIGN),
+};
+```
+
+`?` works on `Option` inside a closure or function that returns `Option`, just as it does on
+`Result` — the first `None` ends the chain.
+
 ## Newtypes
 
 A struct with one field gives a plain number a distinct type:

@@ -5,8 +5,9 @@ real devices). Each stage's cases must be run and recorded as passed before the 
 complete. Record results in the table (date, tester, platform, result, notes); keep earlier
 rows when re-running a case.
 
-**How to run**: `cargo build --release`, then `target/release/openinterceptor --data game`
-(the folder with your *Interceptor* CD contents). Every case names its launcher entry; to jump
+**How to run**: `cargo build --release`, then `target/release/openinterceptor` (the CD is
+found automatically — see [Settings](../architecture/settings.md)), or open
+`dist/OpenInterceptor-<version>.app` built by `python3 tools/build_bundle.py`. Every case names its launcher entry; to jump
 straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside view). Ship ids:
 `lightning`, `firestar`, `avenger`. Keys are the defaults on [Controls](../original-game/controls.md).
 
@@ -18,7 +19,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | MT-1-02 | Ship selection: all three hulls | `flight-test` | partial | 2026-11-10 | developer / macOS | Preview seen; Lightning, Firestar, Avenger flown |
 | MT-1-03 | Model viewer | Model viewer | partial | 2026-11-10 | developer / macOS | Browsing and zoom checked |
 | MT-1-04 | Keyboard flight: attitude | `flight-test` | partial | 2026-11-10 | developer / macOS | Yaw checked |
-| MT-1-05 | Keyboard flight: throttle and afterburner | `flight-test` | partial | 2026-11-10 | developer / macOS | Full throttle checked |
+| MT-1-05 | Keyboard flight: throttle and afterburner | `flight-test` | partial | 2026-11-10 | developer / macOS | Full throttle checked (before the newtonian model; re-run) |
 | MT-1-06 | Mouse flight | `flight-test` | not run | | | |
 | MT-1-07 | Gamepad flight | `flight-test` | not run | | | Needs a physical controller |
 | MT-1-08 | Cockpit per hull | `flight-test` | partial | 2026-11-10 | developer / macOS | A and C seen |
@@ -32,9 +33,18 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | MT-1-16 | Hostile AI | `combat-test` | partial | 2026-11-10 | developer / macOS | Hostile fire seen in cockpit C |
 | MT-1-17 | Nav points | `flight-test` | not run | | | |
 | MT-1-18 | Sound effects | `gunnery-range` | not run | | | |
-| MT-1-19 | Original-free sample pack | `sample-arena` | partial | 2026-11-10 | developer / macOS | Runs without data |
+| MT-1-19 | Original-free sample pack | `sample-arena` | partial | 2026-11-10 | developer / macOS | Runs without data (before the 3D cockpit; re-run) |
 | MT-1-20 | Pause, menu, restart, death | any | not run | | | |
 | MT-1-21 | Linux build and run | `flight-test` | not run | | | Type-checks for Linux; not yet run on Linux |
+| MT-1-22 | Newtonian flight: coast, reverse, brake | `flight-test` | not run | | | Build 0.2.0 |
+| MT-1-23 | Match speed hold | `gunnery-range` | not run | | | |
+| MT-1-24 | Arena edge | `sample-arena` | not run | | | |
+| MT-1-25 | HD cockpit override | `flight-test` | **pass** | 2026-11-10 | developer / macOS | 2560×1920 red-tinted repaint of CockpitA#12000 replaced the original; instruments aligned; nav marker shown |
+| MT-1-26 | 3D cockpit (sample Dart) | `sample-arena` | not run | | | Pending: implemented and validated by `--check`, not yet seen on screen |
+| MT-1-27 | Extract the CD | — | **pass** | 2026-11-10 | developer / macOS | 297 models, 799 textures, 3244 images, 792 sounds, 27 files, 0 errors, ~2.4 s |
+| MT-1-28 | Asset browser and override marking | Asset browser | not run | | | |
+| MT-1-29 | Disable a pack | `flight-test` | not run | | | Covered by a unit test; needs an on-screen check |
+| MT-1-30 | App bundle from Finder | Launcher | partial | 2026-11-10 | developer / macOS | Bundled binary run from `/` loads packs and the CD (`--check` 0 errors); not yet opened from Finder |
 
 "partial" = seen working during development; the full steps below still need a recorded pass.
 
@@ -78,8 +88,8 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | Field | |
 |---|---|
 | Scenario | `flight-test`, any hull |
-| Steps | 1. Press `=` (or keypad +) three times, `-` once. 2. Backspace. 3. Hold Tab. 4. `\`. 5. Z, then Backspace. 6. Target a moving drone (R) and press M. |
-| Expected | THR reads 30 %, 20 %, then 100 %; speed climbs to the hull's MaxSpeed (600 m/s) along the nose. Tab: BURN shown, speed above max, energy gauge falls; released or out of energy, it stops. `\` decelerates to 0. Z shows REV and the ship backs up at half the throttle speed. M sets the throttle to the target's speed. A single key press always changes the throttle exactly once. |
+| Steps | 1. Press `=` (or keypad +) three times, `-` once. 2. Backspace. 3. Hold Tab, release. |
+| Expected | THR reads 30 %, 20 %, then 100 %; each press changes the throttle exactly once. At 100 % speed climbs to the hull's MaxSpeed (600 m/s) and stops there. Tab: BURN shown, speed rises to MaxSpeed + Boost, energy gauge falls; released (or out of energy) the extra speed bleeds off back to MaxSpeed. (Coasting, reverse and braking: MT-1-22.) |
 
 ### MT-1-06 — Mouse flight
 
@@ -191,7 +201,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 |---|---|
 | Scenario | Sample pack arena |
 | Steps | Run `openinterceptor --no-original` (or without `--data`); start the arena; fight. |
-| Expected | The Dart (no cockpit art: glass instruments), two Dart wingmen, the textured ring station and three red raiders that attack. Everything works without any original file. The Model viewer lists only dart, raider and ring station. |
+| Expected | The Dart (3D cockpit, see MT-1-26), two Dart wingmen, the textured ring station and three red raiders that attack. Everything works without any original file. The Model viewer lists only dart, raider and ring station. |
 
 ### MT-1-20 — Pause, menu, restart, death
 
@@ -209,3 +219,75 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | Preconditions | Linux with `libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev`; an Xbox-style pad at `/dev/input/js0` if available. |
 | Steps | `scripts/check.sh`, then run MT-1-01, 04, 07, 08, 18. |
 | Expected | The gate passes; the cases behave as on macOS; `bindings.ini` is created under `~/.local/share/openinterceptor/`. |
+
+### MT-1-22 — Newtonian flight: coast, reverse, brake
+
+| Field | |
+|---|---|
+| Scenario | `flight-test`, any hull, cockpit view |
+| Steps | 1. Backspace (full throttle) until 600 m/s. 2. `\` (zero throttle). 3. Yaw hard right for two seconds, release. 4. Z (reverse) and Backspace. 5. Hold B. 6. Release B, Z again. |
+| Expected | 2: speed stays at 600 m/s — the ship coasts. 3: the nose turns but the ship keeps travelling the old way (stars and targets slide sideways); the forward-speed reading falls as the nose turns away from the motion. 4: REV shown; the ship slows, stops and then backs up. 5: BRAKE shown; the ship comes to a full stop (0 m/s) and stays there. 6: thrust forward again. Repeat with `[flight] Model = assisted` in a test mod: zero throttle then slows the ship to a stop and turning carries the velocity round. |
+
+### MT-1-23 — Match speed hold
+
+| Field | |
+|---|---|
+| Scenario | `gunnery-range` |
+| Steps | Target a drone (R); press M; fly behind it; then press `=`. |
+| Expected | M shows `HOLD n` with the drone's speed; the ship settles at that speed and stops drifting sideways. Any throttle key (or B, Z) clears HOLD and returns to manual thrust. |
+
+### MT-1-24 — Arena edge
+
+| Field | |
+|---|---|
+| Scenario | `sample-arena` (ArenaRadius 30 000 m) |
+| Steps | Full throttle with afterburner in one direction for about a minute (or use a test mod with `ArenaRadius = 3000`). |
+| Expected | "ARENA BOUNDARY" appears once on the message line; the ship stops moving outwards at the edge but can still slide along it and fly back in. |
+
+### MT-1-25 — HD cockpit override
+
+| Field | |
+|---|---|
+| Preconditions | An extracted CD (MT-1-27). |
+| Steps | 1. Scale `images/cockpita/12000.png` from the extraction to 2560×1920 and tint it (any image editor). 2. Save it as `<user data>/mods/hd-cockpit-test/images/cockpita/12000.png` with a `pack.ini` (`id = hd-cockpit-test`, `depends = interceptor`, `requires_original = yes`). 3. `openinterceptor --check`. 4. Fly `flight-test` in the Lightning II. 5. Add `hd-cockpit-test` to `[packs] disabled` in `settings.ini`; fly again. |
+| Expected | 3: 0 errors, 3 packs. 4: the tinted, sharper cockpit replaces the original; windows are transparent; radars, MFD, gauges and message line sit exactly where they did. 5: the original cockpit is back. |
+| Recorded | 2026-11-10, macOS: pass (steps 1–4). |
+
+### MT-1-26 — 3D cockpit (sample Dart)
+
+| Field | |
+|---|---|
+| Scenario | `sample-arena` (no original data needed) |
+| Steps | Start the arena; look around the cockpit view (F1); fly towards the ring station; switch to F7 and back. |
+| Expected | A 3D cockpit around the pilot: dashboard slab, side consoles, canopy struts meeting above the nose, an overhead hoop, two green screens. It never disappears behind or into world objects (the station, other ships), struts directly ahead are not clipped, and it turns with the ship. Instruments are drawn in the 1280×720 layout along the bottom (radars at the corners, MFD left of centre, gauges right). F7 shows the Dart from outside without the cockpit. |
+
+### MT-1-27 — Extract the CD
+
+| Field | |
+|---|---|
+| Steps | `openinterceptor --extract ~/interceptor-extracted`; open a few files: a model in Blender (`models/inttypea.obj`), a texture, `images/cockpita/12000.png`, a sound. |
+| Expected | A summary with 0 errors; the model imports with its textures (nose along −Z, metres); the cockpit PNG has transparent windows; sounds play in any player. |
+| Recorded | 2026-11-10, macOS: pass for the run and counts (297 models, 799 textures, 3244 images, 792 sounds, 27 files, 0 errors); files not yet opened in Blender. |
+
+### MT-1-28 — Asset browser and override marking
+
+| Field | |
+|---|---|
+| Scenario | Launcher → Asset browser |
+| Steps | Browse textures, Tab to images (find `cockpita.dll #12000`), Tab to sounds and press Enter on a few; with the MT-1-25 mod installed, look at `cockpita.dll #12000` again. |
+| Expected | Textures and images draw over a checkerboard at their size; sounds play; with the mod, the entry reads `[overridden by hd-cockpit-test]` and shows the repaint. |
+
+### MT-1-29 — Disable a pack
+
+| Field | |
+|---|---|
+| Steps | With any mod installed, add its id to `[packs] disabled` in `settings.ini`; run `--list` and fly. |
+| Expected | `--list` omits the pack; a warning "pack '<id>' is disabled in settings" is printed; the originals are used again. |
+
+### MT-1-30 — App bundle from Finder
+
+| Field | |
+|---|---|
+| Steps | `python3 tools/build_bundle.py`; double-click `dist/OpenInterceptor-0.2.0.app` in Finder. |
+| Expected | The launcher opens with both packs listed (the CD found through `settings.ini`); Finder shows version 0.2.0 in Get Info; `bindings.ini` and `mods/` exist in `~/Library/Application Support/OpenInterceptor/`. |
+

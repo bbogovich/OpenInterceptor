@@ -9,14 +9,20 @@ Plan: Stage 1.
 ```mermaid
 flowchart LR
     W["World + player ShipId"] --> L["pure logic<br/>radar_point, gauge_values, gauge_angle,<br/>mfd_lines, MessageLog::visible"]
-    CK["CockpitDef.instruments<br/>(or default_instruments)"] --> LY["Layout::rect<br/>640×480 design space → pixels"]
+    CK["CockpitDef.instruments + design<br/>(or default_instruments, 640×480)"] --> LY["Layout::new(screen, design)<br/>design space → pixels"]
     L --> D["draw::draw_targeting<br/>draw::draw_cockpit<br/>draw::draw_instruments"]
     LY --> D
 ```
 
-**Design space.** Cockpit art is 640×480; instruments are placed in that space
-(`Instrument.mfd = x, y, w, h` in the rules). `Layout::new(screen)` scales by height and centres
-horizontally, so a 4:3 cockpit sits in the middle of a wide screen.
+**Design space.** Instruments are placed in a cockpit's *design space*
+(`Instrument.mfd = x, y, w, h` in the rules). The original cockpits use 640×480, the default;
+a cockpit can declare its own with `Design = w, h` (the sample Dart uses 1280×720).
+`Layout::new(screen, design)` scales the design space as large as fits
+(`min(screen.w / design.w, screen.h / design.h)`) and centres it: a 4:3 cockpit fills the
+height of a 16:9 screen with space visible at the sides; a 16:9 design fills it exactly. The
+cockpit image is stretched to the whole design space (`Layout::full`), whatever its pixel
+size — which is why an HD repaint (e.g. 2560×1920 replacing a 640×480 original) keeps every
+instrument aligned without changing a rule.
 
 **Instruments** (names used in cockpit rules):
 
@@ -29,7 +35,8 @@ horizontally, so a 4:3 cockpit sits in the middle of a wide screen.
 
 Ships without cockpit art, and the non-cockpit views, use **glass instruments**
 (`default_instruments()` with dark backgrounds). A throttle/speed/REV/BURN/VCT strip is
-drawn under the message line.
+drawn under the message line, extended with `BRAKE` while braking and `HOLD n` while the
+flight computer holds a speed.
 
 **Targeting** (forward views): a reticle; corner brackets sized by the target's angular size;
 name and range; a lead circle (where to aim beams); a lock-progress ring, then a red lock
@@ -40,7 +47,7 @@ diamond.
 
 | Symbol | What it is |
 |---|---|
-| `Layout` | `scale` and `offset`; `rect([x, y, w, h])`. |
+| `Layout` | `scale`, `offset`, `design`; `new(screen, design)`, `rect([x, y, w, h])`, `full()`. |
 | `radar_point(local_dir, front) -> Option<Vec2>` | Where a contact goes on a scope (unit disc). |
 | `gauge_angle(fraction)`, `gauge_values(&Ruleset, &Ship) -> [f32; 4]` | Needle maths. |
 | `MfdPage`, `mfd_lines(&World, ShipId, page, nav) -> Vec<String>` | MFD content. |
@@ -55,7 +62,7 @@ diamond.
 ## Debugging
 
 - If instruments sit in the wrong place on a cockpit, adjust the `Instrument.*` rectangles in
-  the cockpit's rules section — no code change needed; positions are in 640×480 pixels of the
-  art.
+  the cockpit's rules section — no code change needed; positions are in the cockpit's design
+  space (640×480 unless `Design` says otherwise), not in the image's pixels.
 - The original cockpits' cyan colour key becomes transparent black on load; a cyan halo means
   the key was not applied (`load_image(.., colour_key = true)`).

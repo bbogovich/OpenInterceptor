@@ -5,7 +5,9 @@
 | Model | Wavefront **OBJ** + **MTL** | `v`, `vt`, `vn`, `f` (forms `1`, `1/2`, `1//3`, `1/2/3`, negative indices), `usemtl`, `mtllib`. Polygons are fan-triangulated, so keep them convex. Groups and objects are ignored. |
 | Material | MTL | `newmtl`, `Kd r g b` (flat colour, 0–1), `map_Kd file` (texture, relative to the `.mtl`; options before the file name are allowed). |
 | Texture | **PNG** or **TGA** | Any size; RGBA honoured. |
-| Cockpit art | PNG or TGA | 640×480 design size (scaled to the window height). Use alpha for the window. |
+| Cockpit art | PNG or TGA | Any resolution; stretched over the cockpit's design space (640×480 unless `Design` says otherwise). Use alpha for the window. See [Cockpits](cockpits.md). |
+| 3D cockpit | OBJ + MTL | Metres around the pilot's eye at the origin, +Y up, looking along −Z. |
+| Replacement of an original asset | OBJ / PNG / WAV at its override path | See [Overrides and extraction](overrides.md); `--extract` produces starting files. |
 
 The original formats (XMSH meshes, XTXR textures, TGA cockpits) are read straight from the CD
 behind the same interfaces, so original and mod assets can be mixed freely.

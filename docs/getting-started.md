@@ -20,14 +20,31 @@ cargo build --release
 ## Put the game data in place
 
 Copy the CD contents (the folder with `Resources/`, `ProgramFiles/` and `Animations/`) to
-`OpenInterceptor/game/Game/`, or anywhere else and pass `--data`. If your copy has the CD
-audio tracks extracted, put them in `game/CD Audio/`. The `game/` folder is git-ignored.
+`OpenInterceptor/game/Game/` in a development checkout. If your copy has the CD audio tracks
+extracted, put them in `game/CD Audio/`. The `game/` folder is git-ignored.
+
+You rarely need `--data`: the engine looks, in order, at `--data`, the
+`OPENINTERCEPTOR_DATA` variable, `settings.ini` `[paths] original` in the user data folder,
+`<user data folder>/original`, and finally `game/` in the development checkout
+([Settings and data discovery](architecture/settings.md)). An installed copy keeps the CD (or
+a copy of it), `settings.ini`, `bindings.ini` and `mods/` in the user data folder.
+
+## Build the macOS app
+
+```sh
+python3 tools/build_bundle.py            # dist/OpenInterceptor-0.2.0.app
+```
+
+The app contains the engine and the built-in packs, never game data. The script points
+`settings.ini` at `game/` (or `--data PATH`); `--install-data` clones the CD into the user data
+folder instead, as a real install would. Open the app from Finder. See
+[Packaging](build/packaging.md).
 
 ## Run
 
 ```sh
-# The testbed launcher, with the original data:
-target/release/openinterceptor --data game
+# The testbed launcher (the original data is found automatically):
+target/release/openinterceptor
 
 # Only original-free packs (the sample pack, your own mods):
 target/release/openinterceptor --no-original
@@ -39,8 +56,11 @@ target/release/openinterceptor --data game --scenario flight-test --ship lightni
 target/release/openinterceptor --data game --scenario flight-test --ship firestar --view chase
 
 # Headless validation of every pack, model and texture; list what loaded:
-target/release/openinterceptor --data game --check
-target/release/openinterceptor --data game --list
+target/release/openinterceptor --check
+target/release/openinterceptor --list
+
+# Convert the original data to OBJ/PNG/WAV for modding (personal use only):
+target/release/openinterceptor --extract ~/interceptor-extracted
 
 # The quality gate (tests, build, checks):
 scripts/check.sh
@@ -50,14 +70,15 @@ scripts/check.sh
 
 | Option | Meaning |
 |---|---|
-| `--data <PATH>` | The *Interceptor* CD or install folder (or set `OPENINTERCEPTOR_DATA`). |
-| `--mods <DIR>` | Folder of user mods (default: `mods/` in the user data folder). |
+| `--data <PATH>` | The *Interceptor* CD or install folder. Without it: `OPENINTERCEPTOR_DATA`, then `settings.ini`, then `<user data>/original`, then `game/` in a checkout. |
+| `--mods <DIR>` | Folder of user mods (default: `settings.ini` `[paths] mods`, else `mods/` in the user data folder). |
 | `--packs <DIR>` | Folder of built-in packs (default: `packs/` next to the program, or the source tree). |
 | `--no-original` | Ignore the original data even if available. |
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). |
+| `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](modding/overrides.md)), then exit. |
 | `--list` | List packs, playable ships and scenarios, then exit. |
 | `--windowed` / `--fullscreen` | Window mode (windowed is the default). |
 | `--help` | Usage. |
@@ -65,13 +86,16 @@ scripts/check.sh
 Environment: `OPENINTERCEPTOR_DATA` (default for `--data`), `OI_DEBUG_KEYS=1` (print key
 names as you press them).
 
-The user data folder (bindings and mods) is `~/Library/Application Support/OpenInterceptor/`
+The user data folder (`settings.ini`, `bindings.ini`, `original/`, `mods/`) is `~/Library/Application Support/OpenInterceptor/`
 on macOS and `$XDG_DATA_HOME/openinterceptor/` (default `~/.local/share/openinterceptor/`) on
 Linux.
 
-The launcher lists the model viewer and the test scenarios from every loaded pack: Up/Down to
+The launcher lists the model viewer, the asset browser and the test scenarios from every
+loaded pack: Up/Down to
 choose, Left/Right to pick a ship, Enter to start, Esc to quit. In flight, Esc opens the menu
 (R restart, L back to the launcher). Default controls follow the original game; see [Controls](original-game/controls.md).
+Flight is newtonian by default: throttle is thrust and the ship coasts; `Z` reverses thrust,
+hold `B` to brake, `M` holds the target's speed.
 
 ## Documentation site
 

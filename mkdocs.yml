@@ -81,6 +81,8 @@ nav:
       - "Packs": modding/packs.md
       - "Rulesets and layering": modding/rulesets.md
       - "Models and textures": modding/models.md
+      - "Overrides and extraction": modding/overrides.md
+      - "Cockpits (HD and 3D)": modding/cockpits.md
       - "Scenarios and missions": modding/scenarios.md
       - "Scripting (planned)": modding/scripting.md
       - "Tech tree and campaign (planned)": modding/campaign.md
@@ -99,6 +101,7 @@ nav:
       - architecture/index.md
       - "Formats layer": architecture/formats.md
       - "Packs, VFS and rules": architecture/packs.md
+      - "Settings and data discovery": architecture/settings.md
       - "Assets and GPU cache": architecture/assets.md
       - "Simulation": architecture/sim.md
       - "Rendering": architecture/rendering.md
@@ -107,6 +110,7 @@ nav:
       - "Audio": architecture/audio.md
       - "Platform layer": architecture/platform.md
       - "Testbed": architecture/testbed.md
+      - "Extractor": architecture/extract.md
   - "Build":
       - "Development environment": build/setup.md
       - "Packaging": build/packaging.md

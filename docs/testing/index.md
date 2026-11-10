@@ -6,14 +6,15 @@ See the [testing policy](../best-practices/testing-policy.md) for what must be t
 
 `scripts/check.sh` on `main` runs every automated check:
 
-1. `cargo test --release` — all unit tests (146 at main `cf374a7`).
+1. `cargo test --release` — all unit tests (164 at main `909d687`, build 0.2.0).
 2. `cargo build --release`.
 3. `openinterceptor --check --no-original` — the original-free packs load and validate.
 4. `openinterceptor --data <data> --check` — when the player's data is found
    (`OPENINTERCEPTOR_DATA` or `./game`): every rule, ship model, debris model, texture,
    cockpit image, sound and scenario loads, and every original mesh and texture decodes
-   (reference CD: 2 packs, 34 ship classes, 99 models, 272 textures, 3 images, 20 sounds,
-   5 scenarios, 1 096 original resources, 0 errors). Skipped with a message otherwise.
+   (reference CD: 2 packs, 34 ship classes, 100 models incl. the sample pack's 3D cockpit,
+   272 textures, 3 images, 20 sounds, 5 scenarios, 1 096 original resources, 0 errors).
+   Skipped with a message otherwise.
 5. A guard that fails if any original asset file type (`exe dll cab smk aif aiff wav mps`) is
    tracked by git.
 
@@ -22,6 +23,7 @@ warnings and `cargo fmt --check` (settings in `rustfmt.toml`: width 120).
 
 ```sh
 scripts/check.sh                                 # everything
+openinterceptor --extract /tmp/x                 # also exercises every reader (not in the gate)
 cargo test                                       # unit tests only
 cargo test xmsh                                  # tests whose name contains "xmsh"
 OPENINTERCEPTOR_DATA=~/Games/Interceptor scripts/check.sh

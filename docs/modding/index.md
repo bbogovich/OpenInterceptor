@@ -26,11 +26,46 @@ flowchart LR
 
 | Stage | You can change |
 |---|---|
-| 1 (now) | Ships (model, cockpit, flight model, mounts, hull/armour/shields, energy), beam weapons, missiles, stations and objects, factions, cockpits and instrument layout, event sounds, scenarios with any mix of objects and nav points, replacement or additional models (OBJ) and textures (PNG/TGA), re-skins of original textures |
+| 1 (now) | Ships (model, cockpit, flight values, mounts, hull/armour/shields, energy), the flight model itself (`newtonian` or `assisted`) and arena size, beam weapons, missiles, stations and objects, factions, cockpits (2D art at any resolution, own design space, 3D cockpit models), instrument layout, event sounds, scenarios with any mix of objects and nav points, additional models (OBJ) and textures (PNG/TGA), **per-asset replacement of any original model, texture, image or sound** |
 | 2 | AI behaviours per class, shields/armour, special systems, mines and probes, effects, sounds |
 | 3 | Missions with objectives and triggers, wingman chatter, **scripts** |
 | 4 | Star map, bases and modules, research tree, manufacturing, economy, enemy strategy |
 | 5 | Menus, videos, music |
+
+## Two ways to change the game
+
+1. **Rules and scenarios** — INI files in a pack. Add new ships, weapons and arenas, or change
+   any value of an existing one by overriding just that key ([Rulesets](rulesets.md)).
+2. **Assets** — drop a file at an original asset's *override path* in a pack and it replaces
+   that asset everywhere ([Overrides and extraction](overrides.md)). `openinterceptor
+   --extract <folder>` writes every original asset, already converted to OBJ/PNG/WAV, at
+   exactly those paths: extract, edit, copy the edited file into your mod.
+
+The simplest useful mod is one file: a repainted cockpit at modern resolution
+([walkthrough](overrides.md#walkthrough-repaint-the-cockpit-in-hd)). Replacing the 2D cockpit
+with a 3D one is a few lines of rules plus a model ([Cockpits](cockpits.md)).
+
+## Comparison with XWVM
+
+[XWVM](https://www.gamingonlinux.com/2025/06/xwvm-is-a-modern-unity-engine-to-play-star-wars-x-wing-first-alpha-out-now)
+plays the original *X-Wing* from the player's own data, and faces the same problem: 1990s
+assets by default, modern content when the player wants it. Public sources (a GamingOnLinux
+article, a Steam discussion, changelog quotes on Mudspike, and the `scotsdez/xwvm-sidecars-xwing`
+repository; ModDB refused automated access) describe its approach:
+
+| | XWVM | OpenInterceptor |
+|---|---|---|
+| Original assets | Read from the player's install; none shipped | Same |
+| Modern content | A separate HD Asset Pack download (new ship models, 3D cockpits, re-recorded music) | Any pack or mod |
+| Switching | Whole packs activated in the launcher's *Game Content* screen | Whole packs switched off in `settings.ini` `[packs] disabled` |
+| Granularity | Per pack; no documented per-asset override scheme | **Per asset**: a file at the override path replaces one original asset; everything else still comes from the CD |
+| Cockpits | Legacy VGA cockpit or a 3D cockpit with instruments on in-cockpit screens | Original 2D cockpit, HD/widescreen 2D art with its own design space, or a 3D cockpit model (instruments on in-cockpit screens are planned, Stage 5) |
+| Missions | "Sidecar" XML beside the unmodified original mission | Scenario INI files; rules `inherit` from original sections without editing them |
+| Tools | No public extractor; community format tools | Built-in `--extract` to OBJ/PNG/WAV at override paths |
+
+Both keep original files untouched and never redistribute them. XWVM's lesson on pack
+activation (toggling a pack had no effect until a restart path was taken) is why our pack list
+is read once, deterministically, at start-up.
 
 ## Pages
 
@@ -38,6 +73,8 @@ flowchart LR
 - [Packs](packs.md): folder layout, `pack.ini`, asset references, re-skinning.
 - [Rulesets and layering](rulesets.md): the rule format and how mods override.
 - [Models and textures](models.md): bringing your own art.
+- [Overrides and extraction](overrides.md): replacing original assets; `--extract`; the HD cockpit walkthrough.
+- [Cockpits (HD and 3D)](cockpits.md): cockpit rules, design spaces, 3D cockpits.
 - [Scenarios and missions](scenarios.md): placing ships and stations.
 - [Scripting](scripting.md) and [Tech tree and campaign](campaign.md): planned.
 - [Validating a mod](validating.md): `--check`.

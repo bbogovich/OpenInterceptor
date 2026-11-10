@@ -45,8 +45,15 @@ once per frame. There are no threads involved and no async runtime such as Tokio
 
 ## Consequences
 
-- Anything that waits for a frame must be `async` and `.await`ed. Only `app::run` and
-  `SoundBank::load` are async in this codebase.
+- Anything that waits for a frame must be `async` and `.await`ed. In this codebase that is
+  `app::run`, `SoundBank::load`, and the asset browser's `AssetBrowser::frame`, which loads a
+  sound for playback with macroquad's `async fn load_sound_from_bytes`. Making that one screen
+  method `async` costs nothing: the app loop is already async and simply writes
+  `Screen::Assets(a) => a.frame(&mut ctx).await`.
+- A tempting shortcut — a hand-made `block_on` that polls the future in a loop — was rejected
+  when writing the asset browser: it needs an `unsafe` waker (or `Waker::noop`) and spins
+  forever if the future is ever `Pending`. `.await` inside the async loop is both safe and
+  simpler.
 - Screen `frame` functions and `World::step` are **ordinary** functions called from the loop,
   which keeps them testable without a window.
 
