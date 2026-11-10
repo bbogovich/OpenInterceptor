@@ -45,6 +45,12 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | MT-1-28 | Asset browser and override marking | Asset browser | not run | | | |
 | MT-1-29 | Disable a pack | `flight-test` | not run | | | Covered by a unit test; needs an on-screen check |
 | MT-1-30 | App bundle from Finder | Launcher | partial | 2026-11-10 | developer / macOS | Bundled binary run from `/` loads packs and the CD (`--check` 0 errors); not yet opened from Finder |
+| MT-1-31 | Original meshes render correctly | Model viewer | partial | 2026-11-10 | developer / macOS | Build 0.2.1: XBASE7, CPAT, ROID100, ALIENC7, AVENGER16 seen solid, fully textured, no flicker; tester reports viewer models "look more correct". 1ASHB and close-ups pending |
+| MT-1-32 | Viewer wireframe and face selection | Model viewer | not run | | | Build 0.2.1 |
+| MT-1-33 | Overlay toggle | Model viewer | not run | | | Build 0.2.1 |
+| MT-1-34 | Bolts leave from the nose (chase view) | `gunnery-range` | not run | | | Build 0.2.1; reported broken in 0.2.0 |
+| MT-1-35 | Radar scopes aligned with cockpit art | `combat-test` | partial | 2026-11-10 | developer / macOS | Cockpit A seen aligned (contacts inside the painted glass); B and C pending |
+| MT-1-36 | Sample models one-sided | `sample-arena` | not run | | | Build 0.2.1: ring station and Dart under back-face culling |
 
 "partial" = seen working during development; the full steps below still need a recorded pass.
 
@@ -289,5 +295,54 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 | Field | |
 |---|---|
 | Steps | `python3 tools/build_bundle.py`; double-click `dist/OpenInterceptor-0.2.0.app` in Finder. |
-| Expected | The launcher opens with both packs listed (the CD found through `settings.ini`); Finder shows version 0.2.0 in Get Info; `bindings.ini` and `mods/` exist in `~/Library/Application Support/OpenInterceptor/`. |
+| Expected | The launcher opens with both packs listed (the CD found through `settings.ini`); Finder shows the build's version in Get Info; `bindings.ini` and `mods/` exist in `~/Library/Application Support/OpenInterceptor/`. |
 
+### MT-1-31 — Original meshes render correctly
+
+| Field | |
+|---|---|
+| Scenario | Model viewer (`--model <NAME>` opens it on a mesh) |
+| Preconditions | Original data available |
+| Steps | Open each of `XBASE7`, `CPAT`, `ROID100`, `ALIENC7`, `1ASHB`, `AVENGER16`, `AL-OPP7`, `A-FRT3`, `A-SHIPA5`; orbit all the way round (arrows/drag) and zoom in close (+/wheel). |
+| Expected | No flickering on flat areas (station panels, saucer underside circles, shield ring, Avenger fin); every textured face shows texture detail — no single-colour faces and no smeared stripes (the Patton's hull is fully textured, the asteroid is rock all over); faces seen only from outside, never inside-out. |
+| Known, not bugs | `A-BMOD01`, `ALCLAW2`, `A-FRT4` (and other debris/parts) are **open shells** in the original data: looking into the opening shows no inside faces. `A-SHIPA4`'s stretched texture on one side matches its original UVs (unconfirmed against the original game). Faces flagged translucent are drawn opaque (the flag is not used yet). |
+
+### MT-1-32 — Viewer wireframe and face selection
+
+| Field | |
+|---|---|
+| Scenario | Model viewer, `--model A-SHIPA5` |
+| Steps | Press **W** three times; press **]** several times, **Shift+]**, **[**; press **I**; press **PgDn** to the next model. |
+| Expected | W cycles solid → solid + green face outlines with yellow vertex dots → outlines only (all edges visible) → solid; the info line names the mode. ] selects face 0, 1, …; Shift jumps 10; [ goes back and wraps; the selected face is outlined in yellow with its number, and the info line shows its corners, texture, flags, layer and UVs. I numbers every face towards the camera. Changing model clears the selection. |
+
+### MT-1-33 — Overlay toggle
+
+| Field | |
+|---|---|
+| Scenario | Model viewer, `--model XBASE7` |
+| Steps | Zoom in to the station's flat panels; press **O** twice; press Esc and fly any scenario. |
+| Expected | O hides the overlay-flagged panels (the base surface under them shows) and shows them again; the info line says "overlays hidden/shown". After Esc, stations in flight have their overlays (the setting is restored). |
+
+### MT-1-34 — Bolts leave from the nose (chase view)
+
+| Field | |
+|---|---|
+| Scenario | `gunnery-range`, `--view chase` |
+| Steps | Fire beams (Space) while stationary, then at full throttle and with afterburner. |
+| Expected | Every bolt streak starts at the front of the ship and grows forward; no streak reaches back past the ship. |
+
+### MT-1-35 — Radar scopes aligned with cockpit art
+
+| Field | |
+|---|---|
+| Scenario | `combat-test`, cockpit view, once with each hull (`--ship lightning`, `firestar`, `avenger`) |
+| Steps | Look at both radar scopes; turn so contacts move to the edge of each scope. |
+| Expected | Contacts stay inside the painted round glass, centred on the painted crosshair; no extra engine-drawn rings or F/R letters over the art; the glass HUD (F2 or a non-cockpit view) still shows rings and labels. |
+
+### MT-1-36 — Sample models one-sided
+
+| Field | |
+|---|---|
+| Scenario | `sample-arena`, `--no-original`, chase view |
+| Steps | Fly around the ring station and past the wingmen's Darts; open the model viewer on `ring` and `dart`. |
+| Expected | The ring is solid from every side (no missing walls); the Dart's canopy fin shows from both sides; the 3D cockpit is unchanged. |

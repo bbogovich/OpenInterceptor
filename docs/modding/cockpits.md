@@ -11,8 +11,8 @@ Model = models/cockpit.obj            ; optional 3D cockpit around the pilot's e
 ModelOffset = 0, 0, 0                 ; metres from the eye (x right, y up, -z ahead)
 ModelScale = 1
 Instrument.message = 118, 12, 410, 24
-Instrument.radar_front = 109, 318, 68, 68
-Instrument.radar_rear = 465, 318, 68, 68
+Instrument.radar_front = 111, 332, 60, 60  ; the round glass of the scope
+Instrument.radar_rear = 473, 332, 60, 60
 Instrument.mfd = 246, 338, 156, 82
 Instrument.gauge1 = 243, 299, 26, 26   ; speed
 Instrument.gauge2 = 288, 299, 26, 26   ; energy
@@ -28,6 +28,12 @@ Instrument.gauge4 = 378, 299, 26, 26   ; hull
 | `ModelOffset` | `0, 0, 0` | Where the model's origin sits relative to the pilot's eye, in metres. |
 | `ModelScale` | `1` | Model units → metres. |
 | `Instrument.<name>` | — | `x, y, w, h` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`. |
+
+**Radar rectangles enclose the scope's glass.** Contacts are placed in the circle inscribed in
+the rectangle, so draw it tight around the round glass (centre on the painted crosshair).
+Over cockpit art the engine draws **only the contacts** — the art supplies the scope rings; on
+the glass HUD (no art) the engine adds two rings and an F/R label. The interceptor pack's
+values were measured from the original art to ±1 px.
 
 A cockpit needs an `Image`, a `Model`, or both. Without a cockpit (or in the non-cockpit
 views) the HUD uses glass instruments in a default layout.

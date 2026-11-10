@@ -42,13 +42,65 @@ reaches the GPU: each object's model matrix is built from `position − camera.p
 
 | Material | Shader | GPU state | Used for |
 |---|---|---|---|
-| lit | vertex lighting: `0.30 + 0.85 × max(n·sun, 0)` × vertex colour × texture, plus a `Tint` uniform (hit flash) | depth test ≤, depth write | ships, stations, debris |
+| lit | vertex lighting: `0.30 + 0.85 × max(n·sun, 0)` × vertex colour × texture, plus a `Tint` uniform (hit flash); overlay depth bias | depth test ≤, depth write, **back faces culled** (counter-clockwise = front) | ships, stations, debris |
 | sky | unlit | depth always, no write, additive | stars, sun |
 | glow | unlit | depth test ≤, no write, `SrcAlpha + One` | engines, bolts, missiles, sparks, explosions |
 
 Normals reach the shader through macroquad's spare `normal` vertex attribute. Per-object
 transforms use macroquad's model-matrix stack (`push_model_matrix`), which breaks batches per
 object and snapshots uniforms per draw call — so the hit `Tint` is per ship.
+
+### One-sided faces (back-face culling)
+
+Models are one-sided, as in the original game: the lit pipeline sets `cull_face: Back` with
+counter-clockwise front faces. The original data winds every polygon counter-clockwise around
+its outward plane normal, and models a surface seen from both sides as two polygons back to
+back (shield rings, fins). Without culling both copies drew at the same depth and flickered
+(z-fighting). `Model::from_xmsh` mirrors Z and reverses winding, so engine triangles stay
+counter-clockwise seen from outside; mod OBJ models follow the same rule
+([Models](../modding/models.md)).
+
+### Overlay layers and the depth bias
+
+A decal lying exactly on another face (station panels, alien hull markings) has the same depth
+values as the face under it, so the depth test picks a winner at random per pixel — flicker.
+At load, `model::assign_overlay_layers` compares every pair of faces in a LOD: faces in the same
+plane (normals within 0.999, plane offsets within 1e-4 × radius), facing the same way, that
+overlap by the *separating-axis* test get stacked layers. Which is on top: faces flagged
+`POLY_OVERLAY`, then `POLY_TRANSLUCENT`, then ordinary faces; among equals the later face in
+the file (the original painted in that order). OBJ models use file order only. The pass takes
+about 8 ms for all 297 CD meshes; 119 of 17,284 LOD-0 faces get a layer above 0.
+
+The layer travels per vertex in the spare `w` of the `normal` attribute (`ModelVertex::layer`).
+The lit vertex shader does
+
+```glsl
+gl_Position.z -= normal.w * LAYER_BIAS * gl_Position.w;
+```
+
+which moves the face towards the camera **in depth only** (the image does not shift).
+`LAYER_DEPTH_BIAS` = 2⁻¹⁸ in normalised device coordinates, about 32 steps of a 24-bit depth
+buffer — the same idea as `glPolygonOffset`, done per vertex because a model is one draw call.
+Multiplying by `w` keeps the shift constant after the perspective divide. GLSL cannot read a
+Rust constant, so `lit_vertex_source()` pastes the number into the shader text at start-up.
+
+Overlay-flagged faces are kept in their own material groups (`MaterialGroup::overlay`,
+`GpuLod::overlay`), so `Renderer::show_overlays = false` hides them (the model viewer's **O**).
+
+### Texture addressing
+
+Original texture coordinates run outside 0..1 to tile a texture across a big face. Model
+textures are set to **repeat** (`render::set_repeat`, via `texture_set_wrap` on the internal GL
+context) instead of macroquad's default clamp, which smeared edge pixels across such faces
+(the "incomplete" Patton, the asteroids, many debris chunks). The UV varying is `mediump`, not
+`lowp`, so tiled coordinates keep their precision on GL ES devices.
+
+### Bolt streaks
+
+A bolt is drawn as a streak trailing behind its head. `Bolt::streak_length()` is
+`min(muzzle_speed × 0.025 s, 80 m, muzzle_speed × age)`: never longer than the distance the bolt
+has flown from the gun. Without the last term, a bolt fired this frame trailed up to 80 m back
+past the muzzle, so in the chase view fire seemed to come from behind the ship.
 
 LOD choice: `GpuModel::lod(distance)` picks the first LOD whose `switch_distance` exceeds the
 camera distance (the original values: e.g. 75 / 150 / 450 m / ∞ for the Lightning II).
@@ -63,6 +115,12 @@ Objects entirely behind the camera are skipped.
 | `effects::Effects` | `explosions`, `sparks`, `debris`, created by `on_events(&World)` and aged by `update(dt)`. |
 | `starfield::Star`, `starfield::generate(seed, count)` | Seeded, uniform-on-the-sphere star directions. |
 | `push_billboard`, `push_streak` | Build camera-facing quads into the reusable buffers. |
+| `LAYER_DEPTH_BIAS`, `lit_vertex_source()` | Depth shift per overlay layer and the shader text with it filled in. |
+| `Renderer::show_overlays` | Draw overlay-flagged faces (default `true`; the viewer toggles it and restores it on exit). |
+| `gpu::Chunk::overlay`, `GpuLod::overlay` | Per-mesh overlay flag, parallel to `GpuLod::meshes`. |
+| `GpuModel::lod_index(distance)` | Index of the LOD to draw; shared between `GpuModel::lods` and `model.lods`. |
+| `model::Face` | One original polygon: `first`, `count` (its corners are consecutive vertices), `group`, `flags`. |
+| `model::assign_overlay_layers`, `model::face_plane` | The overlay pass; a face's plane by Newell's method. |
 
 ## API Reference
 
@@ -81,5 +139,13 @@ Objects entirely behind the camera are skipped.
   `Renderer::new` (shown on the start-up error screen).
 - Engine glows come from rear-facing model attachments, else the back of the bounding box;
   `GpuModel::engines` is computed once at load, so drawing glows allocates nothing per frame.
+- A face that vanishes from one side is a back face: wind it the other way, or add a second
+  face back to back if it must be seen from both sides. The viewer's wireframe (**W**) shows the
+  missing face's outline.
+- Flicker on a flat area means coplanar faces facing the same way that the overlay pass did not
+  pair (they are not in the same plane within tolerance); select them with **[ ]** in the viewer
+  and compare their `layer`.
+- Stretched or single-colour faces on original models: check that the texture repeats (the
+  face info line shows UVs beyond 0..1).
 - A 3D cockpit that is invisible usually sits behind the eye: check `ModelOffset` and that the
   model's front faces −Z.

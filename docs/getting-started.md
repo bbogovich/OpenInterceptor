@@ -59,6 +59,9 @@ target/release/openinterceptor --data game --scenario flight-test --ship firesta
 target/release/openinterceptor --check
 target/release/openinterceptor --list
 
+# Open the model viewer on one model (ship id or original mesh name):
+target/release/openinterceptor --model XBASE7
+
 # Convert the original data to OBJ/PNG/WAV for modding (personal use only):
 target/release/openinterceptor --extract ~/interceptor-extracted
 
@@ -77,6 +80,7 @@ scripts/check.sh
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
+| `--model <NAME>` | Open the model viewer on this model: a ship class id (`dart`) or an original mesh name (`XBASE7`). |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](modding/overrides.md)), then exit. |
 | `--list` | List packs, playable ships and scenarios, then exit. |

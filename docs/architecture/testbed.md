@@ -10,6 +10,7 @@ Stage 1.
 stateDiagram-v2
     [*] --> Launcher
     [*] --> FlightSession: --scenario id
+    [*] --> ModelViewer: --model name
     Launcher --> FlightSession: Enter on a scenario (Next::Fly)
     Launcher --> ModelViewer: Enter on Model viewer (Next::Viewer)
     ModelViewer --> Launcher: Esc
@@ -33,6 +34,15 @@ stateDiagram-v2
   with arrows or mouse drag, zoom with +/− or the wheel, PgUp/PgDn (or B/N) to change model,
   `L` to cycle LOD (auto, 0–3), Space to stop spinning, Esc back. The camera is fitted to each
   model's radius and never enters it; `viewer::wheel_steps` turns wheel movement into zoom steps.
+  The near plane follows the orbit (`viewer::near_plane`: just in front of the model, at least
+  1% of the distance, never under 5 cm), so depth precision suits a 600 m station as well as a
+  2 m debris chunk. Mesh-debugging keys: **W** cycles `Display::Solid` / `SolidWire` / `Wire`
+  (each original face's outline as 3D lines, pulled 0.3% towards the camera over a solid
+  model, plus a dot on every vertex of faces towards the camera); **[ / ]** select a face
+  (Shift ×10), outlined and numbered, with `viewer::face_info` on the info line (index, corners,
+  texture, flags, overlay layer, UVs); **I** numbers every face towards the camera; **O** toggles
+  `Renderer::show_overlays` (restored on Esc). `--model NAME` opens the viewer on a model
+  (`viewer::find_entry`: ship id or mesh name, whole names, case-insensitive).
 - **Asset browser** (`assets.rs`): every original texture, image (cockpits, HUD, menus,
   sprites) and sound, loaded exactly as the game loads them — so a pack override shows its
   replacement, and the entry is marked `[overridden by <pack>]`. Tab switches between
