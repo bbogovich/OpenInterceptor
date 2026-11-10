@@ -7,7 +7,10 @@ engine's tests) never depend on X-COM: Interceptor data. Run from the repository
     python3 tools/make_sample_models.py
 
 Conventions for mod models (see the docs site, Modding > Models): metres, +Y up, the
-nose pointing along -Z, Wavefront OBJ with an .mtl material library.
+nose pointing along -Z, Wavefront OBJ with an .mtl material library. Faces are
+one-sided: a face is seen only from the side where its corners run counter-clockwise,
+so every face here is wound that way seen from outside, and a thin surface meant to be
+seen from both sides (the Dart's canopy fin) is two faces back to back.
 """
 import math
 import os
@@ -73,7 +76,8 @@ def dart():
     o.face("engine", top, tail, right)
     o.face("engine", left, bottom, tail)
     o.face("engine", tail, bottom, right)
-    o.face("canopy", nose, top, canopy)
+    o.face("canopy", nose, top, canopy)  # a thin fin: one face per side
+    o.face("canopy", nose, canopy, top)
     o.write({"hull": ((0.55, 0.62, 0.75), None), "engine": ((1.0, 0.55, 0.15), None), "canopy": ((0.3, 0.9, 1.0), None)})
 
 
@@ -105,7 +109,8 @@ def ring_station():
         p, q = rings[k], rings[(k + 1) % segs]
         for i in range(4):
             j = (i + 1) % 4
-            o.face("panel", p[i], q[i], q[j], p[j], uv=(1, 2, 3, 4))
+            # Counter-clockwise seen from outside the ring's cross-section.
+            o.face("panel", p[i], p[j], q[j], q[i], uv=(1, 4, 3, 2))
     # Hub: a box.
     hub = [o.vert(x, y, z) for x in (-40, 40) for y in (-40, 40) for z in (-40, 40)]
     for quad in [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]:

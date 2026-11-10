@@ -55,8 +55,12 @@ pub fn draw_instruments(f: &HudFrame) {
         let Some(r) = get(name) else { continue };
         let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
         let radius = r[2].min(r[3]) * 0.5;
-        draw_circle_lines(c.x, c.y, radius, 1.0, HUD_DIM);
-        draw_circle_lines(c.x, c.y, radius * 0.5, 1.0, HUD_DIM);
+        // Cockpit art has its own scope rings; the engine adds rings only on the
+        // plain glass HUD, so they never sit slightly off the painted ones.
+        if f.glass {
+            draw_circle_lines(c.x, c.y, radius, 1.0, HUD_DIM);
+            draw_circle_lines(c.x, c.y, radius * 0.5, 1.0, HUD_DIM);
+        }
         for id in f.world.live_ids() {
             if id == f.player {
                 continue;
@@ -77,7 +81,9 @@ pub fn draw_instruments(f: &HudFrame) {
                 }
             }
         }
-        text(if front { "F" } else { "R" }, r[0], r[1], 10.0 * f.layout.scale.max(1.0), HUD_DIM);
+        if f.glass {
+            text(if front { "F" } else { "R" }, r[0], r[1], 10.0 * f.layout.scale.max(1.0), HUD_DIM);
+        }
     }
     // Gauges: speed, energy, shields, hull.
     let values = gauge_values(rules, me);

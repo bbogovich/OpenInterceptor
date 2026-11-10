@@ -16,12 +16,26 @@
 //!   texture = 32-byte name
 //!   manipulator = 64 bytes: 3x4 matrix + two ints (attachment points)
 //!   BSP node = 64 bytes: plane, bbox, front/back child, polygon count; polygons inline
-//!   polygon  = plane, colour, texture index, n, then n *signed* edge references
+//!   polygon  = plane, flags, colour, ?, ?, texture index, n, then n *signed* edge refs
 //! ```
 //!
 //! A polygon lists **edges**, not vertices. A positive reference `+e` walks edge `e`
 //! from its first to its second vertex; `-e` walks it backwards. Taking the starting
 //! vertex of each walked edge yields the polygon's vertex loop.
+//!
+//! ## Polygon flags (*derived*)
+//!
+//! Most polygons have a flags word of 0. Two bits are understood well enough to use:
+//!
+//! - [`POLY_OVERLAY`] (`0x2000_0000`) marks an *overlay* — a decal-like polygon lying
+//!   exactly on top of a larger base polygon (station hatches, alien hull markings). The
+//!   original drew polygons in BSP order, so the later, flagged one simply painted over
+//!   the base; a depth-buffered renderer must be told which one wins
+//!   (see [`crate::model`]).
+//! - [`POLY_TRANSLUCENT`] (`0x8000_0000`) always comes with a float between 0 and 1 in
+//!   the following field (0.33, 0.60, 0.65 …) — most likely an opacity. Not yet used.
+//!
+//! The remaining bits (for example `0x0000_01xx` on station overlays) are not decoded.
 //!
 //! The reader keeps the data exactly as stored (Direct3D's left-handed coordinates).
 //! Conversion to the engine's right-handed system happens in [`crate::model`].
@@ -44,6 +58,11 @@ pub struct XVertex {
     pub uv: [f32; 2],
 }
 
+/// Polygon flag (*derived*): an overlay drawn on top of a coplanar base polygon.
+pub const POLY_OVERLAY: u32 = 0x2000_0000;
+/// Polygon flag (*derived*): probably translucent, with its opacity in [`Polygon::unknown`]`[0]`.
+pub const POLY_TRANSLUCENT: u32 = 0x8000_0000;
+
 /// One polygon. Its vertex indices are `lod.polygon_vertices[first..first + count]`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Polygon {
@@ -59,8 +78,11 @@ pub struct Polygon {
     pub first: u32,
     /// Number of vertices (3 or more).
     pub count: u16,
-    /// Fields whose meaning is not yet known; kept so research can continue.
-    pub unknown: [u32; 3],
+    /// Flag bits; see [`POLY_OVERLAY`] and [`POLY_TRANSLUCENT`].
+    pub flags: u32,
+    /// Fields whose meaning is not yet known; kept so research can continue. The first
+    /// is a float (stored as its bits) when [`POLY_TRANSLUCENT`] is set.
+    pub unknown: [u32; 2],
 }
 
 /// An attachment point ("manipulator") such as a gun mount or engine glow.
@@ -213,7 +235,7 @@ fn data_budget(len: usize) -> usize {
 fn parse_polygon(r: &Reader, p: usize, edges: &[(u32, u32)], lod: &mut Lod) -> FResult<usize> {
     let normal = [r.f32(p)?, r.f32(p + 4)?, r.f32(p + 8)?];
     let distance = r.f32(p + 12)?;
-    let unknown0 = r.u32(p + 16)?;
+    let flags = r.u32(p + 16)?;
     let color = r.u32(p + 20)?;
     let unknown1 = r.u32(p + 24)?;
     let unknown2 = r.u32(p + 28)?;
@@ -243,7 +265,8 @@ fn parse_polygon(r: &Reader, p: usize, edges: &[(u32, u32)], lod: &mut Lod) -> F
         texture,
         first,
         count: n as u16,
-        unknown: [unknown0, unknown1, unknown2],
+        flags,
+        unknown: [unknown1, unknown2],
     });
     Ok(p + 40 + 4 * n as usize)
 }
@@ -256,6 +279,18 @@ pub(crate) fn build_test_xmsh(
     edges: &[(u32, u32)],
     textures: &[&str],
     polys: &[(u32, &[i32])],
+) -> Vec<u8> {
+    let with_flags: Vec<(u32, u32, &[i32])> = polys.iter().map(|&(t, e)| (t, 0, e)).collect();
+    build_test_xmsh_with_flags(verts, edges, textures, &with_flags)
+}
+
+/// Like [`build_test_xmsh`], with a flags word per polygon: `(texture, flags, edges)`.
+#[cfg(test)]
+pub(crate) fn build_test_xmsh_with_flags(
+    verts: &[[f32; 8]],
+    edges: &[(u32, u32)],
+    textures: &[&str],
+    polys: &[(u32, u32, &[i32])],
 ) -> Vec<u8> {
     let mut m = vec![0xcdu8; 0x70];
     m[..4].copy_from_slice(b"test");
@@ -297,9 +332,9 @@ pub(crate) fn build_test_xmsh(
     node[44..48].copy_from_slice(&(-1i32).to_le_bytes());
     node[52..56].copy_from_slice(&(polys.len() as i32).to_le_bytes());
     l.extend_from_slice(&node);
-    for (tex, es) in polys {
+    for (tex, flags, es) in polys {
         l.extend_from_slice(&[0u8; 16]); // plane
-        l.extend_from_slice(&0u32.to_le_bytes());
+        l.extend_from_slice(&flags.to_le_bytes());
         l.extend_from_slice(&0xff00ff00u32.to_le_bytes());
         l.extend_from_slice(&[0u8; 8]);
         l.extend_from_slice(&tex.to_le_bytes());
@@ -359,7 +394,22 @@ mod tests {
         assert_eq!(p.texture, Some(0));
         assert_eq!(p.color, 0xff00ff00);
         assert_eq!(p.count, 4);
+        assert_eq!(p.flags, 0);
         assert_eq!(lod.bsp_nodes, 1);
+    }
+
+    #[test]
+    fn polygon_flags_are_read() {
+        let v = [0.0f32; 8];
+        let data = build_test_xmsh_with_flags(
+            &[v, v, v],
+            &[(0, 1), (1, 2), (2, 0)],
+            &[],
+            &[(0, POLY_OVERLAY | 0x11d, &[1, 2, 3])],
+        );
+        let p = parse(&data).unwrap().lods[0].polygons[0];
+        assert_eq!(p.flags & POLY_OVERLAY, POLY_OVERLAY);
+        assert_eq!(p.flags & 0xfff, 0x11d, "undecoded bits are kept");
     }
 
     #[test]

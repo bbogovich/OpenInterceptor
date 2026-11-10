@@ -206,8 +206,22 @@ pub struct Bolt {
     pub velocity: Vec3,
     /// Seconds left before it fades out.
     pub life: f32,
+    /// Seconds since it was fired.
+    pub age: f32,
+    /// Speed relative to the ship that fired it (m/s), i.e. the weapon's muzzle speed.
+    pub muzzle_speed: f32,
     pub damage: f32,
     pub color: [f32; 3],
+}
+
+impl Bolt {
+    /// Length of the bolt's visible streak, in metres. A bolt is drawn as a short
+    /// streak trailing behind it; the streak may never be longer than the distance the
+    /// bolt has flown from the gun, or a freshly fired bolt would trail back past the
+    /// muzzle and appear to come from behind the ship.
+    pub fn streak_length(&self) -> f32 {
+        (self.muzzle_speed * 0.025).min(80.0).min(self.muzzle_speed * self.age)
+    }
 }
 
 /// A missile in flight.

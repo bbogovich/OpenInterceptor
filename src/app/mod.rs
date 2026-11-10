@@ -133,7 +133,10 @@ pub async fn run(options: Options) {
                 Screen::Launcher(launcher::Launcher::new(&ctx))
             }
         },
-        None => Screen::Launcher(launcher::Launcher::new(&ctx)),
+        None => match &options.model {
+            Some(name) => Screen::Viewer(viewer::ModelViewer::open_at(&ctx, name)),
+            None => Screen::Launcher(launcher::Launcher::new(&ctx)),
+        },
     };
     loop {
         let next = match &mut screen {

@@ -136,6 +136,8 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
             position: muzzle,
             velocity: vel + rot * Vec3::NEG_Z * beam.speed,
             life: beam.range / beam.speed,
+            age: 0.0,
+            muzzle_speed: beam.speed,
             damage: beam.damage,
             color: beam.color,
         });
@@ -204,7 +206,7 @@ fn move_bolts(w: &mut World, dt: f32) {
         let next = b.position + b.velocity * dt;
         match first_hit(w, b.position, next, b.owner) {
             Some((j, t)) => hits.push((j, b.position.lerp(next, t), b.damage)),
-            None if b.life > dt => keep.push(Bolt { position: next, life: b.life - dt, ..b }),
+            None if b.life > dt => keep.push(Bolt { position: next, life: b.life - dt, age: b.age + dt, ..b }),
             None => {}
         }
     }
@@ -413,6 +415,25 @@ mod tests {
         assert_eq!(foe_ship.armor, 30.0, "then 20 of 50 armour");
         assert_eq!(foe_ship.hull, 100.0);
         assert!(w.bolts.is_empty());
+    }
+
+    #[test]
+    fn a_new_bolt_streak_never_reaches_behind_the_muzzle() {
+        let (mut w, me, _) = duel();
+        let s = w.get_mut(me).unwrap();
+        s.velocity = Vec3::new(0.0, 0.0, -200.0); // flying forward fast
+        s.controls.fire_beams = true;
+        step(&mut w, TICK);
+        let ship = w.get(me).unwrap().position;
+        for b in &w.bolts {
+            let tail = b.position - b.velocity.normalize() * b.streak_length();
+            // Forward is -Z: the tail must still be ahead of the ship's centre.
+            assert!(tail.z < ship.z, "tail {tail:?} behind ship {ship:?}");
+            assert!(b.streak_length() <= b.muzzle_speed * b.age + 1e-4);
+        }
+        let mut old = w.bolts[0].clone();
+        old.age = 10.0;
+        assert_eq!(old.streak_length(), (old.muzzle_speed * 0.025).min(80.0), "full length once clear of the gun");
     }
 
     #[test]

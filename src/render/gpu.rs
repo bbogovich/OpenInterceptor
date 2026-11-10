@@ -22,6 +22,8 @@ pub const MAX_CHUNK_VERTICES: usize = 16_000;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chunk {
     pub texture: Option<String>,
+    /// From [`MaterialGroup::overlay`](crate::model::MaterialGroup::overlay).
+    pub overlay: bool,
     pub vertices: Vec<ModelVertex>,
     pub indices: Vec<u16>,
 }
@@ -30,16 +32,19 @@ pub struct Chunk {
 pub fn split_lod(lod: &ModelLod) -> Vec<Chunk> {
     let mut out = Vec::new();
     for group in &lod.groups {
-        let mut chunk = Chunk { texture: group.texture.clone(), vertices: Vec::new(), indices: Vec::new() };
+        let empty = || Chunk {
+            texture: group.texture.clone(),
+            overlay: group.overlay,
+            vertices: Vec::new(),
+            indices: Vec::new(),
+        };
+        let mut chunk = empty();
         // Maps a LOD-wide vertex index to its index inside the current chunk.
         let mut remap: HashMap<u32, u16> = HashMap::new();
         for tri in group.indices.chunks_exact(3) {
             // Start a new chunk if this triangle might not fit.
             if chunk.vertices.len() + 3 > MAX_CHUNK_VERTICES {
-                out.push(std::mem::replace(
-                    &mut chunk,
-                    Chunk { texture: group.texture.clone(), vertices: Vec::new(), indices: Vec::new() },
-                ));
+                out.push(std::mem::replace(&mut chunk, empty()));
                 remap.clear();
             }
             for &v in tri {
@@ -61,6 +66,8 @@ pub fn split_lod(lod: &ModelLod) -> Vec<Chunk> {
 pub struct GpuLod {
     pub switch_distance: f32,
     pub meshes: Vec<Mesh>,
+    /// `overlay[i]` is true if `meshes[i]` holds flagged overlay faces.
+    pub overlay: Vec<bool>,
 }
 
 /// A model on the GPU.
@@ -77,10 +84,13 @@ pub struct GpuModel {
 impl GpuModel {
     /// The LOD to draw at `distance` metres.
     pub fn lod(&self, distance: f32) -> &GpuLod {
-        self.lods
-            .iter()
-            .find(|l| distance < l.switch_distance)
-            .unwrap_or_else(|| self.lods.last().expect("models have LODs"))
+        &self.lods[self.lod_index(distance)]
+    }
+
+    /// Index of the LOD to draw at `distance` metres (the last one beyond every switch
+    /// distance). `GpuModel::lods` and `model.lods` share indices.
+    pub fn lod_index(&self, distance: f32) -> usize {
+        self.lods.iter().position(|l| distance < l.switch_distance).unwrap_or(self.lods.len().saturating_sub(1))
     }
 }
 
@@ -96,7 +106,8 @@ pub fn engine_points(model: &Model) -> Vec<glam::Vec3> {
 
 /// Converts an engine vertex to macroquad's layout.
 fn to_vertex(v: &ModelVertex) -> Vertex {
-    Vertex { position: v.position, uv: v.uv, color: v.color, normal: v.normal.extend(0.0) }
+    // The normal's spare w component carries the overlay layer to the shader.
+    Vertex { position: v.position, uv: v.uv, color: v.color, normal: v.normal.extend(v.layer as f32) }
 }
 
 /// Loads and caches GPU models and textures.
@@ -139,6 +150,7 @@ impl ModelCache {
             Ok(img) => {
                 let t = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
                 t.set_filter(macroquad::prelude::FilterMode::Linear);
+                super::set_repeat(&t);
                 Some(t)
             }
             Err(e) => {
@@ -153,7 +165,9 @@ impl ModelCache {
     fn upload(&mut self, content: &Content, model: Model, pack: usize) -> GpuModel {
         let mut lods = Vec::with_capacity(model.lods.len());
         for lod in &model.lods {
-            let meshes = split_lod(lod)
+            let chunks = split_lod(lod);
+            let overlay = chunks.iter().map(|c| c.overlay).collect();
+            let meshes = chunks
                 .into_iter()
                 .map(|c| Mesh {
                     vertices: c.vertices.iter().map(to_vertex).collect(),
@@ -161,7 +175,7 @@ impl ModelCache {
                     texture: c.texture.as_deref().and_then(|t| self.texture(content, t, pack)),
                 })
                 .collect();
-            lods.push(GpuLod { switch_distance: lod.switch_distance, meshes });
+            lods.push(GpuLod { switch_distance: lod.switch_distance, meshes, overlay });
         }
         GpuModel { radius: model.radius, lods, engines: engine_points(&model), model }
     }
@@ -174,7 +188,7 @@ mod tests {
     use glam::{Vec2, Vec3};
 
     fn vertex(i: u32) -> ModelVertex {
-        ModelVertex { position: Vec3::splat(i as f32), normal: Vec3::Y, uv: Vec2::ZERO, color: [255; 4] }
+        ModelVertex { position: Vec3::splat(i as f32), normal: Vec3::Y, uv: Vec2::ZERO, color: [255; 4], layer: 0 }
     }
 
     #[test]
@@ -183,9 +197,10 @@ mod tests {
             switch_distance: 10.0,
             vertices: (0..6).map(vertex).collect(),
             groups: vec![
-                MaterialGroup { texture: Some("a".into()), indices: vec![0, 1, 2, 2, 1, 3] },
-                MaterialGroup { texture: None, indices: vec![3, 4, 5] },
+                MaterialGroup { texture: Some("a".into()), indices: vec![0, 1, 2, 2, 1, 3], overlay: false },
+                MaterialGroup { texture: None, indices: vec![3, 4, 5], overlay: true },
             ],
+            faces: vec![],
         };
         let chunks = split_lod(&lod);
         assert_eq!(chunks.len(), 2);
@@ -194,6 +209,7 @@ mod tests {
         assert_eq!(chunks[1].indices, vec![0, 1, 2], "indices restart in each chunk");
         assert_eq!(chunks[1].vertices[0].position, Vec3::splat(3.0));
         assert_eq!(chunks[1].texture, None);
+        assert!(!chunks[0].overlay && chunks[1].overlay, "the overlay flag follows the group");
     }
 
     #[test]
@@ -218,7 +234,8 @@ mod tests {
         let lod = ModelLod {
             switch_distance: 1.0,
             vertices: (0..n).map(vertex).collect(),
-            groups: vec![MaterialGroup { texture: None, indices: (0..n - n % 3).collect() }],
+            groups: vec![MaterialGroup { texture: None, indices: (0..n - n % 3).collect(), overlay: false }],
+            faces: vec![],
         };
         let chunks = split_lod(&lod);
         assert_eq!(chunks.len(), 2);

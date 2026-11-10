@@ -26,6 +26,8 @@ OPTIONS:
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
     --view <VIEW>       Start view for --scenario: cockpit, forward, left, right,
                         rear-left, rear-right, chase, chase-manual
+    --model <NAME>      Open the model viewer on this model: a ship class id or an
+                        original mesh name (for example XBASE7)
     --check             Validate all content without opening a window, then exit
     --extract <DIR>     Convert the original data to OBJ/PNG/WAV at override paths
                         (personal modding use only), then exit
@@ -45,6 +47,7 @@ pub struct Options {
     pub scenario: Option<String>,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
+    pub model: Option<String>,
     pub check: bool,
     pub extract: Option<PathBuf>,
     pub list: bool,
@@ -67,6 +70,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--packs" => o.packs = Some(PathBuf::from(value("--packs")?)),
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--ship" => o.ship = Some(value("--ship")?),
+            "--model" => o.model = Some(value("--model")?),
             "--view" => {
                 let v = value("--view")?;
                 o.view = Some(crate::input::View::parse(&v).ok_or(format!("unknown view '{v}'"))?);
@@ -166,6 +170,7 @@ mod tests {
         assert!(parse(&args("--view sideways"), None).unwrap_err().contains("unknown view"));
         assert_eq!(parse(&args("--extract out"), None).unwrap().extract, Some(PathBuf::from("out")));
         assert_eq!(parse(&args("--view chase"), None).unwrap().view, Some(crate::input::View::Chase));
+        assert_eq!(parse(&args("--model XBASE7"), None).unwrap().model.as_deref(), Some("XBASE7"));
     }
 
     #[test]

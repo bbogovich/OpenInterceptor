@@ -18,9 +18,28 @@
 //! A *material* is a shader program plus GPU state (blending, depth). We use three:
 //!
 //! - **lit** — textured, vertex-coloured, with one directional light (the sun) plus
-//!   ambient. Normals come in through macroquad's spare `normal` vertex attribute.
+//!   ambient. Normals come in through macroquad's spare `normal` vertex attribute, and
+//!   its unused fourth component carries the face's *overlay layer* (see below).
+//!   Back faces are culled: models are one-sided, as in the original game.
 //! - **sky** — unlit, ignores and does not write depth, so stars sit behind everything.
 //! - **glow** — additive (`src + dst`): overlapping glows brighten like real light.
+//!
+//! ## Overlay layers and the depth bias
+//!
+//! Two faces in exactly the same plane get the same depth values, so the depth test
+//! picks a winner almost at random, pixel by pixel and frame by frame: "z-fighting",
+//! seen as flicker. [`crate::model::assign_overlay_layers`] numbers the faces that lie
+//! on top of others; the lit vertex shader moves each layer a fixed, tiny step towards
+//! the camera *in depth only* (`gl_Position.z`), so the picture does not shift but the
+//! decal reliably wins. The step ([`LAYER_DEPTH_BIAS`]) is about 32 steps of a 24-bit
+//! depth buffer — the same idea as OpenGL's `glPolygonOffset`, done per vertex because
+//! a whole model is drawn in one call.
+//!
+//! ## Texture addressing
+//!
+//! Original models use texture coordinates outside 0..1 to *tile* a texture across a
+//! large face. Model textures are therefore set to repeat (wrap) rather than macroquad's
+//! default clamp, which would smear the edge pixels across the face instead.
 //!
 //! ## Allocation discipline
 //!
@@ -39,7 +58,10 @@ use camera::SpaceCamera;
 use effects::{explosion_curve, Effects};
 use glam::{Mat4, Quat, Vec2, Vec3};
 use gpu::{GpuModel, ModelCache};
-use macroquad::miniquad::{BlendFactor, BlendState, BlendValue, Comparison, Equation, PipelineParams, UniformType};
+use macroquad::miniquad::{
+    BlendFactor, BlendState, BlendValue, Comparison, CullFace, Equation, FrontFaceOrder, PipelineParams, TextureWrap,
+    UniformType,
+};
 use macroquad::prelude::*;
 use std::rc::Rc;
 
@@ -48,7 +70,7 @@ attribute vec3 position;
 attribute vec2 texcoord;
 attribute vec4 color0;
 attribute vec4 normal;
-varying lowp vec2 uv;
+varying mediump vec2 uv;
 varying lowp vec4 color;
 uniform mat4 Model;
 uniform mat4 Projection;
@@ -56,6 +78,9 @@ uniform vec4 SunDirection;
 uniform vec4 Tint;
 void main() {
     gl_Position = Projection * Model * vec4(position, 1.0);
+    // Overlay layer (normal.w) pulls the face towards the camera in depth only.
+    // Multiplying by w keeps the shift constant after the perspective divide.
+    gl_Position.z -= normal.w * LAYER_BIAS * gl_Position.w;
     // w = 0 transforms a direction (rotation only, no translation).
     vec3 n = normalize((Model * vec4(normal.xyz, 0.0)).xyz);
     float diffuse = max(dot(n, SunDirection.xyz), 0.0);
@@ -65,7 +90,7 @@ void main() {
 }"#;
 
 const LIT_FRAGMENT: &str = r#"#version 100
-varying lowp vec2 uv;
+varying mediump vec2 uv;
 varying lowp vec4 color;
 uniform sampler2D Texture;
 void main() {
@@ -94,6 +119,16 @@ void main() {
     gl_FragColor = color * texture2D(Texture, uv);
 }"#;
 
+/// Depth shift per overlay layer, in normalised device coordinates (NDC depth spans
+/// −1..1, so one step of a 24-bit depth buffer is 2⁻²³; this is 2⁻¹⁸ = 32 steps).
+pub const LAYER_DEPTH_BIAS: f32 = 3.814_697_3e-6;
+
+/// The lit vertex shader with [`LAYER_DEPTH_BIAS`] filled in (GLSL has no way to read a
+/// Rust constant, so the number is pasted into the source once at start-up).
+fn lit_vertex_source() -> String {
+    LIT_VERTEX.replace("LAYER_BIAS", &format!("{LAYER_DEPTH_BIAS:.10}"))
+}
+
 /// Distance at which sky objects are drawn (inside the far plane).
 const SKY_DISTANCE: f32 = 150_000.0;
 
@@ -105,6 +140,9 @@ pub struct Renderer {
     /// A soft round spot, generated at start-up, used for every glow.
     glow_texture: Texture2D,
     pub models: ModelCache,
+    /// Draw faces flagged as overlays (on by default; the model viewer can hide them to
+    /// show what lies underneath).
+    pub show_overlays: bool,
     stars: Vec<starfield::Star>,
     star_seed: u64,
     // Reused per-frame buffers (see the module docs).
@@ -189,12 +227,16 @@ pub fn rgb8(c: [f32; 3], k: f32) -> [u8; 4] {
 impl Renderer {
     /// Compiles shaders and creates GPU state. Fails only if the GPU rejects a shader.
     pub fn new() -> Result<Renderer, String> {
+        let lit_vertex = lit_vertex_source();
         let lit = load_material(
-            ShaderSource::Glsl { vertex: LIT_VERTEX, fragment: LIT_FRAGMENT },
+            ShaderSource::Glsl { vertex: &lit_vertex, fragment: LIT_FRAGMENT },
             MaterialParams {
                 pipeline_params: PipelineParams {
                     depth_test: Comparison::LessOrEqual,
                     depth_write: true,
+                    // Engine triangles wind counter-clockwise seen from the front.
+                    cull_face: CullFace::Back,
+                    front_face_order: FrontFaceOrder::CounterClockwise,
                     ..Default::default()
                 },
                 uniforms: vec![
@@ -242,6 +284,7 @@ impl Renderer {
             glow,
             glow_texture: make_glow_texture(),
             models: ModelCache::default(),
+            show_overlays: true,
             stars: Vec::new(),
             star_seed: u64::MAX,
             glow_vertices: Vec::new(),
@@ -286,8 +329,10 @@ impl Renderer {
         self.lit.set_uniform("Tint", tint.extend(0.0));
         let gl = unsafe_gl();
         gl.push_model_matrix(cam.model_matrix(position, rotation, 1.0));
-        for mesh in &lod.meshes {
-            draw_mesh(mesh);
+        for (mesh, overlay) in lod.meshes.iter().zip(&lod.overlay) {
+            if self.show_overlays || !overlay {
+                draw_mesh(mesh);
+            }
         }
         gl.pop_model_matrix();
     }
@@ -433,7 +478,7 @@ impl Renderer {
             }
         }
         for b in &world.bolts {
-            let tail = b.position - b.velocity.normalize_or_zero() * (b.velocity.length() * 0.025).min(80.0);
+            let tail = b.position - b.velocity.normalize_or_zero() * b.streak_length();
             let dist = rel(b.position).length();
             let width = (dist * 0.0025).max(0.6);
             push_streak(
@@ -564,6 +609,12 @@ fn unsafe_gl_context() -> macroquad::window::InternalGlContext<'static> {
     unsafe { get_internal_gl() }
 }
 
+/// Makes a texture repeat (tile) outside 0..1 instead of clamping to its edge pixels.
+fn set_repeat(texture: &Texture2D) {
+    let gl = unsafe_gl_context();
+    gl.quad_context.texture_set_wrap(texture.raw_miniquad_id(), TextureWrap::Repeat, TextureWrap::Repeat);
+}
+
 /// Identity transform, re-exported for callers drawing in camera space.
 pub fn identity() -> Mat4 {
     Mat4::IDENTITY
@@ -572,6 +623,13 @@ pub fn identity() -> Mat4 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn layer_bias_reaches_the_shader() {
+        let src = lit_vertex_source();
+        assert!(!src.contains("LAYER_BIAS"), "placeholder replaced");
+        assert!(src.contains("0.0000038147"));
+    }
 
     #[test]
     fn billboards_and_streaks_build_two_triangles() {
