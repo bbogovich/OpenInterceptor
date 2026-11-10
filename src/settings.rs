@@ -34,6 +34,8 @@ pub struct Settings {
     pub mods: Option<PathBuf>,
     /// Ids of packs switched off (`[packs] disabled = a, b`).
     pub disabled_packs: Vec<String>,
+    /// The campaign last chosen in the launcher (`[game] campaign`).
+    pub campaign: Option<String>,
 }
 
 impl Settings {
@@ -49,7 +51,8 @@ impl Settings {
             .filter(|s| !s.is_empty())
             .map(str::to_string)
             .collect();
-        Settings { original: path("original"), mods: path("mods"), disabled_packs }
+        let campaign = ini.get("game", "campaign").filter(|v| !v.is_empty()).map(str::to_string);
+        Settings { original: path("original"), mods: path("mods"), disabled_packs, campaign }
     }
 
     /// Reads `<dir>/settings.ini`, or returns defaults if it does not exist.
@@ -64,10 +67,11 @@ impl Settings {
             "; OpenInterceptor settings. Paths may be absolute or relative to this folder.\n[paths]\n\
              ; Your X-COM: Interceptor CD, or a folder copied from it.\noriginal = {}\n\
              ; Folder of mods (empty = the mods folder next to this file).\nmods = {}\n\n\
-             [packs]\n; Pack ids switched off (comma-separated). The launcher's Packs screen edits this.\ndisabled = {}\n",
+             [packs]\n; Pack ids switched off (comma-separated).\ndisabled = {}\n\n             [game]\n; The campaign to load (the launcher's campaign switch sets it).\ncampaign = {}\n",
             show(&self.original),
             show(&self.mods),
-            self.disabled_packs.join(", ")
+            self.disabled_packs.join(", "),
+            self.campaign.as_deref().unwrap_or("")
         )
     }
 
@@ -121,10 +125,16 @@ mod tests {
 
     #[test]
     fn parses_and_round_trips() {
-        let s = Settings::parse("[paths]\noriginal = /cd\nmods =\n[packs]\ndisabled = a, b\n");
+        let s =
+            Settings::parse("[paths]\noriginal = /cd\nmods =\n[packs]\ndisabled = a, b\n[game]\ncampaign = default\n");
         assert_eq!(
             s,
-            Settings { original: Some("/cd".into()), mods: None, disabled_packs: vec!["a".into(), "b".into()] }
+            Settings {
+                original: Some("/cd".into()),
+                mods: None,
+                disabled_packs: vec!["a".into(), "b".into()],
+                campaign: Some("default".into())
+            }
         );
         assert_eq!(Settings::parse(&s.to_ini_text()), s);
         assert_eq!(Settings::load(Path::new("/no/such/dir")), Settings::default());

@@ -25,6 +25,11 @@
 //! leader = player
 //! offset = -60, 0, 30           ; formation slot relative to the leader
 //!
+//! [object.wreck]
+//! class = wraith
+//! destroyed_systems = engines, manoeuvring   ; start disabled (a capture target)
+//! hull = 0.4                    ; start at 40% hull
+//!
 //! [nav.alpha]                   ; optional navigation points (engine extension)
 //! position = 0, 0, -3000
 //! ```
@@ -76,6 +81,10 @@ pub struct Placement {
     pub offset: Vec3,
     /// Initial speed, m/s.
     pub speed: f32,
+    /// Systems (kinds or system ids) that start destroyed.
+    pub destroyed_systems: Vec<String>,
+    /// Starting hull as a fraction of the class's hit points.
+    pub hull: f32,
 }
 
 /// A navigation point.
@@ -144,6 +153,14 @@ impl Scenario {
                     leader: sec.get_nonempty("leader").map(str::to_string),
                     offset: vec3(sec, "offset", Vec3::new(-60.0, 0.0, 30.0)).map_err(ctx)?,
                     speed: sec.get_f32("speed").unwrap_or(0.0),
+                    destroyed_systems: sec
+                        .get("destroyed_systems")
+                        .unwrap_or("")
+                        .split(',')
+                        .map(|x| x.trim().to_ascii_lowercase())
+                        .filter(|x| !x.is_empty())
+                        .collect(),
+                    hull: sec.get_f32("hull").unwrap_or(1.0).clamp(0.01, 1.0),
                 });
             } else if let Some(name) = sec.name.strip_prefix("nav.") {
                 nav_points.push(NavPoint {
@@ -183,6 +200,7 @@ mod tests {
             "[scenario]\nid=t\ntitle=Test\nplayer=lightning\nsun=0,1,0\norder=5\n\
              [object.base]\nclass=xcom_base\nposition=0,0,-3000\n\
              [object.w1]\nclass=lightning\nai=wingman\nleader=player\noffset=10,0,5\nspeed=100\n\
+             destroyed_systems = Engines, vct\nhull = 0.4\n\
              [nav.alpha]\nposition=1,2,3\n",
             2,
         )
@@ -196,6 +214,8 @@ mod tests {
         assert_eq!(s.objects[1].ai, AiRole::Wingman);
         assert_eq!(s.objects[1].leader.as_deref(), Some("player"));
         assert_eq!(s.objects[1].offset, Vec3::new(10.0, 0.0, 5.0));
+        assert_eq!(s.objects[1].destroyed_systems, vec!["engines", "vct"]);
+        assert_eq!((s.objects[0].hull, s.objects[1].hull), (1.0, 0.4));
         assert_eq!(s.nav_points[0].position, Vec3::new(1.0, 2.0, 3.0));
     }
 

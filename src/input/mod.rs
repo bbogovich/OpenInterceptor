@@ -7,7 +7,8 @@
 //!    are identified by *names* such as `"Up"`, `"Kp7"` or `"F1"`.
 //! 2. This module turns `RawInput` into [`Controls`] for the simulation plus a list of
 //!    one-shot [`Command`]s (target next, change view, pause…), using [`Bindings`] that
-//!    come from an editable INI file.
+//!    come from an editable INI file — and from the in-game controls menu, whose model
+//!    lives in [`editor`].
 //!
 //! ```text
 //!  keyboard ─┐
@@ -15,13 +16,22 @@
 //!  gamepad ──┘
 //! ```
 //!
+//! ## Chords
+//!
+//! A keyboard binding may need Shift (`Shift+F`), and a gamepad binding may need a
+//! **modifier button** held (`LeftShoulder+A`). A controller has far fewer buttons than
+//! a keyboard has keys, so modifier chords are what make *every* action reachable from
+//! the pad. A button used as a modifier anywhere does nothing on its own while it is held:
+//! holding it switches the pad to its second layer.
+//!
 //! The default keyboard layout follows the original game's documented keys; the docs
 //! site's *Original game → Controls* page lists them with their sources.
 
+pub mod editor;
 pub mod gamepad;
 
 use crate::formats::ini::Ini;
-use crate::sim::Controls;
+use crate::sim::{Controls, Requests};
 use gamepad::{Button, PadState};
 use std::collections::{HashMap, HashSet};
 
@@ -54,6 +64,15 @@ pub enum Action {
     PrevTarget,
     NearestEnemy,
     TargetInSights,
+    BeamCharge,
+    ShieldCharge,
+    PowerToShields,
+    PowerToBeams,
+    ShieldBalance,
+    Tractor,
+    Cloak,
+    Ecm,
+    Hyperspace,
     MfdNext,
     MfdPrev,
     ViewCockpit,
@@ -71,90 +90,152 @@ pub enum Action {
     ChaseIn,
     ChaseOut,
     ChaseReset,
+    WingMenu,
     WingFireAtWill,
     WingAttackMyTarget,
     WingFormation,
+    WingEvasive,
+    WingRetreat,
+    WingStatus,
+    RepeatMessage,
     NextNav,
     Pause,
     Menu,
     MouseFlight,
 }
 
-/// `(name in bindings.ini, action, default keys)`. One table drives parsing, defaults
-/// and the documentation, so they cannot drift apart.
-pub const ACTIONS: &[(&str, Action, &str)] = &[
-    ("pitch_up", Action::PitchUp, "Down"),
-    ("pitch_down", Action::PitchDown, "Up"),
-    ("yaw_left", Action::YawLeft, "Left"),
-    ("yaw_right", Action::YawRight, "Right"),
-    ("roll_left", Action::RollLeft, "Kp7, Q"),
-    ("roll_right", Action::RollRight, "Kp9, E"),
-    ("slide_left", Action::SlideLeft, "Kp4"),
-    ("slide_right", Action::SlideRight, "Kp6"),
-    ("slide_up", Action::SlideUp, "Kp8"),
-    ("slide_down", Action::SlideDown, "Kp2"),
-    ("throttle_up", Action::ThrottleUp, "Equal, KpAdd"),
-    ("throttle_down", Action::ThrottleDown, "Minus, KpSubtract"),
-    ("throttle_full", Action::ThrottleFull, "Backspace"),
-    ("throttle_zero", Action::ThrottleZero, "Backslash"),
-    ("reverse", Action::Reverse, "Z"),
-    ("match_speed", Action::MatchSpeed, "M"),
-    ("afterburner", Action::Afterburner, "Tab"),
-    ("brake", Action::Brake, "B"),
-    ("fire_beams", Action::FireBeams, "Enter, LeftControl"),
-    ("fire_missile", Action::FireMissile, "Space"),
-    ("cycle_link", Action::CycleLink, "X"),
-    ("cycle_missile", Action::CycleMissile, "W"),
-    ("next_target", Action::NextTarget, "T"),
-    ("prev_target", Action::PrevTarget, "Y"),
-    ("nearest_enemy", Action::NearestEnemy, "R"),
-    ("target_in_sights", Action::TargetInSights, "G"),
-    ("mfd_next", Action::MfdNext, "Period"),
-    ("mfd_prev", Action::MfdPrev, "Comma"),
-    ("view_cockpit", Action::ViewCockpit, "F1"),
-    ("view_forward", Action::ViewForward, "F2"),
-    ("view_left", Action::ViewLeft, "F3"),
-    ("view_right", Action::ViewRight, "F4"),
-    ("view_rear_left", Action::ViewRearLeft, "F5"),
-    ("view_rear_right", Action::ViewRearRight, "F6"),
-    ("view_chase", Action::ViewChase, "F7"),
-    ("view_chase_manual", Action::ViewChaseManual, "F8"),
-    ("chase_left", Action::ChaseLeft, "Insert"),
-    ("chase_right", Action::ChaseRight, "Delete"),
-    ("chase_up", Action::ChaseUp, "PageUp"),
-    ("chase_down", Action::ChaseDown, "PageDown"),
-    ("chase_in", Action::ChaseIn, "Home"),
-    ("chase_out", Action::ChaseOut, "End"),
-    ("chase_reset", Action::ChaseReset, "Kp5"),
-    ("wing_fire_at_will", Action::WingFireAtWill, "Shift+F"),
-    ("wing_attack_my_target", Action::WingAttackMyTarget, "Shift+A"),
-    ("wing_formation", Action::WingFormation, "Shift+I, Shift+R"),
-    ("next_nav", Action::NextNav, "N"),
-    ("pause", Action::Pause, "P"),
-    ("menu", Action::Menu, "Escape"),
-    ("mouse_flight", Action::MouseFlight, "C"),
+/// Groups for the controls menu and the docs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Group {
+    Flight,
+    Throttle,
+    Weapons,
+    Targeting,
+    Power,
+    Wingmen,
+    Views,
+    Camera,
+    Interface,
+}
+
+impl Group {
+    pub fn title(self) -> &'static str {
+        match self {
+            Group::Flight => "Flight",
+            Group::Throttle => "Throttle and speed",
+            Group::Weapons => "Weapons",
+            Group::Targeting => "Targeting",
+            Group::Power => "Power and systems",
+            Group::Wingmen => "Wingmen and comms",
+            Group::Views => "Views",
+            Group::Camera => "Chase camera",
+            Group::Interface => "Interface",
+        }
+    }
+}
+
+/// Everything known about one action: its `bindings.ini` name, defaults, menu group
+/// and label. One table drives parsing, defaults, the controls menu and the
+/// documentation, so they cannot drift apart.
+#[derive(Debug, Clone, Copy)]
+pub struct ActionInfo {
+    pub name: &'static str,
+    pub action: Action,
+    /// Default keys, comma-separated (`Shift+` for chords).
+    pub keys: &'static str,
+    /// Default gamepad buttons, comma-separated (`Modifier+Button` for chords).
+    pub pad: &'static str,
+    pub group: Group,
+    pub label: &'static str,
+}
+
+const fn a(
+    name: &'static str,
+    action: Action,
+    keys: &'static str,
+    pad: &'static str,
+    group: Group,
+    label: &'static str,
+) -> ActionInfo {
+    ActionInfo { name, action, keys, pad, group, label }
+}
+
+use Action as A;
+use Group as G;
+
+/// The action table (see [`ActionInfo`]). Gamepad defaults use the left shoulder as the
+/// modifier for the second layer.
+pub const ACTIONS: &[ActionInfo] = &[
+    a("pitch_up", A::PitchUp, "Down", "", G::Flight, "Nose up"),
+    a("pitch_down", A::PitchDown, "Up", "", G::Flight, "Nose down"),
+    a("yaw_left", A::YawLeft, "Left", "", G::Flight, "Turn left"),
+    a("yaw_right", A::YawRight, "Right", "", G::Flight, "Turn right"),
+    a("roll_left", A::RollLeft, "Kp7, Q", "", G::Flight, "Roll left"),
+    a("roll_right", A::RollRight, "Kp9, E", "", G::Flight, "Roll right"),
+    a("slide_left", A::SlideLeft, "Kp4", "", G::Flight, "Slide left (VCT)"),
+    a("slide_right", A::SlideRight, "Kp6", "", G::Flight, "Slide right (VCT)"),
+    a("slide_up", A::SlideUp, "Kp8", "", G::Flight, "Slide up (VCT)"),
+    a("slide_down", A::SlideDown, "Kp2", "", G::Flight, "Slide down (VCT)"),
+    a("throttle_up", A::ThrottleUp, "Equal, KpAdd", "DpadUp", G::Throttle, "Throttle up 10%"),
+    a("throttle_down", A::ThrottleDown, "Minus, KpSubtract", "DpadDown", G::Throttle, "Throttle down 10%"),
+    a("throttle_full", A::ThrottleFull, "Backspace", "", G::Throttle, "Full throttle"),
+    a("throttle_zero", A::ThrottleZero, "Backslash", "", G::Throttle, "Zero throttle"),
+    a("reverse", A::Reverse, "Z", "", G::Throttle, "Reverse thrust"),
+    a("match_speed", A::MatchSpeed, "M", "X", G::Throttle, "Match target speed"),
+    a("afterburner", A::Afterburner, "Tab", "A", G::Throttle, "Afterburner (hold)"),
+    a("brake", A::Brake, "B", "B", G::Throttle, "Brake (hold)"),
+    a("fire_beams", A::FireBeams, "Enter, LeftControl", "RightTrigger", G::Weapons, "Fire beams"),
+    a("fire_missile", A::FireMissile, "Space", "LeftTrigger", G::Weapons, "Fire missile"),
+    a("cycle_link", A::CycleLink, "X", "Back", G::Weapons, "Beam link mode"),
+    a("cycle_missile", A::CycleMissile, "W", "LeftThumb", G::Weapons, "Next missile type"),
+    a("next_target", A::NextTarget, "T", "RightShoulder", G::Targeting, "Next target"),
+    a("prev_target", A::PrevTarget, "Y", "LeftShoulder+RightShoulder", G::Targeting, "Previous target"),
+    a("nearest_enemy", A::NearestEnemy, "R", "RightThumb", G::Targeting, "Nearest enemy"),
+    a("target_in_sights", A::TargetInSights, "G", "LeftShoulder+RightThumb", G::Targeting, "Target in sights"),
+    a("beam_charge", A::BeamCharge, "F9", "LeftShoulder+DpadLeft", G::Power, "Beam charge rate (A-E)"),
+    a("shield_charge", A::ShieldCharge, "F10", "LeftShoulder+DpadRight", G::Power, "Shield charge rate (A-E)"),
+    a("power_to_shields", A::PowerToShields, "Semicolon", "LeftShoulder+DpadDown", G::Power, "Power to shields"),
+    a("power_to_beams", A::PowerToBeams, "Apostrophe", "LeftShoulder+DpadUp", G::Power, "Power to beams"),
+    a("shield_balance", A::ShieldBalance, "S", "LeftShoulder+B", G::Power, "Shield balance"),
+    a("tractor", A::Tractor, "Shift+T", "LeftShoulder+X", G::Power, "Tractor beam"),
+    a("cloak", A::Cloak, "Shift+C", "LeftShoulder+Y", G::Power, "Cloaking device"),
+    a("ecm", A::Ecm, "Shift+J", "LeftShoulder+Back", G::Power, "ECM"),
+    a("hyperspace", A::Hyperspace, "H", "LeftShoulder+A", G::Power, "Hyperspace out / abort"),
+    a("mfd_next", A::MfdNext, "Period", "DpadRight", G::Interface, "Next MFD page"),
+    a("mfd_prev", A::MfdPrev, "Comma", "DpadLeft", G::Interface, "Previous MFD page"),
+    a("view_cockpit", A::ViewCockpit, "F1", "", G::Views, "Cockpit view"),
+    a("view_forward", A::ViewForward, "F2", "", G::Views, "Full forward view"),
+    a("view_left", A::ViewLeft, "F3", "", G::Views, "Left view"),
+    a("view_right", A::ViewRight, "F4", "", G::Views, "Right view"),
+    a("view_rear_left", A::ViewRearLeft, "F5", "", G::Views, "Rear-left view"),
+    a("view_rear_right", A::ViewRearRight, "F6", "", G::Views, "Rear-right view"),
+    a("view_chase", A::ViewChase, "F7", "Y", G::Views, "Chase view"),
+    a("view_chase_manual", A::ViewChaseManual, "F8", "", G::Views, "Manual chase view"),
+    a("chase_left", A::ChaseLeft, "Insert", "", G::Camera, "Orbit left"),
+    a("chase_right", A::ChaseRight, "Delete", "", G::Camera, "Orbit right"),
+    a("chase_up", A::ChaseUp, "PageUp", "", G::Camera, "Orbit up"),
+    a("chase_down", A::ChaseDown, "PageDown", "", G::Camera, "Orbit down"),
+    a("chase_in", A::ChaseIn, "Home", "", G::Camera, "Zoom in"),
+    a("chase_out", A::ChaseOut, "End", "", G::Camera, "Zoom out"),
+    a("chase_reset", A::ChaseReset, "Kp5", "", G::Camera, "Reset camera"),
+    a("wing_menu", A::WingMenu, "RightBracket", "LeftShoulder+LeftThumb", G::Wingmen, "Wingman menu"),
+    a("wing_fire_at_will", A::WingFireAtWill, "Shift+F", "", G::Wingmen, "Wingmen: fire at will"),
+    a("wing_attack_my_target", A::WingAttackMyTarget, "Shift+A", "", G::Wingmen, "Wingmen: attack my target"),
+    a("wing_formation", A::WingFormation, "Shift+I", "", G::Wingmen, "Wingmen: ignore my target (form up)"),
+    a("wing_evasive", A::WingEvasive, "Shift+E", "", G::Wingmen, "Wingmen: evasive"),
+    a("wing_retreat", A::WingRetreat, "Shift+R", "", G::Wingmen, "Wingmen: retreat"),
+    a("wing_status", A::WingStatus, "Shift+S", "", G::Wingmen, "Wingmen: status report"),
+    a("repeat_message", A::RepeatMessage, "L", "", G::Wingmen, "Repeat last message"),
+    a("next_nav", A::NextNav, "N", "", G::Interface, "Next nav point"),
+    a("pause", A::Pause, "P", "Start", G::Interface, "Pause"),
+    a("menu", A::Menu, "Escape", "LeftShoulder+Start", G::Interface, "Menu"),
+    a("mouse_flight", A::MouseFlight, "C", "", G::Interface, "Mouse flight on/off"),
 ];
 
-/// `(name in bindings.ini, action, default buttons)` for the gamepad.
-pub const PAD_ACTIONS: &[(&str, Action, &str)] = &[
-    ("fire_beams", Action::FireBeams, "RightTrigger"),
-    ("fire_missile", Action::FireMissile, "LeftTrigger"),
-    ("next_target", Action::NextTarget, "RightShoulder"),
-    ("prev_target", Action::PrevTarget, "LeftShoulder"),
-    ("afterburner", Action::Afterburner, "A"),
-    ("brake", Action::Brake, "B"),
-    ("nearest_enemy", Action::NearestEnemy, "RightThumb"),
-    ("match_speed", Action::MatchSpeed, "X"),
-    ("view_chase", Action::ViewChase, "Y"),
-    ("throttle_up", Action::ThrottleUp, "DpadUp"),
-    ("throttle_down", Action::ThrottleDown, "DpadDown"),
-    ("mfd_prev", Action::MfdPrev, "DpadLeft"),
-    ("mfd_next", Action::MfdNext, "DpadRight"),
-    ("cycle_link", Action::CycleLink, "Back"),
-    ("pause", Action::Pause, "Start"),
-    ("cycle_missile", Action::CycleMissile, "LeftThumb"),
-    ("target_in_sights", Action::TargetInSights, ""),
-];
+/// The table entry for an action.
+pub fn info(action: Action) -> &'static ActionInfo {
+    ACTIONS.iter().find(|i| i.action == action).expect("every action is in ACTIONS")
+}
 
 /// A key with optional Shift: `Shift+F` or `F`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -165,7 +246,7 @@ pub struct KeyChord {
 
 impl KeyChord {
     /// Parses `"Shift+F"`, `"f"`, `" Kp7 "`. Key names are case-insensitive and stored
-    /// in the canonical capitalisation used by [`RawInput`] (first letter upper-case).
+    /// lower-case, the canonical form used by [`RawInput`].
     pub fn parse(s: &str) -> Option<KeyChord> {
         let s = s.trim();
         if s.is_empty() {
@@ -178,6 +259,49 @@ impl KeyChord {
         };
         Some(KeyChord { key: canonical(key), shift })
     }
+
+    /// The form written to `bindings.ini`.
+    pub fn text(&self) -> String {
+        if self.shift {
+            format!("Shift+{}", self.key)
+        } else {
+            self.key.clone()
+        }
+    }
+}
+
+/// A gamepad button with an optional modifier button held: `LeftShoulder+A` or `A`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PadChord {
+    pub modifier: Option<Button>,
+    pub button: Button,
+}
+
+impl PadChord {
+    /// A plain button.
+    pub fn plain(button: Button) -> PadChord {
+        PadChord { modifier: None, button }
+    }
+
+    /// Parses `"A"` or `"LeftShoulder+A"` (case-insensitive).
+    pub fn parse(s: &str) -> Option<PadChord> {
+        let s = s.trim();
+        match s.split_once('+') {
+            Some((m, b)) => {
+                let (modifier, button) = (Button::parse(m)?, Button::parse(b)?);
+                (modifier != button).then_some(PadChord { modifier: Some(modifier), button })
+            }
+            None => Some(PadChord::plain(Button::parse(s)?)),
+        }
+    }
+
+    /// The form written to `bindings.ini`.
+    pub fn text(&self) -> String {
+        match self.modifier {
+            Some(m) => format!("{}+{}", m.name(), self.button.name()),
+            None => self.button.name().to_string(),
+        }
+    }
 }
 
 /// Canonical key name: case-insensitive input, stored lower-case.
@@ -185,17 +309,30 @@ pub fn canonical(key: &str) -> String {
     key.trim().to_ascii_lowercase()
 }
 
+/// How the two gamepad sticks map to the flight axes (the original's Alt+J swap).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StickLayout {
+    /// Left stick: yaw and pitch; right stick: roll and vertical slide.
+    Space,
+    /// Left stick: roll and pitch (like an aircraft joystick); right stick: yaw and
+    /// vertical slide.
+    Aircraft,
+}
+
 /// Key and button bindings, plus analogue tuning.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bindings {
     pub keys: HashMap<Action, Vec<KeyChord>>,
-    pub pad: HashMap<Action, Vec<Button>>,
+    pub pad: HashMap<Action, Vec<PadChord>>,
     /// Gamepad stick dead zone, 0..1.
     pub dead_zone: f32,
     /// Mouse pixels per full stick deflection.
     pub mouse_range: f32,
-    /// Push the stick forward to dive (aircraft style). False inverts.
+    /// Push the stick forward to dive (aircraft style). True inverts.
     pub pad_invert_pitch: bool,
+    pub stick_layout: StickLayout,
+    /// Mouse flight: moving the mouse up the screen lowers the nose instead of raising it.
+    pub mouse_invert: bool,
 }
 
 impl Default for Bindings {
@@ -212,53 +349,76 @@ impl Bindings {
     /// fire_beams = Enter, Space
     /// [gamepad]
     /// fire_beams = RightTrigger
+    /// hyperspace = LeftShoulder+A
     /// dead_zone = 0.15
+    /// stick_layout = aircraft
     /// ```
     pub fn from_ini(ini: &Ini) -> Bindings {
         let kb = ini.section("keyboard");
         let gp = ini.section("gamepad");
         let mut keys = HashMap::new();
-        for (name, action, default) in ACTIONS {
-            let spec = kb.and_then(|s| s.get(name)).unwrap_or(default);
-            keys.insert(*action, spec.split(',').filter_map(KeyChord::parse).collect());
-        }
         let mut pad = HashMap::new();
-        for (name, action, default) in PAD_ACTIONS {
-            let spec = gp.and_then(|s| s.get(name)).unwrap_or(default);
-            pad.insert(*action, spec.split(',').filter_map(Button::parse).collect());
+        for i in ACTIONS {
+            let spec = kb.and_then(|s| s.get(i.name)).unwrap_or(i.keys);
+            keys.insert(i.action, spec.split(',').filter_map(KeyChord::parse).collect());
+            let spec = gp.and_then(|s| s.get(i.name)).unwrap_or(i.pad);
+            pad.insert(i.action, spec.split(',').filter_map(PadChord::parse).collect());
         }
+        let layout = match gp.and_then(|s| s.get("stick_layout")).map(str::to_ascii_lowercase).as_deref() {
+            Some("aircraft") => StickLayout::Aircraft,
+            _ => StickLayout::Space,
+        };
         Bindings {
             keys,
             pad,
             dead_zone: gp.and_then(|s| s.get_f32("dead_zone")).unwrap_or(0.15).clamp(0.0, 0.9),
             mouse_range: ini.get("mouse", "range").and_then(|v| v.parse().ok()).unwrap_or(200.0f32).max(10.0),
             pad_invert_pitch: gp.and_then(|s| s.get_bool("invert_pitch")).unwrap_or(false),
+            stick_layout: layout,
+            mouse_invert: ini.section("mouse").and_then(|s| s.get_bool("invert")).unwrap_or(false),
         }
     }
 
-    /// Writes the full bindings as INI text (used to create a user's bindings file).
+    /// Writes the full bindings as INI text (the user's `bindings.ini`).
     pub fn to_ini_text(&self) -> String {
-        let mut out =
-            String::from("; OpenInterceptor controls. Edit and restart. Key names: see the docs site.\n[keyboard]\n");
-        for (name, action, _) in ACTIONS {
-            let keys: Vec<String> = self.keys[action]
-                .iter()
-                .map(|k| if k.shift { format!("Shift+{}", k.key) } else { k.key.clone() })
-                .collect();
-            out += &format!("{name} = {}\n", keys.join(", "));
+        let yes = |b: bool| if b { "yes" } else { "no" };
+        let mut out = String::from(
+            "; OpenInterceptor controls. Edit here or in the game's Controls menu.\n\
+             ; Key names: see the docs site (Original game > Controls).\n[keyboard]\n",
+        );
+        for i in ACTIONS {
+            let keys: Vec<String> = self.keys[&i.action].iter().map(KeyChord::text).collect();
+            out += &format!("{} = {}\n", i.name, keys.join(", "));
         }
         out += "\n[gamepad]\n";
-        for (name, action, _) in PAD_ACTIONS {
-            let b: Vec<&str> = self.pad[action].iter().map(|b| b.name()).collect();
-            out += &format!("{name} = {}\n", b.join(", "));
+        for i in ACTIONS {
+            let b: Vec<String> = self.pad[&i.action].iter().map(PadChord::text).collect();
+            out += &format!("{} = {}\n", i.name, b.join(", "));
         }
         out += &format!(
-            "dead_zone = {}\ninvert_pitch = {}\n\n[mouse]\nrange = {}\n",
+            "dead_zone = {}\ninvert_pitch = {}\nstick_layout = {}\n\n[mouse]\nrange = {}\ninvert = {}\n",
             self.dead_zone,
-            if self.pad_invert_pitch { "yes" } else { "no" },
-            self.mouse_range
+            yes(self.pad_invert_pitch),
+            match self.stick_layout {
+                StickLayout::Space => "space",
+                StickLayout::Aircraft => "aircraft",
+            },
+            self.mouse_range,
+            yes(self.mouse_invert)
         );
         out
+    }
+
+    /// Keys used in some `Shift+` chord. While Shift is held these keys belong to their
+    /// chords, so a held action bound to the plain key (roll on `E`) ignores them
+    /// (`Shift+E` orders wingmen to evade without also rolling the ship).
+    fn shifted_keys(&self) -> HashSet<&str> {
+        self.keys.values().flatten().filter(|k| k.shift).map(|k| k.key.as_str()).collect()
+    }
+
+    /// Buttons used as modifiers in some pad chord.
+    fn modifiers(&self) -> HashSet<Button> {
+        self.pad.values().flatten().filter_map(|c| c.modifier).collect()
     }
 }
 
@@ -279,7 +439,17 @@ pub struct RawInput {
     pub pad_previous: Option<PadState>,
 }
 
-/// One-shot requests that are not part of [`Controls`].
+impl RawInput {
+    /// True if gamepad button `b` went down this frame.
+    pub fn pad_pressed(&self, b: Button) -> bool {
+        match self.pad {
+            Some(p) => p.button(b) && !self.pad_previous.unwrap_or_default().button(b),
+            None => false,
+        }
+    }
+}
+
+/// One-shot requests handled by the app rather than the simulation's [`Controls`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Command {
     NextTarget,
@@ -289,9 +459,14 @@ pub enum Command {
     MfdNext,
     MfdPrev,
     View(View),
+    WingMenu,
     WingFireAtWill,
     WingAttackMyTarget,
     WingFormation,
+    WingEvasive,
+    WingRetreat,
+    WingStatus,
+    RepeatMessage,
     NextNav,
     Pause,
     Menu,
@@ -340,63 +515,133 @@ pub struct ChaseInput {
 /// Throttle change per press (10 %, as in the original).
 pub const THROTTLE_STEP: f32 = 0.1;
 
-impl Bindings {
-    fn held(&self, raw: &RawInput, a: Action) -> bool {
-        let keys = self.keys.get(&a).map(Vec::as_slice).unwrap_or(&[]);
-        let key_held = keys.iter().any(|k| raw.held.contains(&k.key) && (!k.shift || raw.shift));
-        let pad_held = match (&raw.pad, self.pad.get(&a)) {
-            (Some(p), Some(buttons)) => buttons.iter().any(|b| p.button(*b)),
-            _ => false,
-        };
-        key_held || pad_held
+/// Actions that become one-shot [`Command`]s.
+const COMMANDS: &[(Action, Command)] = &[
+    (A::NextTarget, Command::NextTarget),
+    (A::PrevTarget, Command::PrevTarget),
+    (A::NearestEnemy, Command::NearestEnemy),
+    (A::TargetInSights, Command::TargetInSights),
+    (A::MfdNext, Command::MfdNext),
+    (A::MfdPrev, Command::MfdPrev),
+    (A::ViewCockpit, Command::View(View::Cockpit)),
+    (A::ViewForward, Command::View(View::Forward)),
+    (A::ViewLeft, Command::View(View::Left)),
+    (A::ViewRight, Command::View(View::Right)),
+    (A::ViewRearLeft, Command::View(View::RearLeft)),
+    (A::ViewRearRight, Command::View(View::RearRight)),
+    (A::ViewChase, Command::View(View::Chase)),
+    (A::ViewChaseManual, Command::View(View::ChaseManual)),
+    (A::WingMenu, Command::WingMenu),
+    (A::WingFireAtWill, Command::WingFireAtWill),
+    (A::WingAttackMyTarget, Command::WingAttackMyTarget),
+    (A::WingFormation, Command::WingFormation),
+    (A::WingEvasive, Command::WingEvasive),
+    (A::WingRetreat, Command::WingRetreat),
+    (A::WingStatus, Command::WingStatus),
+    (A::RepeatMessage, Command::RepeatMessage),
+    (A::NextNav, Command::NextNav),
+    (A::Pause, Command::Pause),
+    (A::Menu, Command::Menu),
+    (A::MouseFlight, Command::MouseFlight),
+];
+
+/// Per-frame helper holding the chord sets, so they are computed once per frame
+/// rather than once per action.
+struct Frame<'a> {
+    b: &'a Bindings,
+    raw: &'a RawInput,
+    shifted: HashSet<&'a str>,
+    modifiers: HashSet<Button>,
+}
+
+impl Frame<'_> {
+    /// True when a modifier other than `except` is held on the pad.
+    fn other_modifier_held(&self, p: &PadState, except: Button) -> bool {
+        self.modifiers.iter().any(|m| *m != except && p.button(*m))
     }
 
-    fn pressed(&self, raw: &RawInput, a: Action) -> bool {
-        let keys = self.keys.get(&a).map(Vec::as_slice).unwrap_or(&[]);
+    fn pad_chord_held(&self, c: &PadChord) -> bool {
+        let Some(p) = &self.raw.pad else { return false };
+        match c.modifier {
+            Some(m) => p.button(m) && p.button(c.button),
+            None => p.button(c.button) && !self.modifiers.contains(&c.button) && !self.other_modifier_held(p, c.button),
+        }
+    }
+
+    fn pad_chord_pressed(&self, c: &PadChord) -> bool {
+        let Some(p) = &self.raw.pad else { return false };
+        let went_down = p.button(c.button) && !self.raw.pad_previous.unwrap_or_default().button(c.button);
+        match c.modifier {
+            Some(m) => p.button(m) && went_down,
+            // A modifier button pressed on its own does nothing.
+            None => went_down && !self.modifiers.contains(&c.button) && !self.other_modifier_held(p, c.button),
+        }
+    }
+
+    fn held(&self, a: Action) -> bool {
+        let keys = self.b.keys.get(&a).map(Vec::as_slice).unwrap_or(&[]);
+        let key_held = keys.iter().any(|k| {
+            self.raw.held.contains(&k.key)
+                && if k.shift { self.raw.shift } else { !self.raw.shift || !self.shifted.contains(k.key.as_str()) }
+        });
+        let pad = self.b.pad.get(&a).map(Vec::as_slice).unwrap_or(&[]);
+        key_held || pad.iter().any(|c| self.pad_chord_held(c))
+    }
+
+    fn pressed(&self, a: Action) -> bool {
+        let keys = self.b.keys.get(&a).map(Vec::as_slice).unwrap_or(&[]);
         // A Shift chord only fires with Shift held; a plain key only fires without it,
         // so `F` and `Shift+F` can do different things.
-        let key = keys.iter().any(|k| raw.pressed.contains(&k.key) && k.shift == raw.shift);
-        let pad = match (&raw.pad, self.pad.get(&a)) {
-            (Some(p), Some(buttons)) => {
-                let prev = raw.pad_previous.unwrap_or_default();
-                buttons.iter().any(|b| p.button(*b) && !prev.button(*b))
-            }
-            _ => false,
-        };
-        key || pad
+        let key = keys.iter().any(|k| self.raw.pressed.contains(&k.key) && k.shift == self.raw.shift);
+        let pad = self.b.pad.get(&a).map(Vec::as_slice).unwrap_or(&[]);
+        key || pad.iter().any(|c| self.pad_chord_pressed(c))
     }
 
+    fn axis(&self, neg: Action, pos: Action) -> f32 {
+        (self.held(pos) as i32 - self.held(neg) as i32) as f32
+    }
+}
+
+impl Bindings {
     /// Converts one frame of raw input. `mouse_flight` enables mouse steering.
     pub fn translate(&self, raw: &RawInput, mouse_flight: bool) -> (Controls, Vec<Command>, ChaseInput) {
-        let axis = |neg: Action, pos: Action| (self.held(raw, pos) as i32 - self.held(raw, neg) as i32) as f32;
+        let f = Frame { b: self, raw, shifted: self.shifted_keys(), modifiers: self.modifiers() };
         let mut c = Controls {
-            pitch: axis(Action::PitchDown, Action::PitchUp),
-            yaw: axis(Action::YawLeft, Action::YawRight),
-            roll: axis(Action::RollLeft, Action::RollRight),
-            slide: glam::Vec2::new(
-                axis(Action::SlideLeft, Action::SlideRight),
-                axis(Action::SlideDown, Action::SlideUp),
-            ),
-            afterburner: self.held(raw, Action::Afterburner),
-            brake: self.held(raw, Action::Brake),
-            fire_beams: self.held(raw, Action::FireBeams),
-            fire_missile: self.pressed(raw, Action::FireMissile),
-            cycle_link: self.pressed(raw, Action::CycleLink),
-            cycle_missile: self.pressed(raw, Action::CycleMissile),
-            toggle_reverse: self.pressed(raw, Action::Reverse),
-            match_speed: self.pressed(raw, Action::MatchSpeed),
+            pitch: f.axis(A::PitchDown, A::PitchUp),
+            yaw: f.axis(A::YawLeft, A::YawRight),
+            roll: f.axis(A::RollLeft, A::RollRight),
+            slide: glam::Vec2::new(f.axis(A::SlideLeft, A::SlideRight), f.axis(A::SlideDown, A::SlideUp)),
+            afterburner: f.held(A::Afterburner),
+            brake: f.held(A::Brake),
+            fire_beams: f.held(A::FireBeams),
+            fire_missile: f.pressed(A::FireMissile),
+            cycle_link: f.pressed(A::CycleLink),
+            cycle_missile: f.pressed(A::CycleMissile),
+            toggle_reverse: f.pressed(A::Reverse),
+            match_speed: f.pressed(A::MatchSpeed),
+            requests: Requests {
+                beam_charge: f.pressed(A::BeamCharge),
+                shield_charge: f.pressed(A::ShieldCharge),
+                power_to_shields: f.pressed(A::PowerToShields),
+                power_to_beams: f.pressed(A::PowerToBeams),
+                shield_balance: f.pressed(A::ShieldBalance),
+                tractor: f.pressed(A::Tractor),
+                cloak: f.pressed(A::Cloak),
+                ecm: f.pressed(A::Ecm),
+                hyperspace: f.pressed(A::Hyperspace),
+            },
             ..Default::default()
         };
-        if self.pressed(raw, Action::ThrottleUp) {
+        if f.pressed(A::ThrottleUp) {
             c.throttle_delta += THROTTLE_STEP;
         }
-        if self.pressed(raw, Action::ThrottleDown) {
+        if f.pressed(A::ThrottleDown) {
             c.throttle_delta -= THROTTLE_STEP;
         }
-        if self.pressed(raw, Action::ThrottleFull) {
+        if f.pressed(A::ThrottleFull) {
             c.throttle_set = Some(1.0);
         }
-        if self.pressed(raw, Action::ThrottleZero) {
+        if f.pressed(A::ThrottleZero) {
             c.throttle_set = Some(0.0);
         }
         // Gamepad sticks add to (and are clamped with) the keys.
@@ -406,8 +651,16 @@ impl Bindings {
                 (dead(p.axis_lx(), dz), dead(p.axis_ly(), dz), dead(p.axis_rx(), dz), dead(p.axis_ry(), dz));
             // Pushing the stick forward (up) dives, like an aircraft joystick.
             c.pitch += if self.pad_invert_pitch { ly } else { -ly };
-            c.yaw += lx;
-            c.roll += rx;
+            match self.stick_layout {
+                StickLayout::Space => {
+                    c.yaw += lx;
+                    c.roll += rx;
+                }
+                StickLayout::Aircraft => {
+                    c.roll += lx;
+                    c.yaw += rx;
+                }
+            }
             c.slide.y += ry;
         }
         // Mouse flight. The original readme maps "Nose Down = Mouse Back, Nose Up =
@@ -416,7 +669,8 @@ impl Bindings {
         if mouse_flight {
             let (mx, my) = raw.mouse_offset;
             c.yaw += (mx / self.mouse_range).clamp(-1.0, 1.0);
-            c.pitch -= (my / self.mouse_range).clamp(-1.0, 1.0);
+            let pitch = (my / self.mouse_range).clamp(-1.0, 1.0);
+            c.pitch += if self.mouse_invert { pitch } else { -pitch };
             c.fire_beams |= raw.mouse_left;
             c.fire_missile |= raw.mouse_right_pressed;
         }
@@ -425,40 +679,12 @@ impl Bindings {
         c.roll = c.roll.clamp(-1.0, 1.0);
         c.slide = c.slide.clamp_length_max(1.0);
 
-        let mut cmds = Vec::new();
-        let one_shots = [
-            (Action::NextTarget, Command::NextTarget),
-            (Action::PrevTarget, Command::PrevTarget),
-            (Action::NearestEnemy, Command::NearestEnemy),
-            (Action::TargetInSights, Command::TargetInSights),
-            (Action::MfdNext, Command::MfdNext),
-            (Action::MfdPrev, Command::MfdPrev),
-            (Action::ViewCockpit, Command::View(View::Cockpit)),
-            (Action::ViewForward, Command::View(View::Forward)),
-            (Action::ViewLeft, Command::View(View::Left)),
-            (Action::ViewRight, Command::View(View::Right)),
-            (Action::ViewRearLeft, Command::View(View::RearLeft)),
-            (Action::ViewRearRight, Command::View(View::RearRight)),
-            (Action::ViewChase, Command::View(View::Chase)),
-            (Action::ViewChaseManual, Command::View(View::ChaseManual)),
-            (Action::WingFireAtWill, Command::WingFireAtWill),
-            (Action::WingAttackMyTarget, Command::WingAttackMyTarget),
-            (Action::WingFormation, Command::WingFormation),
-            (Action::NextNav, Command::NextNav),
-            (Action::Pause, Command::Pause),
-            (Action::Menu, Command::Menu),
-            (Action::MouseFlight, Command::MouseFlight),
-        ];
-        for (a, cmd) in one_shots {
-            if self.pressed(raw, a) {
-                cmds.push(cmd);
-            }
-        }
+        let cmds = COMMANDS.iter().filter(|(a, _)| f.pressed(*a)).map(|(_, cmd)| *cmd).collect();
         let chase = ChaseInput {
-            yaw: axis(Action::ChaseLeft, Action::ChaseRight),
-            pitch: axis(Action::ChaseDown, Action::ChaseUp),
-            zoom: axis(Action::ChaseOut, Action::ChaseIn),
-            reset: self.pressed(raw, Action::ChaseReset),
+            yaw: f.axis(A::ChaseLeft, A::ChaseRight),
+            pitch: f.axis(A::ChaseDown, A::ChaseUp),
+            zoom: f.axis(A::ChaseOut, A::ChaseIn),
+            reset: f.pressed(A::ChaseReset),
         };
         (c, cmds, chase)
     }
@@ -504,6 +730,20 @@ mod tests {
     }
 
     #[test]
+    fn power_and_equipment_keys_follow_the_original() {
+        let b = Bindings::default();
+        let (c, _, _) = b.translate(&raw(&[], &["F9", "F10", "Semicolon", "Apostrophe", "S", "H"]), false);
+        let r = c.requests;
+        assert!(r.beam_charge && r.shield_charge && r.power_to_shields && r.power_to_beams);
+        assert!(r.shield_balance && r.hyperspace && !r.tractor);
+        let mut shifted = raw(&[], &["T", "C", "J"]);
+        shifted.shift = true;
+        let (c, cmds, _) = b.translate(&shifted, false);
+        assert!(c.requests.tractor && c.requests.cloak && c.requests.ecm);
+        assert!(cmds.is_empty(), "Shift+T is not next target");
+    }
+
+    #[test]
     fn one_shot_commands_and_shift_chords() {
         let b = Bindings::default();
         let (_, cmds, _) = b.translate(&raw(&[], &["T", "F7", "P"]), false);
@@ -512,9 +752,35 @@ mod tests {
         assert!(b.translate(&r, false).1.is_empty(), "plain F is unbound");
         r.shift = true;
         assert_eq!(b.translate(&r, false).1, vec![Command::WingFireAtWill]);
-        let mut r = raw(&[], &["A", "R"]);
+        let mut r = raw(&[], &["A", "R", "E", "S", "I"]);
         r.shift = true;
-        assert_eq!(b.translate(&r, false).1, vec![Command::WingAttackMyTarget, Command::WingFormation]);
+        assert_eq!(
+            b.translate(&r, false).1,
+            vec![
+                Command::WingAttackMyTarget,
+                Command::WingFormation,
+                Command::WingEvasive,
+                Command::WingRetreat,
+                Command::WingStatus
+            ]
+        );
+        let (_, cmds, _) = b.translate(&raw(&[], &["RightBracket", "L"]), false);
+        assert_eq!(cmds, vec![Command::WingMenu, Command::RepeatMessage]);
+    }
+
+    #[test]
+    fn a_shift_chord_does_not_also_trigger_the_plain_held_key() {
+        let b = Bindings::default();
+        let mut r = raw(&["E"], &["E"]);
+        assert_eq!(b.translate(&r, false).0.roll, 1.0, "E rolls");
+        r.shift = true;
+        let (c, cmds, _) = b.translate(&r, false);
+        assert_eq!(c.roll, 0.0, "Shift+E belongs to the wingman order");
+        assert_eq!(cmds, vec![Command::WingEvasive]);
+        // A key with no Shift chord still works with Shift held.
+        let mut up = raw(&["Up"], &[]);
+        up.shift = true;
+        assert_eq!(b.translate(&up, false).0.pitch, -1.0);
     }
 
     #[test]
@@ -531,6 +797,84 @@ mod tests {
         assert!(b.translate(&held, false).1.is_empty(), "a held button fires once");
         let small = RawInput { pad: Some(PadState { lx: 1000, ..Default::default() }), ..Default::default() };
         assert_eq!(b.translate(&small, false).0.yaw, 0.0, "inside the dead zone");
+    }
+
+    #[test]
+    fn pad_modifier_layer_reaches_every_power_control() {
+        let b = Bindings::default();
+        let press = |mods: &[Button], button: Button| {
+            let mut prev = PadState::default();
+            for m in mods {
+                prev.set(*m, true);
+            }
+            let mut now = prev;
+            now.set(button, true);
+            b.translate(&RawInput { pad: Some(now), pad_previous: Some(prev), ..Default::default() }, false)
+        };
+        let ls = Button::LeftShoulder;
+        assert!(press(&[ls], Button::A).0.requests.hyperspace);
+        assert!(!press(&[ls], Button::A).0.afterburner, "A is not the afterburner while the modifier is held");
+        assert!(press(&[ls], Button::DpadUp).0.requests.power_to_beams);
+        assert_eq!(press(&[ls], Button::DpadUp).0.throttle_delta, 0.0, "not throttle on the second layer");
+        assert!(press(&[ls], Button::DpadDown).0.requests.power_to_shields);
+        assert!(press(&[ls], Button::DpadLeft).0.requests.beam_charge);
+        assert!(press(&[ls], Button::DpadRight).0.requests.shield_charge);
+        assert!(press(&[ls], Button::B).0.requests.shield_balance);
+        assert!(press(&[ls], Button::X).0.requests.tractor);
+        assert!(press(&[ls], Button::Y).0.requests.cloak);
+        assert!(press(&[ls], Button::Back).0.requests.ecm);
+        assert_eq!(press(&[ls], Button::RightShoulder).1, vec![Command::PrevTarget]);
+        assert_eq!(press(&[ls], Button::LeftThumb).1, vec![Command::WingMenu]);
+        assert_eq!(press(&[ls], Button::Start).1, vec![Command::Menu]);
+        assert_eq!(press(&[], ls).1, Vec::<Command>::new(), "the modifier alone does nothing");
+        assert_eq!(press(&[], Button::Start).1, vec![Command::Pause]);
+        assert!(press(&[], Button::A).0.afterburner);
+    }
+
+    #[test]
+    fn every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad() {
+        let b = Bindings::default();
+        for i in ACTIONS {
+            assert!(!b.keys[&i.action].is_empty(), "{} has no key", i.name);
+        }
+        for a in [
+            A::BeamCharge,
+            A::ShieldCharge,
+            A::PowerToBeams,
+            A::PowerToShields,
+            A::ShieldBalance,
+            A::Tractor,
+            A::Cloak,
+            A::Ecm,
+            A::Hyperspace,
+            A::WingMenu,
+        ] {
+            assert!(!b.pad[&a].is_empty(), "{:?} has no pad button", a);
+        }
+        // No two actions share a default chord.
+        let mut seen = HashMap::new();
+        for i in ACTIONS {
+            for k in &b.keys[&i.action] {
+                assert!(seen.insert(("k", k.text()), i.name).is_none(), "{} reused", k.text());
+            }
+            for p in &b.pad[&i.action] {
+                assert!(seen.insert(("p", p.text()), i.name).is_none(), "{} reused", p.text());
+            }
+        }
+    }
+
+    #[test]
+    fn stick_layouts_and_mouse_inversion() {
+        let mut b = Bindings::default();
+        let r =
+            RawInput { pad: Some(PadState { lx: i16::MAX, rx: i16::MIN, ..Default::default() }), ..Default::default() };
+        assert_eq!((b.translate(&r, false).0.yaw, b.translate(&r, false).0.roll), (1.0, -1.0));
+        b.stick_layout = StickLayout::Aircraft;
+        assert_eq!((b.translate(&r, false).0.yaw, b.translate(&r, false).0.roll), (-1.0, 1.0));
+        let m = RawInput { mouse_offset: (0.0, 400.0), ..Default::default() };
+        assert_eq!(b.translate(&m, true).0.pitch, -1.0);
+        b.mouse_invert = true;
+        assert_eq!(b.translate(&m, true).0.pitch, 1.0);
     }
 
     #[test]
@@ -557,16 +901,23 @@ mod tests {
 
     #[test]
     fn bindings_file_overrides_and_round_trips() {
-        let ini = Ini::parse("[keyboard]\nfire_beams = Space, Shift+B\nfire_missile = Enter\n[gamepad]\nfire_beams = A\ndead_zone = 0.3\ninvert_pitch = yes\n[mouse]\nrange = 50\n");
+        let ini = Ini::parse(
+            "[keyboard]\nfire_beams = Space, Shift+B\nfire_missile = Enter\n[gamepad]\nfire_beams = A\n\
+             hyperspace = Back+Y\ndead_zone = 0.3\ninvert_pitch = yes\nstick_layout = aircraft\n\
+             [mouse]\nrange = 50\ninvert = yes\n",
+        );
         let b = Bindings::from_ini(&ini);
         assert_eq!(
             b.keys[&Action::FireBeams],
             vec![KeyChord::parse("space").unwrap(), KeyChord::parse("shift+b").unwrap()]
         );
-        assert_eq!(b.pad[&Action::FireBeams], vec![Button::A]);
+        assert_eq!(b.pad[&Action::FireBeams], vec![PadChord::plain(Button::A)]);
+        assert_eq!(b.pad[&Action::Hyperspace], vec![PadChord { modifier: Some(Button::Back), button: Button::Y }]);
         assert_eq!((b.dead_zone, b.mouse_range, b.pad_invert_pitch), (0.3, 50.0, true));
+        assert_eq!((b.stick_layout, b.mouse_invert), (StickLayout::Aircraft, true));
         let again = Bindings::from_ini(&Ini::parse(&b.to_ini_text()));
         assert_eq!(again, b);
+        assert_eq!(Bindings::from_ini(&Ini::parse(&Bindings::default().to_ini_text())), Bindings::default());
     }
 
     #[test]
@@ -585,6 +936,9 @@ mod tests {
         assert_eq!(KeyChord::parse(""), None);
         assert_eq!(KeyChord::parse("Ctrl+X"), None);
         assert_eq!(KeyChord::parse(" Kp7 "), Some(KeyChord { key: "kp7".into(), shift: false }));
+        assert_eq!(PadChord::parse("A+A"), None, "a button cannot modify itself");
+        assert_eq!(PadChord::parse("Turbo"), None);
+        assert_eq!(PadChord::parse("leftshoulder+dpadup").unwrap().text(), "LeftShoulder+DpadUp");
         assert_eq!(dead(0.1, 0.2), 0.0);
         assert!((dead(1.0, 0.2) - 1.0).abs() < 1e-6);
         assert!((dead(-0.6, 0.2) + 0.5).abs() < 1e-6);

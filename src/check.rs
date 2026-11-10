@@ -5,8 +5,9 @@
 //!
 //! - **Modders** run `openinterceptor --check --mods <dir>` to find mistakes in a pack
 //!   (unknown ids, missing models, bad textures) before playing.
-//! - **The quality gate** (`scripts/check.sh`) runs it against the sample pack always,
-//!   and against the original data when it is present.
+//! - **The quality gate** (`scripts/check.sh`) runs it against the original-free
+//!   `default` campaign always, and against the `interceptor` campaign when the original
+//!   data is present. Each campaign is checked with its own active set of packs.
 //!
 //! The result is a [`Report`]: counts of what was checked plus a list of errors. The
 //! binary prints it and exits non-zero if there are errors.
@@ -142,7 +143,9 @@ pub fn run(content: &Content) -> Report {
         }
     }
     // Exhaustive pass over the original data: every mesh and texture must decode.
-    if let Some(o) = &content.original {
+    // The exhaustive pass over the CD runs only for an active set that uses it.
+    let uses_original = content.packs.iter().any(|p| p.requires_original);
+    if let Some(o) = content.original.as_ref().filter(|_| uses_original) {
         for name in o.resource_names("XMSH") {
             let data = o.resource("XMSH", None, &name).unwrap_or_default();
             match crate::formats::xmsh::parse(data) {
@@ -167,21 +170,23 @@ mod tests {
     use crate::content::ContentConfig;
     use std::path::PathBuf;
 
-    /// The repository's own sample pack must always pass the check: it is the template
-    /// modders copy, and the one pack every build can test without original data.
+    /// The repository's own default campaign must always pass the check: it is the
+    /// template modders copy, and the one campaign every build can test without
+    /// original data.
     #[test]
-    fn the_sample_pack_passes() {
+    fn the_default_campaign_passes() {
         let packs = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
         let content =
             Content::load(&ContentConfig { pack_dirs: vec![packs], no_original: true, ..Default::default() }).unwrap();
         let report = run(&content);
         assert!(report.errors.is_empty(), "{:#?}", report.errors);
         assert!(
-            report.ships >= 3 && report.models >= 3 && report.textures >= 1 && report.scenarios >= 1,
+            report.ships >= 12 && report.models >= 12 && report.textures >= 5 && report.scenarios >= 4,
             "{}",
             report.summary()
         );
         assert!(report.summary().contains("0 errors"));
+        assert_eq!(content.campaign.as_deref(), Some("default"));
     }
 
     #[test]

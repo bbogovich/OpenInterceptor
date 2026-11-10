@@ -10,7 +10,7 @@ PATH="/opt/homebrew/opt/rustup/bin:$HOME/.cargo/bin:$PATH"
 cargo test --release
 cargo build --release
 bin=target/release/openinterceptor
-# The sample pack uses no original assets, so it is always checked.
+# The default campaign uses no original assets, so it is always checked.
 "$bin" --check --no-original
 data="${OPENINTERCEPTOR_DATA:-game}"
 if [ -d "$data" ]; then
@@ -19,7 +19,7 @@ else
     echo "Interceptor data not found; original-data checks skipped"
 fi
 # Guard: no original asset may ever be tracked.
-if git ls-files | grep -E -i '\.(exe|dll|cab|smk|aiff?|wav|mps)$' ; then
+if git ls-files | grep -v "^packs/default/sounds/" | grep -E -i "\.(exe|dll|cab|smk|aiff?|wav|mps)$" ; then
     echo "error: original asset types are tracked by git" >&2
     exit 1
 fi

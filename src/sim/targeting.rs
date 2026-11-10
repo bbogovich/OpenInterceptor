@@ -13,12 +13,13 @@
 
 use super::{ShipId, World};
 
-/// Every live ship except `me`, as `(id, distance)`.
+/// Every live ship except `me` that `me`'s sensors can see (cloaked enemies beyond
+/// their cloak's range are invisible), as `(id, distance)`.
 fn others(w: &World, me: ShipId) -> Vec<(ShipId, f32)> {
     let Some(ship) = w.get(me) else { return Vec::new() };
     w.live_ids()
         .into_iter()
-        .filter(|&id| id != me)
+        .filter(|&id| id != me && super::systems::detectable(w, ship, &w.ships[id.index as usize]))
         .map(|id| (id, w.ships[id.index as usize].position.distance(ship.position)))
         .collect()
 }

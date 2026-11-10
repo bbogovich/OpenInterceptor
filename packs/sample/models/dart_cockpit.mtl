@@ -1,8 +1,0 @@
-newmtl dash
-Kd 0.22 0.24 0.28
-newmtl hood
-Kd 0.15 0.16 0.18
-newmtl frame
-Kd 0.45 0.5 0.58
-newmtl screen
-Kd 0.1 0.6 0.35

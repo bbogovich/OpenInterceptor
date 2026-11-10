@@ -2,7 +2,9 @@
 //!
 //! This layer answers "what is in the game?". It loads, in order:
 //!
-//! 1. the **packs** (built-in ones, then user mods), ordered by dependencies;
+//! 1. the **packs** (built-in ones, then user mods): the chosen campaign, its parent
+//!    chain and the addons and libraries that go with it ([`pack::active_set`]), ordered
+//!    by dependencies;
 //! 2. the player's **original data**, if a path was given and a pack needs it;
 //! 3. every pack's `rules/*.ini` into one [`rules::Ruleset`];
 //! 4. every pack's `scenarios/*.ini`.
@@ -19,6 +21,7 @@
 //!  player's CD ────────────────┘
 //! ```
 
+pub mod equipment;
 pub mod pack;
 pub mod rules;
 pub mod scenario;
@@ -47,11 +50,29 @@ pub struct ContentConfig {
     /// Ids of packs switched off (from `settings.ini` `[packs] disabled`), like XWVM's
     /// per-pack activation: a disabled mod's overrides and rules are not loaded.
     pub disabled: Vec<String>,
+    /// The campaign to play. `None` picks [`preferred_campaign`].
+    pub campaign: Option<String>,
+}
+
+/// The campaign loaded when none is chosen: `interceptor` when the player's data made it
+/// available, otherwise the built-in `default` campaign, otherwise the first one found.
+pub fn preferred_campaign(packs: &[PackInfo]) -> Option<String> {
+    let campaigns = pack::campaigns(packs);
+    ["interceptor", "default"]
+        .iter()
+        .find(|id| campaigns.iter().any(|p| p.id == **id))
+        .map(|id| id.to_string())
+        .or_else(|| campaigns.first().map(|p| p.id.clone()))
 }
 
 /// Everything loaded: the result of [`Content::load`].
 pub struct Content {
+    /// The active packs, in load order.
     pub packs: Vec<PackInfo>,
+    /// The campaign being played (`None` only when no pack is a campaign).
+    pub campaign: Option<String>,
+    /// Every campaign that could be played with the data available: `(id, name)`.
+    pub campaigns: Vec<(String, String)>,
     pub original: Option<OriginalData>,
     pub rules: Ruleset,
     pub scenarios: Vec<Scenario>,
@@ -107,7 +128,21 @@ impl Content {
                 break;
             }
         }
-        let packs = pack::order(found)?;
+        let campaigns: Vec<(String, String)> =
+            pack::campaigns(&found).iter().map(|p| (p.id.clone(), p.name.clone())).collect();
+        let wanted = match &cfg.campaign {
+            Some(c) if campaigns.iter().any(|(id, _)| id == c) => Some(c.clone()),
+            Some(c) => {
+                warnings.push(format!("campaign '{c}' is not available; using the default"));
+                preferred_campaign(&found)
+            }
+            None => preferred_campaign(&found),
+        };
+        let packs = match &wanted {
+            Some(c) => pack::active_set(&found, c)?,
+            // No campaigns at all (a Stage 1 setup): every pack loads.
+            None => pack::order(found)?,
+        };
         if packs.is_empty() {
             return Err("no content packs found (is the packs/ folder next to the program?)".into());
         }
@@ -145,7 +180,7 @@ impl Content {
             }
         }
         scenarios.sort_by(|a, b| a.order.cmp(&b.order).then(a.title.cmp(&b.title)));
-        Ok(Content { packs, original, rules, scenarios, warnings })
+        Ok(Content { packs, campaign: wanted, campaigns, original, rules, scenarios, warnings })
     }
 
     fn original(&self) -> Result<&OriginalData, String> {

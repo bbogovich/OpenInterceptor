@@ -57,12 +57,36 @@ pub fn event_sound(world: &World, e: &SimEvent, listener: ShipId, ear: Vec3) -> 
         SimEvent::LockAcquired { ship } if mine(ship) => (SoundKey::Named("lock"), 0.8),
         SimEvent::Collision { position, .. } => (SoundKey::Named("collision"), at(*position)),
         SimEvent::NoEnergy { ship } if mine(ship) => (SoundKey::Named("denied"), 0.6),
+        SimEvent::SystemChanged { ship, repaired: false, .. } if mine(ship) => (SoundKey::Named("system_damage"), 0.8),
+        SimEvent::Switched { ship, kind, on } => {
+            let key = match kind {
+                crate::content::equipment::SystemKind::Tractor => "tractor",
+                crate::content::equipment::SystemKind::Cloak => "cloak",
+                _ => "ecm",
+            };
+            let pos = world.ships.get(ship.index as usize).map(|s| s.position).unwrap_or(ear);
+            (
+                SoundKey::Named(key),
+                if mine(ship) {
+                    if *on {
+                        0.8
+                    } else {
+                        0.5
+                    }
+                } else {
+                    at(pos) * 0.6
+                },
+            )
+        }
+        SimEvent::Departed { ship, position } => {
+            (SoundKey::Named("hyperspace"), if mine(ship) { 1.0 } else { at(*position) })
+        }
         _ => return None,
     })
 }
 
 /// Named event sounds the engine knows about.
-pub const NAMED: [&str; 10] = [
+pub const NAMED: [&str; 15] = [
     "explosion",
     "big_explosion",
     "shield_hit",
@@ -73,6 +97,11 @@ pub const NAMED: [&str; 10] = [
     "target",
     "denied",
     "collision",
+    "system_damage",
+    "tractor",
+    "cloak",
+    "ecm",
+    "hyperspace",
 ];
 
 /// Decoded, playable sounds.
@@ -187,5 +216,11 @@ mod tests {
         assert_eq!(s(SimEvent::MissileExploded { position: Vec3::ZERO }).unwrap().0, SoundKey::Named("explosion"));
         assert_eq!(s(SimEvent::Collision { ship: me, position: Vec3::ZERO }).unwrap().0, SoundKey::Named("collision"));
         assert_eq!(s(SimEvent::Message { ship: me, text: "x".into() }), None);
+        let dmg =
+            SimEvent::SystemChanged { ship: me, system: 0, condition: crate::sim::Condition::Damaged, repaired: false };
+        assert_eq!(s(dmg).unwrap().0, SoundKey::Named("system_damage"));
+        let on = SimEvent::Switched { ship: me, kind: crate::content::equipment::SystemKind::Cloak, on: true };
+        assert_eq!(s(on), Some((SoundKey::Named("cloak"), 0.8)));
+        assert_eq!(s(SimEvent::Departed { ship: me, position: Vec3::ZERO }).unwrap().0, SoundKey::Named("hyperspace"));
     }
 }

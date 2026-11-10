@@ -23,7 +23,7 @@ use crate::input::{ChaseInput, Command, View};
 use crate::render::camera::SpaceCamera;
 use crate::render::effects::Effects;
 use crate::render::gpu::GpuModel;
-use crate::sim::{ai, collision, targeting, ShipId, SimEvent, World, TICK};
+use crate::sim::{ai, collision, targeting, Condition, ShipId, SimEvent, World, TICK};
 use glam::{Quat, Vec2, Vec3};
 use macroquad::prelude::*;
 use std::collections::HashMap;
@@ -79,48 +79,76 @@ pub fn view_pose(view: View, pos: Vec3, rot: Quat, radius: f32, chase: &ChaseOrb
     }
 }
 
+/// Vertical field of view (radians) for a cockpit designed at `design_aspect` (width /
+/// height) shown on a screen of `aspect`. The engine's normal view has a 60° vertical
+/// field; on a screen narrower than the design that would cut off the cockpit's sides
+/// and misplace its instruments, so the field widens until the design's full width fits
+/// — the 3D equivalent of the 2D layout fitting the design inside the screen.
+pub fn cockpit_fov(design_aspect: f32, aspect: f32) -> f32 {
+    let base = 60f32.to_radians();
+    if aspect >= design_aspect || aspect <= 0.0 {
+        base
+    } else {
+        2.0 * ((base * 0.5).tan() * design_aspect / aspect).atan()
+    }
+}
+
 /// Whether a view shows the player's own ship model.
 pub fn shows_own_ship(view: View) -> bool {
     matches!(view, View::Chase | View::ChaseManual)
 }
 
-/// Applies a targeting or wingman command to the world. Returns a message for the
-/// message line, if the command produces one.
-pub fn apply_command(world: &mut World, player: ShipId, cmd: Command) -> Option<String> {
-    let current = world.get(player)?.target;
+/// The wingman menu's entries, in the original's order: `(label, command)`.
+pub const WING_MENU: [(&str, Command); 6] = [
+    ("Fire at will", Command::WingFireAtWill),
+    ("Attack my target", Command::WingAttackMyTarget),
+    ("Ignore my target", Command::WingFormation),
+    ("Evasive!", Command::WingEvasive),
+    ("Retreat!", Command::WingRetreat),
+    ("Status report", Command::WingStatus),
+];
+
+/// Applies a targeting or wingman command to the world. Returns lines for the message
+/// line (a status report has one per wingman).
+pub fn apply_command(world: &mut World, player: ShipId, cmd: Command) -> Vec<String> {
+    let Some(current) = world.get(player).map(|s| s.target) else { return Vec::new() };
     let new_target = match cmd {
         Command::NextTarget => targeting::cycle(world, player, current, true),
         Command::PrevTarget => targeting::cycle(world, player, current, false),
         Command::NearestEnemy => targeting::nearest_hostile(world, player),
         Command::TargetInSights => targeting::in_sights(world, player, 15.0),
-        Command::WingFireAtWill => {
-            return Some(order(world, player, ai::WingOrder::FireAtWill, "WINGMEN: FIRE AT WILL"))
-        }
+        Command::WingFireAtWill => return order(world, player, ai::WingOrder::FireAtWill, "WINGMEN: FIRE AT WILL"),
         Command::WingAttackMyTarget => {
-            return Some(order(world, player, ai::WingOrder::AttackMyTarget, "WINGMEN: ATTACK MY TARGET"))
+            return order(world, player, ai::WingOrder::AttackMyTarget, "WINGMEN: ATTACK MY TARGET")
         }
-        Command::WingFormation => return Some(order(world, player, ai::WingOrder::Formation, "WINGMEN: FORM ON ME")),
-        _ => return None,
+        Command::WingFormation => return order(world, player, ai::WingOrder::Formation, "WINGMEN: IGNORE MY TARGET"),
+        Command::WingEvasive => return order(world, player, ai::WingOrder::Evasive, "WINGMEN: EVASIVE!"),
+        Command::WingRetreat => return order(world, player, ai::WingOrder::Retreat, "WINGMEN: RETREAT!"),
+        Command::WingStatus => {
+            let lines = ai::wing_status(world, player);
+            return if lines.is_empty() { vec!["NO WINGMEN".into()] } else { lines };
+        }
+        _ => return Vec::new(),
     };
-    let s = world.get_mut(player)?;
+    let Some(s) = world.get_mut(player) else { return Vec::new() };
     if new_target != s.target {
         s.lock = Default::default();
     }
     s.target = new_target;
-    match new_target {
+    vec![match new_target {
         Some(t) => {
             let name = world.rules.ship(world.ships[t.index as usize].class).name.clone();
-            Some(format!("TARGET: {}", name.to_uppercase()))
+            format!("TARGET: {}", name.to_uppercase())
         }
-        None => Some("NO TARGET".into()),
-    }
+        None => "NO TARGET".into(),
+    }]
 }
 
-fn order(world: &mut World, player: ShipId, o: ai::WingOrder, text: &str) -> String {
-    match ai::order_wingmen(world, player, o) {
+fn order(world: &mut World, player: ShipId, o: ai::WingOrder, text: &str) -> Vec<String> {
+    vec![match ai::order_wingmen(world, player, o) {
         0 => "NO WINGMEN".into(),
         _ => text.into(),
-    }
+    }]
 }
 
 /// Message-line texts for this tick's events, from the player's point of view.
@@ -133,6 +161,32 @@ pub fn event_messages(world: &World, player: ShipId) -> Vec<String> {
             SimEvent::LockAcquired { ship } if *ship == player => out.push("MISSILE LOCK".into()),
             SimEvent::NoEnergy { ship } if *ship == player => out.push("INSUFFICIENT POWER".into()),
             SimEvent::Destroyed { ship, .. } if *ship == player => out.push("YOUR SHIP HAS BEEN DESTROYED".into()),
+            SimEvent::SystemChanged { ship, system, condition, repaired } if *ship == player => {
+                let s = &world.ships[player.index as usize];
+                let name = world.rules.system(s.systems[*system].id).name.to_uppercase();
+                out.push(match (condition, repaired) {
+                    (Condition::Ok, _) => format!("{name} REPAIRED"),
+                    (Condition::Damaged, true) => format!("{name} BACK ON-LINE"),
+                    (Condition::Damaged, false) => format!("{name} DAMAGED: HALF EFFICIENCY"),
+                    (Condition::Inoperative, _) => format!("{name} INOPERATIVE: REPAIRS UNDERWAY"),
+                    (Condition::Destroyed, _) => format!("{name} DESTROYED"),
+                });
+            }
+            SimEvent::Disabled { ship } if *ship == player => {
+                out.push("ENGINES AND THRUSTERS OUT: SHIP DISABLED".into())
+            }
+            SimEvent::Disabled { ship } if Some(*ship) == target => out.push("TARGET DISABLED".into()),
+            SimEvent::Departed { ship, .. } if *ship == player => out.push("HYPERJUMP COMPLETE".into()),
+            SimEvent::Departed { ship, .. } => {
+                let s = &world.ships[ship.index as usize];
+                if world.rules.hostile(world.ships[player.index as usize].faction, s.faction) || Some(*ship) == target {
+                    out.push(format!("{} JUMPED OUT", world.rules.ship(s.class).name.to_uppercase()));
+                }
+            }
+            SimEvent::Captured { prize, .. } => {
+                let s = &world.ships[prize.index as usize];
+                out.push(format!("{} CAPTURED", world.rules.ship(s.class).name.to_uppercase()));
+            }
             SimEvent::Destroyed { ship, .. } => {
                 let name = world.rules.ship(world.ships[ship.index as usize].class).name.to_uppercase();
                 // The target was cleared on death, so compare with last frame's target.
@@ -178,6 +232,12 @@ pub struct FlightSession {
     instruments: HashMap<String, [f32; 4]>,
     scenario_id: String,
     ship_choice: Option<String>,
+    /// The wingman menu, while open: the highlighted entry.
+    wing_menu: Option<usize>,
+    /// The controls menu, while open over the battle (from the pause menu).
+    controls: Option<super::controls::ControlsMenu>,
+    /// Prizes captured by the player's tractor beam when jumping out.
+    captured: Vec<String>,
 }
 
 impl FlightSession {
@@ -258,14 +318,55 @@ impl FlightSession {
             instruments,
             scenario_id: scenario.id.clone(),
             ship_choice: ship.map(str::to_string),
+            wing_menu: None,
+            controls: None,
+            captured: Vec::new(),
         })
     }
 
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
+        // The controls menu, opened from the pause menu, takes the whole frame.
+        if let Some(menu) = &mut self.controls {
+            if menu.frame(ctx) {
+                self.controls = None;
+            }
+            return Next::Stay;
+        }
         let raw = ctx.devices.read();
-        let (controls, commands, chase_input) = ctx.bindings.translate(&raw, self.mouse_flight);
+        let (mut controls, mut commands, chase_input) = ctx.bindings.translate(&raw, self.mouse_flight);
         let dt = get_frame_time().min(MAX_FRAME);
         let alive = self.world.get(self.player).is_some();
+        let departed = self.world.ships[self.player.index as usize].departed;
+
+        // --- Wingman menu: digits (or the d-pad and A) choose, the menu key closes ----
+        if let Some(sel) = self.wing_menu {
+            let pressed = |k: &str| raw.pressed.contains(k);
+            let n = WING_MENU.len();
+            let mut choice = (1..=n).find(|d| pressed(&format!("key{d}")) || pressed(&format!("kp{d}")));
+            let mut highlight = sel;
+            if raw.pad_pressed(crate::input::gamepad::Button::DpadDown) {
+                highlight = (sel + 1) % n;
+            }
+            if raw.pad_pressed(crate::input::gamepad::Button::DpadUp) {
+                highlight = (sel + n - 1) % n;
+            }
+            if raw.pad_pressed(crate::input::gamepad::Button::A) {
+                choice = Some(sel + 1);
+            }
+            let close = raw.pad_pressed(crate::input::gamepad::Button::B) || commands.contains(&Command::WingMenu);
+            self.wing_menu = Some(highlight);
+            // While the menu is open the d-pad and A belong to it, not to the throttle,
+            // the MFD or the afterburner.
+            controls.throttle_delta = 0.0;
+            controls.afterburner = false;
+            commands.retain(|c| !matches!(c, Command::MfdNext | Command::MfdPrev | Command::WingMenu));
+            if let Some(k) = choice {
+                commands.push(WING_MENU[k - 1].1);
+                self.wing_menu = None;
+            } else if close {
+                self.wing_menu = None;
+            }
+        }
 
         // --- Pause menu -------------------------------------------------------------
         if self.menu_open {
@@ -275,11 +376,21 @@ impl FlightSession {
                 return Next::Fly { scenario: self.scenario_id.clone(), ship: self.ship_choice.clone() };
             } else if raw.pressed.contains("l") || raw.pressed.contains("q") {
                 return Next::Launcher;
+            } else if raw.pressed.contains("k") {
+                self.controls = Some(super::controls::ControlsMenu::new(ctx));
+                return Next::Stay;
             }
         } else {
             for cmd in &commands {
                 match cmd {
+                    Command::Menu if self.wing_menu.is_some() => self.wing_menu = None,
                     Command::Menu => self.menu_open = true,
+                    Command::WingMenu => self.wing_menu = Some(0),
+                    Command::RepeatMessage => {
+                        if let Some(m) = self.messages.last().map(str::to_string) {
+                            self.messages.push(self.world.time, m);
+                        }
+                    }
                     Command::Pause => self.paused = !self.paused,
                     Command::View(v) => self.view = *v,
                     Command::MfdNext => self.mfd = self.mfd.cycle(true),
@@ -295,8 +406,11 @@ impl FlightSession {
                         set_cursor_grab(self.mouse_flight);
                     }
                     other => {
-                        if let Some(text) = apply_command(&mut self.world, self.player, *other) {
+                        let lines = apply_command(&mut self.world, self.player, *other);
+                        if !lines.is_empty() {
                             ctx.sounds.play(&crate::audio::SoundKey::Named("target"), 0.5);
+                        }
+                        for text in lines {
                             self.messages.push(self.world.time, text);
                         }
                     }
@@ -326,6 +440,14 @@ impl FlightSession {
                 for m in event_messages(&self.world, self.player) {
                     self.messages.push(self.world.time, m);
                 }
+                for e in &self.world.events {
+                    if let SimEvent::Captured { captor, prize } = e {
+                        if *captor == self.player {
+                            let class = self.world.ships[prize.index as usize].class;
+                            self.captured.push(self.world.rules.ship(class).name.clone());
+                        }
+                    }
+                }
                 self.accumulator -= TICK;
             }
             self.effects.update(dt);
@@ -337,7 +459,14 @@ impl FlightSession {
         // After death, keep watching the wreck from outside.
         let view = if alive { self.view } else { View::ChaseManual };
         let (pos, rot) = view_pose(view, me.position, me.rotation, radius, &self.chase);
-        let cam = SpaceCamera::new(pos, rot, 60f32.to_radians(), screen_width() / screen_height());
+        let aspect = screen_width() / screen_height();
+        // A 3D cockpit (no 2D art) keeps its whole design width on narrow screens.
+        let fov = if alive && view == View::Cockpit && self.cockpit_model.is_some() && self.cockpit.is_none() {
+            cockpit_fov(self.design.x / self.design.y, aspect)
+        } else {
+            60f32.to_radians()
+        };
+        let cam = SpaceCamera::new(pos, rot, fov, aspect);
         let hide = if shows_own_ship(view) { None } else { Some(self.player) };
 
         // --- Drawing ----------------------------------------------------------------
@@ -372,6 +501,7 @@ impl FlightSession {
             messages: &self.messages,
             now: self.world.time,
             glass: !with_art,
+            backdrops: !custom,
             forward_view: alive && matches!(view, View::Cockpit | View::Forward | View::Chase),
         };
         hud::draw::draw_targeting(&frame);
@@ -395,9 +525,27 @@ impl FlightSession {
             if self.mouse_flight { " - mouse flight (C)" } else { "" }
         );
         hud::draw::draw_caption(&caption, false);
-        if !alive {
+        if departed {
+            draw_centered("JUMPED TO HYPERSPACE", screen.y * 0.4, 40.0, SKYBLUE);
+            if !self.captured.is_empty() {
+                draw_centered(&format!("Captured: {}", self.captured.join(", ")), screen.y * 0.4 + 36.0, 24.0, GOLD);
+            }
+            draw_centered("Enter: fly again    Esc: menu", screen.y * 0.4 + 70.0, 22.0, WHITE);
+        } else if !alive {
             draw_centered("SHIP DESTROYED", screen.y * 0.4, 40.0, RED);
             draw_centered("Enter: try again    Esc: menu", screen.y * 0.4 + 40.0, 22.0, WHITE);
+        }
+        if let Some(sel) = self.wing_menu {
+            let (w, h) = (300.0, 34.0 + WING_MENU.len() as f32 * 26.0);
+            let (x, y) = (screen.x * 0.5 - w * 0.5, screen.y * 0.18);
+            draw_rectangle(x, y, w, h, Color::new(0.0, 0.06, 0.02, 0.85));
+            draw_rectangle_lines(x, y, w, h, 1.5, Color::new(0.35, 1.0, 0.45, 0.8));
+            draw_text("WINGMEN", x + 12.0, y + 24.0, 22.0, Color::new(0.35, 1.0, 0.45, 1.0));
+            for (i, (label, _)) in WING_MENU.iter().enumerate() {
+                let ly = y + 50.0 + i as f32 * 26.0;
+                let c = if i == sel { WHITE } else { Color::new(0.35, 1.0, 0.45, 0.9) };
+                draw_text(&format!("{}  {label}", i + 1), x + 16.0, ly, 20.0, c);
+            }
         }
         if self.paused {
             draw_centered("PAUSED (P)", screen.y * 0.3, 36.0, YELLOW);
@@ -406,13 +554,13 @@ impl FlightSession {
             draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.0, 0.0, 0.6));
             draw_centered("MENU", screen.y * 0.35, 40.0, WHITE);
             draw_centered(
-                "Esc  resume      R  restart      L  back to launcher",
+                "Esc  resume      R  restart      K  controls      L  back to launcher",
                 screen.y * 0.35 + 44.0,
                 22.0,
                 LIGHTGRAY,
             );
             draw_centered(
-                "Keys: arrows pitch/yaw  Q/E or Num7/9 roll  +/- throttle  Tab burner",
+                "Keys: arrows pitch/yaw  Q/E or Num7/9 roll  +/- throttle  Tab burner  H hyperspace",
                 screen.y * 0.35 + 90.0,
                 18.0,
                 GRAY,
@@ -420,6 +568,12 @@ impl FlightSession {
             draw_centered(
                 "Enter/LCtrl beams  Space missile  T/Y/R/G target  X link  F1-F8 views  C mouse",
                 screen.y * 0.35 + 114.0,
+                18.0,
+                GRAY,
+            );
+            draw_centered(
+                "F9/F10 beam/shield charge  ; ' power  S shield balance  ] wingmen  Shift+T/C/J tractor/cloak/ECM",
+                screen.y * 0.35 + 138.0,
                 18.0,
                 GRAY,
             );
@@ -459,6 +613,17 @@ mod tests {
     }
 
     #[test]
+    fn cockpit_fov_widens_only_on_narrow_screens() {
+        let base = 60f32.to_radians();
+        assert_eq!(cockpit_fov(16.0 / 9.0, 16.0 / 9.0), base);
+        assert_eq!(cockpit_fov(16.0 / 9.0, 21.0 / 9.0), base, "wider screens keep 60°");
+        let f = cockpit_fov(16.0 / 9.0, 4.0 / 3.0);
+        // The horizontal half-angle must match the design's at 60° vertical.
+        let horizontal = |fov: f32, a: f32| ((fov * 0.5).tan() * a).atan();
+        assert!((horizontal(f, 4.0 / 3.0) - horizontal(base, 16.0 / 9.0)).abs() < 1e-5);
+    }
+
+    #[test]
     fn chase_orbit_responds_and_resets() {
         let mut c = ChaseOrbit::default();
         c.apply(&ChaseInput { yaw: 1.0, pitch: 1.0, zoom: 1.0, reset: false }, 0.5);
@@ -474,9 +639,10 @@ mod tests {
         let r = w.rules.ship_id("raider").unwrap();
         let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
         let foe = w.spawn(r, FactionId(1), "foe", Vec3::new(0.0, 0.0, -500.0), Quat::IDENTITY, Pilot::External);
-        assert_eq!(apply_command(&mut w, me, Command::NearestEnemy), Some("TARGET: RAIDER".into()));
+        assert_eq!(apply_command(&mut w, me, Command::NearestEnemy), vec!["TARGET: RAIDER"]);
         assert_eq!(w.get(me).unwrap().target, Some(foe));
-        assert_eq!(apply_command(&mut w, me, Command::WingFireAtWill), Some("NO WINGMEN".into()));
+        assert_eq!(apply_command(&mut w, me, Command::WingFireAtWill), vec!["NO WINGMEN"]);
+        assert_eq!(apply_command(&mut w, me, Command::WingStatus), vec!["NO WINGMEN"]);
         w.spawn(
             f,
             FactionId(0),
@@ -485,15 +651,19 @@ mod tests {
             Quat::IDENTITY,
             Pilot::Ai(ai::AiState::new(ai::Behaviour::Wingman, Some(me), Vec3::X * 50.0)),
         );
-        assert_eq!(apply_command(&mut w, me, Command::WingAttackMyTarget), Some("WINGMEN: ATTACK MY TARGET".into()));
-        assert_eq!(apply_command(&mut w, me, Command::WingFormation), Some("WINGMEN: FORM ON ME".into()));
-        assert_eq!(apply_command(&mut w, me, Command::Pause), None, "not a world command");
+        assert_eq!(apply_command(&mut w, me, Command::WingAttackMyTarget), vec!["WINGMEN: ATTACK MY TARGET"]);
+        assert_eq!(apply_command(&mut w, me, Command::WingFormation), vec!["WINGMEN: IGNORE MY TARGET"]);
+        assert_eq!(apply_command(&mut w, me, Command::WingEvasive), vec!["WINGMEN: EVASIVE!"]);
+        assert_eq!(apply_command(&mut w, me, Command::WingRetreat), vec!["WINGMEN: RETREAT!"]);
+        assert_eq!(apply_command(&mut w, me, Command::WingStatus).len(), 1, "one line per wingman");
+        assert!(apply_command(&mut w, me, Command::Pause).is_empty(), "not a world command");
         w.get_mut(foe).unwrap().alive = false;
         w.get_mut(me).unwrap().target = None;
-        assert_eq!(apply_command(&mut w, me, Command::NearestEnemy), Some("NO TARGET".into()));
-        assert!(apply_command(&mut w, me, Command::NextTarget).unwrap().starts_with("TARGET:"));
-        assert!(apply_command(&mut w, me, Command::PrevTarget).is_some());
-        assert!(apply_command(&mut w, me, Command::TargetInSights).is_some());
+        assert_eq!(apply_command(&mut w, me, Command::NearestEnemy), vec!["NO TARGET"]);
+        assert!(apply_command(&mut w, me, Command::NextTarget)[0].starts_with("TARGET:"));
+        assert!(!apply_command(&mut w, me, Command::PrevTarget).is_empty());
+        assert!(!apply_command(&mut w, me, Command::TargetInSights).is_empty());
+        assert_eq!(WING_MENU[5].1, Command::WingStatus);
     }
 
     #[test]

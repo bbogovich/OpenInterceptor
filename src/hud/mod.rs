@@ -17,12 +17,18 @@
 //! | `mfd` | the multi-function display: target, weapons, ship status or navigation page |
 //! | `gauge1`–`gauge4` | speed, energy, shields, hull |
 //! | `message` | the latest pilot messages |
+//! | `power` | beam and shield charge settings (A–E), power budget, shield balance and the fore/aft shield levels |
+//! | `systems` | one lamp per fitted system: working, damaged, knocked out, destroyed, switched on, being repaired |
+//!
+//! A cockpit that does not place `power` or `systems` gets them in the top-right corner
+//! of the screen.
 //!
 //! The logic (where a contact goes on the radar, what each MFD page says, which messages
 //! are visible) is pure and unit-tested; the `draw_*` functions only paint it.
 
+use crate::content::equipment::{PowerRules, SystemKind};
 use crate::content::rules::{FactionId, Ruleset};
-use crate::sim::{LinkMode, Ship, ShipId, World};
+use crate::sim::{systems, Condition, LinkMode, ShieldBalance, Ship, ShipId, World};
 use glam::{Vec2, Vec3};
 use std::collections::HashMap;
 
@@ -70,6 +76,8 @@ pub fn default_instruments() -> HashMap<String, [f32; 4]> {
         ("gauge2", [438.0, 418.0, 34.0, 34.0]),
         ("gauge3", [476.0, 418.0, 34.0, 34.0]),
         ("gauge4", [514.0, 418.0, 34.0, 34.0]),
+        ("power", [252.0, 400.0, 66.0, 72.0]),
+        ("systems", [324.0, 400.0, 70.0, 72.0]),
     ]
     .into_iter()
     .map(|(k, v)| (k.to_string(), v))
@@ -115,17 +123,122 @@ pub fn gauge_values(rules: &Ruleset, ship: &Ship) -> [f32; 4] {
     ]
 }
 
+/// What the `power` instrument shows.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PowerReadout {
+    /// Level indices (0 = A) and the number of levels.
+    pub beam: u8,
+    pub shield: u8,
+    pub levels: u8,
+    /// Steps in use and available.
+    pub used: u32,
+    pub budget: u32,
+    pub balance: ShieldBalance,
+    /// Fore and aft shields as fractions of their (balanced) capacity.
+    pub fore: f32,
+    pub aft: f32,
+}
+
+/// Reads the ship's power state for the `power` instrument.
+pub fn power_readout(rules: &Ruleset, ship: &Ship) -> PowerReadout {
+    let c = rules.ship(ship.class);
+    let (cap_f, cap_a) = systems::shield_caps(c.shields, ship.power.balance, rules.power.balance_shift);
+    let frac = |v: f32, max: f32| if max > 0.0 { (v / max).clamp(0.0, 1.0) } else { 0.0 };
+    PowerReadout {
+        beam: ship.power.beam,
+        shield: ship.power.shield,
+        levels: rules.power.levels(),
+        used: systems::power_used(ship, rules),
+        budget: rules.power.budget as u32,
+        balance: ship.power.balance,
+        fore: frac(ship.shield_fore, cap_f),
+        aft: frac(ship.shield_aft, cap_a),
+    }
+}
+
+/// How a system lamp is lit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Lamp {
+    /// Working (green).
+    Ok,
+    /// Switched on (bright cyan): an active tractor, cloak or ECM.
+    On,
+    /// Damaged: half effect (amber).
+    Damaged,
+    /// Knocked out (red); blinks while being repaired.
+    Out,
+    /// Destroyed for the battle (dark).
+    Destroyed,
+}
+
+/// Three-letter lamp label for a system kind.
+pub fn system_abbrev(kind: SystemKind) -> &'static str {
+    match kind {
+        SystemKind::Engines => "ENG",
+        SystemKind::Manoeuvring => "MAN",
+        SystemKind::Sensors => "SEN",
+        SystemKind::Shields => "SHD",
+        SystemKind::Hyperdrive => "HYP",
+        SystemKind::Vct => "VCT",
+        SystemKind::Tractor => "TRC",
+        SystemKind::Cloak => "CLK",
+        SystemKind::Ecm => "ECM",
+        SystemKind::DamageControl => "DCC",
+    }
+}
+
+/// One lamp per fitted system: `(label, lamp, being repaired)`.
+pub fn system_lamps(ship: &Ship) -> Vec<(&'static str, Lamp, bool)> {
+    ship.systems
+        .iter()
+        .enumerate()
+        .map(|(i, s)| {
+            let lamp = match s.condition() {
+                Condition::Ok if s.on => Lamp::On,
+                Condition::Ok => Lamp::Ok,
+                Condition::Damaged if s.on => Lamp::On,
+                Condition::Damaged => Lamp::Damaged,
+                Condition::Inoperative => Lamp::Out,
+                Condition::Destroyed => Lamp::Destroyed,
+            };
+            (system_abbrev(s.kind), lamp, ship.repairing == Some(i))
+        })
+        .collect()
+}
+
+/// Short status flags for the strip under the message line.
+pub fn status_flags(ship: &Ship) -> Vec<String> {
+    let mut v = Vec::new();
+    if ship.disabled {
+        v.push("DISABLED".to_string());
+    }
+    if ship.cloaked() {
+        v.push("CLOAKED".into());
+    }
+    if ship.is_on(SystemKind::Tractor) {
+        v.push("TRACTOR".into());
+    }
+    if ship.is_on(SystemKind::Ecm) {
+        v.push("ECM".into());
+    }
+    if let Some(t) = ship.hyperspace {
+        v.push(format!("JUMP {:.0}", t.ceil()));
+    }
+    v
+}
+
 /// Multi-function display pages, cycled with `<` and `>`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MfdPage {
     Target,
     Weapons,
     Status,
+    Systems,
     Nav,
 }
 
 impl MfdPage {
-    const ALL: [MfdPage; 4] = [MfdPage::Target, MfdPage::Weapons, MfdPage::Status, MfdPage::Nav];
+    const ALL: [MfdPage; 5] = [MfdPage::Target, MfdPage::Weapons, MfdPage::Status, MfdPage::Systems, MfdPage::Nav];
 
     /// The next (or previous) page, wrapping.
     pub fn cycle(self, forwards: bool) -> MfdPage {
@@ -174,12 +287,40 @@ pub fn mfd_lines(world: &World, player: ShipId, page: MfdPage, nav: Option<(&str
         }
         MfdPage::Status => {
             let c = rules.ship(me.class);
+            let p = power_readout(rules, me);
+            let balance = match p.balance {
+                ShieldBalance::Equal => "EVEN",
+                ShieldBalance::Forward => "FWD",
+                ShieldBalance::Aft => "AFT",
+            };
             vec![
                 c.name.clone(),
-                format!("SHIELD F {:.0} A {:.0}", me.shield_fore, me.shield_aft),
+                format!("SHIELD F {:.0} A {:.0} {balance}", me.shield_fore, me.shield_aft),
                 format!("ARMOR {:.0}  HULL {:.0}", me.armor, me.hull),
                 format!("ENERGY {:.0}/{:.0}", me.energy, c.energy),
+                format!(
+                    "BEAM {} SHLD {} PWR {}/{}",
+                    PowerRules::letter(p.beam),
+                    PowerRules::letter(p.shield),
+                    p.used,
+                    p.budget
+                ),
             ]
+        }
+        MfdPage::Systems => {
+            let mut lines = vec!["SYSTEMS".to_string()];
+            for (i, s) in me.systems.iter().enumerate() {
+                let state = match s.condition() {
+                    Condition::Ok if s.on => "ON".to_string(),
+                    Condition::Ok => "OK".to_string(),
+                    Condition::Damaged => format!("DMG {:.0}%", 100.0 * s.hp / s.max),
+                    Condition::Inoperative => "OUT".to_string(),
+                    Condition::Destroyed => "DESTROYED".to_string(),
+                };
+                let fix = if me.repairing == Some(i) { " *" } else { "" };
+                lines.push(format!("{} {state}{fix}", system_abbrev(s.kind)));
+            }
+            lines
         }
         MfdPage::Nav => match nav {
             None => vec!["NAV".into(), "no nav points".into()],
@@ -222,6 +363,11 @@ impl MessageLog {
         if self.entries.len() > 32 {
             self.entries.remove(0);
         }
+    }
+
+    /// The newest message, however old (for "repeat last message").
+    pub fn last(&self) -> Option<&str> {
+        self.entries.last().map(|(_, s)| s.as_str())
     }
 
     /// Up to `n` messages younger than [`MESSAGE_TIME`], newest last.
@@ -290,6 +436,7 @@ mod tests {
     fn mfd_pages_cycle_and_describe() {
         assert_eq!(MfdPage::Target.cycle(true), MfdPage::Weapons);
         assert_eq!(MfdPage::Target.cycle(false), MfdPage::Nav);
+        assert_eq!(MfdPage::Status.cycle(true), MfdPage::Systems);
         let mut w = world();
         let f = w.rules.ship_id("fighter").unwrap();
         let r = w.rules.ship_id("raider").unwrap();
@@ -309,6 +456,33 @@ mod tests {
     }
 
     #[test]
+    fn power_and_system_readouts() {
+        let mut w = world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let id = w.spawn(f, FactionId(0), "p", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let s = w.get_mut(id).unwrap();
+        s.power.balance = ShieldBalance::Forward;
+        s.shield_fore = 30.0;
+        s.systems[0].set_hp(0.0);
+        s.repairing = Some(0);
+        s.systems[2].set_hp(10.0);
+        s.hyperspace = Some(3.2);
+        let s = w.get(id).unwrap();
+        let p = power_readout(&w.rules, s);
+        assert_eq!((p.beam, p.shield, p.levels, p.used, p.budget), (3, 3, 5, 6, 6));
+        assert!((p.fore - 0.5).abs() < 1e-6, "30 of a 60-point forward-balanced shield");
+        let lamps = system_lamps(s);
+        assert_eq!(lamps[0], ("ENG", Lamp::Out, true));
+        assert_eq!(lamps[1], ("MAN", Lamp::Ok, false));
+        assert_eq!(lamps[2].1, Lamp::Damaged);
+        assert_eq!(status_flags(s), vec!["JUMP 4"]);
+        let sys = mfd_lines(&w, id, MfdPage::Systems, None);
+        assert_eq!(sys[1], "ENG OUT *");
+        assert!(sys[3].starts_with("SEN DMG"), "{sys:?}");
+        assert!(mfd_lines(&w, id, MfdPage::Status, None)[4].starts_with("BEAM D SHLD D PWR 6/6"));
+    }
+
+    #[test]
     fn messages_expire_and_keep_the_newest() {
         let mut log = MessageLog::default();
         log.push(0.0, "old");
@@ -321,6 +495,6 @@ mod tests {
         }
         assert_eq!(log.visible(10.0, 100).len(), 32, "bounded history");
         assert_eq!(format_distance(12_400.0), "12.4 km");
-        assert_eq!(default_instruments().len(), 8);
+        assert_eq!(default_instruments().len(), 10);
     }
 }

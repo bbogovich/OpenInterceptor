@@ -23,6 +23,7 @@
 
 use super::collision::segment_shape;
 use super::{Bolt, LinkMode, Missile, ShipId, SimEvent, World};
+use crate::content::equipment::SystemKind;
 use glam::Vec3;
 
 /// Seconds between missile launches.
@@ -69,11 +70,14 @@ fn update_lock(w: &mut World, i: usize, dt: f32) {
     let to = t.position - ship.position;
     let in_range = to.length() <= m.speed * m.duration;
     let in_cone = to.normalize_or_zero().dot(ship.forward()) >= w.rules.flight.lock_angle.to_radians().cos();
+    // Damaged sensors lock more slowly (not at all when knocked out); a target running
+    // ECM halves the rate.
+    let rate = ship.efficiency(SystemKind::Sensors) * if t.is_on(SystemKind::Ecm) { 0.5 } else { 1.0 };
     let id = w.id_of(i);
     let lock_time = m.lock_time;
     let s = &mut w.ships[i];
-    if in_range && in_cone {
-        s.lock.progress += dt;
+    if in_range && in_cone && rate > 0.0 {
+        s.lock.progress += dt * rate;
         if !s.lock.locked && s.lock.progress >= lock_time {
             s.lock.locked = true;
             w.events.push(SimEvent::LockAcquired { ship: id });
@@ -101,6 +105,14 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     if !s.controls.fire_beams || n == 0 {
         return;
     }
+    // The original: beams cannot fire while the tractor beam is on.
+    if s.is_on(SystemKind::Tractor) {
+        if s.beam_cooldown.iter().all(|c| *c <= 0.0) {
+            s.beam_cooldown.iter_mut().for_each(|c| *c = 1.0);
+            w.events.push(SimEvent::Message { ship: id, text: "BEAMS OFF-LINE: TRACTOR BEAM ON".into() });
+        }
+        return;
+    }
     // Which mounts fire this tick depends on the link mode.
     let group: Vec<usize> = match s.link_mode {
         LinkMode::Full => (0..n).collect(),
@@ -125,6 +137,7 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     }
     s.energy -= cost;
     s.next_mount = (group.last().copied().unwrap_or(0) + 1) % n;
+    drop_cloak(s, id, &mut w.events);
     let (pos, rot, vel, faction) = (s.position, s.rotation, s.velocity, s.faction);
     for &k in &group {
         let beam = rules.beam(class.beams[k]);
@@ -183,8 +196,18 @@ fn handle_missile_controls(w: &mut World, i: usize, id: ShipId, dt: f32) {
     };
     let pos = s.position;
     s.lock = Default::default();
+    drop_cloak(s, id, &mut w.events);
     w.missiles.push(m);
     w.events.push(SimEvent::MissileLaunched { ship: id, position: pos });
+}
+
+/// Firing gives a cloaked ship away: the cloak switches off.
+fn drop_cloak(s: &mut super::Ship, id: ShipId, events: &mut Vec<SimEvent>) {
+    if let Some((k, _)) = s.system(SystemKind::Cloak).filter(|(_, c)| c.on) {
+        s.systems[k].on = false;
+        events.push(SimEvent::Message { ship: id, text: "CLOAK DROPPED".into() });
+        events.push(SimEvent::Switched { ship: id, kind: SystemKind::Cloak, on: false });
+    }
 }
 
 /// First ship (other than `owner`) hit by the segment `a → b`: `(slot, fraction)`.
@@ -278,7 +301,9 @@ pub fn rotate_towards(from: Vec3, to: Vec3, max_angle: f32) -> Vec3 {
 }
 
 /// Applies `amount` damage to `id`, hit at world position `at`. Shields (fore or aft)
-/// absorb first, then armour, then hull. Emits `Hit` and possibly `Destroyed`.
+/// absorb first, then armour, then hull; damage reaching the hull also strikes one of
+/// the ship's systems ([`super::systems::damage_system`]). Emits `Hit` and possibly
+/// `Destroyed`.
 pub fn apply_damage(w: &mut World, id: ShipId, amount: f32, at: Vec3) {
     let radius = match w.get(id) {
         Some(s) => w.shapes[s.class.0 as usize].radius,
@@ -288,7 +313,13 @@ pub fn apply_damage(w: &mut World, id: ShipId, amount: f32, at: Vec3) {
     let from_front = (at - s.position).dot(s.forward()) >= 0.0;
     let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
     let absorbed = amount.min(*shield);
+    let was_up = *shield > 0.0;
     *shield -= absorbed;
+    if was_up && *shield <= 0.0 {
+        let text = if from_front { "FORE SHIELD DOWN" } else { "AFT SHIELD DOWN" };
+        w.events.push(SimEvent::Message { ship: id, text: text.into() });
+    }
+    let Some(s) = w.get_mut(id) else { return };
     let mut rest = amount - absorbed;
     let to_armor = rest.min(s.armor);
     s.armor -= to_armor;
@@ -303,11 +334,24 @@ pub fn apply_damage(w: &mut World, id: ShipId, amount: f32, at: Vec3) {
     w.events.push(SimEvent::Hit { ship: id, position: at, shield: rest <= 0.0 && to_armor <= 0.0 });
     if destroyed {
         w.events.push(SimEvent::Destroyed { ship: id, position: pos, radius });
-        // Anyone targeting the dead ship loses the target.
-        for other in &mut w.ships {
-            if other.target == Some(id) {
-                other.target = None;
-                other.lock = Default::default();
+        forget_ship(w, id);
+    } else if rest > 0.0 {
+        super::systems::damage_system(w, id, rest);
+    }
+}
+
+/// Clears every reference to a ship that has left the battle (destroyed or jumped):
+/// targets, locks and tractor beams.
+pub fn forget_ship(w: &mut World, id: ShipId) {
+    for other in &mut w.ships {
+        if other.target == Some(id) {
+            other.target = None;
+            other.lock = Default::default();
+        }
+        if other.towing == Some(id) {
+            other.towing = None;
+            if let Some((k, _)) = other.system(SystemKind::Tractor) {
+                other.systems[k].on = false;
             }
         }
     }

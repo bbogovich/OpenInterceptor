@@ -466,7 +466,7 @@ mod tests {
     }
 
     #[test]
-    fn sample_entries_list_every_class() {
+    fn default_entries_list_every_class() {
         let packs = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
         let c = crate::content::Content::load(&crate::content::ContentConfig {
             pack_dirs: vec![packs],
@@ -476,6 +476,6 @@ mod tests {
         .unwrap();
         let e = entries(&c);
         assert_eq!(e.len(), c.rules.ships.len());
-        assert!(e.iter().any(|x| x.label.starts_with("Dart")));
+        assert!(e.iter().any(|x| x.label.starts_with("Comet")));
     }
 }

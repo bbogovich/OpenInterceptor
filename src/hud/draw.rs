@@ -4,8 +4,13 @@
 //! window, so they are verified by the manual test cases (docs site, *Testing → Manual
 //! tests*) rather than unit tests; all the decisions they paint are tested in `hud`.
 
-use super::{gauge_angle, gauge_values, mfd_lines, radar_point, Layout, MessageLog, MfdPage};
+use super::{
+    gauge_angle, gauge_values, mfd_lines, power_readout, radar_point, status_flags, system_lamps, Lamp, Layout,
+    MessageLog, MfdPage,
+};
+use crate::content::equipment::PowerRules;
 use crate::render::camera::SpaceCamera;
+use crate::sim::ShieldBalance;
 use crate::sim::{ai, ShipId, World};
 use glam::{Vec2, Vec3};
 use macroquad::prelude::*;
@@ -22,8 +27,11 @@ pub struct HudFrame<'a> {
     pub nav: Option<(&'a str, Vec3)>,
     pub messages: &'a MessageLog,
     pub now: f64,
-    /// Glass instruments (no cockpit art): draw backgrounds behind each instrument.
+    /// Glass instruments (no cockpit art): draw scope rings and gauge dials.
     pub glass: bool,
+    /// Draw a dark panel behind each instrument (the plain glass HUD; a 3D cockpit's
+    /// bezels already frame its instruments).
+    pub backdrops: bool,
     /// Draw target brackets and the reticle (only when looking forward).
     pub forward_view: bool,
 }
@@ -45,7 +53,7 @@ pub fn draw_instruments(f: &HudFrame) {
     let Some(me) = f.world.get(f.player) else { return };
     let rules = &f.world.rules;
     let get = |name: &str| f.instruments.get(name).map(|r| f.layout.rect(*r));
-    if f.glass {
+    if f.backdrops {
         for r in f.instruments.values().map(|r| f.layout.rect(*r)) {
             draw_rectangle(r[0], r[1], r[2], r[3], Color::new(0.0, 0.05, 0.0, 0.45));
         }
@@ -136,8 +144,107 @@ pub fn draw_instruments(f: &HudFrame) {
     if class.vct {
         status += "  VCT";
     }
+    for flag in status_flags(me) {
+        status += "  ";
+        status += &flag;
+    }
     let size = 10.0 * f.layout.scale.max(1.0);
     text(&status, f.layout.offset.x + 8.0, 40.0 * f.layout.scale, size, HUD_GREEN);
+
+    // Power and systems: in the cockpit's own rectangles, or a corner panel.
+    // A cockpit without these rectangles gets small panels in the top-right corner of
+    // its design space, below where cockpit art usually has its message bar.
+    let corner = |top: f32, h: f32| {
+        let d = f.layout.design;
+        f.layout.rect([d.x - d.x * 0.125, d.y * 0.09 + top, d.x * 0.115, h])
+    };
+    let d = f.layout.design;
+    let power_rect = get("power").unwrap_or_else(|| corner(0.0, d.y * 0.1));
+    let systems_rect = get("systems").unwrap_or_else(|| corner(d.y * 0.11, d.y * 0.14));
+    let backdrop = !f.glass && (get("power").is_none() || get("systems").is_none());
+    if backdrop {
+        for r in [power_rect, systems_rect] {
+            draw_rectangle(r[0], r[1], r[2], r[3], Color::new(0.0, 0.05, 0.0, 0.55));
+        }
+    }
+    draw_power(f, me, power_rect);
+    draw_systems(f, me, systems_rect);
+}
+
+/// The `power` instrument: two level columns (beams, shields) with the budget, and the
+/// fore/aft shield bars with the balance marker.
+fn draw_power(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
+    let p = power_readout(&f.world.rules, me);
+    let size = (r[3] / 7.0).max(8.0);
+    let label_h = size * 1.1;
+    let col_w = r[2] / 4.0;
+    let bar_top = r[1] + label_h;
+    let bar_h = r[3] - label_h - 2.0;
+    let levels = p.levels.max(1) as f32;
+    // Beam and shield charge columns: one cell per level, lit up to the setting.
+    for (k, (level, label)) in [(p.beam, "B"), (p.shield, "S")].into_iter().enumerate() {
+        let x = r[0] + col_w * k as f32 + col_w * 0.15;
+        let w = col_w * 0.7;
+        let cell = bar_h / levels;
+        for l in 1..p.levels {
+            let y = bar_top + bar_h - cell * l as f32;
+            let lit = l <= level;
+            let c = if lit { HUD_GREEN } else { HUD_DIM };
+            draw_rectangle(x, y + 1.0, w, cell - 2.0, if lit { c } else { Color::new(c.r, c.g, c.b, 0.15) });
+        }
+        let t = format!("{}-{}", label, PowerRules::letter(level));
+        text(&t, x, r[1], size, HUD_GREEN);
+    }
+    // Shield facings, with the favoured one marked.
+    for (k, (v, label, favoured)) in
+        [(p.fore, "F", p.balance == ShieldBalance::Forward), (p.aft, "A", p.balance == ShieldBalance::Aft)]
+            .into_iter()
+            .enumerate()
+    {
+        let x = r[0] + col_w * (2 + k) as f32 + col_w * 0.25;
+        let w = col_w * 0.5;
+        draw_rectangle_lines(x, bar_top, w, bar_h, 1.0, HUD_DIM);
+        let c = if v < 0.25 { RED } else { SKYBLUE };
+        draw_rectangle(x + 1.0, bar_top + bar_h * (1.0 - v), w - 2.0, bar_h * v, c);
+        text(label, x, r[1], size, if favoured { WHITE } else { HUD_GREEN });
+    }
+    // Over budget (it never should be) or fully used: show the count.
+    if p.used >= p.budget {
+        text(&format!("{}/{}", p.used, p.budget), r[0], r[1] + r[3] - size, size * 0.8, YELLOW);
+    }
+}
+
+/// The `systems` instrument: a grid of labelled lamps.
+fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
+    let lamps = system_lamps(me);
+    if lamps.is_empty() {
+        return;
+    }
+    let cols = if r[2] > r[3] * 2.5 { lamps.len().min(10) } else { 2 };
+    let rows = lamps.len().div_ceil(cols);
+    let (cw, ch) = (r[2] / cols as f32, r[3] / rows as f32);
+    let size = (ch * 0.6).min(cw / 2.6).max(7.0);
+    let blink = (f.now * 3.0) as i64 % 2 == 0;
+    for (i, (label, lamp, repairing)) in lamps.iter().enumerate() {
+        let (cx, cy) = (r[0] + cw * (i % cols) as f32, r[1] + ch * (i / cols) as f32);
+        let color = match lamp {
+            Lamp::Ok => Color::new(0.2, 0.85, 0.3, 0.9),
+            Lamp::On => Color::new(0.3, 0.95, 1.0, 1.0),
+            Lamp::Damaged => Color::new(1.0, 0.7, 0.1, 1.0),
+            Lamp::Out if *repairing && blink => Color::new(0.45, 0.05, 0.05, 1.0),
+            Lamp::Out => Color::new(1.0, 0.15, 0.1, 1.0),
+            Lamp::Destroyed => Color::new(0.25, 0.25, 0.25, 1.0),
+        };
+        let d = (ch * 0.45).min(cw * 0.25);
+        draw_circle(cx + d * 0.8, cy + ch * 0.5, d * 0.5, color);
+        text(
+            label,
+            cx + d * 1.6,
+            cy + (ch - size) * 0.5,
+            size,
+            if *lamp == Lamp::Destroyed { GRAY } else { HUD_GREEN },
+        );
+    }
 }
 
 /// Reticle, target brackets, lead indicator and off-screen arrow.

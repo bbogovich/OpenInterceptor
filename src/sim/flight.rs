@@ -39,6 +39,7 @@
 //! multiplying `rotation * small_rotation` applies a turn in the ship's *own* frame.
 
 use super::{Controls, Ship};
+use crate::content::equipment::SystemKind;
 use crate::content::rules::{FlightModel, FlightRules, ShipClass};
 use glam::{Quat, Vec3};
 
@@ -103,14 +104,14 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
     if class.max_speed <= 0.0 {
         // Static objects (stations) may still rotate slowly if given angular velocity.
         ship.rotation = (ship.rotation * Quat::from_scaled_axis(ship.angular_velocity * dt)).normalize();
-        recharge(ship, class, dt, false);
         return;
     }
     turn(ship, class, &c, dt);
 
     // --- Afterburner ---------------------------------------------------------------------
     let burn_cost = rules.afterburner_cost * dt;
-    ship.afterburning = c.afterburner && !ship.reverse && !c.brake && ship.energy >= burn_cost;
+    let engines = ship.efficiency(SystemKind::Engines);
+    ship.afterburning = c.afterburner && !ship.reverse && !c.brake && ship.energy >= burn_cost && engines > 0.0;
     if ship.afterburning {
         ship.energy -= burn_cost;
     }
@@ -121,12 +122,12 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
         FlightModel::Assisted => assisted(ship, class, rules, &c, dt),
     }
     ship.position += ship.velocity * dt;
-    recharge(ship, class, dt, ship.afterburning);
 }
 
 /// Rotation from stick input, shared by both models.
 fn turn(ship: &mut Ship, class: &ShipClass, c: &Controls, dt: f32) {
-    let factor = turn_factor(ship.forward_speed(), class.lock_speed);
+    // A damaged manoeuvring system turns at half rate; a knocked-out one not at all.
+    let factor = turn_factor(ship.forward_speed(), class.lock_speed) * ship.efficiency(SystemKind::Manoeuvring);
     // Roll is not reduced by speed (the original data describes only pitch and yaw).
     let desired = Vec3::new(
         c.pitch.clamp(-1.0, 1.0) * class.pitch_rate.to_radians() * factor,
@@ -141,7 +142,11 @@ fn turn(ship: &mut Ship, class: &ShipClass, c: &Controls, dt: f32) {
 
 /// The newtonian model (see the module docs).
 fn newtonian(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Controls, dt: f32) {
-    let accel = class.acceleration;
+    // Damaged engines give half thrust; knocked-out engines none (the ship coasts). The
+    // speed limit's bleed-off still uses the full figure: it stands for drag-free
+    // trimming by the flight computer, not for engine thrust.
+    let accel = class.acceleration * ship.efficiency(SystemKind::Engines);
+    let bleed = class.acceleration;
     let fwd = ship.forward();
     let cap = class.max_speed + if ship.afterburning { rules.afterburner_boost } else { 0.0 };
     let hold = c.hold_speed.or(ship.speed_hold);
@@ -160,14 +165,15 @@ fn newtonian(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Contro
         thrust += dir * accel * power;
     }
     if class.vct {
-        thrust += (ship.right() * c.slide.x + ship.up() * c.slide.y) * accel * VCT_THRUST_FRACTION;
+        let vct = ship.efficiency(SystemKind::Vct);
+        thrust += (ship.right() * c.slide.x + ship.up() * c.slide.y) * class.acceleration * VCT_THRUST_FRACTION * vct;
     }
     let before = ship.velocity.length();
     ship.velocity += thrust * dt;
     // Speed limit: thrust may not take the ship past the cap; excess bleeds off.
     let after = ship.velocity.length();
     if after > cap {
-        let allowed = if before > cap { (before - accel * dt).max(cap) } else { cap };
+        let allowed = if before > cap { (before - bleed * dt).max(cap) } else { cap };
         ship.velocity *= allowed / after;
     }
 }
@@ -186,22 +192,16 @@ fn assisted(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Control
     }
     let inv = ship.rotation.inverse();
     let mut local = inv * ship.velocity; // x right, y up, -z forward
-    let accel = class.acceleration * dt;
+    let accel = class.acceleration * ship.efficiency(SystemKind::Engines) * dt;
     local.z = approach(local.z, -target_forward, accel * if ship.afterburning { 2.0 } else { 1.0 });
-    let slide =
-        if class.vct { c.slide.clamp_length_max(1.0) * class.max_speed * VCT_SPEED_FRACTION } else { glam::Vec2::ZERO };
+    let slide = if class.vct {
+        c.slide.clamp_length_max(1.0) * class.max_speed * VCT_SPEED_FRACTION * ship.efficiency(SystemKind::Vct)
+    } else {
+        glam::Vec2::ZERO
+    };
     local.x = approach(local.x, slide.x, accel);
     local.y = approach(local.y, slide.y, accel);
     ship.velocity = ship.rotation * local;
-}
-
-/// Regenerates energy (not while afterburning) and shields.
-fn recharge(ship: &mut Ship, class: &ShipClass, dt: f32, afterburning: bool) {
-    if !afterburning {
-        ship.energy = (ship.energy + class.energy_recharge * dt).min(class.energy);
-    }
-    ship.shield_fore = (ship.shield_fore + class.shield_recharge * dt).min(class.shields);
-    ship.shield_aft = (ship.shield_aft + class.shield_recharge * dt).min(class.shields);
 }
 
 /// Keeps a ship inside the arena: at the boundary sphere it is placed on the surface
@@ -416,11 +416,20 @@ mod tests {
             s.energy = 0.0;
             s.shield_fore = 0.0;
         }
-        run(&mut w, id, 1.0, Controls::default());
+        // Recharge lives in `sim::systems` and follows the power setting: the default
+        // start level D gives 75% of the hull's EnergyRecharge (50/s).
+        let recharge = |w: &mut crate::sim::World, seconds: f32| {
+            let rules = w.rules.clone();
+            let s = w.get_mut(id).unwrap();
+            for _ in 0..(seconds / TICK).round() as usize {
+                crate::sim::systems::recharge(s, rules.ship(s.class), &rules.power, TICK);
+            }
+        };
+        recharge(&mut w, 1.0);
         let s = w.get(id).unwrap();
-        assert!((s.energy - 50.0).abs() < 1.0);
+        assert!((s.energy - 37.5).abs() < 1.0, "{}", s.energy);
         assert!(s.shield_fore > 0.0);
-        run(&mut w, id, 100.0, Controls::default());
+        recharge(&mut w, 100.0);
         let s = w.get(id).unwrap();
         assert_eq!((s.energy, s.shield_fore), (500.0, 40.0));
     }

@@ -49,6 +49,11 @@ const NAMES: [(&str, Button); 16] = [
 ];
 
 impl Button {
+    /// Every button, in XInput order (triggers last).
+    pub fn all() -> impl Iterator<Item = Button> {
+        NAMES.iter().map(|(_, b)| *b)
+    }
+
     /// Parses a button name (case-insensitive).
     pub fn parse(s: &str) -> Option<Button> {
         NAMES.iter().find(|(n, _)| n.eq_ignore_ascii_case(s.trim())).map(|(_, b)| *b)

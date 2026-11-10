@@ -23,7 +23,9 @@
 *.xmsh
 *.xtxr
 # Except test fixtures created from scratch by this project.
-!/packs/sample/**/*.tga
+!/packs/default/**/*.tga
+# The default campaign's sounds are synthesised by tools/default_assets/sounds.py.
+!/packs/default/sounds/*.wav
 .DS_Store
 site/
 __pycache__/

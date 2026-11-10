@@ -22,12 +22,17 @@ OPTIONS:
     --mods <DIR>        Folder of user mods (default: the user data folder's mods/)
     --packs <DIR>       Folder of built-in packs (default: packs/ next to the program)
     --no-original       Ignore the original data even if available
+    --campaign <ID>     Load this campaign (default: the last one chosen, else
+                        interceptor when the data is available, else default)
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
     --view <VIEW>       Start view for --scenario: cockpit, forward, left, right,
                         rear-left, rear-right, chase, chase-manual
     --model <NAME>      Open the model viewer on this model: a ship class id or an
                         original mesh name (for example XBASE7)
+    --screenshot <PNG>  Render the starting screen (with --scenario or --model) for
+                        --frames frames (default 120), save it as a PNG and exit
+    --frames <N>        Frames to run before --screenshot
     --check             Validate all content without opening a window, then exit
     --extract <DIR>     Convert the original data to OBJ/PNG/WAV at override paths
                         (personal modding use only), then exit
@@ -44,10 +49,13 @@ pub struct Options {
     pub mods: Option<PathBuf>,
     pub packs: Option<PathBuf>,
     pub no_original: bool,
+    pub campaign: Option<String>,
     pub scenario: Option<String>,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
     pub model: Option<String>,
+    pub screenshot: Option<PathBuf>,
+    pub frames: Option<u32>,
     pub check: bool,
     pub extract: Option<PathBuf>,
     pub list: bool,
@@ -69,8 +77,14 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--mods" => o.mods = Some(PathBuf::from(value("--mods")?)),
             "--packs" => o.packs = Some(PathBuf::from(value("--packs")?)),
             "--scenario" => o.scenario = Some(value("--scenario")?),
+            "--campaign" => o.campaign = Some(value("--campaign")?),
             "--ship" => o.ship = Some(value("--ship")?),
             "--model" => o.model = Some(value("--model")?),
+            "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),
+            "--frames" => {
+                let v = value("--frames")?;
+                o.frames = Some(v.parse().map_err(|_| format!("--frames needs a number, not '{v}'"))?);
+            }
             "--view" => {
                 let v = value("--view")?;
                 o.view = Some(crate::input::View::parse(&v).ok_or(format!("unknown view '{v}'"))?);
@@ -128,6 +142,7 @@ impl Options {
             original: original.map(|(p, _)| p),
             no_original: self.no_original,
             disabled: settings.disabled_packs,
+            campaign: self.campaign.clone().or(settings.campaign),
         }
     }
 }
@@ -143,7 +158,7 @@ mod tests {
     #[test]
     fn parses_every_option() {
         let o = parse(
-            &args("--data /cd --mods m --packs p --no-original --scenario s --ship x --check --list --fullscreen"),
+            &args("--data /cd --mods m --packs p --no-original --scenario s --ship x --check --list --fullscreen --campaign c"),
             None,
         )
         .unwrap();
@@ -152,6 +167,10 @@ mod tests {
         assert_eq!(o.packs, Some(PathBuf::from("p")));
         assert!(o.no_original && o.check && o.list && o.fullscreen);
         assert_eq!((o.scenario.as_deref(), o.ship.as_deref()), (Some("s"), Some("x")));
+        assert_eq!(o.campaign.as_deref(), Some("c"));
+        let shot = parse(&args("--screenshot a.png --frames 30"), None).unwrap();
+        assert_eq!((shot.screenshot, shot.frames), (Some(PathBuf::from("a.png")), Some(30)));
+        assert!(parse(&args("--frames many"), None).is_err());
         assert!(parse(&args("--help"), None).unwrap().help);
         assert!(!parse(&args("--fullscreen --windowed"), None).unwrap().fullscreen);
     }

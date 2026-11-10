@@ -38,16 +38,24 @@ pub enum Behaviour {
     Enemy,
 }
 
-/// An order a leader gives its wingmen.
+/// An order a leader gives its wingmen (the original's wingman menu).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WingOrder {
-    /// Hold formation (the default).
+    /// Hold formation, ignoring the leader's target (the default; "ignore my target").
     Formation,
     /// Attack the leader's current target.
     AttackMyTarget,
     /// Engage any hostile near the leader.
     FireAtWill,
+    /// Break formation and jink unpredictably near the leader for [`EVASIVE_TIME`]
+    /// seconds, then form up again.
+    Evasive,
+    /// Leave the battle: run from the nearest hostile and jump to hyperspace.
+    Retreat,
 }
+
+/// How long an evasive order lasts, seconds.
+pub const EVASIVE_TIME: f32 = 10.0;
 
 /// Per-ship AI memory.
 #[derive(Debug, Clone, PartialEq)]
@@ -61,11 +69,21 @@ pub struct AiState {
     pub break_timer: f32,
     /// Seconds until the next missile may be considered.
     pub missile_timer: f32,
+    /// Seconds the current order has been in force.
+    pub order_time: f32,
 }
 
 impl AiState {
     pub fn new(behaviour: Behaviour, leader: Option<ShipId>, offset: Vec3) -> AiState {
-        AiState { behaviour, leader, offset, order: WingOrder::Formation, break_timer: 0.0, missile_timer: 5.0 }
+        AiState {
+            behaviour,
+            leader,
+            offset,
+            order: WingOrder::Formation,
+            break_timer: 0.0,
+            missile_timer: 5.0,
+            order_time: 0.0,
+        }
     }
 }
 
@@ -111,6 +129,11 @@ pub fn think(w: &mut World) {
         }
         let mut state = state.clone();
         let id = w.id_of(i);
+        if ship.disabled {
+            // Engines and thrusters are out: nothing to do but drift.
+            decisions.push((i, Controls::default(), ship.target, state));
+            continue;
+        }
         let (controls, target) = match state.behaviour {
             Behaviour::Idle => (Controls::default(), ship.target),
             Behaviour::Target => {
@@ -153,9 +176,19 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
             None => (Controls::default(), None),
         };
     };
+    state.order_time += super::TICK;
+    match state.order {
+        WingOrder::Retreat => return (retreat(w, me), None),
+        WingOrder::Evasive if state.order_time < EVASIVE_TIME => return (evade(w, me, leader.position), None),
+        WingOrder::Evasive => {
+            state.order = WingOrder::Formation;
+            state.order_time = 0.0;
+        }
+        _ => {}
+    }
     // Orders that turn the wingman into an attacker.
     let engage = match state.order {
-        WingOrder::Formation => None,
+        WingOrder::Formation | WingOrder::Evasive | WingOrder::Retreat => None,
         WingOrder::AttackMyTarget => {
             leader.target.filter(|t| w.get(*t).is_some_and(|s| w.rules.hostile(ship.faction, s.faction)))
         }
@@ -233,6 +266,50 @@ fn attack(w: &World, me: ShipId, target: ShipId, state: &mut AiState) -> Control
     c
 }
 
+/// Weaving flight around `centre`: hard, changing turns at full speed, so a pursuer's
+/// guns cannot settle. The pattern is a deterministic function of time and the ship's
+/// slot, so a replay repeats it exactly.
+fn evade(w: &World, me: ShipId, centre: Vec3) -> Controls {
+    let ship = w.get(me).expect("think only visits live ships");
+    let class = w.rules.ship(ship.class);
+    let phase = w.time as f32 * 0.9 + me.index as f32 * 1.7;
+    let mut c = Controls {
+        pitch: (phase * 1.3).sin(),
+        yaw: (phase * 0.7).cos(),
+        roll: (phase * 0.5).sin() * 0.6,
+        hold_speed: Some(class.max_speed),
+        ..Default::default()
+    };
+    if class.vct {
+        c.slide = Vec2::new((phase * 2.1).sin(), (phase * 1.7).cos());
+    }
+    // Do not wander off: steer back when far from the centre.
+    if ship.position.distance(centre) > 1500.0 {
+        let (p, y, r, _) = steer_towards(ship, centre);
+        (c.pitch, c.yaw, c.roll) = (p, y, r);
+    }
+    c
+}
+
+/// Running away: away from the nearest hostile at full speed (burning while energy
+/// lasts), and the hyperdrive started if the ship has one.
+fn retreat(w: &World, me: ShipId) -> Controls {
+    let ship = w.get(me).expect("think only visits live ships");
+    let class = w.rules.ship(ship.class);
+    let away = match targeting::nearest_hostile(w, me) {
+        Some(t) => {
+            ship.position + (ship.position - w.ships[t.index as usize].position).normalize_or(ship.forward()) * 1000.0
+        }
+        None => ship.position + ship.forward() * 1000.0,
+    };
+    let (pitch, yaw, roll, _) = steer_towards(ship, away);
+    let mut c = Controls { pitch, yaw, roll, hold_speed: Some(class.max_speed), ..Default::default() };
+    c.afterburner = ship.energy > 0.2 * class.energy;
+    c.requests.hyperspace =
+        ship.hyperspace.is_none() && ship.efficiency(crate::content::equipment::SystemKind::Hyperdrive) > 0.0;
+    c
+}
+
 /// Gives every wingman led by `leader` a new order.
 pub fn order_wingmen(w: &mut World, leader: ShipId, order: WingOrder) -> usize {
     let mut n = 0;
@@ -240,11 +317,41 @@ pub fn order_wingmen(w: &mut World, leader: ShipId, order: WingOrder) -> usize {
         if let Pilot::Ai(state) = &mut s.pilot {
             if state.behaviour == Behaviour::Wingman && state.leader == Some(leader) {
                 state.order = order;
+                state.order_time = 0.0;
                 n += 1;
             }
         }
     }
     n
+}
+
+/// One status line per wingman of `leader`: name, hull, shields and current order.
+pub fn wing_status(w: &World, leader: ShipId) -> Vec<String> {
+    let mut out = Vec::new();
+    for s in w.ships.iter().filter(|s| s.alive) {
+        let Pilot::Ai(state) = &s.pilot else { continue };
+        if state.behaviour != Behaviour::Wingman || state.leader != Some(leader) {
+            continue;
+        }
+        let c = w.rules.ship(s.class);
+        let pct = |v: f32, max: f32| if max > 0.0 { (100.0 * v / max).round().clamp(0.0, 100.0) } else { 0.0 };
+        let order = match state.order {
+            WingOrder::Formation => "IN FORMATION",
+            WingOrder::AttackMyTarget => "ATTACKING YOUR TARGET",
+            WingOrder::FireAtWill => "ENGAGING",
+            WingOrder::Evasive => "EVADING",
+            WingOrder::Retreat => "RETREATING",
+        };
+        out.push(format!(
+            "{}: HULL {:.0}% SHIELDS {:.0}% {}{}",
+            s.name.to_uppercase(),
+            pct(s.hull, c.hull),
+            pct(s.shield_fore + s.shield_aft, 2.0 * c.shields),
+            order,
+            if s.disabled { " - DISABLED" } else { "" }
+        ));
+    }
+    out
 }
 
 #[cfg(test)]
@@ -362,6 +469,48 @@ mod tests {
         w.get_mut(lead).unwrap().alive = false;
         w.step();
         assert_eq!(w.get(wing).unwrap().target, Some(foe));
+    }
+
+    #[test]
+    fn evasive_ends_and_retreat_jumps_out() {
+        let mut w = world();
+        let lead = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "lead",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::External,
+        );
+        let wing = spawn_ai(&mut w, "fighter", 0, Vec3::new(-60.0, 0.0, 30.0), Behaviour::Wingman, Some(lead));
+        order_wingmen(&mut w, lead, WingOrder::Evasive);
+        for _ in 0..((EVASIVE_TIME + 1.0) / super::super::TICK) as usize {
+            w.step();
+        }
+        match &w.get(wing).unwrap().pilot {
+            Pilot::Ai(s) => assert_eq!(s.order, WingOrder::Formation, "back in formation"),
+            _ => unreachable!(),
+        }
+        let status = wing_status(&w, lead);
+        assert_eq!(status.len(), 1);
+        assert_eq!(status, vec!["FIGHTER: HULL 100% SHIELDS 100% IN FORMATION"]);
+        order_wingmen(&mut w, lead, WingOrder::Retreat);
+        let mut gone = false;
+        for _ in 0..(15.0 / super::super::TICK) as usize {
+            w.step();
+            gone |= w.ships[wing.index as usize].departed;
+        }
+        assert!(gone, "the wingman jumped out");
+        assert!(wing_status(&w, lead).is_empty());
+    }
+
+    #[test]
+    fn disabled_ships_drift() {
+        let mut w = world();
+        let me = spawn_ai(&mut w, "raider", 1, Vec3::ZERO, Behaviour::Target, None);
+        w.get_mut(me).unwrap().disabled = true;
+        w.step();
+        assert_eq!(w.get(me).unwrap().controls.hold_speed, None);
     }
 
     #[test]

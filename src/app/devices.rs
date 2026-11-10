@@ -67,10 +67,10 @@ mod tests {
         assert_eq!(key_name(KeyCode::F1), "f1");
         assert_eq!(key_name(KeyCode::Backslash), "backslash");
         // Every default binding names a key in the vocabulary below.
-        for (name, _, keys) in crate::input::ACTIONS {
-            for k in keys.split(',') {
+        for i in crate::input::ACTIONS {
+            for k in i.keys.split(',') {
                 let chord = crate::input::KeyChord::parse(k).unwrap();
-                assert!(KNOWN.contains(&chord.key.as_str()), "{name}: unknown key {}", chord.key);
+                assert!(KNOWN.contains(&chord.key.as_str()), "{}: unknown key {}", i.name, chord.key);
             }
         }
     }
@@ -132,6 +132,15 @@ mod tests {
         "escape",
         "c",
         "b",
+        "f9",
+        "f10",
+        "semicolon",
+        "apostrophe",
+        "s",
+        "h",
+        "j",
+        "rightbracket",
+        "l",
     ];
 
     #[test]
@@ -155,6 +164,10 @@ mod tests {
             KeyCode::Enter,
             KeyCode::Tab,
             KeyCode::Space,
+            KeyCode::Semicolon,
+            KeyCode::Apostrophe,
+            KeyCode::RightBracket,
+            KeyCode::F10,
         ];
         for c in codes {
             assert!(KNOWN.contains(&key_name(c).as_str()), "{}", key_name(c));

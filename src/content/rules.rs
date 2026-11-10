@@ -39,6 +39,7 @@
 //! `Copy`, and cost 2 bytes. The newtype wrapper stops us from accidentally passing a
 //! beam index where a missile index is expected — the compiler catches it.
 
+use super::equipment::{DamageRules, PowerRules, SystemDef, SystemId, SystemKind};
 use crate::formats::ini::{Ini, Section};
 use std::collections::HashMap;
 
@@ -137,6 +138,12 @@ pub struct ShipClass {
     pub beams: Vec<BeamId>,
     /// Missile racks: type and count.
     pub missiles: Vec<(MissileId, u32)>,
+    /// Fitted systems that can be damaged (and, for switchable ones, turned on).
+    pub systems: Vec<SystemId>,
+    /// Hit points per second repaired without a damage control computer.
+    pub repair_rate: f32,
+    /// A disabled ship of this class can be captured with a tractor beam.
+    pub capturable: bool,
     /// Model references for wreckage chunks.
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
@@ -222,6 +229,8 @@ pub struct FlightRules {
     pub lock_angle: f32,
     /// Sensor range shown on radar, metres.
     pub radar_range: f32,
+    /// Seconds of hyperdrive countdown before a ship jumps out of the battle.
+    pub hyperspace_time: f32,
 }
 
 /// A cockpit: 2D art, a 3D model, or both, plus where the instruments go.
@@ -263,7 +272,11 @@ pub struct Ruleset {
     pub missiles: Vec<MissileClass>,
     pub factions: Vec<Faction>,
     pub cockpits: Vec<CockpitDef>,
+    /// Ship systems: the built-in kinds first (ids = kind names), then pack additions.
+    pub systems: Vec<SystemDef>,
     pub flight: FlightRules,
+    pub power: PowerRules,
+    pub damage: DamageRules,
     /// Named sound effects from the `[sounds]` section: event name (lower case) →
     /// (asset reference, pack index). Events the engine plays: `explosion`,
     /// `big_explosion`, `shield_hit`, `hull_hit`, `lock`, `missile_launch`,
@@ -291,6 +304,12 @@ impl Ruleset {
     }
     pub fn faction_id(&self, id: &str) -> Option<FactionId> {
         self.factions.iter().position(|f| f.id.eq_ignore_ascii_case(id)).map(|i| FactionId(i as u16))
+    }
+    pub fn system(&self, id: SystemId) -> &SystemDef {
+        &self.systems[id.0 as usize]
+    }
+    pub fn system_id(&self, id: &str) -> Option<SystemId> {
+        self.systems.iter().position(|s| s.id.eq_ignore_ascii_case(id)).map(|i| SystemId(i as u16))
     }
     pub fn cockpit(&self, id: &str) -> Option<&CockpitDef> {
         self.cockpits.iter().find(|c| c.id.eq_ignore_ascii_case(id))
@@ -401,10 +420,28 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
             id,
         })
         .collect();
+    // Systems: every built-in kind first, so `[system:ecm]` overrides the default and
+    // ships can name a kind without the pack defining it.
+    let mut systems: Vec<SystemDef> = SystemKind::ALL.into_iter().map(SystemDef::builtin).collect();
+    for (id, s) in of_kind("system") {
+        match SystemDef::parse(&id, s) {
+            Ok(d) => match systems.iter_mut().find(|x| x.id == d.id) {
+                Some(slot) => *slot = d,
+                None => systems.push(d),
+            },
+            Err(e) => errors.push(format!("[{}]: {e}", s.name)),
+        }
+    }
+    let damage = DamageRules::parse(global("damage"));
+    let power = PowerRules::parse(global("power")).unwrap_or_else(|e| {
+        errors.push(e);
+        PowerRules::default()
+    });
     let mut ships = Vec::new();
     for kind in ["ship", "object"] {
         for (id, s) in of_kind(kind) {
-            match ship_class(&id, s, kind, &factions, &beams, &missiles, &section_pack) {
+            let refs = ClassRefs { factions: &factions, beams: &beams, missiles: &missiles, systems: &systems };
+            match ship_class(&id, s, kind, &refs, &damage, &section_pack) {
                 Ok(c) => ships.push(c),
                 Err(e) => errors.push(format!("[{}]: {e}", s.name)),
             }
@@ -464,11 +501,12 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
         afterburner_cost: f.and_then(|s| s.get_f32("Cost")).unwrap_or(50.0),
         lock_angle: f.and_then(|s| s.get_f32("LockAngleDegrees")).unwrap_or(10.0),
         radar_range: f.and_then(|s| s.get_f32("RadarRange")).unwrap_or(6000.0),
+        hyperspace_time: f.and_then(|s| s.get_f32("HyperspaceTime")).unwrap_or(10.0).max(0.0),
     };
     let sounds = global("sounds")
         .map(|s| s.entries.iter().map(|(k, v)| (k.to_ascii_lowercase(), (v.clone(), pack_of(s)))).collect())
         .unwrap_or_default();
-    (Ruleset { ships, beams, missiles, factions, cockpits, flight, sounds }, errors)
+    (Ruleset { ships, beams, missiles, factions, cockpits, systems, flight, power, damage, sounds }, errors)
 }
 
 /// Copies inherited keys under the section's own keys, recursively.
@@ -510,15 +548,69 @@ fn color(s: &Section, key: &str, default: [f32; 3]) -> [f32; 3] {
     }
 }
 
+/// The definitions a ship class may refer to, bundled to keep the argument list short.
+struct ClassRefs<'a> {
+    factions: &'a [Faction],
+    beams: &'a [BeamClass],
+    missiles: &'a [MissileClass],
+    systems: &'a [SystemDef],
+}
+
+/// The systems a class has when its section has no `Systems` key: what any craft of its
+/// kind obviously contains.
+fn default_systems(kind: ShipKind, shields: bool) -> Vec<SystemKind> {
+    let mut v = Vec::new();
+    if !kind.is_static() {
+        v.extend([SystemKind::Engines, SystemKind::Manoeuvring]);
+    }
+    v.push(SystemKind::Sensors);
+    if shields {
+        v.push(SystemKind::Shields);
+    }
+    if matches!(kind, ShipKind::Fighter | ShipKind::Freighter | ShipKind::Capital) {
+        v.push(SystemKind::Hyperdrive);
+    }
+    v
+}
+
+/// Resolves the class's `Systems` list (`Systems = a, b` replaces the default list;
+/// `Systems.add = c` appends to it) to system handles.
+fn class_systems(
+    s: &Section,
+    kind: ShipKind,
+    shields: bool,
+    vct: bool,
+    all: &[SystemDef],
+) -> Result<Vec<SystemId>, String> {
+    let find = |name: &str| {
+        all.iter()
+            .position(|d| d.id.eq_ignore_ascii_case(name))
+            .map(|i| SystemId(i as u16))
+            .ok_or(format!("unknown system '{name}'"))
+    };
+    let mut ids: Vec<SystemId> = match s.get("Systems") {
+        Some(_) => list(s, "Systems").iter().map(|n| find(n)).collect::<Result<_, _>>()?,
+        None => default_systems(kind, shields).into_iter().map(|k| find(k.key())).collect::<Result<_, _>>()?,
+    };
+    for n in list(s, "Systems.add") {
+        ids.push(find(&n)?);
+    }
+    // `VCT = yes` (the Stage 1 key) fits vector-control thrusters if none are listed.
+    if vct && !ids.iter().any(|i| all[i.0 as usize].kind == SystemKind::Vct) {
+        ids.push(find("vct")?);
+    }
+    Ok(ids)
+}
+
 fn ship_class(
     id: &str,
     s: &Section,
     kind_prefix: &str,
-    factions: &[Faction],
-    beams: &[BeamClass],
-    missiles: &[MissileClass],
+    refs: &ClassRefs,
+    damage: &DamageRules,
     section_pack: &HashMap<String, usize>,
 ) -> Result<ShipClass, String> {
+    let ClassRefs { factions, beams, missiles, systems } = *refs;
     let default_kind = if kind_prefix == "object" { ShipKind::Station } else { ShipKind::Fighter };
     let kind = match s.get_nonempty("Kind") {
         Some(k) => ShipKind::parse(k).ok_or(format!("unknown Kind '{k}'"))?,
@@ -548,6 +640,9 @@ fn ship_class(
         })
         .collect::<Result<Vec<_>, String>>()?;
     let is_static = kind.is_static();
+    let shields = s.get_f32("Shields").unwrap_or(0.0);
+    let system_ids = class_systems(s, kind, shields > 0.0, s.get_bool("VCT").unwrap_or(false), systems)?;
+    let vct = system_ids.iter().any(|i| systems[i.0 as usize].kind == SystemKind::Vct);
     Ok(ShipClass {
         id: id.to_string(),
         name: s.get_nonempty("Name").unwrap_or(id).to_string(),
@@ -561,7 +656,7 @@ fn ship_class(
         cockpit: s.get_nonempty("Cockpit").map(str::to_string),
         hull: s.get_f32("HitPoints").unwrap_or(100.0),
         armor: s.get_f32("Armor").unwrap_or(0.0),
-        shields: s.get_f32("Shields").unwrap_or(0.0),
+        shields,
         shield_recharge: s.get_f32("ShieldRecharge").unwrap_or(5.0),
         max_speed: if is_static { 0.0 } else { s.get_f32("MaxSpeed").unwrap_or(400.0) },
         acceleration: s.get_f32("Acceleration").unwrap_or(150.0),
@@ -570,11 +665,16 @@ fn ship_class(
         yaw_rate: s.get_f32("YawRate").unwrap_or(70.0),
         angular_damp: s.get_f32("AngularDamp").unwrap_or(3.0),
         lock_speed: s.get_f32("LockSpeed").unwrap_or(1000.0),
-        vct: s.get_bool("VCT").unwrap_or(false),
+        vct,
         energy: s.get_f32("Energy").unwrap_or(500.0),
         energy_recharge: s.get_f32("EnergyRecharge").unwrap_or(40.0),
         beams: beam_ids,
         missiles: missile_ids,
+        systems: system_ids,
+        repair_rate: s.get_f32("RepairRate").unwrap_or(damage.repair_rate).max(0.0),
+        capturable: s
+            .get_bool("Capturable")
+            .unwrap_or(matches!(kind, ShipKind::Fighter | ShipKind::Drone | ShipKind::Probe | ShipKind::Debris)),
         debris: s
             .get("Debris")
             .unwrap_or("")

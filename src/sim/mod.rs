@@ -29,8 +29,10 @@ pub mod ai;
 pub mod collision;
 pub mod combat;
 pub mod flight;
+pub mod systems;
 pub mod targeting;
 
+use crate::content::equipment::{SystemId, SystemKind};
 use crate::content::rules::{FactionId, MissileId, Ruleset, ShipClassId};
 use crate::content::scenario::{AiRole, Scenario};
 use collision::Shape;
@@ -83,6 +85,46 @@ pub struct Controls {
     pub cycle_link: bool,
     /// Select the next missile type (edge-triggered).
     pub cycle_missile: bool,
+    /// Power and equipment switches (all edge-triggered).
+    pub requests: Requests,
+}
+
+/// One-press requests to the ship's power and equipment, as pilots make them from the
+/// cockpit. They are edge-triggered: one press, one change.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct Requests {
+    /// Step the beam charge setting up one level (wrapping from the top to A).
+    pub beam_charge: bool,
+    /// Step the shield charge setting up one level (wrapping).
+    pub shield_charge: bool,
+    /// Raise shield charge one level, taking power from beams if needed.
+    pub power_to_shields: bool,
+    /// Raise beam charge one level, taking power from shields if needed.
+    pub power_to_beams: bool,
+    /// Cycle shield balance: equal → forward → aft.
+    pub shield_balance: bool,
+    pub tractor: bool,
+    pub cloak: bool,
+    pub ecm: bool,
+    /// Start the hyperdrive countdown, or abort it.
+    pub hyperspace: bool,
+}
+
+impl Requests {
+    /// Both sets of presses together (used to carry presses between frames).
+    pub fn merge(self, o: Requests) -> Requests {
+        Requests {
+            beam_charge: self.beam_charge || o.beam_charge,
+            shield_charge: self.shield_charge || o.shield_charge,
+            power_to_shields: self.power_to_shields || o.power_to_shields,
+            power_to_beams: self.power_to_beams || o.power_to_beams,
+            shield_balance: self.shield_balance || o.shield_balance,
+            tractor: self.tractor || o.tractor,
+            cloak: self.cloak || o.cloak,
+            ecm: self.ecm || o.ecm,
+            hyperspace: self.hyperspace || o.hyperspace,
+        }
+    }
 }
 
 impl Controls {
@@ -103,6 +145,7 @@ impl Controls {
             fire_missile: self.fire_missile || pending.fire_missile,
             cycle_link: self.cycle_link || pending.cycle_link,
             cycle_missile: self.cycle_missile || pending.cycle_missile,
+            requests: self.requests.merge(pending.requests),
             ..self
         }
     }
@@ -126,6 +169,98 @@ pub enum Pilot {
     /// as given.
     External,
     Ai(ai::AiState),
+}
+
+/// How the shield generator shares capacity between the fore and aft shields.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShieldBalance {
+    Equal,
+    Forward,
+    Aft,
+}
+
+/// A ship's power settings (see [`crate::content::equipment::PowerRules`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Power {
+    /// Beam charge level index (0 = A).
+    pub beam: u8,
+    /// Shield charge level index (0 = A).
+    pub shield: u8,
+    pub balance: ShieldBalance,
+}
+
+/// How well a damaged system still works.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Condition {
+    /// Above half its hit points: full effect.
+    Ok,
+    /// Half its hit points or less: half effect.
+    Damaged,
+    /// No hit points left: no effect until repaired.
+    Inoperative,
+    /// Damaged beyond repair for the rest of the battle.
+    Destroyed,
+}
+
+impl Condition {
+    /// The fraction of its normal effect a system in this condition delivers.
+    pub fn efficiency(self) -> f32 {
+        match self {
+            Condition::Ok => 1.0,
+            Condition::Damaged => 0.5,
+            Condition::Inoperative | Condition::Destroyed => 0.0,
+        }
+    }
+}
+
+/// One fitted system on one ship.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SystemState {
+    pub id: SystemId,
+    pub kind: SystemKind,
+    /// Current hit points; may go negative down to the destruction threshold.
+    pub hp: f32,
+    /// Hit points when undamaged.
+    pub max: f32,
+    pub destroyed: bool,
+    /// Knocked out (hit points reached zero) and not yet repaired back to
+    /// [`SystemState::ONLINE_AT`]. Remembered separately so that the first moments of
+    /// repair do not bring a wrecked system straight back.
+    pub offline: bool,
+    /// Switched on (tractor, cloak, ECM).
+    pub on: bool,
+}
+
+impl SystemState {
+    /// A knocked-out system works again once repaired to this fraction of its hit points.
+    pub const ONLINE_AT: f32 = 0.25;
+
+    /// An undamaged, switched-off system.
+    pub fn new(id: SystemId, kind: SystemKind, max: f32) -> SystemState {
+        SystemState { id, kind, hp: max, max, destroyed: false, offline: false, on: false }
+    }
+
+    /// Sets the hit points and updates the knocked-out flag.
+    pub fn set_hp(&mut self, hp: f32) {
+        self.hp = hp.min(self.max);
+        if self.hp <= 0.0 {
+            self.offline = true;
+        } else if self.hp >= self.max * Self::ONLINE_AT {
+            self.offline = false;
+        }
+    }
+
+    pub fn condition(&self) -> Condition {
+        if self.destroyed {
+            Condition::Destroyed
+        } else if self.offline || self.hp <= 0.0 {
+            Condition::Inoperative
+        } else if self.hp <= self.max * 0.5 {
+            Condition::Damaged
+        } else {
+            Condition::Ok
+        }
+    }
 }
 
 /// Missile-lock progress against the current target.
@@ -178,6 +313,20 @@ pub struct Ship {
     /// Seconds since this ship was last hit (for HUD flashes).
     pub since_hit: f32,
     pub alive: bool,
+    /// Power settings: beam and shield charge, shield balance.
+    pub power: Power,
+    /// Fitted systems, in the class's order.
+    pub systems: Vec<SystemState>,
+    /// Index into `systems` of the system being repaired.
+    pub repairing: Option<usize>,
+    /// The ship held by this ship's tractor beam.
+    pub towing: Option<ShipId>,
+    /// Seconds left in the hyperdrive countdown, while one is running.
+    pub hyperspace: Option<f32>,
+    /// Engines and manoeuvring both knocked out: the ship drifts helplessly.
+    pub disabled: bool,
+    /// Left the battle by hyperspace (no longer `alive`, but not destroyed).
+    pub departed: bool,
 }
 
 impl Ship {
@@ -194,6 +343,32 @@ impl Ship {
     /// Speed along the nose, m/s.
     pub fn forward_speed(&self) -> f32 {
         self.velocity.dot(self.forward())
+    }
+
+    /// The first fitted system of `kind`, with its index.
+    pub fn system(&self, kind: SystemKind) -> Option<(usize, &SystemState)> {
+        self.systems.iter().enumerate().find(|(_, s)| s.kind == kind)
+    }
+
+    /// How well the ship's `kind` system works, 0..=1. A craft without engines,
+    /// manoeuvring thrusters or sensors in its list is assumed to have working ones that
+    /// are simply not modelled; any other missing system does not work at all.
+    pub fn efficiency(&self, kind: SystemKind) -> f32 {
+        match self.system(kind) {
+            Some((_, s)) => s.condition().efficiency(),
+            None if matches!(kind, SystemKind::Engines | SystemKind::Manoeuvring | SystemKind::Sensors) => 1.0,
+            None => 0.0,
+        }
+    }
+
+    /// True while a switchable system of `kind` is on.
+    pub fn is_on(&self, kind: SystemKind) -> bool {
+        self.system(kind).is_some_and(|(_, s)| s.on)
+    }
+
+    /// True while the ship is cloaked.
+    pub fn cloaked(&self) -> bool {
+        self.is_on(SystemKind::Cloak)
     }
 }
 
@@ -276,6 +451,35 @@ pub enum SimEvent {
     NoEnergy {
         ship: ShipId,
     },
+    /// A system changed condition (damaged, knocked out, destroyed or repaired).
+    SystemChanged {
+        ship: ShipId,
+        /// Index into the ship's `systems`.
+        system: usize,
+        condition: Condition,
+        /// True when the change came from a repair rather than damage.
+        repaired: bool,
+    },
+    /// Engines and manoeuvring are both out: the ship is helpless (capturable).
+    Disabled {
+        ship: ShipId,
+    },
+    /// A ship jumped out of the battle.
+    Departed {
+        ship: ShipId,
+        position: Vec3,
+    },
+    /// `prize` was taken out of the battle in `captor`'s tractor beam.
+    Captured {
+        captor: ShipId,
+        prize: ShipId,
+    },
+    /// A switchable system was turned on or off (`on`), for sounds.
+    Switched {
+        ship: ShipId,
+        kind: SystemKind,
+        on: bool,
+    },
 }
 
 /// The whole simulated space arena.
@@ -333,6 +537,15 @@ impl World {
         pilot: Pilot,
     ) -> ShipId {
         let c = self.rules.ship(class);
+        let systems = c
+            .systems
+            .iter()
+            .map(|&sid| {
+                let d = self.rules.system(sid);
+                SystemState::new(sid, d.kind, d.hit_points)
+            })
+            .collect();
+        let p = &self.rules.power;
         let ship = Ship {
             class,
             faction,
@@ -363,6 +576,13 @@ impl World {
             lock: Lock::default(),
             since_hit: 999.0,
             alive: true,
+            power: Power { beam: p.start_beam, shield: p.start_shield, balance: ShieldBalance::Equal },
+            systems,
+            repairing: None,
+            towing: None,
+            hyperspace: None,
+            disabled: false,
+            departed: false,
         };
         let index = match self.ships.iter().position(|s| !s.alive) {
             Some(i) => {
@@ -406,11 +626,13 @@ impl World {
     }
 
     /// Advances the world by one tick. Order matters and is documented on the site:
-    /// AI decides → flight moves ships → weapons fire → projectiles move and hit →
-    /// collisions → bookkeeping.
+    /// AI decides → power and equipment switches → flight moves ships → weapons fire →
+    /// projectiles move and hit → collisions → systems (recharge, repair, tractor,
+    /// countermeasures, hyperdrive) → bookkeeping.
     pub fn step(&mut self) {
         self.events.clear();
         ai::think(self);
+        systems::handle_requests(self);
         // Cloning an `Arc` only bumps a reference count — no data is copied. Holding our
         // own handle to the rules lets us borrow a ship class while also mutably
         // borrowing `self.ships`, which the borrow checker would otherwise refuse
@@ -443,6 +665,7 @@ impl World {
         }
         combat::step(self, TICK);
         combat::ship_collisions(self);
+        systems::step(self, TICK);
         // Edge-triggered controls only act once.
         for s in &mut self.ships {
             s.controls.fire_missile = false;
@@ -452,6 +675,7 @@ impl World {
             s.controls.match_speed = false;
             s.controls.throttle_set = None;
             s.controls.throttle_delta = 0.0;
+            s.controls.requests = Requests::default();
             s.since_hit += TICK;
         }
         self.time += TICK as f64;
@@ -494,10 +718,26 @@ impl World {
                 AiRole::Target => Pilot::Ai(ai::AiState::new(ai::Behaviour::Target, None, Vec3::ZERO)),
             };
             let id = w.spawn(class, faction, &p.name, p.position, rot, pilot);
+            for name in &p.destroyed_systems {
+                let kind = crate::content::equipment::SystemKind::parse(name);
+                let sid = rules.system_id(name);
+                let s = w.get_mut(id).expect("just spawned");
+                let found =
+                    s.systems.iter_mut().filter(|x| Some(x.kind) == kind || Some(x.id) == sid).fold(false, |_, x| {
+                        x.set_hp(0.0);
+                        x.destroyed = true;
+                        true
+                    });
+                if !found {
+                    return Err(format!("object {}: has no system '{name}'", p.name));
+                }
+            }
             if let Some(s) = w.get_mut(id) {
                 s.velocity = s.forward() * p.speed;
                 let max = rules.ship(class).max_speed;
                 s.throttle = if max > 0.0 { (p.speed / max).clamp(0.0, 1.0) } else { 0.0 };
+                s.hull *= p.hull;
+                s.disabled = s.efficiency(SystemKind::Engines) <= 0.0 && s.efficiency(SystemKind::Manoeuvring) <= 0.0;
             }
             named.push((p.name.clone(), id));
         }
@@ -601,12 +841,15 @@ mod tests {
         let s = Scenario::parse(
             "[scenario]\nid=t\nplayer=choose\n[object.base]\nclass=base\nposition=0,0,-3000\n\
              [object.w1]\nclass=fighter\nai=wingman\nleader=player\n[object.bad]\nclass=raider\nai=enemy\nspeed=300\n\
-             [object.t]\nclass=raider\nai=target\nfaction=grey\n",
+             [object.t]\nclass=raider\nai=target\nfaction=grey\n\
+             [object.wreck]\nclass=raider\ndestroyed_systems=engines,manoeuvring\nhull=0.5\n",
             0,
         )
         .unwrap();
         let (w, player) = World::from_scenario(&s, r.clone(), shapes(&r), None).unwrap();
-        assert_eq!(w.live_ids().len(), 5);
+        assert_eq!(w.live_ids().len(), 6);
+        let wreck = w.ships.iter().find(|s| s.name == "wreck").unwrap();
+        assert!(wreck.disabled && wreck.hull == 50.0, "starts disabled at half hull");
         assert_eq!(w.get(player).unwrap().pilot, Pilot::External);
         let wing = w.ships.iter().find(|s| s.name == "w1").unwrap();
         match &wing.pilot {
@@ -628,6 +871,7 @@ mod tests {
             "[scenario]\nid=t\n[object.a]\nclass=ghost\n",
             "[scenario]\nid=t\n[object.a]\nclass=fighter\nfaction=nobody\n",
             "[scenario]\nid=t\n[object.a]\nclass=fighter\nai=wingman\nleader=nobody\n",
+            "[scenario]\nid=t\n[object.a]\nclass=fighter\ndestroyed_systems=tractor\n",
         ] {
             let s = Scenario::parse(text, 0).unwrap();
             assert!(World::from_scenario(&s, r.clone(), shapes(&r), None).is_err(), "{text}");

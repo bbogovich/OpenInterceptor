@@ -58,6 +58,10 @@ fn headless(options: &cli::Options) -> Option<i32> {
         });
     }
     if options.list {
+        for (id, name) in &content.campaigns {
+            let mark = if content.campaign.as_deref() == Some(id.as_str()) { "*" } else { " " };
+            println!("campaign{mark}{:<14} {}", id, name);
+        }
         for p in &content.packs {
             println!("pack     {:<14} {}", p.id, p.name);
         }
@@ -70,15 +74,37 @@ fn headless(options: &cli::Options) -> Option<i32> {
         }
     }
     if options.check {
-        let report = check::run(&content);
-        for w in report.warnings.iter().filter(|w| !report.errors.contains(w)) {
-            println!("warning: {w}");
+        // Every campaign is checked on its own (with its own addons) unless one was
+        // named: a campaign must pass by itself, and each addon with its targets.
+        let ids: Vec<String> = match &options.campaign {
+            Some(c) => vec![c.clone()],
+            None if content.campaigns.is_empty() => vec![String::new()],
+            None => content.campaigns.iter().map(|(id, _)| id.clone()).collect(),
+        };
+        let mut failed = false;
+        for id in ids {
+            let mut cfg = options.content_config();
+            cfg.campaign = (!id.is_empty()).then_some(id.clone());
+            let content = match Content::load(&cfg) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("error: campaign {id}: {e}");
+                    failed = true;
+                    continue;
+                }
+            };
+            let report = check::run(&content);
+            for w in report.warnings.iter().filter(|w| !report.errors.contains(w)) {
+                println!("warning: {w}");
+            }
+            for e in &report.errors {
+                println!("error: {e}");
+            }
+            let label = content.campaign.as_deref().unwrap_or("(all packs)");
+            println!("check {label}: {}", report.summary());
+            failed |= !report.errors.is_empty();
         }
-        for e in &report.errors {
-            println!("error: {e}");
-        }
-        println!("check: {}", report.summary());
-        return Some(if report.errors.is_empty() { 0 } else { 1 });
+        return Some(i32::from(failed));
     }
     Some(0)
 }

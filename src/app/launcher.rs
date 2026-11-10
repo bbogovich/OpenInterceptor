@@ -17,6 +17,7 @@ use macroquad::prelude::*;
 pub enum Entry {
     ModelViewer,
     AssetBrowser,
+    Controls,
     /// Index into `content.scenarios`.
     Scenario(usize),
 }
@@ -34,11 +35,11 @@ pub struct Menu {
 
 impl Menu {
     pub fn new(content: &Content) -> Menu {
-        let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser];
+        let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls];
         entries.extend((0..content.scenarios.len()).map(Entry::Scenario));
         let playable = content.rules.playable_ships().into_iter().map(|id| content.rules.ship(id).id.clone()).collect();
         // Start on the first scenario rather than the viewer.
-        Menu { selected: if entries.len() > 2 { 2 } else { 0 }, entries, ship: 0, playable }
+        Menu { selected: if entries.len() > 3 { 3 } else { 0 }, entries, ship: 0, playable }
     }
 
     /// Moves the selection up or down, wrapping.
@@ -63,6 +64,7 @@ impl Menu {
         match &self.entries[self.selected] {
             Entry::ModelViewer => Next::Viewer,
             Entry::AssetBrowser => Next::Assets,
+            Entry::Controls => Next::Controls,
             Entry::Scenario(i) => {
                 let s = &content.scenarios[*i];
                 let ship = if s.player_class.is_none() { self.playable.get(self.ship).cloned() } else { None };
@@ -103,6 +105,11 @@ impl Launcher {
         }
         if pressed("escape") || pad_pressed(Button::Back) {
             return Next::Quit;
+        }
+        if pressed("tab") || pad_pressed(Button::Y) {
+            if let Some(next) = next_campaign(&ctx.content) {
+                return Next::Campaign(next);
+            }
         }
         // Mouse: click a line to select it; click again to start.
         let line_h = 30.0;
@@ -160,14 +167,23 @@ impl Launcher {
             }
         }
         set_default_camera();
-        draw_text("OpenInterceptor - testbed", 40.0, 70.0, 40.0, WHITE);
+        draw_text("OpenInterceptor - testbed", 40.0, 60.0, 40.0, WHITE);
+        let campaign = content
+            .campaigns
+            .iter()
+            .find(|(id, _)| Some(id.as_str()) == content.campaign.as_deref())
+            .map(|(_, name)| name.as_str())
+            .unwrap_or("(none)");
+        let switch = if content.campaigns.len() > 1 { "   (Tab: switch campaign)" } else { "" };
+        draw_text(&format!("Campaign: {campaign}{switch}"), 40.0, 92.0, 22.0, Color::new(1.0, 0.8, 0.4, 1.0));
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
-        draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 105.0, 18.0, GRAY);
+        draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, GRAY);
         for (i, e) in self.menu.entries.iter().enumerate() {
             let y = top + i as f32 * line_h;
             let label = match e {
                 Entry::ModelViewer => "Model viewer".to_string(),
                 Entry::AssetBrowser => "Asset browser (textures, images, sounds)".to_string(),
+                Entry::Controls => "Controls (keyboard, gamepad, mouse)".to_string(),
                 Entry::Scenario(k) => content.scenarios[*k].title.clone(),
             };
             let selected = i == self.menu.selected;
@@ -184,6 +200,9 @@ impl Launcher {
                 "Every texture, image and sound on the CD, as the game loads it - with pack overrides marked."
                     .to_string()
             }
+            Entry::Controls => {
+                "Rebind every action to keys or gamepad buttons (hold LB for the second layer), and set stick and mouse options.".to_string()
+            }
             Entry::Scenario(k) => content.scenarios[*k].description.clone(),
         };
         let y = top + self.menu.entries.len() as f32 * line_h + 20.0;
@@ -198,13 +217,23 @@ impl Launcher {
             draw_text(n, 40.0, screen_height() - 150.0 + i as f32 * 22.0, 18.0, ORANGE);
         }
         draw_text(
-            "Up/Down choose   Left/Right ship   Enter start   Esc quit",
+            "Up/Down choose   Left/Right ship   Enter start   Tab campaign   Esc quit",
             40.0,
             screen_height() - 24.0,
             18.0,
             GRAY,
         );
     }
+}
+
+/// The campaign after the current one in the list (wrapping), if there is another.
+pub fn next_campaign(content: &Content) -> Option<String> {
+    let list = &content.campaigns;
+    if list.len() < 2 {
+        return None;
+    }
+    let i = list.iter().position(|(id, _)| Some(id.as_str()) == content.campaign.as_deref()).unwrap_or(0);
+    Some(list[(i + 1) % list.len()].0.clone())
 }
 
 /// Word-wraps `s` to lines of at most `width` characters.
@@ -240,10 +269,10 @@ mod tests {
     fn menu_lists_viewer_and_scenarios_and_wraps() {
         let c = sample();
         let mut m = Menu::new(&c);
-        assert_eq!(m.entries[..2], [Entry::ModelViewer, Entry::AssetBrowser]);
-        assert_eq!(m.entries.len(), 2 + c.scenarios.len());
-        assert_eq!(m.selected, 2, "starts on the first scenario");
-        for _ in 0..3 {
+        assert_eq!(m.entries[..3], [Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls]);
+        assert_eq!(m.entries.len(), 3 + c.scenarios.len());
+        assert_eq!(m.selected, 3, "starts on the first scenario");
+        for _ in 0..4 {
             m.move_selection(false);
         }
         assert_eq!(m.selected, m.entries.len() - 1, "wraps upwards");
@@ -252,26 +281,37 @@ mod tests {
         assert!(matches!(m.activate(&c), Next::Viewer));
         m.move_selection(true);
         assert!(matches!(m.activate(&c), Next::Assets));
+        m.move_selection(true);
+        assert!(matches!(m.activate(&c), Next::Controls));
     }
 
     #[test]
     fn scenarios_start_with_the_chosen_ship_only_when_choosing() {
         let c = sample();
         let mut m = Menu::new(&c);
-        m.selected = 2;
-        // The sample arena fixes the player ship, so no choice is passed.
+        m.selected = 3;
+        // The first default arena lets the player choose: the launcher passes its pick.
+        assert!(m.choosing(&c));
+        m.move_ship(true);
         match m.activate(&c) {
             Next::Fly { scenario, ship } => {
-                assert_eq!(scenario, "sample-arena");
-                assert_eq!(ship, None);
+                assert_eq!(scenario, "rocket-vs-saucer");
+                assert_eq!(ship.as_deref(), Some("meteor"));
             }
             _ => panic!("expected Fly"),
         }
-        assert!(!m.choosing(&c));
-        m.move_ship(true);
         m.move_ship(false);
         assert_eq!(m.ship, 0);
-        assert_eq!(m.playable, vec!["dart".to_string()]);
+        assert_eq!(m.playable, vec!["comet".to_string(), "meteor".to_string(), "thunderbolt".to_string()]);
+        // The systems trial fixes the ship, so no choice is passed.
+        m.selected = m
+            .entries
+            .iter()
+            .position(|e| matches!(e, Entry::Scenario(k) if c.scenarios[*k].id == "systems-trial"))
+            .unwrap();
+        assert!(!m.choosing(&c));
+        assert!(matches!(m.activate(&c), Next::Fly { ship: None, .. }));
+        assert_eq!(next_campaign(&c), None, "only one campaign without the CD");
     }
 
     #[test]
