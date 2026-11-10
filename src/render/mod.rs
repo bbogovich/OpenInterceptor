@@ -418,18 +418,8 @@ impl Renderer {
             }
             let Some(model) = self.ship_model(content, world, s.class) else { continue };
             let power = if s.afterburning { 1.6 } else { 0.35 + 0.65 * s.throttle };
-            // Engine position: the model's rear-facing attachments, else the back centre.
-            let rear: Vec<Vec3> = {
-                let a: Vec<Vec3> =
-                    model.model.attachments.iter().filter(|a| a.forward.z > 0.5).map(|a| a.position).collect();
-                if a.is_empty() {
-                    vec![Vec3::new(0.0, 0.0, model.model.bounds_max.z * 0.95)]
-                } else {
-                    a
-                }
-            };
-            for p in rear {
-                let world_p = s.position + s.rotation * p;
+            for p in &model.engines {
+                let world_p = s.position + s.rotation * *p;
                 let size = model.radius * 0.25 * power;
                 push_billboard(
                     &mut self.glow_vertices,

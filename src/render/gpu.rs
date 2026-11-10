@@ -67,6 +67,9 @@ pub struct GpuLod {
 pub struct GpuModel {
     pub radius: f32,
     pub lods: Vec<GpuLod>,
+    /// Engine glow points (model space), computed once at load so drawing glows each
+    /// frame allocates nothing: rear-facing attachments, else the back centre.
+    pub engines: Vec<glam::Vec3>,
     /// The CPU model is kept for collision shapes and the model viewer's statistics.
     pub model: Model,
 }
@@ -78,6 +81,16 @@ impl GpuModel {
             .iter()
             .find(|l| distance < l.switch_distance)
             .unwrap_or_else(|| self.lods.last().expect("models have LODs"))
+    }
+}
+
+/// Where engine glows go: attachments facing backwards (+Z), or the back centre.
+pub fn engine_points(model: &Model) -> Vec<glam::Vec3> {
+    let rear: Vec<glam::Vec3> = model.attachments.iter().filter(|a| a.forward.z > 0.5).map(|a| a.position).collect();
+    if rear.is_empty() {
+        vec![glam::Vec3::new(0.0, 0.0, model.bounds_max.z * 0.95)]
+    } else {
+        rear
     }
 }
 
@@ -150,7 +163,7 @@ impl ModelCache {
                 .collect();
             lods.push(GpuLod { switch_distance: lod.switch_distance, meshes });
         }
-        GpuModel { radius: model.radius, lods, model }
+        GpuModel { radius: model.radius, lods, engines: engine_points(&model), model }
     }
 }
 
@@ -181,6 +194,22 @@ mod tests {
         assert_eq!(chunks[1].indices, vec![0, 1, 2], "indices restart in each chunk");
         assert_eq!(chunks[1].vertices[0].position, Vec3::splat(3.0));
         assert_eq!(chunks[1].texture, None);
+    }
+
+    #[test]
+    fn engines_use_rear_attachments_or_the_back_centre() {
+        use crate::model::Attachment;
+        let mut m = Model {
+            name: "m".into(),
+            radius: 5.0,
+            bounds_min: Vec3::splat(-1.0),
+            bounds_max: Vec3::new(1.0, 1.0, 4.0),
+            lods: vec![],
+            attachments: vec![Attachment { position: Vec3::X, forward: Vec3::NEG_Z }],
+        };
+        assert_eq!(engine_points(&m), vec![Vec3::new(0.0, 0.0, 3.8)], "front-facing attachment ignored");
+        m.attachments.push(Attachment { position: Vec3::new(0.0, 0.0, 4.0), forward: Vec3::Z });
+        assert_eq!(engine_points(&m), vec![Vec3::new(0.0, 0.0, 4.0)]);
     }
 
     #[test]

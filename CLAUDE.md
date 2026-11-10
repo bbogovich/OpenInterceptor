@@ -51,7 +51,8 @@ project's three objectives in force. When a rule conflicts with convenience, the
   flattened arrays over per-item allocations, pre-built GPU meshes over per-frame
   rebuilding, and no allocation in the per-frame hot path where avoidable.
 - **No global mutable state.** State is owned by explicit structs and passed down.
-- **`unsafe`** only at FFI boundaries (platform shims), each block with a `// SAFETY:` note.
+- **`unsafe`** only at FFI boundaries (platform shims) and the single documented access to
+  macroquad's internal GL state (`render::unsafe_gl`), each block with a `// SAFETY:` note.
 - `cargo clippy` clean and `cargo fmt` formatted.
 
 ## Dependencies
