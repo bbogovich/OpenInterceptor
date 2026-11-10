@@ -209,7 +209,7 @@ pub fn draw_targeting(f: &HudFrame) {
 
 /// Paints the cockpit art over the whole design space.
 pub fn draw_cockpit(tex: &Texture2D, layout: Layout) {
-    let r = layout.rect([0.0, 0.0, super::DESIGN.x, super::DESIGN.y]);
+    let r = layout.full();
     draw_texture_ex(
         tex,
         r[0],

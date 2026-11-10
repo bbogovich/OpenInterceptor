@@ -22,10 +22,12 @@ use crate::hud::{self, draw::HudFrame, Layout, MessageLog, MfdPage};
 use crate::input::{ChaseInput, Command, View};
 use crate::render::camera::SpaceCamera;
 use crate::render::effects::Effects;
+use crate::render::gpu::GpuModel;
 use crate::sim::{ai, collision, targeting, ShipId, SimEvent, World, TICK};
 use glam::{Quat, Vec2, Vec3};
 use macroquad::prelude::*;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::Arc;
 
 /// Longest frame time fed to the simulation, seconds.
@@ -167,7 +169,12 @@ pub struct FlightSession {
     menu_open: bool,
     mouse_flight: bool,
     accumulator: f32,
+    /// 2D cockpit art, if the player's cockpit has an image.
     cockpit: Option<Texture2D>,
+    /// 3D cockpit model and its offset from the pilot's eye, if any.
+    cockpit_model: Option<(Rc<GpuModel>, Vec3)>,
+    /// The cockpit's design space (instrument coordinates).
+    design: Vec2,
     instruments: HashMap<String, [f32; 4]>,
     scenario_id: String,
     ship_choice: Option<String>,
@@ -203,21 +210,29 @@ impl FlightSession {
         let (world, player) = World::from_scenario(&scenario, rules.clone(), Arc::new(shapes), choice)?;
         let player_class = rules.ship(world.get(player).expect("just spawned").class);
         let cockpit_def = player_class.cockpit.as_deref().and_then(|c| rules.cockpit(c));
-        let cockpit = cockpit_def.and_then(|c| match content.load_image(&c.image, c.image_pack, true) {
-            Ok(img) => {
-                let t = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
-                t.set_filter(FilterMode::Linear);
-                Some(t)
-            }
-            Err(e) => {
-                eprintln!("cockpit: {e}");
-                None
-            }
+        let cockpit = cockpit_def.and_then(|c| c.image.as_ref().map(|i| (i, c.image_pack))).and_then(
+            |(image, pack)| match content.load_image(image, pack, true) {
+                Ok(img) => {
+                    let t = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
+                    t.set_filter(FilterMode::Linear);
+                    Some(t)
+                }
+                Err(e) => {
+                    eprintln!("cockpit: {e}");
+                    None
+                }
+            },
+        );
+        let cockpit_model = cockpit_def.and_then(|c| {
+            let model = c.model.as_ref()?;
+            let gpu = ctx.renderer.models.get(content, model, c.image_pack, c.model_scale)?;
+            Some((gpu, Vec3::from(c.model_offset)))
         });
-        let instruments = cockpit_def
-            .filter(|_| cockpit.is_some())
-            .map(|c| c.instruments.clone())
-            .unwrap_or_else(hud::default_instruments);
+        let has_cockpit = cockpit.is_some() || cockpit_model.is_some();
+        let (instruments, design) = match cockpit_def.filter(|_| has_cockpit) {
+            Some(c) => (c.instruments.clone(), Vec2::from(c.design)),
+            None => (hud::default_instruments(), hud::DESIGN),
+        };
         let mut messages = MessageLog::default();
         messages.push(0.0, scenario.title.to_uppercase());
         Ok(FlightSession {
@@ -228,7 +243,7 @@ impl FlightSession {
             seed: scenario.starfield_seed,
             effects: Effects::default(),
             messages,
-            view: if cockpit.is_some() { View::Cockpit } else { View::Forward },
+            view: if has_cockpit { View::Cockpit } else { View::Forward },
             mfd: MfdPage::Target,
             chase: ChaseOrbit::default(),
             nav: scenario.nav_points.clone(),
@@ -238,6 +253,8 @@ impl FlightSession {
             mouse_flight: false,
             accumulator: 0.0,
             cockpit,
+            cockpit_model,
+            design,
             instruments,
             scenario_id: scenario.id.clone(),
             ship_choice: ship.map(str::to_string),
@@ -320,12 +337,7 @@ impl FlightSession {
         // After death, keep watching the wreck from outside.
         let view = if alive { self.view } else { View::ChaseManual };
         let (pos, rot) = view_pose(view, me.position, me.rotation, radius, &self.chase);
-        let cam = SpaceCamera {
-            position: pos,
-            rotation: rot,
-            fov_y: 60f32.to_radians(),
-            aspect: screen_width() / screen_height(),
-        };
+        let cam = SpaceCamera::new(pos, rot, 60f32.to_radians(), screen_width() / screen_height());
         let hide = if shows_own_ship(view) { None } else { Some(self.player) };
 
         // --- Drawing ----------------------------------------------------------------
@@ -333,17 +345,21 @@ impl FlightSession {
         ctx.renderer.draw_sky(&cam, self.seed, self.sun);
         ctx.renderer.draw_world(&ctx.content, &self.world, &self.effects, &cam, self.sun, hide);
         ctx.renderer.draw_glows(&ctx.content, &self.world, &self.effects, &cam, hide);
+        if let (true, View::Cockpit, Some((model, offset))) = (alive, view, &self.cockpit_model) {
+            ctx.renderer.draw_cockpit_model(&cam, model, *offset, self.sun);
+        }
         set_default_camera();
         let screen = Vec2::new(screen_width(), screen_height());
-        let layout = Layout::new(screen);
-        let with_art = alive && view == View::Cockpit && self.cockpit.is_some();
+        let in_cockpit = alive && view == View::Cockpit;
+        let with_art = in_cockpit && self.cockpit.is_some();
+        let custom = in_cockpit && (self.cockpit.is_some() || self.cockpit_model.is_some());
         let nav = self.nav.get(self.nav_index).map(|n| (n.name.as_str(), n.position));
         let default_instruments;
-        let instruments = if with_art {
-            &self.instruments
+        let (instruments, layout) = if custom {
+            (&self.instruments, Layout::new(screen, self.design))
         } else {
             default_instruments = hud::default_instruments();
-            &default_instruments
+            (&default_instruments, Layout::new(screen, hud::DESIGN))
         };
         let frame = HudFrame {
             world: &self.world,

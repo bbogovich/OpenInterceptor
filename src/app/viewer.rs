@@ -156,8 +156,7 @@ impl ModelViewer {
             // Never let the camera enter the model.
             self.orbit.distance = self.orbit.distance.max(m.radius * 1.05);
             let (pos, rot) = self.orbit.pose();
-            let cam =
-                SpaceCamera { position: pos, rotation: rot, fov_y: 0.8, aspect: screen_width() / screen_height() };
+            let cam = SpaceCamera::new(pos, rot, 0.8, screen_width() / screen_height());
             let sun = Vec3::new(-0.4, 0.7, 0.6);
             ctx.renderer.draw_sky(&cam, 9, sun);
             ctx.renderer.begin_solid(&cam, sun);

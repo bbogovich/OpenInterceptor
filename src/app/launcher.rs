@@ -132,12 +132,12 @@ impl Launcher {
                 let class = content.rules.ship(id);
                 if let Some(model) = ctx.renderer.models.get(content, &class.model, class.model_pack, class.model_scale)
                 {
-                    let cam = SpaceCamera {
-                        position: Vec3::new(-model.radius * 0.9, model.radius * 0.5, model.radius * 2.6),
-                        rotation: Quat::from_rotation_y(-0.3) * Quat::from_rotation_x(-0.18),
-                        fov_y: 0.8,
-                        aspect: screen_width() / screen_height(),
-                    };
+                    let cam = SpaceCamera::new(
+                        Vec3::new(-model.radius * 0.9, model.radius * 0.5, model.radius * 2.6),
+                        Quat::from_rotation_y(-0.3) * Quat::from_rotation_x(-0.18),
+                        0.8,
+                        screen_width() / screen_height(),
+                    );
                     ctx.renderer.draw_sky(&cam, 5, Vec3::new(-0.5, 0.6, 0.6));
                     ctx.renderer.begin_solid(&cam, Vec3::new(-0.5, 0.6, 0.6));
                     ctx.renderer.draw_model(&cam, &model, Vec3::ZERO, Quat::from_rotation_y(self.spin), Vec3::ZERO);

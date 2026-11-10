@@ -525,6 +525,20 @@ impl Renderer {
         }
     }
 
+    /// Draws a 3D cockpit around the pilot's eye (the camera), always in front of the
+    /// world: the depth buffer is cleared first, and a near plane of 5 cm lets the
+    /// geometry sit right in front of the eye. `offset` is in the eye's frame.
+    pub fn draw_cockpit_model(&self, cam: &SpaceCamera, model: &GpuModel, offset: Vec3, sun: Vec3) {
+        let mut gl = unsafe_gl_context();
+        // Everything batched so far must reach the GPU before the depth is cleared.
+        gl.flush();
+        gl.quad_context.clear(None, Some(1.0), None);
+        let near = cam.with_near(0.05);
+        self.begin_solid(&near, sun);
+        self.draw_model_lod(&near, model, cam.position + cam.rotation * offset, cam.rotation, Vec3::ZERO, Some(0));
+        gl_use_default_material();
+    }
+
     /// A small 3D marker (used by the model viewer for attachment points).
     pub fn draw_axes(&self, cam: &SpaceCamera, at: Vec3, rot: Quat, size: f32) {
         set_camera(cam);
@@ -537,10 +551,17 @@ impl Renderer {
 
 /// Access to macroquad's low-level GL state for the model-matrix stack.
 fn unsafe_gl() -> &'static mut macroquad::prelude::QuadGl {
-    // `get_internal_gl` is marked unsafe only because the returned reference must not
-    // be held across `next_frame().await`; we use it immediately and drop it.
-    // SAFETY: called during drawing on the main thread; the reference is not kept.
-    unsafe { get_internal_gl() }.quad_gl
+    unsafe_gl_context().quad_gl
+}
+
+/// Access to macroquad's internal GL context (batcher + raw rendering backend).
+///
+/// This is the project's only non-FFI `unsafe`: `get_internal_gl` is marked unsafe
+/// because the returned references must not be held across `next_frame().await`.
+fn unsafe_gl_context() -> macroquad::window::InternalGlContext<'static> {
+    // SAFETY: called during drawing on the main thread; callers use the references
+    // immediately and never keep them past the current frame.
+    unsafe { get_internal_gl() }
 }
 
 /// Identity transform, re-exported for callers drawing in camera space.

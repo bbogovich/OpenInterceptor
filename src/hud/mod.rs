@@ -34,13 +34,22 @@ pub const DESIGN: Vec2 = Vec2::new(640.0, 480.0);
 pub struct Layout {
     pub scale: f32,
     pub offset: Vec2,
+    /// The design space's size (640×480 for the original cockpits).
+    pub design: Vec2,
 }
 
 impl Layout {
-    /// Fit the design space to the screen height, centred horizontally.
-    pub fn new(screen: Vec2) -> Layout {
-        let scale = screen.y / DESIGN.y;
-        Layout { scale, offset: Vec2::new((screen.x - DESIGN.x * scale) * 0.5, 0.0) }
+    /// Fits a design space of size `design` inside the screen, as large as possible,
+    /// centred. A 4:3 cockpit on a 16:9 screen fills the height with space visible at the
+    /// sides; a 16:9 cockpit design fills a 16:9 screen exactly.
+    pub fn new(screen: Vec2, design: Vec2) -> Layout {
+        let scale = (screen.x / design.x).min(screen.y / design.y);
+        Layout { scale, offset: (screen - design * scale) * 0.5, design }
+    }
+
+    /// The whole design space in screen pixels (where cockpit art is drawn).
+    pub fn full(&self) -> [f32; 4] {
+        self.rect([0.0, 0.0, self.design.x, self.design.y])
     }
 
     /// A design rectangle `[x, y, w, h]` in screen pixels.
@@ -240,10 +249,15 @@ mod tests {
 
     #[test]
     fn layout_scales_by_height_and_centres() {
-        let l = Layout::new(Vec2::new(1920.0, 960.0));
+        let l = Layout::new(Vec2::new(1920.0, 960.0), DESIGN);
         assert_eq!(l.scale, 2.0);
         assert_eq!(l.offset.x, (1920.0 - 1280.0) / 2.0);
         assert_eq!(l.rect([10.0, 20.0, 30.0, 40.0]), [320.0 + 20.0, 40.0, 60.0, 80.0]);
+        assert_eq!(l.full(), [320.0, 0.0, 1280.0, 960.0]);
+        // A widescreen design on a 4:3 screen fits the width and centres vertically.
+        let w = Layout::new(Vec2::new(1024.0, 768.0), Vec2::new(1920.0, 1080.0));
+        assert!((w.scale - 1024.0 / 1920.0).abs() < 1e-6);
+        assert!(w.offset.x.abs() < 1e-3 && w.offset.y > 0.0);
     }
 
     #[test]

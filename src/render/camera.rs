@@ -31,12 +31,25 @@ pub struct SpaceCamera {
     pub fov_y: f32,
     /// Width / height of the viewport.
     pub aspect: f32,
+    /// Near clip plane, metres. Small for the 3D cockpit pass, [`Z_NEAR`] otherwise.
+    pub z_near: f32,
 }
 
 impl SpaceCamera {
+    /// A camera with the default clip planes.
+    pub fn new(position: Vec3, rotation: Quat, fov_y: f32, aspect: f32) -> SpaceCamera {
+        SpaceCamera { position, rotation, fov_y, aspect, z_near: Z_NEAR }
+    }
+
+    /// The same view with a different near plane (the cockpit pass uses 5 cm, so
+    /// geometry right in front of the pilot's eye is not clipped).
+    pub fn with_near(self, z_near: f32) -> SpaceCamera {
+        SpaceCamera { z_near, ..self }
+    }
+
     /// Projection × rotation-only view (see the module docs).
     pub fn view_projection(&self) -> Mat4 {
-        let proj = Mat4::perspective_rh_gl(self.fov_y, self.aspect, Z_NEAR, Z_FAR);
+        let proj = Mat4::perspective_rh_gl(self.fov_y, self.aspect, self.z_near, Z_FAR);
         proj * Mat4::from_quat(self.rotation.inverse())
     }
 
@@ -83,7 +96,7 @@ mod tests {
     use super::*;
 
     fn cam() -> SpaceCamera {
-        SpaceCamera { position: Vec3::new(10_000.0, 0.0, 0.0), rotation: Quat::IDENTITY, fov_y: 1.0, aspect: 1.0 }
+        SpaceCamera::new(Vec3::new(10_000.0, 0.0, 0.0), Quat::IDENTITY, 1.0, 1.0)
     }
 
     #[test]
@@ -103,6 +116,17 @@ mod tests {
         let p = c.project(Vec3::new(9_900.0, 0.0, 0.0), Vec2::new(100.0, 100.0)).unwrap();
         assert!((p - Vec2::new(50.0, 50.0)).length() < 1e-2);
         assert!((c.local_direction(Vec3::new(9_000.0, 0.0, 0.0)) - Vec3::NEG_Z).length() < 1e-5);
+    }
+
+    #[test]
+    fn near_plane_changes_only_depth() {
+        let c = cam();
+        let near = c.with_near(0.05);
+        assert_eq!(near.z_near, 0.05);
+        let p = Vec3::new(10_000.0, 0.2, -0.5);
+        assert!(c.project(p, Vec2::splat(100.0)).is_some());
+        let (a, b) = (c.project(p, Vec2::splat(100.0)).unwrap(), near.project(p, Vec2::splat(100.0)).unwrap());
+        assert!((a - b).length() < 1e-3, "same screen position");
     }
 
     #[test]

@@ -99,9 +99,17 @@ pub fn run(content: &Content) -> Report {
         }
     }
     for c in &rules.cockpits {
-        match content.load_image(&c.image, c.image_pack, true) {
-            Ok(_) => r.images += 1,
-            Err(e) => r.errors.push(format!("cockpit {}: {e}", c.id)),
+        if let Some(image) = &c.image {
+            match content.load_image(image, c.image_pack, true) {
+                Ok(_) => r.images += 1,
+                Err(e) => r.errors.push(format!("cockpit {}: {e}", c.id)),
+            }
+        }
+        if let Some(model) = &c.model {
+            match content.load_model(model, c.image_pack, c.model_scale) {
+                Ok(_) => r.models += 1,
+                Err(e) => r.errors.push(format!("cockpit {} model: {e}", c.id)),
+            }
         }
     }
     let mut sounds: Vec<(String, usize)> = rules.sounds.values().cloned().collect();

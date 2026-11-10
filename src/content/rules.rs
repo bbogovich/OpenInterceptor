@@ -224,14 +224,34 @@ pub struct FlightRules {
     pub radar_range: f32,
 }
 
-/// A cockpit: background art plus where the instruments go.
+/// A cockpit: 2D art, a 3D model, or both, plus where the instruments go.
+///
+/// ```ini
+/// [cockpit:a]
+/// Image = original:CockpitA.dll#12000   ; or a pack image of any resolution, or `none`
+/// Design = 640, 480                     ; the coordinate space of Instrument.* (default)
+/// Model = models/cockpit.obj            ; optional 3D cockpit around the pilot's eye
+/// ModelOffset = 0, -0.2, 0              ; metres from the eye (x right, y up, -z ahead)
+/// ModelScale = 1
+/// Instrument.mfd = 246, 338, 156, 82
+/// ```
+///
+/// An HD repaint can simply *override* the original image file (same design space, any
+/// pixel size); a widescreen redesign sets its own `Design` and instrument rectangles.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CockpitDef {
     pub id: String,
-    /// Asset reference of the cockpit image (640×480 design size).
-    pub image: String,
+    /// Asset reference of the 2D cockpit art, if any.
+    pub image: Option<String>,
+    /// Pack whose rules defined this cockpit (pack-relative paths resolve there).
     pub image_pack: usize,
-    /// Instrument rectangles in 640×480 design pixels: `(x, y, w, h)`.
+    /// Width and height of the design space the instruments are placed in.
+    pub design: [f32; 2],
+    /// Asset reference of a 3D cockpit model, if any.
+    pub model: Option<String>,
+    pub model_offset: [f32; 3],
+    pub model_scale: f32,
+    /// Instrument rectangles in design-space pixels: `(x, y, w, h)`.
     pub instruments: HashMap<String, [f32; 4]>,
 }
 
@@ -393,10 +413,12 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
     let cockpits = of_kind("cockpit")
         .into_iter()
         .filter_map(|(id, s)| {
-            let Some(image) = s.get_nonempty("Image") else {
-                errors.push(format!("[{}]: no Image", s.name));
+            let image = s.get_nonempty("Image").filter(|i| !i.eq_ignore_ascii_case("none")).map(str::to_string);
+            let model = s.get_nonempty("Model").map(str::to_string);
+            if image.is_none() && model.is_none() {
+                errors.push(format!("[{}]: a cockpit needs an Image, a Model, or both", s.name));
                 return None;
-            };
+            }
             let instruments = s
                 .entries
                 .iter()
@@ -406,9 +428,21 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
                     (v.len() == 4).then(|| (name.to_ascii_lowercase(), [v[0], v[1], v[2], v[3]]))
                 })
                 .collect();
+            let design = match s.get_floats("Design") {
+                Some(v) if v.len() == 2 && v[0] > 0.0 && v[1] > 0.0 => [v[0], v[1]],
+                _ => [640.0, 480.0],
+            };
+            let offset = match s.get_floats("ModelOffset") {
+                Some(v) if v.len() == 3 => [v[0], v[1], v[2]],
+                _ => [0.0; 3],
+            };
             Some(CockpitDef {
-                image: image.to_string(),
-                image_pack: *section_pack.get(&s.name.to_ascii_lowercase()).unwrap_or(&0),
+                image,
+                image_pack: pack_of(s),
+                design,
+                model,
+                model_offset: offset,
+                model_scale: s.get_f32("ModelScale").unwrap_or(1.0),
                 instruments,
                 id,
             })
@@ -581,6 +615,7 @@ mod tests {
              [ship:pirate]\ninherit=ship:interceptor\nPlayable=no\nFaction=alien\nMaxSpeed=500\n\
              [object:base]\nModel=models/base.obj\nFaction=xcom\nHitPoints=5000\n\
              [cockpit:a]\nImage=original:CockpitA.dll#12000\nInstrument.radar=10,20,30,40\n\
+             [cockpit:vr]\nImage=none\nModel=models/pit.obj\nModelOffset=0,-0.5,0\nDesign=1920,1080\n\
              [flight]\nBoost=120\n[sounds]\nLock=original:target lock.wav\n",
         )
     }
@@ -603,10 +638,20 @@ mod tests {
         let base = rules.ship(rules.ship_id("base").unwrap());
         assert_eq!((base.kind, base.max_speed), (ShipKind::Station, 0.0));
         assert_eq!(rules.playable_ships(), vec![rules.ship_id("interceptor").unwrap()]);
-        assert_eq!(rules.cockpit("A").unwrap().instruments["radar"], [10.0, 20.0, 30.0, 40.0]);
+        let a = rules.cockpit("A").unwrap();
+        assert_eq!(a.instruments["radar"], [10.0, 20.0, 30.0, 40.0]);
+        assert_eq!(
+            (a.design, a.model.as_deref(), a.image.as_deref()),
+            ([640.0, 480.0], None, Some("original:CockpitA.dll#12000"))
+        );
         assert_eq!(rules.flight.afterburner_boost, 120.0);
         assert_eq!(rules.flight.afterburner_cost, 50.0, "default");
         assert_eq!((rules.flight.model, rules.flight.arena_radius), (FlightModel::Newtonian, 60_000.0), "defaults");
+        let vr = rules.cockpit("vr").unwrap();
+        assert_eq!(
+            (vr.image.clone(), vr.model.as_deref(), vr.model_offset, vr.design),
+            (None, Some("models/pit.obj"), [0.0, -0.5, 0.0], [1920.0, 1080.0])
+        );
         assert_eq!(rules.sounds["lock"], ("original:target lock.wav".to_string(), 0));
         let (x, a) = (rules.faction_id("xcom").unwrap(), rules.faction_id("alien").unwrap());
         assert!(rules.hostile(x, a) && rules.hostile(a, x));

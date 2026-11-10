@@ -122,6 +122,55 @@ def ring_station():
     o.write({"panel": ((1, 1, 1), "../textures/panel.png"), "hub": ((0.7, 0.7, 0.75), None)})
 
 
+def box(o, mat, x0, x1, y0, y1, z0, z1):
+    """Adds an axis-aligned box (all six faces) to `o`."""
+    p = [o.vert(x, y, z) for x in (x0, x1) for y in (y0, y1) for z in (z0, z1)]
+    for quad in [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]:
+        o.face(mat, *[p[i] for i in quad])
+
+
+def strut(o, mat, a, b, w):
+    """A thin square beam from point a to point b (used for canopy frame struts)."""
+    ax, ay, az = a
+    bx, by, bz = b
+    dx, dy, dz = bx - ax, by - ay, bz - az
+    # A perpendicular direction: cross with Z (or X if the strut runs along Z).
+    px, py, pz = (dy, -dx, 0) if abs(dz) < 0.9 * max(abs(dx), abs(dy), abs(dz), 1e-6) else (0, dz, -dy)
+    n = math.sqrt(px * px + py * py + pz * pz) or 1.0
+    px, py, pz = px / n * w, py / n * w, pz / n * w
+    # Second perpendicular = direction x first.
+    qx, qy, qz = dy * pz - dz * py, dz * px - dx * pz, dx * py - dy * px
+    m = math.sqrt(qx * qx + qy * qy + qz * qz) or 1.0
+    qx, qy, qz = qx / m * w, qy / m * w, qz / m * w
+    ring = lambda c: [o.vert(c[0] + sx * px + sy * qx, c[1] + sx * py + sy * qy, c[2] + sx * pz + sy * qz) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    r0, r1 = ring(a), ring(b)
+    for k in range(4):
+        j = (k + 1) % 4
+        o.face(mat, r0[k], r0[j], r1[j], r1[k])
+
+
+def dart_cockpit():
+    """A 3D cockpit for the Dart, in metres around the pilot's eye at the origin
+    (nose along -Z). Shows the 'replace the 2D overlay with a 3D cockpit' path."""
+    o = Obj("dart_cockpit")
+    # Dashboard slab below and ahead of the eye, with a raised instrument hood.
+    box(o, "dash", -0.75, 0.75, -0.62, -0.42, -1.05, -0.55)
+    box(o, "hood", -0.35, 0.35, -0.42, -0.30, -1.0, -0.8)
+    # Side consoles.
+    box(o, "dash", -0.85, -0.6, -0.75, -0.40, -0.9, 0.3)
+    box(o, "dash", 0.6, 0.85, -0.75, -0.40, -0.9, 0.3)
+    # Canopy frame: two forward struts meeting above the nose, a hoop overhead.
+    strut(o, "frame", (-0.75, -0.42, -1.0), (0.0, 0.45, -1.6), 0.03)
+    strut(o, "frame", (0.75, -0.42, -1.0), (0.0, 0.45, -1.6), 0.03)
+    hoop = [(0.8 * math.cos(a), 0.55 * math.sin(a) - 0.1, -0.1) for a in [math.pi * k / 8 for k in range(9)]]
+    for a, b in zip(hoop, hoop[1:]):
+        strut(o, "frame", a, b, 0.035)
+    # Glowing displays on the dash (flat panels facing the pilot).
+    for x0 in (-0.6, 0.25):
+        o.face("screen", o.vert(x0, -0.42, -0.62), o.vert(x0 + 0.35, -0.42, -0.62), o.vert(x0 + 0.35, -0.47, -0.95), o.vert(x0, -0.47, -0.95))
+    o.write({"dash": ((0.22, 0.24, 0.28), None), "hood": ((0.15, 0.16, 0.18), None), "frame": ((0.45, 0.5, 0.58), None), "screen": ((0.1, 0.6, 0.35), None)})
+
+
 def panel_png():
     """A 64x64 hull-panel texture: grey plates with dark seams and a few lights."""
     w = h = 64
@@ -148,5 +197,6 @@ if __name__ == "__main__":
     dart()
     raider()
     ring_station()
+    dart_cockpit()
     panel_png()
     print("sample pack models written")
