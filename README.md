@@ -12,14 +12,20 @@ original assets at all. *Interceptor* is the worked example the engine is proven
 | Area | Status |
 |---|---|
 | Original data readers (meshes, textures, cockpits, INI rules) | Working |
-| Flight simulator testbed (Stage 1) | In progress |
+| Flight simulator testbed (Stage 1) | Playable (build 0.2.0) |
+| Asset overrides, extraction, HD/3D cockpits | Working |
 | Enemy AI and combat (Stage 2) | Planned |
 | Missions, campaign, strategy layer, scripting | Planned |
 
 - **Documentation site** (plan, architecture, formats, modding): the `docs` branch;
   serve it locally with `./docs.sh serve` from that branch's worktree.
-- **Build:** `cargo build --release`, then
-  `target/release/openinterceptor --data "<path to the Interceptor CD or install>"`.
+- **Build and run:** `cargo build --release`, then `target/release/openinterceptor`.
+  The CD is found automatically: `--data`, `OPENINTERCEPTOR_DATA`, `settings.ini` in the
+  user data folder, `<user data>/original`, or `game/` in this checkout.
+- **macOS app:** `python3 tools/build_bundle.py` builds `dist/OpenInterceptor-<version>.app`
+  (versions follow the stages: Stage 1 = 0.2.x) and points `settings.ini` at `game/`.
+- **Modding:** `openinterceptor --extract <folder>` converts the CD to OBJ/PNG/WAV at the
+  paths where a mod's files override the originals; see the docs site's Modding section.
 - **Quality gate:** `scripts/check.sh`.
 
 ## Ground rules

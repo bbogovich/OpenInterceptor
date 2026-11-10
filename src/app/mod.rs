@@ -24,6 +24,7 @@
 //! matters here. Loading sounds is also `async` (macroquad's API), so it happens before
 //! the loop starts.
 
+pub mod assets;
 pub mod devices;
 pub mod flight;
 pub mod launcher;
@@ -51,6 +52,7 @@ pub enum Next {
     Stay,
     Launcher,
     Viewer,
+    Assets,
     /// Start a scenario: its id and the chosen player ship class id.
     Fly {
         scenario: String,
@@ -64,6 +66,7 @@ pub enum Next {
 enum Screen {
     Launcher(launcher::Launcher),
     Viewer(viewer::ModelViewer),
+    Assets(assets::AssetBrowser),
     Flight(Box<flight::FlightSession>),
 }
 
@@ -136,6 +139,7 @@ pub async fn run(options: Options) {
         let next = match &mut screen {
             Screen::Launcher(l) => l.frame(&mut ctx),
             Screen::Viewer(v) => v.frame(&mut ctx),
+            Screen::Assets(a) => a.frame(&mut ctx).await,
             Screen::Flight(f) => f.frame(&mut ctx),
         };
         match next {
@@ -147,6 +151,7 @@ pub async fn run(options: Options) {
                 screen = Screen::Launcher(launcher::Launcher::new(&ctx));
             }
             Next::Viewer => screen = Screen::Viewer(viewer::ModelViewer::new(&ctx)),
+            Next::Assets => screen = Screen::Assets(assets::AssetBrowser::new(&ctx)),
             Next::Fly { scenario, ship } => match flight::FlightSession::start(&mut ctx, &scenario, ship.as_deref()) {
                 Ok(s) => screen = Screen::Flight(Box::new(s)),
                 Err(e) => {

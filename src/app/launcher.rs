@@ -16,6 +16,7 @@ use macroquad::prelude::*;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Entry {
     ModelViewer,
+    AssetBrowser,
     /// Index into `content.scenarios`.
     Scenario(usize),
 }
@@ -33,11 +34,11 @@ pub struct Menu {
 
 impl Menu {
     pub fn new(content: &Content) -> Menu {
-        let mut entries = vec![Entry::ModelViewer];
+        let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser];
         entries.extend((0..content.scenarios.len()).map(Entry::Scenario));
         let playable = content.rules.playable_ships().into_iter().map(|id| content.rules.ship(id).id.clone()).collect();
         // Start on the first scenario rather than the viewer.
-        Menu { selected: if entries.len() > 1 { 1 } else { 0 }, entries, ship: 0, playable }
+        Menu { selected: if entries.len() > 2 { 2 } else { 0 }, entries, ship: 0, playable }
     }
 
     /// Moves the selection up or down, wrapping.
@@ -61,6 +62,7 @@ impl Menu {
     pub fn activate(&self, content: &Content) -> Next {
         match &self.entries[self.selected] {
             Entry::ModelViewer => Next::Viewer,
+            Entry::AssetBrowser => Next::Assets,
             Entry::Scenario(i) => {
                 let s = &content.scenarios[*i];
                 let ship = if s.player_class.is_none() { self.playable.get(self.ship).cloned() } else { None };
@@ -165,6 +167,7 @@ impl Launcher {
             let y = top + i as f32 * line_h;
             let label = match e {
                 Entry::ModelViewer => "Model viewer".to_string(),
+                Entry::AssetBrowser => "Asset browser (textures, images, sounds)".to_string(),
                 Entry::Scenario(k) => content.scenarios[*k].title.clone(),
             };
             let selected = i == self.menu.selected;
@@ -176,6 +179,10 @@ impl Launcher {
         let desc = match &self.menu.entries[self.menu.selected] {
             Entry::ModelViewer => {
                 "Browse every model: ship classes and, with original data, every mesh on the CD.".to_string()
+            }
+            Entry::AssetBrowser => {
+                "Every texture, image and sound on the CD, as the game loads it - with pack overrides marked."
+                    .to_string()
             }
             Entry::Scenario(k) => content.scenarios[*k].description.clone(),
         };
@@ -233,22 +240,25 @@ mod tests {
     fn menu_lists_viewer_and_scenarios_and_wraps() {
         let c = sample();
         let mut m = Menu::new(&c);
-        assert_eq!(m.entries[0], Entry::ModelViewer);
-        assert_eq!(m.entries.len(), 1 + c.scenarios.len());
-        assert_eq!(m.selected, 1, "starts on the first scenario");
-        m.move_selection(false);
-        m.move_selection(false);
+        assert_eq!(m.entries[..2], [Entry::ModelViewer, Entry::AssetBrowser]);
+        assert_eq!(m.entries.len(), 2 + c.scenarios.len());
+        assert_eq!(m.selected, 2, "starts on the first scenario");
+        for _ in 0..3 {
+            m.move_selection(false);
+        }
         assert_eq!(m.selected, m.entries.len() - 1, "wraps upwards");
         m.move_selection(true);
         assert_eq!(m.selected, 0);
         assert!(matches!(m.activate(&c), Next::Viewer));
+        m.move_selection(true);
+        assert!(matches!(m.activate(&c), Next::Assets));
     }
 
     #[test]
     fn scenarios_start_with_the_chosen_ship_only_when_choosing() {
         let c = sample();
         let mut m = Menu::new(&c);
-        m.selected = 1;
+        m.selected = 2;
         // The sample arena fixes the player ship, so no choice is passed.
         match m.activate(&c) {
             Next::Fly { scenario, ship } => {
