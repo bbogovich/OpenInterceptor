@@ -33,6 +33,18 @@ impl Orbit {
     }
 }
 
+/// Direction of a mouse-wheel movement: −1, 0 or +1.
+///
+/// Beware: Rust's `f32::signum(0.0)` is `1.0`, not `0.0` (IEEE-754 zero has a sign), so
+/// `wheel.signum()` would report "scrolling up" every frame the wheel is still.
+pub fn wheel_steps(wheel: f32) -> f32 {
+    if wheel == 0.0 {
+        0.0
+    } else {
+        wheel.signum()
+    }
+}
+
 /// One model in the list.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ViewerEntry {
@@ -49,6 +61,8 @@ pub struct ModelViewer {
     orbit: Orbit,
     /// `None` = automatic LOD by distance; `Some(i)` forces LOD `i`.
     forced_lod: Option<usize>,
+    /// The entry the camera distance was last fitted to (fit again when it changes).
+    fitted: Option<usize>,
     spin: bool,
     angle: f32,
 }
@@ -82,6 +96,7 @@ impl ModelViewer {
             selected: 0,
             orbit: Orbit { yaw: 0.6, pitch: 0.35, distance: 30.0 },
             forced_lod: None,
+            fitted: None,
             spin: true,
             angle: 0.0,
         }
@@ -116,7 +131,7 @@ impl ModelViewer {
         }
         let dt = get_frame_time();
         let axis = |a: &str, b: &str| (held(b) as i32 - held(a) as i32) as f32;
-        let zoom = axis("minus", "equal") + mouse_wheel().1.signum() * 4.0;
+        let zoom = axis("minus", "equal") + wheel_steps(mouse_wheel().1) * 4.0;
         self.orbit.update(axis("left", "right") * 1.5, axis("down", "up") * 1.0, zoom * 1.5, dt);
         if is_mouse_button_down(MouseButton::Left) {
             let d = mouse_delta_position();
@@ -134,9 +149,12 @@ impl ModelViewer {
         };
         let model = ctx.renderer.models.get(&ctx.content, &entry.reference, entry.pack, entry.scale);
         if let Some(m) = &model {
-            if changed {
+            if changed || self.fitted != Some(self.selected) {
                 self.orbit.distance = (m.radius * 2.8).max(5.0);
+                self.fitted = Some(self.selected);
             }
+            // Never let the camera enter the model.
+            self.orbit.distance = self.orbit.distance.max(m.radius * 1.05);
             let (pos, rot) = self.orbit.pose();
             let cam =
                 SpaceCamera { position: pos, rotation: rot, fov_y: 0.8, aspect: screen_width() / screen_height() };
@@ -205,6 +223,13 @@ mod tests {
         let (p, r) = o.pose();
         assert!(p.y > 0.0, "positive pitch is above");
         assert!(((r * Vec3::NEG_Z) - (-p.normalize())).length() < 1e-5, "still aimed at the origin");
+    }
+
+    #[test]
+    fn a_still_wheel_does_not_zoom() {
+        assert_eq!(wheel_steps(0.0), 0.0);
+        assert_eq!(wheel_steps(3.5), 1.0);
+        assert_eq!(wheel_steps(-0.1), -1.0);
     }
 
     #[test]
