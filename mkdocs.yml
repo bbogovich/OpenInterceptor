@@ -84,9 +84,23 @@ nav:
       - "Overrides and extraction": modding/overrides.md
       - "Cockpits (HD and 3D)": modding/cockpits.md
       - "Scenarios and missions": modding/scenarios.md
-      - "Scripting (planned)": modding/scripting.md
-      - "Tech tree and campaign (planned)": modding/campaign.md
+      - "Scripting (design)": modding/scripting.md
+      - "Campaigns (design)": modding/campaign.md
       - "Validating a mod": modding/validating.md
+  - "Game design and mod format":
+      - design/index.md
+      - "The original, system by system": design/original-analysis.md
+      - "Mod structure": design/mod-structure.md
+      - "Format: campaign and game flow": design/format-campaign.md
+      - "Format: strategy layer": design/format-strategy.md
+      - "Format: objects and models": design/format-objects.md
+      - "Format: missions, environments, events": design/format-missions.md
+      - "Format: behaviours and scripting": design/format-behaviour.md
+      - "Format: interface, text and media": design/format-interface.md
+      - "Coverage matrix": design/coverage.md
+      - "The Interceptor campaign mod": design/interceptor-campaign.md
+      - "The default campaign": design/default-campaign.md
+      - "Interceptor Remastered": design/remastered.md
   - "Implementation plan":
       - implementation-plan/index.md
       - "Stage 0 — Foundation": implementation-plan/stage-0-foundation.md
@@ -94,9 +108,10 @@ nav:
       - "Stage 2 — Enemies and combat": implementation-plan/stage-2-combat.md
       - "Stage 3 — Missions and scripting": implementation-plan/stage-3-missions.md
       - "Stage 4 — Strategy layer": implementation-plan/stage-4-strategy.md
-      - "Stage 5 — Presentation": implementation-plan/stage-5-presentation.md
-      - "Stage 6 — Modding toolkit": implementation-plan/stage-6-modding.md
-      - "Stage 7 — Platforms and release": implementation-plan/stage-7-release.md
+      - "Stage 5 — Campaigns": implementation-plan/stage-5-campaign.md
+      - "Stage 6 — Presentation": implementation-plan/stage-6-presentation.md
+      - "Stage 7 — Modding toolkit and Remastered": implementation-plan/stage-7-modding.md
+      - "Stage 8 — Platforms and release": implementation-plan/stage-8-release.md
   - "Architecture":
       - architecture/index.md
       - "Formats layer": architecture/formats.md

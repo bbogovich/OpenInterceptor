@@ -6,12 +6,13 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 |---|---|---|
 | [0 Foundation](implementation-plan/stage-0-foundation.md) | **Done** | Repository, SpecItOut manifest, gate, docs site; every asset type for stages 1–2 decoded and verified |
 | [1 Flight simulator](implementation-plan/stage-1-flight.md) | **In progress** — build **0.2.1** | See the checklist below |
-| [2 Enemies and combat](implementation-plan/stage-2-combat.md) | Not started | |
-| [3 Missions and scripting](implementation-plan/stage-3-missions.md) | Not started | Scripting language decision pending |
+| [2 Combat, objects and behaviours](implementation-plan/stage-2-combat.md) | Not started | Mod kinds and `parent` land here |
+| [3 Missions, environments and conditions](implementation-plan/stage-3-missions.md) | Not started | Tier 2 script language decided at entry |
 | [4 Strategy layer](implementation-plan/stage-4-strategy.md) | Not started | |
-| [5 Presentation](implementation-plan/stage-5-presentation.md) | Not started | |
-| [6 Modding toolkit](implementation-plan/stage-6-modding.md) | Not started | |
-| [7 Platforms and release](implementation-plan/stage-7-release.md) | Not started | |
+| [5 Campaigns](implementation-plan/stage-5-campaign.md) | Not started | |
+| [6 Presentation](implementation-plan/stage-6-presentation.md) | Not started | |
+| [7 Modding toolkit and Remastered](implementation-plan/stage-7-modding.md) | Not started | |
+| [8 Platforms and release](implementation-plan/stage-8-release.md) | Not started | |
 
 ## Stage 0 results
 

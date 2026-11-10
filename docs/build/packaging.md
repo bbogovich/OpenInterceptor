@@ -48,13 +48,18 @@ build of a stage.
 |---|---|---|
 | 0 Foundation | 0.1.x | (no app; analysis, formats, docs) |
 | 1 Flight simulator | 0.2.x | **0.2.0** — first app: newtonian flight, overrides, `--extract`, HD/3D cockpits, asset browser; **0.2.1** — mesh rendering fixes (tiled textures, back-face culling, overlay layers), viewer mesh tools and `--model`, bolt streaks, radar alignment |
-| 2 Enemies and combat | 0.3.x | — |
-| 3 Missions and scripting | 0.4.x | — |
+| 2 Combat, objects and behaviours | 0.3.x | — |
+| 3 Missions, environments and conditions | 0.4.x | — |
+| 4 Strategy layer | 0.5.x | — |
+| 5 Campaigns | 0.6.x | — |
+| 6 Presentation | 0.7.x | — |
+| 7 Modding toolkit and Remastered | 0.8.x | — |
+| 8 Platforms and release | 1.0.0 | — |
 
-## Linux (Stage 7)
+## Linux (Stage 8)
 
 A tarball with the binary, `packs/` and a `.desktop` file. AppImage is under consideration.
 
 ## Windows
 
-Kept buildable; gamepad (XInput) and packaging are planned for Stage 7.
+Kept buildable; gamepad (XInput) and packaging are planned for Stage 8.

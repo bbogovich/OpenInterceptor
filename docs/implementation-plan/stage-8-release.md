@@ -1,7 +1,9 @@
-# Stage 7 — Platforms and release
+# Stage 8 — Platforms and release
 
 **Version 1.0.0. Status: planned.**
 
+- Ships three campaigns: `default` (*Perils of the Void*, the no-CD experience), `interceptor`
+  and `interceptor-remastered` (both need the player's CD).
 - macOS `.app` (engine + original-free packs); optional local-only variant with the player's
   data in `dist/`, never published.
 - Linux tarball and `.desktop`; AppImage considered.

@@ -1,14 +1,12 @@
-# Tech tree and campaign (planned)
+# Campaigns (design)
 
-Stage 4 turns the strategy layer into data:
+Campaigns — the star map, factions and relations, economy, research, bases, pilots, the story
+and the rival's plan — are designed in full in **[Game design and mod format](../design/index.md)**:
 
-- **Tech tree**: research topics as `[research:<id>]` rules with prerequisites, cost and what
-  they unlock — the original's `R_*` sections imported the same way ships are.
-- **Star map**: systems, jump lanes, sensor ranges.
-- **Bases and modules**: module rules (the original's `M_*` sections) with effects.
-- **Economy**: income sources, maintenance, manufacturing.
-- **Enemy strategy**: the alien planner's budgets (`Think.ini`) as rules plus scripts.
-- **Campaign script**: start state, story triggers, victory and defeat.
+- [Mod structure](../design/mod-structure.md): campaign, addon and library mods; `parent`.
+- [Campaign and game flow](../design/format-campaign.md): start state, difficulty, arcs, rival plans, score, endings.
+- [Strategy layer](../design/format-strategy.md): map, relations, economy, research, bases, ships, pilots, strategist.
+- [Missions, environments and events](../design/format-missions.md).
 
-A custom campaign is then a pack with its own map, tree, factions and missions, and no original
-assets.
+They are implemented in Stages 4 and 5 ([plan](../implementation-plan/index.md)). The
+[default campaign](../design/default-campaign.md) will be the worked example for modders.

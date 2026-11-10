@@ -8,12 +8,26 @@ playtest one component at a time. Later stages add scenarios; none are removed.
 |---|---|---|---|
 | [0 Foundation](stage-0-foundation.md) | 0.1.0 | Repository, SpecItOut, docs site, format analysis, feasibility | Done |
 | [1 Flight simulator](stage-1-flight.md) | 0.2.0 | Packs and rules, model loading, rendering, cockpits and HUD, controls, flight model, weapons, targeting, wingmen, testbed | In progress |
-| [2 Enemies and combat](stage-2-combat.md) | 0.3.0 | Per-class AI, full damage and power model, special systems, missiles' behaviours, mines, probes, station turrets, effects, sound | Planned |
-| [3 Missions and scripting](stage-3-missions.md) | 0.4.0 | Mission definitions, objectives, triggers, comms, hyperspace, debrief; scripting language | Planned |
-| [4 Strategy layer](stage-4-strategy.md) | 0.5.0 | Star map, bases, research, manufacturing, economy, enemy strategy | Planned |
-| [5 Presentation](stage-5-presentation.md) | 0.6.0 | Menus, Smacker video, music, settings, saves | Planned |
-| [6 Modding toolkit](stage-6-modding.md) | 0.7.0 | Validator, exporter, a full original-free sample campaign, guide | Planned |
-| [7 Platforms and release](stage-7-release.md) | 1.0.0 | macOS app, Linux packages, Windows, release process | Planned |
+| [2 Combat, objects and behaviours](stage-2-combat.md) | 0.3.0 | Mod kinds and `parent`; model sets (damage, construction states, debris); full damage, power and special systems; behaviours with difficulty variants; missiles, mines, probes, stations; effects, sound | Planned |
+| [3 Missions, environments and conditions](stage-3-missions.md) | 0.4.0 | Condition/action language; mission types; space and **atmospheric/ground** environments with terrain; comms; hyperspace; debrief; Tier 2 script decision | Planned |
+| [4 Strategy layer](stage-4-strategy.md) | 0.5.0 | Interactive star map, squadrons and sensors, economy, research, bases and modules, ships and loadouts, pilots, functional screens, saves | Planned |
+| [5 Campaigns](stage-5-campaign.md) | 0.6.0 | Events, arcs, rival plans, strategist, dynamic relations, endings: **both campaigns playable start to finish** | Planned |
+| [6 Presentation](stage-6-presentation.md) | 0.7.0 | Screen layouts and skins, menus, video, interactive music, voices | Planned |
+| [7 Modding toolkit and Remastered](stage-7-modding.md) | 0.8.0 | Full validator, recipes (upscale, mesh patch), `interceptor-remastered`, modding guide | Planned |
+| [8 Platforms and release](stage-8-release.md) | 1.0.0 | macOS app, Linux packages, Windows, release process | Planned |
+
+## Three campaigns
+
+The plan delivers three campaign mods, designed in [Game design and mod format](../design/index.md):
+
+| Campaign | Grows in stages | Complete |
+|---|---|---|
+| [`interceptor`](../design/interceptor-campaign.md): the full original campaign from the player's CD — the primary test case | 2–6 | Playable start to finish at Stage 5; presentation at Stage 6 |
+| [`default`](../design/default-campaign.md): *Perils of the Void*, a 1950s film-serial campaign with original content — runs without a CD | 2–7 | Playable start to finish at Stage 5; finished at Stage 7 |
+| [`interceptor-remastered`](../design/remastered.md): extends `interceptor` with locally generated upscaled textures and an enhanced Lightning | 7 | Stage 7 |
+
+Every stage's features must work in both `interceptor` and `default` before the stage is done
+(the project's modding-first rule), so neither campaign can fall behind.
 
 ## Feasibility
 
