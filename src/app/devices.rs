@@ -131,6 +131,7 @@ mod tests {
         "p",
         "escape",
         "c",
+        "b",
     ];
 
     #[test]

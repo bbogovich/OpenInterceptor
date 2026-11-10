@@ -121,6 +121,12 @@ pub fn draw_instruments(f: &HudFrame) {
     if me.afterburning {
         status += "  BURN";
     }
+    if me.braking {
+        status += "  BRAKE";
+    }
+    if let Some(h) = me.speed_hold {
+        status += &format!("  HOLD {h:.0}");
+    }
     if class.vct {
         status += "  VCT";
     }

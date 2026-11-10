@@ -3,7 +3,9 @@
 //! AI ships are flown by the same flight model as the player: each tick an AI fills in
 //! a [`Controls`] struct, exactly as the keyboard code does for the human. That keeps the
 //! game fair (AI cannot do anything the player cannot) and means flight-model changes
-//! affect everyone equally.
+//! affect everyone equally. AI pilots set their speed with [`Controls::hold_speed`] — the
+//! same flight computer the player's "match speed" uses — so under newtonian physics
+//! they still thrust, coast and brake within their hull's limits.
 //!
 //! Stage 1 behaviours:
 //!
@@ -111,7 +113,10 @@ pub fn think(w: &mut World) {
         let id = w.id_of(i);
         let (controls, target) = match state.behaviour {
             Behaviour::Idle => (Controls::default(), ship.target),
-            Behaviour::Target => (Controls { yaw: 0.12, throttle_set: Some(0.35), ..Default::default() }, None),
+            Behaviour::Target => {
+                let speed = 0.35 * w.rules.ship(ship.class).max_speed;
+                (Controls { yaw: 0.12, hold_speed: Some(speed), ..Default::default() }, None)
+            }
             Behaviour::Wingman => wingman(w, id, &mut state),
             Behaviour::Enemy => {
                 let target = ship.target.filter(|t| w.get(*t).is_some()).or_else(|| {
@@ -120,7 +125,10 @@ pub fn think(w: &mut World) {
                 });
                 match target {
                     Some(t) => (attack(w, id, t, &mut state), Some(t)),
-                    None => (Controls { yaw: 0.05, throttle_set: Some(0.5), ..Default::default() }, None),
+                    None => {
+                        let speed = 0.5 * w.rules.ship(ship.class).max_speed;
+                        (Controls { yaw: 0.05, hold_speed: Some(speed), ..Default::default() }, None)
+                    }
                 }
             }
         };
@@ -166,7 +174,7 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
         // Far away: fly straight to the slot, burning if very far.
         let (p, y, r, _) = steer_towards(ship, slot);
         (c.pitch, c.yaw, c.roll) = (p, y, r);
-        c.throttle_set = Some(1.0);
+        c.hold_speed = Some(class.max_speed);
         c.afterburner = dist > 2000.0 && ship.energy > 0.3 * class.energy;
     } else {
         // Close: aim at a point ahead of the slot so we fly parallel to the leader, and
@@ -180,7 +188,7 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
         let along = to_slot.dot(leader.forward());
         let wanted = leader.forward_speed() + along * 0.8;
         let max = class.max_speed.max(1.0);
-        c.throttle_set = Some((wanted / max).clamp(0.0, 1.0));
+        c.hold_speed = Some(wanted.clamp(0.0, max));
         c.afterburner = wanted > max + 50.0 && leader.afterburning;
     }
     (c, None)
@@ -202,14 +210,14 @@ fn attack(w: &World, me: ShipId, target: ShipId, state: &mut AiState) -> Control
         let away = ship.position + (ship.position - t.position).normalize_or(Vec3::Y) * 500.0 + ship.up() * 200.0;
         let (p, y, r, _) = steer_towards(ship, away);
         (c.pitch, c.yaw, c.roll) = (p, y, r);
-        c.throttle_set = Some(1.0);
+        c.hold_speed = Some(class.max_speed);
         return c;
     }
     let aim = lead_point(ship.position, t.position, t.velocity, bolt_speed);
     let (p, y, r, ahead) = steer_towards(ship, aim);
     (c.pitch, c.yaw, c.roll) = (p, y, r * 0.5);
     // Close in fast when far; slow to stay on the target's tail when near.
-    c.throttle_set = Some(if dist > 1500.0 { 1.0 } else { 0.7 });
+    c.hold_speed = Some(class.max_speed * if dist > 1500.0 { 1.0 } else { 0.7 });
     c.fire_beams = ahead > 0.996 && dist < range * 0.9; // within ~5° and in range
     if ship.lock.locked && state.missile_timer <= 0.0 {
         c.fire_missile = true;

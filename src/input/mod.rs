@@ -45,6 +45,7 @@ pub enum Action {
     Reverse,
     MatchSpeed,
     Afterburner,
+    Brake,
     FireBeams,
     FireMissile,
     CycleLink,
@@ -99,6 +100,7 @@ pub const ACTIONS: &[(&str, Action, &str)] = &[
     ("reverse", Action::Reverse, "Z"),
     ("match_speed", Action::MatchSpeed, "M"),
     ("afterburner", Action::Afterburner, "Tab"),
+    ("brake", Action::Brake, "B"),
     ("fire_beams", Action::FireBeams, "Enter, LeftControl"),
     ("fire_missile", Action::FireMissile, "Space"),
     ("cycle_link", Action::CycleLink, "X"),
@@ -140,7 +142,8 @@ pub const PAD_ACTIONS: &[(&str, Action, &str)] = &[
     ("next_target", Action::NextTarget, "RightShoulder"),
     ("prev_target", Action::PrevTarget, "LeftShoulder"),
     ("afterburner", Action::Afterburner, "A"),
-    ("nearest_enemy", Action::NearestEnemy, "B"),
+    ("brake", Action::Brake, "B"),
+    ("nearest_enemy", Action::NearestEnemy, "RightThumb"),
     ("match_speed", Action::MatchSpeed, "X"),
     ("view_chase", Action::ViewChase, "Y"),
     ("throttle_up", Action::ThrottleUp, "DpadUp"),
@@ -150,7 +153,7 @@ pub const PAD_ACTIONS: &[(&str, Action, &str)] = &[
     ("cycle_link", Action::CycleLink, "Back"),
     ("pause", Action::Pause, "Start"),
     ("cycle_missile", Action::CycleMissile, "LeftThumb"),
-    ("target_in_sights", Action::TargetInSights, "RightThumb"),
+    ("target_in_sights", Action::TargetInSights, ""),
 ];
 
 /// A key with optional Shift: `Shift+F` or `F`.
@@ -375,6 +378,7 @@ impl Bindings {
                 axis(Action::SlideDown, Action::SlideUp),
             ),
             afterburner: self.held(raw, Action::Afterburner),
+            brake: self.held(raw, Action::Brake),
             fire_beams: self.held(raw, Action::FireBeams),
             fire_missile: self.pressed(raw, Action::FireMissile),
             cycle_link: self.pressed(raw, Action::CycleLink),
@@ -484,7 +488,8 @@ mod tests {
     #[test]
     fn default_keys_follow_the_original_layout() {
         let b = Bindings::default();
-        let (c, _, _) = b.translate(&raw(&["Up", "Right", "Kp7", "Tab", "Enter"], &["Space", "X"]), false);
+        let (c, _, _) = b.translate(&raw(&["Up", "Right", "Kp7", "Tab", "Enter", "B"], &["Space", "X"]), false);
+        assert!(c.brake, "B brakes");
         assert_eq!((c.pitch, c.yaw, c.roll), (-1.0, 1.0, -1.0), "Up = nose down");
         assert!(c.afterburner && c.fire_beams && c.fire_missile && c.cycle_link);
         let (c, _, _) = b.translate(&raw(&[], &["Equal"]), false);

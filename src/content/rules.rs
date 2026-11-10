@@ -197,9 +197,23 @@ pub struct Faction {
     pub hostile: Vec<String>,
 }
 
+/// Which flight model the ruleset uses (see [`crate::sim::flight`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FlightModel {
+    /// Throttle is thrust; ships coast; reverse thrust and the brake slow them.
+    Newtonian,
+    /// Throttle is a target speed with automatic deceleration (arcade).
+    Assisted,
+}
+
 /// Global flight and sensor settings.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FlightRules {
+    /// `[flight] Model = newtonian | assisted` (default newtonian).
+    pub model: FlightModel,
+    /// Radius of the playable arena around the origin, metres (0 = unlimited). Ships
+    /// reaching it are halted against the edge.
+    pub arena_radius: f32,
     /// Afterburner speed bonus, m/s.
     pub afterburner_boost: f32,
     /// Afterburner energy use, per second.
@@ -401,7 +415,17 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
         })
         .collect();
     let f = global("flight");
+    let model = match f.and_then(|s| s.get_nonempty("Model")).map(str::to_ascii_lowercase).as_deref() {
+        None | Some("newtonian") => FlightModel::Newtonian,
+        Some("assisted") => FlightModel::Assisted,
+        Some(other) => {
+            errors.push(format!("[flight]: unknown Model '{other}' (newtonian or assisted)"));
+            FlightModel::Newtonian
+        }
+    };
     let flight = FlightRules {
+        model,
+        arena_radius: f.and_then(|s| s.get_f32("ArenaRadius")).unwrap_or(60_000.0).max(0.0),
         afterburner_boost: f.and_then(|s| s.get_f32("Boost")).unwrap_or(150.0),
         afterburner_cost: f.and_then(|s| s.get_f32("Cost")).unwrap_or(50.0),
         lock_angle: f.and_then(|s| s.get_f32("LockAngleDegrees")).unwrap_or(10.0),
@@ -582,6 +606,7 @@ mod tests {
         assert_eq!(rules.cockpit("A").unwrap().instruments["radar"], [10.0, 20.0, 30.0, 40.0]);
         assert_eq!(rules.flight.afterburner_boost, 120.0);
         assert_eq!(rules.flight.afterburner_cost, 50.0, "default");
+        assert_eq!((rules.flight.model, rules.flight.arena_radius), (FlightModel::Newtonian, 60_000.0), "defaults");
         assert_eq!(rules.sounds["lock"], ("original:target lock.wav".to_string(), 0));
         let (x, a) = (rules.faction_id("xcom").unwrap(), rules.faction_id("alien").unwrap());
         assert!(rules.hostile(x, a) && rules.hostile(a, x));
@@ -625,12 +650,13 @@ mod tests {
              [ship:i]\ninherit=ship:missing\n\
              [ship:j]\ninherit=original:nofile\n\
              [ship:k]\nModel=m\nFaction=xcom\nMissiles=x*y\n\
-             [cockpit:z]\n\
+             [cockpit:z]\n[flight]\nModel=warp\n\
              [ship:ok]\nModel=m\nFaction=xcom\nBeams=laser\n",
         );
         let (rules, errors) = build(&[RulesSource { pack: 0, ini: bad }], &lookup);
         assert_eq!(rules.ships.len(), 1, "only the valid ship survives");
-        assert_eq!(errors.len(), 12, "{errors:#?}");
+        assert_eq!(errors.len(), 13, "{errors:#?}");
+        assert!(errors.iter().any(|e| e.contains("unknown Model")));
         assert!(errors.iter().any(|e| e.contains("unknown beam 'nope'")));
         assert!(errors.iter().any(|e| e.contains("unknown missile 'ghost'")));
     }

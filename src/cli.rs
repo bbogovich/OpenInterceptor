@@ -5,6 +5,7 @@
 //! pure function from a list of strings to [`Options`], so it is unit-tested.
 
 use crate::content::ContentConfig;
+use crate::settings::{resolve_original, Settings};
 use std::path::{Path, PathBuf};
 
 pub const USAGE: &str = "\
@@ -14,8 +15,10 @@ USAGE:
     openinterceptor [OPTIONS]
 
 OPTIONS:
-    --data <PATH>       The X-COM: Interceptor CD or install folder (or set
-                        OPENINTERCEPTOR_DATA). Without it only original-free packs load.
+    --data <PATH>       The X-COM: Interceptor CD or install folder. Without it:
+                        OPENINTERCEPTOR_DATA, then settings.ini [paths] original, then
+                        <user data>/original, then game/ in a development checkout.
+                        If none is found, only original-free packs load.
     --mods <DIR>        Folder of user mods (default: the user data folder's mods/)
     --packs <DIR>       Folder of built-in packs (default: packs/ next to the program)
     --no-original       Ignore the original data even if available
@@ -105,10 +108,16 @@ impl Options {
     /// Turns options into the content layer's configuration.
     pub fn content_config(&self) -> ContentConfig {
         let exe = std::env::current_exe().ok();
+        let user = user_data_dir();
+        let settings = user.as_deref().map(Settings::load).unwrap_or_default();
+        // `--data` (or the environment variable, already merged into `data`) wins;
+        // otherwise settings.ini, <user data>/original, then a development checkout.
+        let dev_tree = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let original = resolve_original(self.data.as_deref(), None, &settings, user.as_deref(), Some(dev_tree));
         ContentConfig {
             pack_dirs: self.packs.clone().or_else(|| find_packs_dir(exe.as_deref())).into_iter().collect(),
-            mods_dir: self.mods.clone().or_else(|| user_data_dir().map(|d| d.join("mods"))),
-            original: self.data.clone(),
+            mods_dir: self.mods.clone().or(settings.mods).or_else(|| user.map(|d| d.join("mods"))),
+            original: original.map(|(p, _)| p),
             no_original: self.no_original,
         }
     }

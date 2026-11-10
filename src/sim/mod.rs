@@ -70,6 +70,11 @@ pub struct Controls {
     /// Match the target's speed (edge-triggered).
     pub match_speed: bool,
     pub afterburner: bool,
+    /// Hold to brake: retro-thrust against the direction of travel.
+    pub brake: bool,
+    /// Fly at this forward speed (m/s) this tick, using the flight computer. AI pilots
+    /// steer their speed this way; it obeys the same thrust limits as the pilot.
+    pub hold_speed: Option<f32>,
     /// Hold to fire beams.
     pub fire_beams: bool,
     /// Fire one missile (edge-triggered).
@@ -148,6 +153,10 @@ pub struct Ship {
     pub throttle: f32,
     pub reverse: bool,
     pub afterburning: bool,
+    /// True while the brake is held (for the HUD).
+    pub braking: bool,
+    /// A persistent speed hold set by "match speed"; cleared by any throttle input.
+    pub speed_hold: Option<f32>,
     pub hull: f32,
     pub armor: f32,
     pub shield_fore: f32,
@@ -321,6 +330,8 @@ impl World {
             throttle: 0.0,
             reverse: false,
             afterburning: false,
+            braking: false,
+            speed_hold: None,
             hull: c.hull,
             armor: c.armor,
             shield_fore: c.shields,
@@ -392,7 +403,8 @@ impl World {
         // (both borrows would go through `self`).
         let rules = self.rules.clone();
         // Match speed needs the *target's* speed, which the per-ship flight step cannot
-        // see, so it is resolved here first.
+        // see, so it is resolved here first: it sets a speed hold that the flight
+        // computer then flies (newtonian) or the throttle (assisted).
         for i in 0..self.ships.len() {
             if !(self.ships[i].alive && self.ships[i].controls.match_speed) {
                 continue;
@@ -400,11 +412,20 @@ impl World {
             let target_speed = self.ships[i].target.and_then(|t| self.get(t)).map(|t| t.forward_speed());
             let max = rules.ship(self.ships[i].class).max_speed;
             if let (Some(speed), true) = (target_speed, max > 0.0) {
-                self.ships[i].throttle = (speed / max).clamp(0.0, 1.0);
+                let s = &mut self.ships[i];
+                s.speed_hold = Some(speed.clamp(0.0, max));
+                s.throttle = (speed / max).clamp(0.0, 1.0);
             }
         }
-        for ship in self.ships.iter_mut().filter(|s| s.alive) {
+        let ids: Vec<ShipId> = self.live_ids();
+        for id in ids {
+            let ship = &mut self.ships[id.index as usize];
             flight::step(ship, rules.ship(ship.class), &rules.flight, TICK);
+            // The arena edge: ships are halted against it.
+            let was_inside = (ship.position - ship.velocity * TICK).length() <= rules.flight.arena_radius;
+            if flight::hold_in_arena(ship, rules.flight.arena_radius) && was_inside {
+                self.events.push(SimEvent::Message { ship: id, text: "ARENA BOUNDARY".into() });
+            }
         }
         combat::step(self, TICK);
         combat::ship_collisions(self);
@@ -636,7 +657,9 @@ mod tests {
         s.target = Some(other);
         s.controls.match_speed = true;
         w.step();
-        assert!((w.get(me).unwrap().throttle - 0.5).abs() < 0.01);
+        let s = w.get(me).unwrap();
+        assert!((s.throttle - 0.5).abs() < 0.01);
+        assert_eq!(s.speed_hold, Some(300.0), "the flight computer holds the target's speed");
     }
 
     #[test]
