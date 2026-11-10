@@ -1,6 +1,89 @@
-fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    if args.iter().any(|a| a == "--check") {
-        println!("check: ok (nothing to check yet)");
+//! # The `openinterceptor` program
+//!
+//! A thin entry point: parse the command line, handle the window-less modes (`--help`,
+//! `--list`, `--check`), otherwise open the window and hand over to the testbed app.
+//! All real work lives in the library crate (`src/lib.rs`).
+
+use openinterceptor::{app, check, cli, content::Content};
+
+/// Window settings.
+fn window_conf(fullscreen: bool) -> macroquad::conf::Conf {
+    macroquad::conf::Conf {
+        miniquad_conf: macroquad::miniquad::conf::Conf {
+            window_title: "OpenInterceptor".to_string(),
+            window_width: 1280,
+            window_height: 960,
+            high_dpi: true,
+            fullscreen,
+            sample_count: 4,
+            ..Default::default()
+        },
+        // Station models are large; give the batcher room for them in one draw.
+        draw_call_vertex_capacity: 20_000,
+        draw_call_index_capacity: 30_000,
+        ..Default::default()
     }
+}
+
+/// Handles everything that does not need a window. Returns `Some(exit code)` if the
+/// program should stop here.
+fn headless(options: &cli::Options) -> Option<i32> {
+    if options.help {
+        print!("{}", cli::USAGE);
+        return Some(0);
+    }
+    if !(options.check || options.list) {
+        return None;
+    }
+    let content = match Content::load(&options.content_config()) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return Some(1);
+        }
+    };
+    if options.list {
+        for p in &content.packs {
+            println!("pack     {:<14} {}", p.id, p.name);
+        }
+        for id in content.rules.playable_ships() {
+            let s = content.rules.ship(id);
+            println!("ship     {:<14} {}", s.id, s.name);
+        }
+        for s in &content.scenarios {
+            println!("scenario {:<14} {}", s.id, s.title);
+        }
+    }
+    if options.check {
+        let report = check::run(&content);
+        for w in report.warnings.iter().filter(|w| !report.errors.contains(w)) {
+            println!("warning: {w}");
+        }
+        for e in &report.errors {
+            println!("error: {e}");
+        }
+        println!("check: {}", report.summary());
+        return Some(if report.errors.is_empty() { 0 } else { 1 });
+    }
+    Some(0)
+}
+
+/// A plain `main`: the headless modes must not open a window, so we only create one
+/// (with `macroquad::Window::from_config`) once we know the game is really starting.
+/// macroquad then runs the `async` app on its own executor: each `next_frame().await`
+/// inside the app yields to the window system until the next frame.
+fn main() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let options = match cli::parse(&args, std::env::var("OPENINTERCEPTOR_DATA").ok()) {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("error: {e}");
+            std::process::exit(2);
+        }
+    };
+    if let Some(code) = headless(&options) {
+        std::process::exit(code);
+    }
+    let conf = window_conf(options.fullscreen);
+    macroquad::Window::from_config(conf, app::run(options));
 }

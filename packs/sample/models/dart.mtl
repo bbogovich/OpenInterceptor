@@ -1,0 +1,6 @@
+newmtl hull
+Kd 0.55 0.62 0.75
+newmtl engine
+Kd 1.0 0.55 0.15
+newmtl canopy
+Kd 0.3 0.9 1.0

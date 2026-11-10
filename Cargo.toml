@@ -13,6 +13,14 @@ description = "Moddable space-combat simulator engine; plays X-COM: Interceptor 
 # implemented in this crate.
 [dependencies]
 macroquad = "=0.4.14"
+# Vector/matrix/quaternion maths. Already in the tree through macroquad (same version), so
+# depending on it directly adds nothing to the build — but it lets the `sim` layer use
+# maths types without depending on the windowing library.
+glam = "=0.27.0"
+# PNG decoding for mod textures. Also already in the tree through macroquad with this exact
+# version and feature, so it adds nothing to the build; used directly so the content layer
+# can decode images without the windowing library.
+image = { version = "=0.24.9", default-features = false, features = ["png"] }
 
 [profile.dev]
 opt-level = 1

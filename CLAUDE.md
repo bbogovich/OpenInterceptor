@@ -1,0 +1,90 @@
+# OpenInterceptor — project rules
+
+These rules apply to every session working in this repository. They exist to keep the
+project's three objectives in force. When a rule conflicts with convenience, the rule wins.
+
+## Objectives, in priority order
+
+1. **Modding toolkit.** OpenInterceptor is a general, data-driven space-combat simulator
+   engine. *X-COM: Interceptor* is one content pack — the worked example — not the thing
+   the engine is shaped around. The most likely user is a modder building a custom
+   campaign that uses **no original assets at all**.
+2. **Rust teaching example.** The code and docs show how to build a 3D application and
+   game engine in Rust with sound architecture, coding patterns and data-model design.
+3. **Compatibility.** Play the original game from the player's own CD data.
+
+## Never commit original content
+
+- `game/` holds the developer's own copy of the CD. It is git-ignored and must stay so.
+- No original asset may enter Git in any form: models, textures, images, sounds, music,
+  video, text files, INI files, executables or DLLs — nor dumps, extracts, screenshots or
+  conversions of them. Tests use synthetic data built in the test itself.
+- Docs may describe formats and cite facts (stat values, names); they must not reproduce
+  original art, text or files.
+- Original binaries are read as data only; nothing from them is executed.
+
+## Modding comes first
+
+- Gameplay values, ship/weapon/object definitions, factions, scenarios and missions live in
+  **pack data** (`packs/<id>/…` INI rulesets and scenarios), never hard-coded in Rust. If a
+  value would differ between the original game and a custom campaign, it is data.
+- Every feature must work with the original-free `sample` pack, not only with
+  `interceptor`. A feature that only works with original data is incomplete.
+- Mod-facing formats are open and documented: INI rules, Wavefront OBJ models, PNG/TGA
+  textures. Original formats (XMSH, XTXR, …) are readers behind the same interfaces.
+- Every new rule key, scenario key or pack feature is documented on the docs site's
+  *Modding* section in the same change.
+
+## Rust and code quality (the teaching bar)
+
+- **Comments for a Rust beginner.** Every module starts with a `//!` doc explaining what it
+  is for and how it fits the architecture. Every public item has a `///` doc. Non-obvious
+  lines — ownership choices, lifetimes, `unsafe`, maths, format quirks — get a comment
+  explaining *why*. Introduce a Rust concept the first time a module relies on it.
+- **Layering.** `formats` (bytes → data) → `model`/`packs` (engine data, rules, VFS) →
+  `sim` (simulation, no rendering or input) → `render`/`hud`/`audio` → `testbed`/`app`.
+  Lower layers never depend on higher ones. `sim` is deterministic at a fixed 60 Hz tick
+  and has no macroquad dependency, so it is unit-testable.
+- **Errors, not panics.** Bad or modded data returns a `Result` with a useful message;
+  `unwrap`/`expect` only where an invariant is proven locally (with a comment saying so).
+- **Data-model discipline.** Prefer index handles over references between objects,
+  flattened arrays over per-item allocations, pre-built GPU meshes over per-frame
+  rebuilding, and no allocation in the per-frame hot path where avoidable.
+- **No global mutable state.** State is owned by explicit structs and passed down.
+- **`unsafe`** only at FFI boundaries (platform shims), each block with a `// SAFETY:` note.
+- `cargo clippy` clean and `cargo fmt` formatted.
+
+## Dependencies
+
+Only `macroquad` (pinned). Anything else needs the evaluation required by the global
+dependency policy (complexity, stability, transitive tree, used fraction, licence — no GPL)
+recorded on the docs site's dependency page *before* it is added. Prefer implementing
+small things in-crate.
+
+## Testing
+
+- **Unit tests for all code** before a stage is called complete, except behaviour that can
+  only be judged by playing (rendering look, feel of controls, audio). Pure logic in
+  `formats`, `model`, `packs`, `sim`, `input` mapping and HUD layout maths is always tested.
+- Anything not unit-testable gets a **manual test case** on the docs site
+  (`testing/manual-tests.md`): ID, testbed scenario, preconditions, steps, expected result.
+- Every stage ends in a **playable testbed build** with scenarios that exercise its
+  features, and a manual playtest pass recorded on the docs site.
+- `scripts/check.sh` is the one gate; it must pass before any commit to `main`.
+
+## Documentation
+
+- The site lives on the `docs` branch, checked out as the worktree `engine-docs/`; use
+  `engine-docs/docs.sh serve|build|deploy`. `./docs.sh build` must pass `--strict`.
+- Update the site **with** the code, not after: architecture pages (overview with data-flow
+  and logic-flow diagrams, key symbols, API reference, debugging), implementation status,
+  the plan, testing pages, deviations, modding pages, and *Learn Rust* pages when a new
+  Rust concept enters the code.
+- Facts derived from the original data are marked verified / derived / unknown.
+
+## Process
+
+- SpecItOut implementation project (`.specitout/sdd.json`, no specification yet). Issues
+  only through `sio`; set `SPECITOUT_ACTOR=agent:claude`.
+- Check the vault (`vg context …`) before re-deriving format facts; capture new findings.
+- Commit messages end with the attribution line the session provides.
