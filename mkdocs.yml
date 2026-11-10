@@ -1,0 +1,119 @@
+site_name: OpenInterceptor — Implementation
+site_description: "OpenInterceptor as built: a moddable space-combat simulator engine. Plan, architecture, original formats, modding, Rust practice and testing (docs branch)"
+docs_dir: docs
+theme:
+  name: material
+  features:
+    - navigation.indexes
+    - navigation.top
+    - navigation.sections
+    - toc.follow
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue grey
+      toggle: {icon: material/brightness-7, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      toggle: {icon: material/brightness-4, name: Light mode}
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - pymdownx.details
+  # Headings are what `sio docs page <page> --section <heading>` selects; keep them stable.
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - "Home": index.md
+  - "Getting started": getting-started.md
+  - "Learn Rust with this codebase":
+      - learn-rust/index.md
+      - "Ownership and borrowing": learn-rust/ownership.md
+      - "Lifetimes and borrowed bytes": learn-rust/lifetimes.md
+      - "Structs, enums and pattern matching": learn-rust/types.md
+      - "Traits and generics": learn-rust/traits.md
+      - "Error handling": learn-rust/errors.md
+      - "Modules and visibility": learn-rust/modules.md
+      - "Iterators and closures": learn-rust/iterators.md
+      - "Collections": learn-rust/collections.md
+      - "FFI, repr(C) and unsafe": learn-rust/ffi-unsafe.md
+      - "Platforms with cfg": learn-rust/cfg.md
+      - "Testing in Rust": learn-rust/testing.md
+      - "Cargo": learn-rust/cargo.md
+      - "Async and the macroquad loop": learn-rust/async-loop.md
+  - "Best practices":
+      - best-practices/index.md
+      - "Architectural design": best-practices/architecture.md
+      - "Coding patterns": best-practices/patterns.md
+      - "Data model and performance": best-practices/data-model.md
+      - "Dependency policy": best-practices/dependencies.md
+      - "Commenting standard": best-practices/comments.md
+      - "Testing policy": best-practices/testing-policy.md
+  - "Original game":
+      - original-game/index.md
+      - "Gameplay": original-game/gameplay.md
+      - "Controls": original-game/controls.md
+      - "CD layout": original-game/cd-layout.md
+      - "Formats":
+          - original-game/formats/index.md
+          - "PE resource container": original-game/formats/pe-resources.md
+          - "XMSH meshes": original-game/formats/xmsh.md
+          - "XTXR textures": original-game/formats/xtxr.md
+          - "TGA images and cockpits": original-game/formats/tga.md
+          - "XSPT sprites": original-game/formats/xspt.md
+          - "Audio": original-game/formats/audio.md
+          - "Smacker video": original-game/formats/smacker.md
+          - "INI rule files": original-game/formats/ini.md
+          - "Object and ship table": original-game/formats/object-table.md
+  - "Modding":
+      - modding/index.md
+      - "Packs": modding/packs.md
+      - "Rulesets and layering": modding/rulesets.md
+      - "Models and textures": modding/models.md
+      - "Scenarios and missions": modding/scenarios.md
+      - "Scripting (planned)": modding/scripting.md
+      - "Tech tree and campaign (planned)": modding/campaign.md
+      - "Validating a mod": modding/validating.md
+  - "Implementation plan":
+      - implementation-plan/index.md
+      - "Stage 0 — Foundation": implementation-plan/stage-0-foundation.md
+      - "Stage 1 — Flight simulator": implementation-plan/stage-1-flight.md
+      - "Stage 2 — Enemies and combat": implementation-plan/stage-2-combat.md
+      - "Stage 3 — Missions and scripting": implementation-plan/stage-3-missions.md
+      - "Stage 4 — Strategy layer": implementation-plan/stage-4-strategy.md
+      - "Stage 5 — Presentation": implementation-plan/stage-5-presentation.md
+      - "Stage 6 — Modding toolkit": implementation-plan/stage-6-modding.md
+      - "Stage 7 — Platforms and release": implementation-plan/stage-7-release.md
+  - "Architecture":
+      - architecture/index.md
+      - "Formats layer": architecture/formats.md
+      - "Packs, VFS and rules": architecture/packs.md
+      - "Assets and GPU cache": architecture/assets.md
+      - "Simulation": architecture/sim.md
+      - "Rendering": architecture/rendering.md
+      - "Cockpit and HUD": architecture/hud.md
+      - "Input and gamepads": architecture/input.md
+      - "Audio": architecture/audio.md
+      - "Platform layer": architecture/platform.md
+      - "Testbed": architecture/testbed.md
+  - "Build":
+      - "Development environment": build/setup.md
+      - "Packaging": build/packaging.md
+  - "Testing":
+      - testing/index.md
+      - "Unit tests": testing/unit-tests.md
+      - "Manual tests": testing/manual-tests.md
+  - "Implementation status": implementation-status.md
+  - "Deviations": deviations/index.md
+  - "Workflows": workflows/index.md
+  - "Revision history": revision-history.md

@@ -1,0 +1,4 @@
+# Only the documentation toolchain; the engine itself is built with cargo.
+# MkDocs below 2.0: 2.0 breaks Material.
+mkdocs>=1.6,<2
+mkdocs-material>=9.5,<10
