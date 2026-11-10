@@ -91,10 +91,7 @@ pub fn segment_shape(a: Vec3, b: Vec3, shape: &Shape, position: Vec3, rotation: 
     // space: two transforms instead of thousands.
     let inv = rotation.inverse();
     let (la, lb) = (inv * (a - position), inv * (b - position));
-    mesh.triangles
-        .iter()
-        .filter_map(|t| segment_triangle(la, lb, t))
-        .min_by(|x, y| x.total_cmp(y))
+    mesh.triangles.iter().filter_map(|t| segment_triangle(la, lb, t)).min_by(|x, y| x.total_cmp(y))
 }
 
 #[cfg(test)]
@@ -126,15 +123,24 @@ mod tests {
 
     #[test]
     fn shapes_use_mesh_in_model_space() {
-        let mesh = TriMesh { triangles: vec![[Vec3::new(-1.0, -1.0, 0.0), Vec3::new(1.0, -1.0, 0.0), Vec3::new(0.0, 1.0, 0.0)]] };
+        let mesh = TriMesh {
+            triangles: vec![[Vec3::new(-1.0, -1.0, 0.0), Vec3::new(1.0, -1.0, 0.0), Vec3::new(0.0, 1.0, 0.0)]],
+        };
         let shape = Shape { radius: 10.0, mesh: Some(mesh) };
         let pos = Vec3::new(0.0, 0.0, -100.0);
         // Rotated 90° about Y, the triangle now lies in the YZ plane: a segment along -Z
         // through its centre no longer hits it, but one along X does.
         let rot = Quat::from_rotation_y(std::f32::consts::FRAC_PI_2);
-        assert_eq!(segment_shape(Vec3::new(0.0, 0.0, -80.0), Vec3::new(0.0, 0.0, -120.0), &shape, pos, Quat::IDENTITY).map(|t| (t * 100.0).round()), Some(50.0));
+        assert_eq!(
+            segment_shape(Vec3::new(0.0, 0.0, -80.0), Vec3::new(0.0, 0.0, -120.0), &shape, pos, Quat::IDENTITY)
+                .map(|t| (t * 100.0).round()),
+            Some(50.0)
+        );
         assert!(segment_shape(Vec3::new(-5.0, 0.0, -100.0), Vec3::new(5.0, 0.0, -100.0), &shape, pos, rot).is_some());
-        assert!(segment_shape(Vec3::new(0.0, 50.0, 0.0), Vec3::new(0.0, 50.0, -200.0), &shape, pos, rot).is_none(), "broad phase");
+        assert!(
+            segment_shape(Vec3::new(0.0, 50.0, 0.0), Vec3::new(0.0, 50.0, -200.0), &shape, pos, rot).is_none(),
+            "broad phase"
+        );
         let sphere = Shape { radius: 2.0, mesh: None };
         assert!(segment_shape(Vec3::ZERO, Vec3::new(0.0, 0.0, -200.0), &sphere, pos, rot).is_some());
     }

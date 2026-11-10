@@ -264,7 +264,8 @@ impl Ruleset {
     /// True if `a` treats `b` as an enemy (either side declaring hostility is enough).
     pub fn hostile(&self, a: FactionId, b: FactionId) -> bool {
         let (fa, fb) = (self.faction(a), self.faction(b));
-        fa.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fb.id)) || fb.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fa.id))
+        fa.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fb.id))
+            || fb.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fa.id))
     }
     /// Classes a player can choose to fly, in definition order.
     pub fn playable_ships(&self) -> Vec<ShipClassId> {
@@ -435,7 +436,13 @@ fn resolve(merged: &Ini, s: &Section, original: &OriginalLookup, depth: usize) -
 }
 
 fn list(s: &Section, key: &str) -> Vec<String> {
-    s.get(key).unwrap_or("").split(',').map(str::trim).filter(|x| !x.is_empty()).map(|x| x.to_ascii_lowercase()).collect()
+    s.get(key)
+        .unwrap_or("")
+        .split(',')
+        .map(str::trim)
+        .filter(|x| !x.is_empty())
+        .map(|x| x.to_ascii_lowercase())
+        .collect()
 }
 
 fn color(s: &Section, key: &str, default: [f32; 3]) -> [f32; 3] {
@@ -510,7 +517,14 @@ fn ship_class(
         energy_recharge: s.get_f32("EnergyRecharge").unwrap_or(40.0),
         beams: beam_ids,
         missiles: missile_ids,
-        debris: s.get("Debris").unwrap_or("").split(',').map(str::trim).filter(|x| !x.is_empty()).map(str::to_string).collect(),
+        debris: s
+            .get("Debris")
+            .unwrap_or("")
+            .split(',')
+            .map(str::trim)
+            .filter(|x| !x.is_empty())
+            .map(str::to_string)
+            .collect(),
         engine_color: color(s, "EngineColor", [0.5, 0.7, 1.0]),
     })
 }
@@ -578,18 +592,22 @@ mod tests {
     #[test]
     fn later_packs_override_and_delete() {
         let lookup = original_lookup();
-        let patch = Ini::parse("[ship:interceptor]\nMaxSpeed=900\n[ship:pirate]\ndelete=yes\n[object:base]\nModel=models/mybase.obj\n");
-        let (rules, errors) = build(
-            &[RulesSource { pack: 0, ini: base_rules() }, RulesSource { pack: 1, ini: patch }],
-            &lookup,
+        let patch = Ini::parse(
+            "[ship:interceptor]\nMaxSpeed=900\n[ship:pirate]\ndelete=yes\n[object:base]\nModel=models/mybase.obj\n",
         );
+        let (rules, errors) =
+            build(&[RulesSource { pack: 0, ini: base_rules() }, RulesSource { pack: 1, ini: patch }], &lookup);
         assert!(errors.is_empty(), "{errors:?}");
         let i = rules.ship(rules.ship_id("interceptor").unwrap());
         assert_eq!(i.max_speed, 900.0);
         assert_eq!(i.hull, 100.0, "untouched keys keep the base value");
         assert!(rules.ship_id("pirate").is_none(), "deleted");
         let base = rules.ship(rules.ship_id("base").unwrap());
-        assert_eq!((base.model.as_str(), base.model_pack), ("models/mybase.obj", 1), "paths resolve in the overriding pack");
+        assert_eq!(
+            (base.model.as_str(), base.model_pack),
+            ("models/mybase.obj", 1),
+            "paths resolve in the overriding pack"
+        );
     }
 
     #[test]

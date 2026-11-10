@@ -119,7 +119,8 @@ pub fn run(content: &Content) -> Report {
     let rules_arc = Arc::new(rules.clone());
     let shapes = Arc::new(shapes);
     for s in &content.scenarios {
-        let choices = if s.player_class.is_some() { vec![None] } else { rules.playable_ships().into_iter().map(Some).collect() };
+        let choices =
+            if s.player_class.is_some() { vec![None] } else { rules.playable_ships().into_iter().map(Some).collect() };
         let mut ok = true;
         for choice in choices {
             if let Err(e) = World::from_scenario(s, rules_arc.clone(), shapes.clone(), choice) {
@@ -163,10 +164,15 @@ mod tests {
     #[test]
     fn the_sample_pack_passes() {
         let packs = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
-        let content = Content::load(&ContentConfig { pack_dirs: vec![packs], no_original: true, ..Default::default() }).unwrap();
+        let content =
+            Content::load(&ContentConfig { pack_dirs: vec![packs], no_original: true, ..Default::default() }).unwrap();
         let report = run(&content);
         assert!(report.errors.is_empty(), "{:#?}", report.errors);
-        assert!(report.ships >= 3 && report.models >= 3 && report.textures >= 1 && report.scenarios >= 1, "{}", report.summary());
+        assert!(
+            report.ships >= 3 && report.models >= 3 && report.textures >= 1 && report.scenarios >= 1,
+            "{}",
+            report.summary()
+        );
         assert!(report.summary().contains("0 errors"));
     }
 
@@ -187,7 +193,16 @@ mod tests {
         let content = Content::load(&ContentConfig { pack_dirs: vec![root.clone()], ..Default::default() }).unwrap();
         let report = run(&content);
         let all = report.errors.join("\n");
-        for needle in ["[ship:y]", "model models/missing.obj", "debris", "unknown cockpit", "cockpit c", "s/none.wav", "s/boom.wav", "scenario s"] {
+        for needle in [
+            "[ship:y]",
+            "model models/missing.obj",
+            "debris",
+            "unknown cockpit",
+            "cockpit c",
+            "s/none.wav",
+            "s/boom.wav",
+            "scenario s",
+        ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }
         std::fs::remove_dir_all(&root).unwrap();

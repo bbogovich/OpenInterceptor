@@ -21,6 +21,8 @@ OPTIONS:
     --no-original       Ignore the original data even if available
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
+    --view <VIEW>       Start view for --scenario: cockpit, forward, left, right,
+                        rear-left, rear-right, chase, chase-manual
     --check             Validate all content without opening a window, then exit
     --list              List packs, playable ships and scenarios, then exit
     --windowed          Start in a window instead of full screen (default)
@@ -37,6 +39,7 @@ pub struct Options {
     pub no_original: bool,
     pub scenario: Option<String>,
     pub ship: Option<String>,
+    pub view: Option<crate::input::View>,
     pub check: bool,
     pub list: bool,
     pub fullscreen: bool,
@@ -58,6 +61,10 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--packs" => o.packs = Some(PathBuf::from(value("--packs")?)),
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--ship" => o.ship = Some(value("--ship")?),
+            "--view" => {
+                let v = value("--view")?;
+                o.view = Some(crate::input::View::parse(&v).ok_or(format!("unknown view '{v}'"))?);
+            }
             "--no-original" => o.no_original = true,
             "--check" => o.check = true,
             "--list" => o.list = true,
@@ -117,7 +124,11 @@ mod tests {
 
     #[test]
     fn parses_every_option() {
-        let o = parse(&args("--data /cd --mods m --packs p --no-original --scenario s --ship x --check --list --fullscreen"), None).unwrap();
+        let o = parse(
+            &args("--data /cd --mods m --packs p --no-original --scenario s --ship x --check --list --fullscreen"),
+            None,
+        )
+        .unwrap();
         assert_eq!(o.data, Some(PathBuf::from("/cd")));
         assert_eq!(o.mods, Some(PathBuf::from("m")));
         assert_eq!(o.packs, Some(PathBuf::from("p")));
@@ -138,6 +149,8 @@ mod tests {
     fn errors_for_unknown_or_incomplete_options() {
         assert!(parse(&args("--bogus"), None).unwrap_err().contains("unknown option"));
         assert!(parse(&args("--data"), None).unwrap_err().contains("needs a value"));
+        assert!(parse(&args("--view sideways"), None).unwrap_err().contains("unknown view"));
+        assert_eq!(parse(&args("--view chase"), None).unwrap().view, Some(crate::input::View::Chase));
     }
 
     #[test]

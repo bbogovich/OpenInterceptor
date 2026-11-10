@@ -11,10 +11,20 @@
 //! 2. [`model`] — the engine's format-neutral 3D model.
 //! 3. [`content`] — packs, the player's original data, rulesets, scenarios, asset loading.
 //! 4. [`sim`] — the deterministic space simulation (flight, combat, AI). No graphics.
-pub mod formats;
-pub mod model;
-pub mod content;
-pub mod sim;
+//! 5. [`input`] (bindings → controls) and [`platform`] (OS-specific devices).
+//! 6. [`render`], [`hud`] and [`audio`] — presentation: they read the simulation.
+//! 7. [`app`] — the testbed: launcher, model viewer and flight sessions.
+//!
+//! Plus [`check`] (headless content validation) and [`cli`] (command-line options).
+pub mod app;
+pub mod audio;
 pub mod check;
 pub mod cli;
-pub mod app;
+pub mod content;
+pub mod formats;
+pub mod hud;
+pub mod input;
+pub mod model;
+pub mod platform;
+pub mod render;
+pub mod sim;

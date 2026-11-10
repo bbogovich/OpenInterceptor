@@ -117,7 +117,8 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
     let mut local = inv * ship.velocity; // x right, y up, -z forward
     let accel = class.acceleration * dt;
     local.z = approach(local.z, -target_forward, accel * if ship.afterburning { 2.0 } else { 1.0 });
-    let slide = if class.vct { c.slide.clamp_length_max(1.0) * class.max_speed * VCT_SPEED_FRACTION } else { glam::Vec2::ZERO };
+    let slide =
+        if class.vct { c.slide.clamp_length_max(1.0) * class.max_speed * VCT_SPEED_FRACTION } else { glam::Vec2::ZERO };
     local.x = approach(local.x, slide.x, accel);
     local.y = approach(local.y, slide.y, accel);
     ship.velocity = ship.rotation * local;
@@ -138,9 +139,9 @@ fn recharge(ship: &mut Ship, class: &ShipClass, dt: f32, afterburning: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::content::rules::FactionId;
     use crate::sim::test_support::world;
     use crate::sim::{Pilot, TICK};
-    use crate::content::rules::FactionId;
 
     fn fighter() -> (crate::sim::World, crate::sim::ShipId) {
         let mut w = world();

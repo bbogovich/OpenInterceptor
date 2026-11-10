@@ -80,6 +80,29 @@ pub struct Controls {
     pub cycle_missile: bool,
 }
 
+impl Controls {
+    /// Combines this frame's input with one-shot requests from earlier frames that no
+    /// tick has consumed yet.
+    ///
+    /// Frames and ticks are not in lock-step: on a 120 Hz display half the frames run no
+    /// tick at all. A key *press* (throttle step, missile launch) seen in such a frame
+    /// must not be overwritten by the next frame's input, so it is carried forward
+    /// until [`World::step`] consumes it (and clears it). Held inputs (axes, triggers)
+    /// simply take the newest value.
+    pub fn carry_unconsumed(self, pending: &Controls) -> Controls {
+        Controls {
+            throttle_set: self.throttle_set.or(pending.throttle_set),
+            throttle_delta: self.throttle_delta + pending.throttle_delta,
+            toggle_reverse: self.toggle_reverse ^ pending.toggle_reverse,
+            match_speed: self.match_speed || pending.match_speed,
+            fire_missile: self.fire_missile || pending.fire_missile,
+            cycle_link: self.cycle_link || pending.cycle_link,
+            cycle_missile: self.cycle_missile || pending.cycle_missile,
+            ..self
+        }
+    }
+}
+
 /// How beam mounts fire together.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinkMode {
@@ -193,17 +216,43 @@ pub struct Missile {
 /// Something that happened during a tick, for presentation layers to react to.
 #[derive(Debug, Clone, PartialEq)]
 pub enum SimEvent {
-    BeamFired { ship: ShipId, position: Vec3 },
-    MissileLaunched { ship: ShipId, position: Vec3 },
+    BeamFired {
+        ship: ShipId,
+        position: Vec3,
+    },
+    MissileLaunched {
+        ship: ShipId,
+        position: Vec3,
+    },
     /// `shield` is true when the hit was absorbed by shields.
-    Hit { ship: ShipId, position: Vec3, shield: bool },
-    Destroyed { ship: ShipId, position: Vec3, radius: f32 },
-    MissileExploded { position: Vec3 },
-    LockAcquired { ship: ShipId },
-    Collision { ship: ShipId, position: Vec3 },
+    Hit {
+        ship: ShipId,
+        position: Vec3,
+        shield: bool,
+    },
+    Destroyed {
+        ship: ShipId,
+        position: Vec3,
+        radius: f32,
+    },
+    MissileExploded {
+        position: Vec3,
+    },
+    LockAcquired {
+        ship: ShipId,
+    },
+    Collision {
+        ship: ShipId,
+        position: Vec3,
+    },
     /// A message for the pilot's message line (from `ship`'s point of view).
-    Message { ship: ShipId, text: String },
-    NoEnergy { ship: ShipId },
+    Message {
+        ship: ShipId,
+        text: String,
+    },
+    NoEnergy {
+        ship: ShipId,
+    },
 }
 
 /// The whole simulated space arena.
@@ -251,7 +300,15 @@ impl World {
     }
 
     /// Adds a ship of `class` and returns its handle. Reuses a dead slot if one exists.
-    pub fn spawn(&mut self, class: ShipClassId, faction: FactionId, name: &str, position: Vec3, rotation: Quat, pilot: Pilot) -> ShipId {
+    pub fn spawn(
+        &mut self,
+        class: ShipClassId,
+        faction: FactionId,
+        name: &str,
+        position: Vec3,
+        rotation: Quat,
+        pilot: Pilot,
+    ) -> ShipId {
         let c = self.rules.ship(class);
         let ship = Ship {
             class,
@@ -359,6 +416,7 @@ impl World {
             s.controls.toggle_reverse = false;
             s.controls.match_speed = false;
             s.controls.throttle_set = None;
+            s.controls.throttle_delta = 0.0;
             s.since_hit += TICK;
         }
         self.time += TICK as f64;
@@ -411,8 +469,16 @@ impl World {
         // Second pass: resolve leaders now that every object has a handle.
         for p in &scenario.objects {
             if let Some(leader) = &p.leader {
-                let lid = named.iter().find(|(n, _)| n == leader).map(|(_, id)| *id).ok_or(format!("object {}: unknown leader '{leader}'", p.name))?;
-                let me = named.iter().find(|(n, _)| n == &p.name).map(|(_, id)| *id).expect("every placement was named above");
+                let lid = named
+                    .iter()
+                    .find(|(n, _)| n == leader)
+                    .map(|(_, id)| *id)
+                    .ok_or(format!("object {}: unknown leader '{leader}'", p.name))?;
+                let me = named
+                    .iter()
+                    .find(|(n, _)| n == &p.name)
+                    .map(|(_, id)| *id)
+                    .expect("every placement was named above");
                 if let Some(Ship { pilot: Pilot::Ai(state), .. }) = w.get_mut(me) {
                     state.leader = Some(lid);
                 }
@@ -546,6 +612,20 @@ mod tests {
     }
 
     #[test]
+    fn unconsumed_presses_carry_over_held_inputs_do_not() {
+        let pending =
+            Controls { throttle_delta: 0.1, fire_missile: true, fire_beams: true, pitch: 1.0, ..Default::default() };
+        let now = Controls { throttle_delta: 0.1, throttle_set: Some(1.0), ..Default::default() };
+        let c = now.carry_unconsumed(&pending);
+        assert!((c.throttle_delta - 0.2).abs() < 1e-6, "two presses = two steps");
+        assert_eq!(c.throttle_set, Some(1.0));
+        assert!(c.fire_missile, "press carried");
+        assert!(!c.fire_beams && c.pitch == 0.0, "held inputs take the newest value");
+        let r = Controls { toggle_reverse: true, ..Default::default() };
+        assert!(!r.carry_unconsumed(&r).toggle_reverse, "two toggles cancel");
+    }
+
+    #[test]
     fn match_speed_copies_the_targets_speed() {
         let mut w = world();
         let f = w.rules.ship_id("fighter").unwrap();
@@ -564,9 +644,14 @@ mod tests {
         let mut w = world();
         let f = w.rules.ship_id("fighter").unwrap();
         let id = w.spawn(f, FactionId(0), "x", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
-        w.get_mut(id).unwrap().controls.fire_missile = true;
+        let s = w.get_mut(id).unwrap();
+        s.controls.fire_missile = true;
+        s.controls.throttle_delta = 0.1;
         w.step();
-        assert!((w.time - TICK as f64).abs() < 1e-9);
-        assert!(!w.get(id).unwrap().controls.fire_missile);
+        w.step();
+        assert!((w.time - 2.0 * TICK as f64).abs() < 1e-9);
+        let s = w.get(id).unwrap();
+        assert!(!s.controls.fire_missile);
+        assert!((s.throttle - 0.1).abs() < 1e-6, "one key press = one 10% step, however many ticks run");
     }
 }

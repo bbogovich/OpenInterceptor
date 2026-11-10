@@ -104,16 +104,8 @@ impl<'a> Reader<'a> {
     /// `checked_add` guards against integer overflow when a corrupt file contains a huge
     /// offset: in Rust, overflow in release builds wraps silently, so we check explicitly.
     pub fn bytes(&self, offset: usize, n: usize) -> FResult<&'a [u8]> {
-        let end = offset.checked_add(n).ok_or(FormatError::Truncated {
-            offset,
-            wanted: n,
-            len: self.data.len(),
-        })?;
-        self.data.get(offset..end).ok_or(FormatError::Truncated {
-            offset,
-            wanted: n,
-            len: self.data.len(),
-        })
+        let end = offset.checked_add(n).ok_or(FormatError::Truncated { offset, wanted: n, len: self.data.len() })?;
+        self.data.get(offset..end).ok_or(FormatError::Truncated { offset, wanted: n, len: self.data.len() })
     }
 
     /// Reads a little-endian `u16`.
@@ -176,10 +168,7 @@ mod tests {
     #[test]
     fn out_of_bounds_is_an_error_not_a_panic() {
         let r = Reader::new(&[1, 2, 3]);
-        assert_eq!(
-            r.u32(0),
-            Err(FormatError::Truncated { offset: 0, wanted: 4, len: 3 })
-        );
+        assert_eq!(r.u32(0), Err(FormatError::Truncated { offset: 0, wanted: 4, len: 3 }));
         // An offset near usize::MAX must not overflow.
         assert!(r.bytes(usize::MAX, 2).is_err());
     }
@@ -197,8 +186,6 @@ mod tests {
         assert_eq!(e.to_string(), "bad signature, expected MSH");
         assert!(FormatError::Invalid("x".into()).to_string().contains("x"));
         assert!(FormatError::Unsupported("y".into()).to_string().contains("y"));
-        assert!(FormatError::Truncated { offset: 1, wanted: 2, len: 0 }
-            .to_string()
-            .contains("truncated"));
+        assert!(FormatError::Truncated { offset: 1, wanted: 2, len: 0 }.to_string().contains("truncated"));
     }
 }

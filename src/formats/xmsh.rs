@@ -147,20 +147,15 @@ fn parse_lod(r: &Reader, base: usize) -> FResult<Lod> {
     for i in 0..nv {
         let o = base + voff + VERTEX_SIZE * i;
         let f = |k: usize| r.f32(o + 4 * k);
-        vertices.push(XVertex {
-            position: [f(0)?, f(1)?, f(2)?],
-            normal: [f(3)?, f(4)?, f(5)?],
-            uv: [f(6)?, f(7)?],
-        });
+        vertices.push(XVertex { position: [f(0)?, f(1)?, f(2)?], normal: [f(3)?, f(4)?, f(5)?], uv: [f(6)?, f(7)?] });
     }
     let mut edges = Vec::with_capacity(ne);
     for i in 0..ne {
         let o = base + eoff + EDGE_SIZE * i;
         edges.push((r.u32(o)?, r.u32(o + 4)?));
     }
-    let textures = (0..nt)
-        .map(|i| r.name(base + toff + TEXTURE_NAME_SIZE * i, TEXTURE_NAME_SIZE))
-        .collect::<FResult<Vec<_>>>()?;
+    let textures =
+        (0..nt).map(|i| r.name(base + toff + TEXTURE_NAME_SIZE * i, TEXTURE_NAME_SIZE)).collect::<FResult<Vec<_>>>()?;
     let mut manipulators = Vec::with_capacity(nman);
     for i in 0..nman {
         let o = base + moff + MANIP_SIZE * i;

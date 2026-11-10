@@ -1,0 +1,4 @@
+# Formatting rules for `cargo fmt`. Wider than the default 100 so documented
+# expressions stay on one line where that reads better.
+max_width = 120
+use_small_heuristics = "Max"

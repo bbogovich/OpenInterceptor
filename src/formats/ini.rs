@@ -37,11 +37,7 @@ pub struct Section {
 impl Section {
     /// The last value for `key`, or `None`.
     pub fn get(&self, key: &str) -> Option<&str> {
-        self.entries
-            .iter()
-            .rev()
-            .find(|(k, _)| k.eq_ignore_ascii_case(key))
-            .map(|(_, v)| v.as_str())
+        self.entries.iter().rev().find(|(k, _)| k.eq_ignore_ascii_case(key)).map(|(_, v)| v.as_str())
     }
 
     /// Every value for `key`, in order.

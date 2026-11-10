@@ -12,7 +12,9 @@ description = "Moddable space-combat simulator engine; plays X-COM: Interceptor 
 # Looking Glass use. Everything else (PE resources, meshes, textures, INI, ADPCM, OBJ) is
 # implemented in this crate.
 [dependencies]
-macroquad = "=0.4.14"
+# The "audio" feature adds macroquad's own small sound backend (quad-snd: CoreAudio on macOS,
+# ALSA on Linux — the Linux build needs the ALSA development package).
+macroquad = { version = "=0.4.14", features = ["audio"] }
 # Vector/matrix/quaternion maths. Already in the tree through macroquad (same version), so
 # depending on it directly adds nothing to the build — but it lets the `sim` layer use
 # maths types without depending on the windowing library.

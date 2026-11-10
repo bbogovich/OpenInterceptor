@@ -199,10 +199,7 @@ impl Content {
                 }
             }
         }
-        let data = self
-            .original()?
-            .resource("XTXR", None, name)
-            .ok_or(format!("texture {name} not found"))?;
+        let data = self.original()?.resource("XTXR", None, name).ok_or(format!("texture {name} not found"))?;
         let t = xtxr::parse(data).map_err(|e| format!("texture {name}: {e}"))?;
         Ok(Image { width: t.width, height: t.height, rgba: t.to_rgba() })
     }
@@ -216,7 +213,10 @@ impl Content {
             AssetRef::Original { file, resource } => {
                 let o = self.original()?;
                 let data = match resource {
-                    Some(r) => o.resource("TARG", file.as_deref(), &r).ok_or(format!("original image {reference} not found"))?.to_vec(),
+                    Some(r) => o
+                        .resource("TARG", file.as_deref(), &r)
+                        .ok_or(format!("original image {reference} not found"))?
+                        .to_vec(),
                     None => o.read_file(file.as_deref().unwrap_or_default())?,
                 };
                 tga::decode(&data, key).map_err(|e| format!("{reference}: {e}"))
@@ -231,7 +231,9 @@ impl Content {
     /// Loads a sound as PCM samples.
     pub fn load_sound(&self, reference: &str, pack: usize) -> Result<wav::Pcm, String> {
         let bytes = match AssetRef::parse(reference)? {
-            AssetRef::Original { file, .. } => self.original()?.read_file(file.as_deref().ok_or("sound needs a file name")?)?,
+            AssetRef::Original { file, .. } => {
+                self.original()?.read_file(file.as_deref().ok_or("sound needs a file name")?)?
+            }
             AssetRef::PackFile(path) => self.read_pack_file(pack, &path)?,
         };
         wav::decode(&bytes).map_err(|e| format!("{reference}: {e}"))
@@ -312,7 +314,10 @@ mod tests {
         std::fs::create_dir_all(dir.join("models")).unwrap();
         std::fs::write(
             dir.join("pack.ini"),
-            format!("[pack]\nid={id}\ndepends={depends}\nrequires_original={}\n", if requires_original { "yes" } else { "no" }),
+            format!(
+                "[pack]\nid={id}\ndepends={depends}\nrequires_original={}\n",
+                if requires_original { "yes" } else { "no" }
+            ),
         )
         .unwrap();
         std::fs::write(
@@ -320,7 +325,8 @@ mod tests {
             "[faction:blue]\nHostile=red\n[faction:red]\n[ship:dart]\nModel=models/dart.obj\nFaction=blue\nPlayable=yes\n",
         )
         .unwrap();
-        std::fs::write(dir.join("models/dart.obj"), "mtllib dart.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nusemtl m\nf 1 2 3\n").unwrap();
+        std::fs::write(dir.join("models/dart.obj"), "mtllib dart.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nusemtl m\nf 1 2 3\n")
+            .unwrap();
         std::fs::write(dir.join("models/dart.mtl"), "newmtl m\nmap_Kd skin.png\n").unwrap();
         std::fs::write(dir.join("scenarios/a.ini"), format!("[scenario]\nid=arena\ntitle={id} arena\n")).unwrap();
         std::fs::write(dir.join("scenarios/broken.ini"), "nothing here").unwrap();

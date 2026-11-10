@@ -91,8 +91,13 @@ pub fn decode(data: &[u8], key555: Option<u16>) -> FResult<Image> {
                 2 => {
                     let v = u16::from_le_bytes([px[0], px[1]]);
                     let [r, g, b] = super::xtxr::rgb555(v);
-                    let alpha = if key555 == Some(v & 0x7fff) { 0 } else { 255 };
-                    [r, g, b, alpha]
+                    // Keyed pixels become transparent *black*: if they kept their cyan,
+                    // texture filtering would blend cyan into the edges of the art.
+                    if key555 == Some(v & 0x7fff) {
+                        [0, 0, 0, 0]
+                    } else {
+                        [r, g, b, 255]
+                    }
                 }
                 // TGA stores true colour as B, G, R(, A).
                 3 => [px[2], px[1], px[0], 255],
@@ -127,7 +132,7 @@ mod tests {
         px.extend_from_slice(&0x7c00u16.to_le_bytes());
         px.extend_from_slice(&COCKPIT_KEY_555.to_le_bytes());
         let img = decode(&build_test_tga(1, 2, 16, false, &px), Some(COCKPIT_KEY_555)).unwrap();
-        assert_eq!(img.rgba[3], 0, "top row is the key colour, so transparent");
+        assert_eq!(&img.rgba[0..4], &[0, 0, 0, 0], "top row is the key colour: transparent black");
         assert_eq!(&img.rgba[4..8], &[255, 0, 0, 255]);
     }
 

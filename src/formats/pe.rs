@@ -85,8 +85,7 @@ impl ResourceFile {
 
     /// Reads and parses a file from disk.
     pub fn open(path: &std::path::Path) -> FResult<ResourceFile> {
-        let bytes = std::fs::read(path)
-            .map_err(|e| FormatError::Invalid(format!("{}: {e}", path.display())))?;
+        let bytes = std::fs::read(path).map_err(|e| FormatError::Invalid(format!("{}: {e}", path.display())))?;
         Self::parse(bytes)
     }
 
@@ -195,9 +194,7 @@ fn walk(
             // High bit set: offset to a length-prefixed UTF-16 string.
             let s = base + (name_field & 0x7fff_ffff) as usize;
             let len = r.u16(s)? as usize;
-            let units: Vec<u16> = (0..len)
-                .map(|k| r.u16(s + 2 + 2 * k))
-                .collect::<FResult<_>>()?;
+            let units: Vec<u16> = (0..len).map(|k| r.u16(s + 2 + 2 * k)).collect::<FResult<_>>()?;
             ResId::name(&String::from_utf16_lossy(&units))
         } else {
             ResId::Num(name_field)
@@ -321,10 +318,7 @@ mod tests {
 
     #[test]
     fn rejects_non_pe_data() {
-        assert_eq!(
-            ResourceFile::parse(b"hello world".to_vec()).err(),
-            Some(FormatError::BadMagic { expected: "MZ" })
-        );
+        assert_eq!(ResourceFile::parse(b"hello world".to_vec()).err(), Some(FormatError::BadMagic { expected: "MZ" }));
         let mut pe = build_test_pe(&[]);
         pe[0x80] = b'X';
         assert!(matches!(ResourceFile::parse(pe), Err(FormatError::BadMagic { .. })));

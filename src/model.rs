@@ -189,7 +189,8 @@ impl Model {
             .collect();
         for face in &mesh.faces {
             let corners = mesh.face_corners(face);
-            let p: Vec<Vec3> = corners.iter().map(|c| Vec3::from(mesh.positions[c.position as usize]) * scale).collect();
+            let p: Vec<Vec3> =
+                corners.iter().map(|c| Vec3::from(mesh.positions[c.position as usize]) * scale).collect();
             // A face normal for corners that have none.
             let face_normal = (p[1] - p[0]).cross(p[2] - p[0]).normalize_or_zero();
             let colour = face
@@ -203,7 +204,10 @@ impl Model {
                 let uv = c.uv.map(|i| mesh.uvs[i as usize]).unwrap_or([0.0, 0.0]);
                 vertices.push(ModelVertex {
                     position: *pos,
-                    normal: c.normal.map(|i| Vec3::from(mesh.normals[i as usize]).normalize_or_zero()).unwrap_or(face_normal),
+                    normal: c
+                        .normal
+                        .map(|i| Vec3::from(mesh.normals[i as usize]).normalize_or_zero())
+                        .unwrap_or(face_normal),
                     // OBJ's v axis points up the image; textures are stored top row first.
                     uv: Vec2::new(uv[0], 1.0 - uv[1]),
                     color,
@@ -286,7 +290,7 @@ mod tests {
         let mut m = Model::from_xmsh(&xmsh_quad());
         let mut far = m.lods[0].clone();
         far.switch_distance = f32::MAX;
-        far.vertices.truncate(0);
+        far.vertices.clear();
         m.lods.push(far);
         assert_eq!(m.lod_for_distance(10.0).switch_distance, 100.0);
         assert_eq!(m.lod_for_distance(500.0).switch_distance, f32::MAX);

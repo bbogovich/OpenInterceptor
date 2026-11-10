@@ -321,7 +321,8 @@ pub fn ship_collisions(w: &mut World) {
             if !w.ships[i].alive || !w.ships[j].alive {
                 continue;
             }
-            let (si, sj) = (rules.ship(w.ships[i].class).kind.is_static(), rules.ship(w.ships[j].class).kind.is_static());
+            let (si, sj) =
+                (rules.ship(w.ships[i].class).kind.is_static(), rules.ship(w.ships[j].class).kind.is_static());
             if si && sj {
                 continue;
             }

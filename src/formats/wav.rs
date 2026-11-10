@@ -96,7 +96,7 @@ impl Channel {
         let sample = (predicted + signed * self.delta).clamp(i16::MIN as i32, i16::MAX as i32);
         self.s2 = self.s1;
         self.s1 = sample;
-        self.delta = (ADAPTATION[nibble as usize] * self.delta >> 8).max(16);
+        self.delta = ((ADAPTATION[nibble as usize] * self.delta) >> 8).max(16);
         sample as i16
     }
 }
@@ -114,9 +114,8 @@ fn decode_ms_adpcm(body: &[u8], ch: usize, block_align: usize, coefs: &[(i32, i3
         let mut state = [Channel::default(); 2];
         for (c, s) in state.iter_mut().enumerate().take(ch) {
             let predictor = block[c] as usize;
-            let &(c1, c2) = coefs
-                .get(predictor)
-                .ok_or_else(|| FormatError::Invalid(format!("ADPCM predictor {predictor}")))?;
+            let &(c1, c2) =
+                coefs.get(predictor).ok_or_else(|| FormatError::Invalid(format!("ADPCM predictor {predictor}")))?;
             s.c1 = c1;
             s.c2 = c2;
             s.delta = r.i16(ch + 2 * c)? as i32;
@@ -305,7 +304,7 @@ mod tests {
         f.extend_from_slice(&1u16.to_le_bytes()); // one coefficient pair
         f.extend_from_slice(&256i16.to_le_bytes()); // c1 = 1.0
         f.extend_from_slice(&0i16.to_le_bytes()); // c2 = 0
-        // predictor 0, delta 16, s1 = 100, s2 = 50, then codes +1 and -1.
+                                                  // predictor 0, delta 16, s1 = 100, s2 = 50, then codes +1 and -1.
         let mut block = vec![0u8];
         block.extend_from_slice(&16i16.to_le_bytes());
         block.extend_from_slice(&100i16.to_le_bytes());

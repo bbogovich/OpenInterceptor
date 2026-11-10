@@ -48,7 +48,9 @@ impl AssetRef {
                 return Err("empty original: reference".into());
             }
             return Ok(match rest.split_once('#') {
-                Some((file, res)) => AssetRef::Original { file: Some(file.to_string()), resource: Some(res.to_string()) },
+                Some((file, res)) => {
+                    AssetRef::Original { file: Some(file.to_string()), resource: Some(res.to_string()) }
+                }
                 // A name with a dot is a file (GameSettings.ini); otherwise a resource.
                 None if rest.contains('.') => AssetRef::Original { file: Some(rest.to_string()), resource: None },
                 None => AssetRef::Original { file: None, resource: Some(rest.to_string()) },

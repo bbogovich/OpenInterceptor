@@ -115,7 +115,8 @@ pub fn think(w: &mut World) {
             Behaviour::Wingman => wingman(w, id, &mut state),
             Behaviour::Enemy => {
                 let target = ship.target.filter(|t| w.get(*t).is_some()).or_else(|| {
-                    targeting::nearest_hostile(w, id).filter(|t| w.ships[t.index as usize].position.distance(ship.position) < HUNT_RADIUS)
+                    targeting::nearest_hostile(w, id)
+                        .filter(|t| w.ships[t.index as usize].position.distance(ship.position) < HUNT_RADIUS)
                 });
                 match target {
                     Some(t) => (attack(w, id, t, &mut state), Some(t)),
@@ -147,7 +148,9 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
     // Orders that turn the wingman into an attacker.
     let engage = match state.order {
         WingOrder::Formation => None,
-        WingOrder::AttackMyTarget => leader.target.filter(|t| w.get(*t).is_some_and(|s| w.rules.hostile(ship.faction, s.faction))),
+        WingOrder::AttackMyTarget => {
+            leader.target.filter(|t| w.get(*t).is_some_and(|s| w.rules.hostile(ship.faction, s.faction)))
+        }
         WingOrder::FireAtWill => targeting::nearest_hostile(w, me)
             .filter(|t| w.ships[t.index as usize].position.distance(leader.position) < ENGAGE_RADIUS),
     };
@@ -245,7 +248,14 @@ mod tests {
 
     fn spawn_ai(w: &mut World, class: &str, faction: u16, pos: Vec3, b: Behaviour, leader: Option<ShipId>) -> ShipId {
         let c = w.rules.ship_id(class).unwrap();
-        w.spawn(c, FactionId(faction), class, pos, Quat::IDENTITY, Pilot::Ai(AiState::new(b, leader, Vec3::new(-60.0, 0.0, 30.0))))
+        w.spawn(
+            c,
+            FactionId(faction),
+            class,
+            pos,
+            Quat::IDENTITY,
+            Pilot::Ai(AiState::new(b, leader, Vec3::new(-60.0, 0.0, 30.0))),
+        )
     }
 
     #[test]
@@ -272,7 +282,14 @@ mod tests {
     #[test]
     fn wingman_closes_on_its_slot() {
         let mut w = world();
-        let leader = w.spawn(w.rules.ship_id("fighter").unwrap(), FactionId(0), "lead", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let leader = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "lead",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::External,
+        );
         let wing = spawn_ai(&mut w, "fighter", 0, Vec3::new(-1000.0, 0.0, 800.0), Behaviour::Wingman, Some(leader));
         let start = w.get(wing).unwrap().position.distance(Vec3::new(-60.0, 0.0, 30.0));
         for _ in 0..(20.0 / super::super::TICK) as usize {
@@ -285,7 +302,14 @@ mod tests {
     #[test]
     fn enemy_hunts_and_damages_a_hostile() {
         let mut w = world();
-        let victim = w.spawn(w.rules.ship_id("fighter").unwrap(), FactionId(0), "v", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let victim = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "v",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::External,
+        );
         let hunter = spawn_ai(&mut w, "raider", 1, Vec3::new(300.0, 100.0, 1500.0), Behaviour::Enemy, None);
         for _ in 0..(30.0 / super::super::TICK) as usize {
             w.step();
@@ -297,13 +321,23 @@ mod tests {
             assert_eq!(w.get(hunter).unwrap().target, Some(victim), "the hunter locked onto the hostile");
         }
         let v = w.ships[victim.index as usize].clone();
-        assert!(!v.alive || v.shield_fore + v.shield_aft + v.armor + v.hull < 40.0 + 40.0 + 50.0 + 100.0, "took damage");
+        assert!(
+            !v.alive || v.shield_fore + v.shield_aft + v.armor + v.hull < 40.0 + 40.0 + 50.0 + 100.0,
+            "took damage"
+        );
     }
 
     #[test]
     fn orders_switch_wingmen_to_attack() {
         let mut w = world();
-        let lead = w.spawn(w.rules.ship_id("fighter").unwrap(), FactionId(0), "lead", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let lead = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "lead",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::External,
+        );
         let wing = spawn_ai(&mut w, "fighter", 0, Vec3::new(-60.0, 0.0, 30.0), Behaviour::Wingman, Some(lead));
         let foe = spawn_ai(&mut w, "raider", 1, Vec3::new(0.0, 0.0, -2000.0), Behaviour::Idle, None);
         assert_eq!(order_wingmen(&mut w, lead, WingOrder::FireAtWill), 1);
