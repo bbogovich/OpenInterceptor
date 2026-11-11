@@ -73,7 +73,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
         });
     }
     if let Some(sc) = &options.soak {
-        let pilot = if options.soak_ai { soak::SoakPilot::Ai } else { soak::SoakPilot::Passive };
+        let pilot = options.soak_pilot.unwrap_or(soak::SoakPilot::Passive);
         let seconds = options.seconds.unwrap_or(60.0);
         // A mission id soaks the mission (and reports its result); else a scenario.
         if content.rules.missions.iter().any(|m| &m.id == sc) {
@@ -81,11 +81,12 @@ fn headless(options: &cli::Options) -> Option<i32> {
                 Ok((r, result)) => {
                     let level =
                         content.rules.difficulty_levels.get(content.rules.difficulty).cloned().unwrap_or_default();
-                    let pilot = if options.soak_ai { "ai" } else { "passive" };
                     let result = result.unwrap_or_else(|| "still running".into());
                     println!(
-                        "soak mission {sc} ({level}, {pilot}): {result} after {:.0} s; {} kills",
-                        r.seconds, r.kills
+                        "soak mission {sc} ({level}, {}): {result} after {:.0} s; {} kills",
+                        pilot.name(),
+                        r.seconds,
+                        r.kills
                     );
                     0
                 }
@@ -101,7 +102,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
                 println!(
                     "soak {sc} ({}, {level}, {}): {}",
                     options.ship.as_deref().unwrap_or("scenario ship"),
-                    if options.soak_ai { "ai" } else { "passive" },
+                    pilot.name(),
                     r.summary()
                 );
                 0

@@ -186,6 +186,13 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     s.next_mount = (group.last().copied().unwrap_or(0) + 1) % n;
     drop_cloak(s, id, &mut w.events);
     let (pos, rot, vel, faction) = (s.position, s.rotation, s.velocity, s.faction);
+    // The ship's turn rate in world axes. `angular_velocity` is kept in the ship's own
+    // (body) axes, so rotating it by the ship's orientation gives the world vector ω.
+    let spin = rot * s.angular_velocity;
+    let carry = match rules.flight.bolt_frame {
+        crate::content::rules::BoltFrame::World => 0.0,
+        crate::content::rules::BoltFrame::Ship => rules.flight.bolt_carry,
+    };
     // Fixed guns fire along the nose; turrets along the requested aim, if it is within
     // their arc of the nose.
     let fwd = rot * Vec3::NEG_Z;
@@ -198,17 +205,27 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     for &k in &group {
         let beam = rules.beam(class.beams[k]);
         s.beam_cooldown[k] = 1.0 / beam.rate_of_fire;
-        let muzzle = pos + rot * mount_offset(k, n, radius);
+        let offset = rot * mount_offset(k, n, radius);
+        // A point on a turning body moves at ω × r, where r is its offset from the
+        // centre: a gun on the right wing of a ship yawing left is swinging forwards.
+        // The bolt keeps that speed when it leaves the gun (physics: it starts with
+        // exactly the muzzle's velocity, plus its own muzzle speed along the barrel).
+        let velocity = vel + spin.cross(offset) + dir * beam.speed;
         w.bolts.push(Bolt {
             owner: id,
             faction,
-            position: muzzle,
-            velocity: vel + dir * beam.speed,
+            position: pos + offset,
+            velocity,
             life: beam.range / beam.speed,
             age: 0.0,
             muzzle_speed: beam.speed,
             damage: beam.damage,
             color: beam.color,
+            carry,
+            // `conjugate` undoes a rotation (for a unit quaternion it is the inverse):
+            // world vectors become the ship's body axes.
+            local_offset: rot.conjugate() * offset,
+            local_velocity: rot.conjugate() * (dir * beam.speed),
         });
     }
     w.events.push(SimEvent::BeamFired { ship: id, position: pos });
@@ -281,7 +298,21 @@ fn move_bolts(w: &mut World, dt: f32) {
     // Phase 1: move bolts and find hits (only reads ships).
     let mut hits: Vec<(usize, Vec3, f32)> = Vec::new();
     let mut keep = Vec::with_capacity(w.bolts.len());
-    for b in std::mem::take(&mut w.bolts) {
+    for mut b in std::mem::take(&mut w.bolts) {
+        // A bolt still carried in its owner's frame (`bolt_frame: ship`) is placed from
+        // the owner each tick, so it turns with the nose; when the carry ends (or the
+        // owner is gone) it keeps its last world velocity and flies straight.
+        let carrier = if b.carry > 0.0 { w.get(b.owner).map(|o| (o.position, o.rotation)) } else { None };
+        if let Some((op, orot)) = carrier {
+            b.local_offset += b.local_velocity * dt;
+            let target = op + orot * b.local_offset;
+            b.carry -= dt;
+            // Aim the move at the carried position, so the hit test below sweeps the
+            // path the bolt actually takes this tick.
+            b.velocity = (target - b.position) / dt;
+        } else {
+            b.carry = 0.0;
+        }
         let next = b.position + b.velocity * dt;
         match first_hit(w, b.position, next, b.owner) {
             Some((j, t)) => hits.push((j, b.position.lerp(next, t), b.damage)),
@@ -513,6 +544,66 @@ mod tests {
         let mut old = w.bolts[0].clone();
         old.age = 10.0;
         assert_eq!(old.streak_length(), (old.muzzle_speed * 0.025).min(80.0), "full length once clear of the gun");
+    }
+
+    #[test]
+    fn a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight() {
+        let (mut w, me, _) = duel();
+        let s = w.get_mut(me).unwrap();
+        s.velocity = Vec3::new(30.0, 0.0, -100.0); // drifting right while flying ahead
+        s.angular_velocity = Vec3::new(0.0, 1.0, 0.0); // yawing left at 1 rad/s
+        s.controls.fire_beams = true;
+        step(&mut w, TICK);
+        let s = w.get(me).unwrap().clone();
+        let speed = w.rules.beam(w.rules.ship(s.class).beams[0]).speed;
+        for b in &w.bolts {
+            // Physics: ship velocity + ω × r at the muzzle + muzzle speed along the nose.
+            let r = b.position - b.velocity * TICK - s.position;
+            let expected = s.velocity + (s.rotation * s.angular_velocity).cross(r) + s.forward() * speed;
+            assert!((b.velocity - expected).length() < 1e-3, "{:?} vs {expected:?}", b.velocity);
+            // Relative to the ship it moves straight out along the nose, despite the drift.
+            let rel = b.velocity - s.velocity - (s.rotation * s.angular_velocity).cross(r);
+            assert!(rel.normalize().dot(s.forward()) > 0.9999);
+        }
+        // Once fired, a bolt ignores the ship: turning the ship does not bend it.
+        let before: Vec<Vec3> = w.bolts.iter().map(|b| b.velocity).collect();
+        w.get_mut(me).unwrap().controls.fire_beams = false;
+        w.get_mut(me).unwrap().rotation = Quat::from_rotation_y(1.0);
+        step(&mut w, TICK);
+        let after: Vec<Vec3> = w.bolts.iter().map(|b| b.velocity).collect();
+        assert_eq!(before, after);
+    }
+
+    #[test]
+    fn with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried() {
+        let (mut w, me, _) = duel();
+        let mut rules = (*w.rules).clone();
+        rules.flight.bolt_frame = crate::content::rules::BoltFrame::Ship;
+        rules.flight.bolt_carry = 0.5;
+        w.rules = std::sync::Arc::new(rules);
+        w.get_mut(me).unwrap().controls.fire_beams = true;
+        step(&mut w, TICK);
+        w.get_mut(me).unwrap().controls.fire_beams = false;
+        // Turn the ship 90 degrees left: carried bolts now sit along the new nose.
+        let turn = Quat::from_rotation_y(std::f32::consts::FRAC_PI_2);
+        w.get_mut(me).unwrap().rotation = turn;
+        step(&mut w, TICK);
+        let nose = turn * Vec3::NEG_Z;
+        for b in &w.bolts {
+            let dir = (b.position - w.get(me).unwrap().position).normalize();
+            assert!(dir.dot(nose) > 0.95, "bolt {dir:?} follows the nose {nose:?}");
+            assert!(b.carry > 0.0);
+        }
+        // After the carry it flies straight on, whatever the ship does.
+        for _ in 0..40 {
+            step(&mut w, TICK);
+        }
+        let v: Vec<Vec3> = w.bolts.iter().map(|b| b.velocity).collect();
+        w.get_mut(me).unwrap().rotation = Quat::IDENTITY;
+        step(&mut w, TICK);
+        assert!(!w.bolts.is_empty());
+        assert!(w.bolts.iter().all(|b| b.carry == 0.0));
+        assert_eq!(v, w.bolts.iter().map(|b| b.velocity).collect::<Vec<_>>());
     }
 
     #[test]

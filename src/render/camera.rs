@@ -33,18 +33,27 @@ pub struct SpaceCamera {
     pub aspect: f32,
     /// Near clip plane, metres. Small for the 3D cockpit pass, [`Z_NEAR`] otherwise.
     pub z_near: f32,
+    /// How fast the viewer is moving (m/s), e.g. the ship the camera rides with. Bolt
+    /// streaks are drawn along their motion *relative to the viewer*, which is what
+    /// the eye sees: a shot from a drifting ship streaks straight out of its guns.
+    pub velocity: Vec3,
 }
 
 impl SpaceCamera {
     /// A camera with the default clip planes.
     pub fn new(position: Vec3, rotation: Quat, fov_y: f32, aspect: f32) -> SpaceCamera {
-        SpaceCamera { position, rotation, fov_y, aspect, z_near: Z_NEAR }
+        SpaceCamera { position, rotation, fov_y, aspect, z_near: Z_NEAR, velocity: Vec3::ZERO }
     }
 
     /// The same view with a different near plane (the cockpit pass uses 5 cm, so
     /// geometry right in front of the pilot's eye is not clipped).
     pub fn with_near(self, z_near: f32) -> SpaceCamera {
         SpaceCamera { z_near, ..self }
+    }
+
+    /// This camera, moving with `velocity` (see [`SpaceCamera::velocity`]).
+    pub fn with_velocity(self, velocity: Vec3) -> SpaceCamera {
+        SpaceCamera { velocity, ..self }
     }
 
     /// Projection × rotation-only view (see the module docs).

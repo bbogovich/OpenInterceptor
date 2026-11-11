@@ -77,6 +77,8 @@ mod tests {
 
     /// Key names used by the default bindings, checked against `key_name` above.
     const KNOWN: &[&str] = &[
+        "slash",
+        "f12",
         "up",
         "down",
         "left",

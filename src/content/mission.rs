@@ -122,7 +122,7 @@ pub struct MissionDef {
     pub optional: Vec<(String, Expr)>,
     /// `(seconds, result)`: the battle ends with `result` when the time runs out.
     pub timer: Option<(f32, String)>,
-    /// `(result, actions)`; results are win, lose, draw and retreat.
+    /// `(result, actions)`; results are win, lose, draw, retreat and killed.
     pub outcomes: Vec<(String, Vec<action::Action>)>,
     pub chatter: Vec<ChatterDef>,
     /// `(result, text)`.
@@ -135,7 +135,9 @@ pub struct MissionDef {
 }
 
 /// The results a mission can end with.
-pub const RESULTS: [&str; 4] = ["win", "lose", "draw", "retreat"];
+/// `killed` is set by the engine when the player's craft is destroyed; a mission may
+/// give it its own debrief and outcomes, else it takes the `lose` outcomes.
+pub const RESULTS: [&str; 5] = ["win", "lose", "draw", "retreat", "killed"];
 
 fn vec3(g: Get, key: &str, default: Vec3) -> Vec3 {
     match g.nums(key) {
@@ -267,7 +269,7 @@ impl MissionDef {
                 let after = t.qty("after", Unit::Time).ok_or("timer: needs after: (a time)")?;
                 let then = t.str("then").unwrap_or("draw").to_string();
                 if !RESULTS.contains(&then.as_str()) {
-                    return Err(format!("timer.then: '{then}' is not win, lose, draw or retreat"));
+                    return Err(format!("timer.then: '{then}' is not win, lose, draw, retreat or killed"));
                 }
                 Some((after, then))
             }
@@ -276,7 +278,7 @@ impl MissionDef {
         let mut outcomes = Vec::new();
         for (result, list) in g.map("outcomes") {
             if !RESULTS.contains(&result.as_str()) {
-                return Err(format!("outcomes.{result}: results are win, lose, draw and retreat"));
+                return Err(format!("outcomes.{result}: results are win, lose, draw, retreat and killed"));
             }
             let mut actions = Vec::new();
             for item in list.as_seq().unwrap_or(&[]) {

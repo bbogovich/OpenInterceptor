@@ -76,6 +76,8 @@ uniform mat4 Model;
 uniform mat4 Projection;
 uniform vec4 SunDirection;
 uniform vec4 Tint;
+// x = ambient, y = sun, z = rim, w = gamma (see `Lighting` and `Renderer::brightness`).
+uniform vec4 Light;
 void main() {
     gl_Position = Projection * Model * vec4(position, 1.0);
     // Overlay layer (normal.w) pulls the face towards the camera in depth only.
@@ -84,17 +86,27 @@ void main() {
     // w = 0 transforms a direction (rotation only, no translation).
     vec3 n = normalize((Model * vec4(normal.xyz, 0.0)).xyz);
     float diffuse = max(dot(n, SunDirection.xyz), 0.0);
-    float light = 0.30 + 0.85 * diffuse;
+    // Rim light: the Model matrix places the vertex relative to the camera, so its
+    // position is also the view ray. Faces seen edge-on (normal across the ray) get
+    // the most rim, which outlines a dark hull against black space.
+    vec3 ray = normalize((Model * vec4(position, 1.0)).xyz);
+    float edge = 1.0 - abs(dot(n, ray));
+    float light = Light.x + Light.y * diffuse + Light.z * edge * edge * edge;
     color = vec4(color0.rgb / 255.0 * light + Tint.rgb, color0.a / 255.0);
     uv = texcoord;
 }"#;
 
 const LIT_FRAGMENT: &str = r#"#version 100
+precision mediump float;
 varying mediump vec2 uv;
 varying lowp vec4 color;
 uniform sampler2D Texture;
+uniform vec4 Light;
 void main() {
-    gl_FragColor = color * texture2D(Texture, uv);
+    vec4 c = color * texture2D(Texture, uv);
+    // Gamma (Light.w = 1 / brightness): below 1 lifts dark tones more than bright ones,
+    // so shadowed hulls become visible without washing out lit faces.
+    gl_FragColor = vec4(pow(c.rgb, vec3(Light.w)), c.a);
 }"#;
 
 const PLAIN_VERTEX: &str = r#"#version 100
@@ -143,6 +155,10 @@ pub struct Renderer {
     /// Draw faces flagged as overlays (on by default; the model viewer can hide them to
     /// show what lies underneath).
     pub show_overlays: bool,
+    /// The campaign's lighting (`flight: {lighting: …}`); set by the screen drawing.
+    pub lighting: crate::content::rules::Lighting,
+    /// The player's brightness setting (`graphics: {brightness: …}`, 1 = as authored).
+    pub brightness: f32,
     stars: Vec<starfield::Star>,
     star_seed: u64,
     // Reused per-frame buffers (see the module docs).
@@ -242,6 +258,7 @@ impl Renderer {
                 uniforms: vec![
                     UniformDesc::new("SunDirection", UniformType::Float4),
                     UniformDesc::new("Tint", UniformType::Float4),
+                    UniformDesc::new("Light", UniformType::Float4),
                 ],
                 ..Default::default()
             },
@@ -285,6 +302,8 @@ impl Renderer {
             glow_texture: make_glow_texture(),
             models: ModelCache::default(),
             show_overlays: true,
+            lighting: Default::default(),
+            brightness: 1.0,
             stars: Vec::new(),
             star_seed: u64::MAX,
             glow_vertices: Vec::new(),
@@ -354,6 +373,8 @@ impl Renderer {
         set_camera(cam);
         gl_use_material(&self.lit);
         self.lit.set_uniform("SunDirection", sun.normalize_or(Vec3::Y).extend(0.0));
+        let l = self.lighting;
+        self.lit.set_uniform("Light", Vec4::new(l.ambient, l.sun, l.rim, 1.0 / self.brightness.clamp(0.25, 4.0)));
     }
 
     /// Draws the stars and the sun.
@@ -468,6 +489,7 @@ impl Renderer {
         effects: &Effects,
         cam: &SpaceCamera,
         hide: Option<ShipId>,
+        player: Option<ShipId>,
     ) {
         set_camera(cam);
         self.glow_vertices.clear();
@@ -500,8 +522,9 @@ impl Renderer {
                 );
             }
         }
+        self.push_distant_dots(world, cam, hide, player);
         for b in &world.bolts {
-            let tail = b.position - b.velocity.normalize_or_zero() * b.streak_length();
+            let tail = b.position - (b.velocity - cam.velocity).normalize_or_zero() * b.streak_length();
             let dist = rel(b.position).length();
             let width = (dist * 0.0025).max(0.6);
             push_streak(
@@ -636,6 +659,54 @@ impl Renderer {
         self.begin_solid(&near, sun);
         self.draw_model_lod(&near, model, cam.position + cam.rotation * offset, cam.rotation, Vec3::ZERO, Some(0));
         gl_use_default_material();
+    }
+
+    /// Ships too small on screen to see are drawn as a dot in their radar colour
+    /// (`flight: {lighting: {distant_dot: px}}`), so far-off craft never vanish.
+    fn push_distant_dots(&mut self, world: &World, cam: &SpaceCamera, hide: Option<ShipId>, player: Option<ShipId>) {
+        let px = self.lighting.distant_dot;
+        let (Some(viewer), true) = (player.and_then(|p| world.get(p)), px > 0.0) else { return };
+        let me = viewer.faction;
+        let (right, up) = (cam.rotation * Vec3::X, cam.rotation * Vec3::Y);
+        // World metres covered by one pixel at distance 1: the screen height spans
+        // 2·tan(fov/2) at unit distance.
+        let per_px = 2.0 * (cam.fov_y * 0.5).tan() / screen_height().max(1.0);
+        for i in 0..world.ships.len() {
+            let s = &world.ships[i];
+            if !s.alive || Some(world.id_of(i)) == hide || Some(world.id_of(i)) == player {
+                continue;
+            }
+            // Only what the player's sensors show (cloaked ships stay hidden).
+            if !crate::sim::systems::on_radar(world, viewer, s) {
+                continue;
+            }
+            let rel = s.position - cam.position;
+            let dist = rel.dot(cam.rotation * Vec3::NEG_Z);
+            if dist <= 1.0 {
+                continue;
+            }
+            let radius = world.shapes[s.class.0 as usize].radius;
+            let size_px = 2.0 * radius / (dist * per_px);
+            if size_px >= px {
+                continue;
+            }
+            let colors = world.rules.flight.radar_colors;
+            let color = match s.protected_by {
+                Some(_) => colors.objective,
+                None => colors.of(world.rules.relation(me, s.faction)),
+            };
+            // Fade in as the ship shrinks, so there is no pop at the threshold.
+            let alpha = (1.0 - size_px / px).clamp(0.0, 1.0) * 0.9 + 0.1;
+            push_billboard(
+                &mut self.glow_vertices,
+                &mut self.glow_indices,
+                rel,
+                px * per_px * dist,
+                right,
+                up,
+                rgb8(color, alpha),
+            );
+        }
     }
 
     /// A small 3D marker (used by the model viewer for attachment points).

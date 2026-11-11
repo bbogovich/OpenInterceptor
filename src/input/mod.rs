@@ -102,6 +102,7 @@ pub enum Action {
     Pause,
     Menu,
     MouseFlight,
+    Help,
 }
 
 /// Groups for the controls menu and the docs.
@@ -230,7 +231,27 @@ pub const ACTIONS: &[ActionInfo] = &[
     a("pause", A::Pause, "P", "Start", G::Interface, "Pause"),
     a("menu", A::Menu, "Escape", "LeftShoulder+Start", G::Interface, "Menu"),
     a("mouse_flight", A::MouseFlight, "C", "", G::Interface, "Mouse flight on/off"),
+    a("help", A::Help, "Shift+Slash, F12", "", G::Interface, "Keys help (this list)"),
 ];
+
+/// The keys help: every group in menu order, each with `(label, keys)` rows showing the
+/// player's *current* bindings (keyboard first, then gamepad), or "unbound". Built from
+/// [`ACTIONS`], so a new action appears here, in the controls menu and on the console
+/// without further work.
+pub fn help_rows(b: &Bindings) -> Vec<(Group, Vec<(&'static str, String)>)> {
+    let mut groups: Vec<(Group, Vec<(&'static str, String)>)> = Vec::new();
+    for info in ACTIONS {
+        let mut keys: Vec<String> = b.keys.get(&info.action).into_iter().flatten().map(KeyChord::text).collect();
+        keys.extend(b.pad.get(&info.action).into_iter().flatten().map(|p| format!("pad {}", p.text())));
+        let keys = if keys.is_empty() { "unbound".to_string() } else { keys.join(", ") };
+        // Groups appear in the order their first action appears in the table.
+        match groups.iter_mut().find(|(g, _)| *g == info.group) {
+            Some((_, rows)) => rows.push((info.label, keys)),
+            None => groups.push((info.group, vec![(info.label, keys)])),
+        }
+    }
+    groups
+}
 
 /// The table entry for an action.
 pub fn info(action: Action) -> &'static ActionInfo {
@@ -546,6 +567,7 @@ pub enum Command {
     Pause,
     Menu,
     MouseFlight,
+    Help,
 }
 
 /// Camera views (F1–F8).
@@ -618,6 +640,7 @@ const COMMANDS: &[(Action, Command)] = &[
     (A::Pause, Command::Pause),
     (A::Menu, Command::Menu),
     (A::MouseFlight, Command::MouseFlight),
+    (A::Help, Command::Help),
 ];
 
 /// Per-frame helper holding the chord sets, so they are computed once per frame
@@ -785,6 +808,26 @@ mod tests {
             pressed: pressed.iter().map(|k| canonical(k)).collect(),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn the_keys_help_lists_every_action_with_its_current_keys() {
+        let mut b = Bindings::default();
+        let rows = help_rows(&b);
+        assert_eq!(rows.iter().map(|(_, r)| r.len()).sum::<usize>(), ACTIONS.len(), "every action once");
+        assert_eq!(rows[0].0, Group::Flight, "groups in table order");
+        let find = |rows: &[(Group, Vec<(&str, String)>)], label: &str| {
+            rows.iter().flat_map(|(_, r)| r.iter()).find(|(l, _)| *l == label).map(|(_, k)| k.clone()).unwrap()
+        };
+        assert_eq!(find(&rows, "Afterburner (hold)"), "tab, pad A");
+        b.keys.insert(Action::Afterburner, vec![]);
+        b.pad.insert(Action::Afterburner, vec![]);
+        assert_eq!(find(&help_rows(&b), "Afterburner (hold)"), "unbound");
+        // `?` (Shift+Slash) and F12 open it.
+        let mut r = raw(&[], &["Slash"]);
+        r.shift = true;
+        assert_eq!(Bindings::default().translate(&r, false).1, vec![Command::Help]);
+        assert_eq!(Bindings::default().translate(&raw(&[], &["F12"]), false).1, vec![Command::Help]);
     }
 
     #[test]

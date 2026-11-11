@@ -222,6 +222,8 @@ pub struct FlightSession {
     nav_index: usize,
     paused: bool,
     menu_open: bool,
+    /// The keys help overlay (`?` or F12) is showing; the battle pauses under it.
+    help_open: bool,
     mouse_flight: bool,
     accumulator: f32,
     /// 2D cockpit art, if the player's cockpit has an image.
@@ -380,6 +382,7 @@ impl FlightSession {
             nav_index: 0,
             paused: false,
             menu_open: false,
+            help_open: false,
             mouse_flight: false,
             accumulator: 0.0,
             cockpit,
@@ -484,7 +487,11 @@ impl FlightSession {
         }
 
         // --- Pause menu -------------------------------------------------------------
-        if self.menu_open {
+        if self.help_open {
+            if raw.pressed.contains("escape") || commands.contains(&Command::Help) {
+                self.help_open = false;
+            }
+        } else if self.menu_open {
             if raw.pressed.contains("escape") {
                 self.menu_open = false;
             } else if raw.pressed.contains("r") {
@@ -507,6 +514,7 @@ impl FlightSession {
                         }
                     }
                     Command::Pause => self.paused = !self.paused,
+                    Command::Help => self.help_open = true,
                     Command::View(v) => self.view = *v,
                     Command::MfdNext => self.mfd = self.mfd.cycle(true),
                     Command::MfdPrev => self.mfd = self.mfd.cycle(false),
@@ -542,7 +550,7 @@ impl FlightSession {
 
         // --- Simulation -------------------------------------------------------------
         let over = self.mission.as_ref().is_some_and(|m| m.debrief.is_some());
-        if !self.paused && !self.menu_open && self.editor.is_none() && !over {
+        if !self.paused && !self.menu_open && !self.help_open && self.editor.is_none() && !over {
             if let Some(s) = self.world.get_mut(self.player) {
                 // Whatever is still set in `s.controls` was not consumed by a tick yet.
                 s.controls = controls.carry_unconsumed(&s.controls);
@@ -587,14 +595,15 @@ impl FlightSession {
         } else {
             60f32.to_radians()
         };
-        let cam = SpaceCamera::new(pos, rot, fov, aspect);
+        let cam = SpaceCamera::new(pos, rot, fov, aspect).with_velocity(me.velocity);
+        ctx.renderer.lighting = self.world.rules.flight.lighting;
         let hide = if shows_own_ship(view) { None } else { Some(self.player) };
 
         // --- Drawing ----------------------------------------------------------------
         clear_background(BLACK);
         ctx.renderer.draw_sky(&cam, self.seed, self.sun);
         ctx.renderer.draw_world(&ctx.content, &self.world, &self.effects, &cam, self.sun, hide);
-        ctx.renderer.draw_glows(&ctx.content, &self.world, &self.effects, &cam, hide);
+        ctx.renderer.draw_glows(&ctx.content, &self.world, &self.effects, &cam, hide, Some(self.player));
         if let (true, View::Cockpit, Some((model, offset))) = (alive, view, &self.cockpit_model) {
             ctx.renderer.draw_cockpit_model(&cam, model, *offset, self.sun);
         }
@@ -719,24 +728,10 @@ impl FlightSession {
                 22.0,
                 LIGHTGRAY,
             );
-            draw_centered(
-                "Keys: arrows pitch/yaw  Q/E or Num7/9 roll  +/- throttle  Tab burner  H hyperspace",
-                screen.y * 0.35 + 90.0,
-                18.0,
-                GRAY,
-            );
-            draw_centered(
-                "Enter/LCtrl beams  Space missile  T/Y/R/G target  X link  F1-F8 views  C mouse",
-                screen.y * 0.35 + 114.0,
-                18.0,
-                GRAY,
-            );
-            draw_centered(
-                "F9/F10 beam/shield charge  ; ' power  S shield balance  ] wingmen  Shift+T/C/J tractor/cloak/ECM",
-                screen.y * 0.35 + 138.0,
-                18.0,
-                GRAY,
-            );
+            draw_centered("?  or  F12   every key, grouped", screen.y * 0.35 + 90.0, 18.0, GRAY);
+        }
+        if self.help_open {
+            draw_help(&ctx.bindings, screen);
         }
         Next::Stay
     }
@@ -927,6 +922,42 @@ fn draw_anchored(
     }
 }
 
+/// The keys help overlay: every action, grouped, with the player's current bindings,
+/// laid out in as many columns as the screen needs.
+fn draw_help(bindings: &crate::input::Bindings, screen: Vec2) {
+    draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.02, 0.0, 0.9));
+    let size = (screen.y * 0.021).clamp(13.0, 20.0);
+    let line = size * 1.25;
+    draw_centered("KEYS   (? or F12 or Esc to close)", size * 2.2, size * 1.4, Color::new(0.4, 1.0, 0.5, 1.0));
+    let groups = crate::input::help_rows(bindings);
+    let rows: usize = groups.iter().map(|(_, r)| r.len() + 2).sum();
+    let top = size * 4.0;
+    let per_column = (((screen.y - top - size) / line) as usize).max(8);
+    let columns = rows.div_ceil(per_column).max(1);
+    let width = screen.x / columns as f32;
+    let (mut col, mut row) = (0usize, 0usize);
+    for (group, items) in &groups {
+        // Keep a group's title with at least its first two rows.
+        if row > 0 && row + 3 > per_column {
+            (col, row) = (col + 1, 0);
+        }
+        let x = col as f32 * width + size;
+        draw_text(group.title(), x, top + row as f32 * line, size, Color::new(0.4, 1.0, 0.5, 1.0));
+        row += 1;
+        for (label, keys) in items {
+            if row >= per_column {
+                (col, row) = (col + 1, 0);
+            }
+            let x = col as f32 * width + size;
+            let y = top + row as f32 * line;
+            draw_text(label, x, y, size, WHITE);
+            draw_text(keys, x + width * 0.48, y, size, Color::new(0.75, 0.85, 0.75, 1.0));
+            row += 1;
+        }
+        row += 1;
+    }
+}
+
 /// The debrief panel over the frozen battle.
 fn draw_debrief(d: &crate::mission::Debrief, screen: Vec2) {
     let (w, h) = ((screen.x * 0.6).min(760.0), (screen.y * 0.6).min(520.0));
@@ -936,6 +967,7 @@ fn draw_debrief(d: &crate::mission::Debrief, screen: Vec2) {
     let (title, color) = match d.result.as_str() {
         "win" => ("MISSION ACCOMPLISHED", Color::new(0.4, 1.0, 0.5, 1.0)),
         "lose" => ("MISSION FAILED", Color::new(1.0, 0.35, 0.3, 1.0)),
+        "killed" => ("YOUR CRAFT WAS DESTROYED", Color::new(1.0, 0.35, 0.3, 1.0)),
         "draw" => ("MISSION ENDED", YELLOW),
         _ => ("LEFT THE BATTLE", YELLOW),
     };

@@ -23,6 +23,8 @@
 //! game:
 //!   campaign: default                    # the launcher's choices
 //!   difficulty: ranger
+//! graphics:
+//!   brightness: 1.2                      # 1 = as authored; higher lifts dark tones
 //! ```
 //!
 //! A `settings.ini` from an earlier build is read once and replaced by `settings.yaml`.
@@ -49,6 +51,8 @@ pub struct Settings {
     pub difficulty: Option<String>,
     /// The language of player-visible text (`game.language`, default `en`).
     pub language: Option<String>,
+    /// Display brightness (`graphics.brightness`, 1 = as authored, 0.5–2).
+    pub brightness: Option<f32>,
 }
 
 impl Settings {
@@ -58,6 +62,7 @@ impl Settings {
         let doc = yaml::parse(text).unwrap_or(Node::null(0));
         let section = |k: &str| doc.get(k).cloned().unwrap_or(Node::null(0));
         let (paths, packs, game) = (section("paths"), section("packs"), section("game"));
+        let graphics = section("graphics");
         let text = |n: &Node, k: &str| Get(n).str(k).map(str::to_string);
         Settings {
             original: text(&paths, "original").map(PathBuf::from),
@@ -66,6 +71,7 @@ impl Settings {
             campaign: text(&game, "campaign"),
             difficulty: text(&game, "difficulty"),
             language: text(&game, "language"),
+            brightness: Get(&graphics).num("brightness").map(|b| b.clamp(0.5, 2.0)),
         }
     }
 
@@ -90,6 +96,7 @@ impl Settings {
             campaign,
             difficulty,
             language: None,
+            brightness: None,
         }
     }
 
@@ -120,7 +127,8 @@ impl Settings {
              # original: your X-COM: Interceptor CD, or a folder copied from it.\n\
              # mods: folder of mods (empty = the mods folder next to this file).\n\
              paths:\n{}\n# Pack ids switched off.\npacks:\n{}\n\
-             # The launcher's campaign and difficulty choices, and the text language.\ngame:\n{}\n",
+             # The launcher's campaign and difficulty choices, and the text language.\ngame:\n{}\n\
+             # Display brightness: 1 = as authored; 0.5 (darker) to 2 (brighter).\ngraphics:\n{}\n",
             body(map(vec![("original", path(&self.original)), ("mods", path(&self.mods))])),
             body(map(vec![("disabled", disabled)])),
             body(map(vec![
@@ -128,6 +136,13 @@ impl Settings {
                 ("difficulty", text(self.difficulty.clone())),
                 ("language", text(self.language.clone())),
             ])),
+            body(map(vec![(
+                "brightness",
+                match self.brightness {
+                    Some(b) => Node::text(format!("{b}"), 0),
+                    None => Node::null(0),
+                },
+            )])),
         )
     }
 
@@ -209,11 +224,15 @@ mod tests {
                 disabled_packs: vec!["a".into(), "b".into()],
                 campaign: Some("default".into()),
                 difficulty: None,
-                language: None
+                language: None,
+                brightness: None,
             }
         );
         assert_eq!(Settings::parse_legacy_ini(&s.to_ini_text()), s);
         assert_eq!(Settings::parse(&s.to_yaml_text()), s, "{}", s.to_yaml_text());
+        let bright = Settings { brightness: Some(1.25), ..s.clone() };
+        assert_eq!(Settings::parse(&bright.to_yaml_text()), bright, "{}", bright.to_yaml_text());
+        assert_eq!(Settings::parse("graphics: {brightness: 9}").brightness, Some(2.0), "clamped");
         assert_eq!(Settings::parse(&Settings::default().to_yaml_text()), Settings::default());
         assert_eq!(Settings::load(Path::new("/no/such/dir")), Settings::default());
         let dir = std::env::temp_dir().join(format!("oi-settings-save-{}", std::process::id()));

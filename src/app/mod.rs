@@ -174,10 +174,13 @@ pub async fn run(options: Options) {
     for w in &content.warnings {
         eprintln!("warning: {w}");
     }
-    let renderer = match Renderer::new() {
+    let mut renderer = match Renderer::new() {
         Ok(r) => r,
         Err(e) => return error_screen(&e).await,
     };
+    if let Some(dir) = crate::cli::user_data_dir() {
+        renderer.brightness = crate::settings::Settings::load(&dir).brightness.unwrap_or(1.0);
+    }
     let sounds = SoundBank::load(&content).await;
     for e in &sounds.errors {
         eprintln!("sound: {e}");

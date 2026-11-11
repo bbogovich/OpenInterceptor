@@ -364,6 +364,16 @@ impl Ship {
         self.velocity.dot(self.forward())
     }
 
+    /// The velocity in the ship's own axes: `x` sideways drift (+ right), `y` vertical
+    /// drift (+ up), `z` forward speed (+ ahead). A Newtonian ship keeps drifting after
+    /// it turns, so `x` and `y` show how far its motion is off the nose.
+    pub fn body_velocity(&self) -> Vec3 {
+        // Rotating by the inverse (conjugate) orientation turns a world vector into
+        // body axes. The engine's "forward" is -Z, so z is negated to read forward +.
+        let v = self.rotation.conjugate() * self.velocity;
+        Vec3::new(v.x, v.y, -v.z)
+    }
+
     /// The first fitted system of `kind`, with its index.
     pub fn system(&self, kind: SystemKind) -> Option<(usize, &SystemState)> {
         self.systems.iter().enumerate().find(|(_, s)| s.kind == kind)
@@ -406,6 +416,13 @@ pub struct Bolt {
     pub muzzle_speed: f32,
     pub damage: f32,
     pub color: [f32; 3],
+    /// Seconds the bolt still moves in its owner's frame (`flight: {bolt_frame: ship}`);
+    /// 0 for an ordinary bolt that flies in a straight line.
+    pub carry: f32,
+    /// While `carry > 0`: the bolt's offset from, and velocity relative to, its owner,
+    /// both in the owner's body axes, so they turn when the owner turns.
+    pub local_offset: Vec3,
+    pub local_velocity: Vec3,
 }
 
 impl Bolt {
@@ -1092,6 +1109,21 @@ behaviours:
 mod tests {
     use super::test_support::*;
     use super::*;
+
+    #[test]
+    fn body_velocity_reads_drift_in_the_ships_own_axes() {
+        let mut w = world();
+        let fighter = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(fighter, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let s = w.get_mut(me).unwrap();
+        s.velocity = Vec3::new(40.0, -10.0, -300.0);
+        assert_eq!(s.body_velocity(), Vec3::new(40.0, -10.0, 300.0), "right 40, down 10, ahead 300");
+        // Yawed 90 degrees left, the nose points along -X (world); the same world motion is
+        // now mostly sideways: 300 m/s to the ship's right, 40 m/s backwards.
+        s.rotation = Quat::from_rotation_y(std::f32::consts::FRAC_PI_2);
+        let v = s.body_velocity();
+        assert!((v - Vec3::new(300.0, -10.0, -40.0)).length() < 1e-3, "{v:?}");
+    }
 
     #[test]
     fn generational_handles_detect_reuse() {

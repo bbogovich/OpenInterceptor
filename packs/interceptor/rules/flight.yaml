@@ -13,6 +13,11 @@ flight:
   radar_range: 6000
   # Hyperdrive countdown in seconds (engine value; the original counts down on screen).
   hyperspace_time: 10
+  # Shots: plain physics, as the original (engine value; recorded in Deviations until
+  # observed side by side). Lighting is an engine choice for visibility: the rim
+  # outlines dark alien hulls, distant craft show as radar-coloured dots.
+  bolt_frame: world
+  lighting: {ambient: 0.30, sun: 0.85, rim: 0.35, distant_dot: 4}
 
 # Event sounds by the original's cue names (ProgramFiles/soundfx.ini on the CD).
 audio:

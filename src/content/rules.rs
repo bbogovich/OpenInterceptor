@@ -364,6 +364,47 @@ pub struct FlightRules {
     /// Radar and target-marker colours by relation to the player:
     /// `flight: {radar_colors: {friendly: […], hostile: […], neutral: […]}}`.
     pub radar_colors: RadarColors,
+    /// How a fired bolt moves: `flight: {bolt_frame: world | ship}` (see [`BoltFrame`]).
+    pub bolt_frame: BoltFrame,
+    /// With `bolt_frame: ship`, seconds a bolt stays in the firing ship's frame
+    /// (`flight: {bolt_carry: 0.3s}`).
+    pub bolt_carry: f32,
+    /// Scene lighting: `flight: {lighting: {ambient, sun, rim, distant_dot}}`.
+    pub lighting: Lighting,
+}
+
+/// How a bolt (beam-weapon shot) moves once fired.
+///
+/// - `World` (the default) is plain physics: a bolt leaves with the ship's velocity,
+///   plus the extra sideways speed the muzzle has from the ship's turn (ω × r), plus
+///   its muzzle speed along the gun. After that it flies straight, whatever the ship
+///   does. Seen from a drifting ship it still moves straight ahead of the guns,
+///   because it shares the ship's drift.
+/// - `Ship` is an arcade option: for `bolt_carry` seconds the bolt moves in the ship's
+///   own frame, so it turns with the nose; then it continues in a straight line.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum BoltFrame {
+    #[default]
+    World,
+    Ship,
+}
+
+/// How ships are lit: `ambient` + `sun` × (facing the sun) + `rim` × (edge-on to the
+/// camera). A bright rim outlines dark hulls against black space. `distant_dot` (pixels)
+/// draws a ship smaller than that on screen as a dot in its radar colour, so far-off
+/// craft never vanish into the starfield (0 = off).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Lighting {
+    pub ambient: f32,
+    pub sun: f32,
+    pub rim: f32,
+    pub distant_dot: f32,
+}
+
+impl Default for Lighting {
+    fn default() -> Self {
+        Lighting { ambient: 0.30, sun: 0.85, rim: 0.0, distant_dot: 4.0 }
+    }
 }
 
 /// What a contact is to the player, for its radar colour.
@@ -1003,6 +1044,27 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 None => d,
             }
         },
+        bolt_frame: match fl.and_then(|g| g.str("bolt_frame")).map(str::to_ascii_lowercase).as_deref() {
+            None | Some("world") => BoltFrame::World,
+            Some("ship") => BoltFrame::Ship,
+            Some(other) => {
+                errors.push(format!("flight: unknown bolt_frame '{other}' (world or ship)"));
+                BoltFrame::World
+            }
+        },
+        bolt_carry: fl.and_then(|g| g.qty("bolt_carry", Unit::Time)).unwrap_or(0.3).max(0.0),
+        lighting: {
+            let d = Lighting::default();
+            match fl.and_then(|g| g.node("lighting")).map(Get) {
+                Some(l) => Lighting {
+                    ambient: l.num("ambient").unwrap_or(d.ambient).max(0.0),
+                    sun: l.num("sun").unwrap_or(d.sun).max(0.0),
+                    rim: l.num("rim").unwrap_or(d.rim).max(0.0),
+                    distant_dot: l.num("distant_dot").unwrap_or(d.distant_dot).max(0.0),
+                },
+                None => d,
+            }
+        },
     };
     let sounds = sounds_node
         .map(|(n, pack)| {
@@ -1537,7 +1599,7 @@ cockpits:
     model_offset: [0, -0.5, 0]
     design: [1920, 1080]
     anchors: {mfd: {at: [0, -0.3, -0.8], normal: [0, 0.4, 0.9], size: [0.2, 0.15]}}
-flight: {boost: 120}
+flight: {boost: 120, bolt_frame: ship, bolt_carry: 0.2s, lighting: {rim: 0.4}}
 sounds: {lock: 'original:target lock.wav'}
 ";
 
@@ -1561,6 +1623,8 @@ sounds: {lock: 'original:target lock.wav'}
         assert_eq!(rules.playable_ships(), vec![rules.ship_id("interceptor").unwrap()]);
         let a = rules.cockpit("A").unwrap();
         assert_eq!(a.instruments["radar"], [10.0, 20.0, 30.0, 40.0]);
+        assert_eq!((rules.flight.bolt_frame, rules.flight.bolt_carry), (BoltFrame::Ship, 0.2));
+        assert_eq!(rules.flight.lighting, Lighting { rim: 0.4, ..Lighting::default() }, "unset keys keep defaults");
         assert_eq!(
             (a.design, a.model.as_deref(), a.image.as_deref()),
             ([640.0, 480.0], None, Some("original:CockpitA.dll#12000"))

@@ -331,6 +331,14 @@
             "neutral": {"description": "everyone else", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
             "objective": {"description": "objects the player must protect (scenario protect: true)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
           }},
+        "bolt_frame": {"description": "world: shots fly straight once fired (physics); ship: they turn with the nose for bolt_carry", "enum": ["world", "ship"]},
+        "bolt_carry": {"description": "with bolt_frame: ship, how long a shot stays in the ship's frame", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "lighting": {"description": "how ships are lit", "type": "object", "additionalProperties": false, "properties": {
+            "ambient": {"description": "light everywhere (0.30)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "sun": {"description": "extra light on faces towards the sun (0.85)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "rim": {"description": "extra light on edges seen side-on, outlining hulls (0)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "distant_dot": {"description": "pixels: smaller ships are drawn as a dot in their radar colour (4; 0 = off)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

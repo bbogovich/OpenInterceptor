@@ -8,6 +8,11 @@ flight:
   lock_angle: 12
   radar_range: 6000
   hyperspace_time: 8
+  # Shots fly straight once fired (physics); "ship" makes them turn with the nose for
+  # bolt_carry. Lighting: a rim light outlines hulls against black space, and ships
+  # smaller than distant_dot pixels are drawn as a dot in their radar colour.
+  bolt_frame: world
+  lighting: {ambient: 0.32, sun: 0.85, rim: 0.45, distant_dot: 4}
 
 # Event sounds, synthesised by tools/default_assets/sounds.py.
 sounds:

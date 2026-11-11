@@ -176,7 +176,8 @@ const HUD_BRIGHT: Color = Color::new(0.75, 1.0, 0.8, 1.0);
 /// The throttle and status line: throttle, speed, and the drive and system flags.
 fn status_line(rules: &crate::content::rules::Ruleset, me: &crate::sim::Ship) -> String {
     let class = rules.ship(me.class);
-    let mut status = format!("THR {:>3.0}%  {:>4.0} m/s", me.throttle * 100.0, me.forward_speed());
+    let v = me.body_velocity();
+    let mut status = format!("THR {:>3.0}%  {:>4.0} m/s  {}", me.throttle * 100.0, v.z, drift_text(v));
     if me.reverse {
         status += "  REV";
     }
@@ -197,6 +198,11 @@ fn status_line(rules: &crate::content::rules::Ruleset, me: &crate::sim::Ship) ->
         status += &flag;
     }
     status
+}
+
+/// Sideways (X, + right) and vertical (Y, + up) drift in whole m/s, signed: "X+45 Y-12".
+fn drift_text(body_velocity: Vec3) -> String {
+    format!("X{:+.0} Y{:+.0}", body_velocity.x, body_velocity.y)
 }
 
 /// Draws one instrument into the rectangle `r` (pixels of whatever is being drawn to:
@@ -448,6 +454,18 @@ pub fn draw_targeting(f: &HudFrame) {
     draw_line(centre.x + s * 0.4, centre.y, centre.x + s, centre.y, 1.5, HUD_GREEN);
     draw_line(centre.x, centre.y - s, centre.x, centre.y - s * 0.4, 1.5, HUD_GREEN);
     draw_line(centre.x, centre.y + s * 0.4, centre.x, centre.y + s, 1.5, HUD_GREEN);
+    // Flight-path marker: where the ship is actually going. With no drift it sits on
+    // the crosshair; sideways drift slides it off to the side.
+    if me.velocity.length() > 5.0 {
+        let ahead = f.camera.position + me.velocity.normalize() * 1000.0;
+        if let Some(p) = f.camera.project(ahead, screen) {
+            let r = s * 0.45;
+            draw_circle_lines(p.x, p.y, r, 1.5, HUD_GREEN);
+            draw_line(p.x - r * 2.2, p.y, p.x - r, p.y, 1.5, HUD_GREEN);
+            draw_line(p.x + r, p.y, p.x + r * 2.2, p.y, 1.5, HUD_GREEN);
+            draw_line(p.x, p.y - r, p.x, p.y - r * 2.0, 1.5, HUD_GREEN);
+        }
+    }
     let Some(target) = me.target.and_then(|t| f.world.get(t)) else { return };
     let rules = &f.world.rules;
     let color = col(super::contact_color(rules, me.faction, target));
@@ -541,6 +559,12 @@ mod tests {
         assert_eq!(g(0.1, true), Some((true, false)), "red");
         assert_eq!(g(0.0, true), Some((true, false)));
         assert_eq!(g(0.0, false), None, "down: blinks");
+    }
+
+    #[test]
+    fn drift_reads_signed_whole_metres_per_second() {
+        assert_eq!(drift_text(Vec3::new(45.4, -12.0, 300.0)), "X+45 Y-12");
+        assert_eq!(drift_text(Vec3::ZERO), "X+0 Y+0");
     }
 
     #[test]

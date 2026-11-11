@@ -8,6 +8,8 @@
 //!   does an undefended rocket last against these enemies at this difficulty?
 //! - `ai` — flown by the ship class's own behaviour, like a wingman: roughly, can an
 //!   average pilot in this ship win?
+//! - `idle` — sits still and does nothing: in a defence mission, how long does the
+//!   player have before the enemy wins on its own?
 //!
 //! ```text
 //! openinterceptor --campaign default --soak rocket-vs-saucer --ship comet --difficulty cadet
@@ -23,6 +25,28 @@ use std::sync::Arc;
 pub enum SoakPilot {
     Passive,
     Ai,
+    Idle,
+}
+
+impl SoakPilot {
+    /// Reads `passive`, `ai` or `idle` (the `--soak-pilot` values).
+    pub fn parse(s: &str) -> Option<SoakPilot> {
+        match s {
+            "passive" => Some(SoakPilot::Passive),
+            "ai" => Some(SoakPilot::Ai),
+            "idle" => Some(SoakPilot::Idle),
+            _ => None,
+        }
+    }
+
+    /// The name `parse` reads.
+    pub fn name(self) -> &'static str {
+        match self {
+            SoakPilot::Passive => "passive",
+            SoakPilot::Ai => "ai",
+            SoakPilot::Idle => "idle",
+        }
+    }
 }
 
 /// What a soak run found.
@@ -87,9 +111,7 @@ pub fn run_mission(
     }
     let ticks = (seconds / TICK) as usize;
     for _ in 0..ticks {
-        if pilot == SoakPilot::Passive {
-            passive_controls(&mut w, player);
-        }
+        drive(&mut w, player, pilot);
         w.step();
         run.update(&mut w);
         if run.debrief.is_some() {
@@ -107,6 +129,19 @@ pub fn run_mission(
         hull: (s.hull / rules.ship(s.class).hull.max(1.0)).clamp(0.0, 1.0),
     };
     Ok((report, d.map(|d| d.result)))
+}
+
+/// Sets the player's controls for this tick (the AI pilot flies itself).
+fn drive(w: &mut World, player: crate::sim::ShipId, pilot: SoakPilot) {
+    match pilot {
+        SoakPilot::Passive => passive_controls(w, player),
+        SoakPilot::Idle => {
+            if let Some(s) = w.get_mut(player) {
+                s.controls = crate::sim::Controls { throttle_set: Some(0.0), ..Default::default() };
+            }
+        }
+        SoakPilot::Ai => {}
+    }
 }
 
 /// The passive pilot: 60 % throttle, nose on the nearest enemy, never shooting.
@@ -147,9 +182,7 @@ pub fn run(
     let mut report = SoakReport { destroyed_at: None, seconds, hits_taken: 0, kills: 0, enemies, hull: 1.0 };
     let ticks = (seconds / TICK) as usize;
     for k in 0..ticks {
-        if pilot == SoakPilot::Passive {
-            passive_controls(&mut w, player);
-        }
+        drive(&mut w, player, pilot);
         w.step();
         for e in &w.events {
             match e {
@@ -202,5 +235,14 @@ mod tests {
             easy.summary(),
             hard.summary()
         );
+    }
+
+    /// The balance promise for defence missions: at the easiest level the defended
+    /// station holds for at least 150 s with nobody defending it, so a player always has
+    /// time to engage more than one attacker.
+    #[test]
+    fn at_cadet_an_undefended_station_holds_for_150_seconds() {
+        let (r, result) = run_mission(&content("cadet"), "defend_station", None, 150.0, SoakPilot::Idle).unwrap();
+        assert_eq!(result, None, "still running at 150 s, not {result:?} ({})", r.summary());
     }
 }

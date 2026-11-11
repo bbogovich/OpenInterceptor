@@ -38,9 +38,9 @@ OPTIONS:
     --frames <N>        Frames to run before --screenshot
     --soak <SCENARIO>   Play a scenario without a window for --seconds (default 60) and
                         report what happened to the player (balance testing); the
-                        player is --soak-pilot passive (default) or ai
+                        player is --soak-pilot passive (default), ai or idle
     --seconds <N>       Length of a --soak run
-    --soak-pilot <P>    passive or ai
+    --soak-pilot <P>    passive, ai or idle
     --write-schemas <DIR>  Write JSON Schema files for the mod file types (pack.yaml,
                         rules, scenarios) for editor completion and checking, then exit
     --check             Validate all content without opening a window, then exit
@@ -71,7 +71,7 @@ pub struct Options {
     pub write_schemas: Option<PathBuf>,
     pub soak: Option<String>,
     pub seconds: Option<f32>,
-    pub soak_ai: bool,
+    pub soak_pilot: Option<crate::soak::SoakPilot>,
     pub frames: Option<u32>,
     pub check: bool,
     pub extract: Option<PathBuf>,
@@ -108,11 +108,11 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
                 o.seconds = Some(v.parse().map_err(|_| format!("--seconds needs a number, not '{v}'"))?);
             }
             "--soak-pilot" => {
-                o.soak_ai = match value("--soak-pilot")?.as_str() {
-                    "ai" => true,
-                    "passive" => false,
-                    other => return Err(format!("--soak-pilot is passive or ai, not '{other}'")),
-                }
+                let v = value("--soak-pilot")?;
+                o.soak_pilot = Some(
+                    crate::soak::SoakPilot::parse(&v)
+                        .ok_or(format!("--soak-pilot is passive, ai or idle, not '{v}'"))?,
+                );
             }
             "--frames" => {
                 let v = value("--frames")?;

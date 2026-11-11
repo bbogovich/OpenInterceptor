@@ -44,7 +44,7 @@ pub struct RoleRun {
 /// What the debrief screen shows.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Debrief {
-    /// `win`, `lose`, `draw` or `retreat`.
+    /// `win`, `lose`, `draw`, `retreat` or `killed` (the player's craft destroyed).
     pub result: String,
     pub text: String,
     /// `(optional objective, achieved)`.
@@ -354,9 +354,18 @@ impl MissionRun {
         }
         // 3. The end.
         let time = (w.time - self.start) as f32;
-        let player_gone = w.ships[self.player.index as usize].departed;
+        let me = &w.ships[self.player.index as usize];
+        let player_gone = me.departed;
+        // `same_slot` guards against a reused slot: a destroyed player's slot may hold a
+        // new ship later, and that ship's state says nothing about the player.
+        let player_killed = !w.same_slot(self.player) || !me.alive;
         let result = if player_gone {
             Some("retreat")
+        } else if player_killed {
+            // Checked before the mission's own conditions, so the debrief says what
+            // actually happened ("your craft was destroyed"), not the lose text, which
+            // usually describes the objective failing (e.g. the base falling).
+            Some("killed")
         } else if self.def.lose.clone().is_some_and(|c| check(self, w, &c)) {
             Some("lose")
         } else if self.def.win.clone().is_some_and(|c| check(self, w, &c)) {
@@ -369,7 +378,10 @@ impl MissionRun {
         if let Some(result) = result {
             let result = result.to_string();
             let mut campaign = Vec::new();
-            for a in self.def.outcome(&result) {
+            // A mission without its own `killed` outcomes counts it as a loss.
+            let has_own = self.def.outcomes.iter().any(|(r, _)| r == "killed");
+            let key = if result == "killed" && !has_own { "lose" } else { result.as_str() };
+            for a in self.def.outcome(key) {
                 match a.scope {
                     Scope::Battle => lines.extend(a.args.first().cloned()),
                     Scope::Campaign => campaign.push(a.display()),
@@ -380,6 +392,7 @@ impl MissionRun {
                 "win" => "MISSION ACCOMPLISHED".into(),
                 "lose" => "MISSION FAILED".into(),
                 "draw" => "MISSION ENDED".into(),
+                "killed" => "YOUR CRAFT WAS DESTROYED".into(),
                 _ => "LEFT THE BATTLE".into(),
             });
             self.debrief = Some(Debrief {
@@ -485,5 +498,20 @@ mod tests {
             mission("player: {class: fighter}\nroles:\n  x: {class: raider, ai: idle, at: {distance: 5km}}\ntimer: {after: 1s, then: draw}\n");
         run(&mut w, &mut m, 2.0);
         assert_eq!(m.debrief.as_ref().unwrap().result, "draw");
+    }
+
+    #[test]
+    fn the_players_death_is_its_own_result_with_the_lose_outcomes() {
+        let text = "player: {class: fighter}\nroles:\n  ward: {class: fighter, ai: idle, protect: true, at: {distance: 1km}}\n\
+                    objectives: {lose: destroyed(ward) or not player_alive}\noutcomes: {lose: [lose(ward)]}\n\
+                    debrief: {lose: The ward fell}\n";
+        let (mut w, mut m) = mission(text);
+        let me = m.player;
+        kill(&mut w, me);
+        run(&mut w, &mut m, 0.5);
+        let d = m.debrief.as_ref().unwrap();
+        assert_eq!(d.result, "killed", "not 'lose': the ward is fine");
+        assert_eq!(d.text, "", "the lose text describes the ward, so it is not shown");
+        assert_eq!(d.campaign, vec!["lose(ward)".to_string()], "the lose outcomes apply");
     }
 }

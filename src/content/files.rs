@@ -445,6 +445,26 @@ fn flight() -> Ty {
             ]),
             "radar and target-marker colours by relation to the player",
         ),
+        f(
+            "bolt_frame",
+            Ty::Enum(&["world", "ship"]),
+            "world: shots fly straight once fired (physics); ship: they turn with the nose for bolt_carry",
+        ),
+        f("bolt_carry", time(), "with bolt_frame: ship, how long a shot stays in the ship's frame"),
+        f(
+            "lighting",
+            Ty::Struct(vec![
+                f("ambient", Ty::Num, "light everywhere (0.30)"),
+                f("sun", Ty::Num, "extra light on faces towards the sun (0.85)"),
+                f("rim", Ty::Num, "extra light on edges seen side-on, outlining hulls (0)"),
+                f(
+                    "distant_dot",
+                    Ty::Num,
+                    "pixels: smaller ships are drawn as a dot in their radar colour (4; 0 = off)",
+                ),
+            ]),
+            "how ships are lit",
+        ),
     ])
 }
 
