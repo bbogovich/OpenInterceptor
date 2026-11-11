@@ -77,7 +77,10 @@ uniform mat4 Projection;
 uniform vec4 SunDirection;
 uniform vec4 Tint;
 // x = ambient, y = sun, z = rim, w = gamma (see `Lighting` and `Renderer::brightness`).
-uniform vec4 Light;
+// Declared `mediump` in both shaders: GLSL ES requires a uniform shared by the vertex
+// and fragment shaders to have the same precision, or the program fails to link (the
+// vertex shader's default is highp, the fragment shader's is set to mediump below).
+uniform mediump vec4 Light;
 void main() {
     gl_Position = Projection * Model * vec4(position, 1.0);
     // Overlay layer (normal.w) pulls the face towards the camera in depth only.
@@ -101,7 +104,7 @@ precision mediump float;
 varying mediump vec2 uv;
 varying lowp vec4 color;
 uniform sampler2D Texture;
-uniform vec4 Light;
+uniform mediump vec4 Light;
 void main() {
     vec4 c = color * texture2D(Texture, uv);
     // Gamma (Light.w = 1 / brightness): below 1 lifts dark tones more than bright ones,
@@ -748,6 +751,40 @@ pub fn identity() -> Mat4 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// GLSL ES links a program only if every uniform declared in both shaders has the
+    /// same type *and precision*. A mismatch shows up only at start-up on a real GPU
+    /// ("shader error"), so the declarations are compared here.
+    #[test]
+    fn uniforms_shared_by_both_lit_shaders_match_exactly() {
+        let uniforms = |src: &str| -> Vec<(String, String)> {
+            src.lines()
+                .map(str::trim)
+                .filter(|l| l.starts_with("uniform "))
+                .filter_map(|l| {
+                    let decl = l.trim_end_matches(';').to_string();
+                    let name = decl.split_whitespace().last()?.to_string();
+                    Some((name, decl))
+                })
+                .collect()
+        };
+        let vertex = uniforms(&lit_vertex_source());
+        let fragment = uniforms(LIT_FRAGMENT);
+        let mut shared = 0;
+        for (name, decl) in &fragment {
+            if let Some((_, v)) = vertex.iter().find(|(n, _)| n == name) {
+                shared += 1;
+                assert_eq!(v, decl, "uniform {name} differs between the lit shaders");
+                // No explicit precision means highp in a vertex shader but the
+                // `precision` line's default in a fragment shader: they would differ.
+                assert!(
+                    decl.contains("mediump") || decl.contains("highp") || decl.contains("lowp"),
+                    "{name}: state its precision"
+                );
+            }
+        }
+        assert!(shared >= 1, "Light is used by both");
+    }
 
     #[test]
     fn layer_bias_reaches_the_shader() {
