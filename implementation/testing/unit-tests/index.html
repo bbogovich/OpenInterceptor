@@ -4046,6 +4046,8 @@
       
         
       
+        
+      
     
     
     
@@ -4479,6 +4481,41 @@
     
   
     Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
   
 
     
@@ -5942,8 +5979,14 @@ test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original ga
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
 <p>Since that count, tests named in the requirements' <em>Verified by</em> lines were added with apps
-0.4.3 – 0.4.10 without the full list being regenerated; those named below are listed: app
-0.4.10 (main <code>4edc9d7</code>) adds <code>input::keys_held_when_a_battle_starts_are_ignored_until_released</code>;
+0.4.3 – 0.5.0 without the full list being regenerated; those named below are listed (the
+summary rows of <code>hud</code>, <code>remote::protocol</code> and <code>sim::systems</code> include the 0.4.11 – 0.5.0 ones): app <strong>0.5.0</strong> (main <code>0a1c340</code>) adds
+<code>remote::protocol::tests::themes_layer_per_cockpit_and_become_css_variables</code>; app <strong>0.4.15</strong>
+(main <code>e2b5012</code>) adds <code>remote::protocol::tests::contacts_are_in_the_players_axes_and_targets_decode</code>
+and <code>hud::tests::the_message_log_reports_what_is_new_since_a_count</code>; app <strong>0.4.14</strong> (main
+<code>e51eca9</code>) adds <code>remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group</code>;
+app <strong>0.4.11</strong> (main <code>db2f264</code>) adds <code>sim::systems::tests::sliders_set_power_levels_and_balance_outright</code>;
+app 0.4.10 (main <code>4edc9d7</code>) adds <code>input::keys_held_when_a_battle_starts_are_ignored_until_released</code>;
 app 0.4.8 (main <code>f1c8be8</code>) adds <code>remote::http::ranges_are_served_as_partial_content</code>, and app 0.4.7
 (main <code>c42d773</code>) adds the <strong>ignored</strong> helper <code>remote::server::tests::serve_for_a_browser</code>, which
 is not a unit test and is not counted: <code>cargo test serve_for_a_browser -- --ignored --nocapture</code>
@@ -6104,8 +6147,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>sim::systems</code></td>
-<td>13</td>
-<td><strong>Power</strong>: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; <strong>damage</strong>: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; <strong>hyperspace</strong> countdown, abort and departure; <strong>tractor</strong> hold and capture on jump, and its refusals (power, fitting, range); <strong>cloak</strong> hides from enemy sensors beyond range; <strong>ECM</strong> makes missiles lose their target</td>
+<td>14</td>
+<td><strong>Power</strong>: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; <strong>damage</strong>: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; <strong>hyperspace</strong> countdown, abort and departure; <strong>tractor</strong> hold and capture on jump, and its refusals (power, fitting, range); <strong>cloak</strong> hides from enemy sensors beyond range; <strong>ECM</strong> makes missiles lose their target; <strong>the console's sliders set power levels and balance outright</strong>, within the budget</td>
 </tr>
 <tr>
 <td><code>sim::guidance</code></td>
@@ -6189,8 +6232,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>hud</code></td>
-<td>6</td>
-<td>Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), <strong>power readout and system lamps</strong>, message expiry</td>
+<td>7</td>
+<td>Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), <strong>power readout and system lamps</strong>, message expiry; <strong>the message log reports what is new since a count</strong> (the console's events, kept-lines limit)</td>
 </tr>
 <tr>
 <td><code>hud::layout</code></td>
@@ -6274,8 +6317,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>remote::protocol</code></td>
-<td>3</td>
-<td>Console messages decode, unknown actions and types are refused, throttle clamped; <strong>the catalogue lists every action and marks missing equipment unavailable</strong>; <strong>telemetry reports drift in body axes and the target's rotation relative to the player</strong></td>
+<td>6</td>
+<td>Console messages decode (incl. <code>power</code>), unknown actions and types are refused, throttle clamped; <strong>the catalogue lists every action and marks missing equipment unavailable</strong>; <strong>telemetry reports drift in body axes and the target's rotation relative to the player</strong>; <strong><code>model</code> messages are normalised to radius 1 with a colour per group</strong> (average colour ignores transparent pixels); <strong><code>contacts</code> are in the player's axes</strong> (a craft dead ahead after a 90° yaw), relation and target flag, and <code>target {id}</code> decodes (bad ids refused); <code>event</code>; <strong>themes layer per cockpit and become CSS variables</strong> (cockpit override over the base, <code>--font</code>, <code>--corner</code>, an empty theme sends none)</td>
 </tr>
 <tr>
 <td><code>remote::server</code></td>
@@ -6322,7 +6365,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>formats::xmsh</code></strong>: <code>mesh_without_lods_is_invalid</code>, <code>parses_a_hand_built_mesh</code>, <code>polygon_flags_are_read</code>, <code>rejects_bad_signature_and_bad_references</code>, <code>signed_edges_give_the_vertex_loop</code>, <code>truncated_mesh_is_an_error</code>, <code>untextured_polygons_have_no_texture</code></p>
 <p><strong><code>formats::xtxr</code></strong>: <code>decodes_pixels_through_palette_zero</code>, <code>expands_rgb555_to_full_range</code>, <code>rejects_bad_data</code></p>
 <p><strong><code>formats::yaml</code></strong>: <code>block_scalars_and_wrapped_flows</code>, <code>empty_and_scalar_documents</code>, <code>keys_with_colons_and_urls_stay_whole</code>, <code>mappings_sequences_and_scalars</code>, <code>unsupported_and_broken_input_is_an_error_with_a_line</code>, <code>writing_round_trips</code></p>
-<p><strong><code>hud</code></strong>: <code>gauges_sweep_and_read_the_ship</code>, <code>layout_scales_by_height_and_centres</code>, <code>messages_expire_and_keep_the_newest</code>, <code>mfd_pages_cycle_and_describe</code>, <code>power_and_system_readouts</code>, <code>radar_places_contacts_by_angle</code></p>
+<p><strong><code>hud</code></strong>: <code>gauges_sweep_and_read_the_ship</code>, <code>layout_scales_by_height_and_centres</code>, <code>messages_expire_and_keep_the_newest</code>, <code>mfd_pages_cycle_and_describe</code>, <code>power_and_system_readouts</code>, <code>radar_places_contacts_by_angle</code>, <code>the_message_log_reports_what_is_new_since_a_count</code></p>
 <p><strong><code>hud::draw</code></strong>: <code>drift_reads_signed_whole_metres_per_second</code>, <code>lamp_grids_follow_the_panel_shape</code>, <code>shield_rings_go_green_amber_red_then_blink</code></p>
 <p><strong><code>hud::glyphs</code></strong>: <code>sizes_snap_down_onto_the_ladder</code></p>
 <p><strong><code>hud::layout</code></strong>: <code>corners_lie_on_the_surface_with_world_up</code>, <code>dragging_and_scaling</code>, <code>rays_pick_the_nearest_surface</code>, <code>saved_layouts_are_valid_rules</code></p>
@@ -6335,7 +6378,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>remote</code></strong>: <code>held_actions_last_until_released_and_taps_fire_once</code></p>
 <p><strong><code>remote::http</code></strong>: <code>bad_requests_are_errors_and_responses_are_well_formed</code>, <code>parses_a_websocket_upgrade_and_waits_for_the_blank_line</code>, <code>ranges_are_served_as_partial_content</code></p>
 <p><strong><code>remote::json</code></strong>: <code>bad_and_hostile_input_is_an_error</code>, <code>parses_objects_arrays_strings_and_numbers</code>, <code>writes_compact_objects_that_parse_back</code></p>
-<p><strong><code>remote::protocol</code></strong>: <code>decodes_console_messages_and_refuses_unknown_ones</code>, <code>telemetry_reports_drift_and_the_targets_relative_rotation</code>, <code>the_catalogue_lists_every_action_and_marks_missing_equipment</code></p>
+<p><strong><code>remote::protocol</code></strong>: <code>contacts_are_in_the_players_axes_and_targets_decode</code>, <code>decodes_console_messages_and_refuses_unknown_ones</code>, <code>model_messages_are_normalised_and_coloured_per_group</code>, <code>telemetry_reports_drift_and_the_targets_relative_rotation</code>, <code>the_catalogue_lists_every_action_and_marks_missing_equipment</code>, <code>themes_layer_per_cockpit_and_become_css_variables</code></p>
 <p><strong><code>remote::server</code></strong>: <code>only_local_network_peers_are_served</code>, <code>pairing_codes_are_six_digits_and_vary_with_the_seed</code>, <code>serves_the_page_pairs_and_relays_actions_over_a_real_socket</code>; ignored helper: <code>serve_for_a_browser</code></p>
 <p><strong><code>remote::ws</code></strong>: <code>frames_decode_masked_wait_for_more_bytes_and_encode</code>, <code>protocol_violations_are_errors</code>, <code>sha1_and_base64_match_the_published_test_vectors</code></p>
 <p><strong><code>render</code></strong>: <code>billboards_and_streaks_build_two_triangles</code>, <code>colour_helpers_clamp</code>, <code>layer_bias_reaches_the_shader</code>, <code>uniforms_shared_by_both_lit_shaders_match_exactly</code></p>
@@ -6354,7 +6397,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>sim::combat</code></strong>: <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>, <code>a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>beams_fire_cost_energy_respect_cooldown_and_hit</code>, <code>beams_need_energy</code>, <code>damage_layers_and_aft_shield</code>, <code>empty_racks_report_and_cycle</code>, <code>fighters_bounce_off_each_other_and_stations</code>, <code>link_modes_cycle_and_change_how_many_fire</code>, <code>lock_builds_in_the_cone_and_missile_homes_in</code>, <code>lock_is_lost_outside_the_cone_and_dumbfire_works</code>, <code>point_defence_shoots_down_hostile_missiles</code>, <code>proximity_fuse_fires_on_a_near_miss</code>, <code>rotate_towards_limits_the_turn</code>, <code>with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried</code></p>
 <p><strong><code>sim::flight</code></strong>: <code>afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off</code>, <code>assisted_model_holds_throttle_speed_and_damps_drift</code>, <code>brake_stops_against_the_direction_of_travel</code>, <code>energy_and_shields_recharge_up_to_capacity</code>, <code>half_throttle_is_half_the_acceleration</code>, <code>helpers</code>, <code>newtonian_accelerates_to_the_cap_and_coasts</code>, <code>pitching_up_raises_the_nose_and_rates_fall_with_speed</code>, <code>reverse_thrust_slows_and_then_backs_up</code>, <code>speed_hold_matches_speed_and_cancels_drift</code>, <code>static_objects_do_not_move</code>, <code>the_arena_edge_halts_outward_motion</code>, <code>turning_does_not_steer_the_velocity</code>, <code>vct_thrusts_sideways</code>, <code>yaw_right_and_roll_right_turn_the_expected_way</code></p>
 <p><strong><code>sim::guidance</code></strong>: <code>cloaked_wait_sleeps_until_prey_comes_near</code>, <code>cluster_splits_into_submunitions</code>, <code>damage_modes</code>, <code>doppelganger_launches_a_decoy_ship_that_expires</code>, <code>homing_hits_and_dumbfire_misses_an_offset_target</code>, <code>parallax_decoys_lure_enemy_missiles</code>, <code>sidestep_still_arrives</code></p>
-<p><strong><code>sim::systems</code></strong>: <code>balance_caps_and_message</code>, <code>cloaked_ships_vanish_from_enemy_sensors_beyond_range</code>, <code>cycling_wraps_to_a</code>, <code>damage_knocks_systems_out_and_repairs_bring_them_back</code>, <code>disabled_when_engines_and_manoeuvring_are_out</code>, <code>ecm_makes_incoming_missiles_lose_their_target</code>, <code>hyperspace_counts_down_aborts_and_departs</code>, <code>raising_takes_power_from_the_other_setting</code>, <code>requests_change_power_and_balance</code>, <code>shield_balance_moves_points_forward_and_recharge_follows_power</code>, <code>systems_can_be_destroyed_beyond_repair</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>, <code>tractor_needs_power_a_fitting_and_a_target_in_range</code></p>
+<p><strong><code>sim::systems</code></strong>: <code>balance_caps_and_message</code>, <code>cloaked_ships_vanish_from_enemy_sensors_beyond_range</code>, <code>cycling_wraps_to_a</code>, <code>damage_knocks_systems_out_and_repairs_bring_them_back</code>, <code>disabled_when_engines_and_manoeuvring_are_out</code>, <code>ecm_makes_incoming_missiles_lose_their_target</code>, <code>hyperspace_counts_down_aborts_and_departs</code>, <code>raising_takes_power_from_the_other_setting</code>, <code>requests_change_power_and_balance</code>, <code>shield_balance_moves_points_forward_and_recharge_follows_power</code>, <code>sliders_set_power_levels_and_balance_outright</code>, <code>systems_can_be_destroyed_beyond_repair</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>, <code>tractor_needs_power_a_fitting_and_a_target_in_range</code></p>
 <p><strong><code>sim::targeting</code></strong>: <code>cycles_forwards_and_backwards_with_wraparound</code>, <code>in_sights_picks_the_most_central</code>, <code>nearest_hostile_ignores_friends</code>, <code>nothing_to_target</code></p>
 <p><strong><code>soak</code></strong>: <code>at_cadet_an_undefended_station_holds_for_150_seconds</code>, <code>default_campaign_difficulty_scales_enemy_lethality</code></p>
 <h2 id="running">Running<a class="headerlink" href="#running" title="Permanent link">&para;</a></h2>

@@ -1620,6 +1620,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Theme
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1637,10 +1670,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#messages-still-planned" class="md-nav__link">
+  <a href="#still-planned" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Messages still planned
+        Still planned
       
     </span>
   </a>
@@ -4123,6 +4156,8 @@
       
         
       
+        
+      
     
     
     
@@ -4556,6 +4591,41 @@
     
   
     Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
   
 
     
@@ -6017,6 +6087,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Theme
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contacts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6034,10 +6137,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#messages-still-planned" class="md-nav__link">
+  <a href="#still-planned" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Messages still planned
+        Still planned
       
     </span>
   </a>
@@ -6084,17 +6187,18 @@
 
 
 <h1 id="console-protocol">Console protocol<a class="headerlink" href="#console-protocol" title="Permanent link">&para;</a></h1>
-<p><strong>Status: version 1 implemented (C1, app 0.4.0); the rest planned.</strong> The messages the game and a
+<p><strong>Status: version 1 implemented</strong> (C1, app 0.4.0; <code>power</code> with C2 in 0.4.11; <code>model</code> with C3 in
+0.4.14; <code>contacts</code>, <code>event</code> and <code>target</code> with C4 in 0.4.15; <code>theme</code> with C2b in 0.5.0). Only the
+serial transport (C5) is still planned. The messages the game and a
 control console exchange. The console is the tablet page served by the game
 (<a href="../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a>); later, a
 physical panel over USB serial (<a href="../../definition/control-console/#f-con-007-physical-control-panel">F-CON-007</a>).
 Requirements: <a href="../requirements/control-console/">R-CON-009 – R-CON-021</a>. How it is built:
 <a href="../../implementation/architecture/remote/">Remote console</a>.</p>
-<p>Protocol <strong>version 1</strong> below is as built (<code>src/remote/protocol.rs</code>): <code>hello</code>, <code>welcome</code>,
-<code>denied</code>, <code>catalogue</code>, <code>telemetry</code>, <code>action</code> and <code>throttle</code>. The messages marked <em>planned</em>
-(<code>theme</code>, <code>contacts</code>, <code>model</code>, <code>event</code>) keep the names, directions and rates already decided;
-their fields are fixed when interlude items C2–C4 build them, and this page is updated in the
-same change.</p>
+<p>Protocol <strong>version 1</strong> below is as built (<code>src/remote/protocol.rs</code>): from the console <code>hello</code>,
+<code>action</code>, <code>throttle</code>, <code>power</code>, <code>target</code> and <code>ping</code>; from the game <code>welcome</code>, <code>denied</code>,
+<code>catalogue</code>, <code>telemetry</code>, <code>theme</code>, <code>model</code>, <code>contacts</code> and <code>event</code>. The additions since C1 kept
+the version at 1: each is a new message type, and a page that does not know a type ignores it.</p>
 <h2 id="transport">Transport<a class="headerlink" href="#transport" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Each message is one JSON object with a <code>type</code> field, sent as one WebSocket text frame.</li>
@@ -6122,18 +6226,23 @@ same change.</p>
     else right code
         G-&gt;&gt;C: welcome {version} (server, at once)
         alt no battle running (launcher)
+            G-&gt;&gt;C: theme {vars} (the campaign's base)
             G-&gt;&gt;C: catalogue (every action available)
             loop twice a second
                 G--&gt;&gt;C: telemetry {alive: false, state: "launcher"}
             end
         else in a battle
             G-&gt;&gt;C: welcome {version, campaign} (flight screen)
-            G-&gt;&gt;C: catalogue {groups, actions}
+            G-&gt;&gt;C: catalogue {groups, actions}, theme {vars}
             loop while paired
                 G--&gt;&gt;C: telemetry (20 Hz)
-                G--&gt;&gt;C: catalogue (again when the craft class changes)
+                G--&gt;&gt;C: contacts (5 Hz)
+                G--&gt;&gt;C: model (when the target's class changes)
+                G--&gt;&gt;C: event {text} (each new message-log line)
+                G--&gt;&gt;C: catalogue, theme (again when the craft class changes)
                 C-&gt;&gt;G: action {name, value}
-                C-&gt;&gt;G: throttle {value}
+                C-&gt;&gt;G: throttle {value} · power {beam, shield, balance}
+                C-&gt;&gt;G: target {id}
             end
         end
     end</code></pre>
@@ -6172,6 +6281,16 @@ released.</p>
 <td>The throttle position, clamped to 0 – 1, as if set from a slider.</td>
 </tr>
 <tr>
+<td><code>power</code></td>
+<td><code>beam</code>, <code>shield</code>: number (optional), <code>balance</code>: string (optional)</td>
+<td>Set from the Cockpit layout's sliders (app 0.4.11): the beam and shield charge levels outright (0 = A, clamped to 0 – 15), within the power budget (the game lowers the other setting if the budget needs it), and the shield balance <code>"equal"</code>, <code>"forward"</code> or <code>"aft"</code>. Any field may be left out. An unknown balance is refused.</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>id</code>: string</td>
+<td>Target this contact (app 0.4.15): the <code>id</code> from a <code>contacts</code> entry, <code>"slot:generation"</code>. The game targets it only if it is still on the player's radar; otherwise nothing happens. A malformed id is refused.</td>
+</tr>
+<tr>
 <td><code>ping</code></td>
 <td>none</td>
 <td>Heartbeat, every 250 ms. A console silent for 1 s (<code>HOLD_TIMEOUT</code>) has its held actions released, so a dropped connection never leaves a button pressed.</td>
@@ -6182,6 +6301,8 @@ released.</p>
 <span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"action"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fire_beams"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
 <span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"action"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fire_beams"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
 <span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"throttle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"power"</span><span class="p">,</span><span class="w"> </span><span class="nt">"beam"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">"balance"</span><span class="p">:</span><span class="w"> </span><span class="s2">"aft"</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"target"</span><span class="p">,</span><span class="w"> </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3:0"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="game-console">Game → console<a class="headerlink" href="#game-console" title="Permanent link">&para;</a></h3>
 <table>
@@ -6212,6 +6333,26 @@ released.</p>
 <td><code>telemetry</code></td>
 <td><strong>20 Hz</strong> while paired in a battle; <strong>twice a second</strong> outside one</td>
 <td>See below. Outside a battle: <code>{alive: false, state}</code> only, with <code>state</code> the screen (<code>"launcher"</code>).</td>
+</tr>
+<tr>
+<td><code>theme</code></td>
+<td>On pairing (the campaign's base theme, from the launcher); in a battle with each <code>catalogue</code> (the base with the craft's cockpit layered on)</td>
+<td><code>vars</code>: an object of CSS custom properties: <code>--bg</code>, <code>--panel</code>, <code>--line</code>, <code>--ink</code>, <code>--dim</code>, <code>--hot</code>, <code>--warn</code>, <code>--danger</code>, <code>--off</code> as <code>#rrggbb</code>; <code>--font</code> (a CSS font list); <code>--corner</code> (e.g. <code>"2px"</code>). Only what the theme sets is sent; <code>vars: {}</code> means the page's own look. See <a href="#theme">Theme</a>.</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>When the target's class changes, and again when a tablet pairs</td>
+<td><code>name</code> (class name), <code>groups: [{color, positions, indices}]</code>. See <a href="#model">Model</a>.</td>
+</tr>
+<tr>
+<td><code>contacts</code></td>
+<td><strong>5 Hz</strong> while paired in a battle</td>
+<td><code>range</code> (the radar range, metres), <code>list: [{id, name, relation, station, target, pos, vel}]</code>. See <a href="#contacts">Contacts</a>.</td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td>Each new line of the pilot's message log</td>
+<td><code>text</code>: the line as the message line shows it.</td>
 </tr>
 </tbody>
 </table>
@@ -6315,6 +6456,90 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 <span class="w">            </span><span class="nt">"closing"</span><span class="p">:</span><span class="w"> </span><span class="mi">35</span><span class="p">,</span><span class="w"> </span><span class="nt">"hull"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"shields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="nt">"rotation"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.707</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.707</span><span class="p">]}}</span>
 </code></pre></div>
 <p><em>Values in the examples are illustrative.</em></p>
+<h3 id="theme">Theme<a class="headerlink" href="#theme" title="Permanent link">&para;</a></h3>
+<p>Built by <code>protocol::theme</code> from a <code>rules::ThemeLayer</code> (R-CON-020): the campaign's
+<code>console.theme</code>, with <code>console.cockpits.&lt;id&gt;</code> layered on by <code>ConsoleTheme::for_cockpit</code> while
+flying a craft with that cockpit. Colours are written as <code>#rrggbb</code> from the rules' RGB 0 – 1.
+The page sets each variable on the document root and removes variables a later theme leaves
+out, so they fall back to <code>console.css</code>. The keys a pack writes are on
+<a href="../../modding/console-themes/">Console themes</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"theme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"vars"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"--bg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#0d0a14"</span><span class="p">,</span><span class="w"> </span><span class="nt">"--line"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#c9a34a"</span><span class="p">,</span><span class="w"> </span><span class="nt">"--hot"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#ffcf59"</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"--font"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Futura, 'Avenir Next', sans-serif"</span><span class="p">,</span><span class="w"> </span><span class="nt">"--corner"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2px"</span><span class="p">}}</span>
+</code></pre></div>
+<h3 id="model">Model<a class="headerlink" href="#model" title="Permanent link">&para;</a></h3>
+<p>For the target viewport (R-CON-015), built by <code>protocol::model</code>:</p>
+<ul>
+<li>the <strong>most detailed level of detail with at most 3000 triangles</strong>
+  (<code>protocol::MODEL_TRIANGLE_BUDGET</code>), or the coarsest if every level is larger;</li>
+<li><strong>normalised to radius 1</strong> (positions divided by the model's radius, rounded to 3 decimals);</li>
+<li>one entry per <strong>material group</strong>: <code>positions</code> (flat <code>[x, y, z, …]</code>, only the vertices that
+  group uses, renumbered from 0), <code>indices</code> (triangles, three per face) and <code>color</code> (RGB 0 – 1):
+  a textured group's colour is its texture's average (<code>protocol::average_color</code>, transparent
+  pixels ignored), an untextured group's is its vertex colour. <strong>No textures are sent.</strong></li>
+</ul>
+<p>Axes are the model's own (x right, y up, −z ahead, as in the engine); the page turns it by
+<code>telemetry.target.rotation</code>. The flight screen builds each class's message once and caches it.
+A model that fails to load gives <code>{type: "model", name}</code> with no groups.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w"> </span><span class="nt">"groups"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"color"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">],</span>
+<span class="w"> </span><span class="nt">"positions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">-1</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.5</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">],</span><span class="w"> </span><span class="nt">"indices"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">]}]}</span>
+</code></pre></div>
+<h3 id="contacts">Contacts<a class="headerlink" href="#contacts" title="Permanent link">&para;</a></h3>
+<p>For the map (R-CON-014, R-CON-016), built by <code>protocol::contacts</code>: every live craft on the
+player's radar (<code>sim::systems::on_radar</code>), the player excluded.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td><code>"slot:generation"</code> of the ship handle; send it back in <code>target</code>. A reused slot gets a new generation, so a stale id never targets a newcomer.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>The class name.</td>
+</tr>
+<tr>
+<td><code>relation</code></td>
+<td>string</td>
+<td><code>friendly</code>, <code>hostile</code>, <code>neutral</code>, or <code>objective</code> (a craft the player's faction protects).</td>
+</tr>
+<tr>
+<td><code>station</code></td>
+<td>bool</td>
+<td>A static object (station, base, module).</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td>bool</td>
+<td>The player's current target.</td>
+</tr>
+<tr>
+<td><code>pos</code></td>
+<td><code>[x, y, z]</code></td>
+<td>Position relative to the player, metres, <strong>in the player's own axes</strong>: x right, y up, <strong>z ahead</strong>.</td>
+</tr>
+<tr>
+<td><code>vel</code></td>
+<td><code>[x, y, z]</code></td>
+<td>Velocity relative to the player, m/s, in the same axes.</td>
+</tr>
+</tbody>
+</table>
+<p><code>range</code> at the top level is the radar range (<code>flight.radar_range</code>), which the map's rings use.
+Because positions are already in the player's axes, the page needs no orientation to draw the
+map around the player.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"contacts"</span><span class="p">,</span><span class="w"> </span><span class="nt">"range"</span><span class="p">:</span><span class="w"> </span><span class="mi">6000</span><span class="p">,</span><span class="w"> </span><span class="nt">"list"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w"> </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3:0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w"> </span><span class="nt">"relation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hostile"</span><span class="p">,</span><span class="w"> </span><span class="nt">"station"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"pos"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">-400</span><span class="p">,</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="mi">2100</span><span class="p">],</span><span class="w"> </span><span class="nt">"vel"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">-90</span><span class="p">]}]}</span>
+<span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"event"</span><span class="p">,</span><span class="w"> </span><span class="nt">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">}</span>
+</code></pre></div>
 <h2 id="keeping-the-tablet-awake">Keeping the tablet awake<a class="headerlink" href="#keeping-the-tablet-awake" title="Permanent link">&para;</a></h2>
 <p>Not a message: the page itself keeps the tablet's screen on while it is open (app 0.4.8, main
 <code>f1c8be8</code>, <a href="../requirements/control-console/#r-con-022-keep-the-tablet-awake">R-CON-022</a>).</p>
@@ -6332,43 +6557,12 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 media), and again whenever the page becomes visible (the browser releases both when it is
 hidden). The telemetry grid's <strong>Tablet</strong> cell shows <em>screen kept awake</em>, <em>screen kept awake (wake
 lock)</em> or <em>tap the screen to keep it awake</em>.</p>
-<h2 id="messages-still-planned">Messages still planned<a class="headerlink" href="#messages-still-planned" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Message</th>
-<th>Direction</th>
-<th>When</th>
-<th>Carries (<em>planned</em> fields)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>theme</code></td>
-<td>game → console</td>
-<td>After <code>welcome</code>; again when the campaign or craft changes</td>
-<td>The active pack's console theme (R-CON-020): colours, fonts, frames and images taken from the pack's own console assets — never original art (R-CON-021). Interlude item C2.</td>
-</tr>
-<tr>
-<td><code>contacts</code></td>
-<td>game → console</td>
-<td><strong>5 Hz</strong></td>
-<td>Radar contacts with position relative to the player, faction and kind; nav points (R-CON-014). Item C4.</td>
-</tr>
-<tr>
-<td><code>model</code></td>
-<td>game → console</td>
-<td>Once per target class, when first targeted</td>
-<td>The target's mesh, <strong>decimated</strong>, for the viewport (R-CON-015). The orientation already travels in <code>telemetry</code>. Item C3.</td>
-</tr>
-<tr>
-<td><code>event</code></td>
-<td>game → console</td>
-<td>As it happens</td>
-<td>Messages and events (system damaged, missile lock, shield down, mission result) (R-CON-014).</td>
-</tr>
-</tbody>
-</table>
+<h2 id="still-planned">Still planned<a class="headerlink" href="#still-planned" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The <strong>serial transport</strong> (C5, R-CON-017): the same messages, one per line, for an Arduino
+  panel.</li>
+<li><strong>Nav points</strong> in <code>contacts</code> (the map shows craft only).</li>
+</ul>
 <h2 id="open">Open<a class="headerlink" href="#open" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The QR code that would carry <code>?code=</code> (the page accepts it since app 0.4.7; the game does not
@@ -6378,11 +6572,8 @@ lock)</em> or <em>tap the screen to keep it awake</em>.</p>
 <li>A client name and protocol version in <code>hello</code> (version 1 sends neither); how a version
   mismatch is reported.</li>
 <li>A per-action description in <code>catalogue</code> (R-CON-007): version 1 sends the label only.</li>
-<li>Field lists of <code>theme</code>, <code>contacts</code>, <code>model</code> and <code>event</code>; the decimation budget for <code>model</code>,
-  and whether textures are sent.</li>
-<li>Slider-valued actions other than the throttle (power levels), for the C2 layout.</li>
 <li>Line framing and the message subset for the serial transport.</li>
-<li>The theme's file format in a pack.</li>
+<li>Theme images (frames, backgrounds): version 1 themes are colours, a font and a corner radius.</li>
 </ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
@@ -6413,6 +6604,11 @@ lock)</em> or <em>tap the screen to keep it awake</em>.</p>
 <td>1.7.0</td>
 <td>2026-11-11</td>
 <td>Pairing fix (app 0.4.7): the server sends <code>welcome {version}</code> at once; the flight screen's <code>welcome {version, campaign}</code>; the launcher's catalogue (every action available) and idle <code>telemetry {alive: false, state}</code> twice a second; <code>?code=</code> in the address; the page shows the console on <code>welcome</code>. Keeping the tablet awake (app 0.4.8): wake lock or the <code>keepawake.mp4</code> clip; files served with HTTP ranges. <code>telemetry</code> gains <code>hits</code> and <code>hull_hits</code> (app 0.4.9)</td>
+</tr>
+<tr>
+<td>1.10.0</td>
+<td>2026-11-11</td>
+<td>Console C2 – C4 and C2b as built: <code>power {beam, shield, balance}</code> (app 0.4.11); <code>model {name, groups:[{color, positions, indices}]}</code> with the 3000-triangle LOD budget, radius 1, no textures (0.4.14); <code>contacts {range, list}</code> at 5 Hz in the player's axes, <code>event {text}</code> from the message log and <code>target {id}</code> (0.4.15); <code>theme {vars}</code> as CSS variables, sent on pairing and with each catalogue (0.5.0). Session diagram updated; <em>Messages still planned</em> replaced by <em>Still planned</em> (serial, nav points); open items revised</td>
 </tr>
 </tbody>
 </table>

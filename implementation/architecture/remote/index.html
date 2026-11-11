@@ -3412,6 +3412,50 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#two-layouts-and-tiles-c2-app-0411" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two layouts and tiles (C2, app 0.4.11)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-viewport-c3-app-0414" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target viewport (C3, app 0.4.14)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map-c4-app-0415" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map (C4, app 0.4.15)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#themes-c2b-app-050" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Themes (C2b, app 0.5.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#input-path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4129,6 +4173,8 @@
       
         
       
+        
+      
     
     
     
@@ -4562,6 +4608,41 @@
     
   
     Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
   
 
     
@@ -6024,6 +6105,50 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#two-layouts-and-tiles-c2-app-0411" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two layouts and tiles (C2, app 0.4.11)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-viewport-c3-app-0414" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target viewport (C3, app 0.4.14)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#map-c4-app-0415" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map (C4, app 0.4.15)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#themes-c2b-app-050" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Themes (C2b, app 0.5.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#input-path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6103,10 +6228,13 @@
 <h1 id="remote-console">Remote console<a class="headerlink" href="#remote-console" title="Permanent link">&para;</a></h1>
 <p><code>src/remote/</code>: the <strong>tablet control console</strong> (interlude item C1, app 0.4.0, main <code>dfff71b</code>;
 pairing from any screen in 0.4.7, main <code>c42d773</code>; keeping the tablet awake in 0.4.8, main
-<code>f1c8be8</code>).
+<code>f1c8be8</code>; the two layouts and tiles, C2, in 0.4.11, main <code>db2f264</code>; the target viewport, C3,
+in 0.4.14, main <code>e51eca9</code>; the map, contacts and events, C4, in 0.4.15, main <code>e2b5012</code>; campaign
+themes, C2b, in 0.5.0, main <code>0a1c340</code>). Console items C1 – C4 are complete; only the serial
+panel (C5) remains.
 The game serves a web page and a WebSocket to a tablet on the local network; the tablet shows
 the craft's condition live and sends the pilot's button presses back. Requirements
-<a href="../../../specification/requirements/control-console/#r-con-009-console-server">R-CON-009 – R-CON-014</a>;
+<a href="../../../specification/requirements/control-console/#r-con-009-console-server">R-CON-009 – R-CON-026</a>;
 the wire format is the <a href="../../../specification/console-protocol/">Console protocol</a>; the
 player's guide is <a href="../../../user-guide/console/">Tablet console</a>.</p>
 <p>Everything — HTTP, the WebSocket handshake and frames, SHA-1, base64 and JSON — is written in
@@ -6118,7 +6246,7 @@ to describe it. <code>sim</code> knows nothing about it.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
     subgraph Tablet["Tablet browser"]
-        PG["web/console&lt;br/&gt;oi-pairing · oi-telemetry&lt;br/&gt;oi-throttle · oi-actions"]
+        PG["web/console&lt;br/&gt;All-in-one: oi-telemetry · oi-throttle · oi-actions&lt;br/&gt;Cockpit: oi-hud-strip · oi-shields · oi-display&lt;br/&gt;(oi-target-view · oi-map) · oi-power · oi-tiles"]
     end
     subgraph Threads["Server threads (remote::server)"]
         AC["accept loop&lt;br/&gt;is_local(peer)?"]
@@ -6131,10 +6259,12 @@ to describe it. <code>sim</code> knows nothing about it.</p>
         RW["RawInput&lt;br/&gt;remote_held · remote_pressed · remote_throttle"]
         BT["Bindings::translate"]
         W["sim::World"]
-        PR["protocol::catalogue / telemetry"]
+        PR["protocol::catalogue · telemetry&lt;br/&gt;contacts · model · theme · event"]
+        RU["rules.console&lt;br/&gt;ConsoleTheme::for_cockpit"]
+        ML["hud::MessageLog::since"]
     end
     PG -- "GET / · /console.js · /console.css · /keepawake.mp4 (Range)" --&gt; CN
-    PG -- "hello · action · throttle&lt;br/&gt;(masked frames)" --&gt; CN
+    PG -- "hello · action · throttle&lt;br/&gt;power · target · ping&lt;br/&gt;(masked frames)" --&gt; CN
     AC --&gt; CN
     CN -- "Event (mpsc channel)" --&gt; CF
     CN -- "Event" --&gt; CI
@@ -6142,8 +6272,10 @@ to describe it. <code>sim</code> knows nothing about it.</p>
     CN -- "welcome (at once, on the right code)" --&gt; PG
     CF --&gt; RI --&gt; RW --&gt; BT --&gt; W
     W --&gt; PR --&gt; CF
+    RU --&gt; PR
+    ML --&gt; PR
     CF -- "broadcast / send&lt;br/&gt;(per-client channel)" --&gt; CN
-    CN -- "welcome · catalogue · telemetry · denied" --&gt; PG</code></pre>
+    CN -- "welcome · catalogue · telemetry · denied&lt;br/&gt;theme · model · contacts · event" --&gt; PG</code></pre>
 <p>The game loop must never wait on the network, so the server runs on its own threads and talks
 to the game only through channels (<code>std::sync::mpsc</code>). The game calls <code>ConsoleServer::poll</code>
 once a frame (it never blocks) and <code>broadcast</code> / <code>send</code> to queue outgoing frames; each
@@ -6227,6 +6359,93 @@ while held, or for at least 150 ms after a tap
 rises the page plays about 0.4 s of fading static, stronger for a hull hit
 (<a href="../../../specification/requirements/control-console/#r-con-024-hit-static">R-CON-024</a>). Counts
 rather than one-off events mean a dropped or merged telemetry message never loses a hit.</p>
+<h3 id="two-layouts-and-tiles-c2-app-0411">Two layouts and tiles (C2, app 0.4.11)<a class="headerlink" href="#two-layouts-and-tiles-c2-app-0411" title="Permanent link">&para;</a></h3>
+<p><code>index.html</code> holds both layouts in one page; <code>oi-mode</code> switches between them, remembers the
+choice per tablet (<code>localStorage</code>) and accepts <code>?mode=</code> in the address
+(<a href="../../../specification/requirements/control-console/#r-con-026-two-console-layouts">R-CON-026</a>):</p>
+<ul>
+<li><strong>All-in-one</strong> (<code>#allinone</code>): the C1 elements, <code>oi-telemetry</code>, <code>oi-throttle</code>, <code>oi-actions</code>.</li>
+<li><strong>Cockpit</strong> (<code>#cockpit</code>): <code>oi-hud-strip</code> (the exterior-view HUD figures), <code>oi-shields</code>
+  (shield rings and the balance buttons), <code>oi-display</code> (the display console, with <strong>Target</strong>
+  and <strong>Map</strong> tabs), <code>oi-power</code> (beam and shield charge sliders) and <code>oi-tiles</code> (one status card
+  per catalogue group; tapping one opens a full-width strip of its buttons and folds the rest).</li>
+</ul>
+<p>Every element listens to the same <code>link</code> event target (one <code>EventTarget</code> that re-dispatches each
+message by its <code>type</code>), so both layouts stay live and switching costs nothing. The power
+sliders send <code>power {beam, shield, balance}</code>; the game applies them with
+<code>sim::systems::set_level</code> and the balance request, within the power budget, and <code>telemetry</code>
+carries <code>balance</code>.</p>
+<h3 id="target-viewport-c3-app-0414">Target viewport (C3, app 0.4.14)<a class="headerlink" href="#target-viewport-c3-app-0414" title="Permanent link">&para;</a></h3>
+<p><code>oi-target-view</code> in the Target tab draws the target's model with <strong>WebGL 1, written by hand</strong>
+(no library; a 4×4 projection and a quaternion-to-matrix in a few lines,
+<a href="../../../specification/requirements/control-console/#r-con-015-target-viewport">R-CON-015</a>):</p>
+<ol>
+<li><strong>Game side.</strong> <code>FlightSession::console_frame</code> remembers the class the consoles last received
+   (<code>console_target</code>). When the player's target has another class — or a tablet pairs, which
+   clears it — it loads the class's model (<code>Content::load_model</code>), takes each material group's
+   colour (<code>protocol::average_color</code> of its texture, or the vertex colour if untextured) and
+   builds <code>protocol::model</code>: the most detailed LOD with at most
+   <code>protocol::MODEL_TRIANGLE_BUDGET</code> (3000) triangles, normalised to radius 1, positions rounded
+   to 3 decimals. The text is cached per class in <code>console_models</code>
+   (<code>HashMap&lt;ShipClassId, Rc&lt;String&gt;&gt;</code>), so retargeting a class costs one broadcast.</li>
+<li><strong>Page side.</strong> Each group becomes a vertex buffer of un-indexed triangles with a face normal
+   per triangle (flat shading). The light comes from the upper left; the model is turned by
+   <code>telemetry.target.rotation</code>, already the target's orientation in the player's body axes, so
+   the page needs nothing else. The clear colour is transparent, so the themed panel shows
+   through.</li>
+</ol>
+<p>Textures are not sent: an average colour per group is enough to read the shape at viewport
+size and keeps a message to tens of kilobytes. A video stream of the game's own rendering is
+recorded on GitHub issue #3 as a possible later upgrade.</p>
+<h3 id="map-c4-app-0415">Map (C4, app 0.4.15)<a class="headerlink" href="#map-c4-app-0415" title="Permanent link">&para;</a></h3>
+<p><a href="../../../specification/requirements/control-console/#r-con-016-3d-map-view">R-CON-016</a>,
+<a href="../../../specification/requirements/control-console/#r-con-014-console-telemetry">R-CON-014</a>:</p>
+<ul>
+<li><strong><code>contacts</code></strong> every 0.2 s (<code>console_contacts_clock</code>): <code>protocol::contacts(&amp;World, player)</code>
+  lists every live craft for which <code>sim::systems::on_radar</code> is true, with relative position and
+  velocity turned into the player's axes by the conjugate of the player's rotation (and z
+  negated so that <strong>z is ahead</strong>). The id is <code>"slot:generation"</code>.</li>
+<li><strong><code>event</code></strong>: <code>MessageLog</code> counts every line ever pushed (<code>total</code>); <code>since(seen)</code> returns the
+  lines after a count, as many as are still kept. The flight screen sends each new line as
+  <code>event {text}</code> and remembers <code>console_messages_seen</code>, so no line is sent twice and none is
+  lost between frames.</li>
+<li><strong><code>target {id}</code></strong> decodes to <code>Inbound::Target { index, generation }</code>; the flight screen sets
+  the player's target only if that ship still exists and is on the player's radar, so a console
+  cannot target what the pilot could not.</li>
+</ul>
+<p><code>oi-map</code> is a 2D canvas with its own small perspective projection: the player's axes are
+rotated by the orbit's yaw and pitch, then projected from a camera 2.2 units back (positions
+scaled by the radar range and the zoom). Per frame it draws range rings at ¼, ½ and 1 × the
+radar range and spokes on the plane at the player's height, then the contacts sorted far to
+near, each with a height stalk to that plane, a relation-coloured mark, a label with name and
+range, and a tick to where it will be in 2 seconds. Presets <strong>Behind</strong>, <strong>Top</strong>, <strong>Side</strong>;
+pointer drag orbits, two pointers pinch-zoom, the wheel zooms (0.5 × – 8 ×). A pointer-up that
+moved less than 8 px is a tap, and targets the nearest drawn contact within 28 px. The list
+beside the map shows the nearest 14 contacts by range; tapping a row targets it. The map skips
+drawing while its tab is hidden. <code>oi-display</code> also keeps the last four <code>event</code> lines under the
+target data.</p>
+<h3 id="themes-c2b-app-050">Themes (C2b, app 0.5.0)<a class="headerlink" href="#themes-c2b-app-050" title="Permanent link">&para;</a></h3>
+<p><a href="../../../specification/requirements/control-console/#r-con-020-console-theme-from-the-active-pack">R-CON-020</a>,
+<a href="../../../specification/requirements/control-console/#r-con-021-console-theme-assets-are-original-free">R-CON-021</a>:</p>
+<pre class="mermaid"><code>flowchart LR
+    Y["rules/console.yaml&lt;br/&gt;console: {theme, cockpits}"] --&gt; L["content::rules::load&lt;br/&gt;ConsoleTheme {base, cockpits}"]
+    L --&gt; B["launcher (app::console_idle):&lt;br/&gt;theme(base) on pairing"]
+    L --&gt; F["flight: theme(for_cockpit(class.cockpit))&lt;br/&gt;with every catalogue"]
+    B --&gt; P["page: root style.setProperty(--bg …)"]
+    F --&gt; P
+    P --&gt; C["console.css: var(--line), color-mix(…)"]</code></pre>
+<ul>
+<li><code>rules::ConsoleTheme</code> holds the campaign's <code>base</code> <code>ThemeLayer</code> and one layer per cockpit id
+  (lower-cased). <code>ThemeLayer</code> is <code>colors: Vec&lt;(String, [f32; 3])&gt;</code> plus optional <code>font</code> and
+  <code>corner</code>; unknown colour names are load errors listing <code>rules::CONSOLE_COLORS</code>.</li>
+<li><code>ConsoleTheme::for_cockpit(Some("A"))</code> clones the base and lays the cockpit's values over it.</li>
+<li><code>protocol::theme</code> turns a layer into CSS variables (<code>#rrggbb</code>, <code>--font</code>, <code>--corner</code> in px).</li>
+<li>The page removes the variables of the previous theme before setting the new ones, so a cockpit
+  without an override returns to the base, and an empty theme to the page's defaults.
+  <code>console.css</code> derives every colour from about nine variables, mixing tints with
+  <code>color-mix(in srgb, var(--line) 25%, var(--panel))</code>, so a pack sets a whole look with a few
+  values.</li>
+</ul>
 <h3 id="input-path">Input path<a class="headerlink" href="#input-path" title="Permanent link">&para;</a></h3>
 <p>A console button reaches the simulation the same way a key does:</p>
 <ol>
@@ -6287,7 +6506,27 @@ letting go does not release another's buttons.</p>
 </tr>
 <tr>
 <td><code>remote::protocol::Inbound</code></td>
-<td>A decoded console message: <code>Hello { code }</code>, <code>Action { action, down }</code>, <code>Throttle(f32)</code>.</td>
+<td>A decoded console message: <code>Hello { code }</code>, <code>Action { action, down }</code>, <code>Throttle(f32)</code>, <code>Ping</code>, <code>Power { beam, shield, balance }</code>, <code>Target { index, generation }</code>.</td>
+</tr>
+<tr>
+<td><code>remote::protocol::MODEL_TRIANGLE_BUDGET</code></td>
+<td>3000: the most triangles in a <code>model</code> message; the most detailed LOD under it is sent.</td>
+</tr>
+<tr>
+<td><code>content::rules::ConsoleTheme</code>, <code>ThemeLayer</code>, <code>CONSOLE_COLORS</code></td>
+<td>The <code>console:</code> rules section: the base layer and per-cockpit layers; the nine colour names.</td>
+</tr>
+<tr>
+<td><code>hud::MessageLog::total</code>, <code>since</code></td>
+<td>Lines pushed in all; the lines after a count. The console's <code>event</code> source.</td>
+</tr>
+<tr>
+<td><code>FlightSession::console_target</code>, <code>console_models</code></td>
+<td>The target class the consoles have; the cached <code>model</code> messages per class.</td>
+</tr>
+<tr>
+<td><code>FlightSession::console_contacts_clock</code>, <code>console_messages_seen</code></td>
+<td>The 5 Hz <code>contacts</code> timer; how many log lines were sent as events.</td>
 </tr>
 <tr>
 <td><code>remote::protocol::HELD</code></td>
@@ -6319,7 +6558,7 @@ letting go does not release another's buttons.</p>
 </tr>
 <tr>
 <td><code>FlightSession::console_frame</code></td>
-<td>One frame of console work in flight: poll, apply, <code>welcome {version, campaign}</code>, (re)send the catalogue, 20 Hz telemetry, merge input.</td>
+<td>One frame of console work in flight: poll, apply (including <code>target</code>), <code>welcome {version, campaign}</code>, (re)send the catalogue and theme, the target's <code>model</code>, 20 Hz telemetry, 5 Hz contacts, new log lines as events, merge input.</td>
 </tr>
 <tr>
 <td><code>app::console_idle</code></td>
@@ -6332,6 +6571,10 @@ letting go does not release another's buttons.</p>
 <tr>
 <td><code>remote::server::FILES</code></td>
 <td>The embedded page files (<code>&amp;[u8]</code>): <code>index.html</code>, <code>console.js</code>, <code>console.css</code>, <code>keepawake.mp4</code>.</td>
+</tr>
+<tr>
+<td>Page elements</td>
+<td><code>oi-pairing</code>, <code>oi-mode</code>, <code>oi-telemetry</code>, <code>oi-throttle</code>, <code>oi-actions</code>, <code>oi-hud-strip</code>, <code>oi-shields</code>, <code>oi-display</code>, <code>oi-target-view</code>, <code>oi-map</code>, <code>oi-power</code>, <code>oi-tiles</code>, <code>oi-static</code> (<code>web/console/console.js</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -6350,6 +6593,9 @@ letting go does not release another's buttons.</p>
   <code>catalogue_idle() -&gt; String</code> (every action, all available: no craft yet);
   <code>telemetry(&amp;World, ShipId, time) -&gt; String</code>;
   <code>telemetry_idle(screen) -&gt; String</code> (<code>{alive: false, state: screen}</code>);
+  <code>model(name, &amp;Model, colors: &amp;[[f32; 3]]) -&gt; String</code>; <code>average_color(rgba: &amp;[u8]) -&gt; [f32; 3]</code>;
+  <code>contacts(&amp;World, ShipId) -&gt; String</code>; <code>event(text) -&gt; String</code>;
+  <code>theme(&amp;ThemeLayer) -&gt; String</code>;
   <code>available(&amp;Ruleset, &amp;World, ShipId, Action) -&gt; bool</code> (cloak, ECM, tractor need the system
   fitted; VCT slides need <code>vct</code>; missiles need missiles aboard; beam actions need beams).</li>
 <li><strong>WebSocket</strong> (<code>remote::ws</code>): <code>sha1(&amp;[u8]) -&gt; [u8; 20]</code>, <code>base64(&amp;[u8]) -&gt; String</code>,
@@ -6365,6 +6611,8 @@ letting go does not release another's buttons.</p>
   <code>as_f64</code>; <code>Obj::new().str(k, v).num(k, v).bool(k, v).nums(k, &amp;[..]).raw(k, json).end()</code>,
   <code>array(&amp;[String])</code>.</li>
 <li><strong>Input</strong> (<code>remote</code>): <code>RemoteInput::apply(&amp;Event)</code>, <code>RemoteInput::merge_into(&amp;mut RawInput)</code>.</li>
+<li><strong>Themes</strong> (<code>content::rules</code>): <code>ConsoleTheme::for_cockpit(Option&lt;&amp;str&gt;) -&gt; ThemeLayer</code>; the
+  rules field <code>Ruleset::console</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
@@ -6401,8 +6649,10 @@ code</code> means the code is not the current run's.
   that <code>welcome</code> comes from the server at once.
 - <strong>The real page in a browser, without the game</strong>: the ignored helper test
   <code>remote::server::tests::serve_for_a_browser</code> serves the page on <code>127.0.0.1:8790</code> (pairing
-  code from seed 7) for 20 s, answering like the launcher (idle catalogue and telemetry), and
-  prints a <code>…/?code=NNNNNN</code> address to open:</p>
+  code from seed 7) for 60 s and prints a <code>…/?code=NNNNNN</code> address to open. On pairing it sends
+  the idle catalogue, a sample target model (a wedge) and the default campaign's theme; twice a
+  second a sample in-flight telemetry, four sample contacts and an event, so every panel, the
+  target view and the map have something to show:</p>
 <div class="highlight"><pre><span></span><code>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>serve_for_a_browser<span class="w"> </span>--<span class="w"> </span>--ignored<span class="w"> </span>--nocapture
 </code></pre></div>
 </li>
@@ -6411,6 +6661,14 @@ code</code> means the code is not the current run's.
   answered; update. If the pairing screen stays on top after <em>Connecting…</em>, check that
   <code>console.css</code> still has the <code>[hidden]</code> rule.</p>
 </li>
+<li><strong>The target view stays empty</strong>: the page needs WebGL; check the browser console for
+  <code>webgl</code> errors. A class whose model failed to load sends a <code>model</code> with no groups. With no
+  target, the view is blank by design.</li>
+<li><strong>The map is empty</strong>: <code>contacts</code> lists only craft on the player's radar; check the range rings'
+  scale (<code>range</code>) and zoom out. A tap that does nothing targeted a contact no longer on radar.</li>
+<li><strong>The theme does not change</strong>: the base theme comes on pairing from the launcher; in a battle
+  the cockpit's layer comes with each catalogue (pairing, or a craft of another class). A rules
+  error (an unknown colour name) is reported at load and by <code>--check</code>.</li>
 <li><strong>The tablet still goes to sleep</strong>: look at the <strong>Tablet</strong> cell. <em>tap the screen to keep it
   awake</em> means the clip could not start without a gesture: tap once. If it says <em>screen kept
   awake</em> and the tablet still sleeps, check that <code>/keepawake.mp4</code> is served with <code>206</code> to a

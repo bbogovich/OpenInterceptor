@@ -3964,6 +3964,8 @@
       
         
       
+        
+      
     
     
     
@@ -4525,6 +4527,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        console
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#campaign" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4681,6 +4694,41 @@
     
   
     Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
   
 
     
@@ -6275,6 +6323,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        console
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#campaign" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7494,6 +7553,64 @@ each weapon. Any sound reference may be <code>cue:&lt;Name&gt;</code>, a cue of 
 <td><code>cue_table</code></td>
 <td>asset</td>
 <td>A table of named sound cues: <code>original:&lt;file&gt;/&lt;section&gt;</code> — the original's <code>soundfx.ini</code> (<code>original:soundfx.ini/InterceptorSounds</code>). Each entry <code>Name = "path\file.wav"</code> makes <code>cue:Name</code> mean <code>original:file.wav</code>. Cue names ignore case; an unknown cue, or a missing table, is a load error.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="console"><code>console</code><a class="headerlink" href="#console" title="Permanent link">&para;</a></h3>
+<p>The tablet console's look (app 0.5.0; guide: <a href="../console-themes/">Console themes</a>). A global
+section.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>theme</code></td>
+<td>layer</td>
+<td>none (the page's own look)</td>
+<td>The campaign's base theme.</td>
+</tr>
+<tr>
+<td><code>cockpits</code></td>
+<td>mapping cockpit id: layer</td>
+<td>none</td>
+<td>Overrides while flying a craft with that <code>cockpit:</code>; ids ignore case.</td>
+</tr>
+</tbody>
+</table>
+<p>A layer:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>colors</code></td>
+<td>mapping name: RGB</td>
+<td>none</td>
+<td><code>bg</code> (page background), <code>panel</code> (panel background), <code>line</code> (borders; pressed-button fill), <code>ink</code> (text), <code>dim</code> (labels), <code>hot</code> (values, highlights), <code>warn</code>, <code>danger</code>, <code>off</code> (not fitted). Any other name is a load error.</td>
+</tr>
+<tr>
+<td><code>font</code></td>
+<td>text</td>
+<td>the page's</td>
+<td>A CSS font list, e.g. <code>"Futura, 'Avenir Next', sans-serif"</code>.</td>
+</tr>
+<tr>
+<td><code>corner</code></td>
+<td>number</td>
+<td>the page's</td>
+<td>Panel corner radius in pixels.</td>
 </tr>
 </tbody>
 </table>

@@ -4072,6 +4072,8 @@
       
         
       
+        
+      
     
     
     
@@ -4505,6 +4507,41 @@
     
   
     Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
   
 
     
@@ -6016,7 +6053,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-3-missions/">3 Missions, environments and conditions</a></td>
-<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong></td>
+<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later)</td>
 <td>See <a href="#stage-3-progress">Stage 3 progress</a> below</td>
 </tr>
 <tr>
@@ -6372,7 +6409,9 @@ and <code>--soak</code> <code>f638b44</code>; looks <code>b097c83</code>; guidan
 <h2 id="stage-3-progress">Stage 3 progress<a class="headerlink" href="#stage-3-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.3.0</strong>, main <code>d7553f5</code>; then app <strong>0.3.1</strong>, main <code>c583659</code> (the interlude's playtest
 fixes); app <strong>0.4.0</strong>, main <code>dfff71b</code> (console C1); <strong>0.4.1</strong>, main <code>42716d1</code> (lit shader link
-fix); <strong>0.4.2</strong>, main <code>bf7b7ce</code> (<code>resources/</code> layout); <strong>292 unit tests</strong> on macOS.</p>
+fix); <strong>0.4.2</strong>, main <code>bf7b7ce</code> (<code>resources/</code> layout); <strong>292 unit tests</strong> on macOS at 0.4.2. Then
+the console C2 – C4 and C2b: app <strong>0.4.11</strong> (<code>db2f264</code>), <strong>0.4.14</strong> (<code>e51eca9</code>), <strong>0.4.15</strong>
+(<code>e2b5012</code>) and <strong>0.5.0</strong> (<code>0a1c340</code>).</p>
 <table>
 <thead>
 <tr>
@@ -6453,8 +6492,28 @@ fix); <strong>0.4.2</strong>, main <code>bf7b7ce</code> (<code>resources/</code>
 <td><code>src/remote/</code>, <code>web/console/</code>, <code>src/app/flight.rs</code>, <code>src/input/mod.rs</code></td>
 </tr>
 <tr>
-<td>Interlude C2–C5 — console layout, tiles and themes; target viewport; 3D map; serial panel</td>
-<td><strong>Not started</strong></td>
+<td>Interlude C2 — two layouts (All-in-one, Cockpit), HUD strip, shield rings and balance, display console, power sliders (<code>power {beam, shield, balance}</code>), function-group tiles; visible keep-awake indicator</td>
+<td><strong>Done</strong> (0.4.11, main <code>db2f264</code>; MT-3-29 not yet run)</td>
+<td><code>web/console/</code>, <code>src/remote/protocol.rs</code>, <code>src/sim/systems.rs</code></td>
+</tr>
+<tr>
+<td>Interlude C3 — target viewport: <code>model</code> message (≤ 3000-triangle LOD, radius 1, a colour per material group), hand-written WebGL view turned by the target's relative rotation</td>
+<td><strong>Done</strong> (0.4.14, main <code>e51eca9</code>; MT-3-30 not yet run)</td>
+<td><code>src/remote/protocol.rs</code>, <code>src/app/flight.rs</code>, <code>web/console/console.js</code></td>
+</tr>
+<tr>
+<td>Interlude C4 — map: <code>contacts</code> at 5 Hz in the player's axes, <code>event</code> from the message log, <code>target {id}</code>; TIE Fighter-style map with views, orbit, zoom and tap to target; last four log lines</td>
+<td><strong>Done</strong> (0.4.15, main <code>e2b5012</code>; MT-3-31 not yet run)</td>
+<td><code>src/remote/protocol.rs</code>, <code>src/app/flight.rs</code>, <code>src/hud/mod.rs</code>, <code>web/console/console.js</code></td>
+</tr>
+<tr>
+<td>Interlude C2b — campaign console themes: <code>console: {theme, cockpits}</code> rules, <code>theme {vars}</code> CSS variables; default art-deco, <code>interceptor</code> tinted per cockpit</td>
+<td><strong>Done</strong> (0.5.0, main <code>0a1c340</code>; MT-3-32 not yet run)</td>
+<td><code>src/content/rules.rs</code>, <code>src/content/files.rs</code>, <code>resources/default/rules/console.yaml</code>, <code>packs/interceptor/rules/console.yaml</code></td>
+</tr>
+<tr>
+<td>Interlude C5 — physical panel over USB serial (Arduino)</td>
+<td><strong>Later</strong></td>
 <td></td>
 </tr>
 <tr>
@@ -6468,13 +6527,13 @@ fix); <strong>0.4.2</strong>, main <code>bf7b7ce</code> (<code>resources/</code>
 <td><code>src/cli.rs</code>, <code>src/settings.rs</code>, <code>scripts/check.sh</code>, <code>tools/build_bundle.py</code></td>
 </tr>
 <tr>
-<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-24</td>
-<td><strong>Not yet run</strong></td>
+<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-32</td>
+<td><strong>Not yet run</strong> (MT-3-27's hit static confirmed by the user)</td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Next</strong>: the rest of the <a href="../plan/stage-3-interlude/">Stage 3 interlude</a> (the console manual passes MT-3-19 – MT-3-23, then C2–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
+<p><strong>Next</strong>: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
 
 
 

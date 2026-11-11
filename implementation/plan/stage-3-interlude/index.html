@@ -4046,6 +4046,8 @@
       
         
       
+        
+      
     
     
     
@@ -4479,6 +4481,41 @@
     
   
     Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
   
 
     
@@ -5937,7 +5974,11 @@
 <h1 id="stage-3-interlude-feedback-and-control-console">Stage 3 interlude — feedback and control console<a class="headerlink" href="#stage-3-interlude-feedback-and-control-console" title="Permanent link">&para;</a></h1>
 <p><strong>Status: in progress</strong> (2026-11-11). Feedback items F.1–F.5 are <strong>done</strong> in app <strong>0.3.1</strong>
 (main <code>c583659</code>); console item <strong>C1 is done</strong> in app <strong>0.4.0</strong> (main <code>dfff71b</code>; its manual
-cases MT-3-19 – MT-3-23 still need a run on an iPad); C2–C5 are next. User feedback from playing app 0.3.0, and the tablet control
+cases MT-3-19 – MT-3-23 still need a run on an iPad). <strong>C2</strong> (app 0.4.11, main <code>db2f264</code>), <strong>C3</strong>
+(0.4.14, <code>e51eca9</code>), <strong>C4</strong> (0.4.15, <code>e2b5012</code>) and <strong>C2b</strong> (0.5.0, <code>0a1c340</code>) are done, so the
+console items C1 – C4 are complete; each was checked in Chrome through the DevTools protocol
+(software WebGL for C3) and still needs an iPad pass (MT-3-29 – MT-3-32). <strong>C5</strong> (the Arduino
+panel) comes later. User feedback from playing app 0.3.0, and the tablet control
 console, taken up before the rest of Stage 3 (environments and atmospheric flight). Each item
 cites the features and requirements it delivers; issues are filed in <code>sio</code> against those IDs.</p>
 <h2 id="feedback-items">Feedback items<a class="headerlink" href="#feedback-items" title="Permanent link">&para;</a></h2>
@@ -6022,7 +6063,7 @@ cites the features and requirements it delivers; issues are filed in <code>sio</
 <td><a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a>, <a href="../../../definition/control-console/#f-con-008-console-function-group-tiles">F-CON-008</a>, <a href="../../../definition/control-console/#f-con-009-console-themed-by-the-active-campaign">F-CON-009</a></td>
 <td>R-CON-012, R-CON-013, R-CON-018 – R-CON-021, R-CON-026</td>
 <td>console page, <code>packs/*</code>, <code>resources/default</code></td>
-<td>Next</td>
+<td><strong>Done</strong> (0.4.11, main <code>db2f264</code>): the two layouts with the mode switch (<code>?mode=</code>), HUD strip, shield rings and balance, display console, power sliders (<code>power</code> message), tiles with control strips. Themes split out as C2b. GitHub #1</td>
 </tr>
 <tr>
 <td>C3</td>
@@ -6030,15 +6071,23 @@ cites the features and requirements it delivers; issues are filed in <code>sio</
 <td><a href="../../../definition/control-console/#f-con-005-console-target-viewport">F-CON-005</a></td>
 <td>R-CON-015</td>
 <td>console page, <code>remote</code></td>
-<td>Not started</td>
+<td><strong>Done</strong> (0.4.14, main <code>e51eca9</code>): <code>model</code> (≤ 3000-triangle LOD, radius 1, a colour per material group), WebGL Target tab. A video stream stays a possible upgrade (GitHub #3)</td>
 </tr>
 <tr>
 <td>C4</td>
 <td><strong>Map</strong>: a 3D map view modelled on <em>TIE Fighter</em>'s</td>
 <td><a href="../../../definition/control-console/#f-con-006-console-3d-map">F-CON-006</a></td>
-<td>R-CON-016</td>
-<td>console page</td>
-<td>Not started</td>
+<td>R-CON-014, R-CON-016</td>
+<td>console page, <code>remote</code>, <code>hud</code></td>
+<td><strong>Done</strong> (0.4.15, main <code>e2b5012</code>): <code>contacts</code> (5 Hz), <code>event</code>, <code>target</code>; the Map tab (rings, stalks, views, orbit, zoom, tap to target); last four log lines. GitHub #4</td>
+</tr>
+<tr>
+<td>C2b</td>
+<td><strong>Campaign themes</strong>: the console's look from the pack's rules, per cockpit</td>
+<td><a href="../../../definition/control-console/#f-con-009-console-themed-by-the-active-campaign">F-CON-009</a></td>
+<td>R-CON-020, R-CON-021</td>
+<td><code>content::rules</code>, <code>remote</code>, console page, <code>packs/interceptor</code>, <code>resources/default</code></td>
+<td><strong>Done</strong> (0.5.0, main <code>0a1c340</code>): <code>console: {theme, cockpits}</code>, <code>theme {vars}</code>; default art-deco, <code>interceptor</code> tinted per cockpit (A olive bronze, B steel blue, C red); colours only, no original art. GitHub #2</td>
 </tr>
 <tr>
 <td>C5</td>
@@ -6046,7 +6095,7 @@ cites the features and requirements it delivers; issues are filed in <code>sio</
 <td><a href="../../../definition/control-console/#f-con-007-physical-control-panel">F-CON-007</a></td>
 <td>R-CON-017</td>
 <td><code>remote</code>, <code>platform</code></td>
-<td>Not started</td>
+<td>Later (GitHub #5)</td>
 </tr>
 </tbody>
 </table>
