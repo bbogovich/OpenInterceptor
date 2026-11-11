@@ -126,21 +126,13 @@ A battle MUST take place in one of the environments `space`, `orbit`, `pocket` o
 
 ### R-MSN-009 Hazards
 
-A mission or scenario MUST be able to declare `hazards:`. Each hazard is optional, and all are deterministic for a given seed.
+A mission MUST be able to declare hazards: asteroids, black-hole pull, minefields and ion storms.
 
-- `asteroids: {class, count, radius, center, spin}`: `count` objects of the given class (an object such as `cosmium_asteroid` or `asteroid`), placed uniformly at random in the sphere `radius` around `center`. None is closer than 300 m to an existing craft. Each turns slowly at a random rate up to `spin` degrees per second. Being objects, they collide, block shots and can be destroyed.
-- `minefield: {class, count, radius, center, faction}`: `count` mines of a mine class (`kind: mine`, such as `space_mine`), placed the same way, belonging to `faction` (default: the class's own).
-- `black_hole: {position, pull, radius}`: every craft and missile is accelerated towards `position`.
-  - The acceleration is `pull` m/s² at 1 km, growing with the inverse square of the distance and capped at 20 × `pull`.
-  - A craft that comes within `radius` metres is destroyed.
-  - It is drawn as an accretion glow.
-- `ion_storm: {sensors}`: radar range is multiplied by `sensors` (a fraction, for example `40%`), missile locks build at half speed, and the HUD shows ION STORM.
-
-*Rationale:* Variety, and the original's battles in asteroid belts and next to a black hole.
+*Rationale:* Variety.
 
 - Implements: [F-MSN-004](../../definition/missions.md#f-msn-004-environments-and-hazards)
-- Status: implemented
-- Verified by: `sim::hazards::tests::*`, `content::hazards::tests::*`
+- Status: planned
+- Verified by: Planned.
 - See: [Format: missions, environments, events](../design/format-missions.md)
 
 ### R-MSN-010 Simulator missions
