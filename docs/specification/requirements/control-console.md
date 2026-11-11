@@ -34,6 +34,8 @@ Features: [Controls & control console](../../definition/control-console.md). How
 | [R-CON-020 Console theme from the active pack](#r-con-020-console-theme-from-the-active-pack) | Planned |
 | [R-CON-021 Console theme assets are original-free](#r-con-021-console-theme-assets-are-original-free) | Planned |
 | [R-CON-022 Keep the tablet awake](#r-con-022-keep-the-tablet-awake) | Implemented |
+| [R-CON-023 Button press feedback](#r-con-023-button-press-feedback) | Implemented |
+| [R-CON-024 Hit static](#r-con-024-hit-static) | Implemented |
 
 ## Requirements
 
@@ -339,6 +341,31 @@ The console MUST keep the tablet's screen awake while the page is open and visib
 !!! note "As built (app 0.4.8, main `f1c8be8`)"
     Written as planned and built in the same pass. The clip is `web/console/keepawake.mp4` (black, 2 KB), generated with AVFoundation by `tools/console_assets/make_keepawake.swift`: the project's own output, not third-party. It is started on the pairing tap, again on any tap until it runs, and whenever the page becomes visible. Checked in headless Chrome over localhost (the wake-lock path) and over the LAN address (the video path); not yet on an iPad (MT-3-26).
 
+### R-CON-023 Button press feedback
+
+Every console button, tap or hold, MUST visibly show that it is pressed: its background MUST fill with the button's border colour and its text MUST turn black. A hold button MUST stay so while it is held; a tap MUST show it for at least 150 ms.
+
+*Rationale:* User request, 2026-11-11: "Initial test on console works well, better button press feedback needed so that it's clean when user has pressed the button. for the style currently applied, the button should highlight with the border color and text switch to black. Add brief static effects when a craft is hit by weapons fire."
+
+- Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
+- Status: implemented (app 0.4.9)
+- Verified by: MT-3-27
+- See: [Tablet console](../../user-guide/console.md#what-works-in-c1)
+
+### R-CON-024 Hit static
+
+When the player's craft is hit by weapons fire, the console MUST show a brief static (noise) effect, about 0.4 s long and fading out: lighter when the shields absorb the hit, stronger when the hull is struck. `telemetry` MUST carry running counts of hits on the player's craft (`hits`) and of hull hits (`hull_hits`); the page plays the effect when a count rises.
+
+*Rationale:* User request, 2026-11-11 (as R-CON-023): "Add brief static effects when a craft is hit by weapons fire."
+
+- Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
+- Status: implemented (app 0.4.9)
+- Verified by: MT-3-27
+- See: [Console protocol](../console-protocol.md#game-console)
+
+!!! note "Interpretation awaiting the user's confirmation"
+    "A craft" is read as **the player's craft**, and the effect as appearing **on the console** (not on the game's screen, and not for hits on other craft).
+
 ## Revision history
 
 | Version | Date | Change |
@@ -347,4 +374,4 @@ The console MUST keep the tablet's screen awake while the page is open and visib
 | 1.1.0 | 2026-11-11 | R-CON-007 and R-CON-008 implemented (app 0.3.1): `input::ACTIONS` with `help_rows`; the keys overlay on `?` / Shift+F1 (action `help`), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation |
 | 1.4.0 | 2026-11-11 | R-CON-011: held actions released after 1 s of silence (heartbeat). R-CON-014 status corrected to partial |
 | 1.3.0 | 2026-11-11 | Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from `input::ACTIONS`; the description field stays open |
-| 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented |
+| 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented. New R-CON-023 button press feedback and R-CON-024 hit static (`hits`, `hull_hits` in telemetry), implemented in app 0.4.9; the hit-static interpretation (the player's craft, on the console) awaits the user's confirmation |

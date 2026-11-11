@@ -681,7 +681,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 (main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
 MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). MT-3-19 was revised for
 pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 covers Simple physics (0.4.6, main
-`9671555`) and MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
+`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) and MT-3-27 press feedback and hit static (0.4.9). Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -712,6 +712,7 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-24 | Original data from `resources/xcom` or `resources/xcom-cd`; start-up without a shader error | Launcher | not run | | | App 0.4.1 / 0.4.2; needs original data for steps 2–4 |
 | MT-3-25 | Simple physics for beginners | Launcher; `rocket-vs-saucer` (default) | not run | | | App 0.4.6 |
 | MT-3-26 | Console: the tablet stays awake | any, with `--console` | not run | | | App 0.4.8; needs an iPad. Checked in headless Chrome only (localhost: wake lock; LAN address: video) |
+| MT-3-27 | Console: press feedback and hit static | `rocket-vs-saucer` (default), with `--console` | not run | | | App 0.4.9; hit-static interpretation awaiting the user's confirmation |
 
 ### The debrief (every mission case)
 
@@ -908,3 +909,11 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | Preconditions | MT-3-19 paired, on an iPad over plain http. iPad Auto-Lock set to its shortest time (for example 30 seconds). App 0.4.8 or later. |
 | Steps | 1. Pair, then leave the iPad untouched on the console page for three times the Auto-Lock time, on the launcher and then in a battle. 2. Read the telemetry's **Tablet** cell. 3. Switch to another app and back to Safari; wait again. 4. Lock the iPad, unlock it and return to the page; tap once if the cell asks. 5. Repeat step 1 in a desktop browser opened on `http://127.0.0.1:8765` on the game's computer. |
 | Expected | 1: the iPad's screen does not dim or lock while the page is open. 2: the cell reads *screen kept awake* (the silent video; Safari offers no wake lock over http). No video is visible and no sound plays. 3 and 4: after returning, the cell again reads *screen kept awake* (at most after one tap, when it says *tap the screen to keep it awake*), and the screen stays on. 5: the cell reads *screen kept awake (wake lock)*. If the iPad still sleeps, record it as a finding; the user-guide fallback is Settings › Display & Brightness › Auto-Lock. |
+
+### MT-3-27 — Console: press feedback and hit static
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired, in `rocket-vs-saucer` with the Comet. App 0.4.9 or later. |
+| Steps | 1. Hold *Yaw left* for two seconds, then release. 2. Tap *Next target* quickly, several times. 3. Let the saucer shoot you while your shields are up. 4. Let it keep shooting until hits reach the hull. 5. Fly clear and watch the console for a while without being hit. |
+| Expected | 1: the button fills with its border colour and its text turns black for the whole hold, and returns to normal on release. 2: every tap visibly lights the button (at least about 0.15 s), even a very quick one. 3: each shield hit shows a light burst of static on the console, about 0.4 s, fading out. 4: hull hits show a stronger static burst. 5: no static without hits; the buttons stay readable during the effect. |

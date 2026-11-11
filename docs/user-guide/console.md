@@ -83,6 +83,11 @@ afterburner, a turn) is let go the moment it disconnects.
   slides, missiles or beams — is shown greyed out and labelled *not fitted*, never hidden.
   The list is sent again when you switch to a craft of another class.
 
+A pressed button lights up — filled with its border colour, its text black — for as long as you
+hold it, or briefly after a tap, so you can see every press register (app 0.4.9). When your
+craft is hit by weapons fire, the console flickers with a short burst of static: lighter when
+your shields take the hit, stronger when the hull is struck.
+
 Several tablets can pair at once; each one's held buttons are tracked separately.
 
 ## Keeping the screen on

@@ -135,6 +135,16 @@ iOS Safari fetches video in byte ranges and will not play it from a server that 
 `206 Partial Content` and a `Content-Range` header, and every whole-file answer carries
 `Accept-Ranges: bytes`. Several ranges at once, or a range outside the file, get the whole file.
 
+### Press feedback and hit static (app 0.4.9)
+
+Every button shows its pressed state — background filled with its border colour, black text —
+while held, or for at least 150 ms after a tap
+([R-CON-023](../../specification/requirements/control-console.md#r-con-023-button-press-feedback)).
+`telemetry` carries running counts `hits` and `hull_hits` for the player's craft; when either
+rises the page plays about 0.4 s of fading static, stronger for a hull hit
+([R-CON-024](../../specification/requirements/control-console.md#r-con-024-hit-static)). Counts
+rather than one-off events mean a dropped or merged telemetry message never loses a hit.
+
 ### Input path
 
 A console button reaches the simulation the same way a key does:
