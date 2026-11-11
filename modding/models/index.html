@@ -3962,6 +3962,8 @@
       
         
       
+        
+      
     
     
     
@@ -4385,6 +4387,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#textures-from-the-players-original-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Textures from the player's original data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#checking-a-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4480,6 +4493,41 @@
     
   </span>
   
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3d-cockpit-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
   
 
       </a>
@@ -5896,6 +5944,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#textures-from-the-players-original-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Textures from the player's original data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#checking-a-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6034,6 +6093,12 @@ behind the same interfaces, so original and mod assets can be mixed freely.</p>
 <code>&lt;name&gt;.tga</code>, newest pack first) before the original <code>XTXR</code> texture. To re-skin, export your
 image with the original texture's name — the <a href="../../implementation/architecture/testbed/">model viewer</a> lists
 the models, and <code>--check</code> reports texture names that fail to load.</p>
+<h2 id="textures-from-the-players-original-data">Textures from the player's original data<a class="headerlink" href="#textures-from-the-players-original-data" title="Permanent link">&para;</a></h2>
+<p>A material may name original data instead of a file, so a mod can use the player's own art without shipping it:</p>
+<div class="highlight"><pre><span></span><code>map_Kd original:CockpitA.dll#12000   # an original image (cockpit art); cyan becomes transparent
+map_Kd original:INTTOP               # an original model texture, by name
+</code></pre></div>
+<p>Only lines <em>starting</em> with <code>#</code> are comments; the <code>#</code> in <code>#12000</code> is part of the value. <code>--check</code> loads every such reference and reports one that does not exist. Walkthrough: <a href="../3d-cockpit-tutorial/">Tutorial: a 3D X-COM cockpit</a>. Status: new in app 0.4.13, being evaluated in practice.</p>
 <h2 id="checking-a-model">Checking a model<a class="headerlink" href="#checking-a-model" title="Permanent link">&para;</a></h2>
 <p>Open it straight in the viewer: <code>openinterceptor --model &lt;ship id or mesh name&gt;</code>. In the viewer,
 <strong>W</strong> cycles solid / solid + wireframe / wireframe, <strong>D</strong> cycles the class's looks (intact, damage

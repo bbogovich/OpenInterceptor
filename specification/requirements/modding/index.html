@@ -4651,6 +4651,8 @@
       
         
       
+        
+      
     
     
     
@@ -5061,6 +5063,41 @@
     
   </span>
   
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/3d-cockpit-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
   
 
       </a>
@@ -7856,6 +7893,9 @@
 <p class="admonition-title">Open</p>
 <p>An MTL names its textures by file path (<code>map_Kd</code>); how a model in the repository refers to a texture in the player's original data (for example an <code>original:</code> reference resolved by the rules or by the loader) is settled with MD9.</p>
 </div>
+<ul>
+<li>The open question of how the example mod's model refers to the player's cockpit art is answered by <code>map_Kd original:</code> references (R-MOD-055, app 0.4.13); to be evaluated in practice.</li>
+</ul>
 <h3 id="r-mod-053-single-file-models">R-MOD-053 Single-file models<a class="headerlink" href="#r-mod-053-single-file-models" title="Permanent link">&para;</a></h3>
 <p>Wavefront OBJ/MTL with separate texture files MUST remain a fully supported model format: it is the format the existing packs use (R-MOD-010). In addition, mods SHOULD be able to supply a model as one binary glTF file (<code>.glb</code>) holding its mesh, materials and textures, behind the same model interface as OBJ. A <code>.blend</code> file is a source only (R-MOD-054), never a format the engine loads. The <code>.glb</code> reader MUST be in-crate (the glTF JSON read with the crate's own parser, <code>remote::json</code>, plus its binary buffers) and MUST NOT add a dependency.</p>
 <p><em>Rationale:</em> The user, 2026-11-11: "If possible, it would be ideal to allow the .blend files to be included in addtition to standaole mtl and obj objects so that a user can package the object, material, and textures into a single file, but that is not strictly necessary as long as the correct relationshps between materials and their texture images is consistently maintained."</p>
@@ -7911,6 +7951,16 @@
 <td>1.9.0</td>
 <td>2026-11-11</td>
 <td>From the user's message of 2026-11-11: new R-MOD-048 – R-MOD-055 (planned): instruments dragged onto a 3D cockpit and previewed on the face below the cursor, their size and preview (MD8); Create 3D cockpit, the generic base cockpit in <code>resources/default</code> and the X-COM 3D cockpit example mod, the first test case for the mod tools (MD9); single-file <code>.glb</code> models as an additional option beside OBJ/MTL, which stays fully supported (confirmed by the user), <code>.blend</code> sources exported through Blender, materials keeping their textures (MD10). R-MOD-023: the wizard's kind is <strong>extension</strong> (declares <code>parent:</code>, adds to or overrides the base), Open note resolved; whether it is a manifest kind or maps onto <code>addon</code> stays open (MD4)</td>
+</tr>
+<tr>
+<td>- As built (app 0.4.13, main 4346cba): <code>map_Kd original:&lt;File&gt;.dll#&lt;id&gt;</code> (an original image, colour key applied) and <code>map_Kd original:&lt;NAME&gt;</code> (an original texture) are kept as references and loaded from the player's data; the MTL parser treats only lines starting with <code>#</code> as comments; <code>--check</code> loads 3D cockpit models and their textures. Verified by <code>content::tests::pack_files_override_original_assets</code>, <code>formats::obj</code> MTL test, and a scratch mod against real data. User instructions: <a href="../../../modding/3d-cockpit-tutorial/">Tutorial: a 3D X-COM cockpit</a>. To be evaluated in practice (user, 2026-11-11: "provide instructions for this in the user documentation and we'll evaluate in practice how well it seems to work").</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>1.9.1</td>
+<td>2026-11-11</td>
+<td>R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note</td>
 </tr>
 </tbody>
 </table>
