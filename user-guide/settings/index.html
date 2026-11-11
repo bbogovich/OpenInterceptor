@@ -5895,6 +5895,7 @@ the CD).</p>
 <span class="w">  </span><span class="nt">campaign</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="w">  </span><span class="nt">difficulty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ranger</span>
 <span class="w">  </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">en</span>
+<span class="w">  </span><span class="nt">physics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simple</span><span class="w">       </span><span class="c1"># or realistic</span>
 <span class="nt">graphics</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">brightness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2</span>
 <span class="nt">console</span><span class="p">:</span>
@@ -5939,6 +5940,11 @@ the CD).</p>
 <td><code>game.language</code></td>
 <td><code>en</code></td>
 <td>The text language: the packs' <code>text/&lt;language&gt;/</code> folders (<code>--language</code> overrides it).</td>
+</tr>
+<tr>
+<td><code>game.physics</code></td>
+<td><code>realistic</code></td>
+<td><code>simple</code>: the player's craft always flies where its nose points, with no drift, like a traditional space fighter game. Used only on a campaign's first three difficulty levels; higher levels always fly <code>realistic</code>. The launcher's <strong>P</strong> key switches it (<a href="../../specification/requirements/flight/#r-flt-013-simple-physics-mode">R-FLT-013</a>).</td>
 </tr>
 <tr>
 <td><code>graphics.brightness</code></td>

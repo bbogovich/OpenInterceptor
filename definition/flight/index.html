@@ -511,6 +511,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#f-flt-008-simple-physics-for-beginners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-FLT-008 Simple physics for beginners
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#f-flt-007-atmospheric-flight-over-terrain" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5966,6 +5977,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#f-flt-008-simple-physics-for-beginners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-FLT-008 Simple physics for beginners
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#f-flt-007-atmospheric-flight-over-terrain" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6099,6 +6121,17 @@
 <li><strong>Source:</strong> Plan item 1.7; user request, 2026-11-11: "Formation flying - problems frequently occur where a wingman collides with the player and continues pushing, resulting in a \"hammering\" series of sounds. Formations probably need to have a bit more distance, and wingman fighters should actively try to avoid collisions. Collision should also cause more of an impact and result in directional changes and spin based on relative velocity and angle of impact. This will result in a collision causing fighter to \"spin out of control\". A collision that persists (fighter effectively pushing and staying attached to another) should only play the impact sound effect on initial impact."</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/flight/#r-flt-009-collisions">R-FLT-009</a></li>
 </ul>
+<h3 id="f-flt-008-simple-physics-for-beginners">F-FLT-008 Simple physics for beginners<a class="headerlink" href="#f-flt-008-simple-physics-for-beginners" title="Permanent link">&para;</a></h3>
+<p><strong>What.</strong> A player-selectable physics mode, <strong>Simple</strong> or <strong>Realistic</strong>.
+- In Simple mode the player's craft always travels where its nose points, at a speed set by the engine power, with no drift: it flies like a traditional space fighter game.
+- Realistic is the Newtonian model with drift.
+- The choice is offered only on the campaign's first three difficulty levels. Higher levels always use Realistic.</p>
+<p><strong>Why.</strong> Beginners used to traditional fighter games find drift hard. Higher levels keep the full simulation.</p>
+<ul>
+<li><strong>Status:</strong> implemented</li>
+<li><strong>Source:</strong> User request, 2026-11-11: "Add a physics mode toggle - Simple and Realistic. Simple physics will function more like a general space fighter simulator similar to x-wing, where navigation always follows the player direction based on direction and engine power without the physics drift applied. This makes it easier for beginner players who are used to more traditional fighter games. The toggle is only available on the first three difficulty levels, anything higher always uses realistic physics."</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/flight/#r-flt-013-simple-physics-mode">R-FLT-013</a></li>
+</ul>
 <h3 id="f-flt-007-atmospheric-flight-over-terrain">F-FLT-007 Atmospheric flight over terrain<a class="headerlink" href="#f-flt-007-atmospheric-flight-over-terrain" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> On planet surfaces craft feel drag, gravity and lift, can hover and land, and fly over terrain with ground installations, a sky and fog.</p>
 <p><strong>Why.</strong> New to this engine: it lets campaigns fight on worlds, not only in space (the default campaign has surface missions).</p>
@@ -6126,6 +6159,11 @@
 <td>1.5.0</td>
 <td>2026-11-11</td>
 <td>F-FLT-006: impact, spin, tumble and one sound per contact</td>
+</tr>
+<tr>
+<td>1.6.0</td>
+<td>2026-11-11</td>
+<td>F-FLT-008 simple physics for beginners</td>
 </tr>
 </tbody>
 </table>

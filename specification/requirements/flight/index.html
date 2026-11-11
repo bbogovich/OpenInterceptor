@@ -1317,6 +1317,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-flt-013-simple-physics-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-FLT-013 Simple physics mode
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6088,6 +6099,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-flt-013-simple-physics-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-FLT-013 Simple physics mode
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6311,6 +6333,19 @@
 <li>Verified by: Planned.</li>
 <li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
 </ul>
+<h3 id="r-flt-013-simple-physics-mode">R-FLT-013 Simple physics mode<a class="headerlink" href="#r-flt-013-simple-physics-mode" title="Permanent link">&para;</a></h3>
+<p>The player MUST be able to choose <code>simple</code> or <code>realistic</code> physics: in the launcher (key P), or with <code>game: {physics: simple}</code> in settings.yaml. The default is <code>realistic</code>.</p>
+<p><strong>Simple</strong> applies to the player's craft only:
+- its velocity MUST always lie along its nose, at the throttle (or speed-hold, afterburner, brake) speed, reached at the craft's acceleration;
+- sideways and vertical velocity MUST be only what the slide (VCT) thrusters ask for, with no drift left after turning or after a collision.</p>
+<p>The choice MUST take effect only when the campaign's difficulty is one of its first three levels. At any higher level the player MUST fly Realistic, and the launcher MUST say so.</p>
+<p>AI craft always fly the campaign's own model (<code>flight.model</code>).</p>
+<p><em>Rationale:</em> An easier entry for players used to traditional fighter games, without changing the challenge at higher levels or the AI's behaviour.</p>
+<ul>
+<li>Implements: <a href="../../../definition/flight/#f-flt-008-simple-physics-for-beginners">F-FLT-008</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>sim::flight::tests::simple_physics_has_no_drift</code>, <code>sim::flight::tests::simple_physics_only_on_the_first_three_levels</code>, <code>settings::tests::parses_and_round_trips</code></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6330,6 +6365,11 @@
 <td>1.5.0</td>
 <td>2026-11-11</td>
 <td>R-FLT-009 revised: impulse with restitution, spin from glancing speed and impact angle, tumble, one impact per contact (<code>flight.collision</code>)</td>
+</tr>
+<tr>
+<td>1.6.0</td>
+<td>2026-11-11</td>
+<td>R-FLT-013 simple physics mode</td>
 </tr>
 </tbody>
 </table>
