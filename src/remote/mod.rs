@@ -40,6 +40,8 @@ pub struct RemoteInput {
     held: HashMap<u32, HashSet<Action>>,
     pressed: HashSet<Action>,
     throttle: Option<f32>,
+    /// Power set on the sliders since the last frame.
+    power: (Option<u8>, Option<u8>, Option<crate::sim::ShieldBalance>),
     /// When each console was last heard from (seconds, the caller's clock).
     heard: HashMap<u32, f64>,
 }
@@ -64,6 +66,10 @@ impl RemoteInput {
                 }
             }
             server::Event::Input(_, protocol::Inbound::Throttle(t)) => self.throttle = Some(*t),
+            server::Event::Input(_, protocol::Inbound::Power { beam, shield, balance }) => {
+                // The latest value of each wins; unset ones keep what came earlier.
+                self.power = (beam.or(self.power.0), shield.or(self.power.1), balance.or(self.power.2));
+            }
             server::Event::Left(id) => {
                 // A console that drops off the network lets go of everything it held.
                 self.held.remove(id);
@@ -87,6 +93,7 @@ impl RemoteInput {
         }
         raw.remote_pressed.extend(self.pressed.drain());
         raw.remote_throttle = self.throttle.take();
+        raw.remote_power = std::mem::take(&mut self.power);
     }
 }
 

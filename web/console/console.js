@@ -61,8 +61,9 @@ async function keepAwake() {
     wakeVideo.loop = true;
     wakeVideo.setAttribute("playsinline", "");
     wakeVideo.setAttribute("muted", "");
-    // Out of sight, but still "playing" as far as the browser is concerned.
-    wakeVideo.style.cssText = "position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;bottom:0;left:0";
+    // Shown, small, as a "link" indicator: iOS pauses muted videos that are not visible.
+    wakeVideo.className = "awake";
+    wakeVideo.title = "Keeps this screen awake";
     document.body.appendChild(wakeVideo);
   }
   try {
@@ -149,7 +150,7 @@ class OiTelemetry extends HTMLElement {
 /** A throttle slider (absolute position, 0–100 %). */
 class OiThrottle extends HTMLElement {
   connectedCallback() {
-    this.innerHTML = `<label for="thr">Throttle</label><input id="thr" type="range" min="0" max="100" value="0">
+    this.innerHTML = `<label>Throttle <input type="range" min="0" max="100" value="0"></label>
       <span class="value">0%</span>`;
     const input = this.querySelector("input");
     const out = this.querySelector(".value");
@@ -160,19 +161,61 @@ class OiThrottle extends HTMLElement {
       out.textContent = `${input.value}%`;
       send({ type: "throttle", value: input.value / 100 });
     });
-    link.addEventListener("telemetry", (e) => {
+    this.onTelemetry = (e) => {
       if (!dragging && e.detail.alive) {
         input.value = Math.round(e.detail.throttle * 100);
         out.textContent = `${input.value}%`;
       }
-    });
+    };
+    link.addEventListener("telemetry", this.onTelemetry);
+  }
+
+  // A throttle inside a tile strip is removed when the strip closes: stop listening.
+  disconnectedCallback() {
+    link.removeEventListener("telemetry", this.onTelemetry);
   }
 }
 
-/** Every action from the game's catalogue, grouped. Held actions send down/up; taps send once. */
+/** The latest catalogue and telemetry, for elements built after they arrive. */
+let catalogue = null;
+let latest = null;
+link.addEventListener("catalogue", (e) => { catalogue = e.detail; });
+link.addEventListener("telemetry", (e) => { latest = e.detail; });
+
+/** One action as a button. Held actions send down/up; taps send once. Every button
+ *  lights up while pressed (class "down"): a hold for as long as it is held, a tap for
+ *  at least MIN_LIT ms so a quick tap is still seen. A feature this craft has not got
+ *  is shown, disabled, as "not fitted" (never hidden). */
+function makeButton(a) {
+  const b = document.createElement("button");
+  b.textContent = a.label;
+  b.className = a.kind;
+  b.disabled = !a.available;
+  let since = 0;
+  let lit = null;
+  const press = (ev) => {
+    ev.preventDefault();
+    clearTimeout(lit);
+    since = performance.now();
+    b.classList.add("down");
+    send({ type: "action", name: a.name, value: 1 });
+  };
+  const release = () => {
+    if (!b.classList.contains("down")) return;
+    if (a.kind === "hold") send({ type: "action", name: a.name, value: 0 });
+    const left = Math.max(0, MIN_LIT - (performance.now() - since));
+    lit = setTimeout(() => b.classList.remove("down"), left);
+  };
+  b.addEventListener("pointerdown", press);
+  for (const t of ["pointerup", "pointercancel", "pointerleave"]) b.addEventListener(t, release);
+  return b;
+}
+
+/** All-in-one mode: every action group expanded as a grid of buttons. */
 class OiActions extends HTMLElement {
   connectedCallback() {
     link.addEventListener("catalogue", (e) => this.build(e.detail));
+    if (catalogue) this.build(catalogue);
   }
 
   build(cat) {
@@ -181,32 +224,7 @@ class OiActions extends HTMLElement {
       const section = document.createElement("section");
       section.innerHTML = `<h2>${g.title}</h2><div class="buttons"></div>`;
       const box = section.querySelector(".buttons");
-      for (const a of cat.actions.filter((a) => a.group === g.id)) {
-        const b = document.createElement("button");
-        b.textContent = a.label;
-        b.className = a.kind;
-        b.disabled = !a.available; // not fitted on this craft: shown, but disabled
-        // Every button lights up while pressed (class "down"): a hold button for as long
-        // as it is held, a tap for at least MIN_LIT ms so a quick tap is still seen.
-        let since = 0;
-        let lit = null;
-        const press = (ev) => {
-          ev.preventDefault();
-          clearTimeout(lit);
-          since = performance.now();
-          b.classList.add("down");
-          send({ type: "action", name: a.name, value: 1 });
-        };
-        const release = () => {
-          if (!b.classList.contains("down")) return;
-          if (a.kind === "hold") send({ type: "action", name: a.name, value: 0 });
-          const left = Math.max(0, MIN_LIT - (performance.now() - since));
-          lit = setTimeout(() => b.classList.remove("down"), left);
-        };
-        b.addEventListener("pointerdown", press);
-        for (const t of ["pointerup", "pointercancel", "pointerleave"]) b.addEventListener(t, release);
-        box.appendChild(b);
-      }
+      for (const a of cat.actions.filter((a) => a.group === g.id)) box.appendChild(makeButton(a));
       this.appendChild(section);
     }
   }
@@ -257,6 +275,207 @@ class OiStatic extends HTMLElement {
   }
 }
 
+/* ---------------------------------------------------------------------------------
+ * Cockpit mode (the layout of the design proposal): HUD strip on top, shields left,
+ * the display console centre, power right, function-group tiles below.
+ * ------------------------------------------------------------------------------- */
+
+const pct = (f) => `${Math.round((f || 0) * 100)}%`;
+const signed = (n) => `${n >= 0 ? "+" : ""}${Math.round(n)}`;
+const LEVELS = "ABCDEFGHIJ";
+
+/** Chooses the layout: "allinone" or "cockpit", remembered on this tablet. */
+class OiMode extends HTMLElement {
+  connectedCallback() {
+    this.innerHTML = `<button data-m="allinone">All-in-one</button><button data-m="cockpit">Cockpit</button>`;
+    let mode = "allinone";
+    try { mode = localStorage.getItem("oi-mode") || mode; } catch (_) { /* private mode */ }
+    mode = new URLSearchParams(location.search).get("mode") || mode; // e.g. …/?mode=cockpit
+    const set = (m) => {
+      document.body.dataset.mode = m;
+      for (const b of this.querySelectorAll("button")) b.classList.toggle("on", b.dataset.m === m);
+      try { localStorage.setItem("oi-mode", m); } catch (_) { /* private mode */ }
+    };
+    for (const b of this.querySelectorAll("button")) b.addEventListener("click", () => set(b.dataset.m));
+    set(mode);
+  }
+}
+
+/** The exterior-view HUD as a strip: speed, drift, throttle, hull, energy, target, flags. */
+class OiHudStrip extends HTMLElement {
+  connectedCallback() {
+    const cells = [["spd", "SPD"], ["drift", "DRIFT X/Y"], ["thr", "THR"], ["hull", "HULL"], ["nrg", "ENERGY"],
+      ["tgt", "TARGET"], ["flags", "STATUS"]];
+    this.innerHTML = cells.map(([k, l]) => `<div><span>${l}</span><b data-k="${k}">—</b></div>`).join("");
+    const set = (k, v) => { this.querySelector(`[data-k="${k}"]`).textContent = v; };
+    link.addEventListener("telemetry", (e) => {
+      const t = e.detail;
+      if (!t.alive) { set("spd", t.state === "launcher" ? "not flying" : "DESTROYED"); return; }
+      const [x, y, z] = t.velocity;
+      set("spd", `${Math.round(z)} m/s`);
+      set("drift", `${signed(x)} / ${signed(y)}`);
+      set("thr", pct(t.throttle));
+      set("hull", pct(t.hull));
+      set("nrg", pct(t.energy));
+      set("tgt", t.target ? `${t.target.name} ${(t.target.distance / 1000).toFixed(1)} km` : "none");
+      set("flags", [t.link.toUpperCase(), t.afterburner && "BURN", t.braking && "BRAKE"].filter(Boolean).join(" "));
+    });
+  }
+}
+
+/** Fore and aft shield rings (green, amber, red, blinking when down) and the balance. */
+class OiShields extends HTMLElement {
+  connectedCallback() {
+    const ring = (id, label) => `<figure><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="40"/>
+      <circle class="level" data-r="${id}" cx="50" cy="50" r="40" transform="rotate(-90 50 50)"/>
+      <text x="50" y="47">${label}</text><text class="pc" data-p="${id}" x="50" y="64">—</text></svg></figure>`;
+    this.innerHTML = `<h2>Shields</h2>${ring("fore", "FORE")}${ring("aft", "AFT")}
+      <div class="seg"><button data-b="forward">Fore</button><button data-b="equal">Equal</button><button data-b="aft">Aft</button></div>`;
+    const length = 2 * Math.PI * 40;
+    for (const c of this.querySelectorAll(".level")) c.style.strokeDasharray = `0 ${length}`;
+    for (const b of this.querySelectorAll("[data-b]")) {
+      b.addEventListener("click", () => send({ type: "power", balance: b.dataset.b }));
+    }
+    link.addEventListener("telemetry", (e) => {
+      const t = e.detail;
+      if (!t.alive) return;
+      for (const [k, f] of [["fore", t.shields[0]], ["aft", t.shields[1]]]) {
+        const c = this.querySelector(`[data-r="${k}"]`);
+        c.style.strokeDasharray = `${length * f} ${length}`;
+        c.dataset.level = f > 0.66 ? "ok" : f > 0.33 ? "low" : f > 0.01 ? "bad" : "down";
+        this.querySelector(`[data-p="${k}"]`).textContent = pct(f);
+      }
+      for (const b of this.querySelectorAll("[data-b]")) b.classList.toggle("on", b.dataset.b === t.balance);
+    });
+  }
+}
+
+/** The display console: the target's data, with tabs for the target view (C3) and the
+ *  map (C4), which arrive in later steps. */
+class OiDisplay extends HTMLElement {
+  connectedCallback() {
+    this.innerHTML = `<nav><button data-tab="target" class="on">Target</button><button data-tab="map">Map</button></nav>
+      <div data-pane="target"><div class="tdata"></div><div class="viewport">Target view (coming in step C3)</div></div>
+      <div data-pane="map" hidden><div class="viewport">3D map (coming in step C4)</div></div>`;
+    for (const b of this.querySelectorAll("[data-tab]")) {
+      b.addEventListener("click", () => {
+        for (const x of this.querySelectorAll("[data-tab]")) x.classList.toggle("on", x === b);
+        for (const p of this.querySelectorAll("[data-pane]")) p.hidden = p.dataset.pane !== b.dataset.tab;
+      });
+    }
+    const box = this.querySelector(".tdata");
+    const bar = (label, f) => `<div class="bar"><span>${label}</span><i style="width:${pct(f)}"></i><em>${pct(f)}</em></div>`;
+    link.addEventListener("telemetry", (e) => {
+      const t = e.detail.target;
+      if (!e.detail.alive || !t) { box.innerHTML = `<p class="none">No target</p>`; return; }
+      box.innerHTML = `<h3 class="${t.relation}">${t.name}${t.protect ? ' <small>PROTECT</small>' : ""}</h3>
+        <p>${(t.distance / 1000).toFixed(2)} km · closing ${Math.round(t.closing)} m/s</p>
+        ${bar("Hull", t.hull)}${bar("Fore", t.shields[0])}${bar("Aft", t.shields[1])}`;
+    });
+  }
+}
+
+/** Power: beam and shield charge levels as vertical sliders (A = lowest), within the
+ *  power budget; the game lowers the other setting if the budget needs it. */
+class OiPower extends HTMLElement {
+  connectedCallback() {
+    const slider = (k, l) => `<label><span>${l}</span><input data-s="${k}" type="range" min="0" max="4" step="1" value="0"><b data-v="${k}">A</b></label>`;
+    this.innerHTML = `<h2>Power</h2><div class="sliders">${slider("beam", "Beams")}${slider("shield", "Shields")}</div>
+      <p class="budget">—</p>`;
+    let dragging = null;
+    for (const input of this.querySelectorAll("input")) {
+      input.addEventListener("pointerdown", () => { dragging = input; });
+      input.addEventListener("pointerup", () => { dragging = null; });
+      input.addEventListener("input", () => {
+        this.querySelector(`[data-v="${input.dataset.s}"]`).textContent = LEVELS[input.value];
+        send({ type: "power", [input.dataset.s]: Number(input.value) });
+      });
+    }
+    link.addEventListener("telemetry", (e) => {
+      const t = e.detail;
+      if (!t.alive) return;
+      const [beam, shield, levels, used, budget] = t.power;
+      for (const [k, v] of [["beam", beam], ["shield", shield]]) {
+        const input = this.querySelector(`[data-s="${k}"]`);
+        input.max = Math.max(0, levels - 1);
+        if (input !== dragging) input.value = v;
+        this.querySelector(`[data-v="${k}"]`).textContent = LEVELS[input.value];
+      }
+      this.querySelector(".budget").textContent = `${used} of ${budget} power in use`;
+    });
+  }
+}
+
+/** Function-group tiles: a status card per group. Tapping a card opens a full-width
+ *  strip with that group's controls and folds the other cards to their titles; tapping
+ *  the open title closes it; tapping another title switches to that group. */
+class OiTiles extends HTMLElement {
+  connectedCallback() {
+    this.open = null;
+    link.addEventListener("catalogue", () => this.render());
+    link.addEventListener("telemetry", () => this.status());
+    if (catalogue) this.render();
+  }
+
+  /** The one-line status of a group, from the latest telemetry. */
+  line(id) {
+    const t = latest;
+    if (!t || !t.alive) return "—";
+    const off = catalogue.actions.filter((a) => a.group === id && !a.available).length;
+    const missing = off ? ` · ${off} not fitted` : "";
+    const sys = (k) => (t.systems || []).find((s) => s.kind === k);
+    switch (id) {
+      case "flight": return `drift ${signed(t.velocity[0])} / ${signed(t.velocity[1])}${missing}`;
+      case "throttle": return `${Math.round(t.velocity[2])} m/s · ${pct(t.throttle)}${t.afterburner ? " · BURN" : ""}`;
+      case "weapons": return `${t.link.toUpperCase()} · ${t.missile ? `${t.missile.name} ×${t.missile.count}` : "no missiles"}${missing}`;
+      case "targeting": return t.target ? `${t.target.name} · ${(t.target.distance / 1000).toFixed(1)} km` : "no target";
+      case "power": {
+        const on = ["cloak", "ecm", "tractor"].filter((k) => sys(k) && sys(k).on).map((k) => k.toUpperCase());
+        return `Beam ${LEVELS[t.power[0]]} · Shield ${LEVELS[t.power[1]]} · ${t.balance}${on.length ? " · " + on.join(" ") : ""}${missing}`;
+      }
+      default: return missing ? missing.slice(3) : "ready";
+    }
+  }
+
+  render() {
+    if (!catalogue) return;
+    this.innerHTML = `<div class="cards"></div><div class="strip" hidden></div>`;
+    const cards = this.querySelector(".cards");
+    for (const g of catalogue.groups) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.g = g.id;
+      card.innerHTML = `<h3>${g.title}</h3><p class="line">—</p>`;
+      card.addEventListener("click", () => {
+        this.open = this.open === g.id ? null : g.id;
+        this.layout();
+      });
+      cards.appendChild(card);
+    }
+    this.layout();
+    this.status();
+  }
+
+  layout() {
+    this.classList.toggle("folded", this.open !== null);
+    for (const c of this.querySelectorAll(".card")) c.classList.toggle("on", c.dataset.g === this.open);
+    const strip = this.querySelector(".strip");
+    strip.hidden = this.open === null;
+    strip.innerHTML = "";
+    if (this.open === null) return;
+    if (this.open === "throttle") strip.appendChild(document.createElement("oi-throttle"));
+    const box = document.createElement("div");
+    box.className = "buttons";
+    for (const a of catalogue.actions.filter((a) => a.group === this.open)) box.appendChild(makeButton(a));
+    strip.appendChild(box);
+  }
+
+  status() {
+    if (!catalogue) return;
+    for (const c of this.querySelectorAll(".card")) c.querySelector(".line").textContent = this.line(c.dataset.g);
+  }
+}
+
 const MIN_LIT = 150; // ms a tapped button stays lit
 const STATIC_MS = 400; // ms of static after a hit
 
@@ -265,3 +484,9 @@ customElements.define("oi-pairing", OiPairing);
 customElements.define("oi-telemetry", OiTelemetry);
 customElements.define("oi-throttle", OiThrottle);
 customElements.define("oi-actions", OiActions);
+customElements.define("oi-mode", OiMode);
+customElements.define("oi-hud-strip", OiHudStrip);
+customElements.define("oi-shields", OiShields);
+customElements.define("oi-display", OiDisplay);
+customElements.define("oi-power", OiPower);
+customElements.define("oi-tiles", OiTiles);

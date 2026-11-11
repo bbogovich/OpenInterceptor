@@ -69,6 +69,29 @@ pub fn raise(power: &mut Power, which: Setting, rules: &PowerRules, switched: u3
     true
 }
 
+/// Sets `which` to `level` (clamped to the levels there are), as from a slider. Like
+/// [`raise`], the *other* setting is lowered as far as the budget needs; returns false,
+/// leaving `power` unchanged, when the budget cannot be met even so.
+pub fn set_level(power: &mut Power, which: Setting, level: u8, rules: &PowerRules, switched: u32) -> bool {
+    let top = rules.levels().saturating_sub(1);
+    let mine = level.min(top);
+    let mut other = match which {
+        Setting::Beam => power.shield,
+        Setting::Shield => power.beam,
+    };
+    while (mine + other) as u32 + switched > rules.budget as u32 && other > 0 {
+        other -= 1;
+    }
+    if (mine + other) as u32 + switched > rules.budget as u32 {
+        return false;
+    }
+    match which {
+        Setting::Beam => (power.beam, power.shield) = (mine, other),
+        Setting::Shield => (power.shield, power.beam) = (mine, other),
+    }
+    true
+}
+
 /// Steps `which` up one level, wrapping from the top level back to A (the original's
 /// F9/F10 keys). Raising follows the same budget rule as [`raise`].
 pub fn cycle(power: &mut Power, which: Setting, rules: &PowerRules, switched: u32) -> bool {
@@ -149,8 +172,28 @@ pub fn handle_requests(w: &mut World) {
                 });
             }
         }
+        for (level, setting) in [(r.set_beam, Setting::Beam), (r.set_shield, Setting::Shield)] {
+            let Some(level) = level else { continue };
+            let before = s.power;
+            if set_level(&mut s.power, setting, level, p, budget_used) {
+                changed |= s.power != before;
+            } else {
+                messages.push("INSUFFICIENT POWER".into());
+            }
+        }
         if changed {
             messages.push(power_message(&s.power, p));
+        }
+        if let Some(b) = r.set_balance.filter(|b| *b != s.power.balance) {
+            s.power.balance = b;
+            messages.push(
+                match b {
+                    ShieldBalance::Equal => "SHIELDS BALANCED",
+                    ShieldBalance::Forward => "SHIELDS FULL FORWARD",
+                    ShieldBalance::Aft => "SHIELDS FULL AFT",
+                }
+                .into(),
+            );
         }
         if r.shield_balance {
             s.power.balance = match s.power.balance {
@@ -638,6 +681,35 @@ mod tests {
         let s = w.get(me).unwrap();
         assert_eq!((s.power.beam, s.power.shield, s.power.balance), (4, 2, ShieldBalance::Forward));
         assert!(messages(&w).iter().any(|m| m.starts_with("BEAMS E")), "{:?}", messages(&w));
+    }
+
+    #[test]
+    fn sliders_set_power_levels_and_balance_outright() {
+        let mut w = crate::sim::test_support::world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(
+            f,
+            crate::content::rules::FactionId(0),
+            "me",
+            glam::Vec3::ZERO,
+            glam::Quat::IDENTITY,
+            crate::sim::Pilot::External,
+        );
+        let top = w.rules.power.levels() - 1;
+        press(
+            &mut w,
+            me,
+            Requests { set_beam: Some(top), set_balance: Some(ShieldBalance::Aft), ..Default::default() },
+        );
+        let p = w.get(me).unwrap().power;
+        assert_eq!((p.beam, p.balance), (top, ShieldBalance::Aft));
+        assert!(
+            power_used(w.get(me).unwrap(), &w.rules) <= w.rules.power.budget as u32,
+            "shields gave way to the budget"
+        );
+        press(&mut w, me, Requests { set_shield: Some(0), set_beam: Some(0), ..Default::default() });
+        let p = w.get(me).unwrap().power;
+        assert_eq!((p.beam, p.shield), (0, 0));
     }
 
     #[test]

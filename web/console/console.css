@@ -53,3 +53,82 @@ oi-static canvas { width: 100%; height: 100%; image-rendering: pixelated; }
 @media (prefers-reduced-motion: reduce) { oi-static { display: none; } }
 oi-actions button:disabled { color: var(--off); border-color: var(--off); background: transparent; }
 oi-actions button:disabled::after { content: "not fitted"; display: block; font-size: 10px; }
+
+/* --- Modes ---------------------------------------------------------------------- */
+oi-mode { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 10px; }
+oi-mode button, oi-shields .seg button, oi-display nav button {
+  min-height: 36px; padding: 4px 14px; border-radius: 6px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); font: 13px var(--font); -webkit-tap-highlight-color: transparent; }
+oi-mode button.on, oi-shields .seg button.on, oi-display nav button.on { background: var(--line); color: #000; }
+body:not([data-mode="cockpit"]) #cockpit { display: none; }
+body[data-mode="cockpit"] #allinone { display: none; }
+
+/* --- Cockpit mode ----------------------------------------------------------------- */
+oi-hud-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 10px; }
+oi-hud-strip div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+oi-hud-strip span { display: block; font-size: 10px; color: var(--dim); letter-spacing: .05em; }
+oi-hud-strip b { font: 600 15px/1.3 monospace; color: var(--hot); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+#cockpit .mid { display: grid; grid-template-columns: 170px 1fr 170px; gap: 10px; margin-bottom: 10px; }
+oi-shields, oi-display, oi-power { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+oi-shields figure { margin: 0 auto 6px; width: 120px; }
+oi-shields svg { width: 100%; }
+oi-shields circle { fill: none; stroke-width: 9; }
+oi-shields .track { stroke: #1a2a1f; }
+oi-shields .level { stroke-linecap: round; transition: stroke-dasharray .2s; }
+oi-shields .level[data-level="ok"] { stroke: #3ddc6b; }
+oi-shields .level[data-level="low"] { stroke: var(--warn); }
+oi-shields .level[data-level="bad"] { stroke: var(--danger); }
+oi-shields .level[data-level="down"] { stroke: var(--danger); stroke-dasharray: 251 251 !important; animation: blink .5s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+oi-shields text { fill: var(--ink); font: 11px var(--font); text-anchor: middle; }
+oi-shields text.pc { font: 600 15px monospace; fill: var(--hot); }
+oi-shields .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+oi-shields .seg button { padding: 4px; }
+
+oi-display { display: flex; flex-direction: column; min-height: 300px; }
+oi-display nav { display: flex; gap: 6px; margin-bottom: 8px; }
+oi-display [data-pane] { flex: 1; display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; }
+oi-display [data-pane="map"] { grid-template-columns: 1fr; }
+oi-display .viewport { border: 1px dashed var(--line); border-radius: 6px; display: grid; place-items: center;
+  color: var(--dim); font-size: 12px; background: #050a07; min-height: 220px; }
+oi-display h3 { margin: 0 0 4px; font-size: 18px; }
+oi-display h3.hostile { color: var(--danger); } oi-display h3.friendly { color: #3ddc6b; } oi-display h3.neutral { color: #f2d36b; }
+oi-display h3 small { font-size: 11px; color: #6bc8ff; border: 1px solid #6bc8ff; padding: 0 4px; border-radius: 3px; }
+oi-display p { margin: 0 0 8px; color: var(--ink); }
+oi-display .none { color: var(--dim); }
+oi-display .bar { display: grid; grid-template-columns: 42px 1fr 42px; align-items: center; gap: 6px; margin: 6px 0; font-size: 12px; }
+oi-display .bar i { display: block; height: 10px; background: var(--hot); border-radius: 3px; }
+oi-display .bar em { font-style: normal; color: var(--dim); text-align: right; }
+
+oi-power .sliders { display: flex; justify-content: space-around; height: 210px; }
+oi-power label { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+oi-power input { writing-mode: vertical-lr; direction: rtl; height: 160px; width: 44px; accent-color: var(--hot); }
+oi-power b { font: 600 18px monospace; color: var(--hot); }
+oi-power .budget { font-size: 11px; color: var(--dim); text-align: center; margin: 6px 0 0; }
+
+oi-tiles .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+oi-tiles .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; min-height: 74px; }
+oi-tiles .card h3 { margin: 0 0 6px; font-size: 13px; color: var(--hot); letter-spacing: .04em; text-transform: uppercase; }
+oi-tiles .card .line { margin: 0; font: 12px/1.3 monospace; color: var(--ink); }
+oi-tiles.folded .card { min-height: 0; padding: 8px 10px; }
+oi-tiles.folded .card .line { display: none; }
+oi-tiles .card.on { background: var(--line); }
+oi-tiles .card.on h3 { color: #000; }
+oi-tiles .strip { margin-top: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+oi-tiles .strip .buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+oi-tiles .strip oi-throttle { margin-bottom: 8px; }
+oi-tiles button { min-height: 48px; padding: 6px; border-radius: 6px; border: 1px solid var(--line);
+  background: #102417; color: var(--ink); font: 13px/1.15 var(--font); -webkit-tap-highlight-color: transparent; }
+oi-tiles button.hold { border-style: dashed; }
+oi-tiles button.down { background: var(--line); border-color: var(--line); color: #000; }
+oi-tiles button:disabled { color: var(--off); border-color: var(--off); background: transparent; }
+oi-tiles button:disabled::after { content: "not fitted"; display: block; font-size: 10px; }
+oi-throttle label { display: flex; align-items: center; gap: 12px; flex: 1; }
+@media (max-width: 900px) { #cockpit .mid { grid-template-columns: 1fr; } oi-hud-strip { grid-template-columns: repeat(4, 1fr); } }
+
+/* The keep-awake clip, shown as a small radar-sweep "link" indicator (iOS pauses muted
+   videos that are not visible). */
+video.awake { position: fixed; right: 10px; bottom: 10px; width: 96px; height: 54px; border: 1px solid var(--line);
+  border-radius: 6px; z-index: 5; pointer-events: none; background: #000; }

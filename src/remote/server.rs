@@ -310,7 +310,7 @@ mod tests {
     fn serve_for_a_browser() {
         let server = ConsoleServer::start(8790, 7).unwrap();
         println!("http://127.0.0.1:8790/?code={}", server.code);
-        let end = std::time::Instant::now() + Duration::from_secs(20);
+        let end = std::time::Instant::now() + Duration::from_secs(60);
         while std::time::Instant::now() < end {
             for e in server.poll() {
                 println!("event {e:?}");
@@ -318,7 +318,15 @@ mod tests {
                     server.broadcast(&protocol::catalogue_idle());
                 }
             }
-            server.broadcast(&protocol::telemetry_idle("launcher"));
+            // A sample of in-flight telemetry, so every panel has something to show.
+            server.broadcast(concat!(
+                r#"{"type":"telemetry","time":12,"alive":true,"hits":0,"hull_hits":0,"craft":"Lightning","#,
+                r#""velocity":[24,-6,312],"throttle":0.7,"hull":0.82,"energy":0.64,"shields":[0.9,0.3],"#,
+                r#""power":[2,1,5,3,4],"balance":"equal","link":"linked","afterburner":false,"braking":false,"#,
+                r#""missile":{"name":"Hunter","count":4},"systems":[{"kind":"ecm","health":1,"destroyed":false,"on":true}],"#,
+                r#""target":{"name":"Wraith","relation":"hostile","protect":false,"distance":2140,"closing":85,"#,
+                r#""hull":0.55,"shields":[0.2,0],"rotation":[0,0.38,0,0.92]}}"#
+            ));
             std::thread::sleep(Duration::from_millis(500));
         }
     }

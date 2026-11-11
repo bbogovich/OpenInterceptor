@@ -540,6 +540,8 @@ pub struct RawInput {
     pub remote_pressed: HashSet<Action>,
     /// A throttle position set on a remote slider (0..1), this frame.
     pub remote_throttle: Option<f32>,
+    /// Power set on remote sliders this frame: beam level, shield level, shield balance.
+    pub remote_power: (Option<u8>, Option<u8>, Option<crate::sim::ShieldBalance>),
 }
 
 impl RawInput {
@@ -790,6 +792,9 @@ impl Bindings {
                 ecm: f.pressed(A::Ecm),
                 hyperspace: f.pressed(A::Hyperspace),
                 detonate: false,
+                set_beam: raw.remote_power.0,
+                set_shield: raw.remote_power.1,
+                set_balance: raw.remote_power.2,
             },
             ..Default::default()
         };

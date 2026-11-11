@@ -12,9 +12,19 @@
 <body>
 <oi-pairing></oi-pairing>
 <main id="console" hidden>
-  <oi-telemetry></oi-telemetry>
-  <oi-throttle></oi-throttle>
-  <oi-actions></oi-actions>
+  <oi-mode></oi-mode>
+  <!-- All-in-one: every control expanded. -->
+  <section id="allinone">
+    <oi-telemetry></oi-telemetry>
+    <oi-throttle></oi-throttle>
+    <oi-actions></oi-actions>
+  </section>
+  <!-- Cockpit: the layout of the design proposal. -->
+  <section id="cockpit">
+    <oi-hud-strip></oi-hud-strip>
+    <div class="mid"><oi-shields></oi-shields><oi-display></oi-display><oi-power></oi-power></div>
+    <oi-tiles></oi-tiles>
+  </section>
 </main>
 <oi-static aria-hidden="true"></oi-static>
 <script src="console.js"></script>

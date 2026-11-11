@@ -107,6 +107,13 @@ pub struct Requests {
     pub power_to_beams: bool,
     /// Cycle shield balance: equal → forward → aft.
     pub shield_balance: bool,
+    /// Set the beam charge to this level (0 = A), as from a slider; the shield charge
+    /// gives way if the budget needs it.
+    pub set_beam: Option<u8>,
+    /// Set the shield charge to this level; the beam charge gives way if needed.
+    pub set_shield: Option<u8>,
+    /// Set the shield balance outright.
+    pub set_balance: Option<ShieldBalance>,
     pub tractor: bool,
     pub cloak: bool,
     pub ecm: bool,
@@ -130,6 +137,10 @@ impl Requests {
             ecm: self.ecm || o.ecm,
             hyperspace: self.hyperspace || o.hyperspace,
             detonate: self.detonate || o.detonate,
+            // A later setting wins over an earlier one.
+            set_beam: o.set_beam.or(self.set_beam),
+            set_shield: o.set_shield.or(self.set_shield),
+            set_balance: o.set_balance.or(self.set_balance),
         }
     }
 }

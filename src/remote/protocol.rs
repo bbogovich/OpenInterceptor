@@ -158,6 +158,7 @@ pub fn telemetry(world: &World, player: ShipId, time: f64, hits: [u32; 2]) -> St
         .num("energy", frac(me.energy, class.energy))
         .nums("shields", &[p.fore as f64, p.aft as f64])
         .nums("power", &[p.beam as f64, p.shield as f64, p.levels as f64, p.used as f64, p.budget as f64])
+        .str("balance", &format!("{:?}", p.balance).to_lowercase())
         .str("link", &format!("{:?}", me.link_mode).to_lowercase())
         .bool("afterburner", me.afterburning)
         .bool("braking", me.braking);
@@ -217,6 +218,13 @@ pub enum Inbound {
     Throttle(f32),
     /// The console is still there (see [`HOLD_TIMEOUT`]).
     Ping,
+    /// Power set from the console's sliders: `{type:"power", beam?, shield?, balance?}`,
+    /// levels 0 = A; balance "equal" | "forward" | "aft".
+    Power {
+        beam: Option<u8>,
+        shield: Option<u8>,
+        balance: Option<crate::sim::ShieldBalance>,
+    },
 }
 
 /// Seconds without any message from a console before its held actions are released.
@@ -238,6 +246,17 @@ pub fn decode(text: &str) -> Result<Inbound, String> {
             Ok(Inbound::Throttle(t.clamp(0.0, 1.0) as f32))
         }
         Some("ping") => Ok(Inbound::Ping),
+        Some("power") => {
+            let level = |k: &str| v.get(k).and_then(Json::as_f64).map(|n| n.clamp(0.0, 15.0) as u8);
+            let balance = match v.get("balance").and_then(Json::as_str) {
+                None => None,
+                Some("equal") => Some(crate::sim::ShieldBalance::Equal),
+                Some("forward") => Some(crate::sim::ShieldBalance::Forward),
+                Some("aft") => Some(crate::sim::ShieldBalance::Aft),
+                Some(other) => return Err(format!("unknown shield balance '{other}'")),
+            };
+            Ok(Inbound::Power { beam: level("beam"), shield: level("shield"), balance })
+        }
         Some(other) => Err(format!("unknown message type '{other}'")),
         None => Err("message without a type".into()),
     }
@@ -263,6 +282,11 @@ mod tests {
             Inbound::Action { action: Action::Afterburner, down: false }
         );
         assert_eq!(decode(r#"{"type":"throttle","value":1.7}"#).unwrap(), Inbound::Throttle(1.0));
+        assert_eq!(
+            decode(r#"{"type":"power","beam":3,"balance":"aft"}"#).unwrap(),
+            Inbound::Power { beam: Some(3), shield: None, balance: Some(crate::sim::ShieldBalance::Aft) }
+        );
+        assert!(decode(r#"{"type":"power","balance":"sideways"}"#).is_err());
         assert!(decode(r#"{"type":"action","name":"self_destruct"}"#).unwrap_err().contains("unknown action"));
         assert!(decode(r#"{"type":"launch_nukes"}"#).is_err());
         assert!(decode("not json").is_err());
