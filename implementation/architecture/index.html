@@ -2902,6 +2902,8 @@
       
         
       
+        
+      
     
     
     
@@ -3136,6 +3138,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3746,6 +3776,8 @@
       
         
       
+        
+      
     
     
     
@@ -3940,6 +3972,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3958,6 +4018,8 @@
       
         
           
+        
+      
         
       
         
@@ -4351,6 +4413,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6059,7 +6149,7 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
 <p>The order is the one written at the top of <code>src/lib.rs</code>:</p>
 <pre class="mermaid"><code>flowchart TB
     subgraph L7["7 · Application"]
-        APP["app&lt;br/&gt;launcher, viewer, asset browser, flight session"]
+        APP["app&lt;br/&gt;launcher, viewer, asset browser, flight session,&lt;br/&gt;simulator, strategy screen"]
         CK["check&lt;br/&gt;headless validation"]
         EX["extract&lt;br/&gt;original data → OBJ/PNG/WAV"]
         CLI["cli + settings&lt;br/&gt;options, user data folder"]
@@ -6079,18 +6169,20 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
     end
     subgraph L4["4 · Simulation"]
         S["sim&lt;br/&gt;World, flight, combat, systems, ai, targeting, collision"]
+        CA["campaign&lt;br/&gt;Campaign: the strategy layer, hour step, saves"]
     end
     subgraph L3["3 · Content"]
-        C["content&lt;br/&gt;Content, vfs, pack, rules, schema, files,&lt;br/&gt;equipment, behaviour, scenario"]
-        SC["script&lt;br/&gt;conditions, actions"]
+        C["content&lt;br/&gt;Content, vfs, pack, rules, schema, files,&lt;br/&gt;equipment, behaviour, scenario, formation, strategy"]
+        SC["script&lt;br/&gt;conditions, actions, campaign context"]
     end
     subgraph L2["2 · Model"]
         M["model&lt;br/&gt;Model, ModelLod, MaterialGroup"]
     end
     subgraph L1["1 · Formats"]
-        F["formats&lt;br/&gt;pe, xmsh, xtxr, tga, wav, ini, yaml, obj"]
+        F["formats&lt;br/&gt;pe, xmsh, xtxr, tga, wav, ini, yaml, obj, png (writer)"]
     end
-    APP --&gt; R &amp; H &amp; AU &amp; IN &amp; S &amp; C &amp; MI &amp; RM
+    APP --&gt; R &amp; H &amp; AU &amp; IN &amp; S &amp; C &amp; MI &amp; RM &amp; CA
+    CA --&gt; C &amp; SC
     RM --&gt; IN &amp; S &amp; C &amp; H
     MI --&gt; S &amp; C &amp; SC
     CK --&gt; S &amp; C &amp; F
@@ -6191,6 +6283,11 @@ simulation:</p>
 <td>One running scenario: world, camera view, HUD state, accumulator.</td>
 </tr>
 <tr>
+<td><code>Campaign</code></td>
+<td><code>src/campaign/mod.rs</code></td>
+<td>One strategy-layer game: map, bases, research, craft, pilots, contacts; advanced an hour at a time, saved as YAML (<a href="campaign/">Campaign</a>).</td>
+</tr>
+<tr>
 <td><code>ConsoleServer</code></td>
 <td><code>src/remote/server.rs</code></td>
 <td>The tablet console's server threads, seen from the game: <code>poll</code> events, <code>broadcast</code> messages (<a href="remote/">Remote console</a>).</td>
@@ -6199,7 +6296,7 @@ simulation:</p>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
 <p>Each layer's public API is on its own page: <a href="formats/">Formats</a>, <a href="packs/">Packs, VFS and
-rules</a>, <a href="assets/">Assets and GPU cache</a>, <a href="sim/">Simulation</a>, <a href="script/">Conditions</a>, <a href="mission/">Missions</a>,
+rules</a>, <a href="assets/">Assets and GPU cache</a>, <a href="sim/">Simulation</a>, <a href="script/">Conditions</a>, <a href="mission/">Missions</a>, <a href="campaign/">Campaign</a>,
 <a href="rendering/">Rendering</a>, <a href="hud/">HUD</a>, <a href="input/">Input</a>, <a href="audio/">Audio</a>,
 <a href="platform/">Platform</a>, <a href="remote/">Remote console</a>, <a href="testbed/">Testbed</a>. <code>cargo doc --open</code> renders the <code>///</code> comments
 of every item.</p>

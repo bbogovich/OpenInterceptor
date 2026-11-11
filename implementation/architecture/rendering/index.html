@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../mission/">
+        <link rel="prev" href="../campaign/">
       
       
         <link rel="next" href="../hud/">
@@ -2902,6 +2902,8 @@
       
         
       
+        
+      
     
     
     
@@ -3136,6 +3138,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3986,6 +4016,8 @@
       
         
       
+        
+      
     
     
     
@@ -4180,6 +4212,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4198,6 +4258,8 @@
       
         
           
+        
+      
         
       
         
@@ -4591,6 +4653,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6554,6 +6644,18 @@ draw plain space. With a sky, the background is cleared to the horizon colour in
   a fixed ±8 % per-vertex variation. It is uploaded once per terrain id through
   <code>ModelCache::upload_model</code> and kept in <code>Renderer::terrain</code>, then drawn with <code>draw_model</code> like
   any ship: lit by the sun, depth-tested, fogged.</li>
+<li><strong>Ground to the horizon</strong> (app 0.6.7, from the user's playtest). Past its square the ground
+  continues as <strong>mirror-image tiles</strong> (<code>Heightfield::fold</code>): tile <code>(i, j)</code> is the field reflected
+  across each odd index, so neighbours meet without seams and <code>height_at</code> — used by collision
+  and the AI — answers everywhere. A tile reflected in X alone cannot be drawn by rotating the
+  normal mesh, so two meshes are uploaded: the field and its X-mirror (<code>terrain_model(def,
+  field, mirror_x)</code>, with the triangles' winding swapped so they still face up). A tile
+  reflected in both X and Z is the normal mesh turned 180° about Y; one reflected in Z alone is
+  the mirrored mesh turned 180° (<code>render::terrain::tile_placement</code>). Each frame the renderer
+  draws the tiles within the fog distance × 1.1 (else three field sizes), at most 7 × 7 around
+  the tile under the camera, skipping those whose nearest part is beyond reach. The test
+  <code>tiles_match_the_folded_ground_heights</code> checks every vertex of every placed tile against the
+  folded height.</li>
 <li><strong>Fog</strong> in the lit shader: the vertex stage computes <code>fog = clamp(d / FogDistance.x, 0, 1)²</code> from
   the camera-relative position; the fragment stage mixes the colour towards <code>FogColor</code>.
   <code>FogDistance.x = 0</code> (space) turns it off. See the precision note under <a href="#debugging">Debugging</a>.</li>

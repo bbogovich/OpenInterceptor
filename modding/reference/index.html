@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../voices/">
+        <link rel="prev" href="../strategy/">
       
       
         <link rel="next" href="../models/">
@@ -2898,6 +2898,8 @@
       
         
       
+        
+      
     
     
     
@@ -3132,6 +3134,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3742,6 +3772,8 @@
       
         
       
+        
+      
     
     
     
@@ -3936,6 +3968,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3956,6 +4016,8 @@
       
         
           
+        
+      
         
       
         
@@ -4366,6 +4428,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -4566,6 +4656,17 @@
     <span class="md-ellipsis">
       
         flight
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        formations
       
     </span>
   </a>
@@ -6413,6 +6514,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#formations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        formations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#power" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6711,8 +6823,14 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 </table>
 <h2 id="rules-files-rulesyaml-campaignyaml">Rules files (<code>rules/*.yaml</code>, <code>campaign/*.yaml</code>)<a class="headerlink" href="#rules-files-rulesyaml-campaignyaml" title="Permanent link">&para;</a></h2>
 <p>Top-level sections: <code>factions</code>, <code>beams</code>, <code>missiles</code>, <code>ships</code>, <code>objects</code>, <code>systems</code>, <code>cockpits</code>,
-<code>behaviours</code>, <code>modelsets</code>, <code>debris</code>, <code>effects</code>, <code>missions</code> (definitions by id), and <code>flight</code>, <code>power</code>,
-<code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>campaign</code> (global).</p>
+<code>behaviours</code>, <code>modelsets</code>, <code>debris</code>, <code>effects</code>, <code>voices</code>, <code>environments</code>, <code>terrains</code>, <code>formations</code>,
+<code>missions</code> (definitions by id), and <code>flight</code>, <code>power</code>, <code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>console</code>,
+<code>campaign</code> (global). The <strong>strategy layer</strong> adds the definitions <code>maps</code>, <code>star_classes</code>, <code>research</code>,
+<code>items</code>, <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code> and the globals
+<code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>flags</code>, <code>economy</code>, by convention in
+<code>strategy/*.yaml</code> — every key is on <a href="../strategy/">Strategy layer</a>. All of them are in the editor
+schema <code>schemas/rules.schema.json</code>.</p>
+<p>Times take <code>s</code>, <code>min</code>, <code>h</code> and, since app 0.6.7, <code>d</code> (days): <code>10d</code>.</p>
 <h3 id="factions"><code>factions</code><a class="headerlink" href="#factions" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7649,6 +7767,18 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td>How collisions feel: <code>restitution</code> (bounciness, 0 = the ships stop together … 1 = a perfect bounce; 0.5), <code>spin</code> (how strongly the angle of impact spins a ship; 1), <code>tumble</code> (time: the longest a hard hit leaves the pilot with reduced control; 2.5 s). Ships pressed together make one impact (sound and damage), not one per tick (<a href="../../specification/requirements/flight/#r-flt-009-collisions">R-FLT-009</a>).</td>
 </tr>
 <tr>
+<td><code>formation</code></td>
+<td>id</td>
+<td><code>vee</code></td>
+<td>The formation wingmen fly in when their mission role names none (<a href="#formations"><code>formations</code></a>, app 0.6.6).</td>
+</tr>
+<tr>
+<td><code>debrief_delay</code></td>
+<td>time</td>
+<td>30 s</td>
+<td>After a mission's result the verdict shows and the computer voice speaks at once; the battle runs on this long before the debrief, with a countdown (Enter shows it now; a retreat shows it at once). <code>0s</code> = at once (app 0.7.4).</td>
+</tr>
+<tr>
 <td><code>formation_gap</code></td>
 <td>number</td>
 <td>3</td>
@@ -7662,6 +7792,50 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 </tr>
 </tbody>
 </table>
+<h3 id="formations"><code>formations</code><a class="headerlink" href="#formations" title="Permanent link">&para;</a></h3>
+<p>Named shapes for groups of craft (MD1, app 0.6.6): wingmen in battle now, cutscene formations
+later. A definition section: <code>formations: {&lt;id&gt;: {…}}</code>. Both campaigns ship <code>vee</code>, <code>line_abreast</code>,
+<code>echelon</code>, <code>box</code> and <code>diamond</code> in <code>rules/formations.yaml</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shape</code></td>
+<td><code>vee</code> / <code>line_abreast</code> / <code>echelon</code> / <code>box</code> / <code>diamond</code></td>
+<td>—</td>
+<td>A built-in shape that gives a slot for any number of followers: <strong>vee</strong> alternates left and right, each pair one rank further back; <strong>line_abreast</strong> alternates left and right level with the leader; <strong>echelon</strong> is a diagonal back and to the right; <strong>box</strong> is rows of two behind the leader (the leader is the front-left corner); <strong>diamond</strong> is left, right, then behind (more trail behind).</td>
+</tr>
+<tr>
+<td><code>slots</code></td>
+<td>list of <code>[x, y, z]</code></td>
+<td>—</td>
+<td>A custom shape instead of <code>shape</code> (not both): slots in the leader's frame, +x right, +y up, <strong>+z behind</strong>, in units of <code>spacing</code>. Followers beyond the list continue as a vee behind the deepest slot.</td>
+</tr>
+<tr>
+<td><code>spacing</code></td>
+<td>distance</td>
+<td>60 m</td>
+<td>Metres per slot unit: one number opens or closes the whole formation.</td>
+</tr>
+</tbody>
+</table>
+<p>A mission role of wingmen picks one with <a href="../missions/#roles"><code>formation: &lt;id&gt;</code></a>; otherwise
+<code>flight.formation</code> applies. Slots are still pushed out to <code>flight.formation_gap</code> × the combined
+radii. A campaign with no formations uses a built-in 60 m vee. In flight, <strong>Shift+O</strong> (<em>Wingmen:
+next formation</em>) moves your wingmen into the next formation of the list. Errors: <code>formations.x:
+give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast, echelon, box or diamond</code>;
+<code>missions.m.roles.r: unknown formation 'y'</code> (and <code>flight.formation: …</code>).</p>
+<div class="highlight"><pre><span></span><code><span class="nt">formations</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">vee</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">shape</span><span class="p">:</span><span class="w"> </span><span class="nv">vee</span><span class="p p-Indicator">,</span><span class="nt"> spacing</span><span class="p">:</span><span class="w"> </span><span class="nv">60m</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">staggered</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slots</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">-1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">]],</span><span class="nt"> spacing</span><span class="p">:</span><span class="w"> </span><span class="nv">50m</span><span class="p p-Indicator">}</span>
+</code></pre></div>
 <h3 id="power"><code>power</code><a class="headerlink" href="#power" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7779,8 +7953,7 @@ each weapon. Any sound reference may be <code>cue:&lt;Name&gt;</code>, a cue of 
 </tbody>
 </table>
 <p>A clip is a sound asset (<code>sounds/x.wav</code>, <code>original:&lt;file&gt;.wav</code>); with a list, one is picked
-each time. Unlike the <code>sounds:</code> section, <code>cue:&lt;Name&gt;</code> is <strong>not</strong> resolved in voice clips (app
-0.6.4), and <code>--check</code> does not load them: a clip that fails to load is reported on start-up as a
+each time. Like the <code>sounds:</code> section, a clip may be <code>cue:&lt;Name&gt;</code> (app 0.6.7), and <code>--check</code> does not load them: a clip that fails to load is reported on start-up as a
 <code>sound: …</code> line.</p>
 <h3 id="audio"><code>audio</code><a class="headerlink" href="#audio" title="Permanent link">&para;</a></h3>
 <table>
@@ -8047,7 +8220,7 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 </tr>
 <tr>
 <td><code>roles</code></td>
-<td>mapping name: <code>{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, at, arrive}</code></td>
+<td>mapping name: <code>{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, formation, at, arrive}</code></td>
 <td>—</td>
 <td>Groups of craft. <code>class</code>: an id or a list (random per member); <code>count</code>: <code>n</code> or <code>[min, max]</code>; <code>at</code>: <code>{distance, bearing, from, spread}</code>; <code>arrive</code>: a condition.</td>
 </tr>
@@ -8085,7 +8258,7 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td><code>chatter</code></td>
 <td>list of <code>{when, line, voice}</code></td>
 <td>none</td>
-<td>Radio lines; <code>voice</code> is a clip spoken with the line (app 0.6.2).</td>
+<td>Radio lines; <code>voice</code> is a clip spoken with the line (app 0.6.2), or a <code>cue:&lt;Name&gt;</code> (app 0.6.7).</td>
 </tr>
 <tr>
 <td><code>debrief</code></td>

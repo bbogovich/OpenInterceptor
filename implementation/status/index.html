@@ -2900,6 +2900,8 @@
       
         
       
+        
+      
     
     
     
@@ -3134,6 +3136,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3506,6 +3536,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#stage-4-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4 progress
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3852,6 +3893,8 @@
       
         
       
+        
+      
     
     
     
@@ -4046,6 +4089,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4064,6 +4135,8 @@
       
         
           
+        
+      
         
       
         
@@ -4457,6 +4530,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6098,6 +6199,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#stage-4-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4 progress
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6143,13 +6255,13 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-3-missions/">3 Missions, environments and conditions</a></td>
-<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later); hazards in <strong>0.5.1</strong>; environments, atmospheric flight, terrain and the atmosphere HUD in <strong>0.6.0</strong>; ground installations in <strong>0.6.1</strong>; radio voices in <strong>0.6.2</strong>; the simulator in <strong>0.6.3</strong>; five default missions in <strong>0.6.4</strong>. Tier 2 scripting evaluated, awaiting the user's decision</td>
+<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later); hazards in <strong>0.5.1</strong>; environments, atmospheric flight, terrain and the atmosphere HUD in <strong>0.6.0</strong>; ground installations in <strong>0.6.1</strong>; radio voices in <strong>0.6.2</strong>; the simulator in <strong>0.6.3</strong>; five default missions in <strong>0.6.4</strong>; all 26 <code>interceptor</code> mission types in <strong>0.6.5</strong>; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in <strong>0.6.7</strong>; the battle runs on after its result in <strong>0.7.4</strong>. Tier 2 scripting evaluated, awaiting the user's decision</td>
 <td>See <a href="#stage-3-progress">Stage 3 progress</a> below</td>
 </tr>
 <tr>
 <td><a href="../plan/stage-4-strategy/">4 Strategy layer</a></td>
-<td>Not started</td>
-<td></td>
+<td><strong>In progress</strong> — MD1 formations in <strong>0.6.6</strong>; the campaign context in <strong>0.6.7</strong>; strategy data, the campaign runtime and saves in <strong>0.7.0</strong>; the default campaign's strategy layer and the strategy screen in <strong>0.7.1</strong>; fitting in <strong>0.7.2</strong>; lane travel in <strong>0.7.3</strong>. 4.1 and 4.11 done; 4.2 – 4.10 and 4.13 partial; 4.12, 4.14 – 4.17 open</td>
+<td>See <a href="#stage-4-progress">Stage 4 progress</a> below</td>
 </tr>
 <tr>
 <td><a href="../plan/stage-5-campaign/">5 Campaigns</a></td>
@@ -6577,9 +6689,24 @@ ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a c
 <td><code>src/sim/ai.rs</code>, <code>src/sim/mod.rs</code></td>
 </tr>
 <tr>
-<td><code>interceptor</code>: 5 of 27 mission types (3.11)</td>
-<td><strong>Started</strong> (compositions derived, DEV-041)</td>
-<td><code>packs/interceptor/missions/</code></td>
+<td><code>interceptor</code>: the mission types (3.11)</td>
+<td><strong>Done</strong> (0.6.5, main <code>b1f57ab</code>): 26 types — 21 added; compositions derived (DEV-041); soaked with the AI pilot at beginner (veteran for the hardest). Open: briefing types 2, 6, 10, 17 undefined against the earlier count of 27; simulator types and the final mission's two parts</td>
+<td><code>packs/interceptor/missions/missions.yaml</code></td>
+</tr>
+<tr>
+<td>Playtest fixes from the user's report (app 0.6.7, main <code>c0e2516</code>): <strong>ground to the horizon</strong> (mirror-image tiles, <code>Heightfield::fold</code>, <code>render::terrain::tile_placement</code>); <strong>textured console target</strong> (PNG data URLs and uvs, <code>formats::png</code>); <strong>predictive AI collision avoidance</strong> for every moving AI pilot (<code>ai::avoid_collision</code>, <code>AVOID_HORIZON</code> 2.5 s); <code>guard_station</code> 11 000 hit points at cadet, <code>defend_station</code> 2 raiders at cadet</td>
+<td><strong>Done</strong> (MT-3-60 – MT-3-63 not yet run; the console texture checked in headless Chrome)</td>
+<td><code>src/content/environment.rs</code>, <code>src/render/terrain.rs</code>, <code>src/render/mod.rs</code>, <code>src/formats/png.rs</code>, <code>src/remote/protocol.rs</code>, <code>web/console/console.js</code>, <code>src/sim/ai.rs</code>, <code>resources/default/</code></td>
+</tr>
+<tr>
+<td><code>cue:</code> names in <code>voices:</code> and chatter <code>voice:</code>; static objects spawned over a ground lifted one radius clear; time quantities in <code>d</code> (app 0.6.7, main <code>65141dc</code>)</td>
+<td><strong>Done</strong></td>
+<td><code>src/content/rules.rs</code>, <code>src/sim/mod.rs</code>, <code>src/content/schema.rs</code></td>
+</tr>
+<tr>
+<td>The battle runs on after its result: verdict and computer voice at once, debrief after <code>flight.debrief_delay</code> (30 s) with a countdown, Enter to skip, at once on a retreat (app 0.7.4, main <code>9295707</code>; user request)</td>
+<td><strong>Done</strong> (MT-3-64 not yet run)</td>
+<td><code>src/app/flight.rs</code>, <code>src/content/rules.rs</code></td>
 </tr>
 <tr>
 <td><code>default</code>: 9 missions incl. the logistics missions; <code>colony_defence</code>, <code>ground_strike</code>, <code>outpost_raid</code>, <code>asteroid_hunt</code>, <code>pocket_ambush</code> (3.12, 3.13); craft spawned low over a ground lifted to 300 m; soak kills counted while running</td>
@@ -6662,14 +6789,95 @@ ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a c
 <td><code>src/cli.rs</code>, <code>src/settings.rs</code>, <code>scripts/check.sh</code>, <code>tools/build_bundle.py</code></td>
 </tr>
 <tr>
-<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-59</td>
+<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-64</td>
 <td><strong>Not yet run</strong> (MT-3-27's hit static confirmed by the user). The look of the hazards, sky, fog, terrain and horizon, and how the voices sound, could not be judged from the agent environment: MT-3-33 – MT-3-59 need the user</td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Remaining in Stage 3</strong>: 3.1 (the campaign context comes with Stage 4), 3.10 (the user's decision on Tier 2, then hooks), 3.11 (<code>interceptor</code> mission types, 5 of 27) and 3.13 (logistics missions generated by the strategy layer); terrain detail textures and scattered objects (3.5); the condition console.</p>
+<p><strong>Remaining in Stage 3</strong>: 3.1 (the campaign context exists since app 0.6.7; campaign actions such as <code>relation</code> and cargo are still logged only), 3.10 (the user's decision on Tier 2, then hooks), the open questions of 3.11 (types 2, 6, 10, 17; simulator types; the final mission's two parts) and 3.13 (logistics missions generated by the strategy layer); terrain detail textures and scattered objects (3.5); the condition console.</p>
 <p><strong>Next</strong>: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes, including the hazard and environment cases MT-3-33 – MT-3-46 (sky, fog, terrain, landing, crashing, the ceiling exit, ALT/VS and the horizon); the voices, simulator and new-mission cases MT-3-47 – MT-3-59; identifying the <code>interceptor</code> pilot clips by ear; the user's Tier 2 decision (3.10); then terrain detail textures and scattered objects (3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
+<h2 id="stage-4-progress">Stage 4 progress<a class="headerlink" href="#stage-4-progress" title="Permanent link">&para;</a></h2>
+<p>App <strong>0.6.6</strong> (<code>6d390d7</code>, MD1 formations), <strong>0.6.7</strong> (<code>65141dc</code> the campaign context; <code>c0e2516</code>
+playtest fixes), <strong>0.7.0</strong> (<code>77d6c9f</code>, the core), <strong>0.7.1</strong> (<code>10f7fce</code>, the default campaign's
+strategy layer and the strategy screen), <strong>0.7.2</strong> (<code>94d66c1</code>, fitting), <strong>0.7.3</strong> (<code>076203e</code>,
+<code>1e600db</code>, lane travel) and <strong>0.7.4</strong> (<code>9295707</code>, the debrief delay, a Stage 3 item). At 0.7.4,
+<strong>351 unit tests</strong> on macOS by a count of the sources (<a href="../testing/unit-tests/">Unit tests</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MD1 shared formations: <code>formations:</code> (five shapes or custom slots, <code>spacing</code>) in both campaigns, role <code>formation:</code>, <code>flight.formation</code>, successive slots across wingman roles, unknown = load error, Shift+O <em>Wingmen: next formation</em></td>
+<td><strong>Done</strong> (0.6.6; MT-4-01 not yet run)</td>
+<td><code>src/content/formation.rs</code>, <code>src/mission/mod.rs</code>, <code>src/sim/ai.rs</code>, <code>rules/formations.yaml</code></td>
+</tr>
+<tr>
+<td>Campaign context (<code>script::campaign</code>, 16 queries, every id a checked constant)</td>
+<td><strong>Done</strong> (0.6.7)</td>
+<td><code>src/script/campaign.rs</code></td>
+</tr>
+<tr>
+<td>Strategy data (<code>content::strategy</code>): <code>start</code>, <code>maps</code>, <code>star_classes</code>, <code>research</code>, <code>research_model</code>, <code>items</code>, <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code>, <code>pilots</code>, <code>scores</code>, <code>flags</code>, <code>economy</code>; names checked at load</td>
+<td><strong>Done</strong> (0.7.0; <code>rounds</code> 0.7.2)</td>
+<td><code>src/content/strategy.rs</code>, <code>schemas/rules.schema.json</code></td>
+</tr>
+<tr>
+<td>Campaign runtime: the hour step, construction, research, manufacture, deliveries, flows, the monthly report, recruits, raids, detection, interception, the battle hand-off, unopposed strikes</td>
+<td><strong>Done</strong> for 4.1, partial for 4.2 – 4.9 (see the <a href="../plan/stage-4-strategy/">plan</a>)</td>
+<td><code>src/campaign/mod.rs</code></td>
+</tr>
+<tr>
+<td>Saves (4.11)</td>
+<td><strong>Done</strong> (0.7.0)</td>
+<td><code>src/campaign/save.rs</code></td>
+</tr>
+<tr>
+<td>Default campaign strategy data (4.13)</td>
+<td><strong>Partial</strong> (0.7.1)</td>
+<td><code>resources/default/strategy/</code></td>
+</tr>
+<tr>
+<td>Strategy screen (4.10), launcher entries, <code>--strategy</code>, <code>Next::CampaignBattle</code> / <code>Next::Strategy</code></td>
+<td><strong>Partial</strong> (0.7.1; MT-4-02 – MT-4-10 not yet run)</td>
+<td><code>src/app/strategy.rs</code>, <code>src/app/mod.rs</code>, <code>src/app/launcher.rs</code>, <code>src/app/flight.rs</code>, <code>src/cli.rs</code></td>
+</tr>
+<tr>
+<td>Fitting (4.7)</td>
+<td><strong>Done</strong> for best-available fitting (0.7.2; MT-4-12 not yet run)</td>
+<td><code>src/campaign/mod.rs</code>, <code>src/app/flight.rs</code></td>
+</tr>
+<tr>
+<td>Lane travel (4.2)</td>
+<td><strong>Done</strong> (0.7.3; MT-4-11 not yet run)</td>
+<td><code>src/campaign/mod.rs</code>, <code>src/app/strategy.rs</code></td>
+</tr>
+<tr>
+<td><code>interceptor</code> strategy data (4.12)</td>
+<td><strong>Not started</strong>: the original's research prerequisites are numeric tech ids that do not map to its research sections in file order; a tech-id table must be worked out first</td>
+<td></td>
+</tr>
+<tr>
+<td>Logistics (4.14 – 4.17); the testbed strategy sandbox</td>
+<td><strong>Not started</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Known issues</strong> (found while documenting, in the code at main <code>9295707</code>): manufacture charges
+no money (<code>Campaign::manufacture</code> and the hour step never take the cost); <code>salvage</code> records the
+raid's display name while <code>salvaged(x)</code> compares the raid's id, so the default campaign's
+<code>saucer_hulls</code> and <code>robot_brains</code> cannot be started. <strong>Also open</strong>: <code>relation</code> and cargo outcome
+actions are logged only (Stage 5); texts in the strategy files are plain English (DEV-047); the
+screen is functional and plain (Stage 6); save pack versions are recorded, not compared.</p>
+<p><strong>Exit</strong> of Stage 4 (both campaigns run 6 months; save/load round trips; a manual long run): the
+default campaign's six-month run is a unit test (<code>the_default_campaign_runs_six_months</code>); the
+<code>interceptor</code> half waits for 4.12.</p>
 
 
 

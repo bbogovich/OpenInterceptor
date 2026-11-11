@@ -3116,6 +3116,8 @@
       
         
       
+        
+      
     
     
     
@@ -3350,6 +3352,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3960,6 +3990,8 @@
       
         
       
+        
+      
     
     
     
@@ -4154,6 +4186,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4172,6 +4232,8 @@
       
         
           
+        
+      
         
       
         
@@ -4565,6 +4627,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6426,17 +6516,22 @@
 </ul>
 <h3 id="r-msn-005-debrief">R-MSN-005 Debrief<a class="headerlink" href="#r-msn-005-debrief" title="Permanent link">&para;</a></h3>
 <p>At the end of a mission the debrief MUST show the result, its text, kills, losses, time, optional objectives and the campaign actions, and MUST offer a retry. The player jumping out MUST count as <code>retreat</code>. For <code>killed</code> the headline MUST be "YOUR CRAFT WAS DESTROYED" and the text MUST be the mission's <code>debrief: {killed: …}</code> if given, otherwise none (never the <code>lose</code> text, which describes the objective).</p>
+<p>When the result is decided the verdict MUST be shown at once ("MISSION ACCOMPLISHED", "MISSION FAILED", "YOUR CRAFT WAS DESTROYED" or "MISSION ENDED") and the battle MUST keep running, so its end can be watched; the debrief MUST appear <code>flight.debrief_delay</code> (rules data, a time, default 30 s) after the result, with a countdown, and Enter MUST show it at once. A <code>retreat</code> (the player leaving) MUST show the debrief at once.</p>
 <p><em>Rationale:</em> Closure and feedback.</p>
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-002-debrief">F-MSN-002</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>mission::the_players_death_is_its_own_result_with_the_lose_outcomes</code>; MT-3-01 – MT-3-11 (the debrief in every mission case), MT-3-17</li>
+<li>Verified by: <code>mission::the_players_death_is_its_own_result_with_the_lose_outcomes</code>; <code>app::flight::tests::the_debrief_waits_for_the_delay_after_the_result</code>; MT-3-01 – MT-3-11 (the debrief in every mission case), MT-3-17, MT-3-64</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/mission/">Missions (architecture)</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>Salvage and score are applied by the strategy layer (Stage 4).</p>
+<div class="admonition note">
+<p class="admonition-title">From user feedback (app 0.7.4, main <code>9295707</code>)</p>
+<p>The user's playtest asked to see the battle end: the result is announced (verdict and computer voice) at once, and the battle runs on for <code>flight.debrief_delay</code> before the debrief. <code>flight::debrief_due</code> decides when; the wait is skipped with Enter.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Campaign battles (app 0.7.1)</p>
+<p>In a campaign battle the debrief returns to the strategy screen (Enter or Esc), which applies salvage, score, money and flags (R-STR-003, R-STR-010).</p>
 </div>
 <h3 id="r-msn-006-radio-chatter">R-MSN-006 Radio chatter<a class="headerlink" href="#r-msn-006-radio-chatter" title="Permanent link">&para;</a></h3>
 <p>A mission MUST be able to play chatter lines when their conditions become true.</p>
@@ -6453,8 +6548,8 @@
 <ul>
 <li>A pack MUST be able to define radio voice sets as data, <code>voices: {&lt;set&gt;: {&lt;line&gt;: clip or [clips]}}</code>, and a ship class MUST be able to name one with <code>voice: &lt;set&gt;</code>; an unknown set MUST be a rules error.</li>
 <li>When the player gives a wing order (fire at will, attack my target, ignore my target, evasive, retreat), one of the player's living wingmen whose voice has the line MUST play an <code>acknowledge</code> clip; a status request MUST play a <code>status</code> clip; when one of the player's wingmen is destroyed, <em>another</em> MUST play a <code>down</code> clip. With several clips for a line, one is chosen each time.</li>
-<li>A mission chatter entry MAY name a clip with <code>voice:</code>; it MUST play when the line is said.</li>
-<li>When the debrief appears, the named sound <code>mission_accomplished</code> MUST play for a win and <code>mission_failed</code> for any other result (the computer voice).</li>
+<li>A mission chatter entry MAY name a clip with <code>voice:</code>; it MUST play when the line is said. Voice clips and chatter voices MAY be <code>cue:&lt;Name&gt;</code> references, resolved through the sound cue table like <code>sounds:</code> (app 0.6.7).</li>
+<li>When the mission's result is decided (since app 0.7.4 that is before the debrief, R-MSN-005), the named sound <code>mission_accomplished</code> MUST play for a win and <code>mission_failed</code> for any other result (the computer voice).</li>
 <li>A ship without a voice, a voice without the line, or a campaign without these sounds MUST stay silent without error.</li>
 </ul>
 <p>The <code>default</code> campaign MUST ship the voice set <code>guard_pilot</code> (synthesised radio clips, used by the Comet, Meteor, Thunderbolt and Victory) and the two mission sounds; the <code>interceptor</code> campaign maps the computer voice from the original's cue table (<code>Comp_MissionAccomplished</code>, <code>Comp_MissionFailed</code>).</p>
@@ -6467,7 +6562,7 @@
 </ul>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>The <code>interceptor</code> campaign's <strong>pilot</strong> chatter clips (the numbered <code>FPilot1xx</code> and <code>MPilotxxx</code> files) are not mapped to voice lines: which line each clip says is not known (<em>unknown</em>), and a wrong mapping would put the wrong words in a wingman's mouth. The user is asked to identify the lines by listening (for example in the launcher's asset browser, Sounds tab) so that <code>packs/interceptor</code> can map them to <code>acknowledge</code>, <code>status</code>, <code>down</code> and later lines. Also open: <code>cue:</code> references are not resolved inside <code>voices:</code> or chatter <code>voice:</code>, and <code>--check</code> does not load voice clips (app 0.6.4).</p>
+<p>The <code>interceptor</code> campaign's <strong>pilot</strong> chatter clips (the numbered <code>FPilot1xx</code> and <code>MPilotxxx</code> files) are not mapped to voice lines: which line each clip says is not known (<em>unknown</em>), and a wrong mapping would put the wrong words in a wingman's mouth. The user is asked to identify the lines by listening (for example in the launcher's asset browser, Sounds tab) so that <code>packs/interceptor</code> can map them to <code>acknowledge</code>, <code>status</code>, <code>down</code> and later lines. Also open: <code>--check</code> does not load voice clips. (Resolved in app 0.6.7, main <code>65141dc</code>: <code>cue:</code> references now resolve inside <code>voices:</code> and chatter <code>voice:</code>.)</p>
 </div>
 <h3 id="r-msn-008-battle-environments">R-MSN-008 Battle environments<a class="headerlink" href="#r-msn-008-battle-environments" title="Permanent link">&para;</a></h3>
 <p>A pack MUST be able to define battle environments as data, <code>environments: {&lt;id&gt;: {physics, arena, gravity, air_density, ceiling, terrain, sky, backdrop}}</code>, and a mission or scenario MUST be able to name one with <code>environment: &lt;id&gt;</code>. Without it the battle MUST take place in open space, exactly as before.</p>
@@ -6587,6 +6682,11 @@
 <td>1.12.0</td>
 <td>2026-11-11</td>
 <td>R-MSN-007 voices rewritten as built and implemented (app 0.6.2): <code>voices:</code> sets, ship <code>voice:</code>, the <code>acknowledge</code>, <code>status</code> and <code>down</code> lines, chatter <code>voice:</code>, <code>mission_accomplished</code> / <code>mission_failed</code>; Open note: the <code>interceptor</code> pilot clips are not mapped until their lines are identified. R-MSN-010 simulator rewritten as built and implemented (app 0.6.3): the setup rows, the modified copy, the atmospheric refusal, flying again</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>R-MSN-005: the verdict at once, then the battle runs on for <code>flight.debrief_delay</code> (default 30 s) before the debrief; Enter skips the wait; a retreat shows it at once (app 0.7.4, from user feedback). R-MSN-007: the computer voice plays when the result is decided; <code>cue:</code> names resolve in voices and chatter (app 0.6.7)</td>
 </tr>
 </tbody>
 </table>

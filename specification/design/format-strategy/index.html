@@ -3122,6 +3122,8 @@
       
         
       
+        
+      
     
     
     
@@ -3356,6 +3358,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3966,6 +3996,8 @@
       
         
       
+        
+      
     
     
     
@@ -4160,6 +4192,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4178,6 +4238,8 @@
       
         
           
+        
+      
         
       
         
@@ -4571,6 +4633,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6342,6 +6432,22 @@ Files in <code>strategy/*.yaml</code> (YAML, the mod format of the implemented r
 quantity the original computes with a formula takes an <strong>expression</strong> in the
 <a href="../format-behaviour/#conditions">condition language</a> (arithmetic over campaign queries), so the
 formulas are data too.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.3)</p>
+<p>The built part of this design, with every key, default and error, is on the modding page
+<a href="../../../modding/strategy/">Strategy layer</a>. Built: <code>start</code> (one start; DEV-046), <code>maps</code>
+(fixed and generated; free and lane travel), <code>star_classes</code>, <code>research</code> and <code>research_model</code>
+(<code>mode</code>, <code>rate</code>, <code>switching</code>), <code>items</code> (plus <code>rounds</code>), <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>
+(<code>limits</code>, <code>template</code>, <code>max_distance</code> in place of a placement expression), <code>raids</code> (the
+built stand-in for squadrons and the strategist), <code>incomes</code>, <code>expenses</code>, <code>pilots</code> (stats,
+ranks by experience, salary, recruit fee, pool, healing, survival), <code>scores</code>, <code>flags</code> and
+<code>economy</code> (<code>delivery</code>, <code>salvage_per_kill</code>), all expressions in the campaign context
+(<code>script::campaign</code>). Not built yet: bodies, probes and sensors as items, factions and
+relations, evaluations, resources, markets and factories as sections, storage, salvage
+tables, capture, <code>designs</code>, fitting rules, training, bravery, injuries by health, strategists.
+Several keys are simpler than designed (a number where an expression is shown, <code>upkeep</code> as a
+plain monthly number); see <a href="../../../implementation/deviations/">Deviations</a> DEV-046.</p>
+</div>
 <h2 id="star-map">Star map<a class="headerlink" href="#star-map" title="Permanent link">&para;</a></h2>
 <h3 id="mapid"><code>maps: {&lt;id&gt;: …}</code><a class="headerlink" href="#mapid" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">maps</span><span class="p">:</span>
@@ -6753,6 +6859,11 @@ meet, a <a href="../format-missions/">mission</a> is generated.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch)</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>As-built note: the strategy sections built in app 0.7.0 – 0.7.3 and what remains; the format itself unchanged</td>
 </tr>
 </tbody>
 </table>

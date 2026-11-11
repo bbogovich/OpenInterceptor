@@ -3226,6 +3226,8 @@
       
         
       
+        
+      
     
     
     
@@ -3460,6 +3462,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -4070,6 +4100,8 @@
       
         
       
+        
+      
     
     
     
@@ -4264,6 +4296,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4282,6 +4342,8 @@
       
         
           
+        
+      
         
       
         
@@ -4675,6 +4737,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6791,14 +6881,23 @@
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
 <h3 id="r-cmb-022-wingmen-keep-their-distance">R-CMB-022 Wingmen keep their distance<a class="headerlink" href="#r-cmb-022-wingmen-keep-their-distance" title="Permanent link">&para;</a></h3>
-<p>A wingman's formation slot MUST lie at least <code>flight.formation_gap</code> (default 3) × the two ships' combined radii from the leader; a closer slot from data is pushed out along its own direction.</p>
-<p>A wingman flying in formation MUST actively avoid collisions: when another craft is inside its avoidance zone (twice the combined radii) and closing, it MUST steer away and slow down until clear.</p>
+<p>A wingman's formation slot MUST come from a named formation (<code>formations:</code>, R-MOD-047): the mission role's <code>formation:</code>, else <code>flight.formation</code> (default <code>vee</code>); wingmen of every wingman role MUST take successive slots of it. The slot MUST lie at least <code>flight.formation_gap</code> (default 3) × the two ships' combined radii from the leader; a closer slot from data is pushed out along its own direction. The wing order <em>Wingmen: next formation</em> (Shift+O) MUST move the player's wingmen into the campaign's next formation, in list order, wrapping.</p>
+<p>Every moving AI pilot — wingmen and enemies alike — MUST avoid collisions <strong>predictively</strong>: it MUST project each other object's path against its own (constant velocities) to their closest approach within <code>AVOID_HORIZON</code> (2.5 s; 1 s for static objects and for its own target, so that firing passes are not broken off), and when the miss would be under 1.5 × the combined radii + 10 m (static objects: the combined radii + 30 m), or the other is already inside twice the combined radii and closing, it MUST steer to widen the miss and ease off if the danger is ahead. A leader MUST ignore its own wingmen (they keep clear of it); static objects and turrets MUST NOT avoid.</p>
 <p><em>Rationale:</em> The user's request (see F-CMB-007): wingmen collided with the player and kept pushing.</p>
 <ul>
 <li>Implements: <a href="../../../definition/combat/#f-cmb-007-wingmen-and-orders">F-CMB-007</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>sim::ai::formation_slots_keep_a_gap_from_the_leader</code>, <code>sim::ai::a_wingman_steers_clear_of_the_leader</code></li>
+<li>Verified by: <code>sim::ai::formation_slots_keep_a_gap_from_the_leader</code>, <code>sim::ai::a_wingman_steers_clear_of_the_leader</code>, <code>sim::ai::collision_avoidance_predicts_the_closest_approach</code>, <code>sim::ai::tests::the_formation_order_cycles_the_campaigns_formations</code>; <code>mission::tests::wingmen_take_successive_slots_of_their_formation</code>; <code>content::formation::tests::shapes_place_followers_behind_and_beside_the_leader</code>, <code>custom_slots_then_a_vee_and_errors</code>; MT-3-62, MT-3-63, MT-4-01</li>
+<li>See: <a href="../../../modding/reference/#formations">Formations (modding)</a>, <a href="../../../implementation/architecture/sim/#ai-simai">Simulation › AI</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Formations (MD1, app 0.6.6, main <code>6d390d7</code>)</p>
+<p>Slots come from <code>formations:</code> pack data (<code>content::formation</code>) instead of the fixed side offsets: shapes <code>vee</code>, <code>line_abreast</code>, <code>echelon</code>, <code>box</code>, <code>diamond</code> or a custom <code>slots:</code> list, in units of <code>spacing</code>. Both campaigns ship the five shapes in <code>rules/formations.yaml</code>. An unknown formation is a load error.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">From user feedback (app 0.6.7, main <code>c0e2516</code>)</p>
+<p>The user's playtest reported wingmen and enemies ramming each other and the player. Avoidance was reactive and for wingmen only; it is now predictive and for every moving AI pilot (<code>ai::avoid_collision</code>). The default <code>guard_station</code> was given <code>hit_points: {per_level: [11000, 8000, 8000, 8000]}</code> and <code>defend_station</code> two raiders at cadet, keeping R-MSN-011's 150 s undefended promise with the AI wasting fewer runs.</p>
+</div>
 <h3 id="r-cmb-016-behaviours-as-data">R-CMB-016 Behaviours as data<a class="headerlink" href="#r-cmb-016-behaviours-as-data" title="Permanent link">&para;</a></h3>
 <p>AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (<code>prefer</code>) and systems use (cloak, ECM, power). Any definition MUST accept difficulty <code>variants</code> and <code>{per_level: …}</code> values.</p>
 <p><em>Rationale:</em> Modding first; the original's AI is code, so its behaviours are derived (DEV-031, DEV-032).</p>
@@ -6899,6 +6998,11 @@
 <td>1.5.0</td>
 <td>2026-11-11</td>
 <td>R-CMB-022 wingmen keep their distance and avoid collisions</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>R-CMB-022 revised: slots from named formations with <code>formation:</code> / <code>flight.formation</code> and the Shift+O next-formation order (MD1, app 0.6.6); predictive collision avoidance for every moving AI pilot (app 0.6.7, from user feedback)</td>
 </tr>
 </tbody>
 </table>

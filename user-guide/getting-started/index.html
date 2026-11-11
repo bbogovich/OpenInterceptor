@@ -2898,6 +2898,8 @@
       
         
       
+        
+      
     
     
     
@@ -3132,6 +3134,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3744,6 +3774,8 @@
       
         
       
+        
+      
     
     
     
@@ -3948,6 +3980,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#after-a-battle-the-debrief" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After a battle: the debrief
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#documentation-site" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4090,6 +4133,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4108,6 +4179,8 @@
       
         
           
+        
+      
         
       
         
@@ -4501,6 +4574,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6165,6 +6266,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#after-a-battle-the-debrief" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After a battle: the debrief
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#documentation-site" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6294,6 +6406,9 @@ target/release/openinterceptor<span class="w"> </span>--campaign<span class="w">
 <span class="c1"># ... at a chosen difficulty level:</span>
 target/release/openinterceptor<span class="w"> </span>--campaign<span class="w"> </span>default<span class="w"> </span>--difficulty<span class="w"> </span>space_ace
 
+<span class="c1"># Open a new campaign's strategy screen directly (a campaign with a strategy layer):</span>
+target/release/openinterceptor<span class="w"> </span>--no-original<span class="w"> </span>--strategy
+
 <span class="c1"># Go straight to one mission (or scenario) with one ship:</span>
 target/release/openinterceptor<span class="w"> </span>--no-original<span class="w"> </span>--mission<span class="w"> </span>defend_station<span class="w"> </span>--ship<span class="w"> </span>comet
 
@@ -6375,6 +6490,10 @@ scripts/check.sh
 <td>Start this mission, skipping the launcher (<a href="../../modding/missions/">Missions</a>).</td>
 </tr>
 <tr>
+<td><code>--strategy</code></td>
+<td>Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; <a href="../campaign/">Campaign</a>). Without a strategy layer the launcher opens.</td>
+</tr>
+<tr>
 <td><code>--ship &lt;ID&gt;</code></td>
 <td>Player ship for <code>--scenario</code> when the scenario lets you choose.</td>
 </tr>
@@ -6441,6 +6560,14 @@ Flight is newtonian by default: throttle is thrust and the ship coasts; <code>Z<
 hold <code>B</code> to brake, <code>M</code> holds the target's speed.
 New to space sims? Press <strong>P</strong> in the launcher for <strong>Simple</strong> physics: the craft always flies
 where its nose points, with no drift (<a href="../controls/#simple-physics">Controls › Simple physics</a>).</p>
+<h2 id="after-a-battle-the-debrief">After a battle: the debrief<a class="headerlink" href="#after-a-battle-the-debrief" title="Permanent link">&para;</a></h2>
+<p>When a mission's result is decided, the verdict appears at once — <em>MISSION ACCOMPLISHED</em>,
+<em>MISSION FAILED</em>, <em>YOUR CRAFT WAS DESTROYED</em> or <em>MISSION ENDED</em> — and the computer voice speaks,
+but the battle <strong>keeps running</strong> so you can watch it end: the last explosion, your wingmen
+forming up. A countdown, <em>Debrief in 30 s (Enter: now)</em>, shows when the debrief will appear;
+<strong>Enter</strong> shows it at once (app 0.7.4). Leaving the battle from the pause menu (a retreat)
+shows the debrief at once. A campaign sets the wait with <code>flight.debrief_delay</code>
+(<a href="../../modding/reference/#flight">Mod file reference</a>).</p>
 <h2 id="documentation-site">Documentation site<a class="headerlink" href="#documentation-site" title="Permanent link">&para;</a></h2>
 <p>From the <code>docs</code> worktree (<code>engine-docs/</code> in the main checkout):</p>
 <div class="highlight"><pre><span></span><code>./docs.sh<span class="w"> </span>serve<span class="w">     </span><span class="c1"># live preview on http://127.0.0.1:8000</span>

@@ -3281,6 +3281,8 @@
       
         
       
+        
+      
     
     
     
@@ -3515,6 +3517,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -4125,6 +4155,8 @@
       
         
       
+        
+      
     
     
     
@@ -4319,6 +4351,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4337,6 +4397,8 @@
       
         
           
+        
+      
         
       
         
@@ -4730,6 +4792,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6665,47 +6755,47 @@
 <tbody>
 <tr>
 <td><a href="#r-str-001-campaign-clock">R-STR-001 Campaign clock</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-002-star-map-and-travel">R-STR-002 Star map and travel</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-003-contacts-and-mission-generation">R-STR-003 Contacts and mission generation</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-004-economy">R-STR-004 Economy</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-005-research">R-STR-005 Research</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-006-bases">R-STR-006 Bases</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-007-ships-and-equipment">R-STR-007 Ships and equipment</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-008-pilots">R-STR-008 Pilots</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-009-funding-score-and-reports">R-STR-009 Funding, score and reports</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-010-strategy-screens">R-STR-010 Strategy screens</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-011-saves">R-STR-011 Saves</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-012-logistics-is-optional-data">R-STR-012 Logistics is optional data</a></td>
@@ -6775,104 +6865,194 @@
 </table>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <h3 id="r-str-001-campaign-clock">R-STR-001 Campaign clock<a class="headerlink" href="#r-str-001-campaign-clock" title="Permanent link">&para;</a></h3>
-<p>The strategy layer MUST run on a campaign clock with dates, time speeds and auto-pause, start from the campaign's <code>starts</code> definition, and start a new game with a chosen campaign and difficulty.</p>
+<p>The strategy layer MUST run on a campaign clock with dates (Gregorian, from the campaign's <code>start.date</code>), time speeds and auto-pause, start from the campaign's <code>start</code> definition, and start a new game with a chosen campaign and difficulty. As built:</p>
+<ul>
+<li>Time passes only through <code>Campaign::advance</code>, in steps of at most one hour, so the same orders from the same state give the same game.</li>
+<li>The screen offers pause and four speeds (1 hour, 6 hours, 1 day and 5 days of campaign time per real second). The clock MUST stop by itself whenever the campaign reports a notice (construction or research finished, a contact detected, a raid striking unopposed, the monthly report) or an interception reaching its contact.</li>
+<li>A new game starts at the launcher's difficulty level with a seed from the system clock; the start places the starting bases (finished), craft, pilots (who take the craft in order), known research and stock.</li>
+<li>A campaign without <code>start:</code> MUST have no strategy layer.</li>
+</ul>
 <p><em>Rationale:</em> Real-time strategy.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: implemented (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::a_new_campaign_has_its_start</code>, <code>same_seed_same_campaign</code>, <code>the_default_campaign_runs_six_months</code>; <code>content::strategy::tests::dates_count_days_across_months_and_leap_years</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-4-02, MT-4-03</li>
+<li>See: <a href="../../../modding/strategy/#start">Strategy layer (modding)</a>, <a href="../../../implementation/architecture/campaign/">Campaign (architecture)</a>, <a href="../../../user-guide/campaign/">User guide › Campaign</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p>The design's <code>starts</code> definition is the single section <code>start:</code> (date, money, map, bases, craft, pilots, research, stock); one start per campaign (DEV-046). The difficulty is chosen in the launcher, not on a new-game screen.</p>
+</div>
 <h3 id="r-str-002-star-map-and-travel">R-STR-002 Star map and travel<a class="headerlink" href="#r-str-002-star-map-and-travel" title="Permanent link">&para;</a></h3>
 <p>The star map MUST be generated (classes, bodies, names, hidden black holes; seeded) or fixed, with free or lane travel, endurance and stranding.</p>
 <p><em>Rationale:</em> Both campaigns' maps.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.3, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>076203e</code>)</li>
+<li>Verified by: <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>; <code>campaign::tests::a_new_campaign_has_its_start</code> (a hidden system beyond sensor range), <code>lane_maps_route_along_lanes</code>; <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>; MT-4-02, MT-4-11</li>
+<li>See: <a href="../../../modding/strategy/#maps-and-star_classes">Strategy layer › maps</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>maps: {&lt;id&gt;: {kind: fixed | generated, …}}</code> with <code>star_classes</code>. Fixed maps list systems (<code>name</code>, <code>pos</code>, <code>class</code>, <code>hidden</code>) and <code>lanes</code>; generated maps scatter <code>systems: [min, max]</code> systems in a <code>size</code> rectangle, at least a little apart, with star classes by <code>weight</code>, names from <code>names</code> (then numbered), <code>black_holes</code> hidden systems, and the campaign's seed unless the map fixes its own. Hidden systems appear when a base's sensor range reaches them. The default campaign's map <code>reach</code> is fixed: six systems, seven lanes and the hidden dark moon. <strong>Lane travel</strong> (app 0.7.3): on a <code>travel: lanes</code> map raids enter at the free system farthest from their target and follow the shortest lane route (Dijkstra, <code>Campaign::lane_route</code>); interceptions fly the lanes to the system nearest the contact, then straight to it, and home along the lanes; routes are saved and the map draws each contact's way ahead.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: <strong>bodies</strong> (planets per system); <strong>endurance and stranding</strong>. Generated maps have no unit test yet.</p>
+</div>
 <h3 id="r-str-003-contacts-and-mission-generation">R-STR-003 Contacts and mission generation<a class="headerlink" href="#r-str-003-contacts-and-mission-generation" title="Permanent link">&para;</a></h3>
 <p>Squadrons, convoys and probes MUST move on flight plans; sensor coverage MUST decide detection; a mission MUST be generated when hostile forces meet.</p>
 <p><em>Rationale:</em> Battles with a cause.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::raids_are_detected_intercepted_and_fought</code>, <code>the_default_campaign_runs_six_months</code>; MT-4-04, MT-4-05</li>
+<li>See: <a href="../../../modding/strategy/#raids">Strategy layer › raids</a>, <a href="../../../modding/strategy/#raids-and-battles">Raids and battles</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p>Enemy flights are <strong>raids</strong> (<code>raids: {&lt;id&gt;: {mission, faction, every, chance, requires, target, speed}}</code>): each is rolled every <code>every</code> while <code>requires</code> holds; a success launches a <strong>contact</strong> that heads for one of the player's bases or any system — from well outside the map in a straight line, or on a lane map from the farthest free system along the lanes (R-STR-002). A contact inside a base's sensor range (the hub's <code>sensor_range</code> plus <code>sensor_range</code> module effects) is <strong>detected</strong> and stays so. The player sends a base's ready craft to <strong>intercept</strong>; when they meet it, the battle is the raid's <code>mission</code> (its composition comes from the mission, difficulty and variants), with the first craft's hull as the player's ship, or the player breaks off. The debrief returns to the campaign (R-STR-010). A contact that reaches its target unopposed destroys the target base's newest finished module and scores <code>undefended</code>.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: convoys, probes and the player's own squadrons on flight plans; missions generated from the forces that meet (the battle is the raid's fixed mission); the rival's planning (Stage 5); auto-resolve when the player does not fly (a break-off leaves the contact flying).</p>
+</div>
 <h3 id="r-str-004-economy">R-STR-004 Economy<a class="headerlink" href="#r-str-004-economy" title="Permanent link">&para;</a></h3>
 <p>The economy MUST model resources, income and expense expressions, markets, factories with prioritised queues, deliveries and losses, and storage.</p>
 <p><em>Rationale:</em> The original's economy, as data.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>the_default_campaign_runs_six_months</code>; <code>script::campaign::tests::ids_match_and_names_are_checked</code>; MT-4-06</li>
+<li>See: <a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items and hulls</a>, <a href="../../../modding/strategy/#incomes-and-expenses">incomes and expenses</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>incomes</code> and <code>expenses</code> are amounts written as expressions in the campaign context (<code>script::campaign</code>, 16 queries), paid every <code>every</code>; module maintenance, hull upkeep and pilot salaries are charged at each 30-day month. The <strong>market</strong> buys items and hulls at <code>cost</code> (delivered to the base after <code>economy.delivery</code>) and sells items at <code>sell_price</code>. <strong>Factories</strong> are a base's <code>production_rate</code> (module effects) working through its queue, first job first; a finished hull becomes a craft at the base.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: resources; prioritised queues; delivery losses; storage limits (<code>size</code> and the <code>storage</code> effect are read but not enforced); markets per seller. <strong>Manufacture charges no money</strong> in app 0.7.1: <code>Campaign::manufacture</code> and the hour step never take the product's <code>cost</code>, although the code's own comment says the cost is paid as each unit starts — a defect to fix.</p>
+</div>
 <h3 id="r-str-005-research">R-STR-005 Research<a class="headerlink" href="#r-str-005-research" title="Permanent link">&para;</a></h3>
 <p>Research MUST support the download and labs models, discovery by prerequisites, salvage and capture, and unlocks.</p>
 <p><em>Rationale:</em> Tech tree.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::research_follows_prerequisites_and_unlocks</code>, <code>the_default_campaign_runs_six_months</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>; MT-4-07</li>
+<li>See: <a href="../../../modding/strategy/#research-and-research_model">Strategy layer › research</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>research: {&lt;id&gt;: {name, size, requires, unlocks, description}}</code> and <code>research_model: {mode: download | labs, rate, switching: keep_progress | lose_progress}</code>. Each base works on one topic at <code>rate</code> work units an hour (an expression evaluated for that base). A topic is available while its <code>requires</code> holds; <code>unlocks</code> (<code>items.x</code>, <code>hulls.x</code>, <code>modules.x</code>, <code>base_types.x</code>) stay unavailable until it is known. Every name in an expression and every unlock is checked when the rules load. <code>salvage</code> outcomes mark the raid salvaged for <code>salvaged(x)</code>.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: capture; discovery by events; <code>requires_any</code>; the original's per-item salvage tables. <strong>Known issue:</strong> <code>salvage</code> records the raid's display <code>name</code> while <code>salvaged(x)</code> compares the raid's id, so <code>salvaged(&lt;raid id&gt;)</code> never holds and the default campaign's <code>saucer_hulls</code> and <code>robot_brains</code> cannot be started.</p>
+</div>
 <h3 id="r-str-006-bases">R-STR-006 Bases<a class="headerlink" href="#r-str-006-bases" title="Permanent link">&para;</a></h3>
 <p>Bases MUST have types, placement rules, templates, module construction with build times and construction states, limits, effects, destruction consequences and dismantling.</p>
 <p><em>Rationale:</em> The original's bases.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>a_new_campaign_has_its_start</code>; MT-4-06</li>
+<li>See: <a href="../../../modding/strategy/#base_modules-and-base_types">Strategy layer › base_modules and base_types</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>base_types</code> (cost, build time, <code>max_bases</code>, <code>limits</code> per module group, <code>template</code>, the hub's <code>sensor_range</code>, <code>hangar</code> and <code>quarters</code>, <code>max_distance</code> placement) and <code>base_modules</code> (group, cost, build time, maintenance, <code>effects</code>, <code>requires</code>). One base per system. A module is under construction until its build time has passed (it does not count or take effect until then); the screen shows <em>building, n days</em> or <em>working</em>. Effects acted on: <code>production_rate</code>, <code>sensor_range</code>, <code>hangar</code>; <code>research_rate</code> is available to the research-rate expression through <code>module_count</code>. An unopposed raid destroys the target base's newest finished module.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: dismantling; <code>on_destroyed</code> consequences (losing craft, pilots or stock); repair; the <code>quarters</code>, <code>storage</code>, <code>defence</code> and <code>income</code> effects (read, not acted on); placement expressions; base-type templates of "best available" modules; the 3D base view.</p>
+</div>
 <h3 id="r-str-007-ships-and-equipment">R-STR-007 Ships and equipment<a class="headerlink" href="#r-str-007-ships-and-equipment" title="Permanent link">&para;</a></h3>
 <p>Hulls, items, slots and fitting rules, power draw and stock designs MUST be data; craft MUST be bought or manufactured.</p>
 <p><em>Rationale:</em> Hangar.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-003-ships-equipment-and-pilots">F-STR-003</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.2, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>94d66c1</code>)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>craft_are_fitted_from_the_store_and_fly_their_loadout</code>; <code>app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only</code>; MT-4-06, MT-4-12</li>
+<li>See: <a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items and hulls</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>hulls: {&lt;ship class id&gt;: {cost, prod_time, upkeep, speed, slots, requires}}</code> (a hull must have a ship class of the same id) and <code>items: {&lt;id&gt;: {name, kind, cost, sell_price, prod_time, size, requires}}</code>. Craft are bought (delivered) or manufactured at a base. <strong>Fitting</strong> (app 0.7.2): <code>Campaign::fit_best</code> fills each hull slot with the costliest item of that <code>kind</code> in the base's store (a missile slot takes the item's <code>rounds</code>, a new item key), returning the old fit to the store first; the Hangar tab's <strong>F</strong> fits the chosen craft. A campaign battle carries <code>Campaign::loadout</code> (<code>Next::CampaignBattle</code>), and <code>flight::apply_loadout</code> refits the player's class with the fitted beams and missile racks — items matched to beams and missiles of the same id — in that battle's own copy of the rules (<code>Arc::make_mut</code>), leaving the shared content untouched.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: choosing items slot by slot (fitting is <em>best available</em> only); fitting rules (<code>fits</code>); power draw; stock designs; effects of slot kinds other than <code>beam</code> and <code>missile</code> in battle.</p>
+</div>
 <h3 id="r-str-008-pilots">R-STR-008 Pilots<a class="headerlink" href="#r-str-008-pilots" title="Permanent link">&para;</a></h3>
 <p>Pilots MUST be generated with ranks, experience, training, injury and healing, bravery, recruiting, salaries and voices.</p>
 <p><em>Rationale:</em> Roster.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-003-ships-equipment-and-pilots">F-STR-003</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::a_new_campaign_has_its_start</code>, <code>raids_are_detected_intercepted_and_fought</code>, <code>money_flows_monthly_with_costs</code>; MT-4-08</li>
+<li>See: <a href="../../../modding/strategy/#pilots-and-scores">Strategy layer › pilots</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>pilots: {stats, ranks, salary, recruit_fee, pool, names, heal_days, survive}</code>. Pilots are generated with stats rolled in their ranges and a name from the list; rank follows experience (<code>ranks</code>, ascending). A battle's leader gains its kills and kills + 1 experience; every pilot in the party a mission. A leader shot down (<code>killed</code>) ejects injured for <code>heal_days</code> with chance <code>survive</code>, else dies; the craft is lost. A pool of recruits is offered each month for <code>recruit_fee</code>; living pilots are paid <code>salary</code> monthly. A craft has one pilot; a craft is sent on an interception only with a ready pilot.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: training, bravery (fleeing), stat effects in battle, pilot voices by pilot, injuries by health levels.</p>
+</div>
 <h3 id="r-str-009-funding-score-and-reports">R-STR-009 Funding, score and reports<a class="headerlink" href="#r-str-009-funding-score-and-reports" title="Permanent link">&para;</a></h3>
 <p>Patron funding and evaluations, score and ratings and periodic reports MUST be campaign data.</p>
 <p><em>Rationale:</em> The original's funding model.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-strategy/">Format: strategy layer</a></li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
+<li>Verified by: <code>campaign::tests::money_flows_monthly_with_costs</code>, <code>raids_are_detected_intercepted_and_fought</code>, <code>the_default_campaign_runs_six_months</code>; MT-4-09</li>
+<li>See: <a href="../../../modding/strategy/#pilots-and-scores">Strategy layer › pilots and scores</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>scores: {&lt;name&gt;: points}</code> give mission outcomes' <code>score(&lt;name&gt;)</code> their points; the campaign keeps the total and the month's score (<code>score</code>, <code>month_score</code> queries). Funding is an ordinary income whose amount may use them — the default campaign's Senate stipend is <code>400000 + 60000 * bases + month_score * 200</code> every 30 days. Every 30 days a <strong>monthly report</strong> (a notice that stops the clock) gives the month's score, the total, the month's costs by kind and the funds.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: evaluations (<code>evaluations:</code>) and ratings; funding withdrawn by patrons; a report screen (the report is a banner and a log line).</p>
+</div>
 <h3 id="r-str-010-strategy-screens">R-STR-010 Strategy screens<a class="headerlink" href="#r-str-010-strategy-screens" title="Permanent link">&para;</a></h3>
 <p>Functional screens MUST cover the star map, bases (with the 3D base view), research, hangar, market, pilots, reports, messages and briefing/debriefing, with hand-off to battle and return.</p>
 <p><em>Rationale:</em> Playable strategy layer before skins (Stage 6).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-interface/">Format: interface, text and media</a></li>
+<li>Status: planned — partly met (app 0.7.1, main <code>10f7fce</code>)</li>
+<li>Verified by: <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>, <code>money_has_thousands_separators</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-4-02 – MT-4-10</li>
+<li>See: <a href="../../../user-guide/campaign/">User guide › Campaign</a>, <a href="../../../implementation/architecture/campaign/#the-battle-hand-off">Campaign (architecture)</a>, <a href="../../design/format-interface/">Format: interface, text and media</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.1)</p>
+<p>One functional, plain-skinned screen (<code>app::strategy</code>): the star map (systems, lanes, bases with sensor ranges, detected contacts, craft in flight; click a system to choose it) and eight tabs — Bases (and new bases), Research, Build, Market, Factory, Hangar (craft, pilots, recruits), Contacts (intercept) and Messages — with a clock line (date, speed, funds, score). Keys: Space, 1 – 4, Tab / Shift+Tab, Up/Down, Enter, Left/Right (current base), S (sell), F (fit, app 0.7.2), F5 (save), Esc (save and leave). An interception that meets its contact stops the clock with a fly-or-break-off banner; flying it hands the screen to the app (<code>Next::CampaignBattle</code>, <code>AppContext::campaign</code>), and the debrief returns to the map (<code>Next::Strategy</code>, <code>AppContext::battle_report</code>). The launcher leads with <em>Campaign: continue</em> and <em>Campaign: new game</em> when the campaign has a strategy layer; <code>--strategy</code> opens a new campaign.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia. Texts are plain English in the default campaign's strategy files, not text keys. The look is Stage 6.</p>
+</div>
 <h3 id="r-str-011-saves">R-STR-011 Saves<a class="headerlink" href="#r-str-011-saves" title="Permanent link">&para;</a></h3>
 <p>A save MUST hold the full campaign state plus the mod list and versions; loading MUST refuse a save whose mods are missing. Logistics state (stores, orders, build progress, ships in flight with their attack rolls, survey results) MUST be saved.</p>
 <p><em>Rationale:</em> Long campaigns; changing mods.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-004-saved-games">F-STR-004</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (round-trip unit tests on synthetic campaigns).</li>
-<li>See: <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a></li>
+<li>Status: implemented (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>) for the state that exists; logistics state joins when logistics is built (R-STR-012 – R-STR-027)</li>
+<li>Verified by: <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code>; <code>campaign::tests::the_default_campaign_runs_six_months</code> (a six-month game round-trips); MT-4-10</li>
+<li>See: <a href="../../../implementation/architecture/campaign/#saves">Campaign (architecture) › Saves</a>, <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
+<p><code>campaign::save</code> writes the whole <code>Campaign</code> as YAML (format version 1): the campaign id, the packs with their versions, then every field — stores, queues, build progress, contacts, deliveries, craft in flight, pilots, flags, messages — and reads it back equal (the test also continues both games 300 hours and compares). Loading refuses a save whose packs are not all loaded, naming them, and a save whose indices do not fit the loaded rules ("was a mod changed?"). One save slot per campaign, <code>&lt;user data&gt;/saves/&lt;campaign&gt;.yaml</code>, written on F5 and on leaving the map.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Pack <strong>versions</strong> are recorded but not compared: a save from an older version of a loaded mod is accepted if its indices still fit.</p>
+</div>
 <h3 id="r-str-012-logistics-is-optional-data">R-STR-012 Logistics is optional data<a class="headerlink" href="#r-str-012-logistics-is-optional-data" title="Permanent link">&para;</a></h3>
 <p>Logistics MUST be entirely campaign data; a campaign without <code>facility_types</code>, <code>recipes</code> and <code>logistics</code> sections MUST behave as without logistics. The <code>interceptor</code> campaign MUST NOT use logistics.</p>
 <p><em>Rationale:</em> Modding first; <code>interceptor</code> stays faithful to the original.</p>
@@ -7051,6 +7231,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: R-STR-001 – R-STR-027 (27 requirements; 0 reverse-engineered from the code)</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>R-STR-001 – R-STR-011 as built (app 0.7.0 – 0.7.3, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>94d66c1</code>, <code>076203e</code>): R-STR-001 (<code>start:</code> replaces <code>starts</code>) and R-STR-011 implemented; R-STR-002 – R-STR-010 partly met (status stays planned), each with an As-built note, Verified-by lines and an Open note of what remains (endurance, choosing a fit, logistics, evaluations, the 3D base view; known issues: manufacture charges no money, <code>salvaged</code> compares names with ids). R-STR-012 – R-STR-027 stay planned</td>
 </tr>
 </tbody>
 </table>

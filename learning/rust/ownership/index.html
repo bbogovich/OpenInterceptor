@@ -2898,6 +2898,8 @@
       
         
       
+        
+      
     
     
     
@@ -3132,6 +3134,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3742,6 +3772,8 @@
       
         
       
+        
+      
     
     
     
@@ -3936,6 +3968,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3954,6 +4014,8 @@
       
         
           
+        
+      
         
       
         
@@ -4347,6 +4409,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -4940,6 +5030,28 @@
     <span class="md-ellipsis">
       
         Interior mutability: Cell — src/sim/ai.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moving-a-value-out-of-a-place-memreplace-and-take" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moving a value out of a place: mem::replace and take
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-borrows-from-two-owners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two borrows from two owners
       
     </span>
   </a>
@@ -6078,6 +6190,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#moving-a-value-out-of-a-place-memreplace-and-take" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Moving a value out of a place: mem::replace and take
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-borrows-from-two-owners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two borrows from two owners
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-common-beginner-problem" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6176,6 +6310,42 @@ in and out — no reference to the inside is ever handed out, so the borrow rule
 without any run-time check. (<code>RefCell</code> does the same for non-<code>Copy</code> values, checking borrows at
 run time.) After the transitions have been tested, the AI copies the advanced state back into
 its own memory with <code>cx.rng.get()</code>.</p>
+<h2 id="moving-a-value-out-of-a-place-memreplace-and-take">Moving a value out of a place: <code>mem::replace</code> and <code>take</code><a class="headerlink" href="#moving-a-value-out-of-a-place-memreplace-and-take" title="Permanent link">&para;</a></h2>
+<p>Rust will not let you move a value out of a variable or field that is still in use — the place
+would be left holding nothing. <code>std::mem::replace(&amp;mut place, new)</code> swaps a new value in and
+hands back the old one; <code>std::mem::take(&amp;mut place)</code> does the same with the type's <code>Default</code>
+(an empty <code>Vec</code>, <code>None</code> for an <code>Option</code>). <code>Option::take()</code> is the <code>Option</code> version.</p>
+<p>The campaign's battle hand-off needs exactly this (<code>src/app/mod.rs</code>, app 0.7.1). The current
+screen is an enum value, <code>screen: Screen</code>, and the strategy screen inside it owns the whole
+campaign. To fly a battle, <code>app::run</code> must put a flight screen in <code>screen</code> <strong>without dropping
+the campaign</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Swap a launcher in, and get the strategy screen out by value.</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">old</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">mem</span><span class="p">::</span><span class="n">replace</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">screen</span><span class="p">,</span><span class="w"> </span><span class="n">Screen</span><span class="p">::</span><span class="n">Launcher</span><span class="p">(</span><span class="n">launcher</span><span class="p">::</span><span class="n">Launcher</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)));</span>
+<span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">Screen</span><span class="p">::</span><span class="n">Strategy</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">old</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="n">campaign</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// AppContext keeps it while the battle is flown</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>and after the debrief, <code>ctx.campaign.take()</code> moves it back out of the <code>Option</code>, leaving <code>None</code>.
+The strategy screen is a <code>Box&lt;StrategyScreen&gt;</code>, so these moves copy one pointer, not the
+campaign. Without <code>replace</code>, the code would need <code>screen</code> to be an <code>Option&lt;Screen&gt;</code> checked
+everywhere, or a clone of the whole campaign. The same idea empties buffers each frame
+(<code>std::mem::take</code>, <a href="../../best-practices/data-model/">Data model</a>) and a campaign's delivery
+list each hour (<code>std::mem::take(&amp;mut self.deliveries)</code>, then the ones still on their way are
+put back).</p>
+<h2 id="two-borrows-from-two-owners">Two borrows from two owners<a class="headerlink" href="#two-borrows-from-two-owners" title="Permanent link">&para;</a></h2>
+<p><code>StrategyScreen::frame(&amp;mut self, ctx: &amp;mut AppContext)</code> reads the strategy rules and changes
+the campaign in the same lines:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">def</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="n">content</span><span class="p">.</span><span class="n">rules</span><span class="p">.</span><span class="n">strategy</span><span class="p">.</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">Next</span><span class="p">::</span><span class="n">Launcher</span><span class="w"> </span><span class="p">};</span>
+<span class="c1">// … later, while `def` is still in use:</span>
+<span class="bp">self</span><span class="p">.</span><span class="n">campaign</span><span class="p">.</span><span class="n">battle_result</span><span class="p">(</span><span class="n">def</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="s">"retreat"</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="p">[],</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+</code></pre></div>
+<p><code>def</code> is a shared borrow of something inside <code>ctx</code>; <code>self.campaign</code> is borrowed mutably from
+<code>self</code>. They are different owners, so the borrows cannot overlap and the compiler accepts
+both. Had the campaign lived in <code>ctx</code> too (say <code>ctx.campaign</code>), the same two lines would
+borrow <code>ctx</code> shared and mutably at once and fail to compile. Keeping the rules (<code>ctx.content</code>,
+read-only during play) and the game state (<code>self.campaign</code>) in separate owners is what makes
+the screen's code simple. While <code>def</code> is borrowed, <code>ctx</code> may still be used <strong>shared</strong>:
+<code>self.save(ctx)</code> takes <code>&amp;AppContext</code>, so it is allowed too.</p>
 <h2 id="a-common-beginner-problem">A common beginner problem<a class="headerlink" href="#a-common-beginner-problem" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="n">ship</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">world</span><span class="p">.</span><span class="n">ships</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
 <span class="kd">let</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">world</span><span class="p">.</span><span class="n">ships</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span><span class="w">   </span><span class="c1">// error: world.ships is already borrowed mutably</span>

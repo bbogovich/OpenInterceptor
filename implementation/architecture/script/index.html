@@ -2902,6 +2902,8 @@
       
         
       
+        
+      
     
     
     
@@ -3182,6 +3184,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-campaign-context-app-067" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The campaign context (app 0.6.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3244,6 +3257,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3854,6 +3895,8 @@
       
         
       
+        
+      
     
     
     
@@ -4048,6 +4091,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4066,6 +4137,8 @@
       
         
           
+        
+      
         
       
         
@@ -4459,6 +4532,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6062,6 +6163,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-campaign-context-app-067" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The campaign context (app 0.6.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6158,6 +6270,16 @@ numeric constants. <code>sim::ai::ObjectContext</code> implements <code>Context<
 <code>&amp;World</code>, the ship's id, the time in its current state and the pilot's random state in a
 <code>Cell&lt;u64&gt;</code> — <code>Context::query</code> takes <code>&amp;self</code>, but <code>random</code> must advance the generator, and a
 <code>Cell</code> allows that for a <code>Copy</code> value without <code>&amp;mut</code> (interior mutability).</p>
+<h3 id="the-campaign-context-app-067">The campaign context (app 0.6.7)<a class="headerlink" href="#the-campaign-context-app-067" title="Permanent link">&para;</a></h3>
+<p><code>script::campaign</code> declares the strategy layer's 16 queries (<code>research</code>, <code>researching</code>, <code>has</code>,
+<code>module_count</code>, <code>bases</code>, <code>money</code>, <code>day</code>, <code>month</code>, <code>difficulty</code>, <code>pilots</code>, <code>score</code>,
+<code>month_score</code>, <code>random</code>, <code>flag</code>, <code>salvaged</code>, <code>craft</code>; ids in <code>campaign::id</code>).
+<code>campaign::schema(names, levels)</code> makes <strong>every id the campaign's data defines</strong> a constant —
+its index in <code>StrategyDef::names</code> — so a topic, item or module is passed as a bare word
+(<code>research(heat_rays)</code> compiles to query 0 with that index) and a misspelt name is a load error.
+Difficulty level ids are constants too, unless an id already has that name. The context is
+answered by <code>campaign::Campaign</code> (<a href="../campaign/#expressions-the-campaign-as-a-scriptcontext">Campaign</a>).
+Time quantities accept <code>d</code> (days) since app 0.6.7, for <code>every: 30d</code>.</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6198,6 +6320,10 @@ numeric constants. <code>sim::ai::ObjectContext</code> implements <code>Context<
 <tr>
 <td><code>object::QUERIES</code>, <code>object::id</code>, <code>object::SYSTEM_NAMES</code>, <code>object::schema</code></td>
 <td>The object context (21 queries).</td>
+</tr>
+<tr>
+<td><code>campaign::QUERIES</code>, <code>campaign::id</code>, <code>campaign::schema</code></td>
+<td>The campaign context (16 queries; app 0.6.7).</td>
 </tr>
 <tr>
 <td><code>sim::ai::ObjectContext</code></td>

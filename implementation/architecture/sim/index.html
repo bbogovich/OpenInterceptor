@@ -2902,6 +2902,8 @@
       
         
       
+        
+      
     
     
     
@@ -3354,6 +3356,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3964,6 +3994,8 @@
       
         
       
+        
+      
     
     
     
@@ -4158,6 +4190,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4176,6 +4236,8 @@
       
         
           
+        
+      
         
       
         
@@ -4569,6 +4631,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6701,6 +6791,30 @@ engine's <code>builtin_attack</code>.</p>
   point 800 m ahead and 600 m up and holds <code>1.4 × lift</code> (clamped between half and all of its top
   speed), a speed its wings can climb at. Either returns <code>None</code> when clear, and the behaviour's
   own controls are used. Since the black-hole escape, no AI craft falls in during the soaks.</li>
+<li><strong>Collision avoidance (app 0.6.7, from the user's playtest).</strong> Third in the override chain,
+  <code>avoid_collision(world, id)</code> runs for <strong>every moving AI pilot</strong> (static objects and turrets
+  never avoid; they cannot move out of the way and must keep aiming). For each other object it
+  takes the relative position <code>r</code> and velocity <code>v</code> and finds the time of <strong>closest approach</strong>
+  <code>t* = −(r·v)/|v|²</code>; objects that cannot reach it within the horizon are skipped early. The
+  horizon is <code>AVOID_HORIZON</code> = 2.5 s, but <strong>1 s</strong> for static objects and for the pilot's own
+  target — those are attacked head-on, and a firing pass must not be broken off early. Danger is
+  a miss <code>|r + v·t*|</code> under 1.5 × the combined radii + 10 m (static objects: the combined radii</li>
+<li>30 m, so attack runs on a station still get close), or something already inside twice the
+  combined radii and closing. Against the soonest danger the pilot steers away from where the
+  other will be at closest approach (a dead-on course breaks to its own upper right), mostly
+  sideways, and eases off to the other's speed if it is ahead. A <strong>leader ignores its own
+  wingmen</strong> (they keep clear of it; swerving from them as they form up, it would never fly
+  straight). The fire buttons are kept, so avoiding does not stop a pilot shooting. Before, only
+  wingmen avoided, and only when something was already inside twice the combined radii; the user
+  saw wingmen and enemies ram. Test: <code>collision_avoidance_predicts_the_closest_approach</code>.</li>
+<li><strong>Formations (MD1, app 0.6.6).</strong> A wingman's <code>AiState::offset</code> is its slot in the leader's
+  frame. <code>MissionRun</code> gives wingmen successive slots of their role's formation
+  (<code>Ruleset::formation(role.formation)</code>, else <code>flight.formation</code>; <code>FormationDef::slot(k)</code>),
+  counting the wingmen of every role already spawned. <code>ai::next_formation(world, leader)</code> (the
+  Shift+O order) takes the formation after <code>World::wing_formation</code> in <code>rules.formations</code>
+  (wrapping), gives each of the leader's living wingmen the next slot in ship order and orders
+  them to form up; it returns the formation's id, or <code>None</code> with no formations or no wingmen.
+  Slots are still pushed out to <code>flight.formation_gap</code> by <code>formation_slot</code>.</li>
 </ul>
 <p>Wingmen follow <code>WingOrder</code>s from their leader (<code>order_wingmen</code>); they fend for themselves if
 the leader dies. When they engage they fly <code>attack</code> with the parameters and skill of their
@@ -6907,7 +7021,8 @@ current order, and <code>DISABLED</code> if so.</p>
   <code>hazards::black_hole_accel(&amp;BlackHole, p) -&gt; Vec3</code>, <code>hazards::step(&amp;mut World, dt)</code>.</li>
 <li><code>world.set_environment(id) -&gt; Result&lt;(), String&gt;</code>, <code>world.ground_height(x, z) -&gt; Option&lt;f32&gt;</code>,
   <code>env::air(&amp;mut Ship, &amp;ShipClass, &amp;Env, dt)</code>, <code>env::ground_and_ceiling(&amp;mut World)</code>.</li>
-<li><code>ai::escape_black_hole(world, &amp;Ship) -&gt; Option&lt;Controls&gt;</code>, <code>ai::avoid_ground(world, &amp;Ship) -&gt; Option&lt;Controls&gt;</code>.</li>
+<li><code>ai::escape_black_hole(world, &amp;Ship) -&gt; Option&lt;Controls&gt;</code>, <code>ai::avoid_ground(world, &amp;Ship) -&gt; Option&lt;Controls&gt;</code>, <code>ai::avoid_collision(world, ShipId) -&gt; Option&lt;Controls&gt;</code> (app 0.6.7), <code>ai::AVOID_HORIZON</code>.</li>
+<li><code>ai::next_formation(&amp;mut World, leader) -&gt; Option&lt;String&gt;</code>; <code>World::wing_formation</code> (app 0.6.6).</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>

@@ -3589,6 +3589,8 @@
       
         
       
+        
+      
     
     
     
@@ -3823,6 +3825,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -4433,6 +4463,8 @@
       
         
       
+        
+      
     
     
     
@@ -4627,6 +4659,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4645,6 +4705,8 @@
       
         
           
+        
+      
         
       
         
@@ -5038,6 +5100,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -7465,7 +7555,7 @@
 </tr>
 <tr>
 <td><a href="#r-mod-047-shared-formations">R-MOD-047 Shared formations</a></td>
-<td>Planned</td>
+<td>Implemented (wingmen; cutscenes with MD2)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-048-drag-instruments-onto-a-3d-cockpit">R-MOD-048 Drag instruments onto a 3D cockpit</a></td>
@@ -7637,9 +7727,9 @@
 <p><em>Rationale:</em> Strategy-layer rules and logistics.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-005-conditions-actions-and-scripting">F-MOD-005</a>, <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: planned — partly met: the campaign context exists (<code>script::campaign</code>, app 0.6.7, main <code>65141dc</code>) with 16 strategy queries (<code>research</code>, <code>researching</code>, <code>has</code>, <code>module_count</code>, <code>bases</code>, <code>money</code>, <code>day</code>, <code>month</code>, <code>difficulty</code>, <code>pilots</code>, <code>score</code>, <code>month_score</code>, <code>random</code>, <code>flag</code>, <code>salvaged</code>, <code>craft</code>), every campaign id a checked constant; the system and facility queries listed here wait for logistics</li>
+<li>Verified by: <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code></li>
+<li>See: <a href="../../design/logistics/">Logistics</a>, <a href="../../../modding/strategy/#expressions-the-campaign-context">Strategy layer › expressions</a></li>
 </ul>
 <h3 id="r-mod-015-tier-2-scripting-decision">R-MOD-015 Tier 2 scripting decision<a class="headerlink" href="#r-mod-015-tier-2-scripting-decision" title="Permanent link">&para;</a></h3>
 <p>Before a second-tier script language is added, its dependency evaluation MUST be recorded on the dependency page; hooks and a sandboxed API follow.</p>
@@ -7962,12 +8052,12 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <p>The Linux path (GStreamer through <code>dlopen</code>) MUST be evaluated on the <a href="../../../learning/best-practices/dependencies/">dependency page</a> before it is built (MD3).</p>
 </div>
 <h3 id="r-mod-047-shared-formations">R-MOD-047 Shared formations<a class="headerlink" href="#r-mod-047-shared-formations" title="Permanent link">&para;</a></h3>
-<p>Formations MUST be pack data (<code>formations:</code>): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets.</p>
+<p>Formations MUST be pack data (<code>formations:</code>): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets. As built: <code>formations: {&lt;id&gt;: {shape: vee | line_abreast | echelon | box | diamond, spacing}}</code> or <code>{slots: [[x, y, z], …], spacing}</code> (not both; a custom list continues as a vee behind its last slot), slots in the leader's frame (+X right, +Y up, +Z behind) in units of <code>spacing</code> (default 60 m); a mission role picks one with <code>formation: &lt;id&gt;</code>, else <code>flight.formation</code> (default <code>vee</code>); an unknown formation is a load error, and a campaign with no formations uses a built-in 60 m vee.</p>
 <p><em>Rationale:</em> A cutscene and a battle use the same shapes, and a modder defines them once.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-013-shared-formations">F-MOD-013</a>, <a href="../../../definition/combat/#f-cmb-007-wingmen-and-orders">F-CMB-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD1).</li>
+<li>Status: implemented for wingmen (MD1, app 0.6.6, main <code>6d390d7</code>); cutscene use comes with MD2 (R-MOD-039)</li>
+<li>Verified by: <code>content::formation::tests::shapes_place_followers_behind_and_beside_the_leader</code>, <code>custom_slots_then_a_vee_and_errors</code>; <code>mission::tests::wingmen_take_successive_slots_of_their_formation</code>; <code>sim::ai::tests::the_formation_order_cycles_the_campaigns_formations</code>; MT-4-01</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a>, <a href="../combat/#r-cmb-015-wingman-orders">R-CMB-015</a>, <a href="../combat/#r-cmb-022-wingmen-keep-their-distance">R-CMB-022</a></li>
 </ul>
 <h3 id="r-mod-048-drag-instruments-onto-a-3d-cockpit">R-MOD-048 Drag instruments onto a 3D cockpit<a class="headerlink" href="#r-mod-048-drag-instruments-onto-a-3d-cockpit" title="Permanent link">&para;</a></h3>
@@ -8101,6 +8191,11 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <td>1.12.0</td>
 <td>2026-11-11</td>
 <td>R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) <code>mlua</code>, (b) <code>rhai</code>, (c) grow <code>script::*</code>; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7)</td>
 </tr>
 </tbody>
 </table>

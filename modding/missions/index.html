@@ -2898,6 +2898,8 @@
       
         
       
+        
+      
     
     
     
@@ -3132,6 +3134,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3742,6 +3772,8 @@
       
         
       
+        
+      
     
     
     
@@ -3936,6 +3968,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3956,6 +4016,8 @@
       
         
           
+        
+      
         
       
         
@@ -4540,6 +4602,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6421,13 +6511,13 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td><code>chatter</code></td>
 <td>list of <code>{when, line, voice}</code></td>
 <td>none</td>
-<td>Radio lines, each said once when its condition first holds. <code>voice</code> (optional, app 0.6.2) is a sound asset spoken on the radio with the line: <code>voice: sounds/colony_control.wav</code> (<a href="../voices/">Radio voices</a>).</td>
+<td>Radio lines, each said once when its condition first holds. <code>voice</code> (optional, app 0.6.2) is a sound asset spoken on the radio with the line: <code>voice: sounds/colony_control.wav</code>, or a <code>cue:&lt;Name&gt;</code> (app 0.6.7) (<a href="../voices/">Radio voices</a>).</td>
 </tr>
 <tr>
 <td><code>debrief</code></td>
 <td>mapping result: text</td>
 <td>none</td>
-<td>The debrief text for each result (usually <code>@key</code>s). <code>killed</code> shows its own text if given, otherwise none: the <code>lose</code> text usually describes the objective failing, which is not what happened.</td>
+<td>The debrief text for each result (usually <code>@key</code>s). <code>killed</code> shows its own text if given, otherwise none: the <code>lose</code> text usually describes the objective failing, which is not what happened. The debrief appears <code>flight.debrief_delay</code> (30 s) after the result; the battle runs on meanwhile (app 0.7.4, <a href="../reference/#flight">reference</a>).</td>
 </tr>
 <tr>
 <td><code>environment</code></td>
@@ -6513,6 +6603,12 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td>number</td>
 <td>0</td>
 <td>Starting speed, m/s.</td>
+</tr>
+<tr>
+<td><code>formation</code></td>
+<td>id</td>
+<td><code>flight.formation</code> (<code>vee</code>)</td>
+<td>Wingmen (<code>ai: wingman</code>): the <a href="../reference/#formations">formation</a> they fly in (app 0.6.6). Wingmen of every wingman role take successive slots of it, so two roles never share a slot. An unknown formation is a load error.</td>
 </tr>
 <tr>
 <td><code>at</code></td>
@@ -6915,7 +7011,8 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 <p>Each has a <code>killed</code> debrief (<code>@debrief.killed</code>) so that being shot down never shows the text for
 the objective failing. Over a terrain, craft placed less than 300 m above the ground start at
 300 m (app 0.6.4), so a role placed <code>from</code> a ground installation does not start inside a hill;
-installations themselves are set down on the ground.</p>
+installations themselves are set down on the ground, and other static objects (a station over a
+surface) float one radius clear of it (app 0.6.7).</p>
 <p>Measured with <code>--soak &lt;mission&gt; --soak-pilot ai --difficulty cadet</code> (app 0.6.4):
 <code>colony_defence</code> win at 43 s, <code>outpost_raid</code> win at 99 s; <code>ground_strike</code>, <code>asteroid_hunt</code> and
 <code>pocket_ambush</code> make kills but are still running at 300 s — the AI pilot is a weaker pilot than a

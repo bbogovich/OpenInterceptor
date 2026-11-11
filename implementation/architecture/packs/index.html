@@ -2902,6 +2902,8 @@
       
         
       
+        
+      
     
     
     
@@ -3266,6 +3268,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3876,6 +3906,8 @@
       
         
       
+        
+      
     
     
     
@@ -4070,6 +4102,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4088,6 +4148,8 @@
       
         
           
+        
+      
         
       
         
@@ -4481,6 +4543,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6379,6 +6469,14 @@ original. Whole packs can be switched off with <code>packs.disabled</code> in <c
 <tr>
 <td><code>hazards::Hazards</code>, <code>Scatter</code>, <code>BlackHole</code>, <code>hazards::schema()</code></td>
 <td>A mission's or scenario's <code>hazards:</code> (<a href="../../../modding/missions/#hazards">Missions › Hazards</a>); <code>Hazards::classes()</code> for <code>--check</code>.</td>
+</tr>
+<tr>
+<td><code>formation::FormationDef</code>, <code>Shape</code>, <code>formation::SPACING</code></td>
+<td>A <code>formations:</code> entry (MD1, app 0.6.6): <code>parse</code>, <code>slot(k)</code> (metres, leader's frame), <code>fallback()</code> (the built-in 60 m vee); <code>Ruleset::formations</code> and <code>Ruleset::formation(Option&lt;&amp;str&gt;)</code>, <code>FlightRules::formation</code>.</td>
+</tr>
+<tr>
+<td><code>strategy::StrategyDef</code> and friends, <code>strategy::DEF_SECTIONS</code>, <code>strategy::sections()</code></td>
+<td>The strategy layer (app 0.7.0): <code>Ruleset::strategy: Option&lt;StrategyDef&gt;</code>, <code>None</code> without <code>start:</code> (<a href="../campaign/">Campaign</a>). Strategy files load from <code>&lt;pack&gt;/strategy/</code>.</td>
 </tr>
 <tr>
 <td><code>mission::MissionDef</code> and friends</td>

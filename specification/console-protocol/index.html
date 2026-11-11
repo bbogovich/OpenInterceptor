@@ -3092,6 +3092,8 @@
       
         
       
+        
+      
     
     
     
@@ -3326,6 +3328,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3936,6 +3966,8 @@
       
         
       
+        
+      
     
     
     
@@ -4130,6 +4162,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4148,6 +4208,8 @@
       
         
           
+        
+      
         
       
         
@@ -4541,6 +4603,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6432,7 +6522,7 @@ released.</p>
 <tr>
 <td><code>model</code></td>
 <td>When the target's class changes, and again when a tablet pairs</td>
-<td><code>name</code> (class name), <code>groups: [{color, positions, indices}]</code>. See <a href="#model">Model</a>.</td>
+<td><code>name</code> (class name), <code>groups: [{color, positions, indices, uvs?, texture?}]</code>. See <a href="#model">Model</a>.</td>
 </tr>
 <tr>
 <td><code>contacts</code></td>
@@ -6565,7 +6655,12 @@ out, so they fall back to <code>console.css</code>. The keys a pack writes are o
 <li>one entry per <strong>material group</strong>: <code>positions</code> (flat <code>[x, y, z, …]</code>, only the vertices that
   group uses, renumbered from 0), <code>indices</code> (triangles, three per face) and <code>color</code> (RGB 0 – 1):
   a textured group's colour is its texture's average (<code>protocol::average_color</code>, transparent
-  pixels ignored), an untextured group's is its vertex colour. <strong>No textures are sent.</strong></li>
+  pixels ignored), an untextured group's is its vertex colour;</li>
+<li>a <strong>textured</strong> group also carries <code>texture</code>, its image shrunk to at most 128 pixels a side and
+  sent as a PNG <code>data:image/png;base64,…</code> URL (<code>protocol::texture_url</code>, written by the in-crate
+  <code>formats::png</code>), and <code>uvs</code> (flat <code>[u, v, …]</code>, two per vertex, in the same order as
+  <code>positions</code>) — app 0.6.7. The page shows <code>color</code> until the image has loaded. Untextured groups
+  have neither key.</li>
 </ul>
 <p>Axes are the model's own (x right, y up, −z ahead, as in the engine); the page turns it by
 <code>telemetry.target.rotation</code>. The flight screen builds each class's message once and caches it.
@@ -6699,6 +6794,11 @@ lock)</em> or <em>tap the screen to keep it awake</em>.</p>
 <td>1.10.0</td>
 <td>2026-11-11</td>
 <td>Console C2 – C4 and C2b as built: <code>power {beam, shield, balance}</code> (app 0.4.11); <code>model {name, groups:[{color, positions, indices}]}</code> with the 3000-triangle LOD budget, radius 1, no textures (0.4.14); <code>contacts {range, list}</code> at 5 Hz in the player's axes, <code>event {text}</code> from the message log and <code>target {id}</code> (0.4.15); <code>theme {vars}</code> as CSS variables, sent on pairing and with each catalogue (0.5.0). Session diagram updated; <em>Messages still planned</em> replaced by <em>Still planned</em> (serial, nav points); open items revised</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td><code>model</code>: textured groups carry <code>texture</code> (a PNG data URL, at most 128 px) and <code>uvs</code> (app 0.6.7, from user feedback)</td>
 </tr>
 </tbody>
 </table>

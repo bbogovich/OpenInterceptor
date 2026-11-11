@@ -3270,6 +3270,8 @@
       
         
       
+        
+      
     
     
     
@@ -3504,6 +3506,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -4114,6 +4144,8 @@
       
         
       
+        
+      
     
     
     
@@ -4308,6 +4340,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4326,6 +4386,8 @@
       
         
           
+        
+      
         
       
         
@@ -4719,6 +4781,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6934,16 +7024,20 @@
 <ul>
 <li>Implements: <a href="../../../definition/control-console/#f-con-005-console-target-viewport">F-CON-005</a></li>
 <li>Status: implemented (app 0.4.14, main <code>e51eca9</code>)</li>
-<li>Verified by: <code>remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group</code>; MT-3-30</li>
+<li>Verified by: <code>remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group</code> (textured groups carry a PNG and uvs); <code>formats::png::tests::a_png_has_the_signature_chunks_and_stored_pixels</code>, <code>downscaling_averages_blocks</code>; MT-3-30, MT-3-61</li>
 <li>See: <a href="../../console-protocol/#game-console">Console protocol</a>, <a href="../../../implementation/architecture/remote/#target-viewport-c3-app-0414">Remote console</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (C3, app 0.4.14, main <code>e51eca9</code>)</p>
 <p>The display console's <strong>Target</strong> tab draws the target's model with hand-written WebGL 1 (<code>oi-target-view</code>), flat-shaded, lit from the upper left, turned by <code>telemetry.target.rotation</code>. The game sends <code>model {name, groups}</code> when the target's class changes or a tablet pairs. <strong>Decimation</strong> is by level of detail: the most detailed LOD with at most 3000 triangles (<code>protocol::MODEL_TRIANGLE_BUDGET</code>; the coarsest if every LOD is larger), normalised to radius 1. <strong>No textures</strong> are sent: each material group has one colour, the texture's average (<code>protocol::average_color</code>, transparent pixels ignored) or the vertex colour of an untextured group. Messages are built once per class and cached in the flight screen. A video stream of the game's own rendering stays a possible later upgrade (GitHub issue #3).</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Textured, from user feedback (app 0.6.7, main <code>c0e2516</code>)</p>
+<p>The user asked for the target to look like the craft. Each textured group of the <code>model</code> message now also carries <code>texture</code>, its image downscaled to at most 128 px a side and encoded as a <code>data:image/png;base64,…</code> URL by the new in-crate writer <code>formats::png</code> (stored, uncompressed zlib blocks), and <code>uvs</code>, two per vertex. The page redraws each image onto a 128 × 128 canvas (WebGL 1 repeats only power-of-two textures, and the models' uvs run past 0..1) and samples it; the group's average colour shows until the image loads. Checked in headless Chrome.</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open (resolved)</p>
-<p>The decimation budget (3000 triangles, by LOD) and textures (not sent; one average colour per group) are settled. Original meshes sent to a device on the player's own network stay on the player's equipment (no redistribution).</p>
+<p>The decimation budget (3000 triangles, by LOD) is settled; textures are sent since app 0.6.7 (above). Original meshes sent to a device on the player's own network stay on the player's equipment (no redistribution).</p>
 </div>
 <h3 id="r-con-016-3d-map-view">R-CON-016 3D map view<a class="headerlink" href="#r-con-016-3d-map-view" title="Permanent link">&para;</a></h3>
 <p>The centre display MUST toggle between the target viewport and a 3D map view of the battle modelled on <em>TIE Fighter</em>'s map.</p>
@@ -7141,6 +7235,11 @@
 <td>1.10.0</td>
 <td>2026-11-11</td>
 <td>Console C2 – C4 and C2b complete (app 0.4.11 – 0.5.0): R-CON-015 target viewport (0.4.14), R-CON-016 3D map (0.4.15), R-CON-014 contacts and events (0.4.15), R-CON-018 tiles (0.4.11), R-CON-020 and R-CON-021 themes (0.5.0) implemented, with As-built notes and Verified-by lines; R-CON-012, R-CON-013 and R-CON-019 completed by the C2 page (0.4.11); R-CON-015 open note resolved (3000-triangle LOD budget, no textures). R-CON-017 stays planned (C5). No requirement wording changed</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>R-CON-015: the target model is textured — PNG data URLs and uvs per textured group (app 0.6.7, from user feedback)</td>
 </tr>
 </tbody>
 </table>

@@ -2960,6 +2960,8 @@
       
         
       
+        
+      
     
     
     
@@ -3194,6 +3196,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3804,6 +3834,8 @@
       
         
       
+        
+      
     
     
     
@@ -3998,6 +4030,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4016,6 +4076,8 @@
       
         
           
+        
+      
         
       
         
@@ -4409,6 +4471,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6022,7 +6112,7 @@
 <code>d7553f5</code>, 2026-11-11; hazards in app 0.5.1 (main <code>70d68e2</code>); environments, atmospheric flight,
 terrain and the atmosphere HUD in app 0.6.0 (main <code>af003f6</code>); ground installations in app 0.6.1
 (main <code>de417df</code>); radio voices in app 0.6.2 (main <code>5bdb47f</code>); the simulator in app 0.6.3 (main
-<code>1d13b59</code>, <code>c3fb959</code>); five more default missions in app 0.6.4 (main <code>3866c34</code>, <code>90653b9</code>). Missions become data: roles, waves, objectives and
+<code>1d13b59</code>, <code>c3fb959</code>); five more default missions in app 0.6.4 (main <code>3866c34</code>, <code>90653b9</code>); the remaining <code>interceptor</code> mission types in app 0.6.5 (main <code>b1f57ab</code>); playtest fixes (ground to the horizon, the textured console target, AI collision avoidance) in app 0.6.7 (main <code>c0e2516</code>) and the battle running on after its result in app 0.7.4 (main <code>9295707</code>). Missions become data: roles, waves, objectives and
 outcomes, in space and — new to this engine — on planet surfaces with atmospheric flight.</p>
 <p>Design: <a href="../../../specification/design/format-missions/">missions and events</a>,
 <a href="../../../specification/design/format-behaviour/">behaviours and scripting</a>.</p>
@@ -6101,7 +6191,7 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.11</td>
 <td><code>interceptor</code>: the 27 mission types, the simulator types and the final mission's two parts as mission definitions (compositions from the guide, else <em>derived</em> estimates)</td>
 <td><code>packs/interceptor</code></td>
-<td><strong>Started:</strong> 5 of 27 — <code>xcom_base_defense</code>, <code>defend_freighter_convoy</code>, <code>deep_space_encounter</code>, <code>attack_alien_outpost</code>, <code>destroy_alien_probe</code>; original names, briefings and debriefs by <code>@orig</code> key; compositions derived (DEV-041).</td>
+<td><strong>Done</strong> (app 0.6.5, main <code>b1f57ab</code>): <strong>26 mission types</strong> — the first five and 21 more (original types 3 – 5, 7 – 9, 12 – 14, 16, 18 – 23, 25 – 27, 29, 30: base, corporate outpost, OPP and science-station defence; freighter convoys against aliens and pirates; deep-space ambush and encounter; the pirate squadron ambush; alien freighter ambushes; attacks on alien mining platforms, outposts and bases; the doomsday weapon). Original names, briefings and debriefs by <code>@orig</code> key; compositions derived, growing with the level, variants escalating (DEV-041). Soaked with the AI pilot at beginner, and at veteran for the hardest. Open: the earlier count was 27; briefing types 2, 6, 10 and 17 have no definition (whether they exist is <em>unknown</em>), and the simulator types and the final mission's two parts are not separate entries (<a href="../../../specification/requirements/campaigns/#r-cpn-005-interceptor-campaign-content">R-CPN-005</a>). GitHub #17 (closed).</td>
 </tr>
 <tr>
 <td>3.12</td>

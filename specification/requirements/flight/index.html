@@ -3127,6 +3127,8 @@
       
         
       
+        
+      
     
     
     
@@ -3361,6 +3363,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3971,6 +4001,8 @@
       
         
       
+        
+      
     
     
     
@@ -4165,6 +4197,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4183,6 +4243,8 @@
       
         
           
+        
+      
         
       
         
@@ -4576,6 +4638,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6537,7 +6627,7 @@
 <h3 id="r-flt-012-terrain">R-FLT-012 Terrain<a class="headerlink" href="#r-flt-012-terrain" title="Permanent link">&para;</a></h3>
 <p>A pack MUST be able to define terrains as data, <code>terrains: {&lt;id&gt;: {generate | heightmap, size, height, colors, resolution}}</code>, used by an atmospheric environment's <code>terrain:</code>.</p>
 <ul>
-<li>A terrain MUST be a square heightfield of <code>resolution</code> points per side (default 129, 17 – 257), <code>size</code> metres across (default 30 km), centred on the origin; its heights MUST span <code>height: [low, high]</code> metres (default <code>[0, 1500]</code>). Outside the square the edge heights continue.</li>
+<li>A terrain MUST be a square heightfield of <code>resolution</code> points per side (default 129, 17 – 257), <code>size</code> metres across (default 30 km), centred on the origin; its heights MUST span <code>height: [low, high]</code> metres (default <code>[0, 1500]</code>). Outside the square the ground MUST continue to the horizon as <strong>mirror-image tiles</strong> of the field (each neighbour reflected across the shared edge, so heights meet without seams); collision and the drawn ground MUST agree everywhere, and the tiles within the fog distance MUST be drawn.</li>
 <li>Heights MUST come from exactly one of:</li>
 <li><code>generate: {kind, seed}</code>: <code>hills</code> (smooth value noise in five octaves) or <code>craters</code> (a gently rolling plain with bowl-shaped craters and raised rims), deterministic for <code>seed</code>, built once while the rules are read;</li>
 <li><code>heightmap: &lt;image&gt;</code>: a greyscale PNG or TGA from the pack (black = <code>low</code>, white = <code>high</code>; the red channel, resampled to <code>resolution</code>), built once when the content loads.</li>
@@ -6549,12 +6639,16 @@
 <ul>
 <li>Implements: <a href="../../../definition/flight/#f-flt-007-atmospheric-flight-over-terrain">F-FLT-007</a></li>
 <li>Status: implemented (app 0.6.0, main <code>af003f6</code>)</li>
-<li>Verified by: <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>, <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code>, <code>render::terrain::tests::terrain_meshes_face_up_and_colour_by_height</code>; MT-3-39, MT-3-40</li>
+<li>Verified by: <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>, <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code> (mirrored beyond the edge), <code>render::terrain::tests::terrain_meshes_face_up_and_colour_by_height</code>, <code>tiles_match_the_folded_ground_heights</code>; MT-3-39, MT-3-40, MT-3-60</li>
 <li>See: <a href="../../../modding/environments/">Environments and terrain</a>, <a href="../../../implementation/architecture/rendering/">Rendering</a>, <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
 </ul>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
 <p>Not built yet: texturing with detail maps (<code>texture: {base, detail}</code>) and scattered objects on the ground (<code>objects: {scatter, density}</code>), the rest of plan item 3.5 (ground installations are built: R-MSN-008, app 0.6.1). The terrain's look has been checked only by unit tests so far, not on screen.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">From user feedback (app 0.6.7, main <code>c0e2516</code>)</p>
+<p>The user's playtest saw the ground end at the field's edge. <code>Heightfield::fold</code> maps any point back into the field (odd tiles reflected), so <code>height_at</code> answers everywhere; the renderer draws up to 7 × 7 tiles around the camera within the fog distance from two meshes, the field and its X-mirror (<code>render::terrain::tile_placement</code>). Static objects spawned over a ground now float one radius clear of it (app 0.6.7, <code>65141dc</code>).</p>
 </div>
 <h3 id="r-flt-013-simple-physics-mode">R-FLT-013 Simple physics mode<a class="headerlink" href="#r-flt-013-simple-physics-mode" title="Permanent link">&para;</a></h3>
 <p>The player MUST be able to choose <code>simple</code> or <code>realistic</code> physics: in the launcher (key P), or with <code>game: {physics: simple}</code> in settings.yaml. The default is <code>realistic</code>.</p>
@@ -6598,6 +6692,11 @@
 <td>1.11.0</td>
 <td>2026-11-11</td>
 <td>R-FLT-011 atmospheric flight rewritten as built and implemented (app 0.6.0): drag from <code>atmosphere_max_speed</code>, gravity, lift capped at 2g, hover, landing below 25 m/s upright, crash damage, the ceiling exit, AI ground avoidance, Simple physics kept; keys <code>atmosphere_max_speed</code>, <code>lift</code>, <code>hover</code>, <code>atmospheric</code>; the open note on equations and key names resolved (<code>drag_area</code> not adopted). R-FLT-012 terrain rewritten as built and implemented: generated (<code>hills</code>, <code>craters</code>) and heightmap heightfields, interpolation, colours by height and slope; Open note for detail textures and scattered objects</td>
+</tr>
+<tr>
+<td>1.13.0</td>
+<td>2026-11-11</td>
+<td>R-FLT-012 revised: the ground continues to the horizon as mirror-image tiles, collision and drawing agree (app 0.6.7, from user feedback)</td>
 </tr>
 </tbody>
 </table>

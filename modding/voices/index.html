@@ -14,7 +14,7 @@
         <link rel="prev" href="../missions/">
       
       
-        <link rel="next" href="../reference/">
+        <link rel="next" href="../strategy/">
       
       
         
@@ -2898,6 +2898,8 @@
       
         
       
+        
+      
     
     
     
@@ -3132,6 +3134,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3742,6 +3772,8 @@
       
         
       
+        
+      
     
     
     
@@ -3936,6 +3968,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3956,6 +4016,8 @@
       
         
           
+        
+      
         
       
         
@@ -4470,6 +4532,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -6271,9 +6361,10 @@ once the lines are known.</p>
 </tbody>
 </table>
 <div class="admonition note">
-<p class="admonition-title">Limits in app 0.6.4</p>
-<p><code>cue:&lt;Name&gt;</code> references are resolved in <code>sounds:</code> but <strong>not</strong> inside <code>voices:</code> or chatter
-<code>voice:</code>; use the asset path (<code>original:&lt;file&gt;.wav</code>) there.</p>
+<p class="admonition-title">Fixed in app 0.6.7</p>
+<p><code>cue:&lt;Name&gt;</code> references now resolve inside <code>voices:</code> and chatter <code>voice:</code> too, through the
+same cue table as <code>sounds:</code> (main <code>65141dc</code>). In app 0.6.2 – 0.6.6 they did not; use the asset
+path (<code>original:&lt;file&gt;.wav</code>) for those versions.</p>
 </div>
 
 

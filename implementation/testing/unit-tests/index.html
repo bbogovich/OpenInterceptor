@@ -2900,6 +2900,8 @@
       
         
       
+        
+      
     
     
     
@@ -3134,6 +3136,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3826,6 +3856,8 @@
       
         
       
+        
+      
     
     
     
@@ -4020,6 +4052,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4038,6 +4098,8 @@
       
         
           
+        
+      
         
       
         
@@ -4431,6 +4493,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6068,6 +6158,30 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>9295707</code> (app 0.7.4)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
+build) gives <strong>351</strong> run on macOS (353 less the Linux-only test and the ignored helper). The 26
+added since app 0.6.4 are: app <strong>0.6.6</strong> (<code>6d390d7</code>) <code>content::formation::tests::shapes_place_followers_behind_and_beside_the_leader</code>,
+<code>custom_slots_then_a_vee_and_errors</code>, <code>mission::tests::wingmen_take_successive_slots_of_their_formation</code>,
+<code>sim::ai::tests::the_formation_order_cycles_the_campaigns_formations</code>; app <strong>0.6.7</strong> (<code>65141dc</code>,
+<code>c0e2516</code>) <code>script::campaign::tests::ids_match_and_names_are_checked</code>,
+<code>formats::png::tests::checksums_match_known_values</code>, <code>a_png_has_the_signature_chunks_and_stored_pixels</code>,
+<code>downscaling_averages_blocks</code>, <code>render::terrain::tests::tiles_match_the_folded_ground_heights</code>,
+<code>sim::ai::tests::collision_avoidance_predicts_the_closest_approach</code> (and the static-object lift in
+<code>sim::env::tests::craft_spawned_low_over_a_ground_are_lifted_clear_of_it</code>, mirrored heights in
+<code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code>, textures in
+<code>remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group</code>); app <strong>0.7.0</strong>
+(<code>77d6c9f</code>) <code>content::strategy::tests::dates_count_days_across_months_and_leap_years</code>,
+<code>a_strategy_layer_builds_with_checked_names</code>, <code>campaign::tests::a_new_campaign_has_its_start</code>,
+<code>research_follows_prerequisites_and_unlocks</code>, <code>modules_bases_purchases_and_manufacture</code>,
+<code>money_flows_monthly_with_costs</code>, <code>raids_are_detected_intercepted_and_fought</code>,
+<code>same_seed_same_campaign</code>, <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code>;
+app <strong>0.7.1</strong> (<code>10f7fce</code>) <code>campaign::tests::the_default_campaign_runs_six_months</code>,
+<code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>, <code>money_has_thousands_separators</code> (and the
+campaign entries in <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>); app
+<strong>0.7.2</strong> (<code>94d66c1</code>) <code>campaign::tests::craft_are_fitted_from_the_store_and_fly_their_loadout</code>,
+<code>app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only</code>; app <strong>0.7.3</strong>
+(<code>076203e</code>) <code>campaign::tests::lane_maps_route_along_lanes</code>; app <strong>0.7.4</strong> (<code>9295707</code>)
+<code>app::flight::tests::the_debrief_waits_for_the_delay_after_the_result</code>.</p>
 <p>Since that count, tests named in the requirements' <em>Verified by</em> lines were added with apps
 0.4.3 – 0.6.1 without the full list being regenerated; those named below are listed (the
 summary rows of <code>hud</code>, <code>remote::protocol</code> and <code>sim::systems</code> include the 0.4.11 – 0.5.0 ones, and
@@ -6209,6 +6323,41 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <td>Debris sets and effects parse with defaults; texture swaps accumulate with damage levels and state; texture keys ignore folders, case and extensions</td>
 </tr>
 <tr>
+<td><code>content::formation</code></td>
+<td>2</td>
+<td>Every shape places followers behind and beside the leader in the leader's frame, scaled by <code>spacing</code>; custom slots then a vee behind them; <code>shape</code> with <code>slots</code>, or an unknown shape, is an error</td>
+</tr>
+<tr>
+<td><code>content::strategy</code></td>
+<td>2</td>
+<td>Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors)</td>
+</tr>
+<tr>
+<td><code>script::campaign</code></td>
+<td>1</td>
+<td>Query ids match the table; campaign ids and level names are constants; a misspelt name is an error</td>
+</tr>
+<tr>
+<td><code>campaign</code></td>
+<td>9</td>
+<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra)</td>
+</tr>
+<tr>
+<td><code>campaign::save</code></td>
+<td>1</td>
+<td>A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused</td>
+</tr>
+<tr>
+<td><code>formats::png</code></td>
+<td>3</td>
+<td>CRC-32 and Adler-32 match known values; a PNG has the signature, chunks and stored pixels; downscaling averages blocks</td>
+</tr>
+<tr>
+<td><code>app::strategy</code></td>
+<td>2</td>
+<td>The map fits its rectangle, centred; money has thousands separators</td>
+</tr>
+<tr>
 <td><code>content::mission</code></td>
 <td>2</td>
 <td>A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action)</td>
@@ -6265,8 +6414,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::ai</code></td>
-<td>13</td>
-<td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong></td>
+<td>15</td>
+<td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong></td>
 </tr>
 <tr>
 <td><code>sim::systems</code></td>
@@ -6280,8 +6429,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>mission</code></td>
-<td>4</td>
-<td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; <strong>the player's death is its own result (<code>killed</code>) with the lose outcomes</strong></td>
+<td>5</td>
+<td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; <strong>the player's death is its own result (<code>killed</code>) with the lose outcomes</strong>; <strong>wingmen take successive slots of their formation</strong> across roles</td>
 </tr>
 <tr>
 <td><code>sim::targeting</code></td>
@@ -6365,8 +6514,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>render::terrain</code></td>
-<td>1</td>
-<td>Terrain meshes face up (counter-clockwise from above) and are coloured from low to high by height</td>
+<td>2</td>
+<td>Terrain meshes face up (counter-clockwise from above) and are coloured from low to high by height (the X-mirrored mesh too); <strong>every placed horizon tile matches the folded ground height</strong></td>
 </tr>
 <tr>
 <td><code>hud</code></td>
@@ -6405,8 +6554,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>app::flight</code></td>
-<td>6</td>
-<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one)</td>
+<td>8</td>
+<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one); <strong>a campaign loadout refits the player's class in this battle only</strong>; <strong>the debrief waits for the delay after the result</strong></td>
 </tr>
 <tr>
 <td><code>app::simulator</code></td>

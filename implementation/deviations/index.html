@@ -2900,6 +2900,8 @@
       
         
       
+        
+      
     
     
     
@@ -3134,6 +3136,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
   
 
     
@@ -3754,6 +3784,8 @@
       
         
       
+        
+      
     
     
     
@@ -3948,6 +3980,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3966,6 +4026,8 @@
       
         
           
+        
+      
         
       
         
@@ -4359,6 +4421,34 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
   
 
     
@@ -6230,6 +6320,24 @@ one looks like a bug.</p>
 <td>DEV-045</td>
 <td><strong>Interceptor hazards are engine models with derived numbers</strong>: the black hole pulls with 1/d² (<code>pull</code> at 1 km, capped at 20 ×) and destroys craft inside its <code>radius</code>; the ion storm keeps a fraction of radar range and halves lock speed; asteroid fields are scattered, slowly turning objects. The <code>interceptor</code> testbed scenarios use <code>pull: 12</code>, <code>radius: 450</code> and <code>sensors: 40%</code>.</td>
 <td>The original's belt and black-hole battles are built in code; their pull law, numbers and sensor effects have not been measured. All are <code>hazards:</code> data (R-MSN-009).</td>
+<td>3</td>
+</tr>
+<tr>
+<td>DEV-046</td>
+<td><strong>The strategy format as built is a simpler subset of its design</strong>: one <code>start:</code> section instead of <code>starts</code>; <code>base_types.max_distance</code> (map units) instead of a <code>placement</code> expression; plain numbers for <code>upkeep</code>, <code>maintenance</code>, <code>salary</code> and costs (only incomes, expenses, the research rate and prerequisites are expressions); <code>raids:</code> with fixed missions instead of squadrons, flight plans and generated missions; pilot ranks by experience thresholds; fitting is <em>best available</em> from the store (app 0.7.2) without fitting rules.</td>
+<td>Stage 4 first makes every rule playable end to end with the default campaign; the richer keys of <a href="../../specification/design/format-strategy/">Format: strategy layer</a> are added when the <code>interceptor</code> strategy data (4.12) and logistics (4.14 – 4.17) need them.</td>
+<td>4</td>
+</tr>
+<tr>
+<td>DEV-047</td>
+<td><strong>The default campaign's strategy texts are plain English</strong> in <code>resources/default/strategy/*.yaml</code>, not text keys.</td>
+<td>The strategy layer was written ahead of its translation; moving the names and descriptions to <code>text/en/</code> keys is a data change for a later pass (R-STR-010 Open note).</td>
+<td>4</td>
+</tr>
+<tr>
+<td>DEV-048</td>
+<td><strong>A battle runs on after its result</strong>: the verdict and computer voice come at once, and the debrief waits <code>flight.debrief_delay</code> (30 s by default; Enter skips it; a retreat shows it at once).</td>
+<td>User request (playtest, app 0.7.4): to watch the final explosion. An engine choice: the original's own timing is not measured here (<em>unknown</em>); the delay is rules data, so a campaign can set <code>0s</code>.</td>
 <td>3</td>
 </tr>
 </tbody>
