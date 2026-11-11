@@ -319,7 +319,11 @@ impl ModelViewer {
         let model = match &set {
             Some(set) => {
                 let swaps = look_swaps(set, &look);
-                ctx.renderer.models.get_variant(&ctx.content, &set.intact, set.pack, set.scale, &swaps)
+                let state = match &look {
+                    Look::State(i) => Some(set.states[*i].0.as_str()),
+                    _ => None,
+                };
+                ctx.renderer.models.get_variant(&ctx.content, set.model_for(state), set.pack, set.scale, &swaps)
             }
             None => ctx.renderer.models.get(&ctx.content, &entry.reference, entry.pack, entry.scale),
         };
@@ -570,6 +574,7 @@ mod tests {
                 DamageLevel { below: 0.33, swaps: vec![("hull".into(), "b.png".into())] },
             ],
             states: vec![("building".into(), vec![("hull".into(), "c.png".into())])],
+            state_models: Vec::new(),
             debris: Some(DebrisId(0)),
             destroyed_effect: None,
         };

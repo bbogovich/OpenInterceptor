@@ -1255,6 +1255,11 @@ fn model_set(id: &str, g: Get, pack: usize, debris: &[DebrisSet], effects: &[Eff
         textures: swaps(g, "textures"),
         damage,
         states: g.map("states").iter().map(|(k, v)| (k.to_ascii_lowercase(), swaps(Get(v), "textures"))).collect(),
+        state_models: g
+            .map("states")
+            .iter()
+            .filter_map(|(k, v)| Some((k.to_ascii_lowercase(), Get(v).str("model")?.to_string())))
+            .collect(),
         debris,
         destroyed_effect,
     })
@@ -1366,6 +1371,7 @@ fn ship_class(
                 textures: Vec::new(),
                 damage: Vec::new(),
                 states: Vec::new(),
+                state_models: Vec::new(),
                 debris,
                 destroyed_effect: None,
             });

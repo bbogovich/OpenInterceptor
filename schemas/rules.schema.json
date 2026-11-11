@@ -221,7 +221,8 @@
                 "below": {"description": "applies while the hull is below this fraction", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "textures": {"description": "texture name: replacement", "type": "object", "additionalProperties": {"type": "string"}}
               }}},
-          "states": {"description": "named conditions: building, destroyed …", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+          "states": {"description": "named conditions: build_25, destroyed … (scenario objects pick one with state:)", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+                "model": {"description": "a mesh replacing the intact one in this state (construction stages)", "type": "string"},
                 "textures": {"description": "texture name: replacement", "type": "object", "additionalProperties": {"type": "string"}}
               }}},
           "debris": {"description": "debris set id used when destroyed", "type": "string", "pattern": "^[a-z0-9_.-]+$"},

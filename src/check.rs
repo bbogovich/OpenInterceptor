@@ -101,8 +101,15 @@ pub fn run(content: &Content) -> Report {
             }
         }
     }
-    // Model sets: every swapped texture loads; debris sets: every piece and chunk loads.
+    // Model sets: every swapped texture and state mesh loads; debris sets: every piece
+    // and chunk loads.
     for set in &rules.model_sets {
+        for (state, m) in &set.state_models {
+            match content.load_model(m, set.pack, set.scale) {
+                Ok(_) => r.models += 1,
+                Err(e) => r.errors.push(format!("model set {}: state {state}: {m}: {e}", set.id)),
+            }
+        }
         let swapped = set.textures.iter().chain(set.damage.iter().flat_map(|d| d.swaps.iter()));
         for (_, t) in swapped.chain(set.states.iter().flat_map(|(_, s)| s.iter())) {
             if textures_seen.insert((t.clone(), set.pack)) {

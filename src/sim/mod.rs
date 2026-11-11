@@ -338,6 +338,9 @@ pub struct Ship {
     pub expires: Option<f32>,
     /// Point defence: seconds until the guns can fire again.
     pub pd_cooldown: f32,
+    /// The model-set state it is drawn in (`build_25` for a station under construction),
+    /// from the scenario's `state:`; `None` = intact.
+    pub look_state: Option<String>,
     /// Station modules: the hub it is mounted on, and where (in the hub's frame).
     pub mount: Option<(ShipId, Vec3, Quat)>,
     /// A scenario objective protected by this faction (the player's): its pilots never
@@ -645,6 +648,7 @@ impl World {
             departed: false,
             expires: None,
             pd_cooldown: 0.0,
+            look_state: None,
             mount: None,
             protected_by: None,
         };
@@ -911,6 +915,7 @@ impl World {
                 let mine = w.get(player).map(|s| s.faction);
                 w.get_mut(id).expect("just spawned").protected_by = mine;
             }
+            w.get_mut(id).expect("just spawned").look_state = p.state.clone();
             for name in &p.destroyed_systems {
                 let kind = crate::content::equipment::SystemKind::parse(name);
                 let sid = rules.system_id(name);

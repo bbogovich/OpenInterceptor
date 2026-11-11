@@ -311,8 +311,10 @@ impl Renderer {
         let c = world.rules.ship(ship.class);
         let set = world.rules.model_set(c.model_set);
         let hull = if c.hull > 0.0 { ship.hull / c.hull } else { 1.0 };
-        let swaps = set.swaps_for(hull, None);
-        self.models.get_variant(content, &set.intact, set.pack, set.scale, &swaps)
+        // A construction stage (or any state with its own mesh) swaps the model.
+        let state = ship.look_state.as_deref();
+        let swaps = set.swaps_for(hull, state);
+        self.models.get_variant(content, set.model_for(state), set.pack, set.scale, &swaps)
     }
 
     /// Draws a model with the lit material, choosing the LOD by distance. Call after

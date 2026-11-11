@@ -118,8 +118,11 @@ fn modelset() -> Ty {
         ),
         f(
             "states",
-            Ty::Dict(Box::new(Ty::Struct(vec![f("textures", swaps(), "texture name: replacement")]))),
-            "named conditions: building, destroyed …",
+            Ty::Dict(Box::new(Ty::Struct(vec![
+                f("model", Ty::Asset, "a mesh replacing the intact one in this state (construction stages)"),
+                f("textures", swaps(), "texture name: replacement"),
+            ]))),
+            "named conditions: build_25, destroyed … (scenario objects pick one with state:)",
         ),
         f("debris", name(), "debris set id used when destroyed"),
         f("destroyed_effect", name(), "effect id of the explosion"),

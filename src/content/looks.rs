@@ -13,6 +13,7 @@
 //!       - {below: 33%, textures: {guard_hull: textures/guard_hull_burnt.png}}
 //!     states:                                   # named conditions (stations: building…)
 //!       building: {textures: {xmmod: original:hang-const}}
+//!       build_25: {model: models/station_build1.obj}   # a stage with its own mesh
 //!     debris: comet                             # the debris set used when it explodes
 //!     destroyed_effect: explosion_small
 //! debris:
@@ -70,11 +71,22 @@ pub struct ModelSet {
     pub damage: Vec<DamageLevel>,
     /// Named states (construction, destroyed-in-place) and their swaps.
     pub states: Vec<(String, Swaps)>,
+    /// States that replace the whole mesh (construction stages): `(state, model)`.
+    pub state_models: Vec<(String, String)>,
     pub debris: Option<DebrisId>,
     pub destroyed_effect: Option<EffectId>,
 }
 
 impl ModelSet {
+    /// The model to draw in `state`: the state's own mesh if it has one (a construction
+    /// stage), else the intact model.
+    pub fn model_for(&self, state: Option<&str>) -> &str {
+        state
+            .and_then(|n| self.state_models.iter().find(|(k, _)| k == n))
+            .map(|(_, m)| m.as_str())
+            .unwrap_or(&self.intact)
+    }
+
     /// The texture swaps for an object at `hull` fraction in named `state` (if any):
     /// the set's own swaps, then every damage level the hull is below (cumulative,
     /// highest threshold first, so the worst level wins), then the state's.
@@ -250,6 +262,7 @@ mod tests {
                 },
             ],
             states: vec![("building".into(), vec![("hull".into(), "frame.png".into())])],
+            state_models: vec![("build_25".into(), "frame.obj".into())],
             debris: None,
             destroyed_effect: None,
         };
@@ -259,6 +272,10 @@ mod tests {
         assert_eq!((worst[0].1.as_str(), worst.len()), ("burnt.png", 2));
         assert_eq!(set.swaps_for(1.0, Some("building"))[0].1, "frame.png");
         assert_eq!(set.swaps_for(1.0, Some("nope"))[0].1, "blue.png");
+        assert_eq!(
+            (set.model_for(Some("build_25")), set.model_for(Some("building")), set.model_for(None)),
+            ("frame.obj", "m", "m")
+        );
     }
 
     #[test]

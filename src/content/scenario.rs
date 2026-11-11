@@ -83,6 +83,9 @@ pub struct Placement {
     /// An objective the player must keep alive (`protect: true`): marked on the HUD and
     /// skipped by "nearest enemy" for the player's side.
     pub protect: bool,
+    /// The model-set state to show it in (`state: build_25` — a station under
+    /// construction); `None` = intact.
+    pub state: Option<String>,
     /// A behaviour id overriding the class's (`behaviour = scout_saucer`).
     pub behaviour: Option<String>,
 }
@@ -163,6 +166,7 @@ impl Scenario {
                 destroyed_systems: o.list("destroyed_systems").iter().map(|x| x.to_ascii_lowercase()).collect(),
                 hull: o.qty("hull", Unit::Fraction).unwrap_or(1.0).clamp(0.01, 1.0),
                 protect: o.bool("protect").unwrap_or(false),
+                state: o.str("state").map(str::to_ascii_lowercase),
                 behaviour: o.str("behaviour").map(str::to_string),
             });
         }
