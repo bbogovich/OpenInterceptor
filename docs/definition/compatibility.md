@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.2.0
 status: current
 updated: 2026-11-11
 ---
@@ -59,8 +59,23 @@ Requirements for these features: [Compatibility (original data) requirements](..
 - **Source:** Project rules; Deviations page.
 - **Specified by:** [R-CMP-013](../specification/requirements/compatibility.md#r-cmp-013-facts-and-deviations-marked)
 
+### F-CMP-005 A resources folder that says what ships with the game
+
+**What.** Content bundled with the game lives in one `resources/` folder:
+- `resources/default/` holds the default campaign and every one of its assets, in modern editable formats. It is the equivalent of the X-COM game's contents.
+- `resources/xcom/` (an installed copy of X-COM: Interceptor) and `resources/xcom-cd/` (a copy of the CD) are empty, git-ignored places where a player adds their own original data for a personal build.
+
+Mods (`packs/`, and the user's mods folder) override resources as before. The interceptor campaign is such a mod.
+
+**Why.** Most players will not own X-COM: Interceptor, and those who do more likely have it installed than a CD copy. A `game/` folder at the root suggested the game itself was included. The new layout makes it explicit which assets the default campaign provides and what belongs to an installed mod.
+
+- **Status:** implemented
+- **Source:** User request, 2026-11-11: "Rather than a \"game\" folder in the repo root, which is misleading because it gives the impression that the game itself is there, it should be a \"resources\" folder that contains core assets bundled with the game for the default campaign in one subfolder, and gitignored xcom and xcom-cd subfolders that a user would manually add to for their personal build." "the default campaign's content in resources is the equivalent the xcom game contents, but with all files in modern editable formats."
+- **Specified by:** [R-CMP-014](../specification/requirements/compatibility.md#r-cmp-014-resources-folder), [R-CMP-015](../specification/requirements/compatibility.md#r-cmp-015-installed-copy-or-cd-copy)
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CMP-001 – F-CMP-004 (4 features) |
+| 1.2.0 | 2026-11-11 | F-CMP-005 resources folder |
