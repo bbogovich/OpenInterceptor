@@ -355,7 +355,7 @@ class OiShields extends HTMLElement {
 class OiDisplay extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `<nav><button data-tab="target" class="on">Target</button><button data-tab="map">Map</button></nav>
-      <div data-pane="target"><div class="tdata"></div><div class="viewport">Target view (coming in step C3)</div></div>
+      <div data-pane="target"><div class="tdata"></div><oi-target-view class="viewport"></oi-target-view></div>
       <div data-pane="map" hidden><div class="viewport">3D map (coming in step C4)</div></div>`;
     for (const b of this.querySelectorAll("[data-tab]")) {
       b.addEventListener("click", () => {
@@ -372,6 +372,95 @@ class OiDisplay extends HTMLElement {
         <p>${(t.distance / 1000).toFixed(2)} km · closing ${Math.round(t.closing)} m/s</p>
         ${bar("Hull", t.hull)}${bar("Fore", t.shields[0])}${bar("Aft", t.shields[1])}`;
     });
+  }
+}
+
+/** The target viewport (C3): the target's model, flat-shaded with WebGL, turned to its
+ *  orientation as seen from the player's craft (telemetry `target.rotation`, a
+ *  quaternion in the player's body axes). The model arrives once per ship class in a
+ *  `model` message, normalised to radius 1. Plain WebGL 1, no library. */
+class OiTargetView extends HTMLElement {
+  connectedCallback() {
+    this.innerHTML = `<canvas></canvas><p class="label">No target</p>`;
+    const canvas = this.querySelector("canvas");
+    const label = this.querySelector(".label");
+    const gl = canvas.getContext("webgl", { antialias: true });
+    if (!gl) { label.textContent = "3D view not available in this browser"; return; }
+    const vs = `attribute vec3 p; attribute vec3 n; attribute vec3 c; uniform mat4 mvp; uniform mat3 rot;
+      varying vec3 col; void main() {
+        vec3 nn = normalize(rot * n);
+        float l = 0.35 + 0.65 * max(dot(nn, normalize(vec3(-0.5, 0.7, 0.6))), 0.0);
+        col = c * l; gl_Position = mvp * vec4(p, 1.0); }`;
+    const fs = `precision mediump float; varying vec3 col; void main() { gl_FragColor = vec4(col, 1.0); }`;
+    const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+    const loc = { p: gl.getAttribLocation(prog, "p"), n: gl.getAttribLocation(prog, "n"), c: gl.getAttribLocation(prog, "c"),
+      mvp: gl.getUniformLocation(prog, "mvp"), rot: gl.getUniformLocation(prog, "rot") };
+    const buf = gl.createBuffer();
+    let count = 0;
+    let quat = [0, 0, 0, 1];
+    let name = null;
+    // Expand each triangle with its own flat normal: [x y z nx ny nz r g b] per corner.
+    const load = (m) => {
+      const out = [];
+      for (const g of m.groups || []) {
+        const P = g.positions, I = g.indices, [r, gg, b] = g.color;
+        for (let i = 0; i + 2 < I.length; i += 3) {
+          const a = I[i] * 3, b2 = I[i + 1] * 3, c = I[i + 2] * 3;
+          const u = [P[b2] - P[a], P[b2 + 1] - P[a + 1], P[b2 + 2] - P[a + 2]];
+          const v = [P[c] - P[a], P[c + 1] - P[a + 1], P[c + 2] - P[a + 2]];
+          let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+          const len = Math.hypot(...n) || 1;
+          n = n.map((x) => x / len);
+          for (const k of [a, b2, c]) out.push(P[k], P[k + 1], P[k + 2], ...n, r, gg, b);
+        }
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(out), gl.STATIC_DRAW);
+      count = out.length / 9;
+      name = m.name;
+    };
+    link.addEventListener("model", (e) => load(e.detail));
+    link.addEventListener("telemetry", (e) => {
+      const t = e.detail.target;
+      if (t && t.rotation) quat = t.rotation;
+      label.textContent = t ? (count ? "" : t.name) : "No target";
+      this.classList.toggle("empty", !t || !count);
+    });
+    // Quaternion (x, y, z, w) → 3×3 rotation, column-major (as WebGL expects).
+    const mat3 = ([x, y, z, w]) => [
+      1 - 2 * (y * y + z * z), 2 * (x * y + z * w), 2 * (x * z - y * w),
+      2 * (x * y - z * w), 1 - 2 * (x * x + z * z), 2 * (y * z + x * w),
+      2 * (x * z + y * w), 2 * (y * z - x * w), 1 - 2 * (x * x + y * y)];
+    const draw = () => {
+      requestAnimationFrame(draw);
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h || !count || this.classList.contains("empty")) return;
+      if (canvas.width !== w * devicePixelRatio) { canvas.width = w * devicePixelRatio; canvas.height = h * devicePixelRatio; }
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0.02, 0.04, 0.03, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.enable(gl.DEPTH_TEST);
+      // The player looks along −Z; the target sits 3 radii ahead, turned by `quat`.
+      const r = mat3(quat), f = 1 / Math.tan(0.35), aspect = w / h, near = 0.1, far = 10, d = -3;
+      const P = [f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, 2 * far * near / (near - far), 0];
+      const M = [r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, 0, 0, d, 1];
+      const mvp = new Array(16).fill(0);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) mvp[j * 4 + i] += P[k * 4 + i] * M[j * 4 + k];
+      gl.uniformMatrix4fv(loc.mvp, false, new Float32Array(mvp));
+      gl.uniformMatrix3fv(loc.rot, false, new Float32Array(r));
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      const stride = 36;
+      gl.enableVertexAttribArray(loc.p); gl.vertexAttribPointer(loc.p, 3, gl.FLOAT, false, stride, 0);
+      gl.enableVertexAttribArray(loc.n); gl.vertexAttribPointer(loc.n, 3, gl.FLOAT, false, stride, 12);
+      gl.enableVertexAttribArray(loc.c); gl.vertexAttribPointer(loc.c, 3, gl.FLOAT, false, stride, 24);
+      gl.drawArrays(gl.TRIANGLES, 0, count);
+    };
+    requestAnimationFrame(draw);
   }
 }
 
@@ -487,6 +576,7 @@ customElements.define("oi-actions", OiActions);
 customElements.define("oi-mode", OiMode);
 customElements.define("oi-hud-strip", OiHudStrip);
 customElements.define("oi-shields", OiShields);
+customElements.define("oi-target-view", OiTargetView);
 customElements.define("oi-display", OiDisplay);
 customElements.define("oi-power", OiPower);
 customElements.define("oi-tiles", OiTiles);

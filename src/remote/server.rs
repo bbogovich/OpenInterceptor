@@ -316,6 +316,13 @@ mod tests {
                 println!("event {e:?}");
                 if let Event::Paired(_) = e {
                     server.broadcast(&protocol::catalogue_idle());
+                    // A sample target model for the viewport: a dart-like wedge.
+                    let mesh = crate::formats::obj::parse(
+                        "v 0 0 -2\nv -1 0 1\nv 1 0 1\nv 0 0.5 1\nf 1 3 2\nf 1 2 4\nf 1 4 3\nf 2 3 4\n",
+                    )
+                    .unwrap();
+                    let m = crate::model::Model::from_obj("sample", &mesh, 1.0, &[]);
+                    server.broadcast(&protocol::model("Wraith", &m, &[[0.6, 0.75, 0.6]]));
                 }
             }
             // A sample of in-flight telemetry, so every panel has something to show.

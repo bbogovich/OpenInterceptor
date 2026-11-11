@@ -204,6 +204,73 @@ pub fn telemetry(world: &World, player: ShipId, time: f64, hits: [u32; 2]) -> St
     o.end()
 }
 
+/// Most triangles sent in a `model` message: the most detailed level of detail under
+/// this is used (or the coarsest, if every level is larger).
+pub const MODEL_TRIANGLE_BUDGET: usize = 3000;
+
+/// The `model` message for the target viewport (C3): one level of detail of `model`,
+/// normalised to radius 1, as flat-shaded groups with one colour each.
+///
+/// `colors` gives each material group's colour (RGB 0..1): the texture's average for a
+/// textured group, so the shape reads correctly without sending textures. Positions are
+/// rounded to 3 decimals, which is plenty at viewport size and keeps the message small.
+pub fn model(name: &str, model: &crate::model::Model, colors: &[[f32; 3]]) -> String {
+    let lod = model
+        .lods
+        .iter()
+        .find(|l| l.triangle_count() <= MODEL_TRIANGLE_BUDGET)
+        .unwrap_or_else(|| model.lods.last().expect("a model always has a LOD"));
+    let scale = 1.0 / model.radius.max(1e-3);
+    let mut groups = Vec::new();
+    for (gi, g) in lod.groups.iter().enumerate() {
+        // Only the vertices this group uses, renumbered from 0.
+        let mut map = std::collections::HashMap::new();
+        let mut positions = Vec::new();
+        let mut indices = Vec::with_capacity(g.indices.len());
+        for &i in &g.indices {
+            let next = map.len() as u32;
+            let k = *map.entry(i).or_insert_with(|| {
+                let p = lod.vertices[i as usize].position * scale;
+                positions.extend([p.x as f64, p.y as f64, p.z as f64]);
+                next
+            });
+            indices.push(k as f64);
+        }
+        // Untextured faces carry their colour in the vertices; textured ones are white,
+        // so the caller's colour (the texture's average) is used.
+        let c = match (&g.texture, g.indices.first()) {
+            (None, Some(&i)) => {
+                let v = lod.vertices[i as usize].color;
+                [v[0] as f32 / 255.0, v[1] as f32 / 255.0, v[2] as f32 / 255.0]
+            }
+            _ => colors.get(gi).copied().unwrap_or([0.7, 0.7, 0.7]),
+        };
+        groups.push(
+            Obj::new()
+                .nums("color", &[c[0] as f64, c[1] as f64, c[2] as f64])
+                .nums("positions", &positions)
+                .nums("indices", &indices)
+                .end(),
+        );
+    }
+    Obj::new().str("type", "model").str("name", name).raw("groups", &array(&groups)).end()
+}
+
+/// The average colour of an RGBA image (RGB 0..1), ignoring transparent pixels.
+pub fn average_color(rgba: &[u8]) -> [f32; 3] {
+    let (mut sum, mut n) = ([0u64; 3], 0u64);
+    for p in rgba.chunks_exact(4).filter(|p| p[3] > 16) {
+        for k in 0..3 {
+            sum[k] += p[k] as u64;
+        }
+        n += 1;
+    }
+    if n == 0 {
+        return [0.7, 0.7, 0.7];
+    }
+    [sum[0] as f32 / n as f32 / 255.0, sum[1] as f32 / n as f32 / 255.0, sum[2] as f32 / n as f32 / 255.0]
+}
+
 /// A message from the console, decoded.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Inbound {
@@ -269,6 +336,25 @@ mod tests {
     use crate::sim::test_support::world;
     use crate::sim::Pilot;
     use glam::{Quat, Vec3};
+
+    #[test]
+    fn model_messages_are_normalised_and_coloured_per_group() {
+        let mesh = crate::formats::obj::parse("v 0 0 0\nv 2 0 0\nv 0 2 0\nv 0 0 2\nf 1 2 3\nf 1 3 4\n").unwrap();
+        let m = crate::model::Model::from_obj("t", &mesh, 1.0, &[]);
+        let msg = super::super::json::parse(&model("Wraith", &m, &[[0.2, 0.4, 0.6]])).unwrap();
+        assert_eq!(msg.get("name").and_then(Json::as_str), Some("Wraith"));
+        let Some(Json::Arr(groups)) = msg.get("groups") else { panic!() };
+        let Some(Json::Arr(pos)) = groups[0].get("positions") else { panic!() };
+        let max = pos.iter().filter_map(Json::as_f64).fold(0.0f64, |a, b| a.max(b.abs()));
+        assert!(max <= 1.0 + 1e-6, "normalised to radius 1: {max}");
+        let Some(Json::Arr(idx)) = groups[0].get("indices") else { panic!() };
+        assert_eq!(idx.len(), 6, "two triangles");
+        assert_eq!(
+            average_color(&[255, 0, 0, 255, 0, 0, 255, 255, 9, 9, 9, 0]),
+            [0.5, 0.0, 0.5],
+            "transparent ignored"
+        );
+    }
 
     #[test]
     fn decodes_console_messages_and_refuses_unknown_ones() {

@@ -231,6 +231,10 @@ pub struct FlightSession {
     console_hits: [u32; 2],
     /// The craft class the console's catalogue was built for (resent when it changes).
     console_class: Option<crate::content::rules::ShipClassId>,
+    /// The target class whose model the console has (C3), and the encoded `model`
+    /// messages by class, built once each.
+    console_target: Option<crate::content::rules::ShipClassId>,
+    console_models: std::collections::HashMap<crate::content::rules::ShipClassId, std::rc::Rc<String>>,
     /// The keys help overlay (`?` or Shift+F1) is showing; the battle pauses under it.
     help_open: bool,
     mouse_flight: bool,
@@ -416,6 +420,8 @@ impl FlightSession {
             start_guard: Default::default(),
             console_hits: [0, 0],
             console_class: None,
+            console_target: None,
+            console_models: Default::default(),
             mouse_flight: false,
             accumulator: 0.0,
             cockpit,
@@ -813,6 +819,39 @@ impl FlightSession {
         if resend {
             server.broadcast(&protocol::catalogue(&self.world.rules, &self.world, self.player));
             self.console_class = class;
+            self.console_target = None; // a new console needs the target model too
+        }
+        // The target viewport's model (C3): sent when the target's class changes.
+        let target_class =
+            self.world.get(self.player).and_then(|s| s.target).and_then(|t| self.world.get(t)).map(|t| t.class);
+        if let Some(tc) = target_class.filter(|tc| Some(*tc) != self.console_target) {
+            let content = &ctx.content;
+            let rules = &self.world.rules;
+            let msg = self.console_models.entry(tc).or_insert_with(|| {
+                let c = rules.ship(tc);
+                let text = match content.load_model(&c.model, c.model_pack, c.model_scale) {
+                    Ok(m) => {
+                        let lod = m.lods.iter().find(|l| l.triangle_count() <= protocol::MODEL_TRIANGLE_BUDGET);
+                        let lod = lod.unwrap_or_else(|| m.lods.last().expect("a model always has a LOD"));
+                        let colors: Vec<[f32; 3]> = lod
+                            .groups
+                            .iter()
+                            .map(|g| match &g.texture {
+                                Some(t) => content
+                                    .load_texture(t, c.model_pack)
+                                    .map(|img| protocol::average_color(&img.rgba))
+                                    .unwrap_or([0.7, 0.7, 0.7]),
+                                None => [0.7, 0.7, 0.7],
+                            })
+                            .collect();
+                        protocol::model(&c.name, &m, &colors)
+                    }
+                    Err(_) => crate::remote::json::Obj::new().str("type", "model").str("name", &c.name).end(),
+                };
+                std::rc::Rc::new(text)
+            });
+            server.broadcast(msg);
+            self.console_target = Some(tc);
         }
         self.console_clock += get_frame_time();
         if self.console_clock >= 0.05 {
