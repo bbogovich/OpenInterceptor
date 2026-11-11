@@ -3966,6 +3966,8 @@
       
         
       
+        
+      
     
     
     
@@ -4175,6 +4177,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -4538,6 +4568,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terrains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        terrains
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#campaign" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4553,6 +4605,17 @@
     <span class="md-ellipsis">
       
         missions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hazards
       
     </span>
   </a>
@@ -6334,6 +6397,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terrains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        terrains
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#campaign" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6349,6 +6434,17 @@
     <span class="md-ellipsis">
       
         missions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hazards
       
     </span>
   </a>
@@ -6762,9 +6858,9 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 </tr>
 <tr>
 <td><code>kind</code></td>
-<td><code>fighter</code>, <code>freighter</code>, <code>capital</code>, <code>drone</code>, <code>station</code>, <code>probe</code>, <code>mine</code>, <code>debris</code></td>
+<td><code>fighter</code>, <code>freighter</code>, <code>capital</code>, <code>drone</code>, <code>station</code>, <code>probe</code>, <code>mine</code>, <code>debris</code>, <code>ground</code></td>
 <td><code>fighter</code> / <code>station</code></td>
-<td>What sort of object it is. <code>station</code> and <code>mine</code> never move.</td>
+<td>What sort of object it is. <code>station</code>, <code>mine</code> and <code>ground</code> never move; a <code>ground</code> installation is set down on the terrain wherever it is placed (<a href="../environments/#ground-installations">Environments and terrain</a>).</td>
 </tr>
 <tr>
 <td><code>faction</code></td>
@@ -6861,6 +6957,30 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td>bool</td>
 <td><code>false</code></td>
 <td>Fitted with vector control thrusters (adds the <code>vct</code> system).</td>
+</tr>
+<tr>
+<td><code>atmosphere_max_speed</code></td>
+<td>number</td>
+<td>60 % of <code>max_speed</code></td>
+<td>Top speed in air of density 1, m/s: full thrust balances drag here (<a href="../environments/#atmospheric-flight">atmospheric flight</a>).</td>
+</tr>
+<tr>
+<td><code>lift</code></td>
+<td>number</td>
+<td>120 for <code>fighter</code>, else 0</td>
+<td>The forward speed, m/s, at which the wings carry the craft's weight; 0 = no wings.</td>
+</tr>
+<tr>
+<td><code>hover</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Hovers in an atmosphere: gravity does not pull it down (saucers).</td>
+</tr>
+<tr>
+<td><code>atmospheric</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Can enter an atmosphere. Read and validated; not yet acted on (Stage 4 hides such craft from surface missions).</td>
 </tr>
 <tr>
 <td><code>energy</code></td>
@@ -7614,6 +7734,119 @@ section.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="environments"><code>environments</code><a class="headerlink" href="#environments" title="Permanent link">&para;</a></h3>
+<p>Battle environments by id (app 0.6.0; guide: <a href="../environments/">Environments and terrain</a>). A
+mission or scenario picks one with <code>environment: &lt;id&gt;</code>; without it the battle is in open space.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>physics</code></td>
+<td><code>space</code>, <code>atmosphere</code></td>
+<td><code>space</code></td>
+<td><code>space</code>: the flight model unchanged. <code>atmosphere</code>: drag, gravity, lift, a ground and a ceiling.</td>
+</tr>
+<tr>
+<td><code>arena</code></td>
+<td>distance</td>
+<td><code>flight.arena_radius</code></td>
+<td>Arena radius for battles here (a pocket is small).</td>
+</tr>
+<tr>
+<td><code>gravity</code></td>
+<td>number</td>
+<td>9.8 in an atmosphere, else 0</td>
+<td>m/s², downwards (−Y).</td>
+</tr>
+<tr>
+<td><code>air_density</code></td>
+<td>number</td>
+<td>1 in an atmosphere, else 0</td>
+<td>Scales drag and lift; 0 = vacuum.</td>
+</tr>
+<tr>
+<td><code>ceiling</code></td>
+<td>distance</td>
+<td>none</td>
+<td>Climbing above this height leaves the battle ("LEFT THE ATMOSPHERE").</td>
+</tr>
+<tr>
+<td><code>terrain</code></td>
+<td>id</td>
+<td>—</td>
+<td>The <a href="#terrains">terrain</a> under the battle; <em>required</em> with <code>physics: atmosphere</code>.</td>
+</tr>
+<tr>
+<td><code>sky</code></td>
+<td><code>{top, horizon, fog, fog_distance, stars}</code></td>
+<td>none (black space)</td>
+<td><code>top</code>, <code>horizon</code>: RGB at the zenith and the horizon (defaults <code>[0.05, 0.08, 0.2]</code>, <code>[0.5, 0.6, 0.75]</code>); <code>fog</code>: RGB (default the horizon); <code>fog_distance</code>: distance at which things have faded fully into the fog (default 15 km, at least 100 m); <code>stars</code>: how much of the starfield shows, 0–1 (default 0).</td>
+</tr>
+<tr>
+<td><code>backdrop</code></td>
+<td><code>{planet: {color, size, direction}}</code></td>
+<td>none</td>
+<td>A planet in the sky: <code>color</code> RGB (default <code>[0.3, 0.5, 0.9]</code>), <code>size</code> its angular size in degrees (default 30, 1–170), <code>direction</code> where it lies (default <code>[0, -0.5, -1]</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="terrains"><code>terrains</code><a class="headerlink" href="#terrains" title="Permanent link">&para;</a></h3>
+<p>Terrains (heightfields) by id (app 0.6.0; guide: <a href="../environments/#terrains">Environments and terrain</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>generate</code></td>
+<td><code>{kind, seed}</code></td>
+<td>—</td>
+<td>Generated heights: <code>kind</code> <code>hills</code> (default) or <code>craters</code>; <code>seed</code> a number (default 1). Give <code>generate</code> <strong>or</strong> <code>heightmap</code>, not both.</td>
+</tr>
+<tr>
+<td><code>heightmap</code></td>
+<td>asset</td>
+<td>—</td>
+<td>A greyscale image (PNG or TGA): black = lowest, white = highest (the red channel).</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>distance</td>
+<td>30 km</td>
+<td>Side of the square terrain, centred on the origin (at least 1 km).</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>2 numbers</td>
+<td><code>[0, 1500]</code></td>
+<td>Lowest and highest ground, metres (plain numbers).</td>
+</tr>
+<tr>
+<td><code>colors</code></td>
+<td><code>{low, high, slope}</code></td>
+<td>greys</td>
+<td>RGB of low ground, high ground and steep slopes.</td>
+</tr>
+<tr>
+<td><code>resolution</code></td>
+<td>number</td>
+<td>129</td>
+<td>Grid points per side, 17–257 (the mesh and the height lookup).</td>
+</tr>
+</tbody>
+</table>
 <h3 id="campaign"><code>campaign</code><a class="headerlink" href="#campaign" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7737,6 +7970,57 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td>none</td>
 <td>Debrief texts, by the same results (<code>killed</code> shows no text unless given).</td>
 </tr>
+<tr>
+<td><code>environment</code></td>
+<td>id</td>
+<td>open space</td>
+<td>The battle <a href="#environments">environment</a>.</td>
+</tr>
+<tr>
+<td><code>hazards</code></td>
+<td><a href="#hazards">hazards</a></td>
+<td>none</td>
+<td>Asteroid field, minefield, black hole, ion storm.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hazards"><code>hazards</code><a class="headerlink" href="#hazards" title="Permanent link">&para;</a></h3>
+<p>In missions and scenarios (app 0.5.1; guide: <a href="../missions/#hazards">Missions › Hazards</a>). Each
+part is optional.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asteroids</code></td>
+<td><code>{class, count, radius, center, spin, faction}</code></td>
+<td>—</td>
+<td>An asteroid field: <code>count</code> (40) objects of <code>class</code> (<em>required</em>) scattered uniformly in the sphere <code>radius</code> (distance, 5 km) around <code>center</code> (3 numbers, origin), none within 300 m of a craft; each turns at a random rate up to <code>spin</code> (°/s, 4); <code>faction</code> default the class's. Shown on the radar only within range.</td>
+</tr>
+<tr>
+<td><code>minefield</code></td>
+<td>the same</td>
+<td>—</td>
+<td>A minefield: <code>count</code> (20) mines of <code>class</code> (a <code>kind: mine</code> class) in <code>radius</code> (2 km).</td>
+</tr>
+<tr>
+<td><code>black_hole</code></td>
+<td><code>{position, pull, radius}</code></td>
+<td>—</td>
+<td>Pulls craft and missiles towards <code>position</code> (3 numbers): <code>pull</code> m/s² at 1 km (15), growing with 1/d², capped at 20 × <code>pull</code>; a craft inside <code>radius</code> (distance, 400 m) is destroyed.</td>
+</tr>
+<tr>
+<td><code>ion_storm</code></td>
+<td><code>{sensors}</code></td>
+<td>—</td>
+<td>Radar range × <code>sensors</code> (fraction, 40 %, at least 5 %); missile locks at half speed.</td>
+</tr>
 </tbody>
 </table>
 <p>The schema type <strong>either</strong> (<code>Ty::Either</code>) lets a key take one of two forms: <code>count: 3</code> or
@@ -7846,6 +8130,18 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td>mapping name: <code>{position: [x, y, z]}</code></td>
 <td>none</td>
 <td>Navigation points (engine extension, DEV-002).</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>id</td>
+<td>open space</td>
+<td>The battle <a href="#environments">environment</a> (app 0.6.0).</td>
+</tr>
+<tr>
+<td><code>hazards</code></td>
+<td><a href="#hazards">hazards</a></td>
+<td>none</td>
+<td>Asteroid field, minefield, black hole, ion storm (app 0.5.1).</td>
 </tr>
 </tbody>
 </table>

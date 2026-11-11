@@ -4026,6 +4026,8 @@
       
         
       
+        
+      
     
     
     
@@ -4235,6 +4237,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -5929,7 +5959,9 @@
 
 <h1 id="stage-3-missions-environments-and-the-condition-language">Stage 3 — Missions, environments and the condition language<a class="headerlink" href="#stage-3-missions-environments-and-the-condition-language" title="Permanent link">&para;</a></h1>
 <p><strong>Version 0.4.0. Status: in progress</strong> — part 1 (missions as data) shipped in app 0.3.0, main
-<code>d7553f5</code>, 2026-11-11. Missions become data: roles, waves, objectives and
+<code>d7553f5</code>, 2026-11-11; hazards in app 0.5.1 (main <code>70d68e2</code>); environments, atmospheric flight,
+terrain and the atmosphere HUD in app 0.6.0 (main <code>af003f6</code>); ground installations in app 0.6.1
+(main <code>de417df</code>). Missions become data: roles, waves, objectives and
 outcomes, in space and — new to this engine — on planet surfaces with atmospheric flight.</p>
 <p>Design: <a href="../../../specification/design/format-missions/">missions and events</a>,
 <a href="../../../specification/design/format-behaviour/">behaviours and scripting</a>.</p>
@@ -5954,31 +5986,31 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.2</td>
 <td>Mission types: roles (from situation, class lists per difficulty, player craft), arrivals and waves, objectives (win/draw/lose, optional), outcomes as action lists, timers, hazards (asteroids, black-hole pull, minefields, ion storm)</td>
 <td><code>mission</code> (new), <code>sim</code></td>
-<td><strong>Done except hazards:</strong> roles (class lists, counts per level, faction, AI, behaviour, protect, state, hull, systems, speed), arrivals (<code>at:</code>, <code>arrive:</code>; DEV-040), waves, objectives, optional objectives, timers, outcomes. Hazards planned.</td>
+<td><strong>Done except hazards:</strong> roles (class lists, counts per level, faction, AI, behaviour, protect, state, hull, systems, speed), arrivals (<code>at:</code>, <code>arrive:</code>; DEV-040), waves, objectives, optional objectives, timers, outcomes. <strong>Hazards done</strong> (app 0.5.1, main <code>70d68e2</code>): asteroid fields and minefields as scattered objects, black hole (pull, swallow, look, AI escape), ion storm (<code>content::hazards</code>, <code>sim::hazards</code>); GitHub #9.</td>
 </tr>
 <tr>
 <td>3.3</td>
 <td>Battle environments: <code>space</code>, <code>orbit</code>, <code>pocket</code>; backdrops from the map location</td>
 <td><code>render</code>, <code>sim</code></td>
-<td>Planned.</td>
+<td><strong>Done</strong> (app 0.6.0, main <code>af003f6</code>): <code>environments:</code> data, <code>environment: &lt;id&gt;</code> on missions and scenarios, <code>arena</code>, planet backdrop, sky; default <code>orbit</code>, <code>pocket</code>, <code>moon_surface</code>, <code>dusk_hills</code>. Backdrops from the map location wait for Stage 4. GitHub #10.</td>
 </tr>
 <tr>
 <td>3.4</td>
 <td><strong>Atmospheric flight</strong>: drag, gravity, lift, hover, ground collision and landing, ceiling escape; per-ship <code>DragArea</code>, <code>Lift</code>, <code>Hover</code>, <code>AtmosphereMaxSpeed</code>, <code>Atmospheric</code></td>
-<td><code>sim::flight</code></td>
-<td>Planned.</td>
+<td><code>sim::env</code></td>
+<td><strong>Done</strong> (app 0.6.0): drag from <code>atmosphere_max_speed</code>, gravity, lift, <code>hover</code>, landing below 25 m/s upright, crash damage, ceiling exit, AI ground avoidance; ship keys <code>atmosphere_max_speed</code>, <code>lift</code>, <code>hover</code>, <code>atmospheric</code> (<code>drag_area</code> not adopted; <code>atmospheric</code> not yet acted on). GitHub #11.</td>
 </tr>
 <tr>
 <td>3.5</td>
 <td><strong>Terrain</strong>: heightfield from an image or a generator (craters, hills), texturing with detail maps, scattered objects, sky gradient, fog; ground installations (<code>kind: ground</code>) and anti-air turrets</td>
 <td><code>render::terrain</code> (new), <code>sim</code></td>
-<td>Planned.</td>
+<td><strong>Partial:</strong> heightfields generated (<code>hills</code>, <code>craters</code>) or from a heightmap, the coloured terrain mesh, sky dome and distance fog (app 0.6.0); ground installations, <code>kind: ground</code>, and anti-air batteries as ground turrets (app 0.6.1, main <code>de417df</code>). <strong>To do:</strong> detail-map texturing and scattered objects (deferred). GitHub #12.</td>
 </tr>
 <tr>
 <td>3.6</td>
 <td>HUD for atmosphere: altitude, vertical speed, horizon</td>
 <td><code>hud</code></td>
-<td>Planned.</td>
+<td><strong>Done</strong> (app 0.6.0): <code>ALT n  VS ±n</code> on the status line, artificial horizon and pitch ladder. GitHub #13.</td>
 </tr>
 <tr>
 <td>3.7</td>
@@ -6024,7 +6056,10 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 </tr>
 </tbody>
 </table>
-<p><strong>Testbed adds</strong> (so far: missions on the launcher with scrolling, <code>--mission</code>, <code>--soak &lt;mission&gt;</code>): a mission browser (every mission type of both campaigns, with difficulty and
+<p><strong>Testbed adds</strong> (so far: missions on the launcher with scrolling, <code>--mission</code>, <code>--soak &lt;mission&gt;</code>;
+hazard scenarios <code>hazard-asteroids</code>, <code>hazard-black-hole</code>, <code>hazard-minefield</code> and environment
+scenarios <code>env-orbit</code>, <code>env-pocket</code>, <code>surface-moon</code>, <code>surface-hills</code>, <code>surface-colony</code>,
+<code>surface-strike</code> — the surface ones serve as the terrain flight sandbox for now): a mission browser (every mission type of both campaigns, with difficulty and
 force choices), a terrain flight sandbox (atmospheric handling on several worlds), and a
 condition-language console.</p>
 <p><strong>Exit</strong>: every mission type winnable and losable in the testbed; atmospheric flight feels

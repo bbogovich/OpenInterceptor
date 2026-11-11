@@ -4074,6 +4074,8 @@
       
         
       
+        
+      
     
     
     
@@ -4283,6 +4285,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6053,7 +6083,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-3-missions/">3 Missions, environments and conditions</a></td>
-<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later)</td>
+<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later); hazards in <strong>0.5.1</strong>; environments, atmospheric flight, terrain and the atmosphere HUD in <strong>0.6.0</strong>; ground installations in <strong>0.6.1</strong></td>
 <td>See <a href="#stage-3-progress">Stage 3 progress</a> below</td>
 </tr>
 <tr>
@@ -6411,7 +6441,10 @@ and <code>--soak</code> <code>f638b44</code>; looks <code>b097c83</code>; guidan
 fixes); app <strong>0.4.0</strong>, main <code>dfff71b</code> (console C1); <strong>0.4.1</strong>, main <code>42716d1</code> (lit shader link
 fix); <strong>0.4.2</strong>, main <code>bf7b7ce</code> (<code>resources/</code> layout); <strong>292 unit tests</strong> on macOS at 0.4.2. Then
 the console C2 – C4 and C2b: app <strong>0.4.11</strong> (<code>db2f264</code>), <strong>0.4.14</strong> (<code>e51eca9</code>), <strong>0.4.15</strong>
-(<code>e2b5012</code>) and <strong>0.5.0</strong> (<code>0a1c340</code>).</p>
+(<code>e2b5012</code>) and <strong>0.5.0</strong> (<code>0a1c340</code>). Then Stage 3.2 – 3.6: app <strong>0.5.1</strong> (<code>70d68e2</code>, hazards), <strong>0.6.0</strong>
+(<code>af003f6</code>, environments, atmospheric flight, terrain, atmosphere HUD) and <strong>0.6.1</strong> (<code>de417df</code>,
+ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a count of the sources (not a build; see
+<a href="../testing/unit-tests/">Unit tests</a>).</p>
 <table>
 <thead>
 <tr>
@@ -6428,8 +6461,33 @@ the console C2 – C4 and C2b: app <strong>0.4.11</strong> (<code>db2f264</code>
 </tr>
 <tr>
 <td>Missions as data: roles, arrivals (<code>at:</code>, <code>arrive:</code>), waves, objectives, optional objectives, timer, outcomes, chatter, debrief (3.2)</td>
-<td><strong>Done</strong> (hazards planned)</td>
+<td><strong>Done</strong></td>
 <td><code>src/content/mission.rs</code>, <code>src/mission/</code></td>
+</tr>
+<tr>
+<td>Hazards (3.2): asteroid fields and minefields scattered clear of craft (asteroids are radar scenery), black hole (1/d² pull capped at 20×, swallowing, black core and accretion ring, AI escape), ion storm (radar × <code>sensors</code>, half-speed locks, start message); <code>--check</code> validates hazard classes</td>
+<td><strong>Done</strong> (0.5.1, main <code>70d68e2</code>; soaked with the AI pilot; MT-3-33 – MT-3-36 not yet run)</td>
+<td><code>src/content/hazards.rs</code>, <code>src/sim/hazards.rs</code>, <code>src/sim/ai.rs</code>, <code>src/render/mod.rs</code></td>
+</tr>
+<tr>
+<td>Battle environments (3.3): <code>environments:</code> and <code>environment: &lt;id&gt;</code>, arena, planet backdrop, sky</td>
+<td><strong>Done</strong> (0.6.0, main <code>af003f6</code>; backdrops from the map location in Stage 4; MT-3-37 – MT-3-40 not yet run)</td>
+<td><code>src/content/environment.rs</code>, <code>src/sim/env.rs</code>, <code>resources/default/rules/environments.yaml</code></td>
+</tr>
+<tr>
+<td>Atmospheric flight (3.4): drag, gravity, lift, hover, landing, crashing, ceiling exit, AI ground avoidance; ship keys <code>atmosphere_max_speed</code>, <code>lift</code>, <code>hover</code>, <code>atmospheric</code></td>
+<td><strong>Done</strong> (0.6.0; MT-3-41 – MT-3-43 not yet run)</td>
+<td><code>src/sim/env.rs</code>, <code>src/sim/ai.rs</code>, <code>src/content/rules.rs</code></td>
+</tr>
+<tr>
+<td>Terrain (3.5): generated and heightmap heightfields, coloured terrain mesh, sky dome, distance fog; ground installations (<code>kind: ground</code>) and anti-air batteries</td>
+<td><strong>Partial</strong> (0.6.0; installations 0.6.1, main <code>de417df</code>; MT-3-45, MT-3-46 not yet run). Detail textures and scattered objects deferred</td>
+<td><code>src/content/environment.rs</code>, <code>src/render/terrain.rs</code>, <code>src/render/mod.rs</code>, <code>src/sim/mod.rs</code>, <code>resources/default/rules/ground.yaml</code></td>
+</tr>
+<tr>
+<td>Atmosphere HUD (3.6): <code>ALT</code> / <code>VS</code> on the status line, artificial horizon and pitch ladder</td>
+<td><strong>Done</strong> (0.6.0; MT-3-44 not yet run)</td>
+<td><code>src/hud/draw.rs</code></td>
 </tr>
 <tr>
 <td>Debrief screen; player jumping out = <code>retreat</code> (3.8)</td>
@@ -6457,7 +6515,7 @@ the console C2 – C4 and C2b: app <strong>0.4.11</strong> (<code>db2f264</code>
 <td><code>resources/default/missions/</code></td>
 </tr>
 <tr>
-<td>Environments, atmospheric flight, terrain, simulator missions, Tier 2 decision (3.3–3.6, 3.9, 3.10)</td>
+<td>Simulator missions, Tier 2 decision (3.9, 3.10)</td>
 <td><strong>Not started</strong></td>
 <td></td>
 </tr>
@@ -6527,13 +6585,13 @@ the console C2 – C4 and C2b: app <strong>0.4.11</strong> (<code>db2f264</code>
 <td><code>src/cli.rs</code>, <code>src/settings.rs</code>, <code>scripts/check.sh</code>, <code>tools/build_bundle.py</code></td>
 </tr>
 <tr>
-<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-32</td>
-<td><strong>Not yet run</strong> (MT-3-27's hit static confirmed by the user)</td>
+<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-46</td>
+<td><strong>Not yet run</strong> (MT-3-27's hit static confirmed by the user). The look of the hazards, sky, fog, terrain and horizon could not be seen from the agent environment: MT-3-33 – MT-3-46 need the user</td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Next</strong>: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
+<p><strong>Next</strong>: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes, including the hazard and environment cases MT-3-33 – MT-3-46 (sky, fog, terrain, landing, crashing, the ceiling exit, ALT/VS and the horizon); then terrain detail textures and scattered objects (3.5), simulator missions (3.9) and the Tier 2 decision (3.10). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
 
 
 

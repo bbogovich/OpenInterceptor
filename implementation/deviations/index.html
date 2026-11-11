@@ -3976,6 +3976,8 @@
       
         
       
+        
+      
     
     
     
@@ -4185,6 +4187,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6134,6 +6164,12 @@ one looks like a bug.</p>
 <td>DEV-044</td>
 <td><strong>Interceptor lighting adds a rim light and distant dots</strong> (<code>flight: {lighting: {ambient: 0.30, sun: 0.85, rim: 0.35, distant_dot: 4}}</code>): hulls seen edge-on are outlined, and craft smaller than 4 px on screen that are on the radar are drawn as a dot in their radar colour.</td>
 <td>An engine choice for visibility (F-HUD-007: "it is difficult to see other fighters"). Ambient and sun match the engine's earlier fixed lighting; the original's look is otherwise unchanged and the keys are data.</td>
+<td>3</td>
+</tr>
+<tr>
+<td>DEV-045</td>
+<td><strong>Interceptor hazards are engine models with derived numbers</strong>: the black hole pulls with 1/d² (<code>pull</code> at 1 km, capped at 20 ×) and destroys craft inside its <code>radius</code>; the ion storm keeps a fraction of radar range and halves lock speed; asteroid fields are scattered, slowly turning objects. The <code>interceptor</code> testbed scenarios use <code>pull: 12</code>, <code>radius: 450</code> and <code>sensors: 40%</code>.</td>
+<td>The original's belt and black-hole battles are built in code; their pull law, numbers and sensor effects have not been measured. All are <code>hazards:</code> data (R-MSN-009).</td>
 <td>3</td>
 </tr>
 </tbody>

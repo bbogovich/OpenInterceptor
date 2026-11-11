@@ -3348,6 +3348,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#battle-environments-app-060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Battle environments (app 0.6.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#black-hole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Black hole
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4186,6 +4208,8 @@
       
         
       
+        
+      
     
     
     
@@ -4395,6 +4419,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6192,6 +6244,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#battle-environments-app-060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Battle environments (app 0.6.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#black-hole" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Black hole
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6251,13 +6325,15 @@
 <p><code>src/render/</code>: draws one frame of the 3D scene with macroquad. It only <em>reads</em> the
 simulation. Plan: Stage 1; Stage 2 added looks (model sets with texture swaps), debris sets,
 effects with shock waves, station modules and their wrecks; app 0.3.1 lighting from the rules
-(rim light), a brightness gamma, distant dots and viewer-relative bolt streaks.</p>
+(rim light), a brightness gamma, distant dots and viewer-relative bolt streaks; Stage 3 the black
+hole (app 0.5.1) and the battle environment — terrain, sky dome, distance fog and a planet
+backdrop (app 0.6.0).</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <h3 id="frame-structure">Frame structure<a class="headerlink" href="#frame-structure" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
-    CL["clear_background"] --&gt; SKY["draw_sky&lt;br/&gt;2 500 stars + sun&lt;br/&gt;sky material: no depth, additive"]
-    SKY --&gt; SOL["draw_world&lt;br/&gt;ships, stations, debris&lt;br/&gt;lit material: depth test + write"]
-    SOL --&gt; GLO["draw_glows&lt;br/&gt;engines, bolts, missiles, sparks, explosions,&lt;br/&gt;distant dots&lt;br/&gt;glow material: depth test, no write, additive"]
+    CL["clear_background&lt;br/&gt;(black, or the sky's horizon colour)"] --&gt; SKY["draw_sky&lt;br/&gt;sky dome (atmosphere), 2 500 stars (dimmed by sky.stars),&lt;br/&gt;planet disc (backdrop), sun&lt;br/&gt;sky material: no depth, additive"]
+    SKY --&gt; SOL["draw_world&lt;br/&gt;terrain mesh, black-hole core,&lt;br/&gt;ships, stations, debris&lt;br/&gt;lit material: depth test + write, fog"]
+    SOL --&gt; GLO["draw_glows&lt;br/&gt;engines, bolts, missiles, sparks, explosions,&lt;br/&gt;distant dots, black-hole accretion ring&lt;br/&gt;glow material: depth test, no write, additive"]
     GLO --&gt; CP["draw_cockpit_model (3D cockpit, cockpit view only)&lt;br/&gt;flush + clear depth; 5 cm near plane"]
     CP --&gt; HUD["2D HUD (hud::draw)"]</code></pre>
 <h3 id="looks-which-model-to-draw">Looks: which model to draw<a class="headerlink" href="#looks-which-model-to-draw" title="Permanent link">&para;</a></h3>
@@ -6399,6 +6475,35 @@ past the muzzle, so in the chase view fire seemed to come from behind the ship.<
 <code>with_velocity</code>). That is what the eye sees: a bolt from a drifting ship shares the drift, so
 relative to the pilot it streaks straight out of the guns, while a stationary observer would
 see it slanted.</p>
+<h3 id="battle-environments-app-060">Battle environments (app 0.6.0)<a class="headerlink" href="#battle-environments-app-060" title="Permanent link">&para;</a></h3>
+<p>The flight screen sets <code>Renderer::env_sky</code> and <code>Renderer::planet</code> from the battle's environment
+before drawing each frame, and clears them after, so the launcher, viewer and other screens still
+draw plain space. With a sky, the background is cleared to the horizon colour instead of black.</p>
+<ul>
+<li><strong>Sky dome</strong> (<code>draw_sky_dome</code>, drawn first in <code>draw_sky</code>): a dome of 8 rings × 24 segments around
+  the camera, from 30° below the horizon to the zenith, coloured from <code>horizon</code> to <code>top</code> by
+  <code>√max(sin(elevation), 0)</code> — the square root keeps the horizon band narrow. Stars are then drawn
+  with their colour scaled by <code>sky.stars</code>.</li>
+<li><strong>Planet</strong> (<code>draw_planet</code>): a disc facing the camera at 80 % of the sky distance, its radius set
+  by the angular <code>size</code>. Each vertex is shaded as if it were on a sphere (the normal is rebuilt
+  from the disc position), lit by the sun with a darker limb, so one flat mesh reads as a lit globe.</li>
+<li><strong>Terrain</strong> (<code>render::terrain::terrain_model</code>): the heightfield becomes an ordinary <code>Model</code> —
+  one vertex per grid point, two triangles per square, wound counter-clockwise seen from above so
+  the fronts face up for back-face culling. Vertex colours run from <code>low</code> to <code>high</code> by height,
+  blended to <code>slope</code> where the normal tips more than about 0.08 from vertical (full at 0.38), with
+  a fixed ±8 % per-vertex variation. It is uploaded once per terrain id through
+  <code>ModelCache::upload_model</code> and kept in <code>Renderer::terrain</code>, then drawn with <code>draw_model</code> like
+  any ship: lit by the sun, depth-tested, fogged.</li>
+<li><strong>Fog</strong> in the lit shader: the vertex stage computes <code>fog = clamp(d / FogDistance.x, 0, 1)²</code> from
+  the camera-relative position; the fragment stage mixes the colour towards <code>FogColor</code>.
+  <code>FogDistance.x = 0</code> (space) turns it off. See the precision note under <a href="#debugging">Debugging</a>.</li>
+</ul>
+<h3 id="black-hole">Black hole<a class="headerlink" href="#black-hole" title="Permanent link">&para;</a></h3>
+<p>A black hole (<code>World::hazards.black_hole</code>, app 0.5.1) is drawn in two parts: in <code>draw_world</code> a
+black sphere of the hole's <code>radius</code> that hides the stars and anything behind it, and in
+<code>draw_glows</code> an accretion ring of 48 additive orange glows at 1.6 – 1.85 × the radius, turning
+slowly with the battle time and bobbing a little out of plane, with fixed per-glow heat
+variations.</p>
 <p>LOD choice: <code>GpuModel::lod(distance)</code> picks the first LOD whose <code>switch_distance</code> exceeds the
 camera distance (the original values: e.g. 75 / 150 / 450 m / ∞ for the Lightning II).
 Objects entirely behind the camera are skipped.</p>
@@ -6467,6 +6572,26 @@ Objects entirely behind the camera are skipped.</p>
 <td><code>model::assign_overlay_layers</code>, <code>model::face_plane</code></td>
 <td>The overlay pass; a face's plane by Newell's method.</td>
 </tr>
+<tr>
+<td><code>Renderer::env_sky</code>, <code>Renderer::planet</code></td>
+<td>The battle's <code>Sky</code> and <code>Planet</code> (set per frame by the flight screen, cleared after).</td>
+</tr>
+<tr>
+<td><code>Renderer::terrain</code></td>
+<td>The current terrain's GPU model, by terrain id (built once).</td>
+</tr>
+<tr>
+<td><code>terrain::terrain_model(&amp;TerrainDef, &amp;Heightfield) -&gt; Model</code></td>
+<td>The terrain mesh, coloured by height and slope.</td>
+</tr>
+<tr>
+<td><code>ModelCache::upload_model(content, Model, pack)</code></td>
+<td>Uploads a model built in code rather than loaded from a pack.</td>
+</tr>
+<tr>
+<td><code>FogDistance</code>, <code>FogColor</code></td>
+<td>Lit-shader uniforms: vertex stage only, fragment stage only.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
@@ -6502,6 +6627,16 @@ Objects entirely behind the camera are skipped.</p>
   test <code>render::tests::uniforms_shared_by_both_lit_shaders_match_exactly</code> compares every
   uniform the two lit shaders share and requires an explicit precision, so a new shared
   uniform cannot reintroduce the problem.</li>
+<li><strong>Fog distance is computed in the vertex shader</strong> (app 0.6.0). Battle distances reach tens of
+  kilometres, and the fragment shader's <code>precision mediump float</code> only guarantees about ±16 384
+  with a 10-bit mantissa, so <code>d / FogDistance</code> computed there would be coarse or overflow on some
+  GPUs. The vertex stage (highp by default) computes the fog factor, already in 0..1, and passes
+  it down as a <code>mediump</code> varying. Each uniform is declared in <strong>one</strong> stage only (<code>FogDistance</code> in
+  the vertex shader, <code>FogColor</code> in the fragment shader), which also sidesteps the
+  shared-uniform precision rule above.</li>
+<li>An atmospheric battle with no visible ground: check the player starts above the terrain's
+  <code>height</code> range, and that <code>fog_distance</code> is not so short that the ground is fogged out; the
+  heightfield is cached per terrain id, so a changed terrain needs a new battle (not a new frame).</li>
 <li>Engine glows come from rear-facing model attachments, else the back of the bounding box;
   <code>GpuModel::engines</code> is computed once at load, so drawing glows allocates nothing per frame.</li>
 <li>A face that vanishes from one side is a back face: wind it the other way, or add a second

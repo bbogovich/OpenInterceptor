@@ -4193,6 +4193,8 @@
       
         
       
+        
+      
     
     
     
@@ -4402,6 +4404,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6311,7 +6341,7 @@
 </tr>
 <tr>
 <td><a href="#r-hud-012-atmosphere-instruments">R-HUD-012 Atmosphere instruments</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 </tbody>
 </table>
@@ -6437,13 +6467,18 @@
 <p>The measurable part is the minimum on-screen size (<code>distant_dot</code>, 4 px in both packs). Whether a craft is <em>easy</em> to see is judged in play (MT-3-15).</p>
 </div>
 <h3 id="r-hud-012-atmosphere-instruments">R-HUD-012 Atmosphere instruments<a class="headerlink" href="#r-hud-012-atmosphere-instruments" title="Permanent link">&para;</a></h3>
-<p>In an atmosphere the HUD MUST show altitude, vertical speed and a horizon.</p>
-<p><em>Rationale:</em> Flight over terrain.</p>
+<p>In a battle over a ground (an atmospheric environment, R-MSN-008), the HUD MUST show:</p>
+<ul>
+<li>on the status line, after the speed and flight flags, <code>ALT n  VS ±n</code>: the height above the terrain directly below the craft and the vertical speed (+ up), in whole metres and metres per second;</li>
+<li>in the forward view, an <strong>artificial horizon</strong>: a level horizon line straight ahead in the camera's compass direction, whatever the craft's pitch and roll, and a pitch ladder with shorter, labelled rungs at −20°, −10°, +10° and +20°.</li>
+</ul>
+<p>In space neither is shown.</p>
+<p><em>Rationale:</em> Flight over terrain: the pilot needs to know how high they are, whether they are sinking, and which way is level.</p>
 <ul>
 <li>Implements: <a href="../../../definition/cockpit-hud/#f-hud-008-atmosphere-instruments">F-HUD-008</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../../implementation/plan/stage-3-missions/">Stage 3</a></li>
+<li>Status: implemented (app 0.6.0, main <code>af003f6</code>)</li>
+<li>Verified by: <code>hud::draw::tests::the_pitch_ladder_sits_ahead_at_its_angles</code>; MT-3-44</li>
+<li>See: <a href="../../../implementation/architecture/hud/">Cockpit and HUD</a></li>
 </ul>
 <h3 id="r-hud-013-wide-screen-side-bands">R-HUD-013 Wide-screen side bands<a class="headerlink" href="#r-hud-013-wide-screen-side-bands" title="Permanent link">&para;</a></h3>
 <p>A 2D cockpit stays centred at its design aspect, filling the screen height. A cockpit MAY define <code>wide:</code> in its pack data:
@@ -6481,6 +6516,11 @@
 <td>1.8.0</td>
 <td>2026-11-11</td>
 <td>R-HUD-013 wide-screen side bands</td>
+</tr>
+<tr>
+<td>1.11.0</td>
+<td>2026-11-11</td>
+<td>R-HUD-012 atmosphere instruments rewritten as built and implemented (app 0.6.0): <code>ALT n  VS ±n</code> on the status line, the artificial horizon with a pitch ladder at ±10° and ±20°</td>
 </tr>
 </tbody>
 </table>

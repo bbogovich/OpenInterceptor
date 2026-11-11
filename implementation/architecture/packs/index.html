@@ -4098,6 +4098,8 @@
       
         
       
+        
+      
     
     
     
@@ -4307,6 +4309,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6140,11 +6170,20 @@ so mods override resources. <code>cli::content_dirs</code> builds the list; <cod
    objects (which refer to the others by id; <code>model_set</code>, or a model set made from the
    shorthand <code>model</code>/<code>debris</code>; <code>class_systems</code> resolves <code>systems</code>, <code>systems+</code>, <code>systems-</code>,
    <code>vct</code>; <code>modules</code> as <code>(slot, class)</code>), then missions (<code>MissionDef::parse</code> against the
-   battle schema of their role names), cockpits (with anchors), flight, sounds.</li>
+   battle schema of their role names; their <code>hazards:</code> through <code>content::hazards</code>), terrains
+(<code>TerrainDef::parse</code>; a generated heightfield is built here, once), environments
+(<code>EnvironmentDef::parse</code>, each <code>terrain:</code> checked against the terrains), cockpits (with
+anchors), flight, sounds. <code>environments</code> and <code>terrains</code> are definition sections like <code>ships</code>
+(<code>DEF_SECTIONS</code>), so <code>inherit</code>, <code>delete</code> and variants work on them.</li>
 </ol>
 <p>Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and <code>files::scenario()</code> validation (<code>Scenario::from_yaml</code>), and
 manifests through <code>files::pack()</code> (<code>PackInfo::parse</code>).</p>
+<p><strong>Heightmaps</strong> (app 0.6.0): after the rules and text, <code>Content::load</code> reads each terrain with a
+<code>heightmap:</code> image from its pack (<code>load_image</code>) and builds its <code>Heightfield::from_image</code>; a failure
+is a content error naming the terrain. Generated terrains need no files, so they are built with the
+rules; heightmaps need the pack's files, so they wait for content loading. Either way the
+heightfield is stored once in <code>TerrainDef::field</code> (an <code>Arc</code>) and shared by every battle.</p>
 <p><strong>Text</strong> (<code>content::text</code>, Stage 2): before the rules are typed, every active pack's
 <code>text/&lt;language&gt;/*.yaml</code> (falling back to <code>text/en/</code> for a pack without the language) is read
 into one <code>TextTable</code>, later packs replacing keys; <code>imports:</code> read the original's language files
@@ -6266,6 +6305,18 @@ original. Whole packs can be switched off with <code>packs.disabled</code> in <c
 <td>Looks (<a href="../../../modding/looks/">modder's guide</a>); <code>ModelSet::swaps_for(hull, state)</code>, <code>looks::texture_key(reference)</code>.</td>
 </tr>
 <tr>
+<td><code>environment::EnvironmentDef</code>, <code>Physics</code>, <code>Sky</code>, <code>Planet</code></td>
+<td>One <code>environments:</code> entry (<a href="../../../modding/environments/">Environments and terrain</a>); <code>Ruleset::environments</code>.</td>
+</tr>
+<tr>
+<td><code>environment::TerrainDef</code>, <code>TerrainSource</code>, <code>Heightfield</code></td>
+<td>One <code>terrains:</code> entry (<code>Generate { kind, seed }</code> or <code>Heightmap(asset)</code>) and its heights, <code>field: Option&lt;Arc&lt;Heightfield&gt;&gt;</code>; <code>Ruleset::terrains</code>.</td>
+</tr>
+<tr>
+<td><code>hazards::Hazards</code>, <code>Scatter</code>, <code>BlackHole</code>, <code>hazards::schema()</code></td>
+<td>A mission's or scenario's <code>hazards:</code> (<a href="../../../modding/missions/#hazards">Missions › Hazards</a>); <code>Hazards::classes()</code> for <code>--check</code>.</td>
+</tr>
+<tr>
 <td><code>mission::MissionDef</code> and friends</td>
 <td>Parsed missions (<a href="../mission/">Missions</a>); <code>Ruleset::missions</code>, sorted by <code>order</code>.</td>
 </tr>
@@ -6315,7 +6366,7 @@ original. Whole packs can be switched off with <code>packs.disabled</code> in <c
 </tr>
 <tr>
 <td><code>rules::Ruleset</code></td>
-<td><code>ships</code>, <code>beams</code>, <code>missiles</code>, <code>factions</code>, <code>systems</code>, <code>behaviours</code>, <code>model_sets</code>, <code>debris_sets</code>, <code>effects</code>, <code>cockpits</code>, <code>flight: FlightRules</code> (with <code>hyperspace_time</code>), <code>power: PowerRules</code>, <code>damage: DamageRules</code>, <code>sounds</code>, <code>difficulty_levels</code>, <code>difficulty</code> (index played).</td>
+<td><code>ships</code>, <code>beams</code>, <code>missiles</code>, <code>factions</code>, <code>systems</code>, <code>behaviours</code>, <code>model_sets</code>, <code>debris_sets</code>, <code>effects</code>, <code>cockpits</code>, <code>environments</code>, <code>terrains</code>, <code>missions</code>, <code>flight: FlightRules</code> (with <code>hyperspace_time</code>), <code>power: PowerRules</code>, <code>damage: DamageRules</code>, <code>sounds</code>, <code>difficulty_levels</code>, <code>difficulty</code> (index played).</td>
 </tr>
 <tr>
 <td><code>rules::RulesSource</code>, <code>OriginalLookup</code></td>

@@ -4109,6 +4109,8 @@
       
         
       
+        
+      
     
     
     
@@ -4318,6 +4320,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6106,11 +6136,17 @@ are <code>src/script/battle.rs</code>, the outcome actions <code>src/script/acti
     AC["script::action::MISSION_ACTIONS"] --&gt; MP
     MP --&gt; TX["Content: @keys resolved&lt;br/&gt;(name, briefing, debrief, chatter, message args)"]
     TX --&gt; RU["Ruleset::missions (sorted by order)"]
-    RU --&gt; ST["MissionRun::start(def, rules, shapes, player class)&lt;br/&gt;player + roles arriving at the start → World"]
+    RU --&gt; ST["MissionRun::start(def, rules, shapes, player class)&lt;br/&gt;environment first → player + roles arriving at the start&lt;br/&gt;→ hazards last → World"]
     ST --&gt; W["World"]</code></pre>
 <p><strong>Layering.</strong> <code>mission</code> sits between <code>sim</code> and <code>app</code>: it reads and spawns into a <code>World</code> (through
 <code>World::spawn_placement</code>, the same path scenario objects take), but the simulation knows nothing
 about missions, so <code>sim</code> stays testable on its own.</p>
+<p><strong>Start order (Stage 3).</strong> <code>MissionRun::start</code> sets the mission's <code>environment:</code> on the new
+<code>World</code> <strong>first</strong> (<code>World::set_environment</code>), so that ground installations among the roles are
+set down on its terrain (app 0.6.1); then places the player and the roles that arrive at the
+start; and applies <code>hazards:</code> <strong>last</strong> (<code>World::apply_hazards</code>), so asteroids and mines keep
+300 m clear of every craft already placed. <code>World::from_scenario</code> follows the same order for
+scenarios. See <a href="../sim/#hazards-simhazards-app-051">Simulation</a>.</p>
 <h3 id="one-frame-of-a-mission">One frame of a mission<a class="headerlink" href="#one-frame-of-a-mission" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
     FS["FlightSession::frame"] --&gt; STEP["World::step() × n ticks"]

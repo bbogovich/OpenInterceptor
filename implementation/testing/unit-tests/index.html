@@ -4048,6 +4048,8 @@
       
         
       
+        
+      
     
     
     
@@ -4257,6 +4259,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -5979,8 +6009,23 @@ test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original ga
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
 <p>Since that count, tests named in the requirements' <em>Verified by</em> lines were added with apps
-0.4.3 – 0.5.0 without the full list being regenerated; those named below are listed (the
-summary rows of <code>hud</code>, <code>remote::protocol</code> and <code>sim::systems</code> include the 0.4.11 – 0.5.0 ones): app <strong>0.5.0</strong> (main <code>0a1c340</code>) adds
+0.4.3 – 0.6.1 without the full list being regenerated; those named below are listed (the
+summary rows of <code>hud</code>, <code>remote::protocol</code> and <code>sim::systems</code> include the 0.4.11 – 0.5.0 ones, and
+the rows of <code>content::hazards</code>, <code>content::environment</code>, <code>sim::hazards</code>, <code>sim::env</code>,
+<code>render::terrain</code> and <code>hud::draw</code> the 0.5.1 – 0.6.1 ones). A count of the <code>#[test]</code> functions in
+<code>src/</code> at main <code>de417df</code> (app 0.6.1), read with grep and not a build, gives <strong>321</strong> run on macOS
+(323 less the Linux-only test and the ignored helper below). App <strong>0.6.1</strong> (main <code>de417df</code>) adds
+<code>sim::env::tests::ground_installations_are_set_down_on_the_terrain</code>; app <strong>0.6.0</strong> (main
+<code>af003f6</code>) adds <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>,
+<code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code>,
+<code>sim::env::tests::drag_gravity_and_lift_act_in_air_and_not_in_space</code>,
+<code>ai_pilots_pull_up_near_the_ground</code>, <code>gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit</code>,
+<code>render::terrain::tests::terrain_meshes_face_up_and_colour_by_height</code> and
+<code>hud::draw::tests::the_pitch_ladder_sits_ahead_at_its_angles</code>; app <strong>0.5.1</strong> (main <code>70d68e2</code>) adds
+<code>content::hazards::tests::hazards_parse_with_defaults_and_report_mistakes</code> and
+<code>sim::hazards::tests::asteroid_fields_and_minefields_are_scattered_clear_of_craft</code>,
+<code>a_black_hole_pulls_harder_when_near_and_swallows_what_crosses_its_radius</code>,
+<code>ai_pilots_turn_away_from_a_black_hole</code>, <code>an_ion_storm_shortens_radar_range</code>. App <strong>0.5.0</strong> (main <code>0a1c340</code>) adds
 <code>remote::protocol::tests::themes_layer_per_cockpit_and_become_css_variables</code>; app <strong>0.4.15</strong>
 (main <code>e2b5012</code>) adds <code>remote::protocol::tests::contacts_are_in_the_players_axes_and_targets_decode</code>
 and <code>hud::tests::the_message_log_reports_what_is_new_since_a_count</code>; app <strong>0.4.14</strong> (main
@@ -5994,7 +6039,7 @@ serves the console page on <code>127.0.0.1:8790</code> for 20 s, answering like 
 the real page in a browser (<a href="../../architecture/remote/#debugging">Remote console</a>).</p>
 <p>Not unit-tested, by design, and covered by <a href="../manual-tests/">manual tests</a> instead: the
 <code>hud::draw</code> painting, the <code>Renderer</code>'s draw calls and shaders, macroquad device reading, sound
-playback, the 3D cockpit pass, anchored instruments drawn into textures, the asset browser's, controls menu's and layout editor's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.</p>
+playback, the sky dome, planet disc, fog and terrain drawing, the black hole's look, the artificial horizon's drawing, the 3D cockpit pass, anchored instruments drawn into textures, the asset browser's, controls menu's and layout editor's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.</p>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6079,6 +6124,16 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <td><code>content::equipment</code></td>
 <td>3</td>
 <td>System kinds round trip and built-ins exist, <code>systems</code> definitions overriding built-ins, <code>power</code> parsing and validation (level counts, start levels)</td>
+</tr>
+<tr>
+<td><code>content::hazards</code></td>
+<td>1</td>
+<td><code>hazards:</code> parses with defaults (count, radius, <code>sensors</code> as a fraction); a hazard without <code>class</code>, or a position without three numbers, is an error</td>
+</tr>
+<tr>
+<td><code>content::environment</code></td>
+<td>2</td>
+<td>Environments and terrains parse with defaults; mistakes reported (unknown <code>physics</code>, an atmosphere without a terrain, both or neither of <code>generate</code> / <code>heightmap</code>, an unknown generator); generated heightfields span their <code>height</code> range, are the same for the same seed and interpolate between grid points</td>
 </tr>
 <tr>
 <td><code>content::looks</code></td>
@@ -6166,6 +6221,16 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <td>Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target</td>
 </tr>
 <tr>
+<td><code>sim::hazards</code></td>
+<td>4</td>
+<td>Asteroid fields and minefields are scattered in their sphere, clear of craft, deterministically, asteroids as scenery; a black hole pulls harder when near (capped) and swallows what crosses its radius; AI pilots turn away from it; an ion storm shortens radar range</td>
+</tr>
+<tr>
+<td><code>sim::env</code></td>
+<td>4</td>
+<td>Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the <code>lift</code> speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain</td>
+</tr>
+<tr>
 <td><code>script</code></td>
 <td>3</td>
 <td>Units and tokens; evaluation with precedence and short-circuit; <strong>errors found when loading</strong> (unknown names, argument counts, types)</td>
@@ -6231,6 +6296,11 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <td>Same seed same sky, unit directions, uniform hemispheres</td>
 </tr>
 <tr>
+<td><code>render::terrain</code></td>
+<td>1</td>
+<td>Terrain meshes face up (counter-clockwise from above) and are coloured from low to high by height</td>
+</tr>
+<tr>
 <td><code>hud</code></td>
 <td>7</td>
 <td>Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), <strong>power readout and system lamps</strong>, message expiry; <strong>the message log reports what is new since a count</strong> (the console's events, kept-lines limit)</td>
@@ -6242,8 +6312,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>hud::draw</code></td>
-<td>3</td>
-<td>Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; <strong>drift reads signed whole metres per second</strong></td>
+<td>4</td>
+<td>Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; <strong>drift reads signed whole metres per second</strong>; <strong>the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch</strong></td>
 </tr>
 <tr>
 <td><code>hud::glyphs</code></td>
@@ -6345,7 +6415,9 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>content</code></strong>: <code>empty_pack_dirs_are_an_error</code>, <code>loads_original_free_packs_rules_scenarios_and_models</code>, <code>pack_files_override_original_assets</code>, <code>png_and_tga_pack_images_decode</code>, <code>scaling_scales_everything</code></p>
 <p><strong><code>content::behaviour</code></strong>: <code>parses_states_transitions_and_skill</code>, <code>reports_mistakes</code>, <code>target_preferences_parse_and_reject_unknown_selectors</code>, <code>the_builtin_attack_is_valid</code></p>
 <p><strong><code>content::equipment</code></strong>: <code>kinds_round_trip_and_builtins_exist</code>, <code>power_section_parses_and_validates</code>, <code>system_definitions_override_builtins</code></p>
+<p><strong><code>content::environment</code></strong>: <code>environments_and_terrains_parse_and_report_mistakes</code>, <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code></p>
 <p><strong><code>content::files</code></strong>: <code>every_schema_builds_and_exports</code></p>
+<p><strong><code>content::hazards</code></strong>: <code>hazards_parse_with_defaults_and_report_mistakes</code></p>
 <p><strong><code>content::looks</code></strong>: <code>debris_and_effects_parse_with_defaults</code>, <code>swaps_accumulate_with_damage_and_state</code>, <code>texture_keys_ignore_folders_case_and_extensions</code></p>
 <p><strong><code>content::mission</code></strong>: <code>a_full_mission_parses</code>, <code>mistakes_are_reported_with_where</code></p>
 <p><strong><code>content::pack</code></strong>: <code>detects_missing_duplicate_and_cyclic_dependencies</code>, <code>discovers_pack_folders</code>, <code>manifests_declare_kind_parent_targets_and_format</code>, <code>orders_dependencies_first_and_keeps_order_otherwise</code>, <code>parses_a_manifest</code>, <code>rejects_bad_manifests</code>, <code>the_active_set_follows_the_chosen_campaign</code></p>
@@ -6366,7 +6438,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>formats::xtxr</code></strong>: <code>decodes_pixels_through_palette_zero</code>, <code>expands_rgb555_to_full_range</code>, <code>rejects_bad_data</code></p>
 <p><strong><code>formats::yaml</code></strong>: <code>block_scalars_and_wrapped_flows</code>, <code>empty_and_scalar_documents</code>, <code>keys_with_colons_and_urls_stay_whole</code>, <code>mappings_sequences_and_scalars</code>, <code>unsupported_and_broken_input_is_an_error_with_a_line</code>, <code>writing_round_trips</code></p>
 <p><strong><code>hud</code></strong>: <code>gauges_sweep_and_read_the_ship</code>, <code>layout_scales_by_height_and_centres</code>, <code>messages_expire_and_keep_the_newest</code>, <code>mfd_pages_cycle_and_describe</code>, <code>power_and_system_readouts</code>, <code>radar_places_contacts_by_angle</code>, <code>the_message_log_reports_what_is_new_since_a_count</code></p>
-<p><strong><code>hud::draw</code></strong>: <code>drift_reads_signed_whole_metres_per_second</code>, <code>lamp_grids_follow_the_panel_shape</code>, <code>shield_rings_go_green_amber_red_then_blink</code></p>
+<p><strong><code>hud::draw</code></strong>: <code>drift_reads_signed_whole_metres_per_second</code>, <code>lamp_grids_follow_the_panel_shape</code>, <code>shield_rings_go_green_amber_red_then_blink</code>, <code>the_pitch_ladder_sits_ahead_at_its_angles</code></p>
 <p><strong><code>hud::glyphs</code></strong>: <code>sizes_snap_down_onto_the_ladder</code></p>
 <p><strong><code>hud::layout</code></strong>: <code>corners_lie_on_the_surface_with_world_up</code>, <code>dragging_and_scaling</code>, <code>rays_pick_the_nearest_surface</code>, <code>saved_layouts_are_valid_rules</code></p>
 <p><strong><code>input</code></strong>: <code>a_shift_chord_does_not_also_trigger_the_plain_held_key</code>, <code>bindings_file_overrides_and_round_trips</code>, <code>chase_camera_keys</code>, <code>chord_parsing_and_dead_zone</code>, <code>default_keys_follow_the_original_layout</code>, <code>every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad</code>, <code>gamepad_sticks_buttons_and_presses</code>, <code>mouse_flight_only_when_enabled</code>, <code>one_shot_commands_and_shift_chords</code>, <code>keys_held_when_a_battle_starts_are_ignored_until_released</code>, <code>pad_modifier_layer_reaches_every_power_control</code>, <code>power_and_equipment_keys_follow_the_original</code>, <code>stick_layouts_and_mouse_inversion</code>, <code>the_keys_help_lists_every_action_with_its_current_keys</code>, <code>view_names_parse</code></p>
@@ -6386,6 +6458,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>render::effects</code></strong>: <code>events_create_effects_that_expire</code>, <code>explosion_curve_grows_and_fades</code>, <code>jitter_stays_in_range</code></p>
 <p><strong><code>render::gpu</code></strong>: <code>engines_use_rear_attachments_or_the_back_centre</code>, <code>groups_become_chunks_with_local_indices</code>, <code>huge_groups_are_split</code></p>
 <p><strong><code>render::starfield</code></strong>: <code>same_seed_same_sky_and_unit_directions</code></p>
+<p><strong><code>render::terrain</code></strong>: <code>terrain_meshes_face_up_and_colour_by_height</code></p>
 <p><strong><code>script</code></strong>: <code>errors_are_found_when_loading</code>, <code>evaluates_with_precedence_and_short_circuits</code>, <code>units_and_tokens</code></p>
 <p><strong><code>script::action</code></strong>: <code>actions_parse_and_check</code></p>
 <p><strong><code>script::battle</code></strong>: <code>ids_match_and_roles_are_checked_names</code></p>
@@ -6396,7 +6469,9 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>sim::collision</code></strong>: <code>segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code></p>
 <p><strong><code>sim::combat</code></strong>: <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>, <code>a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>beams_fire_cost_energy_respect_cooldown_and_hit</code>, <code>beams_need_energy</code>, <code>damage_layers_and_aft_shield</code>, <code>empty_racks_report_and_cycle</code>, <code>fighters_bounce_off_each_other_and_stations</code>, <code>link_modes_cycle_and_change_how_many_fire</code>, <code>lock_builds_in_the_cone_and_missile_homes_in</code>, <code>lock_is_lost_outside_the_cone_and_dumbfire_works</code>, <code>point_defence_shoots_down_hostile_missiles</code>, <code>proximity_fuse_fires_on_a_near_miss</code>, <code>rotate_towards_limits_the_turn</code>, <code>with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried</code></p>
 <p><strong><code>sim::flight</code></strong>: <code>afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off</code>, <code>assisted_model_holds_throttle_speed_and_damps_drift</code>, <code>brake_stops_against_the_direction_of_travel</code>, <code>energy_and_shields_recharge_up_to_capacity</code>, <code>half_throttle_is_half_the_acceleration</code>, <code>helpers</code>, <code>newtonian_accelerates_to_the_cap_and_coasts</code>, <code>pitching_up_raises_the_nose_and_rates_fall_with_speed</code>, <code>reverse_thrust_slows_and_then_backs_up</code>, <code>speed_hold_matches_speed_and_cancels_drift</code>, <code>static_objects_do_not_move</code>, <code>the_arena_edge_halts_outward_motion</code>, <code>turning_does_not_steer_the_velocity</code>, <code>vct_thrusts_sideways</code>, <code>yaw_right_and_roll_right_turn_the_expected_way</code></p>
+<p><strong><code>sim::env</code></strong>: <code>ai_pilots_pull_up_near_the_ground</code>, <code>drag_gravity_and_lift_act_in_air_and_not_in_space</code>, <code>gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit</code>, <code>ground_installations_are_set_down_on_the_terrain</code></p>
 <p><strong><code>sim::guidance</code></strong>: <code>cloaked_wait_sleeps_until_prey_comes_near</code>, <code>cluster_splits_into_submunitions</code>, <code>damage_modes</code>, <code>doppelganger_launches_a_decoy_ship_that_expires</code>, <code>homing_hits_and_dumbfire_misses_an_offset_target</code>, <code>parallax_decoys_lure_enemy_missiles</code>, <code>sidestep_still_arrives</code></p>
+<p><strong><code>sim::hazards</code></strong>: <code>a_black_hole_pulls_harder_when_near_and_swallows_what_crosses_its_radius</code>, <code>ai_pilots_turn_away_from_a_black_hole</code>, <code>an_ion_storm_shortens_radar_range</code>, <code>asteroid_fields_and_minefields_are_scattered_clear_of_craft</code></p>
 <p><strong><code>sim::systems</code></strong>: <code>balance_caps_and_message</code>, <code>cloaked_ships_vanish_from_enemy_sensors_beyond_range</code>, <code>cycling_wraps_to_a</code>, <code>damage_knocks_systems_out_and_repairs_bring_them_back</code>, <code>disabled_when_engines_and_manoeuvring_are_out</code>, <code>ecm_makes_incoming_missiles_lose_their_target</code>, <code>hyperspace_counts_down_aborts_and_departs</code>, <code>raising_takes_power_from_the_other_setting</code>, <code>requests_change_power_and_balance</code>, <code>shield_balance_moves_points_forward_and_recharge_follows_power</code>, <code>sliders_set_power_levels_and_balance_outright</code>, <code>systems_can_be_destroyed_beyond_repair</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>, <code>tractor_needs_power_a_fitting_and_a_target_in_range</code></p>
 <p><strong><code>sim::targeting</code></strong>: <code>cycles_forwards_and_backwards_with_wraparound</code>, <code>in_sights_picks_the_most_central</code>, <code>nearest_hostile_ignores_friends</code>, <code>nothing_to_target</code></p>
 <p><strong><code>soak</code></strong>: <code>at_cadet_an_undefended_station_holds_for_150_seconds</code>, <code>default_campaign_difficulty_scales_enemy_lethality</code></p>

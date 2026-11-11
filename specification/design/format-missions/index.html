@@ -4105,6 +4105,8 @@
       
         
       
+        
+      
     
     
     
@@ -4314,6 +4316,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6085,9 +6115,12 @@
 (campaign events).</strong> <strong>Stage 3 part 1 (app 0.3.0) implemented mission types</strong>: roles, arrivals
 (as a role's <code>at:</code> / <code>arrive:</code>), waves, objectives, optional objectives, timer, outcomes as
 checked actions, chatter and debriefs, flown from the launcher — documented for modders on
-<a href="../../../modding/missions/">Missions</a>. Still planned: <code>location</code>, <code>environment</code>, <code>backdrop</code>,
-<code>generated</code>, <code>refuse</code>, roles <code>from:</code> the strategy situation, <code>hazards</code>, chatter voices, simulator
-missions, environments, events and squadrons. Files in <code>missions/*.yaml</code> and
+<a href="../../../modding/missions/">Missions</a>. <strong>Hazards</strong> followed in app 0.5.1, <strong>environments, atmospheric
+flight, terrain and the atmosphere HUD</strong> in 0.6.0 and <strong>ground installations</strong> in 0.6.1 — documented on
+<a href="../../../modding/missions/#hazards">Missions › Hazards</a> and <a href="../../../modding/environments/">Environments and terrain</a>;
+the notes below mark what was built and how it differs from this design. Still planned: <code>location</code>,
+<code>backdrop</code> from the map, <code>generated</code>, <code>refuse</code>, roles <code>from:</code> the strategy situation, chatter voices,
+simulator missions, terrain detail textures and scattered objects, events and squadrons. Files in <code>missions/*.yaml</code> and
 <code>events/*.yaml</code> (YAML, like every mod file). The <a href="../../../modding/scenarios/">scenario format</a> stays for testbed
 arenas; a mission is a scenario with roles, waves, objectives and outcomes.</p>
 <p>In the original, mission composition is entirely hard-coded (27 briefing types, 7 side
@@ -6134,7 +6167,7 @@ missions, 12 simulator types). The <code>interceptor</code> mod writes each one 
 <tbody>
 <tr>
 <td><code>location</code>, <code>environment</code>, <code>backdrop</code></td>
-<td>Where the battle happens and what the arena is like.</td>
+<td>Where the battle happens and what the arena is like. <strong><code>environment: &lt;id&gt;</code> implemented</strong> (app 0.6.0; missions and scenarios); <code>location</code> and <code>backdrop: location</code> need the strategy map (Stage 4) — a planet backdrop is part of the environment for now.</td>
 </tr>
 <tr>
 <td><code>generated</code></td>
@@ -6162,7 +6195,7 @@ missions, 12 simulator types). The <code>interceptor</code> mod writes each one 
 </tr>
 <tr>
 <td><code>hazards</code></td>
-<td><code>{asteroids: dense, black_hole: {pull: 15}, minefield: {mines: 20}, ion_storm: {sensors: -60%}}</code>. <em>Planned.</em></td>
+<td><strong>Implemented</strong> (app 0.5.1; missions and scenarios), with explicit keys instead of the sketched shorthand: <code>{asteroids: {class, count, radius, center, spin}, minefield: {class, count, radius, center, faction}, black_hole: {position, pull, radius}, ion_storm: {sensors: 40%}}</code> — <code>sensors</code> is the fraction of radar range kept, not a reduction (<a href="../../requirements/missions/#r-msn-009-hazards">R-MSN-009</a>).</td>
 </tr>
 <tr>
 <td><code>chatter</code></td>
@@ -6187,6 +6220,17 @@ attack point is chosen at random at its launch (the 25 % attack roll belongs to 
 black hole. The format also supports <strong>atmospheric and ground battles</strong> — attacks on and
 defence of surface installations such as mining colonies and research outposts. The default
 campaign uses them; the <code>interceptor</code> campaign does not.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.6.0 – 0.6.1)</p>
+<p>Built: <code>physics: space | atmosphere</code>, <code>arena</code>, <code>gravity</code>, <code>air_density</code>, <code>ceiling</code>, <code>terrain</code> (the
+design's <code>ground</code>), an inline <code>sky: {top, horizon, fog, fog_distance, stars}</code> (the design names a
+sky), <code>backdrop: {planet: {color, size, direction}}</code>; terrains with <code>generate: {kind: craters | hills,
+seed}</code> or <code>heightmap</code>, a single <code>size</code> (square), <code>height: [low, high]</code> as plain metres, <code>colors:
+{low, high, slope}</code> and <code>resolution</code>. Open space is simply no <code>environment:</code> (there is no <code>space</code>
+entry to define). Not built: <code>inherit</code> between environments (the rules' own <code>inherit</code> works),
+<code>speed_of_sound</code>, <code>weather</code>, the terrain's <code>texture</code> (base and detail maps) and <code>objects</code>
+(scattered rocks). Reference: <a href="../../../modding/environments/">Environments and terrain</a>.</p>
+</div>
 <div class="highlight"><pre><span></span><code><span class="nt">environments</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">space</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">physics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">space</span><span class="w">                      </span><span class="c1"># newtonian: no drag, no gravity (the implemented model)</span>
@@ -6256,12 +6300,39 @@ so the same ship flies very differently on a planet:</p>
 <code>atmospheric: false</code> for craft that cannot enter an atmosphere (the mission screen hides them).
 Missiles get <code>drag_area</code> too. <code>flight: {model: newtonian}</code> (or <code>assisted</code>; implemented) stays
 the default for space; an environment's <code>physics</code> overrides it for its battles.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.6.0)</p>
+<p>The forces were simplified so that each is set by one number a modder can reason about
+(<a href="../../requirements/flight/#r-flt-011-atmospheric-flight">R-FLT-011</a>):</p>
+<ul>
+<li>drag <code>a = −k·ρ·|v|·v</code> with <code>k = acceleration / atmosphere_max_speed²</code> — full thrust balances
+  drag at <code>atmosphere_max_speed</code> (default 60 % of <code>max_speed</code>); there is no <code>drag_area</code>, and
+  missiles feel no drag;</li>
+<li>lift <code>g·ρ·(forward speed / lift)²</code> along the craft's up, capped at 2g, where <code>lift</code> is the
+  speed at which the wings carry the weight (default 120 m/s for fighters, 0 otherwise); no
+  angle-of-attack term;</li>
+<li><code>hover: true</code> cancels gravity, with no power cost yet;</li>
+<li>a landing is any touchdown at no more than 25 m/s into the ground while upright (a fixed
+  <code>LANDING_SPEED</code>, not a per-ship <code>impact_speed</code>); a crash does (speed)² × 0.5 damage;</li>
+<li>above <code>ceiling</code> the craft leaves the battle (<code>Departed</code>, "LEFT THE ATMOSPHERE");</li>
+<li><code>atmospheric</code> is read but not yet acted on (the mission screen comes with Stage 4).</li>
+</ul>
+</div>
 <h3 id="ground-installations">Ground installations<a class="headerlink" href="#ground-installations" title="Permanent link">&para;</a></h3>
 <p>Ground bases are object classes with <code>kind: ground</code> (static, placed on the terrain at a
 surface point: <code>position: {surface: [12km, 4km]}</code>) and the usual model sets, modules, turrets
 (a behaviour with <code>do: turret</code> and ground arcs) and damage. Surface <strong>anti-air</strong> turrets, shield domes,
 landing pads (ships launch from them as an arrival), and buildings that are objectives
 (<code>roles: {colony: {class: mining_colony}}</code>) all use existing constructs.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.6.1)</p>
+<p><code>kind: ground</code> exists: such an object is static and is set down on the terrain wherever it is
+placed (at the ground height plus a quarter of its collision radius); the environment is set
+before anything is placed. Positions are ordinary <code>[x, y, z]</code> — the y is replaced — rather than
+<code>position: {surface: …}</code>. Anti-air is a <code>kind: ground</code> class with beams, a <code>turret_arc</code> and a
+turret behaviour (the default campaign's <code>dominion_flak</code>). Shield domes and landing pads as
+arrivals are not built.</p>
+</div>
 <p>Mission types for the surface follow the same format: <em>Defend colony</em> (surface), <em>Raid
 research outpost</em>, <em>Ground strike</em>, <em>Rescue at the crash site</em>, with <code>location: surface</code> and an
 atmospheric environment chosen from the map body (<code>environment: body</code>).</p>
@@ -6339,6 +6410,11 @@ tugs and escorts.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch)</td>
+</tr>
+<tr>
+<td>1.11.0</td>
+<td>2026-11-11</td>
+<td>Marked as built: <code>hazards</code> (app 0.5.1) with their explicit keys; <code>environment</code>, <code>environments</code>, <code>terrains</code> and atmospheric flight (0.6.0) with the simplified forces; ground installations (0.6.1). Not built: <code>location</code>/<code>backdrop</code> from the map, <code>speed_of_sound</code>, <code>weather</code>, terrain textures and scattered objects, shield domes, landing-pad arrivals</td>
 </tr>
 </tbody>
 </table>

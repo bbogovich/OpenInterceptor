@@ -3966,6 +3966,8 @@
       
         
       
+        
+      
     
     
     
@@ -4195,6 +4197,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../stations/" class="md-nav__link">
         
   
@@ -4379,6 +4409,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hazards
+      
+    </span>
+  </a>
   
 </li>
       
@@ -6075,6 +6116,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hazards
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-battle-context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6283,6 +6335,18 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td>none</td>
 <td>The debrief text for each result (usually <code>@key</code>s). <code>killed</code> shows its own text if given, otherwise none: the <code>lose</code> text usually describes the objective failing, which is not what happened.</td>
 </tr>
+<tr>
+<td><code>environment</code></td>
+<td>id</td>
+<td>open space</td>
+<td>Where the battle happens: an <a href="../environments/">environment</a> such as <code>orbit</code> or <code>moon_surface</code>.</td>
+</tr>
+<tr>
+<td><code>hazards</code></td>
+<td>mapping</td>
+<td>none</td>
+<td>Asteroid field, minefield, black hole, ion storm (<a href="#hazards">below</a>).</td>
+</tr>
 </tbody>
 </table>
 <h3 id="roles">Roles<a class="headerlink" href="#roles" title="Permanent link">&para;</a></h3>
@@ -6472,6 +6536,55 @@ station falling: the station's text is shown only when the station falls.</p>
 <p>The battle then freezes behind the <strong>debrief</strong>: the result, the debrief text, kills, losses and
 time, the optional objectives (met or not), and the outcome's campaign actions. <strong>Enter</strong> (pad
 <strong>A</strong>) flies the mission again; <strong>Esc</strong> or <strong>L</strong> returns to the launcher.</p>
+<h2 id="hazards">Hazards<a class="headerlink" href="#hazards" title="Permanent link">&para;</a></h2>
+<p><code>hazards:</code> (app 0.5.1) puts a battle in an asteroid belt, a minefield, next to a black hole or in
+an ion storm. It works the same in a mission and in a <a href="../scenarios/">scenario</a>. Each part is
+optional, and everything is deterministic for the mission's <code>starfield_seed</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">hazards</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">asteroids</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="nv">cosmium_asteroid</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">45</span><span class="p p-Indicator">,</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">4km</span><span class="p p-Indicator">,</span><span class="nt"> center</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-4500</span><span class="p p-Indicator">],</span><span class="nt"> spin</span><span class="p">:</span><span class="w"> </span><span class="nv">8</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">minefield</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="nv">space_mine</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">2500m</span><span class="p p-Indicator">,</span><span class="nt"> center</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-3500</span><span class="p p-Indicator">]}</span>
+<span class="w">  </span><span class="nt">black_hole</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">position</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-500</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-7000</span><span class="p p-Indicator">],</span><span class="nt"> pull</span><span class="p">:</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">450</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">ion_storm</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">sensors</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Hazard</th>
+<th>Keys (defaults)</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asteroids</code></td>
+<td><code>class</code> (required), <code>count</code> (40), <code>radius</code> (5 km), <code>center</code> (origin), <code>spin</code> (4 °/s), <code>faction</code></td>
+<td><code>count</code> objects of <code>class</code> scattered uniformly through the sphere, never within 300 m of a craft already placed; each turns at a random rate up to <code>spin</code>. They are ordinary objects: they collide, stop shots and can be shot to pieces. Asteroids are <strong>scenery</strong>: they show on the radar only within radar range, so a field does not flood the scopes (stations still always show).</td>
+</tr>
+<tr>
+<td><code>minefield</code></td>
+<td>the same; <code>count</code> (20), <code>radius</code> (2 km)</td>
+<td>Mines of a <code>kind: mine</code> class (<a href="../weapons/">Missiles and mines</a>), placed the same way, belonging to <code>faction</code> (default: the class's own).</td>
+</tr>
+<tr>
+<td><code>black_hole</code></td>
+<td><code>position</code> (origin), <code>pull</code> (15 m/s²), <code>radius</code> (400 m)</td>
+<td>Every craft and missile that can move is pulled towards <code>position</code>: <code>pull</code> m/s² at 1 km, growing with 1/d² and capped at 20 × <code>pull</code> (so at 224 m and closer it pulls its hardest). A craft that crosses <code>radius</code> is destroyed. It is drawn as a black sphere of <code>radius</code> with a turning ring of orange glows. AI pilots turn away and burn out inside 4 × <code>radius</code>, or inside 10 × <code>radius</code> while heading in.</td>
+</tr>
+<tr>
+<td><code>ion_storm</code></td>
+<td><code>sensors</code> (40 %, at least 5 %)</td>
+<td>Radar range is multiplied by <code>sensors</code>; missile locks build at half speed; the pilot is told <code>ION STORM: SENSORS AT 50%</code> as the battle starts.</td>
+</tr>
+</tbody>
+</table>
+<p>Hazards are placed <strong>last</strong>, after every role (and in a scenario after every object), so the
+asteroids and mines keep clear of everyone. Stations and other objects that never move are not
+pulled by a black hole. Choosing numbers: a black hole's pull at distance d is
+<code>pull × (1000 / d)²</code>. With <code>pull: 12</code> and <code>radius: 450</code>, the pull at the edge of the radius is
+12 × (1000 / 450)² ≈ 59 m/s², so a craft that accelerates at 150 m/s² can still climb out from
+anywhere outside it if it thrusts away in time; one that coasts is drawn in.</p>
+<p>Testbed scenarios: <code>hazard-asteroids</code>, <code>hazard-black-hole</code> and <code>hazard-minefield</code> (default);
+<code>hazard-asteroids</code> (in an ion storm) and <code>hazard-black-hole</code> (interceptor).</p>
 <h2 id="the-battle-context">The battle context<a class="headerlink" href="#the-battle-context" title="Permanent link">&para;</a></h2>
 <p>Mission conditions (<code>objectives</code>, <code>optional</code>, <code>waves.when</code>, <code>arrive</code>, <code>chatter.when</code>) use the
 <a href="../behaviours/#the-condition-language">condition language</a> with the <strong>battle context</strong>. The
@@ -6718,6 +6831,26 @@ by a unit test).</p>
 <tr>
 <td><code>chatter[2]: needs line:</code></td>
 <td>A chatter entry without its line.</td>
+</tr>
+<tr>
+<td><code>hazards.minefield: needs a class</code></td>
+<td>A hazard without <code>class</code>.</td>
+</tr>
+<tr>
+<td><code>hazards: position needs [x, y, z]</code> (or <code>center</code>)</td>
+<td>A position with the wrong number of values.</td>
+</tr>
+<tr>
+<td><code>mission x: hazards: unknown class 'y'</code> (<code>--check</code>)</td>
+<td>A hazard class that the rules do not define.</td>
+</tr>
+<tr>
+<td><code>hazards.asteroids: unknown faction 'y'</code></td>
+<td>A bad <code>faction</code> (reported when the battle starts).</td>
+</tr>
+<tr>
+<td><code>mission x: unknown environment 'y'</code> (<code>--check</code>)</td>
+<td>An <code>environment:</code> that no <code>environments:</code> entry defines.</td>
 </tr>
 </tbody>
 </table>

@@ -4059,6 +4059,8 @@
       
         
       
+        
+      
     
     
     
@@ -4268,6 +4270,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6083,6 +6113,16 @@ forward speed, then sideways (X, + right) and vertical (Y, + up) drift in whole 
 second, signed (<code>drift_text</code>). All three come from <code>Ship::body_velocity()</code>, the velocity turned
 into the ship's own axes (<a href="../sim/">Simulation</a>). In newtonian flight a turn changes the nose, not
 the motion, so after a hard turn X or Y shows how far the ship is sliding.</p>
+<p><strong>Atmosphere instruments (app 0.6.0).</strong> Over a ground, <code>status_line</code> (which now takes the
+<code>World</code>) appends <code>ALT n  VS ±n</code>: <code>draw::altitude(world, ship)</code> — the height above
+<code>World::ground_height</code> under the craft, <code>None</code> in space — and the world vertical speed. In the
+forward views <code>draw_targeting</code> draws an <strong>artificial horizon</strong>: <code>ladder_directions(camera_forward,
+angles)</code> gives, for each pitch angle, a direction straight ahead in the camera's compass heading
+(its forward with the vertical part removed) tilted up by that angle. A point 1 km along it is
+projected, and a line is drawn across it along the camera's level right: 320 m long (at 1 km) for
+the horizon (0°), 120 m with a <code>+10</code>-style label for the rungs at −20°, −10°, +10°, +20°. Because the
+directions are built from the level heading, the horizon stays level on screen in world terms
+whatever the craft's pitch and roll.</p>
 <p><strong>Flight-path marker.</strong> <code>draw_targeting</code> projects a point 1 km along the ship's velocity
 (when faster than 5 m/s) and draws a circle with three ticks (left, right, up) there: where the
 craft is actually going. With no drift it sits on the crosshair; sideways drift slides it off to
@@ -6137,6 +6177,14 @@ diamond.</p>
 <td><code>X+45 Y-12</code>: the drift part of the status line.</td>
 </tr>
 <tr>
+<td><code>draw::altitude(&amp;World, &amp;Ship) -&gt; Option&lt;f32&gt;</code></td>
+<td>Height above the ground (atmospheric battles).</td>
+</tr>
+<tr>
+<td><code>draw::ladder_directions(camera_forward, &amp;[f32]) -&gt; Vec&lt;(f32, Vec3)&gt;</code></td>
+<td>The horizon's and pitch ladder's rung directions.</td>
+</tr>
+<tr>
 <td><code>draw::HudFrame</code></td>
 <td>Everything a draw call needs that is not in the world, incl. <code>anchored</code> (instruments drawn on the 3D cockpit) and <code>text_scale</code>.</td>
 </tr>
@@ -6174,6 +6222,7 @@ diamond.</p>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
+<li>No ALT/VS or horizon: they appear only when the battle has a ground (<code>World::env.ground</code>); in space and in <code>physics: space</code> environments they are hidden by design.</li>
 <li>Power and systems panels appearing at the top right mean the cockpit has no
   <code>instruments.power</code> / <code>instruments.systems</code> rectangles; add them to place the instruments.</li>
 <li>In a 3D cockpit, instruments that drift off their bezels on a narrow window point to a

@@ -4193,6 +4193,8 @@
       
         
       
+        
+      
     
     
     
@@ -4402,6 +4404,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6307,11 +6337,11 @@
 </tr>
 <tr>
 <td><a href="#r-flt-011-atmospheric-flight">R-FLT-011 Atmospheric flight</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-flt-012-terrain">R-FLT-012 Terrain</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 </tbody>
 </table>
@@ -6423,27 +6453,49 @@
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a>, <a href="../../../learning/best-practices/architecture/">Architectural design</a></li>
 </ul>
 <h3 id="r-flt-011-atmospheric-flight">R-FLT-011 Atmospheric flight<a class="headerlink" href="#r-flt-011-atmospheric-flight" title="Permanent link">&para;</a></h3>
-<p>A ship in an atmosphere MUST feel drag, gravity and lift, MAY hover, MUST collide with the ground and be able to land, and MUST be able to escape through the ceiling. Per-ship values <code>DragArea</code>, <code>Lift</code>, <code>Hover</code>, <code>AtmosphereMaxSpeed</code> and <code>Atmospheric</code> MUST be data.</p>
-<p><em>Rationale:</em> Surface missions.</p>
+<p>In an environment with <code>physics: atmosphere</code> (R-MSN-008), every craft that can move MUST feel, each tick, with ρ = the environment's <code>air_density</code> and g = its <code>gravity</code>:</p>
+<ul>
+<li><strong>Drag</strong> <code>a = −k · ρ · |v| · v</code>, with <code>k = acceleration / atmosphere_max_speed²</code> (never removing more than the whole velocity in one tick), so that full thrust balances drag at <code>atmosphere_max_speed</code> in air of density 1, and a craft without thrust slows down.</li>
+<li><strong>Gravity</strong> g along −Y, except for craft with <code>hover: true</code>.</li>
+<li><strong>Lift</strong> <code>g · ρ · (forward speed / lift)²</code> along the craft's own up, capped at 2g, for craft with <code>lift</code> &gt; 0: at the <code>lift</code> speed the wings carry the weight, slower they sink, and banking turns the lift sideways.</li>
+<li><strong>Ground</strong>: a craft MUST NOT pass below the terrain (R-FLT-012). Touching down at no more than <code>LANDING_SPEED</code> = 25 m/s into the ground while upright (its up within about 45° of the ground's normal) MUST be a landing: the motion into the ground stops and a slide is slowed. Faster, or not upright, MUST be a crash: damage of (impact speed)² × 0.5, a <code>Collision</code> event and a bounce that keeps half the speed.</li>
+<li><strong>Ceiling</strong>: a craft that climbs above the environment's <code>ceiling</code> MUST leave the battle, as by hyperspace (<code>Departed</code>, with the message <code>LEFT THE ATMOSPHERE</code>).</li>
+</ul>
+<p>AI pilots MUST pull up to a climb at a speed their wings can fly when below 150 m, or when their vertical speed would take them below 100 m within 3 s. A craft in Simple physics (R-FLT-013) MUST keep its arcade handling (the forces act, but its velocity is still set along the nose). In <code>physics: space</code> none of this applies.</p>
+<p>The per-ship values MUST be data on the ship class: <code>atmosphere_max_speed</code> (default 60 % of <code>max_speed</code>), <code>lift</code> (default 120 m/s for fighters, 0 for every other kind), <code>hover</code> (default <code>false</code>) and <code>atmospheric</code> (default <code>true</code>; read and validated, not yet acted on).</p>
+<p><em>Rationale:</em> Surface missions, where a craft must fly rather than drift; the forces are simple enough for a modder to tune with three numbers.</p>
 <ul>
 <li>Implements: <a href="../../../definition/flight/#f-flt-007-atmospheric-flight-over-terrain">F-FLT-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (Stage 3 exit: "atmospheric flight feels distinct from space", manual test).</li>
-<li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a>, <a href="../../../implementation/plan/stage-3-missions/">Stage 3</a></li>
+<li>Status: implemented (app 0.6.0, main <code>af003f6</code>)</li>
+<li>Verified by: <code>sim::env::tests::drag_gravity_and_lift_act_in_air_and_not_in_space</code>, <code>ai_pilots_pull_up_near_the_ground</code>, <code>gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit</code>; MT-3-41 – MT-3-43 (Stage 3 exit: "atmospheric flight feels distinct from space")</li>
+<li>See: <a href="../../../modding/environments/">Environments and terrain</a>, <a href="../../../implementation/architecture/sim/">Simulation</a>, <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Resolved (1.11.0)</p>
+<p>The equations and key names are as above. The design's <code>drag_area</code> (Cd·A) was not adopted: drag is set by <code>atmosphere_max_speed</code>, which a modder can reason about directly. <code>atmospheric: false</code> is reserved for hiding a craft from surface missions once the strategy layer chooses craft (Stage 4).</p>
+</div>
+<h3 id="r-flt-012-terrain">R-FLT-012 Terrain<a class="headerlink" href="#r-flt-012-terrain" title="Permanent link">&para;</a></h3>
+<p>A pack MUST be able to define terrains as data, <code>terrains: {&lt;id&gt;: {generate | heightmap, size, height, colors, resolution}}</code>, used by an atmospheric environment's <code>terrain:</code>.</p>
+<ul>
+<li>A terrain MUST be a square heightfield of <code>resolution</code> points per side (default 129, 17 – 257), <code>size</code> metres across (default 30 km), centred on the origin; its heights MUST span <code>height: [low, high]</code> metres (default <code>[0, 1500]</code>). Outside the square the edge heights continue.</li>
+<li>Heights MUST come from exactly one of:</li>
+<li><code>generate: {kind, seed}</code>: <code>hills</code> (smooth value noise in five octaves) or <code>craters</code> (a gently rolling plain with bowl-shaped craters and raised rims), deterministic for <code>seed</code>, built once while the rules are read;</li>
+<li><code>heightmap: &lt;image&gt;</code>: a greyscale PNG or TGA from the pack (black = <code>low</code>, white = <code>high</code>; the red channel, resampled to <code>resolution</code>), built once when the content loads.</li>
+<li>The ground height under a point MUST be bilinearly interpolated; its normal comes from the slope around it.</li>
+<li>The terrain MUST be drawn as a lit mesh coloured from <code>colors: {low, high, slope}</code>: low ground to high ground by height, blended towards <code>slope</code> where the ground is steep, faded into the sky's fog with distance (R-MSN-008).</li>
+<li>Giving both <code>generate</code> and <code>heightmap</code>, neither, or an unknown <code>kind</code> MUST be a rules error; a heightmap that fails to load MUST be a content error naming it.</li>
+</ul>
+<p><em>Rationale:</em> Surface missions of the default campaign, on ground a modder can generate from a seed or paint as an image.</p>
+<ul>
+<li>Implements: <a href="../../../definition/flight/#f-flt-007-atmospheric-flight-over-terrain">F-FLT-007</a></li>
+<li>Status: implemented (app 0.6.0, main <code>af003f6</code>)</li>
+<li>Verified by: <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>, <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code>, <code>render::terrain::tests::terrain_meshes_face_up_and_colour_by_height</code>; MT-3-39, MT-3-40</li>
+<li>See: <a href="../../../modding/environments/">Environments and terrain</a>, <a href="../../../implementation/architecture/rendering/">Rendering</a>, <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
 </ul>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>The flight model's equations and the key spellings in mod format 2 are not designed yet.</p>
+<p>Not built yet: texturing with detail maps (<code>texture: {base, detail}</code>) and scattered objects on the ground (<code>objects: {scatter, density}</code>), the rest of plan item 3.5 (ground installations are built: R-MSN-008, app 0.6.1). The terrain's look has been checked only by unit tests so far, not on screen.</p>
 </div>
-<h3 id="r-flt-012-terrain">R-FLT-012 Terrain<a class="headerlink" href="#r-flt-012-terrain" title="Permanent link">&para;</a></h3>
-<p>A surface environment MUST provide a heightfield from an image or a generator (craters, hills), textured with detail maps, with scattered objects, a sky gradient and fog, and MUST support ground installations (<code>kind: ground</code>) and anti-air turrets.</p>
-<p><em>Rationale:</em> Surface missions of the default campaign.</p>
-<ul>
-<li>Implements: <a href="../../../definition/flight/#f-flt-007-atmospheric-flight-over-terrain">F-FLT-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
-</ul>
 <h3 id="r-flt-013-simple-physics-mode">R-FLT-013 Simple physics mode<a class="headerlink" href="#r-flt-013-simple-physics-mode" title="Permanent link">&para;</a></h3>
 <p>The player MUST be able to choose <code>simple</code> or <code>realistic</code> physics: in the launcher (key P), or with <code>game: {physics: simple}</code> in settings.yaml. The default is <code>realistic</code>.</p>
 <p><strong>Simple</strong> applies to the player's craft only:
@@ -6481,6 +6533,11 @@
 <td>1.6.0</td>
 <td>2026-11-11</td>
 <td>R-FLT-013 simple physics mode</td>
+</tr>
+<tr>
+<td>1.11.0</td>
+<td>2026-11-11</td>
+<td>R-FLT-011 atmospheric flight rewritten as built and implemented (app 0.6.0): drag from <code>atmosphere_max_speed</code>, gravity, lift capped at 2g, hover, landing below 25 m/s upright, crash damage, the ceiling exit, AI ground avoidance, Simple physics kept; keys <code>atmosphere_max_speed</code>, <code>lift</code>, <code>hover</code>, <code>atmospheric</code>; the open note on equations and key names resolved (<code>drag_area</code> not adopted). R-FLT-012 terrain rewritten as built and implemented: generated (<code>hills</code>, <code>craters</code>) and heightmap heightfields, interpolation, colours by height and slope; Open note for detail textures and scattered objects</td>
 </tr>
 </tbody>
 </table>

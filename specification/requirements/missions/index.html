@@ -4182,6 +4182,8 @@
       
         
       
+        
+      
     
     
     
@@ -4391,6 +4393,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6273,11 +6303,11 @@
 </tr>
 <tr>
 <td><a href="#r-msn-008-battle-environments">R-MSN-008 Battle environments</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-msn-009-hazards">R-MSN-009 Hazards</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-msn-010-simulator-missions">R-MSN-010 Simulator missions</a></td>
@@ -6368,22 +6398,46 @@
 <li>See: <a href="../../../implementation/plan/stage-6-presentation/">Stage 6</a></li>
 </ul>
 <h3 id="r-msn-008-battle-environments">R-MSN-008 Battle environments<a class="headerlink" href="#r-msn-008-battle-environments" title="Permanent link">&para;</a></h3>
-<p>A battle MUST take place in one of the environments <code>space</code>, <code>orbit</code>, <code>pocket</code> or a surface, with a backdrop chosen from its map location.</p>
-<p><em>Rationale:</em> Variety; surface missions.</p>
+<p>A pack MUST be able to define battle environments as data, <code>environments: {&lt;id&gt;: {physics, arena, gravity, air_density, ceiling, terrain, sky, backdrop}}</code>, and a mission or scenario MUST be able to name one with <code>environment: &lt;id&gt;</code>. Without it the battle MUST take place in open space, exactly as before.</p>
 <ul>
-<li>Implements: <a href="../../../definition/missions/#f-msn-004-environments-and-hazards">F-MSN-004</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
+<li><code>physics: space</code> (the default) MUST leave the campaign's flight model unchanged; <code>physics: atmosphere</code> MUST apply atmospheric flight (R-FLT-011) over the environment's <code>terrain</code> (R-FLT-012), which it then MUST name.</li>
+<li><code>arena</code>, if given, MUST replace <code>flight.arena_radius</code> for battles in that environment (a small "pocket").</li>
+<li><code>backdrop: {planet: {color, size, direction}}</code> MUST draw a lit planet disc of that colour and angular size (degrees) in that direction (orbit).</li>
+<li><code>sky: {top, horizon, fog, fog_distance, stars}</code> MUST replace black space with a sky gradient from <code>top</code> (zenith) to <code>horizon</code>, fade distant objects into <code>fog</code> (default: the horizon colour) by <code>fog_distance</code>, and dim the starfield to <code>stars</code> (0–1).</li>
+<li>An object class of <code>kind: ground</code> (a ground installation: a colony, an outpost, an anti-air battery) MUST be static and MUST be set down on the terrain wherever it is placed, at the ground height plus a quarter of its collision radius. Anti-air is a turret on the ground: a <code>kind: ground</code> class with beams, a <code>turret_arc</code> and a turret behaviour. The environment MUST be set before anything is placed, so this holds for scenario objects and mission roles alike; in space a ground object stays where it is placed.</li>
+<li>Unknown environment ids in a mission MUST be reported by <code>--check</code>; a scenario with one MUST fail to build with a message naming it. An atmosphere without a terrain, or naming an unknown terrain, MUST be a rules error.</li>
 </ul>
-<h3 id="r-msn-009-hazards">R-MSN-009 Hazards<a class="headerlink" href="#r-msn-009-hazards" title="Permanent link">&para;</a></h3>
-<p>A mission MUST be able to declare hazards: asteroids, black-hole pull, minefields and ion storms.</p>
-<p><em>Rationale:</em> Variety.</p>
+<p>The <code>default</code> campaign MUST ship <code>orbit</code>, <code>pocket</code>, <code>moon_surface</code> and <code>dusk_hills</code>, and the ground installations <code>guard_colony</code> and <code>dominion_flak</code> (an anti-air battery); the <code>interceptor</code> campaign stays in space, as the original.</p>
+<p><em>Rationale:</em> Variety, and the surface missions of the default campaign. Environments are pack data so a mod can add worlds without code.</p>
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-004-environments-and-hazards">F-MSN-004</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
+<li>Status: implemented (app 0.6.0, main <code>af003f6</code>; ground installations app 0.6.1, main <code>de417df</code>)</li>
+<li>Verified by: <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>, <code>sim::env::tests::ground_installations_are_set_down_on_the_terrain</code>; MT-3-37 – MT-3-40, MT-3-45, MT-3-46</li>
+<li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a>, <a href="../../../modding/environments/">Environments and terrain</a></li>
+</ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Ground installations and anti-air batteries were resolved in 1.11.0 (app 0.6.1). Still open: choosing the environment and backdrop from the strategy map's location (<code>location</code>, <code>backdrop: location</code>, <code>environment: body</code>), which needs the strategy layer (Stage 4); scattered objects and detail textures are under R-FLT-012.</p>
+</div>
+<h3 id="r-msn-009-hazards">R-MSN-009 Hazards<a class="headerlink" href="#r-msn-009-hazards" title="Permanent link">&para;</a></h3>
+<p>A mission or scenario MUST be able to declare <code>hazards:</code>. Each hazard is optional, and all are deterministic for a given seed.</p>
+<ul>
+<li><code>asteroids: {class, count, radius, center, spin}</code> (defaults 40, 5 km, origin, 4 °/s): <code>count</code> objects of the given class (an object such as <code>cosmium_asteroid</code> or <code>asteroid</code>), placed uniformly at random in the sphere <code>radius</code> around <code>center</code>. None is closer than 300 m to a craft already placed. Each turns at a random rate up to <code>spin</code> degrees per second. Being objects, they collide, block shots and can be destroyed. Asteroids are <em>scenery</em>: they MUST show on the radar only within radar range (other objects that never move, such as stations, still always show).</li>
+<li><code>minefield: {class, count, radius, center, faction}</code> (defaults 20, 2 km): <code>count</code> mines of a mine class (<code>kind: mine</code>, such as <code>space_mine</code>), placed the same way, belonging to <code>faction</code> (default: the class's own).</li>
+<li><code>black_hole: {position, pull, radius}</code> (defaults 15 m/s², 400 m): every craft and missile that can move is accelerated towards <code>position</code>.</li>
+<li>The acceleration is <code>pull</code> m/s² at 1 km, growing with the inverse square of the distance and capped at 20 × <code>pull</code>.</li>
+<li>A craft that comes within <code>radius</code> metres is destroyed.</li>
+<li>It MUST be drawn as a black core (a sphere of <code>radius</code>) with a slowly turning accretion ring of glows.</li>
+<li>AI pilots (other than idle objects) MUST turn away and burn out when inside 4 × <code>radius</code>, or within 10 × <code>radius</code> while heading in.</li>
+<li><code>ion_storm: {sensors}</code> (default 40 %): radar range is multiplied by <code>sensors</code> (a fraction, for example <code>40%</code>), missile locks build at half speed, and the pilot is told <code>ION STORM: SENSORS AT n%</code> when the battle starts.</li>
+</ul>
+<p>An unknown class or faction in a hazard MUST be an error: <code>--check</code> reports it for missions, and a scenario fails to build with it.</p>
+<p><em>Rationale:</em> Variety, and the original's battles in asteroid belts and next to a black hole.</p>
+<ul>
+<li>Implements: <a href="../../../definition/missions/#f-msn-004-environments-and-hazards">F-MSN-004</a></li>
+<li>Status: implemented (app 0.5.1, main <code>70d68e2</code>)</li>
+<li>Verified by: <code>content::hazards::tests::hazards_parse_with_defaults_and_report_mistakes</code>, <code>sim::hazards::tests::asteroid_fields_and_minefields_are_scattered_clear_of_craft</code>, <code>a_black_hole_pulls_harder_when_near_and_swallows_what_crosses_its_radius</code>, <code>ai_pilots_turn_away_from_a_black_hole</code>, <code>an_ion_storm_shortens_radar_range</code>; MT-3-33 – MT-3-36</li>
+<li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a>, <a href="../../../modding/missions/#hazards">Missions › Hazards</a>, <a href="../../../implementation/deviations/">Deviations (DEV-045)</a></li>
 </ul>
 <h3 id="r-msn-010-simulator-missions">R-MSN-010 Simulator missions<a class="headerlink" href="#r-msn-010-simulator-missions" title="Permanent link">&para;</a></h3>
 <p>The player MUST be able to set up a simulator mission on a setup screen and fly it.</p>
@@ -6440,6 +6494,11 @@
 <td>1.1.0</td>
 <td>2026-11-11</td>
 <td>R-MSN-011 implemented (app 0.3.1) with a measurable threshold (an undefended station holds 150 s at the lowest level, <code>--soak-pilot idle</code>); open note resolved. R-MSN-003: the <code>killed</code> result, set by the engine, with the <code>lose</code> outcomes by default. R-MSN-005: the <code>killed</code> headline and debrief text</td>
+</tr>
+<tr>
+<td>1.11.0</td>
+<td>2026-11-11</td>
+<td>R-MSN-009 hazards rewritten as built and implemented (app 0.5.1): asteroid fields and minefields as scattered objects (asteroids are radar scenery), the black hole's 1/d² pull capped at 20 × <code>pull</code>, its look and the AI's escape, the ion storm's radar factor, half-speed locks and start message; defaults stated. R-MSN-008 battle environments rewritten as built and implemented (app 0.6.0): <code>environments:</code> data, <code>environment: &lt;id&gt;</code>, <code>physics</code>, <code>arena</code>, <code>backdrop.planet</code>, <code>sky</code>; ground installations (<code>kind: ground</code>, set down on the terrain) and anti-air batteries as ground turrets (app 0.6.1); Open note keeps the map location</td>
 </tr>
 </tbody>
 </table>

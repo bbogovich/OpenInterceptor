@@ -3199,6 +3199,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#hazards-simhazards-app-051" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hazards (sim::hazards, app 0.5.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-battle-environment-simenv-app-060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The battle environment (sim::env, app 0.6.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#missile-guidance-simguidance-stage-2" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4164,6 +4186,8 @@
       
         
       
+        
+      
     
     
     
@@ -4373,6 +4397,34 @@
     
   
     Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
   
 
     
@@ -6105,6 +6157,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#hazards-simhazards-app-051" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hazards (sim::hazards, app 0.5.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-battle-environment-simenv-app-060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The battle environment (sim::env, app 0.6.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#missile-guidance-simguidance-stage-2" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6208,24 +6282,31 @@
 No rendering, no input devices, no clock reads, no macroquad — only <code>glam</code> maths and the
 <code>Ruleset</code>. That makes it deterministic and unit-testable (80+ tests). Plan: Stage 1 (flight,
 weapons, basic AI); Stage 2 (in progress) adds ship systems, power, damage to systems, special
-equipment, hyperspace and wingman orders (<code>sim::systems</code>), and will deepen the AI.</p>
+equipment, hyperspace and wingman orders (<code>sim::systems</code>), and will deepen the AI. Stage 3 adds
+battle hazards (<code>sim::hazards</code>, app 0.5.1) and the battle environment — atmosphere, ground and
+ceiling (<code>sim::env</code>, app 0.6.0; ground installations 0.6.1).</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <h3 id="one-tick-worldstep">One tick: <code>World::step()</code><a class="headerlink" href="#one-tick-worldstep" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart TD
     A["events.clear()"] --&gt; B["ai::think&lt;br/&gt;AI pilots write Controls (two-phase)"]
     B --&gt; B2["systems::handle_requests&lt;br/&gt;power settings, shield balance,&lt;br/&gt;tractor / cloak / ECM switches, hyperdrive"]
     B2 --&gt; C["match speed resolved&lt;br/&gt;(sets Ship::speed_hold to the target's speed)"]
-    C --&gt; D["flight::step for every live ship&lt;br/&gt;throttle, turn rates, rotation, thrust/velocity, position&lt;br/&gt;(scaled by engine / manoeuvring / VCT efficiency)"]
-    D --&gt; D2["flight::hold_in_arena&lt;br/&gt;halt ships at arena_radius ('ARENA BOUNDARY')"]
-    D2 --&gt; E["combat::step&lt;br/&gt;lock → beams → missile controls → link mode&lt;br/&gt;→ point_defence → move_bolts → guidance::step"]
+    C --&gt; AIR["env::air for every live ship&lt;br/&gt;drag, gravity, lift (atmosphere only)"]
+    AIR --&gt; D["flight::step for every live ship&lt;br/&gt;throttle, turn rates, rotation, thrust/velocity, position&lt;br/&gt;(scaled by engine / manoeuvring / VCT efficiency)"]
+    D --&gt; D2["flight::hold_in_arena&lt;br/&gt;halt ships at the arena radius ('ARENA BOUNDARY')&lt;br/&gt;(env.arena overrides flight.arena_radius)"]
+    D2 --&gt; GC["env::ground_and_ceiling&lt;br/&gt;landing / crash on the terrain, ceiling exit"]
+    GC --&gt; HZ["hazards::step&lt;br/&gt;black-hole pull, swallowed craft destroyed"]
+    HZ --&gt; E["combat::step&lt;br/&gt;lock → beams → missile controls → link mode&lt;br/&gt;→ point_defence → move_bolts → guidance::step"]
     E --&gt; F["combat::ship_collisions"]
     F --&gt; S["systems::step&lt;br/&gt;recharge → repair → disabled check&lt;br/&gt;→ tractors → countermeasures → hyperdrives"]
     S --&gt; WR["destroyed modules with a destroyed look → wrecks"]
     WR --&gt; MO["update_modules&lt;br/&gt;modules follow hubs, cascade, shield generators"]
     MO --&gt; EX["expiring ships (doppelgangers) counted down"]
     EX --&gt; G["clear one-shot controls and requests,&lt;br/&gt;since_hit += TICK, time += TICK"]</code></pre>
-<p>In short: <strong>AI → requests → flight → combat (incl. missile guidance) → collisions → systems →
-modules</strong>. Requests run before
+<p>In short: <strong>AI → requests → air → flight → ground and ceiling → hazards → combat (incl. missile
+guidance) → collisions → systems → modules</strong>. The atmosphere's forces act before <code>flight::step</code>
+so the flight model integrates them with thrust in the same tick; the ground is checked after the
+move, so a craft never ends a tick below it. Requests run before
 flight so a switch pressed this tick (a cloak, a power change) already counts; systems run last
 so that damage done this tick can knock a system out before repair and recharge look at it.</p>
 <p>The player and the AI produce the <strong>same</strong> <code>Controls</code> struct and fly the same flight model.</p>
@@ -6334,6 +6415,91 @@ while <code>systems::jammed(observer)</code></strong>, i.e. inside the <code>jam
 or within the <code>sensors</code> range of any live probe of the observer's faction. Objects that never
 move always show. Missile lock also builds at half speed while jammed. Probes are ordinary
 objects with a <code>ProbeDef { sensors, jamming }</code>.</p>
+<p>Since app 0.5.1 an <strong>ion storm</strong> multiplies the radar range by its <code>sensors</code> factor (after the
+jamming halving) and halves missile-lock speed again. <strong>Scenery</strong> (<code>Ship::scenery</code>, set on
+asteroids placed by a hazard) is the exception to "objects that never move always show": it shows
+only within range, so an asteroid field does not flood the scopes.</p>
+<h3 id="hazards-simhazards-app-051">Hazards (<code>sim::hazards</code>, app 0.5.1)<a class="headerlink" href="#hazards-simhazards-app-051" title="Permanent link">&para;</a></h3>
+<p>The definitions come from a mission's or scenario's <code>hazards:</code> (<code>content::hazards::Hazards</code>:
+<code>Scatter</code> for asteroids and mines, <code>BlackHole</code>, the ion storm's factor; <a href="../../../modding/missions/#hazards">modder's
+guide</a>). <code>World::apply_hazards</code> runs <strong>last</strong> when a battle is
+built — after every scenario object or mission role — and does two things:</p>
+<ul>
+<li><strong>Asteroid fields and minefields are ordinary objects</strong>, spawned once by <code>World::scatter</code>, so
+  collisions, shots, damage and destruction need no new code. Points are uniform in the ball: a
+  random direction times <code>radius × u^(1/3)</code> (volume grows with r³, so a plain <code>u</code> would crowd the
+  centre). A point within <code>CLEARANCE</code> = 300 m of a live craft is rejected; at most 20 × <code>count</code> tries
+  are made, so a crowded sphere places fewer rather than looping. Each gets a random orientation
+  and an angular velocity up to <code>spin</code> °/s. Everything uses the world's seeded <code>random()</code>, so a
+  battle is the same every time.</li>
+<li><strong>Field hazards</strong> (the black hole and the ion storm) are stored as <code>ActiveHazards</code> on
+  <code>World::hazards</code> and act every tick. <code>hazards::step</code> adds <code>black_hole_accel</code> to every live,
+  non-static craft and to every missile, then destroys any craft inside the hole's <code>radius</code>
+  (shields and armour zeroed, then <code>combat::apply_damage</code> with an overwhelming amount, so the
+  usual <code>Destroyed</code> event, explosion and mission bookkeeping follow). The ion storm acts through
+  <code>systems::on_radar</code> and the lock code (above).</li>
+</ul>
+<p><code>black_hole_accel(b, p)</code> = <code>pull × (1000 / d)²</code> towards the hole, capped at <code>PULL_CAP</code> = 20 ×
+<code>pull</code> — without the cap the 1/d² term would fling a craft very near the centre across the map
+in one tick. The flight screen announces an ion storm as the battle starts (<code>ION STORM: SENSORS
+AT n%</code>), and the renderer draws the hole (<a href="../rendering/#black-hole">Rendering</a>).</p>
+<h3 id="the-battle-environment-simenv-app-060">The battle environment (<code>sim::env</code>, app 0.6.0)<a class="headerlink" href="#the-battle-environment-simenv-app-060" title="Permanent link">&para;</a></h3>
+<p><code>World::env: Env</code> holds the environment the battle runs in: <code>id</code>, <code>physics</code> (<code>Space</code> or
+<code>Atmosphere</code>), <code>gravity</code>, <code>air_density</code>, <code>ceiling</code>, <code>ground</code> (an <code>Arc&lt;Heightfield&gt;</code>, shared with
+the rules rather than copied per battle) and <code>arena</code>. <code>World::set_environment(id)</code> copies it from
+<code>Ruleset::environments</code> and finds the terrain's heightfield; it runs <strong>first</strong>, right after
+<code>World::new</code> in <code>World::from_scenario</code> and before the roles in <code>MissionRun::start</code>, so that ground
+installations placed afterwards can be set on the ground. Without an <code>environment:</code> the default
+<code>Env</code> is open space and nothing below applies.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Function</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drag</td>
+<td><code>env::air</code></td>
+<td><code>v −= v · min(k·ρ·|v|·dt, 1)</code>, <code>k = acceleration / atmosphere_max_speed²</code>: full thrust balances drag at <code>atmosphere_max_speed</code> when ρ = 1. The <code>min</code> keeps one tick from reversing the velocity.</td>
+</tr>
+<tr>
+<td>Gravity</td>
+<td><code>env::air</code></td>
+<td><code>v.y −= g·dt</code>, unless the class has <code>hover</code>.</td>
+</tr>
+<tr>
+<td>Lift</td>
+<td><code>env::air</code></td>
+<td><code>v += up · min(g·ρ·(forward/lift)², 2g) · dt</code> for classes with <code>lift</code> &gt; 0; <code>forward</code> is the velocity along the nose (never negative).</td>
+</tr>
+<tr>
+<td>Ground</td>
+<td><code>env::ground_and_ceiling</code></td>
+<td>Below <code>ground_height + clearance</code> (the shape radius × <code>BODY_RADIUS_FRACTION</code>) the craft is put back on the ground. Speed into the ground (along the terrain's normal) ≤ <code>LANDING_SPEED</code> = 25 m/s with <code>up · n &gt; 0.7</code> lands (the into-ground motion removed, ×0.97 slide friction); otherwise a crash: a bounce (<code>+n × into × 1.3</code>, then ×0.5), a <code>Collision</code> event and <code>apply_damage(into² × 0.5)</code>.</td>
+</tr>
+<tr>
+<td>Ceiling</td>
+<td><code>env::ground_and_ceiling</code></td>
+<td>Above <code>ceiling</code>: <code>alive = false</code>, <code>departed = true</code>, <code>Departed</code> and the message <code>LEFT THE ATMOSPHERE</code> — the same path as a hyperspace jump, so missions count it as leaving.</td>
+</tr>
+</tbody>
+</table>
+<p>Static classes (<code>max_speed</code> 0) feel none of it. A craft in Simple physics feels the forces, but
+<code>flight::step</code> then sets its velocity along the nose as usual. <strong>Ground installations</strong>
+(<code>ShipKind::Ground</code>, app 0.6.1) are static (<code>is_static</code>); <code>World::spawn</code> replaces the y of such an
+object with <code>ground_height + 0.25 × shape radius</code> when the battle has a ground.</p>
+<pre class="mermaid"><code>flowchart LR
+    R["Ruleset::environments / terrains&lt;br/&gt;(Heightfield built once)"] --&gt; SE["World::set_environment(id)&lt;br/&gt;first, before placement"]
+    SE --&gt; ENV["World::env&lt;br/&gt;physics, g, ρ, ceiling, ground, arena"]
+    ENV --&gt; AIR["env::air (each tick)"]
+    ENV --&gt; GC["env::ground_and_ceiling (each tick)"]
+    ENV --&gt; SP["World::spawn&lt;br/&gt;kind: ground set down"]
+    ENV --&gt; AG["ai::avoid_ground"]
+    ENV --&gt; HUD["hud: ALT / VS, horizon"]
+    ENV --&gt; RN["render: terrain mesh, sky, fog"]</code></pre>
 <h3 id="missile-guidance-simguidance-stage-2">Missile guidance (<code>sim::guidance</code>, Stage 2)<a class="headerlink" href="#missile-guidance-simguidance-stage-2" title="Permanent link">&para;</a></h3>
 <p><code>combat</code> fires a missile through <code>guidance::launch</code>, which applies the class's launch-time
 behaviour; <code>guidance::step</code> (called by <code>combat::step</code> every tick) steers, moves and detonates
@@ -6467,6 +6633,14 @@ engine's <code>builtin_attack</code>.</p>
   hyperdrive.</li>
 <li>Each pilot has its own seeded random stream (<code>AiState::rng</code>), so <code>random(p)</code> and aim errors
   are deterministic.</li>
+<li><strong>Escapes (Stage 3).</strong> Whatever its behaviour wants, every AI pilot except <code>Idle</code> objects first
+  checks two overrides, in this order: <code>escape_black_hole</code> — inside 4 × the hole's radius, or
+  inside 10 × while its velocity points towards the hole, it steers directly away, holds its top
+  speed and burns the afterburner while energy is above 20 %; then <code>avoid_ground</code> — below 150 m
+  above the terrain, or when <code>altitude + 3 s × vertical speed</code> is below 100 m, it steers for a
+  point 800 m ahead and 600 m up and holds <code>1.4 × lift</code> (clamped between half and all of its top
+  speed), a speed its wings can climb at. Either returns <code>None</code> when clear, and the behaviour's
+  own controls are used. Since the black-hole escape, no AI craft falls in during the soaks.</li>
 </ul>
 <p>Wingmen follow <code>WingOrder</code>s from their leader (<code>order_wingmen</code>); they fend for themselves if
 the leader dies. When they engage they fly <code>attack</code> with the parameters and skill of their
@@ -6604,6 +6778,34 @@ current order, and <code>DISABLED</code> if so.</p>
 <td><code>TICK</code></td>
 <td><code>1.0 / 60.0</code>.</td>
 </tr>
+<tr>
+<td><code>hazards::ActiveHazards</code>, <code>World::hazards</code></td>
+<td>The field hazards acting every tick: <code>black_hole: Option&lt;BlackHole&gt;</code>, <code>ion_storm: Option&lt;f32&gt;</code> (the radar factor).</td>
+</tr>
+<tr>
+<td><code>hazards::PULL_CAP</code>, <code>CLEARANCE</code></td>
+<td>20 (× <code>pull</code>), 300 m.</td>
+</tr>
+<tr>
+<td><code>Ship::scenery</code></td>
+<td>Shown on radar only within range although it never moves (hazard asteroids).</td>
+</tr>
+<tr>
+<td><code>env::Env</code>, <code>World::env</code></td>
+<td>The battle environment: <code>id</code>, <code>physics</code>, <code>gravity</code>, <code>air_density</code>, <code>ceiling</code>, <code>ground: Option&lt;Arc&lt;Heightfield&gt;&gt;</code>, <code>arena</code>.</td>
+</tr>
+<tr>
+<td><code>env::LANDING_SPEED</code></td>
+<td>25 m/s: the hardest touchdown that is a landing.</td>
+</tr>
+<tr>
+<td><code>content::environment::Heightfield</code></td>
+<td><code>n</code>, <code>size</code>, row-major <code>heights</code>; <code>height_at</code> (bilinear), <code>normal_at</code>, <code>coord</code>, <code>generate</code>, <code>from_image</code>, <code>scaled</code>.</td>
+</tr>
+<tr>
+<td><code>content::rules::ShipKind::Ground</code></td>
+<td>A ground installation: static, set down on the terrain.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
@@ -6641,6 +6843,11 @@ current order, and <code>DISABLED</code> if so.</p>
 <li><code>collision::segment_sphere</code>, <code>segment_triangle</code> (Möller–Trumbore), <code>segment_shape</code>.</li>
 <li><code>ship.body_velocity() -&gt; Vec3</code> — velocity in body axes (x right, y up, z forward).</li>
 <li><code>sim::euler(Vec3 degrees)</code> — yaw/pitch/roll to a quaternion (positive yaw turns left).</li>
+<li><code>world.apply_hazards(&amp;Hazards) -&gt; Result&lt;(), String&gt;</code> (an unknown class or faction is an error),
+  <code>hazards::black_hole_accel(&amp;BlackHole, p) -&gt; Vec3</code>, <code>hazards::step(&amp;mut World, dt)</code>.</li>
+<li><code>world.set_environment(id) -&gt; Result&lt;(), String&gt;</code>, <code>world.ground_height(x, z) -&gt; Option&lt;f32&gt;</code>,
+  <code>env::air(&amp;mut Ship, &amp;ShipClass, &amp;Env, dt)</code>, <code>env::ground_and_ceiling(&amp;mut World)</code>.</li>
+<li><code>ai::escape_black_hole(world, &amp;Ship) -&gt; Option&lt;Controls&gt;</code>, <code>ai::avoid_ground(world, &amp;Ship) -&gt; Option&lt;Controls&gt;</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
@@ -6671,6 +6878,12 @@ current order, and <code>DISABLED</code> if so.</p>
   plays the battle without a window and reports how long the player lasted, hits taken and
   enemies destroyed; the default campaign's balance promise is held by a unit test of the
   same runner (<code>soak</code>).</li>
+<li>Hazards and environments: the testbed scenarios <code>hazard-asteroids</code>, <code>hazard-black-hole</code>,
+  <code>hazard-minefield</code>, <code>env-orbit</code>, <code>env-pocket</code>, <code>surface-moon</code>, <code>surface-hills</code>,
+  <code>surface-colony</code> and <code>surface-strike</code> (default) set each up on its own; <code>--soak &lt;scenario&gt;
+  --soak-pilot ai</code> shows whether craft survive them. A craft "vanishing" in an atmosphere has
+  usually climbed through the <code>ceiling</code> (the message log says LEFT THE ATMOSPHERE). Physics
+  questions make good unit tests: <code>sim::env</code>'s tests build an <code>Env</code> with a flat ground by hand.</li>
 <li>Missions sit <strong>above</strong> the simulation: <code>mission::MissionRun::update</code> runs after each
   <code>World::step</code> and spawns through <code>World::spawn_placement</code> (<a href="../mission/">Missions</a>); <code>sim</code>
   itself knows nothing about them.</li>
