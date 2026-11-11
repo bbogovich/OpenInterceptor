@@ -1,5 +1,5 @@
 ---
-spec_version: 1.7.0
+spec_version: 1.9.0
 status: current
 updated: 2026-11-11
 ---
@@ -11,15 +11,17 @@ updated: 2026-11-11
     were answered by the user on 2026-11-11 ([Decisions](#7-decisions)): D1 and D2 accepted (with
     the Linux video path recorded), D3 yes, D4 accepted with a further `harmless` flag, and D5 a
     separate designer program in the same repository. The Linux video path still needs its
-    dependency evaluation before it is built.
+    dependency evaluation before it is built. Further decisions of 2026-11-11 added 3D cockpit
+    instrument placement, the first test case (an X-COM 3D cockpit), single-file models and the
+    name *extension* ([sections 2.1 – 2.5](#21-packs-and-mods)).
 
-**Features:** [F-MOD-009 – F-MOD-013](../../definition/modding-toolkit.md#f-mod-009-mod-designer),
+**Features:** [F-MOD-009 – F-MOD-015](../../definition/modding-toolkit.md#f-mod-009-mod-designer),
 [F-PLT-005](../../definition/platforms.md#f-plt-005-game-bundling).
-**Requirements:** [R-MOD-021 – R-MOD-047](../requirements/modding.md#r-mod-021-designer-application),
+**Requirements:** [R-MOD-021 – R-MOD-055](../requirements/modding.md#r-mod-021-designer-application),
 [R-PLT-007 – R-PLT-010](../requirements/platforms.md#r-plt-007-product-file).
 **Plan:** MD1 in [Stage 4](../../implementation/plan/stage-4-strategy.md#mod-and-cutscene-designer-md1),
 MD2 – MD3 in [Stage 6](../../implementation/plan/stage-6-presentation.md#mod-and-cutscene-designer-md2-md3),
-MD4 – MD6 in [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6),
+MD4 – MD6 and MD8 – MD10 in [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6),
 MD7 in [Stage 8](../../implementation/plan/stage-8-release.md#game-bundling-md7)
 ([where it goes](#6-where-it-goes-in-the-plan)).
 
@@ -75,6 +77,31 @@ reads, so nothing it makes is locked to the tool.
     With decision D4 the user added: "Also a flag for the animations for their weapons to cause
     no damage."
 
+??? quote "Source: the user's message of 2026-11-11 (3D cockpits, extensions, packs and mods)"
+    "for xcom cockpits, we will be designing a 3d cockpit in blender to include as an example mod
+    that substitutes the 3d to replace the 2d image. This raises a point for the mod design tools,
+    they need to accommodate placement of the UI elements so that they are projected onto the
+    correct faces in a 3d view. Simple handling will be to allow each element to be dragged around
+    the screen to detemine their positions and then previewed by applying to the geometry that it
+    is over. this will be the first test case for the mod design tools when available - a mod
+    extending interceptor, where user selects the cockpit images to extract, they are copied into
+    the mod, select to create a 3d cockpit (which will provide a generic base cockpit geometry
+    defined in default if none is present in the parent). The user can then edit it in Blender.
+    If possible, it would be ideal to allow the .blend files to be included in addtition to
+    standaole mtl and obj objects so that a user can package the object, material, and textures
+    into a single file, but that is not strictly necessary as long as the correct relationshps
+    between materials and their texture images is consistently maintained.
+
+    Open points
+    Hit static - correct, works well now
+    Let's call it an extension as opposed to an override, since another pack is the base and we
+    are either adding to or overriding assets. Will have to consider where the distinction is
+    between pack and mod in that case, but conceptually packs are "baked into" the game on build
+    where mods are added externally in user's local files."
+
+    On the single-file plan (section 2.5): "ok that works. obj/mtl as in the existing packs of
+    course would continue to be supported."
+
 ## 1. Goals and principles
 
 - **The files stay the source of truth.** The designer is a convenience over the documented
@@ -100,18 +127,28 @@ reads, so nothing it makes is locked to the tool.
 
 | Action | What it does |
 |---|---|
-| New pack / mod | Asks for an id, a name and a kind: **campaign** (a new game), **addon** (adds to a campaign) or **override** (replaces assets). Asks for a **base** to override: the default campaign (`resources/default`), `interceptor`, or any installed pack. Writes `pack.yaml` with `parent:` and creates the folder skeleton (`rules/`, `models/`, `textures/`, `sounds/`, `text/en/`, `missions/`, `scenarios/`, `cutscenes/`). |
+| New pack / mod | Asks for an id, a name and a kind: **campaign** (a new game), **addon** (adds to a campaign) or **extension** (another pack is the base; it adds to or overrides that pack's assets). Asks for a **base**: the default campaign (`resources/default`), `interceptor`, or any installed pack. Writes `pack.yaml` with `parent:` and creates the folder skeleton (`rules/`, `models/`, `textures/`, `sounds/`, `text/en/`, `missions/`, `scenarios/`, `cutscenes/`). |
 | Open / edit | A pack tree, with definitions grouped as ships, weapons, missions, cutscenes, text and so on. A form editor generated from the engine's schemas — the same ones that produce the JSON Schemas — so new keys appear without designer changes. A raw YAML view. |
 | Import from parent | Pick any asset the parent provides: a model, texture, sound, image or cockpit. The designer copies it and its dependencies into the mod at the path that overrides the original ([2.2](#22-what-an-asset-and-its-dependencies-means)). Original formats (XMSH, XTXR, TGA, ADPCM WAV) are converted to OBJ/MTL, PNG and WAV by the extractor that already exists. |
 | Edit externally | "Open in Blender" (or any program set per file type) launches the external editor on the copied file. A file watcher reloads the asset in the preview on save, using the engine's model cache. |
 | Validate and play | The engine validator runs on every save; each problem is reported with its file, line and key. "Play" starts the testbed with the mod enabled, on a chosen scenario or mission. |
 | Package | Exports the pack as a folder or zip for sharing, or adds it to a product bundle ([section 5](#5-bundling-a-complete-game)). |
 
+!!! note "Decided (2026-11-11): extension, not override"
+    The user: "Let's call it an extension as opposed to an override, since another pack is the base
+    and we are either adding to or overriding assets." An extension declares `parent:` and adds to
+    or overrides the base's assets.
+
 !!! note "Open"
     The pack manifest's kinds today are `campaign`, `addon` and `library`
-    ([R-MOD-001](../requirements/modding.md#r-mod-001-pack-manifests)). The wizard's **override**
-    kind is an addon that only replaces assets; whether it is written as `kind: addon` or becomes a
-    manifest kind of its own is decided when MD4 is built.
+    ([R-MOD-001](../requirements/modding.md#r-mod-001-pack-manifests)). Whether **extension**
+    becomes a manifest kind of its own or maps onto `addon` is decided when MD4 is built.
+
+**Packs and mods.** The same format; the difference is where they come from and whether a build
+includes them. **Packs** are "baked into" the game on build: `resources/` and the bundled
+`packs/`, included in a product bundle ([section 5](#5-bundling-a-complete-game)). **Mods** are
+added externally, in the user's local mods folder. *Open:* where exactly the line falls — for
+example, whether a mod promoted into a product bundle becomes a pack — is to be settled.
 
 ### 2.2 What "an asset and its dependencies" means
 
@@ -124,6 +161,83 @@ reads, so nothing it makes is locked to the tool.
 
 A **dependency graph** built from the loaded content drives this. The same graph powers "where
 is this used?" and warns before deleting anything still referenced.
+
+### 2.3 Instruments on a 3D cockpit
+
+A 3D cockpit's instruments (radar, MFD, gauges, status, message, power, systems…) are drawn
+on the model's surface at **anchors**, `{at, normal, size}`
+([Cockpits](../../modding/cockpits.md#a-3d-cockpit-instead-of-the-overlay)). In the designer:
+
+1. The modder **drags** an instrument around the screen over the cockpit model.
+2. On every frame of the drag, a ray from the eye through the cursor is intersected with the
+   model's triangles; the nearest hit gives the anchor's `at`, and the hit face's normal its
+   `normal`.
+3. The instrument is **previewed applied to that face**, drawn by the game's own
+   anchored-instrument path, so it looks as it will in the game. Over no face, it keeps its last
+   anchor.
+4. Its **size** on the surface is adjustable. Dropping keeps the anchor; saving writes
+   `cockpits.<id>.anchors` to the mod's rules.
+
+An instrument with only a 2D rectangle gains an anchor the same way; its rectangle still serves
+the other views.
+
+**Reuse.** The engine already has the pieces: `hud::layout::cursor_ray` (the ray through the
+cursor), `hud::layout::ray_triangle` (the hit) and `hud::layout::anchor_corners` (the
+instrument's rectangle on the surface); the `cockpits.<id>.anchors` key; and the game's F12
+layout editor (`app/flight.rs`, `edit_layout`), which drags 2D rectangles and already places an
+existing anchor where the dashboard is clicked. The designer reuses them. As a first step, the
+F12 editor could gain the drag with live preview, and anchors for instruments that have none.
+
+Requirements: [R-MOD-048](../requirements/modding.md#r-mod-048-drag-instruments-onto-a-3d-cockpit),
+[R-MOD-049](../requirements/modding.md#r-mod-049-instrument-size-and-preview-on-the-surface).
+
+### 2.4 First test case: an X-COM 3D cockpit
+
+The first test case for the mod tools, when they are available, is a mod that **extends
+`interceptor`** with a 3D X-COM cockpit:
+
+1. The modder selects the cockpit images to extract. They are copied into the mod — converted
+   from the original data by the extractor, with their provenance recorded, for personal use
+   only and never bundled.
+2. **Create 3D cockpit** copies the parent's cockpit model into the mod or, when the parent has
+   none, a **generic base cockpit** defined in `resources/default`: an original-free OBJ/MTL model
+   with its textures, generated by `tools/default_assets/`, with dashboard surfaces and default
+   anchors for the standard instruments.
+3. The modder edits the model in Blender (live reload, [2.1](#21-packs-and-mods)).
+4. The modder places the instruments on it ([2.3](#23-instruments-on-a-3d-cockpit)).
+
+Separately, the user intends to design an X-COM 3D cockpit in Blender and ship it as an
+**example mod** in `packs/` that replaces the 2D cockpit image with a 3D one. Its geometry is
+original-free; the X-COM cockpit textures are referenced from the player's original data, not
+copied, and the mod declares `requires_original: true`. *Open:* an MTL names its textures by file
+path, so how the model refers to a texture in the original data is settled with MD9.
+
+Requirements: [R-MOD-050](../requirements/modding.md#r-mod-050-create-a-3d-cockpit),
+[R-MOD-051](../requirements/modding.md#r-mod-051-generic-base-cockpit),
+[R-MOD-052](../requirements/modding.md#r-mod-052-example-mod-x-com-3d-cockpit).
+
+### 2.5 Single-file models and Blender sources
+
+- **OBJ/MTL stays.** Wavefront OBJ/MTL with separate texture files remains a fully supported
+  format: it is what the existing packs use, and nothing below replaces it.
+- **`.glb` as an additional option.** Binary glTF is one file holding mesh, materials and
+  textures. Blender exports it natively, and the engine can read it in-crate: a JSON chunk (the
+  crate already has a JSON parser, `src/remote/json.rs`) and binary buffers. No dependency.
+- **`.blend` as the source only.** A mod may carry its `.blend` files. When Blender is
+  installed, the designer runs it headless on save to export OBJ/MTL or `.glb`
+  (`blender -b file.blend --python-expr …`). The engine never parses `.blend`, whose binary
+  format changes between Blender versions. Blender is an optional external tool, not a
+  dependency ([Dependency policy](../../learning/best-practices/dependencies.md#external-tools)).
+- **Materials keep their textures.** On every import and export, each material stays with its
+  texture images: MTL `map_Kd` paths are relative to the `.mtl` file and inside the pack.
+
+The user called single files "not strictly necessary as long as the correct relationshps between
+materials and their texture images is consistently maintained", and confirmed this plan: "ok that
+works. obj/mtl as in the existing packs of course would continue to be supported."
+
+Requirements: [R-MOD-053](../requirements/modding.md#r-mod-053-single-file-models),
+[R-MOD-054](../requirements/modding.md#r-mod-054-blender-sources),
+[R-MOD-055](../requirements/modding.md#r-mod-055-materials-keep-their-textures).
 
 ## 3. The Cutscene Designer
 
@@ -314,6 +428,9 @@ played with nothing to install.
 | MD4 | Designer application shell (a separate program and build artifact, D5; macroquad UI, D1): pack wizard with base selection, pack tree, schema-driven forms and YAML view, validation, play in testbed | Stage 7 | [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6) |
 | MD5 | Asset import with dependencies (including conversion from original formats), external editor launch, live reload, "where used", provenance recording | Stage 7 | [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6) |
 | MD6 | Cutscene Designer: outline, 3D map, preview, timeline with keyframes, cameras and cuts, sounds, captions, scrubbing with snapshots | Stage 7 | [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6) |
+| MD8 | 3D cockpit instrument placement: drag each instrument over the cockpit model, ray-cast to the face below the cursor, preview applied to it, adjustable size, saved as `anchors` | Stage 7 | [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6) |
+| MD9 | First test case for the mod tools: an `interceptor` extension with a 3D X-COM cockpit (extract the cockpit images, Create 3D cockpit, edit in Blender, place instruments); the generic base cockpit in `resources/default`; the X-COM 3D cockpit example mod in `packs/` | Stage 7 | [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6) |
+| MD10 | Single-file models: `.glb` reader (in-crate) beside OBJ/MTL; `.blend` sources exported through Blender when installed; materials keep their textures | Stage 7 | [Stage 7](../../implementation/plan/stage-7-modding.md#mod-and-cutscene-designer-md4-md6) |
 | MD7 | Product bundling: the build's two artifacts (game and designer, D5); `product.yaml`, branded builds, release mode without developer tools, the provenance guard | Stage 8 | [Stage 8](../../implementation/plan/stage-8-release.md#game-bundling-md7) |
 
 ## 7. Decisions
@@ -333,3 +450,4 @@ Proposed with recommendations; **answered by the user on 2026-11-11**.
 | Version | Date | Change |
 |---|---|---|
 | 1.7.0 | 2026-11-11 | New page, with the user's decisions D1–D5 (D2's Linux path via `dlopen` still to be evaluated; D4 adds the `harmless` flag; D5 two build artifacts): the Mod Designer, the Cutscene Designer, video cutscenes, shared formations and game bundling, from the user's request of 2026-11-11; plan items MD1–MD7 |
+| 1.9.0 | 2026-11-11 | From the user's message of 2026-11-11 (quoted): new sections 2.3 instruments on a 3D cockpit (drag, ray-cast to the face, preview), 2.4 the first test case (an `interceptor` extension with a 3D X-COM cockpit; the generic base cockpit; the example mod) and 2.5 single-file models (`.glb` beside OBJ/MTL, which stays fully supported, `.blend` as source only; confirmed by the user); the wizard's kind renamed **extension**; packs versus mods; plan items MD8–MD10 |

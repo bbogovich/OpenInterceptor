@@ -1,5 +1,5 @@
 ---
-spec_version: 1.7.0
+spec_version: 1.9.0
 status: current
 updated: 2026-11-11
 ---
@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.7.0** (87 features). Changes are listed in the
+Definition version **1.9.0** (90 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -20,12 +20,12 @@ Definition version **1.7.0** (87 features). Changes are listed in the
 |---|---|---|---|
 | [Flight](flight.md) | `FLT` | 8 | How a craft moves: the flight model, speed management, the arena, hyperspace and, later, flight in an atmosphere. |
 | [Combat](combat.md) | `CMB` | 11 | Weapons, damage, ship systems, special equipment, targeting, wingmen and the enemies' behaviour. |
-| [Cockpit & HUD](cockpit-hud.md) | `HUD` | 8 | What the pilot sees: cockpits, views, instruments and the targeting display. |
+| [Cockpit & HUD](cockpit-hud.md) | `HUD` | 9 | What the pilot sees: cockpits, views, instruments and the targeting display. |
 | [Controls & control console](control-console.md) | `CON` | 9 | How the pilot commands the craft: keyboard, mouse and gamepad bindings, finding the controls, and the tablet control console. |
 | [Missions](missions.md) | `MSN` | 7 | Battles with a purpose: roles, waves, objectives, outcomes, the debrief, environments and balance. |
 | [Strategy & logistics](strategy-logistics.md) | `STR` | 9 | The real-time strategy game around the battles, and the default campaign's supply-chain logistics. |
 | [Campaigns](campaigns/features.md) | `CPN` | 7 | The campaigns that ship with the engine, how one is chosen and played, and what turns battles into a story. Background on each campaign is in the pages beside this one. |
-| [Modding toolkit](modding-toolkit.md) | `MOD` | 13 | What a modder gets: packs, readable rule files, asset replacement, translation, conditions, the tools that check and generate content and, planned, the Mod Designer, the Cutscene Designer and cutscenes. |
+| [Modding toolkit](modding-toolkit.md) | `MOD` | 15 | What a modder gets: packs, readable rule files, asset replacement, translation, conditions, the tools that check and generate content and, planned, the Mod Designer (with 3D cockpit instrument placement), single-file models, the Cutscene Designer and cutscenes. |
 | [Compatibility (original data)](compatibility.md) | `CMP` | 5 | Playing *X-COM: Interceptor* from the player's own CD, read as data, without the project ever holding original content. |
 | [Platforms](platforms.md) | `PLT` | 5 | Where OpenInterceptor runs and how it is shipped, including a creator's own bundled game. |
 | [Testbed & tools](testbed-tools.md) | `TST` | 5 | The testbed that every stage ends in, the viewers, headless runs and the asset generators. |
@@ -55,3 +55,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.1.0 | 2026-11-11 | Playtest fixes (app 0.3.1): F-HUD-006, F-HUD-007, F-CMB-011, F-MSN-006 and F-CON-003 implemented |
 | 1.3.0 | 2026-11-11 | 80 features (F-CMP-005 added in 1.2.0, implemented in app 0.4.2); F-CON-004 partial (console C1, app 0.4.0) |
 | 1.7.0 | 2026-11-11 | 87 features: F-FLT-008 (added in 1.6.0); F-MOD-009 – F-MOD-013 and F-PLT-005 (planned: Mod Designer, Cutscene Designer, cutscenes, video cutscenes, shared formations, game bundling) |
+| 1.9.0 | 2026-11-11 | 90 features: F-HUD-009 (added in 1.8.0); F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned) |

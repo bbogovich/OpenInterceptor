@@ -172,6 +172,11 @@ copy `cockpit-layout.yaml` into its `rules/`.
 Status: the 3D cockpit path, anchors and the editor are implemented; the on-screen checks are
 manual tests MT-2-14 to MT-2-17.
 
+**Planned (Mod Designer, MD8 – MD9):** drag each instrument over the cockpit model with a live
+preview on the face below the cursor, and *Create 3D cockpit*, which starts from the parent's
+model or a generic base cockpit in `resources/default`
+([design](../specification/design/designer.md#23-instruments-on-a-3d-cockpit)).
+
 Open a model straight in the viewer: `openinterceptor --model <ship id or mesh name>`. In the
 viewer, **W** cycles solid / solid + wireframe / wireframe, **[ ]** select faces (Shift: ten at
 a time) and show each face's number, corner count, texture, flags, overlay layer and UVs, **I**

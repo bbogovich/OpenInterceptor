@@ -1,12 +1,12 @@
 ---
-spec_version: 1.7.0
+spec_version: 1.9.0
 status: current
 updated: 2026-11-11
 ---
 
 # Modding toolkit requirements
 
-Requirements for packs, rule files, schemas, overrides, extraction, text, the condition language, validation and recipes, and (planned) the Mod Designer, cutscenes, video cutscenes and shared formations ([design](../design/designer.md)). The normative structure is [Mod structure](../design/mod-structure.md); every key is in the [Mod file reference](../../modding/reference.md).
+Requirements for packs, rule files, schemas, overrides, extraction, text, the condition language, validation and recipes, and (planned) the Mod Designer, 3D cockpit instrument placement, single-file models, cutscenes, video cutscenes and shared formations ([design](../design/designer.md)). The normative structure is [Mod structure](../design/mod-structure.md); every key is in the [Mod file reference](../../modding/reference.md).
 
 Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a requirement: [Specification](../index.md#reading-a-requirement).
 
@@ -59,6 +59,14 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-045 Skipping a cutscene](#r-mod-045-skipping-a-cutscene) | Planned |
 | [R-MOD-046 Video cutscenes](#r-mod-046-video-cutscenes) | Planned |
 | [R-MOD-047 Shared formations](#r-mod-047-shared-formations) | Planned |
+| [R-MOD-048 Drag instruments onto a 3D cockpit](#r-mod-048-drag-instruments-onto-a-3d-cockpit) | Planned |
+| [R-MOD-049 Instrument size and preview on the surface](#r-mod-049-instrument-size-and-preview-on-the-surface) | Planned |
+| [R-MOD-050 Create a 3D cockpit](#r-mod-050-create-a-3d-cockpit) | Planned |
+| [R-MOD-051 Generic base cockpit](#r-mod-051-generic-base-cockpit) | Planned |
+| [R-MOD-052 Example mod: X-COM 3D cockpit](#r-mod-052-example-mod-x-com-3d-cockpit) | Planned |
+| [R-MOD-053 Single-file models](#r-mod-053-single-file-models) | Planned |
+| [R-MOD-054 Blender sources](#r-mod-054-blender-sources) | Planned |
+| [R-MOD-055 Materials keep their textures](#r-mod-055-materials-keep-their-textures) | Planned |
 
 ## Requirements
 
@@ -325,17 +333,20 @@ Everything the designer saves MUST be the documented open pack data (YAML, OBJ/M
 
 ### R-MOD-023 New pack from a base
 
-Creating a pack or mod MUST ask for an id, a name, a kind (campaign, addon or override) and a base to override: the default campaign (`resources/default`), `interceptor` or any installed pack. It MUST write `pack.yaml` with `parent:` set to the base, and the folder skeleton `rules/`, `models/`, `textures/`, `sounds/`, `text/en/`, `missions/`, `scenarios/` and `cutscenes/`.
+Creating a pack or mod MUST ask for an id, a name, a kind (campaign, addon or **extension**) and a base: the default campaign (`resources/default`), `interceptor` or any installed pack. An extension MUST declare `parent:` set to the base, and adds to or overrides the base's assets. The wizard MUST write `pack.yaml` with `parent:` set to the base, and the folder skeleton `rules/`, `models/`, `textures/`, `sounds/`, `text/en/`, `missions/`, `scenarios/` and `cutscenes/`.
 
-*Rationale:* The user's request: "on creation of a new pack or mod, user may choose a base to use for assets that they are going to override".
+*Rationale:* The user's request: "on creation of a new pack or mod, user may choose a base to use for assets that they are going to override". The name, from the user, 2026-11-11: "Let's call it an extension as opposed to an override, since another pack is the base and we are either adding to or overriding assets."
 
 - Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
 - Status: planned
 - Verified by: Planned (MD4).
-- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods), [Mod structure](../design/mod-structure.md)
+- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods), [Mod structure](../design/mod-structure.md), [Packs](../../modding/packs.md#packs-and-mods)
+
+!!! note "Resolved (2026-11-11): extension, not override"
+    The wizard's kind is called **extension**: another pack is the base, declared with `parent:`, and the extension adds to it or overrides its assets.
 
 !!! note "Open"
-    `override` is not a manifest kind today (R-MOD-001: `campaign`, `addon`, `library`); whether it is written as an addon or becomes a kind of its own is decided with MD4.
+    `extension` is not a manifest kind today (R-MOD-001: `campaign`, `addon`, `library`; `parent:` is a campaign's key and an addon uses `targets:`). Whether `extension` becomes a manifest kind of its own or maps onto `addon` is decided with MD4.
 
 ### R-MOD-024 Pack tree, forms and YAML view
 
@@ -609,9 +620,111 @@ Formations MUST be pack data (`formations:`): named shapes such as vee, line abr
 - Verified by: Planned (MD1).
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains), [R-CMB-015](combat.md#r-cmb-015-wingman-orders), [R-CMB-022](combat.md#r-cmb-022-wingmen-keep-their-distance)
 
+### R-MOD-048 Drag instruments onto a 3D cockpit
+
+For a cockpit with a 3D model, the designer MUST let the modder drag each instrument (radar, MFD, gauges, status, message, power, systems and any other the cockpit has) around the screen over the model. While an instrument is dragged, a ray from the eye through the cursor MUST be intersected with the cockpit model's triangles, and the instrument MUST be previewed applied to the face it is over: an anchor `{at, normal, size}` whose `at` is the hit point and whose `normal` is the hit face's normal. Dropping it MUST keep that anchor. An instrument that has only a 2D rectangle MUST be able to gain an anchor this way. Over no face, the instrument MUST keep its last anchor.
+
+*Rationale:* The user, 2026-11-11: "for xcom cockpits, we will be designing a 3d cockpit in blender to include as an example mod that substitutes the 3d to replace the 2d image. This raises a point for the mod design tools, they need to accommodate placement of the UI elements so that they are projected onto the correct faces in a 3d view. Simple handling will be to allow each element to be dragged around the screen to detemine their positions and then previewed by applying to the geometry that it is over."
+
+- Implements: [F-MOD-014](../../definition/modding-toolkit.md#f-mod-014-3d-cockpit-instrument-placement)
+- Status: planned
+- Verified by: Planned (MD8: unit tests of cursor ray to anchor on synthetic geometry; manual test of the drag and preview).
+- See: [Mod designer: instruments on a 3D cockpit](../design/designer.md#23-instruments-on-a-3d-cockpit), [Cockpits (HD and 3D)](../../modding/cockpits.md#a-3d-cockpit-instead-of-the-overlay), [R-HUD-004](cockpit-hud.md#r-hud-004-anchored-3d-cockpit-instruments), [R-HUD-008](cockpit-hud.md#r-hud-008-cockpit-layout-editor)
+
+!!! note "Reuse"
+    The engine already has the pieces: `hud::layout::cursor_ray`, `hud::layout::ray_triangle` and `hud::layout::anchor_corners`; the `cockpits.<id>.anchors` key; and the game's F12 layout editor (`app/flight.rs`, `edit_layout`), which drags 2D rectangles and places an existing anchor by clicking the dashboard. The designer reuses them. As a first step the F12 editor could gain the drag with live preview, and anchors for instruments that have none yet.
+
+### R-MOD-049 Instrument size and preview on the surface
+
+The width and height of an anchored instrument on the surface MUST be adjustable in the designer. The preview MUST draw each anchored instrument through the game's own anchored-instrument path (drawn into a texture and mapped onto the corners from `hud::layout::anchor_corners`), so that it looks as it will in the game. The placements MUST be saved as `cockpits.<id>.anchors` in the mod's rules, in the documented format (R-MOD-022).
+
+*Rationale:* The user, 2026-11-11: "previewed by applying to the geometry that it is over".
+
+- Implements: [F-MOD-014](../../definition/modding-toolkit.md#f-mod-014-3d-cockpit-instrument-placement)
+- Status: planned
+- Verified by: Planned (MD8: saved anchors load back as valid rules; manual test).
+- See: [Mod designer: instruments on a 3D cockpit](../design/designer.md#23-instruments-on-a-3d-cockpit), [R-HUD-004](cockpit-hud.md#r-hud-004-anchored-3d-cockpit-instruments)
+
+### R-MOD-050 Create a 3D cockpit
+
+In a mod that extends another pack, the designer MUST offer, for any cockpit of the parent:
+
+1. **Extract cockpit images**: the modder selects which of the parent's cockpit images to extract, and they are copied into the mod, converted from original formats by the extractor with their provenance recorded (R-MOD-029; never bundled, R-PLT-009);
+2. **Create 3D cockpit**: the parent's cockpit model, or, if the parent has none, the generic base cockpit of `resources/default` (R-MOD-051), is copied into the mod with its materials and textures, and the mod's cockpit entry is set to use it;
+3. then editing the model in Blender (R-MOD-027) and placing the instruments on it (R-MOD-048).
+
+*Rationale:* The user, 2026-11-11: "this will be the first test case for the mod design tools when available - a mod extending interceptor, where user selects the cockpit images to extract, they are copied into the mod, select to create a 3d cockpit (which will provide a generic base cockpit geometry defined in default if none is present in the parent). The user can then edit it in Blender."
+
+- Implements: [F-MOD-014](../../definition/modding-toolkit.md#f-mod-014-3d-cockpit-instrument-placement), [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD9: the first test case for the mod tools; manual test).
+- See: [Mod designer: first test case](../design/designer.md#24-first-test-case-an-x-com-3d-cockpit), [R-MOD-025](#r-mod-025-import-an-asset-with-its-dependencies)
+
+### R-MOD-051 Generic base cockpit
+
+`resources/default` MUST provide a generic base cockpit: an original-free OBJ/MTL model with its textures, generated by `tools/default_assets/`, modelled in metres around the eye at the origin (+Y up, looking along −Z) as the 3D cockpit path requires, with dashboard surfaces for the standard instruments and a default set of anchors.
+
+*Rationale:* The user: "a generic base cockpit geometry defined in default if none is present in the parent".
+
+- Implements: [F-MOD-014](../../definition/modding-toolkit.md#f-mod-014-3d-cockpit-instrument-placement)
+- Status: planned
+- Verified by: Planned (MD9: the model loads and every default anchor lies on a face).
+- See: [Mod designer: first test case](../design/designer.md#24-first-test-case-an-x-com-3d-cockpit), [Cockpits (HD and 3D)](../../modding/cockpits.md#a-3d-cockpit-instead-of-the-overlay)
+
+### R-MOD-052 Example mod: X-COM 3D cockpit
+
+The bundled `packs/` MUST include an example mod that extends `interceptor` and replaces the 2D X-COM cockpit image with a 3D cockpit designed in Blender. Its geometry MUST be original-free; the X-COM cockpit textures MUST be referenced from the player's original data and never copied into the repository, and the mod MUST declare `requires_original: true`.
+
+*Rationale:* The user, 2026-11-11: "for xcom cockpits, we will be designing a 3d cockpit in blender to include as an example mod that substitutes the 3d to replace the 2d image."
+
+- Implements: [F-MOD-014](../../definition/modding-toolkit.md#f-mod-014-3d-cockpit-instrument-placement)
+- Status: planned
+- Verified by: Planned (MD9: manual test in the `interceptor` campaign).
+- See: [Mod designer: first test case](../design/designer.md#24-first-test-case-an-x-com-3d-cockpit), [Overrides and extraction](../../modding/overrides.md)
+
+!!! note "Open"
+    An MTL names its textures by file path (`map_Kd`); how a model in the repository refers to a texture in the player's original data (for example an `original:` reference resolved by the rules or by the loader) is settled with MD9.
+
+### R-MOD-053 Single-file models
+
+Wavefront OBJ/MTL with separate texture files MUST remain a fully supported model format: it is the format the existing packs use (R-MOD-010). In addition, mods SHOULD be able to supply a model as one binary glTF file (`.glb`) holding its mesh, materials and textures, behind the same model interface as OBJ. A `.blend` file is a source only (R-MOD-054), never a format the engine loads. The `.glb` reader MUST be in-crate (the glTF JSON read with the crate's own parser, `remote::json`, plus its binary buffers) and MUST NOT add a dependency.
+
+*Rationale:* The user, 2026-11-11: "If possible, it would be ideal to allow the .blend files to be included in addtition to standaole mtl and obj objects so that a user can package the object, material, and textures into a single file, but that is not strictly necessary as long as the correct relationshps between materials and their texture images is consistently maintained."
+
+- Implements: [F-MOD-015](../../definition/modding-toolkit.md#f-mod-015-single-file-models-and-blender-sources)
+- Status: planned
+- Verified by: Planned (MD10: unit tests on synthetic `.glb` files built in the test).
+- See: [Mod designer: single-file models](../design/designer.md#25-single-file-models-and-blender-sources), [R-MOD-010](#r-mod-010-open-model-and-image-formats)
+
+!!! note "Confirmed by the user (2026-11-11)"
+    The plan (OBJ/MTL kept, `.glb` as an additional option, `.blend` as a source exported through Blender) was confirmed: "ok that works. obj/mtl as in the existing packs of course would continue to be supported." `.glb` stays a SHOULD: in the user's first words it is "not strictly necessary as long as the correct relationshps between materials and their texture images is consistently maintained" (R-MOD-055).
+
+### R-MOD-054 Blender sources
+
+A mod MAY include `.blend` files as the source of its models. The engine MUST NOT read `.blend` files (their binary format changes between Blender versions). When Blender is installed, the designer SHOULD export a `.blend` to OBJ/MTL or `.glb` on save by running Blender headless (`blender -b file.blend --python-expr …`); without Blender, the exported files already in the pack are used as they are. Blender is an optional external tool, not a dependency.
+
+*Rationale:* The user: "it would be ideal to allow the .blend files to be included in addtition to standaole mtl and obj objects so that a user can package the object, material, and textures into a single file".
+
+- Implements: [F-MOD-015](../../definition/modding-toolkit.md#f-mod-015-single-file-models-and-blender-sources)
+- Status: planned
+- Verified by: Planned (MD10: manual test with Blender installed).
+- See: [Mod designer: single-file models](../design/designer.md#25-single-file-models-and-blender-sources), [Dependency policy](../../learning/best-practices/dependencies.md#external-tools), [R-MOD-027](#r-mod-027-external-editor-and-live-reload)
+
+### R-MOD-055 Materials keep their textures
+
+Every import and export — the extractor, the designer's import, the Blender export and the `.glb` reader — MUST keep the relationship between each material and its texture images: an MTL names its textures with `map_Kd` paths relative to the `.mtl` file and inside the pack (R-MOD-011), and copying a model MUST copy and re-point its textures together. The designer MUST report a material whose texture is missing.
+
+*Rationale:* The user: "as long as the correct relationshps between materials and their texture images is consistently maintained".
+
+- Implements: [F-MOD-015](../../definition/modding-toolkit.md#f-mod-015-single-file-models-and-blender-sources), [F-MOD-003](../../definition/modding-toolkit.md#f-mod-003-replace-any-asset-in-open-formats)
+- Status: planned
+- Verified by: Planned (MD10, MD5: import and export round-trip unit tests on synthetic models).
+- See: [Models and textures](../../modding/models.md), [R-MOD-025](#r-mod-025-import-an-asset-with-its-dependencies)
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-MOD-001 – R-MOD-020 (20 requirements; 16 reverse-engineered from the code) |
 | 1.7.0 | 2026-11-11 | R-MOD-021 – R-MOD-047 (planned): the Mod Designer (R-MOD-021 – R-MOD-030), the Cutscene Designer and cutscene files, playback, entities, actions, sounds, captions, cameras and cuts, the `harmless` and `aggressive` flags (R-MOD-031 – R-MOD-043), where cutscenes play and skipping (R-MOD-044, R-MOD-045), video cutscenes (R-MOD-046), shared formations (R-MOD-047), from the user's request of 2026-11-11 and the decisions D1–D5 |
+| 1.9.0 | 2026-11-11 | From the user's message of 2026-11-11: new R-MOD-048 – R-MOD-055 (planned): instruments dragged onto a 3D cockpit and previewed on the face below the cursor, their size and preview (MD8); Create 3D cockpit, the generic base cockpit in `resources/default` and the X-COM 3D cockpit example mod, the first test case for the mod tools (MD9); single-file `.glb` models as an additional option beside OBJ/MTL, which stays fully supported (confirmed by the user), `.blend` sources exported through Blender, materials keeping their textures (MD10). R-MOD-023: the wizard's kind is **extension** (declares `parent:`, adds to or overrides the base), Open note resolved; whether it is a manifest kind or maps onto `addon` stays open (MD4) |

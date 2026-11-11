@@ -65,4 +65,21 @@ and RFC vectors), `remote::json` (~360) and threads from `std`. Decision: build 
 dependency added. The console page itself (`web/console/`) is plain custom elements and CSS
 with no framework or build step.
 
+## External tools
+
+Programs the user may have installed, which the project calls but never links, bundles or
+requires, are **not dependencies**.
+
+**Blender (planned, MD10).** A mod may carry `.blend` files as the source of its models. When
+Blender is installed, the Mod Designer runs it headless on save
+(`blender -b file.blend --python-expr …`) to export OBJ/MTL or `.glb`; without it, the exported
+files already in the pack are used. The engine never parses `.blend`, whose binary format changes
+between Blender versions. Blender is GPL, but it runs as a separate program on the user's own
+files and nothing of it enters the codebase. See
+[R-MOD-054](../../specification/requirements/modding.md#r-mod-054-blender-sources).
+
+**`.glb` (planned, MD10)** is read in-crate: the glTF JSON chunk with `remote::json` and the
+binary buffers; no crate is added
+([R-MOD-053](../../specification/requirements/modding.md#r-mod-053-single-file-models)).
+
 The next candidate is the Tier 2 scripting language (see [Scripting](../../modding/scripting.md)).

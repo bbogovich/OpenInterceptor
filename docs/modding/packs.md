@@ -20,6 +20,25 @@ Default mods folder: macOS `~/Library/Application Support/OpenInterceptor/mods/`
 `$XDG_DATA_HOME/openinterceptor/mods/` (default `~/.local/share/openinterceptor/mods/`), or
 `settings.yaml` `paths: {mods: …}` ([Settings](../implementation/architecture/settings.md)).
 
+## Packs and mods
+
+Packs and mods use the same format. The difference is where they come from and whether a build
+includes them:
+
+- **packs** are "baked into" the game on build: `resources/` and the bundled `packs/`, which a
+  product bundle includes;
+- **mods** are added externally, in the user's local mods folder.
+
+A mod built on another pack, which adds to it or overrides its assets, is an **extension** of that
+pack (planned in the Mod Designer;
+[R-MOD-023](../specification/requirements/modding.md#r-mod-023-new-pack-from-a-base)). Today it
+is written as a campaign with `parent:` or an addon with `targets:`, below.
+
+!!! note "Open"
+    Where exactly the line between a pack and a mod falls is to be settled, for example whether a
+    mod promoted into a product bundle becomes a pack; and whether `extension` becomes a manifest
+    kind or maps onto `addon` (MD4).
+
 ## Mod kinds and the active set
 
 Every pack is one of three **kinds** (`kind:` in `pack.yaml`; from `src/content/pack.rs`):

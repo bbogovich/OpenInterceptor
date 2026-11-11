@@ -1,5 +1,5 @@
 ---
-spec_version: 1.8.1
+spec_version: 1.9.0
 status: current
 updated: 2026-11-11
 ---
@@ -365,8 +365,8 @@ When the player's craft is hit by weapons fire, the console MUST show a brief st
 - Verified by: MT-3-27
 - See: [Console protocol](../console-protocol.md#game-console)
 
-!!! note "Interpretation awaiting the user's confirmation"
-    "A craft" is read as **the player's craft**, and the effect as appearing **on the console** (not on the game's screen, and not for hits on other craft).
+!!! note "Interpretation confirmed by the user (2026-11-11): works well"
+    "A craft" is read as **the player's craft**, and the effect as appearing **on the console** (not on the game's screen, and not for hits on other craft). The user, 2026-11-11: "Hit static - correct, works well now".
 
 ### R-CON-025 Keys held at the start of a battle are ignored
 
@@ -406,3 +406,4 @@ The console page MUST offer two layouts, switchable on the page and remembered p
 | 1.3.0 | 2026-11-11 | Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from `input::ACTIONS`; the description field stays open |
 | 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented. New R-CON-023 button press feedback and R-CON-024 hit static (`hits`, `hull_hits` in telemetry), implemented in app 0.4.9; the hit-static interpretation (the player's craft, on the console) awaits the user's confirmation. New R-CON-025 keys held at the start of a battle are ignored (app 0.4.10), implemented; new R-CON-026 two console layouts, All-in-one and Cockpit (C2), planned; R-CON-013 note |
 | 1.8.1 | 2026-11-11 | R-CON-026 implemented (0.4.11) |
+| 1.9.0 | 2026-11-11 | R-CON-024: the hit-static interpretation (the player's craft, on the console) confirmed by the user: "Hit static - correct, works well now" |

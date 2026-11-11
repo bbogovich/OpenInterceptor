@@ -712,7 +712,7 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-24 | Original data from `resources/xcom` or `resources/xcom-cd`; start-up without a shader error | Launcher | not run | | | App 0.4.1 / 0.4.2; needs original data for steps 2–4 |
 | MT-3-25 | Simple physics for beginners | Launcher; `rocket-vs-saucer` (default) | not run | | | App 0.4.6 |
 | MT-3-26 | Console: the tablet stays awake | any, with `--console` | not run | | | App 0.4.8; needs an iPad. Checked in headless Chrome only (localhost: wake lock; LAN address: video) |
-| MT-3-27 | Console: press feedback and hit static | `rocket-vs-saucer` (default), with `--console` | not run | | | App 0.4.9; hit-static interpretation awaiting the user's confirmation |
+| MT-3-27 | Console: press feedback and hit static | `rocket-vs-saucer` (default), with `--console` | not run | | | App 0.4.9; hit static confirmed by the user (2026-11-11): works well |
 | MT-3-28 | No shot from the start key | Launcher; any mission | not run | | | App 0.4.10 |
 
 ### The debrief (every mission case)
@@ -918,6 +918,8 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | Preconditions | MT-3-19 paired, in `rocket-vs-saucer` with the Comet. App 0.4.9 or later. |
 | Steps | 1. Hold *Yaw left* for two seconds, then release. 2. Tap *Next target* quickly, several times. 3. Let the saucer shoot you while your shields are up. 4. Let it keep shooting until hits reach the hull. 5. Fly clear and watch the console for a while without being hit. |
 | Expected | 1: the button fills with its border colour and its text turns black for the whole hold, and returns to normal on release. 2: every tap visibly lights the button (at least about 0.15 s), even a very quick one. 3: each shield hit shows a light burst of static on the console, about 0.4 s, fading out. 4: hull hits show a stronger static burst. 5: no static without hits; the buttons stay readable during the effect. |
+
+Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - correct, works well now". The full case is still to be recorded as run.
 
 ### MT-3-28 — No shot from the start key
 
