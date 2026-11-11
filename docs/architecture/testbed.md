@@ -18,8 +18,8 @@ stateDiagram-v2
     Launcher --> AssetBrowser: Enter on Asset browser (Next::Assets)
     AssetBrowser --> Launcher: Esc
     Launcher --> Controls: Enter on Controls (Next::Controls)
-    Controls --> Launcher: Esc (save bindings.ini)
-    Launcher --> Launcher: Tab (Next::Campaign) reloads Content for the next campaign
+    Controls --> Launcher: Esc (save bindings.yaml)
+    Launcher --> Launcher: Tab or D (Next::Reload) reloads Content for another campaign or difficulty
     FlightSession --> Launcher: Esc menu → L
     FlightSession --> FlightSession: Esc menu → K (controls menu inside the session)
     FlightSession --> FlightSession: Esc menu → R, or Enter after death
@@ -32,12 +32,14 @@ stateDiagram-v2
 - **`--screenshot <png>`** (with `--scenario` or `--model`) runs the starting screen for
   `--frames` frames (default 120), saves what was drawn as an opaque PNG and exits — a way to
   check a cockpit or model on several window sizes without playing.
-- **Launcher** (`launcher.rs`): the header names the loaded campaign; **Tab** (pad **Y**) switches
-  to the next campaign (`launcher::next_campaign`), which returns `Next::Campaign(id)`: the app
-  reloads `Content` with that campaign, saves it as `settings.ini [game] campaign`, and shows any
+- **Launcher** (`launcher.rs`): the header names the loaded campaign and difficulty level;
+  **Tab** (pad **Y**) switches to the next campaign (`launcher::next_campaign`) and **D** (pad
+  **X**) to the next difficulty level (`launcher::next_difficulty`), each returning
+  `Next::Reload { campaign, difficulty }`: the app reloads `Content` (the ruleset is rebuilt at
+  that level), saves the choice in `settings.yaml` (`game.campaign`, `game.difficulty`), and shows any
   load error on the launcher. Entries: the model viewer, the asset browser, **Controls**, then every scenario
   sorted by `order` (the first scenario is selected at start). For
-  `player = choose` scenarios, Left/Right picks among playable ship classes, previewed as a
+  `player: choose` scenarios, Left/Right picks among playable ship classes, previewed as a
   turning model with name, description and stats. Keyboard, mouse (click to select, click
   again to start) and gamepad (D-pad, A/Start, Back to quit). Skipped-pack warnings and start
   errors are shown.
@@ -67,8 +69,15 @@ stateDiagram-v2
   camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher); P
   pauses. The player's cockpit may have 2D art, a 3D model, or both; the HUD uses the cockpit's
   design space in the cockpit view and the default glass layout in the other views. A 3D
-  cockpit on a window narrower than its design widens the field of view (`cockpit_fov`).
+  cockpit on a window narrower than its design widens the field of view (`cockpit_fov`), and
+  its anchored instruments are drawn on the dashboard in perspective (`draw_anchored`).
   Stage 2 additions:
+    - **Cockpit layout editor** (F12 in the cockpit view; the battle pauses): `LayoutEditor`
+      holds the selected instrument, the drag in progress and a status message; `edit_layout`
+      handles Tab, 2D drags and nudges, 3D ray picks on the cockpit model's top LOD, resizing
+      by wheel or `+`/`-`, and **S**, which `save_layout` writes as an addon
+      `<user data>/mods/<campaign>-cockpit-<id>/` (`pack.yaml` + `rules/cockpit-layout.yaml`).
+      See [Cockpits](../modding/cockpits.md#the-cockpit-layout-editor-f12).
     - **Wingman comms menu** (`]`, pad LB + left stick click): the six `WING_MENU` entries
       (fire at will, attack my target, ignore my target, evasive, retreat, status report),
       chosen with digits 1–6 or the d-pad and A; B or `]` closes it. While open, the d-pad and A
@@ -103,8 +112,8 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 | Symbol | What it is |
 |---|---|
 | `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`. |
-| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Campaign(id)`, `Fly { scenario, ship }`, `Quit`. |
-| `launcher::next_campaign(&Content) -> Option<String>` | The campaign after the current one (wrapping), if there is another. |
+| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Quit`. |
+| `launcher::next_campaign(&Content)`, `next_difficulty(&Content) -> Option<String>` | The campaign / difficulty level after the current one (wrapping), if there is another. |
 | `controls::ControlsMenu` | The controls menu component (`new`, `frame`). |
 | `assets::AssetBrowser`, `assets::Tab`, `assets::entries(&Content, Tab)` | The asset browser; `entries` (pure) lists assets with their override pack. |
 | `launcher::Menu` | Pure menu state: `entries`, `selected`, `ship`, `playable`; `move_selection`, `move_ship`, `choosing`, `activate`. |
@@ -133,3 +142,8 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
   the widened 3D-cockpit field of view; compare with a manual run in a 16:9 window (MT-2-14).
 - Scenario errors (unknown class, faction or leader) are shown in orange on the launcher
   and printed to standard error.
+- `openinterceptor --campaign default --soak rocket-vs-saucer --ship comet --difficulty cadet`
+  plays the scenario headless and prints the player's fate (`src/soak.rs`): how long a passive
+  ship survives, or whether an AI-flown one wins (`--soak-pilot ai`), per difficulty level.
+- A layout saved by F12 that seems ignored: the addon targets the campaign that was loaded when
+  it was saved; check `--list` shows `<campaign>-cockpit-<id>` and that it is not disabled.

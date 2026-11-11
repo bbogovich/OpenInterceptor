@@ -80,6 +80,8 @@ nav:
       - "Make your first mod": modding/first-mod.md
       - "Packs": modding/packs.md
       - "Rulesets and layering": modding/rulesets.md
+      - "Behaviours and conditions": modding/behaviours.md
+      - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md
       - "Cockpits (HD and 3D)": modding/cockpits.md
@@ -119,6 +121,7 @@ nav:
       - "Settings and data discovery": architecture/settings.md
       - "Assets and GPU cache": architecture/assets.md
       - "Simulation": architecture/sim.md
+      - "Conditions (script)": architecture/script.md
       - "Rendering": architecture/rendering.md
       - "Cockpit and HUD": architecture/hud.md
       - "Input and gamepads": architecture/input.md

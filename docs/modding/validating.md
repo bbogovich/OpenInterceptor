@@ -8,11 +8,16 @@ openinterceptor --list  --mods ~/my-mods            # what loaded: packs, playab
 
 `--check` loads everything without opening a window and reports:
 
-- every rules definition that failed (`[ship:x]: unknown beam 'y'`, bad inherit, unknown
-  faction or kind, missing `Model`, bad missile count, cockpit without `Image`);
+- every **file** that is not valid YAML or does not match its schema, with file, line and key
+  path: `rules/ships.yaml:12: ships.comet.max_sped: unknown key (did you mean 'max_speed'?)`,
+  `scenarios/t.yaml:2: unbalanced …`, a wrong type or unit (`range: 2.4kn` → "unknown unit 'kn'
+  … (use m, km)");
+- every rules definition that failed (`ships.x: unknown beam 'y'`, bad inherit, unknown
+  faction or kind, missing `model`, cockpit without `image` or `model`, a behaviour whose
+  condition does not check, an unknown difficulty level in `variants`);
 - every ship model, debris model and texture that does not load, and unknown cockpit ids;
 - every cockpit image and every referenced sound that does not load;
-- every scenario that cannot spawn (with each playable ship for `player = choose`);
+- every scenario that cannot spawn (with each playable ship for `player: choose`), including unknown object behaviours;
 - with original data, every original mesh and texture that does not decode.
 
 It ends with a summary line and exits with status 1 if there were errors, so it can run in a
@@ -23,3 +28,12 @@ the `default` campaign — the template for mods — always validates. `--check`
 campaign separately**, each with its own active set of packs (its parent chain, the addons that
 target it and their dependencies), so an addon is validated with each campaign it applies to;
 `--check --campaign <id>` checks just one.
+
+Validation happens at the difficulty level being loaded (the default unless `--difficulty` is
+given), so a typo inside one level's `variants` entry is reported whichever level is played.
+For balance across levels, `--soak <scenario> --difficulty <level>` plays a battle without a
+window and reports the player's fate.
+
+**In your editor.** Point each file at its JSON Schema (`# yaml-language-server:
+$schema=…`, see [Rulesets](rulesets.md#the-yaml-subset)) and most of these mistakes are
+underlined as you type.

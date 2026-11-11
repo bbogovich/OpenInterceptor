@@ -18,7 +18,7 @@ straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside
 **Stage 1 was signed off by the developer's playtest on 2026-11-10.** The rows below keep what
 was recorded case by case during development. In Stage 2 the `sample` pack became the `default`
 campaign and `sample-arena` was retired: re-run MT-1-19 as MT-2-13, MT-1-24 in
-`rocket-vs-saucer` (the default campaign also has `ArenaRadius = 30000`), MT-1-26 as MT-2-14;
+`rocket-vs-saucer` (the default campaign also has `arena_radius: 30000`), MT-1-26 as MT-2-14;
 MT-1-36 is retired with the Dart and ring station.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -232,7 +232,7 @@ MT-1-36 is retired with the Dart and ring station.
 | Scenario | `flight-test` |
 | Preconditions | Linux with `libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev`; an Xbox-style pad at `/dev/input/js0` if available. |
 | Steps | `scripts/check.sh`, then run MT-1-01, 04, 07, 08, 18. |
-| Expected | The gate passes; the cases behave as on macOS; `bindings.ini` is created under `~/.local/share/openinterceptor/`. |
+| Expected | The gate passes; the cases behave as on macOS; `bindings.yaml` is created under `~/.local/share/openinterceptor/`. |
 
 ### MT-1-22 — Newtonian flight: coast, reverse, brake
 
@@ -240,7 +240,7 @@ MT-1-36 is retired with the Dart and ring station.
 |---|---|
 | Scenario | `flight-test`, any hull, cockpit view |
 | Steps | 1. Backspace (full throttle) until 600 m/s. 2. `\` (zero throttle). 3. Yaw hard right for two seconds, release. 4. Z (reverse) and Backspace. 5. Hold B. 6. Release B, Z again. |
-| Expected | 2: speed stays at 600 m/s — the ship coasts. 3: the nose turns but the ship keeps travelling the old way (stars and targets slide sideways); the forward-speed reading falls as the nose turns away from the motion. 4: REV shown; the ship slows, stops and then backs up. 5: BRAKE shown; the ship comes to a full stop (0 m/s) and stays there. 6: thrust forward again. Repeat with `[flight] Model = assisted` in a test mod: zero throttle then slows the ship to a stop and turning carries the velocity round. |
+| Expected | 2: speed stays at 600 m/s — the ship coasts. 3: the nose turns but the ship keeps travelling the old way (stars and targets slide sideways); the forward-speed reading falls as the nose turns away from the motion. 4: REV shown; the ship slows, stops and then backs up. 5: BRAKE shown; the ship comes to a full stop (0 m/s) and stays there. 6: thrust forward again. Repeat with `flight: {model: assisted}` in a test mod: zero throttle then slows the ship to a stop and turning carries the velocity round. |
 
 ### MT-1-23 — Match speed hold
 
@@ -254,8 +254,8 @@ MT-1-36 is retired with the Dart and ring station.
 
 | Field | |
 |---|---|
-| Scenario | `rocket-vs-saucer` (ArenaRadius 30 000 m; was `sample-arena`) |
-| Steps | Full throttle with afterburner in one direction for about a minute (or use a test mod with `ArenaRadius = 3000`). |
+| Scenario | `rocket-vs-saucer` (`arena_radius` 30 000 m; was `sample-arena`) |
+| Steps | Full throttle with afterburner in one direction for about a minute (or use a test mod with `arena_radius: 3000`). |
 | Expected | "ARENA BOUNDARY" appears once on the message line; the ship stops moving outwards at the edge but can still slide along it and fly back in. |
 
 ### MT-1-25 — HD cockpit override
@@ -263,7 +263,7 @@ MT-1-36 is retired with the Dart and ring station.
 | Field | |
 |---|---|
 | Preconditions | An extracted CD (MT-1-27). |
-| Steps | 1. Scale `images/cockpita/12000.png` from the extraction to 2560×1920 and tint it (any image editor). 2. Save it as `<user data>/mods/hd-cockpit-test/images/cockpita/12000.png` with a `pack.ini` (`id = hd-cockpit-test`, `depends = interceptor`, `requires_original = yes`). 3. `openinterceptor --check`. 4. Fly `flight-test` in the Lightning II. 5. Add `hd-cockpit-test` to `[packs] disabled` in `settings.ini`; fly again. |
+| Steps | 1. Scale `images/cockpita/12000.png` from the extraction to 2560×1920 and tint it (any image editor). 2. Save it as `<user data>/mods/hd-cockpit-test/images/cockpita/12000.png` with a `pack.yaml` (`id: hd-cockpit-test`, `kind: addon`, `targets: [interceptor]`, `requires_original: true`, `format: 2`; the Stage 1 run used the equivalent `pack.ini`). 3. `openinterceptor --check`. 4. Fly `flight-test` in the Lightning II. 5. Add `hd-cockpit-test` to `packs: {disabled: […]}` in `settings.yaml`; fly again. |
 | Expected | 3: 0 errors, 3 packs. 4: the tinted, sharper cockpit replaces the original; windows are transparent; radars, MFD, gauges and message line sit exactly where they did. 5: the original cockpit is back. |
 | Recorded | 2026-11-10, macOS: pass (steps 1–4). |
 
@@ -295,7 +295,7 @@ MT-1-36 is retired with the Dart and ring station.
 
 | Field | |
 |---|---|
-| Steps | With any mod installed, add its id to `[packs] disabled` in `settings.ini`; run `--list` and fly. |
+| Steps | With any mod installed, add its id to `packs: {disabled: […]}` in `settings.yaml`; run `--list` and fly. |
 | Expected | `--list` omits the pack; a warning "pack '<id>' is disabled in settings" is printed; the originals are used again. |
 
 ### MT-1-30 — App bundle from Finder
@@ -303,7 +303,7 @@ MT-1-36 is retired with the Dart and ring station.
 | Field | |
 |---|---|
 | Steps | `python3 tools/build_bundle.py`; double-click `dist/OpenInterceptor-0.2.0.app` in Finder. |
-| Expected | The launcher opens with both packs listed (the CD found through `settings.ini`); Finder shows the build's version in Get Info; `bindings.ini` and `mods/` exist in `~/Library/Application Support/OpenInterceptor/`. |
+| Expected | The launcher opens with both packs listed (the CD found through `settings.yaml`); Finder shows the build's version in Get Info; `bindings.yaml` and `mods/` exist in `~/Library/Application Support/OpenInterceptor/`. |
 
 ### MT-1-31 — Original meshes render correctly
 
@@ -378,6 +378,13 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | MT-2-12 | Campaign switch | Launcher | not run | | | |
 | MT-2-13 | Default campaign look: cockpit and ships | `rocket-vs-saucer`, `dominion-raid`, `black-comet-ambush` | not run | | | Replaces MT-1-19 |
 | MT-2-14 | 3D cockpit on 4:3 and 16:9 windows | `rocket-vs-saucer` | not run | | | Replaces MT-1-26 |
+| MT-2-15 | Anchored 3D-cockpit instruments | `rocket-vs-saucer` | not run | | | Build `dd92045` |
+| MT-2-16 | Cockpit layout editor: 2D instruments | `flight-test` (cockpit A) or any 2D cockpit | not run | | | |
+| MT-2-17 | Cockpit layout editor: 3D placement and saving | `rocket-vs-saucer` | not run | | | |
+| MT-2-18 | YAML mistakes reported with file and line | `--check` | not run | | | |
+| MT-2-19 | Difficulty switch | Launcher | not run | | | |
+| MT-2-20 | Enemy accuracy by difficulty | `rocket-vs-saucer` | not run | | | Also `--soak` numbers |
+| MT-2-21 | HUD text fits the instruments | any | not run | | | |
 
 ## Stage 2 cases
 
@@ -450,8 +457,8 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | Field | |
 |---|---|
 | Scenario | Launcher → *Controls (keyboard, gamepad, mouse)*; later the pause menu (Esc, K) in any scenario |
-| Steps | 1. Select *Fire missile*, Key column, Enter, press `V`. 2. Select *Cloaking device*, Alt key column, Enter, press Shift+`B`. 3. Select *Brake*, Key column, Enter, press `V`. 4. Delete on a cell; D on an action; Shift+D. 5. Change *Mouse flight range* with Left/Right. 6. Esc; fly; open `bindings.ini`. 7. Restart the game. |
-| Expected | 1: the cell shows V; the status line confirms. 2: the cell shows Shift+B. 3: V moves to Brake and the status line says it was taken from *Fire missile* (whose cell is now empty). 4: the cell clears; D restores that action's defaults; Shift+D restores all. 6: the new bindings work at once; `bindings.ini` contains them. 7: they persist. Esc during a capture cancels it; a capture with no input gives up after 8 s. |
+| Steps | 1. Select *Fire missile*, Key column, Enter, press `V`. 2. Select *Cloaking device*, Alt key column, Enter, press Shift+`B`. 3. Select *Brake*, Key column, Enter, press `V`. 4. Delete on a cell; D on an action; Shift+D. 5. Change *Mouse flight range* with Left/Right. 6. Esc; fly; open `bindings.yaml`. 7. Restart the game. |
+| Expected | 1: the cell shows V; the status line confirms. 2: the cell shows Shift+B. 3: V moves to Brake and the status line says it was taken from *Fire missile* (whose cell is now empty). 4: the cell clears; D restores that action's defaults; Shift+D restores all. 6: the new bindings work at once; `bindings.yaml` contains them. 7: they persist. Esc during a capture cancels it; a capture with no input gives up after 8 s. |
 
 ### MT-2-10 — Gamepad chord capture and modifier layer
 
@@ -476,7 +483,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 |---|---|
 | Scenario | Launcher, with original data available |
 | Steps | 1. Start the game; read the header. 2. Press Tab (pad Y). 3. Quit and start again. 4. Run `openinterceptor --list`, then `--campaign interceptor`. 5. Run with `--no-original`. |
-| Expected | 1: "Campaign: X-COM: Interceptor (original data)   (Tab: switch campaign)" (or the last campaign chosen). 2: content reloads; the header says *Perils of the Void* and the scenario list shows the default campaign's scenarios only. 3: the last choice is remembered (`settings.ini [game] campaign`). 4: `--list` marks the loaded campaign with `*`; `--campaign` overrides the remembered choice. 5: only *Perils of the Void*; no Tab hint. |
+| Expected | 1: "Campaign: X-COM: Interceptor (original data)   (Tab: switch campaign)" (or the last campaign chosen). 2: content reloads; the header says *Perils of the Void* and the scenario list shows the default campaign's scenarios only. 3: the last choice is remembered (`settings.yaml` `game.campaign`). 4: `--list` marks the loaded campaign with `*`; `--campaign` overrides the remembered choice. 5: only *Perils of the Void*; no Tab hint. |
 
 ### MT-2-13 — Default campaign look: cockpit and ships
 
@@ -493,3 +500,59 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | Scenario | `rocket-vs-saucer`, cockpit view (F1) |
 | Steps | 1. Start in the default 1280×960 (4:3) window. 2. Resize the window to 16:9 (or go full screen on a 16:9 display). 3. Optionally: `openinterceptor --no-original --scenario rocket-vs-saucer --ship comet --screenshot pit.png`. |
 | Expected | 1: the whole dashboard is visible, side to side; radars, MFD, gauges, message bar, `power` and `systems` sit inside their bezels (the view widens to fit the 16:9 design). 2: the normal 60° field; instruments still in their bezels. The cockpit never disappears into world objects and turns with the ship; F7 shows the rocket without the cockpit. 3: the PNG matches what step 1 shows. |
+
+### MT-2-15 — Anchored 3D-cockpit instruments
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer` in a Comet, cockpit view (F1) |
+| Steps | 1. Fly in the default 4:3 window. 2. Resize to 16:9, then to a tall narrow window and a very wide one. 3. Look at the radars, MFD, gauges, message bar, `power` and `systems` close up while turning and firing. |
+| Expected | Every instrument lies **on** the dashboard inside its bezel, in perspective (tilted with the dashboard surface), at every window shape; nothing floats over the bezels or drifts when the window changes. Lines and text stay sharp and readable; radar contacts, needles and lamps update live. In the chase view (F7) the instruments return to their 2D places. |
+
+### MT-2-16 — Cockpit layout editor: 2D instruments
+
+| Field | |
+|---|---|
+| Scenario | `flight-test` in the Lightning II (cockpit A, 2D art), cockpit view |
+| Steps | 1. Press F12. 2. Tab to the MFD; drag it; drag its bottom-right corner; nudge with the arrows (and Shift+arrows); use the wheel and `+`/`-`. 3. Shift+Tab back. 4. Press S. 5. Esc; fly; then quit and fly again. |
+| Expected | 1: the battle pauses; "COCKPIT LAYOUT: <name>" and a key summary at the top. 2: the rectangle moves and resizes with the mouse, nudges 1 or 10 design pixels, grows and shrinks by 5 % about its centre; never below a minimum size. 4: "Saved as an addon: …/mods/interceptor-cockpit-a/rules/cockpit-layout.yaml". 5: the new layout is used now and after a restart; `--list` shows the addon; disabling it restores the original layout. |
+
+### MT-2-17 — Cockpit layout editor: 3D placement and saving
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer` in a Comet, cockpit view |
+| Steps | 1. F12; Tab to `mfd`. 2. Click a different spot on the dashboard; click empty space through the canopy. 3. Wheel up and down. 4. S, then Esc. 5. Open the saved `rules/cockpit-layout.yaml`; run `openinterceptor --check --no-original`. |
+| Expected | 2: the MFD jumps to the clicked spot, lying flat on that surface and facing the pilot ("mfd placed at …"); clicking empty space says "No cockpit surface under the cursor". 3: it grows and shrinks keeping its shape. 4: saved under `<user data>/mods/default-cockpit-guard/`. 5: the file holds `cockpits: guard: instruments` and `anchors` in valid YAML; `--check` reports no errors. |
+
+### MT-2-18 — YAML mistakes reported with file and line
+
+| Field | |
+|---|---|
+| Preconditions | A test mod copied from `packs/default` into the mods folder (id changed). |
+| Steps | In the copy: 1. misspell a key (`max_sped: 700`); 2. give a bad unit (`range: 2.4kn`); 3. indent one line with a tab; 4. write a condition with a typo (`when: "hul < 20%"`); 5. put a format-1 `pack.ini` folder beside it. Run `openinterceptor --check --no-original` after each, then open the launcher. |
+| Expected | Each problem is reported with the file, line and key path: 1: "unknown key (did you mean 'max_speed'?)"; 2: "unknown unit 'kn' … (use m, km)"; 3: a tab error with the line; 4: "unknown name 'hul'" for that behaviour; 5: "pack.ini is the old INI mod format (format 1) …". `--check` exits with status 1 for 1–4; the launcher shows the problems in orange and still offers the rest of the content. |
+
+### MT-2-19 — Difficulty switch
+
+| Field | |
+|---|---|
+| Scenario | Launcher, `default` campaign |
+| Steps | 1. Read the header. 2. Press D repeatedly (pad X). 3. Quit and start again. 4. Run with `--difficulty space_ace`, then `--difficulty nonsense`. 5. Switch to the `interceptor` campaign (Tab) and press D. |
+| Expected | 1: "Difficulty: ranger   (D: change)". 2: cadet → ranger → captain → space ace → cadet, content reloading each time. 3: the last level is remembered (`settings.yaml` `game.difficulty`). 4: space ace is used; an unknown level is reported and the middle level used. 5: beginner, experienced, veteran (default), genius, superhuman. |
+
+### MT-2-20 — Enemy accuracy by difficulty
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer` in a Comet, at **cadet** and at **space ace** |
+| Steps | 1. At each level, fly straight towards the saucers without firing for 30 s; watch their bolts. 2. Fight normally. 3. Optionally run `openinterceptor --campaign default --soak rocket-vs-saucer --ship comet --difficulty cadet` and again with `space_ace`. |
+| Expected | 1: at cadet most bolts miss wide, saucers fire short bursts with long pauses and no seeker rockets; at space ace bolts land close, bursts are long and rockets come. 2: cadet is clearly easier. Hurt saucers at captain and above sometimes flee. 3: the passive ship survives clearly longer at cadet than at space ace. |
+
+### MT-2-21 — HUD text fits the instruments
+
+| Field | |
+|---|---|
+| Scenario | Any, in a 2D cockpit, the 3D Guard cockpit and the glass HUD (F2); small and large windows |
+| Steps | Page through every MFD page; trigger long messages (system damage, wingman status); watch the gauges, `power` and `systems`. |
+| Expected | All text stays inside its instrument box at every window size; the MFD text size does not change between pages; nothing overlaps the next instrument. |

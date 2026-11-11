@@ -12,10 +12,10 @@ automatically ([Settings and data discovery](../architecture/settings.md)).
 ## macOS app
 
 ```sh
-python3 tools/build_bundle.py                    # app + settings.ini pointing at ./game
+python3 tools/build_bundle.py                    # app + settings.yaml pointing at ./game
 python3 tools/build_bundle.py --data /Volumes/CD # settings point at another copy
 python3 tools/build_bundle.py --install-data     # clone the CD into <user data>/original
-python3 tools/build_bundle.py --no-settings      # leave settings.ini alone
+python3 tools/build_bundle.py --no-settings      # leave settings.yaml alone
 python3 tools/build_bundle.py --skip-build       # reuse the last release build
 ```
 
@@ -31,7 +31,7 @@ OpenInterceptor-0.2.2.app/Contents/
 ```
 
 Then it prepares the user data folder `~/Library/Application Support/OpenInterceptor/`:
-`settings.ini` `[paths] original` is set to `./game` (or `--data`), keeping any other
+`settings.yaml` `paths.original` is set to `./game` (or `--data`), keeping any other
 settings; `--install-data` instead clones the CD into `original/` (an APFS clone costs almost no
 disk) and points the settings there; `mods/` is created. The program finds its packs at
 `../Resources/packs` relative to the executable, so it works when Finder starts it with `/` as

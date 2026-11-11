@@ -18,7 +18,7 @@ flowchart LR
 
 ### The 3D cockpit pass
 
-A cockpit definition may name a `Model` (see [Cockpits](../modding/cockpits.md)). It must always
+A cockpit definition may name a `model` (see [Cockpits](../modding/cockpits.md)). It must always
 appear in front of the world and may sit centimetres from the pilot's eye, which the normal
 1 m near plane would clip. So `Renderer::draw_cockpit_model`:
 

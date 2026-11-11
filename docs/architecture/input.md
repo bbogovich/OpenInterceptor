@@ -1,7 +1,7 @@
 # Input and gamepads
 
 `src/input/` turns device state into simulation `Controls` and one-shot `Command`s, using
-bindings from an editable INI file. The device reading itself is in `src/app/devices.rs`
+bindings from an editable YAML file (`bindings.yaml`). The device reading itself is in `src/app/devices.rs`
 (keyboard, mouse) and `src/platform/` (gamepads). The in-game controls menu is modelled in
 `src/input/editor.rs` and drawn by `src/app/controls.rs`. Plan: Stage 1; Stage 2 added the
 power, equipment and wingman actions, gamepad chords and the controls menu. The default layout
@@ -18,14 +18,14 @@ flowchart LR
     T --> C["Controls (sim)"]
     T --> CMD["Vec&lt;Command&gt; (app)"]
     T --> CH["ChaseInput (camera)"]
-    TAB["ACTIONS table<br/>name, action, keys, pad, group, label"] --> B["Bindings::from_ini<br/>(defaults + bindings.ini)"]
+    TAB["ACTIONS table<br/>name, action, keys, pad, group, label"] --> B["Bindings::from_yaml<br/>(defaults + bindings.yaml)"]
     B --> T
     ED["editor::Editor<br/>(controls menu)"] -- "edits a copy;<br/>saved on leaving" --> B
 ```
 
-- **One table.** `ACTIONS` lists every action once: its `bindings.ini` name, the `Action`, its
+- **One table.** `ACTIONS` lists every action once: its `bindings.yaml` name, the `Action`, its
   default keys, its default pad chords, its menu `Group` and its label. Parsing, defaults,
-  `to_ini_text`, the controls menu and the [Controls](../original-game/controls.md) tables all
+  `to_yaml_text`, the controls menu and the [Controls](../original-game/controls.md) tables all
   come from it, so they cannot drift apart. Entries are built with a `const fn a(…)` so the
   whole table is a compile-time constant.
 
@@ -47,27 +47,28 @@ flowchart LR
   and vertical slide; `StickLayout::Aircraft` swaps yaw and roll (the original's Alt+J). Stick
   forward = nose down unless `invert_pitch`.
 - **Mouse flight** (toggle `C`): cursor offset from the centre / `mouse range` gives yaw and
-  pitch, cursor down = nose down (as the original readme states) unless `[mouse] invert`; left
+  pitch, cursor down = nose down (as the original readme states) unless `mouse_invert`; left
   button = beams, right button = missile.
-- **Bindings file**: `bindings.ini` in the user data folder (macOS
+- **Bindings file**: `bindings.yaml` in the user data folder (macOS
   `~/Library/Application Support/OpenInterceptor/`, Linux `$XDG_DATA_HOME/openinterceptor/` or
   `~/.local/share/openinterceptor/`). Created with the defaults on first run
   (`app::load_bindings`); keys not mentioned keep their defaults; the controls menu rewrites it
-  in full when it saves.
+  in full when it saves. A `bindings.ini` of an earlier build is read once with the legacy
+  reader (`Bindings::from_ini`) and saved as `bindings.yaml`.
 
-```ini
-[keyboard]
-fire_beams = Enter, LeftControl
-wing_fire_at_will = Shift+F
-[gamepad]
-fire_beams = RightTrigger
-hyperspace = LeftShoulder+A
-dead_zone = 0.15
-invert_pitch = no
-stick_layout = space
-[mouse]
-range = 200
-invert = no
+```yaml
+keyboard:
+  fire_beams: [Enter, LeftControl]
+  wing_fire_at_will: [Shift+F]
+gamepad:
+  fire_beams: [RightTrigger]
+  hyperspace: [LeftShoulder+A]
+options:
+  dead_zone: 0.15
+  invert_pitch: false
+  stick_layout: space
+  mouse_range: 200
+  mouse_invert: false
 ```
 
 ### The controls menu
@@ -77,7 +78,7 @@ flowchart LR
     DEV["devices.read()<br/>RawInput"] --> CM["app::controls::ControlsMenu::frame"]
     CM -- "keys, d-pad, A/B/X/Y" --> ED["editor::Editor<br/>rows, selection, capture"]
     ED --> PAINT["paint rows, cells, message"]
-    CM -- "on leaving" --> AP["ctx.bindings = editor.bindings<br/>write bindings.ini"]
+    CM -- "on leaving" --> AP["ctx.bindings = editor.bindings<br/>write bindings.yaml"]
 ```
 
 `Editor` holds a working copy of the `Bindings` and the list of `Row`s: a `Header` per `Group`,
@@ -107,7 +108,7 @@ a capture after 8 s (`CAPTURE_TIMEOUT`).
 | `KeyChord` | A key name plus optional Shift; `parse`, `text`. |
 | `PadChord` | A button plus optional modifier button; `plain`, `parse`, `text`. |
 | `StickLayout` | `Space` or `Aircraft`. |
-| `Bindings` | `keys: HashMap<Action, Vec<KeyChord>>`, `pad: HashMap<Action, Vec<PadChord>>`, `dead_zone`, `mouse_range`, `pad_invert_pitch`, `stick_layout`, `mouse_invert`; `from_ini`, `to_ini_text`, `translate`. |
+| `Bindings` | `keys: HashMap<Action, Vec<KeyChord>>`, `pad: HashMap<Action, Vec<PadChord>>`, `dead_zone`, `mouse_range`, `pad_invert_pitch`, `stick_layout`, `mouse_invert`; `from_yaml`, `to_yaml_text`, legacy `from_ini`, `translate`. |
 | `RawInput` | One frame of device state. |
 | `Command` | One-shot app requests: targeting, MFD, `View(View)`, `WingMenu`, wing orders (`WingFireAtWill`, `WingAttackMyTarget`, `WingFormation`, `WingEvasive`, `WingRetreat`, `WingStatus`), `RepeatMessage`, `NextNav`, `Pause`, `Menu`, `MouseFlight`. Power and equipment presses go to `Controls::requests` instead. |
 | `View` | `Cockpit`, `Forward`, `Left`, `Right`, `RearLeft`, `RearRight`, `Chase`, `ChaseManual`; `View::parse` for `--view`. |
@@ -119,7 +120,8 @@ a capture after 8 s (`CAPTURE_TIMEOUT`).
 
 ## API Reference
 
-- `Bindings::default()`, `Bindings::from_ini(&Ini)`, `bindings.to_ini_text()`.
+- `Bindings::default()`, `Bindings::from_yaml(&yaml::Node)`, `bindings.to_yaml_text()`;
+  `Bindings::from_ini(&Ini)` for migrating an old `bindings.ini`.
 - `bindings.translate(&RawInput, mouse_flight: bool) -> (Controls, Vec<Command>, ChaseInput)`.
 - `KeyChord::parse("Shift+F")`, `PadChord::parse("LeftShoulder+A")`, `input::canonical(name)`,
   `input::dead(v, dz)`, `input::info(Action) -> &ActionInfo`.
@@ -138,7 +140,8 @@ a capture after 8 s (`CAPTURE_TIMEOUT`).
 - An action that "does nothing": open the controls menu and look at its cells — a chord moved
   to another action is removed from the old one, and the status line said which. A pad button
   that does nothing on its own is probably used as a modifier in some chord.
-- A broken `bindings.ini` cannot lock you out: Shift+D in the controls menu restores every
+- A broken `bindings.yaml` cannot lock you out (a file that does not parse is reported and the
+  defaults are used): Shift+D in the controls menu restores every
   default, and deleting the file recreates it on the next run.
 - A gamepad that does nothing on Linux: check `/dev/input/js0` exists and is readable by your
   user (often the `input` group).

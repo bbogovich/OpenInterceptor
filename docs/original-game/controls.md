@@ -5,7 +5,7 @@ release `Readme.txt` for mouse and joystick, the game's bindable-action list), a
 **OpenInterceptor binds by default** (from the single `ACTIONS` table in
 `src/input/mod.rs`, which also drives the controls menu, so the tables below cannot drift from
 the game). Every engine binding can be changed in the in-game **Controls** menu or in
-`bindings.ini`.
+`bindings.yaml`.
 
 ## Original keyboard defaults
 
@@ -46,7 +46,7 @@ layout. The hat switch drives the VCT.
 
 ## OpenInterceptor defaults
 
-Key and button names are those used in `bindings.ini` (case does not matter). `Shift+F` is a
+Key and button names are those used in `bindings.yaml` (case does not matter). `Shift+F` is a
 keyboard chord; `LeftShoulder+A` is a gamepad chord (hold the left shoulder, press A). Since
 Stage 2 every action of the original has a default except **letterbox**, **include base
 modules** and **quit (Alt+Q)**, which are still unbound (they arrive with the views and the
@@ -54,7 +54,7 @@ strategy layer; the pause menu quits).
 
 ### Flight
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `pitch_up` | Nose up | `Down` | — | as original |
 | `pitch_down` | Nose down | `Up` | — | as original |
@@ -69,7 +69,7 @@ strategy layer; the pause menu quits).
 
 ### Throttle and speed
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `throttle_up` | Throttle up 10% | `Equal`, `KpAdd` | `DpadUp` | 10 % thrust per press |
 | `throttle_down` | Throttle down 10% | `Minus`, `KpSubtract` | `DpadDown` |  |
@@ -82,7 +82,7 @@ strategy layer; the pause menu quits).
 
 ### Weapons
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `fire_beams` | Fire beams | `Enter`, `LeftControl` | `RightTrigger` | hold; LeftControl added; blocked while the tractor beam is on |
 | `fire_missile` | Fire missile | `Space` | `LeftTrigger` |  |
@@ -91,7 +91,7 @@ strategy layer; the pause menu quits).
 
 ### Targeting
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `next_target` | Next target | `T` | `RightShoulder` |  |
 | `prev_target` | Previous target | `Y` | `LeftShoulder+RightShoulder` |  |
@@ -100,7 +100,7 @@ strategy layer; the pause menu quits).
 
 ### Power and systems
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `beam_charge` | Beam charge rate (A-E) | `F9` | `LeftShoulder+DpadLeft` | as original: steps A → E, then wraps to A |
 | `shield_charge` | Shield charge rate (A-E) | `F10` | `LeftShoulder+DpadRight` | as original: steps A → E, then wraps to A |
@@ -114,7 +114,7 @@ strategy layer; the pause menu quits).
 
 ### Wingmen and comms
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `wing_menu` | Wingman menu | `RightBracket` | `LeftShoulder+LeftThumb` | as original: opens the comms menu (digits 1–6 or d-pad and A choose) |
 | `wing_fire_at_will` | Wingmen: fire at will | `Shift+F` | — |  |
@@ -127,7 +127,7 @@ strategy layer; the pause menu quits).
 
 ### Views
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `view_cockpit` | Cockpit view | `F1` | — |  |
 | `view_forward` | Full forward view | `F2` | — |  |
@@ -140,7 +140,7 @@ strategy layer; the pause menu quits).
 
 ### Chase camera
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `chase_left` | Orbit left | `Insert` | — | F8 view |
 | `chase_right` | Orbit right | `Delete` | — |  |
@@ -152,7 +152,7 @@ strategy layer; the pause menu quits).
 
 ### Interface
 
-| Action (`bindings.ini` name) | Label | Default keys | Default gamepad | Notes |
+| Action (`bindings.yaml` name) | Label | Default keys | Default gamepad | Notes |
 |---|---|---|---|---|
 | `mfd_next` | Next MFD page | `Period` | `DpadRight` | the `>` key; pages Target, Weapons, Status, Systems, Nav |
 | `mfd_prev` | Previous MFD page | `Comma` | `DpadLeft` | the `<` key |
@@ -168,8 +168,8 @@ the wingmen to evade without also rolling the ship on `E`.
 
 **Mouse flight** (after `C`): cursor offset from the screen centre steers — moving the cursor
 **down lowers the nose** (the readme's "Nose Down = Mouse Back"), right turns right. Left
-button fires beams, right button fires a missile. `[mouse] range` (pixels for full deflection,
-default 200) and `[mouse] invert` (`yes` = moving up lowers the nose) are in `bindings.ini` and
+button fires beams, right button fires a missile. `mouse_range` (pixels for full deflection,
+default 200) and `mouse_invert` (`true` = moving up lowers the nose) are in `bindings.yaml` and
 the controls menu.
 
 ## OpenInterceptor gamepad defaults
@@ -199,7 +199,7 @@ why previous target, alone among the Stage 1 pad bindings, moved to `LB + RB`
 
 Wingman orders other than the menu have no default pad chord: open the menu with `LB + left
 stick click`, then choose with the d-pad and A (B closes it). Stick options (in the controls
-menu or `[gamepad]` in `bindings.ini`): `stick_layout = space` (default, as the original
+menu or `options:` in `bindings.yaml`): `stick_layout: space` (default, as the original
 joystick) or `aircraft` (the original's Alt+J swap: left stick rolls, right stick yaws),
 `invert_pitch`, `dead_zone`.
 
@@ -222,31 +222,31 @@ menu (Esc, then `K`). The model is `input::editor::Editor`; the screen is `app::
 - Binding a key or chord that another action used **takes it away from that action**; the
   status line names the action that lost it.
 - Up/Down (d-pad) select, Left/Right or Tab move between cells, PageUp/PageDown (LB/RB) page.
-  **Esc** (pad **B**) leaves: the bindings apply at once and are saved to `bindings.ini`.
+  **Esc** (pad **B**) leaves: the bindings apply at once and are saved to `bindings.yaml`.
 
-## `bindings.ini`
+## `bindings.yaml`
 
 Created with every default on first run in the user data folder — macOS
-`~/Library/Application Support/OpenInterceptor/bindings.ini`, Linux
-`$XDG_DATA_HOME/openinterceptor/bindings.ini` (default `~/.local/share/openinterceptor/`), and
-rewritten in full whenever the controls menu saves. Anything not mentioned keeps its default.
+`~/Library/Application Support/OpenInterceptor/bindings.yaml`, Linux
+`$XDG_DATA_HOME/openinterceptor/bindings.yaml` (default `~/.local/share/openinterceptor/`), and
+rewritten in full whenever the controls menu saves. Anything not mentioned keeps its default. A
+`bindings.ini` from an earlier build is read once, and its bindings are saved as
+`bindings.yaml`.
 
-```ini
-[keyboard]
-fire_beams = Enter, LeftControl     ; several keys separated by commas
-tractor = Shift+T                   ; Shift+ makes a chord
-
-[gamepad]
-hyperspace = LeftShoulder+A         ; Modifier+Button chord
-fire_beams = RightTrigger
-dead_zone = 0.15
-invert_pitch = no
-stick_layout = space                ; space | aircraft
-
-[mouse]
-range = 200
-invert = no
+```yaml
+keyboard:
+  fire_beams: [Enter, LeftControl]    # a list: several keys per action
+  tractor: [Shift+T]                  # Shift+ makes a chord
+  ecm: []                             # an empty list unbinds the action
+gamepad:
+  hyperspace: [LeftShoulder+A]        # Modifier+Button chord
+  fire_beams: [RightTrigger]
+options:
+  dead_zone: 0.15
+  invert_pitch: false
+  stick_layout: space                 # space | aircraft
+  mouse_range: 200
+  mouse_invert: false
 ```
 
-An empty value (`ecm =`) unbinds the action on that device. Run with `OI_DEBUG_KEYS=1` to print
-the name of each key you press.
+Run with `OI_DEBUG_KEYS=1` to print the name of each key you press.

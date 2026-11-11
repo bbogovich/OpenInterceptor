@@ -79,7 +79,7 @@ ships are visited.
 
 ### Tables built at compile time: `const fn` — `src/input/mod.rs`
 
-Every bindable action is one row of a `const` table: its `bindings.ini` name, default keys and
+Every bindable action is one row of a `const` table: its `bindings.yaml` name, default keys and
 pad buttons, menu group and label. The rows are built by a small constructor marked `const fn`,
 which the compiler may run while compiling, so the whole table is a constant baked into the
 program — no start-up code, no allocation:
@@ -98,6 +98,45 @@ pub const ACTIONS: &[ActionInfo] = &[
 
 `&'static str` fields fit because string literals live for the whole program. One table feeds
 parsing, defaults, the controls menu and the docs, so they cannot disagree.
+
+### Recursive enums and recursive descent — `src/script/mod.rs`
+
+A parsed condition such as `hull < 25% and not disabled` is a **tree**. An enum can describe a
+tree if a variant holds more of the same enum — but a value cannot contain itself directly (its
+size would be infinite), so the children are put on the heap with `Box`:
+
+```rust
+pub enum Expr {
+    Num(f32),
+    Bool(bool),
+    Query(u16, Vec<Expr>),          // a Vec is already on the heap
+    Not(Box<Expr>),
+    Binary(Op, Box<Expr>, Box<Expr>),
+    …
+}
+```
+
+The parser that builds it is **recursive descent**: one method per precedence level, each
+calling the next-tighter level for its operands. Lower levels bind tighter, so `a or b and c`
+parses as `a or (b and c)` with no precedence table:
+
+```rust
+fn or(&mut self) -> Result<(Expr, Type), String> {
+    let (mut e, mut t) = self.and()?;               // the tighter level first
+    while self.eat_word("or") {
+        let (r, rt) = self.and()?;
+        Self::want(Type::Bool, t, "'or'")?;          // type check while parsing
+        Self::want(Type::Bool, rt, "'or'")?;
+        e = Expr::Binary(Op::Or, Box::new(e), Box::new(r));
+        t = Type::Bool;
+    }
+    Ok((e, t))
+}
+```
+
+`not` calls itself for `not not x`, and the innermost level (`primary`) calls back up to `or`
+for a bracketed sub-expression — that is the "recursive". Evaluation is a `match` over the
+enum that calls `eval` on the boxed children.
 
 ## `match`: handle every case — `src/app/flight.rs`
 

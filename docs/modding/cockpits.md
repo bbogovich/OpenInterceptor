@@ -1,33 +1,42 @@
 # Cockpits (HD and 3D)
 
-A cockpit is a `[cockpit:<id>]` section in a pack's rules; a ship uses it with
-`Cockpit = <id>`. It can be 2D art, a 3D model, or both, and it says where the instruments go.
+A cockpit is an entry of the `cockpits:` section of a pack's rules; a ship uses it with
+`cockpit: <id>`. It can be 2D art, a 3D model, or both, and it says where the instruments go —
+as rectangles in a 2D design space, and for a 3D cockpit optionally as **anchors** on the
+model's surface, drawn in perspective.
 
-```ini
-[cockpit:a]
-Image = original:CockpitA.dll#12000   ; 2D art: original, a pack image, or `none`
-Design = 640, 480                     ; coordinate space of Instrument.* (default 640, 480)
-Model = models/cockpit.obj            ; optional 3D cockpit around the pilot's eye
-ModelOffset = 0, 0, 0                 ; metres from the eye (x right, y up, -z ahead)
-ModelScale = 1
-Instrument.message = 118, 12, 410, 24
-Instrument.radar_front = 111, 332, 60, 60  ; the round glass of the scope
-Instrument.radar_rear = 473, 332, 60, 60
-Instrument.mfd = 246, 338, 156, 82
-Instrument.gauge1 = 243, 299, 26, 26   ; speed
-Instrument.gauge2 = 288, 299, 26, 26   ; energy
-Instrument.gauge3 = 333, 299, 26, 26   ; shields
-Instrument.gauge4 = 378, 299, 26, 26   ; hull
+```yaml
+cockpits:
+  a:
+    image: original:CockpitA.dll#12000   # 2D art: original, a pack image, or none
+    design: [640, 480]                   # coordinate space of instruments (default 640, 480)
+    model: models/cockpit.obj            # optional 3D cockpit around the pilot's eye
+    model_offset: [0, 0, 0]              # metres from the eye (x right, y up, -z ahead)
+    model_scale: 1
+    instruments:
+      message: [118, 12, 410, 24]
+      radar_front: [111, 332, 60, 60]    # the round glass of the scope
+      radar_rear: [473, 332, 60, 60]
+      mfd: [246, 338, 156, 82]
+      gauge1: [243, 299, 26, 26]         # speed
+      gauge2: [288, 299, 26, 26]         # energy
+      gauge3: [333, 299, 26, 26]         # shields
+      gauge4: [378, 299, 26, 26]         # hull
 ```
 
 | Key | Default | Meaning |
 |---|---|---|
-| `Image` | — | Asset reference of the 2D art, drawn over the whole design space; `none` for no 2D art. |
-| `Design` | `640, 480` | The size of the coordinate space the instruments use. The art is stretched to it whatever its pixel size. |
-| `Model` | none | Asset reference of a 3D cockpit model. |
-| `ModelOffset` | `0, 0, 0` | Where the model's origin sits relative to the pilot's eye, in metres. |
-| `ModelScale` | `1` | Model units → metres. |
-| `Instrument.<name>` | — | `x, y, w, h` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`. |
+| `image` | — | Asset reference of the 2D art, drawn over the whole design space; `none` for no 2D art. |
+| `design` | `[640, 480]` | The size of the coordinate space the instruments use. The art is stretched to it whatever its pixel size. |
+| `model` | none | Asset reference of a 3D cockpit model. |
+| `model_offset` | `[0, 0, 0]` | Where the model's origin sits relative to the pilot's eye, in metres. |
+| `model_scale` | `1` | Model units → metres. |
+| `instruments` | — | `name: [x, y, w, h]` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`. |
+| `anchors` | none | 3D cockpits: `name: {at, normal, size}` — the instrument drawn in perspective on the model (below). |
+
+All instrument text — MFD pages, the message line, gauge labels, the `power` and `systems`
+labels — is sized to fit its instrument's box, so a small rectangle gets small text rather than
+text spilling out of it.
 
 ## The `power` and `systems` instruments (Stage 2)
 
@@ -47,7 +56,7 @@ Over cockpit art the engine draws **only the contacts** — the art supplies the
 the glass HUD (no art) the engine adds two rings and an F/R label. The interceptor pack's
 values were measured from the original art to ±1 px.
 
-A cockpit needs an `Image`, a `Model`, or both. Without a cockpit (or in the non-cockpit
+A cockpit needs an `image`, a `model`, or both. Without a cockpit (or in the non-cockpit
 views) the HUD uses glass instruments in a default layout.
 
 ## How the screen is fitted
@@ -58,60 +67,102 @@ visible either side; a 1920×1080 design fills it exactly. So:
 
 - **An HD repaint at the same proportions** (2560×1920 for 640×480) needs no rule changes at all:
   just [override the image](overrides.md#walkthrough-repaint-the-cockpit-in-hd).
-- **A widescreen redesign** sets `Design = 1920, 1080` and new `Instrument.*` rectangles.
+- **A widescreen redesign** sets `design: [1920, 1080]` and new `instruments` rectangles.
 
 ## A 3D cockpit instead of the overlay
 
-With `Model`, the cockpit is a 3D model drawn around the pilot's eye in the cockpit view
+With `model`, the cockpit is a 3D model drawn around the pilot's eye in the cockpit view
 (F1). It is drawn after the world with a fresh depth buffer, so the world never pokes
 through it, and with a 5 cm near plane, so struts right in front of the eye are not clipped.
-Model it in metres around the eye at the origin, +Y up, looking along −Z. The 2D instruments
-are drawn over it at their design-space positions (instruments on the model's own screens,
-as XWVM's 3D cockpits do, are planned for Stage 5).
+Model it in metres around the eye at the origin, +Y up, looking along −Z.
+
+Its instruments can be placed two ways:
+
+| | 2D rectangle (`instruments`) | Anchor (`anchors`) |
+|---|---|---|
+| Drawn | flat, over the view, at its design-space position | into a texture, then mapped onto a rectangle **on the model's surface**, in perspective |
+| Window shape | depends on the field of view matching the design (below) | sits in its bezel at any window shape and field of view |
+| Used for | 2D cockpits; any instrument without an anchor | 3D cockpits with screens or bezels on the dashboard |
+
+An anchor is `{at: [x, y, z], normal: [x, y, z], size: [w, h]}` in metres from the eye: the
+centre of the instrument on the model, the surface's outward normal, and the instrument's width
+and height on the surface. Its "up" is world up projected onto the surface. An instrument with an
+anchor is drawn only on the surface in the cockpit view; its 2D rectangle still serves the other
+views and the fallback.
 
 **Field of view.** The 3D view normally has a 60° vertical field. On a window narrower than
-the cockpit's `Design` proportions (a 4:3 window with a 16:9 cockpit), that would cut off the
-cockpit's sides and misplace the instruments relative to their bezels, so the field widens until
+the cockpit's `design` proportions (a 4:3 window with a 16:9 cockpit), that would cut off the
+cockpit's sides and misplace 2D instruments relative to their bezels, so the field widens until
 the design's full width fits (`app::flight::cockpit_fov`). Windows as wide as the design or
-wider keep 60°. Design the model and its `Instrument.*` rectangles for the camera the
-rectangles were measured with: eye at the origin, looking −Z, 60° vertical field, at the
-`Design` aspect.
+wider keep 60°. Measure 2D rectangles for the camera they will be seen with: eye at the origin,
+looking −Z, 60° vertical field, at the `design` aspect. Anchored instruments do not need this.
 
 The `default` campaign's Guard rockets fly from one, an art-deco dashboard (original-free,
-generated by `tools/default_assets/models.py`). The generator projects each bezel's opening
-with the cockpit camera and writes the rectangles to `models/guard_cockpit.instruments.ini`,
-from which they are copied into the rules:
+generated by `tools/default_assets/models.py`). The generator writes both placements, measured
+from the bezels it builds, to `models/guard_cockpit.instruments.yaml`, from which they are copied
+into the rules:
 
-```ini
-[cockpit:guard]
-Image = none
-Model = models/guard_cockpit.obj
-ModelOffset = 0, 0, 0
-Design = 1280, 720
-Instrument.message = 404, 474, 472, 26
-Instrument.radar_front = 101, 540, 155, 156
-Instrument.radar_rear = 1024, 540, 156, 156
-Instrument.mfd = 548, 514, 184, 186
-Instrument.gauge1 = 294, 522, 80, 80
-Instrument.gauge2 = 405, 522, 79, 80
-Instrument.gauge3 = 796, 522, 80, 80
-Instrument.gauge4 = 906, 522, 80, 80
-Instrument.power = 292, 628, 196, 64
-Instrument.systems = 792, 632, 196, 32
-
-[ship:comet]
-Cockpit = guard
+```yaml
+cockpits:
+  guard:
+    image: none
+    model: models/guard_cockpit.obj
+    model_offset: [0, 0, 0]
+    design: [1280, 720]
+    instruments:
+      message: [404, 474, 472, 26]
+      radar_front: [101, 540, 155, 156]
+      mfd: [548, 514, 184, 186]
+      power: [292, 628, 196, 64]
+      systems: [792, 632, 196, 32]
+      # … radar_rear, gauge1–gauge4
+    anchors:
+      message: {at: [0, -0.1729, -0.8497], normal: [0, 0.342, 0.9397], size: [0.6449, 0.0351]}
+      mfd: {at: [0, -0.311, -0.7995], normal: [0, 0.342, 0.9397], size: [0.2445, 0.2218]}
+      # … one per instrument
+ships:
+  comet:
+    cockpit: guard
 ```
 
 To give an original ship a 3D cockpit, a mod adds only:
 
-```ini
-[cockpit:a]
-Image = none                    ; or keep the art and add the model on top
-Model = models/lightning_pit.obj
-Design = 1280, 720
-; …new Instrument.* rectangles in 1280×720…
+```yaml
+cockpits:
+  a:
+    image: none                    # or keep the art and add the model on top
+    model: models/lightning_pit.obj
+    design: [1280, 720]
+    # … new instruments in 1280×720, and anchors (or place them with F12, below)
 ```
 
-Status: the 3D cockpit path is implemented and its rules are validated by `--check`; the
-Guard cockpit on 4:3 and 16:9 windows is manual test MT-2-14.
+## The cockpit layout editor (F12)
+
+In the cockpit view of any ship with a cockpit, **F12** opens the layout editor; the battle
+pauses while it is open.
+
+| Key / mouse | Effect |
+|---|---|
+| Tab / Shift+Tab | Select the next / previous instrument (its name is shown at the top). |
+| 2D instrument: drag inside | Move it. |
+| 2D instrument: drag the corner | Resize it. |
+| 2D instrument: arrow keys | Nudge 1 design pixel (Shift: 10). |
+| 3D (anchored) instrument: click the dashboard | Place it there: a ray from the eye through the cursor is intersected with the cockpit model; the hit point becomes the anchor's centre and the hit face's normal its facing. |
+| Mouse wheel, `+` / `-` | Grow / shrink the selected instrument by 5 % (2D about its centre; 3D keeps its proportions). |
+| **S** | Save. |
+| F12 or Esc | Leave the editor (unsaved changes stay for this flight only). |
+
+**Save** writes a small addon into the user's mods folder,
+`<user data>/mods/<campaign>-cockpit-<cockpit id>/`, with a `pack.yaml` (`kind: addon`,
+`targets: [<campaign>]`) and `rules/cockpit-layout.yaml` holding the cockpit's `instruments` and
+`anchors`. It loads with that campaign from then on and overrides the original layout key by
+key; delete the folder (or disable the pack) to go back. To ship a layout with your own mod,
+copy `cockpit-layout.yaml` into its `rules/`.
+
+Status: the 3D cockpit path, anchors and the editor are implemented; the on-screen checks are
+manual tests MT-2-14 to MT-2-17.
+
+Open a model straight in the viewer: `openinterceptor --model <ship id or mesh name>`. In the
+viewer, **W** cycles solid / solid + wireframe / wireframe, **[ ]** select faces (Shift: ten at
+a time) and show each face's number, corner count, texture, flags, overlay layer and UVs, **I**
+labels every face towards the camera, and **O** hides overlay-flagged faces.

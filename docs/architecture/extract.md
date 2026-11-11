@@ -13,7 +13,7 @@ flowchart LR
     CD --> I["TARG (TGA, incl. colour-mapped) → RGBA<br/>cockpit cyan → alpha → png()<br/>images/<dll>/<id>.png"]
     CD --> S["*.wav (MS/IMA ADPCM, PCM) → Pcm → to_wav_bytes<br/>sounds/<name>.wav"]
     CD --> R["*.ini, *.txt copied<br/>original-data/"]
-    M & T & I & S & R --> OUT["<DIR>/ with pack.ini (interceptor-extracted) and README.txt"]
+    M & T & I & S & R --> OUT["<DIR>/ with pack.yaml (interceptor-extracted) and README.txt"]
 ```
 
 - **Models**: the most detailed LOD, in the engine's convention (metres, +Y up, nose along
@@ -36,7 +36,7 @@ shared or committed. The README written into the folder says so.
 | `ExtractReport` | Counts per kind plus error messages; `summary()`. |
 | `model_to_obj(&Model, name) -> (obj, mtl)` | OBJ + MTL text for LOD 0. |
 | `png(&Image) -> Result<Vec<u8>, String>` | PNG encoding via the `image` crate. |
-| `pack_files() -> (pack.ini, README)` | The texts written at the top of the folder. |
+| `pack_files() -> (pack.yaml, README)` | The texts written at the top of the folder. |
 
 ## API Reference
 

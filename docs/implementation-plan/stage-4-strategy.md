@@ -10,7 +10,7 @@ Design: [strategy layer](../design/format-strategy.md), [interface](../design/fo
 
 | # | Item | Module |
 |---|---|---|
-| 4.1 | Campaign clock: dates, time speeds, auto-pause; the `[campaign]` and `[start:]` definitions; starting a new game with a chosen campaign and difficulty | `campaign` (new) |
+| 4.1 | Campaign clock: dates, time speeds, auto-pause; the `campaign` and `starts` definitions; starting a new game with a chosen campaign and difficulty | `campaign` (new) |
 | 4.2 | Star map: generated (classes, bodies, names, hidden black holes; seeded) and fixed maps; free and lane travel; endurance and stranding | `campaign::map` |
 | 4.3 | Squadrons, convoys and probes on flight plans; sensor coverage; contact detection; mission generation when they meet | `campaign` |
 | 4.4 | Economy: resources, income and expense expressions, markets (buy/sell), factories and queues with priorities, deliveries and losses, storage | `campaign::economy` |

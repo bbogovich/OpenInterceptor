@@ -38,13 +38,14 @@ flowchart TB
         S["sim<br/>World, flight, combat, systems, ai, targeting, collision"]
     end
     subgraph L3["3 · Content"]
-        C["content<br/>Content, vfs, pack, rules, scenario"]
+        C["content<br/>Content, vfs, pack, rules, schema, files,<br/>equipment, behaviour, scenario"]
+        SC["script<br/>conditions"]
     end
     subgraph L2["2 · Model"]
         M["model<br/>Model, ModelLod, MaterialGroup"]
     end
     subgraph L1["1 · Formats"]
-        F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, obj"]
+        F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj"]
     end
     APP --> R & H & AU & IN & S & C
     CK --> S & C & F
@@ -53,8 +54,8 @@ flowchart TB
     AU --> S & C
     IN --> S
     PL --> IN
-    S --> C
-    C --> M & F
+    S --> C & SC
+    C --> M & F & SC
     M --> F
 ```
 
@@ -66,7 +67,7 @@ rate, which is what makes it deterministic and unit-testable.
 ```mermaid
 flowchart LR
     CD[("player's CD<br/>DLLs, INI, WAV")] --> OD["content::vfs::OriginalData<br/>files by name + pe::ResourceFile"]
-    PK[("packs/*<br/>pack.ini, rules, scenarios, OBJ, PNG")] --> CT["content::Content::load"]
+    PK[("packs/*<br/>pack.yaml, rules, scenarios (YAML), OBJ, PNG")] --> CT["content::Content::load"]
     OD --> CT
     CT --> RU["content::rules::Ruleset"]
     CT --> SC["content::scenario::Scenario"]
@@ -130,7 +131,7 @@ flowchart LR
 ## API Reference
 
 Each layer's public API is on its own page: [Formats](formats.md), [Packs, VFS and
-rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md),
+rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md),
 [Rendering](rendering.md), [HUD](hud.md), [Input](input.md), [Audio](audio.md),
 [Platform](platform.md), [Testbed](testbed.md). `cargo doc --open` renders the `///` comments
 of every item.
@@ -142,7 +143,7 @@ of every item.
   ships and scenarios.
 - `openinterceptor --data <cd> --scenario flight-test --ship lightning --view chase` starts a
   scenario directly, skipping the launcher.
-- `OI_DEBUG_KEYS=1` prints the name of every key pressed (the name to use in `bindings.ini`).
+- `OI_DEBUG_KEYS=1` prints the name of every key pressed (the name to use in `bindings.yaml`).
 - Load problems that do not stop the program (missing texture, bad sound) are printed to
   standard error as `warning:` / `sound:` lines.
 - `RUST_BACKTRACE=1` for a panic's stack trace. Panics are bugs: bad data must produce an error.

@@ -5,7 +5,7 @@
 | Model | Wavefront **OBJ** + **MTL** | `v`, `vt`, `vn`, `f` (forms `1`, `1/2`, `1//3`, `1/2/3`, negative indices), `usemtl`, `mtllib`. Polygons are fan-triangulated, so keep them convex. Groups and objects are ignored. |
 | Material | MTL | `newmtl`, `Kd r g b` (flat colour, 0–1), `map_Kd file` (texture, relative to the `.mtl`; options before the file name are allowed). |
 | Texture | **PNG** or **TGA** | Any size; RGBA honoured. |
-| Cockpit art | PNG or TGA | Any resolution; stretched over the cockpit's design space (640×480 unless `Design` says otherwise). Use alpha for the window. See [Cockpits](cockpits.md). |
+| Cockpit art | PNG or TGA | Any resolution; stretched over the cockpit's design space (640×480 unless `design` says otherwise). Use alpha for the window. See [Cockpits](cockpits.md). |
 | 3D cockpit | OBJ + MTL | Metres around the pilot's eye at the origin, +Y up, looking along −Z. |
 | Replacement of an original asset | OBJ / PNG / WAV at its override path | See [Overrides and extraction](overrides.md); `--extract` produces starting files. |
 
@@ -14,7 +14,7 @@ behind the same interfaces, so original and mod assets can be mixed freely.
 
 ## Conventions
 
-- **Units: metres.** Use `ModelScale` in the ship's rules if your file uses other units.
+- **Units: metres.** Use `model_scale` in the ship's rules if your file uses other units.
 - **Axes: right-handed, +Y up, the nose pointing along −Z** (the engine's convention). Blender's
   OBJ exporter with "Forward: −Z, Up: Y" produces this.
 - **Texture coordinates**: standard OBJ (v up); the loader flips them for the engine.
@@ -36,7 +36,7 @@ behind the same interfaces, so original and mod assets can be mixed freely.
 - **Attachment points** (engine glows, gun mounts) come only from original models' manipulators
   in Stage 1; OBJ models get one engine glow at the back of their bounding box. Named attachment
   objects in OBJ files are planned for Stage 2.
-- **Collision**: craft collide as spheres (bounding radius); stations (`Kind = station`)
+- **Collision**: craft collide as spheres (bounding radius); stations (`kind: station`)
   collide against their triangles, so model the station's real shape.
 
 ## Re-skinning original models

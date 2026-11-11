@@ -1,14 +1,16 @@
 # Format: behaviours and scripting
 
-**Status: design.** Replaces the open question on [Scripting](../modding/scripting.md) with a
-two-tier design. Tier 1 is built in Stage 2 (behaviours) and Stage 3 (conditions and actions);
-the Tier 2 language decision is taken at the start of Stage 3.
+**Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2**; actions,
+the battle and campaign contexts, the remaining manoeuvres, targeting preferences and Tier 2
+are design. Replaces the open question on [Scripting](../modding/scripting.md) with a two-tier
+design; the Tier 2 language decision is taken at the start of Stage 3. The implemented form is
+documented for modders on [Behaviours and conditions](../modding/behaviours.md).
 
 ## Two tiers
 
 | Tier | What | Who needs it |
 |---|---|---|
-| **1. Declarative** | Behaviours, missions and events written as INI definitions, with a small **condition and action language** for the parts that vary (`hull < 0.3`, `research(plasma)`, `spawn(wave_2)`). Implemented in-crate: a lexer, parser, type checker and interpreter of a few hundred lines each — itself a teaching example. | Everything. Both shipped campaigns (`interceptor`, `default`) are written entirely in Tier 1. |
+| **1. Declarative** | Behaviours, missions and events written as YAML definitions, with a small **condition and action language** for the parts that vary (`hull < 0.3`, `research(plasma)`, `spawn(wave_2)`). Implemented in-crate: a lexer, parser, type checker and interpreter of a few hundred lines each — itself a teaching example. | Everything. Both shipped campaigns (`interceptor`, `default`) are written entirely in Tier 1. |
 | **2. Scripts** | Optional script files for behaviour Tier 1 cannot express (a boss with bespoke phases, a puzzle mission, a procedural campaign generator). Called through named hooks from Tier 1. | Mods that want it. |
 
 Why not scripts for everything: Tier 1 definitions can be **validated before play** (every
@@ -20,7 +22,9 @@ natural fit for it.
 ## Conditions
 
 A condition is an expression that evaluates to true or false. The same language is used in
-every `When`, `Requires`, `visible-when` and `If` key across the format.
+every `when`, `requires`, `visible_when` and `if` key across the format. **Implemented** for
+the object context ([reference](../modding/behaviours.md#the-condition-language),
+[architecture](../architecture/script.md)).
 
 ```text
 hull < 0.3 and not system_damaged(engines)
@@ -31,8 +35,8 @@ difficulty >= veteran
 ```
 
 - **Values**: numbers (with units `m`, `km`, `s`, `min`, `h`, `day`, `%`, converted to base
-  units), strings, booleans, ids (`plasma_beam`), and the difficulty levels as ordered
-  constants.
+  units), booleans, ids as query arguments (`plasma_beam`), and the difficulty levels as ordered
+  constants. (Implemented: all but strings, which no context needs yet.)
 - **Operators**: `+ - * /`, comparisons, `and or not`, parentheses.
 - **Functions**: a fixed, documented query API per context (below). Unknown names, wrong
   argument types and misspelt ids are load errors, not run-time surprises.
@@ -41,7 +45,7 @@ difficulty >= veteran
 
 | Context | Queries available (examples) |
 |---|---|
-| Object (behaviours) | `hull`, `shields`, `energy`, `speed`, `system_damaged(x)`, `target_distance`, `target_class`, `target_hull`, `threats(within)`, `allies(within)`, `ammo(x)`, `time_in_state`, `random(p)` |
+| Object (behaviours) — **implemented** | `hull`, `shields`, `energy`, `speed`, `has_target`, `target_distance`, `target_hull`, `target_disabled`, `target_is_player`, `time_in_state`, `hit_recently(t)`, `random(p)`, `system_damaged(x)`, `threats(d)`, `allies(d)`, `missiles`, `difficulty`, `disabled`, `towing`, `prize_near(d)`. Not yet: `target_class`, `ammo(x)`. |
 | Battle (missions) | `count(...)`, `alive(name)`, `destroyed(name)`, `disabled(name)`, `captured(name)`, `time`, `objective(x)`, `player_hull`, `near(a, b, d)` |
 | Campaign (events, strategy) | `day`, `date`, `money`, `research(x)`, `researching(x)`, `module(x)`, `owns(system)`, `relation(faction)`, `flag(x)`, `counter(x)`, `missions_won(type)`, `losses(class)`, `resource(x)`, `threat(system)`, `difficulty` |
 
@@ -62,61 +66,94 @@ unlock(research: alien_navigation); start_mission(nova_theft, system: kepler)
 The action vocabulary per context is fixed and documented in the reference (Stage 3 and 4
 implement it). As with queries, everything is checked at load time.
 
-## Behaviours: `[behaviour:<id>]`
+## Behaviours: `behaviours: {<id>: …}`
 
 A behaviour is a **state machine** for one object: states, each running a built-in
 **manoeuvre** with parameters, and transitions with conditions. Built-in manoeuvres cover what
 the original AI does; their parameters are the tuning.
 
-```ini
-[behaviour:wraith]
-Start = engage
-; State: manoeuvre and its parameters
-State.engage = attack, range: 1.5km, fire_cone: 8, burst: 2s, evade_when_hit: yes
-State.evade = evade, duration: 3s, jink: 40
-State.flee = retreat, to: nearest_friendly_base
-; Transitions: from > to : condition
-Go.1 = engage > evade : hit_recently(1s) and random(0.4)
-Go.2 = evade > engage : time_in_state > 3s
-Go.3 = * > flee : hull < 0.25 and difficulty >= veteran
-; Targeting preferences, scored: higher wins
-Target = player 3, wingman 2, freighter 1
-Skill = aim: 0.6, reaction: 0.8s
+The **implemented** form (Stage 2):
 
-[behaviour:wraith@beginner]
-inherit = behaviour:wraith
-Skill = aim: 0.35, reaction: 1.4s
-Go.3 =                         ; at Beginner they never flee (empty value removes the key)
-
-[behaviour:wraith@superhuman]
-inherit = behaviour:wraith
-Skill = aim: 0.9, reaction: 0.3s
-State.engage = attack, range: 2km, fire_cone: 12, burst: 3s, evade_when_hit: yes, lead: yes
+```yaml
+behaviours:
+  wraith:
+    start: engage
+    states:                        # state: manoeuvre and its parameters
+      engage:
+        do: attack
+        range: 1.6km
+        fire_cone: 3
+        burst: {per_level: [0.6s, 0.8s, 1s, 1.2s, 1.5s]}
+        pause: {per_level: [2s, 1.6s, 1.2s, 0.9s, 0.6s]}
+        missiles: {per_level: [0, 0, 14s, 11s, 8s]}
+      jink: {do: evade, duration: 2s}
+      flee: {do: retreat, jump: true}
+    transitions:                   # tried in order; from "*" = any state
+      - {from: engage, to: jink, when: "hit_recently(0.3s) and random(0.4)"}
+      - {from: jink, to: engage, when: "time_in_state > 2s"}
+      - {from: "*", to: flee, when: "hull < 15% and difficulty >= veteran"}
+    skill:
+      aim: {per_level: [0.2, 0.35, 0.5, 0.65, 0.8]}
+      reaction: {per_level: [1.3s, 1s, 0.8s, 0.6s, 0.4s]}
+    variants:                      # per difficulty level: only what differs
+      beginner: {transitions: [{from: engage, to: jink, when: "random(0.2)"}]}
 ```
 
-### Difficulty variants
+Still design: targeting preferences (`target: {player: 3, wingman: 2, freighter: 1}`), more
+manoeuvre parameters (`evade_when_hit`, `jink`, `lead`, `retreat` to a point), and wingman
+orders as transitions. The original design sketch, in today's syntax:
 
-Any definition — not only behaviours — can have a variant for a difficulty level by appending
-`@<level>` to its id: `[ship:wraith@superhuman]`, `[mission:defend_opp@beginner]`,
-`[event:nova_theft@beginner]`. When a game is played at a level, the variant (if any) is used in
-place of the base definition. Variants normally `inherit` the base and change a few keys.
-Levels are defined by the campaign ruleset (the original has five: Beginner, Experienced,
-Veteran, Genius, Superhuman), so a mod can have any number.
+```yaml
+behaviours:
+  wraith:
+    start: engage
+    states:
+      engage: {do: attack, range: 1.5km, fire_cone: 8, burst: 2s, evade_when_hit: true}
+      evade: {do: evade, duration: 3s, jink: 40}
+      flee: {do: retreat, to: nearest_friendly_base}
+    transitions:
+      - {from: engage, to: evade, when: "hit_recently(1s) and random(0.4)"}
+      - {from: evade, to: engage, when: "time_in_state > 3s"}
+      - {from: "*", to: flee, when: "hull < 25% and difficulty >= veteran"}
+    target: {player: 3, wingman: 2, freighter: 1}     # targeting preferences, scored
+    skill: {aim: 0.6, reaction: 0.8s}
+    variants:
+      beginner:
+        skill: {aim: 0.35, reaction: 1.4s}
+        transitions:                                  # at Beginner they never flee
+          - {from: engage, to: evade, when: "hit_recently(1s) and random(0.4)"}
+          - {from: evade, to: engage, when: "time_in_state > 3s"}
+      superhuman:
+        skill: {aim: 0.9, reaction: 0.3s}
+        states:
+          engage: {range: 2km, fire_cone: 12, burst: 3s, lead: true}
+```
 
-A *table* that varies by difficulty does not need a variant: any numeric key accepts one value
-per level, `StartingMoney = 5000000, 4500000, 4000000, 3500000, 3000000`, as the original's
-`Think.ini` and `*Goodies` sections do.
+### Difficulty variants (implemented) { #difficulty-variants }
+
+Any definition — not only behaviours — can carry a `variants:` mapping with an entry per
+difficulty level, holding only the keys that differ; at that level the entry is merged over the
+definition (maps merge, lists and values replace). Levels are defined by the campaign ruleset
+(`campaign: {difficulty: [beginner, experienced, veteran, genius, superhuman], default_difficulty:
+veteran}` — the original's five), so a mod can have any number. (The earlier `kind:id@level`
+section idea was replaced by `variants` when the rules moved to YAML.)
+
+A value that varies by difficulty does not need a variant: any number accepts one value per
+level, `starting_money: {per_level: [5000000, 4500000, 4000000, 3500000, 3000000]}`, as the
+original's `Think.ini` and `*Goodies` sections do (a shorter list repeats its last value).
 
 ### Built-in manoeuvres
 
-`idle`, `patrol` (route or area), `formation` (on a leader), `attack` (pursuit with firing
+**Implemented:** `idle`, `circle`, `patrol` (circle round the spawn point), `attack`, `evade`,
+`retreat` (with `jump`), `turret`, `tow`. **Design:** the rest of this list. `idle`, `patrol` (route or area), `formation` (on a leader), `attack` (pursuit with firing
 discipline), `strafe` (attack runs on large targets), `evade`, `retreat` (to a point or
 hyperspace out), `escort` (stay near and defend), `intercept` (cut off a target before it
 reaches a point), `tow` (tug: tractor and haul a disabled ship), `launch` (carrier/freighter
 launching craft), `turret` (stationary aim and fire), `mine` (proximity trigger), `probe`
 (station-keeping with sensor/jamming effect), `follow_path` (convoy), `dock`. Each manoeuvre's
 parameters are documented with defaults. Wingmen use the same system with player orders as
-transitions (`Go = * > attack : order(attack_my_target)`).
+transitions (`{from: "*", to: attack, when: "order(attack_my_target)"}`; implemented so far as
+fixed wingman orders, with the class behaviour's attack parameters and skill).
 
 ### Weapon and equipment behaviours
 
@@ -130,14 +167,17 @@ Tier 2 hook.
 
 A Tier 1 definition can hand control to a script through a **hook**:
 
-```ini
-[behaviour:portal_guardian]
-State.phase_3 = script, call: scripts/guardian.lua:phase_3, every: 0.5s
+```yaml
+behaviours:
+  portal_guardian:
+    states:
+      phase_3: {do: script, call: "scripts/guardian.lua:phase_3", every: 0.5s}
 ```
 
-```ini
-[event:custom_ending]
-Do = script(scripts/ending.lua:run)
+```yaml
+events:
+  custom_ending:
+    do: ["script(scripts/ending.lua:run)"]
 ```
 
 - Scripts see the same query and action API as Tier 1 (so nothing is reachable from a script

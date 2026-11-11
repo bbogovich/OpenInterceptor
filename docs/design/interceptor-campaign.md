@@ -2,7 +2,7 @@
 
 **Status: design; authored across Stages 2–6, playable start to finish at the end of
 [Stage 5](../implementation-plan/stage-5-campaign.md).** The existing `interceptor` pack grows
-into a `kind = campaign` mod that plays the whole original campaign from the player's CD. It is
+into a `kind: campaign` mod that plays the whole original campaign from the player's CD. It is
 the **primary test case** of the engine: if a system of the original cannot be expressed, the
 format is incomplete.
 
@@ -15,41 +15,42 @@ numbers needed to reference them (mesh names, section names, values the rules re
 
 ```text
 packs/interceptor/
-  pack.ini                     kind = campaign, requires_original = yes, format = 1
+  pack.yaml                    kind: campaign, requires_original: true, format: 2   (exists)
   campaign/
-    campaign.ini               [campaign], [start:interceptor], endings
-    doomsday.ini               [arc:doomsday], [plan:doomsday], warnings
-    score.ini                  [score:interceptor] (MissionScores by name), reports
+    campaign.yaml              campaign: (difficulty levels exist), starts:, endings
+    doomsday.yaml              arcs: doomsday, plans: doomsday, warnings
+    score.yaml                 scores: interceptor (MissionScores by name), reports
   strategy/
-    map.ini                    [map:frontier] generated; [starclass:]×9; [body:]; travel
-    factions.ini               xcom, alien, corporate (funding), pirates, cult, arms dealer, gsc
-    economy.ini                resources, income, expenses, market, factory, delivery, storage
-    research.ini               71 topics: inherit original:GameSettings.ini/R_*, + Unlocks, Appears
-    salvage.ini                13 sets: inherit the *Goodies sections
-    bases.ini                  [basetype:xcom], [basetype:alien], templates
-    modules.ini                68 modules: inherit M_*, + Effects, OnDestroyed, model sets
-    items.ini                  beams, launchers, missiles, mines, equipment: inherit originals
-    pilots.ini                 [pilots]: ranks inherit RankAdvancement*, formulas authored
-    strategist.ini             [strategist:alien]: Think.ini values by reference + rules
-  rules/                       Stage 1–2 combat rules (ships, flight, cockpits, sounds)
+    map.yaml                   maps: frontier (generated); star_classes ×9; bodies; travel
+    factions.yaml              xcom, alien, corporate (funding), pirates, cult, arms dealer, gsc
+    economy.yaml               resources, incomes, expenses, markets, factories, deliveries, storage
+    research.yaml              71 topics: inherit original:GameSettings.ini/R_*, + unlocks, appears
+    salvage.yaml               13 sets: inherit the *Goodies sections
+    bases.yaml                 base_types: xcom, alien; templates
+    modules.yaml               68 modules: inherit M_*, + effects, on_destroyed, model sets
+    items.yaml                 beams, launchers, missiles, mines, equipment: inherit originals
+    pilots.yaml                pilots: ranks inherit RankAdvancement*, formulas authored
+    strategist.yaml            strategists: alien — Think.ini values by reference + rules
+  rules/                       combat rules (ships, weapons, systems, flight, cockpits, sounds;
+                               exist as YAML today)
   models/
-    modelsets.ini              21 class model sets, 11 station sets, module sets with textures
-    debris.ini                 the 28 debris sets
-    effects.ini                explosions, shock waves, shield rings
+    modelsets.yaml             21 class model sets, 11 station sets, module sets with textures
+    debris.yaml                the 28 debris sets
+    effects.yaml               explosions, shock waves, shield rings
   behaviours/                  per-class AI with Beginner…Superhuman variants
   missions/                    27 mission types, simulator types, the final mission
   events/                      side missions, messages, news triggers, reports
   interface/                   screens laid out with original wrapper art; cockpits A/B/C
   text/en/                     imports: original:LangFile1.txt, starcorp1, Names1, news1, short1
-  scenarios/                   testbed arenas (Stage 1, kept)
+  scenarios/                   testbed arenas (exist as YAML today, kept)
 ```
 
 ## Import, reference, author
 
 | Kind of content | How the mod gets it |
 |---|---|
-| Numbers in `GameSettings.ini`, `Think.ini`, `soundfx.ini`, `MPSettings.INI` | `inherit = original:<file>/<section>` and per-key references (`think:<section>/<key>`); never copied |
-| Text | `Text = original:LangFile1.txt` and the other text files, imported at load under `orig.*` keys; the mod's own text files only map ids to those keys |
+| Numbers in `GameSettings.ini`, `Think.ini`, `soundfx.ini`, `MPSettings.INI` | `inherit: original:<file>/<section>` (implemented; original keys map to field names by spelling, `HitPoints` → `hit_points`) and per-key references (`think:<section>/<key>`); never copied |
+| Text | `text: original:LangFile1.txt` and the other text files, imported at load under `orig.*` keys; the mod's own text files only map ids to those keys |
 | Models, textures, images, sounds, music, video | `original:` references and override paths (Stage 1) |
 | Tables the executable holds (class → mesh, debris sets, module texture triples, star visuals) | Written as rules naming the original meshes and textures — facts needed to reference the data, recorded once in the mod |
 | Rules the executable holds (mission compositions, AI, story, yields, formulas) | **Authored** from the [analysis](original-analysis.md); each definition's comment cites its source (guide chapter, CD string, play-test) and confidence |
@@ -59,17 +60,18 @@ packs/interceptor/
 Original section names become readable ids, with the original name kept as the inheritance
 source:
 
-```ini
-[research:tri_titanium]
-inherit = original:GameSettings.ini/R_<topic>   ; Level, FileSize, Prereq* (section name illustrative)
-Size = {FileSize} * 1000                 ; the original's unit is k TQ
-Requires = research(wraith_examination)  ; numeric Prereq ids resolved to readable ids
-Unlocks = item:tri_titanium_armor, hull:firestar       ; AUTH: guide ch. 3
-Name = @orig.R_<topic>.found              ; from short1.txt
+```yaml
+research:
+  tri_titanium:
+    inherit: original:GameSettings.ini/R_<topic>   # level, file_size, prereq* (section name illustrative)
+    size: "file_size * 1000"                 # the original's unit is k TQ
+    requires: "research(wraith_examination)" # numeric Prereq ids resolved to readable ids
+    unlocks: [items.tri_titanium_armor, hulls.firestar]   # AUTH: guide ch. 3
+    name: "@orig.R_<topic>.found"            # from short1.txt
 ```
 
-Numeric tech ids in prerequisite keys (`Prereq1 = 12`) are translated by a mapping table in the
-mod (`[techids]`), checked by `--check` against the original file so a mistake is reported, not
+Numeric tech ids in prerequisite keys (`Prereq1=12` in the original file) are translated by a mapping table in the
+mod (`tech_ids:`), checked by `--check` against the original file so a mistake is reported, not
 silently wrong.
 
 ## Fidelity process

@@ -14,7 +14,8 @@ flowchart LR
     RD --> XT["xtxr::parse → XTexture"]
     RD --> TG["tga::decode → Image"]
     RD --> WV["wav::decode → Pcm"]
-    TXT["&str"] --> INI["ini::Ini::parse"]
+    TXT["&str"] --> INI["ini::Ini::parse<br/>(original INI; legacy settings)"]
+    TXT --> YML["yaml::parse → Node<br/>(mod files, settings, bindings)"]
     TXT --> OBJ["obj::parse → ObjMesh<br/>obj::parse_mtl"]
 ```
 
@@ -30,7 +31,8 @@ indices) → return owned data.
 | `formats::xtxr` | `XTXR` palettised textures | Palette 0 (full brightness) of 16 RGB555 shade palettes; top mip only. |
 | `formats::tga` | TGA (16/24/32-bit, raw or RLE) | Optional colour key (cockpit cyan `0x03DF`) → transparent black. |
 | `formats::wav` | RIFF WAVE: PCM 8/16, MS ADPCM, IMA ADPCM | Re-encodes to PCM WAV in memory for playback. |
-| `formats::ini` | INI text | Case-insensitive sections/keys, `;` comments, layered merge. |
+| `formats::ini` | INI text | Case-insensitive sections/keys, `;` comments, layered merge. Since Stage 2 used for the **original** CD's INI files (`inherit: original:…`) and to migrate old `settings.ini` / `bindings.ini`; mod files are YAML. |
+| `formats::yaml` | A strict subset of YAML | Block and flow mappings and sequences, plain/quoted scalars, `|` and `>` block text, `#` comments. Rejects tabs, anchors, aliases, tags, several documents, complex keys and multi-line plain scalars with a line number. Every scalar stays text (with a `quoted` flag); the schema layer gives it a type. Also writes YAML (`to_yaml`). Why hand-written: DEV-030. |
 | `formats::obj` | Wavefront OBJ + MTL | The mod model format. Negative indices, `v/vt/vn` forms. |
 
 ## Key Symbols
@@ -47,6 +49,7 @@ indices) → return owned data.
 | `tga::Image` | RGBA, rows top to bottom (also used as `content::Image`). |
 | `wav::Pcm` | Interleaved `i16` samples; `to_wav_bytes()`, `duration()`. |
 | `ini::Ini`, `ini::Section` | Parsed INI; `get`, `get_f32`, `get_bool`, `get_floats`, `merge_from`. |
+| `yaml::Node`, `yaml::Value`, `yaml::YamlError` | A YAML value with its 1-based line: `Null`, `Scalar { text, quoted }`, `Seq`, `Map` (entries in file order); an error with line and message. |
 | `obj::ObjMesh`, `obj::ObjMaterial` | Positions, uvs, normals, faces (as corner ranges), material names. |
 
 ## API Reference
@@ -61,6 +64,8 @@ indices) → return owned data.
 - `Ini::parse(&str)`, `Ini::parse_bytes(&[u8])` (UTF-8 or Latin-1), `Ini::parse_with_warnings`,
   `ini.section(name)`, `ini.get(section, key)`, `ini.merge_from(&other)`.
 - `obj::parse(&str) -> FResult<ObjMesh>`, `obj::parse_mtl(&str) -> Vec<ObjMaterial>`.
+- `yaml::parse(&str) -> Result<Node, YamlError>`; `Node::null(line)`, `Node::text(s, line)`,
+  `node.get(key)`, `as_str`, `as_map`, `as_seq`, `is_null`, `to_yaml()`.
 
 Test-only builders (`#[cfg(test)]`, crate-visible): `pe::build_test_pe`,
 `xmsh::build_test_xmsh`, `xtxr::build_test_xtxr`, `tga::build_test_tga` — so other modules'
@@ -74,3 +79,6 @@ tests can make fake DLLs and meshes.
   [format pages](../original-game/formats/index.md).
 - To inspect a resource by hand, the format pages describe the layout field by field; the
   `build_test_*` helpers show the same layout as code.
+- A YAML problem reads `line N: message` (callers add the file name). The reader works line by
+  line: a block parser for indentation (`BlockParser`) and a small flow parser for `[…]` and
+  `{…}`, which may wrap over several lines inside the brackets.

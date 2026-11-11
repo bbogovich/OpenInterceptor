@@ -42,7 +42,16 @@ tested without it in mind — at zero added build weight.
 
 PE resources, XMSH, XTXR, TGA, WAV (PCM, MS ADPCM, IMA ADPCM), INI, OBJ/MTL, command-line
 parsing, the gamepad layers (Objective-C shim compiled by `build.rs`; Linux joystick API with
-`std`), random numbers for AI and effects, the starfield. Each is a few hundred lines with
-tests.
+`std`), random numbers for AI and effects, the starfield, and since Stage 2 the **YAML** reader
+and writer, the **schema** validator and JSON Schema exporter, and the **condition language**
+(lexer, parser, type checker, evaluator). Each is a few hundred lines with tests.
 
-The next candidate is the Stage 3 scripting language (see [Scripting](../modding/scripting.md)).
+**YAML, evaluated (Stage 2).** Mod files moved to YAML. The usual crate, `serde_yaml`, is
+unmaintained (archived by its author), and alternatives would bring `serde` and a YAML engine
+into the tree for a small part of what they do. Full YAML also behaves in ways that surprise
+modders (implicit typing such as `no` → false, anchors and aliases). The project's files need
+mappings, lists, scalars, block text and comments — about 750 lines in `formats::yaml`, with
+every value kept as text until the schema types it, so errors can name the file, line and key.
+Decision: build in-crate ([DEV-030](../deviations/index.md)).
+
+The next candidate is the Tier 2 scripting language (see [Scripting](../modding/scripting.md)).

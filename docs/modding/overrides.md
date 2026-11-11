@@ -28,12 +28,12 @@ openinterceptor --extract ~/Desktop/interceptor-extracted
 
 ```text
 interceptor-extracted/
-  README.txt, pack.ini      (id interceptor-extracted; personal use only)
+  README.txt, pack.yaml     (id interceptor-extracted; personal use only)
   models/<name>.obj, .mtl   most detailed LOD; textures referenced as ../textures/<tex>.png
   textures/<name>.png
   images/<dll>/<id>.png     cockpit cyan already turned into transparency
   sounds/<name>.wav         16-bit PCM (sound effects and music loops)
-  original-data/            the original INI and text files, for reference
+  original-data/            the original INI and text files, for reference (read-only data)
 ```
 
 The extracted files are converted copies of copyrighted content from **your** CD: use them to
@@ -50,7 +50,7 @@ repaint, without touching any rule.
 
 1. **Extract** (once): `openinterceptor --extract ~/interceptor-extracted`.
 2. **Find the image**: the Lightning II uses cockpit `a`, whose rules say
-   `Image = original:CockpitA.dll#12000`. Its extracted copy is
+   `image: original:CockpitA.dll#12000`. Its extracted copy is
    `~/interceptor-extracted/images/cockpita/12000.png`.
 3. **Paint** a new version at any resolution with the **same 4:3 proportions** — for example
    2560×1920. Keep the windows transparent (alpha 0) and keep the instruments' screens where
@@ -60,16 +60,17 @@ repaint, without touching any rule.
 
     ```text
     ~/Library/Application Support/OpenInterceptor/mods/hd-cockpit/
-      pack.ini
+      pack.yaml
       images/cockpita/12000.png      ← your repaint
     ```
 
-    ```ini
-    [pack]
-    id = hd-cockpit
-    name = HD cockpit
-    depends = interceptor
-    requires_original = yes
+    ```yaml
+    id: hd-cockpit
+    name: HD cockpit
+    kind: addon
+    targets: [interceptor]
+    requires_original: true
+    format: 2
     ```
 
 5. **Check and fly**: `openinterceptor --check` (no errors), then the Asset browser shows
@@ -78,25 +79,26 @@ repaint, without touching any rule.
 
 This was verified with a 2560×1920 test repaint: it replaced the original in game and every
 instrument stayed in place. To compare with the original, add `hd-cockpit` to
-`[packs] disabled` in `settings.ini`.
+`packs: {disabled: [...]}` in `settings.yaml`.
 
 **A widescreen redesign** (16:9 art rather than 4:3) needs new instrument positions too: add a
-`[cockpit:a]` section to your mod with `Design = 1920, 1080` and new `Instrument.*` rectangles
-in that space — only the keys you change; the rest is inherited by layering. See
+`cockpits: {a: …}` entry to your mod with `design: [1920, 1080]` and new `instruments`
+rectangles in that space — only the keys you change; the rest is inherited by layering. For a
+3D cockpit the in-game layout editor (F12) writes such an addon for you. See
 [Cockpits](cockpits.md).
 
 ## Other common overrides
 
 - **New ship model**: export from Blender as OBJ (metres, +Y up, forward −Z) to
   `models/<original mesh name>.obj` — e.g. `models/inttypea.obj` — and every Lightning II uses
-  it. For a ship of your own, add a `[ship:...]` section instead, with `Model = models/...`.
+  it. For a ship of your own, add a ship under `ships:` instead, with `model: models/...`.
 - **Re-skin**: `textures/<texture name>.png` changes that texture on every model using it.
 - **Sounds**: `sounds/xwinder.wav` replaces the X-Winder launch sound.
 
 ## Troubleshooting
 
 - *Nothing changed*: the file name or folder does not match — compare with the extracted path
-  or the Asset browser label (all lower-case). Is the pack disabled in `settings.ini`?
+  or the Asset browser label (all lower-case). Is the pack disabled in `settings.yaml`, or does its `targets` miss the campaign being played?
 - *Black or cyan edges*: the image needs real alpha; the cyan key is only applied to the
   original files.
 - *Model faces the wrong way*: the engine's forward is −Z; rotate the model 180° before export.

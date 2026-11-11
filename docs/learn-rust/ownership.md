@@ -59,6 +59,40 @@ The signatures tell you, without reading the body, that drawing cannot change th
 compiler enforces it: this rule ("one writer **or** many readers") is what removes data races
 and many use-after-free bugs at compile time.
 
+## Interior mutability: `Cell` — `src/sim/ai.rs`
+
+The condition language asks a context for values through a trait whose method takes `&self`:
+
+```rust
+pub trait Context {
+    fn query(&self, id: u16, args: &[f32]) -> Value;
+}
+```
+
+Shared access is right for almost every query — reading a ship's hull changes nothing. But
+`random(0.3)` must advance the pilot's random-number generator, which is a change. Rather than
+make every query take `&mut self`, `ObjectContext` keeps the generator state in a
+`std::cell::Cell`:
+
+```rust
+pub struct ObjectContext<'a> {
+    pub world: &'a World,
+    pub me: ShipId,
+    pub state_time: f32,
+    pub rng: Cell<u64>,         // changeable through &self
+}
+// inside query(&self, …):
+let mut r = self.rng.get();     // copy out
+let roll = next_random(&mut r);
+self.rng.set(r);                // copy back
+```
+
+`Cell<T>` allows changing a `Copy` value through a shared reference by only ever copying it
+in and out — no reference to the inside is ever handed out, so the borrow rules still hold
+without any run-time check. (`RefCell` does the same for non-`Copy` values, checking borrows at
+run time.) After the transitions have been tested, the AI copies the advanced state back into
+its own memory with `cx.rng.get()`.
+
 ## A common beginner problem
 
 ```rust

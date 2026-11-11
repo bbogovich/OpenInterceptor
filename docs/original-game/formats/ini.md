@@ -19,7 +19,10 @@ whitespace, some empty values. Section and key names are case-insensitive. **ver
 | `MissionScores`, `*HP` | Scores; station hit points |
 
 The engine reads this file as **data**: the Interceptor pack's rules import its sections with
-`inherit = original:GameSettings.ini/<Section>` (see [Rulesets](../../modding/rulesets.md)).
+`inherit: original:GameSettings.ini/<Section>` in their YAML rules; original key names become
+field names by spelling (`HitPoints` → `hit_points`; `Side` → `faction`) — see
+[Rulesets](../../modding/rulesets.md#layering-inherit-delete-and-list-edits). Mod files
+themselves are YAML since mod format 2.
 
 ## Others
 

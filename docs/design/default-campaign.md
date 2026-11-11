@@ -156,10 +156,11 @@ outward, no degenerate faces, triangle budgets) before it is written.
 | Textures | Hull paint per faction plus *scorched* and *burnt* damage variants |
 | Cockpit | The 3D art-deco Guard cockpit `guard` (no 2D art), with bezels for every instrument including `power` and `systems`; rectangles measured by projecting the bezels with the cockpit camera |
 | Sounds | Synthesised weapon, explosion, hit, lock, afterburner, saucer hum, theremin sting, UI, and Stage 2 system sounds (system damage, tractor, cloak, hyperspace; ECM reuses the target click) |
-| Rules | Seven factions, six beams and two missiles, systems and power rules (`rules/systems.ini`), equipment fits by `Systems.add`, flight rules (`HyperspaceTime = 8`) |
+| Rules | YAML (mod format 2): seven factions, six beams and two missiles, systems and power rules (`rules/systems.yaml`), equipment fits by `systems+`, flight rules (`hyperspace_time: 8s`), behaviours for every enemy type and the Guard pilots (`rules/behaviours.yaml`) with aim, reaction and fire discipline per level, the campaign ruleset with four difficulty levels (`campaign/campaign.yaml`; default *ranger*) |
+| Cockpit layout | The Guard cockpit's instruments are also **anchored** on the dashboard (drawn in perspective); `models/guard_cockpit.instruments.yaml` is generated with the model |
 | Scenarios | `rocket-vs-saucer`, `dominion-raid`, `black-comet-ambush`, `systems-trial` |
 
-Not yet: model sets with damage states, behaviours with difficulty variants, the 2D cockpit, UI
+Not yet: model sets with damage states, the 2D cockpit, UI
 art, music, text.
 
 ## Built up by stage

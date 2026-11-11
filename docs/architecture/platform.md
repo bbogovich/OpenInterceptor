@@ -46,6 +46,6 @@ flowchart LR
 
 - macOS: a controller must be paired and show in System Settings → Game Controllers.
 - Linux: `ls -l /dev/input/js*`; your user needs read access. Non-Xbox pads may number axes
-  differently — remap buttons in `bindings.ini`.
+  differently — remap buttons in the controls menu or `bindings.yaml`.
 - The only `unsafe` block in the project is the FFI call in `src/platform/macos.rs`, with a
   `// SAFETY:` comment stating why it is sound.

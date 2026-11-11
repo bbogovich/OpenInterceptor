@@ -8,9 +8,9 @@ Read in order; each page builds on the previous one.
 
 | Page | You will be able to read… |
 |---|---|
-| [Ownership and borrowing](ownership.md) | Who owns the World, the meshes, the textures; why `&` and `&mut` matter |
-| [Lifetimes and borrowed bytes](lifetimes.md) | The format readers, which parse a DLL without copying it |
-| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`) |
+| [Ownership and borrowing](ownership.md) | Who owns the World, the meshes, the textures; why `&` and `&mut` matter; interior mutability with `Cell` (`ObjectContext`) |
+| [Lifetimes and borrowed bytes](lifetimes.md) | The format readers, which parse a DLL without copying it; naming lifetimes on a returned iterator (`rules::of`) |
+| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`); recursive enums and a recursive-descent parser (`script::Expr`) |
 | [Traits and generics](traits.md) | `Default`, `Debug`, `From`, `Iterator`, macroquad's `Camera` |
 | [Error handling](errors.md) | `Result`, `?`, per-layer error enums; why bad data never panics |
 | [Modules and visibility](modules.md) | The `src/` tree, `mod`, `pub`, `pub(crate)` |

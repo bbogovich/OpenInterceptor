@@ -47,10 +47,12 @@ Three mods define what "done" means:
 2. **One format for both campaigns.** Every construct the original needs has a simpler use in
    the default campaign, and vice versa ([coverage](coverage.md)). A feature only one of them
    would use is a sign the format is shaped around a game rather than a genre.
-3. **Extend what exists.** The Stage 1 conventions stay: INI rules with `inherit`, layering by
-   load order, `original:` references, per-asset overrides at fixed paths, OBJ/PNG/WAV for
-   mod art. New content types are new section kinds and folders, not a new syntax.
+3. **Extend what exists.** The established conventions stay: YAML rules files (mod format 2,
+   checked against schemas) with `inherit` (including `inherit: original:<file>/<section>` to
+   read the original INI data), layering by load order, `original:` references, per-asset
+   overrides at fixed paths, OBJ/PNG/WAV for mod art. New content types are new top-level
+   sections and folders, not a new syntax.
 4. **No original content in the repository.** The `interceptor` mod is rules and references;
    the remastered mod is *recipes* that the engine applies to the player's own files.
 5. **Everything is validated.** Every reference, condition and expression is checked at load
-   (`--check`) with a message naming the file, section and key.
+   (`--check`) with a message naming the file, line and key path.

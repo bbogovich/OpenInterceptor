@@ -27,14 +27,14 @@ flowchart LR
 | Stage | You can change |
 |---|---|
 | 1 | Ships (model, cockpit, flight values, mounts, hull/armour/shields, energy), the flight model itself (`newtonian` or `assisted`) and arena size, beam weapons, missiles, stations and objects, factions, cockpits (2D art at any resolution, own design space, 3D cockpit models), instrument layout, event sounds, scenarios with any mix of objects and nav points, additional models (OBJ) and textures (PNG/TGA), **per-asset replacement of any original model, texture, image or sound** |
-| 2 (in progress) | **Done:** mod kinds (`campaign`, `addon`, `library`) with `parent`, `targets`, `format`; ship systems and special equipment (`[system:<id>]`, `Systems`, `Systems.add`), power sharing (`[power]`), damage to systems and repair (`[damage]`), capture (`Capturable`), hyperspace time, crippled scenario objects (`destroyed_systems`, `hull`), the `power` and `systems` instruments. **To come:** AI behaviours per class, mines and probes, effects |
+| 2 (in progress) | **Done:** mod kinds (`campaign`, `addon`, `library`) with `parent`, `targets`, `format`; **YAML mod files with schemas** (format 2: units, did-you-mean errors, editor completion); ship systems and special equipment (`systems`, `systems+`), power sharing (`power`), damage to systems and repair (`damage`), capture (`capturable`), hyperspace time, crippled scenario objects (`destroyed_systems`, `hull`), the `power` and `systems` instruments; **AI behaviours** as state machines with the condition language; **difficulty levels** with per-level values and variants; 3D cockpit instruments anchored in perspective and the F12 layout editor. **To come:** model sets, mines and probes, effects |
 | 3 | Missions with objectives and triggers, wingman chatter, **scripts** |
 | 4 | Star map, bases and modules, research tree, manufacturing, economy, enemy strategy |
 | 5 | Menus, videos, music |
 
 ## Two ways to change the game
 
-1. **Rules and scenarios** — INI files in a pack. Add new ships, weapons and arenas, or change
+1. **Rules and scenarios** — YAML files in a pack. Add new ships, weapons and arenas, or change
    any value of an existing one by overriding just that key ([Rulesets](rulesets.md)).
 2. **Assets** — drop a file at an original asset's *override path* in a pack and it replaces
    that asset everywhere ([Overrides and extraction](overrides.md)). `openinterceptor
@@ -57,10 +57,10 @@ repository; ModDB refused automated access) describe its approach:
 |---|---|---|
 | Original assets | Read from the player's install; none shipped | Same |
 | Modern content | A separate HD Asset Pack download (new ship models, 3D cockpits, re-recorded music) | Any pack or mod |
-| Switching | Whole packs activated in the launcher's *Game Content* screen | Whole packs switched off in `settings.ini` `[packs] disabled` |
+| Switching | Whole packs activated in the launcher's *Game Content* screen | Whole packs switched off in `settings.yaml` (`packs: {disabled: […]}`) |
 | Granularity | Per pack; no documented per-asset override scheme | **Per asset**: a file at the override path replaces one original asset; everything else still comes from the CD |
-| Cockpits | Legacy VGA cockpit or a 3D cockpit with instruments on in-cockpit screens | Original 2D cockpit, HD/widescreen 2D art with its own design space, or a 3D cockpit model (instruments on in-cockpit screens are planned, Stage 5) |
-| Missions | "Sidecar" XML beside the unmodified original mission | Scenario INI files; rules `inherit` from original sections without editing them |
+| Cockpits | Legacy VGA cockpit or a 3D cockpit with instruments on in-cockpit screens | Original 2D cockpit, HD/widescreen 2D art with its own design space, or a 3D cockpit model with instruments anchored in perspective on its dashboard, placed with the in-game layout editor |
+| Missions | "Sidecar" XML beside the unmodified original mission | Scenario YAML files; rules `inherit` from original INI sections without editing them |
 | Tools | No public extractor; community format tools | Built-in `--extract` to OBJ/PNG/WAV at override paths |
 
 Both keep original files untouched and never redistribute them. XWVM's lesson on pack
@@ -70,8 +70,10 @@ is read once, deterministically, at start-up.
 ## Pages
 
 - [Make your first mod](first-mod.md): a walkthrough starting from the `default` campaign.
-- [Packs](packs.md): folder layout, `pack.ini`, asset references, re-skinning.
-- [Rulesets and layering](rulesets.md): the rule format and how mods override.
+- [Packs](packs.md): folder layout, `pack.yaml`, asset references, re-skinning.
+- [Rulesets and layering](rulesets.md): the YAML rule format, units, difficulty and how mods override.
+- [Behaviours and conditions](behaviours.md): AI state machines and the condition language.
+- [Mod file reference](reference.md): every key of every file type.
 - [Models and textures](models.md): bringing your own art.
 - [Overrides and extraction](overrides.md): replacing original assets; `--extract`; the HD cockpit walkthrough.
 - [Cockpits (HD and 3D)](cockpits.md): cockpit rules, design spaces, 3D cockpits.

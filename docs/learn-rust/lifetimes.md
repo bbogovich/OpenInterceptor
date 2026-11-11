@@ -73,3 +73,23 @@ pub fn triangles(&self) -> impl Iterator<Item = [Vec3; 3]> + '_ { … }
 
 `'_` says "this iterator borrows from `self`": you cannot drop or change the `ModelLod` while
 iterating its triangles.
+
+## Naming the lifetimes yourself — `src/content/rules.rs`
+
+When a returned iterator borrows from **two** inputs, the compiler cannot guess which one the
+`'_` means, so the lifetime is written out. While building the ruleset, the resolved
+definitions of one section are needed again and again:
+
+```rust
+fn of<'a>(
+    resolved: &'a [(String, String, Entry)],
+    section: &'a str,
+) -> impl Iterator<Item = &'a (String, String, Entry)> + 'a {
+    resolved.iter().filter(move |(s, _, _)| s == section)
+}
+```
+
+`'a` ties both inputs and the iterator together: the iterator may hold on to the slice *and* to
+`section` (the `move` closure captures it), so it lives no longer than either. It is a plain
+nested function rather than a closure because a closure's signature cannot declare a lifetime
+parameter like this.

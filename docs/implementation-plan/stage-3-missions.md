@@ -14,12 +14,12 @@ Design: [missions and events](../design/format-missions.md),
 | 3.2 | Mission types: roles (from situation, class lists per difficulty, player craft), arrivals and waves, objectives (win/draw/lose, optional), outcomes as action lists, timers, hazards (asteroids, black-hole pull, minefields, ion storm) | `mission` (new), `sim` |
 | 3.3 | Battle environments: `space`, `orbit`, `pocket`; backdrops from the map location | `render`, `sim` |
 | 3.4 | **Atmospheric flight**: drag, gravity, lift, hover, ground collision and landing, ceiling escape; per-ship `DragArea`, `Lift`, `Hover`, `AtmosphereMaxSpeed`, `Atmospheric` | `sim::flight` |
-| 3.5 | **Terrain**: heightfield from an image or a generator (craters, hills), texturing with detail maps, scattered objects, sky gradient, fog; ground installations (`Kind = ground`) and anti-air turrets | `render::terrain` (new), `sim` |
+| 3.5 | **Terrain**: heightfield from an image or a generator (craters, hills), texturing with detail maps, scattered objects, sky gradient, fog; ground installations (`kind: ground`) and anti-air turrets | `render::terrain` (new), `sim` |
 | 3.6 | HUD for atmosphere: altitude, vertical speed, horizon | `hud` |
 | 3.7 | Wingman comms menu and orders; radio chatter by trigger; voices | `sim`, `audio`, `hud` |
 | 3.8 | Hyperspace out with countdown; retreat outcomes; debrief screen (results, salvage, score) | `mission`, `app` |
 | 3.9 | Simulator missions with a setup screen | `app` |
-| 3.10 | **Tier 2 script language decision** (Lua via `mlua` recommended): dependency evaluation recorded on the dependency page, then hooks (`State = script`, `Do = script(...)`) and the sandboxed API | `script` |
+| 3.10 | **Tier 2 script language decision** (Lua via `mlua` recommended): dependency evaluation recorded on the dependency page, then hooks (`do: script`, `do: ["script(...)"]`) and the sandboxed API | `script` |
 | 3.11 | `interceptor`: the 27 mission types, the simulator types and the final mission's two parts as mission definitions (compositions from the guide, else *derived* estimates) | `packs/interceptor` |
 | 3.12 | `default`: the 11 generated mission types (2 on surfaces) and chapter missions 1, 2, 4, 5 playable from the testbed; terrain and sky assets generated | `packs/default`, `tools` |
 

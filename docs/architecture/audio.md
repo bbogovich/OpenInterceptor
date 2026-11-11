@@ -7,7 +7,7 @@ music loops and CD audio are Stage 5.
 
 ```mermaid
 flowchart LR
-    R["Ruleset: [sounds], beam Sound, missile Sound"] --> L["SoundBank::load (async)<br/>Content::load_sound → wav::decode (PCM / MS ADPCM / IMA ADPCM)<br/>→ Pcm::to_wav_bytes → load_sound_from_bytes"]
+    R["Ruleset: sounds, beam sound, missile sound"] --> L["SoundBank::load (async)<br/>Content::load_sound → wav::decode (PCM / MS ADPCM / IMA ADPCM)<br/>→ Pcm::to_wav_bytes → load_sound_from_bytes"]
     EV["world.events"] --> ES["event_sound(world, event, listener, ear)<br/>→ (SoundKey, volume)"]
     ES --> P["SoundBank::play"]
     L --> P

@@ -24,10 +24,12 @@ Copy the CD contents (the folder with `Resources/`, `ProgramFiles/` and `Animati
 extracted, put them in `game/CD Audio/`. The `game/` folder is git-ignored.
 
 You rarely need `--data`: the engine looks, in order, at `--data`, the
-`OPENINTERCEPTOR_DATA` variable, `settings.ini` `[paths] original` in the user data folder,
+`OPENINTERCEPTOR_DATA` variable, `settings.yaml` `paths: {original: …}` in the user data folder,
 `<user data folder>/original`, and finally `game/` in the development checkout
 ([Settings and data discovery](architecture/settings.md)). An installed copy keeps the CD (or
-a copy of it), `settings.ini`, `bindings.ini` and `mods/` in the user data folder.
+a copy of it), `settings.yaml`, `bindings.yaml` and `mods/` in the user data folder (a
+`settings.ini` or `bindings.ini` from an earlier build is read once and replaced by the YAML
+file).
 
 ## Build the macOS app
 
@@ -36,7 +38,7 @@ python3 tools/build_bundle.py            # dist/OpenInterceptor-0.2.2.app
 ```
 
 The app contains the engine and the built-in packs, never game data. The script points
-`settings.ini` at `game/` (or `--data PATH`); `--install-data` clones the CD into the user data
+`settings.yaml` at `game/` (or `--data PATH`); `--install-data` clones the CD into the user data
 folder instead, as a real install would. Open the app from Finder. See
 [Packaging](build/packaging.md).
 
@@ -52,6 +54,9 @@ target/release/openinterceptor --no-original
 # Choose the campaign (default: the last one chosen in the launcher, else interceptor
 # when the CD is found, else default):
 target/release/openinterceptor --campaign default
+
+# ... at a chosen difficulty level:
+target/release/openinterceptor --campaign default --difficulty space_ace
 
 # Go straight to one scenario with one ship:
 target/release/openinterceptor --data game --scenario flight-test --ship lightning
@@ -80,11 +85,12 @@ scripts/check.sh
 
 | Option | Meaning |
 |---|---|
-| `--data <PATH>` | The *Interceptor* CD or install folder. Without it: `OPENINTERCEPTOR_DATA`, then `settings.ini`, then `<user data>/original`, then `game/` in a checkout. |
-| `--mods <DIR>` | Folder of user mods (default: `settings.ini` `[paths] mods`, else `mods/` in the user data folder). |
+| `--data <PATH>` | The *Interceptor* CD or install folder. Without it: `OPENINTERCEPTOR_DATA`, then `settings.yaml`, then `<user data>/original`, then `game/` in a checkout. |
+| `--mods <DIR>` | Folder of user mods (default: `settings.yaml` `paths: {mods: …}`, else `mods/` in the user data folder). |
 | `--packs <DIR>` | Folder of built-in packs (default: `packs/` next to the program, or the source tree). |
 | `--no-original` | Ignore the original data even if available. |
 | `--campaign <ID>` | Load this campaign (default: the last one chosen in the launcher, else `interceptor` when the data is available, else `default`). |
+| `--difficulty <ID>` | Play at this difficulty level, a level id of the campaign (default: the last one chosen, else the campaign's `default_difficulty`). |
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
@@ -92,6 +98,8 @@ scripts/check.sh
 | `--screenshot <PNG>` | With `--scenario` or `--model`: render the starting screen for `--frames` frames, save it as a PNG and exit. |
 | `--frames <N>` | Frames to run before `--screenshot` (default 120). |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; `--campaign` checks one. |
+| `--soak <SCENARIO>` | Play a scenario without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots) or `ai` (its class's behaviour). Use with `--ship`, `--campaign`, `--difficulty`. |
+| `--write-schemas <DIR>` | Write the JSON Schema files of the mod file types (`pack.schema.json`, `rules.schema.json`, `scenario.schema.json`) for editor completion and checking, then exit. |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](modding/overrides.md)), then exit. |
 | `--list` | List campaigns (`*` = loaded), packs, playable ships and scenarios, then exit. |
 | `--windowed` / `--fullscreen` | Window mode (windowed is the default). |
@@ -100,7 +108,7 @@ scripts/check.sh
 Environment: `OPENINTERCEPTOR_DATA` (default for `--data`), `OI_DEBUG_KEYS=1` (print key
 names as you press them).
 
-The user data folder (`settings.ini`, `bindings.ini`, `original/`, `mods/`) is `~/Library/Application Support/OpenInterceptor/`
+The user data folder (`settings.yaml`, `bindings.yaml`, `original/`, `mods/`) is `~/Library/Application Support/OpenInterceptor/`
 on macOS and `$XDG_DATA_HOME/openinterceptor/` (default `~/.local/share/openinterceptor/`) on
 Linux.
 

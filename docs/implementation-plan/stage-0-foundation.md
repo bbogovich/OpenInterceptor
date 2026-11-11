@@ -19,6 +19,6 @@
 |---|---|
 | Rust, one crate, macroquad 0.4.14 | Proven in ArenaVM and Looking Glass on this machine; OpenGL 3 on macOS and Linux; small. |
 | All format readers in-crate | Each is a few hundred lines; no crate exists for these formats anyway. |
-| INI for rules | The original uses INI, so original sections import directly; no parser dependency. |
+| INI for rules | The original uses INI, so original sections import directly; no parser dependency. *Revised in Stage 2:* mod files moved to a YAML subset with schemas (DEV-030); original INI sections are still imported through `inherit: original:…`. |
 | OBJ + PNG/TGA for mod art | Universal export targets; OBJ is trivial to parse. |
 | Gamepad without a crate | macOS GameController shim (pattern from Looking Glass) and Linux joystick API with std. |
