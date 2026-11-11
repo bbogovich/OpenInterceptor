@@ -22,6 +22,7 @@ Design: [missions and events](../design/format-missions.md),
 | 3.10 | **Tier 2 script language decision** (Lua via `mlua` recommended): dependency evaluation recorded on the dependency page, then hooks (`do: script`, `do: ["script(...)"]`) and the sandboxed API | `script` |
 | 3.11 | `interceptor`: the 27 mission types, the simulator types and the final mission's two parts as mission definitions (compositions from the guide, else *derived* estimates) | `packs/interceptor` |
 | 3.12 | `default`: the 11 generated mission types (2 on surfaces) and chapter missions 1, 2, 4, 5 playable from the testbed; terrain and sky assets generated | `packs/default`, `tools` |
+| 3.13 | **Logistics missions** (default campaign, [design](../design/logistics.md#mission-types-tied-to-logistics-stage-3)): `convoy_ambush` (protect a supply convoy; cargo lost if destroyed or captured) and `construction_defence` (a facility in its construction-stage model, hit points scaled by progress); roles from the strategy situation; auto-resolve when the player does not fly; the campaign context queries they need | `mission`, `script` |
 
 **Testbed adds**: a mission browser (every mission type of both campaigns, with difficulty and
 force choices), a terrain flight sandbox (atmospheric handling on several worlds), and a

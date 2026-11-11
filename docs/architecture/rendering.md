@@ -42,8 +42,9 @@ part of the drawn mesh at all (the OBJ reader sets them aside as attachment poin
 and throws the **debris set**: `pick` distinct pieces chosen with the effects' generator, each
 starting at its place in the object's model space with the object's velocity plus a random
 outward push and tumble, plus the generic `chunks`; wreckage darkens as it cools over its last
-third and disappears after the set's `life`. Missile detonations draw a fixed 25 m, 0.8 s
-fireball (the missile's `explosion` effect is not used yet).
+third and disappears after the set's `life`. Missile detonations draw the missile's `explosion` effect
+(`SimEvent::MissileExploded { position, effect }`; size in metres), else a 25 m, 0.8 s fireball.
+**Point-defence tracers** (`SimEvent::PointDefence`) are short streaks in the glow pass.
 
 ### The 3D cockpit pass
 

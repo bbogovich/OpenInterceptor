@@ -99,6 +99,7 @@ scripts/check.sh
 | `--frames <N>` | Frames to run before `--screenshot` (default 120). |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; `--campaign` checks one. |
 | `--soak <SCENARIO>` | Play a scenario without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots) or `ai` (its class's behaviour). Use with `--ship`, `--campaign`, `--difficulty`. |
+| `--language <CODE>` | Text language: the packs' `text/<CODE>/` folders (default `en`, or `settings.yaml` `game.language`). |
 | `--write-schemas <DIR>` | Write the JSON Schema files of the mod file types (`pack.schema.json`, `rules.schema.json`, `scenario.schema.json`) for editor completion and checking, then exit. |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](modding/overrides.md)), then exit. |
 | `--list` | List campaigns (`*` = loaded), packs, playable ships and scenarios, then exit. |

@@ -394,6 +394,10 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | MT-2-28 | Protected objectives and radar colours | `systems-trial`, `rocket-vs-saucer` | not run | | | |
 | MT-2-29 | Cockpit text legibility | `rocket-vs-saucer`, `systems-trial` (default) | not run | | | |
 | MT-2-30 | Top display bar and shield rings | any `interceptor` duel, each hull; `rocket-vs-saucer` | not run | | | |
+| MT-2-31 | Point defence | `base-assault`, `outpost-strike`, `duel-dreadnought` | not run | | | Build `a08c8bf` |
+| MT-2-32 | Sensor and jamming probes | `probe-net` (both campaigns) | not run | | | |
+| MT-2-33 | AI pilots use cloak, ECM and power | `duel-raider-saucer`, `duel-shade`, `rocket-vs-saucer` | not run | | | |
+| MT-2-34 | Text keys and a translation addon | Launcher, `--language` | not run | | | |
 
 ## Stage 2 cases
 
@@ -638,3 +642,34 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | Scenario | `duel-wraith` (interceptor) flown in a Lightning, Firestar and Avenger (the three cockpits); `rocket-vs-saucer` (default), cockpit view |
 | Steps | 1. Read the top bar at start. 2. Throttle up, use afterburner. 3. Let the Wraith shoot your nose, then your tail. 4. Lower shield power (F10) and watch the power strip. |
 | Expected | 1: the message sits in the lit band; `THR … m/s` in the left strip; `B-x S-x F100 A100` and `SYSTEMS OK` in the right strip; nothing overlaps the bar's dividers. 2: the throttle line updates and shows `BURN`. 3: the front scope's ring turns amber/red as the fore shield drops, then the rear's; a downed facing blinks red. 4: the power strip's letters change; a damaged system appears in the systems strip in amber/red. |
+
+### MT-2-31 — Point defence
+
+| Field | |
+|---|---|
+| Scenario | `outpost-strike` / `base-assault` (stations), `duel-dreadnought` (default) |
+| Steps | 1. Lock a missile on the station or dreadnought from about 3 km and fire several. 2. Fire a parallax / decoy rocket near it. 3. Watch its energy on the Target MFD while it shoots. |
+| Expected | 1: short tracers flash from the target towards your missiles inside about 1 km with the `point_defence` sound; roughly a third to two-fifths of shots destroy a missile, so some missiles still get through. 2: the guns also shoot at decoys. 3: each shot costs a little energy. Missile blasts show their own explosion effect (and sound, where the effect has one). |
+
+### MT-2-32 — Sensor and jamming probes
+
+| Field | |
+|---|---|
+| Scenario | `probe-net` in both campaigns |
+| Steps | 1. At the start, look at the radar. 2. Fly towards the hostile jamming probe; watch the radar and try a missile lock inside 2.5 km of it. 3. Destroy the jamming probe and lock again. 4. Destroy your own sensor probe (or let the enemy do it). 5. Have a cloaked enemy in range (`duel-shade` / `duel-raider-saucer`). |
+| Expected | 1: enemies around your sensor probe, 7 km ahead, already show on the radar, beyond your own radar range. 2: inside the jamming radius distant contacts disappear (half range) and the lock takes about twice as long. 3: normal again. 4: the far contacts vanish. 5: a cloaked enemy beyond its cloak range does not show on the radar, probe or not. |
+
+### MT-2-33 — AI pilots use cloak, ECM and power
+
+| Field | |
+|---|---|
+| Scenario | `duel-raider-saucer` (default), `duel-shade` (interceptor), `rocket-vs-saucer` |
+| Steps | 1. Watch the raider saucers / Shade as they close in. 2. Fire missiles at enemies (and at the dreadnought or Guard pilots). 3. Damage an enemy below half hull and watch its shots. |
+| Expected | 1: they stay cloaked (off the radar) until about 2 km from their target, then decloak to fire. 2: ships with ECM switch it on while your missiles are coming (your missiles lose lock more often). 3: hurt pilots favour shields: their shields recover faster and their beam fire slackens (slower capacitor recharge). |
+
+### MT-2-34 — Text keys and a translation addon
+
+| Field | |
+|---|---|
+| Steps | 1. Run the default campaign and read ship and scenario names. 2. Create `mods/default-de/` with `pack.yaml` (`kind: addon`, `targets: [default]`) and `text/de/ships.yaml` renaming `ship.comet.name`. 3. Run with `--language de`, then set `game: {language: de}` in `settings.yaml` and run without the option. 4. Add a rule with `name: "@ship.nope.name"` and run `--check`. 5. With the CD: `--check` in the interceptor campaign. |
+| Expected | 1: names read normally (no `@` keys showing). 2–3: the Comet has the new name; every other string stays English (fallback to `text/en/`). 4: `--check` reports the missing key; in game it shows as the key. 5: the summary counts the texts, including the 3 645 imported `orig.*` strings. |

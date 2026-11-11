@@ -104,6 +104,7 @@ my-campaign/
                         sounds, audio
                         (all files loaded, in file-name order)
   campaign/*.yaml       campaigns: the campaign ruleset (name, difficulty levels)
+  text/<lang>/*.yaml    player-visible strings by key; imports of the original's text
   scenarios/*.yaml      playable arenas (all files loaded)
   models/*.obj, *.mtl   models (any folder works; paths are written in the rules)
   textures/*.png, *.tga textures; also how a pack re-skins a model texture by name

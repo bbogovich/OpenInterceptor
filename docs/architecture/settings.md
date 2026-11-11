@@ -16,7 +16,7 @@ OpenInterceptor-0.2.2.app/Contents/           (the program — safe to share)
 
 ~/Library/Application Support/OpenInterceptor/      (macOS)
 $XDG_DATA_HOME/openinterceptor/ or ~/.local/share/openinterceptor/   (Linux)
-  settings.yaml    paths: original, mods; packs: disabled; game: campaign, difficulty
+  settings.yaml    paths: original, mods; packs: disabled; game: campaign, difficulty, language
   bindings.yaml    controls (created on first run)
   original/        optional copy of the CD (tools/build_bundle.py --install-data)
   mods/            one folder per mod
@@ -50,7 +50,8 @@ packs:
   disabled: [hd-cockpit-test]
 game:
   campaign: default
-  difficulty: ranger
+  difficulty: ranger        # a level of game.campaign: ignored when another campaign loads
+  language: en              # text/<language>/ folders (--language overrides)
 ```
 
 **Migration.** Builds before the YAML formats wrote `settings.ini` and `bindings.ini`. When
@@ -66,7 +67,7 @@ and ignored from then on.
 
 | Symbol | What it is |
 |---|---|
-| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`, `difficulty: Option<String>`. |
+| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`, `difficulty: Option<String>`, `language: Option<String>`. |
 | `settings::Source` | Which rule found the data: `CommandLine`, `Environment`, `SettingsFile`, `UserDataFolder`, `DevelopmentTree`. |
 | `cli::user_data_dir()` | The per-user folder for this platform. |
 | `cli::find_packs_dir(exe)` | `./packs`, next to the program, `../Resources/packs` inside an app bundle, then the source tree. |
@@ -80,7 +81,9 @@ and ignored from then on.
   pure apart from `is_dir` checks; tested with temporary folders.
 - `cli::Options::content_config()` assembles a `ContentConfig` from all of the above
   (`campaign` = `--campaign`, else `game.campaign`; `difficulty` = `--difficulty`, else
-  `game.difficulty`).
+  `game.difficulty` **only when the loaded campaign is `game.campaign`** — a remembered level
+  belongs to its campaign, so `--check` checks every other campaign at its default level;
+  `language` = `--language`, else `game.language`, else `en`).
 
 ## Debugging
 

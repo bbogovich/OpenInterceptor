@@ -93,6 +93,33 @@ chapter condition.
 is lost). **Defeat**: the Engine completes; the Guard's last base falls; or the Senate withdraws
 recognition (funding at 0 for 60 days).
 
+## Logistics: mines, research stations and foundries (planned)
+
+The user has asked for the default campaign's strategy layer to run on **supply lines**
+([design](logistics.md)):
+
+- **New base types**: mining facility, research station, manufacturing center, built in star
+  systems according to their resources; research stations only in systems meeting a research
+  site's criteria (a nebula, a pulsar…).
+- **Resources** mined over time (cosmium first) supply research stations and manufacturing
+  centers; manufacturing is time-based by recipe.
+- **Supply ships** carry resources from mines to foundries and research stations, and products
+  from foundries to the Guard's bases, dispatched when the deliverables are ready. The Dominion
+  and the raiders ambush them; a destroyed or captured convoy never delivers.
+- **Research stations** open tech branches that ordinary bases cannot research (for example
+  theremin shielding at a nebula lab).
+- **Survey probes** (the Sky-Eye) are sent from a base to nearby systems to find which station
+  types they suit.
+- **Fighters** can be assigned to the new facilities, defending them and escorting their convoys.
+- **Construction** takes time and passes through construction stages, each with its own model
+  (scaffold, frame, cladding); the Dominion may try to destroy a facility before it is finished.
+
+This fits the premise — both sides race to mine the belts — and gives the Escort and Convoy raid
+mission types a strategic cause. The Regent's Eclipse Engine shipments use the same convoys.
+Owners: Stage 4 (economy and logistics), Stage 3 (convoy-ambush and construction-defence
+missions), Stage 5 (the Dominion's use of supply lines); the generator will produce the stage
+models. Open questions are listed on the [design page](logistics.md#open-questions).
+
 ## Content at a glance
 
 | Area | Default campaign | Interceptor equivalent |
@@ -114,7 +141,8 @@ recognition (funding at 0 for 60 days).
 |---|---|
 | Intercept | Destroy a Dominion strike group before it reaches a colony |
 | Defend | Hold a base, colony, mine or allied station |
-| Escort | Bring a convoy (prospector, Cartel or Senate) through |
+| Escort | Bring a convoy (prospector, Cartel or Senate) through — and, with [logistics](logistics.md), the Guard's own supply rockets (`convoy_ambush`) |
+| Construction defence | Hold a facility under construction against a Dominion strike ([logistics](logistics.md#mission-types-tied-to-logistics-stage-3), planned) |
 | Convoy raid | Destroy or capture Dominion cargo orbs (slows the Engine) |
 | Strike | Destroy a Dominion mine, pod or base |
 | Patrol | Sweep a system; random contacts |

@@ -76,16 +76,17 @@ chase view, and radar scopes offset from cockpit A's art. Seen fixed in the mode
 
 ## Stage 2 progress
 
-Build **0.2.2** (Cargo version; 0.3.0 is reserved for Stage 2 complete). Main `47629c0`
+Build **0.2.2** (Cargo version; 0.3.0 is reserved for Stage 2 complete). Main `162bec7`
 (first delivery `7594041`; YAML formats `13d8d19`; behaviours, conditions and difficulty
 `1e8a598`; anchored instruments and layout editor `dd92045`; enemy behaviours for both campaigns
 and `--soak` `f638b44`; looks `b097c83`; guidance and mines `7997e53`; station modules `c7d9301`,
-`a062822`; cue table `8369fe9`; target preferences `47629c0`); **253 unit tests** on macOS;
+`a062822`; cue table `8369fe9`; target preferences `47629c0`; point defence `a08c8bf`; probes
+`69d247a`, `d798f30`; AI systems use `c0a470d`; text keys `162bec7`); **262 unit tests** on macOS;
 `--check` runs per campaign.
 
 | Item | Status | Where |
 |---|---|---|
-| Mod kinds `campaign` / `addon` / `library`, `parent`, `targets`, `format`, active set, one campaign at a time (`--campaign`, `settings.yaml` `game.campaign`, launcher Tab), `--check` per campaign, `--list` campaigns (2.1) | **Done** (text keys not yet) | `src/content/pack.rs`, `src/content/mod.rs` |
+| Mod kinds `campaign` / `addon` / `library`, `parent`, `targets`, `format`, active set, one campaign at a time (`--campaign`, `settings.yaml` `game.campaign`, launcher Tab), `--check` per campaign, `--list` campaigns (2.1) | **Done** (text keys done in `162bec7`) | `src/content/pack.rs`, `src/content/mod.rs` |
 | Ship systems with hit points, conditions (OK / damaged / inoperative / destroyed), damage to a random system, repair worst first, damage control, disabled ships (2.5) | **Done** | `src/content/equipment.rs`, `src/sim/systems.rs` |
 | Power: beam and shield charge A–E within a budget, transfers, shield balance, recharge by setting (2.6) | **Done** | `src/sim/systems.rs` |
 | Special systems: VCT, tractor (tow, capture on hyperjump), cloak (hidden beyond range, dropped by firing), ECM (missiles lose lock, enemy lock halved), damage control, afterburner (2.7) | **Done** (cloak lock-break by difficulty with 2.8) | `src/sim/systems.rs`, `combat.rs`, `flight.rs` |
@@ -103,12 +104,16 @@ and `--soak` `f638b44`; looks `b097c83`; guidance and mines `7997e53`; station m
 | Difficulty levels: `campaign.difficulty`, launcher D, `--difficulty`, `settings.yaml`; `--soak` balance runs | **Done** | `src/content/rules.rs`, `src/app/launcher.rs`, `src/soak.rs` |
 | HUD text fitted to instruments; 3D-cockpit instruments anchored in perspective; cockpit layout editor (F12) | **Done** | `src/hud/`, `src/app/flight.rs` |
 | Looks: model sets (texture swaps, damage levels, states), debris sets, effects with shock waves; viewer D (2.2–2.4) | **Done** (XSPT sprite explosions deferred) | `src/content/looks.rs`, `src/render/` |
-| Missile guidance (homing, dumbfire, sidestep, parallax, cloaked wait, cluster, doppelganger), damage modes, mines and area blasts (2.10) | **Done** (point defence, probes not yet) | `src/sim/guidance.rs` |
+| Missile guidance (homing, dumbfire, sidestep, parallax, cloaked wait, cluster, doppelganger), damage modes, mines and area blasts (2.10) | **Done** | `src/sim/guidance.rs` |
+| Point defence (`point_defence`), missile explosion effects and effect sounds (2.10, 2.4) | **Done** | `src/sim/combat.rs`, `src/render/effects.rs`, `src/audio.rs` |
+| Probes: sensor and jamming (`probe`); radar hides cloaked ships; `probe-net` arenas (2.10) | **Done** | `src/sim/systems.rs` |
+| AI systems use: `systems: {cloak, ecm, shields_first, beams_first}`, `missiles_incoming(d)` (2.7, 2.8) | **Done** | `src/content/behaviour.rs`, `src/sim/ai.rs` |
+| Text keys: `text/<language>/`, `@key`, original `LangFile1.txt` imported by reference, `--language`, `game.language`, `text.schema.json` (2.1) | **Done** | `src/content/text.rs`, `src/formats/langfile.rs` |
 | Station modules: OBJ `slot_<name>` and original attachment points, follow, shield generators, cascade, wrecks; both campaigns' stations (2.11) | **Done** | `src/sim/mod.rs`, `src/formats/obj.rs` |
 | Sound cue table: `audio.cue_table`, `cue:<Name>` (2.12) | **Done** | `src/content/rules.rs` |
 | AI target preferences (`prefer`) | **Done** | `src/content/behaviour.rs`, `src/sim/targeting.rs` |
 | Testbed arenas: a duel per enemy type, mixed dogfight, escort, debris showcase, base assault, outpost strike | **Done** | `packs/*/scenarios/` |
-| Remaining: point defence, probes, XSPT explosions, AI cloak/power use, text keys | **Not started** | [plan](implementation-plan/stage-2-combat.md#remaining-in-stage-2) |
-| Stage 2 [manual tests](testing/manual-tests.md#stage-2-results) MT-2-01 … MT-2-27 | **Not yet run** | |
+| Remaining: XSPT explosions (deferred), model-set extras | **Not started** | [plan](implementation-plan/stage-2-combat.md#remaining-in-stage-2) |
+| Stage 2 [manual tests](testing/manual-tests.md#stage-2-results) MT-2-01 … MT-2-34 | **Not yet run** | |
 
-**Next**: the Stage 2 manual pass, then the remaining items (point defence, probes, AI cloak and power use, text keys).
+**Next**: the Stage 2 manual pass and the model-set extras; then Stage 3 (missions). The strategy-layer logistics of the default campaign are designed on [Logistics](design/logistics.md).

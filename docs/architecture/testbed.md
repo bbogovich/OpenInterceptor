@@ -111,6 +111,7 @@ stateDiagram-v2
 | `debris-showcase` | both | Every class at 2 % hull in a row: damage textures at once, then one shot each shows explosion, shock wave and debris. Nothing shoots back. |
 | `base-assault` | interceptor | An alien base with plasma gun pods and shield pods; two wingmen. |
 | `outpost-strike` | default | A Dominion outpost with death-ray pods and a shield pod: shields drop with the pod, the pods die with the hub. |
+| `probe-net` | both | A friendly sensor probe 7 km ahead shows enemies on your radar early; a hostile jamming probe on the way halves your radar range and slows locks until you shoot it down. |
 
 The Stage 1 `sample-arena` scenario (pack `sample`) was retired when the `sample` pack became
 the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.

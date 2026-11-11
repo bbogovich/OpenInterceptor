@@ -105,3 +105,37 @@ behaviours:
 ```
 
 The default campaign's `dominion-raid` scenario lays Dominion space mines.
+
+## Probes
+
+An object with `kind: probe` and a `probe:` entry changes what the sides can see:
+
+```yaml
+objects:
+  sky_eye_probe:
+    kind: probe
+    faction: guard
+    model_set: sky_eye_probe
+    hit_points: 50
+    probe: {sensors: 8km}       # the Guard's radar sees every contact within 8 km of it
+  jammer_buoy:
+    kind: probe
+    faction: dominion
+    model_set: jammer_buoy
+    hit_points: 80
+    probe: {jamming: 2.5km}     # hostile ships within 2.5 km: half radar range, half lock speed
+```
+
+- **Sensors.** A side's radar shows every contact within any of its own probes' `sensors`
+  range, however far from the ship looking.
+- **Jamming.** A ship within a hostile probe's `jamming` radius has **half its radar range** and
+  locks missiles at **half speed** (on top of a target's ECM).
+- **Cloaks still win.** Since this change the radar also hides cloaked ships of other factions
+  beyond their cloak's range — probes do not reveal them.
+- Stations and mines (objects that never move) always show on radar.
+
+Probes are ordinary objects: they can be shot (they have hit points and a look) and placed in
+scenarios. The `interceptor` probes use the original `SENSPROB` and `ECMPROB` meshes (verified
+names); their battle effects and numbers are derived, because the original launches probes from
+the strategy map (DEV-039). The default campaign has the Guard's Sky-Eye sensor probe and the
+Dominion jamming buoy. Testbed arena: `probe-net` (both campaigns).

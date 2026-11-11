@@ -27,6 +27,9 @@ flowchart TD
     OD -->|"original:File.ini/Section<br/>(still INI)"| B
     B --> RU["Ruleset<br/>incl. behaviours, difficulty"]
     O --> SC["scenarios/*.yaml → validate → Scenario<br/>later pack replaces same id"]
+    O --> TX["text/<language>/*.yaml (else text/en/)<br/>+ imports of original LangFile*.txt<br/>→ TextTable"]
+    TX -->|"@key resolved"| B
+    TX -->|"@key resolved"| SC
 ```
 
 ### From YAML text to typed rules
@@ -70,6 +73,13 @@ Logic flow of `rules::build_at(sources, original, level)`:
 Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and `files::scenario()` validation (`Scenario::from_yaml`), and
 manifests through `files::pack()` (`PackInfo::parse`).
+
+**Text** (`content::text`, Stage 2): before the rules are typed, every active pack's
+`text/<language>/*.yaml` (falling back to `text/en/` for a pack without the language) is read
+into one `TextTable`, later packs replacing keys; `imports:` read the original's language files
+from the CD by reference (`formats::langfile`) under a prefix (`orig.<KEY>`). `TextTable::resolve`
+turns `@key` values into strings in names, descriptions and scenario titles; a missing key is an
+error and shows as the key.
 
 The schemas are **data** (`schema::Ty` trees built in `files.rs`), so one description drives
 validation, the JSON Schema export (`files::json_schemas`, `--write-schemas`; the committed
@@ -139,6 +149,9 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `files::{pack, rules, scenario, section, json_schemas}` | The schemas of every mod file type. |
 | `looks::ModelSet`, `DamageLevel`, `DebrisSet`, `EffectDef`, `Swaps`, `ModelSetId`, `DebrisId`, `EffectId` | Looks ([modder's guide](../modding/looks.md)); `ModelSet::swaps_for(hull, state)`, `looks::texture_key(reference)`. |
 | `rules::Guidance`, `rules::DamageMode` | Missile steering kinds and warhead modes. |
+| `rules::PointDefence`, `rules::ProbeDef` | A class's point-defence guns (`range`, `rate`, `chance`, `energy`); a probe's `sensors` and `jamming` radii. |
+| `behaviour::SystemsUse` | A behaviour's `systems:` conditions (`cloak`, `ecm`, `shields_first`, `beams_first`). |
+| `text::TextTable`, `formats::langfile` | Strings by key (`insert`, `get`, `resolve`, `add_file`, `add_langfile`, `len`); the original language-file reader. |
 | `behaviour::Selector` | A target-preference selector: `Player`, `Kind`, `Class`, `Faction`. |
 | `behaviour::BehaviourDef`, `StateDef`, `Manoeuvre`, `Params`, `Transition`, `Skill`, `BehaviourId` | A parsed behaviour ([Behaviours](../modding/behaviours.md)). |
 | `equipment::SystemKind` | The ten system kinds (`ALL`, `key`, `parse`, `is_switchable`). |

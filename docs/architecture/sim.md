@@ -17,7 +17,7 @@ flowchart TD
     B2 --> C["match speed resolved<br/>(sets Ship::speed_hold to the target's speed)"]
     C --> D["flight::step for every live ship<br/>throttle, turn rates, rotation, thrust/velocity, position<br/>(scaled by engine / manoeuvring / VCT efficiency)"]
     D --> D2["flight::hold_in_arena<br/>halt ships at arena_radius ('ARENA BOUNDARY')"]
-    D2 --> E["combat::step<br/>lock → beams → missile controls → link mode<br/>→ move_bolts → move_missiles"]
+    D2 --> E["combat::step<br/>lock → beams → missile controls → link mode<br/>→ point_defence → move_bolts → guidance::step"]
     E --> F["combat::ship_collisions"]
     F --> S["systems::step<br/>recharge → repair → disabled check<br/>→ tractors → countermeasures → hyperdrives"]
     S --> WR["destroyed modules with a destroyed look → wrecks"]
@@ -115,6 +115,24 @@ limit. Default 60 000 m.
 - **Collisions**: fighter–fighter spheres (60 % of radius) push apart and swap half their
   velocities; a fighter sweeping into a station mesh is backed out and bounced. Damage =
   relative speed × 0.1.
+
+### Point defence (Stage 2)
+
+`combat::point_defence` runs before the missiles move: each ship with a `PointDefence`
+(`range`, `rate`, `chance`, `energy`) whose gun is cooled down and that has the energy fires at
+the **nearest hostile missile** within `range` (decoys included); `chance` is rolled on the
+world's seeded generator; a hit removes the missile. Each shot costs `energy`, sets
+`Ship::pd_cooldown = 1 / rate` and emits `SimEvent::PointDefence { ship, from, to, hit }` (tracer and
+sound).
+
+### Probes and radar (Stage 2)
+
+`systems::on_radar(world, observer, other)` decides what a radar shows: `detectable` (a cloak
+hides a ship of another faction beyond its range), then within `flight.radar_range` — **halved
+while `systems::jammed(observer)`**, i.e. inside the `jamming` radius of a live hostile probe —
+or within the `sensors` range of any live probe of the observer's faction. Objects that never
+move always show. Missile lock also builds at half speed while jammed. Probes are ordinary
+objects with a `ProbeDef { sensors, jamming }`.
 
 ### Missile guidance (`sim::guidance`, Stage 2)
 
@@ -251,6 +269,12 @@ flowchart TD
 - **Fire discipline.** `in_burst` alternates `burst` seconds of firing with `pause` seconds of
   holding; guns fire only inside `fire_cone` and inside `range` (and 95 % of the first beam's
   reach). Missiles every `missiles` seconds when locked (0 = never).
+- **Systems use.** At each transition check, `systems:` conditions of the behaviour are evaluated
+  (`ObjectContext`) and turned into ordinary `Requests`: `cloak` / `ecm` switched to match their
+  condition, `power_to_shields` while `shields_first` holds and shields are below the top level,
+  else `power_to_beams` while `beams_first` holds. The requests go through
+  `systems::handle_requests` like the player's keys, and reach the ship once (they are cleared
+  after the tick).
 - **Target choice.** `attack` and `turret` keep the current target while it lives and stays
   visible; otherwise they pick `targeting::preferred_hostile` with the behaviour's `prefer`
   weights (a matching hostile counts as `distance / weight`; several matches multiply), within
@@ -302,7 +326,7 @@ current order, and `DISABLED` if so.
 | `ai::CHECKS_PER_SECOND`, `MAX_AIM_ERROR`, `ENGAGE_RADIUS`, `HUNT_RADIUS` | 4, 8°, 3 km (wingmen engage near the leader), 8 km (enemies look for targets). |
 | `FlightModel` | `Newtonian` or `Assisted` (`flight.model`), in `FlightRules` with `arena_radius`. |
 | `Pilot` | `External` (the player) or `Ai(AiState)`. |
-| `SimEvent` | `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`. |
+| `SimEvent` | `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded { position, effect }`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`, `PointDefence { ship, from, to, hit }`. |
 | `Bolt`, `Missile`, `Lock`, `LinkMode` | Projectiles and weapon state. |
 | `collision::Shape`, `TriMesh` | Bounding radius plus optional triangle mesh. |
 | `TICK` | `1.0 / 60.0`. |
@@ -330,7 +354,8 @@ current order, and `DISABLED` if so.
   `switched_power(&Ship, &Ruleset)`, `power_used(&Ship, &Ruleset)`,
   `recharge(&mut Ship, &ShipClass, &PowerRules, dt)`,
   `repair(&mut Ship, &ShipClass, &Ruleset, dt) -> Option<(index, before, after)>`,
-  `damage_system(world, id, amount)`, `detectable(world, observer, other) -> bool`.
+  `damage_system(world, id, amount)`, `detectable(world, observer, other) -> bool`,
+  `on_radar(world, observer, other) -> bool`, `jammed(world, ship) -> bool`.
 - `ai::think`, `ai::order_wingmen(world, leader, WingOrder) -> usize`,
   `ai::wing_status(world, leader) -> Vec<String>`, `steer_towards`, `lead_point`,
   `ai::nearest_prize(world, me, within) -> Option<ShipId>`.

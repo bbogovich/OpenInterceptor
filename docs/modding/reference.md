@@ -7,7 +7,7 @@ definitions produce the editor JSON Schemas in `schemas/` and validate files on 
 |---|---|
 | number | `620`, `0.5`; any number may also be `{per_level: [a, b, …]}` ([difficulty](rulesets.md#difficulty-levels)) |
 | distance / time / angle / fraction | a number with an optional unit: `2.4km`, `1.5s`, `12deg`, `40%` (plain = metres, seconds, degrees, 0..1) |
-| text | free text; quote it if it contains `: ` or starts with a symbol |
+| text | free text; quote it if it contains `: ` or starts with a symbol. Player-visible names and descriptions may instead be a **text key**, `"@ship.comet.name"`, resolved from `text/<language>/` ([Text and translation](text.md)) |
 | id | a lower-case id (`blaster`) |
 | ids | a list of ids: `[a, b]` |
 | asset | an [asset reference](packs.md#asset-references): `models/comet.obj`, `original:INTTYPEA`, `none` where allowed |
@@ -77,7 +77,7 @@ Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `system
 | `lock_time` | time | 2 s | Seconds in the lock cone to lock on. |
 | `color` | RGB | 1, 0.8, 0.4 | Trail colour. |
 | `sound` | asset | none | Launch sound (or `cue:<Name>`). |
-| `explosion` | id | — | Effect of its detonation. Accepted, but not used yet: missile blasts draw a fixed 25 m, 0.8 s fireball. |
+| `explosion` | id | a 25 m, 0.8 s fireball | Effect of its detonation ([effects](#effects)); its `size` is in metres, and its `sound`, if any, plays instead of the `explosion` event sound. |
 | `guidance` | `homing`, `dumbfire`, `sidestep`, `parallax`, `cloaked_wait`, `cluster`, `doppelganger` | `homing` | How it steers ([Missiles and mines](weapons.md)). |
 | `damage` | `normal`, `bypass_shields`, `enveloping` | `normal` | How the warhead's damage lands. |
 | `decoys` | number | 2 | `parallax`: decoys released at launch. |
@@ -121,6 +121,8 @@ The same keys; `objects` defaults to `kind: station`.
 | `debris` | list of assets | none | Shorthand (with `model`): wreckage models. With a model set, its debris set is used instead. |
 | `modules` | list of `{slot, class}` | none | Stations: modules mounted at the model's attachment points — `slot` is an OBJ `slot_<name>` group's name or an original mesh's attachment index (quoted: `'0'`) ([Stations and modules](stations.md)). |
 | `shield_generator` | bool | `false` | Modules: while one survives, its station's shields work. |
+| `point_defence` | `{range, rate, chance, energy}` | none | Guns that shoot down hostile missiles (and decoys): `range` (distance, default 800 m), `rate` (shots per second, default 3), `chance` (fraction a shot destroys the missile, default 35 %), `energy` (per shot, default 4). |
+| `probe` | `{sensors, jamming}` | none | Probes: `sensors` (distance) — its side's radar sees every contact this close to the probe; `jamming` (distance) — hostile ships this close have half radar range and lock missiles at half speed. |
 | `engine_color` | RGB | 0.5, 0.7, 1.0 | Engine glow colour. |
 
 ### `systems`
@@ -165,6 +167,7 @@ A cockpit needs an `image`, a `model`, or both. Guide: [Cockpits](cockpits.md).
 |---|---|---|---|
 | `start` | id | the first state | The first state. |
 | `states` | mapping state name: state | *required* (at least one) | Manoeuvre and parameters (below). |
+| `systems` | `{cloak, ecm, shields_first, beams_first}` | none | When the pilot uses its ship's systems: each a condition, checked with the transitions. `cloak` / `ecm` on while it holds, off otherwise (if fitted); `shields_first` moves power to shields one step at a time while it holds; else `beams_first` moves it to beams. |
 | `prefer` | mapping selector: weight | none | Target preferences: a hostile matching a selector counts as if `weight` times nearer when the AI picks a new target (several matches multiply). Selectors: `player`, a ship kind (`fighter`, `freighter`, `station`, …), `class:<id>`, `faction:<id>`; weights above 0. |
 | `transitions` | list of `{from, to, when}` | none | Tried in order; the first whose `from` matches and whose condition holds wins. `from` is a state name or `"*"` (any, the default); `when` is a [condition](behaviours.md#the-condition-language). |
 | `skill` | `{aim, reaction}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. |
@@ -212,11 +215,11 @@ Texture names match a model's textures by file name without folder or extension,
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `size` | number | 2.5 | Fireball size: × the object's radius. |
+| `size` | number | 2.5 | Fireball size: × the object's radius (a missile's `explosion`: metres). |
 | `duration` | time | 1.6 s | How long it lasts. |
 | `color` | RGB | 1, 0.6, 0.25 | Fireball colour. |
 | `shockwave` | bool | `false` | An expanding ring of light. |
-| `sound` | text | none | Sound event name or asset (accepted; not played yet — destructions play the `explosion` / `big_explosion` event sounds). |
+| `sound` | text | none | Played with the effect: an event name from `sounds:` (`big_explosion`) or an asset. Without one, destructions play the `explosion` / `big_explosion` event sounds and missile blasts `explosion`. |
 
 ### `flight`
 
@@ -254,7 +257,7 @@ Texture names match a model's textures by file name without folder or extension,
 
 `<event>: <asset>` for the events the engine plays: `explosion`, `big_explosion`, `shield_hit`,
 `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`,
-`system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`. Beam and missile sounds are set on
+`system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`, `point_defence` (a point-defence shot). Beam and missile sounds are set on
 each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audio) cue table.
 
 ### `audio`
@@ -270,6 +273,15 @@ each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audi
 | `name` | text | — | Campaign title. |
 | `difficulty` | ids | none | Difficulty level ids, easiest first. |
 | `default_difficulty` | id | the middle level | The level a new game starts at. |
+
+## Text files (`text/<language>/*.yaml`)
+
+| Key | Type | Meaning |
+|---|---|---|
+| `text` | mapping key: text | The strings by key; `"@<key>"` in rules and scenarios refers to them. |
+| `imports` | list of `{file, prefix}` | The original's language files, read from the player's CD at run time: `file` (`original:LangFile1.txt`), `prefix` (default `orig`) — every original key `K` becomes `<prefix>.K`. |
+
+Schema: `schemas/text.schema.json`. Guide: [Text and translation](text.md).
 
 ## Scenario files (`scenarios/*.yaml`)
 

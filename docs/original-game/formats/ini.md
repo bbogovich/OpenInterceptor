@@ -28,3 +28,18 @@ themselves are YAML since mod format 2.
 
 `Think.ini` (alien strategic AI), `soundfx.ini` (sound table), `MPSettings.INI` and
 `NetSettings.ini` (multiplayer).
+
+## Language files (`LangFile1.txt`)
+
+The original's player-visible text is in plain-ASCII language files (verified):
+
+```text
+/ a comment line starts with a slash
+KEY_NAME        "The text~second line"
+```
+
+A key, whitespace (tabs or spaces), then the text between the first and last double quote on
+the line; `~` is a line break; anything else is skipped. `formats::langfile` reads them from the
+player's CD at run time when a pack's text file `imports:` them; the strings become `@orig.<KEY>`
+text keys and are never copied into a pack ([Text and translation](../../modding/text.md)).
+

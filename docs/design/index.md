@@ -28,6 +28,7 @@ Three mods define what "done" means:
 | [Mod structure](mod-structure.md) | Mod kinds, `parent`, folder layout, load order, ids, overrides, generated assets. |
 | [Format: campaign and game flow](format-campaign.md) | The campaign ruleset: start state, calendar, phases, difficulty, victory and defeat. |
 | [Format: strategy layer](format-strategy.md) | Star map, factions and relations, economy, research, bases and modules, ships, equipment, pilots. |
+| [Logistics](logistics.md) | Planned for the default campaign: resources and deposits, mining facilities, research stations, manufacturing centers, supply convoys and ambushes, survey probes, construction stages; open questions. |
 | [Format: space objects and models](format-objects.md) | Object descriptors, model sets (intact, damage, debris, construction states), mounts. |
 | [Format: missions and events](format-missions.md) | Mission types and generation, objectives, outcomes; scripted campaign events. |
 | [Format: behaviours and scripting](format-behaviour.md) | AI and object behaviours with difficulty variants; the condition/action language; scripts. |

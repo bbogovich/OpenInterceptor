@@ -72,6 +72,32 @@ All keys with types and defaults: [Mod file reference › behaviours](reference.
 | `mine` | Waits; when a hostile is within `range`, detonates its first missile rack as an area blast and is gone ([Missiles and mines](weapons.md#mines)). | `range` (trigger distance) |
 | `tow` | Finds the nearest disabled, capturable hostile ship, closes in, tractors it and jumps out with it (tugs; needs a tractor beam fitted). | `range` (search radius, at least 5 km) |
 
+## Using the ship's systems
+
+`systems:` tells the pilot when to use its ship's equipment and power. Each entry is a
+condition, checked with the transitions (4 times a second):
+
+```yaml
+behaviours:
+  saucer_raider:
+    systems:
+      cloak: target_distance > 2km          # stay cloaked until 2 km from the target
+      ecm: missiles_incoming(3km) > 0       # jam when missiles are coming
+      shields_first: hull < 50%             # hurt: favour shields
+```
+
+| Key | While the condition holds | Otherwise |
+|---|---|---|
+| `cloak` | The cloak is switched on (if fitted, working and powered). | Switched off. |
+| `ecm` | ECM on. | ECM off. |
+| `shields_first` | Power moves one step at a time towards shields (`;`), up to the top level. | — |
+| `beams_first` | Power moves towards beams (`'`), unless `shields_first` also holds. | — |
+
+The requests are exactly the player's keys, so the same power budget and fitting rules apply
+(a ship without a cloak cannot cloak), and firing still drops a cloak. Both campaigns' pilots run
+ECM against incoming missiles and favour shields when hurt; the raider saucer and the Shade stay
+cloaked until 2 km from their target.
+
 ## Target preferences
 
 By default an attacker picks the **nearest** visible hostile (within 8 km for `attack`, `range`
@@ -178,6 +204,7 @@ Fractions are 0..1 (write `25%` or `0.25`), distances metres, times seconds.
 | `difficulty` | number | The difficulty level's index; compare with level ids: `difficulty >= captain`. |
 | `disabled` | true/false | This ship is disabled. |
 | `towing` | true/false | This ship's tractor beam holds something. |
+| `missiles_incoming(d)` | number | Hostile missiles homing on this ship within distance `d`: `missiles_incoming(3km)`. |
 | `prize_near(d)` | true/false | A disabled, capturable hostile ship is within distance `d`. |
 
 Missions and events (Stage 3) will add their own contexts with the same language.

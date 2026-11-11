@@ -58,7 +58,7 @@ numeric constants. `sim::ai::ObjectContext` implements `Context` for one ship: i
 | `QueryDef`, `Arg` | A query: `name`, `args` (`Arg::Num` or `Arg::Name(&[..])`), `result` type, `doc`. |
 | `Schema` | The queries and named constants available in one context. |
 | `Context` | The trait a game context implements: `query(id, &[f32]) -> Value`. |
-| `object::QUERIES`, `object::id`, `object::SYSTEM_NAMES`, `object::schema` | The object context (20 queries). |
+| `object::QUERIES`, `object::id`, `object::SYSTEM_NAMES`, `object::schema` | The object context (21 queries). |
 | `sim::ai::ObjectContext` | The simulation's answer to object queries. |
 
 ## API Reference

@@ -37,8 +37,9 @@ on the launcher, within 2.5 km of one of its decoys, may become **lured** (80 % 
 and from then on chases the nearest decoy; when the decoys are gone it returns to its target.
 
 Every missile still detonates on impact, on a near miss (the proximity fuse: inside
-`proximity_radius` and moving away) or when its fuel (`duration`) runs out, with a small fixed
-fireball (the `explosion` key naming an effect is accepted but not used yet).
+`proximity_radius` and moving away) or when its fuel (`duration`) runs out. Its blast is the
+`explosion` effect it names ([Looks](looks.md#effects)) — size in metres, with the effect's
+sound — or a 25 m, 0.8 s fireball.
 
 ## Damage modes
 
@@ -47,6 +48,28 @@ fireball (the `explosion` key naming an effect is accepted but not used yet).
 | `normal` (default) | On the shield facing that was hit, then armour, then hull. |
 | `bypass_shields` | Ignores shields: straight to armour and hull (the original's Permeator). |
 | `enveloping` | Spread over both shield facings, as if the whole surface were hit. |
+
+## Point defence
+
+A ship or object with `point_defence` carries automatic guns that shoot at the **nearest hostile
+missile in range** — decoys included, since the guns cannot tell them apart:
+
+```yaml
+objects:
+  guard_station:
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `range` | 800 m | Reach. |
+| `rate` | 3 | Shots per second. |
+| `chance` | 35 % | Chance a shot destroys the missile, rolled on the world's seeded generator (battles replay identically). |
+| `energy` | 4 | Energy per shot, from the ship's capacitor; no energy, no shot. |
+
+Each shot draws a tracer and plays the `point_defence` event sound. Point defence is fitted to
+the Patton, the X-COM freighter and the bases (`interceptor`), and to the dreadnought and the
+stations (`default`); the numbers are derived (DEV-038).
 
 ## Mines
 

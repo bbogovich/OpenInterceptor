@@ -45,6 +45,10 @@ maps:
 
 ### Sensors and probes
 
+*Survey probes* that report a system's deposits and facility suitability are designed on
+[Logistics](logistics.md#survey-probes). Battle probes (`probe: {sensors, jamming}`) are
+implemented ([Stations, modules and probes](../modding/stations.md#probes)).
+
 `sensor` keys on bases, ships, outposts and probes give a **map range**; contacts are visible
 inside the union of ranges. Probes are object classes with `map_range`, `lifetime`, movement
 (`station`, `roam`) and effects (`reveal`, `jam: downlink`, `hunt`).
@@ -159,6 +163,13 @@ evaluations:
 | `deliveries` | How goods arrive | Outpost freighters (100 CSU; lost with cargo) | Supply rocket |
 | `storage` | Units and limits | CSU; cargo module 1000; full = no orders, loot jettisoned | Same rule |
 
+**Logistics (default campaign, planned).** Resources with deposits per system, three
+production facility types (mining facility, research station, manufacturing center), time-based
+extraction and recipes, supply convoys on the lanes that can be ambushed, survey probes, site-
+specific research branches and fighter assignment are designed on
+[Logistics: facilities and supply lines](logistics.md). A campaign that leaves those sections out
+keeps the simpler `deliveries` model above (as `interceptor` does).
+
 Item economy keys go on the items themselves: `cost`, `sell_price`, `prod_time` (0 = bought off
 the shelf), `size` (storage), `maintenance`, `requires`.
 
@@ -207,6 +218,9 @@ base_types:
     templates:
       new: [beam_defence, beam_defence, downlink, shield, sensor]   # best available of each
 ```
+
+Production facilities (`facility_types`: mining, research, manufacturing) extend base types
+with production roles; see [Logistics](logistics.md#facility-types).
 
 Modules are object classes ([objects](format-objects.md#modules-moduleid)) with `effects`:
 named campaign quantities they add while working (`hangar_capacity +3`, `pilot_capacity +5`,

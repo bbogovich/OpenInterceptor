@@ -76,15 +76,15 @@ from `textures.py`.
 
 | Key | Meaning |
 |---|---|
-| `size` | Fireball size: a multiple of the object's radius. |
+| `size` | Fireball size: a multiple of the object's radius (for a missile's `explosion`, metres). |
 | `duration` | How long it lasts. |
 | `color` | Fireball colour. |
 | `shockwave` | `true` adds an expanding ring of light in the wreck's plane. |
-| `sound` | A sound event name or asset (accepted; not played yet). |
+| `sound` | A sound event name (from `sounds:`) or asset, played with the effect. |
 
-Effects are used by model sets (`destroyed_effect`); without one, the effect named `explosion`
-(a pack may define it; otherwise the engine's: size 2.5, 1.6 s, orange) is used. A missile's
-`explosion` key is accepted but not used yet — missile blasts draw a fixed small fireball.
+Effects are used by model sets (`destroyed_effect`; without one, the effect named `explosion` —
+a pack may define it, otherwise the engine's: size 2.5, 1.6 s, orange) and by missiles
+(`explosion`, sized in metres; without one, a 25 m, 0.8 s fireball).
 
 ## The interceptor pack's looks
 

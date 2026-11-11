@@ -92,6 +92,11 @@ modelsets:
       destroyed: {textures: {xmmod: xhngr-brn}}
 ```
 
+**Mesh-swapping stages (planned with [logistics](logistics.md#construction-stages-as-model-set-states)).**
+A state may also replace the **model** (`states: {build_25: {model: models/rig_build25.obj}}`),
+so a facility can show distinct construction stages — foundation, frame, cladding — chosen
+from build progress; the engine is gaining mesh-swapping states in Stage 2.
+
 The engine sets `building` while a module's build time runs, and `destroyed` (a module wreck
 stays attached, unlike a destroyed ship) when its hit points reach zero; damaged-but-working is
 shown with the HUD's base-view overlay, as in the original.

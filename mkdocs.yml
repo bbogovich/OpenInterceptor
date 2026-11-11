@@ -83,7 +83,8 @@ nav:
       - "Behaviours and conditions": modding/behaviours.md
       - "Looks: model sets, debris, effects": modding/looks.md
       - "Missiles and mines": modding/weapons.md
-      - "Stations and modules": modding/stations.md
+      - "Stations, modules and probes": modding/stations.md
+      - "Text and translation": modding/text.md
       - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md
@@ -98,6 +99,7 @@ nav:
       - "Mod structure": design/mod-structure.md
       - "Format: campaign and game flow": design/format-campaign.md
       - "Format: strategy layer": design/format-strategy.md
+      - "Logistics: facilities and supply lines": design/logistics.md
       - "Format: objects and models": design/format-objects.md
       - "Format: missions, environments, events": design/format-missions.md
       - "Format: behaviours and scripting": design/format-behaviour.md
