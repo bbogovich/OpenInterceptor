@@ -18,6 +18,7 @@
 //!       - {from: evade, to: engage, when: "time_in_state > 3s"}
 //!       - {from: "*", to: flee, when: "hull < 20% and difficulty >= captain"}
 //!     skill: {aim: 0.4, reaction: 0.9s}
+//!     prefer: {player: 1.5, class:comet: 2}   # chase the player over a nearer wingman
 //!     variants:                        # per difficulty level: only what differs
 //!       cadet: {skill: {aim: 0.2, reaction: 1.4s}}
 //! ```
@@ -142,6 +143,38 @@ impl Default for Skill {
     }
 }
 
+/// What a target preference matches.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Selector {
+    /// The ship flown by the human player.
+    Player,
+    /// Every ship of a kind (`fighter`, `station`, …).
+    Kind(super::rules::ShipKind),
+    /// Ships of one class id.
+    Class(String),
+    /// Ships of one faction id.
+    Faction(String),
+}
+
+impl Selector {
+    /// `player`, a kind name, `class:<id>` or `faction:<id>`.
+    pub fn parse(text: &str) -> Result<Selector, String> {
+        let t = text.trim();
+        if t == "player" {
+            return Ok(Selector::Player);
+        }
+        if let Some(c) = t.strip_prefix("class:") {
+            return Ok(Selector::Class(c.trim().to_string()));
+        }
+        if let Some(f) = t.strip_prefix("faction:") {
+            return Ok(Selector::Faction(f.trim().to_string()));
+        }
+        super::rules::ShipKind::parse(t)
+            .map(Selector::Kind)
+            .ok_or(format!("prefer: '{t}' is not player, a ship kind, class:<id> or faction:<id>"))
+    }
+}
+
 /// A complete behaviour.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BehaviourDef {
@@ -150,6 +183,9 @@ pub struct BehaviourDef {
     pub start: usize,
     pub transitions: Vec<Transition>,
     pub skill: Skill,
+    /// Target preferences: a matching hostile counts as `distance / weight` when the
+    /// pilot picks the nearest one, so weight 2 makes it as attractive as one half as far.
+    pub prefer: Vec<(Selector, f32)>,
 }
 
 impl BehaviourDef {
@@ -173,6 +209,7 @@ impl BehaviourDef {
                 Transition { from: Some(1), to: 0, when: cond("time_in_state > 2.5s") },
             ],
             skill: Skill::default(),
+            prefer: Vec::new(),
         }
     }
 
@@ -234,7 +271,15 @@ impl BehaviourDef {
             }
             None => d,
         };
-        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill })
+        let mut prefer = Vec::new();
+        for (k, v) in g.map("prefer") {
+            let w: f32 = v.as_str().and_then(|x| x.parse().ok()).ok_or(format!("prefer.{k}: needs a number"))?;
+            if w <= 0.0 {
+                return Err(format!("prefer.{k}: weight must be above 0"));
+            }
+            prefer.push((Selector::parse(k)?, w));
+        }
+        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill, prefer })
     }
 }
 
@@ -251,6 +296,16 @@ mod tests {
     fn parse(text: &str) -> Result<BehaviourDef, String> {
         let doc = yaml::parse(text).unwrap();
         BehaviourDef::parse("b", Get(&doc), &schema())
+    }
+
+    #[test]
+    fn target_preferences_parse_and_reject_unknown_selectors() {
+        use crate::content::rules::ShipKind;
+        assert_eq!(Selector::parse("player"), Ok(Selector::Player));
+        assert_eq!(Selector::parse("station"), Ok(Selector::Kind(ShipKind::Station)));
+        assert_eq!(Selector::parse("class:comet"), Ok(Selector::Class("comet".into())));
+        assert_eq!(Selector::parse("faction: guard"), Ok(Selector::Faction("guard".into())));
+        assert!(Selector::parse("everyone").is_err());
     }
 
     #[test]

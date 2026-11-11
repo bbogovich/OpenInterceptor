@@ -39,7 +39,7 @@
 //! would also make the result depend on the order ships are processed.
 
 use super::{targeting, Controls, Pilot, Ship, ShipId, World, TICK};
-use crate::content::behaviour::{BehaviourDef, BehaviourId, Manoeuvre, Params, Skill};
+use crate::content::behaviour::{BehaviourDef, BehaviourId, Manoeuvre, Params, Selector, Skill};
 use crate::content::equipment::SystemKind;
 use crate::script::{object::id, Context, Value};
 use glam::{Vec2, Vec3};
@@ -324,17 +324,24 @@ fn run_behaviour(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) ->
         }
     }
     let state = &def.states[st.state];
-    fly(w, me, st, state.manoeuvre, &state.params, &def.skill)
+    fly(w, me, st, state.manoeuvre, &state.params, &def.skill, &def.prefer)
 }
 
 /// Flies one manoeuvre for one tick.
-fn fly(w: &World, me: ShipId, st: &mut AiState, m: Manoeuvre, p: &Params, skill: &Skill) -> (Controls, Option<ShipId>) {
+fn fly(
+    w: &World,
+    me: ShipId,
+    st: &mut AiState,
+    m: Manoeuvre,
+    p: &Params,
+    skill: &Skill,
+    prefer: &[(Selector, f32)],
+) -> (Controls, Option<ShipId>) {
     let ship = w.get(me).expect("think only visits live ships");
     let hunt = |within: f32| {
-        ship.target.filter(|t| w.get(*t).is_some_and(|o| systems_ok_target(w, ship, o))).or_else(|| {
-            targeting::nearest_hostile(w, me)
-                .filter(|t| w.ships[t.index as usize].position.distance(ship.position) < within)
-        })
+        ship.target
+            .filter(|t| w.get(*t).is_some_and(|o| systems_ok_target(w, ship, o)))
+            .or_else(|| targeting::preferred_hostile(w, me, prefer).filter(|(_, d)| *d < within).map(|(t, _)| t))
     };
     match m {
         Manoeuvre::Idle => (Controls::default(), ship.target),

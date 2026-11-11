@@ -1106,6 +1106,21 @@ mod tests {
     }
 
     #[test]
+    fn preferences_pull_the_ai_past_a_nearer_target() {
+        use crate::content::behaviour::Selector;
+        let mut w = world();
+        let fighter = w.rules.ship_id("fighter").unwrap();
+        let (blue, red) = (w.rules.faction_id("blue").unwrap(), w.rules.faction_id("red").unwrap());
+        let ai = || Pilot::Ai(ai::AiState::new(ai::Behaviour::Target, None, Vec3::ZERO));
+        let me = w.spawn(fighter, red, "me", Vec3::ZERO, Quat::IDENTITY, ai());
+        let wing = w.spawn(fighter, blue, "wing", Vec3::new(0.0, 0.0, -300.0), Quat::IDENTITY, ai());
+        let player = w.spawn(fighter, blue, "player", Vec3::new(0.0, 0.0, -500.0), Quat::IDENTITY, Pilot::External);
+        assert_eq!(targeting::preferred_hostile(&w, me, &[]).map(|t| t.0), Some(wing));
+        let pick = targeting::preferred_hostile(&w, me, &[(Selector::Player, 2.0)]);
+        assert_eq!(pick, Some((player, 500.0)), "500 m / 2 beats 300 m; the true distance is returned");
+    }
+
+    #[test]
     fn station_modules_mount_follow_and_fall_with_their_hub() {
         let r = rules();
         let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape::sphere(5.0)).collect();

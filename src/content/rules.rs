@@ -86,7 +86,7 @@ pub enum ShipKind {
 }
 
 impl ShipKind {
-    fn parse(s: &str) -> Option<ShipKind> {
+    pub(crate) fn parse(s: &str) -> Option<ShipKind> {
         Some(match s.to_ascii_lowercase().as_str() {
             "fighter" => ShipKind::Fighter,
             "freighter" => ShipKind::Freighter,

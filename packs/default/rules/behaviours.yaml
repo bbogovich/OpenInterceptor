@@ -8,6 +8,7 @@
 behaviours:
   # Small, slippery saucers: dart in, fire a burst, dodge when hit.
   saucer_scout:
+    prefer: {player: 1.3}
     start: engage
     states:
       engage:
@@ -29,6 +30,7 @@ behaviours:
 
   # Fighting saucers: steadier, with seeker rockets from ranger up.
   saucer_raider:
+    prefer: {player: 1.5}
     start: engage
     states:
       engage:
@@ -76,6 +78,7 @@ behaviours:
 
   # Grappler tugs: drag off disabled rockets; fight back when shot at.
   tug:
+    prefer: {freighter: 3}
     start: work
     states:
       work: {do: tow, range: 6km}
@@ -116,6 +119,7 @@ behaviours:
 
   # Station guns: turrets that track targets in range.
   station_turret:
+    prefer: {fighter: 1.5}
     states:
       guns:
         do: turret

@@ -12,6 +12,7 @@
 //! world; the caller stores the result in `ship.target`.
 
 use super::{ShipId, World};
+use crate::content::behaviour::Selector;
 
 /// Every live ship except `me` that `me`'s sensors can see (cloaked enemies beyond
 /// their cloak's range are invisible), as `(id, distance)`.
@@ -47,6 +48,34 @@ pub fn nearest_hostile(w: &World, me: ShipId) -> Option<ShipId> {
         .filter(|(id, _)| w.rules.hostile(my_faction, w.ships[id.index as usize].faction))
         .min_by(|a, b| a.1.total_cmp(&b.1))
         .map(|(id, _)| id)
+}
+
+/// The hostile an AI pilot would pick: the nearest, with each candidate's distance
+/// divided by the weights of the preferences it matches (see
+/// [`crate::content::behaviour::BehaviourDef::prefer`]). With no preferences this is
+/// [`nearest_hostile`]. Returns the ship and its *true* distance.
+pub fn preferred_hostile(w: &World, me: ShipId, prefer: &[(Selector, f32)]) -> Option<(ShipId, f32)> {
+    let my_faction = w.get(me)?.faction;
+    others(w, me)
+        .into_iter()
+        .filter(|(id, _)| w.rules.hostile(my_faction, w.ships[id.index as usize].faction))
+        .map(|(id, d)| {
+            let s = &w.ships[id.index as usize];
+            let weight: f32 = prefer.iter().filter(|(sel, _)| matches(w, s, sel)).map(|(_, k)| k).product();
+            (id, d, d / weight)
+        })
+        .min_by(|a, b| a.2.total_cmp(&b.2))
+        .map(|(id, d, _)| (id, d))
+}
+
+/// Whether ship `s` matches a target-preference selector.
+fn matches(w: &World, s: &super::Ship, sel: &Selector) -> bool {
+    match sel {
+        Selector::Player => matches!(s.pilot, super::Pilot::External),
+        Selector::Kind(k) => w.rules.ship(s.class).kind == *k,
+        Selector::Class(c) => w.rules.ship(s.class).id == *c,
+        Selector::Faction(f) => w.rules.factions.get(s.faction.0 as usize).is_some_and(|x| x.id == *f),
+    }
 }
 
 /// The ship nearest the centre of `me`'s view, within `max_angle_deg` of the nose.

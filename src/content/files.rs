@@ -287,6 +287,11 @@ fn behaviour() -> Ty {
             "tried in order; the first whose condition holds wins",
         ),
         f(
+            "prefer",
+            Ty::Dict(Box::new(Ty::Num)),
+            "target preferences: player, a kind (fighter, station…), class:<id> or faction:<id> → weight (2 = as if half as far)",
+        ),
+        f(
             "skill",
             Ty::Struct(vec![
                 f("aim", Ty::Qty(Unit::Fraction), "0 wild … 1 perfect"),
