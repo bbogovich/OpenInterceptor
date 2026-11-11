@@ -6,8 +6,9 @@
 //!    chain and the addons and libraries that go with it ([`pack::active_set`]), ordered
 //!    by dependencies;
 //! 2. the player's **original data**, if a path was given and a pack needs it;
-//! 3. every pack's `rules/*.ini` into one [`rules::Ruleset`];
-//! 4. every pack's `scenarios/*.ini`.
+//! 3. every pack's `campaign/*.yaml` and `rules/*.yaml` into one [`rules::Ruleset`],
+//!    after checking each file against its [`files`] schema;
+//! 4. every pack's `scenarios/*.yaml`.
 //!
 //! It also loads individual assets on demand (models, textures, images, sounds) from
 //! whichever source an [`vfs::AssetRef`] points at. Assets come back as plain CPU data;
@@ -23,9 +24,11 @@
 
 pub mod behaviour;
 pub mod equipment;
+pub mod files;
 pub mod pack;
 pub mod rules;
 pub mod scenario;
+pub mod schema;
 pub mod vfs;
 
 use crate::formats::{ini::Ini, obj, tga, wav, xmsh, xtxr};
@@ -41,7 +44,7 @@ use vfs::{AssetKind, AssetRef, OriginalData};
 pub struct ContentConfig {
     /// Folders containing built-in packs (searched in order; usually one).
     pub pack_dirs: Vec<PathBuf>,
-    /// Folder with user mods (each mod is a sub-folder with `pack.ini`).
+    /// Folder with user mods (each mod is a sub-folder with `pack.yaml`).
     pub mods_dir: Option<PathBuf>,
     /// The player's original Interceptor data.
     pub original: Option<PathBuf>,
@@ -79,8 +82,11 @@ pub struct Content {
     pub original: Option<OriginalData>,
     pub rules: Ruleset,
     pub scenarios: Vec<Scenario>,
-    /// Non-fatal problems (bad rules sections, unreadable scenarios, skipped packs).
+    /// Non-fatal problems (skipped packs, and every error below).
     pub warnings: Vec<String>,
+    /// Problems in the mod files themselves (bad YAML, schema violations, unknown ids):
+    /// the definition concerned was skipped. `--check` fails on these.
+    pub errors: Vec<String>,
 }
 
 /// An RGBA image decoded on the CPU.
@@ -151,16 +157,17 @@ impl Content {
         }
         // 3. Rules.
         let mut sources = Vec::new();
+        let mut errors = Vec::new();
         for (i, p) in packs.iter().enumerate() {
             // `campaign/` holds the campaign ruleset (difficulty levels now; game flow
             // from Stage 4); it merges with the rules like any rules file.
-            let files = files_with_ext(&p.dir.join("campaign"), "ini")
-                .into_iter()
-                .chain(files_with_ext(&p.dir.join("rules"), "ini"));
-            for path in files {
-                match std::fs::read(&path) {
-                    Ok(bytes) => sources.push(RulesSource { pack: i, ini: Ini::parse_bytes(&bytes) }),
-                    Err(e) => warnings.push(format!("{}: {e}", path.display())),
+            for folder in ["campaign", "rules"] {
+                for path in yaml_files(&p.dir.join(folder)) {
+                    let file = format!("{}/{folder}/{}", p.id, path.file_name().unwrap_or_default().to_string_lossy());
+                    match read_yaml(&path) {
+                        Ok(doc) => sources.push(RulesSource { pack: i, file, doc }),
+                        Err(e) => errors.push(format!("{file}:{e}")),
+                    }
                 }
             }
         }
@@ -170,25 +177,25 @@ impl Content {
             ini.section(section).cloned()
         };
         let (rules, rule_errors) = rules::build_at(&sources, &lookup, cfg.difficulty.as_deref());
-        warnings.extend(rule_errors);
+        errors.extend(rule_errors);
         // 4. Scenarios (a later pack's scenario with the same id replaces the earlier one).
         let mut scenarios: Vec<Scenario> = Vec::new();
         for (i, p) in packs.iter().enumerate() {
-            for path in files_with_ext(&p.dir.join("scenarios"), "ini") {
-                let parsed = std::fs::read(&path)
-                    .map_err(|e| e.to_string())
-                    .and_then(|b| Scenario::parse(&String::from_utf8_lossy(&b), i));
+            for path in yaml_files(&p.dir.join("scenarios")) {
+                let file = format!("{}/scenarios/{}", p.id, path.file_name().unwrap_or_default().to_string_lossy());
+                let parsed = read_yaml(&path).and_then(|doc| Scenario::from_yaml(&doc, i));
                 match parsed {
                     Ok(s) => {
                         scenarios.retain(|x| x.id != s.id);
                         scenarios.push(s)
                     }
-                    Err(e) => warnings.push(format!("{}: {e}", path.display())),
+                    Err(e) => errors.push(format!("{file}:{e}")),
                 }
             }
         }
         scenarios.sort_by(|a, b| a.order.cmp(&b.order).then(a.title.cmp(&b.title)));
-        Ok(Content { packs, campaign: wanted, campaigns, original, rules, scenarios, warnings })
+        warnings.extend(errors.iter().cloned());
+        Ok(Content { packs, campaign: wanted, campaigns, original, rules, scenarios, warnings, errors })
     }
 
     fn original(&self) -> Result<&OriginalData, String> {
@@ -368,6 +375,22 @@ fn join(folder: &str, file: &str) -> String {
 }
 
 /// Files in `dir` with the given extension, sorted by name (deterministic load order).
+/// The `.yaml` and `.yml` files in a folder, sorted by name.
+pub fn yaml_files(dir: &Path) -> Vec<PathBuf> {
+    let mut v = files_with_ext(dir, "yaml");
+    v.extend(files_with_ext(dir, "yml"));
+    v.sort();
+    v
+}
+
+/// Reads and parses a YAML file. Errors read `<line>: <message>` (the caller adds the
+/// file name in front).
+pub fn read_yaml(path: &Path) -> Result<crate::formats::yaml::Node, String> {
+    let bytes = std::fs::read(path).map_err(|e| format!(" {e}"))?;
+    let text = String::from_utf8(bytes).map_err(|_| " the file is not UTF-8 text".to_string())?;
+    crate::formats::yaml::parse(&text).map_err(|e| format!("{}: {}", e.line, e.message))
+}
+
 fn files_with_ext(dir: &Path, ext: &str) -> Vec<PathBuf> {
     let Ok(entries) = std::fs::read_dir(dir) else { return Vec::new() };
     let mut v: Vec<PathBuf> = entries
@@ -390,23 +413,20 @@ mod tests {
         std::fs::create_dir_all(dir.join("scenarios")).unwrap();
         std::fs::create_dir_all(dir.join("models")).unwrap();
         std::fs::write(
-            dir.join("pack.ini"),
-            format!(
-                "[pack]\nid={id}\ndepends={depends}\nrequires_original={}\n",
-                if requires_original { "yes" } else { "no" }
-            ),
+            dir.join("pack.yaml"),
+            format!("id: {id}\ndepends: [{depends}]\nrequires_original: {requires_original}\n"),
         )
         .unwrap();
         std::fs::write(
-            dir.join("rules/ships.ini"),
-            "[faction:blue]\nHostile=red\n[faction:red]\n[ship:dart]\nModel=models/dart.obj\nFaction=blue\nPlayable=yes\n",
+            dir.join("rules/ships.yaml"),
+            "factions:\n  blue: {hostile: [red]}\n  red: {}\nships:\n  dart: {model: models/dart.obj, faction: blue, playable: true}\n",
         )
         .unwrap();
         std::fs::write(dir.join("models/dart.obj"), "mtllib dart.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nusemtl m\nf 1 2 3\n")
             .unwrap();
         std::fs::write(dir.join("models/dart.mtl"), "newmtl m\nmap_Kd skin.png\n").unwrap();
-        std::fs::write(dir.join("scenarios/a.ini"), format!("[scenario]\nid=arena\ntitle={id} arena\n")).unwrap();
-        std::fs::write(dir.join("scenarios/broken.ini"), "nothing here").unwrap();
+        std::fs::write(dir.join("scenarios/a.yaml"), format!("id: arena\ntitle: {id} arena\n")).unwrap();
+        std::fs::write(dir.join("scenarios/broken.yaml"), "nothing here").unwrap();
     }
 
     #[test]
@@ -421,7 +441,7 @@ mod tests {
         let ids: Vec<&str> = c.packs.iter().map(|p| p.id.as_str()).collect();
         assert_eq!(ids, vec!["base", "zmod"], "needs-cd skipped without data");
         assert!(c.warnings.iter().any(|w| w.contains("needs-cd")));
-        assert!(c.warnings.iter().any(|w| w.contains("broken.ini")));
+        assert!(c.errors.iter().any(|w| w.contains("broken.yaml")), "{:?}", c.errors);
         assert_eq!(c.scenarios.len(), 1, "same id: the later pack replaces it");
         assert_eq!(c.scenario("ARENA").unwrap().title, "zmod arena");
         let dart = c.rules.ship(c.rules.ship_id("dart").unwrap());
@@ -457,9 +477,9 @@ mod tests {
         for d in ["models", "images/cockpita", "sounds"] {
             std::fs::create_dir_all(m.join(d)).unwrap();
         }
-        std::fs::write(m.join("pack.ini"), "[pack]\nid=hd\n").unwrap();
+        std::fs::write(m.join("pack.yaml"), "id: hd\n").unwrap();
         std::fs::create_dir_all(packs.join("base")).unwrap();
-        std::fs::write(packs.join("base/pack.ini"), "[pack]\nid=base\n").unwrap();
+        std::fs::write(packs.join("base/pack.yaml"), "id: base\n").unwrap();
         let cfg = |disabled: Vec<String>| ContentConfig {
             pack_dirs: vec![packs.clone()],
             original: Some(cd.clone()),

@@ -42,7 +42,7 @@ impl Devices {
         };
         self.previous_pad = pad;
         // Debug aid (documented on the docs site): OI_DEBUG_KEYS=1 prints the name of
-        // every key pressed, which is the name to use in bindings.ini.
+        // every key pressed, which is the name to use in bindings.yaml.
         if !raw.pressed.is_empty() && std::env::var_os("OI_DEBUG_KEYS").is_some() {
             eprintln!("keys pressed: {:?}", raw.pressed);
         }

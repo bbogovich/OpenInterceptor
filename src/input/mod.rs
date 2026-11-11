@@ -134,7 +134,7 @@ impl Group {
     }
 }
 
-/// Everything known about one action: its `bindings.ini` name, defaults, menu group
+/// Everything known about one action: its `bindings.yaml` name, defaults, menu group
 /// and label. One table drives parsing, defaults, the controls menu and the
 /// documentation, so they cannot drift apart.
 #[derive(Debug, Clone, Copy)]
@@ -260,7 +260,7 @@ impl KeyChord {
         Some(KeyChord { key: canonical(key), shift })
     }
 
-    /// The form written to `bindings.ini`.
+    /// The form written to `bindings.yaml`.
     pub fn text(&self) -> String {
         if self.shift {
             format!("Shift+{}", self.key)
@@ -295,7 +295,7 @@ impl PadChord {
         }
     }
 
-    /// The form written to `bindings.ini`.
+    /// The form written to `bindings.yaml`.
     pub fn text(&self) -> String {
         match self.modifier {
             Some(m) => format!("{}+{}", m.name(), self.button.name()),
@@ -342,7 +342,8 @@ impl Default for Bindings {
 }
 
 impl Bindings {
-    /// Builds bindings from `bindings.ini` text; anything not mentioned keeps its default.
+    /// Builds bindings from a `bindings.ini` of an earlier build (read once, then
+    /// replaced by `bindings.yaml`); anything not mentioned keeps its default.
     ///
     /// ```ini
     /// [keyboard]
@@ -379,7 +380,8 @@ impl Bindings {
         }
     }
 
-    /// Writes the full bindings as INI text (the user's `bindings.ini`).
+    /// Writes the full bindings as INI text (the earlier format; kept for tests of the
+    /// migration).
     pub fn to_ini_text(&self) -> String {
         let yes = |b: bool| if b { "yes" } else { "no" };
         let mut out = String::from(
@@ -405,6 +407,79 @@ impl Bindings {
             },
             self.mouse_range,
             yes(self.mouse_invert)
+        );
+        out
+    }
+
+    /// Builds bindings from `bindings.yaml`; anything not mentioned keeps its default.
+    ///
+    /// ```yaml
+    /// keyboard:
+    ///   fire_beams: [Enter, Space]
+    /// gamepad:
+    ///   hyperspace: [LeftShoulder+A]
+    /// options:
+    ///   dead_zone: 0.15
+    ///   invert_pitch: false
+    ///   stick_layout: aircraft
+    ///   mouse_range: 200
+    ///   mouse_invert: false
+    /// ```
+    pub fn from_yaml(doc: &crate::formats::yaml::Node) -> Bindings {
+        use crate::content::schema::Get;
+        let d = Bindings::default();
+        let section = |k: &str| doc.get(k).cloned().unwrap_or(crate::formats::yaml::Node::null(0));
+        let (kb, gp, opt) = (section("keyboard"), section("gamepad"), section("options"));
+        let mut b = d.clone();
+        for i in ACTIONS {
+            if kb.get(i.name).is_some() {
+                b.keys.insert(i.action, Get(&kb).list(i.name).iter().filter_map(|k| KeyChord::parse(k)).collect());
+            }
+            if gp.get(i.name).is_some() {
+                b.pad.insert(i.action, Get(&gp).list(i.name).iter().filter_map(|k| PadChord::parse(k)).collect());
+            }
+        }
+        let o = Get(&opt);
+        b.dead_zone = o.num("dead_zone").unwrap_or(d.dead_zone).clamp(0.0, 0.9);
+        b.pad_invert_pitch = o.bool("invert_pitch").unwrap_or(d.pad_invert_pitch);
+        b.stick_layout = match o.str("stick_layout").map(str::to_ascii_lowercase).as_deref() {
+            Some("aircraft") => StickLayout::Aircraft,
+            Some("space") => StickLayout::Space,
+            _ => d.stick_layout,
+        };
+        b.mouse_range = o.num("mouse_range").unwrap_or(d.mouse_range).max(10.0);
+        b.mouse_invert = o.bool("mouse_invert").unwrap_or(d.mouse_invert);
+        b
+    }
+
+    /// Writes the full bindings as `bindings.yaml` text.
+    pub fn to_yaml_text(&self) -> String {
+        let list = |items: Vec<String>| {
+            format!("[{}]", items.iter().map(|i| format!("\"{i}\"")).collect::<Vec<_>>().join(", "))
+        };
+        let mut out = String::from(
+            "# OpenInterceptor controls. Edit here or in the game's Controls menu.\n\
+             # Key names: see the docs site (Original game > Controls). Shift+ makes a chord;\n\
+             # on the gamepad, Modifier+Button (LeftShoulder+A) needs the modifier held.\n\
+             keyboard:\n",
+        );
+        for i in ACTIONS {
+            out += &format!("  {}: {}\n", i.name, list(self.keys[&i.action].iter().map(KeyChord::text).collect()));
+        }
+        out += "gamepad:\n";
+        for i in ACTIONS {
+            out += &format!("  {}: {}\n", i.name, list(self.pad[&i.action].iter().map(PadChord::text).collect()));
+        }
+        out += &format!(
+            "options:\n  dead_zone: {}\n  invert_pitch: {}\n  stick_layout: {}\n  mouse_range: {}\n  mouse_invert: {}\n",
+            self.dead_zone,
+            self.pad_invert_pitch,
+            match self.stick_layout {
+                StickLayout::Space => "space",
+                StickLayout::Aircraft => "aircraft",
+            },
+            self.mouse_range,
+            self.mouse_invert
         );
         out
     }
@@ -917,6 +992,19 @@ mod tests {
         assert_eq!((b.stick_layout, b.mouse_invert), (StickLayout::Aircraft, true));
         let again = Bindings::from_ini(&Ini::parse(&b.to_ini_text()));
         assert_eq!(again, b);
+        let doc = crate::formats::yaml::parse(&b.to_yaml_text()).unwrap();
+        assert_eq!(Bindings::from_yaml(&doc), b, "YAML round trip");
+        let partial =
+            crate::formats::yaml::parse("keyboard:\n  fire_beams: [Space]\noptions: {stick_layout: aircraft}\n")
+                .unwrap();
+        let p = Bindings::from_yaml(&partial);
+        assert_eq!(p.keys[&Action::FireBeams], vec![KeyChord::parse("space").unwrap()]);
+        assert_eq!(
+            p.keys[&Action::FireMissile],
+            Bindings::default().keys[&Action::FireMissile],
+            "unmentioned: default"
+        );
+        assert_eq!(p.stick_layout, StickLayout::Aircraft);
         assert_eq!(Bindings::from_ini(&Ini::parse(&Bindings::default().to_ini_text())), Bindings::default());
     }
 

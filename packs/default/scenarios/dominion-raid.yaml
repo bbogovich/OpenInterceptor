@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena: defend a station against a mixed Dominion force.
+id: dominion-raid
+order: 12
+title: Dominion raid on the Guard station
+description: A Dreadnought disc, raider saucers and robot sentinels strike the Guard station. Hold them off with three wingmen.
+player: choose
+player_position: [0, 300, 0]
+sun: [0.3, 0.6, -0.7]
+starfield_seed: 33
+
+objects:
+  station:
+    class: guard_station
+    position: [0, 0, 1800]
+    rotation: [0, 0, 0]
+  wing1:
+    class: meteor
+    ai: wingman
+    leader: player
+    position: [-60, 300, 40]
+    offset: [-60, 0, 40]
+  wing2:
+    class: comet
+    ai: wingman
+    leader: player
+    position: [60, 300, 40]
+    offset: [60, 0, 40]
+  wing3:
+    class: comet
+    ai: wingman
+    leader: player
+    position: [0, 340, 80]
+    offset: [0, 40, 80]
+  disc:
+    class: dreadnought
+    ai: enemy
+    position: [0, 400, -9000]
+    speed: 150
+  raider1:
+    class: raider_saucer
+    ai: enemy
+    position: [-1200, 500, -6000]
+    speed: 300
+  raider2:
+    class: raider_saucer
+    ai: enemy
+    position: [1200, 200, -6200]
+    speed: 300
+  robot1:
+    class: robot_sentinel
+    ai: enemy
+    position: [-400, 0, -5000]
+    speed: 400
+  robot2:
+    class: robot_sentinel
+    ai: enemy
+    position: [400, 100, -5100]
+    speed: 400
+  robot3:
+    class: robot_sentinel
+    ai: enemy
+    position: [0, -200, -5300]
+    speed: 400

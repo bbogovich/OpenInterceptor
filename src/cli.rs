@@ -16,7 +16,7 @@ USAGE:
 
 OPTIONS:
     --data <PATH>       The X-COM: Interceptor CD or install folder. Without it:
-                        OPENINTERCEPTOR_DATA, then settings.ini [paths] original, then
+                        OPENINTERCEPTOR_DATA, then settings.yaml paths.original, then
                         <user data>/original, then game/ in a development checkout.
                         If none is found, only original-free packs load.
     --mods <DIR>        Folder of user mods (default: the user data folder's mods/)
@@ -34,6 +34,8 @@ OPTIONS:
     --screenshot <PNG>  Render the starting screen (with --scenario or --model) for
                         --frames frames (default 120), save it as a PNG and exit
     --frames <N>        Frames to run before --screenshot
+    --write-schemas <DIR>  Write JSON Schema files for the mod file types (pack.yaml,
+                        rules, scenarios) for editor completion and checking, then exit
     --check             Validate all content without opening a window, then exit
     --extract <DIR>     Convert the original data to OBJ/PNG/WAV at override paths
                         (personal modding use only), then exit
@@ -57,6 +59,7 @@ pub struct Options {
     pub view: Option<crate::input::View>,
     pub model: Option<String>,
     pub screenshot: Option<PathBuf>,
+    pub write_schemas: Option<PathBuf>,
     pub frames: Option<u32>,
     pub check: bool,
     pub extract: Option<PathBuf>,
@@ -84,6 +87,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--ship" => o.ship = Some(value("--ship")?),
             "--model" => o.model = Some(value("--model")?),
             "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),
+            "--write-schemas" => o.write_schemas = Some(PathBuf::from(value("--write-schemas")?)),
             "--frames" => {
                 let v = value("--frames")?;
                 o.frames = Some(v.parse().map_err(|_| format!("--frames needs a number, not '{v}'"))?);
@@ -136,7 +140,7 @@ impl Options {
         let user = user_data_dir();
         let settings = user.as_deref().map(Settings::load).unwrap_or_default();
         // `--data` (or the environment variable, already merged into `data`) wins;
-        // otherwise settings.ini, <user data>/original, then a development checkout.
+        // otherwise settings.yaml, <user data>/original, then a development checkout.
         let dev_tree = Path::new(env!("CARGO_MANIFEST_DIR"));
         let original = resolve_original(self.data.as_deref(), None, &settings, user.as_deref(), Some(dev_tree));
         ContentConfig {

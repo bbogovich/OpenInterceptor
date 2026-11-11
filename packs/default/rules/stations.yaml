@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Stations and bodies. Turrets, modules and construction states arrive later in Stage 2.
+#
+
+objects:
+  guard_station:
+    name: Guard station
+    description: "An art-deco spire with a docking ring: home of the Interplanetary Guard."
+    model: models/guard_station.obj
+    faction: guard
+    hit_points: 8000
+    shields: 1500
+    armor: 2000
+    debris: [models/guard_station_debris1.obj, models/guard_station_debris2.obj, models/guard_station_debris3.obj, models/guard_station_debris4.obj, models/guard_station_debris5.obj]
+  dominion_outpost:
+    name: Dominion outpost
+    description: A dark spiked hub of the Umbral Dominion.
+    model: models/dominion_outpost.obj
+    faction: dominion
+    hit_points: 6000
+    shields: 1200
+    armor: 1500
+    debris: [models/dominion_outpost_debris1.obj, models/dominion_outpost_debris2.obj, models/dominion_outpost_debris3.obj, models/dominion_outpost_debris4.obj, models/dominion_outpost_debris5.obj]
+  cosmium_asteroid:
+    name: Cosmium asteroid
+    description: A rock veined with glowing cosmium crystals.
+    model: models/cosmium_asteroid.obj
+    faction: neutral
+    hit_points: 20000
+    debris: [models/cosmium_asteroid_debris1.obj, models/cosmium_asteroid_debris2.obj, models/cosmium_asteroid_debris3.obj, models/cosmium_asteroid_debris4.obj, models/cosmium_asteroid_debris5.obj]

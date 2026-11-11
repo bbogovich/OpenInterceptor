@@ -781,28 +781,63 @@ pub(crate) mod test_support {
     //! A tiny ruleset and world for the simulation tests.
     use super::*;
     use crate::content::rules;
-    use crate::formats::ini::Ini;
+    use crate::formats::yaml;
+
+    /// The test ruleset (YAML, like a pack's rules file).
+    pub const RULES: &str = "\
+factions: {blue: {hostile: [red]}, red: {}, grey: {}}
+beams:
+  laser: {damage: 30, energy_cost: 10, rate_of_fire: 2, speed: 2000, range: 2km}
+missiles:
+  dart: {speed: 800, duration: 5s, impact_damage: 300, proximity_damage: 100, lock_time: 1s, turn_rate: 180}
+ships:
+  fighter:
+    model: m
+    faction: blue
+    playable: true
+    hit_points: 100
+    armor: 50
+    shields: 40
+    max_speed: 600
+    acceleration: 300
+    roll_rate: 200
+    pitch_rate: 100
+    yaw_rate: 100
+    angular_damp: 2
+    lock_speed: 1000
+    energy: 500
+    energy_recharge: 50
+    beams: [laser, laser]
+    missiles: {dart: 2}
+    vct: true
+  raider: {inherit: fighter, faction: red, playable: false}
+  tug: {inherit: raider, systems+: [tractor], behaviour: tug}
+objects:
+  base: {model: m, faction: grey, hit_points: 5000}
+  gun: {model: m, faction: red, hit_points: 5000, beams: [laser], turret_arc: 180, behaviour: gunner}
+behaviours:
+  sharp:
+    states: {go: {do: attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0}}
+    skill: {aim: 1, reaction: 0.1s}
+  wild:
+    states: {go: {do: attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0}}
+    skill: {aim: 0, reaction: 0.4s}
+  jumpy:
+    states: {engage: {do: attack}, dodge: {do: evade, duration: 2s}}
+    transitions:
+      - {from: engage, to: dodge, when: hit_recently(1s)}
+      - {from: dodge, to: engage, when: time_in_state > 2s}
+  gunner:
+    states: {guns: {do: turret, range: 3km, burst: 1s, pause: 0s}}
+    skill: {aim: 1, reaction: 0.1s}
+  tug:
+    states: {work: {do: tow, range: 5km}}
+";
 
     pub fn rules() -> Arc<Ruleset> {
-        let ini = Ini::parse(
-            "[faction:blue]\nHostile=red\n[faction:red]\n[faction:grey]\n\
-             [beam:laser]\nDamage=30\nEnergyCost=10\nRateOfFire=2\nSpeed=2000\nRange=2\n\
-             [missile:dart]\nSpeed=800\nDuration=5\nImpactDamage=300\nProximityDamage=100\nLockTime=1\nTurnRate=180\n\
-             [ship:fighter]\nModel=m\nFaction=blue\nPlayable=yes\nHitPoints=100\nArmor=50\nShields=40\nMaxSpeed=600\n\
-             Acceleration=300\nRollRate=200\nPitchRate=100\nYawRate=100\nAngularDamp=2\nLockSpeed=1000\nEnergy=500\n\
-             EnergyRecharge=50\nBeams=laser,laser\nMissiles=dart*2\nVCT=yes\n\
-             [ship:raider]\ninherit=ship:fighter\nFaction=red\nPlayable=no\n\
-             [object:base]\nModel=m\nFaction=grey\nHitPoints=5000\n\
-             [behaviour:sharp]\nState.go = attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0\nSkill = aim: 1, reaction: 0.1s\n\
-             [behaviour:wild]\nState.go = attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0\nSkill = aim: 0, reaction: 0.4s\n\
-             [behaviour:jumpy]\nState.engage = attack\nState.dodge = evade, duration: 2s\n\
-             Go.1 = engage > dodge : hit_recently(1s)\nGo.2 = dodge > engage : time_in_state > 2s\n\
-             [behaviour:gunner]\nState.guns = turret, range: 3km, burst: 1s, pause: 0s\nSkill = aim: 1, reaction: 0.1s\n\
-             [behaviour:tug]\nState.work = tow, range: 5km\n\
-             [object:gun]\nModel=m\nFaction=red\nHitPoints=5000\nBeams=laser\nTurretArc=180\nBehaviour=gunner\n\
-             [ship:tug]\ninherit=ship:raider\nSystems.add=tractor\nBehaviour=tug\n",
-        );
-        let (r, errors) = rules::build(&[rules::RulesSource { pack: 0, ini }], &|_: &str, _: &str| None);
+        let doc = yaml::parse(RULES).expect("the test rules are valid YAML");
+        let src = rules::RulesSource { pack: 0, file: "test.yaml".into(), doc };
+        let (r, errors) = rules::build(&[src], &|_: &str, _: &str| None);
         assert!(errors.is_empty(), "{errors:?}");
         Arc::new(r)
     }
@@ -854,10 +889,10 @@ mod tests {
     fn scenario_spawns_player_objects_and_leaders() {
         let r = rules();
         let s = Scenario::parse(
-            "[scenario]\nid=t\nplayer=choose\n[object.base]\nclass=base\nposition=0,0,-3000\n\
-             [object.w1]\nclass=fighter\nai=wingman\nleader=player\n[object.bad]\nclass=raider\nai=enemy\nspeed=300\n\
-             [object.t]\nclass=raider\nai=target\nfaction=grey\n\
-             [object.wreck]\nclass=raider\ndestroyed_systems=engines,manoeuvring\nhull=0.5\n",
+            "id: t\nplayer: choose\nobjects:\n  base: {class: base, position: [0, 0, -3000]}\n  \
+             w1: {class: fighter, ai: wingman, leader: player}\n  bad: {class: raider, ai: enemy, speed: 300}\n  \
+             t: {class: raider, ai: target, faction: grey}\n  \
+             wreck: {class: raider, destroyed_systems: [engines, manoeuvring], hull: 0.5}\n",
             0,
         )
         .unwrap();
@@ -882,11 +917,12 @@ mod tests {
     fn scenario_errors_are_reported() {
         let r = rules();
         for text in [
-            "[scenario]\nid=t\nplayer=nope\n",
-            "[scenario]\nid=t\n[object.a]\nclass=ghost\n",
-            "[scenario]\nid=t\n[object.a]\nclass=fighter\nfaction=nobody\n",
-            "[scenario]\nid=t\n[object.a]\nclass=fighter\nai=wingman\nleader=nobody\n",
-            "[scenario]\nid=t\n[object.a]\nclass=fighter\ndestroyed_systems=tractor\n",
+            "id: t\nplayer: nope\n",
+            "id: t\nobjects: {a: {class: ghost}}\n",
+            "id: t\nobjects: {a: {class: fighter, faction: nobody}}\n",
+            "id: t\nobjects: {a: {class: fighter, ai: wingman, leader: nobody}}\n",
+            "id: t\nobjects: {a: {class: fighter, destroyed_systems: [tractor]}}\n",
+            "id: t\nobjects: {a: {class: fighter, ai: enemy, behaviour: nope}}\n",
         ] {
             let s = Scenario::parse(text, 0).unwrap();
             assert!(World::from_scenario(&s, r.clone(), shapes(&r), None).is_err(), "{text}");

@@ -5,26 +5,27 @@
 //! (the [`crate::script`] language, object context) becomes true. A **skill** line sets
 //! how well the pilot aims and how fast it reacts.
 //!
-//! ```ini
-//! [behaviour:scout_saucer]
-//! Start = engage
-//! State.engage = attack, range: 2km, fire_cone: 4, burst: 1.2s, pause: 1.4s
-//! State.evade = evade, duration: 3s
-//! State.flee = retreat, jump: yes
-//! Go.1 = engage > evade : hit_recently(0.5s) and random(0.3)
-//! Go.2 = evade > engage : time_in_state > 3s
-//! Go.3 = * > flee : hull < 20% and difficulty >= captain
-//! Skill = aim: 0.4, reaction: 0.9s
-//!
-//! [behaviour:scout_saucer@cadet]       ; a difficulty variant: replaces the base
-//! inherit = behaviour:scout_saucer      ; definition when the game is played at cadet
-//! Skill = aim: 0.2, reaction: 1.4s
+//! ```yaml
+//! behaviours:
+//!   scout_saucer:
+//!     start: engage
+//!     states:
+//!       engage: {do: attack, range: 2km, fire_cone: 4, burst: 1.2s, pause: 1.4s}
+//!       evade: {do: evade, duration: 3s}
+//!       flee: {do: retreat, jump: true}
+//!     transitions:
+//!       - {from: engage, to: evade, when: "hit_recently(0.5s) and random(0.3)"}
+//!       - {from: evade, to: engage, when: "time_in_state > 3s"}
+//!       - {from: "*", to: flee, when: "hull < 20% and difficulty >= captain"}
+//!     skill: {aim: 0.4, reaction: 0.9s}
+//!     variants:                        # per difficulty level: only what differs
+//!       cadet: {skill: {aim: 0.2, reaction: 1.4s}}
 //! ```
 //!
-//! Transitions are tried in `Go.<n>` order; the first whose `from` matches the current
-//! state (`*` matches any) and whose condition holds wins.
+//! Transitions are tried in order; the first whose `from` matches the current state
+//! (`*` matches any) and whose condition holds wins.
 
-use crate::formats::ini::Section;
+use super::schema::{Get, Unit};
 use crate::script::{self, Expr, Schema};
 
 /// Index of a [`BehaviourDef`] in the ruleset.
@@ -175,119 +176,88 @@ impl BehaviourDef {
         self.states.iter().find(|s| s.manoeuvre == m)
     }
 
-    /// Parses a `[behaviour:<id>]` section, checking every condition against `schema`.
-    pub fn parse(id: &str, s: &Section, schema: &Schema) -> Result<BehaviourDef, String> {
+    /// Parses a `behaviours:` definition, checking every condition against `schema`.
+    pub fn parse(id: &str, g: Get, schema: &Schema) -> Result<BehaviourDef, String> {
         let mut states = Vec::new();
-        for (k, v) in &s.entries {
-            let Some(name) = strip_ci(k, "State.") else { continue };
-            let mut parts = v.split(',');
-            let m = parts.next().unwrap_or("");
-            let manoeuvre = Manoeuvre::parse(m).ok_or(format!("State.{name}: unknown manoeuvre '{}'", m.trim()))?;
-            let mut params = Params::default();
-            for p in parts {
-                let (key, value) =
-                    p.split_once(':').ok_or(format!("State.{name}: '{}' is not key: value", p.trim()))?;
-                set_param(&mut params, key.trim(), value.trim()).map_err(|e| format!("State.{name}: {e}"))?;
-            }
+        for (name, body) in g.map("states") {
+            let sg = Get(body);
+            let m = sg.str("do").ok_or(format!("states.{name}: say what it does (do: attack, …)"))?;
+            let manoeuvre = Manoeuvre::parse(m).ok_or(format!("states.{name}: unknown manoeuvre '{m}'"))?;
+            let d = Params::default();
+            let params = Params {
+                range: sg.qty("range", Unit::Distance).unwrap_or(d.range),
+                fire_cone: sg.qty("fire_cone", Unit::Angle).unwrap_or(d.fire_cone).clamp(0.1, 180.0),
+                burst: sg.qty("burst", Unit::Time).unwrap_or(d.burst).max(0.0),
+                pause: sg.qty("pause", Unit::Time).unwrap_or(d.pause).max(0.0),
+                duration: sg.qty("duration", Unit::Time).unwrap_or(d.duration).max(0.0),
+                speed: sg.qty("speed", Unit::Fraction).unwrap_or(d.speed).clamp(0.0, 1.0),
+                missile_interval: sg.qty("missiles", Unit::Time).unwrap_or(d.missile_interval).max(0.0),
+                jump: sg.bool("jump").unwrap_or(d.jump),
+            };
             states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params });
         }
         if states.is_empty() {
-            return Err("a behaviour needs at least one State.<name>".into());
+            return Err("a behaviour needs at least one state (states: {name: {do: …}})".into());
         }
         let find = |n: &str| states.iter().position(|st| st.name.eq_ignore_ascii_case(n.trim()));
-        let start = match s.get_nonempty("Start") {
-            Some(n) => find(n).ok_or(format!("Start: no state '{n}'"))?,
+        let start = match g.str("start") {
+            Some(n) => find(n).ok_or(format!("start: no state '{n}'"))?,
             None => 0,
         };
-        let mut gos: Vec<(u32, &str, &str)> = s
-            .entries
-            .iter()
-            .filter_map(|(k, v)| {
-                strip_ci(k, "Go.").map(|n| (n.parse::<u32>().unwrap_or(u32::MAX), k.as_str(), v.as_str()))
-            })
-            .filter(|(_, _, v)| !v.trim().is_empty()) // an empty value removes an inherited rule
-            .collect();
-        gos.sort_by_key(|g| g.0);
         let mut transitions = Vec::new();
-        for (_, key, v) in gos {
-            let (route, cond) = v.split_once(':').ok_or(format!("{key}: write 'from > to : condition'"))?;
-            let (from, to) = route.split_once('>').ok_or(format!("{key}: write 'from > to : condition'"))?;
-            let from = match from.trim() {
+        for (k, t) in g.node("transitions").and_then(|n| n.as_seq()).unwrap_or(&[]).iter().enumerate() {
+            let tg = Get(t);
+            let at = format!("transitions[{k}]");
+            let from = match tg.str("from").unwrap_or("*") {
                 "*" => None,
-                f => Some(find(f).ok_or(format!("{key}: no state '{f}'"))?),
+                f => Some(find(f).ok_or(format!("{at}: no state '{f}'"))?),
             };
-            let to = find(to).ok_or(format!("{key}: no state '{}'", to.trim()))?;
-            let when = script::parse_condition(cond.trim(), schema).map_err(|e| format!("{key}: {e}"))?;
+            let to_name = tg.str("to").ok_or(format!("{at}: needs to:"))?;
+            let to = find(to_name).ok_or(format!("{at}: no state '{to_name}'"))?;
+            let cond = tg.str("when").ok_or(format!("{at}: needs when: (a condition)"))?;
+            let when = script::parse_condition(cond, schema).map_err(|e| format!("{at}: {e}"))?;
             transitions.push(Transition { from, to, when });
         }
-        let mut skill = Skill::default();
-        if let Some(v) = s.get_nonempty("Skill") {
-            for p in v.split(',') {
-                let (key, value) = p.split_once(':').ok_or(format!("Skill: '{}' is not key: value", p.trim()))?;
-                let n = number(value)?;
-                match key.trim().to_ascii_lowercase().as_str() {
-                    "aim" => skill.aim = n.clamp(0.0, 1.0),
-                    "reaction" => skill.reaction = n.max(0.05),
-                    other => return Err(format!("Skill: unknown key '{other}' (aim, reaction)")),
+        let d = Skill::default();
+        let skill = match g.node("skill") {
+            Some(n) => {
+                let sk = Get(n);
+                Skill {
+                    aim: sk.qty("aim", Unit::Fraction).unwrap_or(d.aim).clamp(0.0, 1.0),
+                    reaction: sk.qty("reaction", Unit::Time).unwrap_or(d.reaction).max(0.05),
                 }
             }
-        }
+            None => d,
+        };
         Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill })
     }
-}
-
-/// `key` without `prefix` (compared case-insensitively).
-fn strip_ci<'a>(key: &'a str, prefix: &str) -> Option<&'a str> {
-    (key.len() > prefix.len() && key[..prefix.len()].eq_ignore_ascii_case(prefix)).then(|| &key[prefix.len()..])
-}
-
-/// A single number with an optional unit (`1.5km`, `3s`, `40%`), via the script lexer.
-fn number(text: &str) -> Result<f32, String> {
-    match script::lex(text)?.as_slice() {
-        [script::Token::Num(n)] => Ok(*n),
-        _ => Err(format!("'{}' is not a number", text.trim())),
-    }
-}
-
-fn set_param(p: &mut Params, key: &str, value: &str) -> Result<(), String> {
-    let yes = |v: &str| matches!(v.to_ascii_lowercase().as_str(), "yes" | "true" | "1");
-    match key.to_ascii_lowercase().as_str() {
-        "range" => p.range = number(value)?,
-        "fire_cone" => p.fire_cone = number(value)?.clamp(0.1, 180.0),
-        "burst" => p.burst = number(value)?.max(0.0),
-        "pause" => p.pause = number(value)?.max(0.0),
-        "duration" => p.duration = number(value)?.max(0.0),
-        "speed" => p.speed = number(value)?.clamp(0.0, 1.0),
-        "missiles" => p.missile_interval = number(value)?.max(0.0),
-        "jump" => p.jump = yes(value),
-        other => {
-            return Err(format!(
-                "unknown parameter '{other}' (range, fire_cone, burst, pause, duration, speed, missiles, jump)"
-            ))
-        }
-    }
-    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::formats::ini::Ini;
+    use crate::formats::yaml;
     use crate::script::object;
 
     fn schema() -> Schema {
         object::schema(&["cadet".into(), "captain".into()])
     }
 
+    fn parse(text: &str) -> Result<BehaviourDef, String> {
+        let doc = yaml::parse(text).unwrap();
+        BehaviourDef::parse("b", Get(&doc), &schema())
+    }
+
     #[test]
     fn parses_states_transitions_and_skill() {
-        let ini = Ini::parse(
-            "[behaviour:b]\nStart = engage\nState.engage = attack, range: 1.5km, fire_cone: 4, burst: 1s, pause: 2s, missiles: 8s\n\
-             State.evade = evade, duration: 3s\nState.flee = retreat, jump: yes\n\
-             Go.2 = evade > engage : time_in_state > 3s\nGo.1 = engage > evade : hit_recently(1s) and random(0.4)\n\
-             Go.10 = * > flee : hull < 25% and difficulty >= captain\nGo.11 =\nSkill = aim: 0.6, reaction: 0.8s\n",
-        );
-        let b = BehaviourDef::parse("b", ini.section("behaviour:b").unwrap(), &schema()).unwrap();
+        let b = parse(
+            "start: engage\nstates:\n  engage: {do: attack, range: 1.5km, fire_cone: 4, burst: 1s, pause: 2s, missiles: 8s}\n  \
+             evade: {do: evade, duration: 3s}\n  flee: {do: retreat, jump: true}\ntransitions:\n  \
+             - {from: engage, to: evade, when: hit_recently(1s) and random(0.4)}\n  \
+             - {from: evade, to: engage, when: time_in_state > 3s}\n  \
+             - {from: '*', to: flee, when: hull < 25% and difficulty >= captain}\nskill: {aim: 0.6, reaction: 0.8s}\n",
+        )
+        .unwrap();
         assert_eq!(b.states.len(), 3);
         assert_eq!(b.states[0].params.range, 1500.0);
         assert_eq!(
@@ -295,8 +265,8 @@ mod tests {
             (1.0, 2.0, 8.0)
         );
         assert!(b.states[2].params.jump);
-        assert_eq!(b.transitions.len(), 3, "the empty Go.11 is dropped");
-        assert_eq!((b.transitions[0].from, b.transitions[0].to), (Some(0), 1), "sorted by number");
+        assert_eq!(b.transitions.len(), 3);
+        assert_eq!((b.transitions[0].from, b.transitions[0].to), (Some(0), 1));
         assert_eq!((b.transitions[2].from, b.transitions[2].to), (None, 2));
         assert_eq!(b.skill, Skill { aim: 0.6, reaction: 0.8 });
         assert_eq!(b.state_with(Manoeuvre::Retreat).unwrap().name, "flee");
@@ -305,18 +275,15 @@ mod tests {
     #[test]
     fn reports_mistakes() {
         for (text, needle) in [
-            ("[behaviour:b]\n", "at least one State"),
-            ("[behaviour:b]\nState.a = dance\n", "unknown manoeuvre"),
-            ("[behaviour:b]\nState.a = attack, rang: 3\n", "unknown parameter 'rang'"),
-            ("[behaviour:b]\nState.a = attack\nStart = b\n", "no state 'b'"),
-            ("[behaviour:b]\nState.a = attack\nGo.1 = a > z : true\n", "no state 'z'"),
-            ("[behaviour:b]\nState.a = attack\nGo.1 = a > a : hull\n", "is a number"),
-            ("[behaviour:b]\nState.a = attack\nGo.1 = a : true\n", "from > to"),
-            ("[behaviour:b]\nState.a = attack\nSkill = luck: 1\n", "unknown key 'luck'"),
-            ("[behaviour:b]\nState.a = attack, range: far\n", "not a number"),
+            ("start: a\n", "at least one state"),
+            ("states: {a: {do: dance}}\n", "unknown manoeuvre"),
+            ("states: {a: {range: 3}}\n", "say what it does"),
+            ("states: {a: {do: attack}}\nstart: b\n", "no state 'b'"),
+            ("states: {a: {do: attack}}\ntransitions: [{from: a, to: z, when: 'true'}]\n", "no state 'z'"),
+            ("states: {a: {do: attack}}\ntransitions: [{from: a, to: a, when: hull}]\n", "is a number"),
+            ("states: {a: {do: attack}}\ntransitions: [{from: a, to: a}]\n", "needs when"),
         ] {
-            let ini = Ini::parse(text);
-            let e = BehaviourDef::parse("b", ini.section("behaviour:b").unwrap(), &schema()).unwrap_err();
+            let e = parse(text).unwrap_err();
             assert!(e.contains(needle), "{text}: {e}");
         }
     }

@@ -6,28 +6,37 @@
 //! ```text
 //! ~/Library/Application Support/OpenInterceptor/      (macOS)
 //! $XDG_DATA_HOME/openinterceptor/  or ~/.local/share/openinterceptor/   (Linux)
-//!   settings.ini      paths and preferences (this module)
-//!   bindings.ini      controls (see crate::input)
+//!   settings.yaml     paths and preferences (this module)
+//!   bindings.yaml     controls (see crate::input)
 //!   original/         a copy of the player's Interceptor CD (optional)
 //!   mods/             one folder per mod
 //! ```
 //!
-//! `settings.ini`:
+//! `settings.yaml`:
 //!
-//! ```ini
-//! [paths]
-//! original = /Volumes/INTERCEPTOR      ; the CD or a copy of it
-//! mods = /Users/me/Interceptor mods    ; optional; defaults to <user data>/mods
+//! ```yaml
+//! paths:
+//!   original: /Volumes/INTERCEPTOR       # the CD or a copy of it
+//!   mods: /Users/me/Interceptor mods     # optional; defaults to <user data>/mods
+//! packs:
+//!   disabled: [old-hud]                  # pack ids switched off
+//! game:
+//!   campaign: default                    # the launcher's choices
+//!   difficulty: ranger
 //! ```
+//!
+//! A `settings.ini` from an earlier build is read once and replaced by `settings.yaml`.
 //!
 //! The original data is looked for in a fixed order ([`resolve_original`]), so a
 //! development checkout (with the CD copied to `game/`) and an installed app both work
 //! without typing a path every time.
 
+use crate::content::schema::Get;
 use crate::formats::ini::Ini;
+use crate::formats::yaml::{self, Node, Value};
 use std::path::{Path, PathBuf};
 
-/// The contents of `settings.ini`.
+/// The contents of `settings.yaml`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Settings {
     pub original: Option<PathBuf>,
@@ -41,8 +50,24 @@ pub struct Settings {
 }
 
 impl Settings {
-    /// Parses settings text. Unknown keys are ignored so older builds can read newer files.
+    /// Parses `settings.yaml` text. Unknown keys are ignored so older builds can read
+    /// newer files; a file that is not valid YAML gives the defaults.
     pub fn parse(text: &str) -> Settings {
+        let doc = yaml::parse(text).unwrap_or(Node::null(0));
+        let section = |k: &str| doc.get(k).cloned().unwrap_or(Node::null(0));
+        let (paths, packs, game) = (section("paths"), section("packs"), section("game"));
+        let text = |n: &Node, k: &str| Get(n).str(k).map(str::to_string);
+        Settings {
+            original: text(&paths, "original").map(PathBuf::from),
+            mods: text(&paths, "mods").map(PathBuf::from),
+            disabled_packs: Get(&packs).list("disabled"),
+            campaign: text(&game, "campaign"),
+            difficulty: text(&game, "difficulty"),
+        }
+    }
+
+    /// Parses a `settings.ini` from a build before the YAML formats.
+    pub fn parse_legacy_ini(text: &str) -> Settings {
         let ini = Ini::parse(text);
         let path = |k: &str| ini.get("paths", k).filter(|v| !v.is_empty()).map(PathBuf::from);
         let disabled_packs = ini
@@ -58,13 +83,43 @@ impl Settings {
         Settings { original: path("original"), mods: path("mods"), disabled_packs, campaign, difficulty }
     }
 
-    /// Reads `<dir>/settings.ini`, or returns defaults if it does not exist.
+    /// Reads `<dir>/settings.yaml` (or an older `settings.ini`), or returns defaults.
     pub fn load(dir: &Path) -> Settings {
-        std::fs::read_to_string(dir.join("settings.ini")).map(|t| Settings::parse(&t)).unwrap_or_default()
+        if let Ok(t) = std::fs::read_to_string(dir.join("settings.yaml")) {
+            return Settings::parse(&t);
+        }
+        std::fs::read_to_string(dir.join("settings.ini")).map(|t| Settings::parse_legacy_ini(&t)).unwrap_or_default()
     }
 
-    /// The settings as INI text.
-    pub fn to_ini_text(&self) -> String {
+    /// The settings as YAML text, with comments for a player editing it by hand.
+    pub fn to_yaml_text(&self) -> String {
+        let text = |s: Option<String>| match s {
+            Some(v) => Node::text(v, 0),
+            None => Node::null(0),
+        };
+        let path = |p: &Option<PathBuf>| text(p.as_ref().map(|p| p.display().to_string()));
+        let map = |entries: Vec<(&str, Node)>| Node {
+            value: Value::Map(entries.into_iter().map(|(k, v)| (k.to_string(), v)).collect()),
+            line: 0,
+        };
+        let disabled =
+            Node { value: Value::Seq(self.disabled_packs.iter().map(|d| Node::text(d, 0)).collect()), line: 0 };
+        let body = |n: Node| n.to_yaml().lines().map(|l| format!("  {l}")).collect::<Vec<_>>().join("\n");
+        format!(
+            "# OpenInterceptor settings. Paths may be absolute or relative to this folder.\n\
+             # original: your X-COM: Interceptor CD, or a folder copied from it.\n\
+             # mods: folder of mods (empty = the mods folder next to this file).\n\
+             paths:\n{}\n# Pack ids switched off.\npacks:\n{}\n\
+             # The launcher's campaign and difficulty choices.\ngame:\n{}\n",
+            body(map(vec![("original", path(&self.original)), ("mods", path(&self.mods))])),
+            body(map(vec![("disabled", disabled)])),
+            body(map(vec![("campaign", text(self.campaign.clone())), ("difficulty", text(self.difficulty.clone()))])),
+        )
+    }
+
+    /// The settings as INI text (only for tests of the legacy reader).
+    #[cfg(test)]
+    fn to_ini_text(&self) -> String {
         let show = |p: &Option<PathBuf>| p.as_ref().map(|p| p.display().to_string()).unwrap_or_default();
         format!(
             "; OpenInterceptor settings. Paths may be absolute or relative to this folder.\n[paths]\n\
@@ -79,14 +134,14 @@ impl Settings {
         )
     }
 
-    /// Writes `<dir>/settings.ini`, creating the folder if needed.
+    /// Writes `<dir>/settings.yaml`, creating the folder if needed.
     pub fn save(&self, dir: &Path) -> std::io::Result<()> {
         std::fs::create_dir_all(dir)?;
-        std::fs::write(dir.join("settings.ini"), self.to_ini_text())
+        std::fs::write(dir.join("settings.yaml"), self.to_yaml_text())
     }
 }
 
-/// Where the original data comes from, for messages ("found via settings.ini").
+/// Where the original data comes from, for messages ("found via settings.yaml").
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Source {
     CommandLine,
@@ -97,7 +152,7 @@ pub enum Source {
 }
 
 /// Picks the original-data folder. The first candidate that *exists* wins, in this
-/// order: command line, environment variable, `settings.ini`, `<user data>/original`,
+/// order: command line, environment variable, `settings.yaml`, `<user data>/original`,
 /// then the development checkout's `game/` folder. A path given explicitly on the
 /// command line is returned even if it does not exist, so the error names it.
 pub fn resolve_original(
@@ -129,8 +184,9 @@ mod tests {
 
     #[test]
     fn parses_and_round_trips() {
-        let s =
-            Settings::parse("[paths]\noriginal = /cd\nmods =\n[packs]\ndisabled = a, b\n[game]\ncampaign = default\n");
+        let s = Settings::parse_legacy_ini(
+            "[paths]\noriginal = /cd\nmods =\n[packs]\ndisabled = a, b\n[game]\ncampaign = default\n",
+        );
         assert_eq!(
             s,
             Settings {
@@ -141,7 +197,9 @@ mod tests {
                 difficulty: None
             }
         );
-        assert_eq!(Settings::parse(&s.to_ini_text()), s);
+        assert_eq!(Settings::parse_legacy_ini(&s.to_ini_text()), s);
+        assert_eq!(Settings::parse(&s.to_yaml_text()), s, "{}", s.to_yaml_text());
+        assert_eq!(Settings::parse(&Settings::default().to_yaml_text()), Settings::default());
         assert_eq!(Settings::load(Path::new("/no/such/dir")), Settings::default());
         let dir = std::env::temp_dir().join(format!("oi-settings-save-{}", std::process::id()));
         s.save(&dir).unwrap();

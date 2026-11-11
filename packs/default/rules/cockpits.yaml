@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+cockpits:
+  # The Guard rockets' cockpit: a 3D art-deco dashboard around the pilot's eye (no 2D art).
+  # The instrument rectangles frame the dashboard's bezels; tools/default_assets/models.py
+  # computes them by projecting each bezel and writes models/guard_cockpit.instruments.ini.
+  guard:
+    image: none
+    model: models/guard_cockpit.obj
+    model_offset: [0, 0, 0]
+    design: [1280, 720]
+    instruments:
+      message: [404, 474, 472, 26]
+      radar_front: [101, 540, 155, 156]
+      radar_rear: [1024, 540, 156, 156]
+      mfd: [548, 514, 184, 186]
+      gauge1: [294, 522, 80, 80]
+      gauge2: [404, 522, 80, 80]
+      gauge3: [796, 522, 80, 80]
+      gauge4: [906, 522, 80, 80]
+      power: [292, 628, 196, 64]
+      systems: [792, 632, 196, 32]

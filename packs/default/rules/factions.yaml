@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Factions of Perils of the Void. Hostility is fixed for now; relations that change with
+# the player's deeds arrive in Stage 5 (docs: Design > Strategy > Dynamic relations).
+#
+
+factions:
+  guard:
+    name: Interplanetary Guard
+    color: [0.95, 0.35, 0.25]
+    hostile: [dominion, raiders]
+  dominion:
+    name: Umbral Dominion
+    color: [0.72, 0.35, 1.0]
+    hostile: [guard, senate, prospectors]
+  senate:
+    name: Solar Senate
+    color: [1.0, 0.85, 0.4]
+  cartel:
+    name: Nebula Cartel
+    color: [0.85, 0.65, 0.25]
+  prospectors:
+    name: Belt Prospectors
+    color: [1.0, 0.6, 0.2]
+  raiders:
+    name: Black Comet raiders
+    color: [0.95, 0.25, 0.6]
+    hostile: [guard, senate, prospectors, cartel]
+  neutral:
+    name: Uncharted
+    color: [0.6, 0.6, 0.6]

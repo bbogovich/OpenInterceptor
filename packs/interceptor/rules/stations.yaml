@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Stations and other large static objects. Kind = station is the default for [object:*].
+# HitPoints use the first value of the original *HP sections (HP1); per-module damage
+# arrives in Stage 2.
+#
+
+objects:
+  xcom_base:
+    name: X-COM Base
+    faction: xcom
+    model: original:XBASE7
+    hit_points: 6000
+    shields: 1000
+  xcom_outpost:
+    name: Corporate Outpost
+    faction: corporate
+    model: original:XOUT6
+    hit_points: 4000
+  xcom_opp:
+    name: Ore Processing Plant
+    faction: corporate
+    model: original:XOPP
+    hit_points: 4000
+  alien_base:
+    name: Alien Base
+    faction: alien
+    model: original:AL-BASE01
+    hit_points: 8000
+    shields: 1500
+  alien_outpost:
+    name: Alien Outpost
+    faction: alien
+    model: original:ALORBOUT
+    hit_points: 5000
+  alien_opp:
+    name: Alien Mining Platform
+    faction: alien
+    model: original:AL-OPP7
+    hit_points: 5000
+  pirate_base:
+    name: Pirate Base
+    faction: pirate
+    model: original:PBASE3
+    hit_points: 5000
+  arms_dealer:
+    name: Arms Dealer Base
+    faction: neutral
+    model: original:ARMS4
+    hit_points: 4000
+  science_station:
+    name: GSC Science Station
+    faction: corporate
+    model: original:SCICENTER02
+    hit_points: 3000
+  nova_science:
+    name: Nova Science Station
+    faction: corporate
+    model: original:NOVA2
+    hit_points: 3000
+  asteroid:
+    name: Asteroid
+    faction: neutral
+    model: original:ROID100
+    hit_points: 20000

@@ -29,6 +29,7 @@ pub mod tga;
 pub mod wav;
 pub mod xmsh;
 pub mod xtxr;
+pub mod yaml;
 
 use std::fmt;
 

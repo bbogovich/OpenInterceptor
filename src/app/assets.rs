@@ -171,7 +171,7 @@ impl AssetBrowser {
         draw_text(&title, 20.0, 30.0, 20.0, WHITE);
         if self.list.is_empty() {
             draw_text(
-                "No original data loaded (run with --data, or set it in settings.ini).",
+                "No original data loaded (run with --data, or set it in settings.yaml).",
                 20.0,
                 70.0,
                 22.0,

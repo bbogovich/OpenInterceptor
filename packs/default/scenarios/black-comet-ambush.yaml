@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed: third parties. Escort a prospector hauler through a raider ambush.
+id: black-comet-ambush
+order: 16
+title: Black Comet ambush
+description: Escort a Belt Prospectors ore hauler past a cosmium asteroid while Black Comet hot-rods attack. A Senate patrol rocket and a Cartel freighter are in the area; only the raiders are hostile.
+player: choose
+player_position: [0, 0, 0]
+sun: [0.5, 0.3, -0.8]
+starfield_seed: 55
+
+objects:
+  hauler:
+    class: prospector_hauler
+    ai: target
+    position: [300, -50, -600]
+    speed: 120
+  patrol:
+    class: senate_patrol
+    ai: idle
+    position: [-1500, 200, -2500]
+    speed: 0
+  freighter:
+    class: cartel_freighter
+    ai: idle
+    position: [2500, -300, -3500]
+    rotation: [60, 0, 0]
+  rock:
+    class: cosmium_asteroid
+    position: [0, -600, -4000]
+    rotation: [0, 20, 10]
+  hotrod1:
+    class: hotrod
+    ai: enemy
+    position: [-800, 300, -5000]
+    speed: 400
+  hotrod2:
+    class: hotrod
+    ai: enemy
+    position: [0, 400, -5300]
+    speed: 400
+  hotrod3:
+    class: hotrod
+    ai: enemy
+    position: [800, 200, -5100]
+    speed: 400

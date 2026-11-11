@@ -32,6 +32,21 @@ fn headless(options: &cli::Options) -> Option<i32> {
         print!("{}", cli::USAGE);
         return Some(0);
     }
+    if let Some(dir) = &options.write_schemas {
+        if let Err(e) = std::fs::create_dir_all(dir) {
+            eprintln!("error: {}: {e}", dir.display());
+            return Some(1);
+        }
+        for (name, text) in openinterceptor::content::files::json_schemas() {
+            let path = dir.join(name);
+            if let Err(e) = std::fs::write(&path, text) {
+                eprintln!("error: {}: {e}", path.display());
+                return Some(1);
+            }
+            println!("wrote {}", path.display());
+        }
+        return Some(0);
+    }
     if !(options.check || options.list || options.extract.is_some()) {
         return None;
     }

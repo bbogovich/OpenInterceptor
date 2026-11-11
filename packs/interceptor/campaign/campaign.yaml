@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The campaign ruleset of X-COM: Interceptor. The five difficulty levels are the
+# original's (Beginner … Superhuman); the game flow arrives in Stages 4 and 5.
+campaign:
+  name: "X-COM: Interceptor"
+  difficulty: [beginner, experienced, veteran, genius, superhuman]
+  default_difficulty: veteran

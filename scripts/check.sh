@@ -10,6 +10,15 @@ PATH="/opt/homebrew/opt/rustup/bin:$HOME/.cargo/bin:$PATH"
 cargo test --release
 cargo build --release
 bin=target/release/openinterceptor
+# The published JSON Schemas must match the engine's schemas.
+tmp=$(mktemp -d)
+"$bin" --write-schemas "$tmp" >/dev/null
+if ! diff -r "$tmp" schemas >/dev/null; then
+    echo "error: schemas/ is out of date; run: $bin --write-schemas schemas" >&2
+    rm -rf "$tmp"
+    exit 1
+fi
+rm -rf "$tmp"
 # The default campaign uses no original assets, so it is always checked.
 "$bin" --check --no-original
 data="${OPENINTERCEPTOR_DATA:-game}"

@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Beam weapons and missiles. Damage, energy, rate of fire, speed and range come from the
+# original GameSettings.ini; colours and sounds are added here.
+#
+
+beams:
+  laser_cannon:
+    inherit: original:GameSettings.ini/LaserCannon
+    name: Laser Cannon
+    color: [1.0, 0.25, 0.2]
+    sound: original:lasercannon.wav
+  heavy_laser:
+    inherit: original:GameSettings.ini/HeavyLaser
+    name: Heavy Laser
+    color: [1.0, 0.5, 0.1]
+    sound: original:HeavyLaser.wav
+  gatling_laser:
+    inherit: original:GameSettings.ini/GatlingLaser
+    name: Gatling Laser
+    color: [1.0, 0.9, 0.2]
+    sound: original:GatlingLaser.wav
+  tracer_cannon:
+    inherit: original:GameSettings.ini/TracerCannon
+    name: Tracer Cannon
+    color: [0.4, 1.0, 1.0]
+    sound: original:tracercannon.wav
+  phase_cannon:
+    inherit: original:GameSettings.ini/PhaseCannon
+    name: Phase Cannon
+    color: [0.6, 0.4, 1.0]
+    sound: original:PhaseCannon.wav
+  plasma_cannon:
+    inherit: original:GameSettings.ini/PlasmaCannon
+    name: Plasma Cannon
+    color: [0.3, 1.0, 0.3]
+    sound: original:plasmacannon.wav
+  tachyon_pulser:
+    inherit: original:GameSettings.ini/TachyonPulser
+    name: Tachyon Pulser
+    color: [0.9, 0.3, 1.0]
+    sound: original:TachyonPulser.wav
+
+missiles:
+  # Missiles: Speed, Duration, ImpactDamage, ProximityDamage from the original. TurnRate and
+  # LockTime are engine values (special behaviours of each type arrive in Stage 2).
+  xwinder:
+    inherit: original:GameSettings.ini/XWinderMissile
+    name: X-Winder
+    turn_rate: 100
+    lock_time: 2.0
+    color: [1.0, 0.85, 0.5]
+    sound: original:Xwinder.wav
+  permeator:
+    inherit: original:GameSettings.ini/PermeatorMissile
+    name: Permeator
+    turn_rate: 90
+    lock_time: 2.5
+    color: [0.6, 1.0, 0.6]
+    sound: original:PermeatorLaunch.wav
+  sidestep:
+    inherit: original:GameSettings.ini/SidestepMissile
+    name: Sidestep
+    turn_rate: 160
+    lock_time: 2.0
+    color: [0.6, 0.8, 1.0]
+    sound: original:Xwinder.wav
+  fusion:
+    inherit: original:GameSettings.ini/FusionMissile
+    name: Fusion Missile
+    turn_rate: 40
+    lock_time: 3.0
+    color: [1.0, 0.4, 0.9]
+    sound: original:fusionLaunch.wav
+  elerium_torpedo:
+    inherit: original:GameSettings.ini/EleriumTorpedo
+    name: Elerium Torpedo
+    turn_rate: 80
+    lock_time: 2.0
+    color: [0.4, 1.0, 0.4]
+    sound: original:AlienMissileLaunch.wav

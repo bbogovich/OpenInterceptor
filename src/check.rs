@@ -56,9 +56,9 @@ impl Report {
 /// definition that failed to load is a bug in the pack.
 pub fn run(content: &Content) -> Report {
     let mut r = Report { packs: content.packs.len(), warnings: content.warnings.clone(), ..Default::default() };
-    // Definitions that failed to parse were reported as warnings while loading; for a
-    // check they are errors (pack-skipped messages stay warnings).
-    r.errors.extend(content.warnings.iter().filter(|w| w.starts_with('[')).cloned());
+    // Problems in the mod files (bad YAML, schema violations, unknown ids) are errors;
+    // the remaining warnings (skipped packs) stay warnings.
+    r.errors.extend(content.errors.iter().cloned());
     let rules = &content.rules;
     r.ships = rules.ships.len();
     let mut textures_seen = HashSet::new();
@@ -195,19 +195,23 @@ mod tests {
         let dir = root.join("bad");
         std::fs::create_dir_all(dir.join("rules")).unwrap();
         std::fs::create_dir_all(dir.join("scenarios")).unwrap();
-        std::fs::write(dir.join("pack.ini"), "[pack]\nid=bad\n").unwrap();
+        std::fs::write(dir.join("pack.yaml"), "id: bad\n").unwrap();
         std::fs::write(
-            dir.join("rules/r.ini"),
-            "[faction:a]\n[ship:x]\nModel=models/missing.obj\nFaction=a\nPlayable=yes\nCockpit=nope\nDebris=models/gone.obj\n\
-             [ship:y]\nFaction=a\n[cockpit:c]\nImage=img/none.png\n[beam:b]\nSound=s/none.wav\n[sounds]\nboom=s/boom.wav\n",
+            dir.join("rules/r.yaml"),
+            "factions: {a: {}}\nships:\n  x: {model: models/missing.obj, faction: a, playable: true, cockpit: nope, debris: [models/gone.obj]}\n  \
+             y: {faction: a}\n  z: {model: m, faction: a, speeed: 3}\ncockpits: {c: {image: img/none.png}}\nbeams: {b: {sound: s/none.wav}}\n\
+             sounds: {boom: s/boom.wav}\n",
         )
         .unwrap();
-        std::fs::write(dir.join("scenarios/s.ini"), "[scenario]\nid=s\n[object.o]\nclass=ghost\n").unwrap();
+        std::fs::write(dir.join("scenarios/s.yaml"), "id: s\nobjects:\n  o: {class: ghost}\n").unwrap();
+        std::fs::write(dir.join("scenarios/t.yaml"), "id: t\nobjects: [\n").unwrap();
         let content = Content::load(&ContentConfig { pack_dirs: vec![root.clone()], ..Default::default() }).unwrap();
         let report = run(&content);
         let all = report.errors.join("\n");
         for needle in [
-            "[ship:y]",
+            "ships.y: no model",
+            "bad/rules/r.yaml:5: ships.z.speeed: unknown key",
+            "bad/scenarios/t.yaml:2: unbalanced",
             "model models/missing.obj",
             "debris",
             "unknown cockpit",

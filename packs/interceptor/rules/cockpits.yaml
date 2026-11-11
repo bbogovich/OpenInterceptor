@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The three original cockpits. Which hull uses which cockpit is DERIVED (one per hull).
+# Instrument.<name> = x, y, width, height in the 640x480 design space of the image.
+# Instruments the engine draws: message, radar_front, radar_rear, mfd, gauge1..gauge4
+# (speed, energy, shields, hull). Move them to match your own cockpit art.
+# The radar rectangles enclose the round glass of each scope, measured from the art
+# (crosshair centre +-1 px); the engine draws contacts only, the art supplies the rings.
+#
+
+cockpits:
+  a:
+    image: original:CockpitA.dll#12000
+    instruments:
+      message: [118, 12, 410, 24]
+      radar_front: [111, 332, 60, 60]
+      radar_rear: [473, 332, 60, 60]
+      mfd: [246, 338, 156, 82]
+      gauge1: [243, 299, 26, 26]
+      gauge2: [288, 299, 26, 26]
+      gauge3: [333, 299, 26, 26]
+      gauge4: [378, 299, 26, 26]
+  b:
+    image: original:CockpitB.dll#12200
+    instruments:
+      message: [118, 12, 410, 24]
+      radar_front: [126, 366, 56, 56]
+      radar_rear: [462, 366, 56, 56]
+      mfd: [248, 324, 146, 76]
+      gauge1: [243, 431, 30, 28]
+      gauge2: [285, 431, 30, 28]
+      gauge3: [328, 431, 30, 28]
+      gauge4: [370, 431, 30, 28]
+  c:
+    image: original:CockpitC.dll#12400
+    instruments:
+      message: [118, 12, 410, 24]
+      radar_front: [26, 361, 53, 53]
+      radar_rear: [560, 361, 53, 53]
+      mfd: [250, 377, 136, 72]
+      gauge1: [246, 325, 26, 24]
+      gauge2: [288, 325, 26, 24]
+      gauge3: [331, 325, 26, 24]
+      gauge4: [372, 325, 26, 24]

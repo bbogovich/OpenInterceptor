@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenInterceptor pack manifest (pack.yaml)",
+  "type": "object", "additionalProperties": false, "properties": {
+    "id": {"description": "unique id: a-z, 0-9, - and _", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+    "name": {"description": "shown in the launcher", "type": "string"},
+    "version": {"description": "the pack's own version", "type": "string"},
+    "description": {"description": "one or two sentences for the launcher", "type": "string"},
+    "kind": {"description": "campaign, addon (default) or library", "enum": ["campaign", "addon", "library"]},
+    "parent": {"description": "campaigns: the campaign this one extends", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+    "targets": {"description": "addons: campaigns it applies to (* = all)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+    "depends": {"description": "packs that must load first", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+    "requires_original": {"description": "true when the pack reads the player's Interceptor CD", "type": "boolean"},
+    "format": {"description": "mod-format version the pack was written for", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+    "authors": {"description": "informational", "type": "string"},
+    "licence": {"description": "informational", "type": "string"}
+  }
+}

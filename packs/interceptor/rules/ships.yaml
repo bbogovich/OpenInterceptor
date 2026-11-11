@@ -1,0 +1,290 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Ships of X-COM: Interceptor.
+#
+# Hull values (HitPoints, turn rates, LockSpeed, MaxSpeed, Side) are inherited from the
+# player's GameSettings.ini. The class -> mesh mapping comes from the string table in
+# Interceptor.exe; which alien mesh is which named class is DERIVED (see the docs site,
+# Original game > Formats > Object table).
+#
+# Shields, Armor, Energy, EnergyRecharge and Acceleration are engine values: in the
+# original they depend on fitted equipment (ShieldType*, ArmorType*, EngineType*), which
+# arrives with the equipment system in Stage 4. Model = original:<MESH> reads the XMSH
+# resource of that name.
+#
+# --- X-COM interceptors (playable) ----------------------------------------------------
+#
+
+ships:
+  lightning:
+    inherit: original:GameSettings.ini/Ship_IntType1
+    name: X-1A Lightning II
+    description: Fast, fragile patrol interceptor.
+    model: original:INTTYPEA
+    playable: true
+    cockpit: a
+    shields: 100
+    armor: 80
+    energy: 400
+    energy_recharge: 45
+    acceleration: 140
+    beams: [laser_cannon, laser_cannon]
+    missiles: {xwinder: 5, sidestep: 4}
+    # Special systems: a Stage 2 testbed fit until loadouts arrive (Stage 4). The hull has
+    # two special mounts (SpecialSystemMounts = 2).
+    systems+: [ecm, damage_control]
+    debris: [original:X-SHIPA1, original:X-SHIPA2, original:X-SHIPA3, original:X-SHIPA4]
+    engine_color: [0.5, 0.7, 1.0]
+  firestar:
+    inherit: original:GameSettings.ini/Ship_IntType2
+    name: S-2 Firestar
+    description: Tri-titanium multirole fighter.
+    model: original:FIRESTAR6
+    playable: true
+    cockpit: b
+    shields: 150
+    armor: 150
+    energy: 500
+    energy_recharge: 55
+    acceleration: 110
+    beams: [gatling_laser, gatling_laser, laser_cannon, laser_cannon]
+    missiles: {xwinder: 5, permeator: 3, sidestep: 4}
+    # Testbed fit for the four special mounts.
+    systems+: [ecm, damage_control, tractor]
+    debris: [original:X-SHIPB1, original:X-SHIPB2, original:X-SHIPB3, original:X-SHIPB4]
+    engine_color: [0.5, 0.7, 1.0]
+  avenger:
+    inherit: original:GameSettings.ini/Ship_IntType3
+    name: M-3 Super Avenger
+    description: Alien-alloy heavy fighter-bomber.
+    model: original:AVENGER16
+    playable: true
+    cockpit: c
+    shields: 200
+    armor: 250
+    energy: 600
+    energy_recharge: 65
+    acceleration: 90
+    beams: [heavy_laser, heavy_laser, laser_cannon, laser_cannon]
+    missiles: {xwinder: 5, permeator: 3, sidestep: 4, fusion: 2}
+    # Testbed fit for the six special mounts: every special system, to try them all.
+    systems+: [advanced_ecm, damage_control, tractor, cloak]
+    vct: true
+    debris: [original:X-SHIPC1, original:X-SHIPC3, original:X-SHIPC4]
+    engine_color: [0.5, 0.7, 1.0]
+  # --- Aliens ---------------------------------------------------------------------------
+  # Alien hulls have no flight values in the original file (they were coded per class);
+  # the values here are engine estimates tuned to the documented roles.
+  wraith:
+    inherit: original:GameSettings.ini/Ship_AlienType1
+    name: Wraith
+    description: Light, agile alien saucer.
+    model: original:ALIENSH3
+    shields: 80
+    armor: 40
+    max_speed: 650
+    acceleration: 160
+    roll_rate: 220
+    pitch_rate: 110
+    yaw_rate: 110
+    vct: true
+    beams: [plasma_cannon, plasma_cannon]
+    missiles: {elerium_torpedo: 2}
+    debris: [original:ASHADC1, original:ASHADC2, original:ASHADC3]
+    engine_color: [0.4, 1.0, 0.4]
+  spectre:
+    inherit: original:GameSettings.ini/Ship_AlienType2
+    name: Spectre
+    description: Multirole alien saucer.
+    model: original:ALIENB4
+    shields: 120
+    armor: 60
+    max_speed: 600
+    acceleration: 130
+    roll_rate: 180
+    pitch_rate: 90
+    yaw_rate: 90
+    vct: true
+    beams: [plasma_cannon, plasma_cannon]
+    missiles: {elerium_torpedo: 3}
+    debris: [original:ASHADC2, original:ASHADC4]
+    engine_color: [0.4, 1.0, 0.4]
+  phantasm:
+    inherit: original:GameSettings.ini/Ship_AlienType3
+    name: Phantasm
+    description: Heavy alien beam gunship.
+    model: original:ALIENC7
+    shields: 200
+    armor: 120
+    max_speed: 520
+    acceleration: 100
+    roll_rate: 120
+    pitch_rate: 60
+    yaw_rate: 60
+    vct: true
+    beams: [plasma_cannon, plasma_cannon, tachyon_pulser, plasma_cannon]
+    missiles: {elerium_torpedo: 3}
+    debris: [original:ASHADC3, original:ASHADC5]
+    engine_color: [0.4, 1.0, 0.4]
+  shade:
+    inherit: original:GameSettings.ini/Ship_AlienType4
+    name: Shade
+    description: Elite alien fighter flown by Aereon pilots.
+    model: original:SHADE
+    shields: 250
+    armor: 100
+    max_speed: 700
+    acceleration: 180
+    roll_rate: 220
+    pitch_rate: 120
+    yaw_rate: 120
+    vct: true
+    # Accumulator shields, VCT, cloak and ECM (guide: the Shade).
+    systems+: [cloak, advanced_ecm]
+    beams: [plasma_cannon, plasma_cannon, plasma_cannon]
+    missiles: {elerium_torpedo: 4}
+    debris: [original:ASHADC1, original:ASHADC4]
+    engine_color: [0.8, 0.4, 1.0]
+  harbinger:
+    inherit: original:GameSettings.ini/Ship_AlienType5
+    name: Harbinger
+    description: Alien tug; tows cargo and tries to capture disabled ships.
+    model: original:ALTUG04
+    kind: capital
+    # Tows cargo and tries to capture disabled ships (guide).
+    systems+: [tractor]
+    shields: 200
+    armor: 150
+    max_speed: 300
+    acceleration: 50
+    roll_rate: 40
+    pitch_rate: 25
+    yaw_rate: 25
+    beams: [tachyon_pulser, tachyon_pulser]
+    debris: [original:A-TUGCH1, original:A-TUGCH2, original:A-TUGCH3, original:A-TUGCH4]
+    engine_color: [0.4, 1.0, 0.4]
+  alien_container:
+    inherit: original:GameSettings.ini/Ship_AlienType6
+    name: Alien Container
+    description: Cargo towed by a Harbinger (class mapping derived).
+    model: original:DDC4
+    kind: freighter
+    max_speed: 150
+    acceleration: 20
+    roll_rate: 10
+    pitch_rate: 10
+    yaw_rate: 10
+  spirit:
+    inherit: original:GameSettings.ini/Ship_AlienFreighter
+    name: Spirit
+    description: Alien freighter; launches drones.
+    model: original:AL-FREIG6
+    kind: freighter
+    shields: 150
+    armor: 150
+    max_speed: 250
+    acceleration: 40
+    roll_rate: 30
+    pitch_rate: 20
+    yaw_rate: 20
+    beams: [plasma_cannon]
+    debris: [original:A-FRT1, original:A-FRT2, original:A-FRT3, original:A-FRT4]
+    engine_color: [0.4, 1.0, 0.4]
+  drone:
+    inherit: original:GameSettings.ini/Ship_AlienDrone
+    name: Alien Drone
+    description: Fast, unarmoured, psionically controlled.
+    model: original:DRONE01
+    kind: drone
+    max_speed: 750
+    acceleration: 220
+    roll_rate: 250
+    pitch_rate: 130
+    yaw_rate: 130
+    beams: [plasma_cannon]
+    engine_color: [0.4, 1.0, 0.4]
+  # --- Pirates and corporations (same three hulls, different paint) ---------------------
+  pirate_lightning:
+    inherit: lightning
+    faction: pirate
+    playable: false
+    name: Pirate Lightning II
+    model: original:P-TYPEA
+    debris: [original:XPIRATA1, original:XPIRATA2, original:XPIRATA3, original:XPIRATA4]
+  pirate_firestar:
+    inherit: firestar
+    faction: pirate
+    playable: false
+    name: Pirate Firestar
+    model: original:P-TYPEB
+    debris: [original:XPIRATB1, original:XPIRATB2, original:XPIRATB3, original:XPIRATB4]
+  pirate_avenger:
+    inherit: avenger
+    faction: pirate
+    playable: false
+    name: Pirate Super Avenger
+    model: original:P-AVENGER16
+    debris: [original:XPIRATC1, original:XPIRATC3, original:XPIRATC4]
+  rogue_freighter:
+    inherit: original:GameSettings.ini/Ship_PirateFreighter
+    name: Rogue Freighter
+    model: original:P-FRE98-5
+    kind: freighter
+    shields: 150
+    armor: 200
+    max_speed: 250
+    acceleration: 40
+    roll_rate: 30
+    pitch_rate: 20
+    yaw_rate: 20
+    beams: [laser_cannon, laser_cannon]
+    missiles: {xwinder: 4}
+    debris: [original:XPIRFRT1, original:XPIRFRT2, original:XPIRFRT3, original:XPIRFRT4]
+  corporate_lightning:
+    inherit: lightning
+    faction: corporate
+    playable: false
+    name: Corporate Lightning II
+    model: original:CORTYPEA
+    debris: [original:XCORPA1, original:XCORPA2, original:XCORPA3, original:XCORPA4]
+  corporate_firestar:
+    inherit: firestar
+    faction: corporate
+    playable: false
+    name: Corporate Firestar
+    model: original:C-TYPEB
+    debris: [original:XCORPB1, original:XCORPB2, original:XCORPB3, original:XCORPB4]
+  corporate_avenger:
+    inherit: avenger
+    faction: corporate
+    playable: false
+    name: Corporate Super Avenger
+    model: original:C-AVENGER16
+    debris: [original:XCORPC1, original:XCORPC3, original:XCORPC4]
+  xcom_freighter:
+    inherit: original:GameSettings.ini/Ship_XCOMFreighter
+    name: Star Ranger Freighter
+    model: original:XFRE98-5
+    kind: freighter
+    shields: 150
+    armor: 200
+    max_speed: 250
+    acceleration: 40
+    roll_rate: 30
+    pitch_rate: 20
+    yaw_rate: 20
+    beams: [laser_cannon]
+    debris: [original:XFRGTCH1, original:XFRGTCH2, original:XFRGTCH3, original:XFRGTCH4, original:XFRGTCH5]
+  patton:
+    inherit: original:GameSettings.ini/Ship_PattonClass
+    name: Patton-class Research Cruiser
+    model: original:CPAT
+    kind: capital
+    shields: 400
+    armor: 500
+    max_speed: 150
+    acceleration: 15
+    roll_rate: 8
+    pitch_rate: 5
+    yaw_rate: 5
+    beams: [laser_cannon]
+    debris: [original:XKPAT1, original:XKPAT2, original:XKPAT3, original:XKPAT4, original:XKPAT5, original:XKPAT6]

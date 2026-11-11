@@ -5,23 +5,22 @@
 //! between beam weapons, shields and special equipment, and how damage reaches those
 //! systems and gets repaired.
 //!
-//! ```ini
-//! [system:ecm_pod]            ; a fitted system (any id); Kind picks the built-in effect
-//! Kind = ecm
-//! Name = ECM Pod
-//! HitPoints = 100
-//! Power = 1                   ; power steps used while switched on
-//! Range = 250                 ; metres
-//! Strength = 10               ; ECM: % chance per second to break a missile's homing
-//!
-//! [power]                     ; global: the beam/shield charge settings A–E
-//! BeamRecharge = 0, 0.32, 0.45, 0.68, 1     ; fraction of the ship's EnergyRecharge
-//! ShieldRecharge = 0, 0.2, 0.4, 0.6, 1      ; fraction of the ship's ShieldRecharge
-//! Budget = 6
-//!
-//! [damage]                    ; global: how hits reach systems and how repair works
-//! SystemShare = 1
-//! RepairRate = 2
+//! ```yaml
+//! systems:
+//!   ecm_pod:                  # a fitted system (any id); kind picks the built-in effect
+//!     kind: ecm
+//!     name: ECM Pod
+//!     hit_points: 100
+//!     power: 1                # power steps used while switched on
+//!     range: 250m
+//!     strength: 10            # ECM: % chance per second to break a missile's homing
+//! power:                      # global: the beam/shield charge settings A–E
+//!   beam_recharge: [0, 0.32, 0.45, 0.68, 1]    # fraction of the ship's energy_recharge
+//!   shield_recharge: [0, 0.2, 0.4, 0.6, 1]     # fraction of the ship's shield_recharge
+//!   budget: 6
+//! damage:                     # global: how hits reach systems and how repair works
+//!   system_share: 100%
+//!   repair_rate: 2
 //! ```
 //!
 //! ## Why the effects are code but the numbers are data
@@ -31,10 +30,10 @@
 //! points, power draw, range, strength, names — is data. A mod can define any number of
 //! systems of one kind (`ecm_pod`, `advanced_ecm_pod`) with different numbers.
 //!
-//! When a pack does not define a `[system:<kind>]` section for a kind, a built-in
+//! When a pack does not define a system named after a kind, a built-in
 //! default ([`SystemDef::builtin`]) is used, so older packs keep working.
 
-use crate::formats::ini::Section;
+use super::schema::{Get, Unit};
 
 /// What a system does. Each kind has one built-in effect in the simulation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -152,23 +151,23 @@ impl SystemDef {
         SystemDef { id: kind.key().into(), name: name.into(), kind, hit_points, power, range, strength, repair_rate }
     }
 
-    /// Parses a `[system:<id>]` section. Missing keys take the kind's built-in values.
-    pub fn parse(id: &str, s: &Section) -> Result<SystemDef, String> {
-        // With no `Kind`, the id itself may name a kind (`[system:ecm]`).
-        let kind = match s.get_nonempty("Kind") {
-            Some(k) => SystemKind::parse(k).ok_or(format!("unknown system Kind '{k}'"))?,
-            None => SystemKind::parse(id).ok_or("a system needs a Kind")?,
+    /// Parses a `systems:` definition. Missing keys take the kind's built-in values.
+    pub fn parse(id: &str, g: Get) -> Result<SystemDef, String> {
+        // With no `kind`, the id itself may name a kind (`systems: {ecm: …}`).
+        let kind = match g.str("kind") {
+            Some(k) => SystemKind::parse(k).ok_or(format!("unknown system kind '{k}'"))?,
+            None => SystemKind::parse(id).ok_or("a system needs a kind")?,
         };
         let d = SystemDef::builtin(kind);
         Ok(SystemDef {
             id: id.to_string(),
-            name: s.get_nonempty("Name").unwrap_or(&d.name).to_string(),
+            name: g.str("name").unwrap_or(&d.name).to_string(),
             kind,
-            hit_points: s.get_f32("HitPoints").unwrap_or(d.hit_points).max(1.0),
-            power: s.get_f32("Power").map(|p| p.clamp(0.0, 255.0) as u8).unwrap_or(d.power),
-            range: s.get_f32("Range").unwrap_or(d.range).max(0.0),
-            strength: s.get_f32("Strength").unwrap_or(d.strength).max(0.0),
-            repair_rate: s.get_f32("RepairRate").unwrap_or(d.repair_rate).max(0.0),
+            hit_points: g.num("hit_points").unwrap_or(d.hit_points).max(1.0),
+            power: g.num("power").map(|p| p.clamp(0.0, 255.0) as u8).unwrap_or(d.power),
+            range: g.qty("range", Unit::Distance).unwrap_or(d.range).max(0.0),
+            strength: g.num("strength").unwrap_or(d.strength).max(0.0),
+            repair_rate: g.num("repair_rate").unwrap_or(d.repair_rate).max(0.0),
         })
     }
 }
@@ -219,29 +218,29 @@ impl PowerRules {
         (b'A' + level.min(25)) as char
     }
 
-    /// Parses the `[power]` section (or defaults when absent).
-    pub fn parse(s: Option<&Section>) -> Result<PowerRules, String> {
+    /// Parses the `power:` section (or defaults when absent).
+    pub fn parse(g: Option<Get>) -> Result<PowerRules, String> {
         let d = PowerRules::default();
-        let Some(s) = s else { return Ok(d) };
+        let Some(g) = g else { return Ok(d) };
         let levels = |key: &str, default: &Vec<f32>| -> Result<Vec<f32>, String> {
-            match s.get_floats(key) {
+            match g.nums(key) {
                 None => Ok(default.clone()),
-                Some(v) if v.is_empty() || v.len() > 26 => Err(format!("[power] {key}: give 1 to 26 levels")),
+                Some(v) if v.is_empty() || v.len() > 26 => Err(format!("{key}: give 1 to 26 levels")),
                 Some(v) => Ok(v.into_iter().map(|x| x.max(0.0)).collect()),
             }
         };
-        let beam_recharge = levels("BeamRecharge", &d.beam_recharge)?;
-        let shield_recharge = levels("ShieldRecharge", &d.shield_recharge)?;
+        let beam_recharge = levels("beam_recharge", &d.beam_recharge)?;
+        let shield_recharge = levels("shield_recharge", &d.shield_recharge)?;
         if beam_recharge.len() != shield_recharge.len() {
-            return Err("[power] BeamRecharge and ShieldRecharge need the same number of levels".into());
+            return Err("beam_recharge and shield_recharge need the same number of levels".into());
         }
         let top = beam_recharge.len() as f32 - 1.0;
-        let step = |key: &str, default: u8| s.get_f32(key).map(|v| v.clamp(0.0, top) as u8).unwrap_or(default);
+        let step = |key: &str, default: u8| g.num(key).map(|v| v.clamp(0.0, top) as u8).unwrap_or(default);
         Ok(PowerRules {
-            budget: s.get_f32("Budget").map(|v| v.clamp(0.0, 255.0) as u8).unwrap_or(d.budget),
-            start_beam: step("StartBeam", d.start_beam.min(top as u8)),
-            start_shield: step("StartShield", d.start_shield.min(top as u8)),
-            balance_shift: s.get_f32("BalanceShift").unwrap_or(d.balance_shift).clamp(0.0, 1.0),
+            budget: g.num("budget").map(|v| v.clamp(0.0, 255.0) as u8).unwrap_or(d.budget),
+            start_beam: step("start_beam", d.start_beam.min(top as u8)),
+            start_shield: step("start_shield", d.start_shield.min(top as u8)),
+            balance_shift: g.qty("balance_shift", Unit::Fraction).unwrap_or(d.balance_shift).clamp(0.0, 1.0),
             beam_recharge,
             shield_recharge,
         })
@@ -268,14 +267,14 @@ impl Default for DamageRules {
 }
 
 impl DamageRules {
-    /// Parses the `[damage]` section (or defaults when absent).
-    pub fn parse(s: Option<&Section>) -> DamageRules {
+    /// Parses the `damage:` section (or defaults when absent).
+    pub fn parse(g: Option<Get>) -> DamageRules {
         let d = DamageRules::default();
-        let Some(s) = s else { return d };
+        let Some(g) = g else { return d };
         DamageRules {
-            system_share: s.get_f32("SystemShare").unwrap_or(d.system_share).max(0.0),
-            destroy_below: s.get_f32("DestroyBelow").unwrap_or(d.destroy_below).max(0.0),
-            repair_rate: s.get_f32("RepairRate").unwrap_or(d.repair_rate).max(0.0),
+            system_share: g.qty("system_share", Unit::Fraction).unwrap_or(d.system_share).max(0.0),
+            destroy_below: g.qty("destroy_below", Unit::Fraction).unwrap_or(d.destroy_below).max(0.0),
+            repair_rate: g.num("repair_rate").unwrap_or(d.repair_rate).max(0.0),
         }
     }
 }
@@ -283,7 +282,6 @@ impl DamageRules {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::formats::ini::Ini;
 
     #[test]
     fn kinds_round_trip_and_builtins_exist() {
@@ -297,27 +295,34 @@ mod tests {
         assert_eq!(SystemKind::parse("warp"), None);
     }
 
+    fn doc(text: &str) -> crate::formats::yaml::Node {
+        crate::formats::yaml::parse(text).unwrap()
+    }
+
     #[test]
-    fn system_sections_override_builtins() {
-        let ini = Ini::parse("[system:adv_ecm]\nKind=ecm\nName=Advanced ECM\nRange=500\nStrength=25\n[system:cloak]\nPower=4\n[system:x]\n");
-        let ecm = SystemDef::parse("adv_ecm", ini.section("system:adv_ecm").unwrap()).unwrap();
+    fn system_definitions_override_builtins() {
+        let d = doc("adv_ecm: {kind: ecm, name: Advanced ECM, range: 0.5km, strength: 25}
+cloak: {power: 4}
+x: {}
+");
+        let ecm = SystemDef::parse("adv_ecm", Get(d.get("adv_ecm").unwrap())).unwrap();
         assert_eq!((ecm.kind, ecm.range, ecm.strength, ecm.power), (SystemKind::Ecm, 500.0, 25.0, 1));
-        let cloak = SystemDef::parse("cloak", ini.section("system:cloak").unwrap()).unwrap();
+        let cloak = SystemDef::parse("cloak", Get(d.get("cloak").unwrap())).unwrap();
         assert_eq!((cloak.kind, cloak.power), (SystemKind::Cloak, 4), "the id names the kind");
-        assert!(SystemDef::parse("x", ini.section("system:x").unwrap()).is_err());
+        assert!(SystemDef::parse("x", Get(d.get("x").unwrap())).is_err());
     }
 
     #[test]
     fn power_section_parses_and_validates() {
-        let ini = Ini::parse("[power]\nBeamRecharge=0,7,10,15,22\nShieldRecharge=0,1,2,3,5\nBudget=5\nStartBeam=9\n");
-        let p = PowerRules::parse(ini.section("power")).unwrap();
+        let d = doc("beam_recharge: [0, 7, 10, 15, 22]\nshield_recharge: [0, 1, 2, 3, 5]\nbudget: 5\nstart_beam: 9\n");
+        let p = PowerRules::parse(Some(Get(&d))).unwrap();
         assert_eq!((p.levels(), p.budget, p.start_beam), (5, 5, 4), "start clamped to the top level");
         assert_eq!(PowerRules::letter(0), 'A');
         assert_eq!(PowerRules::letter(4), 'E');
-        let bad = Ini::parse("[power]\nBeamRecharge=0,1\nShieldRecharge=0,1,2\n");
-        assert!(PowerRules::parse(bad.section("power")).is_err());
+        let bad = doc("beam_recharge: [0, 1]\nshield_recharge: [0, 1, 2]\n");
+        assert!(PowerRules::parse(Some(Get(&bad))).is_err());
         assert_eq!(PowerRules::parse(None).unwrap(), PowerRules::default());
-        let d = DamageRules::parse(Ini::parse("[damage]\nRepairRate=5\n").section("damage"));
+        let d = DamageRules::parse(Some(Get(&doc("repair_rate: 5\n"))));
         assert_eq!((d.repair_rate, d.system_share), (5.0, 1.0));
     }
 }

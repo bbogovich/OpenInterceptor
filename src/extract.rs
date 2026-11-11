@@ -131,19 +131,19 @@ fn put(root: &Path, rel: &str, bytes: &[u8]) -> Result<(), String> {
     std::fs::write(&path, bytes).map_err(|e| format!("{}: {e}", path.display()))
 }
 
-/// The `pack.ini` and README written at the top of an extraction.
+/// The `pack.yaml` and README written at the top of an extraction.
 pub fn pack_files() -> (String, String) {
-    let pack = "; Assets extracted from your own X-COM: Interceptor CD, laid out as overrides.\n\
-                ; As a pack it replaces every original asset with its extracted copy. For a mod,\n\
-                ; copy only the files you change into your mod's folder (same relative paths).\n\
-                [pack]\nid = interceptor-extracted\nname = Interceptor (extracted copy)\nversion = 1\n\
-                depends = interceptor\nrequires_original = yes\n";
+    let pack = "# Assets extracted from your own X-COM: Interceptor CD, laid out as overrides.\n\
+                # As an addon it replaces every original asset with its extracted copy. For a mod,\n\
+                # copy only the files you change into your mod's folder (same relative paths).\n\
+                id: interceptor-extracted\nname: Interceptor (extracted copy)\nversion: \"1\"\n\
+                kind: addon\ntargets: [interceptor]\nrequires_original: true\n";
     let readme = "These files were converted from YOUR copy of X-COM: Interceptor by\n\
                   `openinterceptor --extract`. They are copyrighted by their owners: keep them for\n\
                   personal modding; never share or publish them.\n\n\
                   To replace an asset in the game, put an edited file at the SAME relative path in\n\
-                  a mod folder (a folder with a pack.ini) inside your mods folder, for example:\n\n\
-                  mods/hd-cockpit/pack.ini\n\
+                  a mod folder (a folder with a pack.yaml) inside your mods folder, for example:\n\n\
+                  mods/hd-cockpit/pack.yaml\n\
                   mods/hd-cockpit/images/cockpita/12000.png   (repainted cockpit, any resolution)\n\n\
                   models/*.obj   meshes (metres, +Y up, nose along -Z); textures in ../textures\n\
                   textures/*.png  model textures\n\
@@ -158,7 +158,7 @@ pub fn run(content: &Content, out: &Path) -> Result<ExtractReport, String> {
     let o = content.original.as_ref().ok_or("--extract needs the original Interceptor data (--data)")?;
     let mut r = ExtractReport::default();
     let (pack, readme) = pack_files();
-    put(out, "pack.ini", pack.as_bytes())?;
+    put(out, "pack.yaml", pack.as_bytes())?;
     put(out, "README.txt", readme.as_bytes())?;
     for (_, name, data) in o.resources_of("XMSH") {
         let lower = name.to_ascii_lowercase();
@@ -297,7 +297,7 @@ mod tests {
         std::fs::write(cd.join("SoundFX/Boom.WAV"), pcm.to_wav_bytes()).unwrap();
         let packs = root.join("packs");
         std::fs::create_dir_all(packs.join("base")).unwrap();
-        std::fs::write(packs.join("base/pack.ini"), "[pack]\nid=base\n").unwrap();
+        std::fs::write(packs.join("base/pack.yaml"), "id: base\n").unwrap();
         let content = Content::load(&crate::content::ContentConfig {
             pack_dirs: vec![packs],
             original: Some(cd),
@@ -309,7 +309,7 @@ mod tests {
         assert!(r.errors.is_empty(), "{:?}", r.errors);
         assert_eq!((r.models, r.textures, r.sounds, r.files), (2, 2, 1, 1), "{}", r.summary());
         for f in [
-            "pack.ini",
+            "pack.yaml",
             "README.txt",
             "models/ship.obj",
             "models/ship.mtl",

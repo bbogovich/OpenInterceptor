@@ -8,7 +8,7 @@
 //!
 //! Button and axis numbers follow the common `xpad` / SDL layout used by Xbox-style
 //! controllers (the most widespread on Linux); other pads may map differently and can
-//! be remapped in `bindings.ini`.
+//! be remapped in `bindings.yaml`.
 //!
 //! Only `std` is used: no udev, no extra crates.
 

@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena: the default campaign's basic dogfight.
+id: rocket-vs-saucer
+order: 10
+title: Rocket vs saucer
+description: "Two Guard wingmen and a choice of rocket against a flight of Dominion saucers near the Guard station. Wingmen: ] for the menu, Shift+F fire at will."
+player: choose
+player_position: [0, 0, 600]
+sun: [-0.5, 0.4, -0.75]
+starfield_seed: 21
+
+objects:
+  station:
+    class: guard_station
+    position: [600, -200, -1500]
+    rotation: [20, 0, 0]
+  wing1:
+    class: comet
+    ai: wingman
+    leader: player
+    position: [-50, 0, 640]
+    offset: [-50, 0, 40]
+  wing2:
+    class: comet
+    ai: wingman
+    leader: player
+    position: [50, 0, 640]
+    offset: [50, 0, 40]
+  scout1:
+    class: scout_saucer
+    ai: enemy
+    position: [-900, 250, -4500]
+    speed: 350
+  scout2:
+    class: scout_saucer
+    ai: enemy
+    position: [0, -200, -4800]
+    speed: 350
+  raider1:
+    class: raider_saucer
+    ai: enemy
+    position: [900, 300, -5200]
+    speed: 300

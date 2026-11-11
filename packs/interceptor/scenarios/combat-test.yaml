@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# The flight-test arena with hostile AI. Generated from flight-test.ini; keep in sync.
+id: combat-test
+order: 20
+title: "Combat test: hostile arena"
+description: The flight-test arena, but every alien and pirate attacks. Wingmen hold formation until ordered (Shift+F fire at will, Shift+A attack my target).
+player: choose
+player_position: [0, 0, 0]
+sun: [-0.4, 0.45, -0.8]
+starfield_seed: 7
+
+objects:
+  base:
+    class: xcom_base
+    position: [1500, -300, -3500]
+    rotation: [30, 0, 0]
+    ai: idle
+  alpha2:
+    class: lightning
+    ai: wingman
+    leader: player
+    position: [-80, 0, 40]
+    offset: [-80, 0, 40]
+  alpha3:
+    class: lightning
+    ai: wingman
+    leader: player
+    position: [80, 0, 40]
+    offset: [80, 0, 40]
+  # Aliens, ahead and to the left.
+  wraith:
+    class: wraith
+    position: [-2200, 300, -5000]
+    ai: enemy
+    speed: 200
+  spectre:
+    class: spectre
+    position: [-1400, -200, -5600]
+    ai: enemy
+    speed: 200
+  phantasm:
+    class: phantasm
+    position: [-600, 400, -6200]
+    ai: enemy
+    speed: 180
+  shade:
+    class: shade
+    position: [-2800, -400, -6400]
+    ai: enemy
+    speed: 220
+  harbinger:
+    class: harbinger
+    position: [-3600, 0, -7400]
+    ai: enemy
+    speed: 100
+  container:
+    class: alien_container
+    position: [-3600, -150, -7000]
+    ai: idle
+  spirit:
+    class: spirit
+    position: [200, -600, -8000]
+    ai: enemy
+    speed: 80
+  drone:
+    class: drone
+    position: [-1000, 800, -4200]
+    ai: enemy
+    speed: 250
+  # Pirates, ahead and to the right.
+  pirate1:
+    class: pirate_lightning
+    position: [3200, 200, -5200]
+    ai: enemy
+    speed: 200
+  pirate2:
+    class: pirate_firestar
+    position: [3800, -200, -5800]
+    ai: enemy
+    speed: 200
+  pirate3:
+    class: pirate_avenger
+    position: [4400, 300, -6400]
+    ai: enemy
+    speed: 180
+  rogue:
+    class: rogue_freighter
+    position: [5200, 0, -7400]
+    ai: enemy
+    speed: 80
+
+nav:
+  # Navigation points (engine extension; cycle with N, shown on the MFD Nav page).
+  base:
+    position: [1500, -300, -3500]
+  aliens:
+    position: [-2200, 0, -6000]
+  pirates:
+    position: [4200, 0, -6000]

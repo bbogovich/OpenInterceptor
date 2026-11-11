@@ -1,41 +1,34 @@
 //! # Scenarios
 //!
-//! A scenario is a playable space arena described in a pack's `scenarios/*.ini`. The
+//! A scenario is a playable space arena described in a pack's `scenarios/*.yaml`. The
 //! testbed's live test environments are scenarios, and Stage 3 missions build on the
 //! same format. Being plain data, a modder can add a new test arena without writing Rust.
 //!
-//! ```ini
-//! [scenario]
-//! id = flight-test
-//! title = Flight test: station patrol
-//! description = Fly around an X-COM base with two wingmen…
-//! player = choose               ; or a ship id
-//! sun = -0.4, 0.5, -0.8         ; direction *towards* the sun
-//! starfield_seed = 7
-//!
-//! [object.base]
-//! class = xcom_base
-//! position = 0, 0, -3000        ; metres; -Z is "ahead" of the player's start
-//! rotation = 0, 0, 0            ; yaw, pitch, roll in degrees
-//! ai = idle                     ; player | wingman | enemy | idle | target
-//!
-//! [object.wing1]
-//! class = lightning
-//! ai = wingman
-//! leader = player
-//! offset = -60, 0, 30           ; formation slot relative to the leader
-//!
-//! [object.wreck]
-//! class = wraith
-//! destroyed_systems = engines, manoeuvring   ; start disabled (a capture target)
-//! hull = 0.4                    ; start at 40% hull
-//! behaviour = wraith_ambush     ; fly this behaviour instead of the class's
-//!
-//! [nav.alpha]                   ; optional navigation points (engine extension)
-//! position = 0, 0, -3000
+//! ```yaml
+//! id: flight-test
+//! title: "Flight test: station patrol"
+//! description: Fly around an X-COM base with two wingmen…
+//! player: choose                # or a ship id
+//! sun: [-0.4, 0.5, -0.8]        # direction *towards* the sun
+//! starfield_seed: 7
+//! objects:
+//!   base:
+//!     class: xcom_base
+//!     position: [0, 0, -3000]   # metres; -z is "ahead" of the player's start
+//!     rotation: [0, 0, 0]       # yaw, pitch, roll in degrees
+//!     ai: idle                  # wingman | enemy | idle | target
+//!   wing1: {class: lightning, ai: wingman, leader: player, offset: [-60, 0, 30]}
+//!   wreck:
+//!     class: wraith
+//!     destroyed_systems: [engines, manoeuvring]   # start disabled (a capture target)
+//!     hull: 40%
+//!     behaviour: wraith_ambush  # fly this behaviour instead of the class's
+//! nav:                          # optional navigation points (engine extension)
+//!   alpha: {position: [0, 0, -3000]}
 //! ```
 
-use crate::formats::ini::{Ini, Section};
+use super::schema::{Get, Unit};
+use crate::formats::yaml::Node;
 use glam::Vec3;
 
 /// How an object in a scenario is controlled.
@@ -120,72 +113,69 @@ pub struct Scenario {
     pub order: i64,
 }
 
-fn vec3(s: &Section, key: &str, default: Vec3) -> Result<Vec3, String> {
-    match s.get_floats(key) {
-        Some(v) if v.len() == 3 => Ok(Vec3::new(v[0], v[1], v[2])),
-        Some(_) => Err(format!("{key} needs three numbers")),
-        None if s.get_nonempty(key).is_some() => Err(format!("{key} is not a list of numbers")),
-        None => Ok(default),
+fn vec3(g: Get, key: &str, default: Vec3) -> Vec3 {
+    match g.nums(key) {
+        Some(v) if v.len() == 3 => Vec3::new(v[0], v[1], v[2]),
+        _ => default,
     }
 }
 
 impl Scenario {
-    /// Parses scenario text. `pack` is recorded for asset resolution.
+    /// Parses scenario YAML text (`pack` is recorded for asset resolution).
     pub fn parse(text: &str, pack: usize) -> Result<Scenario, String> {
-        let ini = Ini::parse(text);
-        let s = ini.section("scenario").ok_or("no [scenario] section")?;
-        let id = s.get_nonempty("id").ok_or("scenario has no id")?.to_string();
-        let player = s.get_nonempty("player").unwrap_or("choose");
+        let doc = crate::formats::yaml::parse(text).map_err(|e| format!("{}: {}", e.line, e.message))?;
+        Scenario::from_yaml(&doc, pack)
+    }
+
+    /// Builds a scenario from a parsed file, checking it against the schema first. Errors
+    /// read `<line>: <path>: <message>`.
+    pub fn from_yaml(doc: &Node, pack: usize) -> Result<Scenario, String> {
+        let mut problems = Vec::new();
+        super::schema::validate(doc, &super::files::scenario(), "", &mut problems);
+        if let Some(p) = problems.first() {
+            return Err(format!("{}: {}: {}", p.line, p.path, p.message));
+        }
+        let g = Get(doc);
+        let id = g.str("id").ok_or(format!("{}: a scenario needs an id", doc.line))?.to_string();
+        let player = g.str("player").unwrap_or("choose");
         let mut objects = Vec::new();
-        let mut nav_points = Vec::new();
-        for sec in ini.sections() {
-            if let Some(name) = sec.name.strip_prefix("object.") {
-                let ctx = |e: String| format!("[{}]: {e}", sec.name);
-                let class = sec.get_nonempty("class").ok_or_else(|| ctx("no class".into()))?.to_string();
-                let ai = match sec.get_nonempty("ai") {
-                    Some(a) => AiRole::parse(a).ok_or_else(|| ctx(format!("unknown ai '{a}'")))?,
-                    None => AiRole::Idle,
-                };
-                objects.push(Placement {
-                    name: name.to_string(),
-                    class,
-                    faction: sec.get_nonempty("faction").map(str::to_string),
-                    position: vec3(sec, "position", Vec3::ZERO).map_err(ctx)?,
-                    rotation: vec3(sec, "rotation", Vec3::ZERO).map_err(ctx)?,
-                    ai,
-                    leader: sec.get_nonempty("leader").map(str::to_string),
-                    offset: vec3(sec, "offset", Vec3::new(-60.0, 0.0, 30.0)).map_err(ctx)?,
-                    speed: sec.get_f32("speed").unwrap_or(0.0),
-                    destroyed_systems: sec
-                        .get("destroyed_systems")
-                        .unwrap_or("")
-                        .split(',')
-                        .map(|x| x.trim().to_ascii_lowercase())
-                        .filter(|x| !x.is_empty())
-                        .collect(),
-                    hull: sec.get_f32("hull").unwrap_or(1.0).clamp(0.01, 1.0),
-                    behaviour: sec.get_nonempty("behaviour").map(str::to_string),
-                });
-            } else if let Some(name) = sec.name.strip_prefix("nav.") {
-                nav_points.push(NavPoint {
-                    name: name.to_string(),
-                    position: vec3(sec, "position", Vec3::ZERO).map_err(|e| format!("[{}]: {e}", sec.name))?,
-                });
-            }
+        for (name, body) in g.map("objects") {
+            let o = Get(body);
+            let class = o.str("class").ok_or(format!("{}: objects.{name}: no class", body.line))?.to_string();
+            let ai = match o.str("ai") {
+                Some(a) => AiRole::parse(a).ok_or(format!("{}: objects.{name}: unknown ai '{a}'", body.line))?,
+                None => AiRole::Idle,
+            };
+            objects.push(Placement {
+                name: name.clone(),
+                class,
+                faction: o.str("faction").map(str::to_string),
+                position: vec3(o, "position", Vec3::ZERO),
+                rotation: vec3(o, "rotation", Vec3::ZERO),
+                ai,
+                leader: o.str("leader").map(str::to_string),
+                offset: vec3(o, "offset", Vec3::new(-60.0, 0.0, 30.0)),
+                speed: o.num("speed").unwrap_or(0.0),
+                destroyed_systems: o.list("destroyed_systems").iter().map(|x| x.to_ascii_lowercase()).collect(),
+                hull: o.qty("hull", Unit::Fraction).unwrap_or(1.0).clamp(0.01, 1.0),
+                behaviour: o.str("behaviour").map(str::to_string),
+            });
         }
-        if objects.iter().filter(|o| o.ai == AiRole::Player).count() > 0 {
-            return Err("use `player =` in [scenario] rather than ai = player".into());
-        }
+        let nav_points = g
+            .map("nav")
+            .iter()
+            .map(|(name, body)| NavPoint { name: name.clone(), position: vec3(Get(body), "position", Vec3::ZERO) })
+            .collect();
         Ok(Scenario {
-            title: s.get_nonempty("title").unwrap_or(&id).to_string(),
-            description: s.get("description").unwrap_or("").to_string(),
+            title: g.str("title").unwrap_or(&id).to_string(),
+            description: g.str("description").unwrap_or("").trim().to_string(),
             player_class: (!player.eq_ignore_ascii_case("choose")).then(|| player.to_string()),
-            player_position: vec3(s, "player_position", Vec3::ZERO)?,
-            player_rotation: vec3(s, "player_rotation", Vec3::ZERO)?,
-            sun_direction: vec3(s, "sun", Vec3::new(-0.4, 0.5, -0.8))?.normalize_or(Vec3::Y),
-            starfield_seed: s.get_i64("starfield_seed").unwrap_or(1) as u64,
-            music: s.get_nonempty("music").map(str::to_string),
-            order: s.get_i64("order").unwrap_or(100),
+            player_position: vec3(g, "player_position", Vec3::ZERO),
+            player_rotation: vec3(g, "player_rotation", Vec3::ZERO),
+            sun_direction: vec3(g, "sun", Vec3::new(-0.4, 0.5, -0.8)).normalize_or(Vec3::Y),
+            starfield_seed: g.num("starfield_seed").unwrap_or(1.0) as u64,
+            music: g.str("music").map(str::to_string),
+            order: g.num("order").unwrap_or(100.0) as i64,
             id,
             objects,
             nav_points,
@@ -201,11 +191,9 @@ mod tests {
     #[test]
     fn parses_objects_and_nav_points() {
         let s = Scenario::parse(
-            "[scenario]\nid=t\ntitle=Test\nplayer=lightning\nsun=0,1,0\norder=5\n\
-             [object.base]\nclass=xcom_base\nposition=0,0,-3000\n\
-             [object.w1]\nclass=lightning\nai=wingman\nleader=player\noffset=10,0,5\nspeed=100\n\
-             destroyed_systems = Engines, vct\nhull = 0.4\n\
-             [nav.alpha]\nposition=1,2,3\n",
+            "id: t\ntitle: Test\nplayer: lightning\nsun: [0, 1, 0]\norder: 5\nobjects:\n  base: {class: xcom_base, position: [0, 0, -3000]}\n  \
+             w1: {class: lightning, ai: wingman, leader: player, offset: [10, 0, 5], speed: 100, destroyed_systems: [engines, vct], hull: 40%}\n\
+             nav:\n  alpha: {position: [1, 2, 3]}\n",
             2,
         )
         .unwrap();
@@ -225,21 +213,24 @@ mod tests {
 
     #[test]
     fn choose_means_the_launcher_picks() {
-        let s = Scenario::parse("[scenario]\nid=x\n", 0).unwrap();
+        let s = Scenario::parse("id: x\n", 0).unwrap();
         assert_eq!(s.player_class, None);
         assert_eq!(s.title, "x");
     }
 
     #[test]
-    fn errors_name_the_section() {
+    fn errors_name_the_line_and_path() {
         assert!(Scenario::parse("", 0).is_err());
-        assert!(Scenario::parse("[scenario]\n", 0).is_err());
-        let e = Scenario::parse("[scenario]\nid=x\n[object.a]\nclass=c\nai=dance\n", 0).unwrap_err();
-        assert!(e.contains("[object.a]") && e.contains("dance"));
-        assert!(Scenario::parse("[scenario]\nid=x\n[object.a]\n", 0).is_err());
-        assert!(Scenario::parse("[scenario]\nid=x\n[object.a]\nclass=c\nposition=1,2\n", 0).is_err());
-        assert!(Scenario::parse("[scenario]\nid=x\n[object.a]\nclass=c\nposition=a,b,c\n", 0).is_err());
-        assert!(Scenario::parse("[scenario]\nid=x\n[object.a]\nclass=c\nai=player\n", 0).is_err());
-        assert!(Scenario::parse("[scenario]\nid=x\n[nav.a]\nposition=1\n", 0).is_err());
+        assert!(Scenario::parse("title: x\n", 0).is_err());
+        for (text, needle) in [
+            ("id: x\nobjects:\n  a: {class: c, ai: dance}\n", "objects.a.ai: 'dance' is not one of"),
+            ("id: x\nobjects:\n  a: {}\n", "objects.a: no class"),
+            ("id: x\nobjects:\n  a: {class: c, position: [1, 2]}\n", "objects.a.position: expected a list of 3"),
+            ("id: x\nobjects:\n  a: {class: c, positon: [1, 2, 3]}\n", "did you mean 'position'"),
+            ("id: x\nnav:\n  a: {position: 1}\n", "nav.a.position"),
+        ] {
+            let e = Scenario::parse(text, 0).unwrap_err();
+            assert!(e.contains(needle), "{text}: {e}");
+        }
     }
 }

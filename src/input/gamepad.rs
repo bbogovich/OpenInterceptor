@@ -59,7 +59,7 @@ impl Button {
         NAMES.iter().find(|(n, _)| n.eq_ignore_ascii_case(s.trim())).map(|(_, b)| *b)
     }
 
-    /// The name used in `bindings.ini`.
+    /// The name used in `bindings.yaml`.
     pub fn name(self) -> &'static str {
         NAMES.iter().find(|(_, b)| *b == self).map(|(n, _)| *n).expect("every button is in NAMES")
     }

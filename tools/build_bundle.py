@@ -4,17 +4,17 @@
     python3 tools/build_bundle.py                    # app + settings pointing at ./game
     python3 tools/build_bundle.py --data /Volumes/CD # settings point at another copy
     python3 tools/build_bundle.py --install-data     # also clone the CD into the user data folder
-    python3 tools/build_bundle.py --no-settings      # leave settings.ini alone
+    python3 tools/build_bundle.py --no-settings      # leave settings.yaml alone
 
 The app contains the engine and the built-in packs (packs/), never any game data, so the
 app itself is safe to share. The player's data lives in the user data folder, as in a
 real install:
 
     ~/Library/Application Support/OpenInterceptor/
-        settings.ini   [paths] original = <the CD or a copy of it>
+        settings.yaml  paths: original: <the CD or a copy of it>
         original/      (with --install-data) a copy of the CD
         mods/          one folder per mod
-        bindings.ini   controls (created on first run)
+        bindings.yaml  controls (created on first run)
 
 Version numbers follow the implementation stages, like ArenaVM: 0.<stage+1>.<build>,
 so Stage 1 builds are 0.2.0, 0.2.1, ... The version comes from Cargo.toml; bump the last
@@ -65,20 +65,25 @@ def find_cargo():
 
 
 def update_settings(original: Path):
-    """Sets [paths] original in settings.ini, keeping every other line."""
+    """Sets paths.original in settings.yaml, keeping every other line.
+
+    settings.yaml is written by the engine in a fixed layout (a `paths:` mapping with an
+    `original:` line), so a line edit is enough; no YAML library is needed.
+    """
     USER_DATA.mkdir(parents=True, exist_ok=True)
-    path = USER_DATA / "settings.ini"
-    line = f"original = {original}"
+    path = USER_DATA / "settings.yaml"
+    value = '"' + str(original).replace("\\", "\\\\").replace('"', '\\"') + '"'
+    line = f"  original: {value}"
     if path.exists():
         text = path.read_text()
-        if re.search(r"^original\s*=.*$", text, re.M):
-            text = re.sub(r"^original\s*=.*$", line, text, count=1, flags=re.M)
-        elif "[paths]" in text:
-            text = text.replace("[paths]", f"[paths]\n{line}", 1)
+        if re.search(r"^  original:.*$", text, re.M):
+            text = re.sub(r"^  original:.*$", lambda _: line, text, count=1, flags=re.M)
+        elif re.search(r"^paths:\s*$", text, re.M):
+            text = re.sub(r"^paths:\s*$", lambda _: "paths:\n" + line, text, count=1, flags=re.M)
         else:
-            text = f"[paths]\n{line}\n\n" + text
+            text = "paths:\n" + line + "\n" + text
     else:
-        text = f"; OpenInterceptor settings (written by tools/build_bundle.py)\n[paths]\n{line}\nmods =\n\n[packs]\ndisabled =\n"
+        text = f"# OpenInterceptor settings (written by tools/build_bundle.py)\npaths:\n{line}\n"
     path.write_text(text)
     print(f"Settings: {path} -> original = {original}")
 
@@ -87,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--data", type=Path, default=ROOT / "game", help="the Interceptor CD or a copy (default: ./game)")
     parser.add_argument("--install-data", action="store_true", help="clone the CD into the user data folder's original/")
-    parser.add_argument("--no-settings", action="store_true", help="do not touch settings.ini")
+    parser.add_argument("--no-settings", action="store_true", help="do not touch settings.yaml")
     parser.add_argument("--skip-build", action="store_true", help="reuse the last release build")
     args = parser.parse_args()
 
@@ -149,7 +154,7 @@ def main():
         elif data.is_dir():
             update_settings(data)
         else:
-            print(f"No original data at {data}; settings.ini not changed (only original-free packs will load)")
+            print(f"No original data at {data}; settings.yaml not changed (only original-free packs will load)")
     (USER_DATA / "mods").mkdir(parents=True, exist_ok=True)
     print(f"Built {app}")
 

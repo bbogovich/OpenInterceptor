@@ -4,7 +4,7 @@
 //! modifier chords), and change the stick, dead-zone and mouse options. All decisions
 //! are made by [`crate::input::editor::Editor`]; this module only feeds it the devices
 //! and paints it. Leaving the menu applies the new bindings at once and saves them to
-//! the user's `bindings.ini`.
+//! the user's `bindings.yaml`.
 //!
 //! The screen is used both from the launcher and from the in-flight pause menu, so it is
 //! a component with a `frame` method rather than a top-level screen of its own.

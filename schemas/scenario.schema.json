@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenInterceptor scenario (scenarios/*.yaml)",
+  "type": "object", "additionalProperties": false, "properties": {
+    "id": {"description": "unique scenario id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+    "title": {"description": "launcher title", "type": "string"},
+    "description": {"description": "launcher description", "type": "string"},
+    "order": {"description": "launcher sort key (lower first)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+    "player": {"description": "ship id, or choose", "type": "string"},
+    "player_position": {"description": "metres", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+    "player_rotation": {"description": "yaw, pitch, roll in degrees", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+    "sun": {"description": "direction towards the sun", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+    "starfield_seed": {"description": "background stars", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+    "music": {"description": "music", "type": "string"},
+    "objects": {"description": "placed objects by name", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+          "class": {"description": "ship or object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "faction": {"description": "overrides the class's faction", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "position": {"description": "metres; -z is ahead of the player's start", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "rotation": {"description": "yaw, pitch, roll in degrees", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "ai": {"description": "how it is flown", "enum": ["wingman", "enemy", "idle", "target"]},
+          "leader": {"description": "wingmen: object to follow (player = the player)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "offset": {"description": "wingmen: formation slot relative to the leader", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "speed": {"description": "starting speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "destroyed_systems": {"description": "systems (kinds or ids) that start destroyed", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+          "hull": {"description": "starting hull fraction", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "behaviour": {"description": "behaviour id instead of the class's", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+        }}},
+    "nav": {"description": "navigation points", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+          "position": {"description": "metres", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+        }}}
+  }
+}

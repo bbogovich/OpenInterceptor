@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Ray guns and rockets. Range is in kilometres; Speed in metres per second.
+#
+
+beams:
+  # --- Guard ray guns ---------------------------------------------------------------------
+  blaster:
+    name: Blaster
+    damage: 22
+    energy_cost: 8
+    rate_of_fire: 4
+    speed: 2400
+    range: 2.4km
+    color: [1.0, 0.3, 0.2]
+    sound: sounds/ray_zap.wav
+  heat_ray:
+    name: Heat ray
+    damage: 34
+    energy_cost: 13
+    rate_of_fire: 3
+    speed: 2200
+    range: 2.6km
+    color: [1.0, 0.65, 0.1]
+    sound: sounds/heat_ray.wav
+  disintegrator:
+    name: Disintegrator
+    damage: 60
+    energy_cost: 26
+    rate_of_fire: 1.6
+    speed: 2000
+    range: 3.0km
+    color: [0.6, 0.9, 1.0]
+    sound: sounds/disintegrator.wav
+  ion_ray:
+    name: Ion ray
+    damage: 30
+    energy_cost: 12
+    rate_of_fire: 3
+    speed: 2600
+    range: 2.8km
+    color: [0.4, 0.8, 1.0]
+    sound: sounds/ion_ray.wav
+  # --- Dominion rays ----------------------------------------------------------------------
+  paralyzer_ray:
+    name: Paralyzer ray
+    damage: 20
+    energy_cost: 7
+    rate_of_fire: 4
+    speed: 2300
+    range: 2.2km
+    color: [0.75, 0.3, 1.0]
+    sound: sounds/ion_ray.wav
+  death_ray:
+    name: Death ray
+    damage: 45
+    energy_cost: 18
+    rate_of_fire: 2.2
+    speed: 2100
+    range: 2.8km
+    color: [0.45, 1.0, 0.3]
+    sound: sounds/disintegrator.wav
+
+missiles:
+  # --- Rockets ----------------------------------------------------------------------------
+  seeker:
+    name: Seeker rocket
+    speed: 900
+    duration: 8
+    impact_damage: 150
+    proximity_damage: 60
+    turn_rate: 120
+    lock_time: 1.5
+    color: [1.0, 1.0, 0.6]
+    sound: sounds/seeker_launch.wav
+  atomic_torpedo:
+    name: Atomic torpedo
+    speed: 600
+    duration: 12
+    impact_damage: 600
+    proximity_damage: 250
+    proximity_radius: 40
+    turn_rate: 60
+    lock_time: 2.5
+    color: [0.6, 1.0, 0.6]
+    sound: sounds/seeker_launch.wav

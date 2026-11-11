@@ -1,18 +1,17 @@
 //! # Pack manifests, mod kinds and load order
 //!
-//! A *pack* (or *mod*) is a folder of content with a `pack.ini` manifest:
+//! A *pack* (or *mod*) is a folder of content with a `pack.yaml` manifest:
 //!
-//! ```ini
-//! [pack]
-//! id = mycampaign
-//! name = My Campaign
-//! version = 1.0
-//! kind = campaign             ; campaign | addon (the default) | library
-//! parent = default            ; campaigns only: the campaign this one extends
-//! targets = default           ; addons only: campaigns it applies to (* = all)
-//! depends = shared-art        ; libraries or addons that must load first
-//! requires_original = no      ; yes = needs the player's Interceptor data
-//! format = 1                  ; mod-format version it was written for
+//! ```yaml
+//! id: mycampaign
+//! name: My Campaign
+//! version: "1.0"
+//! kind: campaign              # campaign | addon (the default) | library
+//! parent: default             # campaigns only: the campaign this one extends
+//! targets: [default]          # addons only: campaigns it applies to (* = all)
+//! depends: [shared-art]       # libraries or addons that must load first
+//! requires_original: false    # true = needs the player's Interceptor data
+//! format: 2                   # mod-format version it was written for
 //! ```
 //!
 //! ## Which packs load
@@ -24,11 +23,12 @@
 //! by key — that is what lets a small mod change one value in a big base ruleset, and a
 //! campaign like *Interceptor Remastered* be "the Interceptor campaign plus my changes".
 
-use crate::formats::ini::Ini;
+use super::schema::Get;
 use std::path::{Path, PathBuf};
 
-/// The newest mod-format version this engine reads.
-pub const FORMAT: u32 = 1;
+/// The newest mod-format version this engine reads. Format 2 is YAML; format 1 (INI)
+/// is no longer read.
+pub const FORMAT: u32 = 2;
 
 /// What a pack is (see the module docs).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,64 +61,77 @@ pub struct PackInfo {
     pub dir: PathBuf,
 }
 
-/// Splits a comma-separated manifest value.
-fn ids(s: Option<&str>) -> Vec<String> {
-    s.unwrap_or("").split(',').map(str::trim).filter(|d| !d.is_empty()).map(str::to_string).collect()
-}
-
 impl PackInfo {
-    /// Parses a manifest's text. `dir` is the folder it came from.
+    /// Parses a manifest's YAML text. `dir` is the folder it came from.
     pub fn parse(text: &str, dir: &Path) -> Result<PackInfo, String> {
-        let ini = Ini::parse(text);
-        let s = ini.section("pack").ok_or_else(|| format!("{}: pack.ini has no [pack] section", dir.display()))?;
-        let id = s.get_nonempty("id").ok_or_else(|| format!("{}: pack.ini has no id", dir.display()))?;
+        let where_ = dir.join("pack.yaml");
+        let doc = crate::formats::yaml::parse(text).map_err(|e| format!("{}:{e}", where_.display()))?;
+        let mut problems = Vec::new();
+        super::schema::validate(&doc, &super::files::pack(), "", &mut problems);
+        if let Some(p) = problems.first() {
+            return Err(format!("{}:{}: {}: {}", where_.display(), p.line, p.path, p.message));
+        }
+        let g = Get(&doc);
+        let id = g.str("id").ok_or_else(|| format!("{}: pack.yaml has no id", dir.display()))?;
         if !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
             return Err(format!("{}: pack id '{id}' may only use letters, digits, - and _", dir.display()));
         }
-        let kind = match s.get_nonempty("kind").map(str::to_ascii_lowercase).as_deref() {
+        let kind = match g.str("kind").map(str::to_ascii_lowercase).as_deref() {
             None | Some("addon") => PackKind::Addon,
             Some("campaign") => PackKind::Campaign,
             Some("library") => PackKind::Library,
             Some(k) => return Err(format!("{}: unknown pack kind '{k}' (campaign, addon or library)", dir.display())),
         };
-        let format = s.get_f32("format").map(|f| f as u32).unwrap_or(FORMAT);
+        let format = g.num("format").map(|f| f as u32).unwrap_or(FORMAT);
         if format > FORMAT {
             return Err(format!(
                 "{}: pack '{id}' needs mod format {format}; this engine reads up to {FORMAT} (update OpenInterceptor)",
                 dir.display()
             ));
         }
-        let parent = s.get_nonempty("parent").map(str::to_string);
+        let parent = g.str("parent").map(str::to_string);
         if parent.is_some() && kind != PackKind::Campaign {
             return Err(format!("{}: only a campaign may have a parent", dir.display()));
         }
         Ok(PackInfo {
             id: id.to_string(),
-            name: s.get_nonempty("name").unwrap_or(id).to_string(),
-            version: s.get_nonempty("version").unwrap_or("0").to_string(),
-            description: s.get("description").unwrap_or("").to_string(),
+            name: g.str("name").unwrap_or(id).to_string(),
+            version: g.str("version").unwrap_or("0").to_string(),
+            description: g.str("description").unwrap_or("").trim().to_string(),
             kind,
             parent,
-            targets: ids(s.get("targets")),
-            depends: ids(s.get("depends")),
-            requires_original: s.get_bool("requires_original").unwrap_or(false),
+            targets: g.list("targets"),
+            depends: g.list("depends"),
+            requires_original: g.bool("requires_original").unwrap_or(false),
             format,
             dir: dir.to_path_buf(),
         })
     }
 
-    /// Reads `<dir>/pack.ini`.
+    /// Reads `<dir>/pack.yaml`.
     pub fn load(dir: &Path) -> Result<PackInfo, String> {
-        let text = std::fs::read_to_string(dir.join("pack.ini")).map_err(|e| format!("{}: {e}", dir.display()))?;
+        if !dir.join("pack.yaml").is_file() && dir.join("pack.ini").is_file() {
+            return Err(format!(
+                "{}: pack.ini is the old INI mod format (format 1); this engine reads YAML packs \
+                 (pack.yaml, rules/*.yaml) — see the docs site, Modding > Packs",
+                dir.display()
+            ));
+        }
+        let text = std::fs::read_to_string(dir.join("pack.yaml")).map_err(|e| format!("{}: {e}", dir.display()))?;
         Self::parse(&text, dir)
     }
 }
 
-/// Finds every pack folder (a sub-folder with a `pack.ini`) directly inside `dir`,
+/// Finds every pack folder (a sub-folder with a `pack.yaml`, or an old `pack.ini`, which
+/// is reported) directly inside `dir`,
 /// sorted by folder name so the result does not depend on the file system's order.
 pub fn discover(dir: &Path) -> Vec<Result<PackInfo, String>> {
     let Ok(entries) = std::fs::read_dir(dir) else { return Vec::new() };
-    let mut dirs: Vec<PathBuf> = entries.flatten().map(|e| e.path()).filter(|p| p.join("pack.ini").is_file()).collect();
+    let mut dirs: Vec<PathBuf> = entries
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.join("pack.yaml").is_file() || p.join("pack.ini").is_file())
+        .collect();
     dirs.sort();
     dirs.iter().map(|d| PackInfo::load(d)).collect()
 }
@@ -176,7 +189,7 @@ pub fn chain(packs: &[PackInfo], id: &str) -> Result<Vec<String>, String> {
             .find(|p| p.id == c)
             .ok_or(format!("campaign '{c}' is not installed (or could not be loaded)"))?;
         if p.kind != PackKind::Campaign {
-            return Err(format!("'{c}' is not a campaign (kind = campaign in its pack.ini)"));
+            return Err(format!("'{c}' is not a campaign (kind: campaign in its pack.yaml)"));
         }
         out.push(c);
         next = p.parent.clone();
@@ -250,53 +263,14 @@ mod tests {
 
     #[test]
     fn manifests_declare_kind_parent_targets_and_format() {
-        let p = PackInfo::parse(
-            "[pack]
-id=remaster
-kind=campaign
-parent=interceptor
-format=1
-",
-            Path::new("/x"),
-        )
-        .unwrap();
-        assert_eq!((p.kind, p.parent.as_deref(), p.format), (PackKind::Campaign, Some("interceptor"), 1));
-        let a = PackInfo::parse(
-            "[pack]
-id=a
-targets = interceptor, default
-",
-            Path::new("/x"),
-        )
-        .unwrap();
+        let p =
+            PackInfo::parse("id: remaster\nkind: campaign\nparent: interceptor\nformat: 2\n", Path::new("/x")).unwrap();
+        assert_eq!((p.kind, p.parent.as_deref(), p.format), (PackKind::Campaign, Some("interceptor"), 2));
+        let a = PackInfo::parse("id: a\ntargets: [interceptor, default]\n", Path::new("/x")).unwrap();
         assert_eq!((a.kind, a.targets.len()), (PackKind::Addon, 2), "addon is the default kind");
-        assert!(PackInfo::parse(
-            "[pack]
-id=a
-kind=planet
-",
-            Path::new("/x")
-        )
-        .is_err());
-        assert!(
-            PackInfo::parse(
-                "[pack]
-id=a
-parent=b
-",
-                Path::new("/x")
-            )
-            .is_err(),
-            "only campaigns have parents"
-        );
-        let future = PackInfo::parse(
-            "[pack]
-id=a
-format=99
-",
-            Path::new("/x"),
-        )
-        .unwrap_err();
+        assert!(PackInfo::parse("id: a\nkind: planet\n", Path::new("/x")).is_err());
+        assert!(PackInfo::parse("id: a\nparent: b\n", Path::new("/x")).is_err(), "only campaigns have parents");
+        let future = PackInfo::parse("id: a\nformat: 99\n", Path::new("/x")).unwrap_err();
         assert!(future.contains("format 99"), "{future}");
     }
 
@@ -329,7 +303,7 @@ format=99
     #[test]
     fn parses_a_manifest() {
         let p = PackInfo::parse(
-            "[pack]\nid=my-mod\nname=My Mod\nversion=2\ndepends= a , b\nrequires_original=yes\n",
+            "id: my-mod\nname: My Mod\nversion: '2'\ndepends: [a, b]\nrequires_original: true\n",
             Path::new("/x"),
         )
         .unwrap();
@@ -337,15 +311,18 @@ format=99
         assert_eq!(p.name, "My Mod");
         assert_eq!(p.depends, vec!["a", "b"]);
         assert!(p.requires_original);
-        let minimal = PackInfo::parse("[pack]\nid=m\n", Path::new("/x")).unwrap();
+        let minimal = PackInfo::parse("id: m\n", Path::new("/x")).unwrap();
         assert_eq!((minimal.name.as_str(), minimal.version.as_str()), ("m", "0"));
     }
 
     #[test]
     fn rejects_bad_manifests() {
         assert!(PackInfo::parse("", Path::new("/x")).is_err());
-        assert!(PackInfo::parse("[pack]\nname=x\n", Path::new("/x")).is_err());
-        assert!(PackInfo::parse("[pack]\nid=a b\n", Path::new("/x")).is_err());
+        assert!(PackInfo::parse("name: x\n", Path::new("/x")).is_err());
+        assert!(PackInfo::parse("id: A B\n", Path::new("/x")).is_err());
+        assert!(PackInfo::parse("id: a\nkidn: campaign\n", Path::new("/x"))
+            .unwrap_err()
+            .contains("did you mean 'kind'"));
         assert!(PackInfo::load(Path::new("/no/such/pack")).is_err());
     }
 
@@ -370,10 +347,14 @@ format=99
         std::fs::create_dir_all(root.join("b")).unwrap();
         std::fs::create_dir_all(root.join("a")).unwrap();
         std::fs::create_dir_all(root.join("not-a-pack")).unwrap();
-        std::fs::write(root.join("b/pack.ini"), "[pack]\nid=b\n").unwrap();
-        std::fs::write(root.join("a/pack.ini"), "[pack]\nid=a\n").unwrap();
-        let found: Vec<String> = discover(&root).into_iter().map(|p| p.unwrap().id).collect();
-        assert_eq!(found, vec!["a", "b"]);
+        std::fs::write(root.join("b/pack.yaml"), "id: b\n").unwrap();
+        std::fs::write(root.join("a/pack.yaml"), "id: a\n").unwrap();
+        std::fs::create_dir_all(root.join("old")).unwrap();
+        std::fs::write(root.join("old/pack.ini"), "[pack]\nid=old\n").unwrap();
+        let found: Vec<Result<PackInfo, String>> = discover(&root);
+        let ids: Vec<String> = found.iter().filter_map(|p| p.as_ref().ok().map(|p| p.id.clone())).collect();
+        assert_eq!(ids, vec!["a", "b"]);
+        assert!(found.iter().any(|p| p.as_ref().is_err_and(|e| e.contains("old INI mod format"))));
         assert!(discover(Path::new("/no/such/dir")).is_empty());
         std::fs::remove_dir_all(&root).unwrap();
     }

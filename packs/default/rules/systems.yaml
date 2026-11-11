@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Ship systems in serial-era names. The kinds (and what they do) are the engine's; the
+# names and numbers are this campaign's. Docs: Modding > Rulesets > Systems.
+#
+
+systems:
+  engines:
+    name: Atomic rockets
+    hit_points: 100
+  manoeuvring:
+    name: Attitude jets
+    hit_points: 100
+  sensors:
+    name: Radar
+    hit_points: 60
+  shields:
+    name: Force-field generator
+    hit_points: 60
+  hyperdrive:
+    name: Hyperdrive
+    hit_points: 100
+  vct:
+    name: Gyro-jets
+    hit_points: 120
+  tractor:
+    name: Tractor ray
+    hit_points: 200
+    power: 2
+    range: 300
+    strength: 70
+  cloak:
+    name: Invisibility screen
+    hit_points: 100
+    power: 3
+    range: 350
+    strength: 30
+  ecm:
+    name: Radar jammer
+    hit_points: 80
+    power: 1
+    range: 300
+    strength: 12
+  damage_control:
+    name: Robot repair crew
+    hit_points: 120
+    repair_rate: 4
+
+# Five charge settings, A (off) to E (full). Rockets start at C/C with two steps free.
+power:
+  beam_recharge: [0, 0.4, 0.6, 0.8, 1]
+  shield_recharge: [0, 0.25, 0.5, 0.75, 1]
+  budget: 6
+  start_beam: 2
+  start_shield: 2
+  balance_shift: 0.5
+
+damage:
+  system_share: 1
+  destroy_below: 0.5
+  repair_rate: 3

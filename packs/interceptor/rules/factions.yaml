@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+factions:
+  # Sides of the conflict. Ids match the original files' Side= values (case-insensitive),
+  # so original sections inherited below land in the right faction automatically.
+  xcom:
+    name: X-COM
+    color: [0.35, 1.0, 0.35]
+    hostile: [alien, pirate]
+  alien:
+    name: Aliens
+    color: [1.0, 0.3, 0.3]
+    hostile: [xcom, corporate, pirate]
+  pirate:
+    name: Kabron pirates
+    color: [1.0, 0.65, 0.1]
+    hostile: [xcom, corporate]
+  corporate:
+    name: Frontier corporations
+    color: [0.4, 0.75, 1.0]
+  neutral:
+    name: Neutral
+    color: [0.7, 0.7, 0.7]

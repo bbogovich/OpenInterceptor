@@ -84,32 +84,36 @@ enum Screen {
     Flight(Box<flight::FlightSession>),
 }
 
-/// Loads bindings from the user's `bindings.ini`, creating it with the defaults the first
-/// time so players have a file to edit.
+/// Loads bindings from the user's `bindings.yaml` — or, once, from a `bindings.ini` of an
+/// earlier build — creating the file with the defaults the first time so players have a
+/// file to edit.
 fn load_bindings() -> Bindings {
     let Some(dir) = crate::cli::user_data_dir() else { return Bindings::default() };
-    let path = dir.join("bindings.ini");
-    match std::fs::read(&path) {
-        Ok(bytes) => Bindings::from_ini(&Ini::parse_bytes(&bytes)),
-        Err(_) => {
-            let b = Bindings::default();
-            let _ = std::fs::create_dir_all(&dir);
-            let _ = std::fs::write(&path, b.to_ini_text());
-            b
+    if let Ok(text) = std::fs::read_to_string(dir.join("bindings.yaml")) {
+        match crate::formats::yaml::parse(&text) {
+            Ok(doc) => return Bindings::from_yaml(&doc),
+            Err(e) => eprintln!("bindings.yaml: {e}; using the default controls"),
         }
+        return Bindings::default();
     }
+    let b = match std::fs::read(dir.join("bindings.ini")) {
+        Ok(bytes) => Bindings::from_ini(&Ini::parse_bytes(&bytes)),
+        Err(_) => Bindings::default(),
+    };
+    let _ = save_bindings(&b);
+    b
 }
 
-/// Saves bindings to the user's `bindings.ini`, returning the file written.
+/// Saves bindings to the user's `bindings.yaml`, returning the file written.
 pub fn save_bindings(b: &Bindings) -> Result<std::path::PathBuf, String> {
     let dir = crate::cli::user_data_dir().ok_or("no user data folder on this system")?;
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-    let path = dir.join("bindings.ini");
-    std::fs::write(&path, b.to_ini_text()).map_err(|e| format!("{}: {e}", path.display()))?;
+    let path = dir.join("bindings.yaml");
+    std::fs::write(&path, b.to_yaml_text()).map_err(|e| format!("{}: {e}", path.display()))?;
     Ok(path)
 }
 
-/// Records the chosen campaign and difficulty in `settings.ini` so the next start uses
+/// Records the chosen campaign and difficulty in `settings.yaml` so the next start uses
 /// them.
 fn remember_choice(id: &str, difficulty: Option<&str>) {
     let Some(dir) = crate::cli::user_data_dir() else { return };
