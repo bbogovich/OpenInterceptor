@@ -935,10 +935,27 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let sounds_node = global("sounds");
     // The strategy layer's global sections (read now, while `global` may still borrow
     // `errors`; the strategy layer itself is built at the end).
-    let strategy_globals: Vec<(&str, Node)> = ["start", "research_model", "pilots", "scores", "economy", "flags"]
-        .into_iter()
-        .filter_map(|s| global(s).map(|(n, _)| (s, n)))
-        .collect();
+    let mut strategy_globals: Vec<(&str, Node)> =
+        ["start", "research_model", "pilots", "scores", "economy", "flags", "tech_ids"]
+            .into_iter()
+            .filter_map(|s| global(s).map(|(n, _)| (s, n)))
+            .collect();
+    // `start.money_from: original:<file>/<key>`: the starting money from the section of the
+    // original's file named after the difficulty level (Veteran, Genius, …).
+    for (s, node) in strategy_globals.iter_mut() {
+        let Some(from) = (*s == "start").then(|| Get(node).str("money_from").map(str::to_string)).flatten() else {
+            continue;
+        };
+        let level = level_id.clone().unwrap_or_default();
+        let section: String = level.chars().take(1).flat_map(char::to_uppercase).chain(level.chars().skip(1)).collect();
+        let value = from.strip_prefix("original:").and_then(|r| r.split_once('/')).and_then(|(file, key)| {
+            original(file, &section)?.entries.iter().find(|(k, _)| k.eq_ignore_ascii_case(key)).map(|(_, v)| v.clone())
+        });
+        match value {
+            Some(v) => merge_into(node, &crate::formats::yaml::parse(&format!("money: {v}")).expect("a number parses")),
+            None => errors.push(format!("start.money_from: {from} not found for level {section}")),
+        }
+    }
     // The resolved definitions of one section. (A plain function rather than a closure:
     // its signature can tie the returned iterator's lifetime to both inputs.)
     fn of<'a>(

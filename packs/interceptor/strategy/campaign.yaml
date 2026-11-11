@@ -1,0 +1,142 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The X-COM: Interceptor strategy layer (Stage 4.12), on top of references.yaml (the
+# original's sections, inherited, and its tech-id table). Values marked DERIVED are
+# estimates from the design analysis (docs: Design > Original analysis), not read from
+# the original; everything else is inherited from the player's GameSettings.ini.
+
+economy:
+  cost_scale: 1000          # the original's costs, prices and upkeep are in thousands
+  module_time: days         # module ProdTime is days
+  delivery: 72h             # DERIVED
+  salvage_per_kill: 20000   # DERIVED (the original's salvage tables, *Goodies, come later)
+
+start:
+  date: 2067-01-01                          # DERIVED from the manual's opening
+  money_from: original:GameSettings.ini/StartingTreasury
+  map: frontier
+  pilots: 4                                 # DERIVED
+  bases: [{type: xcom, system: s0, name: Frontier Base One, modules: [hangar]}]
+  craft: [{hull: lightning, base: 0, count: 3}]   # DERIVED
+  stock: {laser_cannon: 6, xwinder: 16}     # DERIVED
+
+maps:
+  frontier:
+    kind: generated
+    size: [60000, 60000]      # the executable's MAX_GRIDRANGE
+    systems: [30, 45]         # DERIVED (the executable allows up to 85)
+    black_holes: 1            # the gateway, hidden until found
+    travel: free
+    unit_ly: 0.000167
+
+star_classes:
+  yellow: {color: [1.0, 0.92, 0.55], weight: 3}
+  orange: {color: [1.0, 0.7, 0.35], weight: 3}
+  red: {color: [1.0, 0.45, 0.35], weight: 4}
+  white: {color: [0.95, 0.95, 1.0], weight: 2}
+  blue: {color: [0.55, 0.7, 1.0], weight: 1}
+  black_hole: {color: [0.5, 0.2, 0.7], weight: 0}
+
+# Research is downloaded from Earth through each base's downlinks (30/35/40 work units an
+# hour by type; switching topics loses progress).
+research_model:
+  mode: download
+  rate: module_count(downlink_type1) * 30 + module_count(downlink_type2) * 35 + module_count(downlink_type3) * 40
+  switching: lose_progress
+
+hulls:
+  lightning: {inherit: original:GameSettings.ini/Ship_IntType1, speed: 3000}   # speed DERIVED
+  firestar: {inherit: original:GameSettings.ini/Ship_IntType2, speed: 3600}
+  avenger: {inherit: original:GameSettings.ini/Ship_IntType3, speed: 4200}
+
+# Missile racks: rounds per missile slot (DERIVED until the launchers' Rounds are read).
+items:
+  xwinder: {rounds: 4}
+  permeator: {rounds: 4}
+  sidestep: {rounds: 4}
+  fusion: {rounds: 3}
+  elerium_torpedo: {rounds: 2}
+  enveloping_torpedo: {rounds: 2}
+  parallax_torpedo: {rounds: 2}
+  cloaking_torpedo: {rounds: 2}
+  doppelganger: {rounds: 3}
+  nova_bomb: {rounds: 1}
+
+# Module groups (for the base type's limits) and what each does while working. DERIVED
+# from the manual's descriptions.
+base_modules:
+  downlink_type1: {group: downlink}
+  downlink_type2: {group: downlink}
+  downlink_type3: {group: downlink}
+  hangar: {group: hangar, effects: {hangar: 3}}
+  personnel: {group: personnel, effects: {quarters: 5}}
+  sensor_type1: {group: sensor, effects: {sensor_range: 9000}}
+  sensor_type2: {group: sensor, effects: {sensor_range: 15000}}
+  sensor_type3: {group: sensor, effects: {sensor_range: 24000}}
+  shield_generator_type1: {group: shield, effects: {defence: 1}}
+  shield_generator_type2: {group: shield, effects: {defence: 2}}
+  shield_generator_type3: {group: shield, effects: {defence: 3}}
+  communications: {group: comms}
+  cargo: {group: cargo, effects: {storage: 1000}}
+  medical: {group: medical}
+  training: {group: training}
+  probe_launch: {group: probe}
+  tractor: {group: special}
+  ecmtype1: {group: ecm}
+  ecmtype2: {group: ecm}
+  advanced_damage_control: {group: special}
+  beam_defense_laser: {group: weapon}
+  beam_defense_heavy_laser: {group: weapon}
+  beam_defense_gatling_laser: {group: weapon}
+  beam_defense_tracer_cannon: {group: weapon}
+  beam_defense_tracking_tracer: {group: weapon}
+  beam_defense_phase: {group: weapon}
+  beam_defense_plasma_pulse: {group: weapon}
+  beam_defense_tachyon_pulser: {group: weapon}
+  missile_defense_xwinder: {group: weapon}
+  missile_defense_permeator: {group: weapon}
+  missile_defense_elerium_torp: {group: weapon}
+  missile_defense_enveloping_torp: {group: weapon}
+  missile_defense_sidestep: {group: weapon}
+  missile_defense_parallax: {group: weapon}
+
+base_types:
+  xcom:
+    name: X-COM base
+    cost: 1500000                   # DERIVED (the guide: 1.5M plus modules, less 25%)
+    build_time: 7d
+    max_bases: 8                    # the game's own limit (the executable allows 20)
+    max_distance: 9000              # 1.5 light years from one of your bases
+    sensor_range: 3000              # DERIVED: the hub's own
+    limits: {shield: 1, sensor: 1, comms: 1, hangar: 3, downlink: 3, weapon: 10}
+    template: [beam_defense_laser, beam_defense_laser, downlink_type1, shield_generator_type1, sensor_type1]
+
+# The corporations' funding (DERIVED: the original's monthly evaluation per outpost
+# system arrives with relations in Stage 5).
+incomes:
+  corporate_funding: {name: Corporate funding, every: 30d, amount: 600000 + month_score * 1000}
+
+# Alien and pirate activity (DERIVED: the alien strategist replaces these rolls in Stage 5).
+raids:
+  alien_probe: {name: Alien probe, mission: destroy_alien_probe, faction: alien, every: 3d, chance: 60%, target: system, speed: 1500}
+  deep_space_contact: {name: Alien squadron, mission: deep_space_encounter, faction: alien, every: 4d, chance: 50%, target: system, speed: 1800}
+  base_attack: {name: Alien strike on a base, mission: xcom_base_defense, faction: alien, every: 7d, chance: 40%, target: base, speed: 1600, requires: day >= 14}
+  heavy_base_attack: {name: Alien assault on a base, mission: xcom_base_defense_heavy, faction: alien, every: 10d, chance: 30%, target: base, speed: 1600, requires: day >= 60}
+  alien_freighters: {name: Alien freighter convoy, mission: ambush_alien_freighters, faction: alien, every: 6d, chance: 40%, target: system, speed: 1200, requires: day >= 20}
+  pirates: {name: Pirate squadron, mission: ambush_pirate_squadron, faction: pirate, every: 8d, chance: 35%, target: system, speed: 2000, requires: day >= 10}
+
+pilots:
+  stats: {intelligence: [50, 100], accuracy: [25, 100], flying: [25, 100], aggression: [25, 100], bravery: [25, 100], psionics: [1, 100], stamina: [50, 100]}
+  ranks: {rookie: 0, ensign: 2, lieutenant: 10, lt_commander: 24, commander: 38}
+  salary: 4000                       # 48,000 a year
+  recruit_fee: 34000
+  pool: 10
+  heal_days: 14
+  survive: 60%
+
+scores:
+  base_defended: 100
+  convoy_defended: 60
+  probe_destroyed: 40
+  aliens_destroyed: 50
+  alien_outpost_destroyed: 200
+  undefended: -100

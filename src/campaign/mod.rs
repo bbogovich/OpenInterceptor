@@ -1236,6 +1236,47 @@ impl StrategyDef {
     }
 }
 
+/// Plays a campaign for `days` with a simple automatic player: keeps every base
+/// researching, builds a lab and a workshop when it can, intercepts every contact it
+/// sees, and alternates battle results. Returns the campaign.
+pub fn autoplay(def: &StrategyDef, seed: u64, days: f64) -> Campaign {
+    let mut c = Campaign::new(def, 1, seed);
+    let mut battles = 0u32;
+    while c.hours < days * 24.0 {
+        for b in 0..c.bases.len() {
+            if c.bases[b].research.is_none() {
+                if let Some(&t) = c.researchable(def).first() {
+                    c.start_research(def, b, t).unwrap();
+                }
+            }
+        }
+        for m in ["laboratory", "workshop"] {
+            if let Some(m) = def.module(m) {
+                if c.money > 1_500_000.0 {
+                    let _ = c.build_module(def, 0, m);
+                }
+            }
+        }
+        for e in c.advance(def, 24.0) {
+            match e {
+                Event::Notice(t) if t.starts_with("Contact") => {
+                    if let Some(id) = c.contacts.iter().rev().find(|x| x.detected).map(|x| x.id) {
+                        let free: Vec<usize> = (0..c.craft.len()).filter(|&k| c.craft[k].away.is_none()).collect();
+                        let _ = c.intercept(def, id, &free[..free.len().min(1)]);
+                    }
+                }
+                Event::Battle { contact } => {
+                    battles += 1;
+                    let result = if battles % 3 == 0 { "retreat" } else { "win" };
+                    c.battle_result(def, contact, result, &["salvage".into()], 2);
+                }
+                _ => {}
+            }
+        }
+    }
+    c
+}
+
 /// Makes a generated map: `count` systems scattered in a `size` rectangle, at least a
 /// little apart, star classes by weight, names from the list (then numbered), and
 /// `black_holes` of them hidden.
@@ -1431,47 +1472,6 @@ mod tests {
         assert_ne!(c.pilots[1].state, PilotState::Ready);
     }
 
-    /// Plays a campaign for `days` with a simple automatic player: keeps every base
-    /// researching, builds a lab and a workshop when it can, intercepts every contact it
-    /// sees, and alternates battle results. Returns the campaign.
-    pub(crate) fn autoplay(def: &StrategyDef, seed: u64, days: f64) -> Campaign {
-        let mut c = Campaign::new(def, 1, seed);
-        let mut battles = 0u32;
-        while c.hours < days * 24.0 {
-            for b in 0..c.bases.len() {
-                if c.bases[b].research.is_none() {
-                    if let Some(&t) = c.researchable(def).first() {
-                        c.start_research(def, b, t).unwrap();
-                    }
-                }
-            }
-            for m in ["laboratory", "workshop"] {
-                if let Some(m) = def.module(m) {
-                    if c.money > 1_500_000.0 {
-                        let _ = c.build_module(def, 0, m);
-                    }
-                }
-            }
-            for e in c.advance(def, 24.0) {
-                match e {
-                    Event::Notice(t) if t.starts_with("Contact") => {
-                        if let Some(id) = c.contacts.iter().rev().find(|x| x.detected).map(|x| x.id) {
-                            let free: Vec<usize> = (0..c.craft.len()).filter(|&k| c.craft[k].away.is_none()).collect();
-                            let _ = c.intercept(def, id, &free[..free.len().min(1)]);
-                        }
-                    }
-                    Event::Battle { contact } => {
-                        battles += 1;
-                        let result = if battles % 3 == 0 { "retreat" } else { "win" };
-                        c.battle_result(def, contact, result, &["salvage".into()], 2);
-                    }
-                    _ => {}
-                }
-            }
-        }
-        c
-    }
-
     #[test]
     fn the_default_campaign_runs_six_months() {
         let content = crate::content::Content::load(&crate::content::ContentConfig {
@@ -1482,7 +1482,7 @@ mod tests {
         })
         .unwrap();
         let def = content.rules.strategy.as_ref().expect("the default campaign has a strategy layer");
-        let c = autoplay(def, 3, 180.0);
+        let c = super::autoplay(def, 3, 180.0);
         assert!(c.hours >= 180.0 * 24.0);
         assert!(c.known.iter().filter(|k| **k).count() >= 4, "research progressed: {:?}", c.known);
         assert!(c.messages.iter().filter(|m| m.text.starts_with("Monthly report")).count() >= 5);

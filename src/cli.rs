@@ -30,6 +30,7 @@ OPTIONS:
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --mission <ID>      Start this mission directly, skipping the launcher
     --strategy          Start a new campaign's strategy layer directly
+    --strategy-soak <D> Play the strategy layer automatically for D days and report
     --console           Serve the tablet control console (settings: console.enabled)
     --console-port <N>  Its port (default 8765; settings: console.port)
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
@@ -79,6 +80,8 @@ pub struct Options {
     pub screenshot: Option<PathBuf>,
     pub write_schemas: Option<PathBuf>,
     pub soak: Option<String>,
+    /// `--strategy-soak <days>`: play the campaign's strategy layer automatically.
+    pub strategy_soak: Option<f64>,
     pub seconds: Option<f32>,
     pub soak_pilot: Option<crate::soak::SoakPilot>,
     pub frames: Option<u32>,
@@ -119,6 +122,10 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),
             "--write-schemas" => o.write_schemas = Some(PathBuf::from(value("--write-schemas")?)),
             "--soak" => o.soak = Some(value("--soak")?),
+            "--strategy-soak" => {
+                o.strategy_soak =
+                    Some(value("--strategy-soak")?.parse().map_err(|_| "--strategy-soak needs a number of days")?)
+            }
             "--seconds" => {
                 let v = value("--seconds")?;
                 o.seconds = Some(v.parse().map_err(|_| format!("--seconds needs a number, not '{v}'"))?);

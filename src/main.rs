@@ -47,7 +47,12 @@ fn headless(options: &cli::Options) -> Option<i32> {
         }
         return Some(0);
     }
-    if !(options.check || options.list || options.extract.is_some() || options.soak.is_some()) {
+    if !(options.check
+        || options.list
+        || options.extract.is_some()
+        || options.soak.is_some()
+        || options.strategy_soak.is_some())
+    {
         return None;
     }
     let content = match Content::load(&options.content_config()) {
@@ -71,6 +76,26 @@ fn headless(options: &cli::Options) -> Option<i32> {
                 1
             }
         });
+    }
+    if let Some(days) = options.strategy_soak {
+        let Some(def) = content.rules.strategy.as_ref() else {
+            eprintln!("error: this campaign has no strategy layer");
+            return Some(1);
+        };
+        let c = openinterceptor::campaign::autoplay(def, 7, days);
+        let known = c.known.iter().filter(|k| **k).count();
+        let battles = c.messages.iter().filter(|m| m.text.starts_with("Battle with")).count();
+        println!(
+            "strategy soak {days} days: {} - funds {:.0}, score {:.0}, {} bases, {} craft, {known}/{} topics, {battles} battles, {} messages",
+            c.date(def),
+            c.money,
+            c.score,
+            c.bases.len(),
+            c.craft.len(),
+            def.research.len(),
+            c.messages.len()
+        );
+        return Some(0);
     }
     if let Some(sc) = &options.soak {
         let pilot = options.soak_pilot.unwrap_or(soak::SoakPilot::Passive);

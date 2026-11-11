@@ -443,6 +443,36 @@ impl StrategyDef {
         names.sort();
         names.dedup();
         let schema = script::campaign::schema(&names, levels);
+        // The original's numeric tech ids (`Prereq1..3`, `TechRequired`, read from its own
+        // files by inheritance) become readable research ids through the mod's
+        // `tech_ids: {<number>: <research id>}` table. Ids it does not list (the
+        // original's alien craft, 75 and up) are left out of the condition.
+        let tech_ids: Vec<(i64, String)> = global("tech_ids")
+            .map(|n| {
+                n.as_map()
+                    .unwrap_or(&[])
+                    .iter()
+                    .filter_map(|(k, v)| Some((k.trim().parse().ok()?, v.as_str()?.to_string())))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let tech_req = |g: Get, keys: &[&str]| -> Option<String> {
+            if tech_ids.is_empty() {
+                return None;
+            }
+            let parts: Vec<String> = keys
+                .iter()
+                .filter_map(|k| g.str(k)?.trim().parse::<i64>().ok())
+                .filter_map(|n| tech_ids.iter().find(|(i, _)| *i == n).map(|(_, id)| format!("research({id})")))
+                .collect();
+            (!parts.is_empty()).then(|| parts.join(" and "))
+        };
+        // `requires:` as written, else the original's prerequisites translated.
+        let req_text = |g: Get, keys: &[&str]| -> Option<String> {
+            g.str("requires").map(str::to_string).or_else(|| tech_req(g, keys))
+        };
+        const PREREQS: [&str; 3] = ["prereq1", "prereq2", "prereq3"];
+        const TECH: [&str; 2] = ["tech_required", "tech_required2"];
         let cond = |text: Option<&str>, at: &str, errors: &mut Vec<String>| -> Option<Expr> {
             let t = text?;
             match script::parse_condition(t, &schema) {
@@ -552,7 +582,7 @@ impl StrategyDef {
                 name: name_of(g, id),
                 // `file_size` (k work units) is the original's key, read by inheritance.
                 size: g.num("size").or_else(|| g.num("file_size").map(|k| k * 1000.0)).unwrap_or(1000.0).max(1.0),
-                requires: cond(g.str("requires"), &format!("research.{id}.requires"), errors),
+                requires: cond(req_text(g, &PREREQS).as_deref(), &format!("research.{id}.requires"), errors),
                 unlocks: g.list("unlocks"),
                 description: g.str("description").unwrap_or("").to_string(),
             })
@@ -569,17 +599,22 @@ impl StrategyDef {
                 switching_loses: g.and_then(|g| g.str("switching")) == Some("lose_progress"),
             }
         };
+        // Money in the original's files is in thousands (`economy.cost_scale: 1000`), and
+        // its module build times are days (`economy.module_time: days`).
+        let economy = global("economy");
+        let scale = economy.as_ref().and_then(|n| Get(n).num("cost_scale")).unwrap_or(1.0);
+        let module_days = economy.as_ref().and_then(|n| Get(n).str("module_time")) == Some("days");
         // 4. Items, hulls, modules, base types.
         let items: Vec<Item> = of(defs, "items")
             .map(|(id, g)| Item {
                 id: id.to_string(),
                 name: name_of(g, id),
                 kind: g.str("kind").unwrap_or("goods").to_string(),
-                cost: g.num("cost").unwrap_or(0.0),
-                sell_price: g.num("sell_price").unwrap_or(0.0),
+                cost: g.num("cost").unwrap_or(0.0) * scale,
+                sell_price: g.num("sell_price").unwrap_or(0.0) * scale,
                 prod_time: g.num("prod_time").unwrap_or(0.0),
                 size: g.num("size").unwrap_or(1.0),
-                requires: cond(g.str("requires"), &format!("items.{id}.requires"), errors),
+                requires: cond(req_text(g, &TECH).as_deref(), &format!("items.{id}.requires"), errors),
                 rounds: g.num("rounds").unwrap_or(1.0).max(1.0) as u32,
             })
             .collect();
@@ -598,12 +633,12 @@ impl StrategyDef {
                 }
                 Hull {
                     id: id.to_string(),
-                    cost: g.num("cost").unwrap_or(0.0),
+                    cost: g.num("cost").unwrap_or(0.0) * scale,
                     prod_time: g.num("prod_time").unwrap_or(0.0),
-                    upkeep: g.num("upkeep").or_else(|| g.num("maint_cost")).unwrap_or(0.0),
+                    upkeep: g.num("upkeep").or_else(|| g.num("maint_cost")).unwrap_or(0.0) * scale,
                     speed: g.num("speed").unwrap_or(1000.0).max(1.0),
                     slots,
-                    requires: cond(g.str("requires"), &format!("hulls.{id}.requires"), errors),
+                    requires: cond(req_text(g, &TECH).as_deref(), &format!("hulls.{id}.requires"), errors),
                 }
             })
             .collect();
@@ -612,11 +647,13 @@ impl StrategyDef {
                 id: id.to_string(),
                 name: name_of(g, id),
                 group: g.str("group").unwrap_or(id).to_string(),
-                cost: g.num("cost").unwrap_or(0.0),
-                build_time: hours(g, "build_time").unwrap_or(72.0),
-                maintenance: g.num("maintenance").unwrap_or(0.0),
+                cost: g.num("cost").unwrap_or(0.0) * scale,
+                build_time: hours(g, "build_time")
+                    .or_else(|| g.num("prod_time").filter(|_| module_days).map(|d| d * 24.0))
+                    .unwrap_or(72.0),
+                maintenance: g.num("maintenance").unwrap_or(0.0) * scale,
                 effects: pairs(g, "effects"),
-                requires: cond(g.str("requires"), &format!("base_modules.{id}.requires"), errors),
+                requires: cond(req_text(g, &TECH).as_deref(), &format!("base_modules.{id}.requires"), errors),
             })
             .collect();
         let base_types: Vec<BaseType> = of(defs, "base_types")
@@ -703,7 +740,6 @@ impl StrategyDef {
         } else {
             scores
         };
-        let economy = global("economy");
         let delivery = economy.as_ref().and_then(|n| hours(Get(n), "delivery")).unwrap_or(48.0);
         let salvage = economy.as_ref().and_then(|n| Get(n).num("salvage_per_kill")).unwrap_or(0.0);
         // 7. The start.
@@ -874,6 +910,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("pilots", Ty::Num, "pilots the player starts with"),
                 f("research", Ty::List(Box::new(Ty::Name)), "topics already known"),
                 f("stock", nums(), "items in stock at the first base"),
+                f("money_from", Ty::Text, "original:<file>/<key>: starting money from the difficulty level's section"),
             ]),
             "how a new campaign begins (no start: no strategy layer)",
         ),
@@ -1044,6 +1081,11 @@ pub fn sections() -> Vec<super::schema::Field> {
         ),
         f("scores", nums(), "mission score names (score(x) in outcomes): points"),
         f(
+            "tech_ids",
+            Ty::Dict(Box::new(Ty::Name)),
+            "the original's numeric tech ids (Prereq1..3, TechRequired) to research ids",
+        ),
+        f(
             "flags",
             Ty::List(Box::new(Ty::Name)),
             "campaign flags conditions may test with flag(x) (set_flag names are added)",
@@ -1053,6 +1095,12 @@ pub fn sections() -> Vec<super::schema::Field> {
             Ty::Struct(vec![
                 f("delivery", Ty::Qty(Unit::Time), "time for a purchase to arrive"),
                 f("salvage_per_kill", Ty::Num, "money per enemy destroyed when an outcome says salvage"),
+                f(
+                    "cost_scale",
+                    Ty::Num,
+                    "multiplies every cost, price, upkeep and maintenance (the original's are thousands)",
+                ),
+                f("module_time", Ty::Enum(&["days"]), "modules without build_time take their prod_time in days"),
             ]),
             "economy settings",
         ),
@@ -1119,6 +1167,31 @@ pilots: {stats: {flying: [25, 100]}, ranks: {rookie: 0, ensign: 3}, salary: 2000
 scores: {station_defended: 150, station_lost: -300}
 flags: [raids]
 ";
+
+    #[test]
+    fn original_tech_ids_become_research_prerequisites() {
+        // A topic and an item carrying the original's numeric keys (as inheritance from
+        // its files gives them), and the mod's table translating them.
+        let text = SAMPLE
+            .replace(
+                "  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}",
+                "  plasma: {size: 1000, prereq1: 7, prereq2: 99, unlocks: [items.plasma]}",
+            )
+            .replace(
+                "  laser: {kind: beam, cost: 1000, sell_price: 500}",
+                "  laser: {kind: beam, cost: 1000, sell_price: 500, tech_required: 8}",
+            )
+            + "tech_ids: {7: basics, 8: plasma}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = crate::campaign::Campaign::new(&d, 0, 1);
+        let plasma = d.topic("plasma").unwrap();
+        assert!(c.researchable(&d).contains(&plasma), "basics known; 99 is not listed and is left out");
+        c.known[d.topic("basics").unwrap()] = false;
+        assert!(!c.researchable(&d).contains(&plasma));
+        assert!(!c.available(&d, "items.laser"), "TechRequired 8 = plasma, not yet known");
+    }
 
     #[test]
     fn a_strategy_layer_builds_with_checked_names() {
