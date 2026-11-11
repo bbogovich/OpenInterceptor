@@ -4,6 +4,7 @@
 #   ./docs.sh serve    live preview at http://127.0.0.1:8000 (PORT=… to change)
 #   ./docs.sh build    strict build into site/
 #   ./docs.sh deploy   strict build, then publish to the forge's pages branch
+#                      (on GitHub, pushing the docs branch publishes it: .github/workflows/pages.yml)
 #   ./docs.sh help
 #
 # The toolchain lives in .venv/ beside this script, created on first use from
