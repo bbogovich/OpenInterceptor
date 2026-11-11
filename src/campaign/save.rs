@@ -369,7 +369,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             base: idx(k, "base", bases.len(), "a craft's base")?,
             fit,
             away,
-            route: k.node("route").map(&waypoints).unwrap_or_default(),
+            route: k.node("route").map(waypoints).unwrap_or_default(),
         });
     }
     let mut contacts = Vec::new();
@@ -384,7 +384,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             dest: [d.first().copied().unwrap_or(0.0) as f32, d.get(1).copied().unwrap_or(0.0) as f32],
             target_base: opt(k, "target_base"),
             detected: k.bool("detected").unwrap_or(false),
-            route: k.node("route").map(&waypoints).unwrap_or_default(),
+            route: k.node("route").map(waypoints).unwrap_or_default(),
         });
     }
     let mut deliveries = Vec::new();
