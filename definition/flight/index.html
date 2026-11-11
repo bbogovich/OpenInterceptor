@@ -6092,11 +6092,11 @@
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/flight/#r-flt-008-hyperspace-out">R-FLT-008</a></li>
 </ul>
 <h3 id="f-flt-006-collisions">F-FLT-006 Collisions<a class="headerlink" href="#f-flt-006-collisions" title="Permanent link">&para;</a></h3>
-<p><strong>What.</strong> Craft bounce off each other and off station hulls; fast shots never pass through a target.</p>
-<p><strong>Why.</strong> Stations are large solid objects, and hits must count.</p>
+<p><strong>What.</strong> Craft bounce off each other and off station hulls, and a hard hit has real consequences. The impact changes direction according to the relative speed, and the angle of impact sets the craft spinning, out of control for a moment. Ships pressed together make one impact sound, not a hammering series. Fast shots never pass through a target.</p>
+<p><strong>Why.</strong> Stations are large solid objects, and hits must count. A collision should feel like one.</p>
 <ul>
 <li><strong>Status:</strong> implemented</li>
-<li><strong>Source:</strong> Plan item 1.7.</li>
+<li><strong>Source:</strong> Plan item 1.7; user request, 2026-11-11: "Formation flying - problems frequently occur where a wingman collides with the player and continues pushing, resulting in a \"hammering\" series of sounds. Formations probably need to have a bit more distance, and wingman fighters should actively try to avoid collisions. Collision should also cause more of an impact and result in directional changes and spin based on relative velocity and angle of impact. This will result in a collision causing fighter to \"spin out of control\". A collision that persists (fighter effectively pushing and staying attached to another) should only play the impact sound effect on initial impact."</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/flight/#r-flt-009-collisions">R-FLT-009</a></li>
 </ul>
 <h3 id="f-flt-007-atmospheric-flight-over-terrain">F-FLT-007 Atmospheric flight over terrain<a class="headerlink" href="#f-flt-007-atmospheric-flight-over-terrain" title="Permanent link">&para;</a></h3>
@@ -6121,6 +6121,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: F-FLT-001 – F-FLT-007 (7 features)</td>
+</tr>
+<tr>
+<td>1.5.0</td>
+<td>2026-11-11</td>
+<td>F-FLT-006: impact, spin, tumble and one sound per contact</td>
 </tr>
 </tbody>
 </table>

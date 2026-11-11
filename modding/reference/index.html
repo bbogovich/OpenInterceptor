@@ -7296,6 +7296,18 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td>How ships are lit: <code>ambient</code> (light everywhere, 0.30), <code>sun</code> (extra light on faces towards the sun, 0.85), <code>rim</code> (extra light on edges seen side-on, outlining hulls against space, 0), <code>distant_dot</code> (pixels: a ship on the player's radar smaller than this on screen is drawn as a dot in its radar colour, 4; 0 = off). Keys left out keep their defaults (<a href="../../implementation/architecture/rendering/#lighting-rim-and-brightness-app-031">Rendering</a>).</td>
 </tr>
 <tr>
+<td><code>collision</code></td>
+<td>map</td>
+<td>see below</td>
+<td>How collisions feel: <code>restitution</code> (bounciness, 0 = the ships stop together … 1 = a perfect bounce; 0.5), <code>spin</code> (how strongly the angle of impact spins a ship; 1), <code>tumble</code> (time: the longest a hard hit leaves the pilot with reduced control; 2.5 s). Ships pressed together make one impact (sound and damage), not one per tick (<a href="../../specification/requirements/flight/#r-flt-009-collisions">R-FLT-009</a>).</td>
+</tr>
+<tr>
+<td><code>formation_gap</code></td>
+<td>number</td>
+<td>3</td>
+<td>A wingman's formation slot is at least this many × the two ships' combined radii from its leader; tighter slots in scenarios and missions are pushed out (<a href="../../specification/requirements/combat/#r-cmb-022-wingmen-keep-their-distance">R-CMB-022</a>).</td>
+</tr>
+<tr>
 <td><code>radar_colors</code></td>
 <td>map</td>
 <td>see below</td>

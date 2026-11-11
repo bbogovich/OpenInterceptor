@@ -6264,12 +6264,18 @@
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a>, <a href="../../../implementation/deviations/">Deviations (DEV-026)</a></li>
 </ul>
 <h3 id="r-flt-009-collisions">R-FLT-009 Collisions<a class="headerlink" href="#r-flt-009-collisions" title="Permanent link">&para;</a></h3>
-<p>Fighters touching (spheres at 60 % of radius) MUST be pushed apart and exchange half their velocities; a fighter sweeping into a station mesh MUST be backed out and bounced; collision damage MUST be relative speed × 0.1. Bolts and missiles MUST test the segment travelled each tick so they cannot pass through a target.</p>
-<p><em>Rationale:</em> Solid stations and hits that count.</p>
+<p>Fighters touching (spheres at 60 % of radius) MUST be separated (in proportion to their masses, taken as radius cubed) and, while approaching, MUST exchange an impulse along the contact normal with restitution <code>flight.collision.restitution</code> (default 0.5). A fighter sweeping into a station mesh MUST be backed out and bounced the same way, with the station immovable.</p>
+<p>Each impact MUST add spin to the ships involved:
+- from the glancing (tangential) speed, by friction at the contact point;
+- and from the angle between the ship's nose and the impact direction, scaled by <code>flight.collision.spin</code>.</p>
+<p>A spin above about 0.5 rad/s MUST start a <strong>tumble</strong> of up to <code>flight.collision.tumble</code> seconds, during which the pilot's turn authority is reduced, so the craft spins out of control and then recovers.</p>
+<p>The impact sound (<code>Collision</code> event) and the collision damage (approach speed × 0.1) MUST happen only when two ships first touch, not on every tick they stay pressed together.</p>
+<p>Bolts and missiles MUST test the segment travelled each tick so they cannot pass through a target.</p>
+<p><em>Rationale:</em> Solid stations, hits that count, collisions that feel like collisions, and no "hammering" from a ship pushing against another.</p>
 <ul>
 <li>Implements: <a href="../../../definition/flight/#f-flt-006-collisions">F-FLT-006</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>sim::combat::fighters_bounce_off_each_other_and_stations</code>, <code>sim::collision::segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code>; MT-1-15</li>
+<li>Verified by: <code>sim::combat::fighters_bounce_off_each_other_and_stations</code>, <code>sim::combat::a_glancing_hit_sends_a_fighter_tumbling</code>, <code>sim::combat::pressed_together_ships_make_one_impact</code>, <code>sim::collision::segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code>; MT-1-15</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
@@ -6319,6 +6325,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: R-FLT-001 – R-FLT-012 (12 requirements; 10 reverse-engineered from the code)</td>
+</tr>
+<tr>
+<td>1.5.0</td>
+<td>2026-11-11</td>
+<td>R-FLT-009 revised: impulse with restitution, spin from glancing speed and impact angle, tumble, one impact per contact (<code>flight.collision</code>)</td>
 </tr>
 </tbody>
 </table>

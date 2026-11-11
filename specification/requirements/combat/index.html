@@ -1386,6 +1386,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#r-cmb-022-wingmen-keep-their-distance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CMB-022 Wingmen keep their distance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#r-cmb-016-behaviours-as-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6221,6 +6232,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#r-cmb-022-wingmen-keep-their-distance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CMB-022 Wingmen keep their distance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#r-cmb-016-behaviours-as-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6567,6 +6589,15 @@
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
+<h3 id="r-cmb-022-wingmen-keep-their-distance">R-CMB-022 Wingmen keep their distance<a class="headerlink" href="#r-cmb-022-wingmen-keep-their-distance" title="Permanent link">&para;</a></h3>
+<p>A wingman's formation slot MUST lie at least <code>flight.formation_gap</code> (default 3) × the two ships' combined radii from the leader; a closer slot from data is pushed out along its own direction.</p>
+<p>A wingman flying in formation MUST actively avoid collisions: when another craft is inside its avoidance zone (twice the combined radii) and closing, it MUST steer away and slow down until clear.</p>
+<p><em>Rationale:</em> The user's request (see F-CMB-007): wingmen collided with the player and kept pushing.</p>
+<ul>
+<li>Implements: <a href="../../../definition/combat/#f-cmb-007-wingmen-and-orders">F-CMB-007</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>sim::ai::formation_slots_keep_a_gap_from_the_leader</code>, <code>sim::ai::a_wingman_steers_clear_of_the_leader</code></li>
+</ul>
 <h3 id="r-cmb-016-behaviours-as-data">R-CMB-016 Behaviours as data<a class="headerlink" href="#r-cmb-016-behaviours-as-data" title="Permanent link">&para;</a></h3>
 <p>AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (<code>prefer</code>) and systems use (cloak, ECM, power). Any definition MUST accept difficulty <code>variants</code> and <code>{per_level: …}</code> values.</p>
 <p><em>Rationale:</em> Modding first; the original's AI is code, so its behaviours are derived (DEV-031, DEV-032).</p>
@@ -6662,6 +6693,11 @@
 <td>1.1.0</td>
 <td>2026-11-11</td>
 <td>R-CMB-021 implemented (app 0.3.1): <code>flight.bolt_frame</code> (<code>world</code> default, <code>ship</code> with <code>bolt_carry</code>), open note resolved. R-CMB-002: bolts also carry the muzzle's turn velocity; streaks drawn relative to the viewer</td>
+</tr>
+<tr>
+<td>1.5.0</td>
+<td>2026-11-11</td>
+<td>R-CMB-022 wingmen keep their distance and avoid collisions</td>
 </tr>
 </tbody>
 </table>
