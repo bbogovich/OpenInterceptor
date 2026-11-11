@@ -59,6 +59,8 @@ pub struct AppContext {
     pub console_status: String,
     /// Problems the player should see on the launcher (a broken settings.yaml…).
     pub notices: Vec<String>,
+    /// The player chose Simple physics (applies on the first three difficulty levels).
+    pub simple_physics: bool,
 }
 
 /// What the app should do after a screen's frame.
@@ -134,6 +136,16 @@ fn remember_choice(id: &str, difficulty: Option<&str>) {
     let mut s = crate::settings::Settings::load(&dir);
     s.campaign = Some(id.to_string());
     s.difficulty = difficulty.map(str::to_string);
+    if let Err(e) = s.save(&dir) {
+        eprintln!("settings not saved: {e}");
+    }
+}
+
+/// Records the player's physics choice in `settings.yaml`.
+pub fn remember_physics(simple: bool) {
+    let Some(dir) = crate::cli::user_data_dir() else { return };
+    let mut s = crate::settings::Settings::load(&dir);
+    s.simple_physics = simple;
     if let Err(e) = s.save(&dir) {
         eprintln!("settings not saved: {e}");
     }
@@ -234,6 +246,9 @@ pub async fn run(options: Options) {
         remote: Default::default(),
         console_status,
         notices,
+        simple_physics: crate::cli::user_data_dir()
+            .map(|d| crate::settings::Settings::load(&d).simple_physics)
+            .unwrap_or(false),
     };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),

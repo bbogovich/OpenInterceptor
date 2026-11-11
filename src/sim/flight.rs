@@ -117,9 +117,13 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
     }
     ship.braking = c.brake;
 
-    match rules.model {
-        FlightModel::Newtonian => newtonian(ship, class, rules, &c, dt),
-        FlightModel::Assisted => assisted(ship, class, rules, &c, dt),
+    if ship.simple_physics {
+        simple(ship, class, rules, &c, dt);
+    } else {
+        match rules.model {
+            FlightModel::Newtonian => newtonian(ship, class, rules, &c, dt),
+            FlightModel::Assisted => assisted(ship, class, rules, &c, dt),
+        }
     }
     ship.position += ship.velocity * dt;
 }
@@ -210,6 +214,25 @@ fn assisted(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Control
     };
     local.x = approach(local.x, slide.x, accel);
     local.y = approach(local.y, slide.y, accel);
+    ship.velocity = ship.rotation * local;
+}
+
+/// Simple physics (R-FLT-013): like a traditional space fighter game, the craft always
+/// travels where its nose points. Forward speed approaches the throttle (or hold,
+/// afterburner, brake) speed at the craft's acceleration, as in [`assisted`]; but the
+/// sideways and vertical parts of the velocity are set outright to what the slide
+/// thrusters ask for, so no drift survives a turn or a collision.
+fn simple(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Controls, dt: f32) {
+    assisted(ship, class, rules, c, dt);
+    let slide = if class.vct {
+        c.slide.clamp_length_max(1.0) * class.max_speed * VCT_SPEED_FRACTION * ship.efficiency(SystemKind::Vct)
+    } else {
+        glam::Vec2::ZERO
+    };
+    // In body axes (x right, y up, −z forward): keep z, replace x and y.
+    let mut local = ship.rotation.inverse() * ship.velocity;
+    local.x = slide.x;
+    local.y = slide.y;
     ship.velocity = ship.rotation * local;
 }
 
@@ -415,6 +438,40 @@ mod tests {
         // Reverse is still engaged from above, which blocks the afterburner: disengage it.
         run(&mut w, id, 3.0, Controls { afterburner: true, toggle_reverse: true, ..Default::default() });
         assert!(w.get(id).unwrap().forward_speed() > 700.0);
+    }
+
+    #[test]
+    fn simple_physics_has_no_drift() {
+        let (mut w, id) = fighter(); // the campaign flies Newtonian
+        w.get_mut(id).unwrap().simple_physics = true;
+        run(&mut w, id, 3.0, Controls { throttle_set: Some(1.0), ..Default::default() });
+        let s = w.get(id).unwrap();
+        let speed = s.forward_speed();
+        assert!(speed > 100.0, "throttle drives it forward");
+        // Turn hard: the velocity turns with the nose, nothing is left sideways.
+        run(&mut w, id, 1.0, Controls { yaw: 1.0, ..Default::default() });
+        let s = w.get(id).unwrap();
+        let v = s.body_velocity();
+        assert!(v.x.abs() < 1e-2 && v.y.abs() < 1e-2, "no drift after a turn: {v:?}");
+        // A knock sideways (a collision) is gone on the next tick.
+        let knock = w.get(id).unwrap().rotation * Vec3::X * 80.0;
+        w.get_mut(id).unwrap().velocity += knock;
+        run(&mut w, id, TICK, Controls::default());
+        assert!(w.get(id).unwrap().body_velocity().x.abs() < 1e-2);
+        // The same turn under Realistic physics leaves drift.
+        let (mut w, id) = fighter();
+        run(&mut w, id, 3.0, Controls { throttle_set: Some(1.0), ..Default::default() });
+        run(&mut w, id, 1.0, Controls { yaw: 1.0, ..Default::default() });
+        assert!(w.get(id).unwrap().body_velocity().x.abs() > 1.0, "realistic: drift");
+    }
+
+    #[test]
+    fn simple_physics_only_on_the_first_three_levels() {
+        let mut rules = (*crate::sim::test_support::rules()).clone();
+        for (level, allowed) in [(0, true), (1, true), (2, true), (3, false), (4, false)] {
+            rules.difficulty = level;
+            assert_eq!(rules.simple_physics_allowed(), allowed, "level {level}");
+        }
     }
 
     #[test]

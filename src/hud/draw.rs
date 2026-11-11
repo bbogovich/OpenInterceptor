@@ -193,6 +193,9 @@ fn status_line(rules: &crate::content::rules::Ruleset, me: &crate::sim::Ship) ->
     if class.vct {
         status += "  VCT";
     }
+    if me.simple_physics {
+        status += "  SIMPLE";
+    }
     for flag in status_flags(me) {
         status += "  ";
         status += &flag;

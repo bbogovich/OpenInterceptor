@@ -23,6 +23,7 @@
 //! game:
 //!   campaign: default                    # the launcher's choices
 //!   difficulty: ranger
+//!   physics: simple                      # or realistic (simple: first three levels only)
 //! graphics:
 //!   brightness: 1.2                      # 1 = as authored; higher lifts dark tones
 //! console:
@@ -55,6 +56,9 @@ pub struct Settings {
     pub difficulty: Option<String>,
     /// The language of player-visible text (`game.language`, default `en`).
     pub language: Option<String>,
+    /// Simple (no-drift) physics for the player (`game.physics: simple`); used only on
+    /// a campaign's first three difficulty levels.
+    pub simple_physics: bool,
     /// Display brightness (`graphics.brightness`, 1 = as authored, 0.5–2).
     pub brightness: Option<f32>,
     /// Serve the tablet control console (`console.enabled`, default off).
@@ -80,6 +84,7 @@ impl Settings {
             campaign: text(&game, "campaign"),
             difficulty: text(&game, "difficulty"),
             language: text(&game, "language"),
+            simple_physics: text(&game, "physics").is_some_and(|p| p.eq_ignore_ascii_case("simple")),
             brightness: Get(&graphics).num("brightness").map(|b| b.clamp(0.5, 2.0)),
             console: Get(&console).str("enabled").is_some_and(|v| v == "true" || v == "yes" || v == "on"),
             console_port: Get(&console).num("port").filter(|p| (1.0..=65535.0).contains(p)).map(|p| p as u16),
@@ -107,6 +112,7 @@ impl Settings {
             campaign,
             difficulty,
             language: None,
+            simple_physics: false,
             brightness: None,
             console: false,
             console_port: None,
@@ -161,6 +167,7 @@ impl Settings {
                 ("campaign", text(self.campaign.clone())),
                 ("difficulty", text(self.difficulty.clone())),
                 ("language", text(self.language.clone())),
+                ("physics", Node::text(if self.simple_physics { "simple" } else { "realistic" }, 0)),
             ])),
             body(map(vec![(
                 "brightness",
@@ -271,11 +278,14 @@ mod tests {
                 campaign: Some("default".into()),
                 difficulty: None,
                 language: None,
+                simple_physics: false,
                 brightness: None,
                 console: false,
                 console_port: None,
             }
         );
+        let simple = Settings { simple_physics: true, ..s.clone() };
+        assert_eq!(Settings::parse(&simple.to_yaml_text()), simple, "{}", simple.to_yaml_text());
         assert_eq!(Settings::parse_legacy_ini(&s.to_ini_text()), s);
         assert_eq!(Settings::parse(&s.to_yaml_text()), s, "{}", s.to_yaml_text());
         let bright = Settings { brightness: Some(1.25), ..s.clone() };

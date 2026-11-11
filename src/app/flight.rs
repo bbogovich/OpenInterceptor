@@ -338,6 +338,11 @@ impl FlightSession {
                 (w, p, None)
             }
         };
+        let mut world = world;
+        // Simple physics for the player, when chosen and allowed at this level (R-FLT-013).
+        if let Some(s) = world.get_mut(player) {
+            s.simple_physics = ctx.simple_physics && rules.simple_physics_allowed();
+        }
         let player_class = rules.ship(world.get(player).expect("just spawned").class);
         let cockpit_def = player_class.cockpit.as_deref().and_then(|c| rules.cockpit(c));
         let cockpit = cockpit_def.and_then(|c| c.image.as_ref().map(|i| (i, c.image_pack))).and_then(

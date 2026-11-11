@@ -600,6 +600,12 @@ impl Ruleset {
     /// True if `a` treats `b` as an enemy (either side declaring hostility is enough).
     /// What faction `other` is to faction `me`: its own side, an enemy (either side
     /// hostile to the other), or neutral.
+    /// True when the player may choose Simple physics: only on the campaign's first three
+    /// difficulty levels (R-FLT-013); higher levels always fly Realistic.
+    pub fn simple_physics_allowed(&self) -> bool {
+        self.difficulty < 3
+    }
+
     pub fn relation(&self, me: FactionId, other: FactionId) -> Relation {
         if me == other {
             Relation::Friendly

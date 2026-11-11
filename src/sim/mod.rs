@@ -291,6 +291,9 @@ pub struct Ship {
     pub velocity: Vec3,
     /// Body-space angular velocity, radians/s: x = pitch, y = yaw, z = roll.
     pub angular_velocity: Vec3,
+    /// Simple (no-drift) physics for this ship: its velocity always follows its nose
+    /// (the player's choice on the easy levels; see `flight::simple`).
+    pub simple_physics: bool,
     /// Seconds left of a collision tumble: while above zero the pilot's turn authority
     /// is reduced and the impact's spin dies away slowly (see `flight::turn`).
     pub tumble: f32,
@@ -650,6 +653,7 @@ impl World {
             velocity: Vec3::ZERO,
             angular_velocity: Vec3::ZERO,
             tumble: 0.0,
+            simple_physics: false,
             throttle: 0.0,
             reverse: false,
             afterburning: false,

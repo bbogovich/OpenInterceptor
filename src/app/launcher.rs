@@ -135,6 +135,11 @@ impl Launcher {
                 return Next::Reload { campaign: Some(next), difficulty: None };
             }
         }
+        // P: Simple or Realistic physics (offered on the first three difficulty levels).
+        if pressed("p") && ctx.content.rules.simple_physics_allowed() {
+            ctx.simple_physics = !ctx.simple_physics;
+            super::remember_physics(ctx.simple_physics);
+        }
         if pressed("d") || pad_pressed(Button::X) {
             if let Some(level) = next_difficulty(&ctx.content) {
                 return Next::Reload { campaign: None, difficulty: Some(level) };
@@ -210,7 +215,18 @@ impl Launcher {
             Some(l) => format!("   Difficulty: {}   (D: change)", l.replace('_', " ")),
             None => String::new(),
         };
-        draw_text(&format!("Campaign: {campaign}{switch}{level}"), 40.0, 92.0, 22.0, Color::new(1.0, 0.8, 0.4, 1.0));
+        let physics = match (r.simple_physics_allowed(), ctx.simple_physics) {
+            (true, true) => "   Physics: Simple   (P: change)",
+            (true, false) => "   Physics: Realistic   (P: change)",
+            (false, _) => "   Physics: Realistic (always, at this level)",
+        };
+        draw_text(
+            &format!("Campaign: {campaign}{switch}{level}{physics}"),
+            40.0,
+            92.0,
+            22.0,
+            Color::new(1.0, 0.8, 0.4, 1.0),
+        );
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
         draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, GRAY);
 
@@ -276,7 +292,7 @@ impl Launcher {
             if on { Color::new(0.5, 1.0, 0.6, 1.0) } else { GRAY },
         );
         draw_text(
-            "Up/Down choose   Left/Right ship   Enter start   Tab campaign   D difficulty   Esc quit",
+            "Up/Down choose   Left/Right ship   Enter start   Tab campaign   D difficulty   P physics   Esc quit",
             40.0,
             screen_height() - 24.0,
             18.0,
