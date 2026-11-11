@@ -3762,6 +3762,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3831,6 +3835,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5804,7 +5864,13 @@ and <code>--campaign</code> / <code>--difficulty</code> override them for one ru
 <span class="w">  </span><span class="nt">campaign</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
 <span class="w">  </span><span class="nt">difficulty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ranger</span><span class="w">        </span><span class="c1"># a level of game.campaign: ignored when another campaign loads</span>
 <span class="w">  </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">en</span><span class="w">              </span><span class="c1"># text/&lt;language&gt;/ folders (--language overrides)</span>
+<span class="nt">graphics</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">brightness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2</span><span class="w">           </span><span class="c1"># 1 = as authored; 0.5 (darker) to 2 (brighter)</span>
 </code></pre></div>
+<p><code>graphics.brightness</code> (app 0.3.1) is read once at start-up into <code>Renderer::brightness</code> and
+applied as a gamma of 1 / brightness in the lit shader (<a href="../rendering/">Rendering</a>); values
+outside 0.5–2 are clamped, and an empty value means 1. The player's guide is
+<a href="../../../user-guide/settings/">Settings</a>.</p>
 <p><strong>Migration.</strong> Builds before the YAML formats wrote <code>settings.ini</code> and <code>bindings.ini</code>. When
 <code>settings.yaml</code> does not exist, <code>Settings::load</code> reads <code>settings.ini</code> instead
 (<code>parse_legacy_ini</code>), and the next save writes <code>settings.yaml</code>. <code>bindings.ini</code> is read once and
@@ -5823,7 +5889,7 @@ and ignored from then on.</p>
 <tbody>
 <tr>
 <td><code>Settings</code></td>
-<td><code>original: Option&lt;PathBuf&gt;</code>, <code>mods: Option&lt;PathBuf&gt;</code>, <code>disabled_packs: Vec&lt;String&gt;</code>, <code>campaign: Option&lt;String&gt;</code>, <code>difficulty: Option&lt;String&gt;</code>, <code>language: Option&lt;String&gt;</code>.</td>
+<td><code>original: Option&lt;PathBuf&gt;</code>, <code>mods: Option&lt;PathBuf&gt;</code>, <code>disabled_packs: Vec&lt;String&gt;</code>, <code>campaign: Option&lt;String&gt;</code>, <code>difficulty: Option&lt;String&gt;</code>, <code>language: Option&lt;String&gt;</code>, <code>brightness: Option&lt;f32&gt;</code> (<code>graphics.brightness</code>, clamped 0.5–2).</td>
 </tr>
 <tr>
 <td><code>settings::Source</code></td>

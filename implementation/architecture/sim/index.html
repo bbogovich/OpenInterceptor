@@ -3867,6 +3867,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3936,6 +3940,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -6056,8 +6116,25 @@ limit. Default 60 000 m.</p>
   TRACTOR BEAM ON"); firing beams or a missile drops an active cloak ("CLOAK DROPPED").</li>
 <li><strong>Beams</strong>: <code>LinkMode::Linked</code> fires mounts in pairs, <code>Full</code> all at once, <code>Unlinked</code> one at a
   time; each mount has a cooldown of <code>1 / rate_of_fire</code>; energy is checked for the whole group
-  (<code>NoEnergy</code> event and a 0.5 s hold if short). Bolts inherit the ship's velocity; life =
-  range / speed.</li>
+  (<code>NoEnergy</code> event and a 0.5 s hold if short). Life = range / speed.</li>
+<li><strong>Bolt launch (app 0.3.1, R-CMB-021).</strong> A bolt starts at its muzzle, <code>pos + r</code> with
+  <code>r = rotation × mount_offset</code>, and leaves with exactly the muzzle's velocity plus its own
+  muzzle speed along the gun: <code>velocity = ship.velocity + ω × r + dir × beam.speed</code>. <code>ω</code> is the
+  ship's turn rate in world axes; <code>Ship::angular_velocity</code> is kept in body axes, so
+  <code>ω = rotation × angular_velocity</code>. A gun on the right wing of a ship yawing left is swinging
+  forwards, and its shot keeps that speed. After launch the bolt flies straight, whatever the
+  ship does (<code>flight.bolt_frame: world</code>, the default).</li>
+<li><strong><code>bolt_frame: ship</code></strong> (the arcade option): the bolt also stores its offset and velocity in
+  the owner's body axes (<code>local_offset</code>, <code>local_velocity</code>, made with <code>rotation.conjugate()</code>)
+  and a <code>carry</code> time from <code>flight.bolt_carry</code>. While <code>carry &gt; 0</code> and the owner lives,
+  <code>move_bolts</code> places it from the owner each tick (<code>owner.position + owner.rotation ×
+  local_offset</code>), so it turns with the nose; its <code>velocity</code> is set to the move it makes, so the
+  hit test sweeps the real path. When the carry runs out it keeps that last velocity and flies
+  straight.</li>
+<li><strong>Body velocity.</strong> <code>Ship::body_velocity()</code> is the velocity in the ship's own axes,
+  <code>rotation.conjugate() × velocity</code>, with z negated so forward reads positive: <code>x</code> sideways
+  drift (+ right), <code>y</code> vertical drift (+ up), <code>z</code> forward speed. The HUD's drift readout shows
+  it (<a href="../hud/">Cockpit and HUD</a>).</li>
 <li><strong>Bolts and missiles</strong> test the <em>segment</em> travelled this tick against every other ship's
   <code>collision::Shape</code> (sphere broad phase, triangle mesh for stations) so fast shots cannot
   tunnel.</li>
@@ -6342,7 +6419,11 @@ current order, and <code>DISABLED</code> if so.</p>
 </tr>
 <tr>
 <td><code>Bolt</code>, <code>Missile</code>, <code>Lock</code>, <code>LinkMode</code></td>
-<td>Projectiles and weapon state.</td>
+<td>Projectiles and weapon state. <code>Bolt::carry</code>, <code>local_offset</code>, <code>local_velocity</code>: the <code>bolt_frame: ship</code> carry (above).</td>
+</tr>
+<tr>
+<td><code>content::rules::BoltFrame</code>, <code>FlightRules::bolt_carry</code></td>
+<td><code>World</code> (default) or <code>Ship</code>; the carry time (0.3 s).</td>
 </tr>
 <tr>
 <td><code>collision::Shape</code>, <code>TriMesh</code></td>
@@ -6387,6 +6468,7 @@ current order, and <code>DISABLED</code> if so.</p>
   <code>ai::nearest_prize(world, me, within) -&gt; Option&lt;ShipId&gt;</code>.</li>
 <li><code>targeting::cycle</code>, <code>nearest_hostile</code>, <code>in_sights(world, me, max_angle_deg)</code>, <code>off_nose_angle</code>.</li>
 <li><code>collision::segment_sphere</code>, <code>segment_triangle</code> (Möller–Trumbore), <code>segment_shape</code>.</li>
+<li><code>ship.body_velocity() -&gt; Vec3</code> — velocity in body axes (x right, y up, z forward).</li>
 <li><code>sim::euler(Vec3 degrees)</code> — yaw/pitch/roll to a quaternion (positive yaw turns left).</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -6414,7 +6496,7 @@ current order, and <code>DISABLED</code> if so.</p>
 <li>An enemy that "does nothing": check its role (<code>ai: enemy</code> in the scenario) and that its
   behaviour's states can act (an <code>attack</code> state with a <code>range</code> its beams reach). <code>--check</code>
   reports behaviours whose conditions do not parse.</li>
-<li>Balance by numbers: <code>--soak &lt;scenario&gt; --ship &lt;id&gt; --difficulty &lt;level&gt; [--soak-pilot ai]</code>
+<li>Balance by numbers: <code>--soak &lt;scenario&gt; --ship &lt;id&gt; --difficulty &lt;level&gt; [--soak-pilot ai|idle]</code>
   plays the battle without a window and reports how long the player lasted, hits taken and
   enemies destroyed; the default campaign's balance promise is held by a unit test of the
   same runner (<code>soak</code>).</li>

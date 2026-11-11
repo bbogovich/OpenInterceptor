@@ -3984,6 +3984,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -4053,6 +4057,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -6292,7 +6352,7 @@
 </tr>
 <tr>
 <td><a href="#r-cmb-021-shot-physics">R-CMB-021 Shot physics</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 </tbody>
 </table>
@@ -6308,12 +6368,12 @@
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
 <h3 id="r-cmb-002-bolt-travel">R-CMB-002 Bolt travel<a class="headerlink" href="#r-cmb-002-bolt-travel" title="Permanent link">&para;</a></h3>
-<p>A bolt MUST live for <code>range / speed</code>, start at its muzzle with its streak never reaching behind the muzzle, and inherit the firing ship's velocity.</p>
+<p>A bolt MUST live for <code>range / speed</code>, start at its muzzle with its streak never reaching behind the muzzle, and inherit the firing ship's velocity plus the muzzle's turn velocity (R-CMB-021). Its streak MUST be drawn along its velocity <em>relative to the viewer</em>, so shots from a drifting craft streak straight out of its guns.</p>
 <p><em>Rationale:</em> Shots must look as if they leave the gun.</p>
 <ul>
 <li>Implements: <a href="../../../definition/combat/#f-cmb-001-beam-weapons">F-CMB-001</a>, <a href="../../../definition/combat/#f-cmb-011-shot-physics">F-CMB-011</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>sim::combat::a_new_bolt_streak_never_reaches_behind_the_muzzle</code>; MT-1-34</li>
+<li>Verified by: <code>sim::combat::a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>; MT-1-34, MT-3-14</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
@@ -6515,17 +6575,14 @@
 </div>
 <h3 id="r-cmb-021-shot-physics">R-CMB-021 Shot physics<a class="headerlink" href="#r-cmb-021-shot-physics" title="Permanent link">&para;</a></h3>
 <p>A ruleset option MUST choose how shots move, and the default MUST be physics: a shot MUST leave the muzzle with the craft's velocity plus the craft's turn velocity at the muzzle (angular velocity × muzzle offset) plus its own muzzle speed, and once fired MUST move independently of the craft's orientation.</p>
+<p>The option is <code>flight: {bolt_frame: world | ship}</code>. <code>world</code> (the default) is the physics above. With <code>ship</code>, a shot MUST move in its owner's frame for <code>flight.bolt_carry</code> (a time, default 0.3 s), turning with the nose, and then fly straight with its last velocity.</p>
 <p><em>Rationale:</em> User request (F-CMB-011); decision D1.</p>
 <ul>
 <li>Implements: <a href="../../../definition/combat/#f-cmb-011-shot-physics">F-CMB-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (interlude item F.2).</li>
-<li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>sim::combat::a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>, <code>with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried</code>; <code>content::rules::builds_typed_definitions_with_inheritance</code>; MT-3-14</li>
+<li>See: <a href="../../../implementation/architecture/sim/">Simulation</a>, <a href="../../../modding/reference/#flight">Mod file reference (<code>flight</code>)</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>The option's key name and what its non-default value does are not yet specified.</p>
-</div>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6540,6 +6597,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: R-CMB-001 – R-CMB-021 (21 requirements; 20 reverse-engineered from the code)</td>
+</tr>
+<tr>
+<td>1.1.0</td>
+<td>2026-11-11</td>
+<td>R-CMB-021 implemented (app 0.3.1): <code>flight.bolt_frame</code> (<code>world</code> default, <code>ship</code> with <code>bolt_carry</code>), open note resolved. R-CMB-002: bolts also carry the muzzle's turn velocity; streaks drawn relative to the viewer</td>
 </tr>
 </tbody>
 </table>

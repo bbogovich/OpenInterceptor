@@ -3277,6 +3277,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lighting-rim-and-brightness-app-031" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lighting, rim and brightness (app 0.3.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distant-dots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distant dots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bolt-streaks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3867,6 +3889,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3936,6 +3962,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5907,6 +5989,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lighting-rim-and-brightness-app-031" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lighting, rim and brightness (app 0.3.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distant-dots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distant dots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bolt-streaks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5975,13 +6079,14 @@
 <h1 id="rendering">Rendering<a class="headerlink" href="#rendering" title="Permanent link">&para;</a></h1>
 <p><code>src/render/</code>: draws one frame of the 3D scene with macroquad. It only <em>reads</em> the
 simulation. Plan: Stage 1; Stage 2 added looks (model sets with texture swaps), debris sets,
-effects with shock waves, station modules and their wrecks.</p>
+effects with shock waves, station modules and their wrecks; app 0.3.1 lighting from the rules
+(rim light), a brightness gamma, distant dots and viewer-relative bolt streaks.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <h3 id="frame-structure">Frame structure<a class="headerlink" href="#frame-structure" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
     CL["clear_background"] --&gt; SKY["draw_sky&lt;br/&gt;2 500 stars + sun&lt;br/&gt;sky material: no depth, additive"]
     SKY --&gt; SOL["draw_world&lt;br/&gt;ships, stations, debris&lt;br/&gt;lit material: depth test + write"]
-    SOL --&gt; GLO["draw_glows&lt;br/&gt;engines, bolts, missiles, sparks, explosions&lt;br/&gt;glow material: depth test, no write, additive"]
+    SOL --&gt; GLO["draw_glows&lt;br/&gt;engines, bolts, missiles, sparks, explosions,&lt;br/&gt;distant dots&lt;br/&gt;glow material: depth test, no write, additive"]
     GLO --&gt; CP["draw_cockpit_model (3D cockpit, cockpit view only)&lt;br/&gt;flush + clear depth; 5 cm near plane"]
     CP --&gt; HUD["2D HUD (hud::draw)"]</code></pre>
 <h3 id="looks-which-model-to-draw">Looks: which model to draw<a class="headerlink" href="#looks-which-model-to-draw" title="Permanent link">&para;</a></h3>
@@ -6038,7 +6143,7 @@ reaches the GPU: each object's model matrix is built from <code>position − cam
 <tbody>
 <tr>
 <td>lit</td>
-<td>vertex lighting: <code>0.30 + 0.85 × max(n·sun, 0)</code> × vertex colour × texture, plus a <code>Tint</code> uniform (hit flash); overlay depth bias</td>
+<td>vertex lighting: <code>ambient + sun × max(n·sun, 0) + rim × edge³</code> × vertex colour × texture, plus a <code>Tint</code> uniform (hit flash); gamma <code>1 / brightness</code> in the fragment shader; overlay depth bias</td>
 <td>depth test ≤, depth write, <strong>back faces culled</strong> (counter-clockwise = front)</td>
 <td>ships, stations, debris</td>
 </tr>
@@ -6093,11 +6198,35 @@ textures are set to <strong>repeat</strong> (<code>render::set_repeat</code>, vi
 context) instead of macroquad's default clamp, which smeared edge pixels across such faces
 (the "incomplete" Patton, the asteroids, many debris chunks). The UV varying is <code>mediump</code>, not
 <code>lowp</code>, so tiled coordinates keep their precision on GL ES devices.</p>
+<h3 id="lighting-rim-and-brightness-app-031">Lighting, rim and brightness (app 0.3.1)<a class="headerlink" href="#lighting-rim-and-brightness-app-031" title="Permanent link">&para;</a></h3>
+<p>The lit shader's light comes from the <code>Light</code> uniform, a <code>vec4</code>: x = ambient, y = sun,
+z = rim, w = gamma. <code>Renderer::lighting</code> is the campaign's <code>flight: {lighting: …}</code>
+(<code>content::rules::Lighting</code>, defaults 0.30 / 0.85 / 0 / 4 px, which reproduce the earlier fixed
+lighting); the flight screen copies it in each frame. In the vertex shader the model matrix
+already places the vertex relative to the camera, so its position is also the view ray;
+<code>edge = 1 − |n·ray|</code> is 1 where a face is seen edge-on, and <code>rim × edge³</code> lights a thin
+outline around a hull against black space. <code>Renderer::brightness</code> is the player's
+<code>graphics.brightness</code> (1 = as authored, clamped 0.25–4 here, 0.5–2 by the settings reader),
+read at start-up; the fragment shader raises the colour to the power <code>1 / brightness</code>, which
+lifts dark tones more than bright ones.</p>
+<h3 id="distant-dots">Distant dots<a class="headerlink" href="#distant-dots" title="Permanent link">&para;</a></h3>
+<p><code>push_distant_dots</code> (inside <code>draw_glows</code>) draws each ship that is on the player's radar
+(<code>systems::on_radar</code>, so cloaked ships stay hidden) and smaller on screen than
+<code>lighting.distant_dot</code> pixels as a glow billboard of that size in its radar colour (hostile,
+friendly, neutral; the objective colour when protected). The on-screen size is
+<code>2 × radius / (distance × metres per pixel)</code>, where one pixel covers
+<code>2 tan(fov / 2) / screen height</code> metres at unit distance. The dot fades in as the ship shrinks,
+so there is no pop at the threshold. <code>distant_dot: 0</code> turns it off.</p>
 <h3 id="bolt-streaks">Bolt streaks<a class="headerlink" href="#bolt-streaks" title="Permanent link">&para;</a></h3>
 <p>A bolt is drawn as a streak trailing behind its head. <code>Bolt::streak_length()</code> is
 <code>min(muzzle_speed × 0.025 s, 80 m, muzzle_speed × age)</code>: never longer than the distance the bolt
 has flown from the gun. Without the last term, a bolt fired this frame trailed up to 80 m back
 past the muzzle, so in the chase view fire seemed to come from behind the ship.</p>
+<p>The streak points along the bolt's velocity <strong>relative to the viewer</strong>,
+<code>bolt.velocity − cam.velocity</code> (<code>SpaceCamera::velocity</code>, set from the player's ship with
+<code>with_velocity</code>). That is what the eye sees: a bolt from a drifting ship shares the drift, so
+relative to the pilot it streaks straight out of the guns, while a stationary observer would
+see it slanted.</p>
 <p>LOD choice: <code>GpuModel::lod(distance)</code> picks the first LOD whose <code>switch_distance</code> exceeds the
 camera distance (the original values: e.g. 75 / 150 / 450 m / ∞ for the Lightning II).
 Objects entirely behind the camera are skipped.</p>
@@ -6112,11 +6241,11 @@ Objects entirely behind the camera are skipped.</p>
 <tbody>
 <tr>
 <td><code>Renderer</code></td>
-<td>Owns the three materials, a generated radial <code>glow_texture</code>, <code>models: ModelCache</code>, the star list, and reusable vertex/index buffers.</td>
+<td><code>lighting</code> (the campaign's <code>Lighting</code>) and <code>brightness</code> (the player's setting); owns the three materials, a generated radial <code>glow_texture</code>, <code>models: ModelCache</code>, the star list, and reusable vertex/index buffers.</td>
 </tr>
 <tr>
 <td><code>camera::SpaceCamera</code></td>
-<td><code>position</code>, <code>rotation</code>, <code>fov_y</code>, <code>aspect</code>, <code>z_near</code>; <code>new(...)</code>, <code>with_near(..)</code>; implements macroquad's <code>Camera</code> trait; <code>project</code> (world → screen pixels) and <code>local_direction</code> for the HUD.</td>
+<td><code>position</code>, <code>rotation</code>, <code>fov_y</code>, <code>aspect</code>, <code>z_near</code>, <code>velocity</code> (the viewer's, for streaks); <code>new(...)</code>, <code>with_near(..)</code>, <code>with_velocity(..)</code>; implements macroquad's <code>Camera</code> trait; <code>project</code> (world → screen pixels) and <code>local_direction</code> for the HUD.</td>
 </tr>
 <tr>
 <td><code>effects::Effects</code></td>
@@ -6173,15 +6302,22 @@ Objects entirely behind the camera are skipped.</p>
 <li><code>Renderer::new() -&gt; Result&lt;Renderer, String&gt;</code> (fails only if a shader is rejected).</li>
 <li><code>draw_sky(&amp;cam, seed, sun)</code>, <code>begin_solid(&amp;cam, sun)</code>, <code>draw_model(&amp;cam, &amp;GpuModel, pos, rot, tint)</code>,
   <code>draw_model_lod(.., force_lod: Option&lt;usize&gt;)</code>, <code>draw_world(&amp;Content, &amp;World, &amp;Effects, &amp;cam, sun, hide)</code>,
-  <code>draw_glows(&amp;Content, &amp;World, &amp;Effects, &amp;cam, hide)</code>, <code>draw_cockpit_model(&amp;cam, &amp;GpuModel, offset, sun)</code>,
+  <code>draw_glows(&amp;Content, &amp;World, &amp;Effects, &amp;cam, hide, player)</code> (<code>player</code> for distant dots), <code>draw_cockpit_model(&amp;cam, &amp;GpuModel, offset, sun)</code>,
   <code>draw_axes</code>, <code>ship_model</code>, <code>ship_look(&amp;Content, &amp;World, &amp;Ship)</code>.</li>
 <li><code>ModelCache::get(content, reference, pack, scale)</code>, <code>get_variant(.., &amp;Swaps)</code>.</li>
 <li><code>effects::explosion_curve(t) -&gt; (size, brightness)</code>; <code>effects::SPARK_LIFE</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Reused buffers: <code>draw_glows</code> and <code>draw_sky</code> <em>move</em> their <code>Vec</code>s into a <code>Mesh</code> with
-  <code>std::mem::take</code>, draw, then move them back — no allocation after the first frame.</li>
+<li>
+<p>Ships too dark or invisible: raise <code>rim</code> or <code>ambient</code> in the campaign's <code>flight.lighting</code>, or
+  <code>graphics.brightness</code> in <code>settings.yaml</code>; dots missing for far ships: check <code>distant_dot</code> is
+  not 0 and that the ship is on the radar (beyond <code>radar_range</code>, or cloaked, it is not).</p>
+</li>
+<li>
+<p>Reused buffers: <code>draw_glows</code> and <code>draw_sky</code> <em>move</em> their <code>Vec</code>s into a <code>Mesh</code> with
+  <code>std::mem::take</code>, draw, then move them back — no allocation after the first frame.</p>
+</li>
 <li>If a scene is black except the HUD, check the shader compile error returned by
   <code>Renderer::new</code> (shown on the start-up error screen).</li>
 <li>Engine glows come from rear-facing model attachments, else the back of the bounding box;

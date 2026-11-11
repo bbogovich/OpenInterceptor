@@ -3667,6 +3667,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3736,6 +3740,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -6032,13 +6092,13 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td><code>timer</code></td>
 <td><code>{after, then}</code></td>
 <td>none</td>
-<td>A time limit: after <code>after</code> (a time) the result is <code>then</code> (<code>win</code>, <code>lose</code>, <code>draw</code> or <code>retreat</code>; default <code>draw</code>).</td>
+<td>A time limit: after <code>after</code> (a time) the result is <code>then</code> (<code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code> or <code>killed</code>; default <code>draw</code>).</td>
 </tr>
 <tr>
 <td><code>outcomes</code></td>
 <td>mapping result: list of actions</td>
 <td>none</td>
-<td>What each result does (below). Results: <code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code>.</td>
+<td>What each result does (below). Results: <code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code>, <code>killed</code>. A mission without <code>killed</code> outcomes uses its <code>lose</code> outcomes for it.</td>
 </tr>
 <tr>
 <td><code>chatter</code></td>
@@ -6050,7 +6110,7 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td><code>debrief</code></td>
 <td>mapping result: text</td>
 <td>none</td>
-<td>The debrief text for each result (usually <code>@key</code>s).</td>
+<td>The debrief text for each result (usually <code>@key</code>s). <code>killed</code> shows its own text if given, otherwise none: the <code>lose</code> text usually describes the objective failing, which is not what happened.</td>
 </tr>
 </tbody>
 </table>
@@ -6219,11 +6279,25 @@ no survivors) is placed relative to the player's start.</p>
 <p>Every tick after the simulation step the mission checks, in this order:</p>
 <ol>
 <li>the player jumped out (hyperspace) → <strong><code>retreat</code></strong>;</li>
+<li>the player's craft was destroyed → <strong><code>killed</code></strong> (set by the engine, before the mission's own
+   conditions);</li>
 <li><code>lose</code> → <strong><code>lose</code></strong> (checked first, so a simultaneous win and loss is a loss);</li>
 <li><code>win</code> → <strong><code>win</code></strong>;</li>
 <li><code>draw</code> → <strong><code>draw</code></strong>;</li>
 <li>the <code>timer</code> → its <code>then</code>.</li>
 </ol>
+<p><strong><code>killed</code></strong> is the player's death as its own result. Its debrief headline is "YOUR CRAFT WAS
+DESTROYED"; it applies the mission's <code>outcomes: {killed: […]}</code> if there are any, else the <code>lose</code>
+outcomes, and shows <code>debrief: {killed: …}</code> if given, else no text. A <code>lose</code> condition such as
+<code>destroyed(station) or not player_alive</code> therefore no longer reports the player's death as the
+station falling: the station's text is shown only when the station falls.</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nt">outcomes</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">lose</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">lose(guard_station)</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">score(station_lost)</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">killed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">score(pilot_lost)</span><span class="p p-Indicator">]</span><span class="w">          </span><span class="c1"># optional; else the lose outcomes apply</span>
+<span class="w">    </span><span class="nt">debrief</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">lose</span><span class="p">:</span><span class="w"> </span><span class="s">"@debrief.defend_station.lose"</span>
+<span class="w">      </span><span class="nt">killed</span><span class="p">:</span><span class="w"> </span><span class="s">"@debrief.killed"</span><span class="w">            </span><span class="c1"># optional; else no text</span>
+</code></pre></div>
 <p>The battle then freezes behind the <strong>debrief</strong>: the result, the debrief text, kills, losses and
 time, the optional objectives (met or not), and the outcome's campaign actions. <strong>Enter</strong> (pad
 <strong>A</strong>) flies the mission again; <strong>Esc</strong> or <strong>L</strong> returns to the launcher.</p>
@@ -6423,7 +6497,12 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 </table>
 <p><code>--soak &lt;mission id&gt;</code> plays a mission without a window and prints its result
 (<code>soak mission defend_station (ranger, ai): lose after 132 s; &lt;n&gt; kills</code>); see
-<a href="../validating/">Validating a mod</a>.</p>
+<a href="../validating/">Validating a mod</a>. <code>--soak-pilot</code> chooses who flies the player's craft:
+<code>passive</code> (flies at the nearest enemy, never shoots), <code>ai</code> (its class's behaviour) or <code>idle</code>
+(sits still and does nothing). The idle pilot measures how long a defended object holds on its
+own — the balance check for a defence mission: at the lowest level an undefended station or base
+should hold for at least 150 s (R-MSN-011; the default campaign's <code>defend_station</code> is held to it
+by a unit test).</p>
 <h2 id="common-errors">Common errors<a class="headerlink" href="#common-errors" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6454,11 +6533,11 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 <td>A bad <code>ai</code>.</td>
 </tr>
 <tr>
-<td><code>timer.then: 'x' is not win, lose, draw or retreat</code></td>
+<td><code>timer.then: 'x' is not win, lose, draw, retreat or killed</code></td>
 <td>A bad timer result.</td>
 </tr>
 <tr>
-<td><code>outcomes.x: results are win, lose, draw and retreat</code></td>
+<td><code>outcomes.x: results are win, lose, draw, retreat and killed</code></td>
 <td>An unknown result name.</td>
 </tr>
 <tr>

@@ -3782,6 +3782,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3851,6 +3855,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5808,14 +5868,15 @@
 <p>How work is done in this project, following SpecItOut.</p>
 <h2 id="issues">Issues<a class="headerlink" href="#issues" title="Permanent link">&para;</a></h2>
 <p>Issues are reached only through the <code>sio</code> client (<code>sio issues list | show | create | comment …</code>),
-with <code>SPECITOUT_ACTOR</code> set. The forge is <code>none</code>: issues live on the orphan <code>issues</code> branch,
-written only by the client. Labels: <code>formats</code>, <code>packs</code>, <code>flight</code>, <code>combat</code>, <code>render</code>, <code>input</code>,
+with <code>SPECITOUT_ACTOR</code> set. The forge is <strong>GitHub</strong>: the repository is public at
+<a href="https://github.com/bbogovich/OpenInterceptor">github.com/bbogovich/OpenInterceptor</a> and issues
+are GitHub Issues, which the client syncs (<code>sio issues sync</code>); nothing else writes them. Labels: <code>formats</code>, <code>packs</code>, <code>flight</code>, <code>combat</code>, <code>render</code>, <code>input</code>,
 <code>testbed</code>, <code>campaign</code>, <code>platform</code>, <code>docs</code>.</p>
 <h2 id="rapid-prototyping">Rapid Prototyping<a class="headerlink" href="#rapid-prototyping" title="Permanent link">&para;</a></h2>
 <p>The project follows the <strong>Rapid Prototyping</strong> workflow (a SpecItOut proposal, P65; not yet
 supported by the <code>sio</code> client). The <a href="../../definition/">definition</a> and the
-<a href="../../specification/">specification</a> live on this site, at version 1.0.0 from
-2026-11-11.</p>
+<a href="../../specification/">specification</a> live on this site: version 1.0.0 from
+2026-11-11, 1.1.0 since the interlude's playtest fixes (app 0.3.1).</p>
 <ol>
 <li><strong>Each user request</strong>, in the same pass and <strong>before any code</strong>:<ol>
 <li>a feature (<code>F-&lt;AREA&gt;-NNN</code>) is created or updated on the definition page for its area;</li>

@@ -3667,6 +3667,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3736,6 +3740,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5181,6 +5241,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematics (planned)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -5197,6 +5275,64 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-turn-velocity-and-changing-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example: turn velocity and changing frames
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked example: turn velocity and changing frames">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-point-on-a-turning-body-moves-at-r" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A point on a turning body moves at ω × r
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#body-axes-and-world-axes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Body axes and world axes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -5612,6 +5748,53 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-turn-velocity-and-changing-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example: turn velocity and changing frames
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked example: turn velocity and changing frames">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-point-on-a-turning-body-moves-at-r" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A point on a turning body moves at ω × r
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#body-axes-and-world-axes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Body axes and world axes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -5631,8 +5814,49 @@
 <div class="admonition note">
 <p class="admonition-title">Planned</p>
 <p>This section is <strong>planned</strong> and not yet written. It will teach mathematics using
-OpenInterceptor's own code and data as the worked example.</p>
+OpenInterceptor's own code and data as the worked example. One short worked example is
+already here, because two features of app 0.3.1 depend on it.</p>
 </div>
+<h2 id="worked-example-turn-velocity-and-changing-frames">Worked example: turn velocity and changing frames<a class="headerlink" href="#worked-example-turn-velocity-and-changing-frames" title="Permanent link">&para;</a></h2>
+<p>Two playtest fixes rest on the same two ideas: the velocity of a point on a turning body, and
+moving a vector between the world's axes and the ship's own axes.</p>
+<h3 id="a-point-on-a-turning-body-moves-at-r">A point on a turning body moves at ω × r<a class="headerlink" href="#a-point-on-a-turning-body-moves-at-r" title="Permanent link">&para;</a></h3>
+<p>A ship turning at angular velocity <strong>ω</strong> (a vector along the turn axis, its length the rate in
+radians per second) carries every point on it around that axis. A point at offset <strong>r</strong> from
+the centre moves at</p>
+<blockquote>
+<p><strong>v</strong> = <strong>ω</strong> × <strong>r</strong>   (the cross product)</p>
+</blockquote>
+<p>On a ship yawing left (ω points up, +Y), a gun on the right wing (r points right, +X) has
+ω × r = (0, 1, 0) × (1, 0, 0) = (0, 0, −1): it swings <em>forwards</em> (the engine's forward is −Z).
+A gun 3 m out on a ship yawing at 1 rad/s moves at 3 m/s from the turn alone.</p>
+<p>A shot that leaves the gun physically starts with the gun's whole velocity: the ship's own
+velocity, plus ω × r, plus its muzzle speed along the barrel. That is what
+<code>sim::combat::fire_beams</code> computes:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="n">spin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rot</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">angular_velocity</span><span class="p">;</span><span class="w">           </span><span class="c1">// ω in world axes (see below)</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rot</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">mount_offset</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">radius</span><span class="p">);</span><span class="w"> </span><span class="c1">// r, in world axes</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">velocity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vel</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">spin</span><span class="p">.</span><span class="n">cross</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dir</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">beam</span><span class="p">.</span><span class="n">speed</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="body-axes-and-world-axes">Body axes and world axes<a class="headerlink" href="#body-axes-and-world-axes" title="Permanent link">&para;</a></h3>
+<p>The ship's orientation is a unit quaternion <code>rot</code>. Multiplying a vector by it, <code>rot * v</code>, turns
+a vector written in the <strong>ship's axes</strong> (x right, y up, −z forward) into <strong>world axes</strong>. The
+reverse turn is the <strong>conjugate</strong>, <code>rot.conjugate() * v</code>: for a unit quaternion the conjugate is
+the inverse, and it is cheaper to compute (negate three components) than a general inverse.</p>
+<ul>
+<li><code>angular_velocity</code> is stored in body axes ("yawing left" is the same vector whichever way the
+  ship faces), so the code turns it into world axes with <code>rot *</code> before the cross product.</li>
+<li>The HUD's drift readout needs the opposite: the world velocity seen from the ship.
+  <code>Ship::body_velocity</code> is <code>rot.conjugate() * velocity</code>, with z negated so forward reads
+  positive. A ship flying at 300 m/s that yaws 90° keeps its motion (newtonian flight), so in
+  its own axes the same velocity is now 300 m/s <em>sideways</em>: the readout shows <code>X-300</code> or
+  <code>X+300</code>, depending on the direction of the turn.</li>
+</ul>
+<p>The same pair appears in the arcade option <code>bolt_frame: ship</code>: a shot's offset and velocity are
+stored in its owner's axes (<code>rot.conjugate() *</code>) and placed back into the world each tick with
+the owner's <em>current</em> orientation (<code>owner.rotation *</code>), so the shot turns with the nose.</p>
+<p><strong>Where to look:</strong> <code>src/sim/combat.rs</code> (<code>fire_beams</code>, <code>move_bolts</code>), <code>src/sim/mod.rs</code>
+(<code>Ship::body_velocity</code>), and the tests <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>
+and <code>body_velocity_reads_drift_in_the_ships_own_axes</code>, which check these formulas with numbers.</p>
 
 
 

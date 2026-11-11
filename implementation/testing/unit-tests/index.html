@@ -3751,6 +3751,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3820,6 +3824,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5741,7 +5801,7 @@
 
 
 <h1 id="unit-tests">Unit tests<a class="headerlink" href="#unit-tests" title="Permanent link">&para;</a></h1>
-<p>Every module's tests, as of main <code>d7553f5</code> (build 0.3.0): <strong>269 tests</strong> on macOS (270 on
+<p>Every module's tests, as of main <code>c583659</code> (build 0.3.1): <strong>276 tests</strong> on macOS (277 on
 Linux), run with <code>cargo test</code> by the gate. Tests
 live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <strong>synthetic data built in the
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
@@ -5828,7 +5888,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <tr>
 <td><code>content::rules</code></td>
 <td>6</td>
-<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong></td>
+<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong></td>
 </tr>
 <tr>
 <td><code>content::equipment</code></td>
@@ -5878,12 +5938,12 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <tr>
 <td><code>settings</code></td>
 <td>2</td>
-<td>settings.yaml parse/save round trip incl. <code>packs.disabled</code>, <code>game.campaign</code> and <code>game.difficulty</code>, and the legacy settings.ini reader; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths)</td>
+<td>settings.yaml parse/save round trip incl. <code>packs.disabled</code>, <code>game.campaign</code>, <code>game.difficulty</code> and <strong><code>graphics.brightness</code> (clamped)</strong>, and the legacy settings.ini reader; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths)</td>
 </tr>
 <tr>
 <td><code>sim</code></td>
-<td>13</td>
-<td>Generational handles, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold; <strong>target preferences pull the AI past a nearer target</strong>, <strong>station modules mount, follow and fall with their hub</strong>; <strong>probes extend radar and jam their enemies</strong>, <strong>AI pilots switch cloak, ECM and power by condition</strong>, <strong>protected objectives are not picked as the nearest enemy</strong></td>
+<td>14</td>
+<td>Generational handles, <strong>body velocity reads drift in the ship's own axes</strong>, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold; <strong>target preferences pull the AI past a nearer target</strong>, <strong>station modules mount, follow and fall with their hub</strong>; <strong>probes extend radar and jam their enemies</strong>, <strong>AI pilots switch cloak, ECM and power by condition</strong>, <strong>protected objectives are not picked as the nearest enemy</strong></td>
 </tr>
 <tr>
 <td><code>sim::flight</code></td>
@@ -5892,8 +5952,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>sim::combat</code></td>
-<td>12</td>
-<td>Beams (energy, cooldown, hits on the aft shield), <strong>bolt streak never trails behind the muzzle</strong>, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; <strong>point defence shoots down hostile missiles</strong></td>
+<td>14</td>
+<td>Beams (energy, cooldown, hits on the aft shield), <strong>bolt streak never trails behind the muzzle</strong>, <strong>a bolt leaves with the muzzle's velocity (ω × r) then flies straight</strong>, <strong>with <code>bolt_frame: ship</code> it turns with the nose while carried</strong>, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; <strong>point defence shoots down hostile missiles</strong></td>
 </tr>
 <tr>
 <td><code>sim::ai</code></td>
@@ -5912,8 +5972,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>mission</code></td>
-<td>3</td>
-<td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it</td>
+<td>4</td>
+<td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; <strong>the player's death is its own result (<code>killed</code>) with the lose outcomes</strong></td>
 </tr>
 <tr>
 <td><code>sim::targeting</code></td>
@@ -5947,8 +6007,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>input</code></td>
-<td>13</td>
-<td>Original default layout incl. brake, <strong>power and equipment keys</strong>, one-shot commands and Shift chords, <strong>a Shift chord does not trigger the plain held key</strong>, gamepad sticks/buttons/presses and dead zone, <strong>pad modifier layer reaches every power control</strong>, <strong>every action reachable from the keyboard and flight actions from the pad</strong>, <strong>stick layouts and mouse inversion</strong>, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing</td>
+<td>14</td>
+<td><strong>The keys help lists every action with its current keys</strong>, Original default layout incl. brake, <strong>power and equipment keys</strong>, one-shot commands and Shift chords, <strong>a Shift chord does not trigger the plain held key</strong>, gamepad sticks/buttons/presses and dead zone, <strong>pad modifier layer reaches every power control</strong>, <strong>every action reachable from the keyboard and flight actions from the pad</strong>, <strong>stick layouts and mouse inversion</strong>, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing</td>
 </tr>
 <tr>
 <td><code>input::editor</code></td>
@@ -5997,8 +6057,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>hud::draw</code></td>
-<td>2</td>
-<td>Lamp grids follow the panel shape; shield rings go green, amber, red, then blink</td>
+<td>3</td>
+<td>Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; <strong>drift reads signed whole metres per second</strong></td>
 </tr>
 <tr>
 <td><code>hud::glyphs</code></td>
@@ -6052,8 +6112,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>soak</code></td>
-<td>1</td>
-<td>The default campaign's difficulty scales enemy lethality (headless battle runs)</td>
+<td>2</td>
+<td>The default campaign's difficulty scales enemy lethality (headless battle runs); <strong>at cadet an undefended station holds for 150 s</strong> (idle pilot)</td>
 </tr>
 </tbody>
 </table>
@@ -6090,13 +6150,13 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>formats::xtxr</code></strong>: <code>decodes_pixels_through_palette_zero</code>, <code>expands_rgb555_to_full_range</code>, <code>rejects_bad_data</code></p>
 <p><strong><code>formats::yaml</code></strong>: <code>block_scalars_and_wrapped_flows</code>, <code>empty_and_scalar_documents</code>, <code>keys_with_colons_and_urls_stay_whole</code>, <code>mappings_sequences_and_scalars</code>, <code>unsupported_and_broken_input_is_an_error_with_a_line</code>, <code>writing_round_trips</code></p>
 <p><strong><code>hud</code></strong>: <code>gauges_sweep_and_read_the_ship</code>, <code>layout_scales_by_height_and_centres</code>, <code>messages_expire_and_keep_the_newest</code>, <code>mfd_pages_cycle_and_describe</code>, <code>power_and_system_readouts</code>, <code>radar_places_contacts_by_angle</code></p>
-<p><strong><code>hud::draw</code></strong>: <code>lamp_grids_follow_the_panel_shape</code>, <code>shield_rings_go_green_amber_red_then_blink</code></p>
+<p><strong><code>hud::draw</code></strong>: <code>drift_reads_signed_whole_metres_per_second</code>, <code>lamp_grids_follow_the_panel_shape</code>, <code>shield_rings_go_green_amber_red_then_blink</code></p>
 <p><strong><code>hud::glyphs</code></strong>: <code>sizes_snap_down_onto_the_ladder</code></p>
 <p><strong><code>hud::layout</code></strong>: <code>corners_lie_on_the_surface_with_world_up</code>, <code>dragging_and_scaling</code>, <code>rays_pick_the_nearest_surface</code>, <code>saved_layouts_are_valid_rules</code></p>
-<p><strong><code>input</code></strong>: <code>a_shift_chord_does_not_also_trigger_the_plain_held_key</code>, <code>bindings_file_overrides_and_round_trips</code>, <code>chase_camera_keys</code>, <code>chord_parsing_and_dead_zone</code>, <code>default_keys_follow_the_original_layout</code>, <code>every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad</code>, <code>gamepad_sticks_buttons_and_presses</code>, <code>mouse_flight_only_when_enabled</code>, <code>one_shot_commands_and_shift_chords</code>, <code>pad_modifier_layer_reaches_every_power_control</code>, <code>power_and_equipment_keys_follow_the_original</code>, <code>stick_layouts_and_mouse_inversion</code>, <code>view_names_parse</code></p>
+<p><strong><code>input</code></strong>: <code>a_shift_chord_does_not_also_trigger_the_plain_held_key</code>, <code>bindings_file_overrides_and_round_trips</code>, <code>chase_camera_keys</code>, <code>chord_parsing_and_dead_zone</code>, <code>default_keys_follow_the_original_layout</code>, <code>every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad</code>, <code>gamepad_sticks_buttons_and_presses</code>, <code>mouse_flight_only_when_enabled</code>, <code>one_shot_commands_and_shift_chords</code>, <code>pad_modifier_layer_reaches_every_power_control</code>, <code>power_and_equipment_keys_follow_the_original</code>, <code>stick_layouts_and_mouse_inversion</code>, <code>the_keys_help_lists_every_action_with_its_current_keys</code>, <code>view_names_parse</code></p>
 <p><strong><code>input::editor</code></strong>: <code>capturing_a_key_rebinds_and_steals_it_from_others</code>, <code>capturing_pad_plain_presses_and_chords</code>, <code>clear_reset_and_settings</code>, <code>pretty_names</code>, <code>rows_are_grouped_and_headers_are_skipped</code></p>
 <p><strong><code>input::gamepad</code></strong>: <code>axes_are_normalised</code>, <code>buttons_round_trip_names_and_bits</code></p>
-<p><strong><code>mission</code></strong>: <code>arrivals_waves_chatter_and_a_win</code>, <code>lose_beats_win_and_the_timer_ends_it</code>, <code>roles_are_placed_counted_and_faced_at_the_player</code></p>
+<p><strong><code>mission</code></strong>: <code>arrivals_waves_chatter_and_a_win</code>, <code>lose_beats_win_and_the_timer_ends_it</code>, <code>roles_are_placed_counted_and_faced_at_the_player</code>, <code>the_players_death_is_its_own_result_with_the_lose_outcomes</code></p>
 <p><strong><code>model</code></strong>: <code>empty_obj_has_zero_bounds</code>, <code>faces_record_their_corners_and_group</code>, <code>faces_that_only_touch_or_face_away_are_not_layered</code>, <code>later_overlapping_face_is_layered_on_top</code>, <code>lod_selection_by_distance</code>, <code>mirrored_triangles_keep_outward_winding</code>, <code>obj_models_use_materials_scale_and_flip_v</code>, <code>overlay_flag_beats_file_order</code>, <code>xmsh_is_triangulated_grouped_and_mirrored</code></p>
 <p><strong><code>render</code></strong>: <code>billboards_and_streaks_build_two_triangles</code>, <code>colour_helpers_clamp</code>, <code>layer_bias_reaches_the_shader</code></p>
 <p><strong><code>render::camera</code></strong>: <code>model_matrices_are_camera_relative</code>, <code>near_plane_changes_only_depth</code>, <code>points_ahead_project_to_the_centre_and_behind_is_none</code>, <code>rotation_turns_the_view</code></p>
@@ -6108,15 +6168,15 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>script::battle</code></strong>: <code>ids_match_and_roles_are_checked_names</code></p>
 <p><strong><code>script::object</code></strong>: <code>ids_match_the_table_and_system_names_match_the_kinds</code></p>
 <p><strong><code>settings</code></strong>: <code>parses_and_round_trips</code>, <code>resolution_order_prefers_explicit_and_existing</code></p>
-<p><strong><code>sim</code></strong>: <code>ai_pilots_switch_cloak_ecm_and_power_by_condition</code>, <code>generational_handles_detect_reuse</code>, <code>match_speed_copies_the_targets_speed</code>, <code>preferences_pull_the_ai_past_a_nearer_target</code>, <code>probes_extend_radar_and_jam_their_enemies</code>, <code>protected_objectives_are_not_picked_as_the_nearest_enemy</code>, <code>random_is_deterministic_and_in_range</code>, <code>scenario_errors_are_reported</code>, <code>scenario_spawns_player_objects_and_leaders</code>, <code>ship_axes_follow_the_engine_convention</code>, <code>station_modules_mount_follow_and_fall_with_their_hub</code>, <code>step_advances_time_and_clears_edge_controls</code>, <code>unconsumed_presses_carry_over_held_inputs_do_not</code></p>
+<p><strong><code>sim</code></strong>: <code>ai_pilots_switch_cloak_ecm_and_power_by_condition</code>, <code>body_velocity_reads_drift_in_the_ships_own_axes</code>, <code>generational_handles_detect_reuse</code>, <code>match_speed_copies_the_targets_speed</code>, <code>preferences_pull_the_ai_past_a_nearer_target</code>, <code>probes_extend_radar_and_jam_their_enemies</code>, <code>protected_objectives_are_not_picked_as_the_nearest_enemy</code>, <code>random_is_deterministic_and_in_range</code>, <code>scenario_errors_are_reported</code>, <code>scenario_spawns_player_objects_and_leaders</code>, <code>ship_axes_follow_the_engine_convention</code>, <code>station_modules_mount_follow_and_fall_with_their_hub</code>, <code>step_advances_time_and_clears_edge_controls</code>, <code>unconsumed_presses_carry_over_held_inputs_do_not</code></p>
 <p><strong><code>sim::ai</code></strong>: <code>aim_skill_decides_accuracy</code>, <code>disabled_ships_drift</code>, <code>enemy_hunts_and_damages_a_hostile</code>, <code>evasive_ends_and_retreat_jumps_out</code>, <code>lead_point_anticipates_motion</code>, <code>mines_go_off_when_an_enemy_comes_near</code>, <code>orders_switch_wingmen_to_attack</code>, <code>steering_turns_towards_points</code>, <code>target_drones_circle_and_idle_ships_sit</code>, <code>transitions_switch_states_on_conditions</code>, <code>tugs_tow_disabled_enemies_away</code>, <code>turrets_fire_off_the_nose</code>, <code>wingman_closes_on_its_slot</code></p>
 <p><strong><code>sim::collision</code></strong>: <code>segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code></p>
-<p><strong><code>sim::combat</code></strong>: <code>a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>beams_fire_cost_energy_respect_cooldown_and_hit</code>, <code>beams_need_energy</code>, <code>damage_layers_and_aft_shield</code>, <code>empty_racks_report_and_cycle</code>, <code>fighters_bounce_off_each_other_and_stations</code>, <code>link_modes_cycle_and_change_how_many_fire</code>, <code>lock_builds_in_the_cone_and_missile_homes_in</code>, <code>lock_is_lost_outside_the_cone_and_dumbfire_works</code>, <code>point_defence_shoots_down_hostile_missiles</code>, <code>proximity_fuse_fires_on_a_near_miss</code>, <code>rotate_towards_limits_the_turn</code></p>
+<p><strong><code>sim::combat</code></strong>: <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>, <code>a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>beams_fire_cost_energy_respect_cooldown_and_hit</code>, <code>beams_need_energy</code>, <code>damage_layers_and_aft_shield</code>, <code>empty_racks_report_and_cycle</code>, <code>fighters_bounce_off_each_other_and_stations</code>, <code>link_modes_cycle_and_change_how_many_fire</code>, <code>lock_builds_in_the_cone_and_missile_homes_in</code>, <code>lock_is_lost_outside_the_cone_and_dumbfire_works</code>, <code>point_defence_shoots_down_hostile_missiles</code>, <code>proximity_fuse_fires_on_a_near_miss</code>, <code>rotate_towards_limits_the_turn</code>, <code>with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried</code></p>
 <p><strong><code>sim::flight</code></strong>: <code>afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off</code>, <code>assisted_model_holds_throttle_speed_and_damps_drift</code>, <code>brake_stops_against_the_direction_of_travel</code>, <code>energy_and_shields_recharge_up_to_capacity</code>, <code>half_throttle_is_half_the_acceleration</code>, <code>helpers</code>, <code>newtonian_accelerates_to_the_cap_and_coasts</code>, <code>pitching_up_raises_the_nose_and_rates_fall_with_speed</code>, <code>reverse_thrust_slows_and_then_backs_up</code>, <code>speed_hold_matches_speed_and_cancels_drift</code>, <code>static_objects_do_not_move</code>, <code>the_arena_edge_halts_outward_motion</code>, <code>turning_does_not_steer_the_velocity</code>, <code>vct_thrusts_sideways</code>, <code>yaw_right_and_roll_right_turn_the_expected_way</code></p>
 <p><strong><code>sim::guidance</code></strong>: <code>cloaked_wait_sleeps_until_prey_comes_near</code>, <code>cluster_splits_into_submunitions</code>, <code>damage_modes</code>, <code>doppelganger_launches_a_decoy_ship_that_expires</code>, <code>homing_hits_and_dumbfire_misses_an_offset_target</code>, <code>parallax_decoys_lure_enemy_missiles</code>, <code>sidestep_still_arrives</code></p>
 <p><strong><code>sim::systems</code></strong>: <code>balance_caps_and_message</code>, <code>cloaked_ships_vanish_from_enemy_sensors_beyond_range</code>, <code>cycling_wraps_to_a</code>, <code>damage_knocks_systems_out_and_repairs_bring_them_back</code>, <code>disabled_when_engines_and_manoeuvring_are_out</code>, <code>ecm_makes_incoming_missiles_lose_their_target</code>, <code>hyperspace_counts_down_aborts_and_departs</code>, <code>raising_takes_power_from_the_other_setting</code>, <code>requests_change_power_and_balance</code>, <code>shield_balance_moves_points_forward_and_recharge_follows_power</code>, <code>systems_can_be_destroyed_beyond_repair</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>, <code>tractor_needs_power_a_fitting_and_a_target_in_range</code></p>
 <p><strong><code>sim::targeting</code></strong>: <code>cycles_forwards_and_backwards_with_wraparound</code>, <code>in_sights_picks_the_most_central</code>, <code>nearest_hostile_ignores_friends</code>, <code>nothing_to_target</code></p>
-<p><strong><code>soak</code></strong>: <code>default_campaign_difficulty_scales_enemy_lethality</code></p>
+<p><strong><code>soak</code></strong>: <code>at_cadet_an_undefended_station_holds_for_150_seconds</code>, <code>default_campaign_difficulty_scales_enemy_lethality</code></p>
 <h2 id="running">Running<a class="headerlink" href="#running" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>cargo<span class="w"> </span><span class="nb">test</span><span class="w">                     </span><span class="c1"># all</span>
 cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>sim::<span class="w">               </span><span class="c1"># one module</span>

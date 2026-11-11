@@ -3779,6 +3779,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3848,6 +3852,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5801,7 +5861,8 @@
 bindings from an editable YAML file (<code>bindings.yaml</code>). The device reading itself is in <code>src/app/devices.rs</code>
 (keyboard, mouse) and <code>src/platform/</code> (gamepads). The in-game controls menu is modelled in
 <code>src/input/editor.rs</code> and drawn by <code>src/app/controls.rs</code>. Plan: Stage 1; Stage 2 added the
-power, equipment and wingman actions, gamepad chords and the controls menu. The default layout
+power, equipment and wingman actions, gamepad chords and the controls menu; app 0.3.1 the keys
+overlay (<code>help</code>, <code>help_rows</code>). The default layout
 is on <a href="../../../reference/original-game/controls/">Controls</a>.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
@@ -5816,12 +5877,24 @@ is on <a href="../../../reference/original-game/controls/">Controls</a>.</p>
     B --&gt; T
     ED["editor::Editor&lt;br/&gt;(controls menu)"] -- "edits a copy;&lt;br/&gt;saved on leaving" --&gt; B</code></pre>
 <ul>
-<li>
-<p><strong>One table.</strong> <code>ACTIONS</code> lists every action once: its <code>bindings.yaml</code> name, the <code>Action</code>, its
+<li><strong>One table.</strong> <code>ACTIONS</code> lists every action once: its <code>bindings.yaml</code> name, the <code>Action</code>, its
   default keys, its default pad chords, its menu <code>Group</code> and its label. Parsing, defaults,
   <code>to_yaml_text</code>, the controls menu and the <a href="../../../reference/original-game/controls/">Controls</a> tables all
   come from it, so they cannot drift apart. Entries are built with a <code>const fn a(…)</code> so the
-  whole table is a compile-time constant.</p>
+  whole table is a compile-time constant.</li>
+<li><strong>Keys overlay</strong> (app 0.3.1). <code>help_rows(&amp;Bindings)</code> turns the table into the overlay's
+  content: every <code>Group</code> in table order, each with <code>(label, keys)</code> rows showing the player's
+  <em>current</em> keys, then pad buttons (<code>pad A</code>), or "unbound". The action <code>help</code> (<code>?</code> =
+  Shift+Slash, and Shift+F1) toggles it; <code>app::flight::draw_help</code> paints it. A new action
+  therefore appears in parsing, the defaults, the controls menu, the overlay and (later) the
+  console without further work. F12 is not bound to it: in a custom cockpit F12 opens the
+  layout editor (<a href="../../../modding/cockpits/">Cockpits</a>).</li>
+<li>
+<p><strong>Remote action sets</strong> (work in progress for the control console, interlude C1). <code>RawInput</code>
+  gains <code>remote_held</code> and <code>remote_pressed</code> (sets of <code>Action</code>) and <code>remote_throttle</code>. A remote
+  surface — the tablet console, later a USB panel — fills them, and <code>translate</code> treats a held or
+  tapped remote action exactly like a key bound to it, so the console needs no second path into
+  the simulation. A remote throttle position sets <code>Controls::throttle_set</code>.</p>
 </li>
 <li>
 <p><strong>Key names</strong> are macroquad's <code>KeyCode</code> variant names, lower-cased (<code>KeyCode::Kp7</code> →
@@ -5898,7 +5971,7 @@ a capture after 8 s (<code>CAPTURE_TIMEOUT</code>).</p>
 <tbody>
 <tr>
 <td><code>Action</code></td>
-<td>Every bindable action (64).</td>
+<td>Every bindable action (65, with <code>Help</code>).</td>
 </tr>
 <tr>
 <td><code>ACTIONS</code>, <code>ActionInfo</code>, <code>info(action)</code></td>
@@ -5926,11 +5999,11 @@ a capture after 8 s (<code>CAPTURE_TIMEOUT</code>).</p>
 </tr>
 <tr>
 <td><code>RawInput</code></td>
-<td>One frame of device state.</td>
+<td>One frame of device state (keys, mouse, pad; remote action sets for the console, in progress).</td>
 </tr>
 <tr>
 <td><code>Command</code></td>
-<td>One-shot app requests: targeting, MFD, <code>View(View)</code>, <code>WingMenu</code>, wing orders (<code>WingFireAtWill</code>, <code>WingAttackMyTarget</code>, <code>WingFormation</code>, <code>WingEvasive</code>, <code>WingRetreat</code>, <code>WingStatus</code>), <code>RepeatMessage</code>, <code>NextNav</code>, <code>Pause</code>, <code>Menu</code>, <code>MouseFlight</code>. Power and equipment presses go to <code>Controls::requests</code> instead.</td>
+<td>One-shot app requests: targeting, MFD, <code>View(View)</code>, <code>WingMenu</code>, wing orders (<code>WingFireAtWill</code>, <code>WingAttackMyTarget</code>, <code>WingFormation</code>, <code>WingEvasive</code>, <code>WingRetreat</code>, <code>WingStatus</code>), <code>RepeatMessage</code>, <code>NextNav</code>, <code>Pause</code>, <code>Menu</code>, <code>MouseFlight</code>, <code>Help</code>. Power and equipment presses go to <code>Controls::requests</code> instead.</td>
 </tr>
 <tr>
 <td><code>View</code></td>
@@ -5964,7 +6037,8 @@ a capture after 8 s (<code>CAPTURE_TIMEOUT</code>).</p>
   <code>Bindings::from_ini(&amp;Ini)</code> for migrating an old <code>bindings.ini</code>.</li>
 <li><code>bindings.translate(&amp;RawInput, mouse_flight: bool) -&gt; (Controls, Vec&lt;Command&gt;, ChaseInput)</code>.</li>
 <li><code>KeyChord::parse("Shift+F")</code>, <code>PadChord::parse("LeftShoulder+A")</code>, <code>input::canonical(name)</code>,
-  <code>input::dead(v, dz)</code>, <code>input::info(Action) -&gt; &amp;ActionInfo</code>.</li>
+  <code>input::dead(v, dz)</code>, <code>input::info(Action) -&gt; &amp;ActionInfo</code>,
+  <code>input::help_rows(&amp;Bindings) -&gt; Vec&lt;(Group, Vec&lt;(&amp;str, String)&gt;)&gt;</code>.</li>
 <li><code>Editor::new(&amp;Bindings)</code>, <code>row</code>, <code>move_row</code>, <code>move_column</code>, <code>activate</code>, <code>cancel</code>,
   <code>capture_key(key, shift)</code>, <code>capture_pad(&amp;now, &amp;previous)</code>, <code>assign_key</code>, <code>assign_pad</code>,
   <code>clear</code>, <code>reset_selected</code>, <code>reset_all</code>, <code>adjust(delta)</code>, <code>cell(action, column)</code>,

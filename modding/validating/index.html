@@ -3667,6 +3667,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3736,6 +3740,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5656,7 +5716,8 @@ target it and their dependencies), so an addon is validated with each campaign i
 <p>Validation happens at the difficulty level being loaded (the default unless <code>--difficulty</code> is
 given), so a typo inside one level's <code>variants</code> entry is reported whichever level is played.
 For balance across levels, <code>--soak &lt;scenario&gt; --difficulty &lt;level&gt;</code> plays a battle without a
-window and reports the player's fate.</p>
+window and reports the player's fate; <code>--soak-pilot passive | ai | idle</code> chooses who flies the
+player's craft (<code>idle</code> sits still: how long a defended object holds on its own).</p>
 <p><strong>In your editor.</strong> Point each file at its JSON Schema (<code># yaml-language-server:
 $schema=…</code>, see <a href="../rulesets/#the-yaml-subset">Rulesets</a>) and most of these mistakes are
 underlined as you type.</p>

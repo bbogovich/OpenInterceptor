@@ -3828,6 +3828,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3897,6 +3901,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5922,7 +5982,7 @@
 </tr>
 <tr>
 <td><a href="#f-msn-006-base-defence-the-player-can-win">F-MSN-006 Base defence the player can win</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#f-msn-007-logistics-missions">F-MSN-007 Logistics missions</a></td>
@@ -5975,9 +6035,9 @@
 <p><strong>What.</strong> In a base defence the player has time to engage more than one attacker before the base can fall, on every difficulty.</p>
 <p><strong>Why.</strong> User request: "Base destroyed too easily, player doesn't have time to engage more than one fighter before the aliens successfully destroy the base even on beginner."</p>
 <ul>
-<li><strong>Status:</strong> planned</li>
+<li><strong>Status:</strong> implemented (app 0.3.1). Measured, the base was not falling too fast: on the harder levels the <em>player's</em> craft was destroyed and the debrief showed the base-lost text. The player's death is now its own result, <code>killed</code>.</li>
 <li><strong>Source:</strong> User request (feedback); interlude item F.4.</li>
-<li><strong>Specified by:</strong> <a href="../../specification/requirements/missions/#r-msn-011-base-defence-balance">R-MSN-011</a></li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/missions/#r-msn-003-objectives-timer-and-outcomes">R-MSN-003</a>, <a href="../../specification/requirements/missions/#r-msn-005-debrief">R-MSN-005</a>, <a href="../../specification/requirements/missions/#r-msn-011-base-defence-balance">R-MSN-011</a></li>
 </ul>
 <h3 id="f-msn-007-logistics-missions">F-MSN-007 Logistics missions<a class="headerlink" href="#f-msn-007-logistics-missions" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> Convoy-ambush and construction-defence missions put the supply chain into battles.</p>
@@ -6001,6 +6061,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: F-MSN-001 – F-MSN-007 (7 features)</td>
+</tr>
+<tr>
+<td>1.1.0</td>
+<td>2026-11-11</td>
+<td>F-MSN-006 implemented (app 0.3.1); also specified by R-MSN-003 and R-MSN-005 (the <code>killed</code> result)</td>
 </tr>
 </tbody>
 </table>

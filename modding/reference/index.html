@@ -3667,6 +3667,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3736,6 +3740,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -7158,6 +7218,24 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td>Hyperdrive countdown (doubled while the hyperdrive is damaged).</td>
 </tr>
 <tr>
+<td><code>bolt_frame</code></td>
+<td><code>world</code> / <code>ship</code></td>
+<td><code>world</code></td>
+<td>How a beam shot moves once fired. <code>world</code> is physics: it leaves with the ship's velocity plus the muzzle's turn velocity plus its muzzle speed, then flies straight. <code>ship</code> (arcade): for <code>bolt_carry</code> it moves in the ship's frame, turning with the nose, then flies straight (<a href="../../implementation/architecture/sim/#combat-simcombat">Simulation</a>).</td>
+</tr>
+<tr>
+<td><code>bolt_carry</code></td>
+<td>time</td>
+<td>0.3 s</td>
+<td>With <code>bolt_frame: ship</code>, how long a shot stays in the ship's frame.</td>
+</tr>
+<tr>
+<td><code>lighting</code></td>
+<td>map</td>
+<td>see below</td>
+<td>How ships are lit: <code>ambient</code> (light everywhere, 0.30), <code>sun</code> (extra light on faces towards the sun, 0.85), <code>rim</code> (extra light on edges seen side-on, outlining hulls against space, 0), <code>distant_dot</code> (pixels: a ship on the player's radar smaller than this on screen is drawn as a dot in its radar colour, 4; 0 = off). Keys left out keep their defaults (<a href="../../implementation/architecture/rendering/#lighting-rim-and-brightness-app-031">Rendering</a>).</td>
+</tr>
+<tr>
 <td><code>radar_colors</code></td>
 <td>map</td>
 <td>see below</td>
@@ -7376,7 +7454,7 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td><code>outcomes</code></td>
 <td>mapping result: actions</td>
 <td>none</td>
-<td>Results <code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code>.</td>
+<td>Results <code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code>, <code>killed</code> (the player's craft destroyed; without its own entry it takes the <code>lose</code> actions).</td>
 </tr>
 <tr>
 <td><code>chatter</code></td>
@@ -7388,7 +7466,7 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td><code>debrief</code></td>
 <td>mapping result: text</td>
 <td>none</td>
-<td>Debrief texts.</td>
+<td>Debrief texts, by the same results (<code>killed</code> shows no text unless given).</td>
 </tr>
 </tbody>
 </table>

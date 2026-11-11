@@ -3679,6 +3679,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3748,6 +3752,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5892,6 +5952,18 @@ one looks like a bug.</p>
 <td><strong>Process: Rapid Prototyping run as an implementation project.</strong> The project follows the Rapid Prototyping workflow (SpecItOut proposal P65), but until <code>sio</code> supports a <code>prototype</code> kind the manifest declares <code>kind: implementation</code>, with <code>spec</code> pointing at this worktree's <code>docs/specification</code> (Definition and Specification 1.0.0).</td>
 <td>The <code>sio</code> client does not yet support the prototype kind; the implementation kind lets issues cite requirement IDs now.</td>
 <td>Process</td>
+</tr>
+<tr>
+<td>DEV-043</td>
+<td><strong>Interceptor shots use plain physics</strong> (<code>flight: {bolt_frame: world}</code>): a bolt leaves with the ship's velocity plus the muzzle's turn velocity plus its muzzle speed, then flies straight.</td>
+<td>Engine value: how the original moves its shots has not been observed side by side; physics is the default by decision D1 (R-CMB-021). <code>bolt_frame: ship</code> is the arcade alternative, one rules line away.</td>
+<td>3</td>
+</tr>
+<tr>
+<td>DEV-044</td>
+<td><strong>Interceptor lighting adds a rim light and distant dots</strong> (<code>flight: {lighting: {ambient: 0.30, sun: 0.85, rim: 0.35, distant_dot: 4}}</code>): hulls seen edge-on are outlined, and craft smaller than 4 px on screen that are on the radar are drawn as a dot in their radar colour.</td>
+<td>An engine choice for visibility (F-HUD-007: "it is difficult to see other fighters"). Ambient and sun match the engine's earlier fixed lighting; the original's look is otherwise unchanged and the keys are data.</td>
+<td>3</td>
 </tr>
 </tbody>
 </table>

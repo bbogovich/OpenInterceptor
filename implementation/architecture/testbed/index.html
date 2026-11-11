@@ -3779,6 +3779,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3848,6 +3852,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5868,8 +5928,10 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.</li>
 <li><strong>Flight session</strong> (<code>flight.rs</code>): see the frame loop on the
   <a href="../#logic-flow-one-frame-of-a-flight-session">overview</a>. Views F1–F8; after death the
-  camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher); P
-  pauses. The player's cockpit may have 2D art, a 3D model, or both; the HUD uses the cockpit's
+  camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher; it
+  points to <code>?</code> for the keys instead of listing them); P pauses; <code>?</code> (or Shift+F1) opens the
+  <strong>keys overlay</strong> (<code>draw_help</code>, <code>help_open</code>), which pauses the battle and lists every action by
+  group with its current keys, in as many columns as the screen needs. The player's cockpit may have 2D art, a 3D model, or both; the HUD uses the cockpit's
   design space in the cockpit view and the default glass layout in the other views. A 3D
   cockpit on a window narrower than its design widens the field of view (<code>cockpit_fov</code>), and
   its anchored instruments are drawn on the dashboard in perspective (<code>draw_anchored</code>).
@@ -6084,7 +6146,9 @@ the <code>default</code> campaign; <code>rocket-vs-saucer</code> takes its place
   and printed to standard error.</li>
 <li><code>openinterceptor --campaign default --soak rocket-vs-saucer --ship comet --difficulty cadet</code>
   plays the scenario headless and prints the player's fate (<code>src/soak.rs</code>): how long a passive
-  ship survives, or whether an AI-flown one wins (<code>--soak-pilot ai</code>), per difficulty level.</li>
+  ship survives, or whether an AI-flown one wins (<code>--soak-pilot ai</code>), per difficulty level.
+  <code>--soak-pilot idle</code> leaves the player's craft sitting still: in a defence mission it measures
+  how long the defended object holds on its own (<code>SoakPilot::Idle</code>).</li>
 <li>A layout saved by F12 that seems ignored: the addon targets the campaign that was loaded when
   it was saved; check <code>--list</code> shows <code>&lt;campaign&gt;-cockpit-&lt;id&gt;</code> and that it is not disabled.</li>
 <li><code>openinterceptor --mission defend_station --ship comet</code> starts a mission directly;

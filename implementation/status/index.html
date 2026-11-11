@@ -3777,6 +3777,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3846,6 +3850,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5822,7 +5882,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-3-missions/">3 Missions, environments and conditions</a></td>
-<td><strong>In progress</strong> — part 1 in app 0.3.0</td>
+<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong></td>
 <td>See <a href="#stage-3-progress">Stage 3 progress</a> below</td>
 </tr>
 <tr>
@@ -6176,7 +6236,8 @@ and <code>--soak</code> <code>f638b44</code>; looks <code>b097c83</code>; guidan
 </tbody>
 </table>
 <h2 id="stage-3-progress">Stage 3 progress<a class="headerlink" href="#stage-3-progress" title="Permanent link">&para;</a></h2>
-<p>App <strong>0.3.0</strong>, main <code>d7553f5</code>; <strong>269 unit tests</strong> on macOS.</p>
+<p>App <strong>0.3.0</strong>, main <code>d7553f5</code>; then app <strong>0.3.1</strong>, main <code>c583659</code> (the interlude's playtest
+fixes); <strong>276 unit tests</strong> on macOS.</p>
 <table>
 <thead>
 <tr>
@@ -6227,13 +6288,43 @@ and <code>--soak</code> <code>f638b44</code>; looks <code>b097c83</code>; guidan
 <td></td>
 </tr>
 <tr>
-<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-12</td>
+<td>Interlude F.1 — drift readout (<code>THR 60%  312 m/s  X+45 Y-12</code>) and flight-path marker</td>
+<td><strong>Done</strong> (0.3.1)</td>
+<td><code>src/sim/mod.rs</code> (<code>Ship::body_velocity</code>), <code>src/hud/draw.rs</code></td>
+</tr>
+<tr>
+<td>Interlude F.2 — shot physics: bolts leave with ship velocity + ω × r + muzzle speed, then fly straight; <code>flight.bolt_frame: world \| ship</code>, <code>bolt_carry</code>; streaks relative to the viewer</td>
+<td><strong>Done</strong> (0.3.1)</td>
+<td><code>src/sim/combat.rs</code>, <code>src/content/rules.rs</code>, <code>src/render/</code></td>
+</tr>
+<tr>
+<td>Interlude F.3 — visibility: <code>flight.lighting</code> (ambient, sun, rim, distant dots), <code>graphics.brightness</code></td>
+<td><strong>Done</strong> (0.3.1)</td>
+<td><code>src/render/mod.rs</code>, <code>src/settings.rs</code></td>
+</tr>
+<tr>
+<td>Interlude F.4 — base defence: measured with <code>--soak-pilot idle</code>; the <code>killed</code> result; cadet regression test</td>
+<td><strong>Done</strong> (0.3.1)</td>
+<td><code>src/mission/mod.rs</code>, <code>src/soak.rs</code></td>
+</tr>
+<tr>
+<td>Interlude F.5 — keys overlay (<code>?</code>, action <code>help</code>) from <code>input::ACTIONS</code></td>
+<td><strong>Done</strong> (0.3.1)</td>
+<td><code>src/input/mod.rs</code>, <code>src/app/flight.rs</code></td>
+</tr>
+<tr>
+<td>Interlude C1–C5 — tablet control console</td>
+<td><strong>Started</strong> (remote action sets on <code>RawInput</code>, work in progress)</td>
+<td><code>src/input/mod.rs</code></td>
+</tr>
+<tr>
+<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-18</td>
 <td><strong>Not yet run</strong></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Next</strong>: the <a href="../plan/stage-3-interlude/">Stage 3 interlude</a> (feedback items F.1–F.5 and the control console C1–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
+<p><strong>Next</strong>: the rest of the <a href="../plan/stage-3-interlude/">Stage 3 interlude</a> (the control console C1–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
 
 
 

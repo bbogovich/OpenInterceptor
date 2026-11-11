@@ -3885,6 +3885,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3954,6 +3958,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -6046,15 +6106,15 @@
 </tr>
 <tr>
 <td><a href="#r-hud-009-drift-display">R-HUD-009 Drift display</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-hud-010-brightness-setting">R-HUD-010 Brightness setting</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-hud-011-other-craft-visible-at-combat-ranges">R-HUD-011 Other craft visible at combat ranges</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-hud-012-atmosphere-instruments">R-HUD-012 Atmosphere instruments</a></td>
@@ -6146,41 +6206,42 @@
 <h3 id="r-hud-009-drift-display">R-HUD-009 Drift display<a class="headerlink" href="#r-hud-009-drift-display" title="Permanent link">&para;</a></h3>
 <p>The speed indicator MUST show forward speed and the sideways (X) and vertical (Y) components of the velocity in the craft's frame; the HUD SHOULD show a flight-path marker where the velocity vector points.</p>
 <p><em>Rationale:</em> User request (F-HUD-006): newtonian flight allows drift the pilot cannot otherwise see.</p>
+<p>In the glass HUD's status line this is <code>THR 60%  312 m/s  X+45 Y-12</code>: forward speed, then sideways (X, + right) and vertical (Y, + up) drift in whole metres per second, signed. The flight-path marker is a circle with three ticks at the point the velocity vector projects to; with no drift it sits on the crosshair.</p>
 <ul>
 <li>Implements: <a href="../../../definition/cockpit-hud/#f-hud-006-drift-display">F-HUD-006</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (interlude item F.1).</li>
+<li>Status: implemented</li>
+<li>Verified by: <code>sim::tests::body_velocity_reads_drift_in_the_ships_own_axes</code>, <code>hud::draw::tests::drift_reads_signed_whole_metres_per_second</code>; MT-3-13</li>
 <li>See: <a href="../../../implementation/architecture/hud/">Cockpit and HUD</a></li>
 </ul>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>How the original cockpits' speed gauge shows three values, and the marker's look, are not designed.</p>
+<p>How the original cockpits' speed gauge would show three values is not designed: the drift readout is on the status line, which every view shows. The marker's look is settled (above).</p>
 </div>
 <h3 id="r-hud-010-brightness-setting">R-HUD-010 Brightness setting<a class="headerlink" href="#r-hud-010-brightness-setting" title="Permanent link">&para;</a></h3>
-<p>The player MUST be able to set the picture's brightness in the settings, where 1 means as authored.</p>
+<p>The player MUST be able to set the picture's brightness in the settings, where 1 means as authored. The setting is <code>graphics: {brightness: …}</code> in <code>settings.yaml</code>, from 0.5 (darker) to 2 (brighter); values outside are clamped. It MUST lift dark tones more than bright ones (a gamma of 1 / brightness on the lit models).</p>
 <p><em>Rationale:</em> User request (F-HUD-007).</p>
 <ul>
 <li>Implements: <a href="../../../definition/cockpit-hud/#f-hud-007-seeing-other-craft">F-HUD-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (interlude item F.3).</li>
-<li>See: <a href="../../../implementation/architecture/settings/">Settings and data discovery</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>settings::tests::parses_and_round_trips</code>; MT-3-16</li>
+<li>See: <a href="../../../implementation/architecture/settings/">Settings and data discovery</a>, <a href="../../../user-guide/settings/">Settings (user guide)</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>Range and where it is set in game (settings file only, or an options screen).</p>
+<div class="admonition note">
+<p class="admonition-title">Where it is set</p>
+<p>The settings file only, for now; an in-game options screen belongs to Stage 6 (presentation).</p>
 </div>
 <h3 id="r-hud-011-other-craft-visible-at-combat-ranges">R-HUD-011 Other craft visible at combat ranges<a class="headerlink" href="#r-hud-011-other-craft-visible-at-combat-ranges" title="Permanent link">&para;</a></h3>
-<p>Other craft MUST be visible to the player at combat ranges in every cockpit and view.</p>
+<p>Other craft MUST be visible to the player at combat ranges in every cockpit and view. The campaign's rules MUST set the lighting (<code>flight: {lighting: {ambient, sun, rim, distant_dot}}</code>): a rim light outlines hulls seen edge-on, and a craft on the player's radar MUST NOT be drawn smaller than <code>distant_dot</code> pixels — smaller craft are drawn as a dot in their radar colour (the objective colour if protected).</p>
 <p><em>Rationale:</em> User request (F-HUD-007): "it is difficult to see other fighters".</p>
 <ul>
 <li>Implements: <a href="../../../definition/cockpit-hud/#f-hud-007-seeing-other-craft">F-HUD-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (interlude item F.3; a manual test).</li>
-<li>See: <a href="../../../implementation/architecture/rendering/">Rendering</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>content::rules::tests::builds_typed_definitions_with_inheritance</code> (the lighting keys); MT-3-15</li>
+<li>See: <a href="../../../implementation/architecture/rendering/">Rendering</a>, <a href="../../../modding/reference/#flight">Mod file reference (<code>flight</code>)</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>The means (lighting, minimum on-screen size, contact markers or outlines) and a measurable criterion are not decided.</p>
+<div class="admonition note">
+<p class="admonition-title">Criterion</p>
+<p>The measurable part is the minimum on-screen size (<code>distant_dot</code>, 4 px in both packs). Whether a craft is <em>easy</em> to see is judged in play (MT-3-15).</p>
 </div>
 <h3 id="r-hud-012-atmosphere-instruments">R-HUD-012 Atmosphere instruments<a class="headerlink" href="#r-hud-012-atmosphere-instruments" title="Permanent link">&para;</a></h3>
 <p>In an atmosphere the HUD MUST show altitude, vertical speed and a horizon.</p>
@@ -6205,6 +6266,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: R-HUD-001 – R-HUD-012 (12 requirements; 8 reverse-engineered from the code)</td>
+</tr>
+<tr>
+<td>1.1.0</td>
+<td>2026-11-11</td>
+<td>R-HUD-009, R-HUD-010, R-HUD-011 implemented (app 0.3.1): drift status line and flight-path marker; <code>graphics.brightness</code> 0.5–2 as a gamma; <code>flight.lighting</code> with rim light and distant dots. R-HUD-010 and R-HUD-011 open notes resolved; R-HUD-009 keeps the original-cockpit question</td>
 </tr>
 </tbody>
 </table>

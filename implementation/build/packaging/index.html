@@ -3779,6 +3779,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3848,6 +3852,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5814,11 +5874,11 @@ python3<span class="w"> </span>tools/build_bundle.py<span class="w"> </span>--sk
 </code></pre></div>
 <p><code>tools/build_bundle.py</code> (standard-library Python) builds the release binary, assembles
 <code>dist/OpenInterceptor-&lt;version&gt;.app</code> (<code>dist/</code> is git-ignored), and signs it ad hoc:</p>
-<div class="highlight"><pre><span></span><code>OpenInterceptor-0.3.0.app/Contents/
+<div class="highlight"><pre><span></span><code>OpenInterceptor-0.3.1.app/Contents/
   Info.plist                 identifier io.github.bbogovich.openinterceptor, version, game category
   MacOS/openinterceptor
   Resources/packs/           interceptor and default packs
-  Resources/LICENSE-MIT
+  Resources/LICENSE            the MIT licence
 </code></pre></div>
 <p>Then it prepares the user data folder <code>~/Library/Application Support/OpenInterceptor/</code>:
 <code>settings.yaml</code> <code>paths.original</code> is set to <code>./game</code> (or <code>--data</code>), keeping any other
@@ -5860,7 +5920,7 @@ delivery is <strong>0.2.2</strong>, and <strong>0.3.0</strong> marks Stage 2 com
 <tr>
 <td>3 Missions, environments and conditions</td>
 <td>0.4.x</td>
-<td>part 1 shipped in <strong>0.3.0</strong></td>
+<td>part 1 shipped in <strong>0.3.0</strong>; <strong>0.3.1</strong> — interlude playtest fixes: shot physics, drift readout and flight-path marker, lighting and brightness, the <code>killed</code> result, keys overlay</td>
 </tr>
 <tr>
 <td>4 Strategy layer</td>

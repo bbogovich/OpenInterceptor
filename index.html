@@ -336,10 +336,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#licence" class="md-nav__link">
+  <a href="#licence-and-repository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Licence
+        Licence and repository
       
     </span>
   </a>
@@ -3767,6 +3767,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3836,6 +3840,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5751,10 +5811,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#licence" class="md-nav__link">
+  <a href="#licence-and-repository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Licence
+        Licence and repository
       
     </span>
   </a>
@@ -5801,7 +5861,7 @@ is in the repository, ever.</p>
 </ol>
 <p>The same order is in the repository's <code>CLAUDE.md</code> project rules.</p>
 </div>
-<p><strong>Site version 0.11.0</strong>; Definition and Specification <strong>1.0.0</strong> (<a href="reference/revision-history/">revision history</a>).</p>
+<p><strong>Site version 0.12.0</strong>; Definition and Specification <strong>1.1.0</strong> (<a href="reference/revision-history/">revision history</a>).</p>
 <h2 id="sections">Sections<a class="headerlink" href="#sections" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -5873,10 +5933,11 @@ is in the repository, ever.</p>
 is <strong>complete</strong>, signed off on 2026-11-10 — every original ship, station and cockpit flies or
 renders from the player's CD, an original-free pack plays without it, any original asset can be
 replaced by a mod file (with <code>--extract</code> producing editable copies), and cockpits can be HD
-repaints or 3D models. Stage 2 is <strong>in progress</strong> (build <strong>0.2.2</strong>): one campaign at a time —
-the original <code>interceptor</code> or the original-free default campaign <em>Perils of the Void</em> — with
-ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman orders and an
-in-game controls menu. See <a href="implementation/status/">implementation status</a> and the
+repaints or 3D models. Stage 2 (combat, objects and behaviours) is <strong>complete</strong> in app 0.3.0,
+which also carries Stage 3 part 1 (missions). App <strong>0.3.1</strong> delivers the playtest fixes of the
+<a href="implementation/plan/stage-3-interlude/">Stage 3 interlude</a>: a drift readout and flight-path
+marker, shot physics, visibility (rim light, distant dots, brightness), the <code>killed</code> mission
+result and a keys overlay (<code>?</code>). See <a href="implementation/status/">implementation status</a> and the
 <a href="implementation/plan/">plan</a>.</p>
 <h2 id="how-work-flows-rapid-prototyping">How work flows: Rapid Prototyping<a class="headerlink" href="#how-work-flows-rapid-prototyping" title="Permanent link">&para;</a></h2>
 <p>The project follows the <strong>Rapid Prototyping</strong> workflow (<a href="implementation/workflows/#rapid-prototyping">Workflows</a>).
@@ -5887,11 +5948,14 @@ There are no approval gates; the definition and specification are a permanent re
 ahead of the code. When the prototype is complete they seed the formal definition and
 specification of a production version, built through the SpecItOut fast track.</p>
 <p>Definition and Specification <strong>1.0.0</strong> (2026-11-11): 79 features and 168
-requirements, those for the code already built marked <em>reverse-engineered</em>. Until <code>sio</code> supports
+requirements, those for the code already built marked <em>reverse-engineered</em>; <strong>1.1.0</strong> marks the
+interlude's feedback items implemented (<a href="meta/change-history/">change history</a>). Until <code>sio</code> supports
 a <code>prototype</code> kind the project runs as <code>kind: implementation</code> with <code>spec</code> pointing at
 <code>docs/specification</code> (DEV-042).</p>
-<h2 id="licence">Licence<a class="headerlink" href="#licence" title="Permanent link">&para;</a></h2>
-<p>The engine is <strong>MIT</strong>. <em>X-COM</em> and <em>Interceptor</em> are trademarks of their owners; this project is
+<h2 id="licence-and-repository">Licence and repository<a class="headerlink" href="#licence-and-repository" title="Permanent link">&para;</a></h2>
+<p>The engine is <strong>MIT</strong> (<code>LICENSE</code>). The repository is public at
+<a href="https://github.com/bbogovich/OpenInterceptor">github.com/bbogovich/OpenInterceptor</a>; issues are
+GitHub Issues, reached through the <code>sio</code> client. <em>X-COM</em> and <em>Interceptor</em> are trademarks of their owners; this project is
 not affiliated with or endorsed by them.</p>
 
 

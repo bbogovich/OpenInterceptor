@@ -14,7 +14,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../../modding/">
+        <link rel="next" href="../controls/">
       
       
         
@@ -3669,6 +3669,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3887,6 +3891,62 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -5871,7 +5931,7 @@
   only original-free packs, nothing else is needed.</li>
 </ul>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>&lt;repo&gt;<span class="w"> </span>OpenInterceptor
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/bbogovich/OpenInterceptor.git
 <span class="nb">cd</span><span class="w"> </span>OpenInterceptor
 cargo<span class="w"> </span>build<span class="w"> </span>--release
 </code></pre></div>
@@ -6002,7 +6062,7 @@ scripts/check.sh
 </tr>
 <tr>
 <td><code>--soak &lt;SCENARIO or MISSION&gt;</code></td>
-<td>Play a scenario — or a mission, which then prints its result (<code>soak mission &lt;id&gt; (&lt;level&gt;, &lt;pilot&gt;): &lt;result&gt; after &lt;n&gt; s; &lt;k&gt; kills</code>) — without a window for <code>--seconds</code> (default 60) and report what happened to the player's ship (balance testing); the player is <code>--soak-pilot passive</code> (default: flies at the nearest enemy and never shoots) or <code>ai</code> (its class's behaviour). Use with <code>--ship</code>, <code>--campaign</code>, <code>--difficulty</code>.</td>
+<td>Play a scenario — or a mission, which then prints its result (<code>soak mission &lt;id&gt; (&lt;level&gt;, &lt;pilot&gt;): &lt;result&gt; after &lt;n&gt; s; &lt;k&gt; kills</code>) — without a window for <code>--seconds</code> (default 60) and report what happened to the player's ship (balance testing); the player is <code>--soak-pilot passive</code> (default: flies at the nearest enemy and never shoots), <code>ai</code> (its class's behaviour) or <code>idle</code> (sits still and does nothing: how long a defended object holds on its own). Use with <code>--ship</code>, <code>--campaign</code>, <code>--difficulty</code>.</td>
 </tr>
 <tr>
 <td><code>--language &lt;CODE&gt;</code></td>
@@ -6038,7 +6098,7 @@ Linux.</p>
 <p>The launcher lists the model viewer, the asset browser and the test scenarios from every
 loaded pack: Up/Down to
 choose, Left/Right to pick a ship, Enter to start, Esc to quit. In flight, Esc opens the menu
-(R restart, L back to the launcher). Default controls follow the original game; see <a href="../../reference/original-game/controls/">Controls</a>.
+(R restart, L back to the launcher) and <code>?</code> lists every key (<a href="../controls/">Controls</a>). Default controls follow the original game; see the <a href="../../reference/original-game/controls/">controls reference</a>.
 Flight is newtonian by default: throttle is thrust and the ship coasts; <code>Z</code> reverses thrust,
 hold <code>B</code> to brake, <code>M</code> holds the target's speed.</p>
 <h2 id="documentation-site">Documentation site<a class="headerlink" href="#documentation-site" title="Permanent link">&para;</a></h2>

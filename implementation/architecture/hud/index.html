@@ -3762,6 +3762,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3831,6 +3835,62 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
   
 
     
@@ -5847,6 +5907,15 @@ panels at the top right of its <em>own design space</em> — x from 87.5 % of th
 drawn under the message line, extended with <code>BRAKE</code> while braking and <code>HOLD n</code> while the
 flight computer holds a speed, and the Stage 2 status flags (<code>status_flags</code>): <code>DISABLED</code>,
 <code>CLOAKED</code>, <code>TRACTOR</code>, <code>ECM</code>, <code>JUMP n</code> (hyperspace countdown).</p>
+<p><strong>Drift readout (app 0.3.1).</strong> The status line reads <code>THR 60%  312 m/s  X+45 Y-12</code>: throttle,
+forward speed, then sideways (X, + right) and vertical (Y, + up) drift in whole metres per
+second, signed (<code>drift_text</code>). All three come from <code>Ship::body_velocity()</code>, the velocity turned
+into the ship's own axes (<a href="../sim/">Simulation</a>). In newtonian flight a turn changes the nose, not
+the motion, so after a hard turn X or Y shows how far the ship is sliding.</p>
+<p><strong>Flight-path marker.</strong> <code>draw_targeting</code> projects a point 1 km along the ship's velocity
+(when faster than 5 m/s) and draws a circle with three ticks (left, right, up) there: where the
+craft is actually going. With no drift it sits on the crosshair; sideways drift slides it off to
+the side.</p>
 <p><strong>Targeting</strong> (forward views): a reticle; corner brackets sized by the target's angular size;
 name and range; a lead circle (where to aim beams); a lock-progress ring, then a red lock
 diamond and <code>LOCK</code>; an arrow on a ring when the target is off-screen. Nav points draw a blue
@@ -5891,6 +5960,10 @@ diamond.</p>
 <tr>
 <td><code>status_flags(&amp;Ship) -&gt; Vec&lt;String&gt;</code></td>
 <td>The status-strip flags.</td>
+</tr>
+<tr>
+<td><code>draw::drift_text(body_velocity)</code></td>
+<td><code>X+45 Y-12</code>: the drift part of the status line.</td>
 </tr>
 <tr>
 <td><code>draw::HudFrame</code></td>
