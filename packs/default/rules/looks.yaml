@@ -159,6 +159,19 @@ debris:
     life: 15s
     chunks: {models: [models/chunk2.obj, models/chunk3.obj], count: 3, speed: [30, 80]}
 
+  sky_eye_probe:
+    pieces: [models/sky_eye_probe_debris1.obj, models/sky_eye_probe_debris2.obj, models/sky_eye_probe_debris3.obj]
+    pick: [2, 3]
+    speed: [15, 50]
+    spin: [60, 180]
+    life: 10s
+  jammer_buoy:
+    pieces: [models/jammer_buoy_debris1.obj, models/jammer_buoy_debris2.obj, models/jammer_buoy_debris3.obj]
+    pick: [2, 3]
+    speed: [15, 50]
+    spin: [60, 180]
+    life: 10s
+
 modelsets:
   cargo_orb:
     intact: models/cargo_orb.obj
@@ -314,4 +327,18 @@ modelsets:
     states:
       destroyed: {textures: {dominion_shield_pod: textures/dominion_shield_pod_wrecked.png}}
     debris: dominion_shield_pod
+    destroyed_effect: explosion_small
+  sky_eye_probe:
+    intact: models/sky_eye_probe.obj
+    damage:
+      - {below: 66%, textures: {sky_eye_probe: textures/sky_eye_probe_scorched.png}}
+      - {below: 33%, textures: {sky_eye_probe: textures/sky_eye_probe_burnt.png}}
+    debris: sky_eye_probe
+    destroyed_effect: explosion_small
+  jammer_buoy:
+    intact: models/jammer_buoy.obj
+    damage:
+      - {below: 66%, textures: {jammer_buoy: textures/jammer_buoy_scorched.png}}
+      - {below: 33%, textures: {jammer_buoy: textures/jammer_buoy_burnt.png}}
+    debris: jammer_buoy
     destroyed_effect: explosion_small

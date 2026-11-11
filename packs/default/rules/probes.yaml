@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Probes: the Guard's Sky-Eye sensor probe extends its side's radar; the Dominion's
+# jamming buoy blinds hostile radar near it and slows missile locks.
+
+objects:
+  sky_eye_probe:
+    name: Sky-Eye probe
+    kind: probe
+    faction: guard
+    model_set: sky_eye_probe
+    hit_points: 50
+    probe: {sensors: 8km}
+  jammer_buoy:
+    name: Jamming buoy
+    kind: probe
+    faction: dominion
+    model_set: jammer_buoy
+    hit_points: 80
+    probe: {jamming: 2.5km}

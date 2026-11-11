@@ -833,6 +833,46 @@ def dominion_shield_pod():
 
 
 # ---------------------------------------------------------------------------------------
+# Probes
+# ---------------------------------------------------------------------------------------
+
+def sky_eye_probe():
+    """Guard sensor probe, ~6 m: a polished sphere trailing four long swept antennas,
+    with a small dish and feed horn on the nose."""
+    m = Model("sky_eye_probe", dict(GUARD, hull=((1, 1, 1), "sky_eye_probe.png")), FIGHTER)
+    m.add(sphere("body", 0.9, "hull", 16, 8, uv=(0, 1, 0, 1), u_repeat=2))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            d = norm((sx * 0.35, sy * 0.35, 1.0))
+            m.add(cylinder_between("antenna", mul(d, 0.8), mul(d, 4.6), 0.035, "chrome", 5, radius_b=0.015))
+            m.add(sphere("antenna_root", 0.09, "red", 6, 3).transformed(IDENTITY, mul(d, 0.88)))
+    m.add(cylinder_between("dish_stem", (0, 0, -0.8), (0, 0, -1.35), 0.08, "chrome", 6))
+    m.add(lathe("dish", [(-1.3, 0.0, "cream"), (-1.6, 0.75, "chrome"), (-1.68, 0.72, "cream"), (-1.42, 0.0, "cream")],
+                "cream", 16, crease=30))
+    m.add(cylinder_between("feed", (0, 0, -1.4), (0, 0, -2.1), 0.05, "chrome", 5))
+    m.add(sphere("feed_tip", 0.08, "teal", 6, 3).transformed(IDENTITY, (0, 0, -2.12)))
+    return m
+
+
+def jammer_buoy():
+    """Dominion jamming buoy, ~5 m: a spiked violet and black orb split around a
+    glowing acid-green core, inside a striped ring on three struts."""
+    m = Model("jammer_buoy", dict(DOMINION, hull=((1, 1, 1), "jammer_buoy.png")), FIGHTER)
+    m.add(sphere("core", 1.3, "glow", 14, 7))
+    upper = dome("shell", 0.25, 1.5, 1.35, "hull", 18, 4, uv=(0, 1, 0.5, 1))
+    m.add(upper.transformed(Z_TO_Y))
+    m.add(upper.transformed(Z_TO_Y).transformed(scale_m(1, -1, 1)))  # the mirrored lower half
+    ring = torus("ring", 2.6, 0.16, "hull", 32, 5, uv=(0, 8, 0, 0.2))
+    m.add(upright(ring))
+    for a in (0, 120, 240):
+        d = horizontal(a)
+        m.add(cylinder_between("strut", mul(d, 1.2), mul(d, 2.5), 0.07, "chrome", 5))
+    for d in ((0, 1, 0), (0, -1, 0), norm((1, 0.9, 1)), norm((-1, 0.9, -1)), norm((1, -0.9, -1)), norm((-1, -0.9, 1))):
+        m.add(cylinder_between("spike", mul(d, 1.2), mul(d, 2.5), 0.16, "black", 6, radius_b=0.0))
+    return m
+
+
+# ---------------------------------------------------------------------------------------
 # The Guard 3D cockpit
 # ---------------------------------------------------------------------------------------
 
@@ -1114,6 +1154,7 @@ SHIPS = [
     (guard_station, 5), (dominion_outpost, 5), (cosmium_asteroid, 5),
     # Station modules (appended last so the debris seeds of the models above stay put).
     (guard_turret, 3), (guard_shield_generator, 3), (dominion_turret_pod, 3), (dominion_shield_pod, 3),
+    (sky_eye_probe, 3), (jammer_buoy, 3),
 ]
 
 

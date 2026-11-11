@@ -456,6 +456,17 @@ def dominion_shield_pod():
     return c
 
 
+def sky_eye_probe():
+    chrome, red, teal = (0.84, 0.86, 0.91), (0.78, 0.11, 0.08), (0.08, 0.62, 0.60)
+    return module_drum(chrome, red, teal, (0.55, 0.58, 0.66), 1501,
+                       lambda c, x, y: winged_star(c, x, y, 12, (0.95, 0.9, 0.75), teal, (0.1, 0.1, 0.12)))
+
+
+def jammer_buoy():
+    violet, black, green = (0.40, 0.14, 0.60), (0.07, 0.06, 0.09), (0.55, 1.0, 0.25)
+    return module_drum(violet, black, green, (0.05, 0.02, 0.08), 1601)
+
+
 # Station module textures also get a `_wrecked` variant (a destroyed module left in place).
 MODULE_TEXTURES = {"guard_turret", "guard_shield_generator", "dominion_turret_pod", "dominion_shield_pod"}
 
@@ -465,6 +476,7 @@ TEXTURES = [
     ("guard_station", guard_station), ("prospector_hull", prospector_hull), ("asteroid_rock", asteroid_rock),
     ("guard_turret", guard_turret), ("guard_shield_generator", guard_shield_generator),
     ("dominion_turret_pod", dominion_turret_pod), ("dominion_shield_pod", dominion_shield_pod),
+    ("sky_eye_probe", sky_eye_probe), ("jammer_buoy", jammer_buoy),
 ]
 
 
