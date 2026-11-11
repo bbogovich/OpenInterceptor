@@ -361,6 +361,8 @@ pub struct StrategyDef {
     pub delivery: f32,
     /// Money per enemy destroyed when an outcome says `salvage`.
     pub salvage: f32,
+    /// Resources, facilities and supply (Stages 4.14–4.17), if the campaign has them.
+    pub logistics: Option<super::logistics::LogisticsDef>,
 }
 
 /// The dictionary sections of the strategy layer.
@@ -788,6 +790,8 @@ impl StrategyDef {
             research: s.list("research"),
             stock: pairs(s, "stock").into_iter().map(|(k, v)| (k, v as u32)).collect(),
         };
+        let start_map_id = start.map.clone();
+        let start_map_id = start_map_id.as_str();
         let Some(map) = maps.iter().find(|m| m.id == start.map).cloned() else {
             errors.push(format!("start.map: unknown map '{}'", start.map));
             return None;
@@ -810,6 +814,18 @@ impl StrategyDef {
             scores,
             delivery,
             salvage,
+            logistics: {
+                // The chosen map's systems (their deposits and features), the hulls' and
+                // topics' nodes in the same order as the lists above.
+                let map_node = defs.iter().find(|(s, id, _)| *s == "maps" && *id == start_map_id).map(|(_, _, n)| *n);
+                let systems: Vec<(String, Option<Node>)> = match map_node {
+                    Some(n) => Get(n).map("systems").iter().map(|(id, sn)| (id.clone(), Some(sn.clone()))).collect(),
+                    None => Vec::new(),
+                };
+                let hull_nodes: Vec<(&str, &Node)> = of(defs, "hulls").map(|(id, g)| (id, g.0)).collect();
+                let topic_nodes: Vec<(&str, &Node)> = of(defs, "research").map(|(id, g)| (id, g.0)).collect();
+                super::logistics::LogisticsDef::build(defs, global, &systems, &hull_nodes, &topic_nodes, errors)
+            },
         };
         def.check(errors);
         Some(def)
@@ -878,6 +894,12 @@ impl StrategyDef {
 
 /// The schema of the strategy sections, added to the rules file schema.
 pub fn sections() -> Vec<super::schema::Field> {
+    let mut all = sections_core();
+    all.extend(super::logistics::sections());
+    all
+}
+
+fn sections_core() -> Vec<super::schema::Field> {
     let dict = |t: Ty| Ty::Dict(Box::new(t));
     let expr = || Ty::Condition;
     let nums = || Ty::Dict(Box::new(Ty::Num));
@@ -926,6 +948,17 @@ pub fn sections() -> Vec<super::schema::Field> {
                             f("pos", Ty::Numbers(2), "map position"),
                             f("class", Ty::Name, "star class"),
                             f("hidden", Ty::Bool, "not drawn until found"),
+                            f("bodies", Ty::List(Box::new(Ty::Text)), "planets, moons and belts (descriptive)"),
+                            f(
+                                "deposits",
+                                Ty::Dict(Box::new(Ty::Struct(vec![
+                                    f("rate", Ty::Num, "per day, for a mining facility"),
+                                    f("reserve", Ty::Text, "how much there is, or unlimited"),
+                                    f("body", Ty::Text, "which body (descriptive)"),
+                                ]))),
+                                "logistics: what can be mined here",
+                            ),
+                            f("features", Ty::List(Box::new(Ty::Name)), "logistics: tags for research sites"),
                         ])))),
                         Box::new(Ty::Either(Box::new(Ty::Numbers(2)), Box::new(Ty::Num))),
                     ),
@@ -958,6 +991,9 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("requires", expr(), "available when this holds"),
                 f("unlocks", Ty::List(Box::new(Ty::Text)), "items.x, hulls.x, modules.x, base_types.x"),
                 f("description", Ty::Text, "encyclopaedia text"),
+                f("lab", Ty::Name, "logistics: only this facility type may research it"),
+                f("site", Ty::Name, "logistics: only at a station on this research site"),
+                f("start_cost", nums(), "logistics: materials delivered once to begin"),
             ])),
             "research topics",
         ),
@@ -996,6 +1032,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("upkeep", Ty::Num, "per month"),
                 f("speed", Ty::Num, "map units per hour"),
                 f("slots", nums(), "slot kind: count"),
+                f("components", nums(), "logistics: components a main base builds one from"),
                 f("requires", expr(), "available when this holds"),
             ])),
             "the strategy side of ship classes",
@@ -1126,7 +1163,7 @@ pub(crate) mod tests {
         let doc = yaml::parse(text).unwrap();
         let mut defs = Vec::new();
         for (sec, body) in doc.as_map().unwrap() {
-            if DEF_SECTIONS.contains(&sec.as_str()) {
+            if DEF_SECTIONS.contains(&sec.as_str()) || super::super::logistics::DEF_SECTIONS.contains(&sec.as_str()) {
                 for (id, n) in body.as_map().unwrap() {
                     defs.push((sec.as_str(), id.as_str(), n));
                 }

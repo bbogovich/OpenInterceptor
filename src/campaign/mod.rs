@@ -22,6 +22,7 @@
 //! That keeps the state a plain tree the compiler is happy to mutate, and makes saving
 //! it ([`save`]) a matter of writing numbers.
 
+pub mod logistics;
 pub mod save;
 
 use crate::content::strategy::{MapKind, RaidTarget, StrategyDef, Travel};
@@ -63,6 +64,8 @@ pub struct Job {
     pub left: f32,
     /// Units still to make (including the current one).
     pub count: u32,
+    /// The current unit is paid for (its cost, or with logistics its components used).
+    pub started: bool,
 }
 
 /// A player base.
@@ -195,25 +198,27 @@ pub struct Campaign {
     pub salvaged: Vec<String>,
     pub messages: Vec<Message>,
     pub next_contact: u32,
+    /// Facilities, orders, convoys and surveys (campaigns with logistics).
+    pub logistics: logistics::Logistics,
 }
 
 /// Hours in a campaign month (reports, salaries, maintenance).
 pub const MONTH: f64 = 720.0;
 
 /// The xorshift step used for every campaign roll (seeded, so games replay exactly).
-fn next_random(state: &mut u64) -> f32 {
+pub(crate) fn next_random(state: &mut u64) -> f32 {
     *state ^= *state << 13;
     *state ^= *state >> 7;
     *state ^= *state << 17;
     (*state >> 40) as f32 / (1u64 << 24) as f32
 }
 
-fn distance(a: [f32; 2], b: [f32; 2]) -> f32 {
+pub(crate) fn distance(a: [f32; 2], b: [f32; 2]) -> f32 {
     ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2)).sqrt()
 }
 
 /// Moves `pos` towards `dest` by at most `step`; returns whether it arrived.
-fn travel(pos: &mut [f32; 2], dest: [f32; 2], step: f32) -> bool {
+pub(crate) fn travel(pos: &mut [f32; 2], dest: [f32; 2], step: f32) -> bool {
     let d = distance(*pos, dest);
     if d <= step {
         *pos = dest;
@@ -321,6 +326,7 @@ impl Campaign {
             salvaged: Vec::new(),
             messages: Vec::new(),
             next_contact: 1,
+            logistics: Default::default(),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -377,6 +383,9 @@ impl Campaign {
         }
         c.refresh_recruits(def);
         c.reveal(def);
+        if let Some(l) = &def.logistics {
+            c.logistics = logistics::Logistics::new(l, c.systems.len());
+        }
         c.log(format!("Campaign begins: {}", def.start.date));
         c
     }
@@ -526,6 +535,8 @@ impl Campaign {
     pub fn researchable(&mut self, def: &StrategyDef) -> Vec<usize> {
         (0..def.research.len())
             .filter(|&t| !self.known[t] && self.holds(def, def.research[t].requires.as_ref()))
+            // Station-only topics are researched at research stations, not at bases.
+            .filter(|&t| !def.logistics.as_ref().is_some_and(|l| l.station_topics.get(t).is_some_and(|s| s.is_some())))
             .collect()
     }
 
@@ -647,7 +658,7 @@ impl Campaign {
         if !self.available(def, &what) {
             return Err("not available yet".into());
         }
-        self.bases[base].jobs.push(Job { product, left: work, count });
+        self.bases[base].jobs.push(Job { product, left: work, count, started: false });
         Ok(())
     }
 
@@ -756,6 +767,30 @@ impl Campaign {
         for b in 0..self.bases.len() {
             let mut work = self.effect(def, b, "production_rate") * dt as f32;
             while work > 0.0 && !self.bases[b].jobs.is_empty() {
+                // Each unit is paid for as it starts (the docs' promise); with logistics a
+                // hull instead waits for its components (see `logistics::step`).
+                if !self.bases[b].jobs[0].started {
+                    let product = self.bases[b].jobs[0].product;
+                    let needs_parts = match product {
+                        Product::Hull(h) => def
+                            .logistics
+                            .as_ref()
+                            .is_some_and(|l| l.hull_components.get(h).is_some_and(|c| !c.is_empty())),
+                        Product::Item(_) => false,
+                    };
+                    if needs_parts {
+                        break;
+                    }
+                    let cost = match product {
+                        Product::Item(i) => def.items[i].cost,
+                        Product::Hull(h) => def.hulls[h].cost,
+                    } as f64;
+                    if self.money < cost {
+                        break; // waits until it can be paid
+                    }
+                    self.money -= cost;
+                    self.bases[b].jobs[0].started = true;
+                }
                 let job = &mut self.bases[b].jobs[0];
                 let used = work.min(job.left);
                 job.left -= used;
@@ -763,6 +798,7 @@ impl Campaign {
                 if job.left <= 0.0 {
                     let product = job.product;
                     job.count -= 1;
+                    job.started = false;
                     job.left = match product {
                         Product::Item(i) => def.items[i].prod_time,
                         Product::Hull(h) => def.hulls[h].prod_time,
@@ -911,6 +947,7 @@ impl Campaign {
             }
             self.unopposed(def, id, events);
         }
+        logistics::step(self, def, dt, events);
     }
 
     /// The system nearest a map point.
@@ -1092,6 +1129,9 @@ impl Campaign {
         let party = self.battle_party(contact);
         let raid_name =
             self.contacts.iter().find(|c| c.id == contact).map(|c| def.raids[c.raid].name.clone()).unwrap_or_default();
+        // `salvaged(x)` names raids by id.
+        let raid_id =
+            self.contacts.iter().find(|c| c.id == contact).map(|c| def.raids[c.raid].id.clone()).unwrap_or_default();
         for a in actions {
             let (name, arg) = match a.split_once('(') {
                 Some((n, rest)) => (n.trim(), rest.trim_end_matches(')').trim()),
@@ -1108,8 +1148,8 @@ impl Campaign {
                 "salvage" => {
                     let value = def.salvage_per_kill() as f64 * kills as f64;
                     self.money += value;
-                    if !self.salvaged.contains(&raid_name) {
-                        self.salvaged.push(raid_name.clone());
+                    if !raid_id.is_empty() && !self.salvaged.contains(&raid_id) {
+                        self.salvaged.push(raid_id.clone());
                     }
                     self.log(format!("Salvage recovered: {value:.0}"));
                 }
@@ -1559,6 +1599,32 @@ mod tests {
         });
         let k = c.cheat_jump(5).unwrap();
         assert_eq!(c.battle_party(5), vec![k]);
+    }
+
+    #[test]
+    fn manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id() {
+        let (d, mut c) = sample();
+        c.build_module(&d, 0, d.module("works").unwrap()).unwrap();
+        c.cheat_quickbase();
+        let plasma = d.item("plasma").unwrap();
+        c.known[d.topic("plasma").unwrap()] = true;
+        let before = c.money;
+        c.manufacture(&d, 0, Product::Item(plasma), 2).unwrap();
+        assert_eq!(c.money, before, "nothing paid until a unit starts");
+        c.advance(&d, 1.0);
+        assert_eq!(c.money, before - 5000.0, "the first unit's cost");
+        // Salvage: recorded by raid id, which salvaged(x) conditions name.
+        c.contacts.push(Contact {
+            id: 7,
+            raid: 0,
+            pos: [0.0, 0.0],
+            dest: [0.0, 0.0],
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+        });
+        c.battle_result(&d, 7, "win", &["salvage".into()], 1);
+        assert_eq!(c.salvaged, vec!["raid".to_string()]);
     }
 
     #[test]

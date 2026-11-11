@@ -544,7 +544,14 @@
                   "name": {"description": "display name", "type": "string"},
                   "pos": {"description": "map position", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                   "class": {"description": "star class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
-                  "hidden": {"description": "not drawn until found", "type": "boolean"}
+                  "hidden": {"description": "not drawn until found", "type": "boolean"},
+                  "bodies": {"description": "planets, moons and belts (descriptive)", "type": "array", "items": {"type": "string"}},
+                  "deposits": {"description": "logistics: what can be mined here", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+                        "rate": {"description": "per day, for a mining facility", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                        "reserve": {"description": "how much there is, or unlimited", "type": "string"},
+                        "body": {"description": "which body (descriptive)", "type": "string"}
+                      }}},
+                  "features": {"description": "logistics: tags for research sites", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}}
                 }}}, {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}]}]},
           "lanes": {"description": "lanes", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                 "between": {"description": "two systems", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}}
@@ -572,6 +579,9 @@
           "requires": {"description": "available when this holds", "type": "string"},
           "unlocks": {"description": "items.x, hulls.x, modules.x, base_types.x", "type": "array", "items": {"type": "string"}},
           "description": {"description": "encyclopaedia text", "type": "string"},
+          "lab": {"description": "logistics: only this facility type may research it", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "site": {"description": "logistics: only at a station on this research site", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "start_cost": {"description": "logistics: materials delivered once to begin", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -600,6 +610,7 @@
           "upkeep": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "speed": {"description": "map units per hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "slots": {"description": "slot kind: count", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "components": {"description": "logistics: components a main base builds one from", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "requires": {"description": "available when this holds", "type": "string"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
@@ -679,6 +690,55 @@
         "salvage_per_kill": {"description": "money per enemy destroyed when an outcome says salvage", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "cost_scale": {"description": "multiplies every cost, price, upkeep and maintenance (the original's are thousands)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "module_time": {"description": "modules without build_time take their prod_time in days", "enum": ["days"]}
+      }},
+    "resources": {"description": "raw resources", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "unit": {"description": "unit shown", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "components": {"description": "manufactured components", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "recipes": {"description": "manufacturing recipes", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "component": {"description": "the component made (default: the recipe id)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "inputs": {"description": "resource or component: amount", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "time": {"description": "time to run once", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "output": {"description": "amount made per run", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "facility_types": {"description": "production facility types", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "role": {"description": "what it does", "enum": ["mining", "manufacturing", "research"]},
+          "cost": {"description": "build price", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "time": {"description": "time to build", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "storage": {"description": "store capacity", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "lines": {"description": "manufacturing: recipes at once", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "research_rate": {"description": "research: work units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hub": {"description": "the battle object at the facility", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "research_sites": {"description": "research sites", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "features": {"description": "features a system must have", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "logistics": {"description": "supply settings", "type": "object", "additionalProperties": false, "properties": {
+        "vessels": {"description": "vessels per supply convoy", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "ambush_chance": {"description": "chance a convoy is attacked on its way", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "ambush_loss": {"description": "chance each vessel of an ambushed convoy is lost", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "survey_attack_chance": {"description": "chance a survey ship is attacked (25 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "survey_speed": {"description": "survey ship speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "convoy_speed": {"description": "convoy speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
       }}
   }
 }

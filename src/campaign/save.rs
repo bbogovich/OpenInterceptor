@@ -54,6 +54,222 @@ fn route(r: &[[f32; 2]]) -> Node {
     nums(&r.iter().flat_map(|p| [p[0] as f64, p[1] as f64]).collect::<Vec<_>>())
 }
 
+/// A store of goods as `{goods: amount}`.
+fn store(st: &[(String, f32)]) -> Node {
+    Node { value: Y::Map(st.iter().map(|(g, a)| (g.clone(), n(*a as f64))).collect()), line: 0 }
+}
+
+fn dest(d: &logistics::Dest) -> Node {
+    match d {
+        logistics::Dest::Base(b) => s(format!("base:{b}")),
+        logistics::Dest::Facility(f) => s(format!("facility:{f}")),
+    }
+}
+
+/// The logistics state (facilities, orders, convoys, surveys, reserves, base stores).
+fn write_logistics(l: &logistics::Logistics) -> Node {
+    map(vec![
+        (
+            "facilities",
+            seq(l
+                .facilities
+                .iter()
+                .map(|f| {
+                    map(vec![
+                        ("type", n(f.ftype as f64)),
+                        ("system", n(f.system as f64)),
+                        ("ready_at", n(f.ready_at)),
+                        ("store", store(&f.store)),
+                        ("lines", seq(f.lines.iter().map(|x| nums(&[x.recipe as f64, x.hours_left as f64])).collect())),
+                        ("project", f.project.map_or(Node::null(0), |(t, st)| nums(&[t as f64, st as u8 as f64]))),
+                    ])
+                })
+                .collect()),
+        ),
+        (
+            "orders",
+            seq(l
+                .orders
+                .iter()
+                .map(|o| {
+                    map(vec![
+                        ("goods", s(&o.goods)),
+                        ("amount", n(o.amount as f64)),
+                        ("to", dest(&o.to)),
+                        ("source", n(o.source as f64)),
+                    ])
+                })
+                .collect()),
+        ),
+        (
+            "convoys",
+            seq(l
+                .convoys
+                .iter()
+                .map(|v| {
+                    map(vec![
+                        ("cargo", store(&v.cargo)),
+                        ("to", dest(&v.to)),
+                        ("pos", nums(&[v.pos[0] as f64, v.pos[1] as f64])),
+                        ("route", route(&v.route)),
+                        ("vessels", n(v.vessels as f64)),
+                        ("ambush_in", v.ambush_in.map_or(Node::null(0), |a| n(a as f64))),
+                    ])
+                })
+                .collect()),
+        ),
+        (
+            "surveys",
+            seq(l
+                .surveys
+                .iter()
+                .map(|v| {
+                    map(vec![
+                        ("system", n(v.system as f64)),
+                        ("pos", nums(&[v.pos[0] as f64, v.pos[1] as f64])),
+                        ("attacked", s(v.attacked)),
+                    ])
+                })
+                .collect()),
+        ),
+        ("surveyed", seq(l.surveyed.iter().map(s).collect())),
+        (
+            "reserves",
+            seq(l
+                .reserves
+                .iter()
+                .map(|r| seq(r.iter().map(|x| x.map_or(s("unlimited"), |v| n(v as f64))).collect()))
+                .collect()),
+        ),
+        ("base_goods", seq(l.base_goods.iter().map(|g| store(g)).collect())),
+    ])
+}
+
+/// Reads the logistics state back (indices checked against the loaded rules).
+fn read_logistics(
+    node: Option<&Node>,
+    def: &StrategyDef,
+    bases: usize,
+    systems: usize,
+) -> Result<logistics::Logistics, String> {
+    let Some(node) = node.filter(|n| !n.is_null()) else {
+        return Ok(def.logistics.as_ref().map(|l| logistics::Logistics::new(l, systems)).unwrap_or_default());
+    };
+    let Some(l) = def.logistics.as_ref() else {
+        // A campaign without logistics saves an empty block; anything in it is a mismatch.
+        let empty = Get(node).node("facilities").and_then(|n| n.as_seq()).is_none_or(|s| s.is_empty());
+        return if empty {
+            Ok(Default::default())
+        } else {
+            Err("save: this save has logistics but the loaded campaign has none".into())
+        };
+    };
+    let bad = |what: &str| format!("save: {what} does not match the loaded rules (was a mod changed?)");
+    let g = Get(node);
+    let list = |k: &str| g.node(k).and_then(|n| n.as_seq()).unwrap_or(&[]).to_vec();
+    let num = |g: Get, k: &str| g.str(k).and_then(|t| t.parse::<f64>().ok()).unwrap_or(0.0);
+    let nums_of =
+        |n: &Node| -> Vec<f64> { n.as_seq().unwrap_or(&[]).iter().filter_map(|x| x.as_str()?.parse().ok()).collect() };
+    let store_of = |n: Option<&Node>| -> Vec<(String, f32)> {
+        n.and_then(|n| n.as_map())
+            .unwrap_or(&[])
+            .iter()
+            .filter_map(|(k, v)| Some((k.clone(), v.as_str()?.parse().ok()?)))
+            .collect()
+    };
+    let dest_of = |t: &str| -> Result<logistics::Dest, String> {
+        match t.split_once(':') {
+            Some(("base", b)) => b.parse().ok().filter(|b| *b < bases).map(logistics::Dest::Base),
+            Some(("facility", f)) => f.parse().ok().map(logistics::Dest::Facility),
+            _ => None,
+        }
+        .ok_or_else(|| bad("a delivery destination"))
+    };
+    let mut out = logistics::Logistics::default();
+    for f in list("facilities") {
+        let f = Get(&f);
+        let ftype = num(f, "type") as usize;
+        if ftype >= l.facility_types.len() {
+            return Err(bad("a facility type"));
+        }
+        let lines = f
+            .node("lines")
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .map(|x| {
+                let v = nums_of(x);
+                logistics::Line {
+                    recipe: v.first().copied().unwrap_or(0.0) as usize,
+                    hours_left: v.get(1).copied().unwrap_or(0.0) as f32,
+                }
+            })
+            .collect::<Vec<_>>();
+        if lines.iter().any(|x| x.recipe >= l.recipes.len()) {
+            return Err(bad("a recipe"));
+        }
+        let project = f
+            .node("project")
+            .filter(|n| !n.is_null())
+            .map(nums_of)
+            .map(|v| (v[0] as usize, v.get(1).copied().unwrap_or(0.0) > 0.5));
+        out.facilities.push(logistics::Facility {
+            ftype,
+            system: num(f, "system") as usize,
+            ready_at: num(f, "ready_at"),
+            store: store_of(f.node("store")),
+            lines,
+            project,
+        });
+    }
+    for o in list("orders") {
+        let o = Get(&o);
+        out.orders.push(logistics::Order {
+            goods: o.str("goods").unwrap_or("").into(),
+            amount: num(o, "amount") as f32,
+            to: dest_of(o.str("to").unwrap_or(""))?,
+            source: num(o, "source") as usize,
+        });
+    }
+    for v in list("convoys") {
+        let v = Get(&v);
+        let p = v.node("pos").map(nums_of).unwrap_or_default();
+        out.convoys.push(logistics::Convoy {
+            cargo: store_of(v.node("cargo")),
+            to: dest_of(v.str("to").unwrap_or(""))?,
+            pos: [p.first().copied().unwrap_or(0.0) as f32, p.get(1).copied().unwrap_or(0.0) as f32],
+            route: v
+                .node("route")
+                .map(nums_of)
+                .unwrap_or_default()
+                .chunks_exact(2)
+                .map(|q| [q[0] as f32, q[1] as f32])
+                .collect(),
+            vessels: num(v, "vessels") as u32,
+            ambush_in: v.str("ambush_in").and_then(|a| a.parse().ok()),
+        });
+    }
+    for v in list("surveys") {
+        let v = Get(&v);
+        let p = v.node("pos").map(nums_of).unwrap_or_default();
+        out.surveys.push(logistics::Survey {
+            system: num(v, "system") as usize,
+            pos: [p.first().copied().unwrap_or(0.0) as f32, p.get(1).copied().unwrap_or(0.0) as f32],
+            attacked: v.bool("attacked").unwrap_or(false),
+        });
+    }
+    out.surveyed = list("surveyed").iter().map(|x| x.as_str() == Some("true")).collect();
+    out.reserves = list("reserves")
+        .iter()
+        .map(|r| r.as_seq().unwrap_or(&[]).iter().map(|x| x.as_str().and_then(|t| t.parse().ok())).collect())
+        .collect();
+    out.base_goods = list("base_goods").iter().map(|g| store_of(Some(g))).collect();
+    if out.surveyed.len() != systems || out.facilities.iter().any(|f| f.system >= systems) {
+        return Err(bad("the map"));
+    }
+    Ok(out)
+}
+
 /// Writes a campaign as a save document.
 pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
     let product = |p: &Product| match p {
@@ -123,6 +339,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                                         ("product", s(product(&j.product))),
                                         ("left", n(j.left as f64)),
                                         ("count", n(j.count as f64)),
+                                        ("started", s(j.started)),
                                     ])
                                 })
                                 .collect()),
@@ -202,6 +419,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ("salvaged", seq(c.salvaged.iter().map(s).collect())),
         ("messages", seq(c.messages.iter().map(|m| map(vec![("hour", n(m.hour)), ("text", s(&m.text))])).collect())),
         ("next_contact", n(c.next_contact as f64)),
+        ("logistics", write_logistics(&c.logistics)),
     ]);
     format!("# OpenInterceptor campaign save\n{}", doc.to_yaml())
 }
@@ -315,6 +533,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
                 product: product(j.str("product").unwrap_or(""))?,
                 left: f(j, "left") as f32,
                 count: f(j, "count") as u32,
+                started: j.bool("started").unwrap_or(false),
             });
         }
         let mut stock = Vec::new();
@@ -404,7 +623,9 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
     if next_flow.len() != def.incomes.len() + def.expenses.len() || next_raid.len() != def.raids.len() {
         return Err(bad("the incomes, expenses or raids"));
     }
+    let logistics = read_logistics(g.node("logistics"), def, bases.len(), systems.len())?;
     Ok(Campaign {
+        logistics,
         hours: f(g, "hours"),
         money: f(g, "money"),
         difficulty: f(g, "difficulty") as usize,

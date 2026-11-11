@@ -808,7 +808,10 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     for src in sources {
         for (section, body) in src.doc.as_map().unwrap_or(&[]) {
             let origin = |n: &Node| format!("{}:{}", src.file, n.line);
-            if DEF_SECTIONS.contains(&section.as_str()) || super::strategy::DEF_SECTIONS.contains(&section.as_str()) {
+            if DEF_SECTIONS.contains(&section.as_str())
+                || super::strategy::DEF_SECTIONS.contains(&section.as_str())
+                || super::logistics::DEF_SECTIONS.contains(&section.as_str())
+            {
                 for (id, def) in body.as_map().unwrap_or(&[]) {
                     let id = id.to_ascii_lowercase();
                     match defs.iter_mut().find(|(s, i, _)| s == section && *i == id) {
@@ -936,7 +939,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     // The strategy layer's global sections (read now, while `global` may still borrow
     // `errors`; the strategy layer itself is built at the end).
     let mut strategy_globals: Vec<(&str, Node)> =
-        ["start", "research_model", "pilots", "scores", "economy", "flags", "tech_ids"]
+        ["start", "research_model", "pilots", "scores", "economy", "flags", "tech_ids", "logistics"]
             .into_iter()
             .filter_map(|s| global(s).map(|(n, _)| (s, n)))
             .collect();
@@ -1398,7 +1401,10 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let strategy = {
         let defs: Vec<(&str, &str, &Node)> = resolved
             .iter()
-            .filter(|(s, _, _)| super::strategy::DEF_SECTIONS.contains(&s.as_str()))
+            .filter(|(s, _, _)| {
+                super::strategy::DEF_SECTIONS.contains(&s.as_str())
+                    || super::logistics::DEF_SECTIONS.contains(&s.as_str())
+            })
             .map(|(s, id, e)| (s.as_str(), id.as_str(), &e.node))
             .collect();
         let lookup = |name: &str| strategy_globals.iter().find(|(s, _)| *s == name).map(|(_, n)| n.clone());

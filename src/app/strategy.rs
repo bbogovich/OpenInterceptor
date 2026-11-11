@@ -42,12 +42,22 @@ pub enum Tab {
     Factory,
     Hangar,
     Contacts,
+    Logistics,
     Messages,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 8] =
-        [Tab::Bases, Tab::Research, Tab::Build, Tab::Market, Tab::Factory, Tab::Hangar, Tab::Contacts, Tab::Messages];
+    pub const ALL: [Tab; 9] = [
+        Tab::Bases,
+        Tab::Research,
+        Tab::Build,
+        Tab::Market,
+        Tab::Factory,
+        Tab::Hangar,
+        Tab::Contacts,
+        Tab::Logistics,
+        Tab::Messages,
+    ];
     fn name(self) -> &'static str {
         match self {
             Tab::Bases => "Bases",
@@ -57,6 +67,7 @@ impl Tab {
             Tab::Factory => "Factory",
             Tab::Hangar => "Hangar",
             Tab::Contacts => "Contacts",
+            Tab::Logistics => "Supply",
             Tab::Messages => "Messages",
         }
     }
@@ -75,6 +86,9 @@ enum Act {
     Hire(usize),
     AssignPilot(usize), // craft: give it the next free pilot
     Intercept(u32),
+    Survey(usize),
+    BuildFacility(usize, usize),   // facility type, system
+    StationResearch(usize, usize), // facility, topic
 }
 
 /// A battle being flown: the contact, so the debrief can be applied on return.
@@ -389,6 +403,91 @@ impl StrategyScreen {
                     rows.push(("No contacts on the sensors".into(), Act::None));
                 }
             }
+            Tab::Logistics => match &def.logistics {
+                None => rows.push(("This campaign has no supply chain".into(), Act::None)),
+                Some(l) => {
+                    match self.system {
+                        Some(s) => {
+                            if !c.logistics.surveyed[s] {
+                                rows.push((
+                                    format!("Survey {} from {}", c.systems[s].name, c.bases[base].name),
+                                    Act::Survey(s),
+                                ));
+                            }
+                            for (t, ft) in l.facility_types.iter().enumerate() {
+                                let why =
+                                    c.facility_allowed(def, t, s).err().map(|e| format!(" ({e})")).unwrap_or_default();
+                                rows.push((
+                                    format!(
+                                        "Build a {} at {} - {}{why}",
+                                        ft.name,
+                                        c.systems[s].name,
+                                        money(ft.cost as f64)
+                                    ),
+                                    Act::BuildFacility(t, s),
+                                ));
+                            }
+                        }
+                        None => {
+                            rows.push(("(choose a system on the map to survey it or build there)".into(), Act::None))
+                        }
+                    }
+                    for (f, fac) in c.logistics.facilities.iter().enumerate() {
+                        let ft = &l.facility_types[fac.ftype];
+                        let state = if fac.ready_at > c.hours {
+                            format!("building, {:.1} days", (fac.ready_at - c.hours) / 24.0)
+                        } else {
+                            let goods: Vec<String> =
+                                fac.store.iter().map(|(g, a)| format!("{a:.0} {}", l.goods_name(g))).collect();
+                            if goods.is_empty() {
+                                "store empty".into()
+                            } else {
+                                goods.join(", ")
+                            }
+                        };
+                        let project = fac
+                            .project
+                            .map(|(t, started)| {
+                                format!(
+                                    "; researching {}{}",
+                                    def.research[t].name,
+                                    if started { "" } else { " (awaiting materials)" }
+                                )
+                            })
+                            .unwrap_or_default();
+                        rows.push((
+                            format!("{} at {}: {state}{project}", ft.name, c.systems[fac.system].name),
+                            Act::None,
+                        ));
+                        if ft.role == crate::content::logistics::Role::Research
+                            && fac.project.is_none()
+                            && fac.ready_at <= c.hours
+                        {
+                            for (t, st) in l.station_topics.iter().enumerate() {
+                                if st.as_ref().is_some_and(|st| st.lab == ft.id) && !c.known[t] {
+                                    rows.push((
+                                        format!("   Research {} here", def.research[t].name),
+                                        Act::StationResearch(f, t),
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                    if let Some(b) = c.logistics.base_goods.get(base).filter(|g| !g.is_empty()) {
+                        let goods: Vec<String> = b.iter().map(|(g, a)| format!("{a:.0} {}", l.goods_name(g))).collect();
+                        rows.push((format!("{} store: {}", c.bases[base].name, goods.join(", ")), Act::None));
+                    }
+                    rows.push((
+                        format!(
+                            "{} orders open, {} convoys under way, {} survey ships out",
+                            c.logistics.orders.len(),
+                            c.logistics.convoys.len(),
+                            c.logistics.surveys.len()
+                        ),
+                        Act::None,
+                    ));
+                }
+            },
             Tab::Messages => {
                 for m in c.messages.iter().rev().take(30) {
                     let d = def.start.date.plus_days((m.hour / 24.0) as u32);
@@ -423,6 +522,9 @@ impl StrategyScreen {
                     None => Err("no free pilot".into()),
                 }
             }
+            Act::Survey(s) => c.survey(def, base, s),
+            Act::BuildFacility(t, s) => c.build_facility(def, t, s),
+            Act::StationResearch(f, t) => c.start_station_research(def, f, t),
             Act::Intercept(id) => {
                 let ready: Vec<usize> =
                     (0..c.craft.len()).filter(|&k| c.craft[k].base == base && c.craft[k].away.is_none()).collect();
@@ -676,6 +778,20 @@ impl StrategyScreen {
             let p = to_screen(k.pos);
             draw_triangle(vec2(p.x, p.y - 7.0), vec2(p.x - 6.0, p.y + 5.0), vec2(p.x + 6.0, p.y + 5.0), RED);
             draw_text(&def.raids[k.raid].name, p.x + 8.0, p.y + 14.0, 16.0, Color::new(1.0, 0.5, 0.5, 1.0));
+        }
+        // Supply: facilities (diamonds), convoys (amber), survey ships (cyan).
+        for fac in &c.logistics.facilities {
+            let p = to_screen(c.systems[fac.system].pos) + vec2(14.0, 10.0);
+            let col = if fac.ready_at > c.hours { GRAY } else { ORANGE };
+            draw_poly_lines(p.x, p.y, 4, 6.0, 45.0, 2.0, col);
+        }
+        for v in &c.logistics.convoys {
+            let p = to_screen(v.pos);
+            draw_circle(p.x, p.y, 3.0, GOLD);
+        }
+        for sv in &c.logistics.surveys {
+            let p = to_screen(sv.pos);
+            draw_circle_lines(p.x, p.y, 4.0, 1.0, SKYBLUE);
         }
         for cr in &c.craft {
             if let Some((_, pos)) = cr.away {

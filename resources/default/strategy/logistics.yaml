@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Logistics of Perils of the Void (Stages 4.14–4.17; docs: Design > Logistics): what the
+# frontier holds, what the Guard makes from it, the three facility types and supply.
+# Deposits and features are on the map's systems (below, merged into maps.reach).
+
+resources:
+  iron: {name: Iron, unit: t}
+  gold: {name: Gold, unit: t}
+  cosmium: {name: Cosmium, unit: t}
+  dilithium: {name: Dilithium, unit: kg}
+
+components:
+  hull_plating: {name: Hull plating}
+  rocket_motor: {name: Rocket motor}
+  ray_emitter: {name: Ray emitter}
+
+recipes:
+  hull_plating: {inputs: {iron: 20, cosmium: 2}, time: 24h, output: 4}
+  rocket_motor: {inputs: {iron: 10, cosmium: 6}, time: 36h, output: 1}
+  ray_emitter: {inputs: {gold: 2, dilithium: 5}, time: 48h, output: 1}
+
+facility_types:
+  mining_facility: {name: Mining facility, role: mining, hub: mining_facility, cost: 400000, time: 10d, storage: 400}
+  manufacturing_center: {name: Manufacturing center, role: manufacturing, hub: manufacturing_center, cost: 1200000, time: 15d, lines: 2, storage: 800}
+  research_station: {name: Research station, role: research, hub: research_station, cost: 900000, time: 20d, research_rate: 40}
+
+research_sites:
+  nebula_lab: {features: [nebula]}
+  pulsar_array: {features: [pulsar_near]}
+
+logistics:
+  vessels: 3
+  ambush_chance: 30%
+  ambush_loss: 35%
+  survey_attack_chance: 25%
+  survey_speed: 900
+  convoy_speed: 450
+
+# What each system holds (revealed by a survey).
+maps:
+  reach:
+    systems:
+      mercury_gate: {deposits: {iron: {rate: 12, reserve: unlimited}}}
+      ajax: {deposits: {cosmium: {rate: 6, reserve: 1800}, iron: {rate: 20, reserve: unlimited}}}
+      cinder: {deposits: {iron: {rate: 30, reserve: unlimited}, gold: {rate: 3, reserve: 600}}}
+      vesta_reach: {deposits: {cosmium: {rate: 9, reserve: 2400}}}
+      tycho_drift: {deposits: {gold: {rate: 4, reserve: 900}}, features: [pulsar_near]}
+      nebula_haven: {deposits: {dilithium: {rate: 20, reserve: 4000}}, features: [nebula]}
+
+# Main bases build hulls from components delivered by the supply chain.
+hulls:
+  comet: {components: {hull_plating: 8, rocket_motor: 2, ray_emitter: 2}}
+  meteor: {components: {hull_plating: 12, rocket_motor: 2, ray_emitter: 2}}
+  thunderbolt: {components: {hull_plating: 16, rocket_motor: 3, ray_emitter: 3}}
+  victory: {components: {hull_plating: 24, rocket_motor: 4, ray_emitter: 4}}
+
+# Station-only branches: researched at a research station on the right site, once their
+# start materials have been delivered.
+research:
+  theremin_shielding: {name: Theremin shielding, size: 24000, requires: research(heat_rays), lab: research_station, site: nebula_lab, start_cost: {cosmium: 20, dilithium: 2}}
+  pulsar_navigation: {name: Pulsar navigation, size: 16000, requires: research(deep_radar), lab: research_station, site: pulsar_array, start_cost: {gold: 5}}
