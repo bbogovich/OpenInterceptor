@@ -626,6 +626,9 @@ pub struct Ruleset {
     pub environments: Vec<super::environment::EnvironmentDef>,
     /// Formations (MD1; see [`super::formation`]).
     pub formations: Vec<super::formation::FormationDef>,
+    /// The strategy layer (Stage 4; see [`super::strategy`]); `None` for a campaign
+    /// that is battles only.
+    pub strategy: Option<super::strategy::StrategyDef>,
     /// Radio voice sets (`voices: {<id>: {<line>: [clips]}}`) and every voice clip they
     /// and mission chatter use, by index (the audio layer loads them as `Voice(i)`).
     pub voices: Vec<VoiceSet>,
@@ -802,7 +805,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     for src in sources {
         for (section, body) in src.doc.as_map().unwrap_or(&[]) {
             let origin = |n: &Node| format!("{}:{}", src.file, n.line);
-            if DEF_SECTIONS.contains(&section.as_str()) {
+            if DEF_SECTIONS.contains(&section.as_str()) || super::strategy::DEF_SECTIONS.contains(&section.as_str()) {
                 for (id, def) in body.as_map().unwrap_or(&[]) {
                     let id = id.to_ascii_lowercase();
                     match defs.iter_mut().find(|(s, i, _)| s == section && *i == id) {
@@ -927,6 +930,12 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let power_node = global("power");
     let damage_node = global("damage");
     let sounds_node = global("sounds");
+    // The strategy layer's global sections (read now, while `global` may still borrow
+    // `errors`; the strategy layer itself is built at the end).
+    let strategy_globals: Vec<(&str, Node)> = ["start", "research_model", "pilots", "scores", "economy", "flags"]
+        .into_iter()
+        .filter_map(|s| global(s).map(|(n, _)| (s, n)))
+        .collect();
     // The resolved definitions of one section. (A plain function rather than a closure:
     // its signature can tie the returned iterator's lifetime to both inputs.)
     fn of<'a>(
@@ -1364,9 +1373,45 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             errors.push(format!("{at}: unknown formation '{f}'"));
         }
     }
+    // The strategy layer (Stage 4): `None` for a campaign without `start:`.
+    let strategy = {
+        let defs: Vec<(&str, &str, &Node)> = resolved
+            .iter()
+            .filter(|(s, _, _)| super::strategy::DEF_SECTIONS.contains(&s.as_str()))
+            .map(|(s, id, e)| (s.as_str(), id.as_str(), &e.node))
+            .collect();
+        let lookup = |name: &str| strategy_globals.iter().find(|(s, _)| *s == name).map(|(_, n)| n.clone());
+        let mut extra: Vec<String> = factions.iter().map(|f| f.id.clone()).collect();
+        extra.extend(ships.iter().map(|s| s.id.clone()));
+        extra.extend(missions.iter().map(|m| m.id.clone()));
+        // Flags missions set (set_flag(x) outcomes) may be tested by campaign conditions.
+        for m in &missions {
+            for (_, actions) in &m.outcomes {
+                extra.extend(actions.iter().filter(|a| a.name == "set_flag").filter_map(|a| a.args.first().cloned()));
+            }
+        }
+        let s = super::strategy::StrategyDef::build(&defs, &lookup, &difficulty_levels, &extra, &mut errors);
+        if let Some(s) = &s {
+            for r in &s.raids {
+                if !missions.iter().any(|m| m.id == r.mission) {
+                    errors.push(format!("raids.{}: unknown mission '{}'", r.id, r.mission));
+                }
+                if !factions.iter().any(|f| f.id == r.faction) {
+                    errors.push(format!("raids.{}: unknown faction '{}'", r.id, r.faction));
+                }
+            }
+            for h in &s.hulls {
+                if !ships.iter().any(|c| c.id == h.id) {
+                    errors.push(format!("hulls.{}: no ship class with this id", h.id));
+                }
+            }
+        }
+        s
+    };
     errors.extend(cue_errors.into_inner());
     (
         Ruleset {
+            strategy,
             formations,
             voices,
             voice_clips,

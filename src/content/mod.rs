@@ -34,6 +34,7 @@ pub mod pack;
 pub mod rules;
 pub mod scenario;
 pub mod schema;
+pub mod strategy;
 pub mod text;
 pub mod vfs;
 
@@ -179,7 +180,8 @@ impl Content {
         for (i, p) in packs.iter().enumerate() {
             // `campaign/` holds the campaign ruleset (difficulty levels now; game flow
             // from Stage 4); it merges with the rules like any rules file.
-            for folder in ["campaign", "rules", "missions"] {
+            // `strategy/` holds the strategy layer (Stage 4: map, research, bases, …).
+            for folder in ["campaign", "rules", "missions", "strategy"] {
                 for path in yaml_files(&p.dir.join(folder)) {
                     let file = format!("{}/{folder}/{}", p.id, path.file_name().unwrap_or_default().to_string_lossy());
                     match read_yaml(&path) {

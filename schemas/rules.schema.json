@@ -516,6 +516,163 @@
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+      }},
+    "start": {"description": "how a new campaign begins (no start: no strategy layer)", "type": "object", "additionalProperties": false, "properties": {
+        "date": {"description": "the first day, YYYY-MM-DD", "type": "string"},
+        "money": {"description": "starting money", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "map": {"description": "the map (maps.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "bases": {"description": "bases the player starts with", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+              "type": {"description": "base type", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "system": {"description": "the system it is in", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "name": {"description": "its name", "type": "string"},
+              "modules": {"description": "modules beyond the template", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}}
+            }}},
+        "craft": {"description": "craft the player starts with", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+              "hull": {"description": "hull id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "base": {"description": "index into bases", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "count": {"description": "how many", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }}},
+        "pilots": {"description": "pilots the player starts with", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "research": {"description": "topics already known", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+        "stock": {"description": "items in stock at the first base", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
+      }},
+    "maps": {"description": "star maps", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "kind": {"description": "hand-made or generated", "enum": ["fixed", "generated"]},
+          "systems": {"description": "fixed: the systems; generated: [min, max] count", "anyOf": [{"type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+                  "name": {"description": "display name", "type": "string"},
+                  "pos": {"description": "map position", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "class": {"description": "star class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "hidden": {"description": "not drawn until found", "type": "boolean"}
+                }}}, {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}]}]},
+          "lanes": {"description": "lanes", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "between": {"description": "two systems", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}}
+              }}},
+          "travel": {"description": "straight lines anywhere, or only along lanes", "enum": ["free", "lanes"]},
+          "size": {"description": "generated: width and height, map units", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+          "names": {"description": "generated: system names to draw from", "type": "array", "items": {"type": "string"}},
+          "seed": {"description": "generated: a fixed seed (default: new every campaign)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "black_holes": {"description": "generated: hidden black holes", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "unit_ly": {"description": "light years per map unit", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "star_classes": {"description": "star classes", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "color": {"description": "star colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "weight": {"description": "relative frequency", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "research": {"description": "research topics", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "size": {"description": "work units", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "requires": {"description": "available when this holds", "type": "string"},
+          "unlocks": {"description": "items.x, hulls.x, modules.x, base_types.x", "type": "array", "items": {"type": "string"}},
+          "description": {"description": "encyclopaedia text", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "research_model": {"description": "how research progresses", "type": "object", "additionalProperties": false, "properties": {
+        "mode": {"description": "how research is described", "enum": ["download", "labs"]},
+        "rate": {"description": "work units per hour at one base", "type": "string"},
+        "switching": {"description": "switching topics", "enum": ["keep_progress", "lose_progress"]}
+      }},
+    "items": {"description": "equipment and goods", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "kind": {"description": "beam, launcher, missile, armor, shield, engine, sensor, special, probe, mine, goods", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "cost": {"description": "purchase price", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "sell_price": {"description": "sale price", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "prod_time": {"description": "work units to manufacture (0: bought only)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "size": {"description": "storage space", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "requires": {"description": "available when this holds", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "hulls": {"description": "the strategy side of ship classes", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "cost": {"description": "purchase price", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "prod_time": {"description": "work units to manufacture", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "upkeep": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "speed": {"description": "map units per hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "slots": {"description": "slot kind: count", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "requires": {"description": "available when this holds", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "base_modules": {"description": "base modules", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "group": {"description": "limits group", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "cost": {"description": "build price", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "build_time": {"description": "time to build", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "maintenance": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "effects": {"description": "research_rate, production_rate, sensor_range, hangar, quarters, storage, defence, income", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "requires": {"description": "available when this holds", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "base_types": {"description": "base types", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "cost": {"description": "build price", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "build_time": {"description": "time to build", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "max_bases": {"description": "most bases of this type", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "limits": {"description": "group: most modules", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "template": {"description": "modules a new base comes with", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+          "sensor_range": {"description": "the hub's sensor range, map units", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hangar": {"description": "craft the hub houses", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "quarters": {"description": "pilots the hub houses", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "max_distance": {"description": "a new base must be this close to one of yours (0: anywhere)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "raids": {"description": "enemy flights the campaign launches", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "mission": {"description": "the battle when it is intercepted", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "faction": {"description": "who flies it", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "every": {"description": "time between rolls", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "chance": {"description": "chance per roll", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "requires": {"description": "only while this holds", "type": "string"},
+          "target": {"description": "what it heads for", "enum": ["base", "system"]},
+          "speed": {"description": "map units per hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "incomes": {"description": "recurring income", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "every": {"description": "period", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "amount": {"description": "amount each period", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "expenses": {"description": "recurring costs (beyond maintenance, upkeep and salaries)", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "display name", "type": "string"},
+          "every": {"description": "period", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "amount": {"description": "amount each period", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "pilots": {"description": "pilot rules", "type": "object", "additionalProperties": false, "properties": {
+        "stats": {"description": "stat: [min, max]", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
+        "ranks": {"description": "rank: experience needed", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+        "salary": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "recruit_fee": {"description": "cost to hire", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "pool": {"description": "candidates offered", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "names": {"description": "names to draw from", "type": "array", "items": {"type": "string"}},
+        "heal_days": {"description": "days to heal an injury", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "survive": {"description": "chance a pilot shot down survives", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+      }},
+    "scores": {"description": "mission score names (score(x) in outcomes): points", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+    "flags": {"description": "campaign flags conditions may test with flag(x) (set_flag names are added)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+    "economy": {"description": "economy settings", "type": "object", "additionalProperties": false, "properties": {
+        "delivery": {"description": "time for a purchase to arrive", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "salvage_per_kill": {"description": "money per enemy destroyed when an outcome says salvage", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
       }}
   }
 }

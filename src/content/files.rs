@@ -599,6 +599,9 @@ pub fn rules_sections() -> Vec<Field> {
         ),
         f("campaign", campaign(), "the campaign ruleset"),
     ]
+    .into_iter()
+    .chain(super::strategy::sections())
+    .collect()
 }
 
 /// A rules file (`rules/*.yaml`, `campaign/*.yaml`).
