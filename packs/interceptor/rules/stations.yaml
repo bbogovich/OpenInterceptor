@@ -6,6 +6,7 @@
 
 objects:
   xcom_base:
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: X-COM Base
     faction: xcom
     model_set: xcom_base
@@ -29,6 +30,7 @@ objects:
     model_set: xcom_opp
     hit_points: 4000
   alien_base:
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Alien Base
     faction: alien
     model_set: alien_base
@@ -52,6 +54,7 @@ objects:
     model_set: alien_opp
     hit_points: 5000
   pirate_base:
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Pirate Base
     faction: pirate
     model_set: pirate_base

@@ -26,3 +26,4 @@ sounds:
   cloak: sounds/cloak.wav
   ecm: sounds/target.wav
   hyperspace: sounds/hyperspace.wav
+  point_defence: sounds/ray_zap.wav

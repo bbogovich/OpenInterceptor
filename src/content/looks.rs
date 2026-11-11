@@ -141,17 +141,27 @@ pub struct EffectDef {
     pub color: [f32; 3],
     /// An expanding ring of light in the explosion's plane.
     pub shockwave: bool,
-    /// Sound event name or asset reference.
+    /// Sound event name (from `sounds:`) or asset reference, played when it goes off.
     pub sound: Option<String>,
+    /// The pack that defined it (an asset `sound` resolves there).
+    pub pack: usize,
 }
 
 impl EffectDef {
     /// The engine's explosion when nothing else is named.
     pub fn builtin(id: &str) -> EffectDef {
-        EffectDef { id: id.into(), size: 2.5, duration: 1.6, color: [1.0, 0.6, 0.25], shockwave: false, sound: None }
+        EffectDef {
+            id: id.into(),
+            size: 2.5,
+            duration: 1.6,
+            color: [1.0, 0.6, 0.25],
+            shockwave: false,
+            sound: None,
+            pack: 0,
+        }
     }
 
-    pub fn parse(id: &str, g: Get) -> EffectDef {
+    pub fn parse(id: &str, g: Get, pack: usize) -> EffectDef {
         let d = EffectDef::builtin(id);
         EffectDef {
             id: id.into(),
@@ -163,6 +173,7 @@ impl EffectDef {
             },
             shockwave: g.bool("shockwave").unwrap_or(false),
             sound: g.str("sound").map(str::to_string),
+            pack,
         }
     }
 }
@@ -267,9 +278,9 @@ mod tests {
         let doc = doc.unwrap();
         let d = DebrisSet::parse("d", Get(doc.get("d").unwrap()), 1);
         assert_eq!((d.pick, d.speed, d.life, d.chunk_count, d.pack), ((2, 3), (5.0, 9.0), 8.0, 4, 1));
-        let e = EffectDef::parse("e", Get(doc.get("e").unwrap()));
+        let e = EffectDef::parse("e", Get(doc.get("e").unwrap()), 0);
         assert_eq!((e.size, e.duration, e.shockwave), (3.0, 1.6, true));
-        assert_eq!(EffectDef::parse("f", Get(doc.get("f").unwrap())), EffectDef::builtin("f"));
+        assert_eq!(EffectDef::parse("f", Get(doc.get("f").unwrap()), 0), EffectDef::builtin("f"));
         let l = DebrisSet::from_list("x", vec!["p.obj".into()], 0);
         assert_eq!(l.pick, (1, 1));
     }

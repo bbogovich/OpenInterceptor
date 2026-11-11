@@ -47,12 +47,24 @@ pub struct Debris {
 /// Seconds a spark lives.
 pub const SPARK_LIFE: f32 = 0.25;
 
+/// A point-defence shot: a brief line from the gun to the missile.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Tracer {
+    pub from: Vec3,
+    pub to: Vec3,
+    pub age: f32,
+}
+
+/// Seconds a point-defence tracer shows.
+pub const TRACER_LIFE: f32 = 0.12;
+
 /// All live effects.
 #[derive(Debug, Default)]
 pub struct Effects {
     pub explosions: Vec<Explosion>,
     pub sparks: Vec<Spark>,
     pub debris: Vec<Debris>,
+    pub tracers: Vec<Tracer>,
     seed: u32,
 }
 
@@ -74,14 +86,22 @@ impl Effects {
                 SimEvent::Hit { position, shield, .. } => {
                     self.sparks.push(Spark { position: *position, age: 0.0, shield: *shield })
                 }
-                SimEvent::MissileExploded { position } => self.explosions.push(Explosion {
-                    position: *position,
-                    radius: 25.0,
-                    age: 0.0,
-                    life: 0.8,
-                    color: [1.0, 0.6, 0.25],
-                    shockwave: None,
-                }),
+                SimEvent::MissileExploded { position, effect } => {
+                    // A missile's effect size is in metres (a ship's is × its radius).
+                    let (radius, life, color, shock) = match effect.map(|e| world.rules.effect(e)) {
+                        Some(fx) => (fx.size, fx.duration, fx.color, fx.shockwave),
+                        None => (25.0, 0.8, [1.0, 0.6, 0.25], false),
+                    };
+                    self.explosions.push(Explosion {
+                        position: *position,
+                        radius,
+                        age: 0.0,
+                        life,
+                        color,
+                        shockwave: shock.then_some(Vec3::Y),
+                    })
+                }
+                SimEvent::PointDefence { from, to, .. } => self.tracers.push(Tracer { from: *from, to: *to, age: 0.0 }),
                 SimEvent::Destroyed { ship, position, radius } => {
                     // The slot still holds the dead ship's data this tick.
                     let s = &world.ships[ship.index as usize];
@@ -176,6 +196,10 @@ impl Effects {
             s.age += dt;
         }
         self.sparks.retain(|s| s.age < SPARK_LIFE);
+        for t in &mut self.tracers {
+            t.age += dt;
+        }
+        self.tracers.retain(|t| t.age < TRACER_LIFE);
         for d in &mut self.debris {
             d.age += dt;
             d.position += d.velocity * dt;
@@ -212,7 +236,7 @@ mod tests {
         let id = w.spawn(f, FactionId(0), "x", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
         crate::sim::combat::apply_damage(&mut w, id, 10.0, Vec3::new(0.0, 0.0, -1.0));
         crate::sim::combat::apply_damage(&mut w, id, 1000.0, Vec3::ZERO);
-        w.events.push(SimEvent::MissileExploded { position: Vec3::X });
+        w.events.push(SimEvent::MissileExploded { position: Vec3::X, effect: None });
         let mut fx = Effects::default();
         fx.on_events(&w);
         assert_eq!(fx.sparks.len(), 2);

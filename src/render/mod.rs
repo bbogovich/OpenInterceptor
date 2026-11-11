@@ -542,6 +542,18 @@ impl Renderer {
                 rgb8(c, 0.4),
             );
         }
+        // Point-defence tracers: thin, fading streaks from the gun to the missile.
+        for t in &effects.tracers {
+            let k = 1.0 - t.age / effects::TRACER_LIFE;
+            push_streak(
+                &mut self.glow_vertices,
+                &mut self.glow_indices,
+                rel(t.from),
+                rel(t.to),
+                1.2,
+                rgb8([1.0, 0.95, 0.6], k),
+            );
+        }
         for s in &effects.sparks {
             let k = 1.0 - s.age / effects::SPARK_LIFE;
             let c = if s.shield { [0.4, 0.7, 1.0] } else { [1.0, 0.7, 0.3] };

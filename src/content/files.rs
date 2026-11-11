@@ -204,6 +204,16 @@ fn ship() -> Ty {
             "stations: modules mounted at the model's attachment points",
         ),
         f("shield_generator", Ty::Bool, "modules: while one survives, its station's shields work"),
+        f(
+            "point_defence",
+            Ty::Struct(vec![
+                f("range", dist(), "reach (default 800m)"),
+                f("rate", Ty::Num, "shots per second (default 3)"),
+                f("chance", Ty::Qty(Unit::Fraction), "chance a shot destroys the missile (default 35%)"),
+                f("energy", Ty::Num, "energy per shot (default 4)"),
+            ]),
+            "guns that shoot down hostile missiles",
+        ),
     ])
 }
 

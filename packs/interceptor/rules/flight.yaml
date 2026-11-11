@@ -34,3 +34,4 @@ sounds:
   cloak: cue:Cloak
   ecm: cue:Beep2
   hyperspace: cue:WarpOut
+  point_defence: cue:Beam5

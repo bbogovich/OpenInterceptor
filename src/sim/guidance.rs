@@ -103,8 +103,8 @@ fn launch_doppelganger(w: &mut World, m: &Missile, life: f32) {
     }
 }
 
-/// A warhead going off: `(ship hit, if any; where; damage; how it lands)`.
-type Blast = (Option<usize>, Vec3, f32, DamageMode);
+/// A warhead going off: `(ship hit, if any; where; damage; how it lands; its effect)`.
+type Blast = (Option<usize>, Vec3, f32, DamageMode, Option<crate::content::looks::EffectId>);
 
 /// Moves, steers and detonates every missile for one tick (see the module docs).
 pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
@@ -185,7 +185,7 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
                     s.lured_by = m.lured_by;
                     spawned.push(s);
                 }
-                w.events.push(SimEvent::MissileExploded { position: m.position });
+                w.events.push(SimEvent::MissileExploded { position: m.position, effect: class.explosion });
                 continue;
             }
         }
@@ -212,7 +212,7 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         m.velocity = new_dir * speed;
         let next = m.position + m.velocity * dt;
         if let Some((j, t)) = first_hit(w, m.position, next, m.owner) {
-            blasts.push((Some(j), m.position.lerp(next, t), class.impact_damage, class.damage_mode));
+            blasts.push((Some(j), m.position.lerp(next, t), class.impact_damage, class.damage_mode, class.explosion));
             continue;
         }
         // Proximity fuse: detonate on a near *miss* — inside the fuse radius and starting
@@ -220,7 +220,13 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         if let (Some(tid), Some(tp)) = (m.target.filter(|_| lure.is_none()), target_pos) {
             let (now, then) = (m.position.distance(tp), next.distance(tp));
             if now < class.proximity_radius && then > now {
-                blasts.push((Some(tid.index as usize), m.position, class.proximity_damage, class.damage_mode));
+                blasts.push((
+                    Some(tid.index as usize),
+                    m.position,
+                    class.proximity_damage,
+                    class.damage_mode,
+                    class.explosion,
+                ));
                 continue;
             }
         }
@@ -228,13 +234,13 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         if m.life > 0.0 {
             keep.push(m);
         } else {
-            blasts.push((None, m.position, 0.0, DamageMode::Normal));
+            blasts.push((None, m.position, 0.0, DamageMode::Normal, class.explosion));
         }
     }
     keep.extend(spawned);
     w.missiles = keep;
-    for (slot, pos, dmg, mode) in blasts {
-        w.events.push(SimEvent::MissileExploded { position: pos });
+    for (slot, pos, dmg, mode, effect) in blasts {
+        w.events.push(SimEvent::MissileExploded { position: pos, effect });
         if let Some(j) = slot {
             let id = w.id_of(j);
             apply_damage_mode(w, id, dmg, pos, mode);
@@ -250,7 +256,7 @@ pub fn area_blast(w: &mut World, at: Vec3, radius: f32, damage: f32, except: Opt
         .map(|i| (w.id_of(i), w.ships[i].position.distance(at)))
         .filter(|(_, d)| *d < radius)
         .collect();
-    w.events.push(SimEvent::MissileExploded { position: at });
+    w.events.push(SimEvent::MissileExploded { position: at, effect: None });
     for (id, d) in hits {
         apply_damage_mode(w, id, damage * (1.0 - d / radius.max(1.0)), at, DamageMode::Enveloping);
     }

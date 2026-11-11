@@ -54,8 +54,50 @@ pub fn step(w: &mut World, dt: f32) {
             w.events.push(SimEvent::Message { ship: id, text });
         }
     }
+    point_defence(w, dt);
     move_bolts(w, dt);
     super::guidance::step(w, dt, &rules);
+}
+
+/// Point defence: each ship with `point_defence` fires at the nearest hostile missile
+/// in range when its guns are ready and it has the energy. A shot destroys the missile
+/// with the class's `chance` (rolled on the world's seeded generator, so a battle
+/// replays identically). Decoys are fair game: the guns cannot tell them apart.
+fn point_defence(w: &mut World, dt: f32) {
+    let rules = w.rules.clone();
+    for i in 0..w.ships.len() {
+        let s = &mut w.ships[i];
+        if !s.alive {
+            continue;
+        }
+        let Some(pd) = rules.ship(s.class).point_defence else { continue };
+        s.pd_cooldown = (s.pd_cooldown - dt).max(0.0);
+        if s.pd_cooldown > 0.0 || s.energy < pd.energy {
+            continue;
+        }
+        let (me, at) = (s.faction, s.position);
+        let nearest = w
+            .missiles
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| rules.hostile(me, m.faction))
+            .map(|(k, m)| (k, m.position.distance(at)))
+            .filter(|(_, d)| *d <= pd.range)
+            .min_by(|a, b| a.1.total_cmp(&b.1));
+        let Some((k, _)) = nearest else { continue };
+        let s = &mut w.ships[i];
+        s.pd_cooldown = 1.0 / pd.rate;
+        s.energy -= pd.energy;
+        let hit = w.random() < pd.chance;
+        let to = w.missiles[k].position;
+        let id = w.id_of(i);
+        w.events.push(SimEvent::PointDefence { ship: id, from: at, to, hit });
+        if hit {
+            let m = w.missiles.swap_remove(k);
+            let effect = rules.missile(m.class).explosion;
+            w.events.push(SimEvent::MissileExploded { position: m.position, effect });
+        }
+    }
 }
 
 /// Updates missile-lock progress on the ship in slot `i`.
@@ -549,6 +591,40 @@ mod tests {
             step(&mut w, TICK);
         }
         assert!(w.missiles.is_empty());
+    }
+
+    #[test]
+    fn point_defence_shoots_down_hostile_missiles() {
+        use crate::content::rules::PointDefence;
+        for (chance, survives) in [(1.0, false), (0.0, true)] {
+            let (mut w, me, foe) = duel();
+            // The foe carries point defence; my missile is 500 m out, inside its 800 m reach.
+            let mut rules = (*w.rules).clone();
+            let foe_class = w.get(foe).unwrap().class;
+            rules.ships[foe_class.0 as usize].point_defence =
+                Some(PointDefence { range: 800.0, rate: 5.0, chance, energy: 4.0 });
+            w.rules = Arc::new(rules);
+            let at = w.get(foe).unwrap().position + Vec3::new(0.0, 0.0, 500.0);
+            let my_faction = w.get(me).unwrap().faction;
+            w.missiles.push(Missile::new(
+                crate::content::rules::MissileId(0),
+                me,
+                my_faction,
+                None,
+                at,
+                Vec3::ZERO,
+                5.0,
+            ));
+            let energy = w.get(foe).unwrap().energy;
+            point_defence(&mut w, TICK);
+            assert_eq!(w.missiles.is_empty(), !survives, "chance {chance}");
+            assert_eq!(w.get(foe).unwrap().energy, energy - 4.0, "a shot costs energy");
+            assert!(w.events.iter().any(|e| matches!(e, SimEvent::PointDefence { hit, .. } if *hit == !survives)));
+            // Guns cool down: no second shot on the next tick.
+            let before = w.events.len();
+            point_defence(&mut w, TICK);
+            assert_eq!(w.events.len(), before, "cooling down");
+        }
     }
 
     #[test]

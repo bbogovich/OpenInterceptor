@@ -260,6 +260,7 @@ ships:
     model_set: corporate_avenger
     behaviour: human_pilot
   xcom_freighter:
+    point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_XCOMFreighter
     name: Star Ranger Freighter
     model_set: xcom_freighter
@@ -273,6 +274,7 @@ ships:
     yaw_rate: 20
     beams: [laser_cannon]
   patton:
+    point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_PattonClass
     name: Patton-class Research Cruiser
     model_set: patton

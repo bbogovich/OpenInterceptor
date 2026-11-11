@@ -153,6 +153,7 @@ ships:
     behaviour: saucer_raider
     engine_color: [0.5, 1.0, 0.3]
   dreadnought:
+    point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     name: Dreadnought disc
     description: The Regent's tiered battle disc.
     model_set: dreadnought

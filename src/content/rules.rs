@@ -72,6 +72,34 @@ pub struct MissileId(pub u16);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FactionId(pub u16);
 
+/// Point defence: automatic guns that fire at hostile missiles in range.
+///
+/// ```yaml
+/// point_defence: {range: 800m, rate: 3, chance: 35%, energy: 4}
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PointDefence {
+    /// Reach, metres.
+    pub range: f32,
+    /// Shots per second.
+    pub rate: f32,
+    /// Chance that one shot destroys the missile, 0..1.
+    pub chance: f32,
+    /// Energy per shot.
+    pub energy: f32,
+}
+
+impl PointDefence {
+    fn parse(g: Get) -> PointDefence {
+        PointDefence {
+            range: g.qty("range", Unit::Distance).unwrap_or(800.0).max(0.0),
+            rate: g.num("rate").unwrap_or(3.0).max(0.1),
+            chance: g.qty("chance", Unit::Fraction).unwrap_or(0.35).clamp(0.0, 1.0),
+            energy: g.num("energy").unwrap_or(4.0).max(0.0),
+        }
+    }
+}
+
 /// What sort of object a ship class is. Affects defaults and how the HUD lists it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShipKind {
@@ -170,6 +198,8 @@ pub struct ShipClass {
     pub modules: Vec<(String, ShipClassId)>,
     /// Modules: keeps its station's shields working while it survives.
     pub shield_generator: bool,
+    /// Guns that shoot down hostile missiles, if fitted.
+    pub point_defence: Option<PointDefence>,
     /// Model references for wreckage chunks.
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
@@ -229,6 +259,8 @@ pub struct MissileClass {
     pub split_range: f32,
     /// Cloaked wait: wake when a hostile comes this close, metres.
     pub trigger_range: f32,
+    /// The effect drawn (and heard) when it detonates; the engine's default if none.
+    pub explosion: Option<EffectId>,
 }
 
 /// How a missile steers.
@@ -760,6 +792,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 cluster: None, // resolved below, once every missile is known
                 split_range: g.node("cluster").and_then(|c| Get(c).qty("at", Unit::Distance)).unwrap_or(600.0),
                 trigger_range: g.qty("trigger_range", Unit::Distance).unwrap_or(800.0),
+                explosion: None, // resolved once effects are known
                 id: id.clone(),
             }
         })
@@ -810,9 +843,21 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     }
     // Looks: effects, debris sets and model sets (ships refer to them).
     let mut effects: Vec<EffectDef> =
-        of(&resolved, "effects").map(|(_, id, e)| EffectDef::parse(id, Get(&e.node))).collect();
+        of(&resolved, "effects").map(|(_, id, e)| EffectDef::parse(id, Get(&e.node), e.pack)).collect();
     if !effects.iter().any(|x| x.id == "explosion") {
         effects.push(EffectDef::builtin("explosion"));
+    }
+    // Missiles name their detonation effect.
+    for (_, id, e) in of(&resolved, "missiles") {
+        let Some(name) = Get(&e.node).str("explosion") else { continue };
+        match effects.iter().position(|x| x.id.eq_ignore_ascii_case(name)) {
+            Some(i) => {
+                if let Some(m) = missiles.iter_mut().find(|m| &m.id == id) {
+                    m.explosion = Some(EffectId(i as u16));
+                }
+            }
+            None => errors.push(format!("{}: missiles.{id}.explosion: unknown effect '{name}'", e.origin)),
+        }
     }
     let mut debris_sets: Vec<DebrisSet> =
         of(&resolved, "debris").map(|(_, id, e)| DebrisSet::parse(id, Get(&e.node), e.pack)).collect();
@@ -1376,6 +1421,7 @@ fn ship_class(
         turret_arc: g.qty("turret_arc", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
         modules: Vec::new(), // resolved once every class is known
         shield_generator: g.bool("shield_generator").unwrap_or(false),
+        point_defence: g.node("point_defence").map(|n| PointDefence::parse(Get(n))),
         repair_rate: g.num("repair_rate").unwrap_or(damage.repair_rate).max(0.0),
         capturable: g
             .bool("capturable")

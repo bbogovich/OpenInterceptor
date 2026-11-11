@@ -23,6 +23,8 @@ pub enum SoundKey {
     Beam(u16),
     /// The launch sound of a missile type.
     Missile(u16),
+    /// The sound of an effect (index into `rules.effects`).
+    Effect(u16),
 }
 
 /// Volume falls off with distance: full within 50 m, half at ~350 m.
@@ -49,11 +51,25 @@ pub fn event_sound(world: &World, e: &SimEvent, listener: ShipId, ear: Vec3) -> 
             let key = if *shield { "shield_hit" } else { "hull_hit" };
             (SoundKey::Named(key), if mine(ship) { 1.0 } else { at(*position) * 0.7 })
         }
-        SimEvent::Destroyed { position, radius, .. } => {
-            let key = if *radius > 100.0 { "big_explosion" } else { "explosion" };
-            (SoundKey::Named(key), at(*position).max(0.15))
+        SimEvent::Destroyed { ship, position, radius } => {
+            // The model set's destroyed effect may carry its own sound.
+            let s = &world.ships[ship.index as usize];
+            let fx = world.rules.model_set(world.rules.ship(s.class).model_set).destroyed_effect;
+            let key = match fx.filter(|e| world.rules.effect(*e).sound.is_some()) {
+                Some(e) => SoundKey::Effect(e.0),
+                None if *radius > 100.0 => SoundKey::Named("big_explosion"),
+                None => SoundKey::Named("explosion"),
+            };
+            (key, at(*position).max(0.15))
         }
-        SimEvent::MissileExploded { position } => (SoundKey::Named("explosion"), at(*position) * 0.6),
+        SimEvent::MissileExploded { position, effect } => {
+            let key = match effect.filter(|e| world.rules.effect(*e).sound.is_some()) {
+                Some(e) => SoundKey::Effect(e.0),
+                None => SoundKey::Named("explosion"),
+            };
+            (key, at(*position) * 0.6)
+        }
+        SimEvent::PointDefence { from, .. } => (SoundKey::Named("point_defence"), at(*from) * 0.4),
         SimEvent::LockAcquired { ship } if mine(ship) => (SoundKey::Named("lock"), 0.8),
         SimEvent::Collision { position, .. } => (SoundKey::Named("collision"), at(*position)),
         SimEvent::NoEnergy { ship } if mine(ship) => (SoundKey::Named("denied"), 0.6),
@@ -86,7 +102,7 @@ pub fn event_sound(world: &World, e: &SimEvent, listener: ShipId, ear: Vec3) -> 
 }
 
 /// Named event sounds the engine knows about.
-pub const NAMED: [&str; 15] = [
+pub const NAMED: [&str; 16] = [
     "explosion",
     "big_explosion",
     "shield_hit",
@@ -102,6 +118,7 @@ pub const NAMED: [&str; 15] = [
     "cloak",
     "ecm",
     "hyperspace",
+    "point_defence",
 ];
 
 /// Decoded, playable sounds.
@@ -120,6 +137,13 @@ impl SoundBank {
         for name in NAMED {
             if let Some((r, p)) = rules.sounds.get(name) {
                 wanted.push((SoundKey::Named(name), r.clone(), *p));
+            }
+        }
+        // Effect sounds: an event name from `sounds:`, or an asset in the effect's pack.
+        for (i, fx) in rules.effects.iter().enumerate() {
+            if let Some(snd) = &fx.sound {
+                let (r, p) = rules.sounds.get(snd.as_str()).cloned().unwrap_or((snd.clone(), fx.pack));
+                wanted.push((SoundKey::Effect(i as u16), r, p));
             }
         }
         for (i, b) in rules.beams.iter().enumerate() {
@@ -213,7 +237,10 @@ mod tests {
         assert_eq!(s(SimEvent::LockAcquired { ship: me }).unwrap().0, SoundKey::Named("lock"));
         assert_eq!(s(SimEvent::LockAcquired { ship: other }), None, "only the listener's lock tone");
         assert_eq!(s(SimEvent::NoEnergy { ship: me }).unwrap().0, SoundKey::Named("denied"));
-        assert_eq!(s(SimEvent::MissileExploded { position: Vec3::ZERO }).unwrap().0, SoundKey::Named("explosion"));
+        assert_eq!(
+            s(SimEvent::MissileExploded { position: Vec3::ZERO, effect: None }).unwrap().0,
+            SoundKey::Named("explosion")
+        );
         assert_eq!(s(SimEvent::Collision { ship: me, position: Vec3::ZERO }).unwrap().0, SoundKey::Named("collision"));
         assert_eq!(s(SimEvent::Message { ship: me, text: "x".into() }), None);
         let dmg =

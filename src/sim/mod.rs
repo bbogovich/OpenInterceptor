@@ -336,6 +336,8 @@ pub struct Ship {
     pub departed: bool,
     /// Decoys (doppelgangers): seconds until it vanishes.
     pub expires: Option<f32>,
+    /// Point defence: seconds until the guns can fire again.
+    pub pd_cooldown: f32,
     /// Station modules: the hub it is mounted on, and where (in the hub's frame).
     pub mount: Option<(ShipId, Vec3, Quat)>,
     /// A scenario objective protected by this faction (the player's): its pilots never
@@ -470,6 +472,15 @@ pub enum SimEvent {
     },
     MissileExploded {
         position: Vec3,
+        /// The detonation effect (the missile's `explosion`); `None` = the default.
+        effect: Option<crate::content::looks::EffectId>,
+    },
+    /// Point defence fired from `from` at a missile at `to`; `hit` if it was destroyed.
+    PointDefence {
+        ship: ShipId,
+        from: Vec3,
+        to: Vec3,
+        hit: bool,
     },
     LockAcquired {
         ship: ShipId,
@@ -633,6 +644,7 @@ impl World {
             disabled: false,
             departed: false,
             expires: None,
+            pd_cooldown: 0.0,
             mount: None,
             protected_by: None,
         };

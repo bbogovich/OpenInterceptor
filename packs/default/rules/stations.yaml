@@ -4,6 +4,7 @@
 
 objects:
   guard_station:
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     modules:
       - {slot: turret1, class: guard_turret}
       - {slot: turret2, class: guard_turret}
@@ -21,6 +22,7 @@ objects:
     shields: 1500
     armor: 2000
   dominion_outpost:
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     modules:
       - {slot: pod1, class: dominion_turret_pod}
       - {slot: pod2, class: dominion_turret_pod}
