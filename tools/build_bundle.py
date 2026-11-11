@@ -116,7 +116,7 @@ def main():
     shutil.copy2(engine, contents / "MacOS" / "openinterceptor")
     # Built-in packs ship inside the app (they hold no original content).
     shutil.copytree(ROOT / "packs", resources / "packs")
-    shutil.copy2(ROOT / "LICENSE-MIT", resources / "LICENSE-MIT")
+    shutil.copy2(ROOT / "LICENSE", resources / "LICENSE")
     with open(contents / "Info.plist", "wb") as file:
         plistlib.dump({
             "CFBundleDevelopmentRegion": "en",

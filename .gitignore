@@ -30,3 +30,8 @@
 site/
 __pycache__/
 *.pyc
+
+# From the GitHub template (Rust).
+debug/
+**/*.rs.bk
+*.pdb

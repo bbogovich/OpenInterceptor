@@ -35,7 +35,7 @@ original assets at all. *Interceptor* is the worked example the engine is proven
   it is git-ignored, as are all original asset file types.
 - Original binaries are read as **data** only. Nothing from them is executed or
   redistributed.
-- Licence: **MIT** (see `LICENSE-MIT`). Third-party code is limited to permissively
+- Licence: **MIT** (see `LICENSE`). Third-party code is limited to permissively
   licensed crates listed in `Cargo.toml`.
 
 *X-COM* and *Interceptor* are trademarks of their respective owners. This project is not
