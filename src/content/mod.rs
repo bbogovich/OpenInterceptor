@@ -306,7 +306,9 @@ impl Content {
                     let lib_path = join(&folder, lib);
                     let mtl = String::from_utf8_lossy(&self.read_pack_file(pack, &lib_path)?).into_owned();
                     for mut m in obj::parse_mtl(&mtl) {
-                        m.texture = m.texture.map(|t| join(&folder, &t));
+                        // An `original:` texture names the player's original data, not a
+                        // file, so it is kept as it is (see `load_texture`).
+                        m.texture = m.texture.map(|t| if t.starts_with("original:") { t } else { join(&folder, &t) });
                         materials.push(m);
                     }
                 }
@@ -318,7 +320,19 @@ impl Content {
     /// Loads a texture named inside a model. Pack files win (so a mod can replace an
     /// original texture by dropping `textures/<name>.png` into its pack); otherwise the
     /// original `XTXR` resource of that name is used.
+    ///
+    /// A material (MTL `map_Kd`) may also name original data directly, so a mod can use
+    /// the player's own art without shipping a copy of it:
+    /// - `original:CockpitA.dll#12000`: an original image (TGA resource), with the
+    ///   cockpit art's cyan colour key made transparent (canopy windows stay clear);
+    /// - `original:INTTOP`: an original texture by name.
     pub fn load_texture(&self, name: &str, pack: usize) -> Result<Image, String> {
+        if let Some(rest) = name.strip_prefix("original:") {
+            if rest.contains('#') {
+                return self.load_image(name, pack, true);
+            }
+            return self.load_texture(rest, pack);
+        }
         // A path with an extension is a pack file relative to the model's pack.
         if name.contains('.') {
             return self.load_image(name, pack, false);
@@ -605,6 +619,16 @@ mod tests {
         assert_eq!(c.load_model("original:SHIP", 0, 1.0).unwrap().name, "models/ship.obj", "mod mesh wins");
         assert_eq!(c.load_image("original:CockpitA.dll#art", 0, true).unwrap().rgba, vec![9, 9, 9, 255]);
         assert_eq!(c.load_sound("original:Boom.wav", 0).unwrap().samples, vec![7]);
+        // A pack model whose material names original data directly (a 3D cockpit using
+        // the player's cockpit art): the reference is kept, and loads the original image.
+        std::fs::write(m.join("models/pit.obj"), "mtllib pit.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nusemtl a\nf 1 2 3\n")
+            .unwrap();
+        std::fs::write(m.join("models/pit.mtl"), "newmtl a\nmap_Kd original:xobjects1.dll#art\n").unwrap();
+        let hd = c.packs.iter().position(|p| p.id == "hd").unwrap();
+        let pit = c.load_model("models/pit.obj", hd, 1.0).unwrap();
+        let tex = pit.lods[0].groups[0].texture.clone().unwrap();
+        assert_eq!(tex, "original:xobjects1.dll#art", "not turned into a path");
+        assert_eq!(c.load_texture(&tex, hd).unwrap().rgba, vec![3, 2, 1, 255]);
         // Switching the pack off restores the originals.
         let c = Content::load(&cfg(vec!["HD".into()])).unwrap();
         assert_eq!(c.load_model("original:SHIP", 0, 1.0).unwrap().name, "test");

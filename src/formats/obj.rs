@@ -176,7 +176,12 @@ pub fn parse(text: &str) -> FResult<ObjMesh> {
 pub fn parse_mtl(text: &str) -> Vec<ObjMaterial> {
     let mut out: Vec<ObjMaterial> = Vec::new();
     for raw in text.lines() {
-        let content = raw.split('#').next().unwrap_or("").trim();
+        // A comment is a line starting with '#'. A '#' later on the line is part of the
+        // value: `map_Kd original:CockpitA.dll#12000` names an original resource.
+        let content = raw.trim();
+        if content.starts_with('#') {
+            continue;
+        }
         let Some((tag, rest)) = content.split_once(char::is_whitespace) else { continue };
         let rest = rest.trim();
         match tag {
@@ -252,5 +257,7 @@ mod tests {
         assert_eq!(mats[0].texture.as_deref(), Some("hull.png"));
         assert_eq!(mats[1].color, [1.0; 3], "short Kd is ignored");
         assert_eq!(mats[1].texture, None);
+        let m = parse_mtl("# a comment\nnewmtl pit\nmap_Kd original:CockpitA.dll#12000\n");
+        assert_eq!(m[0].texture.as_deref(), Some("original:CockpitA.dll#12000"), "'#' inside a value is kept");
     }
 }

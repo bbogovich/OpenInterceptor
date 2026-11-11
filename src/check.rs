@@ -105,6 +105,26 @@ pub fn run(content: &Content) -> Report {
             }
         }
     }
+    // 3D cockpits: the model and every texture it uses, `original:` references in its
+    // materials included (a mod painting a 3D cockpit with the player's cockpit art).
+    for c in &rules.cockpits {
+        let Some(model) = &c.model else { continue };
+        match content.load_model(model, c.image_pack, c.model_scale) {
+            Ok(m) => {
+                r.models += 1;
+                for g in m.lods.iter().flat_map(|l| l.groups.iter()) {
+                    let Some(t) = &g.texture else { continue };
+                    if textures_seen.insert((t.clone(), c.image_pack)) {
+                        match content.load_texture(t, c.image_pack) {
+                            Ok(_) => r.textures += 1,
+                            Err(e) => r.errors.push(format!("cockpit {}: texture {t}: {e}", c.id)),
+                        }
+                    }
+                }
+            }
+            Err(e) => r.errors.push(format!("cockpit {}: model {model}: {e}", c.id)),
+        }
+    }
     // Model sets: every swapped texture and state mesh loads; debris sets: every piece
     // and chunk loads.
     for set in &rules.model_sets {
