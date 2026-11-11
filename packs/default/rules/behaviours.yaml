@@ -30,6 +30,7 @@ behaviours:
 
   # Fighting saucers: steadier, with seeker rockets from ranger up.
   saucer_raider:
+    systems: {cloak: target_distance > 2km, shields_first: hull < 50%}
     prefer: {player: 1.5}
     start: engage
     states:
@@ -66,6 +67,7 @@ behaviours:
 
   # The Dreadnought disc and other gun platforms: turrets that track targets.
   gun_platform:
+    systems: {ecm: missiles_incoming(3km) > 0, shields_first: hull < 50%}
     states:
       guns:
         do: turret
@@ -108,6 +110,7 @@ behaviours:
 
   # The Guard's own pilots (wingmen and allied patrols): steady and loyal.
   guard_pilot:
+    systems: {ecm: missiles_incoming(3km) > 0, shields_first: hull < 50%}
     states:
       engage: {do: attack, range: 1.8km, fire_cone: 3, burst: 1.2s, pause: 0.8s, missiles: 10s}
     skill: {aim: 0.55, reaction: 0.7s}

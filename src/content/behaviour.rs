@@ -143,6 +143,17 @@ impl Default for Skill {
     }
 }
 
+/// When a pilot uses its ship's systems: each a condition (object context), checked with
+/// the transitions. Cloak and ECM are switched to match their condition; while
+/// `shields_first` (or else `beams_first`) holds, power is moved one level that way.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct SystemsUse {
+    pub cloak: Option<Expr>,
+    pub ecm: Option<Expr>,
+    pub shields_first: Option<Expr>,
+    pub beams_first: Option<Expr>,
+}
+
 /// What a target preference matches.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Selector {
@@ -186,6 +197,8 @@ pub struct BehaviourDef {
     /// Target preferences: a matching hostile counts as `distance / weight` when the
     /// pilot picks the nearest one, so weight 2 makes it as attractive as one half as far.
     pub prefer: Vec<(Selector, f32)>,
+    /// When to use cloak, ECM and power settings.
+    pub systems: SystemsUse,
 }
 
 impl BehaviourDef {
@@ -210,6 +223,7 @@ impl BehaviourDef {
             ],
             skill: Skill::default(),
             prefer: Vec::new(),
+            systems: SystemsUse::default(),
         }
     }
 
@@ -279,7 +293,21 @@ impl BehaviourDef {
             }
             prefer.push((Selector::parse(k)?, w));
         }
-        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill, prefer })
+        let mut systems = SystemsUse::default();
+        if let Some(n) = g.node("systems") {
+            let sg = Get(n);
+            for (key, slot) in [
+                ("cloak", &mut systems.cloak),
+                ("ecm", &mut systems.ecm),
+                ("shields_first", &mut systems.shields_first),
+                ("beams_first", &mut systems.beams_first),
+            ] {
+                if let Some(text) = sg.str(key) {
+                    *slot = Some(script::parse_condition(text, schema).map_err(|e| format!("systems.{key}: {e}"))?);
+                }
+            }
+        }
+        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill, prefer, systems })
     }
 }
 

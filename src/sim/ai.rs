@@ -111,6 +111,8 @@ pub struct AiState {
     /// This pilot's own random-number state, so decisions stay deterministic without
     /// touching the world's generator during the read-only phase.
     pub rng: u64,
+    /// System switches decided at the last check, handed over on the next tick.
+    pub pending: super::Requests,
 }
 
 impl AiState {
@@ -133,6 +135,7 @@ impl AiState {
             aim_error: Vec2::ZERO,
             home: None,
             rng: 0x9E37_79B9_7F4A_7C15,
+            pending: super::Requests::default(),
         }
     }
 }
@@ -236,6 +239,15 @@ impl Context for ObjectContext<'_> {
             id::TOWING => b(s.towing.is_some()),
             id::PRIZE_NEAR => b(nearest_prize(w, self.me, args[0]).is_some()),
             id::TARGET_IS_PLAYER => b(target.is_some_and(|t| t.pilot == Pilot::External)),
+            id::MISSILES_INCOMING => n(w
+                .missiles
+                .iter()
+                .filter(|m| {
+                    m.target == Some(self.me)
+                        && w.rules.hostile(m.faction, s.faction)
+                        && m.position.distance(s.position) <= args[0]
+                })
+                .count() as f32),
             _ => b(false),
         }
     }
@@ -317,6 +329,9 @@ fn run_behaviour(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) ->
             .iter()
             .find(|t| t.to != st.state && t.from.is_none_or(|f| f == st.state) && t.when.test(&cx))
             .map(|t| t.to);
+        // Ship systems: switch cloak and ECM to match their conditions, and step power
+        // towards shields or beams while those conditions hold.
+        st.pending = systems_requests(w, me, def, &cx);
         st.rng = cx.rng.get();
         if let Some(to) = next {
             st.state = to;
@@ -324,7 +339,31 @@ fn run_behaviour(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) ->
         }
     }
     let state = &def.states[st.state];
-    fly(w, me, st, state.manoeuvre, &state.params, &def.skill, &def.prefer)
+    let (mut c, t) = fly(w, me, st, state.manoeuvre, &state.params, &def.skill, &def.prefer);
+    // Requests act once: hand them over on this tick only.
+    c.requests = c.requests.merge(std::mem::take(&mut st.pending));
+    (c, t)
+}
+
+/// The system switches a behaviour's `systems:` conditions ask for right now.
+fn systems_requests(w: &World, me: ShipId, def: &BehaviourDef, cx: &ObjectContext) -> super::Requests {
+    let mut r = super::Requests::default();
+    let Some(ship) = w.get(me) else { return r };
+    let u = &def.systems;
+    let want = |cond: &Option<crate::script::Expr>| cond.as_ref().map(|e| e.test(cx));
+    if let Some(on) = want(&u.cloak) {
+        r.cloak = ship.system(SystemKind::Cloak).is_some() && on != ship.is_on(SystemKind::Cloak);
+    }
+    if let Some(on) = want(&u.ecm) {
+        r.ecm = ship.system(SystemKind::Ecm).is_some() && on != ship.is_on(SystemKind::Ecm);
+    }
+    let top = w.rules.power.levels().saturating_sub(1);
+    if want(&u.shields_first) == Some(true) && ship.power.shield < top {
+        r.power_to_shields = true;
+    } else if want(&u.beams_first) == Some(true) && ship.power.beam < top {
+        r.power_to_beams = true;
+    }
+    r
 }
 
 /// Flies one manoeuvre for one tick.

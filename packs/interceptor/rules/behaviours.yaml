@@ -48,6 +48,7 @@ behaviours:
 
   # Elite Aereon pilots.
   shade:
+    systems: {cloak: target_distance > 2km, ecm: missiles_incoming(3km) > 0, shields_first: hull < 50%}
     inherit: phantasm
     states:
       engage:
@@ -86,6 +87,7 @@ behaviours:
 
   # Pirates and corporate pilots fly the same human hulls.
   human_pilot:
+    systems: {ecm: missiles_incoming(3km) > 0, shields_first: hull < 50%}
     start: engage
     states:
       engage:
@@ -104,6 +106,7 @@ behaviours:
 
   # X-COM wingmen.
   xcom_pilot:
+    systems: {ecm: missiles_incoming(3km) > 0, shields_first: hull < 50%}
     states:
       engage: {do: attack, range: 1.8km, fire_cone: 3, burst: 1.2s, pause: 0.8s, missiles: 10s}
     skill: {aim: 0.55, reaction: 0.7s}

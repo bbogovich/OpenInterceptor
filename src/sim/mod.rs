@@ -998,6 +998,7 @@ ships:
     vct: true
   raider: {inherit: fighter, faction: red, playable: false}
   tug: {inherit: raider, systems+: [tractor], behaviour: tug}
+  sneak: {inherit: raider, systems+: [cloak, ecm], behaviour: sneaky}
 objects:
   base: {model: m, faction: grey, hit_points: 5000}
   gun: {model: m, faction: red, hit_points: 5000, beams: [laser], turret_arc: 180, behaviour: gunner}
@@ -1028,6 +1029,9 @@ behaviours:
     states: {work: {do: tow, range: 5km}}
   mine:
     states: {wait: {do: mine, range: 150m}}
+  sneaky:
+    states: {wait: {do: idle}}
+    systems: {cloak: threats(5km) > 0, ecm: missiles_incoming(3km) > 0, shields_first: hit_recently(5s)}
 ";
 
     pub fn rules() -> Arc<Ruleset> {
@@ -1190,6 +1194,52 @@ mod tests {
         w.spawn(raider, red, "jammer", Vec3::new(0.0, 0.0, -500.0), Quat::IDENTITY, Pilot::External);
         assert!(systems::jammed(&w, w.get(me).unwrap()));
         assert!(!seen(&w), "jammed: half range");
+    }
+
+    #[test]
+    fn ai_pilots_switch_cloak_ecm_and_power_by_condition() {
+        let mut w = world();
+        let sneak = w.rules.ship_id("sneak").unwrap();
+        let fighter = w.rules.ship_id("fighter").unwrap();
+        let (blue, red) = (w.rules.faction_id("blue").unwrap(), w.rules.faction_id("red").unwrap());
+        let ai = Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, Vec3::ZERO));
+        let me = w.spawn(sneak, red, "sneak", Vec3::ZERO, Quat::IDENTITY, ai);
+        // Both settings at A leave power for the cloak (the budget is shared).
+        let p = &mut w.get_mut(me).unwrap().power;
+        (p.beam, p.shield) = (0, 0);
+        let run = |w: &mut World, secs: f32| (0..(secs / TICK) as usize).for_each(|_| w.step());
+        run(&mut w, 0.5);
+        assert!(!w.get(me).unwrap().is_on(SystemKind::Cloak), "no threats: no cloak");
+        // A missile homing on it, fired from beyond 5 km: ECM on, no cloak yet.
+        let foe = w.spawn(fighter, blue, "foe", Vec3::new(0.0, 0.0, -8000.0), Quat::IDENTITY, Pilot::External);
+        w.missiles.push(Missile::new(
+            MissileId(0),
+            foe,
+            blue,
+            Some(me),
+            Vec3::new(0.0, 0.0, -1000.0),
+            Vec3::ZERO,
+            30.0,
+        ));
+        run(&mut w, 0.5);
+        assert!(w.get(me).unwrap().is_on(SystemKind::Ecm), "missile incoming: ECM on");
+        assert!(!w.get(me).unwrap().is_on(SystemKind::Cloak));
+        // The attacker closes to 2 km: cloak on.
+        w.missiles.clear();
+        w.get_mut(foe).unwrap().position = Vec3::new(0.0, 0.0, -2000.0);
+        run(&mut w, 0.5);
+        assert!(w.get(me).unwrap().is_on(SystemKind::Cloak), "a threat within 5 km: cloaked");
+        // Hit: power moves to shields.
+        let before = w.get(me).unwrap().power.shield;
+        w.get_mut(me).unwrap().since_hit = 0.0;
+        run(&mut w, 0.3);
+        assert!(w.get(me).unwrap().power.shield > before, "hit: power to shields");
+        // The foe leaves: cloak and ECM go off again.
+        w.get_mut(foe).unwrap().alive = false;
+        w.missiles.clear();
+        run(&mut w, 0.5);
+        let s = w.get(me).unwrap();
+        assert!(!s.is_on(SystemKind::Cloak) && !s.is_on(SystemKind::Ecm));
     }
 
     #[test]

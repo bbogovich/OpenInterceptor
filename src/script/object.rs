@@ -33,6 +33,7 @@ pub mod id {
     pub const TOWING: u16 = 17;
     pub const PRIZE_NEAR: u16 = 18;
     pub const TARGET_IS_PLAYER: u16 = 19;
+    pub const MISSILES_INCOMING: u16 = 20;
 }
 
 /// The object context's queries (index = id above).
@@ -97,6 +98,12 @@ pub const QUERIES: &[QueryDef] = &[
         doc: "a disabled, capturable hostile ship is within a distance",
     },
     QueryDef { name: "target_is_player", args: &[], result: Type::Bool, doc: "the target is flown by the player" },
+    QueryDef {
+        name: "missiles_incoming",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "hostile missiles homing on this ship within a distance: missiles_incoming(3km)",
+    },
 ];
 
 /// The object schema with the campaign's difficulty level names as constants.
@@ -135,6 +142,7 @@ mod tests {
             (id::TOWING, "towing"),
             (id::PRIZE_NEAR, "prize_near"),
             (id::TARGET_IS_PLAYER, "target_is_player"),
+            (id::MISSILES_INCOMING, "missiles_incoming"),
         ];
         assert_eq!(ids.len(), QUERIES.len());
         for (i, name) in ids {

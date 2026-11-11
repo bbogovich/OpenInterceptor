@@ -198,6 +198,12 @@
                 "to": {"description": "state name", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                 "when": {"description": "condition (object context)", "type": "string"}
               }}},
+          "systems": {"description": "when the pilot uses its ship's systems", "type": "object", "additionalProperties": false, "properties": {
+              "cloak": {"description": "cloak on while this holds, off otherwise", "type": "string"},
+              "ecm": {"description": "ECM on while this holds, off otherwise", "type": "string"},
+              "shields_first": {"description": "while this holds, move power to shields", "type": "string"},
+              "beams_first": {"description": "while this holds (and shields_first does not), move power to beams", "type": "string"}
+            }},
           "prefer": {"description": "target preferences: player, a kind (fighter, station…), class:<id> or faction:<id> → weight (2 = as if half as far)", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "skill": {"description": "how well the pilot flies and shoots", "type": "object", "additionalProperties": false, "properties": {
               "aim": {"description": "0 wild … 1 perfect", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},

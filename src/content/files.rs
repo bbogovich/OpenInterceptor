@@ -305,6 +305,16 @@ fn behaviour() -> Ty {
             "tried in order; the first whose condition holds wins",
         ),
         f(
+            "systems",
+            Ty::Struct(vec![
+                f("cloak", Ty::Condition, "cloak on while this holds, off otherwise"),
+                f("ecm", Ty::Condition, "ECM on while this holds, off otherwise"),
+                f("shields_first", Ty::Condition, "while this holds, move power to shields"),
+                f("beams_first", Ty::Condition, "while this holds (and shields_first does not), move power to beams"),
+            ]),
+            "when the pilot uses its ship's systems",
+        ),
+        f(
             "prefer",
             Ty::Dict(Box::new(Ty::Num)),
             "target preferences: player, a kind (fighter, station…), class:<id> or faction:<id> → weight (2 = as if half as far)",
