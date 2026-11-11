@@ -48,8 +48,10 @@ fn col(c: [f32; 4]) -> Color {
 const HUD_GREEN: Color = Color::new(0.35, 1.0, 0.45, 0.9);
 const HUD_DIM: Color = Color::new(0.35, 1.0, 0.45, 0.35);
 
-/// Draws text with its top-left at `(x, y)` scaled to `size` pixels.
+/// Draws text with its top-left at `(x, y)` at about `size` pixels: the size is
+/// snapped down to the glyph-cache ladder (see [`super::glyphs`]).
 fn text(s: &str, x: f32, y: f32, size: f32, color: Color) {
+    let size = super::glyphs::snap(size);
     draw_text(s, x, y + size * 0.8, size, color);
 }
 

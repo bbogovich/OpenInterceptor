@@ -385,6 +385,7 @@ pub fn faction_color(rules: &Ruleset, f: FactionId) -> [f32; 4] {
 }
 
 pub mod draw;
+pub mod glyphs;
 pub mod layout;
 
 #[cfg(test)]

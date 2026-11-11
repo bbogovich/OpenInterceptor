@@ -159,6 +159,9 @@ fn save_screenshot(path: &std::path::Path) -> Result<(), String> {
 
 /// Runs the windowed application until the user quits.
 pub async fn run(options: Options) {
+    // First, before any other texture exists: fill the font's glyph atlas so it never
+    // has to grow mid-frame (see `hud::glyphs` for the macroquad bug this avoids).
+    crate::hud::glyphs::warm();
     let content = match Content::load(&options.content_config()) {
         Ok(c) => c,
         Err(e) => return error_screen(&e).await,
