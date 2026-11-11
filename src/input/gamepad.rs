@@ -65,7 +65,7 @@ impl Button {
     }
 
     /// The XInput bit for digital buttons (`None` for the triggers).
-    fn bit(self) -> Option<u16> {
+    pub(crate) fn bit(self) -> Option<u16> {
         Some(match self {
             Button::DpadUp => 0x0001,
             Button::DpadDown => 0x0002,

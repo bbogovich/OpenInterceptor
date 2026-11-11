@@ -552,6 +552,61 @@ impl RawInput {
     }
 }
 
+/// Hides inputs that were already held when a screen started, until each is released.
+///
+/// Enter starts a mission from the launcher, the restart prompt and the debrief, and
+/// Enter is also a fire key: without this guard, the key still down on the battle's
+/// first frame fires the guns. The same goes for the pad's A button (start, and the
+/// afterburner) and the mouse. The guard records what is held on its first frame and
+/// filters it out of every later frame until it is let go; pressing it again then
+/// works normally.
+#[derive(Debug, Default)]
+pub struct StartGuard {
+    started: bool,
+    keys: HashSet<String>,
+    buttons: u16,
+    triggers: (bool, bool),
+    mouse: bool,
+}
+
+impl StartGuard {
+    /// Filters `raw` in place (call once per frame, right after reading the devices).
+    pub fn filter(&mut self, raw: &mut RawInput) {
+        if !self.started {
+            self.started = true;
+            self.keys = raw.held.clone();
+            if let Some(p) = &raw.pad {
+                self.buttons = p.buttons;
+                self.triggers = (p.lt > 127, p.rt > 127);
+            }
+            self.mouse = raw.mouse_left;
+        }
+        // Released inputs leave the guard for good.
+        self.keys.retain(|k| raw.held.contains(k));
+        let pad = raw.pad.unwrap_or_default();
+        self.buttons &= pad.buttons;
+        self.triggers = (self.triggers.0 && pad.lt > 127, self.triggers.1 && pad.rt > 127);
+        self.mouse &= raw.mouse_left;
+        // Hide what is still guarded.
+        for k in &self.keys {
+            raw.held.remove(k);
+            raw.pressed.remove(k);
+        }
+        for p in [&mut raw.pad, &mut raw.pad_previous].into_iter().flatten() {
+            p.buttons &= !self.buttons;
+            if self.triggers.0 {
+                p.lt = 0;
+            }
+            if self.triggers.1 {
+                p.rt = 0;
+            }
+        }
+        if self.mouse {
+            raw.mouse_left = false;
+        }
+    }
+}
+
 /// One-shot requests handled by the app rather than the simulation's [`Controls`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Command {
@@ -818,6 +873,35 @@ mod tests {
             pressed: pressed.iter().map(|k| canonical(k)).collect(),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn keys_held_when_a_battle_starts_are_ignored_until_released() {
+        let b = Bindings::default();
+        let mut guard = StartGuard::default();
+        // Frame 1: Enter is still down from the launcher (and a pad A press).
+        let mut r = raw(&["Enter"], &["Enter"]);
+        r.pad = Some(PadState { buttons: Button::A.bit().unwrap(), ..Default::default() });
+        guard.filter(&mut r);
+        let (c, _, _) = b.translate(&r, false);
+        assert!(!c.fire_beams && !c.afterburner, "the start press does nothing");
+        // Still held a moment later: still nothing.
+        let mut r = raw(&["Enter"], &[]);
+        guard.filter(&mut r);
+        assert!(!b.translate(&r, false).0.fire_beams);
+        // Released, then pressed again: fires.
+        let mut r = raw(&[], &[]);
+        guard.filter(&mut r);
+        let mut r = raw(&["Enter"], &["Enter"]);
+        guard.filter(&mut r);
+        assert!(b.translate(&r, false).0.fire_beams, "a fresh press works");
+        // Other keys are never affected.
+        let mut g = StartGuard::default();
+        let mut r = raw(&["Space"], &["Space"]);
+        g.filter(&mut r);
+        let mut r = raw(&["LeftControl"], &[]);
+        g.filter(&mut r);
+        assert!(b.translate(&r, false).0.fire_beams, "a key pressed after the start counts");
     }
 
     #[test]

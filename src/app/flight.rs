@@ -224,6 +224,8 @@ pub struct FlightSession {
     menu_open: bool,
     /// Seconds since the last telemetry message to the console.
     console_clock: f32,
+    /// Hides the keys still held from the menu that started this battle (see StartGuard).
+    start_guard: crate::input::StartGuard,
     /// Hits on the player's craft so far, and how many reached the hull: the console plays
     /// a burst of static when either count rises.
     console_hits: [u32; 2],
@@ -396,6 +398,7 @@ impl FlightSession {
             menu_open: false,
             help_open: false,
             console_clock: 0.0,
+            start_guard: Default::default(),
             console_hits: [0, 0],
             console_class: None,
             mouse_flight: false,
@@ -434,6 +437,8 @@ impl FlightSession {
             return Next::Stay;
         }
         let mut raw = ctx.devices.read();
+        // The Enter (or pad A) that started this battle must not also fire the guns.
+        self.start_guard.filter(&mut raw);
         self.console_frame(ctx, &mut raw);
         // F12 in the cockpit view opens the layout editor (the battle pauses).
         let in_custom_cockpit = self.view == View::Cockpit && (self.cockpit.is_some() || self.cockpit_model.is_some());
