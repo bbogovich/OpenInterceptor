@@ -356,7 +356,7 @@ class OiDisplay extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `<nav><button data-tab="target" class="on">Target</button><button data-tab="map">Map</button></nav>
       <div data-pane="target"><div class="tdata"></div><oi-target-view class="viewport"></oi-target-view></div>
-      <div data-pane="map" hidden><div class="viewport">3D map (coming in step C4)</div></div>`;
+      <div data-pane="map" hidden><oi-map></oi-map></div>`;
     for (const b of this.querySelectorAll("[data-tab]")) {
       b.addEventListener("click", () => {
         for (const x of this.querySelectorAll("[data-tab]")) x.classList.toggle("on", x === b);
@@ -371,6 +371,16 @@ class OiDisplay extends HTMLElement {
       box.innerHTML = `<h3 class="${t.relation}">${t.name}${t.protect ? ' <small>PROTECT</small>' : ""}</h3>
         <p>${(t.distance / 1000).toFixed(2)} km · closing ${Math.round(t.closing)} m/s</p>
         ${bar("Hull", t.hull)}${bar("Fore", t.shields[0])}${bar("Aft", t.shields[1])}`;
+    });
+    // The last few lines of the pilot's message log, under the target data.
+    const log = document.createElement("ol");
+    log.className = "log";
+    this.querySelector('[data-pane="target"]').appendChild(log);
+    link.addEventListener("event", (e) => {
+      const li = document.createElement("li");
+      li.textContent = e.detail.text;
+      log.appendChild(li);
+      while (log.children.length > 4) log.firstChild.remove();
     });
   }
 }
@@ -461,6 +471,143 @@ class OiTargetView extends HTMLElement {
       gl.drawArrays(gl.TRIANGLES, 0, count);
     };
     requestAnimationFrame(draw);
+  }
+}
+
+/** The 3D map (C4), after TIE Fighter's: the player at the centre, a reference grid at
+ *  the player's height, every radar contact on a height stalk down (or up) to the grid,
+ *  in its relation colour, with its name, range and a short velocity tick; range rings
+ *  at a quarter, half and full radar range. Drag to orbit, pinch or wheel to zoom, and
+ *  tap a contact (or a row of the list) to target it. Positions come in the player's own
+ *  axes (x right, y up, z ahead), so "up the screen" in the top view is the nose. */
+class OiMap extends HTMLElement {
+  connectedCallback() {
+    this.innerHTML = `<div class="views"><button data-v="behind">Behind</button><button data-v="top">Top</button>
+      <button data-v="side">Side</button></div><canvas></canvas><ol class="list"></ol>`;
+    const canvas = this.querySelector("canvas");
+    const g = canvas.getContext("2d");
+    const list = this.querySelector(".list");
+    const presets = { behind: [0, 0.45], top: [0, 1.45], side: [1.5, 0.15] };
+    let [yaw, pitch] = presets.behind;
+    let zoom = 1;
+    let data = { range: 6000, list: [] };
+    let shown = []; // [{id, x, y}] screen positions of the last draw, for taps
+    const colour = { friendly: "#3ddc6b", hostile: "#ff5c4d", neutral: "#f2d36b", objective: "#6bc8ff" };
+    for (const b of this.querySelectorAll("[data-v]")) b.addEventListener("click", () => { [yaw, pitch] = presets[b.dataset.v]; });
+
+    // Orbit: rotate the player's axes by yaw (about up) then pitch (about right), then
+    // perspective-project, the camera standing back from the player.
+    const project = (p, w, h) => {
+      const s = (data.range / zoom) || 1;
+      let [x, y, z] = [p[0] / s, p[1] / s, p[2] / s];
+      [x, z] = [x * Math.cos(yaw) - z * Math.sin(yaw), x * Math.sin(yaw) + z * Math.cos(yaw)];
+      [y, z] = [y * Math.cos(pitch) + z * Math.sin(pitch), -y * Math.sin(pitch) + z * Math.cos(pitch)];
+      const depth = 2.2 - z; // the camera is 2.2 units back, looking ahead (+z in, away)
+      const f = Math.min(w, h * 1.6) * 0.75 / Math.max(depth, 0.2);
+      return [w / 2 + x * f, h / 2 - y * f, depth];
+    };
+    const target = (id) => send({ type: "target", id });
+
+    const draw = () => {
+      requestAnimationFrame(draw);
+      if (this.offsetParent === null) return; // hidden tab: nothing to draw
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (canvas.width !== Math.round(w * devicePixelRatio)) {
+        canvas.width = Math.round(w * devicePixelRatio); canvas.height = Math.round(h * devicePixelRatio);
+      }
+      g.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      g.clearRect(0, 0, w, h);
+      const R = data.range;
+      // Grid: range rings and spokes on the plane at the player's height.
+      g.strokeStyle = "rgba(61,220,107,0.22)";
+      g.lineWidth = 1;
+      for (const k of [0.25, 0.5, 1]) {
+        g.beginPath();
+        for (let a = 0; a <= 64; a++) {
+          const t = a / 64 * Math.PI * 2;
+          const [x, y] = project([Math.cos(t) * R * k, 0, Math.sin(t) * R * k], w, h);
+          a ? g.lineTo(x, y) : g.moveTo(x, y);
+        }
+        g.stroke();
+      }
+      for (let a = 0; a < 8; a++) {
+        const t = a / 8 * Math.PI * 2;
+        const [x0, y0] = project([0, 0, 0], w, h), [x1, y1] = project([Math.cos(t) * R, 0, Math.sin(t) * R], w, h);
+        g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+      }
+      // The player: a small arrowhead pointing ahead (+z).
+      const tri = [[0, 0, R * 0.05], [-R * 0.025, 0, -R * 0.025], [R * 0.025, 0, -R * 0.025]].map((p) => project(p, w, h));
+      g.fillStyle = "#c8f5d2";
+      g.beginPath(); g.moveTo(tri[0][0], tri[0][1]); g.lineTo(tri[1][0], tri[1][1]); g.lineTo(tri[2][0], tri[2][1]); g.fill();
+      // Contacts, far ones first so near ones draw on top.
+      const items = data.list.map((c) => ({ c, s: project(c.pos, w, h) })).sort((a, b) => b.s[2] - a.s[2]);
+      shown = [];
+      g.font = "11px Helvetica, Arial, sans-serif";
+      for (const { c, s } of items) {
+        const col = colour[c.relation] || "#ccc";
+        const base = project([c.pos[0], 0, c.pos[2]], w, h);
+        g.strokeStyle = col; g.globalAlpha = 0.55;
+        g.beginPath(); g.moveTo(base[0], base[1]); g.lineTo(s[0], s[1]); g.stroke();
+        g.globalAlpha = 1;
+        const v = project([c.pos[0] + c.vel[0] * 2, c.pos[1] + c.vel[1] * 2, c.pos[2] + c.vel[2] * 2], w, h);
+        g.beginPath(); g.moveTo(s[0], s[1]); g.lineTo(v[0], v[1]); g.stroke();
+        g.fillStyle = col;
+        const size = c.station ? 5 : 3.5;
+        c.station ? g.fillRect(s[0] - size, s[1] - size, size * 2, size * 2)
+          : (g.beginPath(), g.arc(s[0], s[1], size, 0, Math.PI * 2), g.fill());
+        if (c.target) { g.beginPath(); g.arc(s[0], s[1], 9, 0, Math.PI * 2); g.stroke(); }
+        const dist = Math.hypot(...c.pos);
+        g.fillText(`${c.name} ${(dist / 1000).toFixed(1)}`, s[0] + 8, s[1] - 6);
+        shown.push({ id: c.id, x: s[0], y: s[1] });
+      }
+    };
+    requestAnimationFrame(draw);
+
+    // Drag to orbit; pinch or wheel to zoom; a tap (little movement) targets.
+    const pts = new Map();
+    let moved = 0, pinch = 0;
+    canvas.addEventListener("pointerdown", (e) => { canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!pts.has(e.pointerId)) return;
+      const [px, py] = pts.get(e.pointerId);
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (pts.size === 2) {
+        const [a, b] = [...pts.values()];
+        const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        if (pinch) zoom = Math.min(8, Math.max(0.5, zoom * d / pinch));
+        pinch = d;
+        return;
+      }
+      const dx = e.clientX - px, dy = e.clientY - py;
+      moved += Math.abs(dx) + Math.abs(dy);
+      yaw += dx * 0.01;
+      pitch = Math.min(1.55, Math.max(-1.55, pitch + dy * 0.01));
+    });
+    const up = (e) => {
+      pts.delete(e.pointerId);
+      if (pts.size < 2) pinch = 0;
+      if (moved < 8 && e.type === "pointerup") {
+        const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        const hit = shown.map((s) => ({ s, d: Math.hypot(s.x - x, s.y - y) })).sort((a, b) => a.d - b.d)[0];
+        if (hit && hit.d < 28) target(hit.s.id);
+      }
+    };
+    canvas.addEventListener("pointerup", up);
+    canvas.addEventListener("pointercancel", up);
+    canvas.addEventListener("wheel", (e) => { e.preventDefault(); zoom = Math.min(8, Math.max(0.5, zoom * Math.exp(-e.deltaY * 0.002))); }, { passive: false });
+
+    link.addEventListener("contacts", (e) => {
+      data = e.detail;
+      const rows = [...data.list].sort((a, b) => Math.hypot(...a.pos) - Math.hypot(...b.pos));
+      list.innerHTML = "";
+      for (const c of rows.slice(0, 14)) {
+        const li = document.createElement("li");
+        li.className = c.relation + (c.target ? " on" : "");
+        li.textContent = `${c.name}  ${(Math.hypot(...c.pos) / 1000).toFixed(1)} km`;
+        li.addEventListener("click", () => target(c.id));
+        list.appendChild(li);
+      }
+    });
   }
 }
 
@@ -577,6 +724,7 @@ customElements.define("oi-mode", OiMode);
 customElements.define("oi-hud-strip", OiHudStrip);
 customElements.define("oi-shields", OiShields);
 customElements.define("oi-target-view", OiTargetView);
+customElements.define("oi-map", OiMap);
 customElements.define("oi-display", OiDisplay);
 customElements.define("oi-power", OiPower);
 customElements.define("oi-tiles", OiTiles);

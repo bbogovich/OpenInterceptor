@@ -334,6 +334,14 @@ mod tests {
                 r#""target":{"name":"Wraith","relation":"hostile","protect":false,"distance":2140,"closing":85,"#,
                 r#""hull":0.55,"shields":[0.2,0],"rotation":[0,0.38,0,0.92]}}"#
             ));
+            server.broadcast(concat!(
+                r#"{"type":"contacts","range":6000,"list":["#,
+                r#"{"id":"3:0","name":"Wraith","relation":"hostile","station":false,"target":true,"pos":[-400,300,2100],"vel":[40,0,-90]},"#,
+                r#"{"id":"4:0","name":"Spectre","relation":"hostile","station":false,"target":false,"pos":[1500,-600,3400],"vel":[-60,10,0]},"#,
+                r#"{"id":"5:0","name":"Lightning","relation":"friendly","station":false,"target":false,"pos":[-120,20,-150],"vel":[0,0,0]},"#,
+                r#"{"id":"6:0","name":"X-COM base","relation":"objective","station":true,"target":false,"pos":[2500,-900,-3000],"vel":[0,0,0]}]}"#
+            ));
+            server.broadcast(r#"{"type":"event","text":"TARGET: WRAITH"}"#);
             std::thread::sleep(Duration::from_millis(500));
         }
     }

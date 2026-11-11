@@ -271,6 +271,56 @@ pub fn average_color(rgba: &[u8]) -> [f32; 3] {
     [sum[0] as f32 / n as f32 / 255.0, sum[1] as f32 / n as f32 / 255.0, sum[2] as f32 / n as f32 / 255.0]
 }
 
+/// The `contacts` message (5 Hz) for the map view (C4): every craft on the player's
+/// radar, positioned and moving in the player's own axes (x right, y up, z ahead, in
+/// metres and m/s), so the map can be drawn around the player without knowing its
+/// orientation. `id` is `"slot:generation"`, the handle the console sends back in a
+/// `target` message.
+pub fn contacts(world: &World, player: ShipId) -> String {
+    let Some(me) = world.get(player) else {
+        return Obj::new().str("type", "contacts").raw("list", "[]").end();
+    };
+    let rules = &world.rules;
+    let to_body = |v: glam::Vec3| {
+        let b = me.rotation.conjugate() * v;
+        [b.x as f64, b.y as f64, -b.z as f64]
+    };
+    let mut list = Vec::new();
+    for (i, s) in world.ships.iter().enumerate() {
+        let id = world.id_of(i);
+        if !s.alive || id == player || !crate::sim::systems::on_radar(world, me, s) {
+            continue;
+        }
+        let relation = if s.protected_by == Some(me.faction) {
+            "objective"
+        } else {
+            match rules.relation(me.faction, s.faction) {
+                crate::content::rules::Relation::Friendly => "friendly",
+                crate::content::rules::Relation::Hostile => "hostile",
+                crate::content::rules::Relation::Neutral => "neutral",
+            }
+        };
+        let class = rules.ship(s.class);
+        list.push(
+            Obj::new()
+                .str("id", &format!("{}:{}", id.index, id.generation))
+                .str("name", &class.name)
+                .str("relation", relation)
+                .bool("station", class.kind.is_static())
+                .bool("target", me.target == Some(id))
+                .nums("pos", &to_body(s.position - me.position))
+                .nums("vel", &to_body(s.velocity - me.velocity))
+                .end(),
+        );
+    }
+    Obj::new().str("type", "contacts").num("range", rules.flight.radar_range as f64).raw("list", &array(&list)).end()
+}
+
+/// The `event` message: one line from the pilot's message log.
+pub fn event(text: &str) -> String {
+    Obj::new().str("type", "event").str("text", text).end()
+}
+
 /// A message from the console, decoded.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Inbound {
@@ -285,6 +335,11 @@ pub enum Inbound {
     Throttle(f32),
     /// The console is still there (see [`HOLD_TIMEOUT`]).
     Ping,
+    /// Target this contact (tapped on the map): its `contacts` id, slot and generation.
+    Target {
+        index: u32,
+        generation: u32,
+    },
     /// Power set from the console's sliders: `{type:"power", beam?, shield?, balance?}`,
     /// levels 0 = A; balance "equal" | "forward" | "aft".
     Power {
@@ -313,6 +368,12 @@ pub fn decode(text: &str) -> Result<Inbound, String> {
             Ok(Inbound::Throttle(t.clamp(0.0, 1.0) as f32))
         }
         Some("ping") => Ok(Inbound::Ping),
+        Some("target") => {
+            let id = v.get("id").and_then(Json::as_str).ok_or("target without an id")?;
+            let (i, g) = id.split_once(':').ok_or(format!("bad contact id '{id}'"))?;
+            let parse = |s: &str| s.parse::<u32>().map_err(|_| format!("bad contact id '{id}'"));
+            Ok(Inbound::Target { index: parse(i)?, generation: parse(g)? })
+        }
         Some("power") => {
             let level = |k: &str| v.get(k).and_then(Json::as_f64).map(|n| n.clamp(0.0, 15.0) as u8);
             let balance = match v.get("balance").and_then(Json::as_str) {
@@ -354,6 +415,34 @@ mod tests {
             [0.5, 0.0, 0.5],
             "transparent ignored"
         );
+    }
+
+    #[test]
+    fn contacts_are_in_the_players_axes_and_targets_decode() {
+        let mut w = world();
+        let fighter = w.rules.ship_id("fighter").unwrap();
+        let raider = w.rules.ship_id("raider").unwrap();
+        // The player yawed 90 degrees left: world −X is its nose.
+        let turn = Quat::from_rotation_y(std::f32::consts::FRAC_PI_2);
+        let me = w.spawn(fighter, FactionId(0), "me", Vec3::ZERO, turn, Pilot::External);
+        let foe = w.spawn(raider, FactionId(1), "foe", Vec3::new(-1000.0, 50.0, 0.0), Quat::IDENTITY, Pilot::External);
+        w.get_mut(me).unwrap().target = Some(foe);
+        let c = super::super::json::parse(&contacts(&w, me)).unwrap();
+        let Some(Json::Arr(list)) = c.get("list") else { panic!() };
+        assert_eq!(list.len(), 1);
+        let Some(Json::Arr(p)) = list[0].get("pos") else { panic!() };
+        let p: Vec<f64> = p.iter().filter_map(Json::as_f64).collect();
+        assert!(p[0].abs() < 1e-2 && (p[1] - 50.0).abs() < 1e-2 && (p[2] - 1000.0).abs() < 1e-2, "dead ahead: {p:?}");
+        assert_eq!(list[0].get("relation").and_then(Json::as_str), Some("hostile"));
+        assert_eq!(list[0].get("target"), Some(&Json::Bool(true)));
+        let id = list[0].get("id").and_then(Json::as_str).unwrap().to_string();
+        let (i, g) = id.split_once(':').unwrap();
+        assert_eq!(
+            decode(&format!(r#"{{"type":"target","id":"{id}"}}"#)).unwrap(),
+            Inbound::Target { index: i.parse().unwrap(), generation: g.parse().unwrap() }
+        );
+        assert!(decode(r#"{"type":"target","id":"x"}"#).is_err());
+        assert_eq!(event("SHIELDS DOWN"), r#"{"type":"event","text":"SHIELDS DOWN"}"#);
     }
 
     #[test]

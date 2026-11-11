@@ -234,6 +234,10 @@ pub struct FlightSession {
     /// The target class whose model the console has (C3), and the encoded `model`
     /// messages by class, built once each.
     console_target: Option<crate::content::rules::ShipClassId>,
+    /// Seconds since the last `contacts` message (5 Hz), and how many log messages the
+    /// console has been sent as events.
+    console_contacts_clock: f32,
+    console_messages_seen: u64,
     console_models: std::collections::HashMap<crate::content::rules::ShipClassId, std::rc::Rc<String>>,
     /// The keys help overlay (`?` or Shift+F1) is showing; the battle pauses under it.
     help_open: bool,
@@ -421,6 +425,8 @@ impl FlightSession {
             console_hits: [0, 0],
             console_class: None,
             console_target: None,
+            console_contacts_clock: 0.0,
+            console_messages_seen: 0,
             console_models: Default::default(),
             mouse_flight: false,
             accumulator: 0.0,
@@ -814,6 +820,19 @@ impl FlightSession {
                 server.send(id, &welcome);
                 resend = true;
             }
+            // Tapping a contact on the map targets it (if the player can see it).
+            if let Event::Input(_, protocol::Inbound::Target { index, generation }) = e {
+                let id = crate::sim::ShipId { index, generation };
+                let visible = match (self.world.get(self.player), self.world.get(id)) {
+                    (Some(me), Some(t)) => crate::sim::systems::on_radar(&self.world, me, t),
+                    _ => false,
+                };
+                if visible {
+                    if let Some(me) = self.world.get_mut(self.player) {
+                        me.target = Some(id);
+                    }
+                }
+            }
             ctx.remote.apply(&e, get_time());
         }
         if resend {
@@ -853,6 +872,16 @@ impl FlightSession {
             server.broadcast(msg);
             self.console_target = Some(tc);
         }
+        // The map's contacts, 5 times a second, and new log lines as events.
+        self.console_contacts_clock += get_frame_time();
+        if self.console_contacts_clock >= 0.2 {
+            self.console_contacts_clock = 0.0;
+            server.broadcast(&protocol::contacts(&self.world, self.player));
+        }
+        for line in self.messages.since(self.console_messages_seen) {
+            server.broadcast(&protocol::event(line));
+        }
+        self.console_messages_seen = self.messages.total();
         self.console_clock += get_frame_time();
         if self.console_clock >= 0.05 {
             self.console_clock = 0.0;

@@ -367,6 +367,9 @@ pub fn format_distance(m: f32) -> String {
 #[derive(Debug, Default)]
 pub struct MessageLog {
     entries: Vec<(f64, String)>,
+    /// Messages pushed since the start (including ones dropped from `entries`), so a
+    /// reader such as the tablet console can ask for "everything since my last look".
+    total: u64,
 }
 
 /// Seconds a message stays on the message line.
@@ -375,6 +378,7 @@ pub const MESSAGE_TIME: f64 = 4.0;
 impl MessageLog {
     pub fn push(&mut self, now: f64, text: impl Into<String>) {
         self.entries.push((now, text.into()));
+        self.total += 1;
         if self.entries.len() > 32 {
             self.entries.remove(0);
         }
@@ -383,6 +387,17 @@ impl MessageLog {
     /// The newest message, however old (for "repeat last message").
     pub fn last(&self) -> Option<&str> {
         self.entries.last().map(|(_, s)| s.as_str())
+    }
+
+    /// How many messages have been pushed in all.
+    pub fn total(&self) -> u64 {
+        self.total
+    }
+
+    /// The messages pushed after the first `seen` (oldest first), as many as are kept.
+    pub fn since(&self, seen: u64) -> impl Iterator<Item = &str> {
+        let new = (self.total.saturating_sub(seen) as usize).min(self.entries.len());
+        self.entries[self.entries.len() - new..].iter().map(|(_, s)| s.as_str())
     }
 
     /// Up to `n` messages younger than [`MESSAGE_TIME`], newest last.
@@ -426,6 +441,21 @@ mod tests {
     use crate::sim::test_support::world;
     use crate::sim::Pilot;
     use glam::Quat;
+
+    #[test]
+    fn the_message_log_reports_what_is_new_since_a_count() {
+        let mut log = MessageLog::default();
+        log.push(0.0, "a");
+        let seen = log.total();
+        log.push(1.0, "b");
+        log.push(2.0, "c");
+        assert_eq!(log.since(seen).collect::<Vec<_>>(), vec!["b", "c"]);
+        assert_eq!(log.since(log.total()).count(), 0);
+        for k in 0..40 {
+            log.push(3.0, format!("m{k}"));
+        }
+        assert_eq!(log.since(0).count(), 32, "only what is kept");
+    }
 
     #[test]
     fn side_bands_cover_the_screen_beside_the_cockpit() {
