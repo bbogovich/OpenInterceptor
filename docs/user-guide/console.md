@@ -5,10 +5,11 @@ computer) on the same network opens next to your joystick or gamepad. It shows y
 condition live and offers every control as a labelled button, so nothing depends on
 remembering shortcuts.
 
-This is the first console page (interlude item **C1**, app 0.4.0; pairing from the launcher in
-0.4.7; keeping the screen on in 0.4.8): pairing, live telemetry, a
-throttle slider and every action as a button. The function-group tiles, campaign themes, the
-target viewport and the 3D map follow in C2–C4
+The console has two layouts — **All-in-one**, every control at once, and **Cockpit**, laid out
+like a cockpit with function-group tiles (app 0.4.11) — a **Target** view that shows your target's
+model turned the way it faces you (0.4.14), a TIE Fighter-style **Map** of every radar contact on
+which you can tap a craft to target it (0.4.15), and a look that follows the campaign and the
+cockpit you fly (0.5.0). A physical panel over USB (C5) comes later
 ([Stage 3 interlude](../implementation/plan/stage-3-interlude.md)).
 
 ## Turn it on
@@ -67,7 +68,17 @@ If the connection drops (the game quits, Wi-Fi drops), the page returns to the c
 with *Disconnected. Enter the code to reconnect.* Anything the console was holding (fire,
 afterburner, a turn) is let go the moment it disconnects.
 
-## What works in C1
+## Two layouts
+
+The button at the top of the page switches between the two layouts. Each tablet remembers its
+choice; the address can also choose one (`?mode=cockpit` or `?mode=allinone`).
+
+- **All-in-one**: everything at once, described in the next section.
+- **Cockpit**: laid out like a cockpit ([The Cockpit layout](#the-cockpit-layout)).
+
+Both are live all the time, so switching never loses anything.
+
+## The All-in-one layout
 
 - **Telemetry**, updated 20 times a second: craft, speed, drift (sideways and vertical
   speed), hull, energy, shields fore and aft, the selected missile and how many are left, and
@@ -90,20 +101,78 @@ your shields take the hit, stronger when the hull is struck.
 
 Several tablets can pair at once; each one's held buttons are tracked separately.
 
-## Two layouts (coming with C2)
+## The Cockpit layout
 
-The next console version (C2) offers two layouts, switched on the page and remembered by each
-tablet: **All-in-one**, the page described here with every control laid out at once, and
-**Cockpit**, laid out like a cockpit — the exterior HUD strip on top, the display console in the
-centre, shield rings on the left, power sliders on the right and the function groups as tiles
-below that open and close.
+- **Top**: the HUD strip, as on the exterior view's HUD — speed, drift, throttle, hull, energy,
+  the target and its range, and status (beam link mode, BURN, BRAKE).
+- **Left**: the shield rings, fore and aft, with buttons to balance the shields equally, forward
+  or aft.
+- **Centre**: the **display console**, with two tabs, [Target](#the-target-tab) and
+  [Map](#the-map-tab).
+- **Right**: the power sliders for beam and shield charge (A at the bottom). The power budget
+  still applies: raising one may lower the other, and the slider follows what the game allows.
+- **Below**: one **tile** per function group (flight, throttle, weapons, targeting, power,
+  wingmen, views, camera, interface). Each tile is a status card; it also says how many of its
+  controls your craft lacks (*2 not fitted*). Tap a tile to open a full-width strip with that
+  group's buttons; the other tiles fold to their titles. Tap the open title again to close the
+  strip, or another title to switch to that group.
+
+## The Target tab
+
+The display console's **Target** tab shows your target's name in its relation's colour
+(with *PROTECT* for a craft you must protect), its distance and closing speed, and bars for its
+hull and fore and aft shields; beside them the target's **model**, turned the way it is facing as
+seen from your craft: nose towards you means it is coming at you. The model is drawn in one flat
+colour per part (the game sends the shape, not its textures), lit from the upper left. With no
+target the view is empty.
+
+Under the target data, the last **four lines of the message log** — the same messages as the
+cockpit's message line.
+
+## The Map tab
+
+The **Map** tab is a 3D map of the battle around you, in the style of *TIE Fighter*'s map:
+
+- you are at the centre; a grid and **range rings** at a quarter, half and the whole of your
+  radar range lie flat at your height;
+- every craft on your radar is a mark — a dot for a craft, a square for a station — with a
+  **stalk** down or up to the grid showing how far above or below you it is;
+- colours give the relation: **green** friendly, **red** hostile, **yellow** neutral, **blue**
+  an objective you protect; your current target is ringed;
+- each label gives the name and range; a short **tick** shows where the craft will be in two
+  seconds;
+- beside the map, a **list** of the nearest contacts by range.
+
+| Gesture | Effect |
+|---|---|
+| **Behind**, **Top**, **Side** | Jump to a view: from behind you, from above (up the screen is your nose), or from the side. |
+| Drag with one finger (or the mouse) | Orbit the view. |
+| Pinch, or the mouse wheel | Zoom in or out. |
+| Tap a contact, or a row of the list | **Target it**, as if you had cycled to it. Only craft still on your radar can be targeted. |
+
+The map shows craft only; nav points are not on it yet.
+
+## Themes
+
+The console takes its look from the campaign you play, and while flying, from your craft's
+cockpit (0.5.0):
+
+- **The default campaign**: art-deco — brass lines on midnight-blue panels, cream text, amber
+  values, set in Futura (or the nearest font the tablet has).
+- **X-COM: Interceptor**: a green instrument look, tinted for each cockpit — olive bronze in
+  cockpit A, steel blue in B, red in C. These are colours only, chosen to match each cockpit; no
+  original art appears on the console.
+
+On the launcher the console shows the campaign's base look; in a battle, the cockpit's tint. A
+mod can set its own ([Console themes](../modding/console-themes.md)).
 
 ## Keeping the screen on
 
 While the console page is open, it keeps the tablet's screen from going to sleep (app 0.4.8).
 Where the browser allows it, it asks for a *screen wake lock*; Safari allows that only on secure
-(https) pages, so on an iPad the page instead plays a tiny, invisible, silent video, which
-browsers do not let the screen sleep through. It starts when you pair, and again when you come
+(https) pages, so on an iPad the page instead plays a tiny, silent video, which browsers do not
+let the screen sleep through. Since app 0.4.11 the video is a small radar-sweep "link" indicator
+in the bottom-right corner, because iOS pauses videos that cannot be seen. It starts when you pair, and again when you come
 back to the page. The **Tablet** cell of the telemetry shows the state:
 
 | Tablet cell | Meaning |
@@ -126,6 +195,9 @@ longer time or *Never* while you play.
 | *Could not reach the game* | The game has quit, or the tablet is on another network. |
 | The tablet goes to sleep | See [Keeping the screen on](#keeping-the-screen-on); set Auto-Lock as a fallback. |
 | Buttons do nothing | Check the in-game screen: the battle may be paused or the menu open. |
+| The Target view is empty | There is no target, or the browser has no WebGL (try another browser). |
+| Tapping a contact does not target it | It has left your radar range; the list and map update five times a second. |
+| The colours do not match the cockpit | The cockpit's tint arrives when the battle starts, or when you change to a craft of another class; on the launcher the campaign's base look is shown. |
 
 To test the console without a tablet, developers can use `tools/console_client.py`
 ([Remote console](../implementation/architecture/remote.md#debugging)).

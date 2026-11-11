@@ -7,7 +7,7 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [0 Foundation](plan/stage-0-foundation.md) | **Done** | Repository, SpecItOut manifest, gate, docs site; every asset type for stages 1–2 decoded and verified |
 | [1 Flight simulator](plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
-| [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2** | See [Stage 3 progress](#stage-3-progress) below |
+| [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later) | See [Stage 3 progress](#stage-3-progress) below |
 | [4 Strategy layer](plan/stage-4-strategy.md) | Not started | |
 | [5 Campaigns](plan/stage-5-campaign.md) | Not started | |
 | [6 Presentation](plan/stage-6-presentation.md) | Not started | |
@@ -120,7 +120,9 @@ and `--soak` `f638b44`; looks `b097c83`; guidance and mines `7997e53`; station m
 
 App **0.3.0**, main `d7553f5`; then app **0.3.1**, main `c583659` (the interlude's playtest
 fixes); app **0.4.0**, main `dfff71b` (console C1); **0.4.1**, main `42716d1` (lit shader link
-fix); **0.4.2**, main `bf7b7ce` (`resources/` layout); **292 unit tests** on macOS.
+fix); **0.4.2**, main `bf7b7ce` (`resources/` layout); **292 unit tests** on macOS at 0.4.2. Then
+the console C2 – C4 and C2b: app **0.4.11** (`db2f264`), **0.4.14** (`e51eca9`), **0.4.15**
+(`e2b5012`) and **0.5.0** (`0a1c340`).
 
 | Item | Status | Where |
 |---|---|---|
@@ -138,9 +140,13 @@ fix); **0.4.2**, main `bf7b7ce` (`resources/` layout); **292 unit tests** on mac
 | Interlude F.4 — base defence: measured with `--soak-pilot idle`; the `killed` result; cadet regression test | **Done** (0.3.1) | `src/mission/mod.rs`, `src/soak.rs` |
 | Interlude F.5 — keys overlay (`?`, action `help`) from `input::ACTIONS` | **Done** (0.3.1) | `src/input/mod.rs`, `src/app/flight.rs` |
 | Interlude C1 — tablet console server and protocol: in-crate HTTP/1.1 and WebSocket (SHA-1, base64), JSON, protocol v1 (`hello`, `welcome`, `denied`, `catalogue` with per-action availability, 20 Hz `telemetry`, `action`, `throttle`), local-network peers only, 6-digit pairing code (three wrong codes close the connection), `--console` / `console.enabled`, port 8765; console input through `RawInput`; the C1 page (`oi-pairing`, `oi-telemetry`, `oi-throttle`, `oi-actions`); `tools/console_client.py` | **Done** (0.4.0; manual cases MT-3-19 – MT-3-23 not yet run) | `src/remote/`, `web/console/`, `src/app/flight.rs`, `src/input/mod.rs` |
-| Interlude C2–C5 — console layout, tiles and themes; target viewport; 3D map; serial panel | **Not started** | |
+| Interlude C2 — two layouts (All-in-one, Cockpit), HUD strip, shield rings and balance, display console, power sliders (`power {beam, shield, balance}`), function-group tiles; visible keep-awake indicator | **Done** (0.4.11, main `db2f264`; MT-3-29 not yet run) | `web/console/`, `src/remote/protocol.rs`, `src/sim/systems.rs` |
+| Interlude C3 — target viewport: `model` message (≤ 3000-triangle LOD, radius 1, a colour per material group), hand-written WebGL view turned by the target's relative rotation | **Done** (0.4.14, main `e51eca9`; MT-3-30 not yet run) | `src/remote/protocol.rs`, `src/app/flight.rs`, `web/console/console.js` |
+| Interlude C4 — map: `contacts` at 5 Hz in the player's axes, `event` from the message log, `target {id}`; TIE Fighter-style map with views, orbit, zoom and tap to target; last four log lines | **Done** (0.4.15, main `e2b5012`; MT-3-31 not yet run) | `src/remote/protocol.rs`, `src/app/flight.rs`, `src/hud/mod.rs`, `web/console/console.js` |
+| Interlude C2b — campaign console themes: `console: {theme, cockpits}` rules, `theme {vars}` CSS variables; default art-deco, `interceptor` tinted per cockpit | **Done** (0.5.0, main `0a1c340`; MT-3-32 not yet run) | `src/content/rules.rs`, `src/content/files.rs`, `resources/default/rules/console.yaml`, `packs/interceptor/rules/console.yaml` |
+| Interlude C5 — physical panel over USB serial (Arduino) | **Later** | |
 | Lit shader: the `Light` uniform states `mediump` in both stages (GLSL ES link error at start-up) | **Done** (0.4.1) | `src/render/mod.rs` |
 | `resources/` layout: `resources/default` (the default campaign), git-ignored `resources/xcom` (installed copy, tried first) and `resources/xcom-cd` (CD copy); `packs/` keeps the bundled mods; gate guard; app bundle ships `resources/default` (F-CMP-005, R-CMP-014, R-CMP-015) | **Done** (0.4.2) | `src/cli.rs`, `src/settings.rs`, `scripts/check.sh`, `tools/build_bundle.py` |
-| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-24 | **Not yet run** | |
+| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-32 | **Not yet run** (MT-3-27's hit static confirmed by the user) | |
 
-**Next**: the rest of the [Stage 3 interlude](plan/stage-3-interlude.md) (the console manual passes MT-3-19 – MT-3-23, then C2–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).
+**Next**: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).

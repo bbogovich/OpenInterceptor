@@ -9,8 +9,14 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 so it is not in the count from macOS.
 
 Since that count, tests named in the requirements' *Verified by* lines were added with apps
-0.4.3 – 0.4.10 without the full list being regenerated; those named below are listed: app
-0.4.10 (main `4edc9d7`) adds `input::keys_held_when_a_battle_starts_are_ignored_until_released`;
+0.4.3 – 0.5.0 without the full list being regenerated; those named below are listed (the
+summary rows of `hud`, `remote::protocol` and `sim::systems` include the 0.4.11 – 0.5.0 ones): app **0.5.0** (main `0a1c340`) adds
+`remote::protocol::tests::themes_layer_per_cockpit_and_become_css_variables`; app **0.4.15**
+(main `e2b5012`) adds `remote::protocol::tests::contacts_are_in_the_players_axes_and_targets_decode`
+and `hud::tests::the_message_log_reports_what_is_new_since_a_count`; app **0.4.14** (main
+`e51eca9`) adds `remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group`;
+app **0.4.11** (main `db2f264`) adds `sim::systems::tests::sliders_set_power_levels_and_balance_outright`;
+app 0.4.10 (main `4edc9d7`) adds `input::keys_held_when_a_battle_starts_are_ignored_until_released`;
 app 0.4.8 (main `f1c8be8`) adds `remote::http::ranges_are_served_as_partial_content`, and app 0.4.7
 (main `c42d773`) adds the **ignored** helper `remote::server::tests::serve_for_a_browser`, which
 is not a unit test and is not counted: `cargo test serve_for_a_browser -- --ignored --nocapture`
@@ -53,7 +59,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `sim::flight` | 15 | Helpers (turn factor, damping, approach, approach_vec); **newtonian**: acceleration to the cap and coasting, half throttle, reverse thrust, brake stops exactly, turning keeps the velocity, speed hold and drift cancelling, afterburner cap and bleed-off, VCT thrust; pitch/yaw/roll directions and speed falloff; **assisted** model end to end; recharge; static objects; arena edge |
 | `sim::combat` | 14 | Beams (energy, cooldown, hits on the aft shield), **bolt streak never trails behind the muzzle**, **a bolt leaves with the muzzle's velocity (ω × r) then flies straight**, **with `bolt_frame: ship` it turns with the nose while carried**, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; **point defence shoots down hostile missiles** |
 | `sim::ai` | 13 | Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, **aim skill decides accuracy**, **transitions switch states on conditions**, **turrets fire off the nose**, **tugs tow disabled enemies away**, disabled ships drift, target and idle behaviours; **mines go off when an enemy comes near** |
-| `sim::systems` | 13 | **Power**: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; **damage**: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; **hyperspace** countdown, abort and departure; **tractor** hold and capture on jump, and its refusals (power, fitting, range); **cloak** hides from enemy sensors beyond range; **ECM** makes missiles lose their target |
+| `sim::systems` | 14 | **Power**: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; **damage**: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; **hyperspace** countdown, abort and departure; **tractor** hold and capture on jump, and its refusals (power, fitting, range); **cloak** hides from enemy sensors beyond range; **ECM** makes missiles lose their target; **the console's sliders set power levels and balance outright**, within the budget |
 | `sim::guidance` | 7 | Homing hits and dumbfire misses an offset target; sidestep still arrives; parallax decoys lure enemy missiles; cloaked wait sleeps until prey comes near; cluster splits into submunitions; doppelganger launches a decoy ship that expires; damage modes |
 | `mission` | 4 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; **the player's death is its own result (`killed`) with the lose outcomes** |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
@@ -70,7 +76,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `render::effects` | 3 | Events create sparks/explosions/debris that age and expire, explosion curve, jitter range |
 | `render::gpu` | 3 | Per-texture chunks with local u16 indices and the overlay flag, splitting huge groups, engine glow points |
 | `render::starfield` | 1 | Same seed same sky, unit directions, uniform hemispheres |
-| `hud` | 6 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), **power readout and system lamps**, message expiry |
+| `hud` | 7 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), **power readout and system lamps**, message expiry; **the message log reports what is new since a count** (the console's events, kept-lines limit) |
 | `hud::layout` | 4 | Anchor corners lie on the surface with world up; rays pick the nearest surface; 2D dragging and anchor scaling; saved layouts are valid rules |
 | `hud::draw` | 3 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second** |
 | `hud::glyphs` | 1 | Text sizes snap down onto the glyph ladder |
@@ -87,7 +93,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `remote::ws` | 3 | **SHA-1 and base64 match the published vectors** (FIPS 180 and RFC 4648; the RFC 6455 handshake example), masked frames decode (the RFC 6455 §5.7 examples), partial frames wait for more bytes, back-to-back frames, 16-bit lengths, unmasked server frames with 16- and 64-bit lengths; **protocol violations are errors** (unmasked, unknown opcode, too large) |
 | `remote::json` | 3 | Objects, arrays, strings with escapes, numbers with exponents; **bad and hostile input is an error** (unclosed, trailing commas, trailing text, nesting deeper than 32); the writer's compact objects (numbers to 3 decimals, NaN as `null`) parse back |
 | `remote::http` | 3 | A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed; **byte ranges are served as `206 Partial Content`** (`a-b`, `a-`, `-n`, clamped end; no range or out of range gives the whole file with `Accept-Ranges`) |
-| `remote::protocol` | 3 | Console messages decode, unknown actions and types are refused, throttle clamped; **the catalogue lists every action and marks missing equipment unavailable**; **telemetry reports drift in body axes and the target's rotation relative to the player** |
+| `remote::protocol` | 6 | Console messages decode (incl. `power`), unknown actions and types are refused, throttle clamped; **the catalogue lists every action and marks missing equipment unavailable**; **telemetry reports drift in body axes and the target's rotation relative to the player**; **`model` messages are normalised to radius 1 with a colour per group** (average colour ignores transparent pixels); **`contacts` are in the player's axes** (a craft dead ahead after a 90° yaw), relation and target flag, and `target {id}` decodes (bad ids refused); `event`; **themes layer per cockpit and become CSS variables** (cockpit override over the base, `--font`, `--corner`, an empty theme sends none) |
 | `remote::server` | 3 | **Only local-network peers are served** (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; **end to end over a real localhost socket**: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received; **`welcome` answered at once by the server** (0.4.7). Plus one ignored helper, `serve_for_a_browser` (not counted) |
 | `soak` | 2 | The default campaign's difficulty scales enemy lethality (headless battle runs); **at cadet an undefended station holds for 150 s** (idle pilot) |
 
@@ -157,7 +163,7 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`formats::yaml`**: `block_scalars_and_wrapped_flows`, `empty_and_scalar_documents`, `keys_with_colons_and_urls_stay_whole`, `mappings_sequences_and_scalars`, `unsupported_and_broken_input_is_an_error_with_a_line`, `writing_round_trips`
 
-**`hud`**: `gauges_sweep_and_read_the_ship`, `layout_scales_by_height_and_centres`, `messages_expire_and_keep_the_newest`, `mfd_pages_cycle_and_describe`, `power_and_system_readouts`, `radar_places_contacts_by_angle`
+**`hud`**: `gauges_sweep_and_read_the_ship`, `layout_scales_by_height_and_centres`, `messages_expire_and_keep_the_newest`, `mfd_pages_cycle_and_describe`, `power_and_system_readouts`, `radar_places_contacts_by_angle`, `the_message_log_reports_what_is_new_since_a_count`
 
 **`hud::draw`**: `drift_reads_signed_whole_metres_per_second`, `lamp_grids_follow_the_panel_shape`, `shield_rings_go_green_amber_red_then_blink`
 
@@ -183,7 +189,7 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`remote::json`**: `bad_and_hostile_input_is_an_error`, `parses_objects_arrays_strings_and_numbers`, `writes_compact_objects_that_parse_back`
 
-**`remote::protocol`**: `decodes_console_messages_and_refuses_unknown_ones`, `telemetry_reports_drift_and_the_targets_relative_rotation`, `the_catalogue_lists_every_action_and_marks_missing_equipment`
+**`remote::protocol`**: `contacts_are_in_the_players_axes_and_targets_decode`, `decodes_console_messages_and_refuses_unknown_ones`, `model_messages_are_normalised_and_coloured_per_group`, `telemetry_reports_drift_and_the_targets_relative_rotation`, `the_catalogue_lists_every_action_and_marks_missing_equipment`, `themes_layer_per_cockpit_and_become_css_variables`
 
 **`remote::server`**: `only_local_network_peers_are_served`, `pairing_codes_are_six_digits_and_vary_with_the_seed`, `serves_the_page_pairs_and_relays_actions_over_a_real_socket`; ignored helper: `serve_for_a_browser`
 
@@ -221,7 +227,7 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`sim::guidance`**: `cloaked_wait_sleeps_until_prey_comes_near`, `cluster_splits_into_submunitions`, `damage_modes`, `doppelganger_launches_a_decoy_ship_that_expires`, `homing_hits_and_dumbfire_misses_an_offset_target`, `parallax_decoys_lure_enemy_missiles`, `sidestep_still_arrives`
 
-**`sim::systems`**: `balance_caps_and_message`, `cloaked_ships_vanish_from_enemy_sensors_beyond_range`, `cycling_wraps_to_a`, `damage_knocks_systems_out_and_repairs_bring_them_back`, `disabled_when_engines_and_manoeuvring_are_out`, `ecm_makes_incoming_missiles_lose_their_target`, `hyperspace_counts_down_aborts_and_departs`, `raising_takes_power_from_the_other_setting`, `requests_change_power_and_balance`, `shield_balance_moves_points_forward_and_recharge_follows_power`, `systems_can_be_destroyed_beyond_repair`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`, `tractor_needs_power_a_fitting_and_a_target_in_range`
+**`sim::systems`**: `balance_caps_and_message`, `cloaked_ships_vanish_from_enemy_sensors_beyond_range`, `cycling_wraps_to_a`, `damage_knocks_systems_out_and_repairs_bring_them_back`, `disabled_when_engines_and_manoeuvring_are_out`, `ecm_makes_incoming_missiles_lose_their_target`, `hyperspace_counts_down_aborts_and_departs`, `raising_takes_power_from_the_other_setting`, `requests_change_power_and_balance`, `shield_balance_moves_points_forward_and_recharge_follows_power`, `sliders_set_power_levels_and_balance_outright`, `systems_can_be_destroyed_beyond_repair`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`, `tractor_needs_power_a_fitting_and_a_target_in_range`
 
 **`sim::targeting`**: `cycles_forwards_and_backwards_with_wraparound`, `in_sights_picks_the_most_central`, `nearest_hostile_ignores_friends`, `nothing_to_target`
 

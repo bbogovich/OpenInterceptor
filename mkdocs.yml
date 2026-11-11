@@ -154,6 +154,7 @@ nav:
       - "Overrides and extraction": modding/overrides.md
       - "Cockpits (HD and 3D)": modding/cockpits.md
       - "Tutorial: a 3D X-COM cockpit": modding/3d-cockpit-tutorial.md
+      - "Console themes": modding/console-themes.md
       - "Scenarios and missions": modding/scenarios.md
       - "Scripting (design)": modding/scripting.md
       - "Campaigns (design)": modding/campaign.md

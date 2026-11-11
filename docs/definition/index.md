@@ -1,5 +1,5 @@
 ---
-spec_version: 1.9.0
+spec_version: 1.10.0
 status: current
 updated: 2026-11-11
 ---
@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.9.0** (90 features). Changes are listed in the
+Definition version **1.10.0** (90 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -56,3 +56,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.3.0 | 2026-11-11 | 80 features (F-CMP-005 added in 1.2.0, implemented in app 0.4.2); F-CON-004 partial (console C1, app 0.4.0) |
 | 1.7.0 | 2026-11-11 | 87 features: F-FLT-008 (added in 1.6.0); F-MOD-009 – F-MOD-013 and F-PLT-005 (planned: Mod Designer, Cutscene Designer, cutscenes, video cutscenes, shared formations, game bundling) |
 | 1.9.0 | 2026-11-11 | 90 features: F-HUD-009 (added in 1.8.0); F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned) |
+| 1.10.0 | 2026-11-11 | 90 features: console C2 – C4 and C2b (app 0.4.11 – 0.5.0): F-CON-005, F-CON-006, F-CON-008, F-CON-009 implemented; F-CON-004 implemented except C5 |

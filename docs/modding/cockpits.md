@@ -39,6 +39,8 @@ All instrument text — MFD pages, the message line, gauge labels, the `power` a
 labels — is sized to fit its instrument's box, so a small rectangle gets small text rather than
 text spilling out of it.
 
+A cockpit's id also selects the tablet console's per-cockpit colours (`console.cockpits.<id>`; [Console themes](console-themes.md)).
+
 ## Shield rings
 
 Each radar scope carries a ring just inside its edge showing a shield facing: the front

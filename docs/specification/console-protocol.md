@@ -1,23 +1,24 @@
 ---
-spec_version: 1.7.0
+spec_version: 1.10.0
 status: current
 updated: 2026-11-11
 ---
 
 # Console protocol
 
-**Status: version 1 implemented (C1, app 0.4.0); the rest planned.** The messages the game and a
+**Status: version 1 implemented** (C1, app 0.4.0; `power` with C2 in 0.4.11; `model` with C3 in
+0.4.14; `contacts`, `event` and `target` with C4 in 0.4.15; `theme` with C2b in 0.5.0). Only the
+serial transport (C5) is still planned. The messages the game and a
 control console exchange. The console is the tablet page served by the game
 ([F-CON-004](../definition/control-console.md#f-con-004-tablet-control-console)); later, a
 physical panel over USB serial ([F-CON-007](../definition/control-console.md#f-con-007-physical-control-panel)).
 Requirements: [R-CON-009 – R-CON-021](requirements/control-console.md). How it is built:
 [Remote console](../implementation/architecture/remote.md).
 
-Protocol **version 1** below is as built (`src/remote/protocol.rs`): `hello`, `welcome`,
-`denied`, `catalogue`, `telemetry`, `action` and `throttle`. The messages marked *planned*
-(`theme`, `contacts`, `model`, `event`) keep the names, directions and rates already decided;
-their fields are fixed when interlude items C2–C4 build them, and this page is updated in the
-same change.
+Protocol **version 1** below is as built (`src/remote/protocol.rs`): from the console `hello`,
+`action`, `throttle`, `power`, `target` and `ping`; from the game `welcome`, `denied`,
+`catalogue`, `telemetry`, `theme`, `model`, `contacts` and `event`. The additions since C1 kept
+the version at 1: each is a new message type, and a page that does not know a type ignores it.
 
 ## Transport
 
@@ -48,18 +49,23 @@ sequenceDiagram
     else right code
         G->>C: welcome {version} (server, at once)
         alt no battle running (launcher)
+            G->>C: theme {vars} (the campaign's base)
             G->>C: catalogue (every action available)
             loop twice a second
                 G-->>C: telemetry {alive: false, state: "launcher"}
             end
         else in a battle
             G->>C: welcome {version, campaign} (flight screen)
-            G->>C: catalogue {groups, actions}
+            G->>C: catalogue {groups, actions}, theme {vars}
             loop while paired
                 G-->>C: telemetry (20 Hz)
-                G-->>C: catalogue (again when the craft class changes)
+                G-->>C: contacts (5 Hz)
+                G-->>C: model (when the target's class changes)
+                G-->>C: event {text} (each new message-log line)
+                G-->>C: catalogue, theme (again when the craft class changes)
                 C->>G: action {name, value}
-                C->>G: throttle {value}
+                C->>G: throttle {value} · power {beam, shield, balance}
+                C->>G: target {id}
             end
         end
     end
@@ -84,6 +90,8 @@ released.
 | `hello` | `code`: string | The 6-digit pairing code the game shows. A right code pairs; a wrong one gets `denied`, and the third wrong code on a connection closes it. |
 | `action` | `name`: string, `value`: number (default 1) | A catalogue action. For a `hold` action, `value` 1 presses and 0 releases it; for a `tap` action, a value above 0.5 fires it once. An unknown name is ignored. An action the craft cannot perform reaches the game like the bound key would, and does nothing. |
 | `throttle` | `value`: number | The throttle position, clamped to 0 – 1, as if set from a slider. |
+| `power` | `beam`, `shield`: number (optional), `balance`: string (optional) | Set from the Cockpit layout's sliders (app 0.4.11): the beam and shield charge levels outright (0 = A, clamped to 0 – 15), within the power budget (the game lowers the other setting if the budget needs it), and the shield balance `"equal"`, `"forward"` or `"aft"`. Any field may be left out. An unknown balance is refused. |
+| `target` | `id`: string | Target this contact (app 0.4.15): the `id` from a `contacts` entry, `"slot:generation"`. The game targets it only if it is still on the player's radar; otherwise nothing happens. A malformed id is refused. |
 | `ping` | none | Heartbeat, every 250 ms. A console silent for 1 s (`HOLD_TIMEOUT`) has its held actions released, so a dropped connection never leaves a button pressed. |
 
 ```json
@@ -91,6 +99,8 @@ released.
 {"type": "action", "name": "fire_beams", "value": 1}
 {"type": "action", "name": "fire_beams", "value": 0}
 {"type": "throttle", "value": 0.8}
+{"type": "power", "beam": 3, "balance": "aft"}
+{"type": "target", "id": "3:0"}
 ```
 
 ### Game → console
@@ -101,6 +111,10 @@ released.
 | `denied` | Wrong code | `reason` (`"wrong pairing code"`). |
 | `catalogue` | After `welcome`; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with **every action marked available**, since there is no craft yet; the battle sends the real one when it starts | `groups`: `[{id, title}]` in menu order (`flight`, `throttle`, `weapons`, `targeting`, `power`, `wingmen`, `views`, `camera`, `interface`). `actions`: `[{name, group, label, kind, available}]` for **every** action of the catalogue (R-CON-007): `name` as in `bindings.yaml`, `group` one of the ids above, `label` the display name, `kind` `"hold"` or `"tap"`, `available` false when the craft has no equipment for it (R-CON-019). |
 | `telemetry` | **20 Hz** while paired in a battle; **twice a second** outside one | See below. Outside a battle: `{alive: false, state}` only, with `state` the screen (`"launcher"`). |
+| `theme` | On pairing (the campaign's base theme, from the launcher); in a battle with each `catalogue` (the base with the craft's cockpit layered on) | `vars`: an object of CSS custom properties: `--bg`, `--panel`, `--line`, `--ink`, `--dim`, `--hot`, `--warn`, `--danger`, `--off` as `#rrggbb`; `--font` (a CSS font list); `--corner` (e.g. `"2px"`). Only what the theme sets is sent; `vars: {}` means the page's own look. See [Theme](#theme). |
+| `model` | When the target's class changes, and again when a tablet pairs | `name` (class name), `groups: [{color, positions, indices}]`. See [Model](#model). |
+| `contacts` | **5 Hz** while paired in a battle | `range` (the radar range, metres), `list: [{id, name, relation, station, target, pos, vel}]`. See [Contacts](#contacts). |
+| `event` | Each new line of the pilot's message log | `text`: the line as the message line shows it. |
 
 **Availability.** An action is unavailable when the current craft lacks what it needs: `cloak`,
 `ecm` and `tractor` need that system fitted; the four VCT slides need a class with `vct`;
@@ -139,6 +153,67 @@ actions are still listed, so the console shows them disabled, never hidden.
 
 *Values in the examples are illustrative.*
 
+### Theme
+
+Built by `protocol::theme` from a `rules::ThemeLayer` (R-CON-020): the campaign's
+`console.theme`, with `console.cockpits.<id>` layered on by `ConsoleTheme::for_cockpit` while
+flying a craft with that cockpit. Colours are written as `#rrggbb` from the rules' RGB 0 – 1.
+The page sets each variable on the document root and removes variables a later theme leaves
+out, so they fall back to `console.css`. The keys a pack writes are on
+[Console themes](../modding/console-themes.md).
+
+```json
+{"type": "theme", "vars": {"--bg": "#0d0a14", "--line": "#c9a34a", "--hot": "#ffcf59",
+ "--font": "Futura, 'Avenir Next', sans-serif", "--corner": "2px"}}
+```
+
+### Model
+
+For the target viewport (R-CON-015), built by `protocol::model`:
+
+- the **most detailed level of detail with at most 3000 triangles**
+  (`protocol::MODEL_TRIANGLE_BUDGET`), or the coarsest if every level is larger;
+- **normalised to radius 1** (positions divided by the model's radius, rounded to 3 decimals);
+- one entry per **material group**: `positions` (flat `[x, y, z, …]`, only the vertices that
+  group uses, renumbered from 0), `indices` (triangles, three per face) and `color` (RGB 0 – 1):
+  a textured group's colour is its texture's average (`protocol::average_color`, transparent
+  pixels ignored), an untextured group's is its vertex colour. **No textures are sent.**
+
+Axes are the model's own (x right, y up, −z ahead, as in the engine); the page turns it by
+`telemetry.target.rotation`. The flight screen builds each class's message once and caches it.
+A model that fails to load gives `{type: "model", name}` with no groups.
+
+```json
+{"type": "model", "name": "…", "groups": [{"color": [0.6, 0.75, 0.6],
+ "positions": [0, 0, -1, -0.5, 0, 0.5, 0.5, 0, 0.5], "indices": [0, 2, 1]}]}
+```
+
+### Contacts
+
+For the map (R-CON-014, R-CON-016), built by `protocol::contacts`: every live craft on the
+player's radar (`sim::systems::on_radar`), the player excluded.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | string | `"slot:generation"` of the ship handle; send it back in `target`. A reused slot gets a new generation, so a stale id never targets a newcomer. |
+| `name` | string | The class name. |
+| `relation` | string | `friendly`, `hostile`, `neutral`, or `objective` (a craft the player's faction protects). |
+| `station` | bool | A static object (station, base, module). |
+| `target` | bool | The player's current target. |
+| `pos` | `[x, y, z]` | Position relative to the player, metres, **in the player's own axes**: x right, y up, **z ahead**. |
+| `vel` | `[x, y, z]` | Velocity relative to the player, m/s, in the same axes. |
+
+`range` at the top level is the radar range (`flight.radar_range`), which the map's rings use.
+Because positions are already in the player's axes, the page needs no orientation to draw the
+map around the player.
+
+```json
+{"type": "contacts", "range": 6000, "list": [
+ {"id": "3:0", "name": "…", "relation": "hostile", "station": false, "target": true,
+  "pos": [-400, 300, 2100], "vel": [40, 0, -90]}]}
+{"type": "event", "text": "…"}
+```
+
 ## Keeping the tablet awake
 
 Not a message: the page itself keeps the tablet's screen on while it is open (app 0.4.8, main
@@ -158,14 +233,11 @@ media), and again whenever the page becomes visible (the browser releases both w
 hidden). The telemetry grid's **Tablet** cell shows *screen kept awake*, *screen kept awake (wake
 lock)* or *tap the screen to keep it awake*.
 
-## Messages still planned
+## Still planned
 
-| Message | Direction | When | Carries (*planned* fields) |
-|---|---|---|---|
-| `theme` | game → console | After `welcome`; again when the campaign or craft changes | The active pack's console theme (R-CON-020): colours, fonts, frames and images taken from the pack's own console assets — never original art (R-CON-021). Interlude item C2. |
-| `contacts` | game → console | **5 Hz** | Radar contacts with position relative to the player, faction and kind; nav points (R-CON-014). Item C4. |
-| `model` | game → console | Once per target class, when first targeted | The target's mesh, **decimated**, for the viewport (R-CON-015). The orientation already travels in `telemetry`. Item C3. |
-| `event` | game → console | As it happens | Messages and events (system damaged, missile lock, shield down, mission result) (R-CON-014). |
+- The **serial transport** (C5, R-CON-017): the same messages, one per line, for an Arduino
+  panel.
+- **Nav points** in `contacts` (the map shows craft only).
 
 ## Open
 
@@ -176,11 +248,8 @@ lock)* or *tap the screen to keep it awake*.
 - A client name and protocol version in `hello` (version 1 sends neither); how a version
   mismatch is reported.
 - A per-action description in `catalogue` (R-CON-007): version 1 sends the label only.
-- Field lists of `theme`, `contacts`, `model` and `event`; the decimation budget for `model`,
-  and whether textures are sent.
-- Slider-valued actions other than the throttle (power levels), for the C2 layout.
 - Line framing and the message subset for the serial transport.
-- The theme's file format in a pack.
+- Theme images (frames, backgrounds): version 1 themes are colours, a font and a corner radius.
 
 ## Revision history
 
@@ -190,3 +259,4 @@ lock)* or *tap the screen to keep it awake*.
 | 1.4.0 | 2026-11-11 | `ping` heartbeat and the 1 s hold timeout (app 0.4.3) |
 | 1.3.0 | 2026-11-11 | Version 1 as built (C1, app 0.4.0): `hello {code}`, `welcome {version, campaign}`, `denied {reason}`, `catalogue {groups, actions:[{name, group, label, kind, available}]}` with the availability rules, the `telemetry` fields (body-axis velocity, power, systems, target with relative rotation), `action {name, value}` hold and tap semantics and the new `throttle {value}`; the local-network rule and the three-wrong-codes limit. `theme`, `contacts`, `model`, `event` remain planned; open items revised |
 | 1.7.0 | 2026-11-11 | Pairing fix (app 0.4.7): the server sends `welcome {version}` at once; the flight screen's `welcome {version, campaign}`; the launcher's catalogue (every action available) and idle `telemetry {alive: false, state}` twice a second; `?code=` in the address; the page shows the console on `welcome`. Keeping the tablet awake (app 0.4.8): wake lock or the `keepawake.mp4` clip; files served with HTTP ranges. `telemetry` gains `hits` and `hull_hits` (app 0.4.9) |
+| 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b as built: `power {beam, shield, balance}` (app 0.4.11); `model {name, groups:[{color, positions, indices}]}` with the 3000-triangle LOD budget, radius 1, no textures (0.4.14); `contacts {range, list}` at 5 Hz in the player's axes, `event {text}` from the message log and `target {id}` (0.4.15); `theme {vars}` as CSS variables, sent on pairing and with each catalogue (0.5.0). Session diagram updated; *Messages still planned* replaced by *Still planned* (serial, nav points); open items revised |

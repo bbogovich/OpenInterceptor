@@ -28,7 +28,7 @@ flowchart LR
 |---|---|
 | 1 | Ships (model, cockpit, flight values, mounts, hull/armour/shields, energy), the flight model itself (`newtonian` or `assisted`) and arena size, beam weapons, missiles, stations and objects, factions, cockpits (2D art at any resolution, own design space, 3D cockpit models), instrument layout, event sounds, scenarios with any mix of objects and nav points, additional models (OBJ) and textures (PNG/TGA), **per-asset replacement of any original model, texture, image or sound** |
 | 2 (in progress) | **Done:** mod kinds (`campaign`, `addon`, `library`) with `parent`, `targets`, `format`; **YAML mod files with schemas** (format 2: units, did-you-mean errors, editor completion); ship systems and special equipment (`systems`, `systems+`), power sharing (`power`), damage to systems and repair (`damage`), capture (`capturable`), hyperspace time, crippled scenario objects (`destroyed_systems`, `hull`), the `power` and `systems` instruments; **AI behaviours** as state machines with the condition language; **difficulty levels** with per-level values and variants; 3D cockpit instruments anchored in perspective and the F12 layout editor; **looks** (model sets with damage textures and states, debris sets, effects); **missile guidance** kinds, damage modes and mines; **station modules** at attachment points; AI target preferences and systems use (cloak, ECM, power); the sound cue table; point defence; sensor and jamming probes; **text keys and translations**. **To come:** XSPT explosions, model-set extras |
-| 3 (in progress) | **Done:** missions as data — roles with class lists, counts and arrivals, waves, objectives, optional objectives, timers, outcomes (actions), radio chatter, debriefs. **To come:** hazards, environments and atmospheric flight, the campaign context, Tier 2 **scripts** |
+| 3 (in progress) | **Done:** missions as data — roles with class lists, counts and arrivals, waves, objectives, optional objectives, timers, outcomes (actions), radio chatter, debriefs; the tablet console's look per campaign and cockpit (`console`, [Console themes](console-themes.md)). **To come:** hazards, environments and atmospheric flight, the campaign context, Tier 2 **scripts** |
 | 4 | Star map, bases and modules, research tree, manufacturing, economy, enemy strategy |
 | 5 | Menus, videos, music |
 
@@ -82,6 +82,7 @@ is read once, deterministically, at start-up.
 - [Models and textures](models.md): bringing your own art.
 - [Overrides and extraction](overrides.md): replacing original assets; `--extract`; the HD cockpit walkthrough.
 - [Cockpits (HD and 3D)](cockpits.md): cockpit rules, design spaces, 3D cockpits.
+- [Console themes](console-themes.md): the tablet console's colours, font and corners, per campaign and per cockpit.
 - [Scenarios and missions](scenarios.md): placing ships and stations.
 - [Scripting](scripting.md) and [Tech tree and campaign](campaign.md): planned.
 - [Validating a mod](validating.md): `--check`.

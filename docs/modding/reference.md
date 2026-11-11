@@ -272,6 +272,24 @@ each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audi
 |---|---|---|
 | `cue_table` | asset | A table of named sound cues: `original:<file>/<section>` — the original's `soundfx.ini` (`original:soundfx.ini/InterceptorSounds`). Each entry `Name = "path\file.wav"` makes `cue:Name` mean `original:file.wav`. Cue names ignore case; an unknown cue, or a missing table, is a load error. |
 
+### `console`
+
+The tablet console's look (app 0.5.0; guide: [Console themes](console-themes.md)). A global
+section.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `theme` | layer | none (the page's own look) | The campaign's base theme. |
+| `cockpits` | mapping cockpit id: layer | none | Overrides while flying a craft with that `cockpit:`; ids ignore case. |
+
+A layer:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `colors` | mapping name: RGB | none | `bg` (page background), `panel` (panel background), `line` (borders; pressed-button fill), `ink` (text), `dim` (labels), `hot` (values, highlights), `warn`, `danger`, `off` (not fitted). Any other name is a load error. |
+| `font` | text | the page's | A CSS font list, e.g. `"Futura, 'Avenir Next', sans-serif"`. |
+| `corner` | number | the page's | Panel corner radius in pixels. |
+
 ### `campaign`
 
 | Key | Type | Default | Meaning |

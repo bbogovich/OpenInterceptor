@@ -2,10 +2,13 @@
 
 `src/remote/`: the **tablet control console** (interlude item C1, app 0.4.0, main `dfff71b`;
 pairing from any screen in 0.4.7, main `c42d773`; keeping the tablet awake in 0.4.8, main
-`f1c8be8`).
+`f1c8be8`; the two layouts and tiles, C2, in 0.4.11, main `db2f264`; the target viewport, C3,
+in 0.4.14, main `e51eca9`; the map, contacts and events, C4, in 0.4.15, main `e2b5012`; campaign
+themes, C2b, in 0.5.0, main `0a1c340`). Console items C1 – C4 are complete; only the serial
+panel (C5) remains.
 The game serves a web page and a WebSocket to a tablet on the local network; the tablet shows
 the craft's condition live and sends the pilot's button presses back. Requirements
-[R-CON-009 – R-CON-014](../../specification/requirements/control-console.md#r-con-009-console-server);
+[R-CON-009 – R-CON-026](../../specification/requirements/control-console.md#r-con-009-console-server);
 the wire format is the [Console protocol](../../specification/console-protocol.md); the
 player's guide is [Tablet console](../../user-guide/console.md).
 
@@ -22,7 +25,7 @@ to describe it. `sim` knows nothing about it.
 ```mermaid
 flowchart LR
     subgraph Tablet["Tablet browser"]
-        PG["web/console<br/>oi-pairing · oi-telemetry<br/>oi-throttle · oi-actions"]
+        PG["web/console<br/>All-in-one: oi-telemetry · oi-throttle · oi-actions<br/>Cockpit: oi-hud-strip · oi-shields · oi-display<br/>(oi-target-view · oi-map) · oi-power · oi-tiles"]
     end
     subgraph Threads["Server threads (remote::server)"]
         AC["accept loop<br/>is_local(peer)?"]
@@ -35,10 +38,12 @@ flowchart LR
         RW["RawInput<br/>remote_held · remote_pressed · remote_throttle"]
         BT["Bindings::translate"]
         W["sim::World"]
-        PR["protocol::catalogue / telemetry"]
+        PR["protocol::catalogue · telemetry<br/>contacts · model · theme · event"]
+        RU["rules.console<br/>ConsoleTheme::for_cockpit"]
+        ML["hud::MessageLog::since"]
     end
     PG -- "GET / · /console.js · /console.css · /keepawake.mp4 (Range)" --> CN
-    PG -- "hello · action · throttle<br/>(masked frames)" --> CN
+    PG -- "hello · action · throttle<br/>power · target · ping<br/>(masked frames)" --> CN
     AC --> CN
     CN -- "Event (mpsc channel)" --> CF
     CN -- "Event" --> CI
@@ -46,8 +51,10 @@ flowchart LR
     CN -- "welcome (at once, on the right code)" --> PG
     CF --> RI --> RW --> BT --> W
     W --> PR --> CF
+    RU --> PR
+    ML --> PR
     CF -- "broadcast / send<br/>(per-client channel)" --> CN
-    CN -- "welcome · catalogue · telemetry · denied" --> PG
+    CN -- "welcome · catalogue · telemetry · denied<br/>theme · model · contacts · event" --> PG
 ```
 
 The game loop must never wait on the network, so the server runs on its own threads and talks
@@ -145,6 +152,103 @@ rises the page plays about 0.4 s of fading static, stronger for a hull hit
 ([R-CON-024](../../specification/requirements/control-console.md#r-con-024-hit-static)). Counts
 rather than one-off events mean a dropped or merged telemetry message never loses a hit.
 
+### Two layouts and tiles (C2, app 0.4.11)
+
+`index.html` holds both layouts in one page; `oi-mode` switches between them, remembers the
+choice per tablet (`localStorage`) and accepts `?mode=` in the address
+([R-CON-026](../../specification/requirements/control-console.md#r-con-026-two-console-layouts)):
+
+- **All-in-one** (`#allinone`): the C1 elements, `oi-telemetry`, `oi-throttle`, `oi-actions`.
+- **Cockpit** (`#cockpit`): `oi-hud-strip` (the exterior-view HUD figures), `oi-shields`
+  (shield rings and the balance buttons), `oi-display` (the display console, with **Target**
+  and **Map** tabs), `oi-power` (beam and shield charge sliders) and `oi-tiles` (one status card
+  per catalogue group; tapping one opens a full-width strip of its buttons and folds the rest).
+
+Every element listens to the same `link` event target (one `EventTarget` that re-dispatches each
+message by its `type`), so both layouts stay live and switching costs nothing. The power
+sliders send `power {beam, shield, balance}`; the game applies them with
+`sim::systems::set_level` and the balance request, within the power budget, and `telemetry`
+carries `balance`.
+
+### Target viewport (C3, app 0.4.14)
+
+`oi-target-view` in the Target tab draws the target's model with **WebGL 1, written by hand**
+(no library; a 4×4 projection and a quaternion-to-matrix in a few lines,
+[R-CON-015](../../specification/requirements/control-console.md#r-con-015-target-viewport)):
+
+1. **Game side.** `FlightSession::console_frame` remembers the class the consoles last received
+   (`console_target`). When the player's target has another class — or a tablet pairs, which
+   clears it — it loads the class's model (`Content::load_model`), takes each material group's
+   colour (`protocol::average_color` of its texture, or the vertex colour if untextured) and
+   builds `protocol::model`: the most detailed LOD with at most
+   `protocol::MODEL_TRIANGLE_BUDGET` (3000) triangles, normalised to radius 1, positions rounded
+   to 3 decimals. The text is cached per class in `console_models`
+   (`HashMap<ShipClassId, Rc<String>>`), so retargeting a class costs one broadcast.
+2. **Page side.** Each group becomes a vertex buffer of un-indexed triangles with a face normal
+   per triangle (flat shading). The light comes from the upper left; the model is turned by
+   `telemetry.target.rotation`, already the target's orientation in the player's body axes, so
+   the page needs nothing else. The clear colour is transparent, so the themed panel shows
+   through.
+
+Textures are not sent: an average colour per group is enough to read the shape at viewport
+size and keeps a message to tens of kilobytes. A video stream of the game's own rendering is
+recorded on GitHub issue #3 as a possible later upgrade.
+
+### Map (C4, app 0.4.15)
+
+[R-CON-016](../../specification/requirements/control-console.md#r-con-016-3d-map-view),
+[R-CON-014](../../specification/requirements/control-console.md#r-con-014-console-telemetry):
+
+- **`contacts`** every 0.2 s (`console_contacts_clock`): `protocol::contacts(&World, player)`
+  lists every live craft for which `sim::systems::on_radar` is true, with relative position and
+  velocity turned into the player's axes by the conjugate of the player's rotation (and z
+  negated so that **z is ahead**). The id is `"slot:generation"`.
+- **`event`**: `MessageLog` counts every line ever pushed (`total`); `since(seen)` returns the
+  lines after a count, as many as are still kept. The flight screen sends each new line as
+  `event {text}` and remembers `console_messages_seen`, so no line is sent twice and none is
+  lost between frames.
+- **`target {id}`** decodes to `Inbound::Target { index, generation }`; the flight screen sets
+  the player's target only if that ship still exists and is on the player's radar, so a console
+  cannot target what the pilot could not.
+
+`oi-map` is a 2D canvas with its own small perspective projection: the player's axes are
+rotated by the orbit's yaw and pitch, then projected from a camera 2.2 units back (positions
+scaled by the radar range and the zoom). Per frame it draws range rings at ¼, ½ and 1 × the
+radar range and spokes on the plane at the player's height, then the contacts sorted far to
+near, each with a height stalk to that plane, a relation-coloured mark, a label with name and
+range, and a tick to where it will be in 2 seconds. Presets **Behind**, **Top**, **Side**;
+pointer drag orbits, two pointers pinch-zoom, the wheel zooms (0.5 × – 8 ×). A pointer-up that
+moved less than 8 px is a tap, and targets the nearest drawn contact within 28 px. The list
+beside the map shows the nearest 14 contacts by range; tapping a row targets it. The map skips
+drawing while its tab is hidden. `oi-display` also keeps the last four `event` lines under the
+target data.
+
+### Themes (C2b, app 0.5.0)
+
+[R-CON-020](../../specification/requirements/control-console.md#r-con-020-console-theme-from-the-active-pack),
+[R-CON-021](../../specification/requirements/control-console.md#r-con-021-console-theme-assets-are-original-free):
+
+```mermaid
+flowchart LR
+    Y["rules/console.yaml<br/>console: {theme, cockpits}"] --> L["content::rules::load<br/>ConsoleTheme {base, cockpits}"]
+    L --> B["launcher (app::console_idle):<br/>theme(base) on pairing"]
+    L --> F["flight: theme(for_cockpit(class.cockpit))<br/>with every catalogue"]
+    B --> P["page: root style.setProperty(--bg …)"]
+    F --> P
+    P --> C["console.css: var(--line), color-mix(…)"]
+```
+
+- `rules::ConsoleTheme` holds the campaign's `base` `ThemeLayer` and one layer per cockpit id
+  (lower-cased). `ThemeLayer` is `colors: Vec<(String, [f32; 3])>` plus optional `font` and
+  `corner`; unknown colour names are load errors listing `rules::CONSOLE_COLORS`.
+- `ConsoleTheme::for_cockpit(Some("A"))` clones the base and lays the cockpit's values over it.
+- `protocol::theme` turns a layer into CSS variables (`#rrggbb`, `--font`, `--corner` in px).
+- The page removes the variables of the previous theme before setting the new ones, so a cockpit
+  without an override returns to the base, and an empty theme to the page's defaults.
+  `console.css` derives every colour from about nine variables, mixing tints with
+  `color-mix(in srgb, var(--line) 25%, var(--panel))`, so a pack sets a whole look with a few
+  values.
+
 ### Input path
 
 A console button reaches the simulation the same way a key does:
@@ -188,7 +292,12 @@ letting go does not release another's buttons.
 | `remote::server::Event` | What the server tells the game: `Paired(id)`, `Input(id, Inbound)`, `Left(id)`. |
 | `remote::server::DEFAULT_PORT` | 8765. |
 | `remote::RemoteInput` | The consoles' input state: held actions per console, this frame's taps and throttle. |
-| `remote::protocol::Inbound` | A decoded console message: `Hello { code }`, `Action { action, down }`, `Throttle(f32)`. |
+| `remote::protocol::Inbound` | A decoded console message: `Hello { code }`, `Action { action, down }`, `Throttle(f32)`, `Ping`, `Power { beam, shield, balance }`, `Target { index, generation }`. |
+| `remote::protocol::MODEL_TRIANGLE_BUDGET` | 3000: the most triangles in a `model` message; the most detailed LOD under it is sent. |
+| `content::rules::ConsoleTheme`, `ThemeLayer`, `CONSOLE_COLORS` | The `console:` rules section: the base layer and per-cockpit layers; the nine colour names. |
+| `hud::MessageLog::total`, `since` | Lines pushed in all; the lines after a count. The console's `event` source. |
+| `FlightSession::console_target`, `console_models` | The target class the consoles have; the cached `model` messages per class. |
+| `FlightSession::console_contacts_clock`, `console_messages_seen` | The 5 Hz `contacts` timer; how many log lines were sent as events. |
 | `remote::protocol::HELD` | The actions that act while held; every other action is a tap. |
 | `remote::protocol::VERSION` | The protocol version sent in `welcome` (1). |
 | `remote::ws::Frame`, `ws::Opcode` | One WebSocket frame: `fin`, opcode (`Text`, `Binary`, `Close`, `Ping`, `Pong`, `Continuation`), unmasked payload. |
@@ -196,10 +305,11 @@ letting go does not release another's buttons.
 | `remote::json::Json` | A parsed JSON value (`Null`, `Bool`, `Num`, `Str`, `Arr`, `Obj` with key order kept). |
 | `remote::json::Obj` | A builder that writes a JSON object straight into a `String` (the 20 Hz telemetry costs one allocation). |
 | `AppContext::console`, `AppContext::remote` | The server (when on) and the `RemoteInput`, owned by the app and passed to each screen. |
-| `FlightSession::console_frame` | One frame of console work in flight: poll, apply, `welcome {version, campaign}`, (re)send the catalogue, 20 Hz telemetry, merge input. |
+| `FlightSession::console_frame` | One frame of console work in flight: poll, apply (including `target`), `welcome {version, campaign}`, (re)send the catalogue and theme, the target's `model`, 20 Hz telemetry, 5 Hz contacts, new log lines as events, merge input. |
 | `app::console_idle` | One frame of console work outside a battle (the launcher): the idle catalogue on pairing, idle telemetry twice a second; input ignored. |
 | `AppContext::console_idle_tick` | The half-second count of the last idle telemetry. |
 | `remote::server::FILES` | The embedded page files (`&[u8]`): `index.html`, `console.js`, `console.css`, `keepawake.mp4`. |
+| Page elements | `oi-pairing`, `oi-mode`, `oi-telemetry`, `oi-throttle`, `oi-actions`, `oi-hud-strip`, `oi-shields`, `oi-display`, `oi-target-view`, `oi-map`, `oi-power`, `oi-tiles`, `oi-static` (`web/console/console.js`). |
 
 ## API Reference
 
@@ -216,6 +326,9 @@ letting go does not release another's buttons.
   `catalogue_idle() -> String` (every action, all available: no craft yet);
   `telemetry(&World, ShipId, time) -> String`;
   `telemetry_idle(screen) -> String` (`{alive: false, state: screen}`);
+  `model(name, &Model, colors: &[[f32; 3]]) -> String`; `average_color(rgba: &[u8]) -> [f32; 3]`;
+  `contacts(&World, ShipId) -> String`; `event(text) -> String`;
+  `theme(&ThemeLayer) -> String`;
   `available(&Ruleset, &World, ShipId, Action) -> bool` (cloak, ECM, tractor need the system
   fitted; VCT slides need `vct`; missiles need missiles aboard; beam actions need beams).
 - **WebSocket** (`remote::ws`): `sha1(&[u8]) -> [u8; 20]`, `base64(&[u8]) -> String`,
@@ -231,6 +344,8 @@ letting go does not release another's buttons.
   `as_f64`; `Obj::new().str(k, v).num(k, v).bool(k, v).nums(k, &[..]).raw(k, json).end()`,
   `array(&[String])`.
 - **Input** (`remote`): `RemoteInput::apply(&Event)`, `RemoteInput::merge_into(&mut RawInput)`.
+- **Themes** (`content::rules`): `ConsoleTheme::for_cockpit(Option<&str>) -> ThemeLayer`; the
+  rules field `Ruleset::console`.
 
 ## Debugging
 
@@ -269,8 +384,10 @@ letting go does not release another's buttons.
   that `welcome` comes from the server at once.
 - **The real page in a browser, without the game**: the ignored helper test
   `remote::server::tests::serve_for_a_browser` serves the page on `127.0.0.1:8790` (pairing
-  code from seed 7) for 20 s, answering like the launcher (idle catalogue and telemetry), and
-  prints a `…/?code=NNNNNN` address to open:
+  code from seed 7) for 60 s and prints a `…/?code=NNNNNN` address to open. On pairing it sends
+  the idle catalogue, a sample target model (a wedge) and the default campaign's theme; twice a
+  second a sample in-flight telemetry, four sample contacts and an event, so every panel, the
+  target view and the map have something to show:
 
     ```sh
     cargo test serve_for_a_browser -- --ignored --nocapture
@@ -279,6 +396,14 @@ letting go does not release another's buttons.
 - **The page waits after the code** (before app 0.4.7): pairing from the launcher was never
   answered; update. If the pairing screen stays on top after *Connecting…*, check that
   `console.css` still has the `[hidden]` rule.
+- **The target view stays empty**: the page needs WebGL; check the browser console for
+  `webgl` errors. A class whose model failed to load sends a `model` with no groups. With no
+  target, the view is blank by design.
+- **The map is empty**: `contacts` lists only craft on the player's radar; check the range rings'
+  scale (`range`) and zoom out. A tap that does nothing targeted a contact no longer on radar.
+- **The theme does not change**: the base theme comes on pairing from the launcher; in a battle
+  the cockpit's layer comes with each catalogue (pairing, or a craft of another class). A rules
+  error (an unknown colour name) is reported at load and by `--check`.
 - **The tablet still goes to sleep**: look at the **Tablet** cell. *tap the screen to keep it
   awake* means the clip could not start without a gesture: tap once. If it says *screen kept
   awake* and the tablet still sleeps, check that `/keepawake.mp4` is served with `206` to a

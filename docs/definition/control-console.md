@@ -1,5 +1,5 @@
 ---
-spec_version: 1.7.0
+spec_version: 1.10.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,12 +15,12 @@ Requirements for these features: [Controls & control console requirements](../sp
 | [F-CON-001 Rebindable keyboard, mouse and gamepad](#f-con-001-rebindable-keyboard-mouse-and-gamepad) | Implemented |
 | [F-CON-002 Every original piloting function](#f-con-002-every-original-piloting-function) | Implemented |
 | [F-CON-003 One action catalogue, with a controls overlay](#f-con-003-one-action-catalogue-with-a-controls-overlay) | Implemented |
-| [F-CON-004 Tablet control console](#f-con-004-tablet-control-console) | Partial (C1) |
-| [F-CON-005 Console target viewport](#f-con-005-console-target-viewport) | Planned |
-| [F-CON-006 Console 3D map](#f-con-006-console-3d-map) | Planned |
+| [F-CON-004 Tablet control console](#f-con-004-tablet-control-console) | Implemented (except C5, the serial panel) |
+| [F-CON-005 Console target viewport](#f-con-005-console-target-viewport) | Implemented |
+| [F-CON-006 Console 3D map](#f-con-006-console-3d-map) | Implemented |
 | [F-CON-007 Physical control panel](#f-con-007-physical-control-panel) | Planned |
-| [F-CON-008 Console function-group tiles](#f-con-008-console-function-group-tiles) | Planned |
-| [F-CON-009 Console themed by the active campaign](#f-con-009-console-themed-by-the-active-campaign) | Planned |
+| [F-CON-008 Console function-group tiles](#f-con-008-console-function-group-tiles) | Implemented |
+| [F-CON-009 Console themed by the active campaign](#f-con-009-console-themed-by-the-active-campaign) | Implemented |
 
 ## Features
 
@@ -60,7 +60,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** Immersion, always knowing the craft's condition, and reaching features that are otherwise forgotten. Primary use: an iPad alongside a joystick or gamepad.
 
-- **Status:** partial. C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (`--console` or `console.enabled`; port 8765, `console.port`), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. Since app 0.4.7 a tablet pairs from any screen, the launcher included, as soon as the sixth digit is typed; since 0.4.8 the page keeps the tablet's screen awake; since 0.4.9 buttons show clearly when pressed and the console shows brief static when the player's craft is hit. The layout described above comes with C2 as the **Cockpit** layout; the page will offer it beside the C1 **All-in-one** layout, switchable on the page and remembered per tablet (user request, 2026-11-11: "ipad UI is very different from the design proposal but useful. the page should support two modes, the collected "all-in-one" control scheme in the current design, and the version from the proposal PDF."). See [Tablet console](../user-guide/console.md).
+- **Status:** implemented, except the physical panel (C5, [F-CON-007](#f-con-007-physical-control-panel)). Console items C1 – C4 and C2b are done: C2 (app 0.4.11) the two layouts, **All-in-one** and **Cockpit**, with the function-group tiles and power sliders; C3 (0.4.14) the target viewport; C4 (0.4.15) the 3D map, radar contacts, tap to target and the message log; C2b (0.5.0) campaign themes. Verified in Chrome; an iPad pass is still to be run (MT-3-29 – MT-3-32). History: C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (`--console` or `console.enabled`; port 8765, `console.port`), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. Since app 0.4.7 a tablet pairs from any screen, the launcher included, as soon as the sixth digit is typed; since 0.4.8 the page keeps the tablet's screen awake; since 0.4.9 buttons show clearly when pressed and the console shows brief static when the player's craft is hit. The layout described above came with C2 (app 0.4.11) as the **Cockpit** layout; the page offers it beside the C1 **All-in-one** layout, switchable on the page and remembered per tablet (user request, 2026-11-11: "ipad UI is very different from the design proposal but useful. the page should support two modes, the collected "all-in-one" control scheme in the current design, and the version from the proposal PDF."). See [Tablet console](../user-guide/console.md).
 - **Source:** User request; decision D2 (off by default; local network only; pairing code; port 8765, changeable); interlude items C1 and C2. User request, 2026-11-11: "tablet goes to sleep while page displayed; some function in page needs to keep alive. browser will keep tablet alive during media streaming for video display, so there are some kind of mechanisms in place to prevent sleep. Unclear to what extent this is possible." User request, 2026-11-11: "Initial test on console works well, better button press feedback needed so that it's clean when user has pressed the button. for the style currently applied, the button should highlight with the border color and text switch to black. Add brief static effects when a craft is hit by weapons fire."
 - **Specified by:** [R-CON-007](../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-009](../specification/requirements/control-console.md#r-con-009-console-server), [R-CON-010](../specification/requirements/control-console.md#r-con-010-console-protocol), [R-CON-011](../specification/requirements/control-console.md#r-con-011-console-actions-are-game-actions), [R-CON-012](../specification/requirements/control-console.md#r-con-012-console-page-from-web-components), [R-CON-013](../specification/requirements/control-console.md#r-con-013-console-layout), [R-CON-014](../specification/requirements/control-console.md#r-con-014-console-telemetry), [R-CON-022](../specification/requirements/control-console.md#r-con-022-keep-the-tablet-awake), [R-CON-023](../specification/requirements/control-console.md#r-con-023-button-press-feedback), [R-CON-024](../specification/requirements/control-console.md#r-con-024-hit-static), [R-CON-026](../specification/requirements/control-console.md#r-con-026-two-console-layouts)
 
@@ -70,7 +70,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** Knowing at a glance which way the target is facing.
 
-- **Status:** planned
+- **Status:** implemented (app 0.4.14, main `e51eca9`): the display console's Target tab draws the target's model in WebGL, flat-shaded and turned to its orientation relative to the player.
 - **Source:** User request; interlude item C3.
 - **Specified by:** [R-CON-015](../specification/requirements/control-console.md#r-con-015-target-viewport)
 
@@ -80,7 +80,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** Situational awareness without leaving the cockpit view.
 
-- **Status:** planned
+- **Status:** implemented (app 0.4.15, main `e2b5012`): the Map tab shows every radar contact around the player, with range rings, height stalks, relation colours and three views; tapping a contact targets it.
 - **Source:** User request; interlude item C4.
 - **Specified by:** [R-CON-016](../specification/requirements/control-console.md#r-con-016-3d-map-view)
 
@@ -100,7 +100,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** User request (iPad UI): "since multiple options exist per function group, we will add a feature to make them easy to manage. The tiles present in the mockup will be used and show the status per system in the card. Tapping the tile will collapse other tiles to just their header, and present a full width strip with controls for that function group. Tapping title of the current view again collapses it so that the status cards are all visible. Tapping title of another function group switches the control display to that function group." User request: "Function groups not available at all for the current craft are not displayed. Available function groups are grouped at the horizontal screen center, with empty non-selectable groups where the remaining function group cards would usually be presented in same framing format but with no content." Superseded by the user: "actually based on design all are common, just with individual features disabled, so hiding the whole content is not necessary".
 
-- **Status:** planned
+- **Status:** implemented (app 0.4.11, main `db2f264`), in the Cockpit layout.
 - **Source:** User request (iPad UI); interlude item C2.
 - **Specified by:** [R-CON-018](../specification/requirements/control-console.md#r-con-018-function-group-tiles), [R-CON-026](../specification/requirements/control-console.md#r-con-026-two-console-layouts), [R-CON-019](../specification/requirements/control-console.md#r-con-019-features-the-craft-lacks-are-disabled-not-hidden)
 
@@ -110,8 +110,8 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** User request: "The visual style of the tablet interface is derived from the active campaign/mod. In the case of X-Com Interceptor, these are new assets in the default mod, and the visual styling is based on the current craft's cockpit overlay, but with everything clearly labelled. The default campaign, likewise, follows the retro aesthetic." Clarified by the user: "xcom console theme goes in the interceptor pack, default assets go in resources/default since it's the core content."
 
-- **Status:** planned
-- **Source:** User request (iPad UI); interlude item C2.
+- **Status:** implemented (app 0.5.0, main `0a1c340`): a pack's rules set the console's colours, font and corners, per cockpit if wanted. The default campaign is art-deco (brass on midnight, Futura); `interceptor` keeps the green instrument look, tinted per cockpit (A olive bronze, B steel blue, C red). Colours only: no original art is used. See [Console themes](../modding/console-themes.md).
+- **Source:** User request (iPad UI); interlude items C2 and C2b.
 - **Specified by:** [R-CON-020](../specification/requirements/control-console.md#r-con-020-console-theme-from-the-active-pack), [R-CON-021](../specification/requirements/control-console.md#r-con-021-console-theme-assets-are-original-free)
 
 ## Revision history
@@ -122,3 +122,4 @@ Requirements for these features: [Controls & control console requirements](../sp
 | 1.1.0 | 2026-11-11 | F-CON-003 implemented (app 0.3.1) |
 | 1.3.0 | 2026-11-11 | F-CON-004 partial: console C1 built (app 0.4.0); F-CON-003 status note updated |
 | 1.7.0 | 2026-11-11 | F-CON-004: pairing from any screen (app 0.4.7); the tablet is kept awake (app 0.4.8, R-CON-022); press feedback and hit static (app 0.4.9, R-CON-023, R-CON-024); two layouts, All-in-one and Cockpit (C2, R-CON-026). F-CON-001: keys held at a battle's start are ignored (app 0.4.10, R-CON-025) |
+| 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b complete (app 0.4.11 – 0.5.0): F-CON-005, F-CON-006, F-CON-008 and F-CON-009 implemented; F-CON-004 implemented except C5 (F-CON-007 stays planned) |

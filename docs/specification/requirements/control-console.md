@@ -1,5 +1,5 @@
 ---
-spec_version: 1.9.0
+spec_version: 1.10.0
 status: current
 updated: 2026-11-11
 ---
@@ -23,21 +23,21 @@ Features: [Controls & control console](../../definition/control-console.md). How
 | [R-CON-009 Console server](#r-con-009-console-server) | Implemented |
 | [R-CON-010 Console protocol](#r-con-010-console-protocol) | Implemented |
 | [R-CON-011 Console actions are game actions](#r-con-011-console-actions-are-game-actions) | Implemented |
-| [R-CON-012 Console page from web components](#r-con-012-console-page-from-web-components) | Partial (C1 page) |
-| [R-CON-013 Console layout](#r-con-013-console-layout) | Partial (C1 page) |
+| [R-CON-012 Console page from web components](#r-con-012-console-page-from-web-components) | Implemented |
+| [R-CON-013 Console layout](#r-con-013-console-layout) | Implemented |
 | [R-CON-014 Console telemetry](#r-con-014-console-telemetry) | Implemented |
-| [R-CON-015 Target viewport](#r-con-015-target-viewport) | Planned |
-| [R-CON-016 3D map view](#r-con-016-3d-map-view) | Planned |
+| [R-CON-015 Target viewport](#r-con-015-target-viewport) | Implemented |
+| [R-CON-016 3D map view](#r-con-016-3d-map-view) | Implemented |
 | [R-CON-017 Serial transport](#r-con-017-serial-transport) | Planned |
-| [R-CON-018 Function-group tiles](#r-con-018-function-group-tiles) | Planned |
-| [R-CON-019 Features the craft lacks are disabled, not hidden](#r-con-019-features-the-craft-lacks-are-disabled-not-hidden) | Partial (catalogue and buttons) |
-| [R-CON-020 Console theme from the active pack](#r-con-020-console-theme-from-the-active-pack) | Planned |
-| [R-CON-021 Console theme assets are original-free](#r-con-021-console-theme-assets-are-original-free) | Planned |
+| [R-CON-018 Function-group tiles](#r-con-018-function-group-tiles) | Implemented |
+| [R-CON-019 Features the craft lacks are disabled, not hidden](#r-con-019-features-the-craft-lacks-are-disabled-not-hidden) | Implemented |
+| [R-CON-020 Console theme from the active pack](#r-con-020-console-theme-from-the-active-pack) | Implemented |
+| [R-CON-021 Console theme assets are original-free](#r-con-021-console-theme-assets-are-original-free) | Implemented |
 | [R-CON-022 Keep the tablet awake](#r-con-022-keep-the-tablet-awake) | Implemented |
 | [R-CON-023 Button press feedback](#r-con-023-button-press-feedback) | Implemented |
 | [R-CON-024 Hit static](#r-con-024-hit-static) | Implemented |
 | [R-CON-025 Keys held at the start of a battle are ignored](#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored) | Implemented |
-| [R-CON-026 Two console layouts](#r-con-026-two-console-layouts) | Planned |
+| [R-CON-026 Two console layouts](#r-con-026-two-console-layouts) | Implemented |
 
 ## Requirements
 
@@ -195,12 +195,15 @@ The console page MUST be built from custom web components and CSS, with no frame
 *Rationale:* Lightweight, dependency-free web UI (project dependency policy).
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: partial
-- Verified by: `remote::server::serves_the_page_pairs_and_relays_actions_over_a_real_socket` (the page is served); MT-3-19 – MT-3-23
+- Status: implemented (C1 page app 0.4.0; the Cockpit layout and tiles in 0.4.11; the target viewport, map and themes in 0.4.14 – 0.5.0)
+- Verified by: `remote::server::serves_the_page_pairs_and_relays_actions_over_a_real_socket` (the page is served); MT-3-19 – MT-3-23, MT-3-29 – MT-3-32
 - See: [Dependency policy](../../learning/best-practices/dependencies.md), [Remote console](../../implementation/architecture/remote.md)
 
 !!! note "As built (C1)"
     `web/console/` (`index.html`, `console.css`, `console.js`) is embedded in the binary and served by the game. It is made of four custom elements (`oi-pairing`, `oi-telemetry`, `oi-throttle`, `oi-actions`) with no framework and no build step. This is the C1 page; the C2 page (tiles, themes) completes the requirement.
+
+!!! note "As built (C2 – C4, app 0.4.11 – 0.5.0)"
+    The page now has thirteen custom elements: the C1 four plus `oi-mode` (the layout switch), `oi-hud-strip`, `oi-shields`, `oi-display` (the display console, with its Target and Map tabs), `oi-target-view` (hand-written WebGL 1, no library), `oi-map` (2D canvas), `oi-power`, `oi-tiles` and `oi-static`. Still no framework and no build step.
 
 ### R-CON-013 Console layout
 
@@ -209,14 +212,14 @@ The console MUST show the exterior-view HUD in its top row, a widened display co
 *Rationale:* User request (F-CON-004).
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: partial
-- Verified by: Planned (interlude item C2; a manual test).
+- Status: implemented (app 0.4.11, main `db2f264`, as the **Cockpit** layout of [R-CON-026](#r-con-026-two-console-layouts))
+- Verified by: MT-3-29
 
 !!! note "As built (C1)"
     The C1 page is a working layout, not the one required here: telemetry cells, a throttle slider, then every action as a button under its group title. The HUD row, display console, shield and power columns come with C2, as the **Cockpit** layout; the C1 layout stays as **All-in-one** ([R-CON-026](#r-con-026-two-console-layouts)).
 
-!!! question "Open"
-    The grouping of the remaining functions.
+!!! question "Open (resolved)"
+    The grouping of the remaining functions: the nine catalogue groups, one tile each ([R-CON-018](#r-con-018-function-group-tiles)).
 
 ### R-CON-014 Console telemetry
 
@@ -225,12 +228,15 @@ While paired, the game MUST send craft telemetry at 20 Hz and radar contacts at 
 *Rationale:* Real-time knowledge of the craft's condition.
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: partial (craft telemetry at 20 Hz is built; radar contacts at 5 Hz and events are planned with C4)
-- Verified by: `remote::protocol::telemetry_reports_drift_and_the_targets_relative_rotation`; MT-3-19
+- Status: implemented (craft telemetry at 20 Hz since app 0.4.0; radar contacts at 5 Hz and events since 0.4.15, main `e2b5012`)
+- Verified by: `remote::protocol::telemetry_reports_drift_and_the_targets_relative_rotation`, `remote::protocol::tests::contacts_are_in_the_players_axes_and_targets_decode`, `hud::tests::the_message_log_reports_what_is_new_since_a_count`; MT-3-19, MT-3-31
 - See: [Console protocol](../console-protocol.md#game-console)
 
 !!! note "As built (C1)"
-    Craft telemetry is sent at 20 Hz to every paired console (`app::flight::FlightSession::console_frame`). Radar contacts (5 Hz) and events are not sent yet: they are the `contacts` and `event` messages, still planned on the [Console protocol](../console-protocol.md#messages-still-planned) page, with C4. Outside a battle (app 0.4.7) the launcher sends `telemetry {alive: false, state: "launcher"}` twice a second, which the page shows as *Not flying (launcher)*.
+    Craft telemetry is sent at 20 Hz to every paired console (`app::flight::FlightSession::console_frame`). Radar contacts (5 Hz) and events were not sent yet in C1: they are the `contacts` and `event` messages on the [Console protocol](../console-protocol.md#contacts) page, which came with C4 (below). Outside a battle (app 0.4.7) the launcher sends `telemetry {alive: false, state: "launcher"}` twice a second, which the page shows as *Not flying (launcher)*.
+
+!!! note "As built (C4, app 0.4.15, main `e2b5012`)"
+    `contacts` (`protocol::contacts`) is broadcast every 0.2 s by `FlightSession::console_frame`: every live craft on the player's radar (`sim::systems::on_radar`), in the player's own axes. **Events** are the pilot's message log: each new line becomes an `event {text}`, found with `MessageLog::total` and `MessageLog::since`, so the console sees exactly what the pilot's message line shows (system damage, locks, shields, mission results, radio). Fields: [Console protocol](../console-protocol.md#game-console).
 
 ### R-CON-015 Target viewport
 
@@ -239,12 +245,15 @@ The console's centre display MUST show the current target's model at its true or
 *Rationale:* User request (F-CON-005).
 
 - Implements: [F-CON-005](../../definition/control-console.md#f-con-005-console-target-viewport)
-- Status: planned
-- Verified by: Planned (interlude item C3).
-- See: [Console protocol](../console-protocol.md)
+- Status: implemented (app 0.4.14, main `e51eca9`)
+- Verified by: `remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group`; MT-3-30
+- See: [Console protocol](../console-protocol.md#game-console), [Remote console](../../implementation/architecture/remote.md#target-viewport-c3-app-0414)
 
-!!! question "Open"
-    The decimation budget, and whether textures are sent. Original meshes sent to a device on the player's own network stay on the player's equipment (no redistribution).
+!!! note "As built (C3, app 0.4.14, main `e51eca9`)"
+    The display console's **Target** tab draws the target's model with hand-written WebGL 1 (`oi-target-view`), flat-shaded, lit from the upper left, turned by `telemetry.target.rotation`. The game sends `model {name, groups}` when the target's class changes or a tablet pairs. **Decimation** is by level of detail: the most detailed LOD with at most 3000 triangles (`protocol::MODEL_TRIANGLE_BUDGET`; the coarsest if every LOD is larger), normalised to radius 1. **No textures** are sent: each material group has one colour, the texture's average (`protocol::average_color`, transparent pixels ignored) or the vertex colour of an untextured group. Messages are built once per class and cached in the flight screen. A video stream of the game's own rendering stays a possible later upgrade (GitHub issue #3).
+
+!!! question "Open (resolved)"
+    The decimation budget (3000 triangles, by LOD) and textures (not sent; one average colour per group) are settled. Original meshes sent to a device on the player's own network stay on the player's equipment (no redistribution).
 
 ### R-CON-016 3D map view
 
@@ -253,11 +262,15 @@ The centre display MUST toggle between the target viewport and a 3D map view of 
 *Rationale:* User request (F-CON-006).
 
 - Implements: [F-CON-006](../../definition/control-console.md#f-con-006-console-3d-map)
-- Status: planned
-- Verified by: Planned (interlude item C4).
+- Status: implemented (app 0.4.15, main `e2b5012`)
+- Verified by: `remote::protocol::tests::contacts_are_in_the_players_axes_and_targets_decode`; MT-3-31
+- See: [Console protocol](../console-protocol.md#game-console), [Remote console](../../implementation/architecture/remote.md#map-c4-app-0415), [Tablet console](../../user-guide/console.md#the-map-tab)
+
+!!! note "As built (C4, app 0.4.15, main `e2b5012`)"
+    The display console's **Map** tab (`oi-map`, 2D canvas) beside the **Target** tab. It draws the `contacts` around the player: a grid and range rings at a quarter, half and full radar range on the plane at the player's height; a height stalk from each contact to that plane; relation colours (friendly, hostile, neutral, objective); a label with name and range; a tick showing where each contact will be in 2 seconds. Views **Behind**, **Top** and **Side**; drag to orbit, pinch or the wheel to zoom. Tapping a contact, or a row of the list sorted by range, sends `target {id}`; the game targets it only if it is on the player's radar.
 
 !!! question "Open"
-    What the map shows (contacts, nav points, ranges, orders) and how it is navigated.
+    Nav points and orders on the map (the contacts and ranges are in).
 
 ### R-CON-017 Serial transport
 
@@ -280,12 +293,12 @@ The console MUST present one tile per function group, each a status card for its
 *Rationale:* Many options per function group stay manageable on a tablet (F-CON-008).
 
 - Implements: [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles)
-- Status: planned
-- Verified by: Planned (interlude item C2; a manual test).
-- See: [Console protocol](../console-protocol.md)
+- Status: implemented (app 0.4.11, main `db2f264`)
+- Verified by: MT-3-29
+- See: [Console protocol](../console-protocol.md), [Tablet console](../../user-guide/console.md#the-cockpit-layout)
 
-!!! question "Open"
-    The set of function groups and which status each card shows (the user's mockup is the reference; it is not on this site).
+!!! note "As built (C2, app 0.4.11, main `db2f264`)"
+    `oi-tiles` in the **Cockpit** layout: one tile per catalogue group (the nine groups of `catalogue`), each a status card that also counts the controls *not fitted*. Tapping a tile opens a full-width strip with that group's buttons and folds the others to their headers; tapping the open title closes it; tapping another title switches. Checked in Chrome over the LAN address; iPad check pending.
 
 ### R-CON-019 Features the craft lacks are disabled, not hidden
 
@@ -294,12 +307,12 @@ Every function group MUST be shown for every craft. A control for a feature the 
 *Rationale:* All function groups are common to every craft by design; only individual features differ (user correction, F-CON-008).
 
 - Implements: [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles)
-- Status: partial
-- Verified by: `remote::protocol::the_catalogue_lists_every_action_and_marks_missing_equipment`; MT-3-21
+- Status: implemented (catalogue and buttons app 0.4.0; the tiles' status cards 0.4.11)
+- Verified by: `remote::protocol::the_catalogue_lists_every_action_and_marks_missing_equipment`; MT-3-21, MT-3-29
 - See: [Console protocol](../console-protocol.md)
 
 !!! note "As built (C1)"
-    Availability is sent per action in `catalogue` and resent when the craft class changes; the C1 page shows an unavailable action's button greyed, not tappable and labelled "not fitted". The group status cards arrive with the C2 tiles (R-CON-018).
+    Availability is sent per action in `catalogue` and resent when the craft class changes; the C1 page shows an unavailable action's button greyed, not tappable and labelled "not fitted". The group status cards arrive with the C2 tiles (R-CON-018): since app 0.4.11 each card reads, for example, *Weapons · 2 not fitted*.
 
 !!! question "Open"
     Whether a fitted but destroyed system is shown as not fitted or as damaged (read here: damaged, from telemetry).
@@ -311,12 +324,12 @@ The console's visual style MUST come from the active campaign or mod, delivered 
 *Rationale:* Immersion matching the campaign (F-CON-009).
 
 - Implements: [F-CON-009](../../definition/control-console.md#f-con-009-console-themed-by-the-active-campaign), [F-MOD-001](../../definition/modding-toolkit.md#f-mod-001-packs-and-mod-kinds)
-- Status: planned
-- Verified by: Planned (interlude item C2).
-- See: [Console protocol](../console-protocol.md)
+- Status: implemented (app 0.5.0, main `0a1c340`)
+- Verified by: `remote::protocol::tests::themes_layer_per_cockpit_and_become_css_variables`; MT-3-32
+- See: [Console protocol](../console-protocol.md#game-console), [Console themes](../../modding/console-themes.md), [Mod file reference](../../modding/reference.md#console)
 
-!!! question "Open"
-    The theme's file format and keys in the pack (to be documented on the Modding pages when added).
+!!! note "As built (C2b, app 0.5.0, main `0a1c340`)"
+    A rules section `console: {theme: {colors, font, corner}, cockpits: {<id>: {colors, font, corner}}}` (`rules::ConsoleTheme`, `rules::ThemeLayer`; schema `files::console_theme`). Colour names: `bg`, `panel`, `line`, `ink`, `dim`, `hot`, `warn`, `danger`, `off`. `ConsoleTheme::for_cockpit` layers the cockpit's overrides on the campaign's base. The `theme {vars}` message carries CSS variables (`--bg` … `--off`, `--font`, `--corner`): the base is sent on pairing (from the launcher), and the craft's layered theme with each catalogue in a battle. The page derives every colour from these variables (tints with CSS `color-mix`). A pack without a `console` section sends no variables, so the page keeps its own plain, labelled default.
 
 ### R-CON-021 Console theme assets are original-free
 
@@ -325,9 +338,12 @@ Console theme assets MUST be new art made for this project and kept in the pack'
 *Rationale:* Never reproduce original content (project rule); legibility on a tablet.
 
 - Implements: [F-CON-009](../../definition/control-console.md#f-con-009-console-themed-by-the-active-campaign), [F-CMP-003](../../definition/compatibility.md#f-cmp-003-no-original-content-in-the-project)
-- Status: planned
-- Verified by: Planned (interlude item C2).
-- See: [The default campaign](../../definition/campaigns/default-campaign.md)
+- Status: implemented (app 0.5.0, main `0a1c340`)
+- Verified by: `remote::protocol::tests::themes_layer_per_cockpit_and_become_css_variables`; MT-3-32
+- See: [The default campaign](../../definition/campaigns/default-campaign.md), [Console themes](../../modding/console-themes.md)
+
+!!! note "As built (C2b, app 0.5.0, main `0a1c340`)"
+    Both themes are colours, a font list and a corner radius only: no images, so no art at all is shipped or copied. **Default campaign** (`resources/default/rules/console.yaml`): art-deco, brass lines on midnight panels, cream text, amber values, Futura, corner 2. **`interceptor`** (`packs/interceptor/rules/console.yaml`): the page's green instrument look, tinted per cockpit with that cockpit's accent colour, measured from the player's cockpit art (A olive bronze, B steel blue, C red); only the measured colours are written down. Every control keeps its text label.
 
 ### R-CON-022 Keep the tablet awake
 
@@ -352,7 +368,7 @@ Every console button, tap or hold, MUST visibly show that it is pressed: its bac
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
 - Status: implemented (app 0.4.9)
 - Verified by: MT-3-27
-- See: [Tablet console](../../user-guide/console.md#what-works-in-c1)
+- See: [Tablet console](../../user-guide/console.md#the-all-in-one-layout)
 
 ### R-CON-024 Hit static
 
@@ -392,8 +408,8 @@ The console page MUST offer two layouts, switchable on the page and remembered p
 *Rationale:* User request, 2026-11-11: "ipad UI is very different from the design proposal but useful. the page should support two modes, the collected \"all-in-one\" control scheme in the current design, and the version from the proposal PDF."
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console), [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles)
-- Status: implemented (app 0.4.11, main db2f264): the mode switch (remembered per tablet, `?mode=`), the Cockpit layout with HUD strip, shield rings and balance, display console (target data; viewport C3 and map C4 to come), power sliders (`power {beam, shield, balance}`), and tiles that open a full-width strip. Verified live in Chrome over the LAN address via the DevTools protocol; iPad check pending
-- Verified by: Planned (interlude item C2; a manual test).
+- Status: implemented (app 0.4.11, main db2f264): the mode switch (remembered per tablet, `?mode=`), the Cockpit layout with HUD strip, shield rings and balance, display console (target data; the viewport came with C3 in 0.4.14 and the map with C4 in 0.4.15), power sliders (`power {beam, shield, balance}`), and tiles that open a full-width strip. Verified live in Chrome over the LAN address via the DevTools protocol; iPad check pending
+- Verified by: MT-3-29
 - See: [Stage 3 interlude](../../implementation/plan/stage-3-interlude.md), [Tablet console](../../user-guide/console.md)
 
 ## Revision history
@@ -407,3 +423,4 @@ The console page MUST offer two layouts, switchable on the page and remembered p
 | 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented. New R-CON-023 button press feedback and R-CON-024 hit static (`hits`, `hull_hits` in telemetry), implemented in app 0.4.9; the hit-static interpretation (the player's craft, on the console) awaits the user's confirmation. New R-CON-025 keys held at the start of a battle are ignored (app 0.4.10), implemented; new R-CON-026 two console layouts, All-in-one and Cockpit (C2), planned; R-CON-013 note |
 | 1.8.1 | 2026-11-11 | R-CON-026 implemented (0.4.11) |
 | 1.9.0 | 2026-11-11 | R-CON-024: the hit-static interpretation (the player's craft, on the console) confirmed by the user: "Hit static - correct, works well now" |
+| 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b complete (app 0.4.11 – 0.5.0): R-CON-015 target viewport (0.4.14), R-CON-016 3D map (0.4.15), R-CON-014 contacts and events (0.4.15), R-CON-018 tiles (0.4.11), R-CON-020 and R-CON-021 themes (0.5.0) implemented, with As-built notes and Verified-by lines; R-CON-012, R-CON-013 and R-CON-019 completed by the C2 page (0.4.11); R-CON-015 open note resolved (3000-triangle LOD budget, no textures). R-CON-017 stays planned (C5). No requirement wording changed |

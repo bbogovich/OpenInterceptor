@@ -681,7 +681,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 (main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
 MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). MT-3-19 was revised for
 pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 covers Simple physics (0.4.6, main
-`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
+`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -714,6 +714,10 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-26 | Console: the tablet stays awake | any, with `--console` | not run | | | App 0.4.8; needs an iPad. Checked in headless Chrome only (localhost: wake lock; LAN address: video) |
 | MT-3-27 | Console: press feedback and hit static | `rocket-vs-saucer` (default), with `--console` | not run | | | App 0.4.9; hit static confirmed by the user (2026-11-11): works well |
 | MT-3-28 | No shot from the start key | Launcher; any mission | not run | | | App 0.4.10 |
+| MT-3-29 | Console: two layouts and function-group tiles | `systems-trial` (default), with `--console` | not run | | | App 0.4.11; needs an iPad. Checked in Chrome over the LAN address only |
+| MT-3-30 | Console: the target view | `mixed-dogfight` (default), with `--console` | not run | | | App 0.4.14; needs an iPad. Checked in Chrome (software WebGL) only |
+| MT-3-31 | Console: map views, gestures and tap to target | `mixed-dogfight` (default), with `--console` | not run | | | App 0.4.15; needs an iPad. Checked in Chrome only |
+| MT-3-32 | Console: themes per campaign and per cockpit | Launcher; `rocket-vs-saucer` (default); `combat-test` (`interceptor`), with `--console` | not run | | | App 0.5.0; needs an iPad and, for steps 4–6, original data. Checked in Chrome only |
 
 ### The debrief (every mission case)
 
@@ -928,3 +932,35 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | Preconditions | App 0.4.10 or later. |
 | Steps | 1. In the launcher choose `defend_station` (default) and press **Enter**, holding it for a second. 2. Release Enter, then press it again. 3. Open the menu (Esc) and restart (R); then end the mission and press Enter on the debrief, holding it. 4. With a gamepad, start a mission with **A** and keep it held; release it and press again. 5. Start a mission while holding the fire mouse button (mouse flight on). |
 | Expected | 1: no beam fires at the start, however long Enter is held. 2: the second press fires normally. 3: the retried mission starts without a shot. 4: no A action in flight until A is released and pressed again. 5: no shot until the mouse button is released and pressed again. |
+
+### MT-3-29 — Console: two layouts and function-group tiles
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired, on an iPad in landscape, in `systems-trial` (default) with a craft that lacks some equipment (for example no cloak or no missiles). App 0.4.11 or later. |
+| Steps | 1. Tap **All-in-one**, then **Cockpit** at the top. 2. Reload the page. 3. Open the address with `?mode=allinone`. 4. In Cockpit: read the HUD strip, the shield rings and the display console while flying, firing and taking hits. 5. Tap the shield balance buttons **Fore**, **Equal**, **Aft**. 6. Drag the beam and shield power sliders. 7. Tap the **Weapons** tile, then its title again, then the **Flight** tile's title while Weapons is open. 8. Look at the tiles' status cards. |
+| Expected | 1: the layout switches at once; both show live values. 2: the last layout chosen comes back. 3: All-in-one is shown. 4: the strip shows speed, drift, throttle, hull, energy, target and status; the rings fill and colour with the shields; the display console shows the target's data. 5: the game's shield balance changes, and the button that matches it is lit. 6: the levels change in the game's power readout within the budget; a slider moves back if the budget does not allow it. 7: Weapons opens a full-width strip of its buttons and the other tiles fold to their titles; tapping its title closes the strip and all cards show; tapping Flight switches the strip to Flight. 8: a group with missing equipment says how many controls are *not fitted*; those buttons are greyed and cannot be pressed. Everything fits the iPad screen without scrolling sideways. |
+
+### MT-3-30 — Console: the target view
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired, Cockpit layout, Target tab, in `mixed-dogfight` (default). App 0.4.14 or later. |
+| Steps | 1. Without a target, look at the view. 2. Target a scout saucer (`next_target` until one is selected). 3. Turn so that it flies across your nose, then fly behind it, then let it come at you head-on. 4. Cycle to a craft of another class (a hotrod, then the hauler). 5. Reload the page and pair again while a target is selected. |
+| Expected | 1: the view is empty; the data reads *No target*. 2: within a moment the saucer's model appears, flat-shaded in a few colours that match its look, lit from the upper left. 3: the model turns as its true orientation relative to your craft changes: side-on when crossing, tail towards you when you are behind it, nose towards you head-on; the motion is smooth (20 updates a second). 4: the model changes to the new class each time; switching back to an earlier class is immediate. 5: the model appears again after pairing. No stutter in the game while a model is sent. |
+
+### MT-3-31 — Console: map views, gestures and tap to target
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired, Cockpit layout, **Map** tab, in `mixed-dogfight` (default). App 0.4.15 or later. |
+| Steps | 1. Look at the map in the **Behind** view, then **Top**, then **Side**. 2. Drag with one finger left, right, up and down. 3. Pinch in and out. 4. Fly so that enemies are above and below you. 5. Tap an enemy's mark on the map. 6. Tap a row of the list beside the map. 7. Tap a contact just as it leaves radar range (fly away from a distant one). 8. Switch to the Target tab and watch the message lines while fighting. |
+| Expected | 1: range rings at a quarter, half and full radar range on a grid at your height; your craft at the centre; in Top, ahead is up the screen. 2: the view orbits around you smoothly. 3: the map zooms in and out (within limits). 4: each contact has a stalk to the grid, up or down; colours: green friendly (your wingman), red hostile, yellow neutral, blue an objective; stations are squares; labels show name and range in km; a short tick points where each will be in two seconds. 5 and 6: the game's target changes to that craft at once (the HUD and the Target tab show it, and the contact is ringed on the map and highlighted in the list). 7: a contact no longer on radar is not targeted. 8: the last four lines of the game's message log appear under the target data, in step with the cockpit's message line. |
+
+### MT-3-32 — Console: themes per campaign and per cockpit
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired on an iPad. App 0.5.0 or later. For steps 4–6, original data for the `interceptor` campaign. |
+| Steps | 1. Start the game with the default campaign and pair from the launcher. 2. Start `rocket-vs-saucer` (default). 3. Press a few buttons, open a tile, look at the map and the shield rings. 4. Start the game with the `interceptor` campaign and pair again from the launcher. 5. Fly `combat-test` in the Lightning (cockpit A), then the Firestar (cockpit B), then the Avenger (cockpit C). 6. Return to the launcher. |
+| Expected | 1–3: the art-deco look: brass lines on midnight panels, cream text, amber values, a Futura-like font, small corners; a pressed button fills with brass; every control keeps its label and stays readable. 4: the green instrument look on a dark background. 5: the frames and highlights take each cockpit's tint — olive bronze for A, steel blue for B, red for C — as each battle starts. 6: the base look of the current campaign. No original image appears anywhere on the console. |
