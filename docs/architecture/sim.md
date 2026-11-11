@@ -275,6 +275,10 @@ flowchart TD
   else `power_to_beams` while `beams_first` holds. The requests go through
   `systems::handle_requests` like the player's keys, and reach the ship once (they are cleared
   after the tick).
+- **Missiles (Stage 3).** An attacker launches only within 2.5 × its `attack` range (at least
+  2 km); its first launch comes 3 s plus a random part of one interval into the attack, and each
+  interval varies by ±25 %. Every AI pilot's random sequence is seeded per ship in `World::spawn`
+  (from its slot and the world's generator), so pilots that start together do not fire together.
 - **Target choice.** `attack` and `turret` keep the current target while it lives and stays
   visible; otherwise they pick `targeting::preferred_hostile` with the behaviour's `prefer`
   weights (a matching hostile counts as `distance / weight`; several matches multiply), within
@@ -345,6 +349,9 @@ current order, and `DISABLED` if so.
 - `combat::forget_ship(world, id)` — every ship targeting or towing `id` lets go.
 - `guidance::launch(&mut World, Missile)`, `guidance::step(&mut World, dt, &Ruleset)`,
   `guidance::area_blast(world, at, radius, damage, except)`.
+- `world.spawn_placement(&Placement, player) -> Result<ShipId, String>` (one scenario object or
+  mission role member: class, faction, pilot, modules, starting damage and speed);
+  `world.same_slot(id)`.
 - `world.spawn_modules(hub, depth) -> Result<(), String>` (an unknown slot is an error).
 - `targeting::preferred_hostile(world, me, &[(Selector, f32)]) -> Option<(ShipId, distance)>` —
   the nearest hostile with distances divided by matching preference weights.
@@ -389,3 +396,6 @@ current order, and `DISABLED` if so.
   plays the battle without a window and reports how long the player lasted, hits taken and
   enemies destroyed; the default campaign's balance promise is held by a unit test of the
   same runner (`soak`).
+- Missions sit **above** the simulation: `mission::MissionRun::update` runs after each
+  `World::step` and spawns through `World::spawn_placement` ([Missions](mission.md)); `sim`
+  itself knows nothing about them.

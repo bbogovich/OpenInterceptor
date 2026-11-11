@@ -22,7 +22,7 @@ flowchart TD
     SK -->|skip + warning| W["warnings"]
     SK -->|keep| O["pack::order<br/>stable topological sort"]
     CFG --> OD["vfs::OriginalData::open<br/>index files by name, open DLLs"]
-    O --> RS["rules/*.yaml and campaign/*.yaml of every pack<br/>yaml::parse → Node trees"]
+    O --> RS["rules/, campaign/ and missions/*.yaml of every pack<br/>yaml::parse → Node trees"]
     RS --> B["rules::build_at(level)<br/>validate → merge → levels → inherit/variants/per_level → typed structs"]
     OD -->|"original:File.ini/Section<br/>(still INI)"| B
     B --> RU["Ruleset<br/>incl. behaviours, difficulty"]
@@ -68,7 +68,8 @@ Logic flow of `rules::build_at(sources, original, level)`:
    level names as constants; `builtin_attack` added if no pack defines it), then ships and
    objects (which refer to the others by id; `model_set`, or a model set made from the
    shorthand `model`/`debris`; `class_systems` resolves `systems`, `systems+`, `systems-`,
-   `vct`; `modules` as `(slot, class)`), cockpits (with anchors), flight, sounds.
+   `vct`; `modules` as `(slot, class)`), then missions (`MissionDef::parse` against the
+   battle schema of their role names), cockpits (with anchors), flight, sounds.
 
 Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and `files::scenario()` validation (`Scenario::from_yaml`), and
@@ -148,6 +149,7 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `schema::Get` | Typed reads from a node: `str`, `num`, `qty(key, unit)`, `bool`, `list`, `nums`, `map`, `node`. |
 | `files::{pack, rules, scenario, section, json_schemas}` | The schemas of every mod file type. |
 | `looks::ModelSet`, `DamageLevel`, `DebrisSet`, `EffectDef`, `Swaps`, `ModelSetId`, `DebrisId`, `EffectId` | Looks ([modder's guide](../modding/looks.md)); `ModelSet::swaps_for(hull, state)`, `looks::texture_key(reference)`. |
+| `mission::MissionDef` and friends | Parsed missions ([Missions](mission.md)); `Ruleset::missions`, sorted by `order`. |
 | `rules::Guidance`, `rules::DamageMode` | Missile steering kinds and warhead modes. |
 | `rules::PointDefence`, `rules::ProbeDef` | A class's point-defence guns (`range`, `rate`, `chance`, `energy`); a probe's `sensors` and `jamming` radii. |
 | `behaviour::SystemsUse` | A behaviour's `systems:` conditions (`cloak`, `ecm`, `shields_first`, `beams_first`). |

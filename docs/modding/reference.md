@@ -39,7 +39,7 @@ may also use `inherit`, `delete: true`, `variants: {<level>: {…}}` and list ed
 ## Rules files (`rules/*.yaml`, `campaign/*.yaml`)
 
 Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `systems`, `cockpits`,
-`behaviours`, `modelsets`, `debris`, `effects` (definitions by id), and `flight`, `power`,
+`behaviours`, `modelsets`, `debris`, `effects`, `missions` (definitions by id), and `flight`, `power`,
 `damage`, `sounds`, `audio`, `campaign` (global).
 
 ### `factions`
@@ -273,6 +273,31 @@ each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audi
 | `name` | text | — | Campaign title. |
 | `difficulty` | ids | none | Difficulty level ids, easiest first. |
 | `default_difficulty` | id | the middle level | The level a new game starts at. |
+
+### `missions`
+
+Battles defined by roles, waves, objectives and outcomes. Rules folders: `rules/`, `campaign/`
+and `missions/` (the convention for missions). Full reference, battle-context queries and actions:
+[Missions](missions.md).
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `name`, `briefing` | text | the id, empty | Launcher title and briefing (`@key`s). |
+| `order` | number | 100 | Launcher sort key. |
+| `starfield_seed` | number | 1 | Star field and the mission's random choices. |
+| `sun` | 3 numbers | — | Direction towards the sun. |
+| `player` | `{class, position}` | `choose`, origin | The player's craft and start. |
+| `roles` | mapping name: `{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, at, arrive}` | — | Groups of craft. `class`: an id or a list (random per member); `count`: `n` or `[min, max]`; `at`: `{distance, bearing, from, spread}`; `arrive`: a condition. |
+| `waves` | list of `{role, when, count, at}` | none | Reinforcements, each once. |
+| `objectives` | `{win, lose, draw}` | none | Conditions; `lose` is checked before `win`. |
+| `optional` | mapping name: condition | none | Latched optional objectives. |
+| `timer` | `{after, then}` | none | Time limit and its result. |
+| `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`. |
+| `chatter` | list of `{when, line}` | none | Radio lines. |
+| `debrief` | mapping result: text | none | Debrief texts. |
+
+The schema type **either** (`Ty::Either`) lets a key take one of two forms: `count: 3` or
+`count: [2, 4]`; `bearing: [10, 5]` or `bearing: random`; `class: comet` or `class: [a, b]`.
 
 ## Text files (`text/<language>/*.yaml`)
 

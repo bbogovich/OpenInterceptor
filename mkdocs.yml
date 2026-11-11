@@ -85,6 +85,7 @@ nav:
       - "Missiles and mines": modding/weapons.md
       - "Stations, modules and probes": modding/stations.md
       - "Text and translation": modding/text.md
+      - "Missions": modding/missions.md
       - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md
@@ -127,6 +128,7 @@ nav:
       - "Assets and GPU cache": architecture/assets.md
       - "Simulation": architecture/sim.md
       - "Conditions (script)": architecture/script.md
+      - "Missions": architecture/mission.md
       - "Rendering": architecture/rendering.md
       - "Cockpit and HUD": architecture/hud.md
       - "Input and gamepads": architecture/input.md

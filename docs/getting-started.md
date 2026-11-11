@@ -34,7 +34,7 @@ file).
 ## Build the macOS app
 
 ```sh
-python3 tools/build_bundle.py            # dist/OpenInterceptor-0.2.2.app
+python3 tools/build_bundle.py            # dist/OpenInterceptor-0.3.0.app
 ```
 
 The app contains the engine and the built-in packs, never game data. The script points
@@ -57,6 +57,12 @@ target/release/openinterceptor --campaign default
 
 # ... at a chosen difficulty level:
 target/release/openinterceptor --campaign default --difficulty space_ace
+
+# Go straight to one mission (or scenario) with one ship:
+target/release/openinterceptor --no-original --mission defend_station --ship comet
+
+# Play a mission headless with the AI pilot and print the result:
+target/release/openinterceptor --no-original --soak defend_station --soak-pilot ai --seconds 400
 
 # Go straight to one scenario with one ship:
 target/release/openinterceptor --data game --scenario flight-test --ship lightning
@@ -92,13 +98,14 @@ scripts/check.sh
 | `--campaign <ID>` | Load this campaign (default: the last one chosen in the launcher, else `interceptor` when the data is available, else `default`). |
 | `--difficulty <ID>` | Play at this difficulty level, a level id of the campaign (default: the last one chosen, else the campaign's `default_difficulty`). |
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
+| `--mission <ID>` | Start this mission, skipping the launcher ([Missions](modding/missions.md)). |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
 | `--model <NAME>` | Open the model viewer on this model: a ship class id (`comet`) or an original mesh name (`XBASE7`). |
 | `--screenshot <PNG>` | With `--scenario` or `--model`: render the starting screen for `--frames` frames, save it as a PNG and exit. |
 | `--frames <N>` | Frames to run before `--screenshot` (default 120). |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; `--campaign` checks one. |
-| `--soak <SCENARIO>` | Play a scenario without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots) or `ai` (its class's behaviour). Use with `--ship`, `--campaign`, `--difficulty`. |
+| `--soak <SCENARIO or MISSION>` | Play a scenario — or a mission, which then prints its result (`soak mission <id> (<level>, <pilot>): <result> after <n> s; <k> kills`) — without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots) or `ai` (its class's behaviour). Use with `--ship`, `--campaign`, `--difficulty`. |
 | `--language <CODE>` | Text language: the packs' `text/<CODE>/` folders (default `en`, or `settings.yaml` `game.language`). |
 | `--write-schemas <DIR>` | Write the JSON Schema files of the mod file types (`pack.schema.json`, `rules.schema.json`, `scenario.schema.json`) for editor completion and checking, then exit. |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](modding/overrides.md)), then exit. |

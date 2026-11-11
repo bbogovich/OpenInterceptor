@@ -10,7 +10,7 @@ An installed OpenInterceptor separates **what ships with the program** from **wh
 the player**:
 
 ```text
-OpenInterceptor-0.2.2.app/Contents/           (the program — safe to share)
+OpenInterceptor-0.3.0.app/Contents/           (the program — safe to share)
   MacOS/openinterceptor
   Resources/packs/interceptor, packs/default  (built-in packs: no original content)
 

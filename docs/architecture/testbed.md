@@ -13,6 +13,8 @@ stateDiagram-v2
     [*] --> FlightSession: --scenario id
     [*] --> ModelViewer: --model name
     Launcher --> FlightSession: Enter on a scenario (Next::Fly)
+    Launcher --> FlightSession: Enter on a mission (Next::Mission)
+    [*] --> FlightSession: --mission id
     Launcher --> ModelViewer: Enter on Model viewer (Next::Viewer)
     ModelViewer --> Launcher: Esc
     Launcher --> AssetBrowser: Enter on Asset browser (Next::Assets)
@@ -37,7 +39,7 @@ stateDiagram-v2
   **X**) to the next difficulty level (`launcher::next_difficulty`), each returning
   `Next::Reload { campaign, difficulty }`: the app reloads `Content` (the ruleset is rebuilt at
   that level), saves the choice in `settings.yaml` (`game.campaign`, `game.difficulty`), and shows any
-  load error on the launcher. Entries: the model viewer, the asset browser, **Controls**, then every scenario
+  load error on the launcher. Entries: the model viewer, the asset browser, **Controls**, every scenario, then every **mission** (*Mission: name*, its briefing as the description; [Missions](mission.md)). The list scrolls to keep the selection near the middle (`Menu::first_visible`, "^ more" / "v more"). Scenarios are
   sorted by `order` (the first scenario is selected at start). For
   `player: choose` scenarios, Left/Right picks among playable ship classes, previewed as a
   turning model with name, description and stats. Keyboard, mouse (click to select, click
@@ -66,6 +68,11 @@ stateDiagram-v2
   `async` because loading a sound for playback is (macroquad's API); the app loop `.await`s it.
 - **Controls** (`controls.rs`): the controls menu component (`ControlsMenu`), used from the
   launcher and from the flight pause menu; see [Input](input.md#the-controls-menu).
+- **Missions in a flight session**: `FlightSession::start_mission` builds the battle with
+  `MissionRun::start`; after each tick `MissionRun::update` referees it and its lines go to the
+  message display; when it ends, the battle freezes behind the **debrief** (result, text, kills,
+  losses, time, optional objectives, campaign actions; long text wrapped). Enter (pad A) flies it
+  again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.
 - **Flight session** (`flight.rs`): see the frame loop on the
   [overview](index.md#logic-flow-one-frame-of-a-flight-session). Views F1–F8; after death the
   camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher); P
@@ -123,7 +130,7 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 | Symbol | What it is |
 |---|---|
 | `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`. |
-| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Quit`. |
+| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, `Quit`. |
 | `launcher::next_campaign(&Content)`, `next_difficulty(&Content) -> Option<String>` | The campaign / difficulty level after the current one (wrapping), if there is another. |
 | `controls::ControlsMenu` | The controls menu component (`new`, `frame`). |
 | `assets::AssetBrowser`, `assets::Tab`, `assets::entries(&Content, Tab)` | The asset browser; `entries` (pure) lists assets with their override pack. |
@@ -159,3 +166,5 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
   ship survives, or whether an AI-flown one wins (`--soak-pilot ai`), per difficulty level.
 - A layout saved by F12 that seems ignored: the addon targets the campaign that was loaded when
   it was saved; check `--list` shows `<campaign>-cockpit-<id>` and that it is not disabled.
+- `openinterceptor --mission defend_station --ship comet` starts a mission directly;
+  `--soak defend_station --soak-pilot ai --seconds 400` plays it headless and prints the result.

@@ -8,8 +8,8 @@ playtest one component at a time. Later stages add scenarios; none are removed.
 |---|---|---|---|
 | [0 Foundation](stage-0-foundation.md) | 0.1.0 | Repository, SpecItOut, docs site, format analysis, feasibility | Done |
 | [1 Flight simulator](stage-1-flight.md) | 0.2.0 | Packs and rules, model loading, rendering, cockpits and HUD, controls, flight model, weapons, targeting, wingmen, testbed | Done (signed off 2026-11-10) |
-| [2 Combat, objects and behaviours](stage-2-combat.md) | 0.3.0 | Mod kinds and `parent`; model sets (damage, construction states, debris); full damage, power and special systems; behaviours with difficulty variants; missiles, mines, probes, stations; effects, sound | In progress |
-| [3 Missions, environments and conditions](stage-3-missions.md) | 0.4.0 | Condition/action language; mission types; space and **atmospheric/ground** environments with terrain; comms; hyperspace; debrief; Tier 2 script decision | Planned |
+| [2 Combat, objects and behaviours](stage-2-combat.md) | 0.3.0 | Mod kinds and `parent`; model sets (damage, construction states, debris); full damage, power and special systems; behaviours with difficulty variants; missiles, mines, probes, stations; effects, sound | Done (deferred items listed) |
+| [3 Missions, environments and conditions](stage-3-missions.md) | 0.4.0 | Condition/action language; mission types; space and **atmospheric/ground** environments with terrain; comms; hyperspace; debrief; Tier 2 script decision | In progress |
 | [4 Strategy layer](stage-4-strategy.md) | 0.5.0 | Interactive star map, squadrons and sensors, economy, research, bases and modules, **logistics** (mining, research and manufacturing facilities, supply convoys, surveys — default campaign), ships and loadouts, pilots, functional screens, saves | Planned |
 | [5 Campaigns](stage-5-campaign.md) | 0.6.0 | Events, arcs, rival plans, strategist, dynamic relations, endings: **both campaigns playable start to finish** | Planned |
 | [6 Presentation](stage-6-presentation.md) | 0.7.0 | Screen layouts and skins, menus, video, interactive music, voices | Planned |

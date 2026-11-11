@@ -673,3 +673,113 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 |---|---|
 | Steps | 1. Run the default campaign and read ship and scenario names. 2. Create `mods/default-de/` with `pack.yaml` (`kind: addon`, `targets: [default]`) and `text/de/ships.yaml` renaming `ship.comet.name`. 3. Run with `--language de`, then set `game: {language: de}` in `settings.yaml` and run without the option. 4. Add a rule with `name: "@ship.nope.name"` and run `--check`. 5. With the CD: `--check` in the interceptor campaign. |
 | Expected | 1: names read normally (no `@` keys showing). 2–3: the Comet has the new name; every other string stays English (fallback to `text/en/`). 4: `--check` reports the missing key; in game it shows as the key. 5: the summary counts the texts, including the 3 645 imported `orig.*` strings. |
+
+## Stage 3 results
+
+App 0.3.0 (main `d7553f5`). Each mission case: fly it once to a **win** and once to a **loss**,
+and read the **debrief** each time.
+
+| ID | Case | Scenario | Result | Date | Tester / platform | Notes |
+|---|---|---|---|---|---|---|
+| MT-3-01 | `defend_station` | Mission (default) | not run | | | |
+| MT-3-02 | `convoy_ambush` | Mission (default) | not run | | | |
+| MT-3-03 | `construction_defence` | Mission (default) | not run | | | |
+| MT-3-04 | `intercept_scouts` | Mission (default) | not run | | | |
+| MT-3-05 | `xcom_base_defense` | Mission (interceptor) | not run | | | Needs the CD |
+| MT-3-06 | `defend_freighter_convoy` | Mission (interceptor) | not run | | | Needs the CD |
+| MT-3-07 | `deep_space_encounter` | Mission (interceptor) | not run | | | Needs the CD |
+| MT-3-08 | `attack_alien_outpost` | Mission (interceptor) | not run | | | Needs the CD |
+| MT-3-09 | `destroy_alien_probe` | Mission (interceptor) | not run | | | Needs the CD |
+| MT-3-10 | Launcher mission list and scrolling | Launcher | not run | | | |
+| MT-3-11 | `--mission` and retry from the debrief | — | not run | | | |
+| MT-3-12 | Soak baseline | `--soak <mission>` | not run | | | Expected numbers below |
+
+### The debrief (every mission case)
+
+| Expected | When the mission ends the battle freezes behind a panel: the result (WIN / LOSE / DRAW / RETREAT), the mission's debrief text for it (original text by key for `interceptor`), *Kills n   Losses n   Time m:ss*, each optional objective ticked or not, and "Campaign effects (applied by the strategy layer)" listing the outcome's campaign actions. Enter (pad A) flies the mission again; Esc or L returns to the launcher. Jumping out (H) before the end gives RETREAT. |
+|---|---|
+
+### MT-3-01 — `defend_station`
+
+| Field | |
+|---|---|
+| Steps | Win: defend the Guard station with your two Comet wingmen until all raiders and the late robot sentinels are destroyed. Lose: let the saucers destroy the station (or die). |
+| Expected | Raiders arrive from a random bearing 6 km beyond the station; "saucers inbound" chatter; robots arrive after 75 s ("robots" chatter); reinforcements when fewer than two raiders remain; "station hurt" chatter below 50 % hull. Win: debrief WIN with optional *station untouched* / *no losses*; campaign effects `score(station_defended)`, `salvage`, `relation(guard, +5)`. Lose: LOSE with `lose(guard_station)`, `score(station_lost)`. |
+
+### MT-3-02 — `convoy_ambush`
+
+| Field | |
+|---|---|
+| Steps | Win: protect the two cargo clippers until the hot-rods and the saucer (arrives after 40 s) are destroyed, or survive 4 minutes. Lose: let both clippers die. |
+| Expected | Clippers are marked PROTECT; "ambush" chatter; "clipper lost" when one dies. Win after 4 min even with enemies left (timer). Lose: `cargo_lost`, `score(convoy_lost)`; optional *both clippers*. |
+
+### MT-3-03 — `construction_defence`
+
+| Field | |
+|---|---|
+| Steps | Win: keep the research station at 60 % (scaffolding, no guns) alive; destroy the raiders and the wave after 90 s. Lose: let it fall. |
+| Expected | The station shows its `build_60` model, has no turrets or point defence; win needs all raiders destroyed and more than 95 s elapsed. Lose: `lose(construction_site)`. |
+
+### MT-3-04 — `intercept_scouts`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy every scout saucer. Draw: let 3 minutes pass with scouts alive. Lose: die. |
+| Expected | Scouts ahead at 5 km (count by difficulty: 2 cadet … 4 space ace). After 3 min: DRAW with the draw debrief. |
+
+### MT-3-05 — `xcom_base_defense`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy all Wraiths/Spectres attacking the X-COM base (a wave after 2 min). Lose: let the base fall. |
+| Expected | Launcher name and briefing are the original's text (from `LangFile1.txt`, `%s` shown as written). Debriefs are the original's win/lose texts. |
+
+### MT-3-06 — `defend_freighter_convoy`
+
+| Field | |
+|---|---|
+| Steps | Win: protect two X-COM freighters until the Wraiths are destroyed or 4 minutes pass. Lose: let both freighters die. |
+| Expected | Original texts; win by timer possible; lose lists `cargo_lost`. |
+
+### MT-3-07 — `deep_space_encounter`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy every alien. Lose: die. |
+| Expected | Original texts; campaign effects `score(aliens_destroyed)`, `salvage` on a win. |
+
+### MT-3-08 — `attack_alien_outpost`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy the alien outpost (4 km ahead, below) through its defenders. Lose: die. |
+| Expected | Original texts; the defenders fight back; win as soon as the outpost is destroyed. |
+
+### MT-3-09 — `destroy_alien_probe`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy the alien probe (drone) moving away at 5 km; from experienced up a Wraith escorts it. Draw: let 3 minutes pass. Lose: die. |
+| Expected | Original win, draw and lose debriefs. |
+
+### MT-3-10 — Launcher mission list and scrolling
+
+| Field | |
+|---|---|
+| Steps | Open the launcher in each campaign; move down the whole list with the arrows and back up; click visible entries; select a mission. |
+| Expected | After the scenarios come *Mission: …* entries in their `order`, each with its briefing as the description and the ship choice when the player chooses. The list scrolls to keep the selection near the middle, with "^ more" / "v more" markers when entries are hidden; clicking a visible entry selects it, clicking again starts it. |
+
+### MT-3-11 — `--mission` and retry from the debrief
+
+| Field | |
+|---|---|
+| Steps | `openinterceptor --no-original --mission defend_station --ship meteor`; finish the mission; press Enter; finish again; press Esc. Also try the pause menu's R during a mission, and an unknown id. |
+| Expected | The mission starts directly in the Meteor; Enter restarts the same mission with the same ship; Esc returns to the launcher; R in the pause menu restarts; an unknown id shows an error. |
+
+### MT-3-12 — Soak baseline
+
+| Field | |
+|---|---|
+| Steps | For each mission: `openinterceptor --campaign <c> --soak <mission> --soak-pilot ai --seconds 400 --difficulty <level>` (interceptor with `--ship avenger`); then the passive pilot. |
+| Expected (baseline at `d7553f5`) | **Default, ranger, AI pilot:** `defend_station` lose at 132 s; `convoy_ambush` win at 64 s; `construction_defence` win at 97 s; `intercept_scouts` win at 72 s. Passive pilots lose or draw. **Interceptor, Super Avenger:** beginner wins all five; veteran: base defence lose, convoy win, deep space lose, outpost win, probe lose; superhuman mostly lose (three elerium torpedoes kill an Avenger: the original values 400 impact against 250 armour + 200 shield + 400 hull). Re-run after balance changes; a mission that only ever wins or only ever loses at every level needs attention. |
+

@@ -1,7 +1,8 @@
 # Stage 2 — Combat, objects and behaviours
 
-**Version 0.3.0. Status: in progress** (first delivery 2026-11-10, build 0.2.2; the version
-becomes 0.3.0 when the stage is complete). Every craft, station and weapon of both campaigns fights
+**Version 0.3.0. Status: complete** (app 0.3.0, main `d7553f5`, 2026-11-11), except the deferred
+items below — XSPT sprite explosions and the model-set extras — and the manual passes, which are
+still to be recorded. Stage 3 part 1 (missions) ships in the same build. Every craft, station and weapon of both campaigns fights
 correctly, looks right in every state, and is driven by data: model sets, debris, behaviours with
 difficulty variants. The mod structure (campaign/addon/library, `parent`) lands here because
 every later stage loads content through it.
@@ -42,7 +43,7 @@ Design: [mod structure](../design/mod-structure.md), [objects and models](../des
 | 2.22 | **Cockpit layout editor** (user feedback): F12 in the cockpit view; 2D drag/resize, 3D ray-pick placement, save as an addon | `app::flight`, `hud::layout` | **Done** |
 | 2.23 | Difficulty levels in the launcher (D), `--difficulty`, `settings.yaml`; `--soak` headless balance runs | `app`, `soak` | **Done** |
 
-### Remaining in Stage 2
+### Deferred and outstanding
 
 | Item | Notes |
 |---|---|

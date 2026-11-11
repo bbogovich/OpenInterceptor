@@ -1,6 +1,6 @@
 # Unit tests
 
-Every module's tests, as of main `162bec7` (build 0.2.2): **262 tests** on macOS (263 on
+Every module's tests, as of main `d7553f5` (build 0.3.0): **269 tests** on macOS (270 on
 Linux), run with `cargo test` by the gate. Tests
 live next to the code in `#[cfg(test)] mod tests` blocks and use **synthetic data built in the
 test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.
@@ -32,6 +32,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `content::rules` | 6 | Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, cockpits; **later packs merge, delete and edit lists**; **difficulty variants and per-level values**; every error reported; **spelling of original keys** (`HitPoints` → `hit_points`, `Side` → `faction`, beam `Range` in km); **sound cues resolve through the original table** |
 | `content::equipment` | 3 | System kinds round trip and built-ins exist, `systems` definitions overriding built-ins, `power` parsing and validation (level counts, start levels) |
 | `content::looks` | 3 | Debris sets and effects parse with defaults; texture swaps accumulate with damage levels and state; texture keys ignore folders, case and extensions |
+| `content::mission` | 2 | A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action) |
 | `content::text` | 1 | Keys resolve, plain values pass through, imports are listed |
 | `content::schema` | 4 | Good files pass; **mistakes reported with line and key path** (unknown key with suggestion, wrong type, bad unit); quantities with units and did-you-mean suggestions; JSON Schema export well formed |
 | `content::files` | 1 | Every file schema builds and exports |
@@ -45,9 +46,12 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `sim::ai` | 13 | Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, **aim skill decides accuracy**, **transitions switch states on conditions**, **turrets fire off the nose**, **tugs tow disabled enemies away**, disabled ships drift, target and idle behaviours; **mines go off when an enemy comes near** |
 | `sim::systems` | 13 | **Power**: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; **damage**: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; **hyperspace** countdown, abort and departure; **tractor** hold and capture on jump, and its refusals (power, fitting, range); **cloak** hides from enemy sensors beyond range; **ECM** makes missiles lose their target |
 | `sim::guidance` | 7 | Homing hits and dumbfire misses an offset target; sidestep still arrives; parallax decoys lure enemy missiles; cloaked wait sleeps until prey comes near; cluster splits into submunitions; doppelganger launches a decoy ship that expires; damage modes |
+| `mission` | 3 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
 | `script` | 3 | Units and tokens; evaluation with precedence and short-circuit; **errors found when loading** (unknown names, argument counts, types) |
 | `script::object` | 1 | Query ids match the table; system names match the kinds; level names as constants |
+| `script::battle` | 1 | Query ids match the table; role names are checked names |
+| `script::action` | 1 | Actions parse and are checked (names, argument kinds, battle or campaign scope) |
 | `sim::collision` | 3 | Segment–sphere, segment–triangle, shapes with meshes in model space and the broad phase |
 | `input` | 13 | Original default layout incl. brake, **power and equipment keys**, one-shot commands and Shift chords, **a Shift chord does not trigger the plain held key**, gamepad sticks/buttons/presses and dead zone, **pad modifier layer reaches every power control**, **every action reachable from the keyboard and flight actions from the pad**, **stick layouts and mouse inversion**, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing |
 | `input::editor` | 5 | Rows grouped with headers skipped, capturing a key rebinds and takes it from other actions, capturing plain pad presses and chords, clear / reset / settings, pretty names |
@@ -100,6 +104,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 
 **`content::looks`**: `debris_and_effects_parse_with_defaults`, `swaps_accumulate_with_damage_and_state`, `texture_keys_ignore_folders_case_and_extensions`
 
+**`content::mission`**: `a_full_mission_parses`, `mistakes_are_reported_with_where`
+
 **`content::pack`**: `detects_missing_duplicate_and_cyclic_dependencies`, `discovers_pack_folders`, `manifests_declare_kind_parent_targets_and_format`, `orders_dependencies_first_and_keeps_order_otherwise`, `parses_a_manifest`, `rejects_bad_manifests`, `the_active_set_follows_the_chosen_campaign`
 
 **`content::rules`**: `builds_typed_definitions_with_inheritance`, `difficulty_variants_and_per_level_values`, `later_packs_merge_delete_and_edit_lists`, `reports_every_error_and_keeps_going`, `sound_cues_resolve_through_the_original_table`, `spelling_of_original_keys`
@@ -148,9 +154,9 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 
 **`input::gamepad`**: `axes_are_normalised`, `buttons_round_trip_names_and_bits`
 
-**`model`**: `empty_obj_has_zero_bounds`, `faces_record_their_corners_and_group`, `faces_that_only_touch_or_face_away_are_not_layered`, `later_overlapping_face_is_layered_on_top`, `lod_selection_by_distance`, `mirrored_triangles_keep_outward_winding`, `obj_models_use_materials_scale_and_flip_v`, `overlay_flag_beats_file_order`, `xmsh_is_triangulated_grouped_and_mirrored`
+**`mission`**: `arrivals_waves_chatter_and_a_win`, `lose_beats_win_and_the_timer_ends_it`, `roles_are_placed_counted_and_faced_at_the_player`
 
-**`platform::linux`**: `events_map_to_xinput_layout`
+**`model`**: `empty_obj_has_zero_bounds`, `faces_record_their_corners_and_group`, `faces_that_only_touch_or_face_away_are_not_layered`, `later_overlapping_face_is_layered_on_top`, `lod_selection_by_distance`, `mirrored_triangles_keep_outward_winding`, `obj_models_use_materials_scale_and_flip_v`, `overlay_flag_beats_file_order`, `xmsh_is_triangulated_grouped_and_mirrored`
 
 **`render`**: `billboards_and_streaks_build_two_triangles`, `colour_helpers_clamp`, `layer_bias_reaches_the_shader`
 
@@ -163,6 +169,10 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 **`render::starfield`**: `same_seed_same_sky_and_unit_directions`
 
 **`script`**: `errors_are_found_when_loading`, `evaluates_with_precedence_and_short_circuits`, `units_and_tokens`
+
+**`script::action`**: `actions_parse_and_check`
+
+**`script::battle`**: `ids_match_and_roles_are_checked_names`
 
 **`script::object`**: `ids_match_the_table_and_system_names_match_the_kinds`
 

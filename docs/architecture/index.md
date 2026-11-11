@@ -25,6 +25,9 @@ flowchart TB
         EX["extract<br/>CD → OBJ/PNG/WAV"]
         CLI["cli + settings<br/>options, user data folder"]
     end
+    subgraph LM["6½ · Missions"]
+        MI["mission<br/>MissionRun: roles, waves, objectives, debrief"]
+    end
     subgraph L6["6 · Presentation"]
         R["render<br/>camera, gpu, effects, starfield"]
         H["hud<br/>layout, radar, MFD, draw"]
@@ -39,7 +42,7 @@ flowchart TB
     end
     subgraph L3["3 · Content"]
         C["content<br/>Content, vfs, pack, rules, schema, files,<br/>equipment, behaviour, scenario"]
-        SC["script<br/>conditions"]
+        SC["script<br/>conditions, actions"]
     end
     subgraph L2["2 · Model"]
         M["model<br/>Model, ModelLod, MaterialGroup"]
@@ -47,7 +50,8 @@ flowchart TB
     subgraph L1["1 · Formats"]
         F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj"]
     end
-    APP --> R & H & AU & IN & S & C
+    APP --> R & H & AU & IN & S & C & MI
+    MI --> S & C & SC
     CK --> S & C & F
     R --> S & C & M
     H --> S
@@ -131,7 +135,7 @@ flowchart LR
 ## API Reference
 
 Each layer's public API is on its own page: [Formats](formats.md), [Packs, VFS and
-rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md),
+rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md), [Missions](mission.md),
 [Rendering](rendering.md), [HUD](hud.md), [Input](input.md), [Audio](audio.md),
 [Platform](platform.md), [Testbed](testbed.md). `cargo doc --open` renders the `///` comments
 of every item.

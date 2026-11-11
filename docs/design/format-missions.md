@@ -3,7 +3,12 @@
 **Status: design; implemented in [Stage 3](../implementation-plan/stage-3-missions.md)
 (missions, environments), [Stage 4](../implementation-plan/stage-4-strategy.md)
 (generation from the strategy layer) and [Stage 5](../implementation-plan/stage-5-campaign.md)
-(campaign events).** Files in `missions/*.yaml` and
+(campaign events).** **Stage 3 part 1 (app 0.3.0) implemented mission types**: roles, arrivals
+(as a role's `at:` / `arrive:`), waves, objectives, optional objectives, timer, outcomes as
+checked actions, chatter and debriefs, flown from the launcher — documented for modders on
+[Missions](../modding/missions.md). Still planned: `location`, `environment`, `backdrop`,
+`generated`, `refuse`, roles `from:` the strategy situation, `hazards`, chatter voices, simulator
+missions, environments, events and squadrons. Files in `missions/*.yaml` and
 `events/*.yaml` (YAML, like every mod file). The [scenario format](../modding/scenarios.md) stays for testbed
 arenas; a mission is a scenario with roles, waves, objectives and outcomes.
 
@@ -49,13 +54,14 @@ missions:
 |---|---|
 | `location`, `environment`, `backdrop` | Where the battle happens and what the arena is like. |
 | `generated` | The strategy-layer condition that creates the mission (squadron meets asset, request, event). Testbed and story missions omit it. |
-| `roles: {<name>: …}` | A group of objects: from the situation (the squadron that triggered it, the station under attack), from a class list with counts (per difficulty), or the player's launched craft. Each role has a behaviour and a faction. |
-| `arrivals: {<role>: …}`, `waves: [..]` | When and where groups enter: time, condition, position (distance and bearing, edge, near another role, hyperspace in). |
-| `objectives: {win, lose, draw}`, `optional: {<id>: …}` | Conditions; checked every tick. `draw` for draws (the original has win/draw/lose debriefs). |
-| `outcomes: {<result>: [..]}` | Action lists: score, salvage, capture, relation changes, map changes (outpost lost), flags, story steps. |
-| `timer` | `timer: {after: 10min, then: lose}` for timed missions (the hijacked Nova Bomb, the arms dealer). |
-| `hazards` | `{asteroids: dense, black_hole: {pull: 15}, minefield: {mines: 20}, ion_storm: {sensors: -60%}}`. |
-| `chatter` | Radio lines by trigger (`- {on: "wave(2)", line: "@chat.more_bogeys", voice: wingman}`). |
+| `roles: {<name>: …}` | A group of objects: from the situation (the squadron that triggered it, the station under attack), from a class list with counts (per difficulty), or the player's launched craft. Each role has a behaviour and a faction. **Implemented** for class lists and counts (the player's craft is `player:`); `from:` the situation is Stage 4. |
+| `arrivals: {<role>: …}`, `waves: [..]` | When and where groups enter: time, condition, position (distance and bearing, edge, near another role, hyperspace in). **Implemented differently:** arrival is part of each role — `at: {distance, bearing, from, spread}` and `arrive: <condition>` — not a separate `arrivals:` map (DEV-040). Waves implemented (`{role, when, count, at}`, each once). Edge and hyperspace-in arrivals: planned. |
+| `objectives: {win, lose, draw}`, `optional: {<id>: …}` | Conditions; checked every tick. `draw` for draws (the original has win/draw/lose debriefs). **Implemented** (`lose` before `win`; optional objectives latched). |
+| `outcomes: {<result>: [..]}` | Action lists: score, salvage, capture, relation changes, map changes (outpost lost), flags, story steps. **Implemented** as checked actions; `message` runs in battle, campaign actions are listed on the debrief until Stage 4 applies them. |
+| `timer` | `timer: {after: 10min, then: lose}` for timed missions (the hijacked Nova Bomb, the arms dealer). **Implemented.** |
+| `hazards` | `{asteroids: dense, black_hole: {pull: 15}, minefield: {mines: 20}, ion_storm: {sensors: -60%}}`. *Planned.* |
+| `chatter` | Radio lines by trigger. **Implemented** as `- {when: <condition>, line: "@chat.more_bogeys"}` (each said once); voices are planned. |
+| `debrief` | Debrief text per result. **Implemented.** |
 
 **Logistics missions (planned).** `convoy_ambush` (an enemy attacks a supply convoy; destroyed
 or captured cargo never arrives) and `construction_defence` (an enemy strikes a facility before

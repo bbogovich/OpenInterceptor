@@ -6,8 +6,8 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 |---|---|---|
 | [0 Foundation](implementation-plan/stage-0-foundation.md) | **Done** | Repository, SpecItOut manifest, gate, docs site; every asset type for stages 1–2 decoded and verified |
 | [1 Flight simulator](implementation-plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
-| [2 Combat, objects and behaviours](implementation-plan/stage-2-combat.md) | **In progress** — build **0.2.2** (deliveries of 2026-11-10) | See [Stage 2 progress](#stage-2-progress) below |
-| [3 Missions, environments and conditions](implementation-plan/stage-3-missions.md) | Not started | Tier 2 script language decided at entry |
+| [2 Combat, objects and behaviours](implementation-plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
+| [3 Missions, environments and conditions](implementation-plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0 | See [Stage 3 progress](#stage-3-progress) below |
 | [4 Strategy layer](implementation-plan/stage-4-strategy.md) | Not started | |
 | [5 Campaigns](implementation-plan/stage-5-campaign.md) | Not started | |
 | [6 Presentation](implementation-plan/stage-6-presentation.md) | Not started | |
@@ -76,7 +76,7 @@ chase view, and radar scopes offset from cockpit A's art. Seen fixed in the mode
 
 ## Stage 2 progress
 
-Build **0.2.2** (Cargo version; 0.3.0 is reserved for Stage 2 complete). Main `162bec7`
+Builds 0.2.2 → **0.3.0** (Stage 2 complete, with Stage 3 part 1). Up to main `162bec7`
 (first delivery `7594041`; YAML formats `13d8d19`; behaviours, conditions and difficulty
 `1e8a598`; anchored instruments and layout editor `dd92045`; enemy behaviours for both campaigns
 and `--soak` `f638b44`; looks `b097c83`; guidance and mines `7997e53`; station modules `c7d9301`,
@@ -113,7 +113,23 @@ and `--soak` `f638b44`; looks `b097c83`; guidance and mines `7997e53`; station m
 | Sound cue table: `audio.cue_table`, `cue:<Name>` (2.12) | **Done** | `src/content/rules.rs` |
 | AI target preferences (`prefer`) | **Done** | `src/content/behaviour.rs`, `src/sim/targeting.rs` |
 | Testbed arenas: a duel per enemy type, mixed dogfight, escort, debris showcase, base assault, outpost strike | **Done** | `packs/*/scenarios/` |
-| Remaining: XSPT explosions (deferred), model-set extras | **Not started** | [plan](implementation-plan/stage-2-combat.md#remaining-in-stage-2) |
+| Remaining: XSPT explosions (deferred), model-set extras | **Not started** | [plan](implementation-plan/stage-2-combat.md#deferred-and-outstanding) |
 | Stage 2 [manual tests](testing/manual-tests.md#stage-2-results) MT-2-01 … MT-2-34 | **Not yet run** | |
 
-**Next**: the Stage 2 manual pass and the model-set extras; then Stage 3 (missions). The strategy-layer logistics of the default campaign are designed on [Logistics](design/logistics.md).
+## Stage 3 progress
+
+App **0.3.0**, main `d7553f5`; **269 unit tests** on macOS.
+
+| Item | Status | Where |
+|---|---|---|
+| Battle condition context (role names as constants) and checked outcome actions (battle / campaign scope) (3.1) | **Done** (campaign context: Stage 4) | `src/script/battle.rs`, `src/script/action.rs` |
+| Missions as data: roles, arrivals (`at:`, `arrive:`), waves, objectives, optional objectives, timer, outcomes, chatter, debrief (3.2) | **Done** (hazards planned) | `src/content/mission.rs`, `src/mission/` |
+| Debrief screen; player jumping out = `retreat` (3.8) | **Done** (salvage/score applied in Stage 4) | `src/app/flight.rs` |
+| Launcher mission entries with scrolling; `--mission`; `--soak <mission>` | **Done** | `src/app/launcher.rs`, `src/soak.rs` |
+| AI missile launches only when closing in, staggered; per-pilot random sequences | **Done** | `src/sim/ai.rs`, `src/sim/mod.rs` |
+| `interceptor`: 5 of 27 mission types (3.11) | **Started** (compositions derived, DEV-041) | `packs/interceptor/missions/` |
+| `default`: 4 missions incl. the logistics missions (3.12, 3.13) | **Started** | `packs/default/missions/` |
+| Environments, atmospheric flight, terrain, simulator missions, Tier 2 decision (3.3–3.6, 3.9, 3.10) | **Not started** | |
+| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-12 | **Not yet run** | |
+
+**Next**: the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](design/logistics.md).
