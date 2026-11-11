@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -24,7 +24,7 @@ Requirements for these features: [Modding toolkit requirements](../specification
 | [F-MOD-010 Cutscene Designer](#f-mod-010-cutscene-designer) | Planned |
 | [F-MOD-011 Cutscenes in the game](#f-mod-011-cutscenes-in-the-game) | Planned |
 | [F-MOD-012 Video cutscenes](#f-mod-012-video-cutscenes) | Planned |
-| [F-MOD-013 Shared formations](#f-mod-013-shared-formations) | Planned |
+| [F-MOD-013 Shared formations](#f-mod-013-shared-formations) | In progress |
 | [F-MOD-014 3D cockpit instrument placement](#f-mod-014-3d-cockpit-instrument-placement) | Planned |
 | [F-MOD-015 Single-file models and Blender sources](#f-mod-015-single-file-models-and-blender-sources) | Planned |
 
@@ -180,7 +180,7 @@ Everything it saves is the same open pack data a modder could write by hand.
 
 **Why.** A modder defines a shape once; a cutscene and a battle look the same.
 
-- **Status:** planned
+- **Status:** in-progress. Formations are pack data used by wingmen (MD1, app 0.6.6); cutscenes use them with MD2.
 - **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "For fighters and ships, they can choose which formation to apply." Plan item MD1 (it also serves wingmen and replaces per-scenario slot offsets).
 - **Specified by:** [R-MOD-039](../specification/requirements/modding.md#r-mod-039-formations-in-cutscenes), [R-MOD-047](../specification/requirements/modding.md#r-mod-047-shared-formations), [R-CMB-022](../specification/requirements/combat.md#r-cmb-022-wingmen-keep-their-distance)
 
@@ -214,3 +214,4 @@ The first test case for the mod tools is exactly this: a mod extending `intercep
 | 1.7.0 | 2026-11-11 | F-MOD-009 – F-MOD-013 (planned): Mod Designer, Cutscene Designer, cutscenes in the game, video cutscenes, shared formations (user request and decisions D1–D5) |
 | 1.9.0 | 2026-11-11 | F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned), from the user's message of 2026-11-11. F-MOD-001: packs (built into the game) versus mods (added from the user's mods folder), the term *extension*, Open note on where the line falls. F-MOD-009: the wizard's kind is *extension*, not *override* |
 | 1.12.0 | 2026-11-11 | F-MOD-005: the Tier 2 evaluation is recorded on the dependency page (R-MOD-015); awaiting the user's decision |
+| 1.13.0 | 2026-11-11 | F-MOD-013 in progress: formations built for wingmen (MD1, app 0.6.6) |

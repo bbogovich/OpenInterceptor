@@ -1,5 +1,5 @@
 ---
-spec_version: 1.5.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -218,15 +218,22 @@ Wingmen MUST hold formation slots and obey: formation (ignore my target), attack
 
 ### R-CMB-022 Wingmen keep their distance
 
-A wingman's formation slot MUST lie at least `flight.formation_gap` (default 3) × the two ships' combined radii from the leader; a closer slot from data is pushed out along its own direction.
+A wingman's formation slot MUST come from a named formation (`formations:`, R-MOD-047): the mission role's `formation:`, else `flight.formation` (default `vee`); wingmen of every wingman role MUST take successive slots of it. The slot MUST lie at least `flight.formation_gap` (default 3) × the two ships' combined radii from the leader; a closer slot from data is pushed out along its own direction. The wing order *Wingmen: next formation* (Shift+O) MUST move the player's wingmen into the campaign's next formation, in list order, wrapping.
 
-A wingman flying in formation MUST actively avoid collisions: when another craft is inside its avoidance zone (twice the combined radii) and closing, it MUST steer away and slow down until clear.
+Every moving AI pilot — wingmen and enemies alike — MUST avoid collisions **predictively**: it MUST project each other object's path against its own (constant velocities) to their closest approach within `AVOID_HORIZON` (2.5 s; 1 s for static objects and for its own target, so that firing passes are not broken off), and when the miss would be under 1.5 × the combined radii + 10 m (static objects: the combined radii + 30 m), or the other is already inside twice the combined radii and closing, it MUST steer to widen the miss and ease off if the danger is ahead. A leader MUST ignore its own wingmen (they keep clear of it); static objects and turrets MUST NOT avoid.
 
 *Rationale:* The user's request (see F-CMB-007): wingmen collided with the player and kept pushing.
 
 - Implements: [F-CMB-007](../../definition/combat.md#f-cmb-007-wingmen-and-orders)
 - Status: implemented
-- Verified by: `sim::ai::formation_slots_keep_a_gap_from_the_leader`, `sim::ai::a_wingman_steers_clear_of_the_leader`
+- Verified by: `sim::ai::formation_slots_keep_a_gap_from_the_leader`, `sim::ai::a_wingman_steers_clear_of_the_leader`, `sim::ai::collision_avoidance_predicts_the_closest_approach`, `sim::ai::tests::the_formation_order_cycles_the_campaigns_formations`; `mission::tests::wingmen_take_successive_slots_of_their_formation`; `content::formation::tests::shapes_place_followers_behind_and_beside_the_leader`, `custom_slots_then_a_vee_and_errors`; MT-3-62, MT-3-63, MT-4-01
+- See: [Formations (modding)](../../modding/reference.md#formations), [Simulation › AI](../../implementation/architecture/sim.md#ai-simai)
+
+!!! note "Formations (MD1, app 0.6.6, main `6d390d7`)"
+    Slots come from `formations:` pack data (`content::formation`) instead of the fixed side offsets: shapes `vee`, `line_abreast`, `echelon`, `box`, `diamond` or a custom `slots:` list, in units of `spacing`. Both campaigns ship the five shapes in `rules/formations.yaml`. An unknown formation is a load error.
+
+!!! note "From user feedback (app 0.6.7, main `c0e2516`)"
+    The user's playtest reported wingmen and enemies ramming each other and the player. Avoidance was reactive and for wingmen only; it is now predictive and for every moving AI pilot (`ai::avoid_collision`). The default `guard_station` was given `hit_points: {per_level: [11000, 8000, 8000, 8000]}` and `defend_station` two raiders at cadet, keeping R-MSN-011's 150 s undefended promise with the AI wasting fewer runs.
 
 ### R-CMB-016 Behaviours as data
 
@@ -320,3 +327,4 @@ The option is `flight: {bolt_frame: world | ship}`. `world` (the default) is the
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CMB-001 – R-CMB-021 (21 requirements; 20 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-CMB-021 implemented (app 0.3.1): `flight.bolt_frame` (`world` default, `ship` with `bolt_carry`), open note resolved. R-CMB-002: bolts also carry the muzzle's turn velocity; streaks drawn relative to the viewer |
 | 1.5.0 | 2026-11-11 | R-CMB-022 wingmen keep their distance and avoid collisions |
+| 1.13.0 | 2026-11-11 | R-CMB-022 revised: slots from named formations with `formation:` / `flight.formation` and the Shift+O next-formation order (MD1, app 0.6.6); predictive collision avoidance for every moving AI pilot (app 0.6.7, from user feedback) |

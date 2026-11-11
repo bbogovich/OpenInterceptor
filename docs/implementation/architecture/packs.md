@@ -175,6 +175,8 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `environment::EnvironmentDef`, `Physics`, `Sky`, `Planet` | One `environments:` entry ([Environments and terrain](../../modding/environments.md)); `Ruleset::environments`. |
 | `environment::TerrainDef`, `TerrainSource`, `Heightfield` | One `terrains:` entry (`Generate { kind, seed }` or `Heightmap(asset)`) and its heights, `field: Option<Arc<Heightfield>>`; `Ruleset::terrains`. |
 | `hazards::Hazards`, `Scatter`, `BlackHole`, `hazards::schema()` | A mission's or scenario's `hazards:` ([Missions › Hazards](../../modding/missions.md#hazards)); `Hazards::classes()` for `--check`. |
+| `formation::FormationDef`, `Shape`, `formation::SPACING` | A `formations:` entry (MD1, app 0.6.6): `parse`, `slot(k)` (metres, leader's frame), `fallback()` (the built-in 60 m vee); `Ruleset::formations` and `Ruleset::formation(Option<&str>)`, `FlightRules::formation`. |
+| `strategy::StrategyDef` and friends, `strategy::DEF_SECTIONS`, `strategy::sections()` | The strategy layer (app 0.7.0): `Ruleset::strategy: Option<StrategyDef>`, `None` without `start:` ([Campaign](campaign.md)). Strategy files load from `<pack>/strategy/`. |
 | `mission::MissionDef` and friends | Parsed missions ([Missions](mission.md)); `Ruleset::missions`, sorted by `order`. |
 | `rules::Guidance`, `rules::DamageMode` | Missile steering kinds and warhead modes. |
 | `rules::PointDefence`, `rules::ProbeDef` | A class's point-defence guns (`range`, `rate`, `chance`, `energy`); a probe's `sensors` and `jamming` radii. |

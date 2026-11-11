@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -13,6 +13,21 @@ Files in `strategy/*.yaml` (YAML, the mod format of the implemented rules files)
 quantity the original computes with a formula takes an **expression** in the
 [condition language](format-behaviour.md#conditions) (arithmetic over campaign queries), so the
 formulas are data too.
+
+!!! note "As built (app 0.7.0 – 0.7.3)"
+    The built part of this design, with every key, default and error, is on the modding page
+    [Strategy layer](../../modding/strategy.md). Built: `start` (one start; DEV-046), `maps`
+    (fixed and generated; free and lane travel), `star_classes`, `research` and `research_model`
+    (`mode`, `rate`, `switching`), `items` (plus `rounds`), `hulls`, `base_modules`, `base_types`
+    (`limits`, `template`, `max_distance` in place of a placement expression), `raids` (the
+    built stand-in for squadrons and the strategist), `incomes`, `expenses`, `pilots` (stats,
+    ranks by experience, salary, recruit fee, pool, healing, survival), `scores`, `flags` and
+    `economy` (`delivery`, `salvage_per_kill`), all expressions in the campaign context
+    (`script::campaign`). Not built yet: bodies, probes and sensors as items, factions and
+    relations, evaluations, resources, markets and factories as sections, storage, salvage
+    tables, capture, `designs`, fitting rules, training, bravery, injuries by health, strategists.
+    Several keys are simpler than designed (a number where an expression is shown, `upkeep` as a
+    plain monthly number); see [Deviations](../../implementation/deviations/index.md) DEV-046.
 
 ## Star map
 
@@ -335,3 +350,4 @@ meet, a [mission](format-missions.md) is generated.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch) |
+| 1.13.0 | 2026-11-11 | As-built note: the strategy sections built in app 0.7.0 – 0.7.3 and what remains; the format itself unchanged |

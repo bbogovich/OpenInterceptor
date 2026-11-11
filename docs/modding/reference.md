@@ -39,8 +39,15 @@ may also use `inherit`, `delete: true`, `variants: {<level>: {…}}` and list ed
 ## Rules files (`rules/*.yaml`, `campaign/*.yaml`)
 
 Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `systems`, `cockpits`,
-`behaviours`, `modelsets`, `debris`, `effects`, `missions` (definitions by id), and `flight`, `power`,
-`damage`, `sounds`, `audio`, `campaign` (global).
+`behaviours`, `modelsets`, `debris`, `effects`, `voices`, `environments`, `terrains`, `formations`,
+`missions` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `audio`, `console`,
+`campaign` (global). The **strategy layer** adds the definitions `maps`, `star_classes`, `research`,
+`items`, `hulls`, `base_modules`, `base_types`, `raids`, `incomes`, `expenses` and the globals
+`start`, `research_model`, `pilots`, `scores`, `flags`, `economy`, by convention in
+`strategy/*.yaml` — every key is on [Strategy layer](strategy.md). All of them are in the editor
+schema `schemas/rules.schema.json`.
+
+Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 
 ### `factions`
 
@@ -242,8 +249,35 @@ Texture names match a model's textures by file name without folder or extension,
 | `bolt_carry` | time | 0.3 s | With `bolt_frame: ship`, how long a shot stays in the ship's frame. |
 | `lighting` | map | see below | How ships are lit: `ambient` (light everywhere, 0.30), `sun` (extra light on faces towards the sun, 0.85), `rim` (extra light on edges seen side-on, outlining hulls against space, 0), `distant_dot` (pixels: a ship on the player's radar smaller than this on screen is drawn as a dot in its radar colour, 4; 0 = off). Keys left out keep their defaults ([Rendering](../implementation/architecture/rendering.md#lighting-rim-and-brightness-app-031)). |
 | `collision` | map | see below | How collisions feel: `restitution` (bounciness, 0 = the ships stop together … 1 = a perfect bounce; 0.5), `spin` (how strongly the angle of impact spins a ship; 1), `tumble` (time: the longest a hard hit leaves the pilot with reduced control; 2.5 s). Ships pressed together make one impact (sound and damage), not one per tick ([R-FLT-009](../specification/requirements/flight.md#r-flt-009-collisions)). |
+| `formation` | id | `vee` | The formation wingmen fly in when their mission role names none ([`formations`](#formations), app 0.6.6). |
+| `debrief_delay` | time | 30 s | After a mission's result the verdict shows and the computer voice speaks at once; the battle runs on this long before the debrief, with a countdown (Enter shows it now; a retreat shows it at once). `0s` = at once (app 0.7.4). |
 | `formation_gap` | number | 3 | A wingman's formation slot is at least this many × the two ships' combined radii from its leader; tighter slots in scenarios and missions are pushed out ([R-CMB-022](../specification/requirements/combat.md#r-cmb-022-wingmen-keep-their-distance)). |
 | `radar_colors` | map | see below | Radar blip and target-marker colours by relation to the player: `friendly` (own faction, default green), `hostile` (either side hostile, red), `neutral` (yellow), `objective` (objects with `protect: true`, cyan). Each is `[r, g, b]`, 0..1. |
+
+### `formations`
+
+Named shapes for groups of craft (MD1, app 0.6.6): wingmen in battle now, cutscene formations
+later. A definition section: `formations: {<id>: {…}}`. Both campaigns ship `vee`, `line_abreast`,
+`echelon`, `box` and `diamond` in `rules/formations.yaml`.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `shape` | `vee` / `line_abreast` / `echelon` / `box` / `diamond` | — | A built-in shape that gives a slot for any number of followers: **vee** alternates left and right, each pair one rank further back; **line_abreast** alternates left and right level with the leader; **echelon** is a diagonal back and to the right; **box** is rows of two behind the leader (the leader is the front-left corner); **diamond** is left, right, then behind (more trail behind). |
+| `slots` | list of `[x, y, z]` | — | A custom shape instead of `shape` (not both): slots in the leader's frame, +x right, +y up, **+z behind**, in units of `spacing`. Followers beyond the list continue as a vee behind the deepest slot. |
+| `spacing` | distance | 60 m | Metres per slot unit: one number opens or closes the whole formation. |
+
+A mission role of wingmen picks one with [`formation: <id>`](missions.md#roles); otherwise
+`flight.formation` applies. Slots are still pushed out to `flight.formation_gap` × the combined
+radii. A campaign with no formations uses a built-in 60 m vee. In flight, **Shift+O** (*Wingmen:
+next formation*) moves your wingmen into the next formation of the list. Errors: `formations.x:
+give shape or slots, not both`; `shape: 'y' is not vee, line_abreast, echelon, box or diamond`;
+`missions.m.roles.r: unknown formation 'y'` (and `flight.formation: …`).
+
+```yaml
+formations:
+  vee: {shape: vee, spacing: 60m}
+  staggered: {slots: [[-1, 0, 1], [1, 0, 2], [-1, 0, 3]], spacing: 50m}
+```
 
 ### `power`
 
@@ -286,8 +320,7 @@ Radio voice sets (app 0.6.2; guide: [Radio voices](voices.md)). A definition sec
 | `engaging`, `kill` | Reserved names; not yet said by the engine. Other line names are kept and ignored. |
 
 A clip is a sound asset (`sounds/x.wav`, `original:<file>.wav`); with a list, one is picked
-each time. Unlike the `sounds:` section, `cue:<Name>` is **not** resolved in voice clips (app
-0.6.4), and `--check` does not load them: a clip that fails to load is reported on start-up as a
+each time. Like the `sounds:` section, a clip may be `cue:<Name>` (app 0.6.7), and `--check` does not load them: a clip that fails to load is reported on start-up as a
 `sound: …` line.
 
 ### `audio`
@@ -364,13 +397,13 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `starfield_seed` | number | 1 | Star field and the mission's random choices. |
 | `sun` | 3 numbers | — | Direction towards the sun. |
 | `player` | `{class, position}` | `choose`, origin | The player's craft and start. |
-| `roles` | mapping name: `{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, at, arrive}` | — | Groups of craft. `class`: an id or a list (random per member); `count`: `n` or `[min, max]`; `at`: `{distance, bearing, from, spread}`; `arrive`: a condition. |
+| `roles` | mapping name: `{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, formation, at, arrive}` | — | Groups of craft. `class`: an id or a list (random per member); `count`: `n` or `[min, max]`; `at`: `{distance, bearing, from, spread}`; `arrive`: a condition. |
 | `waves` | list of `{role, when, count, at}` | none | Reinforcements, each once. |
 | `objectives` | `{win, lose, draw}` | none | Conditions; `lose` is checked before `win`. |
 | `optional` | mapping name: condition | none | Latched optional objectives. |
 | `timer` | `{after, then}` | none | Time limit and its result. |
 | `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`, `killed` (the player's craft destroyed; without its own entry it takes the `lose` actions). |
-| `chatter` | list of `{when, line, voice}` | none | Radio lines; `voice` is a clip spoken with the line (app 0.6.2). |
+| `chatter` | list of `{when, line, voice}` | none | Radio lines; `voice` is a clip spoken with the line (app 0.6.2), or a `cue:<Name>` (app 0.6.7). |
 | `debrief` | mapping result: text | none | Debrief texts, by the same results (`killed` shows no text unless given). |
 | `environment` | id | open space | The battle [environment](#environments). |
 | `hazards` | [hazards](#hazards) | none | Asteroid field, minefield, black hole, ion storm. |

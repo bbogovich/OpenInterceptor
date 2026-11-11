@@ -51,6 +51,17 @@ traditional space fighter games can choose **Simple** physics instead:
 | Chase camera | Orbiting and zooming the manual chase camera |
 | Interface | MFD pages, nav points, pause, the menu, mouse flight, the keys overlay (`help`) |
 
+## Wingmen and formations
+
+Your wingmen fly in a **formation** — a vee unless the mission names another. **Shift+O**
+(*Wingmen: next formation*) moves them into the campaign's next formation: both campaigns have
+vee, line abreast, echelon, box and diamond, in that order, and the list wraps. The cockpit
+message says which (*WINGMEN: FORM LINE ABREAST*), or *NO WINGMEN*. The other wing orders —
+Shift+F fire at will, Shift+A attack my target, Shift+I form up (ignore my target), Shift+E
+evasive, Shift+R retreat, Shift+S status — are unchanged; after evasive or *form up* the
+wingmen return to the formation last ordered (app 0.6.6). Formations are pack data
+([Mod file reference › formations](../modding/reference.md#formations)).
+
 ## Rebinding
 
 Open the **controls menu** from the launcher (*Controls (keyboard, gamepad, mouse)*) or in

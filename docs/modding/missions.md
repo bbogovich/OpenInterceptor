@@ -74,8 +74,8 @@ missions:
 | `optional` | mapping name: condition | none | Optional objectives, latched when first met and reported on the debrief. |
 | `timer` | `{after, then}` | none | A time limit: after `after` (a time) the result is `then` (`win`, `lose`, `draw`, `retreat` or `killed`; default `draw`). |
 | `outcomes` | mapping result: list of actions | none | What each result does (below). Results: `win`, `lose`, `draw`, `retreat`, `killed`. A mission without `killed` outcomes uses its `lose` outcomes for it. |
-| `chatter` | list of `{when, line, voice}` | none | Radio lines, each said once when its condition first holds. `voice` (optional, app 0.6.2) is a sound asset spoken on the radio with the line: `voice: sounds/colony_control.wav` ([Radio voices](voices.md)). |
-| `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. |
+| `chatter` | list of `{when, line, voice}` | none | Radio lines, each said once when its condition first holds. `voice` (optional, app 0.6.2) is a sound asset spoken on the radio with the line: `voice: sounds/colony_control.wav`, or a `cue:<Name>` (app 0.6.7) ([Radio voices](voices.md)). |
+| `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. The debrief appears `flight.debrief_delay` (30 s) after the result; the battle runs on meanwhile (app 0.7.4, [reference](reference.md#flight)). |
 | `environment` | id | open space | Where the battle happens: an [environment](environments.md) such as `orbit` or `moon_surface`. |
 | `hazards` | mapping | none | Asteroid field, minefield, black hole, ion storm ([below](#hazards)). |
 
@@ -93,6 +93,7 @@ missions:
 | `hull` | fraction | 100 % | Starting hull. |
 | `destroyed_systems` | ids | none | Systems that start destroyed. |
 | `speed` | number | 0 | Starting speed, m/s. |
+| `formation` | id | `flight.formation` (`vee`) | Wingmen (`ai: wingman`): the [formation](reference.md#formations) they fly in (app 0.6.6). Wingmen of every wingman role take successive slots of it, so two roles never share a slot. An unknown formation is a load error. |
 | `at` | arrival | the player's start | **Where** it enters (below). |
 | `arrive` | condition | at the start | **When** it enters: the role spawns the first time this holds. |
 
@@ -251,7 +252,8 @@ Five missions of the default campaign each show one feature a mission can use. R
 Each has a `killed` debrief (`@debrief.killed`) so that being shot down never shows the text for
 the objective failing. Over a terrain, craft placed less than 300 m above the ground start at
 300 m (app 0.6.4), so a role placed `from` a ground installation does not start inside a hill;
-installations themselves are set down on the ground.
+installations themselves are set down on the ground, and other static objects (a station over a
+surface) float one radius clear of it (app 0.6.7).
 
 Measured with `--soak <mission> --soak-pilot ai --difficulty cadet` (app 0.6.4):
 `colony_defence` win at 43 s, `outpost_raid` win at 99 s; `ground_strike`, `asteroid_hunt` and

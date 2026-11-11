@@ -17,6 +17,7 @@ flowchart LR
     TXT["&str"] --> INI["ini::Ini::parse<br/>(original INI; legacy settings)"]
     TXT --> YML["yaml::parse → Node<br/>(mod files, settings, bindings)"]
     TXT --> OBJ["obj::parse → ObjMesh<br/>obj::parse_mtl"]
+    RGBA["RGBA pixels"] --> PNG["png::encode_rgba → PNG bytes<br/>(writer, app 0.6.7)"]
 ```
 
 Logic flow of a typical reader: check the signature (`BadMagic` if wrong) → read the header
@@ -33,6 +34,7 @@ indices) → return owned data.
 | `formats::wav` | RIFF WAVE: PCM 8/16, MS ADPCM, IMA ADPCM | Re-encodes to PCM WAV in memory for playback. |
 | `formats::ini` | INI text | Case-insensitive sections/keys, `;` comments, layered merge. Since Stage 2 used for the **original** CD's INI files (`inherit: original:…`) and to migrate old `settings.ini` / `bindings.ini`; mod files are YAML. |
 | `formats::yaml` | A strict subset of YAML | Block and flow mappings and sequences, plain/quoted scalars, `|` and `>` block text, `#` comments. Rejects tabs, anchors, aliases, tags, several documents, complex keys and multi-line plain scalars with a line number. Every scalar stays text (with a `quoted` flag); the schema layer gives it a type. Also writes YAML (`to_yaml`). Why hand-written: DEV-030. |
+| `formats::png` | *(writes)* RGBA → PNG | App 0.6.7, for the console's textured target model. `encode_rgba(w, h, rgba)` writes the signature and `IHDR` (8-bit RGBA), one `IDAT` holding a zlib stream of **stored** (uncompressed) deflate blocks of at most 65 535 bytes — each row led by filter byte 0 — and `IEND`; every chunk ends with a CRC-32 (bit-by-bit, polynomial `0xEDB88320`) and the zlib stream with an Adler-32. No compressor is needed, so no crate (see [Dependency policy](../../learning/best-practices/dependencies.md)). `downscale(w, h, rgba, max)` averages blocks to at most `max` pixels a side. PNG files are read by `content`, not here. |
 | `formats::obj` | Wavefront OBJ + MTL | The mod model format. Negative indices, `v/vt/vn` forms. Faces in a `g`/`o` named `slot_<name>` are not kept as geometry: each such group becomes an attachment point `(name, centre of its faces, first face's normal)` in `ObjMesh::slots`. |
 
 ## Key Symbols

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's original data (an
   installed copy or the CD).
 
-Specification version **1.12.0** (217 requirements). Changes are listed in the
+Specification version **1.13.0** (217 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -86,3 +86,4 @@ Facts carry verified / derived / unknown marks.
 | 1.10.0 | 2026-11-11 | 217 requirements: console C2 – C4 and C2b (app 0.4.11 – 0.5.0): R-CON-012 – R-CON-016, R-CON-018 – R-CON-021 implemented; the console protocol gains `power`, `model`, `contacts`, `event`, `theme` and `target` as built (R-MOD-055 implemented in 1.9.1) |
 | 1.11.0 | 2026-11-11 | 217 requirements: Stage 3.2 – 3.6 (app 0.5.1 – 0.6.1): R-MSN-008 battle environments (with ground installations), R-MSN-009 hazards, R-FLT-011 atmospheric flight, R-FLT-012 terrain and R-HUD-012 atmosphere instruments rewritten as built and implemented; the design page *Format: missions, environments, events* marks what is built |
 | 1.12.0 | 2026-11-11 | 217 requirements: Stage 3.7, 3.9 and 3.12 (app 0.6.2 – 0.6.4): R-MSN-007 voices and R-MSN-010 simulator rewritten as built and implemented; R-CPN-004 progress note (nine default missions); R-TST-009 partly met (mission browser = simulator; condition console not built); R-MOD-015 Tier 2 evaluation recorded on the dependency page, awaiting the user's decision; *Format: behaviours and scripting* summarises it |
+| 1.13.0 | 2026-11-11 | 217 requirements: Stage 4 as built (app 0.6.5 – 0.7.4): R-STR-001 and R-STR-011 implemented, R-STR-002 – R-STR-010 partly met with As-built and Open notes; R-MOD-047 implemented for wingmen (MD1), R-MOD-014 partly met (the campaign context); R-CMB-022 revised (formations, predictive avoidance for every AI pilot — user feedback); R-FLT-012 revised (ground to the horizon — user feedback); R-CON-015 textured target (user feedback); R-MSN-005 the battle runs on before the debrief (user request), R-MSN-007 voice timing and `cue:` in voices; R-CPN-004 and R-CPN-005 progress notes; *Console protocol* `model` textures; *Format: strategy layer* as-built note |

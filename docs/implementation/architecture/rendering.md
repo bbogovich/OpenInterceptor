@@ -185,6 +185,18 @@ draw plain space. With a sky, the background is cleared to the horizon colour in
   a fixed ±8 % per-vertex variation. It is uploaded once per terrain id through
   `ModelCache::upload_model` and kept in `Renderer::terrain`, then drawn with `draw_model` like
   any ship: lit by the sun, depth-tested, fogged.
+- **Ground to the horizon** (app 0.6.7, from the user's playtest). Past its square the ground
+  continues as **mirror-image tiles** (`Heightfield::fold`): tile `(i, j)` is the field reflected
+  across each odd index, so neighbours meet without seams and `height_at` — used by collision
+  and the AI — answers everywhere. A tile reflected in X alone cannot be drawn by rotating the
+  normal mesh, so two meshes are uploaded: the field and its X-mirror (`terrain_model(def,
+  field, mirror_x)`, with the triangles' winding swapped so they still face up). A tile
+  reflected in both X and Z is the normal mesh turned 180° about Y; one reflected in Z alone is
+  the mirrored mesh turned 180° (`render::terrain::tile_placement`). Each frame the renderer
+  draws the tiles within the fog distance × 1.1 (else three field sizes), at most 7 × 7 around
+  the tile under the camera, skipping those whose nearest part is beyond reach. The test
+  `tiles_match_the_folded_ground_heights` checks every vertex of every placed tile against the
+  folded height.
 - **Fog** in the lit shader: the vertex stage computes `fog = clamp(d / FogDistance.x, 0, 1)²` from
   the camera-relative position; the fragment stage mixes the colour towards `FogColor`.
   `FogDistance.x = 0` (space) turns it off. See the precision note under [Debugging](#debugging).

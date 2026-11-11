@@ -1,5 +1,5 @@
 ---
-spec_version: 1.10.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -112,7 +112,7 @@ released.
 | `catalogue` | After `welcome`; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with **every action marked available**, since there is no craft yet; the battle sends the real one when it starts | `groups`: `[{id, title}]` in menu order (`flight`, `throttle`, `weapons`, `targeting`, `power`, `wingmen`, `views`, `camera`, `interface`). `actions`: `[{name, group, label, kind, available}]` for **every** action of the catalogue (R-CON-007): `name` as in `bindings.yaml`, `group` one of the ids above, `label` the display name, `kind` `"hold"` or `"tap"`, `available` false when the craft has no equipment for it (R-CON-019). |
 | `telemetry` | **20 Hz** while paired in a battle; **twice a second** outside one | See below. Outside a battle: `{alive: false, state}` only, with `state` the screen (`"launcher"`). |
 | `theme` | On pairing (the campaign's base theme, from the launcher); in a battle with each `catalogue` (the base with the craft's cockpit layered on) | `vars`: an object of CSS custom properties: `--bg`, `--panel`, `--line`, `--ink`, `--dim`, `--hot`, `--warn`, `--danger`, `--off` as `#rrggbb`; `--font` (a CSS font list); `--corner` (e.g. `"2px"`). Only what the theme sets is sent; `vars: {}` means the page's own look. See [Theme](#theme). |
-| `model` | When the target's class changes, and again when a tablet pairs | `name` (class name), `groups: [{color, positions, indices}]`. See [Model](#model). |
+| `model` | When the target's class changes, and again when a tablet pairs | `name` (class name), `groups: [{color, positions, indices, uvs?, texture?}]`. See [Model](#model). |
 | `contacts` | **5 Hz** while paired in a battle | `range` (the radar range, metres), `list: [{id, name, relation, station, target, pos, vel}]`. See [Contacts](#contacts). |
 | `event` | Each new line of the pilot's message log | `text`: the line as the message line shows it. |
 
@@ -177,7 +177,12 @@ For the target viewport (R-CON-015), built by `protocol::model`:
 - one entry per **material group**: `positions` (flat `[x, y, z, …]`, only the vertices that
   group uses, renumbered from 0), `indices` (triangles, three per face) and `color` (RGB 0 – 1):
   a textured group's colour is its texture's average (`protocol::average_color`, transparent
-  pixels ignored), an untextured group's is its vertex colour. **No textures are sent.**
+  pixels ignored), an untextured group's is its vertex colour;
+- a **textured** group also carries `texture`, its image shrunk to at most 128 pixels a side and
+  sent as a PNG `data:image/png;base64,…` URL (`protocol::texture_url`, written by the in-crate
+  `formats::png`), and `uvs` (flat `[u, v, …]`, two per vertex, in the same order as
+  `positions`) — app 0.6.7. The page shows `color` until the image has loaded. Untextured groups
+  have neither key.
 
 Axes are the model's own (x right, y up, −z ahead, as in the engine); the page turns it by
 `telemetry.target.rotation`. The flight screen builds each class's message once and caches it.
@@ -260,3 +265,4 @@ lock)* or *tap the screen to keep it awake*.
 | 1.3.0 | 2026-11-11 | Version 1 as built (C1, app 0.4.0): `hello {code}`, `welcome {version, campaign}`, `denied {reason}`, `catalogue {groups, actions:[{name, group, label, kind, available}]}` with the availability rules, the `telemetry` fields (body-axis velocity, power, systems, target with relative rotation), `action {name, value}` hold and tap semantics and the new `throttle {value}`; the local-network rule and the three-wrong-codes limit. `theme`, `contacts`, `model`, `event` remain planned; open items revised |
 | 1.7.0 | 2026-11-11 | Pairing fix (app 0.4.7): the server sends `welcome {version}` at once; the flight screen's `welcome {version, campaign}`; the launcher's catalogue (every action available) and idle `telemetry {alive: false, state}` twice a second; `?code=` in the address; the page shows the console on `welcome`. Keeping the tablet awake (app 0.4.8): wake lock or the `keepawake.mp4` clip; files served with HTTP ranges. `telemetry` gains `hits` and `hull_hits` (app 0.4.9) |
 | 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b as built: `power {beam, shield, balance}` (app 0.4.11); `model {name, groups:[{color, positions, indices}]}` with the 3000-triangle LOD budget, radius 1, no textures (0.4.14); `contacts {range, list}` at 5 Hz in the player's axes, `event {text}` from the message log and `target {id}` (0.4.15); `theme {vars}` as CSS variables, sent on pairing and with each catalogue (0.5.0). Session diagram updated; *Messages still planned* replaced by *Still planned* (serial, nav points); open items revised |
+| 1.13.0 | 2026-11-11 | `model`: textured groups carry `texture` (a PNG data URL, at most 128 px) and `uvs` (app 0.6.7, from user feedback) |

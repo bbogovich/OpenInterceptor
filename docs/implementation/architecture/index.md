@@ -20,7 +20,7 @@ The order is the one written at the top of `src/lib.rs`:
 ```mermaid
 flowchart TB
     subgraph L7["7 · Application"]
-        APP["app<br/>launcher, viewer, asset browser, flight session"]
+        APP["app<br/>launcher, viewer, asset browser, flight session,<br/>simulator, strategy screen"]
         CK["check<br/>headless validation"]
         EX["extract<br/>original data → OBJ/PNG/WAV"]
         CLI["cli + settings<br/>options, user data folder"]
@@ -40,18 +40,20 @@ flowchart TB
     end
     subgraph L4["4 · Simulation"]
         S["sim<br/>World, flight, combat, systems, ai, targeting, collision"]
+        CA["campaign<br/>Campaign: the strategy layer, hour step, saves"]
     end
     subgraph L3["3 · Content"]
-        C["content<br/>Content, vfs, pack, rules, schema, files,<br/>equipment, behaviour, scenario"]
-        SC["script<br/>conditions, actions"]
+        C["content<br/>Content, vfs, pack, rules, schema, files,<br/>equipment, behaviour, scenario, formation, strategy"]
+        SC["script<br/>conditions, actions, campaign context"]
     end
     subgraph L2["2 · Model"]
         M["model<br/>Model, ModelLod, MaterialGroup"]
     end
     subgraph L1["1 · Formats"]
-        F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj"]
+        F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj, png (writer)"]
     end
-    APP --> R & H & AU & IN & S & C & MI & RM
+    APP --> R & H & AU & IN & S & C & MI & RM & CA
+    CA --> C & SC
     RM --> IN & S & C & H
     MI --> S & C & SC
     CK --> S & C & F
@@ -134,12 +136,13 @@ flowchart LR
 | `World` | `src/sim/mod.rs` | The battle: ships, bolts, missiles, events. Changed only by `World::step`. |
 | `Renderer` | `src/render/mod.rs` | Owns shaders and GPU caches; draws a `World` from a `SpaceCamera`. |
 | `FlightSession` | `src/app/flight.rs` | One running scenario: world, camera view, HUD state, accumulator. |
+| `Campaign` | `src/campaign/mod.rs` | One strategy-layer game: map, bases, research, craft, pilots, contacts; advanced an hour at a time, saved as YAML ([Campaign](campaign.md)). |
 | `ConsoleServer` | `src/remote/server.rs` | The tablet console's server threads, seen from the game: `poll` events, `broadcast` messages ([Remote console](remote.md)). |
 
 ## API Reference
 
 Each layer's public API is on its own page: [Formats](formats.md), [Packs, VFS and
-rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md), [Missions](mission.md),
+rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md), [Missions](mission.md), [Campaign](campaign.md),
 [Rendering](rendering.md), [HUD](hud.md), [Input](input.md), [Audio](audio.md),
 [Platform](platform.md), [Remote console](remote.md), [Testbed](testbed.md). `cargo doc --open` renders the `///` comments
 of every item.

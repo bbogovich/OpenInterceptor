@@ -190,9 +190,20 @@ carries `balance`.
    the page needs nothing else. The clear colour is transparent, so the themed panel shows
    through.
 
-Textures are not sent: an average colour per group is enough to read the shape at viewport
-size and keeps a message to tens of kilobytes. A video stream of the game's own rendering is
-recorded on GitHub issue #3 as a possible later upgrade.
+**Textures (app 0.6.7, from the user's playtest).** Each textured group is now sent with its
+image and uvs: the flight screen loads the group's texture, `protocol::texture_url` shrinks it
+to at most 128 pixels a side (`formats::png::downscale`, averaging blocks) and encodes it as an
+uncompressed PNG (`formats::png::encode_rgba`) in a base64 `data:` URL; `protocol::model` adds
+`texture` and `uvs` (two per vertex) to that group. On the page, each group is a draw range of
+one vertex buffer (`[x y z nx ny nz r g b u v]` per corner); a textured group's image is loaded
+into an `Image`, **redrawn onto a 128 × 128 canvas** — WebGL 1 repeats a texture only when its
+sides are powers of two, and the original models' uvs run past 0..1 — and uploaded with
+`REPEAT` wrapping. The fragment shader samples it when `textured` is set, else uses the group's
+colour, which also shows until the image has loaded. A model message grows from tens to a few
+hundred kilobytes, once per class. The ignored helper `serve_for_a_browser` now sends a
+checkerboard-textured sample so the image path can be tried in a browser; it was checked in
+headless Chrome. A video stream of the game's own rendering stays on GitHub issue #3 as a
+possible later upgrade.
 
 ### Map (C4, app 0.4.15)
 

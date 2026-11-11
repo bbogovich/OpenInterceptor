@@ -390,6 +390,30 @@ flowchart TD
   point 800 m ahead and 600 m up and holds `1.4 × lift` (clamped between half and all of its top
   speed), a speed its wings can climb at. Either returns `None` when clear, and the behaviour's
   own controls are used. Since the black-hole escape, no AI craft falls in during the soaks.
+- **Collision avoidance (app 0.6.7, from the user's playtest).** Third in the override chain,
+  `avoid_collision(world, id)` runs for **every moving AI pilot** (static objects and turrets
+  never avoid; they cannot move out of the way and must keep aiming). For each other object it
+  takes the relative position `r` and velocity `v` and finds the time of **closest approach**
+  `t* = −(r·v)/|v|²`; objects that cannot reach it within the horizon are skipped early. The
+  horizon is `AVOID_HORIZON` = 2.5 s, but **1 s** for static objects and for the pilot's own
+  target — those are attacked head-on, and a firing pass must not be broken off early. Danger is
+  a miss `|r + v·t*|` under 1.5 × the combined radii + 10 m (static objects: the combined radii
+  + 30 m, so attack runs on a station still get close), or something already inside twice the
+  combined radii and closing. Against the soonest danger the pilot steers away from where the
+  other will be at closest approach (a dead-on course breaks to its own upper right), mostly
+  sideways, and eases off to the other's speed if it is ahead. A **leader ignores its own
+  wingmen** (they keep clear of it; swerving from them as they form up, it would never fly
+  straight). The fire buttons are kept, so avoiding does not stop a pilot shooting. Before, only
+  wingmen avoided, and only when something was already inside twice the combined radii; the user
+  saw wingmen and enemies ram. Test: `collision_avoidance_predicts_the_closest_approach`.
+- **Formations (MD1, app 0.6.6).** A wingman's `AiState::offset` is its slot in the leader's
+  frame. `MissionRun` gives wingmen successive slots of their role's formation
+  (`Ruleset::formation(role.formation)`, else `flight.formation`; `FormationDef::slot(k)`),
+  counting the wingmen of every role already spawned. `ai::next_formation(world, leader)` (the
+  Shift+O order) takes the formation after `World::wing_formation` in `rules.formations`
+  (wrapping), gives each of the leader's living wingmen the next slot in ship order and orders
+  them to form up; it returns the formation's id, or `None` with no formations or no wingmen.
+  Slots are still pushed out to `flight.formation_gap` by `formation_slot`.
 
 Wingmen follow `WingOrder`s from their leader (`order_wingmen`); they fend for themselves if
 the leader dies. When they engage they fly `attack` with the parameters and skill of their
@@ -480,7 +504,8 @@ current order, and `DISABLED` if so.
   `hazards::black_hole_accel(&BlackHole, p) -> Vec3`, `hazards::step(&mut World, dt)`.
 - `world.set_environment(id) -> Result<(), String>`, `world.ground_height(x, z) -> Option<f32>`,
   `env::air(&mut Ship, &ShipClass, &Env, dt)`, `env::ground_and_ceiling(&mut World)`.
-- `ai::escape_black_hole(world, &Ship) -> Option<Controls>`, `ai::avoid_ground(world, &Ship) -> Option<Controls>`.
+- `ai::escape_black_hole(world, &Ship) -> Option<Controls>`, `ai::avoid_ground(world, &Ship) -> Option<Controls>`, `ai::avoid_collision(world, ShipId) -> Option<Controls>` (app 0.6.7), `ai::AVOID_HORIZON`.
+- `ai::next_formation(&mut World, leader) -> Option<String>`; `World::wing_formation` (app 0.6.6).
 
 ## Debugging
 

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -12,10 +12,10 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 | Feature | Status |
 |---|---|
-| [F-STR-001 Strategy layer](#f-str-001-strategy-layer) | Planned |
-| [F-STR-002 Economy, research and bases](#f-str-002-economy-research-and-bases) | Planned |
-| [F-STR-003 Ships, equipment and pilots](#f-str-003-ships-equipment-and-pilots) | Planned |
-| [F-STR-004 Saved games](#f-str-004-saved-games) | Planned |
+| [F-STR-001 Strategy layer](#f-str-001-strategy-layer) | In progress |
+| [F-STR-002 Economy, research and bases](#f-str-002-economy-research-and-bases) | In progress |
+| [F-STR-003 Ships, equipment and pilots](#f-str-003-ships-equipment-and-pilots) | In progress |
+| [F-STR-004 Saved games](#f-str-004-saved-games) | Implemented |
 | [F-STR-005 Supply-chain logistics](#f-str-005-supply-chain-logistics) | Planned |
 | [F-STR-006 Surveys](#f-str-006-surveys) | Planned |
 | [F-STR-007 Supply convoys worth escorting](#f-str-007-supply-convoys-worth-escorting) | Planned |
@@ -30,7 +30,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The game is a space-combat *strategy* game; battles need a cause.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.3): the campaign clock, fixed and generated maps with lane travel, raids detected by sensors and intercepted into battles, and the strategy screen; remaining: convoys and probes on flight plans, generated missions, endurance, the 3D base view.
 - **Source:** Plan items 4.1–4.3.
 - **Specified by:** [R-STR-001](../specification/requirements/strategy-logistics.md#r-str-001-campaign-clock), [R-STR-002](../specification/requirements/strategy-logistics.md#r-str-002-star-map-and-travel), [R-STR-003](../specification/requirements/strategy-logistics.md#r-str-003-contacts-and-mission-generation), [R-STR-010](../specification/requirements/strategy-logistics.md#r-str-010-strategy-screens)
 
@@ -40,7 +40,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The original's strategy systems, as data.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.1): income and expense expressions, market, factory queues, deliveries, research (download and labs, prerequisites, unlocks, salvage), base types, modules with limits and effects, the monthly report and score; remaining: resources, storage, evaluations, capture, dismantling.
 - **Source:** Plan items 4.4–4.6 and 4.9.
 - **Specified by:** [R-STR-004](../specification/requirements/strategy-logistics.md#r-str-004-economy), [R-STR-005](../specification/requirements/strategy-logistics.md#r-str-005-research), [R-STR-006](../specification/requirements/strategy-logistics.md#r-str-006-bases), [R-STR-009](../specification/requirements/strategy-logistics.md#r-str-009-funding-score-and-reports)
 
@@ -50,7 +50,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The original's hangar and roster.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.2): hulls and items as data, craft bought or manufactured, fitting from the store flown in campaign battles, pilots with stats, ranks, experience, injury, recruiting and salaries; remaining: fitting rules, designs, training, bravery.
 - **Source:** Plan items 4.7 and 4.8.
 - **Specified by:** [R-STR-007](../specification/requirements/strategy-logistics.md#r-str-007-ships-and-equipment), [R-STR-008](../specification/requirements/strategy-logistics.md#r-str-008-pilots)
 
@@ -60,7 +60,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Long campaigns; mods change between sessions.
 
-- **Status:** planned
+- **Status:** implemented. Built (app 0.7.0): the whole campaign saved as YAML with its pack list; saves needing missing packs are refused.
 - **Source:** Plan item 4.11.
 - **Specified by:** [R-STR-011](../specification/requirements/strategy-logistics.md#r-str-011-saves)
 
@@ -119,3 +119,4 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-STR-001 – F-STR-009 (9 features) |
+| 1.13.0 | 2026-11-11 | F-STR-001 – F-STR-003 in progress and F-STR-004 implemented (app 0.7.0 – 0.7.3) |

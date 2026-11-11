@@ -76,6 +76,9 @@ target/release/openinterceptor --campaign default
 # ... at a chosen difficulty level:
 target/release/openinterceptor --campaign default --difficulty space_ace
 
+# Open a new campaign's strategy screen directly (a campaign with a strategy layer):
+target/release/openinterceptor --no-original --strategy
+
 # Go straight to one mission (or scenario) with one ship:
 target/release/openinterceptor --no-original --mission defend_station --ship comet
 
@@ -122,6 +125,7 @@ scripts/check.sh
 | `--difficulty <ID>` | Play at this difficulty level, a level id of the campaign (default: the last one chosen, else the campaign's `default_difficulty`). |
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--mission <ID>` | Start this mission, skipping the launcher ([Missions](../modding/missions.md)). |
+| `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
 | `--model <NAME>` | Open the model viewer on this model: a ship class id (`comet`) or an original mesh name (`XBASE7`). |
@@ -151,6 +155,16 @@ Flight is newtonian by default: throttle is thrust and the ship coasts; `Z` reve
 hold `B` to brake, `M` holds the target's speed.
 New to space sims? Press **P** in the launcher for **Simple** physics: the craft always flies
 where its nose points, with no drift ([Controls › Simple physics](controls.md#simple-physics)).
+
+## After a battle: the debrief
+
+When a mission's result is decided, the verdict appears at once — *MISSION ACCOMPLISHED*,
+*MISSION FAILED*, *YOUR CRAFT WAS DESTROYED* or *MISSION ENDED* — and the computer voice speaks,
+but the battle **keeps running** so you can watch it end: the last explosion, your wingmen
+forming up. A countdown, *Debrief in 30 s (Enter: now)*, shows when the debrief will appear;
+**Enter** shows it at once (app 0.7.4). Leaving the battle from the pause menu (a retreat)
+shows the debrief at once. A campaign sets the wait with `flight.debrief_delay`
+([Mod file reference](../modding/reference.md#flight)).
 
 ## Documentation site
 

@@ -107,6 +107,7 @@ once the lines are known.
 | `ships.x: unknown voice 'y'` | `voice:` names a set that no `voices:` entry defines. |
 | `sound: …` on start-up | A clip that could not be loaded (a wrong path, or original data missing). `--check` does not load voice clips yet. |
 
-!!! note "Limits in app 0.6.4"
-    `cue:<Name>` references are resolved in `sounds:` but **not** inside `voices:` or chatter
-    `voice:`; use the asset path (`original:<file>.wav`) there.
+!!! note "Fixed in app 0.6.7"
+    `cue:<Name>` references now resolve inside `voices:` and chatter `voice:` too, through the
+    same cue table as `sounds:` (main `65141dc`). In app 0.6.2 – 0.6.6 they did not; use the asset
+    path (`original:<file>.wav`) for those versions.

@@ -123,6 +123,7 @@ strategy layer; the pause menu quits).
 | `wing_evasive` | Wingmen: evasive | `Shift+E` | — |  |
 | `wing_retreat` | Wingmen: retreat | `Shift+R` | — |  |
 | `wing_status` | Wingmen: status report | `Shift+S` | — | engine default: one line per wingman |
+| `wing_next_formation` | Wingmen: next formation | `Shift+O` | — | engine extension (MD1, app 0.6.6): cycles the campaign's `formations` |
 | `repeat_message` | Repeat last message | `L` | — | as original |
 
 ### Views

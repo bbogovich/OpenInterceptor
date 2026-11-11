@@ -114,6 +114,7 @@ nav:
           - "Simulation": implementation/architecture/sim.md
           - "Conditions (script)": implementation/architecture/script.md
           - "Missions": implementation/architecture/mission.md
+          - "Campaign (strategy layer)": implementation/architecture/campaign.md
           - "Rendering": implementation/architecture/rendering.md
           - "Cockpit and HUD": implementation/architecture/hud.md
           - "Input and gamepads": implementation/architecture/input.md
@@ -139,6 +140,7 @@ nav:
       - "Settings": user-guide/settings.md
       - "Tablet console": user-guide/console.md
       - "Simulator": user-guide/simulator.md
+      - "Campaign": user-guide/campaign.md
   - "Modding":
       - modding/index.md
       - "Make your first mod": modding/first-mod.md
@@ -152,6 +154,7 @@ nav:
       - "Text and translation": modding/text.md
       - "Missions": modding/missions.md
       - "Radio voices": modding/voices.md
+      - "Strategy layer": modding/strategy.md
       - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md

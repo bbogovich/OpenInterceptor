@@ -47,6 +47,18 @@ numeric constants. `sim::ai::ObjectContext` implements `Context` for one ship: i
 `Cell<u64>` — `Context::query` takes `&self`, but `random` must advance the generator, and a
 `Cell` allows that for a `Copy` value without `&mut` (interior mutability).
 
+### The campaign context (app 0.6.7)
+
+`script::campaign` declares the strategy layer's 16 queries (`research`, `researching`, `has`,
+`module_count`, `bases`, `money`, `day`, `month`, `difficulty`, `pilots`, `score`,
+`month_score`, `random`, `flag`, `salvaged`, `craft`; ids in `campaign::id`).
+`campaign::schema(names, levels)` makes **every id the campaign's data defines** a constant —
+its index in `StrategyDef::names` — so a topic, item or module is passed as a bare word
+(`research(heat_rays)` compiles to query 0 with that index) and a misspelt name is a load error.
+Difficulty level ids are constants too, unless an id already has that name. The context is
+answered by `campaign::Campaign` ([Campaign](campaign.md#expressions-the-campaign-as-a-scriptcontext)).
+Time quantities accept `d` (days) since app 0.6.7, for `every: 30d`.
+
 ## Key Symbols
 
 | Symbol | What it is |
@@ -59,6 +71,7 @@ numeric constants. `sim::ai::ObjectContext` implements `Context` for one ship: i
 | `Schema` | The queries and named constants available in one context. |
 | `Context` | The trait a game context implements: `query(id, &[f32]) -> Value`. |
 | `object::QUERIES`, `object::id`, `object::SYSTEM_NAMES`, `object::schema` | The object context (21 queries). |
+| `campaign::QUERIES`, `campaign::id`, `campaign::schema` | The campaign context (16 queries; app 0.6.7). |
 | `sim::ai::ObjectContext` | The simulation's answer to object queries. |
 
 ## API Reference

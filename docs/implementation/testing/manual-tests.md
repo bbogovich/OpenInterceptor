@@ -745,6 +745,11 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-57 | `outpost_raid` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: win at 99 s |
 | MT-3-58 | `asteroid_hunt` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: still running at 300 s |
 | MT-3-59 | `pocket_ambush` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: still running at 300 s |
+| MT-3-60 | Ground to the horizon | `surface-strike` (default) | not run | | | App 0.6.7; user feedback |
+| MT-3-61 | Console: the textured target | `mixed-dogfight` (default); `combat-test` (interceptor) | not run | | | App 0.6.7; checked in headless Chrome only; needs the tablet |
+| MT-3-62 | AI avoidance: wingmen do not ram | `rocket-vs-saucer` (default) | not run | | | App 0.6.7; user feedback |
+| MT-3-63 | AI avoidance: enemies do not ram, firing passes go on | `mixed-dogfight` (default); `defend_station` | not run | | | App 0.6.7; user feedback |
+| MT-3-64 | The battle runs on before the debrief | any mission (default) | not run | | | App 0.7.4; user request |
 
 ### The debrief (every mission case)
 
@@ -1203,3 +1208,152 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 |---|---|
 | Steps | Win: destroy every hot-rod. Also be shot down once. |
 | Expected | The `pocket` environment (a 12 km arena under a purple planet); "ION STORM: SENSORS AT 65%" at the start and a shorter radar range; hot-rods 3 km away. Win: `score(raiders_destroyed)`, `relation(raiders, -5)`. |
+
+### MT-3-60 — Ground to the horizon
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.7 or later. |
+| Steps | 1. Start `surface-strike` (default). 2. Climb to 3 km and look all round, then to the edge of the fog. 3. Fly straight in one direction for well over 15 km (past the field's edge), low over the ground. 4. Fly into a hill beyond the edge. |
+| Expected | 1–2: ground everywhere up to the fog; no edge, gap or wall where the field ends. 3: the hills continue as a mirror image of the field; no seam, no step and no flicker where tiles meet; the frame rate stays smooth. 4: a hill beyond the edge is solid: the craft crashes or lands exactly where the drawn ground is (collision and drawing agree). |
+
+### MT-3-61 — Console: the textured target
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-30 passes. App 0.6.7 or later. |
+| Steps | 1. Default campaign, `mixed-dogfight`: target a scout saucer, then a hot-rod. 2. `interceptor` campaign (original data), `combat-test`: target an alien fighter and a station. 3. Cycle quickly between classes. |
+| Expected | 1–2: the Target view shows the craft with its own textures, not flat colours: markings and panels where they are in the game, wrapped correctly (no stretched or smeared faces); for a moment after a class change the flat colours may show, then the textures appear. 3: no stutter in the game; each class's model appears within about a second. |
+
+### MT-3-62 — AI avoidance: wingmen do not ram
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.7 or later. |
+| Steps | 1. Start `rocket-vs-saucer` (default) with wingmen. 2. Fly straight, then brake hard and turn sharply across their path. 3. Order *attack my target* (Shift+A), then *form up* (Shift+I), several times. 4. Fly head-on at a wingman as it forms up. |
+| Expected | 1–3: wingmen break away and ease off instead of flying into you or each other; they return to their slots. 4: the wingman swerves well before contact. No collisions caused by the AI in several minutes. |
+
+### MT-3-63 — AI avoidance: enemies do not ram, firing passes go on
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.7 or later. |
+| Steps | 1. Start `mixed-dogfight` (default); fly among the enemies, sometimes head-on at one. 2. Watch enemies attacking you and each other's paths crossing. 3. Fly `defend_station` at cadet without fighting (idle) and watch the raiders' runs on the station. |
+| Expected | 1: an enemy on a collision course swerves late but in time; it still fires on its pass (firing passes are not broken off early). 2: enemies do not collide with each other. 3: raiders press their attacks close to the station without flying into it; the station holds at least 150 s (R-MSN-011). |
+
+### MT-3-64 — The battle runs on before the debrief
+
+| Field | |
+|---|---|
+| Preconditions | App 0.7.4 or later. Default campaign. |
+| Steps | 1. Win `defend_station` (or any mission). 2. Win again and press Enter during the countdown. 3. Be shot down in a mission. 4. Leave a mission from the pause menu (L). 5. In an addon set `flight: {debrief_delay: 0s}` and win once more. |
+| Expected | 1: "MISSION ACCOMPLISHED" at once with the computer voice; the battle keeps running (the last explosion plays out, wingmen fly on); "Debrief in 30 s (Enter: now)" counts down; the debrief appears at 0. 2: the debrief appears at once. 3: "YOUR CRAFT WAS DESTROYED", the camera on the wreck, then the debrief after the countdown. 4: the debrief at once (retreat). 5: the debrief at once. |
+
+
+## Stage 4 results
+
+| ID | Case | Scenario | Result | Date | Tester / platform | Notes |
+|---|---|---|---|---|---|---|
+| MT-4-01 | Formations: Shift+O | `rocket-vs-saucer` (default); `outpost_raid` | not run | | | App 0.6.6 |
+| MT-4-02 | Campaign: a new game and the map | Launcher › Campaign: new game (default) | not run | | | App 0.7.1 |
+| MT-4-03 | Campaign: the clock, speeds and auto-pause | Strategy screen | not run | | | App 0.7.1 |
+| MT-4-04 | Campaign: interception → battle → back | Strategy screen | not run | | | App 0.7.1; the six-month unit test plays it headless |
+| MT-4-05 | Campaign: breaking off, and an unopposed raid | Strategy screen | not run | | | App 0.7.1 |
+| MT-4-06 | Campaign: Bases, Build, Market and Factory tabs | Strategy screen | not run | | | App 0.7.1; manufacture charges no money (known issue) |
+| MT-4-07 | Campaign: the Research tab | Strategy screen | not run | | | App 0.7.1; salvage topics cannot start (known issue) |
+| MT-4-08 | Campaign: the Hangar tab, pilots and recruits | Strategy screen | not run | | | App 0.7.1 |
+| MT-4-09 | Campaign: the monthly report and messages | Strategy screen | not run | | | App 0.7.1 |
+| MT-4-10 | Campaign: save and continue | Strategy screen, launcher | not run | | | App 0.7.1 |
+| MT-4-11 | Campaign: lane travel | Strategy screen | not run | | | App 0.7.3 |
+| MT-4-12 | Campaign: fitting a craft and flying its fit | Strategy screen, a battle | not run | | | App 0.7.2 |
+
+## Stage 4 cases
+
+How to start: the launcher with the default campaign (`--no-original`, or Tab to it) selects
+*Campaign: continue* first; *Campaign: new game* is next. Or `--no-original --strategy`.
+Keys: [User guide › Campaign](../../user-guide/campaign.md).
+
+### MT-4-01 — Formations: Shift+O
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.6 or later. |
+| Steps | 1. Start `rocket-vs-saucer` (default) with wingmen, chase view (F-key for chase or `--view chase`). 2. Press Shift+O five times, waiting a few seconds each time. 3. Press Shift+O once more. 4. Order evasive (Shift+E), wait 10 s. 5. Fly `outpost_raid` (two Meteor wingmen). 6. Interceptor campaign: repeat 2 in a scenario with wingmen. 7. A scenario with no wingmen: Shift+O. |
+| Expected | 1: wingmen in a vee behind you. 2: each press shows *WINGMEN: FORM LINE ABREAST*, *ECHELON*, *BOX*, *DIAMOND*, *VEE* in turn, and the wingmen move into that shape: level beside you; a diagonal back and right; rows of two behind you; left, right and behind. 3: wraps to *LINE ABREAST*. 4: after evasive they return to the last formation ordered. 5: both wingmen in slots of a vee, not on top of each other. 6: the same shapes. 7: *NO WINGMEN*. |
+
+### MT-4-02 — Campaign: a new game and the map
+
+| Field | |
+|---|---|
+| Steps | 1. Launcher (default): note the first two entries. 2. *Campaign: new game*. 3. Look at the map and the Bases tab. 4. Click Ajax on the map; look at the Bases tab. 5. Click the far east of the map, where nothing is drawn. |
+| Expected | 1: *Campaign: continue*, *Campaign: new game*, selection on *continue*. 2: the strategy screen, paused, dated 2084-03-01, funds 2,500,000, score 0. 3: six systems and seven lanes; the Gatehouse at Mercury Gate with its sensor circle; no dark moon. Bases tab: *\* Gatehouse - Mercury Gate: 3 modules (0 building); researching nothing*. 4: a row *Build a Guard base at Ajax (1,800,000)*. 5: nothing is chosen (hidden systems cannot be clicked). |
+
+### MT-4-03 — Campaign: the clock, speeds and auto-pause
+
+| Field | |
+|---|---|
+| Steps | 1. Press 1, 2, 3 and 4 in turn, watching the date. 2. Space twice. 3. Leave it at 4 until something happens. 4. Dismiss the banner with Enter, Esc and a click on three occasions. |
+| Expected | 1: the top line shows *1 hour/s*, *6 hours/s*, *1 day/s*, *5 days/s* and the date advances at that pace. 2: *paused*, then 1 day/s. 3: the clock stops by itself with a banner (a contact, research complete, a module finished or the monthly report) and the speed reads *paused*. 4: each dismisses it; the clock stays paused until a speed is chosen. |
+
+### MT-4-04 — Campaign: interception → battle → back
+
+| Field | |
+|---|---|
+| Steps | 1. Run the clock until *Contact: Dominion scouts* (or another raid). 2. Contacts tab: Enter on the contact. 3. Run the clock; watch the craft fly. 4. At the banner, Enter. 5. Fly the battle and win; at the debrief press Enter. 6. Repeat with another contact; in the battle open the pause menu and press L. |
+| Expected | 1: the banner, and the contact drawn on the map. 2: *Done.*; the craft leave the base on the map. 3: when they meet the contact the clock stops with a fly-or-break-off banner. 4: the raid's mission starts (for scouts `intercept_scouts`) with the first craft's hull (a Comet) as your ship. 5: after the debrief delay and Enter, back on the map with *Battle result: WIN (n destroyed)*; the contact is gone; score and funds changed by the outcome; the craft fly home; the pilot's kills and missions grew (Hangar). 6: back on the map at once, result RETREAT; the contact still flies. |
+
+### MT-4-05 — Campaign: breaking off, and an unopposed raid
+
+| Field | |
+|---|---|
+| Steps | 1. Intercept a contact; at the fly-or-break-off banner press Esc. 2. Let a saucer raid heading for the Gatehouse arrive without intercepting it. |
+| Expected | 1: *Broke off the interception.*; the contact flies on; the craft fly home. 2: a banner *Saucer raid struck Gatehouse unopposed*; Build tab: the newest finished module is gone; Messages: the module destroyed; the score drops by 100. |
+
+### MT-4-06 — Campaign: Bases, Build, Market and Factory tabs
+
+| Field | |
+|---|---|
+| Steps | 1. Build tab: Enter on *Laboratory*; Enter on it again until refused. 2. Market: Enter on *Buy Blaster*; S on a Blaster row. 3. Factory: Enter on *Make Seeker rocket* several times; run the clock. 4. Choose Ajax on the map; Bases tab: Enter on *Build a Guard base at Ajax*; run the clock 21 days. 5. Left/Right; Build a module at the new base. |
+| Expected | 1: funds drop by 300,000; the lab shows *building, 12.0 days*, later *working*; past the research limit (3) the message says the base already has the most research modules. 2: funds drop by 40,000; 48 hours later Messages: *Gatehouse: 1 x Blaster arrived*; S sells one for 20,000. 3: *Production: 0 units an hour* until a workshop is built — then the queue shows units left, and seekers arrive in store. (Known issue: funds do not drop for manufacture.) 4: *Ajax Station* under construction, complete after 21 days (banner). 5: the current base changes (marked \*); orders apply to it. |
+
+### MT-4-07 — Campaign: the Research tab
+
+| Field | |
+|---|---|
+| Steps | 1. Research tab: Enter on *Heat rays*. 2. Run at 5 days/s until complete. 3. Look at the Market and the list of topics. 4. Switch the base to another topic midway and back. |
+| Expected | 1: *Gatehouse is researching: Heat rays*; the percentage grows with time (6 + 12 per lab work units an hour). 2: banner *Research complete: Heat rays*. 3: *Buy Heat ray* appears in the Market; *Ion rays* is now researchable. 4: progress is kept (`keep_progress`). Known issue: *Saucer hull analysis* and *Robot brains* never appear, even after salvage. |
+
+### MT-4-08 — Campaign: the Hangar tab, pilots and recruits
+
+| Field | |
+|---|---|
+| Steps | 1. Hangar tab: read the craft, pilots and recruits. 2. Enter on a recruit. 3. Buy a Comet; when it is ready, Enter on it. 4. Get a pilot shot down in a campaign battle. |
+| Expected | 1: three Comets with pilots; four pilots with rank *cadet*, kills, missions, *ready*; five recruits with stats and the fee 40,000. 2: funds drop by 40,000; the pilot joins the roster. 3: the new Comet gets the free pilot (or *no free pilot*). 4: back on the map, the craft is gone and the pilot reads *injured, 12 days* (or *killed*); after 12 days *ready*. |
+
+### MT-4-09 — Campaign: the monthly report and messages
+
+| Field | |
+|---|---|
+| Steps | 1. Run the clock past 30 days. 2. Messages tab. |
+| Expected | 1: banner *Monthly report: score … this month (… in all); costs … (modules …, craft …, salaries …); funds …*; a new set of recruits. 2: the newest lines first, dated: stipend, fuel, arrivals, battles. |
+
+### MT-4-10 — Campaign: save and continue
+
+| Field | |
+|---|---|
+| Steps | 1. Mid-campaign press F5. 2. Note date, funds, research progress and contacts; Esc. 3. Quit the program, start it, *Campaign: continue*. 4. Disable an addon the campaign was started with (if any) and continue. 5. *Campaign: new game*. |
+| Expected | 1: *Saved to …/saves/default.yaml*. 2: back to the launcher. 3: the same date, funds, bases, modules (with build progress), research, craft (also those in flight), pilots and contacts. 4: the launcher shows *this save needs packs that are not loaded: …*. 5: a fresh campaign (the save is overwritten on the next save). |
+
+### MT-4-11 — Campaign: lane travel
+
+| Field | |
+|---|---|
+| Steps | 1. Run until a raid is detected; look at its line on the map. 2. Intercept a contact far from Mercury Gate; watch the craft. 3. Let the contact be destroyed or leave; watch the craft return. |
+| Expected | 1: the raid enters at a system without a base (often the far east) and its way ahead is drawn along the lanes. 2: the craft follow the lanes from system to system to the one nearest the contact, then fly straight to it. 3: they come home along the lanes. |
+
+### MT-4-12 — Campaign: fitting a craft and flying its fit
+
+| Field | |
+|---|---|
+| Steps | 1. Hangar tab: on a Comet press F. 2. Press F on a second Comet. 3. Research *Heat rays*, buy two, press F on the first Comet again. 4. Intercept with that Comet and fly the battle; look at the weapons. |
+| Expected | 1: *… fitted: Blaster, Blaster, Seeker rocket, …*; the row shows the fit; the store has fewer blasters and seekers. 2: what is left is fitted, or *nothing in store fits this craft*. 3: the better beams replace the blasters, which go back into the store. 4: the battle's craft fires the fitted beams and carries the fitted missiles with their rounds; other battles (launcher missions) keep the class's own weapons. |

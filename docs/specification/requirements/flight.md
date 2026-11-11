@@ -1,5 +1,5 @@
 ---
-spec_version: 1.11.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -185,7 +185,7 @@ The per-ship values MUST be data on the ship class: `atmosphere_max_speed` (defa
 
 A pack MUST be able to define terrains as data, `terrains: {<id>: {generate | heightmap, size, height, colors, resolution}}`, used by an atmospheric environment's `terrain:`.
 
-- A terrain MUST be a square heightfield of `resolution` points per side (default 129, 17 – 257), `size` metres across (default 30 km), centred on the origin; its heights MUST span `height: [low, high]` metres (default `[0, 1500]`). Outside the square the edge heights continue.
+- A terrain MUST be a square heightfield of `resolution` points per side (default 129, 17 – 257), `size` metres across (default 30 km), centred on the origin; its heights MUST span `height: [low, high]` metres (default `[0, 1500]`). Outside the square the ground MUST continue to the horizon as **mirror-image tiles** of the field (each neighbour reflected across the shared edge, so heights meet without seams); collision and the drawn ground MUST agree everywhere, and the tiles within the fog distance MUST be drawn.
 - Heights MUST come from exactly one of:
   - `generate: {kind, seed}`: `hills` (smooth value noise in five octaves) or `craters` (a gently rolling plain with bowl-shaped craters and raised rims), deterministic for `seed`, built once while the rules are read;
   - `heightmap: <image>`: a greyscale PNG or TGA from the pack (black = `low`, white = `high`; the red channel, resampled to `resolution`), built once when the content loads.
@@ -197,11 +197,14 @@ A pack MUST be able to define terrains as data, `terrains: {<id>: {generate | he
 
 - Implements: [F-FLT-007](../../definition/flight.md#f-flt-007-atmospheric-flight-over-terrain)
 - Status: implemented (app 0.6.0, main `af003f6`)
-- Verified by: `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`, `generated_heightfields_span_their_range_are_deterministic_and_interpolate`, `render::terrain::tests::terrain_meshes_face_up_and_colour_by_height`; MT-3-39, MT-3-40
+- Verified by: `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`, `generated_heightfields_span_their_range_are_deterministic_and_interpolate` (mirrored beyond the edge), `render::terrain::tests::terrain_meshes_face_up_and_colour_by_height`, `tiles_match_the_folded_ground_heights`; MT-3-39, MT-3-40, MT-3-60
 - See: [Environments and terrain](../../modding/environments.md), [Rendering](../../implementation/architecture/rendering.md), [Format: missions, environments, events](../design/format-missions.md)
 
 !!! question "Open"
     Not built yet: texturing with detail maps (`texture: {base, detail}`) and scattered objects on the ground (`objects: {scatter, density}`), the rest of plan item 3.5 (ground installations are built: R-MSN-008, app 0.6.1). The terrain's look has been checked only by unit tests so far, not on screen.
+
+!!! note "From user feedback (app 0.6.7, main `c0e2516`)"
+    The user's playtest saw the ground end at the field's edge. `Heightfield::fold` maps any point back into the field (odd tiles reflected), so `height_at` answers everywhere; the renderer draws up to 7 × 7 tiles around the camera within the fog distance from two meshes, the field and its X-mirror (`render::terrain::tile_placement`). Static objects spawned over a ground now float one radius clear of it (app 0.6.7, `65141dc`).
 
 ### R-FLT-013 Simple physics mode
 
@@ -229,3 +232,4 @@ AI craft always fly the campaign's own model (`flight.model`).
 | 1.5.0 | 2026-11-11 | R-FLT-009 revised: impulse with restitution, spin from glancing speed and impact angle, tumble, one impact per contact (`flight.collision`) |
 | 1.6.0 | 2026-11-11 | R-FLT-013 simple physics mode |
 | 1.11.0 | 2026-11-11 | R-FLT-011 atmospheric flight rewritten as built and implemented (app 0.6.0): drag from `atmosphere_max_speed`, gravity, lift capped at 2g, hover, landing below 25 m/s upright, crash damage, the ceiling exit, AI ground avoidance, Simple physics kept; keys `atmosphere_max_speed`, `lift`, `hover`, `atmospheric`; the open note on equations and key names resolved (`drag_area` not adopted). R-FLT-012 terrain rewritten as built and implemented: generated (`hills`, `craters`) and heightmap heightfields, interpolation, colours by height and slope; Open note for detail textures and scattered objects |
+| 1.13.0 | 2026-11-11 | R-FLT-012 revised: the ground continues to the horizon as mirror-image tiles, collision and drawing agree (app 0.6.7, from user feedback) |

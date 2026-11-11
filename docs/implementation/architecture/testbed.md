@@ -27,6 +27,10 @@ stateDiagram-v2
     Simulator --> Launcher: Esc
     FlightSession --> FlightSession: Enter after a simulator debrief (Next::Simulate, same setup)
     Launcher --> Launcher: Tab or D (Next::Reload) reloads Content for another campaign or difficulty
+    Launcher --> StrategyScreen: Campaign: new game / continue (Next::NewCampaign / LoadCampaign)
+    StrategyScreen --> FlightSession: fly an interception (Next::CampaignBattle; the screen waits in AppContext::campaign)
+    FlightSession --> StrategyScreen: debrief Enter/Esc, or leaving (Next::Strategy with AppContext::battle_report)
+    StrategyScreen --> Launcher: Esc (saves first)
     FlightSession --> Launcher: Esc menu → L
     FlightSession --> FlightSession: Esc menu → K (controls menu inside the session)
     FlightSession --> FlightSession: Esc menu → R, or Enter after death
@@ -77,12 +81,14 @@ stateDiagram-v2
   launcher and from the flight pause menu; see [Input](input.md#the-controls-menu).
 - **Missions in a flight session**: `FlightSession::start_mission` builds the battle with
   `MissionRun::start`; after each tick `MissionRun::update` referees it and its lines go to the
-  message display; when it ends, the battle freezes behind the **debrief** (result, text, kills,
-  losses, time, optional objectives, campaign actions; long text wrapped). Enter (pad A) flies it
+  message display; when it ends, the verdict and computer voice come at once and the battle
+  **runs on** for `flight.debrief_delay` (30 s; `flight::debrief_due`, a countdown, Enter to skip;
+  a retreat skips it — app 0.7.4, from the user's playtest), then freezes behind the **debrief**
+  (result, text, kills, losses, time, optional objectives, campaign actions; long text wrapped). Enter (pad A) flies it
   again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.
 - **Radio voices** (app 0.6.2): the flight screen decides when a pilot speaks — wing orders
   and status requests (`acknowledge`, `status`), a wingman lost (`down`, said by another),
-  chatter clips (`MissionRun::voices`) and the computer voice at the debrief
+  chatter clips (`MissionRun::voices`) and the computer voice when the result is decided
   (`mission_accomplished` / `mission_failed`). See [Audio](audio.md).
 - **Flight session** (`flight.rs`): see the frame loop on the
   [overview](index.md#logic-flow-one-frame-of-a-flight-session). Views F1–F8; after death the
@@ -156,6 +162,19 @@ launcher:
 - `SimSetup` is plain data and `apply` and `ship_allowed` are pure, so the logic is unit-tested
   without a window; the drawing is a manual test (MT-3-51 – MT-3-54).
 
+### The strategy screen (app 0.7.1)
+
+`app::strategy::StrategyScreen` (Stage 4.10) shows a `campaign::Campaign`: the star map, eight
+tabs, the clock (`SPEEDS`: paused, 1, 6, 24 and 120 campaign hours per real second), banners
+for notices and the fly-or-break-off choice. It turns rows into orders on the campaign and
+draws; the rules live in `campaign` ([Campaign](campaign.md)). The launcher leads with
+`Entry::ContinueCampaign` and `Entry::NewCampaign` when `rules.strategy` is set and starts
+selected on them; `--strategy` opens a new campaign. A campaign battle sets
+`FlightSession::campaign_battle`: its debrief returns `Next::Strategy` (Enter or Esc) with
+`AppContext::battle_report`, the pause menu's L/Q is a retreat and R (restart) is disabled.
+`Next::CampaignBattle` carries the first craft's fitted loadout, applied with
+`flight::apply_loadout` (app 0.7.2). Player's guide: [Campaign](../../user-guide/campaign.md).
+
 ### Scenarios shipped
 
 | Id | Pack | What it tests |
@@ -195,9 +214,12 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 
 | Symbol | What it is |
 |---|---|
-| `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`. |
-| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, and since app 0.6.3 `Simulator` (the setup screen) and `Simulate { mission: Box<MissionDef>, ship }` (fly a modified mission), `Quit`. |
-| `launcher::Entry` | `ModelViewer`, `AssetBrowser`, `Controls`, `Simulator`, `Scenario(i)`, `Mission(i)`. |
+| `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`; since app 0.7.1 `campaign` (the strategy screen kept while one of its battles is flown) and `battle_report`. |
+| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, and since app 0.6.3 `Simulator` (the setup screen) and `Simulate { mission: Box<MissionDef>, ship }` (fly a modified mission), since app 0.7.1 `NewCampaign`, `LoadCampaign`, `Strategy` and `CampaignBattle { mission, ship, loadout }`, `Quit`. |
+| `launcher::Entry` | `ContinueCampaign`, `NewCampaign` (app 0.7.1), `ModelViewer`, `AssetBrowser`, `Controls`, `Simulator`, `Scenario(i)`, `Mission(i)`. |
+| `strategy::StrategyScreen`, `Tab`, `SPEEDS`, `BattleReport`, `save_path` | The strategy screen ([Campaign](campaign.md)). |
+| `flight::debrief_due(ended_at, now, delay)` | Whether the debrief is due after the result (pure, tested; app 0.7.4). |
+| `flight::apply_loadout(&mut World, player, beams, missiles)` | A campaign craft's fit on its battle's own copy of the rules (app 0.7.2). |
 | `simulator::Simulator`, `SimSetup`, `FORCES` | The setup screen (`new`, `frame`); the choices (indices and switches); the force multipliers `[0.5, 1, 1.5, 2]`. |
 | `simulator::apply(&MissionDef, &SimSetup, &Ruleset) -> MissionDef` | The modified copy (pure, tested). |
 | `simulator::hazard_classes(&Ruleset)`, `simulator::ship_allowed(&Ruleset, ShipClassId, Option<&str>)` | The campaign's asteroid and mine classes; why a ship may not fly in an environment (`None` = allowed). |

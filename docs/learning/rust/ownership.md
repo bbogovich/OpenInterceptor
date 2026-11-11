@@ -93,6 +93,53 @@ without any run-time check. (`RefCell` does the same for non-`Copy` values, chec
 run time.) After the transitions have been tested, the AI copies the advanced state back into
 its own memory with `cx.rng.get()`.
 
+## Moving a value out of a place: `mem::replace` and `take`
+
+Rust will not let you move a value out of a variable or field that is still in use — the place
+would be left holding nothing. `std::mem::replace(&mut place, new)` swaps a new value in and
+hands back the old one; `std::mem::take(&mut place)` does the same with the type's `Default`
+(an empty `Vec`, `None` for an `Option`). `Option::take()` is the `Option` version.
+
+The campaign's battle hand-off needs exactly this (`src/app/mod.rs`, app 0.7.1). The current
+screen is an enum value, `screen: Screen`, and the strategy screen inside it owns the whole
+campaign. To fly a battle, `app::run` must put a flight screen in `screen` **without dropping
+the campaign**:
+
+```rust
+// Swap a launcher in, and get the strategy screen out by value.
+let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
+if let Screen::Strategy(s) = old {
+    ctx.campaign = Some(s); // AppContext keeps it while the battle is flown
+}
+```
+
+and after the debrief, `ctx.campaign.take()` moves it back out of the `Option`, leaving `None`.
+The strategy screen is a `Box<StrategyScreen>`, so these moves copy one pointer, not the
+campaign. Without `replace`, the code would need `screen` to be an `Option<Screen>` checked
+everywhere, or a clone of the whole campaign. The same idea empties buffers each frame
+(`std::mem::take`, [Data model](../best-practices/data-model.md)) and a campaign's delivery
+list each hour (`std::mem::take(&mut self.deliveries)`, then the ones still on their way are
+put back).
+
+## Two borrows from two owners
+
+`StrategyScreen::frame(&mut self, ctx: &mut AppContext)` reads the strategy rules and changes
+the campaign in the same lines:
+
+```rust
+let Some(def) = ctx.content.rules.strategy.as_ref() else { return Next::Launcher };
+// … later, while `def` is still in use:
+self.campaign.battle_result(def, id, "retreat", &[], 0);
+```
+
+`def` is a shared borrow of something inside `ctx`; `self.campaign` is borrowed mutably from
+`self`. They are different owners, so the borrows cannot overlap and the compiler accepts
+both. Had the campaign lived in `ctx` too (say `ctx.campaign`), the same two lines would
+borrow `ctx` shared and mutably at once and fail to compile. Keeping the rules (`ctx.content`,
+read-only during play) and the game state (`self.campaign`) in separate owners is what makes
+the screen's code simple. While `def` is borrowed, `ctx` may still be used **shared**:
+`self.save(ctx)` takes `&AppContext`, so it is allowed too.
+
 ## A common beginner problem
 
 ```rust

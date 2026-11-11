@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -79,16 +79,21 @@ Mistakes in a mission file (unknown role, bad timer result, unknown action) MUST
 
 At the end of a mission the debrief MUST show the result, its text, kills, losses, time, optional objectives and the campaign actions, and MUST offer a retry. The player jumping out MUST count as `retreat`. For `killed` the headline MUST be "YOUR CRAFT WAS DESTROYED" and the text MUST be the mission's `debrief: {killed: …}` if given, otherwise none (never the `lose` text, which describes the objective).
 
+When the result is decided the verdict MUST be shown at once ("MISSION ACCOMPLISHED", "MISSION FAILED", "YOUR CRAFT WAS DESTROYED" or "MISSION ENDED") and the battle MUST keep running, so its end can be watched; the debrief MUST appear `flight.debrief_delay` (rules data, a time, default 30 s) after the result, with a countdown, and Enter MUST show it at once. A `retreat` (the player leaving) MUST show the debrief at once.
+
 *Rationale:* Closure and feedback.
 
 - Implements: [F-MSN-002](../../definition/missions.md#f-msn-002-debrief)
 - Status: implemented
-- Verified by: `mission::the_players_death_is_its_own_result_with_the_lose_outcomes`; MT-3-01 – MT-3-11 (the debrief in every mission case), MT-3-17
+- Verified by: `mission::the_players_death_is_its_own_result_with_the_lose_outcomes`; `app::flight::tests::the_debrief_waits_for_the_delay_after_the_result`; MT-3-01 – MT-3-11 (the debrief in every mission case), MT-3-17, MT-3-64
 - Reverse-engineered: yes
 - See: [Missions (architecture)](../../implementation/architecture/mission.md)
 
-!!! question "Open"
-    Salvage and score are applied by the strategy layer (Stage 4).
+!!! note "From user feedback (app 0.7.4, main `9295707`)"
+    The user's playtest asked to see the battle end: the result is announced (verdict and computer voice) at once, and the battle runs on for `flight.debrief_delay` before the debrief. `flight::debrief_due` decides when; the wait is skipped with Enter.
+
+!!! note "Campaign battles (app 0.7.1)"
+    In a campaign battle the debrief returns to the strategy screen (Enter or Esc), which applies salvage, score, money and flags (R-STR-003, R-STR-010).
 
 ### R-MSN-006 Radio chatter
 
@@ -108,8 +113,8 @@ Chatter and the computer voice SHOULD play recorded or original voice samples. A
 
 - A pack MUST be able to define radio voice sets as data, `voices: {<set>: {<line>: clip or [clips]}}`, and a ship class MUST be able to name one with `voice: <set>`; an unknown set MUST be a rules error.
 - When the player gives a wing order (fire at will, attack my target, ignore my target, evasive, retreat), one of the player's living wingmen whose voice has the line MUST play an `acknowledge` clip; a status request MUST play a `status` clip; when one of the player's wingmen is destroyed, *another* MUST play a `down` clip. With several clips for a line, one is chosen each time.
-- A mission chatter entry MAY name a clip with `voice:`; it MUST play when the line is said.
-- When the debrief appears, the named sound `mission_accomplished` MUST play for a win and `mission_failed` for any other result (the computer voice).
+- A mission chatter entry MAY name a clip with `voice:`; it MUST play when the line is said. Voice clips and chatter voices MAY be `cue:<Name>` references, resolved through the sound cue table like `sounds:` (app 0.6.7).
+- When the mission's result is decided (since app 0.7.4 that is before the debrief, R-MSN-005), the named sound `mission_accomplished` MUST play for a win and `mission_failed` for any other result (the computer voice).
 - A ship without a voice, a voice without the line, or a campaign without these sounds MUST stay silent without error.
 
 The `default` campaign MUST ship the voice set `guard_pilot` (synthesised radio clips, used by the Comet, Meteor, Thunderbolt and Victory) and the two mission sounds; the `interceptor` campaign maps the computer voice from the original's cue table (`Comp_MissionAccomplished`, `Comp_MissionFailed`).
@@ -122,7 +127,7 @@ The `default` campaign MUST ship the voice set `guard_pilot` (synthesised radio 
 - See: [Radio voices (modding)](../../modding/voices.md), [Audio](../../implementation/architecture/audio.md)
 
 !!! question "Open"
-    The `interceptor` campaign's **pilot** chatter clips (the numbered `FPilot1xx` and `MPilotxxx` files) are not mapped to voice lines: which line each clip says is not known (*unknown*), and a wrong mapping would put the wrong words in a wingman's mouth. The user is asked to identify the lines by listening (for example in the launcher's asset browser, Sounds tab) so that `packs/interceptor` can map them to `acknowledge`, `status`, `down` and later lines. Also open: `cue:` references are not resolved inside `voices:` or chatter `voice:`, and `--check` does not load voice clips (app 0.6.4).
+    The `interceptor` campaign's **pilot** chatter clips (the numbered `FPilot1xx` and `MPilotxxx` files) are not mapped to voice lines: which line each clip says is not known (*unknown*), and a wrong mapping would put the wrong words in a wingman's mouth. The user is asked to identify the lines by listening (for example in the launcher's asset browser, Sounds tab) so that `packs/interceptor` can map them to `acknowledge`, `status`, `down` and later lines. Also open: `--check` does not load voice clips. (Resolved in app 0.6.7, main `65141dc`: `cue:` references now resolve inside `voices:` and chatter `voice:`.)
 
 ### R-MSN-008 Battle environments
 
@@ -227,3 +232,4 @@ The `convoy_ambush` and `construction_defence` missions MUST be playable: protec
 | 1.1.0 | 2026-11-11 | R-MSN-011 implemented (app 0.3.1) with a measurable threshold (an undefended station holds 150 s at the lowest level, `--soak-pilot idle`); open note resolved. R-MSN-003: the `killed` result, set by the engine, with the `lose` outcomes by default. R-MSN-005: the `killed` headline and debrief text |
 | 1.11.0 | 2026-11-11 | R-MSN-009 hazards rewritten as built and implemented (app 0.5.1): asteroid fields and minefields as scattered objects (asteroids are radar scenery), the black hole's 1/d² pull capped at 20 × `pull`, its look and the AI's escape, the ion storm's radar factor, half-speed locks and start message; defaults stated. R-MSN-008 battle environments rewritten as built and implemented (app 0.6.0): `environments:` data, `environment: <id>`, `physics`, `arena`, `backdrop.planet`, `sky`; ground installations (`kind: ground`, set down on the terrain) and anti-air batteries as ground turrets (app 0.6.1); Open note keeps the map location |
 | 1.12.0 | 2026-11-11 | R-MSN-007 voices rewritten as built and implemented (app 0.6.2): `voices:` sets, ship `voice:`, the `acknowledge`, `status` and `down` lines, chatter `voice:`, `mission_accomplished` / `mission_failed`; Open note: the `interceptor` pilot clips are not mapped until their lines are identified. R-MSN-010 simulator rewritten as built and implemented (app 0.6.3): the setup rows, the modified copy, the atmospheric refusal, flying again |
+| 1.13.0 | 2026-11-11 | R-MSN-005: the verdict at once, then the battle runs on for `flight.debrief_delay` (default 30 s) before the debrief; Enter skips the wait; a retreat shows it at once (app 0.7.4, from user feedback). R-MSN-007: the computer voice plays when the result is decided; `cue:` names resolve in voices and chatter (app 0.6.7) |

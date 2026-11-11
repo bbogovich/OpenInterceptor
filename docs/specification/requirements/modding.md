@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -58,7 +58,7 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-044 Where cutscenes play](#r-mod-044-where-cutscenes-play) | Planned |
 | [R-MOD-045 Skipping a cutscene](#r-mod-045-skipping-a-cutscene) | Planned |
 | [R-MOD-046 Video cutscenes](#r-mod-046-video-cutscenes) | Planned |
-| [R-MOD-047 Shared formations](#r-mod-047-shared-formations) | Planned |
+| [R-MOD-047 Shared formations](#r-mod-047-shared-formations) | Implemented (wingmen; cutscenes with MD2) |
 | [R-MOD-048 Drag instruments onto a 3D cockpit](#r-mod-048-drag-instruments-onto-a-3d-cockpit) | Planned |
 | [R-MOD-049 Instrument size and preview on the surface](#r-mod-049-instrument-size-and-preview-on-the-surface) | Planned |
 | [R-MOD-050 Create a 3D cockpit](#r-mod-050-create-a-3d-cockpit) | Planned |
@@ -233,9 +233,9 @@ Conditions MUST gain a campaign context with system and facility queries (`depos
 *Rationale:* Strategy-layer rules and logistics.
 
 - Implements: [F-MOD-005](../../definition/modding-toolkit.md#f-mod-005-conditions-actions-and-scripting), [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: planned — partly met: the campaign context exists (`script::campaign`, app 0.6.7, main `65141dc`) with 16 strategy queries (`research`, `researching`, `has`, `module_count`, `bases`, `money`, `day`, `month`, `difficulty`, `pilots`, `score`, `month_score`, `random`, `flag`, `salvaged`, `craft`), every campaign id a checked constant; the system and facility queries listed here wait for logistics
+- Verified by: `script::campaign::tests::ids_match_and_names_are_checked`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`
+- See: [Logistics](../design/logistics.md), [Strategy layer › expressions](../../modding/strategy.md#expressions-the-campaign-context)
 
 ### R-MOD-015 Tier 2 scripting decision
 
@@ -618,13 +618,13 @@ A pack MUST be able to provide a video file in place of any engine-played cutsce
 
 ### R-MOD-047 Shared formations
 
-Formations MUST be pack data (`formations:`): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets.
+Formations MUST be pack data (`formations:`): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets. As built: `formations: {<id>: {shape: vee | line_abreast | echelon | box | diamond, spacing}}` or `{slots: [[x, y, z], …], spacing}` (not both; a custom list continues as a vee behind its last slot), slots in the leader's frame (+X right, +Y up, +Z behind) in units of `spacing` (default 60 m); a mission role picks one with `formation: <id>`, else `flight.formation` (default `vee`); an unknown formation is a load error, and a campaign with no formations uses a built-in 60 m vee.
 
 *Rationale:* A cutscene and a battle use the same shapes, and a modder defines them once.
 
 - Implements: [F-MOD-013](../../definition/modding-toolkit.md#f-mod-013-shared-formations), [F-CMB-007](../../definition/combat.md#f-cmb-007-wingmen-and-orders)
-- Status: planned
-- Verified by: Planned (MD1).
+- Status: implemented for wingmen (MD1, app 0.6.6, main `6d390d7`); cutscene use comes with MD2 (R-MOD-039)
+- Verified by: `content::formation::tests::shapes_place_followers_behind_and_beside_the_leader`, `custom_slots_then_a_vee_and_errors`; `mission::tests::wingmen_take_successive_slots_of_their_formation`; `sim::ai::tests::the_formation_order_cycles_the_campaigns_formations`; MT-4-01
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains), [R-CMB-015](combat.md#r-cmb-015-wingman-orders), [R-CMB-022](combat.md#r-cmb-022-wingmen-keep-their-distance)
 
 ### R-MOD-048 Drag instruments onto a 3D cockpit
@@ -739,3 +739,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 - As built (app 0.4.13, main 4346cba): `map_Kd original:<File>.dll#<id>` (an original image, colour key applied) and `map_Kd original:<NAME>` (an original texture) are kept as references and loaded from the player's data; the MTL parser treats only lines starting with `#` as comments; `--check` loads 3D cockpit models and their textures. Verified by `content::tests::pack_files_override_original_assets`, `formats::obj` MTL test, and a scratch mod against real data. User instructions: [Tutorial: a 3D X-COM cockpit](../../modding/3d-cockpit-tutorial.md). To be evaluated in practice (user, 2026-11-11: "provide instructions for this in the user documentation and we'll evaluate in practice how well it seems to work").
 | 1.9.1 | 2026-11-11 | R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note |
 | 1.12.0 | 2026-11-11 | R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) `mlua`, (b) `rhai`, (c) grow `script::*`; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed |
+| 1.13.0 | 2026-11-11 | R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7) |

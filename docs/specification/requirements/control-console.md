@@ -1,5 +1,5 @@
 ---
-spec_version: 1.10.0
+spec_version: 1.13.0
 status: current
 updated: 2026-11-11
 ---
@@ -246,14 +246,17 @@ The console's centre display MUST show the current target's model at its true or
 
 - Implements: [F-CON-005](../../definition/control-console.md#f-con-005-console-target-viewport)
 - Status: implemented (app 0.4.14, main `e51eca9`)
-- Verified by: `remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group`; MT-3-30
+- Verified by: `remote::protocol::tests::model_messages_are_normalised_and_coloured_per_group` (textured groups carry a PNG and uvs); `formats::png::tests::a_png_has_the_signature_chunks_and_stored_pixels`, `downscaling_averages_blocks`; MT-3-30, MT-3-61
 - See: [Console protocol](../console-protocol.md#game-console), [Remote console](../../implementation/architecture/remote.md#target-viewport-c3-app-0414)
 
 !!! note "As built (C3, app 0.4.14, main `e51eca9`)"
     The display console's **Target** tab draws the target's model with hand-written WebGL 1 (`oi-target-view`), flat-shaded, lit from the upper left, turned by `telemetry.target.rotation`. The game sends `model {name, groups}` when the target's class changes or a tablet pairs. **Decimation** is by level of detail: the most detailed LOD with at most 3000 triangles (`protocol::MODEL_TRIANGLE_BUDGET`; the coarsest if every LOD is larger), normalised to radius 1. **No textures** are sent: each material group has one colour, the texture's average (`protocol::average_color`, transparent pixels ignored) or the vertex colour of an untextured group. Messages are built once per class and cached in the flight screen. A video stream of the game's own rendering stays a possible later upgrade (GitHub issue #3).
 
+!!! note "Textured, from user feedback (app 0.6.7, main `c0e2516`)"
+    The user asked for the target to look like the craft. Each textured group of the `model` message now also carries `texture`, its image downscaled to at most 128 px a side and encoded as a `data:image/png;base64,…` URL by the new in-crate writer `formats::png` (stored, uncompressed zlib blocks), and `uvs`, two per vertex. The page redraws each image onto a 128 × 128 canvas (WebGL 1 repeats only power-of-two textures, and the models' uvs run past 0..1) and samples it; the group's average colour shows until the image loads. Checked in headless Chrome.
+
 !!! question "Open (resolved)"
-    The decimation budget (3000 triangles, by LOD) and textures (not sent; one average colour per group) are settled. Original meshes sent to a device on the player's own network stay on the player's equipment (no redistribution).
+    The decimation budget (3000 triangles, by LOD) is settled; textures are sent since app 0.6.7 (above). Original meshes sent to a device on the player's own network stay on the player's equipment (no redistribution).
 
 ### R-CON-016 3D map view
 
@@ -424,3 +427,4 @@ The console page MUST offer two layouts, switchable on the page and remembered p
 | 1.8.1 | 2026-11-11 | R-CON-026 implemented (0.4.11) |
 | 1.9.0 | 2026-11-11 | R-CON-024: the hit-static interpretation (the player's craft, on the console) confirmed by the user: "Hit static - correct, works well now" |
 | 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b complete (app 0.4.11 – 0.5.0): R-CON-015 target viewport (0.4.14), R-CON-016 3D map (0.4.15), R-CON-014 contacts and events (0.4.15), R-CON-018 tiles (0.4.11), R-CON-020 and R-CON-021 themes (0.5.0) implemented, with As-built notes and Verified-by lines; R-CON-012, R-CON-013 and R-CON-019 completed by the C2 page (0.4.11); R-CON-015 open note resolved (3000-triangle LOD budget, no textures). R-CON-017 stays planned (C5). No requirement wording changed |
+| 1.13.0 | 2026-11-11 | R-CON-015: the target model is textured — PNG data URLs and uvs per textured group (app 0.6.7, from user feedback) |
