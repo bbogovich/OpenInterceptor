@@ -149,6 +149,8 @@ choose, Left/Right to pick a ship, Enter to start, Esc to quit. In flight, Esc o
 (R restart, L back to the launcher) and `?` lists every key ([Controls](controls.md)). Default controls follow the original game; see the [controls reference](../reference/original-game/controls.md).
 Flight is newtonian by default: throttle is thrust and the ship coasts; `Z` reverses thrust,
 hold `B` to brake, `M` holds the target's speed.
+New to space sims? Press **P** in the launcher for **Simple** physics: the craft always flies
+where its nose points, with no drift ([Controls › Simple physics](controls.md#simple-physics)).
 
 ## Documentation site
 

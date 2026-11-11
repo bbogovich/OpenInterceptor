@@ -22,7 +22,7 @@ is in the repository, ever.
 
     The same order is in the repository's `CLAUDE.md` project rules.
 
-**Site version 0.13.0**; Definition and Specification **1.3.0** ([revision history](reference/revision-history.md)).
+**Site version 0.14.0**; Definition and Specification **1.7.0** ([revision history](reference/revision-history.md)).
 
 ## Sections
 
@@ -75,8 +75,10 @@ specification of a production version, built through the SpecItOut fast track.
 Definition and Specification **1.0.0** (2026-11-11): 79 features and 168
 requirements, those for the code already built marked *reverse-engineered*; **1.1.0** marks the
 interlude's feedback items implemented; **1.2.0** adds the `resources/` folder (F-CMP-005);
-**1.3.0** marks console C1 and the `resources/` layout implemented and records protocol v1
-([change history](meta/change-history.md)). Until `sio` supports
+**1.3.0** marks console C1 and the `resources/` layout implemented and records protocol v1;
+**1.4.0** – **1.6.0** add the console heartbeat, collisions with impact and Simple physics;
+**1.7.0** plans the Mod Designer, Cutscene Designer and game bundling and records the console
+pairing fix and keep-awake ([change history](meta/change-history.md)). Until `sio` supports
 a `prototype` kind the project runs as `kind: implementation` with `spec` pointing at
 `docs/specification` (DEV-042).
 

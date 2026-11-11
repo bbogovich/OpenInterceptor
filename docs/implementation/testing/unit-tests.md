@@ -8,6 +8,14 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+Since that count, tests named in the requirements' *Verified by* lines were added with apps
+0.4.3 – 0.4.8 without the full list being regenerated; the remote console's are below: app
+0.4.8 (main `f1c8be8`) adds `remote::http::ranges_are_served_as_partial_content`, and app 0.4.7
+(main `c42d773`) adds the **ignored** helper `remote::server::tests::serve_for_a_browser`, which
+is not a unit test and is not counted: `cargo test serve_for_a_browser -- --ignored --nocapture`
+serves the console page on `127.0.0.1:8790` for 20 s, answering like the launcher, for trying
+the real page in a browser ([Remote console](../architecture/remote.md#debugging)).
+
 Not unit-tested, by design, and covered by [manual tests](manual-tests.md) instead: the
 `hud::draw` painting, the `Renderer`'s draw calls and shaders, macroquad device reading, sound
 playback, the 3D cockpit pass, anchored instruments drawn into textures, the asset browser's, controls menu's and layout editor's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.
@@ -77,9 +85,9 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `remote` | 1 | **Console input**: held actions last until released, taps fire once, the throttle is one-shot, the bindings see a console-held action like a held key, a console that leaves lets go |
 | `remote::ws` | 3 | **SHA-1 and base64 match the published vectors** (FIPS 180 and RFC 4648; the RFC 6455 handshake example), masked frames decode (the RFC 6455 §5.7 examples), partial frames wait for more bytes, back-to-back frames, 16-bit lengths, unmasked server frames with 16- and 64-bit lengths; **protocol violations are errors** (unmasked, unknown opcode, too large) |
 | `remote::json` | 3 | Objects, arrays, strings with escapes, numbers with exponents; **bad and hostile input is an error** (unclosed, trailing commas, trailing text, nesting deeper than 32); the writer's compact objects (numbers to 3 decimals, NaN as `null`) parse back |
-| `remote::http` | 2 | A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed |
+| `remote::http` | 3 | A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed; **byte ranges are served as `206 Partial Content`** (`a-b`, `a-`, `-n`, clamped end; no range or out of range gives the whole file with `Accept-Ranges`) |
 | `remote::protocol` | 3 | Console messages decode, unknown actions and types are refused, throttle clamped; **the catalogue lists every action and marks missing equipment unavailable**; **telemetry reports drift in body axes and the target's rotation relative to the player** |
-| `remote::server` | 3 | **Only local-network peers are served** (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; **end to end over a real localhost socket**: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received |
+| `remote::server` | 3 | **Only local-network peers are served** (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; **end to end over a real localhost socket**: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received; **`welcome` answered at once by the server** (0.4.7). Plus one ignored helper, `serve_for_a_browser` (not counted) |
 | `soak` | 2 | The default campaign's difficulty scales enemy lethality (headless battle runs); **at cadet an undefended station holds for 150 s** (idle pilot) |
 
 ## Test names
@@ -170,13 +178,13 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`remote`**: `held_actions_last_until_released_and_taps_fire_once`
 
-**`remote::http`**: `bad_requests_are_errors_and_responses_are_well_formed`, `parses_a_websocket_upgrade_and_waits_for_the_blank_line`
+**`remote::http`**: `bad_requests_are_errors_and_responses_are_well_formed`, `parses_a_websocket_upgrade_and_waits_for_the_blank_line`, `ranges_are_served_as_partial_content`
 
 **`remote::json`**: `bad_and_hostile_input_is_an_error`, `parses_objects_arrays_strings_and_numbers`, `writes_compact_objects_that_parse_back`
 
 **`remote::protocol`**: `decodes_console_messages_and_refuses_unknown_ones`, `telemetry_reports_drift_and_the_targets_relative_rotation`, `the_catalogue_lists_every_action_and_marks_missing_equipment`
 
-**`remote::server`**: `only_local_network_peers_are_served`, `pairing_codes_are_six_digits_and_vary_with_the_seed`, `serves_the_page_pairs_and_relays_actions_over_a_real_socket`
+**`remote::server`**: `only_local_network_peers_are_served`, `pairing_codes_are_six_digits_and_vary_with_the_seed`, `serves_the_page_pairs_and_relays_actions_over_a_real_socket`; ignored helper: `serve_for_a_browser`
 
 **`remote::ws`**: `frames_decode_masked_wait_for_more_bytes_and_encode`, `protocol_violations_are_errors`, `sha1_and_base64_match_the_published_test_vectors`
 

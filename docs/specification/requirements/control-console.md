@@ -1,5 +1,5 @@
 ---
-spec_version: 1.4.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
@@ -33,6 +33,7 @@ Features: [Controls & control console](../../definition/control-console.md). How
 | [R-CON-019 Features the craft lacks are disabled, not hidden](#r-con-019-features-the-craft-lacks-are-disabled-not-hidden) | Partial (catalogue and buttons) |
 | [R-CON-020 Console theme from the active pack](#r-con-020-console-theme-from-the-active-pack) | Planned |
 | [R-CON-021 Console theme assets are original-free](#r-con-021-console-theme-assets-are-original-free) | Planned |
+| [R-CON-022 Keep the tablet awake](#r-con-022-keep-the-tablet-awake) | Implemented |
 
 ## Requirements
 
@@ -150,6 +151,9 @@ The game MUST be able to serve the console page and a WebSocket endpoint. The co
 !!! note "Resolved (C1, app 0.4.0)"
     **Settings keys:** `console: {enabled, port}` in `settings.yaml` (default off, 8765), and `--console` / `--console-port N` for one run. **Local network only:** each accepted connection's peer address is checked (`remote::server::is_local`): private, link-local, IPv6 unique-local and loopback addresses (and IPv4-mapped forms of them) are served; any other connection is dropped without an answer. **Pairing code:** six digits chosen at start-up, printed in the terminal and shown at the bottom left of the flight screen with the URL until a console pairs (and while the menu is open); three wrong codes close the connection.
 
+!!! note "As built (app 0.4.7, main `c42d773`)"
+    **Pairing works on every screen.** The server's connection thread answers a right code with `welcome {version}` itself, at once, so the page knows it is paired even when no battle is running (before 0.4.7 only the flight screen answered, and a tablet paired from the launcher waited for ever). The page pairs as soon as the sixth digit is typed (an iPad's number pad has no Enter key), shows *Connecting…* and its errors (*Could not reach the game*, a wrong code, *Disconnected*), and accepts the code in the address (`/?code=123456`, for a future QR code).
+
 ### R-CON-010 Console protocol
 
 Game and console MUST exchange the JSON messages of the [console protocol](../console-protocol.md); the protocol MUST NOT depend on the transport.
@@ -162,7 +166,7 @@ Game and console MUST exchange the JSON messages of the [console protocol](../co
 - See: [Console protocol](../console-protocol.md)
 
 !!! note "As built"
-    Protocol version 1: `hello`, `action`, `throttle` from the console; `welcome`, `denied`, `catalogue`, `telemetry` from the game. `remote::protocol` builds and decodes the JSON text only; the WebSocket framing is in `remote::ws`, so a serial transport can carry the same text.
+    Protocol version 1: `hello`, `action`, `throttle` from the console; `welcome`, `denied`, `catalogue`, `telemetry` from the game. Since app 0.4.7 the server sends `welcome {version}` the moment the code is right, and the flight screen sends `welcome {version, campaign}` again during a battle; outside a battle (the launcher) the game sends a catalogue with every action available and an idle `telemetry {alive: false, state}` twice a second. `remote::protocol` builds and decodes the JSON text only; the WebSocket framing is in `remote::ws`, so a serial transport can carry the same text.
 
 ### R-CON-011 Console actions are game actions
 
@@ -222,7 +226,7 @@ While paired, the game MUST send craft telemetry at 20 Hz and radar contacts at 
 - See: [Console protocol](../console-protocol.md#game-console)
 
 !!! note "As built (C1)"
-    Craft telemetry is sent at 20 Hz to every paired console (`app::flight::FlightSession::console_frame`). Radar contacts (5 Hz) and events are not sent yet: they are the `contacts` and `event` messages, still planned on the [Console protocol](../console-protocol.md#messages-still-planned) page, with C4.
+    Craft telemetry is sent at 20 Hz to every paired console (`app::flight::FlightSession::console_frame`). Radar contacts (5 Hz) and events are not sent yet: they are the `contacts` and `event` messages, still planned on the [Console protocol](../console-protocol.md#messages-still-planned) page, with C4. Outside a battle (app 0.4.7) the launcher sends `telemetry {alive: false, state: "launcher"}` twice a second, which the page shows as *Not flying (launcher)*.
 
 ### R-CON-015 Target viewport
 
@@ -321,6 +325,20 @@ Console theme assets MUST be new art made for this project and kept in the pack'
 - Verified by: Planned (interlude item C2).
 - See: [The default campaign](../../definition/campaigns/default-campaign.md)
 
+### R-CON-022 Keep the tablet awake
+
+The console MUST keep the tablet's screen awake while the page is open and visible. It MUST use the Screen Wake Lock API where the browser allows it and otherwise play a tiny, muted, looping inline video made for the project; it MUST take the lock again when the page becomes visible, and MUST show whether the screen is being kept awake. The server MUST serve the clip with HTTP range requests (`206 Partial Content`).
+
+*Rationale:* User request, 2026-11-11: "tablet goes to sleep while page displayed; some function in page needs to keep alive. browser will keep tablet alive during media streaming for video display, so there are some kind of mechanisms in place to prevent sleep. Unclear to what extent this is possible." Safari offers the wake lock only on secure (https) pages, so an iPad on the plain-http console needs the video; iOS Safari plays video only from a server that honours ranges.
+
+- Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
+- Status: implemented
+- Verified by: `remote::http::ranges_are_served_as_partial_content`; MT-3-26
+- See: [Console protocol](../console-protocol.md#keeping-the-tablet-awake), [Remote console](../../implementation/architecture/remote.md#keeping-the-tablet-awake), [Tablet console](../../user-guide/console.md#keeping-the-screen-on)
+
+!!! note "As built (app 0.4.8, main `f1c8be8`)"
+    Written as planned and built in the same pass. The clip is `web/console/keepawake.mp4` (black, 2 KB), generated with AVFoundation by `tools/console_assets/make_keepawake.swift`: the project's own output, not third-party. It is started on the pairing tap, again on any tap until it runs, and whenever the page becomes visible. Checked in headless Chrome over localhost (the wake-lock path) and over the LAN address (the video path); not yet on an iPad (MT-3-26).
+
 ## Revision history
 
 | Version | Date | Change |
@@ -329,3 +347,4 @@ Console theme assets MUST be new art made for this project and kept in the pack'
 | 1.1.0 | 2026-11-11 | R-CON-007 and R-CON-008 implemented (app 0.3.1): `input::ACTIONS` with `help_rows`; the keys overlay on `?` / Shift+F1 (action `help`), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation |
 | 1.4.0 | 2026-11-11 | R-CON-011: held actions released after 1 s of silence (heartbeat). R-CON-014 status corrected to partial |
 | 1.3.0 | 2026-11-11 | Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from `input::ACTIONS`; the description field stays open |
+| 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented |

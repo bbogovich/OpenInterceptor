@@ -1,12 +1,12 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
 
 # Modding toolkit
 
-What a modder gets: packs, readable rule files, asset replacement, translation, conditions and the tools that check and generate content.
+What a modder gets: packs, readable rule files, asset replacement, translation, conditions, the tools that check and generate content and, planned, the Mod Designer and Cutscene Designer ([design](../specification/design/designer.md)).
 
 Requirements for these features: [Modding toolkit requirements](../specification/requirements/modding.md).
 
@@ -20,6 +20,11 @@ Requirements for these features: [Modding toolkit requirements](../specification
 | [F-MOD-006 Mod validation](#f-mod-006-mod-validation) | In progress |
 | [F-MOD-007 Generated assets (recipes)](#f-mod-007-generated-assets-recipes) | Planned |
 | [F-MOD-008 Modding guide](#f-mod-008-modding-guide) | In progress |
+| [F-MOD-009 Mod Designer](#f-mod-009-mod-designer) | Planned |
+| [F-MOD-010 Cutscene Designer](#f-mod-010-cutscene-designer) | Planned |
+| [F-MOD-011 Cutscenes in the game](#f-mod-011-cutscenes-in-the-game) | Planned |
+| [F-MOD-012 Video cutscenes](#f-mod-012-video-cutscenes) | Planned |
+| [F-MOD-013 Shared formations](#f-mod-013-shared-formations) | Planned |
 
 ## Features
 
@@ -103,8 +108,73 @@ Requirements for these features: [Modding toolkit requirements](../specification
 - **Source:** Plan item 7.9; project rule: every new key is documented in the same change.
 - **Specified by:** [R-MOD-020](../specification/requirements/modding.md#r-mod-020-every-key-documented)
 
+### F-MOD-009 Mod Designer
+
+**What.** A companion application, separate from the game, for building packs and mods without editing files by hand:
+- a new pack or mod starts from a chosen **base** (the default campaign, `interceptor` or any installed pack);
+- any asset of the parent can be **imported**: it is copied with its dependencies (a model with its textures, a ship with its model set, debris, sounds and text) and converted from original formats where needed;
+- the copy is edited in an **external program** such as Blender and reloads live;
+- forms generated from the engine's schemas, a raw YAML view, "where is this used?", **validation** on every save, **play** in the testbed, and packaging as a folder or zip.
+
+Everything it saves is the same open pack data a modder could write by hand.
+
+**Why.** Modding first: building a mod should not need a text editor and the file reference open side by side.
+
+- **Status:** planned
+- **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "Add to the longer term plan a companion app for a mod designer, which allows a user to define custom packs and mods to add to the game. On creation of a new pack or mod, user may choose a base to use for assets that they are going to override. When editing a mod, they can choose to import an asset from the parent. This duplicates the original asset and its dependencies (model plus textures in most cases) which the user can then edit in an external program, usually blender." Decisions D1 (macroquad UI, no new dependency) and D5 (a separate program in the same repository; two build artifacts), 2026-11-11. Plan items MD4, MD5.
+- **Specified by:** [R-MOD-021](../specification/requirements/modding.md#r-mod-021-designer-application), [R-MOD-022](../specification/requirements/modding.md#r-mod-022-files-stay-the-source-of-truth), [R-MOD-023](../specification/requirements/modding.md#r-mod-023-new-pack-from-a-base), [R-MOD-024](../specification/requirements/modding.md#r-mod-024-pack-tree-forms-and-yaml-view), [R-MOD-025](../specification/requirements/modding.md#r-mod-025-import-an-asset-with-its-dependencies), [R-MOD-026](../specification/requirements/modding.md#r-mod-026-where-an-asset-is-used), [R-MOD-027](../specification/requirements/modding.md#r-mod-027-external-editor-and-live-reload), [R-MOD-028](../specification/requirements/modding.md#r-mod-028-validate-on-save-play-in-the-testbed), [R-MOD-029](../specification/requirements/modding.md#r-mod-029-provenance-of-imported-assets), [R-MOD-030](../specification/requirements/modding.md#r-mod-030-package-a-pack)
+
+### F-MOD-010 Cutscene Designer
+
+**What.** Inside the Mod Designer, a timeline editor for introduction films and story scenes played by the engine itself:
+- **scripted** entities, added and removed at set times, keyframed for position, rotation and speed (the speed is overridden when positions are keyed, so every key is met exactly), with timed actions: fire beams or missiles, chase, capture with the tractor, be destroyed, jump out;
+- **autopilot** entities flown by the beginner AI rules towards designated targets, as background action, with an optional `aggressive` flag;
+- a `harmless` flag that makes an entity's or an action's weapons fire without dealing damage;
+- groups placed by a chosen **formation**;
+- **sounds** at timed positions (narration, music, effects) and translatable **captions**;
+- **cameras**, fixed or attached to an object with keyframed distance and orbit, and **camera cuts** set by keyframes;
+- a **3D map** of the whole scene and a **preview** of the current frame, with exact seeking from snapshots;
+- deterministic playback with **Simple physics**.
+
+**Why.** Campaigns need films for their story; a modder should be able to make them with the game's own ships and effects.
+
+- **Status:** planned
+- **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "A cutscene designer is also needed in the mod tool for users to add introduction film and custom animations … Cutscenes always use basic physics so that the animation behavior is predictable. There are both scripted entities and autopilot in the cut scenes … Switching between cameras in the cutscene is set through keyframes." With decision D4: "Also a flag for the animations for their weapons to cause no damage." Decision D3: captions as text keys. Plan item MD6 (the editor) and MD2 (the format and player).
+- **Specified by:** [R-MOD-021](../specification/requirements/modding.md#r-mod-021-designer-application), [R-MOD-031](../specification/requirements/modding.md#r-mod-031-cutscene-designer-workspace), [R-MOD-032](../specification/requirements/modding.md#r-mod-032-seeking-with-snapshots), [R-MOD-033](../specification/requirements/modding.md#r-mod-033-cutscene-files), [R-MOD-034](../specification/requirements/modding.md#r-mod-034-deterministic-playback-with-simple-physics), [R-MOD-035](../specification/requirements/modding.md#r-mod-035-scripted-entities-and-keyframes), [R-MOD-036](../specification/requirements/modding.md#r-mod-036-paths-and-rotations), [R-MOD-037](../specification/requirements/modding.md#r-mod-037-timed-actions), [R-MOD-038](../specification/requirements/modding.md#r-mod-038-autopilot-entities), [R-MOD-039](../specification/requirements/modding.md#r-mod-039-formations-in-cutscenes), [R-MOD-040](../specification/requirements/modding.md#r-mod-040-timed-sounds), [R-MOD-041](../specification/requirements/modding.md#r-mod-041-captions), [R-MOD-042](../specification/requirements/modding.md#r-mod-042-cameras-fixed-or-attached), [R-MOD-043](../specification/requirements/modding.md#r-mod-043-camera-cuts)
+
+### F-MOD-011 Cutscenes in the game
+
+**What.** The game plays a pack's cutscenes as the campaign's introduction, at key campaign events, and at the start and end of specific missions (an outro chosen by the result). The player can always skip one with Esc, the tablet console's skip button or the gamepad's Start button.
+
+**Why.** Story moments in a campaign, the same way every time.
+
+- **Status:** planned
+- **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "introduction film and custom animations that play for key campaign events or at the start of specific mission definitions". Plan item MD2.
+- **Specified by:** [R-MOD-033](../specification/requirements/modding.md#r-mod-033-cutscene-files), [R-MOD-034](../specification/requirements/modding.md#r-mod-034-deterministic-playback-with-simple-physics), [R-MOD-035](../specification/requirements/modding.md#r-mod-035-scripted-entities-and-keyframes), [R-MOD-036](../specification/requirements/modding.md#r-mod-036-paths-and-rotations), [R-MOD-037](../specification/requirements/modding.md#r-mod-037-timed-actions), [R-MOD-038](../specification/requirements/modding.md#r-mod-038-autopilot-entities), [R-MOD-039](../specification/requirements/modding.md#r-mod-039-formations-in-cutscenes), [R-MOD-040](../specification/requirements/modding.md#r-mod-040-timed-sounds), [R-MOD-041](../specification/requirements/modding.md#r-mod-041-captions), [R-MOD-042](../specification/requirements/modding.md#r-mod-042-cameras-fixed-or-attached), [R-MOD-043](../specification/requirements/modding.md#r-mod-043-camera-cuts), [R-MOD-044](../specification/requirements/modding.md#r-mod-044-where-cutscenes-play), [R-MOD-045](../specification/requirements/modding.md#r-mod-045-skipping-a-cutscene)
+
+### F-MOD-012 Video cutscenes
+
+**What.** A pack can provide a video file to play instead of any engine-played cutscene, with optional captions. Videos play through the operating system's media framework (on Linux, GStreamer when installed); image sequences with a WAV track always work.
+
+**Why.** A creator may make a film in another program.
+
+- **Status:** planned
+- **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "Note that a user may also provide a video to play instead of scripted engine animation." Decision D2, 2026-11-11 (the Linux path to be evaluated first). Plan item MD3.
+- **Specified by:** [R-MOD-044](../specification/requirements/modding.md#r-mod-044-where-cutscenes-play), [R-MOD-045](../specification/requirements/modding.md#r-mod-045-skipping-a-cutscene), [R-MOD-046](../specification/requirements/modding.md#r-mod-046-video-cutscenes)
+
+### F-MOD-013 Shared formations
+
+**What.** Formations (vee, line abreast, echelon, box, diamond and custom ones) are pack data, used by wingmen in battle and by groups in cutscenes alike.
+
+**Why.** A modder defines a shape once; a cutscene and a battle look the same.
+
+- **Status:** planned
+- **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "For fighters and ships, they can choose which formation to apply." Plan item MD1 (it also serves wingmen and replaces per-scenario slot offsets).
+- **Specified by:** [R-MOD-039](../specification/requirements/modding.md#r-mod-039-formations-in-cutscenes), [R-MOD-047](../specification/requirements/modding.md#r-mod-047-shared-formations), [R-CMB-022](../specification/requirements/combat.md#r-cmb-022-wingmen-keep-their-distance)
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-MOD-001 – F-MOD-008 (8 features) |
+| 1.7.0 | 2026-11-11 | F-MOD-009 – F-MOD-013 (planned): Mod Designer, Cutscene Designer, cutscenes in the game, video cutscenes, shared formations (user request and decisions D1–D5) |

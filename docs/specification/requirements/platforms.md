@@ -1,12 +1,12 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
 
 # Platforms requirements
 
-Requirements for the macOS, Linux and Windows builds, packaging and dependencies.
+Requirements for the macOS, Linux and Windows builds, packaging, dependencies and (planned) bundling a complete game.
 
 Features: [Platforms](../../definition/platforms.md). How to read a requirement: [Specification](../index.md#reading-a-requirement).
 
@@ -18,6 +18,10 @@ Features: [Platforms](../../definition/platforms.md). How to read a requirement:
 | [R-PLT-004 Release packages](#r-plt-004-release-packages) | Planned |
 | [R-PLT-005 One dependency](#r-plt-005-one-dependency) | Implemented |
 | [R-PLT-006 Unsafe only at boundaries](#r-plt-006-unsafe-only-at-boundaries) | Implemented |
+| [R-PLT-007 Product file](#r-plt-007-product-file) | Planned |
+| [R-PLT-008 Bundled game builds](#r-plt-008-bundled-game-builds) | Planned |
+| [R-PLT-009 Nothing original is bundled](#r-plt-009-nothing-original-is-bundled) | Planned |
+| [R-PLT-010 Validate before bundling](#r-plt-010-validate-before-bundling) | Planned |
 
 ## Requirements
 
@@ -94,8 +98,61 @@ The engine MUST depend only on `macroquad` (pinned); any other dependency MUST b
 - Reverse-engineered: yes
 - See: [FFI, repr(C) and unsafe](../../learning/rust/ffi-unsafe.md)
 
+### R-PLT-007 Product file
+
+A creator's project MUST be able to describe a complete game in a product file, `product.yaml`: name, version, bundle id and icon; splash image and intro cutscene; the packs to include, in load order; the default campaign; whether the testbed, model viewer and developer tools are shown (off for a release); licence and credit files.
+
+*Rationale:* The user's request: "release a complete game without requiring manual download and installation of packs and mods".
+
+- Implements: [F-PLT-005](../../definition/platforms.md#f-plt-005-game-bundling)
+- Status: planned
+- Verified by: Planned (MD7).
+- See: [Mod designer: bundling a complete game](../design/designer.md#5-bundling-a-complete-game)
+
+### R-PLT-008 Bundled game builds
+
+The build MUST produce two artifacts from the one repository: the **game** and the **designer** (R-MOD-021). From a product file, the build tool (`tools/build_bundle.py --product product.yaml`, or the designer's "Package game") MUST build a product bundle from the game artifact that:
+
+- contains the engine, `resources/default` when the product uses it, and exactly the listed packs;
+- is named and branded as the product;
+- starts directly in the product's default campaign;
+- hides the testbed, model viewer and developer tools when the product says so;
+- still loads the player's own mods from their user folder on top.
+
+It MUST write the macOS `.app`, and the Linux and Windows packages once those exist (R-PLT-004).
+
+*Rationale:* A creator ships a game in its own right; players install nothing by hand. The designer is a separate program (decision D5, 2026-11-11), not part of a product.
+
+- Implements: [F-PLT-005](../../definition/platforms.md#f-plt-005-game-bundling)
+- Status: planned
+- Verified by: Planned (MD7).
+- See: [Mod designer: bundling a complete game](../design/designer.md#5-bundling-a-complete-game), [Packaging](../../implementation/build/packaging.md)
+
+### R-PLT-009 Nothing original is bundled
+
+The bundler MUST refuse a pack with `requires_original`, and any file recorded as converted from original data (R-MOD-029). A pack built on `interceptor` MAY be shared as a mod, but MUST NOT be bundled into a product.
+
+*Rationale:* No original content is ever distributed (project rule).
+
+- Implements: [F-PLT-005](../../definition/platforms.md#f-plt-005-game-bundling), [F-CMP-003](../../definition/compatibility.md#f-cmp-003-no-original-content-in-the-project)
+- Status: planned
+- Verified by: Planned (MD7).
+- See: [Mod designer: bundling a complete game](../design/designer.md#5-bundling-a-complete-game)
+
+### R-PLT-010 Validate before bundling
+
+The full validator MUST run on the product's packs and report no errors before a bundle is written.
+
+*Rationale:* A released game starts without content errors.
+
+- Implements: [F-PLT-005](../../definition/platforms.md#f-plt-005-game-bundling)
+- Status: planned
+- Verified by: Planned (MD7).
+- See: [R-MOD-017](modding.md#r-mod-017-full-validator)
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-PLT-001 – R-PLT-006 (6 requirements; 4 reverse-engineered from the code) |
+| 1.7.0 | 2026-11-11 | R-PLT-007 – R-PLT-010 (planned): game bundling — the product file, two build artifacts (game and designer, decision D5) and branded product builds, the provenance guard, validation first |

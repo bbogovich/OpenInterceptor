@@ -1,12 +1,12 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
 
 # Modding toolkit requirements
 
-Requirements for packs, rule files, schemas, overrides, extraction, text, the condition language, validation and recipes. The normative structure is [Mod structure](../design/mod-structure.md); every key is in the [Mod file reference](../../modding/reference.md).
+Requirements for packs, rule files, schemas, overrides, extraction, text, the condition language, validation and recipes, and (planned) the Mod Designer, cutscenes, video cutscenes and shared formations ([design](../design/designer.md)). The normative structure is [Mod structure](../design/mod-structure.md); every key is in the [Mod file reference](../../modding/reference.md).
 
 Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a requirement: [Specification](../index.md#reading-a-requirement).
 
@@ -32,6 +32,33 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-018 Recipes](#r-mod-018-recipes) | Planned |
 | [R-MOD-019 Sound cue table](#r-mod-019-sound-cue-table) | Implemented |
 | [R-MOD-020 Every key documented](#r-mod-020-every-key-documented) | Implemented |
+| [R-MOD-021 Designer application](#r-mod-021-designer-application) | Planned |
+| [R-MOD-022 Files stay the source of truth](#r-mod-022-files-stay-the-source-of-truth) | Planned |
+| [R-MOD-023 New pack from a base](#r-mod-023-new-pack-from-a-base) | Planned |
+| [R-MOD-024 Pack tree, forms and YAML view](#r-mod-024-pack-tree-forms-and-yaml-view) | Planned |
+| [R-MOD-025 Import an asset with its dependencies](#r-mod-025-import-an-asset-with-its-dependencies) | Planned |
+| [R-MOD-026 Where an asset is used](#r-mod-026-where-an-asset-is-used) | Planned |
+| [R-MOD-027 External editor and live reload](#r-mod-027-external-editor-and-live-reload) | Planned |
+| [R-MOD-028 Validate on save, play in the testbed](#r-mod-028-validate-on-save-play-in-the-testbed) | Planned |
+| [R-MOD-029 Provenance of imported assets](#r-mod-029-provenance-of-imported-assets) | Planned |
+| [R-MOD-030 Package a pack](#r-mod-030-package-a-pack) | Planned |
+| [R-MOD-031 Cutscene Designer workspace](#r-mod-031-cutscene-designer-workspace) | Planned |
+| [R-MOD-032 Seeking with snapshots](#r-mod-032-seeking-with-snapshots) | Planned |
+| [R-MOD-033 Cutscene files](#r-mod-033-cutscene-files) | Planned |
+| [R-MOD-034 Deterministic playback with Simple physics](#r-mod-034-deterministic-playback-with-simple-physics) | Planned |
+| [R-MOD-035 Scripted entities and keyframes](#r-mod-035-scripted-entities-and-keyframes) | Planned |
+| [R-MOD-036 Paths and rotations](#r-mod-036-paths-and-rotations) | Planned |
+| [R-MOD-037 Timed actions](#r-mod-037-timed-actions) | Planned |
+| [R-MOD-038 Autopilot entities](#r-mod-038-autopilot-entities) | Planned |
+| [R-MOD-039 Formations in cutscenes](#r-mod-039-formations-in-cutscenes) | Planned |
+| [R-MOD-040 Timed sounds](#r-mod-040-timed-sounds) | Planned |
+| [R-MOD-041 Captions](#r-mod-041-captions) | Planned |
+| [R-MOD-042 Cameras, fixed or attached](#r-mod-042-cameras-fixed-or-attached) | Planned |
+| [R-MOD-043 Camera cuts](#r-mod-043-camera-cuts) | Planned |
+| [R-MOD-044 Where cutscenes play](#r-mod-044-where-cutscenes-play) | Planned |
+| [R-MOD-045 Skipping a cutscene](#r-mod-045-skipping-a-cutscene) | Planned |
+| [R-MOD-046 Video cutscenes](#r-mod-046-video-cutscenes) | Planned |
+| [R-MOD-047 Shared formations](#r-mod-047-shared-formations) | Planned |
 
 ## Requirements
 
@@ -271,8 +298,320 @@ Every new rule key, scenario key or pack feature MUST be documented on the Moddi
 - Reverse-engineered: yes
 - See: [Mod file reference](../../modding/reference.md)
 
+### R-MOD-021 Designer application
+
+The Mod Designer MUST be a separate program in the same repository, built as its own artifact beside the game, that uses the engine's own library (content, simulation, rendering and audio), so that every preview it shows is drawn by the game's renderer and simulated by the game's sim. The game and the designer MUST be able to run at the same time. Its interface MUST use macroquad's built-in UI module, with the engine renderer drawing the 3D map and preview viewports, and MUST NOT add a dependency.
+
+*Rationale:* One engine: what the designer shows is what the game plays, and the designer cannot drift from it. A separate program keeps its interface focused (decisions D1 and D5, 2026-11-11).
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer), [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer)
+- Status: planned
+- Verified by: Planned (MD4).
+- See: [Mod designer: how the designer is built](../design/designer.md#4-how-the-designer-is-built)
+
+!!! note "Decided (2026-11-11)"
+    D1: macroquad's built-in UI module plus the engine renderer; no new dependency. D5: a separate program in the same repository; the build produces two artifacts, the game and the designer.
+
+### R-MOD-022 Files stay the source of truth
+
+Everything the designer saves MUST be the documented open pack data (YAML, OBJ/MTL, PNG, WAV) that a modder could write by hand. Hand-written packs MUST open in the designer. Saving MUST rewrite a hand-written file only in the keys that changed, and SHOULD keep its comments. Edits MUST be undoable.
+
+*Rationale:* Nothing the designer makes is locked to the tool; files can be read, diffed and hand-edited.
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD4: YAML round-trip unit tests).
+- See: [Mod designer: goals and principles](../design/designer.md#1-goals-and-principles)
+
+### R-MOD-023 New pack from a base
+
+Creating a pack or mod MUST ask for an id, a name, a kind (campaign, addon or override) and a base to override: the default campaign (`resources/default`), `interceptor` or any installed pack. It MUST write `pack.yaml` with `parent:` set to the base, and the folder skeleton `rules/`, `models/`, `textures/`, `sounds/`, `text/en/`, `missions/`, `scenarios/` and `cutscenes/`.
+
+*Rationale:* The user's request: "on creation of a new pack or mod, user may choose a base to use for assets that they are going to override".
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD4).
+- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods), [Mod structure](../design/mod-structure.md)
+
+!!! note "Open"
+    `override` is not a manifest kind today (R-MOD-001: `campaign`, `addon`, `library`); whether it is written as an addon or becomes a kind of its own is decided with MD4.
+
+### R-MOD-024 Pack tree, forms and YAML view
+
+The designer MUST show an open pack as a tree with its definitions grouped by kind (ships, weapons, missions, cutscenes, text and so on). It MUST offer a form editor generated from the engine's schemas — the ones that produce the JSON Schemas — so that a new key appears without a designer change, and a raw YAML view.
+
+*Rationale:* Editing without hand-writing files, and without a second description of the format to keep in step.
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD4).
+- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods), [R-MOD-006](#r-mod-006-schemas-and-messages)
+
+### R-MOD-025 Import an asset with its dependencies
+
+The designer MUST import any asset the parent provides (model, texture, sound, image, cockpit, ship or object, mission or scenario) by copying it **and its dependencies** into the mod at the path that overrides the original, as listed on the design page: a model with its MTL, every texture the MTL names and its LODs; a ship or object with its definition, model set, debris and destroyed effect, materials and textures, sounds and text keys; a cockpit with its image or 3D model, instrument layout and textures; a mission or scenario with its text keys (its ships are offered as a separate import). Original formats MUST be converted to OBJ/MTL, PNG and WAV by the existing extractor.
+
+*Rationale:* The user's request: importing "duplicates the original asset and its dependencies (model plus textures in most cases)".
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD5: dependency-graph import unit tests).
+- See: [Mod designer: an asset and its dependencies](../design/designer.md#22-what-an-asset-and-its-dependencies-means), [R-MOD-008](#r-mod-008-per-asset-overrides), [R-MOD-009](#r-mod-009-extraction)
+
+### R-MOD-026 Where an asset is used
+
+The designer MUST build a dependency graph from the loaded content, MUST answer "where is this used?" for any definition or asset, and MUST warn before deleting anything still referenced.
+
+*Rationale:* The same graph that drives import keeps a mod consistent.
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD5).
+- See: [Mod designer: an asset and its dependencies](../design/designer.md#22-what-an-asset-and-its-dependencies-means)
+
+### R-MOD-027 External editor and live reload
+
+The designer MUST open an imported file in an external program chosen per file type (Blender, for example), and MUST reload the asset in its preview when the file is saved.
+
+*Rationale:* The user's request: the copy is edited "in an external program, usually blender".
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD5; manual test).
+- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods)
+
+### R-MOD-028 Validate on save, play in the testbed
+
+The designer MUST run the engine's validator on every save and report each problem with its file, line and key, and MUST start the testbed with the mod enabled on a chosen scenario or mission.
+
+*Rationale:* Mistakes found at once, and the mod tried in the real game.
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer), [F-MOD-006](../../definition/modding-toolkit.md#f-mod-006-mod-validation)
+- Status: planned
+- Verified by: Planned (MD4).
+- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods), [R-MOD-016](#r-mod-016-headless-validation)
+
+### R-MOD-029 Provenance of imported assets
+
+Every file the designer converts from original data MUST be recorded as such in the pack's `pack.yaml`, and stays in the user's own mod folder for personal use only.
+
+*Rationale:* Original content stays private: the bundler must be able to refuse it (R-PLT-009).
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer), [F-PLT-005](../../definition/platforms.md#f-plt-005-game-bundling)
+- Status: planned
+- Verified by: Planned (MD5).
+- See: [Mod designer: bundling](../design/designer.md#5-bundling-a-complete-game)
+
+### R-MOD-030 Package a pack
+
+The designer MUST export a pack as a folder or a zip for sharing, and MUST be able to add it to a product bundle (R-PLT-007).
+
+*Rationale:* Sharing a mod, or releasing it as part of a game.
+
+- Implements: [F-MOD-009](../../definition/modding-toolkit.md#f-mod-009-mod-designer)
+- Status: planned
+- Verified by: Planned (MD4, MD7).
+- See: [Mod designer: packs and mods](../design/designer.md#21-packs-and-mods)
+
+### R-MOD-031 Cutscene Designer workspace
+
+The Cutscene Designer MUST show the scene's outline (entities, cameras, sounds, captions), a 3D map of the whole scene with paths, keyframes and camera frusta, a preview through the active camera at the current frame, a timeline with tracks, keyframes and a playhead, and an inspector for the selection. In it the user MUST be able to add any asset from the loaded packs to the scene, set the times it enters and leaves, move it in 3D and set keyframes.
+
+*Rationale:* The user's request: "User needs to be able to see the overall 3d map and preview of the current animation frame."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer)
+- Status: planned
+- Verified by: Planned (MD6; manual tests).
+- See: [Mod designer: layout](../design/designer.md#31-layout)
+
+### R-MOD-032 Seeking with snapshots
+
+While a cutscene plays in the designer, a snapshot of the whole world MUST be taken every 2 s; seeking MUST replay the simulation from the nearest snapshot, and playing on from a seek MUST give exactly the same frames as playing straight through.
+
+*Rationale:* Scrubbing that is quick and exact.
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer)
+- Status: planned
+- Verified by: Planned (MD6: "seek, then play, equals straight play" unit test).
+- See: [Mod designer: how it plays](../design/designer.md#33-how-it-plays-deterministic-with-simple-physics)
+
+### R-MOD-033 Cutscene files
+
+A cutscene MUST be a pack file `cutscenes/<id>.yaml` with an id, a title (a text key), a length, an environment (starfield seed, sun, backdrop), entities, cameras, camera cuts, sounds and captions, or a video (R-MOD-046). Cutscene files MUST be validated with every other pack file, each mistake reported with its file, line and key.
+
+*Rationale:* Cutscenes are open pack data like everything else a modder writes.
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file)
+
+### R-MOD-034 Deterministic playback with Simple physics
+
+A cutscene MUST run on the normal 60 Hz simulation with a fixed random seed, and every ship in it MUST fly Simple physics (R-FLT-013), so that it plays the same way every time, in the designer and in the game.
+
+*Rationale:* The user's request: "Cutscenes always use basic physics so that the animation behavior is predictable."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: how it plays](../design/designer.md#33-how-it-plays-deterministic-with-simple-physics), [R-FLT-013](flight.md#r-flt-013-simple-physics-mode)
+
+### R-MOD-035 Scripted entities and keyframes
+
+A scripted entity MUST be any ship, object or debris from the loaded packs, with enter and leave times and keyframes for position, rotation and speed. When an entity has position keyframes, its speed MUST be derived from its path, overriding its speed keyframes, so that it is exactly at each keyframe's position at that keyframe's time.
+
+*Rationale:* The user's request: "speed overridden when keyframe positions are set to guarantee that the positioning is correct".
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2: keyframe evaluation and speed-override unit tests).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+### R-MOD-036 Paths and rotations
+
+Position keyframes MUST be joined by a centripetal Catmull-Rom spline that passes through every key; rotation keyframes MUST be interpolated by quaternion slerp. An entity with position keys and no rotation keys MUST face along its path and bank into turns.
+
+*Rationale:* Smooth paths without overshoot at sharp corners.
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2: spline and slerp sampling unit tests).
+- See: [Mod designer: how it plays](../design/designer.md#33-how-it-plays-deterministic-with-simple-physics)
+
+### R-MOD-037 Timed actions
+
+A scripted entity MUST be able to act at given times: fire beams or a missile at a target, start chasing a target, capture a target with the tractor, be destroyed (with its looks and debris) and jump to hyperspace. Each action MUST call the same simulation functions as a battle, so the same effects and sounds play.
+
+A `harmless` flag, on an entity (scripted or autopilot) or on a single action, MUST make that entity's or action's weapons fire and show their effects but deal no damage.
+
+*Rationale:* The user's request: "assign targets for them to chase, capture, or shoot at" and "time triggered destruction"; with decision D4: "Also a flag for the animations for their weapons to cause no damage."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2: action timing unit tests).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+### R-MOD-038 Autopilot entities
+
+An autopilot entity MUST be flown by the engine's AI with the campaign's beginner difficulty rules, towards designated targets (attack, escort, flee to a point). An optional per-entity `aggressive` flag MUST be available for background dogfights. An entity MUST be able to switch from autopilot to scripted at a given time, and back.
+
+*Rationale:* The user's request: "autopilot will run based on beginner AI rules given designated targets and usually serve as background action".
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+!!! note "Decided (2026-11-11)"
+    D4: beginner AI rules, with an optional per-entity `aggressive` flag; the `harmless` flag is R-MOD-037. What `aggressive` changes in the AI is fixed when MD2 is built.
+
+### R-MOD-039 Formations in cutscenes
+
+A group of fighters or ships in a cutscene MUST be placeable by a named formation from the pack's `formations` (R-MOD-047), following a leader that is scripted or autopilot.
+
+*Rationale:* The user's request: "For fighters and ships, they can choose which formation to apply."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-013](../../definition/modding-toolkit.md#f-mod-013-shared-formations)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+### R-MOD-040 Timed sounds
+
+A cutscene MUST play sound clips (narration, music, effects) at given times, each with a volume and a fade in and out, either positioned on an entity or flat; music MUST be able to duck under narration.
+
+*Rationale:* The user's request: "Sounds must be included at timed positions so that narration, music, and other audio can be played."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+### R-MOD-041 Captions
+
+A cutscene MUST be able to show caption text, given as text keys so that it can be translated, over given time ranges.
+
+*Rationale:* Accessible narration (decision D3, 2026-11-11: yes).
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains), [R-MOD-012](#r-mod-012-text-keys)
+
+### R-MOD-042 Cameras, fixed or attached
+
+A cutscene MUST support **fixed** cameras, with keyframed world position, a keyframed look target or rotation and a field of view, and **attached** cameras, parented to an entity, whose coordinates are relative to the parent and whose distance, orbit (yaw and pitch around the parent), height and look offset are keyframed.
+
+*Rationale:* The user's request: "Cameras can be defined at explicit positions or attached to an object … positioning is keyframed for distance and orbit."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+### R-MOD-043 Camera cuts
+
+The active camera MUST be chosen by a track of keyframes, each cut instant or a short blend.
+
+*Rationale:* The user's request: "Switching between cameras in the cutscene is set through keyframes."
+
+- Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+### R-MOD-044 Where cutscenes play
+
+The game MUST play a cutscene as a campaign's introduction, from a campaign event's action, and at a mission's start (intro) and end (outro, chosen by the result, such as win or lose).
+
+*Rationale:* The user's request: animations "that play for key campaign events or at the start of specific mission definitions".
+
+- Implements: [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game), [F-MOD-012](../../definition/modding-toolkit.md#f-mod-012-video-cutscenes)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file), [Format: campaign and game flow](../design/format-campaign.md), [Format: missions, environments, events](../design/format-missions.md)
+
+### R-MOD-045 Skipping a cutscene
+
+The player MUST always be able to skip a cutscene, engine-played or video, with Esc, the tablet console's skip button or the gamepad's Start button.
+
+*Rationale:* A film never holds the player.
+
+- Implements: [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game), [F-MOD-012](../../definition/modding-toolkit.md#f-mod-012-video-cutscenes)
+- Status: planned
+- Verified by: Planned (MD2).
+- See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file)
+
+### R-MOD-046 Video cutscenes
+
+A pack MUST be able to provide a video file in place of any engine-played cutscene (`video:`), with optional captions. Video files MUST play through the operating system's media framework behind the platform shim: AVFoundation on macOS, Media Foundation on Windows, and on Linux GStreamer, when installed, loaded at run time with `dlopen` (no crate dependency and no link-time dependency; GStreamer MUST NOT be bundled). Image sequences with a WAV track MUST play on every platform, and MUST be the fallback where no media framework is available. An in-crate MP4/H.264 decoder is out of scope.
+
+*Rationale:* The user's request: "a user may also provide a video to play instead of scripted engine animation"; decision D2 (2026-11-11). GStreamer is LGPL: loading the system's own copy dynamically, without bundling it, keeps the project clear of it.
+
+- Implements: [F-MOD-012](../../definition/modding-toolkit.md#f-mod-012-video-cutscenes)
+- Status: planned
+- Verified by: Planned (MD3).
+- See: [Mod designer: video instead of animation](../design/designer.md#35-video-instead-of-animation), [Format: interface, text and media](../design/format-interface.md#video), [R-CPN-012](campaigns.md#r-cpn-012-video-and-music)
+
+!!! note "Open"
+    The Linux path (GStreamer through `dlopen`) MUST be evaluated on the [dependency page](../../learning/best-practices/dependencies.md) before it is built (MD3).
+
+### R-MOD-047 Shared formations
+
+Formations MUST be pack data (`formations:`): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets.
+
+*Rationale:* A cutscene and a battle use the same shapes, and a modder defines them once.
+
+- Implements: [F-MOD-013](../../definition/modding-toolkit.md#f-mod-013-shared-formations), [F-CMB-007](../../definition/combat.md#f-cmb-007-wingmen-and-orders)
+- Status: planned
+- Verified by: Planned (MD1).
+- See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains), [R-CMB-015](combat.md#r-cmb-015-wingman-orders), [R-CMB-022](combat.md#r-cmb-022-wingmen-keep-their-distance)
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-MOD-001 – R-MOD-020 (20 requirements; 16 reverse-engineered from the code) |
+| 1.7.0 | 2026-11-11 | R-MOD-021 – R-MOD-047 (planned): the Mod Designer (R-MOD-021 – R-MOD-030), the Cutscene Designer and cutscene files, playback, entities, actions, sounds, captions, cameras and cuts, the `harmless` and `aggressive` flags (R-MOD-031 – R-MOD-043), where cutscenes play and skipping (R-MOD-044, R-MOD-045), video cutscenes (R-MOD-046), shared formations (R-MOD-047), from the user's request of 2026-11-11 and the decisions D1–D5 |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.4.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
@@ -23,12 +23,15 @@ same change.
 
 - Each message is one JSON object with a `type` field, sent as one WebSocket text frame.
 - **WebSocket** (first transport, built): the game serves the console page (`/`,
-  `/console.js`, `/console.css`, built into the program) and the socket (a WebSocket upgrade
+  `/console.js`, `/console.css` and `/keepawake.mp4`, built into the program; files honour
+  HTTP `Range` requests with `206 Partial Content` since app 0.4.8) and the socket (a WebSocket upgrade
   on any path; the page uses `/ws`) over HTTP/1.1 on port **8765** by default
   (`console.port` in `settings.yaml`, `--console-port`). The console is **off by default**
   (decision D2): `--console` or `console.enabled` turns it on.
 - **Local network only**: connections from addresses that are not private, link-local,
   unique-local or loopback are dropped without an answer.
+- **Pairing from the address** (app 0.4.7): `/?code=123456` pairs straight away with that
+  code, for a future QR code shown by the game.
 - **USB serial** (later, for an Arduino panel): the same messages, one per line. The protocol
   never depends on the transport.
 
@@ -43,16 +46,30 @@ sequenceDiagram
         G->>C: denied {reason}
         Note over C,G: the third wrong code closes the connection
     else right code
-        G->>C: welcome {version, campaign}
-        G->>C: catalogue {groups, actions}
-        loop while paired
-            G-->>C: telemetry (20 Hz)
-            G-->>C: catalogue (again when the craft class changes)
-            C->>G: action {name, value}
-            C->>G: throttle {value}
+        G->>C: welcome {version} (server, at once)
+        alt no battle running (launcher)
+            G->>C: catalogue (every action available)
+            loop twice a second
+                G-->>C: telemetry {alive: false, state: "launcher"}
+            end
+        else in a battle
+            G->>C: welcome {version, campaign} (flight screen)
+            G->>C: catalogue {groups, actions}
+            loop while paired
+                G-->>C: telemetry (20 Hz)
+                G-->>C: catalogue (again when the craft class changes)
+                C->>G: action {name, value}
+                C->>G: throttle {value}
+            end
         end
     end
 ```
+
+Since app 0.4.7 (main `c42d773`) the **server answers a right code itself**: its connection
+thread sends `welcome {version}` at once, so the page knows it is paired on any screen. Before,
+only the flight screen answered, and a tablet paired from the launcher waited for ever. During a
+battle the flight screen also sends `welcome {version, campaign}`. The page switches from the
+pairing screen to the console on `welcome` (not on `catalogue`).
 
 Until a console has paired, every message other than `hello` is ignored, as is any message
 that does not decode. When the connection closes, everything that console was holding is
@@ -80,10 +97,10 @@ released.
 
 | Message | When | Fields |
 |---|---|---|
-| `welcome` | Right code | `version` (1), `campaign` (the active campaign's id, empty if none). |
+| `welcome` | Right code: from the server at once with `version` only; during a battle the flight screen sends it again with `campaign` | `version` (1), `campaign` (the active campaign's id, empty if none; flight screen only). |
 | `denied` | Wrong code | `reason` (`"wrong pairing code"`). |
-| `catalogue` | After `welcome`; again whenever the player's craft class changes | `groups`: `[{id, title}]` in menu order (`flight`, `throttle`, `weapons`, `targeting`, `power`, `wingmen`, `views`, `camera`, `interface`). `actions`: `[{name, group, label, kind, available}]` for **every** action of the catalogue (R-CON-007): `name` as in `bindings.yaml`, `group` one of the ids above, `label` the display name, `kind` `"hold"` or `"tap"`, `available` false when the craft has no equipment for it (R-CON-019). |
-| `telemetry` | **20 Hz** while paired | See below. |
+| `catalogue` | After `welcome`; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with **every action marked available**, since there is no craft yet; the battle sends the real one when it starts | `groups`: `[{id, title}]` in menu order (`flight`, `throttle`, `weapons`, `targeting`, `power`, `wingmen`, `views`, `camera`, `interface`). `actions`: `[{name, group, label, kind, available}]` for **every** action of the catalogue (R-CON-007): `name` as in `bindings.yaml`, `group` one of the ids above, `label` the display name, `kind` `"hold"` or `"tap"`, `available` false when the craft has no equipment for it (R-CON-019). |
+| `telemetry` | **20 Hz** while paired in a battle; **twice a second** outside one | See below. Outside a battle: `{alive: false, state}` only, with `state` the screen (`"launcher"`). |
 
 **Availability.** An action is unavailable when the current craft lacks what it needs: `cloak`,
 `ecm` and `tractor` need that system fitted; the four VCT slides need a class with `vct`;
@@ -96,7 +113,8 @@ actions are still listed, so the console shows them disabled, never hidden.
 | Field | Type | Meaning |
 |---|---|---|
 | `time` | number | Mission time, seconds. |
-| `alive` | bool | False once the player's craft is gone; then no other field is sent. |
+| `alive` | bool | False once the player's craft is gone, or when no battle is running; then no other field is sent except `state`. |
+| `state` | string | Only when no battle is running: the screen the game is on (`"launcher"`). The page shows *Not flying (launcher)*; `alive: false` without `state` is shown as *DESTROYED*. |
 | `craft` | string | The craft class's name. |
 | `velocity` | `[x, y, z]` | Velocity in the craft's body axes: x right, y up, **z forward** (so `z` is forward speed and `x`, `y` are the drift). |
 | `throttle` | number | Throttle position, 0 – 1. |
@@ -120,6 +138,25 @@ actions are still listed, so the console shows them disabled, never hidden.
 
 *Values in the examples are illustrative.*
 
+## Keeping the tablet awake
+
+Not a message: the page itself keeps the tablet's screen on while it is open (app 0.4.8, main
+`f1c8be8`, [R-CON-022](requirements/control-console.md#r-con-022-keep-the-tablet-awake)).
+
+1. The **Screen Wake Lock API** (`navigator.wakeLock.request("screen")`) where the browser
+   allows it. Safari allows it only on secure (https) pages, so it does not apply to an iPad on
+   the plain-http console.
+2. Otherwise a **tiny black clip**, `/keepawake.mp4` (2 KB, generated by
+   `tools/console_assets/make_keepawake.swift` with AVFoundation; the project's own output),
+   played muted, inline and looping, out of sight: browsers do not let the screen sleep while a
+   video plays. iOS Safari plays video only from a server that honours `Range` requests, hence
+   `206 Partial Content`.
+
+It starts on the pairing tap, again on any tap until it runs (iOS needs a user gesture for
+media), and again whenever the page becomes visible (the browser releases both when it is
+hidden). The telemetry grid's **Tablet** cell shows *screen kept awake*, *screen kept awake (wake
+lock)* or *tap the screen to keep it awake*.
+
 ## Messages still planned
 
 | Message | Direction | When | Carries (*planned* fields) |
@@ -131,6 +168,8 @@ actions are still listed, so the console shows them disabled, never hidden.
 
 ## Open
 
+- The QR code that would carry `?code=` (the page accepts it since app 0.4.7; the game does not
+  show one yet).
 - The pairing code's lifetime: in version 1 it is chosen when the game starts and lasts for the
   run. Whether it should change after a pairing, or time out, is open.
 - A client name and protocol version in `hello` (version 1 sends neither); how a version
@@ -149,3 +188,4 @@ actions are still listed, so the console shows them disabled, never hidden.
 | 1.0.0 | 2026-11-11 | Bootstrap (planned): transport, session, messages `hello`, `welcome`, `catalogue` (with per-action availability), `theme`, `telemetry`, `contacts`, `model`, `action`, `event` |
 | 1.4.0 | 2026-11-11 | `ping` heartbeat and the 1 s hold timeout (app 0.4.3) |
 | 1.3.0 | 2026-11-11 | Version 1 as built (C1, app 0.4.0): `hello {code}`, `welcome {version, campaign}`, `denied {reason}`, `catalogue {groups, actions:[{name, group, label, kind, available}]}` with the availability rules, the `telemetry` fields (body-axis velocity, power, systems, target with relative rotation), `action {name, value}` hold and tap semantics and the new `throttle {value}`; the local-network rule and the three-wrong-codes limit. `theme`, `contacts`, `model`, `event` remain planned; open items revised |
+| 1.7.0 | 2026-11-11 | Pairing fix (app 0.4.7): the server sends `welcome {version}` at once; the flight screen's `welcome {version, campaign}`; the launcher's catalogue (every action available) and idle `telemetry {alive: false, state}` twice a second; `?code=` in the address; the page shows the console on `welcome`. Keeping the tablet awake (app 0.4.8): wake lock or the `keepawake.mp4` clip; files served with HTTP ranges |

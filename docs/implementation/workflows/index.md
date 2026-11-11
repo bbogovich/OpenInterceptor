@@ -16,7 +16,9 @@ The project follows the **Rapid Prototyping** workflow (a SpecItOut proposal, P6
 supported by the `sio` client). The [definition](../../definition/index.md) and the
 [specification](../../specification/index.md) live on this site: version 1.0.0 from
 2026-11-11, 1.1.0 since the interlude's playtest fixes (app 0.3.1), 1.2.0 with the `resources/`
-folder (F-CMP-005) and 1.3.0 with console C1 (app 0.4.0).
+folder (F-CMP-005), 1.3.0 with console C1 (app 0.4.0), 1.4.0 – 1.6.0 with the console
+heartbeat, collisions and Simple physics, and 1.7.0 with the planned Mod Designer, Cutscene
+Designer and game bundling (MD1–MD7) and the console's pairing fix and keep-awake.
 
 1. **Each user request**, in the same pass and **before any code**:
     1. a feature (`F-<AREA>-NNN`) is created or updated on the definition page for its area;

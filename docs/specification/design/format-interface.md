@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
@@ -140,8 +140,14 @@ an audio file. Missions trigger lines by event (`chatter` keys); pilots are assi
 `videos: {<id>: …}`: intro, endings, cut-scenes. Smacker (the original; in-crate decoder, Stage 5)
 or an image sequence with audio for mods. An ending, briefing or chapter card may name a video.
 
+**Cutscenes** played by the engine, and video files in place of them (through the operating
+system's media framework, with image sequences as the fallback), are designed on
+[Mod designer, cutscene designer and game bundling](designer.md#35-video-instead-of-animation)
+(R-MOD-033 – R-MOD-046, planned).
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
+| 1.7.0 | 2026-11-11 | Video: link to the cutscene and video-cutscene design |

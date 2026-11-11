@@ -37,6 +37,16 @@ Requested logistics for the default campaign (4.14–4.17) are an engine capabil
 could add it). It is all YAML data and a campaign may leave it out. Decisions and the one open
 question (cargo capacity): [Logistics](../../specification/design/logistics.md#decisions-2026-11-11).
 
+## Mod and cutscene designer (MD1)
+
+From the [mod designer, cutscene designer and game bundling](../../specification/design/designer.md) design (decisions D1–D5
+made 2026-11-11). The design places MD1 at "Stage 3 / 4"; it is planned here, in Stage 4. It
+comes first because it **also serves wingmen**: battles use it before any cutscene does.
+
+| # | Item | Module | Requirements |
+|---|---|---|---|
+| MD1 | **Shared formations**: `formations:` pack data (vee, line abreast, echelon, box, diamond, custom), used by wingmen first; replaces today's per-scenario slot offsets; keeps the `flight.formation_gap` spacing ([R-CMB-022](../../specification/requirements/combat.md#r-cmb-022-wingmen-keep-their-distance)). Later used by cutscene formations (MD2) | `content`, `sim::ai` | [R-MOD-047](../../specification/requirements/modding.md#r-mod-047-shared-formations), [R-MOD-039](../../specification/requirements/modding.md#r-mod-039-formations-in-cutscenes) |
+
 **Exit**: both campaigns' strategy layers run for 6 game months without errors, with economy,
 research and bases behaving as specified; save/load round-trips (unit tests on synthetic
 campaigns; manual long-run test).

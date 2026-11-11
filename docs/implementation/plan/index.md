@@ -11,11 +11,13 @@ playtest one component at a time. Later stages add scenarios; none are removed.
 | [2 Combat, objects and behaviours](stage-2-combat.md) | 0.3.0 | Mod kinds and `parent`; model sets (damage, construction states, debris); full damage, power and special systems; behaviours with difficulty variants; missiles, mines, probes, stations; effects, sound | Done (deferred items listed) |
 | [3 Missions, environments and conditions](stage-3-missions.md) | 0.4.0 | Condition/action language; mission types; space and **atmospheric/ground** environments with terrain; comms; hyperspace; debrief; Tier 2 script decision | In progress |
 | [3 interlude: feedback and control console](stage-3-interlude.md) | 0.4.0 | Drift display, shot physics, visibility, base-defence balance, action catalogue and overlay; the tablet control console (server, protocol, components, target viewport, map; Arduino later) | Planned |
-| [4 Strategy layer](stage-4-strategy.md) | 0.5.0 | Interactive star map, squadrons and sensors, economy, research, bases and modules, **logistics** (mining, research and manufacturing facilities, supply convoys, surveys — default campaign), ships and loadouts, pilots, functional screens, saves | Planned |
+| [4 Strategy layer](stage-4-strategy.md) | 0.5.0 | Interactive star map, squadrons and sensors, economy, research, bases and modules, **logistics** (mining, research and manufacturing facilities, supply convoys, surveys — default campaign), ships and loadouts, pilots, functional screens, saves; shared **formations** (MD1) | Planned |
 | [5 Campaigns](stage-5-campaign.md) | 0.6.0 | Events, arcs, rival plans, strategist, dynamic relations, endings: **both campaigns playable start to finish** | Planned |
-| [6 Presentation](stage-6-presentation.md) | 0.7.0 | Screen layouts and skins, menus, video, interactive music, voices | Planned |
-| [7 Modding toolkit and Remastered](stage-7-modding.md) | 0.8.0 | Full validator, recipes (upscale, mesh patch), `interceptor-remastered`, modding guide | Planned |
-| [8 Platforms and release](stage-8-release.md) | 1.0.0 | macOS app, Linux packages, Windows, release process | Planned |
+| [6 Presentation](stage-6-presentation.md) | 0.7.0 | Screen layouts and skins, menus, video, interactive music, voices; **cutscenes** and video cutscenes (MD2, MD3) | Planned |
+| [7 Modding toolkit and Remastered](stage-7-modding.md) | 0.8.0 | Full validator, recipes (upscale, mesh patch), `interceptor-remastered`, modding guide; the **Mod Designer** and **Cutscene Designer** (MD4–MD6) | Planned |
+| [8 Platforms and release](stage-8-release.md) | 1.0.0 | macOS app, Linux packages, Windows, release process; **game bundling** (MD7) | Planned |
+
+Items MD1–MD7 come from the [mod designer, cutscene designer and game bundling](../../specification/design/designer.md) design.
 
 ## Three campaigns
 

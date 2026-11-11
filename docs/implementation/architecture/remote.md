@@ -1,6 +1,8 @@
 # Remote console
 
-`src/remote/`: the **tablet control console** (interlude item C1, app 0.4.0, main `dfff71b`).
+`src/remote/`: the **tablet control console** (interlude item C1, app 0.4.0, main `dfff71b`;
+pairing from any screen in 0.4.7, main `c42d773`; keeping the tablet awake in 0.4.8, main
+`f1c8be8`).
 The game serves a web page and a WebSocket to a tablet on the local network; the tablet shows
 the craft's condition live and sends the pilot's button presses back. Requirements
 [R-CON-009 – R-CON-014](../../specification/requirements/control-console.md#r-con-009-console-server);
@@ -9,8 +11,8 @@ player's guide is [Tablet console](../../user-guide/console.md).
 
 Everything — HTTP, the WebSocket handshake and frames, SHA-1, base64 and JSON — is written in
 the crate: no dependency was added ([dependency policy](../../learning/best-practices/dependencies.md)).
-The page in `web/console/` is plain HTML, CSS and custom elements, built into the binary with
-`include_str!`.
+The page in `web/console/` is plain HTML, CSS and custom elements, plus a 2 KB video clip,
+built into the binary with `include_bytes!` (which embeds a file's bytes at compile time).
 
 `remote` sits in the application layer: it uses threads and sockets, and reads the world only
 to describe it. `sim` knows nothing about it.
@@ -27,6 +29,7 @@ flowchart LR
         CN["one thread per connection<br/>http::parse_request →<br/>file or ws upgrade;<br/>ws::decode → protocol::decode"]
     end
     subgraph Game["Game loop (app::flight)"]
+        CI["app::console_idle<br/>(launcher)"]
         CF["FlightSession::console_frame"]
         RI["remote::RemoteInput"]
         RW["RawInput<br/>remote_held · remote_pressed · remote_throttle"]
@@ -34,10 +37,13 @@ flowchart LR
         W["sim::World"]
         PR["protocol::catalogue / telemetry"]
     end
-    PG -- "GET / · /console.js · /console.css" --> CN
+    PG -- "GET / · /console.js · /console.css · /keepawake.mp4 (Range)" --> CN
     PG -- "hello · action · throttle<br/>(masked frames)" --> CN
     AC --> CN
     CN -- "Event (mpsc channel)" --> CF
+    CN -- "Event" --> CI
+    CI -- "catalogue_idle · telemetry_idle" --> CN
+    CN -- "welcome (at once, on the right code)" --> PG
     CF --> RI --> RW --> BT --> W
     W --> PR --> CF
     CF -- "broadcast / send<br/>(per-client channel)" --> CN
@@ -65,8 +71,14 @@ sequenceDiagram
     alt wrong code
         S->>T: denied (third wrong code: connection closed)
     else right code
+        S->>T: welcome {version} (the connection thread, at once)
         S->>G: Event::Paired(id)
-        G->>T: welcome, catalogue
+        alt launcher (app::console_idle)
+            G->>T: catalogue_idle (every action available)
+            G->>T: telemetry {alive: false, state: "launcher"} (twice a second)
+        else flight (FlightSession::console_frame)
+            G->>T: welcome {version, campaign}, catalogue
+        end
         loop every frame
             T->>S: action / throttle
             S->>G: Event::Input(id, Inbound)
@@ -76,6 +88,52 @@ sequenceDiagram
     T--xS: socket closes
     S->>G: Event::Left(id): its held actions are released
 ```
+
+### Pairing on any screen (app 0.4.7)
+
+Before 0.4.7 only `FlightSession::console_frame` answered `Event::Paired`, so a tablet paired
+while the launcher was open waited for ever. Now:
+
+- the **connection thread** writes `welcome {version}` straight onto its own socket the moment
+  the code is right (`remote::server::serve`), so the page knows it is paired whatever the game
+  is doing;
+- the **launcher** calls `app::console_idle(ctx, "launcher")` each frame: on `Event::Paired` it
+  broadcasts `protocol::catalogue_idle()` (every action of `input::ACTIONS`, all available, as
+  there is no craft yet), and twice a second `protocol::telemetry_idle("launcher")`
+  (`{alive: false, state: "launcher"}`), counted by `AppContext::console_idle_tick`. Console
+  input is ignored until a battle starts;
+- in a battle the flight screen still sends `welcome {version, campaign}` and the real
+  catalogue.
+
+The **page** (`web/console/console.js`, `OiPairing`) pairs as soon as the sixth digit is typed
+(iPad number pads have no Enter key), shows *Connecting…* and errors (*Could not reach the
+game*, the `denied` reason, *Disconnected*), takes `?code=123456` from the address, and switches
+to the console on `welcome` rather than `catalogue`. `console.css` has
+`[hidden] { display: none !important; }`: the custom elements' own `display: grid` rules had
+beaten the `hidden` attribute, so the pairing screen could not hide.
+
+### Keeping the tablet awake
+
+`keepAwake()` in `console.js` (app 0.4.8,
+[R-CON-022](../../specification/requirements/control-console.md#r-con-022-keep-the-tablet-awake)):
+
+1. `navigator.wakeLock.request("screen")` where the browser allows it. Safari allows it only on
+   secure (https) pages, and the console is plain http on the local network, so on an iPad this
+   usually fails.
+2. Otherwise a hidden `<video>` (1 px, almost transparent) plays `keepawake.mp4` muted, inline
+   (`playsinline`) and looping: browsers do not let the screen sleep during video playback. iOS
+   allows muted inline playback reliably only after a tap, so it is started from the pairing tap
+   and retried on every `pointerdown` until it runs.
+
+Both are released by the browser when the page is hidden, so `visibilitychange` takes them
+again. The state is shown in the telemetry grid's **Tablet** cell. The clip (black, 2 KB) is
+made by `tools/console_assets/make_keepawake.swift` with AVFoundation — the project's own
+output, not a third-party file.
+
+iOS Safari fetches video in byte ranges and will not play it from a server that ignores them, so
+`remote::http::file_response` answers `Range: bytes=a-b`, `bytes=a-` and `bytes=-n` with
+`206 Partial Content` and a `Content-Range` header, and every whole-file answer carries
+`Accept-Ranges: bytes`. Several ranges at once, or a range outside the file, get the whole file.
 
 ### Input path
 
@@ -128,7 +186,10 @@ letting go does not release another's buttons.
 | `remote::json::Json` | A parsed JSON value (`Null`, `Bool`, `Num`, `Str`, `Arr`, `Obj` with key order kept). |
 | `remote::json::Obj` | A builder that writes a JSON object straight into a `String` (the 20 Hz telemetry costs one allocation). |
 | `AppContext::console`, `AppContext::remote` | The server (when on) and the `RemoteInput`, owned by the app and passed to each screen. |
-| `FlightSession::console_frame` | One frame of console work in flight: poll, apply, (re)send the catalogue, 20 Hz telemetry, merge input. |
+| `FlightSession::console_frame` | One frame of console work in flight: poll, apply, `welcome {version, campaign}`, (re)send the catalogue, 20 Hz telemetry, merge input. |
+| `app::console_idle` | One frame of console work outside a battle (the launcher): the idle catalogue on pairing, idle telemetry twice a second; input ignored. |
+| `AppContext::console_idle_tick` | The half-second count of the last idle telemetry. |
+| `remote::server::FILES` | The embedded page files (`&[u8]`): `index.html`, `console.js`, `console.css`, `keepawake.mp4`. |
 
 ## API Reference
 
@@ -142,7 +203,9 @@ letting go does not release another's buttons.
 - **Protocol** (`remote::protocol`):
   `decode(text) -> Result<Inbound, String>`;
   `catalogue(&Ruleset, &World, ShipId) -> String`;
+  `catalogue_idle() -> String` (every action, all available: no craft yet);
   `telemetry(&World, ShipId, time) -> String`;
+  `telemetry_idle(screen) -> String` (`{alive: false, state: screen}`);
   `available(&Ruleset, &World, ShipId, Action) -> bool` (cloak, ECM, tractor need the system
   fitted; VCT slides need `vct`; missiles need missiles aboard; beam actions need beams).
 - **WebSocket** (`remote::ws`): `sha1(&[u8]) -> [u8; 20]`, `base64(&[u8]) -> String`,
@@ -150,6 +213,8 @@ letting go does not release another's buttons.
   (`Ok(None)` = wait for more bytes), `encode(Opcode, payload) -> Vec<u8>` (unmasked, final).
 - **HTTP** (`remote::http`): `parse_request(&[u8]) -> Result<Option<(Request, usize)>, String>`,
   `Request::header`, `Request::is_websocket`, `response(status, content_type, body)`,
+  `file_response(content_type, body, range: Option<&str>)` (`206 Partial Content` for one
+  byte range, else `200` with `Accept-Ranges: bytes`),
   `upgrade_response(accept)`, `content_type(path)`.
 - **JSON** (`remote::json`): `parse(text) -> Result<Json, String>` (recursive descent; nesting deeper
   than 32 levels is an error, so hostile input cannot overflow the stack), `Json::get`, `as_str`,
@@ -190,4 +255,22 @@ letting go does not release another's buttons.
   menu, keys overlay, a dead craft) stops them too. An unavailable action (*not fitted*) does
   nothing by design.
 - Tests: `remote::server::serves_the_page_pairs_and_relays_actions_over_a_real_socket` runs the
-  whole path over a real localhost socket on a port derived from the process id.
+  whole path over a real localhost socket on a port derived from the process id, and checks
+  that `welcome` comes from the server at once.
+- **The real page in a browser, without the game**: the ignored helper test
+  `remote::server::tests::serve_for_a_browser` serves the page on `127.0.0.1:8790` (pairing
+  code from seed 7) for 20 s, answering like the launcher (idle catalogue and telemetry), and
+  prints a `…/?code=NNNNNN` address to open:
+
+    ```sh
+    cargo test serve_for_a_browser -- --ignored --nocapture
+    ```
+
+- **The page waits after the code** (before app 0.4.7): pairing from the launcher was never
+  answered; update. If the pairing screen stays on top after *Connecting…*, check that
+  `console.css` still has the `[hidden]` rule.
+- **The tablet still goes to sleep**: look at the **Tablet** cell. *tap the screen to keep it
+  awake* means the clip could not start without a gesture: tap once. If it says *screen kept
+  awake* and the tablet still sleeps, check that `/keepawake.mp4` is served with `206` to a
+  `Range` request (`curl -r 0-1 -i http://<address>:8765/keepawake.mp4`); as a last resort set
+  the iPad's Auto-Lock to *Never*.

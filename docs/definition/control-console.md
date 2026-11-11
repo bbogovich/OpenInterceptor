@@ -1,5 +1,5 @@
 ---
-spec_version: 1.3.0
+spec_version: 1.7.0
 status: current
 updated: 2026-11-11
 ---
@@ -60,9 +60,9 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** Immersion, always knowing the craft's condition, and reaching features that are otherwise forgotten. Primary use: an iPad alongside a joystick or gamepad.
 
-- **Status:** partial. C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (`--console` or `console.enabled`; port 8765, `console.port`), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. The layout described above comes with C2. See [Tablet console](../user-guide/console.md).
-- **Source:** User request; decision D2 (off by default; local network only; pairing code; port 8765, changeable); interlude items C1 and C2.
-- **Specified by:** [R-CON-007](../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-009](../specification/requirements/control-console.md#r-con-009-console-server), [R-CON-010](../specification/requirements/control-console.md#r-con-010-console-protocol), [R-CON-011](../specification/requirements/control-console.md#r-con-011-console-actions-are-game-actions), [R-CON-012](../specification/requirements/control-console.md#r-con-012-console-page-from-web-components), [R-CON-013](../specification/requirements/control-console.md#r-con-013-console-layout), [R-CON-014](../specification/requirements/control-console.md#r-con-014-console-telemetry)
+- **Status:** partial. C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (`--console` or `console.enabled`; port 8765, `console.port`), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. Since app 0.4.7 a tablet pairs from any screen, the launcher included, as soon as the sixth digit is typed; since 0.4.8 the page keeps the tablet's screen awake. The layout described above comes with C2. See [Tablet console](../user-guide/console.md).
+- **Source:** User request; decision D2 (off by default; local network only; pairing code; port 8765, changeable); interlude items C1 and C2. User request, 2026-11-11: "tablet goes to sleep while page displayed; some function in page needs to keep alive. browser will keep tablet alive during media streaming for video display, so there are some kind of mechanisms in place to prevent sleep. Unclear to what extent this is possible."
+- **Specified by:** [R-CON-007](../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-009](../specification/requirements/control-console.md#r-con-009-console-server), [R-CON-010](../specification/requirements/control-console.md#r-con-010-console-protocol), [R-CON-011](../specification/requirements/control-console.md#r-con-011-console-actions-are-game-actions), [R-CON-012](../specification/requirements/control-console.md#r-con-012-console-page-from-web-components), [R-CON-013](../specification/requirements/control-console.md#r-con-013-console-layout), [R-CON-014](../specification/requirements/control-console.md#r-con-014-console-telemetry), [R-CON-022](../specification/requirements/control-console.md#r-con-022-keep-the-tablet-awake)
 
 ### F-CON-005 Console target viewport
 
@@ -121,3 +121,4 @@ Requirements for these features: [Controls & control console requirements](../sp
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CON-001 – F-CON-009 (9 features) |
 | 1.1.0 | 2026-11-11 | F-CON-003 implemented (app 0.3.1) |
 | 1.3.0 | 2026-11-11 | F-CON-004 partial: console C1 built (app 0.4.0); F-CON-003 status note updated |
+| 1.7.0 | 2026-11-11 | F-CON-004: pairing from any screen (app 0.4.7); the tablet is kept awake (app 0.4.8, R-CON-022) |

@@ -21,7 +21,23 @@ views). **F12** in the cockpit view of a ship with cockpit art opens the
 The overlay is built from the same action table as the bindings file and the controls menu, so
 it always shows what the keys really do, including your own changes.
 
-## Action groups
+## Simple physics
+
+OpenInterceptor flies **Realistic** (Newtonian) physics by default: the craft keeps drifting in
+the direction it was going after you turn, until thrust or the brake changes it. Players used to
+traditional space fighter games can choose **Simple** physics instead:
+
+- In the **launcher**, press **P**. The campaign line shows *Physics: Simple (P: change)* or
+  *Physics: Realistic (P: change)*. The choice is saved in `settings.yaml` (`game.physics`,
+  [Settings](settings.md)).
+- In Simple, your craft always travels where its nose points, at the speed the throttle sets,
+  with no drift after a turn or a collision. The slide (VCT) keys still move it sideways.
+  Enemy and wingman craft fly as before.
+- Simple is offered only on the campaign's **first three difficulty levels**. At higher levels
+  the launcher shows *Physics: Realistic (always, at this level)* and P does nothing.
+- In flight, the HUD's status line shows **SIMPLE** while it is in use.
+
+
 
 | Group | What is in it |
 |---|---|

@@ -679,7 +679,9 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 
 App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest fixes in app 0.3.1
 (main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
-MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
+MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). MT-3-19 was revised for
+pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 covers Simple physics (0.4.6, main
+`9671555`) and MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -702,12 +704,14 @@ MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7
 | MT-3-16 | Brightness setting | any | not run | | | |
 | MT-3-17 | The `killed` debrief | `defend_station`; `xcom_base_defense` | not run | | | |
 | MT-3-18 | Keys overlay | any | not run | | | |
-| MT-3-19 | Console: pairing from an iPad | any, with `--console` | not run | | | Needs the user: the game could not be started from the agent environment |
+| MT-3-19 | Console: pairing from an iPad | Launcher and any scenario, with `--console` | not run | | | Needs the user. Revised for app 0.4.7: pairing from the launcher, the code accepted on the sixth digit; checked in headless Chrome against a live server (paired, 9 groups, 65 buttons, "Not flying (launcher)") |
 | MT-3-20 | Console: hold and tap buttons | `rocket-vs-saucer` (default) | not run | | | Needs the user |
 | MT-3-21 | Console: features not fitted | `rocket-vs-saucer`; `systems-trial` (default) | not run | | | Needs the user |
 | MT-3-22 | Console: reconnecting and letting go | `rocket-vs-saucer` (default) | not run | | | Needs the user |
 | MT-3-23 | Console: throttle slider | `rocket-vs-saucer` (default) | not run | | | Needs the user |
 | MT-3-24 | Original data from `resources/xcom` or `resources/xcom-cd`; start-up without a shader error | Launcher | not run | | | App 0.4.1 / 0.4.2; needs original data for steps 2–4 |
+| MT-3-25 | Simple physics for beginners | Launcher; `rocket-vs-saucer` (default) | not run | | | App 0.4.6 |
+| MT-3-26 | Console: the tablet stays awake | any, with `--console` | not run | | | App 0.4.8; needs an iPad. Checked in headless Chrome only (localhost: wake lock; LAN address: video) |
 
 ### The debrief (every mission case)
 
@@ -845,9 +849,9 @@ MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7
 
 | Field | |
 |---|---|
-| Preconditions | The computer and an iPad on the same Wi-Fi (not a guest network). |
-| Steps | 1. Start `openinterceptor --console --no-original --scenario rocket-vs-saucer --ship comet`; read the terminal line and the bottom-left hint. 2. On the iPad open the URL in Safari. 3. Type a wrong code three times. 4. Reload, type the right code. 5. Watch the telemetry while flying; open the menu (Esc) in the game. 6. Quit; start again with `console: {enabled: true, port: 9000}` in `settings.yaml` and no `--console`; pair again on port 9000. 7. Start a second program on the same port first (for example `python3 -m http.server 9000`), then the game. |
-| Expected | 1: the terminal prints `console: open http://<address>:8765 on the tablet; pairing code NNNNNN`, and the flight screen shows `CONSOLE <url>   CODE NNNNNN` at the bottom left. 2: the pairing page asks for the code. 3: each wrong code shows *wrong pairing code*; after the third the page shows *Disconnected*. 4: the page switches to the console as the sixth digit is typed; the bottom-left hint disappears in the game. 5: craft, speed, drift, hull, energy, shields, missile and target update smoothly (about 20 times a second); the hint shows again while the menu is open. 6: the console works on port 9000 without `--console`. 7: the game reports that the port is not available and runs normally without the console. |
+| Preconditions | The computer and an iPad on the same Wi-Fi (not a guest network). App 0.4.7 or later. |
+| Steps | 1. Start `openinterceptor --console --no-original` and stay on the **launcher**; read the terminal line and the launcher's console status. 2. On the iPad open the URL in Safari. 3. Type a wrong code three times. 4. Reload, and type the right code **without pressing anything after the sixth digit**. 5. Start `rocket-vs-saucer` with the Comet from the launcher; watch the telemetry while flying; open the menu (Esc) in the game. 6. Quit; start again with `console: {enabled: true, port: 9000}` in `settings.yaml` and no `--console`; open `http://<address>:9000/?code=<code>` directly. 7. Quit the game with the page open, then type a code. 8. Start a second program on the same port first (for example `python3 -m http.server 9000`), then the game. |
+| Expected | 1: the terminal prints `console: open http://<address>:8765 on the tablet; pairing code NNNNNN`, and the launcher shows the console's address and code. 2: the pairing page asks for the code, with the number pad. 3: each wrong code shows *wrong pairing code*; after the third the page shows *Disconnected*. 4: *Connecting…* shows as the sixth digit is typed, then the console appears at once (no Enter needed), on the launcher; the craft cell reads *Not flying (launcher)* and every group and button is shown. 5: when the battle starts the buttons reflect the Comet (*not fitted* where it lacks equipment); craft, speed, drift, hull, energy, shields, missile and target update smoothly (about 20 times a second); the bottom-left hint shows again while the menu is open. 6: the page pairs from the address alone, on port 9000, without `--console`. 7: *Could not reach the game. Is it still running?* 8: the game reports that the port is not available and runs normally without the console. |
 
 ### MT-3-20 — Console: hold and tap buttons
 
@@ -888,3 +892,19 @@ MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7
 | Preconditions | A checkout at app 0.4.2 or later. For steps 2–4, your own original data. |
 | Steps | 1. With `resources/xcom/` and `resources/xcom-cd/` empty and no other data configured, start the game and run `--list`. 2. Put a CD copy in `resources/xcom-cd/`; run `--list` and the launcher. 3. Also put an installed copy in `resources/xcom/`; run `--list`. 4. Run `scripts/check.sh`; `git status`. 5. Build the app with `python3 tools/build_bundle.py` and open it from Finder. |
 | Expected | Every start shows no shader error (the lit shader links; app 0.4.1) and ships are lit. 1: only the default campaign loads, with no error. 2: `interceptor` loads from the CD copy. 3: the installed copy is used (it is tried first). 4: the gate runs the original-data checks on the folder found and passes; `git status` shows nothing under `resources/xcom*`. 5: the app opens with the default campaign (`Contents/Resources/resources/default`) and the bundled mods, and finds the original data through `settings.yaml`. |
+
+### MT-3-25 — Simple physics for beginners
+
+| Field | |
+|---|---|
+| Preconditions | App 0.4.6 or later. |
+| Steps | 1. Start `openinterceptor --no-original`; on the launcher set difficulty (D) to the first level and press **P** until it reads *Physics: Simple*. 2. Start `rocket-vs-saucer` with the Comet. Full throttle, then yaw 90° and hold the nose there; throttle down to 0; collide gently with the saucer. 3. Back on the launcher, press P to *Realistic* and repeat step 2. 4. Step D through the levels to the fourth (`space_ace` in the default campaign) and press P. 5. Back on the first level, quit and start again. |
+| Expected | 1: the launcher's campaign line reads *Physics: Simple (P: change)*; `settings.yaml` gets `game: {physics: simple}`. 2: the HUD status line shows **SIMPLE**; the craft always travels where its nose points — after the yaw the velocity turns with the nose and the drift readout stays X 0 Y 0; at throttle 0 the craft slows to a stop; after the collision any sideways drift is gone at once. Enemy craft behave as before. 3: no SIMPLE on the HUD; the craft drifts after the yaw, as in MT-3-13. 4: on the second and third levels Simple is still offered; on the fourth the line reads *Physics: Realistic (always, at this level)*, P does nothing and the HUD shows no SIMPLE. 5: the choice is remembered. |
+
+### MT-3-26 — Console: the tablet stays awake
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired, on an iPad over plain http. iPad Auto-Lock set to its shortest time (for example 30 seconds). App 0.4.8 or later. |
+| Steps | 1. Pair, then leave the iPad untouched on the console page for three times the Auto-Lock time, on the launcher and then in a battle. 2. Read the telemetry's **Tablet** cell. 3. Switch to another app and back to Safari; wait again. 4. Lock the iPad, unlock it and return to the page; tap once if the cell asks. 5. Repeat step 1 in a desktop browser opened on `http://127.0.0.1:8765` on the game's computer. |
+| Expected | 1: the iPad's screen does not dim or lock while the page is open. 2: the cell reads *screen kept awake* (the silent video; Safari offers no wake lock over http). No video is visible and no sound plays. 3 and 4: after returning, the cell again reads *screen kept awake* (at most after one tap, when it says *tap the screen to keep it awake*), and the screen stays on. 5: the cell reads *screen kept awake (wake lock)*. If the iPad still sleeps, record it as a finding; the user-guide fallback is Settings › Display & Brightness › Auto-Lock. |

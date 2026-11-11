@@ -78,6 +78,7 @@ nav:
           - "Format: missions, environments, events": specification/design/format-missions.md
           - "Format: behaviours and scripting": specification/design/format-behaviour.md
           - "Format: interface, text and media": specification/design/format-interface.md
+          - "Mod designer, cutscenes and bundling": specification/design/designer.md
           - "Coverage matrix": specification/design/coverage.md
       - "Original data formats":
           - specification/original-formats/index.md
