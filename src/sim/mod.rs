@@ -29,6 +29,7 @@ pub mod ai;
 pub mod collision;
 pub mod combat;
 pub mod flight;
+pub mod guidance;
 pub mod systems;
 pub mod targeting;
 
@@ -111,6 +112,8 @@ pub struct Requests {
     pub ecm: bool,
     /// Start the hyperdrive countdown, or abort it.
     pub hyperspace: bool,
+    /// Mines: blow up now.
+    pub detonate: bool,
 }
 
 impl Requests {
@@ -126,6 +129,7 @@ impl Requests {
             cloak: self.cloak || o.cloak,
             ecm: self.ecm || o.ecm,
             hyperspace: self.hyperspace || o.hyperspace,
+            detonate: self.detonate || o.detonate,
         }
     }
 }
@@ -330,6 +334,8 @@ pub struct Ship {
     pub disabled: bool,
     /// Left the battle by hyperspace (no longer `alive`, but not destroyed).
     pub departed: bool,
+    /// Decoys (doppelgangers): seconds until it vanishes.
+    pub expires: Option<f32>,
 }
 
 impl Ship {
@@ -412,6 +418,27 @@ pub struct Missile {
     pub position: Vec3,
     pub velocity: Vec3,
     pub life: f32,
+    /// A decoy: harmless, but enemy missiles may chase it.
+    pub decoy: bool,
+    /// Lured by the decoys of this ship (it chases them instead of its target).
+    pub lured_by: Option<ShipId>,
+    /// Cloaked-wait torpedoes: woken by a nearby hostile.
+    pub armed: bool,
+}
+
+impl Missile {
+    /// A missile in flight (not a decoy, not lured, armed).
+    pub fn new(
+        class: MissileId,
+        owner: ShipId,
+        faction: FactionId,
+        target: Option<ShipId>,
+        position: Vec3,
+        velocity: Vec3,
+        life: f32,
+    ) -> Missile {
+        Missile { class, owner, faction, target, position, velocity, life, decoy: false, lured_by: None, armed: true }
+    }
 }
 
 /// Something that happened during a tick, for presentation layers to react to.
@@ -586,6 +613,7 @@ impl World {
             hyperspace: None,
             disabled: false,
             departed: false,
+            expires: None,
         };
         let index = match self.ships.iter().position(|s| !s.alive) {
             Some(i) => {
@@ -669,6 +697,20 @@ impl World {
         combat::step(self, TICK);
         combat::ship_collisions(self);
         systems::step(self, TICK);
+        // Decoys that have run their time vanish in a puff.
+        for i in 0..self.ships.len() {
+            let Some(left) = self.ships[i].expires.filter(|_| self.ships[i].alive) else { continue };
+            if left > TICK {
+                self.ships[i].expires = Some(left - TICK);
+            } else {
+                let id = self.id_of(i);
+                let s = &mut self.ships[i];
+                s.alive = false;
+                let position = s.position;
+                self.events.push(SimEvent::Destroyed { ship: id, position, radius: 2.0 });
+                combat::forget_ship(self, id);
+            }
+        }
         // Edge-triggered controls only act once.
         for s in &mut self.ships {
             s.controls.fire_missile = false;
@@ -815,6 +857,7 @@ ships:
 objects:
   base: {model: m, faction: grey, hit_points: 5000}
   gun: {model: m, faction: red, hit_points: 5000, beams: [laser], turret_arc: 180, behaviour: gunner}
+  mine: {model: m, faction: red, kind: mine, hit_points: 10, missiles: {dart: 1}, behaviour: mine}
 behaviours:
   sharp:
     states: {go: {do: attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0}}
@@ -832,6 +875,8 @@ behaviours:
     skill: {aim: 1, reaction: 0.1s}
   tug:
     states: {work: {do: tow, range: 5km}}
+  mine:
+    states: {wait: {do: mine, range: 150m}}
 ";
 
     pub fn rules() -> Arc<Ruleset> {

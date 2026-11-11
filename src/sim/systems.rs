@@ -181,11 +181,21 @@ pub fn handle_requests(w: &mut World) {
         if r.hyperspace {
             messages.push(toggle_hyperspace(s, &rules));
         }
+        // A mine going off: its first missile rack is the warhead.
+        let warhead = r.detonate.then(|| s.missiles.first().map(|(m, _)| *m)).flatten();
+        let at = s.position;
         for text in messages {
             w.events.push(SimEvent::Message { ship: id, text });
         }
         for (kind, on) in switched {
             w.events.push(SimEvent::Switched { ship: id, kind, on });
+        }
+        if let Some(m) = warhead {
+            let class = rules.missile(m);
+            // A mine's blast reaches four times its warhead's fuse radius (at least 100 m).
+            let radius = (class.proximity_radius * 4.0).max(100.0);
+            super::guidance::area_blast(w, at, radius, class.proximity_damage, Some(id));
+            super::combat::apply_damage(w, id, f32::MAX / 4.0, at);
         }
     }
 }
@@ -817,15 +827,16 @@ mod tests {
         let mut lost = 0;
         for k in 0..200 {
             w.missiles.clear();
-            w.missiles.push(crate::sim::Missile {
-                class: dart,
-                owner: ShipId { index: 99, generation: 0 },
-                faction: FactionId(1),
-                target: Some(me),
-                position: Vec3::new(0.0, 100.0 + k as f32 * 0.0, -150.0),
-                velocity: Vec3::ZERO,
-                life: 5.0,
-            });
+            let _ = k;
+            w.missiles.push(crate::sim::Missile::new(
+                dart,
+                ShipId { index: 99, generation: 0 },
+                FactionId(1),
+                Some(me),
+                Vec3::new(0.0, 100.0, -150.0),
+                Vec3::ZERO,
+                5.0,
+            ));
             countermeasures(&mut w, 1.0);
             if w.missiles[0].target.is_none() {
                 lost += 1;

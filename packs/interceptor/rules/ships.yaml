@@ -65,7 +65,7 @@ ships:
     energy_recharge: 65
     acceleration: 90
     beams: [heavy_laser, heavy_laser, laser_cannon, laser_cannon]
-    missiles: {xwinder: 5, permeator: 3, sidestep: 4, fusion: 2}
+    missiles: {xwinder: 5, permeator: 3, sidestep: 4, fusion: 2, parallax_torpedo: 2, cloaking_torpedo: 2, doppelganger: 1, enveloping_torpedo: 2}
     # Testbed fit for the six special mounts: every special system, to try them all.
     systems+: [advanced_ecm, damage_control, tractor, cloak]
     vct: true

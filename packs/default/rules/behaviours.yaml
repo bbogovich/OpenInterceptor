@@ -108,3 +108,8 @@ behaviours:
     states:
       engage: {do: attack, range: 1.8km, fire_cone: 3, burst: 1.2s, pause: 0.8s, missiles: 10s}
     skill: {aim: 0.55, reaction: 0.7s}
+
+  # Space mines: go off when a ship comes within range.
+  space_mine:
+    states:
+      wait: {do: mine, range: {per_level: [100m, 120m, 140m, 160m]}}

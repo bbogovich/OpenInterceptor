@@ -24,6 +24,7 @@
 use super::collision::segment_shape;
 use super::{Bolt, LinkMode, Missile, ShipId, SimEvent, World};
 use crate::content::equipment::SystemKind;
+use crate::content::rules::DamageMode;
 use glam::Vec3;
 
 /// Seconds between missile launches.
@@ -54,7 +55,7 @@ pub fn step(w: &mut World, dt: f32) {
         }
     }
     move_bolts(w, dt);
-    move_missiles(w, dt, &rules);
+    super::guidance::step(w, dt, &rules);
 }
 
 /// Updates missile-lock progress on the ship in slot `i`.
@@ -194,19 +195,19 @@ fn handle_missile_controls(w: &mut World, i: usize, id: ShipId, dt: f32) {
     let speed = w.rules.missile(class).speed;
     let duration = w.rules.missile(class).duration;
     let radius = w.shapes[s.class.0 as usize].radius;
-    let m = Missile {
+    let m = Missile::new(
         class,
-        owner: id,
-        faction: s.faction,
+        id,
+        s.faction,
         target,
-        position: s.position + s.rotation * Vec3::new(0.0, -0.3 * radius, -0.3 * radius),
-        velocity: s.velocity + s.forward() * speed * 0.5,
-        life: duration,
-    };
+        s.position + s.rotation * Vec3::new(0.0, -0.3 * radius, -0.3 * radius),
+        s.velocity + s.forward() * speed * 0.5,
+        duration,
+    );
     let pos = s.position;
     s.lock = Default::default();
     drop_cloak(s, id, &mut w.events);
-    w.missiles.push(m);
+    super::guidance::launch(w, m);
     w.events.push(SimEvent::MissileLaunched { ship: id, position: pos });
 }
 
@@ -220,7 +221,7 @@ fn drop_cloak(s: &mut super::Ship, id: ShipId, events: &mut Vec<SimEvent>) {
 }
 
 /// First ship (other than `owner`) hit by the segment `a → b`: `(slot, fraction)`.
-fn first_hit(w: &World, a: Vec3, b: Vec3, owner: ShipId) -> Option<(usize, f32)> {
+pub fn first_hit(w: &World, a: Vec3, b: Vec3, owner: ShipId) -> Option<(usize, f32)> {
     (0..w.ships.len())
         .filter(|&j| w.ships[j].alive && w.id_of(j) != owner)
         .filter_map(|j| {
@@ -250,53 +251,6 @@ fn move_bolts(w: &mut World, dt: f32) {
     }
 }
 
-fn move_missiles(w: &mut World, dt: f32, rules: &crate::content::rules::Ruleset) {
-    let mut keep = Vec::with_capacity(w.missiles.len());
-    // (ship slot hit, if any; position; damage)
-    let mut blasts: Vec<(Option<usize>, Vec3, f32)> = Vec::new();
-    for mut m in std::mem::take(&mut w.missiles) {
-        let class = rules.missile(m.class);
-        // Homing: rotate the velocity towards the target by at most turn_rate·dt.
-        let target_pos = m.target.and_then(|t| w.get(t)).map(|t| t.position);
-        let dir = m.velocity.normalize_or(Vec3::NEG_Z);
-        let new_dir = match target_pos {
-            Some(tp) => rotate_towards(dir, (tp - m.position).normalize_or(dir), class.turn_rate.to_radians() * dt),
-            None => dir,
-        };
-        let speed = (m.velocity.length() + class.speed * dt).min(class.speed);
-        m.velocity = new_dir * speed;
-        let next = m.position + m.velocity * dt;
-        if let Some((j, t)) = first_hit(w, m.position, next, m.owner) {
-            blasts.push((Some(j), m.position.lerp(next, t), class.impact_damage));
-            continue;
-        }
-        // Proximity fuse: detonate on a near *miss* — inside the fuse radius and starting
-        // to move away from the target (a direct hit was handled just above).
-        if let (Some(tid), Some(tp)) = (m.target, target_pos) {
-            let (now, then) = (m.position.distance(tp), next.distance(tp));
-            if now < class.proximity_radius && then > now {
-                blasts.push((Some(tid.index as usize), m.position, class.proximity_damage));
-                continue;
-            }
-        }
-        m.position = next;
-        m.life -= dt;
-        if m.life > 0.0 {
-            keep.push(m);
-        } else {
-            blasts.push((None, m.position, 0.0));
-        }
-    }
-    w.missiles = keep;
-    for (slot, pos, dmg) in blasts {
-        w.events.push(SimEvent::MissileExploded { position: pos });
-        if let Some(j) = slot {
-            let id = w.id_of(j);
-            apply_damage(w, id, dmg, pos);
-        }
-    }
-}
-
 /// Rotates unit vector `from` towards unit vector `to` by at most `max_angle` radians.
 pub fn rotate_towards(from: Vec3, to: Vec3, max_angle: f32) -> Vec3 {
     let angle = from.dot(to).clamp(-1.0, 1.0).acos();
@@ -314,18 +268,44 @@ pub fn rotate_towards(from: Vec3, to: Vec3, max_angle: f32) -> Vec3 {
 /// the ship's systems ([`super::systems::damage_system`]). Emits `Hit` and possibly
 /// `Destroyed`.
 pub fn apply_damage(w: &mut World, id: ShipId, amount: f32, at: Vec3) {
+    apply_damage_mode(w, id, amount, at, DamageMode::Normal);
+}
+
+/// [`apply_damage`] with a choice of how the damage lands (see [`DamageMode`]).
+pub fn apply_damage_mode(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageMode) {
     let radius = match w.get(id) {
         Some(s) => w.shapes[s.class.0 as usize].radius,
         None => return,
     };
     let Some(s) = w.get_mut(id) else { return };
     let from_front = (at - s.position).dot(s.forward()) >= 0.0;
-    let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
-    let absorbed = amount.min(*shield);
-    let was_up = *shield > 0.0;
-    *shield -= absorbed;
-    if was_up && *shield <= 0.0 {
-        let text = if from_front { "FORE SHIELD DOWN" } else { "AFT SHIELD DOWN" };
+    let mut absorbed = 0.0;
+    let mut downed: Vec<&str> = Vec::new();
+    match mode {
+        DamageMode::BypassShields => {}
+        DamageMode::Normal => {
+            let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
+            absorbed = amount.min(*shield);
+            let was_up = *shield > 0.0;
+            *shield -= absorbed;
+            if was_up && *shield <= 0.0 {
+                downed.push(if from_front { "FORE SHIELD DOWN" } else { "AFT SHIELD DOWN" });
+            }
+        }
+        DamageMode::Enveloping => {
+            // Half the blast on each facing; what a facing cannot hold goes through.
+            for (shield, label) in [(&mut s.shield_fore, "FORE SHIELD DOWN"), (&mut s.shield_aft, "AFT SHIELD DOWN")] {
+                let take = (amount * 0.5).min(*shield);
+                let was_up = *shield > 0.0;
+                *shield -= take;
+                absorbed += take;
+                if was_up && *shield <= 0.0 {
+                    downed.push(label);
+                }
+            }
+        }
+    }
+    for text in downed {
         w.events.push(SimEvent::Message { ship: id, text: text.into() });
     }
     let Some(s) = w.get_mut(id) else { return };
@@ -575,15 +555,15 @@ mod tests {
     fn proximity_fuse_fires_on_a_near_miss() {
         let (mut w, me, foe) = duel();
         // A missile that will pass 15 m beside the foe: no direct hit, but inside 25 m.
-        w.missiles.push(Missile {
-            class: crate::content::rules::MissileId(0),
-            owner: me,
-            faction: FactionId(0),
-            target: Some(foe),
-            position: Vec3::new(15.0, 0.0, -250.0),
-            velocity: Vec3::NEG_Z * 800.0,
-            life: 5.0,
-        });
+        w.missiles.push(Missile::new(
+            crate::content::rules::MissileId(0),
+            me,
+            FactionId(0),
+            Some(foe),
+            Vec3::new(15.0, 0.0, -250.0),
+            Vec3::NEG_Z * 800.0,
+            5.0,
+        ));
         // Turn rate 0 so it cannot steer into the target.
         let mut rules = (*w.rules).clone();
         rules.missiles[0].turn_rate = 0.0;

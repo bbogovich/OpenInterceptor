@@ -704,6 +704,7 @@ impl Bindings {
                 cloak: f.pressed(A::Cloak),
                 ecm: f.pressed(A::Ecm),
                 hyperspace: f.pressed(A::Hyperspace),
+                detonate: false,
             },
             ..Default::default()
         };

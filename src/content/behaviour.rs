@@ -51,6 +51,10 @@ pub enum Manoeuvre {
     Turret,
     /// Find a disabled enemy, tractor it and jump out with it (tugs).
     Tow,
+    /// Wait; when a hostile comes within `range`, detonate (the first missile rack is
+    /// the warhead: its proximity damage, falling off over four times its proximity
+    /// radius, at least 100 m).
+    Mine,
 }
 
 impl Manoeuvre {
@@ -64,6 +68,7 @@ impl Manoeuvre {
             "retreat" => Manoeuvre::Retreat,
             "turret" => Manoeuvre::Turret,
             "tow" => Manoeuvre::Tow,
+            "mine" => Manoeuvre::Mine,
             _ => return None,
         })
     }

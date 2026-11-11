@@ -62,3 +62,15 @@ objects:
     ai: enemy
     position: [0, -200, -5300]
     speed: 400
+  mine1:
+    class: space_mine
+    ai: enemy
+    position: [-300, 250, -1500]
+  mine2:
+    class: space_mine
+    ai: enemy
+    position: [250, 350, -1800]
+  mine3:
+    class: space_mine
+    ai: enemy
+    position: [0, 150, -2200]

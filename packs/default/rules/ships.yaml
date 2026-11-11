@@ -53,7 +53,7 @@ ships:
     energy: 500
     energy_recharge: 60
     beams: [heat_ray, heat_ray, blaster, blaster]
-    missiles: {seeker: 4, atomic_torpedo: 1}
+    missiles: {seeker: 4, atomic_torpedo: 1, decoy_rocket: 2}
     systems+: [ecm, damage_control, tractor]
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
@@ -79,7 +79,7 @@ ships:
     energy_recharge: 70
     vct: true
     beams: [disintegrator, disintegrator, heat_ray, heat_ray]
-    missiles: {seeker: 4, atomic_torpedo: 3}
+    missiles: {seeker: 4, atomic_torpedo: 3, cluster_rocket: 2}
     systems+: [ecm, damage_control, tractor, cloak]
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]

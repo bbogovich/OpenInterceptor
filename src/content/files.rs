@@ -79,6 +79,23 @@ fn missile() -> Ty {
         f("color", rgb(), "trail colour"),
         f("sound", Ty::Asset, "launch sound"),
         f("explosion", name(), "effect id of its detonation"),
+        f(
+            "guidance",
+            Ty::Enum(&["homing", "dumbfire", "sidestep", "parallax", "cloaked_wait", "cluster", "doppelganger"]),
+            "how it steers (default homing)",
+        ),
+        f("damage", Ty::Enum(&["normal", "bypass_shields", "enveloping"]), "how the warhead's damage lands"),
+        f("decoys", Ty::Num, "parallax: decoys released at launch (default 2)"),
+        f(
+            "cluster",
+            Ty::Struct(vec![
+                f("missile", name(), "submunition missile id"),
+                f("count", Ty::Num, "how many"),
+                f("at", dist(), "split this close to the target"),
+            ]),
+            "cluster: what it splits into",
+        ),
+        f("trigger_range", dist(), "cloaked_wait: wakes when a hostile comes this close"),
     ])
 }
 
@@ -236,10 +253,10 @@ fn behaviour() -> Ty {
     let state = Ty::Struct(vec![
         f(
             "do",
-            Ty::Enum(&["idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow"]),
+            Ty::Enum(&["idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "mine"]),
             "the manoeuvre",
         ),
-        f("range", dist(), "attack: open fire inside; patrol: radius; turret: reach"),
+        f("range", dist(), "attack: open fire inside; patrol: radius; turret: reach; mine: trigger distance"),
         f("fire_cone", Ty::Qty(Unit::Angle), "fire when the aim point is within this angle of the nose"),
         f("burst", time(), "seconds of firing"),
         f("pause", time(), "seconds holding fire between bursts"),

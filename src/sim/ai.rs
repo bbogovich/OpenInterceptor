@@ -29,6 +29,7 @@
 //! | `retreat` | runs from the nearest threat; `jump: yes` starts the hyperdrive |
 //! | `turret` | stays put; guns that can swivel (`TurretArc`) track targets in `range` |
 //! | `tow` | finds a disabled enemy, tractors it and jumps out with it |
+//! | `mine` | waits; detonates when a hostile comes within `range` |
 //!
 //! ## Two-phase update
 //!
@@ -362,6 +363,14 @@ fn fly(w: &World, me: ShipId, st: &mut AiState, m: Manoeuvre, p: &Params, skill:
             None => (Controls::default(), None),
         },
         Manoeuvre::Tow => tow(w, me, st, p),
+        Manoeuvre::Mine => {
+            // Detonate when a hostile is inside the trigger distance.
+            let close = targeting::nearest_hostile(w, me)
+                .is_some_and(|t| w.ships[t.index as usize].position.distance(ship.position) < p.range);
+            let mut c = Controls::default();
+            c.requests.detonate = close;
+            (c, None)
+        }
     }
 }
 
@@ -927,6 +936,38 @@ mod tests {
             }
         }
         assert!(captured, "the tug tractored the disabled fighter and jumped out with it");
+    }
+
+    #[test]
+    fn mines_go_off_when_an_enemy_comes_near() {
+        let mut w = world();
+        let mine = w.spawn(
+            w.rules.ship_id("mine").unwrap(),
+            FactionId(1),
+            "m",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::Ai(AiState::new(Behaviour::Enemy, None, Vec3::ZERO)),
+        );
+        let victim = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "v",
+            Vec3::new(0.0, 0.0, -400.0),
+            Quat::IDENTITY,
+            Pilot::External,
+        );
+        for _ in 0..30 {
+            w.step();
+        }
+        assert!(w.get(mine).is_some(), "400 m away: the mine waits");
+        w.get_mut(victim).unwrap().position = Vec3::new(0.0, 0.0, -60.0);
+        let shields = w.get(victim).unwrap().shield_fore + w.get(victim).unwrap().shield_aft;
+        w.step();
+        w.step();
+        assert!(w.get(mine).is_none(), "the mine blew up");
+        let v = w.get(victim).unwrap();
+        assert!(v.shield_fore + v.shield_aft < shields, "and the blast hurt the fighter");
     }
 
     #[test]

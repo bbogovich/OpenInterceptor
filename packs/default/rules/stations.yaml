@@ -25,3 +25,12 @@ objects:
     model_set: cosmium_asteroid
     faction: neutral
     hit_points: 20000
+  space_mine:
+    name: Dominion space mine
+    description: A spiked sphere that waits in the dark and goes off when a ship comes near.
+    model_set: robot_sentinel
+    kind: mine
+    faction: dominion
+    hit_points: 30
+    missiles: {mine_warhead: 1}
+    behaviour: space_mine

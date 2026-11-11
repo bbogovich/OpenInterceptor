@@ -214,6 +214,63 @@ pub struct MissileClass {
     pub color: [f32; 3],
     pub sound: Option<String>,
     pub pack: usize,
+    /// How it steers (see `sim::guidance`).
+    pub guidance: Guidance,
+    /// How its warhead's damage is applied.
+    pub damage_mode: DamageMode,
+    /// Parallax: decoys released at launch.
+    pub decoys: u32,
+    /// Cluster: the submunition class and how many.
+    pub cluster: Option<(MissileId, u32)>,
+    /// Cluster: split when this close to the target, metres.
+    pub split_range: f32,
+    /// Cloaked wait: wake when a hostile comes this close, metres.
+    pub trigger_range: f32,
+}
+
+/// How a missile steers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Guidance {
+    /// Turns towards its locked target (or flies straight without a lock).
+    Homing,
+    /// Never steers.
+    Dumbfire,
+    /// Homing, with its own thrusters: turns twice as hard and weaves near the target.
+    Sidestep,
+    /// Homing; releases decoys that lure enemy missiles away from the launcher.
+    Parallax,
+    /// Dropped behind the launcher; waits, cloaked, until a hostile comes near.
+    CloakedWait,
+    /// Homing; splits into submunitions near the target.
+    Cluster,
+    /// Not a missile at all: launches a decoy copy of the launcher's ship.
+    Doppelganger,
+}
+
+impl Guidance {
+    fn parse(s: &str) -> Option<Guidance> {
+        Some(match s.to_ascii_lowercase().as_str() {
+            "homing" => Guidance::Homing,
+            "dumbfire" => Guidance::Dumbfire,
+            "sidestep" => Guidance::Sidestep,
+            "parallax" => Guidance::Parallax,
+            "cloaked_wait" => Guidance::CloakedWait,
+            "cluster" => Guidance::Cluster,
+            "doppelganger" => Guidance::Doppelganger,
+            _ => return None,
+        })
+    }
+}
+
+/// How damage is applied to a ship.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DamageMode {
+    /// Shields (the facing hit), then armour, then hull.
+    Normal,
+    /// Straight through the shields to the armour (the Permeator).
+    BypassShields,
+    /// Spread over the whole ship: both shield facings share it (the Enveloping torpedo).
+    Enveloping,
 }
 
 /// A side in the conflict.
@@ -601,10 +658,33 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 color: rgb(g, "color", [1.0, 0.8, 0.4]),
                 sound: g.str("sound").map(str::to_string),
                 pack: e.pack,
+                guidance: g.str("guidance").and_then(Guidance::parse).unwrap_or(Guidance::Homing),
+                damage_mode: match g.str("damage") {
+                    Some("bypass_shields") => DamageMode::BypassShields,
+                    Some("enveloping") => DamageMode::Enveloping,
+                    _ => DamageMode::Normal,
+                },
+                decoys: g.num("decoys").unwrap_or(2.0).max(0.0) as u32,
+                cluster: None, // resolved below, once every missile is known
+                split_range: g.node("cluster").and_then(|c| Get(c).qty("at", Unit::Distance)).unwrap_or(600.0),
+                trigger_range: g.qty("trigger_range", Unit::Distance).unwrap_or(800.0),
                 id: id.clone(),
             }
         })
         .collect();
+    // Cluster submunitions name other missiles.
+    let mut missiles = missiles;
+    for (_, id, e) in of(&resolved, "missiles") {
+        let Some(c) = Get(&e.node).node("cluster").map(Get) else { continue };
+        let Some(sub) = c.str("missile") else { continue };
+        match missiles.iter().position(|m| m.id.eq_ignore_ascii_case(sub)) {
+            Some(i) => {
+                let me = missiles.iter_mut().find(|m| &m.id == id).expect("parsed above");
+                me.cluster = Some((MissileId(i as u16), c.num("count").unwrap_or(6.0).max(1.0) as u32));
+            }
+            None => errors.push(format!("{}: missiles.{id}.cluster: unknown missile '{sub}'", e.origin)),
+        }
+    }
     // Systems: every built-in kind first, so `systems: {ecm: …}` overrides the default and
     // ships can name a kind without the pack defining it.
     let mut systems: Vec<SystemDef> = SystemKind::ALL.into_iter().map(SystemDef::builtin).collect();

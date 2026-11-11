@@ -83,3 +83,35 @@ missiles:
     lock_time: 2.5
     color: [0.6, 1.0, 0.6]
     sound: sounds/seeker_launch.wav
+  cluster_rocket:
+    name: Cluster rocket
+    guidance: cluster        # splits into six seekers near the target
+    cluster: {missile: seeker, count: 6, at: 700m}
+    speed: 750
+    duration: 10s
+    impact_damage: 120
+    proximity_damage: 50
+    turn_rate: 90
+    lock_time: 2s
+    color: [1.0, 0.8, 0.3]
+    sound: sounds/seeker_launch.wav
+  decoy_rocket:
+    name: Decoy rocket
+    guidance: parallax       # two flares that draw enemy rockets
+    decoys: 2
+    speed: 850
+    duration: 8s
+    impact_damage: 100
+    proximity_damage: 40
+    turn_rate: 100
+    lock_time: 1.5s
+    color: [1.0, 1.0, 0.9]
+    sound: sounds/seeker_launch.wav
+  mine_warhead:
+    name: Space mine warhead
+    guidance: dumbfire
+    speed: 0
+    impact_damage: 0
+    proximity_damage: 250
+    proximity_radius: 40m
+    color: [0.7, 1.0, 0.3]

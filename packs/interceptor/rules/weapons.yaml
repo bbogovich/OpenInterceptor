@@ -41,8 +41,9 @@ beams:
     sound: original:TachyonPulser.wav
 
 missiles:
-  # Missiles: Speed, Duration, ImpactDamage, ProximityDamage from the original. TurnRate and
-  # LockTime are engine values (special behaviours of each type arrive in Stage 2).
+  # Missiles: speed, duration, impact and proximity damage from the original. Turn rate
+  # and lock time are engine values; each type's special behaviour (guidance, damage) is
+  # from the guide's descriptions (DERIVED).
   xwinder:
     inherit: original:GameSettings.ini/XWinderMissile
     name: X-Winder
@@ -53,6 +54,7 @@ missiles:
   permeator:
     inherit: original:GameSettings.ini/PermeatorMissile
     name: Permeator
+    damage: bypass_shields   # "bypasses shields"
     turn_rate: 90
     lock_time: 2.5
     color: [0.6, 1.0, 0.6]
@@ -60,6 +62,7 @@ missiles:
   sidestep:
     inherit: original:GameSettings.ini/SidestepMissile
     name: Sidestep
+    guidance: sidestep       # its own thrusters
     turn_rate: 160
     lock_time: 2.0
     color: [0.6, 0.8, 1.0]
@@ -78,3 +81,37 @@ missiles:
     lock_time: 2.0
     color: [0.4, 1.0, 0.4]
     sound: original:AlienMissileLaunch.wav
+  enveloping_torpedo:
+    inherit: original:GameSettings.ini/EnvelopingFusionTorpedo
+    name: Enveloping Fusion Torpedo
+    damage: enveloping       # damage spread over the whole surface
+    turn_rate: 60
+    lock_time: 2.5
+    color: [1.0, 0.6, 0.9]
+    sound: original:fusionLaunch.wav
+  parallax_torpedo:
+    inherit: original:GameSettings.ini/ParallaxTorpedo
+    name: Parallax Torpedo
+    guidance: parallax       # two decoys
+    decoys: 2
+    turn_rate: 80
+    lock_time: 2.0
+    color: [0.9, 0.9, 1.0]
+    sound: original:AlienMissileLaunch.wav
+  cloaking_torpedo:
+    inherit: original:GameSettings.ini/PassiveCloakingTorpedo
+    name: Passive Cloaking Torpedo
+    guidance: cloaked_wait   # dropped; waits cloaked
+    trigger_range: 800m
+    turn_rate: 90
+    lock_time: 0.5
+    color: [0.5, 0.5, 0.6]
+    sound: original:MissileCloak.wav
+  doppelganger:
+    inherit: original:GameSettings.ini/DoppelgangerMissile
+    name: Doppelganger
+    guidance: doppelganger   # a decoy copy of your ship
+    turn_rate: 0
+    lock_time: 0.5
+    color: [1.0, 1.0, 1.0]
+    sound: original:DoppleLaunch.wav
