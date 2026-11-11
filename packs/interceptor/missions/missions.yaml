@@ -104,3 +104,378 @@ missions:
     outcomes:
       win: [score(probe_destroyed)]
     debrief: {win: "@orig.DEBRIEF_APROBE_WIN", draw: "@orig.DEBRIEF_APROBE_DRAW", lose: "@orig.DEBRIEF_APROBE_LOSE"}
+
+  # Stage 3.11: the remaining original mission types. Names, briefings and debriefs are
+  # the original's own (by key); compositions are DERIVED estimates (DEV-041) that grow
+  # with the level, and variants of a type escalate.
+
+  xcom_base_defense_heavy:
+    name: "@orig.BRIEFING_TYPE_3"
+    briefing: "@orig.BRIEFING_TEXT_3"
+    order: 10
+    starfield_seed: 32
+    player: {class: choose}
+    roles:
+      target: {class: xcom_base, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith, wraith, spectre]
+        count: {per_level: [[2, 2], [3, 3], [3, 4], [4, 5], [5, 6]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XBASE_WIN", lose: "@orig.DEBRIEF_XBASE_LOSE", draw: "@orig.DEBRIEF_XBASE_DRAW"}
+    waves:
+      - {role: attackers, when: "time > 100s and alive(target)", count: [1, 2]}
+    timer: {after: 6min, then: draw}
+
+  defend_corporate_outpost:
+    name: "@orig.BRIEFING_TYPE_4"
+    briefing: "@orig.BRIEFING_TEXT_4"
+    order: 11
+    starfield_seed: 33
+    player: {class: choose}
+    roles:
+      target: {class: xcom_outpost, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith, wraith]
+        count: {per_level: [[2, 2], [2, 2], [3, 3], [3, 3], [4, 4]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XOUT_WIN", lose: "@orig.DEBRIEF_XOUT_LOSE", draw: "@orig.DEBRIEF_XOUT_DRAW"}
+    waves:
+      - {role: attackers, when: "time > 120s and alive(target)", count: [1, 2]}
+    timer: {after: 5min, then: draw}
+
+  defend_corporate_outpost_heavy:
+    name: "@orig.BRIEFING_TYPE_5"
+    briefing: "@orig.BRIEFING_TEXT_5"
+    order: 12
+    starfield_seed: 34
+    player: {class: choose}
+    roles:
+      target: {class: xcom_outpost, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith, spectre]
+        count: {per_level: [[3, 3], [3, 3], [4, 4], [4, 4], [5, 5]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XOUT_WIN", lose: "@orig.DEBRIEF_XOUT_LOSE", draw: "@orig.DEBRIEF_XOUT_DRAW"}
+    waves:
+      - {role: attackers, when: "time > 90s and alive(target)", count: [1, 2]}
+    timer: {after: 5min, then: draw}
+
+  defend_opp:
+    name: "@orig.BRIEFING_TYPE_7"
+    briefing: "@orig.BRIEFING_TEXT_7"
+    order: 13
+    starfield_seed: 35
+    player: {class: choose}
+    roles:
+      target: {class: xcom_opp, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith]
+        count: {per_level: [[2, 2], [2, 2], [3, 3], [3, 3], [4, 4]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XOPP_WIN", lose: "@orig.DEBRIEF_XOPP_LOSE", draw: "@orig.DEBRIEF_XOPP_DRAW"}
+    waves:
+      - {role: attackers, when: "time > 120s and alive(target)", count: [1, 2]}
+    timer: {after: 5min, then: draw}
+
+  defend_opp_raid:
+    name: "@orig.BRIEFING_TYPE_8"
+    briefing: "@orig.BRIEFING_TEXT_8"
+    order: 14
+    starfield_seed: 36
+    player: {class: choose}
+    roles:
+      target: {class: xcom_opp, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XOPP_WIN", lose: "@orig.DEBRIEF_XOPP_LOSE", draw: "@orig.DEBRIEF_XOPP_DRAW"}
+    waves:
+      - {role: attackers, when: "time > 100s and alive(target)", count: [1, 2]}
+    timer: {after: 5min, then: draw}
+
+  defend_opp_heavy:
+    name: "@orig.BRIEFING_TYPE_9"
+    briefing: "@orig.BRIEFING_TEXT_9"
+    order: 15
+    starfield_seed: 37
+    player: {class: choose}
+    roles:
+      target: {class: xcom_opp, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [spectre, shade]
+        count: {per_level: [[3, 3], [3, 3], [4, 4], [4, 4], [5, 5]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XOPP_WIN", lose: "@orig.DEBRIEF_XOPP_LOSE", draw: "@orig.DEBRIEF_XOPP_DRAW"}
+    waves:
+      - {role: attackers, when: "time > 90s and alive(target)", count: [1, 2]}
+    timer: {after: 6min, then: draw}
+
+  defend_science_station:
+    name: "@orig.BRIEFING_TYPE_29"
+    briefing: "@orig.BRIEFING_TEXT_29"
+    order: 16
+    starfield_seed: 38
+    player: {class: choose}
+    roles:
+      target: {class: science_station, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 7km, from: target, bearing: random}
+    objectives:
+      lose: destroyed(target)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_MISC_WIN", lose: "@orig.DEBRIEF_MISC_LOSE"}
+    waves:
+      - {role: attackers, when: "time > 100s and alive(target)", count: [1, 2]}
+    timer: {after: 5min, then: draw}
+
+  defend_freighter_convoy_large:
+    name: "@orig.BRIEFING_TYPE_12"
+    briefing: "@orig.BRIEFING_TEXT_12"
+    order: 17
+    starfield_seed: 45
+    player: {class: choose}
+    roles:
+      freighters: {class: xcom_freighter, ai: idle, protect: true, count: 3, speed: 80, at: {distance: 0m, spread: 400m}}
+      attackers:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 5km, bearing: random}
+    objectives:
+      lose: destroyed_all(freighters)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XFREIGHT_WIN", lose: "@orig.DEBRIEF_XFREIGHT_LOSE"}
+    timer: {after: 4min, then: win}
+
+  defend_freighter_convoy_pirates:
+    name: "@orig.BRIEFING_TYPE_13"
+    briefing: "@orig.BRIEFING_TEXT_13"
+    order: 18
+    starfield_seed: 46
+    player: {class: choose}
+    roles:
+      freighters: {class: xcom_freighter, ai: idle, protect: true, count: 3, speed: 80, at: {distance: 0m, spread: 400m}}
+      attackers:
+        class: [pirate_lightning, pirate_firestar]
+        count: {per_level: [[1, 2], [2, 2], [2, 3], [3, 4], [3, 4]]}
+        at: {distance: 5km, bearing: random}
+    objectives:
+      lose: destroyed_all(freighters)
+      win: destroyed_all(attackers)
+    debrief: {win: "@orig.DEBRIEF_XFREIGHTP_WIN", lose: "@orig.DEBRIEF_XFREIGHTP_LOSE"}
+    timer: {after: 4min, then: win}
+
+  deep_space_ambush:
+    name: "@orig.BRIEFING_TYPE_14"
+    briefing: "@orig.BRIEFING_TEXT_14"
+    order: 19
+    starfield_seed: 8
+    player: {class: choose}
+    roles:
+      aliens:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 2], [2, 2], [3, 3], [3, 3], [4, 4]]}
+        at: {distance: 1500m, bearing: random, spread: 800m}
+    objectives:
+      win: destroyed_all(aliens)
+    debrief: {win: "@orig.DEBRIEF_ALIENS_WIN", lose: "@orig.DEBRIEF_ALIENS_LOSE"}
+
+  deep_space_encounter_heavy:
+    name: "@orig.BRIEFING_TYPE_16"
+    briefing: "@orig.BRIEFING_TEXT_16"
+    order: 20
+    starfield_seed: 9
+    player: {class: choose}
+    roles:
+      aliens:
+        class: [spectre, shade]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 6km, bearing: [0, 0], spread: 400m}
+    objectives:
+      win: destroyed_all(aliens)
+    debrief: {win: "@orig.DEBRIEF_ALIENS_WIN", lose: "@orig.DEBRIEF_ALIENS_LOSE"}
+
+  ambush_pirate_squadron:
+    name: "@orig.BRIEFING_TYPE_18"
+    briefing: "@orig.BRIEFING_TEXT_18"
+    order: 21
+    starfield_seed: 10
+    player: {class: choose}
+    roles:
+      pirates:
+        class: [pirate_lightning, pirate_firestar, pirate_avenger]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 5km, bearing: [0, 0], spread: 600m}
+    objectives:
+      win: destroyed_all(pirates)
+    debrief: {win: "@orig.DEBRIEF_PIRATESHIPS_WIN", lose: "@orig.DEBRIEF_MISC_LOSE"}
+
+  ambush_alien_freighters:
+    name: "@orig.BRIEFING_TYPE_19"
+    briefing: "@orig.BRIEFING_TEXT_19"
+    order: 22
+    starfield_seed: 11
+    player: {class: choose}
+    roles:
+      freighters: {class: alien_container, ai: idle, count: 2, speed: 70, at: {distance: 5km, bearing: [0, 0], spread: 500m}}
+      escorts:
+        class: [wraith, spectre]
+        count: {per_level: [[1, 2], [1, 2], [2, 3], [2, 3], [3, 4]]}
+        at: {distance: 600m, from: freighters, bearing: random}
+    objectives:
+      win: destroyed_all(freighters)
+    debrief: {win: "@orig.DEBRIEF_AFREIGHT_WIN", lose: "@orig.DEBRIEF_AFREIGHT_LOSE", draw: "@orig.DEBRIEF_AFREIGHT_DRAW"}
+    timer: {after: 5min, then: draw}
+
+  ambush_alien_freighters_escorted:
+    name: "@orig.BRIEFING_TYPE_20"
+    briefing: "@orig.BRIEFING_TEXT_20"
+    order: 23
+    starfield_seed: 12
+    player: {class: choose}
+    roles:
+      freighters: {class: alien_container, ai: idle, count: 2, speed: 70, at: {distance: 5km, bearing: [0, 0], spread: 500m}}
+      escorts:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 600m, from: freighters, bearing: random}
+    objectives:
+      win: destroyed_all(freighters)
+    debrief: {win: "@orig.DEBRIEF_AFREIGHT_WIN", lose: "@orig.DEBRIEF_AFREIGHT_LOSE", draw: "@orig.DEBRIEF_AFREIGHT_DRAW"}
+    timer: {after: 5min, then: draw}
+
+  ambush_alien_freighters_large:
+    name: "@orig.BRIEFING_TYPE_21"
+    briefing: "@orig.BRIEFING_TEXT_21"
+    order: 24
+    starfield_seed: 13
+    player: {class: choose}
+    roles:
+      freighters: {class: alien_container, ai: idle, count: 3, speed: 70, at: {distance: 5km, bearing: [0, 0], spread: 500m}}
+      escorts:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 600m, from: freighters, bearing: random}
+    objectives:
+      win: destroyed_all(freighters)
+    debrief: {win: "@orig.DEBRIEF_AFREIGHT_WIN", lose: "@orig.DEBRIEF_AFREIGHT_LOSE", draw: "@orig.DEBRIEF_AFREIGHT_DRAW"}
+    timer: {after: 5min, then: draw}
+
+  attack_alien_mining_platform:
+    name: "@orig.BRIEFING_TYPE_22"
+    briefing: "@orig.BRIEFING_TEXT_22"
+    order: 25
+    starfield_seed: 59
+    player: {class: choose}
+    roles:
+      target: {class: alien_opp, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [wraith]
+        count: {per_level: [[1, 2], [1, 2], [2, 3], [2, 3], [3, 4]]}
+        at: {distance: 1500m, from: target, bearing: random}
+    objectives:
+      win: destroyed(target)
+    debrief: {win: "@orig.DEBRIEF_AOPP_WIN", lose: "@orig.DEBRIEF_AOPP_LOSE"}
+
+  attack_alien_mining_platform_heavy:
+    name: "@orig.BRIEFING_TYPE_23"
+    briefing: "@orig.BRIEFING_TEXT_23"
+    order: 26
+    starfield_seed: 60
+    player: {class: choose}
+    roles:
+      target: {class: alien_opp, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [wraith, spectre]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 1500m, from: target, bearing: random}
+    objectives:
+      win: destroyed(target)
+    debrief: {win: "@orig.DEBRIEF_AOPP_WIN", lose: "@orig.DEBRIEF_AOPP_LOSE"}
+
+  attack_alien_outpost_heavy:
+    name: "@orig.BRIEFING_TYPE_25"
+    briefing: "@orig.BRIEFING_TEXT_25"
+    order: 27
+    starfield_seed: 61
+    player: {class: choose}
+    roles:
+      target: {class: alien_outpost, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [spectre, shade]
+        count: {per_level: [[2, 3], [2, 3], [3, 4], [3, 4], [4, 5]]}
+        at: {distance: 1500m, from: target, bearing: random}
+    objectives:
+      win: destroyed(target)
+    debrief: {win: "@orig.DEBRIEF_AOUTPOST_WIN", lose: "@orig.DEBRIEF_AOUTPOST_LOSE"}
+
+  attack_alien_base:
+    name: "@orig.BRIEFING_TYPE_26"
+    briefing: "@orig.BRIEFING_TEXT_26"
+    order: 28
+    starfield_seed: 62
+    player: {class: choose}
+    roles:
+      target: {class: alien_base, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [wraith, spectre, shade]
+        count: {per_level: [[3, 4], [3, 4], [4, 5], [4, 5], [5, 6]]}
+        at: {distance: 1500m, from: target, bearing: random}
+    objectives:
+      win: destroyed(target)
+    debrief: {win: "@orig.DEBRIEF_ABASE_WIN", lose: "@orig.DEBRIEF_ABASE_LOSE", draw: "@orig.DEBRIEF_ABASE_DRAW1"}
+    timer: {after: 8min, then: draw}
+
+  attack_alien_base_heavy:
+    name: "@orig.BRIEFING_TYPE_27"
+    briefing: "@orig.BRIEFING_TEXT_27"
+    order: 29
+    starfield_seed: 63
+    player: {class: choose}
+    roles:
+      target: {class: alien_base, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [spectre, shade, phantasm]
+        count: {per_level: [[4, 5], [4, 5], [5, 6], [5, 6], [6, 7]]}
+        at: {distance: 1500m, from: target, bearing: random}
+    objectives:
+      win: destroyed(target)
+    debrief: {win: "@orig.DEBRIEF_ABASE_WIN", lose: "@orig.DEBRIEF_ABASE_LOSE", draw: "@orig.DEBRIEF_ABASE_DRAW2"}
+    timer: {after: 8min, then: draw}
+
+  destroy_doomsday_weapon:
+    name: "@orig.BRIEFING_TYPE_30"
+    briefing: "@orig.BRIEFING_TEXT_30"
+    order: 30
+    starfield_seed: 64
+    player: {class: choose}
+    roles:
+      target: {class: alien_base, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [shade, phantasm, harbinger]
+        count: {per_level: [[4, 6], [4, 6], [5, 7], [5, 7], [6, 8]]}
+        at: {distance: 1500m, from: target, bearing: random}
+    objectives:
+      win: destroyed(target)
+    debrief: {win: "@orig.DEBRIEF_DOOMFREIGHT_WIN1", lose: "@orig.DEBRIEF_DOOMFREIGHT_LOSE"}
+    timer: {after: 8min, then: draw}
