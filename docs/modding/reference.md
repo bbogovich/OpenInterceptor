@@ -150,6 +150,7 @@ Built-in values per kind: [Rulesets](rulesets.md#ship-systems-and-equipment).
 | `model_scale` | number | 1 | Model units to metres. |
 | `instruments` | mapping name: `[x, y, w, h]` | — | Instrument rectangles in the design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`. |
 | `anchors` | mapping name: `{at, normal, size}` | none | 3D cockpits: instruments drawn in perspective on the model's surface (below). |
+| `wide` | `{blackout, color, from, left, right}` | none | Wide screens: the bands left and right of narrower 2D cockpit art. `blackout: true` fills them with `color` (default black), hiding the 3D view there; `from` (design-space y, default 0) starts them lower, e.g. at the dashboard's top so space still shows beside the canopy; `left`/`right` are your own images stretched over each band ([R-HUD-013](../specification/requirements/cockpit-hud.md#r-hud-013-wide-screen-side-bands)). |
 
 An anchor:
 

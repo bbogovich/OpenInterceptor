@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.8.0
 status: current
 updated: 2026-11-11
 ---
@@ -103,9 +103,24 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 - **Source:** Plan item 3.6.
 - **Specified by:** [R-HUD-012](../specification/requirements/cockpit-hud.md#r-hud-012-atmosphere-instruments)
 
+### F-HUD-009 Cockpits on wide screens
+
+**What.** A cockpit drawn for 4:3 (the original's 640×480 art) looks right on a wide screen. A pack can define, per cockpit:
+- side bands that block the 3D view on either side of the cockpit art, in a colour (black by default), either full height or only beside the dashboard;
+- and/or extension art that fills those bands.
+
+The view through the canopy keeps the same height whatever the screen's width.
+
+**Why.** On a 16:9 or wider screen the 4:3 art sits in the middle, with space showing through at the sides, where the cockpit should be.
+
+- **Status:** implemented
+- **Source:** User request, 2026-11-11: "we need to accommodate wide screens. The main problem is the cockpit consoles, which in the original proportions are 4x3 aspect ratio. Simplest solution is add override in the packs that extend the cockpit image to account for wider screens or to have a blackout area defined where the 3d view is blocked on either side of the cockpit base zone such that the player view vertical area remains consistent."
+- **Specified by:** [R-HUD-013](../specification/requirements/cockpit-hud.md#r-hud-013-wide-screen-side-bands)
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-HUD-001 – F-HUD-008 (8 features) |
 | 1.1.0 | 2026-11-11 | F-HUD-006 and F-HUD-007 implemented (app 0.3.1) |
+| 1.8.0 | 2026-11-11 | F-HUD-009 cockpits on wide screens |

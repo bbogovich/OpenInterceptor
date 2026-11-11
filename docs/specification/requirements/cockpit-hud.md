@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.8.0
 status: current
 updated: 2026-11-11
 ---
@@ -178,9 +178,25 @@ In an atmosphere the HUD MUST show altitude, vertical speed and a horizon.
 - Verified by: Planned.
 - See: [Stage 3](../../implementation/plan/stage-3-missions.md)
 
+### R-HUD-013 Wide-screen side bands
+
+A 2D cockpit stays centred at its design aspect, filling the screen height. A cockpit MAY define `wide:` in its pack data:
+- `blackout: true` covers the side bands left and right of the art in `color` (default black);
+- `from` (design-space y, default 0) starts the bands lower, so only the sides of the dashboard are covered and space still shows beside the canopy;
+- `left` and `right` name images stretched to fill each band below `from`, over the colour (extension art made for wide screens). They must be the pack's own art, never original content.
+
+The bands MUST be drawn after the 3D view and the cockpit art, and before the instruments. They MUST NOT change the field of view or the instrument layout.
+
+*Rationale:* 4:3 cockpit art on wide screens (see F-HUD-009).
+
+- Implements: [F-HUD-009](../../definition/cockpit-hud.md#f-hud-009-cockpits-on-wide-screens)
+- Status: implemented
+- Verified by: `hud::tests::side_bands_cover_the_screen_beside_the_cockpit`; the rules test `builds_typed_definitions_with_inheritance` (keys); manual test on a 16:9 screen
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-HUD-001 – R-HUD-012 (12 requirements; 8 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-HUD-009, R-HUD-010, R-HUD-011 implemented (app 0.3.1): drift status line and flight-path marker; `graphics.brightness` 0.5–2 as a gamma; `flight.lighting` with rim light and distant dots. R-HUD-010 and R-HUD-011 open notes resolved; R-HUD-009 keeps the original-cockpit question |
+| 1.8.0 | 2026-11-11 | R-HUD-013 wide-screen side bands |

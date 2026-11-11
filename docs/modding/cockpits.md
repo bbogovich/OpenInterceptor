@@ -33,6 +33,7 @@ cockpits:
 | `model_scale` | `1` | Model units → metres. |
 | `instruments` | — | `name: [x, y, w, h]` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`, `status` (the throttle/speed line; without it the line is plain screen text at the top left). A rectangle more than five times wider than tall is a **strip** and gets the instrument's one-line form (below). |
 | `anchors` | none | 3D cockpits: `name: {at, normal, size}` — the instrument drawn in perspective on the model (below). |
+| `wide` | none | Wide screens: side bands beside 4:3 art: `{blackout: true, color: [0,0,0], from: 305, left: images/left.png, right: images/right.png}`. The X-COM cockpits black out the dashboard sides from the height where each image's edges become solid (A 305, B 382, C 352) ([R-HUD-013](../specification/requirements/cockpit-hud.md#r-hud-013-wide-screen-side-bands)). |
 
 All instrument text — MFD pages, the message line, gauge labels, the `power` and `systems`
 labels — is sized to fit its instrument's box, so a small rectangle gets small text rather than
