@@ -133,7 +133,10 @@ pub fn telemetry_idle(screen: &str) -> String {
 }
 
 /// The `telemetry` message: what the console shows, read from the world.
-pub fn telemetry(world: &World, player: ShipId, time: f64) -> String {
+///
+/// `hits` is `[hits on the player's craft, hits that reached its hull]` since the battle
+/// began; the console shows static when either rises.
+pub fn telemetry(world: &World, player: ShipId, time: f64, hits: [u32; 2]) -> String {
     let rules = &world.rules;
     let Some(me) = world.get(player) else {
         return Obj::new().str("type", "telemetry").num("time", time).bool("alive", false).end();
@@ -146,6 +149,8 @@ pub fn telemetry(world: &World, player: ShipId, time: f64) -> String {
         .str("type", "telemetry")
         .num("time", time)
         .bool("alive", true)
+        .num("hits", hits[0] as f64)
+        .num("hull_hits", hits[1] as f64)
         .str("craft", &class.name)
         .nums("velocity", &[v.x as f64, v.y as f64, v.z as f64])
         .num("throttle", me.throttle as f64)
@@ -296,8 +301,12 @@ mod tests {
         let s = w.get_mut(me).unwrap();
         s.velocity = Vec3::new(20.0, 0.0, -100.0);
         s.target = Some(foe);
-        let t = super::super::json::parse(&telemetry(&w, me, 12.5)).unwrap();
+        let t = super::super::json::parse(&telemetry(&w, me, 12.5, [3, 1])).unwrap();
         assert_eq!(t.get("velocity"), Some(&Json::Arr(vec![Json::Num(20.0), Json::Num(0.0), Json::Num(100.0)])));
+        assert_eq!(
+            (t.get("hits").and_then(Json::as_f64), t.get("hull_hits").and_then(Json::as_f64)),
+            (Some(3.0), Some(1.0))
+        );
         let target = t.get("target").unwrap();
         assert_eq!(target.get("distance").and_then(Json::as_f64), Some(1000.0));
         let Some(Json::Arr(q)) = target.get("rotation") else { panic!() };
@@ -305,7 +314,7 @@ mod tests {
         assert!((q[1] - turn.y as f64).abs() < 1e-3 && (q[3] - turn.w as f64).abs() < 1e-3, "{q:?}");
         // With the player rolled, the same target appears rotated the other way.
         w.get_mut(me).unwrap().rotation = turn;
-        let t = super::super::json::parse(&telemetry(&w, me, 13.0)).unwrap();
+        let t = super::super::json::parse(&telemetry(&w, me, 13.0, [3, 1])).unwrap();
         let Some(Json::Arr(q)) = t.get("target").unwrap().get("rotation") else { panic!() };
         assert!((q[3].as_f64().unwrap() - 1.0).abs() < 1e-3, "same orientation as the player: identity");
     }

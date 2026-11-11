@@ -31,6 +31,7 @@ oi-telemetry { display: grid; grid-template-columns: repeat(auto-fit, minmax(140
 oi-telemetry .cell { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 oi-telemetry .label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
 oi-telemetry .value { font: 20px/1.2 monospace; color: var(--hot); }
+oi-telemetry .value[data-k="awake"] { font-size: 13px; }
 
 oi-throttle { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: var(--panel);
   border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
@@ -42,6 +43,13 @@ oi-actions .buttons { display: grid; grid-template-columns: repeat(auto-fill, mi
 oi-actions button { min-height: 48px; padding: 6px; border-radius: 6px; border: 1px solid var(--line);
   background: #102417; color: var(--ink); font: 13px/1.15 var(--font); }
 oi-actions button.hold { border-style: dashed; }
-oi-actions button.down { background: var(--hot); color: #022; }
+/* Pressed: fills with the border colour, text black (tap or hold). */
+oi-actions button.down { background: var(--line); border-color: var(--line); color: #000; }
+oi-actions button { -webkit-tap-highlight-color: transparent; transition: background-color 60ms; }
+
+/* Hit static: a full-screen overlay that never takes a touch. */
+oi-static { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 10; mix-blend-mode: screen; }
+oi-static canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+@media (prefers-reduced-motion: reduce) { oi-static { display: none; } }
 oi-actions button:disabled { color: var(--off); border-color: var(--off); background: transparent; }
 oi-actions button:disabled::after { content: "not fitted"; display: block; font-size: 10px; }

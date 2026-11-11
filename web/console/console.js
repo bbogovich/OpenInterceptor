@@ -186,14 +186,25 @@ class OiActions extends HTMLElement {
         b.textContent = a.label;
         b.className = a.kind;
         b.disabled = !a.available; // not fitted on this craft: shown, but disabled
-        if (a.kind === "hold") {
-          const down = (ev) => { ev.preventDefault(); b.classList.add("down"); send({ type: "action", name: a.name, value: 1 }); };
-          const up = () => { if (b.classList.contains("down")) { b.classList.remove("down"); send({ type: "action", name: a.name, value: 0 }); } };
-          b.addEventListener("pointerdown", down);
-          for (const t of ["pointerup", "pointercancel", "pointerleave"]) b.addEventListener(t, up);
-        } else {
-          b.addEventListener("click", () => send({ type: "action", name: a.name, value: 1 }));
-        }
+        // Every button lights up while pressed (class "down"): a hold button for as long
+        // as it is held, a tap for at least MIN_LIT ms so a quick tap is still seen.
+        let since = 0;
+        let lit = null;
+        const press = (ev) => {
+          ev.preventDefault();
+          clearTimeout(lit);
+          since = performance.now();
+          b.classList.add("down");
+          send({ type: "action", name: a.name, value: 1 });
+        };
+        const release = () => {
+          if (!b.classList.contains("down")) return;
+          if (a.kind === "hold") send({ type: "action", name: a.name, value: 0 });
+          const left = Math.max(0, MIN_LIT - (performance.now() - since));
+          lit = setTimeout(() => b.classList.remove("down"), left);
+        };
+        b.addEventListener("pointerdown", press);
+        for (const t of ["pointerup", "pointercancel", "pointerleave"]) b.addEventListener(t, release);
         box.appendChild(b);
       }
       this.appendChild(section);
@@ -201,6 +212,55 @@ class OiActions extends HTMLElement {
   }
 }
 
+/** A brief burst of static over the console when the player's craft is hit: lighter
+ *  when the shields take it, stronger when the hull does (telemetry `hits` and
+ *  `hull_hits` are running counts; a rise means new hits). Drawn at low resolution and
+ *  scaled up, so it costs little; fades out over STATIC_MS. */
+class OiStatic extends HTMLElement {
+  connectedCallback() {
+    this.innerHTML = `<canvas width="160" height="100"></canvas>`;
+    const canvas = this.querySelector("canvas");
+    const g = canvas.getContext("2d");
+    const img = g.createImageData(canvas.width, canvas.height);
+    let last = null; // [hits, hull_hits] seen
+    let until = 0;
+    let strength = 0;
+    let frame = 0;
+    const draw = (now) => {
+      const left = until - now;
+      if (left <= 0) { this.style.opacity = 0; frame = 0; return; }
+      // Grey noise with faint scan lines; the overlay's opacity fades it out.
+      for (let i = 0, y = 0; y < canvas.height; y++) {
+        const band = y % 3 === 0 ? 0.6 : 1;
+        for (let x = 0; x < canvas.width; x++, i += 4) {
+          const v = Math.random() * 255 * band;
+          img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+          img.data[i + 3] = 255;
+        }
+      }
+      g.putImageData(img, 0, 0);
+      this.style.opacity = strength * (left / STATIC_MS);
+      frame = requestAnimationFrame(draw);
+    };
+    link.addEventListener("telemetry", (e) => {
+      const t = e.detail;
+      if (!t.alive || t.hits === undefined) { last = null; return; }
+      const now = [t.hits, t.hull_hits];
+      if (last && (now[0] > last[0] || now[1] > last[1])) {
+        const hull = now[1] > last[1];
+        strength = Math.max(hull ? 0.55 : 0.25, until > performance.now() ? strength : 0);
+        until = performance.now() + STATIC_MS;
+        if (!frame) frame = requestAnimationFrame(draw);
+      }
+      last = now;
+    });
+  }
+}
+
+const MIN_LIT = 150; // ms a tapped button stays lit
+const STATIC_MS = 400; // ms of static after a hit
+
+customElements.define("oi-static", OiStatic);
 customElements.define("oi-pairing", OiPairing);
 customElements.define("oi-telemetry", OiTelemetry);
 customElements.define("oi-throttle", OiThrottle);

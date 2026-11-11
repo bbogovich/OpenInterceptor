@@ -224,6 +224,9 @@ pub struct FlightSession {
     menu_open: bool,
     /// Seconds since the last telemetry message to the console.
     console_clock: f32,
+    /// Hits on the player's craft so far, and how many reached the hull: the console plays
+    /// a burst of static when either count rises.
+    console_hits: [u32; 2],
     /// The craft class the console's catalogue was built for (resent when it changes).
     console_class: Option<crate::content::rules::ShipClassId>,
     /// The keys help overlay (`?` or Shift+F1) is showing; the battle pauses under it.
@@ -393,6 +396,7 @@ impl FlightSession {
             menu_open: false,
             help_open: false,
             console_clock: 0.0,
+            console_hits: [0, 0],
             console_class: None,
             mouse_flight: false,
             accumulator: 0.0,
@@ -582,6 +586,12 @@ impl FlightSession {
                     }
                 }
                 for e in &self.world.events {
+                    if let SimEvent::Hit { ship, shield, .. } = e {
+                        if *ship == self.player {
+                            self.console_hits[0] += 1;
+                            self.console_hits[1] += u32::from(!*shield);
+                        }
+                    }
                     if let SimEvent::Captured { captor, prize } = e {
                         if *captor == self.player {
                             let class = self.world.ships[prize.index as usize].class;
@@ -781,7 +791,7 @@ impl FlightSession {
         self.console_clock += get_frame_time();
         if self.console_clock >= 0.05 {
             self.console_clock = 0.0;
-            server.broadcast(&protocol::telemetry(&self.world, self.player, self.world.time));
+            server.broadcast(&protocol::telemetry(&self.world, self.player, self.world.time, self.console_hits));
         }
         ctx.remote.merge_into(raw, get_time());
     }
