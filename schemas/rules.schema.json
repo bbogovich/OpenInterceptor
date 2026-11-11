@@ -92,6 +92,10 @@
               "chance": {"description": "chance a shot destroys the missile (default 35%)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
               "energy": {"description": "energy per shot (default 4)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
             }},
+          "probe": {"description": "sensor and jamming probes", "type": "object", "additionalProperties": false, "properties": {
+              "sensors": {"description": "its side's radar sees every contact this close to the probe", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "jamming": {"description": "hostile ships this close have half radar range and lock missiles at half speed", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -139,6 +143,10 @@
               "rate": {"description": "shots per second (default 3)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "chance": {"description": "chance a shot destroys the missile (default 35%)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
               "energy": {"description": "energy per shot (default 4)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
+          "probe": {"description": "sensor and jamming probes", "type": "object", "additionalProperties": false, "properties": {
+              "sensors": {"description": "its side's radar sees every contact this close to the probe", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "jamming": {"description": "hostile ships this close have half radar range and lock missiles at half speed", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
             }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},

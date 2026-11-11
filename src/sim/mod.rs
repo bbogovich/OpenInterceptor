@@ -1162,6 +1162,37 @@ mod tests {
     }
 
     #[test]
+    fn probes_extend_radar_and_jam_their_enemies() {
+        use crate::content::rules::ProbeDef;
+        let mut rules = (*rules()).clone();
+        let fighter = rules.ship_id("fighter").unwrap();
+        let raider = rules.ship_id("raider").unwrap();
+        // In this test the "raider" class is a probe.
+        rules.ships[raider.0 as usize].probe = Some(ProbeDef { sensors: 3000.0, jamming: 0.0 });
+        rules.flight.radar_range = 6000.0;
+        let rules = Arc::new(rules);
+        let mut w = World::new(rules.clone(), shapes(&rules), 1);
+        let (blue, red) = (rules.faction_id("blue").unwrap(), rules.faction_id("red").unwrap());
+        let me = w.spawn(fighter, blue, "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let far = w.spawn(fighter, red, "far", Vec3::new(0.0, 0.0, -10_000.0), Quat::IDENTITY, Pilot::External);
+        let seen = |w: &World| systems::on_radar(w, w.get(me).unwrap(), w.get(far).unwrap());
+        assert!(!seen(&w), "beyond radar range");
+        let probe = w.spawn(raider, blue, "probe", Vec3::new(0.0, 0.0, -8000.0), Quat::IDENTITY, Pilot::External);
+        assert!(seen(&w), "inside our probe's sensor range");
+        w.get_mut(probe).unwrap().alive = false;
+        assert!(!seen(&w), "gone with the probe");
+        // A hostile jamming probe halves our radar range: 4 km away is no longer seen.
+        let mut r2 = (*rules).clone();
+        r2.ships[raider.0 as usize].probe = Some(ProbeDef { sensors: 0.0, jamming: 1000.0 });
+        w.rules = Arc::new(r2);
+        w.get_mut(far).unwrap().position = Vec3::new(0.0, 0.0, -4000.0);
+        assert!(seen(&w));
+        w.spawn(raider, red, "jammer", Vec3::new(0.0, 0.0, -500.0), Quat::IDENTITY, Pilot::External);
+        assert!(systems::jammed(&w, w.get(me).unwrap()));
+        assert!(!seen(&w), "jammed: half range");
+    }
+
+    #[test]
     fn station_modules_mount_follow_and_fall_with_their_hub() {
         let r = rules();
         let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape::sphere(5.0)).collect();

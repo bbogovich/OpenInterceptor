@@ -228,8 +228,7 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
                     continue;
                 }
                 let s = &f.world.ships[id.index as usize];
-                let dist = s.position.distance(me.position);
-                if dist > rules.flight.radar_range && rules.ship(s.class).max_speed > 0.0 {
+                if !crate::sim::systems::on_radar(f.world, me, s) {
                     continue;
                 }
                 let local = me.rotation.inverse() * (s.position - me.position);

@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Probes in battle. The meshes are the original SENSPROB and ECMPROB (verified names);
+# the original launches probes from the strategy map, so their battle effects and
+# numbers here are DERIVED: a sensor probe extends its side's radar, an ECM probe jams
+# hostile ships near it (half radar range, half missile-lock speed).
+
+modelsets:
+  sensor_probe: {intact: original:SENSPROB, destroyed_effect: explosion_fighter}
+  ecm_probe: {intact: original:ECMPROB, destroyed_effect: explosion_fighter}
+
+objects:
+  sensor_probe:
+    name: Sensor probe
+    kind: probe
+    faction: xcom
+    model_set: sensor_probe
+    hit_points: 60
+    probe: {sensors: 8km}
+  ecm_probe:
+    name: ECM probe
+    kind: probe
+    faction: xcom
+    model_set: ecm_probe
+    hit_points: 60
+    probe: {jamming: 2.5km}

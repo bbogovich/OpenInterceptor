@@ -100,6 +100,19 @@ impl PointDefence {
     }
 }
 
+/// A probe's effects on the battle's sensors.
+///
+/// ```yaml
+/// probe: {sensors: 8km, jamming: 0}
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ProbeDef {
+    /// Its side's radar shows every contact within this distance of the probe, metres.
+    pub sensors: f32,
+    /// Hostile ships within this distance are jammed: half radar range, slower locks.
+    pub jamming: f32,
+}
+
 /// What sort of object a ship class is. Affects defaults and how the HUD lists it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShipKind {
@@ -200,6 +213,8 @@ pub struct ShipClass {
     pub shield_generator: bool,
     /// Guns that shoot down hostile missiles, if fitted.
     pub point_defence: Option<PointDefence>,
+    /// Probes: what this object does for its side's sensors and to its enemies'.
+    pub probe: Option<ProbeDef>,
     /// Model references for wreckage chunks.
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
@@ -1422,6 +1437,13 @@ fn ship_class(
         modules: Vec::new(), // resolved once every class is known
         shield_generator: g.bool("shield_generator").unwrap_or(false),
         point_defence: g.node("point_defence").map(|n| PointDefence::parse(Get(n))),
+        probe: g.node("probe").map(|n| {
+            let p = Get(n);
+            ProbeDef {
+                sensors: p.qty("sensors", Unit::Distance).unwrap_or(0.0).max(0.0),
+                jamming: p.qty("jamming", Unit::Distance).unwrap_or(0.0).max(0.0),
+            }
+        }),
         repair_rate: g.num("repair_rate").unwrap_or(damage.repair_rate).max(0.0),
         capturable: g
             .bool("capturable")

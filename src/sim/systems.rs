@@ -451,6 +451,39 @@ pub fn detectable(w: &World, observer: &Ship, other: &Ship) -> bool {
     }
 }
 
+/// Whether `ship` is inside the jamming field of a live probe hostile to it.
+pub fn jammed(w: &World, ship: &Ship) -> bool {
+    w.ships.iter().any(|p| {
+        p.alive
+            && w.rules.hostile(p.faction, ship.faction)
+            && w.rules
+                .ship(p.class)
+                .probe
+                .is_some_and(|d| d.jamming > 0.0 && p.position.distance(ship.position) <= d.jamming)
+    })
+}
+
+/// Whether `other` shows on `observer`'s radar: detectable (not hidden by a cloak), and
+/// within radar range — halved while jammed — or within the sensor range of one of the
+/// observer's side's probes. Stations and mines (objects that never move) always show.
+pub fn on_radar(w: &World, observer: &Ship, other: &Ship) -> bool {
+    if !detectable(w, observer, other) {
+        return false;
+    }
+    if w.rules.ship(other.class).max_speed <= 0.0 {
+        return true;
+    }
+    let range = w.rules.flight.radar_range * if jammed(w, observer) { 0.5 } else { 1.0 };
+    if observer.position.distance(other.position) <= range {
+        return true;
+    }
+    w.ships.iter().any(|p| {
+        p.alive
+            && p.faction == observer.faction
+            && w.rules.ship(p.class).probe.is_some_and(|d| p.position.distance(other.position) <= d.sensors)
+    })
+}
+
 /// Cloaks hide their ships from sensors and shake off missiles; ECM confuses missiles.
 fn countermeasures(w: &mut World, dt: f32) {
     // Sensors lose cloaked targets.

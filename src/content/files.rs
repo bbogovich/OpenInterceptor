@@ -214,6 +214,14 @@ fn ship() -> Ty {
             ]),
             "guns that shoot down hostile missiles",
         ),
+        f(
+            "probe",
+            Ty::Struct(vec![
+                f("sensors", dist(), "its side's radar sees every contact this close to the probe"),
+                f("jamming", dist(), "hostile ships this close have half radar range and lock missiles at half speed"),
+            ]),
+            "sensor and jamming probes",
+        ),
     ])
 }
 
