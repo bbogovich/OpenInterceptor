@@ -130,6 +130,35 @@ debris:
     life: 30s
     chunks: {models: [models/chunk2.obj, models/chunk3.obj], count: 10, speed: [30, 100]}
 
+  guard_turret:
+    pieces: [models/guard_turret_debris1.obj, models/guard_turret_debris2.obj, models/guard_turret_debris3.obj]
+    pick: [2, 3]
+    speed: [10, 40]
+    spin: [30, 120]
+    life: 15s
+    chunks: {models: [models/chunk2.obj, models/chunk3.obj], count: 3, speed: [30, 80]}
+  guard_shield_generator:
+    pieces: [models/guard_shield_generator_debris1.obj, models/guard_shield_generator_debris2.obj, models/guard_shield_generator_debris3.obj]
+    pick: [2, 3]
+    speed: [10, 40]
+    spin: [30, 120]
+    life: 15s
+    chunks: {models: [models/chunk2.obj, models/chunk3.obj], count: 3, speed: [30, 80]}
+  dominion_turret_pod:
+    pieces: [models/dominion_turret_pod_debris1.obj, models/dominion_turret_pod_debris2.obj, models/dominion_turret_pod_debris3.obj]
+    pick: [2, 3]
+    speed: [10, 40]
+    spin: [30, 120]
+    life: 15s
+    chunks: {models: [models/chunk2.obj, models/chunk3.obj], count: 3, speed: [30, 80]}
+  dominion_shield_pod:
+    pieces: [models/dominion_shield_pod_debris1.obj, models/dominion_shield_pod_debris2.obj, models/dominion_shield_pod_debris3.obj]
+    pick: [2, 3]
+    speed: [10, 40]
+    spin: [30, 120]
+    life: 15s
+    chunks: {models: [models/chunk2.obj, models/chunk3.obj], count: 3, speed: [30, 80]}
+
 modelsets:
   cargo_orb:
     intact: models/cargo_orb.obj
@@ -250,3 +279,39 @@ modelsets:
       - {below: 33%, textures: {guard_hull: textures/guard_hull_burnt.png}}
     debris: victory
     destroyed_effect: explosion_large
+  guard_turret:
+    intact: models/guard_turret.obj
+    damage:
+      - {below: 66%, textures: {guard_turret: textures/guard_turret_scorched.png}}
+      - {below: 33%, textures: {guard_turret: textures/guard_turret_burnt.png}}
+    states:
+      destroyed: {textures: {guard_turret: textures/guard_turret_wrecked.png}}
+    debris: guard_turret
+    destroyed_effect: explosion_small
+  guard_shield_generator:
+    intact: models/guard_shield_generator.obj
+    damage:
+      - {below: 66%, textures: {guard_shield_generator: textures/guard_shield_generator_scorched.png}}
+      - {below: 33%, textures: {guard_shield_generator: textures/guard_shield_generator_burnt.png}}
+    states:
+      destroyed: {textures: {guard_shield_generator: textures/guard_shield_generator_wrecked.png}}
+    debris: guard_shield_generator
+    destroyed_effect: explosion_small
+  dominion_turret_pod:
+    intact: models/dominion_turret_pod.obj
+    damage:
+      - {below: 66%, textures: {dominion_turret_pod: textures/dominion_turret_pod_scorched.png}}
+      - {below: 33%, textures: {dominion_turret_pod: textures/dominion_turret_pod_burnt.png}}
+    states:
+      destroyed: {textures: {dominion_turret_pod: textures/dominion_turret_pod_wrecked.png}}
+    debris: dominion_turret_pod
+    destroyed_effect: explosion_small
+  dominion_shield_pod:
+    intact: models/dominion_shield_pod.obj
+    damage:
+      - {below: 66%, textures: {dominion_shield_pod: textures/dominion_shield_pod_scorched.png}}
+      - {below: 33%, textures: {dominion_shield_pod: textures/dominion_shield_pod_burnt.png}}
+    states:
+      destroyed: {textures: {dominion_shield_pod: textures/dominion_shield_pod_wrecked.png}}
+    debris: dominion_shield_pod
+    destroyed_effect: explosion_small

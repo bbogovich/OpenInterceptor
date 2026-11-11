@@ -351,16 +351,19 @@ def asteroid_rock():
 
 def damaged(base, level, seed):
     """A copy of `base` with soot blotches (level 1, scorched) or heavier blackening and
-    burn-through holes (level 2, burnt). Blotches are noise-edged discs; positions wrap
+    burn-through holes (level 2, burnt), or a wreck (level 3: a station module that has
+    been destroyed but stays mounted - charred almost black, paint drained of colour,
+    cracked, with ember-lit holes). Blotches are noise-edged discs; positions wrap
     around the texture edges so the seam of a lathed hull does not cut them off."""
     c = base.copy()
     rng = random.Random(seed)
     n = noise_grid(seed + 1, c.w, c.h, 14)
-    count = 9 if level == 1 else 18
+    count = {1: 9, 2: 18, 3: 26}[level]
     blots = [(rng.uniform(0, c.w), rng.uniform(0, c.h), rng.uniform(0.07, 0.16) * c.w) for _ in range(count)]
     soot = (0.05, 0.04, 0.035)
-    strength = 0.8 if level == 1 else 0.95
-    overall = 0.0 if level == 1 else 0.28
+    strength = {1: 0.8, 2: 0.95, 3: 1.0}[level]
+    overall = {1: 0.0, 2: 0.28, 3: 0.55}[level]
+    grey = 0.7 if level == 3 else 0.0  # how far the paint is drained toward grey
 
     # Build the soot mask blot by blot, visiting only the pixels near each blot.
     mask = [[0.0] * c.w for _ in range(c.h)]
@@ -379,12 +382,21 @@ def damaged(base, level, seed):
 
     def shade(x, y, p):
         m = max(0.0, min(1.0, mask[y][x] * 1.6)) * strength
-        q = [v * (1 - overall) for v in p]
+        lum = 0.3 * p[0] + 0.55 * p[1] + 0.15 * p[2]
+        q = [(v + (lum - v) * grey) * (1 - overall) for v in p]
         return mix(q, soot, m)
 
     c.shade(shade)
-    if level == 2:
-        for _ in range(6):  # burn-through holes with glowing rims
+    if level == 3:
+        for _ in range(9):  # cracks: dark random walks across the plating
+            x, y = rng.uniform(0, c.w), rng.uniform(0, c.h)
+            a = rng.uniform(0, 2 * math.pi)
+            for _ in range(rng.randrange(25, 60)):
+                c.disc(x, y, 1.1, (0.0, 0.0, 0.0), wrap=True)
+                a += rng.uniform(-0.6, 0.6)
+                x, y = x + math.cos(a) * 2, y + math.sin(a) * 2
+    if level >= 2:
+        for _ in range(6 if level == 2 else 10):  # burn-through holes with glowing rims
             x, y, r = rng.uniform(0, c.w), rng.uniform(0, c.h), rng.uniform(0.008, 0.02) * c.w
             c.glow(x, y, r * 2.2, (1.0, 0.45, 0.08), 0.5, wrap=True)
             c.disc(x, y, r * 1.25, (0.75, 0.25, 0.04), wrap=True)
@@ -392,22 +404,82 @@ def damaged(base, level, seed):
     return c
 
 
+def module_drum(base, band, trim, flute, seed, badge=None):
+    """Around-layout texture for a lathed station module (u around, v up the profile):
+    vertical fluting (the art-deco column look), two coloured bands with trim lines and
+    rivets, and an optional badge painter called at two places around."""
+    c = Canvas(256, 256)
+    c.shade(lambda x, y, p: base if (x // 8) % 2 == 0 else mix(base, flute, 0.35))
+    for y0, y1 in ((40, 72), (176, 200)):
+        c.rect(0, y0, 256, y1, band)
+        c.rect(0, y0 - 3, 256, y0, trim)
+        c.rect(0, y1, 256, y1 + 3, trim)
+        for x in range(4, 256, 10):
+            c.disc(x, y0 + 5, 1.2, trim, wrap=True)
+            c.disc(x, y1 - 5, 1.2, trim, wrap=True)
+    if badge:
+        for cx in (64, 192):
+            badge(c, cx, 128)
+    grime(c, seed, 0.1, 18)
+    return c
+
+
+def guard_turret():
+    cream, red, chrome = (0.93, 0.88, 0.72), (0.78, 0.11, 0.08), (0.85, 0.87, 0.92)
+    return module_drum(cream, red, chrome, (0.6, 0.5, 0.35), 1101,
+                       lambda c, x, y: winged_star(c, x, y, 13, (0.95, 0.9, 0.75), (0.08, 0.62, 0.6), (0.1, 0.1, 0.12)))
+
+
+def guard_shield_generator():
+    chrome, teal, red = (0.80, 0.83, 0.88), (0.08, 0.62, 0.60), (0.78, 0.11, 0.08)
+    return module_drum(chrome, teal, red, (0.4, 0.42, 0.5), 1201)
+
+
+def dominion_turret_pod():
+    violet, black, green = (0.40, 0.14, 0.60), (0.07, 0.06, 0.09), (0.55, 1.0, 0.25)
+    return module_drum(violet, black, green, (0.12, 0.04, 0.18), 1301,
+                       lambda c, x, y: eclipse_sigil(c, x, y, 14, green, black, (0.62, 0.3, 0.85)))
+
+
+def dominion_shield_pod():
+    """The shield pod's glowing core: swirling bands of acid green energy."""
+    c = Canvas(256, 256)
+    n = noise_grid(1401, 256, 256, 32, 4, step=2)
+    dark, mid, hot = (0.05, 0.25, 0.05), (0.35, 0.85, 0.15), (0.85, 1.0, 0.6)
+
+    def energy(x, y, p):
+        # Bands that twist with the noise: a sine of height bent by the noise value.
+        t = 0.5 + 0.5 * math.sin(y / 256 * 2 * math.pi * 5 + n[y][x] * 9)
+        return mix(dark, mid, t) if t < 0.8 else mix(mid, hot, (t - 0.8) / 0.2)
+
+    c.shade(energy)
+    return c
+
+
+# Station module textures also get a `_wrecked` variant (a destroyed module left in place).
+MODULE_TEXTURES = {"guard_turret", "guard_shield_generator", "dominion_turret_pod", "dominion_shield_pod"}
+
 TEXTURES = [
     ("guard_hull", guard_hull), ("senate_hull", senate_hull), ("cartel_hull", cartel_hull),
     ("raider_hull", raider_hull), ("dominion_hull", dominion_hull), ("robot_tin", robot_tin),
     ("guard_station", guard_station), ("prospector_hull", prospector_hull), ("asteroid_rock", asteroid_rock),
+    ("guard_turret", guard_turret), ("guard_shield_generator", guard_shield_generator),
+    ("dominion_turret_pod", dominion_turret_pod), ("dominion_shield_pod", dominion_shield_pod),
 ]
 
 
 def build_all():
-    """Paints and writes every texture and its two damage variants. Returns the list of
+    """Paints and writes every texture and its damage variants. Returns the list of
     written file names."""
     os.makedirs(OUT, exist_ok=True)
     written = []
     for i, (name, painter) in enumerate(TEXTURES):
         base = painter()
-        for suffix, img in (("", base), ("_scorched", damaged(base, 1, 1000 + i * 10)),
-                            ("_burnt", damaged(base, 2, 2000 + i * 10))):
+        variants = [("", base), ("_scorched", damaged(base, 1, 1000 + i * 10)),
+                    ("_burnt", damaged(base, 2, 2000 + i * 10))]
+        if name in MODULE_TEXTURES:
+            variants.append(("_wrecked", damaged(base, 3, 3000 + i * 10)))
+        for suffix, img in variants:
             img.save(os.path.join(OUT, f"{name}{suffix}.png"))
             written.append((f"{name}{suffix}.png", img.w, img.h))
     return written

@@ -788,7 +788,8 @@ def make_debris(model, pieces, seed):
     with a plane across its longest dimension (tilted a little at random). Pieces stay in
     the model's own coordinates, so placed at the origin they reassemble the ship."""
     rng = random.Random(seed)
-    groups = [list(model.parts)]
+    # Attachment points (slot_* groups) mark the intact model only; they are left out.
+    groups = [[p for p in model.parts if not p.name.startswith("slot_")]]
     while len(groups) < pieces:
         groups.sort(key=lambda g: -_extent(g))
         g = groups.pop(0)

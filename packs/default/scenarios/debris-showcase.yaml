@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: debris-showcase
+order: 90
+title: "Debris and damage showcase"
+description: >-
+  Every class at 2% hull, lined up: one shot each shows its explosion, shock wave and debris; damaged textures show on the way. Nothing shoots back.
+player: choose
+player_position: [0, 100, 600]
+starfield_seed: 7
+objects:
+  comet: {class: comet, faction: neutral, position: [-800, 0, -1200], hull: 0.02}
+  meteor: {class: meteor, faction: neutral, position: [-400, 0, -1200], hull: 0.02}
+  thunderbolt: {class: thunderbolt, faction: neutral, position: [0, 0, -1200], hull: 0.02}
+  scout_saucer: {class: scout_saucer, faction: neutral, position: [400, 0, -1200], hull: 0.02}
+  raider_saucer: {class: raider_saucer, faction: neutral, position: [800, 0, -1200], hull: 0.02}
+  robot_sentinel: {class: robot_sentinel, faction: neutral, position: [-800, 0, -1900], hull: 0.02}
+  grappler: {class: grappler, faction: neutral, position: [-400, 0, -1900], hull: 0.02}
+  cargo_orb: {class: cargo_orb, faction: neutral, position: [0, 0, -3400], hull: 0.02}
+  hotrod: {class: hotrod, faction: neutral, position: [400, 0, -1900], hull: 0.02}
+  senate_patrol: {class: senate_patrol, faction: neutral, position: [800, 0, -1900], hull: 0.02}
+  cartel_freighter: {class: cartel_freighter, faction: neutral, position: [-800, 0, -4100], hull: 0.02}
+  prospector_hauler: {class: prospector_hauler, faction: neutral, position: [-400, 0, -2600], hull: 0.02}
+  dreadnought: {class: dreadnought, faction: neutral, position: [0, 0, -4100], hull: 0.02}
+  dominion_outpost: {class: dominion_outpost, faction: neutral, position: [400, 0, -4100], hull: 0.02}

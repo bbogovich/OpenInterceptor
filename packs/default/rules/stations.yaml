@@ -4,6 +4,15 @@
 
 objects:
   guard_station:
+    modules:
+      - {slot: turret1, class: guard_turret}
+      - {slot: turret2, class: guard_turret}
+      - {slot: turret3, class: guard_turret}
+      - {slot: turret4, class: guard_turret}
+      - {slot: turret5, class: guard_turret}
+      - {slot: turret6, class: guard_turret}
+      - {slot: shield1, class: guard_shield_generator}
+      - {slot: shield2, class: guard_shield_generator}
     name: Guard station
     description: "An art-deco spire with a docking ring: home of the Interplanetary Guard."
     model_set: guard_station
@@ -12,6 +21,14 @@ objects:
     shields: 1500
     armor: 2000
   dominion_outpost:
+    modules:
+      - {slot: pod1, class: dominion_turret_pod}
+      - {slot: pod2, class: dominion_turret_pod}
+      - {slot: pod3, class: dominion_turret_pod}
+      - {slot: pod4, class: dominion_turret_pod}
+      - {slot: pod5, class: dominion_turret_pod}
+      - {slot: pod6, class: dominion_turret_pod}
+      - {slot: shield1, class: dominion_shield_pod}
     name: Dominion outpost
     description: A dark spiked hub of the Umbral Dominion.
     model_set: dominion_outpost
@@ -34,3 +51,37 @@ objects:
     hit_points: 30
     missiles: {mine_warhead: 1}
     behaviour: space_mine
+
+  # Station modules (mounted on the stations above).
+  guard_turret:
+    name: Guard ray turret
+    model_set: guard_turret
+    faction: guard
+    hit_points: 300
+    armor: 100
+    beams: [heat_ray, heat_ray]
+    turret_arc: 180
+    behaviour: station_turret
+  guard_shield_generator:
+    name: Force-field generator
+    model_set: guard_shield_generator
+    faction: guard
+    hit_points: 500
+    armor: 150
+    shield_generator: true
+  dominion_turret_pod:
+    name: Death-ray pod
+    model_set: dominion_turret_pod
+    faction: dominion
+    hit_points: 280
+    armor: 80
+    beams: [death_ray]
+    turret_arc: 180
+    behaviour: station_turret
+  dominion_shield_pod:
+    name: Shield pod
+    model_set: dominion_shield_pod
+    faction: dominion
+    hit_points: 450
+    armor: 120
+    shield_generator: true

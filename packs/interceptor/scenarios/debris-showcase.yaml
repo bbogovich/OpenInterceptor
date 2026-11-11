@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: debris-showcase
+order: 90
+title: "Debris and damage showcase"
+description: >-
+  Every class at 2% hull, lined up: one shot each shows its explosion, shock wave and debris; damaged textures show on the way. Nothing shoots back.
+player: choose
+player_position: [0, 100, 600]
+starfield_seed: 7
+objects:
+  lightning: {class: lightning, position: [-800, 0, -1200], hull: 0.02}
+  firestar: {class: firestar, position: [-400, 0, -1200], hull: 0.02}
+  avenger: {class: avenger, position: [0, 0, -1200], hull: 0.02}
+  wraith: {class: wraith, position: [400, 0, -1200], hull: 0.02}
+  spectre: {class: spectre, position: [800, 0, -1200], hull: 0.02}
+  phantasm: {class: phantasm, position: [-800, 0, -1900], hull: 0.02}
+  shade: {class: shade, position: [-400, 0, -1900], hull: 0.02}
+  harbinger: {class: harbinger, position: [0, 0, -1900], hull: 0.02}
+  spirit: {class: spirit, position: [400, 0, -1900], hull: 0.02}
+  drone: {class: drone, position: [800, 0, -1900], hull: 0.02}
+  pirate_lightning: {class: pirate_lightning, position: [-800, 0, -2600], hull: 0.02}
+  corporate_firestar: {class: corporate_firestar, position: [-400, 0, -2600], hull: 0.02}
+  xcom_freighter: {class: xcom_freighter, position: [0, 0, -2600], hull: 0.02}
+  patton: {class: patton, position: [400, 0, -4100], hull: 0.02}
+  alien_outpost: {class: alien_outpost, position: [800, 0, -4100], hull: 0.02}

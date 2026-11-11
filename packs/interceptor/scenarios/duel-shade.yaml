@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: duel-shade
+order: 63
+title: "Duel: shade"
+description: >-
+  You against 1 shade: test how this enemy flies and fights at each difficulty (D in the launcher).
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 7
+objects:
+  shade1: {class: shade, ai: enemy, position: [0, 0, -4000], speed: 250}

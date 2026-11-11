@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: escort
+order: 24
+title: "Escort: X-COM freighter"
+description: >-
+  Escort an X-COM freighter while Wraiths and a Spectre try to destroy it.
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 7
+objects:
+  freighter: {class: xcom_freighter, ai: target, position: [300, -50, -600], speed: 120}
+  wraith1: {class: wraith, ai: enemy, position: [-1500, 300, -6000], speed: 300}
+  wraith2: {class: wraith, ai: enemy, position: [0, 400, -6300], speed: 300}
+  spectre1: {class: spectre, ai: enemy, position: [1500, 300, -6100], speed: 300}

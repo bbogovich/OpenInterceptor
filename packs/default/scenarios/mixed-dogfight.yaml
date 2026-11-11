@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: mixed-dogfight
+order: 40
+title: "Mixed dogfight"
+description: >-
+  Guard rockets, Senate patrols and Prospector haulers against saucers, robots and Black Comet hot-rods: everyone hostile to someone.
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 7
+objects:
+  w1: {class: comet, ai: wingman, leader: player, position: [-60, 0, 40], offset: [-60, 0, 40]}
+  senate1: {class: senate_patrol, ai: enemy, position: [-800, 200, -500], speed: 300}
+  hauler: {class: prospector_hauler, ai: target, position: [900, -200, -1200], speed: 100}
+  scout1: {class: scout_saucer, ai: enemy, position: [-1500, 300, -5000], speed: 300}
+  scout2: {class: scout_saucer, ai: enemy, position: [1500, 300, -5200], speed: 300}
+  robot1: {class: robot_sentinel, ai: enemy, position: [0, -300, -5500], speed: 350}
+  hotrod1: {class: hotrod, ai: enemy, position: [2500, 0, -3000], speed: 350}
+  hotrod2: {class: hotrod, ai: enemy, position: [2700, 200, -3200], speed: 350}

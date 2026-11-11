@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: mixed-dogfight
+order: 22
+title: "Mixed dogfight"
+description: >-
+  X-COM wingmen and corporate fighters against aliens and pirates.
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 7
+objects:
+  w1: {class: lightning, ai: wingman, leader: player, position: [-60, 0, 40], offset: [-60, 0, 40]}
+  corp1: {class: corporate_firestar, ai: enemy, position: [-800, 200, -500], speed: 300}
+  wraith1: {class: wraith, ai: enemy, position: [-1500, 300, -5000], speed: 300}
+  spectre1: {class: spectre, ai: enemy, position: [1500, 300, -5200], speed: 300}
+  pirate1: {class: pirate_lightning, ai: enemy, position: [2500, 0, -3000], speed: 350}
+  pirate2: {class: pirate_firestar, ai: enemy, position: [2700, 200, -3200], speed: 350}

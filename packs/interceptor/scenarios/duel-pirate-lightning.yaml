@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: duel-pirate-lightning
+order: 66
+title: "Duel: pirate lightning"
+description: >-
+  You against 2 pirate lightnings: test how this enemy flies and fights at each difficulty (D in the launcher).
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 7
+objects:
+  pirate_lightning1: {class: pirate_lightning, ai: enemy, position: [-300, 0, -4000], speed: 250}
+  pirate_lightning2: {class: pirate_lightning, ai: enemy, position: [300, 150, -4000], speed: 250}

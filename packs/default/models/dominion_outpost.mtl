@@ -10,5 +10,7 @@ Kd 0.550 1.000 0.250
 newmtl hull
 Kd 1.000 1.000 1.000
 map_Kd ../textures/dominion_hull.png
+newmtl slot
+Kd 1.000 0.000 1.000
 newmtl violet
 Kd 0.420 0.160 0.620

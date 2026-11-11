@@ -25,7 +25,7 @@ import math
 import os
 import random
 
-from common import (Model, lathe, torus, sphere, cylinder_between, prism, box, frame, icosphere, frame_from_z,
+from common import (Model, Part, Face, lathe, torus, sphere, cylinder_between, prism, box, frame, icosphere, frame_from_z,
                     Z_TO_Y, IDENTITY, rot_x, scale_m, add, sub, mul, dot, cross, norm, length,
                     validate_model, write_model, make_debris, PACK)
 
@@ -99,6 +99,13 @@ ROCK = {
     "crystal": ((0.35, 1.0, 0.75), None),
     "metal": ((0.45, 0.45, 0.48), None),
 }
+
+# Attachment points are never drawn; the colour only makes them easy to spot in a viewer.
+SLOT = {"slot": ((1.0, 0.0, 1.0), None)}
+GUARD_TURRET = dict(GUARD, hull=((1, 1, 1), "guard_turret.png"))
+GUARD_SHIELD = dict(GUARD, hull=((1, 1, 1), "guard_shield_generator.png"))
+DOMINION_TURRET = dict(DOMINION, hull=((1, 1, 1), "dominion_turret_pod.png"))
+DOMINION_SHIELD = dict(DOMINION, hull=((1, 1, 1), "dominion_shield_pod.png"))
 
 # Triangle budgets: the validator fails a model that grows past these.
 FIGHTER, CAPITAL = 1500, 6000
@@ -611,10 +618,28 @@ def hotrod():
 # Stations and rocks
 # ---------------------------------------------------------------------------------------
 
+def horizontal(deg):
+    """A horizontal unit direction, 0 degrees = the nose (-Z), 90 = +X."""
+    r = math.radians(deg)
+    return (math.sin(r), 0.0, -math.cos(r))
+
+
+def slot(name, at, normal, size=1.0):
+    """An attachment point: a group `slot_<name>` holding one small square face centred
+    on the mount point and wound counter-clockwise seen from `normal`, so its face normal
+    is the direction the mounted module's -Z (its front) will point. The engine does
+    not draw it, and it is not a solid, so it is marked open (`closed=False`): the
+    validator still checks it for degeneracy but not for closure or volume, and debris
+    cutting leaves it out."""
+    h = size / 2
+    quad = Face("slot", [(-h, -h, 0.0), (h, -h, 0.0), (h, h, 0.0), (-h, h, 0.0)])
+    return Part(name, [quad], closed=False).transformed(frame_from_z(normal), at)
+
+
 def guard_station():
     """Guard station, ~300 m tall: an art-deco spire with setback tiers, buttress fins,
     a habitat ring on spokes and four docking arms."""
-    m = Model("guard_station", STATION, CAPITAL)
+    m = Model("guard_station", dict(STATION, **SLOT), CAPITAL)
     prof = [(-150, 0.0, "chrome"), (-120, 6, "chrome"), (-95, 16, "hull"), (-70, 26, "hull"), (-55, 30, "chrome"),
             (-52, 32, "chrome"), (-49, 30, "hull"), (-10, 30, "hull"), (-8, 31.5, "chrome"), (-5, 31.5, "chrome"),
             (-5, 25, "hull"), (30, 25, "hull"), (30, 27, "chrome"), (32, 27, "chrome"), (32, 19, "hull"),
@@ -639,13 +664,25 @@ def guard_station():
         m.add(cylinder_between("cradle", add(tip, (0, -6, 0)), add(tip, (0, 6, 0)), 7, "red", 12))
         m.add(cylinder_between("cradle_light", add(tip, (0, 6, 0)), add(tip, (0, 8, 0)), 4, "lights", 12))
     m.add(sphere("beacon", 4.0, "lights", 10, 5).transformed(IDENTITY, (0, 118, 0)))
+    # Module mounts. Turrets 1-4 on the outer rim of the habitat ring (between the
+    # spokes' outer ends, at torus vertices so they sit exactly on the surface), turrets
+    # 5-6 on the outer faces of two docking cradles, shields on the upper spire tier.
+    for k, a in enumerate((0, 90, 180, 270)):
+        d = horizontal(a)
+        m.add(slot(f"slot_turret{k + 1}", add(mul(d, 122), (0, -25, 0)), d))
+    for k, a in enumerate((45, 225)):
+        d = horizontal(a)
+        m.add(slot(f"slot_turret{k + 5}", add(mul(d, 82), (0, 45, 0)), d))
+    for k, a in enumerate((90, 270)):
+        d = horizontal(a)
+        m.add(slot(f"slot_shield{k + 1}", add(mul(d, 13), (0, 72, 0)), d))
     return m
 
 
 def dominion_outpost():
     """Dominion outpost, ~200 m: a squat black hub bristling with spikes, pods on struts
     and a glowing ring."""
-    m = Model("dominion_outpost", DOMINION, CAPITAL)
+    m = Model("dominion_outpost", dict(DOMINION, **SLOT), CAPITAL)
     m.add(upright(sphere("hub", 32, "hull", 28, 12, uv=(0, 1, 0, 1), u_repeat=4).transformed(scale_m(1, 1, 0.7))))
     m.add(upright(torus("glow_ring", 38, 2.5, "glow", 40, 6)))
     m.add(upright(torus("ring_frame", 38, 3.2, "black", 40, 4), y=-3.5))
@@ -653,7 +690,6 @@ def dominion_outpost():
         a = 2 * math.pi * k / 8
         d = (math.sin(a), 0, -math.cos(a))
         m.add(cylinder_between("spike", mul(d, 28), mul(d, 100 if k % 2 == 0 else 75), 4.0, "black", 6, radius_b=0.0))
-    m.add(cylinder_between("spike", (0, 18, 0), (0, 95, 0), 5.0, "black", 6, radius_b=0.0))
     m.add(cylinder_between("spike", (0, -18, 0), (0, -80, 0), 5.0, "black", 6, radius_b=0.0))
     for k in range(6):
         a = 2 * math.pi * (k + 0.5) / 6
@@ -664,6 +700,20 @@ def dominion_outpost():
         m.add(sphere("pod", 9.0, "violet", 14, 7).transformed(IDENTITY, tip))
         m.add(torus("pod_band", 9.1, 0.8, "glow", 16, 4).transformed(IDENTITY, tip))
     m.add(upright(dome("crown", 21.5, 10, 9, "dome", 20)))
+    # Module mounts: six pods on the hub's surface between the spikes and struts,
+    # alternately 25 degrees above and below the equator, facing along the surface
+    # normal; one shield mount on the crown's apex (the top is left clear for it).
+    a_r, b_r = 32.0, 32.0 * 0.7  # the hub's equatorial and polar radii
+    for k in range(6):
+        el = math.radians(25 if k % 2 == 0 else -25)
+        h = horizontal(60 * k)
+        d = (h[0] * math.cos(el), math.sin(el), h[2] * math.cos(el))
+        # The ray along d meets the ellipsoid x^2/a^2 + y^2/b^2 + z^2/a^2 = 1 at t:
+        t = 1 / math.sqrt((d[0] ** 2 + d[2] ** 2) / a_r ** 2 + d[1] ** 2 / b_r ** 2)
+        p = mul(d, t)
+        normal = norm((p[0] / a_r ** 2, p[1] / b_r ** 2, p[2] / a_r ** 2))  # the gradient
+        m.add(slot(f"slot_pod{k + 1}", p, normal))
+    m.add(slot("slot_shield1", (0, 30.5, 0), (0, 1, 0)))
     return m
 
 
@@ -706,6 +756,80 @@ def chunks():
     c.add(icosphere("lump", 0.6, "metal", 0, rough=0.45, seed=23).transformed(scale_m(1.6, 0.9, 1.1)))
     out.append(c)
     return out
+
+
+# ---------------------------------------------------------------------------------------
+# Station modules. Each stands on its base at the origin and extends along -Z: the
+# engine turns the module so its -Z follows the slot's normal, out of the hull.
+# Lathe profiles here run from the base (z = 0) toward -Z; `lathe` notices the reversed
+# direction and turns the surface the right way out.
+# ---------------------------------------------------------------------------------------
+
+def guard_turret():
+    """Guard turret, ~6 m: a stepped round base, a fluted drum with deco fins and twin
+    ray guns pointing straight out."""
+    m = Model("guard_turret", GUARD_TURRET, FIGHTER)
+    prof = [(0.0, 2.8, "chrome"), (-0.35, 2.8, "chrome"), (-0.4, 2.5, "red"), (-0.9, 2.5, "red"), (-0.95, 2.2, "chrome"),
+            (-1.2, 2.2, "hull"), (-2.6, 2.0, "hull"), (-3.0, 1.6, "chrome"), (-3.3, 1.0, "chrome"), (-3.4, 0.0, "chrome")]
+    m.add(lathe("base", prof, "hull", 20, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=2))
+    for a in (45, 135, 225, 315):
+        m.add(fin(f"fin{a}", a, [(1.9, -1.2), (1.9, -2.8), (2.9, -2.4), (2.9, -1.4)], "red", 0.2, 0.12))
+    for x in (-0.75, 0.75):
+        m.add(cylinder_between("mantlet", (x, 0, -2.6), (x, 0, -3.6), 0.45, "red", 10))
+        for p in gun("gun", (x, 0, -3.6), (x, 0, -6.0), 0.2, "chrome", "teal", 0.32, 8):
+            m.add(p)
+    return m
+
+
+def guard_shield_generator():
+    """Guard shield generator, ~8 m: a chrome dome on a drum, crowned by a mast wound
+    with a tapering coil and a glowing teal ball."""
+    m = Model("guard_shield_generator", GUARD_SHIELD, FIGHTER)
+    drum = [(0.0, 3.2, "chrome"), (-0.4, 3.2, "red"), (-1.2, 3.0, "hull"), (-1.3, 3.0, "hull")]
+    m.add(lathe("drum", drum, "hull", 20, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=2))
+    m.add(dome("dome", 1.25, 2.9, 2.6, "chrome", 20, 5).transformed(scale_m(1, 1, -1)))
+    m.add(cylinder_between("mast", (0, 0, -3.6), (0, 0, -7.2), 0.25, "chrome", 8))
+    for k in range(5):  # the coil: rings shrinking toward the tip
+        z = -4.0 - k * 0.65
+        m.add(torus("coil", 1.2 - k * 0.18, 0.12, "red" if k % 2 == 0 else "chrome", 16, 4).transformed(IDENTITY, (0, 0, z)))
+    m.add(sphere("ball", 0.55, "teal", 10, 5).transformed(IDENTITY, (0, 0, -7.5)))
+    return m
+
+
+def dominion_turret_pod():
+    """Dominion turret pod, ~7 m: a violet orb on a black collar with a death-ray
+    emitter pointing straight out."""
+    m = Model("dominion_turret_pod", DOMINION_TURRET, FIGHTER)
+    m.add(lathe("collar", [(0.0, 2.2, "black"), (-0.6, 2.0, "black"), (-1.0, 1.4, "black"), (-1.0, 0.0, "black")],
+                "black", 16))
+    m.add(sphere("orb", 2.6, "hull", 18, 9, uv=(0, 1, 0, 1), u_repeat=2).transformed(IDENTITY, (0, 0, -3.2)))
+    m.add(torus("band", 2.62, 0.18, "glow", 24, 4).transformed(IDENTITY, (0, 0, -3.2)))
+    m.add(cylinder_between("emitter_base", (0, 0, -5.4), (0, 0, -6.0), 0.75, "black", 10, radius_b=0.45))
+    for p in gun("ray", (0, 0, -6.0), (0, 0, -7.0), 0.25, "chrome", "glow", 0.42, 8):
+        m.add(p)
+    for a in (0, 120, 240):  # three short spikes around the orb
+        d = (math.sin(math.radians(a)), math.cos(math.radians(a)), 0)
+        b = add(mul(d, 2.3), (0, 0, -3.6))
+        m.add(cylinder_between("spike", b, add(add(mul(d, 3.6), (0, 0, -4.6)), (0, 0, 0)), 0.2, "black", 6, radius_b=0.0))
+    return m
+
+
+def dominion_shield_pod():
+    """Dominion shield pod, ~8 m: an acid-green glowing sphere held in a cage of bars
+    between two rings, with a spike on top."""
+    m = Model("dominion_shield_pod", DOMINION_SHIELD, FIGHTER)
+    m.add(lathe("collar", [(0.0, 2.4, "black"), (-0.5, 2.2, "black"), (-1.0, 1.6, "black"), (-1.0, 0.0, "black")],
+                "black", 16))
+    m.add(sphere("core", 2.7, "hull", 18, 9, uv=(0, 1, 0, 1), u_repeat=2).transformed(IDENTITY, (0, 0, -4.4)))
+    for z in (-1.4, -7.4):
+        m.add(torus("cage_ring", 3.0, 0.2, "violet", 20, 4).transformed(IDENTITY, (0, 0, z)))
+    for k in range(6):
+        a = math.radians(60 * k)
+        d = (math.sin(a), math.cos(a), 0)
+        m.add(cylinder_between("cage_bar", add(mul(d, 3.0), (0, 0, -1.4)), add(mul(d, 3.0), (0, 0, -7.4)), 0.16, "chrome", 6))
+    m.add(lathe("cap", [(-7.2, 1.2, "violet"), (-7.6, 0.9, "violet"), (-7.6, 0.0, "violet")], "violet", 12))
+    m.add(cylinder_between("spike", (0, 0, -7.5), (0, 0, -8.6), 0.35, "black", 6, radius_b=0.0))
+    return m
 
 
 # ---------------------------------------------------------------------------------------
@@ -988,6 +1112,8 @@ SHIPS = [
     (scout_saucer, 4), (raider_saucer, 4), (dreadnought, 5), (robot_sentinel, 3), (grappler, 4), (cargo_orb, 4),
     (senate_patrol, 4), (cartel_freighter, 5), (prospector_hauler, 4), (hotrod, 3),
     (guard_station, 5), (dominion_outpost, 5), (cosmium_asteroid, 5),
+    # Station modules (appended last so the debris seeds of the models above stay put).
+    (guard_turret, 3), (guard_shield_generator, 3), (dominion_turret_pod, 3), (dominion_shield_pod, 3),
 ]
 
 

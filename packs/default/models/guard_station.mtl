@@ -10,5 +10,7 @@ newmtl lights
 Kd 1.000 0.920 0.550
 newmtl red
 Kd 0.820 0.120 0.090
+newmtl slot
+Kd 1.000 0.000 1.000
 newmtl teal
 Kd 0.100 0.700 0.660

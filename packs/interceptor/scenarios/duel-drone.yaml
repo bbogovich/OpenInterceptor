@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed arena (generated list; see the docs' testbed page).
+id: duel-drone
+order: 64
+title: "Duel: drone"
+description: >-
+  You against 3 drones: test how this enemy flies and fights at each difficulty (D in the launcher).
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 7
+objects:
+  drone1: {class: drone, ai: enemy, position: [-600, 0, -4000], speed: 250}
+  drone2: {class: drone, ai: enemy, position: [0, 150, -4000], speed: 250}
+  drone3: {class: drone, ai: enemy, position: [600, 300, -4000], speed: 250}
