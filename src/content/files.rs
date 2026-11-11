@@ -250,6 +250,17 @@ fn cockpit() -> Ty {
             ]))),
             "3D cockpits: instruments drawn in perspective on the model's surface",
         ),
+        f(
+            "wide",
+            Ty::Struct(vec![
+                f("blackout", Ty::Bool, "cover the bands beside the cockpit art (hiding the 3D view there)"),
+                f("color", rgb(), "the bands' colour (default black)"),
+                f("from", Ty::Num, "design-space y where the bands start: 0 = full height"),
+                f("left", Ty::Asset, "extension art stretched over the left band (your own image)"),
+                f("right", Ty::Asset, "extension art stretched over the right band (your own image)"),
+            ]),
+            "wide screens: the side bands beside a narrower cockpit (R-HUD-013)",
+        ),
     ])
 }
 

@@ -13,6 +13,9 @@
 cockpits:
   a:
     image: original:CockpitA.dll#12000
+    # Wide screens: black out the sides of the dashboard (from y=305, where this art's
+    # edges become solid) so space never shows through beside it (R-HUD-013).
+    wide: {blackout: true, from: 305}
     instruments:
       message: [117, 9, 410, 11]
       status: [117, 26, 144, 11]
@@ -27,6 +30,9 @@ cockpits:
       gauge4: [378, 299, 26, 26]
   b:
     image: original:CockpitB.dll#12200
+    # Wide screens: black out the sides of the dashboard (from y=382, where this art's
+    # edges become solid) so space never shows through beside it (R-HUD-013).
+    wide: {blackout: true, from: 382}
     instruments:
       message: [117, 9, 410, 11]
       status: [117, 26, 144, 11]
@@ -41,6 +47,9 @@ cockpits:
       gauge4: [370, 431, 30, 28]
   c:
     image: original:CockpitC.dll#12400
+    # Wide screens: black out the sides of the dashboard (from y=352, where this art's
+    # edges become solid) so space never shows through beside it (R-HUD-013).
+    wide: {blackout: true, from: 352}
     instruments:
       message: [117, 9, 410, 11]
       status: [117, 26, 144, 11]

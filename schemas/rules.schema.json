@@ -176,6 +176,13 @@
                 "normal": {"description": "the surface's outward normal", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
                 "size": {"description": "width and height on the surface, metres", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}
               }}},
+          "wide": {"description": "wide screens: the side bands beside a narrower cockpit (R-HUD-013)", "type": "object", "additionalProperties": false, "properties": {
+              "blackout": {"description": "cover the bands beside the cockpit art (hiding the 3D view there)", "type": "boolean"},
+              "color": {"description": "the bands' colour (default black)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "from": {"description": "design-space y where the bands start: 0 = full height", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "left": {"description": "extension art stretched over the left band (your own image)", "type": "string"},
+              "right": {"description": "extension art stretched over the right band (your own image)", "type": "string"}
+            }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

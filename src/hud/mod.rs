@@ -53,6 +53,17 @@ impl Layout {
         Layout { scale, offset: (screen - design * scale) * 0.5, design }
     }
 
+    /// The screen rectangles `[x, y, w, h]` left and right of the design space, from
+    /// design-space height `from` down to the bottom of the screen. Empty (zero-width)
+    /// when the screen is not wider than the design (R-HUD-013).
+    pub fn side_bands(&self, screen: Vec2, from: f32) -> [[f32; 4]; 2] {
+        let top = (self.offset.y + from.max(0.0) * self.scale).min(screen.y);
+        let h = screen.y - top;
+        let left = self.offset.x.max(0.0);
+        let right_x = self.offset.x + self.design.x * self.scale;
+        [[0.0, top, left, h], [right_x, top, (screen.x - right_x).max(0.0), h]]
+    }
+
     /// The whole design space in screen pixels (where cockpit art is drawn).
     pub fn full(&self) -> [f32; 4] {
         self.rect([0.0, 0.0, self.design.x, self.design.y])
@@ -415,6 +426,22 @@ mod tests {
     use crate::sim::test_support::world;
     use crate::sim::Pilot;
     use glam::Quat;
+
+    #[test]
+    fn side_bands_cover_the_screen_beside_the_cockpit() {
+        // A 640×480 cockpit on a 1920×1080 screen: scale 2.25, art 1440 wide, 240 each side.
+        let l = Layout::new(Vec2::new(1920.0, 1080.0), Vec2::new(640.0, 480.0));
+        let [left, right] = l.side_bands(Vec2::new(1920.0, 1080.0), 0.0);
+        assert_eq!(left, [0.0, 0.0, 240.0, 1080.0]);
+        assert_eq!(right, [1680.0, 0.0, 240.0, 1080.0]);
+        // From the dashboard's top (design y 305): only the lower part.
+        let [left, _] = l.side_bands(Vec2::new(1920.0, 1080.0), 305.0);
+        assert!((left[1] - 686.25).abs() < 1e-3 && (left[3] - 393.75).abs() < 1e-3);
+        // A 4:3 screen: no bands.
+        let l = Layout::new(Vec2::new(1024.0, 768.0), Vec2::new(640.0, 480.0));
+        let [left, right] = l.side_bands(Vec2::new(1024.0, 768.0), 0.0);
+        assert!(left[2] < 1e-3 && right[2] < 1e-3);
+    }
 
     #[test]
     fn layout_scales_by_height_and_centres() {

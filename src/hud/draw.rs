@@ -530,6 +530,36 @@ pub fn draw_targeting(f: &HudFrame) {
     }
 }
 
+/// Fills the side bands beside a cockpit narrower than the screen (R-HUD-013): a colour
+/// (hiding the 3D view there) and/or the pack's extension art, from design height
+/// `wide.from` down. Nothing to do when the cockpit asks for neither.
+pub fn draw_side_bands(
+    layout: Layout,
+    wide: &crate::content::rules::WideFill,
+    left: Option<&Texture2D>,
+    right: Option<&Texture2D>,
+) {
+    let screen = Vec2::new(screen_width(), screen_height());
+    for (band, art) in layout.side_bands(screen, wide.from).into_iter().zip([left, right]) {
+        if band[2] < 0.5 || band[3] < 0.5 {
+            continue;
+        }
+        if wide.blackout {
+            let [r, g, b] = wide.color;
+            draw_rectangle(band[0], band[1], band[2], band[3], Color::new(r, g, b, 1.0));
+        }
+        if let Some(tex) = art {
+            draw_texture_ex(
+                tex,
+                band[0],
+                band[1],
+                WHITE,
+                DrawTextureParams { dest_size: Some(Vec2::new(band[2], band[3])), ..Default::default() },
+            );
+        }
+    }
+}
+
 /// Paints the cockpit art over the whole design space.
 pub fn draw_cockpit(tex: &Texture2D, layout: Layout) {
     let r = layout.full();

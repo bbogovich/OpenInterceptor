@@ -502,6 +502,24 @@ pub struct CockpitDef {
     pub instruments: HashMap<String, [f32; 4]>,
     /// 3D cockpits: instruments drawn in perspective on the model's surface.
     pub anchors: HashMap<String, Anchor>,
+    /// How the screen beside a narrower-than-the-screen cockpit is filled (R-HUD-013).
+    pub wide: WideFill,
+}
+
+/// The side bands beside a 2D cockpit on a screen wider than its design (a 4:3 cockpit
+/// on 16:9): `cockpits: {a: {wide: {blackout: true, color: [0,0,0], from: 0, left, right}}}`.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct WideFill {
+    /// Cover the bands, hiding the 3D view there (false: space shows through).
+    pub blackout: bool,
+    /// The bands' colour (RGB 0..1).
+    pub color: [f32; 3],
+    /// Design-space y where the bands start: 0 = full height; the dashboard's top
+    /// covers only the sides of the dashboard.
+    pub from: f32,
+    /// Extension art stretched over each band below `from` (the pack's own images).
+    pub left: Option<String>,
+    pub right: Option<String>,
 }
 
 /// Where a 3D cockpit's instrument sits on the model: a rectangle on the surface.
@@ -1031,7 +1049,18 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             Some(v) if v.len() == 3 => [v[0], v[1], v[2]],
             _ => [0.0; 3],
         };
+        let wide = match g.node("wide").map(Get) {
+            Some(w) => WideFill {
+                blackout: w.str("blackout").is_some_and(|b| b == "true" || b == "yes"),
+                color: rgb(w, "color", [0.0, 0.0, 0.0]),
+                from: w.num("from").unwrap_or(0.0).max(0.0),
+                left: w.str("left").map(str::to_string),
+                right: w.str("right").map(str::to_string),
+            },
+            None => WideFill::default(),
+        };
         cockpits.push(CockpitDef {
+            wide,
             image,
             image_pack: e.pack,
             design,
@@ -1632,7 +1661,7 @@ ships:
 objects:
   base: {model: models/base.obj, faction: xcom, hit_points: 5000}
 cockpits:
-  a: {image: 'original:CockpitA.dll#12000', instruments: {radar: [10, 20, 30, 40]}}
+  a: {image: 'original:CockpitA.dll#12000', instruments: {radar: [10, 20, 30, 40]}, wide: {blackout: true, from: 305, left: images/l.png}}
   vr:
     image: none
     model: models/pit.obj
@@ -1663,6 +1692,10 @@ sounds: {lock: 'original:target lock.wav'}
         assert_eq!(rules.playable_ships(), vec![rules.ship_id("interceptor").unwrap()]);
         let a = rules.cockpit("A").unwrap();
         assert_eq!(a.instruments["radar"], [10.0, 20.0, 30.0, 40.0]);
+        assert_eq!(
+            a.wide,
+            WideFill { blackout: true, color: [0.0; 3], from: 305.0, left: Some("images/l.png".into()), right: None }
+        );
         assert_eq!((rules.flight.bolt_frame, rules.flight.bolt_carry), (BoltFrame::Ship, 0.2));
         assert_eq!(rules.flight.lighting, Lighting { rim: 0.4, ..Lighting::default() }, "unset keys keep defaults");
         assert_eq!(

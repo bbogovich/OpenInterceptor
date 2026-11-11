@@ -237,6 +237,9 @@ pub struct FlightSession {
     accumulator: f32,
     /// 2D cockpit art, if the player's cockpit has an image.
     cockpit: Option<Texture2D>,
+    /// The cockpit's wide-screen side bands (R-HUD-013) and their extension art.
+    cockpit_wide: Option<crate::content::rules::WideFill>,
+    wide_art: [Option<Texture2D>; 2],
     /// 3D cockpit model and its offset from the pilot's eye, if any.
     cockpit_model: Option<(Rc<GpuModel>, Vec3)>,
     /// The cockpit's design space (instrument coordinates).
@@ -364,6 +367,18 @@ impl FlightSession {
             },
         );
         let cockpit_id = cockpit_def.map(|c| c.id.clone());
+        // Wide screens (R-HUD-013): the side bands and their optional extension art.
+        let cockpit_wide = cockpit_def.map(|c| c.wide.clone());
+        let load_art = |name: Option<&String>, pack: usize| {
+            let img = content.load_image(name?, pack, true).map_err(|e| eprintln!("cockpit wide art: {e}")).ok()?;
+            let t = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
+            t.set_filter(FilterMode::Linear);
+            Some(t)
+        };
+        let wide_art = match cockpit_def {
+            Some(c) => [load_art(c.wide.left.as_ref(), c.image_pack), load_art(c.wide.right.as_ref(), c.image_pack)],
+            None => [None, None],
+        };
         let cockpit_model = cockpit_def.and_then(|c| {
             let model = c.model.as_ref()?;
             let gpu = ctx.renderer.models.get(content, model, c.image_pack, c.model_scale)?;
@@ -404,6 +419,8 @@ impl FlightSession {
             mouse_flight: false,
             accumulator: 0.0,
             cockpit,
+            cockpit_wide,
+            wide_art,
             cockpit_model,
             design,
             instruments,
@@ -673,6 +690,9 @@ impl FlightSession {
         hud::draw::draw_targeting(&frame);
         if let (true, Some(tex)) = (with_art, &self.cockpit) {
             hud::draw::draw_cockpit(tex, layout);
+            if let Some(def) = &self.cockpit_wide {
+                hud::draw::draw_side_bands(layout, def, self.wide_art[0].as_ref(), self.wide_art[1].as_ref());
+            }
         }
         if alive {
             hud::draw::draw_instruments(&frame);
@@ -749,7 +769,8 @@ impl FlightSession {
         // Until a tablet pairs, show where to point it and the code to type.
         if let Some(server) = ctx.console.as_ref().filter(|s| s.paired() == 0 || self.menu_open) {
             let hint = format!("CONSOLE  {}   CODE {}", server.url, server.code);
-            draw_text(&hint, 12.0, screen.y - 12.0, 18.0, Color::new(0.5, 0.9, 0.6, 0.85));
+            // One line above the view caption in the bottom-left corner.
+            draw_text(&hint, 12.0, screen.y - 36.0, 18.0, Color::new(0.5, 0.9, 0.6, 0.85));
         }
         if self.menu_open {
             draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.0, 0.0, 0.6));
