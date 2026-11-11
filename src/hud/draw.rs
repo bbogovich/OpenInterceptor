@@ -17,6 +17,7 @@ use macroquad::prelude::*;
 use std::collections::HashMap;
 
 /// Everything the HUD needs that is not in the world.
+#[derive(Clone, Copy)]
 pub struct HudFrame<'a> {
     pub world: &'a World,
     pub player: ShipId,
@@ -34,6 +35,10 @@ pub struct HudFrame<'a> {
     pub backdrops: bool,
     /// Draw target brackets and the reticle (only when looking forward).
     pub forward_view: bool,
+    /// Instruments drawn elsewhere (in perspective on a 3D cockpit): skipped here.
+    pub anchored: &'a std::collections::HashSet<String>,
+    /// Text size limit multiplier (instrument textures are drawn larger than the screen).
+    pub text_scale: f32,
 }
 
 fn col(c: [f32; 4]) -> Color {
@@ -67,81 +72,21 @@ fn fit_size<S: AsRef<str>>(lines: &[S], rows: usize, w: f32, h: f32, max: f32) -
 pub fn draw_instruments(f: &HudFrame) {
     let Some(me) = f.world.get(f.player) else { return };
     let rules = &f.world.rules;
-    let get = |name: &str| f.instruments.get(name).map(|r| f.layout.rect(*r));
+    let skip = |name: &str| f.anchored.contains(name);
+    let get = |name: &str| f.instruments.get(name).filter(|_| !skip(name)).map(|r| f.layout.rect(*r));
     if f.backdrops {
-        for r in f.instruments.values().map(|r| f.layout.rect(*r)) {
+        for (name, r) in f.instruments.iter().filter(|(n, _)| !skip(n)) {
+            let r = f.layout.rect(*r);
+            let _ = name;
             draw_rectangle(r[0], r[1], r[2], r[3], Color::new(0.0, 0.05, 0.0, 0.45));
         }
     }
-    // Radar scopes.
-    for (name, front) in [("radar_front", true), ("radar_rear", false)] {
-        let Some(r) = get(name) else { continue };
-        let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
-        let radius = r[2].min(r[3]) * 0.5;
-        // Cockpit art has its own scope rings; the engine adds rings only on the
-        // plain glass HUD, so they never sit slightly off the painted ones.
-        if f.glass {
-            draw_circle_lines(c.x, c.y, radius, 1.0, HUD_DIM);
-            draw_circle_lines(c.x, c.y, radius * 0.5, 1.0, HUD_DIM);
+    for name in INSTRUMENTS {
+        if matches!(name, "power" | "systems") {
+            continue; // placed below, with a fallback
         }
-        for id in f.world.live_ids() {
-            if id == f.player {
-                continue;
-            }
-            let s = &f.world.ships[id.index as usize];
-            let dist = s.position.distance(me.position);
-            if dist > rules.flight.radar_range && rules.ship(s.class).max_speed > 0.0 {
-                continue;
-            }
-            let local = me.rotation.inverse() * (s.position - me.position);
-            if let Some(p) = radar_point(local, front) {
-                let at = c + p * radius * 0.92;
-                let color = col(super::faction_color(rules, s.faction));
-                let size = if rules.ship(s.class).kind.is_static() { 3.0 } else { 1.8 };
-                draw_rectangle(at.x - size, at.y - size, size * 2.0, size * 2.0, color);
-                if Some(id) == me.target {
-                    draw_rectangle_lines(at.x - 4.0, at.y - 4.0, 8.0, 8.0, 1.0, WHITE);
-                }
-            }
-        }
-        if f.glass {
-            text(if front { "F" } else { "R" }, r[0], r[1], (r[3] * 0.12).min(14.0), HUD_DIM);
-        }
-    }
-    // Gauges: speed, energy, shields, hull.
-    let values = gauge_values(rules, me);
-    let labels = ["SPD", "NRG", "SHD", "HUL"];
-    for (k, (v, label)) in values.iter().zip(labels).enumerate() {
-        let Some(r) = get(&format!("gauge{}", k + 1)) else { continue };
-        let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
-        let radius = r[2].min(r[3]) * 0.45;
-        let color = if *v < 0.25 && k > 0 { RED } else { HUD_GREEN };
-        let a = gauge_angle(*v);
-        draw_line(c.x, c.y, c.x + a.cos() * radius, c.y + a.sin() * radius, 2.0, color);
-        draw_circle(c.x, c.y, 1.5, color);
-        if f.glass {
-            draw_circle_lines(c.x, c.y, radius, 1.0, HUD_DIM);
-            let size = fit_size(&[label], 1, radius * 0.9, radius * 0.4, 14.0);
-            text(label, c.x - radius * 0.45, c.y + radius * 0.45, size, HUD_DIM);
-        }
-    }
-    // MFD.
-    if let Some(r) = get("mfd") {
-        let lines = mfd_lines(f.world, f.player, f.mfd, f.nav);
-        // One size for every page (fitted to the longest page the MFD can show), so the
-        // text does not jump as pages change; long lines shrink it further.
-        let pad = r[2] * 0.04;
-        let size = fit_size(&lines, lines.len().max(6), r[2] - pad * 2.0, r[3] - pad * 2.0, 22.0);
-        for (i, l) in lines.iter().enumerate() {
-            text(l, r[0] + pad, r[1] + pad + i as f32 * size * 1.12, size, HUD_GREEN);
-        }
-    }
-    // Message line.
-    if let Some(r) = get("message") {
-        if let Some(m) = f.messages.visible(f.now, 1).last() {
-            let size = fit_size(&[m], 1, r[2], r[3], 20.0);
-            let w = measure_text(m, None, size as u16, 1.0).width;
-            text(m, r[0] + (r[2] - w) * 0.5, r[1] + (r[3] - size) * 0.5, size, HUD_GREEN);
+        if let Some(r) = get(name) {
+            draw_instrument(f, me, name, r);
         }
     }
     // Throttle and status strip under the message line.
@@ -178,16 +123,101 @@ pub fn draw_instruments(f: &HudFrame) {
         f.layout.rect([d.x - d.x * 0.125, d.y * 0.09 + top, d.x * 0.115, h])
     };
     let d = f.layout.design;
-    let power_rect = get("power").unwrap_or_else(|| corner(0.0, d.y * 0.1));
-    let systems_rect = get("systems").unwrap_or_else(|| corner(d.y * 0.11, d.y * 0.14));
-    let backdrop = !f.glass && (get("power").is_none() || get("systems").is_none());
-    if backdrop {
-        for r in [power_rect, systems_rect] {
+    for (name, fallback) in [("power", corner(0.0, d.y * 0.1)), ("systems", corner(d.y * 0.11, d.y * 0.14))] {
+        if skip(name) {
+            continue;
+        }
+        let r = get(name).unwrap_or(fallback);
+        if !f.glass && get(name).is_none() {
             draw_rectangle(r[0], r[1], r[2], r[3], Color::new(0.0, 0.05, 0.0, 0.55));
         }
+        draw_instrument(f, me, name, r);
     }
-    draw_power(f, me, power_rect);
-    draw_systems(f, me, systems_rect);
+}
+
+/// Every instrument the HUD knows how to draw.
+pub const INSTRUMENTS: [&str; 10] =
+    ["radar_front", "radar_rear", "gauge1", "gauge2", "gauge3", "gauge4", "mfd", "message", "power", "systems"];
+
+/// Draws one instrument into the rectangle `r` (pixels of whatever is being drawn to:
+/// the screen, or an instrument texture for a 3D cockpit).
+pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32; 4]) {
+    let rules = &f.world.rules;
+    match name {
+        "radar_front" | "radar_rear" => {
+            let front = name == "radar_front";
+            let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
+            let radius = r[2].min(r[3]) * 0.5;
+            // Cockpit art has its own scope rings; the engine adds rings only on the
+            // plain glass HUD, so they never sit slightly off the painted ones.
+            if f.glass {
+                draw_circle_lines(c.x, c.y, radius, f.text_scale, HUD_DIM);
+                draw_circle_lines(c.x, c.y, radius * 0.5, f.text_scale, HUD_DIM);
+            }
+            let blip = (radius * 0.04).max(1.8);
+            for id in f.world.live_ids() {
+                if id == f.player {
+                    continue;
+                }
+                let s = &f.world.ships[id.index as usize];
+                let dist = s.position.distance(me.position);
+                if dist > rules.flight.radar_range && rules.ship(s.class).max_speed > 0.0 {
+                    continue;
+                }
+                let local = me.rotation.inverse() * (s.position - me.position);
+                if let Some(p) = radar_point(local, front) {
+                    let at = c + p * radius * 0.92;
+                    let color = col(super::faction_color(rules, s.faction));
+                    let size = if rules.ship(s.class).kind.is_static() { blip * 1.7 } else { blip };
+                    draw_rectangle(at.x - size, at.y - size, size * 2.0, size * 2.0, color);
+                    if Some(id) == me.target {
+                        let b = size * 2.2;
+                        draw_rectangle_lines(at.x - b, at.y - b, b * 2.0, b * 2.0, f.text_scale, WHITE);
+                    }
+                }
+            }
+            if f.glass {
+                text(if front { "F" } else { "R" }, r[0], r[1], (r[3] * 0.12).min(14.0 * f.text_scale), HUD_DIM);
+            }
+        }
+        "gauge1" | "gauge2" | "gauge3" | "gauge4" => {
+            let k = name.as_bytes()[5] as usize - b'1' as usize;
+            let v = gauge_values(rules, me)[k];
+            let label = ["SPD", "NRG", "SHD", "HUL"][k];
+            let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
+            let radius = r[2].min(r[3]) * 0.45;
+            let color = if v < 0.25 && k > 0 { RED } else { HUD_GREEN };
+            let a = gauge_angle(v);
+            let thick = (radius * 0.05).max(2.0);
+            draw_line(c.x, c.y, c.x + a.cos() * radius, c.y + a.sin() * radius, thick, color);
+            draw_circle(c.x, c.y, thick * 0.8, color);
+            if f.glass {
+                draw_circle_lines(c.x, c.y, radius, f.text_scale, HUD_DIM);
+                let size = fit_size(&[label], 1, radius * 0.9, radius * 0.4, 14.0 * f.text_scale);
+                text(label, c.x - radius * 0.45, c.y + radius * 0.45, size, HUD_DIM);
+            }
+        }
+        "mfd" => {
+            let lines = mfd_lines(f.world, f.player, f.mfd, f.nav);
+            // One size for every page (fitted to the longest page the MFD can show), so the
+            // text does not jump as pages change; long lines shrink it further.
+            let pad = r[2] * 0.04;
+            let size = fit_size(&lines, lines.len().max(6), r[2] - pad * 2.0, r[3] - pad * 2.0, 22.0 * f.text_scale);
+            for (i, l) in lines.iter().enumerate() {
+                text(l, r[0] + pad, r[1] + pad + i as f32 * size * 1.12, size, HUD_GREEN);
+            }
+        }
+        "message" => {
+            if let Some(m) = f.messages.visible(f.now, 1).last() {
+                let size = fit_size(&[m], 1, r[2], r[3], 20.0 * f.text_scale);
+                let w = measure_text(m, None, size as u16, 1.0).width;
+                text(m, r[0] + (r[2] - w) * 0.5, r[1] + (r[3] - size) * 0.5, size, HUD_GREEN);
+            }
+        }
+        "power" => draw_power(f, me, r),
+        "systems" => draw_systems(f, me, r),
+        _ => {}
+    }
 }
 
 /// The `power` instrument: two level columns (beams, shields) with the budget, and the
@@ -195,7 +225,7 @@ pub fn draw_instruments(f: &HudFrame) {
 fn draw_power(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let p = power_readout(&f.world.rules, me);
     let col_w = r[2] / 4.0;
-    let size = fit_size(&["B-E"], 1, col_w * 0.95, r[3] * 0.16, 14.0);
+    let size = fit_size(&["B-E"], 1, col_w * 0.95, r[3] * 0.16, 14.0 * f.text_scale);
     let label_h = size * 1.1;
     let bar_top = r[1] + label_h;
     let bar_h = r[3] - label_h - 2.0;
@@ -222,7 +252,7 @@ fn draw_power(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     {
         let x = r[0] + col_w * (2 + k) as f32 + col_w * 0.25;
         let w = col_w * 0.5;
-        draw_rectangle_lines(x, bar_top, w, bar_h, 1.0, HUD_DIM);
+        draw_rectangle_lines(x, bar_top, w, bar_h, f.text_scale, HUD_DIM);
         let c = if v < 0.25 { RED } else { SKYBLUE };
         draw_rectangle(x + 1.0, bar_top + bar_h * (1.0 - v), w - 2.0, bar_h * v, c);
         text(label, x, r[1], size, if favoured { WHITE } else { HUD_GREEN });
@@ -243,7 +273,7 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let rows = lamps.len().div_ceil(cols);
     let (cw, ch) = (r[2] / cols as f32, r[3] / rows as f32);
     let d = (ch * 0.45).min(cw * 0.25);
-    let size = fit_size(&["ENG"], 1, cw - d * 1.9, ch * 0.8, 14.0);
+    let size = fit_size(&["ENG"], 1, cw - d * 1.9, ch * 0.8, 14.0 * f.text_scale);
     let blink = (f.now * 3.0) as i64 % 2 == 0;
     for (i, (label, lamp, repairing)) in lamps.iter().enumerate() {
         let (cx, cy) = (r[0] + cw * (i % cols) as f32, r[1] + ch * (i / cols) as f32);

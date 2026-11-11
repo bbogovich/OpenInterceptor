@@ -9,7 +9,7 @@ Run from anywhere:
 It writes into packs/default/:
 
 * `models/`   - ships, stations, rubble, debris pieces and the Guard 3D cockpit (OBJ +
-                MTL), plus `guard_cockpit.instruments.ini` (models.py);
+                MTL), plus `guard_cockpit.instruments.yaml` (models.py);
 * `textures/` - hull paint and its damage variants (PNG, textures.py);
 * `sounds/`   - synthesised effects (WAV, sounds.py).
 

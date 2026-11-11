@@ -17,8 +17,9 @@
 //! drag) from triggering hundreds of catch-up ticks.
 
 use super::{AppContext, Next};
+use crate::content::rules::Anchor;
 use crate::content::scenario::NavPoint;
-use crate::hud::{self, draw::HudFrame, Layout, MessageLog, MfdPage};
+use crate::hud::{self, draw::HudFrame, layout, Layout, MessageLog, MfdPage};
 use crate::input::{ChaseInput, Command, View};
 use crate::render::camera::SpaceCamera;
 use crate::render::effects::Effects;
@@ -238,6 +239,24 @@ pub struct FlightSession {
     controls: Option<super::controls::ControlsMenu>,
     /// Prizes captured by the player's tractor beam when jumping out.
     captured: Vec<String>,
+    /// The cockpit's id (for saving its layout).
+    cockpit_id: Option<String>,
+    /// A 3D cockpit's instruments placed on its surface (drawn in perspective).
+    anchors: HashMap<String, Anchor>,
+    /// One texture per anchored instrument, drawn into each frame.
+    instrument_targets: HashMap<String, RenderTarget>,
+    /// The cockpit layout editor, while open (F12).
+    editor: Option<LayoutEditor>,
+}
+
+/// The cockpit layout editor's state (see `hud::layout` for the maths).
+struct LayoutEditor {
+    /// Index into `hud::draw::INSTRUMENTS`.
+    selected: usize,
+    /// A 2D drag in progress: the grip and the last mouse position (design units).
+    drag: Option<(layout::Grip, Vec2)>,
+    message: String,
+    changed: bool,
 }
 
 impl FlightSession {
@@ -283,12 +302,18 @@ impl FlightSession {
                 }
             },
         );
+        let cockpit_id = cockpit_def.map(|c| c.id.clone());
         let cockpit_model = cockpit_def.and_then(|c| {
             let model = c.model.as_ref()?;
             let gpu = ctx.renderer.models.get(content, model, c.image_pack, c.model_scale)?;
             Some((gpu, Vec3::from(c.model_offset)))
         });
         let has_cockpit = cockpit.is_some() || cockpit_model.is_some();
+        // Anchors apply to a 3D cockpit without 2D art.
+        let anchors = match (cockpit_def, &cockpit_model, &cockpit) {
+            (Some(c), Some(_), None) => c.anchors.clone(),
+            _ => HashMap::new(),
+        };
         let (instruments, design) = match cockpit_def.filter(|_| has_cockpit) {
             Some(c) => (c.instruments.clone(), Vec2::from(c.design)),
             None => (hud::default_instruments(), hud::DESIGN),
@@ -321,6 +346,10 @@ impl FlightSession {
             wing_menu: None,
             controls: None,
             captured: Vec::new(),
+            cockpit_id,
+            anchors,
+            instrument_targets: HashMap::new(),
+            editor: None,
         })
     }
 
@@ -333,7 +362,29 @@ impl FlightSession {
             return Next::Stay;
         }
         let raw = ctx.devices.read();
+        // F12 in the cockpit view opens the layout editor (the battle pauses).
+        let in_custom_cockpit = self.view == View::Cockpit && (self.cockpit.is_some() || self.cockpit_model.is_some());
+        if raw.pressed.contains("f12") && in_custom_cockpit {
+            self.editor = match self.editor {
+                Some(_) => None,
+                None => Some(LayoutEditor {
+                    selected: 0,
+                    drag: None,
+                    message: "Tab: next instrument   click/drag: place   wheel or +/-: size   S: save   F12/Esc: done"
+                        .into(),
+                    changed: false,
+                }),
+            };
+        }
+        if self.editor.is_some() {
+            self.edit_layout(ctx, &raw);
+        }
         let (mut controls, mut commands, chase_input) = ctx.bindings.translate(&raw, self.mouse_flight);
+        if self.editor.is_some() {
+            // The editor owns the keyboard and mouse; the battle waits.
+            controls = Default::default();
+            commands.clear();
+        }
         let dt = get_frame_time().min(MAX_FRAME);
         let alive = self.world.get(self.player).is_some();
         let departed = self.world.ships[self.player.index as usize].departed;
@@ -426,7 +477,7 @@ impl FlightSession {
         self.chase.apply(&chase_input, dt);
 
         // --- Simulation -------------------------------------------------------------
-        if !self.paused && !self.menu_open {
+        if !self.paused && !self.menu_open && self.editor.is_none() {
             if let Some(s) = self.world.get_mut(self.player) {
                 // Whatever is still set in `s.controls` was not consumed by a tick yet.
                 s.controls = controls.carry_unconsumed(&s.controls);
@@ -490,6 +541,9 @@ impl FlightSession {
             default_instruments = hud::default_instruments();
             (&default_instruments, Layout::new(screen, hud::DESIGN))
         };
+        // A 3D cockpit's anchored instruments are drawn on its surface instead.
+        let anchored: std::collections::HashSet<String> =
+            if in_cockpit && !with_art { self.anchors.keys().cloned().collect() } else { Default::default() };
         let frame = HudFrame {
             world: &self.world,
             player: self.player,
@@ -503,7 +557,13 @@ impl FlightSession {
             glass: !with_art,
             backdrops: !custom,
             forward_view: alive && matches!(view, View::Cockpit | View::Forward | View::Chase),
+            anchored: &anchored,
+            text_scale: 1.0,
         };
+        if alive && !anchored.is_empty() {
+            let offset = self.cockpit_model.as_ref().map(|(_, o)| *o).unwrap_or_default();
+            draw_anchored(&frame, &self.anchors, &mut self.instrument_targets, &cam, offset, screen);
+        }
         hud::draw::draw_targeting(&frame);
         if let (true, Some(tex)) = (with_art, &self.cockpit) {
             hud::draw::draw_cockpit(tex, layout);
@@ -550,6 +610,33 @@ impl FlightSession {
         if self.paused {
             draw_centered("PAUSED (P)", screen.y * 0.3, 36.0, YELLOW);
         }
+        if let Some(ed) = &self.editor {
+            let name = hud::draw::INSTRUMENTS[ed.selected];
+            let gold = Color::new(1.0, 0.8, 0.2, 1.0);
+            match self.anchors.get(name) {
+                Some(a) => {
+                    let offset = self.cockpit_model.as_ref().map(|(_, o)| *o).unwrap_or_default();
+                    let c = layout::anchor_corners(a, offset);
+                    let pts: Vec<Option<Vec2>> =
+                        c.iter().map(|p| cam.project(cam.position + cam.rotation * *p, screen)).collect();
+                    for k in 0..4 {
+                        if let (Some(p), Some(q)) = (pts[k], pts[(k + 1) % 4]) {
+                            draw_line(p.x, p.y, q.x, q.y, 2.0, gold);
+                        }
+                    }
+                }
+                None => {
+                    if let Some(r) = self.instruments.get(name) {
+                        let r = Layout::new(screen, self.design).rect(*r);
+                        draw_rectangle_lines(r[0], r[1], r[2], r[3], 2.0, gold);
+                        draw_rectangle(r[0] + r[2] - 6.0, r[1] + r[3] - 6.0, 12.0, 12.0, gold);
+                    }
+                }
+            }
+            draw_rectangle(0.0, 0.0, screen.x, 54.0, Color::new(0.0, 0.0, 0.0, 0.7));
+            draw_text(&format!("COCKPIT LAYOUT: {name}"), 12.0, 22.0, 22.0, gold);
+            draw_text(&ed.message, 12.0, 44.0, 18.0, WHITE);
+        }
         if self.menu_open {
             draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.0, 0.0, 0.6));
             draw_centered("MENU", screen.y * 0.35, 40.0, WHITE);
@@ -579,6 +666,191 @@ impl FlightSession {
             );
         }
         Next::Stay
+    }
+}
+
+impl FlightSession {
+    /// One frame of the cockpit layout editor's input (see `hud::layout`).
+    fn edit_layout(&mut self, ctx: &mut AppContext, raw: &crate::input::RawInput) {
+        let Some(ed) = &mut self.editor else { return };
+        let pressed = |k: &str| raw.pressed.contains(k);
+        if pressed("escape") {
+            self.editor = None;
+            return;
+        }
+        let n = hud::draw::INSTRUMENTS.len();
+        if pressed("tab") {
+            ed.selected = if raw.shift { (ed.selected + n - 1) % n } else { (ed.selected + 1) % n };
+            ed.drag = None;
+        }
+        let name = hud::draw::INSTRUMENTS[ed.selected].to_string();
+        let screen = Vec2::new(screen_width(), screen_height());
+        let (mx, my) = mouse_position();
+        let mouse = Vec2::new(mx, my);
+        let (_, wheel) = mouse_wheel();
+        let grow = if pressed("equal") || pressed("kpadd") || wheel > 0.0 {
+            1.05
+        } else if pressed("minus") || pressed("kpsubtract") || wheel < 0.0 {
+            1.0 / 1.05
+        } else {
+            1.0
+        };
+        if let Some(a) = self.anchors.get(&name).copied() {
+            // 3D: click the dashboard to place; size with the wheel.
+            if is_mouse_button_pressed(MouseButton::Left) {
+                if let Some((model, offset)) = &self.cockpit_model {
+                    let aspect = screen.x / screen.y;
+                    let fov = cockpit_fov(self.design.x / self.design.y, aspect);
+                    let dir = layout::cursor_ray(mouse, screen, fov, aspect);
+                    match layout::pick(model.model.lods[0].triangles(), *offset, dir) {
+                        Some((at, normal)) => {
+                            self.anchors.insert(name.clone(), Anchor { at: at.into(), normal: normal.into(), ..a });
+                            ed.changed = true;
+                            ed.message = format!("{name} placed at {at:.3}");
+                        }
+                        None => ed.message = "No cockpit surface under the cursor".into(),
+                    }
+                }
+            }
+            if grow != 1.0 {
+                self.anchors.insert(name.clone(), layout::scale_anchor(&a, grow));
+                ed.changed = true;
+            }
+        } else if let Some(r) = self.instruments.get(&name).copied() {
+            // 2D: drag to move, drag the corner to resize.
+            let l = Layout::new(screen, self.design);
+            let design_point = (mouse - l.offset) / l.scale;
+            if is_mouse_button_pressed(MouseButton::Left) {
+                ed.drag = layout::grip(r, design_point, 8.0 / l.scale.max(0.1)).map(|g| (g, design_point));
+            }
+            if !is_mouse_button_down(MouseButton::Left) {
+                ed.drag = None;
+            }
+            let mut r2 = r;
+            if let Some((g, last)) = ed.drag {
+                r2 = layout::drag_rect(r2, g, design_point - last, 8.0);
+                ed.drag = Some((g, design_point));
+            }
+            let step = if raw.shift { 10.0 } else { 1.0 };
+            let nudge = Vec2::new(
+                (pressed("right") as i32 - pressed("left") as i32) as f32,
+                (pressed("down") as i32 - pressed("up") as i32) as f32,
+            ) * step;
+            r2 = layout::drag_rect(r2, layout::Grip::Move, nudge, 8.0);
+            if grow != 1.0 {
+                let (cx, cy) = (r2[0] + r2[2] * 0.5, r2[1] + r2[3] * 0.5);
+                let (w, h) = (r2[2] * grow, r2[3] * grow);
+                r2 = [cx - w * 0.5, cy - h * 0.5, w, h];
+            }
+            if r2 != r {
+                self.instruments.insert(name.clone(), r2);
+                ed.changed = true;
+            }
+        }
+        if pressed("s") {
+            let ed = self.editor.as_mut().expect("checked above");
+            ed.message = match save_layout(ctx, self.cockpit_id.as_deref(), &self.instruments, &self.anchors) {
+                Ok(path) => format!("Saved as an addon: {}", path.display()),
+                Err(e) => format!("Not saved: {e}"),
+            };
+        }
+    }
+}
+
+/// Saves a cockpit layout as a small addon in the user's mods folder, so it loads with
+/// the campaign from now on (and can be copied into a mod's own rules).
+fn save_layout(
+    ctx: &AppContext,
+    cockpit: Option<&str>,
+    instruments: &HashMap<String, [f32; 4]>,
+    anchors: &HashMap<String, Anchor>,
+) -> Result<std::path::PathBuf, String> {
+    let cockpit = cockpit.ok_or("this ship has no cockpit definition")?;
+    let campaign = ctx.content.campaign.clone().unwrap_or_else(|| "all".into());
+    let dir = crate::cli::user_data_dir()
+        .ok_or("no user data folder")?
+        .join("mods")
+        .join(format!("{campaign}-cockpit-{cockpit}"));
+    std::fs::create_dir_all(dir.join("rules")).map_err(|e| e.to_string())?;
+    let pack = format!(
+        "# yaml-language-server: $schema=../../schemas/pack.schema.json\n\
+         # Written by the cockpit layout editor. Copy rules/cockpit-layout.yaml into your own\n\
+         # mod to ship the layout with it.\n\
+         id: {campaign}-cockpit-{cockpit}\nname: Cockpit layout ({cockpit})\nkind: addon\ntargets: [{campaign}]\nformat: 2\n"
+    );
+    std::fs::write(dir.join("pack.yaml"), pack).map_err(|e| e.to_string())?;
+    let path = dir.join("rules").join("cockpit-layout.yaml");
+    std::fs::write(&path, layout::layout_yaml(cockpit, instruments, anchors)).map_err(|e| e.to_string())?;
+    Ok(path)
+}
+
+/// Draws each anchored instrument into its own texture, then maps the texture onto the
+/// instrument's rectangle on the cockpit's surface, in perspective. The rectangle is
+/// split into a grid so the texture follows the perspective closely (a single quad of
+/// two triangles would bend straight lines at the diagonal).
+fn draw_anchored(
+    frame: &HudFrame,
+    anchors: &HashMap<String, Anchor>,
+    targets: &mut HashMap<String, RenderTarget>,
+    cam: &SpaceCamera,
+    offset: Vec3,
+    screen: Vec2,
+) {
+    let Some(me) = frame.world.get(frame.player) else { return };
+    // Texture pixels per screen pixel: drawing at twice the on-screen size keeps lines
+    // and text crisp after the texture is mapped (and filtered) onto the dashboard.
+    const DENSITY: f32 = 2.0;
+    for (name, a) in anchors {
+        let corners = layout::anchor_corners(a, offset);
+        let on_screen = |p: Vec3| cam.project(cam.position + cam.rotation * p, screen);
+        let (Some(tl), Some(tr), Some(bl)) = (on_screen(corners[0]), on_screen(corners[1]), on_screen(corners[3]))
+        else {
+            continue;
+        };
+        let w = ((tr - tl).length() * DENSITY).clamp(32.0, 2048.0).round();
+        let h = ((bl - tl).length() * DENSITY).clamp(16.0, 2048.0).round();
+        // Recreate the texture only when its size changes noticeably (window resizes).
+        let stale = targets.get(name).is_none_or(|rt| {
+            let (tw, th) = (rt.texture.width(), rt.texture.height());
+            (tw - w).abs() > tw * 0.2 || (th - h).abs() > th * 0.2
+        });
+        if stale {
+            let rt = render_target(w as u32, h as u32);
+            rt.texture.set_filter(FilterMode::Linear);
+            targets.insert(name.clone(), rt);
+        }
+        let rt = targets[name].clone();
+        let (w, h) = (rt.texture.width(), rt.texture.height());
+        let mut camera = Camera2D::from_display_rect(Rect::new(0.0, 0.0, w, h));
+        camera.render_target = Some(rt);
+        set_camera(&camera);
+        clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
+        let inner = HudFrame { layout: Layout::new(Vec2::new(w, h), Vec2::new(w, h)), text_scale: DENSITY, ..*frame };
+        hud::draw::draw_instrument(&inner, me, name, [0.0, 0.0, w, h]);
+    }
+    set_default_camera();
+    for (name, a) in anchors {
+        let Some(rt) = targets.get(name) else { continue };
+        let corners = layout::anchor_corners(a, offset);
+        const GRID: u16 = 6;
+        let mut vertices = Vec::new();
+        for j in 0..=GRID {
+            for i in 0..=GRID {
+                let (u, v) = (i as f32 / GRID as f32, j as f32 / GRID as f32);
+                let p = layout::anchor_point(&corners, u, v);
+                let Some(sp) = cam.project(cam.position + cam.rotation * p, screen) else { return };
+                // Render targets come out upside down: sample with v flipped.
+                vertices.push(macroquad::models::Vertex::new(sp.x, sp.y, 0.0, u, 1.0 - v, WHITE));
+            }
+        }
+        let mut indices = Vec::new();
+        for j in 0..GRID {
+            for i in 0..GRID {
+                let k = j * (GRID + 1) + i;
+                indices.extend([k, k + 1, k + GRID + 1, k + 1, k + GRID + 2, k + GRID + 1]);
+            }
+        }
+        draw_mesh(&macroquad::models::Mesh { vertices, indices, texture: Some(rt.texture.clone()) });
     }
 }
 
