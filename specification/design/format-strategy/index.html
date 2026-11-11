@@ -1,0 +1,6503 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="OpenInterceptor as built: a moddable space-combat simulator engine. Plan, architecture, original formats, modding, Rust practice and testing (docs branch)">
+      
+      
+      
+      
+        <link rel="prev" href="../format-campaign/">
+      
+      
+        <link rel="next" href="../logistics/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Format: strategy layer - OpenInterceptor — Implementation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#format-strategy-layer" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="OpenInterceptor — Implementation" class="md-header__button md-logo" aria-label="OpenInterceptor — Implementation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OpenInterceptor — Implementation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Format: strategy layer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="OpenInterceptor — Implementation" class="md-nav__button md-logo" aria-label="OpenInterceptor — Implementation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OpenInterceptor — Implementation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../definition/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definition
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Definition
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Combat
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/cockpit-hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit & HUD
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/control-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls & control console
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/strategy-logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy & logistics
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../definition/campaigns/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Campaigns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign features
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/interceptor-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Interceptor campaign mod
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/default-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The default campaign
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/remastered/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interceptor Remastered
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/modding-toolkit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding toolkit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility (original data)
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/platforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/testbed-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed & tools
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Requirements
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Combat
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/cockpit-hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit & HUD
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/control-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls & control console
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/strategy-logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy & logistics
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/campaigns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/modding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/platforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../requirements/testbed-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed & tools
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console protocol (planned)
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod formats and design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mod formats and design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../original-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The original, system by system
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mod-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod structure
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../format-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: campaign and game flow
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: strategy layer
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: strategy layer
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#star-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Star map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Star map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        maps: {&lt;id&gt;: …}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sensors-and-probes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sensors and probes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factions-and-relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factions and relations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factions and relations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#factionid-extended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        factions: {&lt;id&gt;: …} (extended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-relations-optional-per-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic relations (optional per campaign)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluations-evaluationid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluations: evaluations: {&lt;id&gt;: …}
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#economy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Economy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bases-and-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bases and modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ships-and-equipment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ships and equipment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pilots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pilots
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rival-strategy-strategistid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rival strategy: strategists: {&lt;id&gt;: …}
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#revision-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revision history
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logistics: facilities and supply lines
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../format-objects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: objects and models
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../format-missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: missions, environments, events
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../format-behaviour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: behaviours and scripting
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../format-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coverage matrix
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../original-formats/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Original data formats
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Original data formats
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/pe-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PE resource container
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/xmsh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XMSH meshes
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/xtxr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XTXR textures
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/tga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TGA images and cockpits
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/xspt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XSPT sprites
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/smacker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/ini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    INI rule files
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/object-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object and ship table
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/plan/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation plan
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-0-foundation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 0 — Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-1-flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 1 — Flight simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-2-combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 2 — Enemies and combat
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-3-missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 3 — Missions and scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-3-interlude/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 3 interlude — Feedback and control console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-4-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 4 — Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-5-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 5 — Campaigns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-6-presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 6 — Presentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-7-modding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 7 — Modding toolkit and Remastered
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-8-release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packs, VFS and rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings and data discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets and GPU cache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/sim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/script/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conditions (script)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/mission/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/rendering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input and gamepads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/testbed/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/extract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extractor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/deviations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deviations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/testing/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/testing/unit-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unit tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/testing/manual-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/build/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/build/packaging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../user-guide/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../modding/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Modding
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/first-mod/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Make your first mod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/rulesets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rulesets and layering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/behaviours/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Behaviours and conditions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/looks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Looks: model sets, debris, effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/weapons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/stations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stations, modules and probes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text and translation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod file reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models and textures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/overrides/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overrides and extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cockpits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpits (HD and 3D)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios and missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting (design)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns (design)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/validating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validating a mod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../learning/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../learning/rust/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn Rust with this codebase
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn Rust with this codebase
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ownership and borrowing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/lifetimes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifetimes and borrowed bytes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structs, enums and pattern matching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/traits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traits and generics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules and visibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/iterators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Iterators and closures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/collections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/ffi-unsafe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFI, repr(C) and unsafe
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/cfg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms with cfg
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing in Rust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/cargo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cargo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/async-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../learning/best-practices/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Best practices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/data-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data model and performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/dependencies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependency policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/comments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commenting standard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/testing-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/game-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game design (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/mathematics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematics (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/physics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Physics (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/original-game/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Original game
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Original game
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/original-game/gameplay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gameplay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/original-game/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/original-game/cd-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CD layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/revision-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision history
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../meta/change-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change history
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#star-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Star map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Star map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        maps: {&lt;id&gt;: …}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sensors-and-probes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sensors and probes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factions-and-relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factions and relations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factions and relations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#factionid-extended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        factions: {&lt;id&gt;: …} (extended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-relations-optional-per-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic relations (optional per campaign)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluations-evaluationid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluations: evaluations: {&lt;id&gt;: …}
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#economy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Economy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#research" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bases-and-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bases and modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ships-and-equipment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ships and equipment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pilots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pilots
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rival-strategy-strategistid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rival strategy: strategists: {&lt;id&gt;: …}
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#revision-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revision history
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="format-strategy-layer">Format: strategy layer<a class="headerlink" href="#format-strategy-layer" title="Permanent link">&para;</a></h1>
+<p><strong>Status: design; implemented in <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a> (map,
+economy, research, bases, ships, pilots) and <a href="../../../implementation/plan/stage-5-campaign/">Stage 5</a>
+(relations, strategist).</strong>
+Files in <code>strategy/*.yaml</code> (YAML, the mod format of the implemented rules files). Numbers that vary by difficulty take one value per level (<code>{per_level: [..]}</code>, implemented); any
+quantity the original computes with a formula takes an <strong>expression</strong> in the
+<a href="../format-behaviour/#conditions">condition language</a> (arithmetic over campaign queries), so the
+formulas are data too.</p>
+<h2 id="star-map">Star map<a class="headerlink" href="#star-map" title="Permanent link">&para;</a></h2>
+<h3 id="mapid"><code>maps: {&lt;id&gt;: …}</code><a class="headerlink" href="#mapid" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">maps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">frontier</span><span class="p">:</span><span class="w">                          </span><span class="c1"># interceptor: generated like the original</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">generated</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">60000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">60000</span><span class="p p-Indicator">]</span><span class="w">             </span><span class="c1"># map units (2D)</span>
+<span class="w">    </span><span class="nt">unit_ly</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.000167</span><span class="w">                </span><span class="c1"># map unit → light years (so 1.5 ly ≈ 9000 units)</span>
+<span class="w">    </span><span class="nt">systems</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">30</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">45</span><span class="p p-Indicator">]</span><span class="w">                </span><span class="c1"># or a table rolled on d100</span>
+<span class="w">    </span><span class="nt">star_classes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">table:spectral</span><span class="w">     </span><span class="c1"># d100 table → star class</span>
+<span class="w">    </span><span class="nt">bodies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">],</span><span class="nt"> slots</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="nt"> table</span><span class="p">:</span><span class="w"> </span><span class="nv">bodies</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">names</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">text:star_names</span><span class="w">           </span><span class="c1"># pool</span>
+<span class="w">    </span><span class="nt">guarantee</span><span class="p">:</span><span class="w"> </span><span class="s">"black_hole</span><span class="nv"> </span><span class="s">&gt;=</span><span class="nv"> </span><span class="s">1"</span><span class="w">     </span><span class="c1"># the gateway</span>
+<span class="w">    </span><span class="nt">travel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">free</span><span class="w">                     </span><span class="c1"># free hyperjumps, or lanes</span>
+<span class="w">    </span><span class="nt">hidden</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">black_hole</span><span class="p p-Indicator">]</span><span class="w">             </span><span class="c1"># not drawn until found</span>
+<span class="w">    </span><span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">random</span><span class="w">                     </span><span class="c1"># or a number for a fixed campaign</span>
+<span class="w">  </span><span class="nt">reach</span><span class="p">:</span><span class="w">                             </span><span class="c1"># default campaign: a fixed, hand-made map</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fixed</span>
+<span class="w">    </span><span class="nt">systems</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">mercury_gate</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">pos</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1200</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">800</span><span class="p p-Indicator">],</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">yellow</span><span class="p p-Indicator">,</span><span class="nt"> bodies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">planet</span><span class="p p-Indicator">:</span><span class="nv">rocky</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">belt</span><span class="p p-Indicator">:</span><span class="nv">thin</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="nt">ajax</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">pos</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">4300</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1500</span><span class="p p-Indicator">],</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">red_dwarf</span><span class="p p-Indicator">,</span><span class="nt"> bodies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">planet</span><span class="p p-Indicator">:</span><span class="nv">ice</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">belt</span><span class="p p-Indicator">:</span><span class="nv">rich</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">lanes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">between</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">mercury_gate</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">ajax</span><span class="p p-Indicator">],</span><span class="nt"> length</span><span class="p">:</span><span class="w"> </span><span class="nv">48h</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">travel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lanes</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Construct</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>star_classes: {&lt;id&gt;: …}</code></td>
+<td>Visual (sun model, colour, size), d100 range, mineral richness table, hazard (black hole: hidden, swallows probes, battle gravity).</td>
+</tr>
+<tr>
+<td><code>bodies: {&lt;id&gt;: …}</code></td>
+<td>Planet, moon or asteroid field: size, richness, the backdrop model used in battles in its orbit, what can be built there (OPP, outpost).</td>
+</tr>
+<tr>
+<td><code>travel</code></td>
+<td><code>free</code> (any point, range-limited: the original) or <code>lanes</code> (only along lanes: simpler, used by the default campaign).</td>
+</tr>
+<tr>
+<td><code>locations: {&lt;kind&gt;: …}</code></td>
+<td>Location kinds a mission can happen at: <code>deep_space</code>, <code>system</code>, <code>orbit</code>, <code>base</code>, <code>outpost</code>, <code>opp</code>, <code>gateway</code>, <code>pocket</code> (a separate battle space reached only by story).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sensors-and-probes">Sensors and probes<a class="headerlink" href="#sensors-and-probes" title="Permanent link">&para;</a></h3>
+<p><em>Survey ships</em> (a separate craft from supply ships; range: the launching station's radar range) that report a system's deposits and facility suitability are designed on
+<a href="../logistics/#survey-ships">Logistics</a>. Battle probes (<code>probe: {sensors, jamming}</code>) are
+implemented (<a href="../../../modding/stations/#probes">Stations, modules and probes</a>).</p>
+<p><code>sensor</code> keys on bases, ships, outposts and probes give a <strong>map range</strong>; contacts are visible
+inside the union of ranges. Probes are object classes with <code>map_range</code>, <code>lifetime</code>, movement
+(<code>station</code>, <code>roam</code>) and effects (<code>reveal</code>, <code>jam: downlink</code>, <code>hunt</code>).</p>
+<h2 id="factions-and-relations">Factions and relations<a class="headerlink" href="#factions-and-relations" title="Permanent link">&para;</a></h2>
+<h3 id="factionid-extended"><code>factions: {&lt;id&gt;: …}</code> (extended)<a class="headerlink" href="#factionid-extended" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">factions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">corporate</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"@faction.corporate"</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">patron</span><span class="w">                 </span><span class="c1"># player, rival, patron, independent, hostile</span>
+<span class="w">    </span><span class="nt">relation</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">xcom</span><span class="p">:</span><span class="w"> </span><span class="nv">funding</span><span class="p p-Indicator">}</span><span class="w">    </span><span class="c1"># relation is a per-holding funding share</span>
+<span class="w">    </span><span class="nt">funding</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">95%</span><span class="p p-Indicator">],</span><span class="nt"> start</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">leaves</span><span class="p">:</span><span class="w"> </span><span class="s">"funding</span><span class="nv"> </span><span class="s">&lt;=</span><span class="nv"> </span><span class="s">0%"</span><span class="w">      </span><span class="c1"># holding lost for good</span>
+<span class="w">    </span><span class="nt">names</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">text:corporations</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th><code>kind</code></th>
+<th>Meaning</th>
+<th>Interceptor</th>
+<th>Default campaign</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>player</code></td>
+<td>The player</td>
+<td>X-COM</td>
+<td>Interplanetary Guard</td>
+</tr>
+<tr>
+<td><code>rival</code></td>
+<td>A strategic opponent with its own economy, research, plan and AI</td>
+<td>Aliens</td>
+<td>Umbral Dominion</td>
+</tr>
+<tr>
+<td><code>patron</code></td>
+<td>Funds the player; relation per holding or overall</td>
+<td>Corporations</td>
+<td>Solar Senate</td>
+</tr>
+<tr>
+<td><code>independent</code></td>
+<td>Has a relation score; can trade, help or turn hostile</td>
+<td>Arms dealer, GSC</td>
+<td>Nebula Cartel, Belt Prospectors</td>
+</tr>
+<tr>
+<td><code>hostile</code></td>
+<td>Attacks everyone; can be bribed or destroyed by events</td>
+<td>Kabron pirates, Cult of Sirius</td>
+<td>Black Comet raiders</td>
+</tr>
+</tbody>
+</table>
+<p>Relations are numbers (−100…100) or funding shares, changed by actions (<code>add(relation(x),
+n)</code>) and by evaluations. Conditions read them.</p>
+<h3 id="dynamic-relations-optional-per-campaign">Dynamic relations (optional per campaign)<a class="headerlink" href="#dynamic-relations-optional-per-campaign" title="Permanent link">&para;</a></h3>
+<p>The original's relations are fixed except for corporate funding. A campaign may instead switch
+on <strong>dynamic relations</strong>: every pair of factions has a standing that drifts with what happens,
+and the standing decides who supports whom and who fights whom, so the player's actions decide
+their allies over time.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">relations</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">dynamic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                         </span><span class="c1"># false = hostility only from factions' hostile lists</span>
+<span class="w">  </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">stances</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">hostile</span><span class="p">:</span><span class="w"> </span><span class="nv">-40</span><span class="p p-Indicator">,</span><span class="nt"> wary</span><span class="p">:</span><span class="w"> </span><span class="nv">-10</span><span class="p p-Indicator">,</span><span class="nt"> neutral</span><span class="p">:</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="nt"> friendly</span><span class="p">:</span><span class="w"> </span><span class="nv">60</span><span class="p p-Indicator">,</span><span class="nt"> allied</span><span class="p">:</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># upper bounds</span>
+<span class="w">  </span><span class="c1"># Initial standings (unlisted pairs start at 0); symmetric unless written both ways</span>
+<span class="w">  </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">guard-cartel</span><span class="p">:</span><span class="w"> </span><span class="nv">-10</span><span class="p p-Indicator">,</span><span class="nt"> guard-senate</span><span class="p">:</span><span class="w"> </span><span class="nv">30</span><span class="p p-Indicator">,</span><span class="nt"> cartel-senate</span><span class="p">:</span><span class="w"> </span><span class="nv">-50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"dominion-*"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">-100</span><span class="p p-Indicator">}</span>
+
+<span class="c1"># How events move standings: who did what to whom</span>
+<span class="nt">relation_rules</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">defended</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="s">"battle_won</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">ally_of_victim(asset_owner)"</span><span class="w">     </span><span class="c1"># you saved their base, convoy or ship</span>
+<span class="w">    </span><span class="nt">change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">asset_owner</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">base</span><span class="p">:</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">,</span><span class="nt"> convoy</span><span class="p">:</span><span class="w"> </span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="nt"> ship</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> other</span><span class="p">:</span><span class="w"> </span><span class="nv">8</span><span class="p p-Indicator">}}</span>
+<span class="w">    </span><span class="nt">also</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">enemies_of_asset_owner</span><span class="p">:</span><span class="w"> </span><span class="nv">-3</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">attacked</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="s">"destroyed_by_player</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">captured_by_player"</span>
+<span class="w">    </span><span class="nt">change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">base</span><span class="p">:</span><span class="w"> </span><span class="nv">-40</span><span class="p p-Indicator">,</span><span class="nt"> outpost</span><span class="p">:</span><span class="w"> </span><span class="nv">-25</span><span class="p p-Indicator">,</span><span class="nt"> freighter</span><span class="p">:</span><span class="w"> </span><span class="nv">-10</span><span class="p p-Indicator">,</span><span class="nt"> fighter</span><span class="p">:</span><span class="w"> </span><span class="nv">-3</span><span class="p p-Indicator">,</span><span class="nt"> other</span><span class="p">:</span><span class="w"> </span><span class="nv">-10</span><span class="p p-Indicator">}}</span>
+<span class="w">    </span><span class="nt">also</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">enemies_of_owner</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">refused</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">defence_request_refused</span>
+<span class="w">    </span><span class="nt">change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">requester</span><span class="p">:</span><span class="w"> </span><span class="nv">-6</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">drift</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">every</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">720h</span><span class="w">                         </span><span class="c1"># a month</span>
+<span class="w">    </span><span class="nt">change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">towards</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> by</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">}</span><span class="w">         </span><span class="c1"># old grudges fade</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Stance</th>
+<th>Effect in battle</th>
+<th>Effect in strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>allied</code></td>
+<td>Their ships fight on your side; you may call for help</td>
+<td>They share sensor data, sell at a discount, may fund you, ask you to defend them</td>
+</tr>
+<tr>
+<td><code>friendly</code></td>
+<td>Their ships help if attacked nearby</td>
+<td>Trade; occasional requests</td>
+</tr>
+<tr>
+<td><code>neutral</code></td>
+<td>Ignore you unless attacked</td>
+<td>Trade at normal prices</td>
+</tr>
+<tr>
+<td><code>wary</code></td>
+<td>Ignore you; return fire</td>
+<td>Refuse to trade; no requests</td>
+</tr>
+<tr>
+<td><code>hostile</code></td>
+<td>Attack on sight; their bases and convoys become targets</td>
+<td>Raid your convoys; may ally with your enemies</td>
+</tr>
+</tbody>
+</table>
+<p>Stance changes fire events (<code>event:on_stance_change</code> with the faction and old and new
+stances), so a campaign can react with messages, new missions or story steps. Battle hostility
+is taken from the stances at the moment the battle starts. The <code>interceptor</code> campaign sets
+<code>dynamic: false</code> to match the original, with corporate funding as its only moving relation; the
+default campaign sets <code>dynamic: true</code>.</p>
+<h3 id="evaluations-evaluationid">Evaluations: <code>evaluations: {&lt;id&gt;: …}</code><a class="headerlink" href="#evaluations-evaluationid" title="Permanent link">&para;</a></h3>
+<p>The monthly funding review is an evaluation: a period, an expression per holding, and a table
+mapping the result to changes.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">evaluations</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">funding</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">720h</span><span class="w">                 </span><span class="c1"># a month</span>
+<span class="w">    </span><span class="nt">each</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outpost_system</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">"activity(xcom,</span><span class="nv"> </span><span class="s">here)</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">activity(xcom)</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">10</span><span class="nv"> </span><span class="s">-</span><span class="nv"> </span><span class="s">activity(alien,</span><span class="nv"> </span><span class="s">here)</span><span class="nv"> </span><span class="s">-</span><span class="nv"> </span><span class="s">activity(alien)</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">5"</span>
+<span class="w">    </span><span class="nt">change</span><span class="p">:</span><span class="w">                      </span><span class="c1"># result bands → funding change range</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">below</span><span class="p">:</span><span class="w"> </span><span class="nv">-1000</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-5%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-20%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">below</span><span class="p">:</span><span class="w"> </span><span class="nv">-500</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-2%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-10%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">below</span><span class="p">:</span><span class="w"> </span><span class="nv">-250</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-5%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">below</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-1%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">equal</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">up_to</span><span class="p">:</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">up_to</span><span class="p">:</span><span class="w"> </span><span class="nv">500</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">up_to</span><span class="p">:</span><span class="w"> </span><span class="nv">1000</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10%</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">above</span><span class="p">:</span><span class="w"> </span><span class="nv">1000</span><span class="p p-Indicator">,</span><span class="nt"> change</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10%</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">then</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">new_outposts</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">rolls</span><span class="p">:</span><span class="w"> </span><span class="s">"sum</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">1000"</span><span class="p p-Indicator">,</span><span class="nt"> table</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">none</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">],</span><span class="nt"> one</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">],</span><span class="nt"> two</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9</span><span class="p p-Indicator">],</span><span class="nt"> three</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">]}}</span>
+</code></pre></div>
+<h2 id="economy">Economy<a class="headerlink" href="#economy" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Defines</th>
+<th>Interceptor</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>resources</code></td>
+<td>Something mined, stored and sold</td>
+<td>Ore (kt)</td>
+<td>Cosmium</td>
+</tr>
+<tr>
+<td><code>incomes</code></td>
+<td>A recurring income: source, period, expression</td>
+<td>Outpost yield × exchange rate × 0.75 × funding</td>
+<td>Senate stipend per protected colony + cosmium sales</td>
+</tr>
+<tr>
+<td><code>expenses</code></td>
+<td>Recurring costs</td>
+<td>Module maintenance, hull upkeep, salaries</td>
+<td>Same, fewer</td>
+</tr>
+<tr>
+<td><code>markets</code></td>
+<td>Who sells what, prices, availability, and who buys</td>
+<td>Outposts sell; the arms dealer buys (and arms the aliens)</td>
+<td>Senate depot sells; the Cartel buys and sells (and may supply the Dominion)</td>
+</tr>
+<tr>
+<td><code>factories</code></td>
+<td>Manufacturing capacity and queue rules</td>
+<td>Outpost technicians (10 + 10/OPP), priorities 10/25/50/100%</td>
+<td>One shipyard per base</td>
+</tr>
+<tr>
+<td><code>deliveries</code></td>
+<td>How goods arrive</td>
+<td>Outpost freighters (100 CSU; lost with cargo)</td>
+<td>Supply rocket</td>
+</tr>
+<tr>
+<td><code>storage</code></td>
+<td>Units and limits</td>
+<td>CSU; cargo module 1000; full = no orders, loot jettisoned</td>
+<td>Same rule</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Logistics (default campaign, planned).</strong> Resources with deposits per system, three production
+facility types (mining facility, research station, manufacturing center), a demand-driven order
+chain (main base ← manufacturing ← mining) with time-based extraction and recipes, automatic
+government supply convoys on fixed lanes with the attack point chosen at launch, enemy supply depots,
+survey ships, site-specific research branches and facility fighter pools are designed on
+<a href="../logistics/">Logistics: facilities and supply lines</a>. A campaign that leaves those sections out
+keeps the simpler <code>deliveries</code> model above — as <code>interceptor</code> does, by decision, to stay faithful
+to the original.</p>
+<p>Item economy keys go on the items themselves: <code>cost</code>, <code>sell_price</code>, <code>prod_time</code> (0 = bought off
+the shelf), <code>size</code> (storage), <code>maintenance</code>, <code>requires</code>.</p>
+<h2 id="research">Research<a class="headerlink" href="#research" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">research</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">tri_titanium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"@research.tri_titanium"</span><span class="w">          </span><span class="c1"># found name / researched name / text keys</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">18000</span><span class="w">                              </span><span class="c1"># work units (the original's TQ)</span>
+<span class="w">    </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">requires</span><span class="p">:</span><span class="w"> </span><span class="s">"research(wraith_examination)"</span>
+<span class="w">    </span><span class="nt">requires_any</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w">                         </span><span class="c1"># alternative prerequisites</span>
+<span class="w">    </span><span class="nt">appears</span><span class="p">:</span><span class="w"> </span><span class="s">"salvage(wraith_hull)</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">captured(wraith)"</span><span class="w">   </span><span class="c1"># how it becomes available</span>
+<span class="w">    </span><span class="nt">unlocks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">items.tri_titanium_armor</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">hulls.firestar</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># the original's hard-coded yields</span>
+<span class="w">    </span><span class="nt">encyclopaedia</span><span class="p">:</span><span class="w"> </span><span class="s">"@db.tri_titanium"</span>
+
+<span class="nt">research_model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">download</span><span class="w">                             </span><span class="c1"># or labs</span>
+<span class="w">  </span><span class="nt">rate</span><span class="p">:</span><span class="w"> </span><span class="s">"module_count(downlink_std)</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">30</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">module_count(downlink_hyper)</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">35"</span>
+<span class="w">  </span><span class="nt">per_base</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">topics</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> max_downlinks</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">switching</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lose_progress</span>
+<span class="w">  </span><span class="nt">jammed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"probe_near_base(data_jammer)"</span><span class="p p-Indicator">,</span><span class="nt"> effect</span><span class="p">:</span><span class="w"> </span><span class="nv">pause_one_downlink</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<ul>
+<li><code>mode: download</code> is the original (research done elsewhere, bandwidth-limited);
+  <code>mode: labs</code> is the familiar X-COM model (staff in base labs) for other campaigns.</li>
+<li><strong>Discovery</strong> routes: prerequisites, salvage, capture, events (<code>unlock(research: x)</code>).</li>
+<li><strong>Salvage</strong> is <code>salvage: {&lt;id&gt;: …}</code>: per item type, survival chance by difficulty (the
+  original's 13 <code>*Goodies</code> sections), what it yields (items, research topics, score).</li>
+<li><strong>Capture</strong>: a disabled object can be towed or held until victory; its class's <code>capture</code>
+  key gives what it yields.</li>
+</ul>
+<h2 id="bases-and-modules">Bases and modules<a class="headerlink" href="#bases-and-modules" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">base_types</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">xcom</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">hub</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">objects.xcom_hub</span>
+<span class="w">    </span><span class="nt">max_bases</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">placement</span><span class="p">:</span><span class="w"> </span><span class="s">"distance_to_own_base</span><span class="nv"> </span><span class="s">&lt;=</span><span class="nv"> </span><span class="s">1.5ly"</span>
+<span class="w">    </span><span class="nt">cost</span><span class="p">:</span><span class="w"> </span><span class="s">"(1500000</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">template_cost)</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">0.75"</span>
+<span class="w">    </span><span class="nt">build_time</span><span class="p">:</span><span class="w"> </span><span class="s">"slowest_module</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">168h"</span>
+<span class="w">    </span><span class="nt">dismantle</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">refund</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> sell_stock</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> dismiss_pilots</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">limits</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">shield</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> sensor</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> comms</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> hangar</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="nt"> downlink</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="nt"> weapon</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">templates</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">new</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">beam_defence</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">beam_defence</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">downlink</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">shield</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">sensor</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># best available of each</span>
+</code></pre></div>
+<p>Production facilities (<code>facility_types</code>: mining, research, manufacturing) extend base types
+with production roles; see <a href="../logistics/#facility-types">Logistics</a>.</p>
+<p>Modules are object classes (<a href="../format-objects/#modules-moduleid">objects</a>) with <code>effects</code>:
+named campaign quantities they add while working (<code>hangar_capacity +3</code>, <code>pilot_capacity +5</code>,
+<code>heal_rate x2</code>, <code>storage +1000</code>, <code>research_rate +30</code>, <code>base_shield 2000</code>, <code>sensor_range
+40000</code>, <code>orders_in_flight</code>, <code>probe_launch</code>, <code>repair_rate x2</code>, <code>ecm 1km</code>), and <code>on_destroyed</code>
+actions (<code>lose(ships in hangar)</code>, <code>kill(pilots in module)</code>, <code>lose(stock)</code>). A destroyed module
+stays as a wreck until repaired or dismantled.</p>
+<h2 id="ships-and-equipment">Ships and equipment<a class="headerlink" href="#ships-and-equipment" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">hulls</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">firestar</span><span class="p">:</span><span class="w">                    </span><span class="c1"># strategy data for a ship class (same id as ships.firestar)</span>
+<span class="w">    </span><span class="nt">slots</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">beam</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">,</span><span class="nt"> missile</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="nt"> special</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">,</span><span class="nt"> armor</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> engine</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> sensor</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> shield</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">cost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">550000</span>
+<span class="w">    </span><span class="nt">prod_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">18000</span>
+<span class="w">    </span><span class="nt">upkeep</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">amount</span><span class="p">:</span><span class="w"> </span><span class="nv">18000</span><span class="p p-Indicator">,</span><span class="nt"> per</span><span class="p">:</span><span class="w"> </span><span class="nv">month</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">requires</span><span class="p">:</span><span class="w"> </span><span class="s">"research(tri_titanium)"</span>
+
+<span class="nt">items</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">graviton_pulse</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">engine</span><span class="w">               </span><span class="c1"># beam, launcher, missile, armor, shield, engine, sensor, special, probe, mine</span>
+<span class="w">    </span><span class="nt">special</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">power</span><span class="p">:</span><span class="w"> </span><span class="nv">300</span><span class="p p-Indicator">,</span><span class="nt"> endurance</span><span class="p">:</span><span class="w"> </span><span class="nv">48h</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">cost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">185000</span>
+<span class="w">    </span><span class="nt">requires</span><span class="p">:</span><span class="w"> </span><span class="s">"research(graviton_pulse)"</span>
+
+<span class="nt">designs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lightning_stock</span><span class="p">:</span><span class="w">             </span><span class="c1"># named configuration</span>
+<span class="w">    </span><span class="nt">hull</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lightning</span>
+<span class="w">    </span><span class="nt">fit</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">beam</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">laser_cannon</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">laser_cannon</span><span class="p p-Indicator">],</span><span class="nt"> missile</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">xwinder_launcher</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">xwinder_launcher</span><span class="p p-Indicator">],</span><span class="nt"> engine</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">conversion_drive</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">auto</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">best</span><span class="w">                 </span><span class="c1"># stock designs upgrade to the best available item</span>
+<span class="w">    </span><span class="nt">price</span><span class="p">:</span><span class="w"> </span><span class="s">"hull</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">0.9</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">parts"</span>
+</code></pre></div>
+<p>Loadout rules (<code>fits</code> on items: which slots, minimum sensor for a missile, power draw) are
+item keys; the Equip Ship screen enforces them.</p>
+<h2 id="pilots">Pilots<a class="headerlink" href="#pilots" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">pilots</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">stats</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">intelligence</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">accuracy</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">flying</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">aggression</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">bravery</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">psionics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">stamina</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">health</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">ranks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">rookie</span><span class="p">:</span><span class="w"> </span><span class="nv">40%</span><span class="p p-Indicator">,</span><span class="nt"> ensign</span><span class="p">:</span><span class="w"> </span><span class="nv">20%</span><span class="p p-Indicator">,</span><span class="nt"> lieutenant</span><span class="p">:</span><span class="w"> </span><span class="nv">20%</span><span class="p p-Indicator">,</span><span class="nt"> lt_commander</span><span class="p">:</span><span class="w"> </span><span class="nv">15%</span><span class="p p-Indicator">,</span><span class="nt"> commander</span><span class="p">:</span><span class="w"> </span><span class="nv">5%</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">rank_up</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">experience</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">38</span><span class="p p-Indicator">]}</span><span class="w">   </span><span class="c1"># thresholds (experienced); other levels via variants</span>
+<span class="w">  </span><span class="nt">experience</span><span class="p">:</span><span class="w"> </span><span class="s">"kills</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">missions</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">missions"</span>
+<span class="w">  </span><span class="nt">kill_value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fighter</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> freighter</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="nt"> outpost</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="nt"> opp</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="nt"> probe</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="nt"> mine</span><span class="p">:</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">salary</span><span class="p">:</span><span class="w"> </span><span class="s">"(48000</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">modifiers)</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">12"</span>
+<span class="w">  </span><span class="nt">training</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">stats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">accuracy</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">flying</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">psionics</span><span class="p p-Indicator">],</span><span class="nt"> per_month</span><span class="p">:</span><span class="w"> </span><span class="s">"ceil(0.1</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">stat</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">intelligence</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">100)"</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">injury</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">health</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="nt"> accuracy</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> flying</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">health</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> accuracy</span><span class="p">:</span><span class="w"> </span><span class="nv">25%</span><span class="p p-Indicator">,</span><span class="nt"> flying</span><span class="p">:</span><span class="w"> </span><span class="nv">25%</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">health</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> state</span><span class="p">:</span><span class="w"> </span><span class="nv">unconscious</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">below</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> state</span><span class="p">:</span><span class="w"> </span><span class="nv">dead</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">bravery</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kill</span><span class="p">:</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="nt"> outpost</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="nt"> base</span><span class="p">:</span><span class="w"> </span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="nt"> own_base_lost</span><span class="p">:</span><span class="w"> </span><span class="nv">-25</span><span class="p p-Indicator">,</span><span class="nt"> flee_below</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="nt"> flee_chance</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> flee_check</span><span class="p">:</span><span class="w"> </span><span class="nv">30s</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">recruit</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">pool</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="nt"> refresh</span><span class="p">:</span><span class="w"> </span><span class="nv">monthly</span><span class="p p-Indicator">,</span><span class="nt"> fee</span><span class="p">:</span><span class="w"> </span><span class="s">"10000</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">24000</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">modifiers"</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">names</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">text:pilot_names</span>
+<span class="w">  </span><span class="nt">voices</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">m1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">m2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">m3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">m4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">m5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">f1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">f2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">f3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">f4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">f5</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>Every formula is an expression, so another campaign can use completely different pilot rules
+(or leave out the <code>pilots</code> section and have none).</p>
+<h2 id="rival-strategy-strategistid">Rival strategy: <code>strategists: {&lt;id&gt;: …}</code><a class="headerlink" href="#rival-strategy-strategistid" title="Permanent link">&para;</a></h2>
+<p>The rival is driven by a strategist: budgets, priorities and an offence ladder, with
+conditions deciding when it expands or attacks. It replaces the original's hard-coded strategic
+AI and reads its <code>Think.ini</code> numbers.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">strategists</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">alien</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">faction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alien</span>
+<span class="w">    </span><span class="nt">income</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100%</span><span class="w">                                   </span><span class="c1"># of outpost yield</span>
+<span class="w">    </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">plan</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> forces</span><span class="p">:</span><span class="w"> </span><span class="nv">35%</span><span class="p p-Indicator">,</span><span class="nt"> research</span><span class="p">:</span><span class="w"> </span><span class="nv">15%</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># Think.ini ResearchDefault/GoodsDefault/DoomsdayDefault</span>
+<span class="w">    </span><span class="nt">period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">360h</span><span class="w">                                   </span><span class="c1"># 15 days</span>
+<span class="w">    </span><span class="nt">aggression</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">think:StartingAggression</span>
+<span class="w">      </span><span class="nt">up_when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">player_passive</span>
+<span class="w">      </span><span class="nt">down_when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">player_winning</span>
+<span class="w">    </span><span class="nt">explore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">probes</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">patrols</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">expand</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">new_base_when</span><span class="p">:</span><span class="w"> </span><span class="s">"player_aggressive</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">lost_base</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">plan_starved</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">outposts_exposed"</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">outposts</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">monthly_chance</span><span class="p">:</span><span class="w"> </span><span class="s">"5%</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">day</span><span class="nv"> </span><span class="s">/</span><span class="nv"> </span><span class="s">30</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">1%"</span><span class="p p-Indicator">,</span><span class="nt"> max</span><span class="p">:</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">offence</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">attack_probe</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">attack_freighter</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">attack_opp</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">attack_outpost</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">cripple_base</span><span class="p p-Indicator">,</span>
+<span class="w">              </span><span class="nv">destroy_base</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">decoy_strike</span><span class="p p-Indicator">]</span><span class="w">          </span><span class="c1"># ordered by aggression</span>
+<span class="w">    </span><span class="nt">defence</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">outposts</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bases</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">opps</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">freighters</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># priority order</span>
+<span class="w">    </span><span class="nt">tech</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">levels</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="nt"> cost</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">800000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">4000000</span><span class="p p-Indicator">],</span><span class="nt"> funded_by</span><span class="p">:</span><span class="w"> </span><span class="s">"module_count(data_receptor)</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">20000"</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># per week</span>
+<span class="w">    </span><span class="nt">cheats</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">knows_player_start_area</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">instant_equipment</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">outposts_rebuilt</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">build_priorities</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">think:module_priorities</span><span class="w">      </span><span class="c1"># the 31 module sections of Think.ini</span>
+</code></pre></div>
+<p>The strategist launches <strong>squadrons</strong> on <strong>flight plans</strong>; when squadrons and player assets
+meet, a <a href="../format-missions/">mission</a> is generated.</p>
+<h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2026-11-11</td>
+<td>Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch)</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.sections", "toc.follow", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
