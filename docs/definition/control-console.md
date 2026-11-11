@@ -108,7 +108,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **What.** The console's look comes from the active campaign or mod. For *Interceptor* the console uses new assets made for this project, kept in the `interceptor` pack, styled after the current craft's cockpit overlay, with every control clearly labelled. The default campaign uses its retro (art-deco) style. No original art is reproduced in the console.
 
-**Why.** User request: "The visual style of the tablet interface is derived from the active campaign/mod. In the case of X-Com Interceptor, these are new assets in the default mod, and the visual styling is based on the current craft's cockpit overlay, but with everything clearly labelled. The default campaign, likewise, follows the retro aesthetic."
+**Why.** User request: "The visual style of the tablet interface is derived from the active campaign/mod. In the case of X-Com Interceptor, these are new assets in the default mod, and the visual styling is based on the current craft's cockpit overlay, but with everything clearly labelled. The default campaign, likewise, follows the retro aesthetic." Clarified by the user: "xcom console theme goes in the interceptor pack, default assets go in resources/default since it's the core content."
 
 - **Status:** planned
 - **Source:** User request (iPad UI); interlude item C2.
