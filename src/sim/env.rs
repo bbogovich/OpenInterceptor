@@ -196,6 +196,17 @@ mod tests {
     }
 
     #[test]
+    fn craft_spawned_low_over_a_ground_are_lifted_clear_of_it() {
+        let mut w = world();
+        w.env = atmosphere(240.0);
+        let f = w.rules.ship_id("fighter").unwrap();
+        let id = w.spawn(f, FactionId(0), "low", Vec3::new(0.0, 100.0, 0.0), Quat::IDENTITY, Pilot::External);
+        assert_eq!(w.get(id).unwrap().position.y, 540.0, "300 m above the ground");
+        let high = w.spawn(f, FactionId(0), "high", Vec3::new(0.0, 2000.0, 0.0), Quat::IDENTITY, Pilot::External);
+        assert_eq!(w.get(high).unwrap().position.y, 2000.0, "high enough already");
+    }
+
+    #[test]
     fn ground_installations_are_set_down_on_the_terrain() {
         let mut w = world();
         w.env = atmosphere(240.0);
@@ -213,6 +224,7 @@ mod tests {
         let f = w.rules.ship_id("fighter").unwrap();
         w.env = atmosphere(100.0);
         let low = w.spawn(f, FactionId(0), "low", Vec3::new(0.0, 180.0, 0.0), Quat::IDENTITY, Pilot::External);
+        w.get_mut(low).unwrap().position.y = 180.0; // below the 300 m spawn lift
         w.get_mut(low).unwrap().velocity = Vec3::new(0.0, -40.0, -150.0);
         let c = crate::sim::ai::avoid_ground(&w, w.get(low).unwrap()).expect("diving at the ground");
         assert!(c.pitch.abs() > 0.1 && c.hold_speed.is_some());
@@ -230,6 +242,9 @@ mod tests {
             w.spawn(f, FactionId(0), "crasher", Vec3::new(500.0, 101.0, 0.0), Quat::IDENTITY, Pilot::External);
         let leaver =
             w.spawn(f, FactionId(0), "leaver", Vec3::new(-500.0, 5100.0, 0.0), Quat::IDENTITY, Pilot::External);
+        // Spawning lifts craft to 300 m over a ground; put these just above it.
+        w.get_mut(lander).unwrap().position.y = 101.0;
+        w.get_mut(crasher).unwrap().position.y = 101.0;
         w.get_mut(lander).unwrap().velocity = Vec3::new(10.0, -5.0, 0.0);
         w.get_mut(crasher).unwrap().velocity = Vec3::new(0.0, -120.0, 0.0);
         let hull = w.get(crasher).unwrap().hull;
