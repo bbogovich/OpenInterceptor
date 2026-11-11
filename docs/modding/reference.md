@@ -39,7 +39,8 @@ may also use `inherit`, `delete: true`, `variants: {<level>: {…}}` and list ed
 ## Rules files (`rules/*.yaml`, `campaign/*.yaml`)
 
 Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `systems`, `cockpits`,
-`behaviours` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `campaign` (global).
+`behaviours`, `modelsets`, `debris`, `effects` (definitions by id), and `flight`, `power`,
+`damage`, `sounds`, `audio`, `campaign` (global).
 
 ### `factions`
 
@@ -75,7 +76,13 @@ Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `system
 | `turn_rate` | number | 90 | Degrees per second while homing. |
 | `lock_time` | time | 2 s | Seconds in the lock cone to lock on. |
 | `color` | RGB | 1, 0.8, 0.4 | Trail colour. |
-| `sound` | asset | none | Launch sound. |
+| `sound` | asset | none | Launch sound (or `cue:<Name>`). |
+| `explosion` | id | — | Effect of its detonation. Accepted, but not used yet: missile blasts draw a fixed 25 m, 0.8 s fireball. |
+| `guidance` | `homing`, `dumbfire`, `sidestep`, `parallax`, `cloaked_wait`, `cluster`, `doppelganger` | `homing` | How it steers ([Missiles and mines](weapons.md)). |
+| `damage` | `normal`, `bypass_shields`, `enveloping` | `normal` | How the warhead's damage lands. |
+| `decoys` | number | 2 | `parallax`: decoys released at launch. |
+| `cluster` | `{missile, count, at}` | count 6, at 600 m | `cluster`: the submunition missile id, how many, and how close to the target it splits. |
+| `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
 
 ### `ships` and `objects`
 
@@ -87,7 +94,8 @@ The same keys; `objects` defaults to `kind: station`.
 | `description` | text | empty | One line for the launcher and viewer. |
 | `kind` | `fighter`, `freighter`, `capital`, `drone`, `station`, `probe`, `mine`, `debris` | `fighter` / `station` | What sort of object it is. `station` and `mine` never move. |
 | `faction` | id | `neutral` | Owning faction; must exist. |
-| `model` | asset | *required* | `models/x.obj` or `original:MESH`. |
+| `model_set` | id | — | The look: a [model set](#modelsets). Either `model_set` or `model` is required. |
+| `model` | asset | — | Shorthand for a model set of its own: `models/x.obj` or `original:MESH`. |
 | `model_scale` | number | 1 | Model units to metres. |
 | `playable` | bool | `false` | The player may fly it (offered in the launcher). |
 | `cockpit` | id | none | Cockpit for the player's view; without one, glass instruments. |
@@ -110,7 +118,9 @@ The same keys; `objects` defaults to `kind: station`.
 | `capturable` | bool | `true` for fighter, drone, probe, debris | Can be captured with a tractor beam when disabled. |
 | `behaviour` | id | none (armed AI ships fly `builtin_attack`) | AI behaviour ([Behaviours](behaviours.md)). |
 | `turret_arc` | angle | 0 | Beams can aim this far off the nose (turrets). |
-| `debris` | list of assets | none | Wreckage models. |
+| `debris` | list of assets | none | Shorthand (with `model`): wreckage models. With a model set, its debris set is used instead. |
+| `modules` | list of `{slot, class}` | none | Stations: modules mounted at the model's attachment points — `slot` is an OBJ `slot_<name>` group's name or an original mesh's attachment index (quoted: `'0'`) ([Stations and modules](stations.md)). |
+| `shield_generator` | bool | `false` | Modules: while one survives, its station's shields work. |
 | `engine_color` | RGB | 0.5, 0.7, 1.0 | Engine glow colour. |
 
 ### `systems`
@@ -155,6 +165,7 @@ A cockpit needs an `image`, a `model`, or both. Guide: [Cockpits](cockpits.md).
 |---|---|---|---|
 | `start` | id | the first state | The first state. |
 | `states` | mapping state name: state | *required* (at least one) | Manoeuvre and parameters (below). |
+| `prefer` | mapping selector: weight | none | Target preferences: a hostile matching a selector counts as if `weight` times nearer when the AI picks a new target (several matches multiply). Selectors: `player`, a ship kind (`fighter`, `freighter`, `station`, …), `class:<id>`, `faction:<id>`; weights above 0. |
 | `transitions` | list of `{from, to, when}` | none | Tried in order; the first whose `from` matches and whose condition holds wins. `from` is a state name or `"*"` (any, the default); `when` is a [condition](behaviours.md#the-condition-language). |
 | `skill` | `{aim, reaction}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. |
 
@@ -162,8 +173,8 @@ A state:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `do` | `idle`, `circle`, `patrol`, `attack`, `evade`, `retreat`, `turret`, `tow` | *required* | The manoeuvre. |
-| `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km). |
+| `do` | `idle`, `circle`, `patrol`, `attack`, `evade`, `retreat`, `turret`, `tow`, `mine` | *required* | The manoeuvre. |
+| `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); mine: trigger distance. |
 | `fire_cone` | angle | 5° | Fire when the aim point is within this angle of the nose. |
 | `burst` | time | 1.5 s | Seconds of firing. |
 | `pause` | time | 1 s | Seconds holding fire between bursts. |
@@ -171,6 +182,41 @@ A state:
 | `speed` | fraction | 100 % | Fraction of top speed. |
 | `missiles` | time | 10 s | Seconds between missile launches (0 = none). |
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
+
+### `modelsets`
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `intact` | asset | *required* | The normal model (all its LODs). |
+| `scale` | number | 1 | Model units to metres. |
+| `textures` | mapping texture name: asset | none | Swaps always applied. |
+| `damage` | list of `{below, textures}` | none | Damage levels: while the hull is below `below` (a fraction), its swaps apply; cumulative, the worst level wins. |
+| `states` | mapping state: `{textures}` | none | Named conditions: `destroyed` (a mounted module's wreck), `building` (later stages). |
+| `debris` | id | none | Debris set thrown when destroyed. |
+| `destroyed_effect` | id | `explosion` | Effect of its explosion. |
+
+Texture names match a model's textures by file name without folder or extension, case-insensitively. Guide: [Looks](looks.md).
+
+### `debris`
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `pieces` | list of assets | none | Piece models, in the object's own model space. |
+| `pick` | `[min, max]` | all pieces | How many pieces are thrown, chosen at random. |
+| `speed` | `[min, max]` | 20, 60 | Outward speed, m/s. |
+| `spin` | `[min, max]` | 30, 120 | Tumble, degrees per second. |
+| `life` | time | 15 s | How long the pieces last. |
+| `chunks` | `{models, count, speed}` | none | Generic rubble: models, how many, `[min, max]` m/s (default 40, 120). |
+
+### `effects`
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `size` | number | 2.5 | Fireball size: × the object's radius. |
+| `duration` | time | 1.6 s | How long it lasts. |
+| `color` | RGB | 1, 0.6, 0.25 | Fireball colour. |
+| `shockwave` | bool | `false` | An expanding ring of light. |
+| `sound` | text | none | Sound event name or asset (accepted; not played yet — destructions play the `explosion` / `big_explosion` event sounds). |
 
 ### `flight`
 
@@ -208,7 +254,13 @@ A state:
 `<event>: <asset>` for the events the engine plays: `explosion`, `big_explosion`, `shield_hit`,
 `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`,
 `system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`. Beam and missile sounds are set on
-each weapon.
+each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audio) cue table.
+
+### `audio`
+
+| Key | Type | Meaning |
+|---|---|---|
+| `cue_table` | asset | A table of named sound cues: `original:<file>/<section>` — the original's `soundfx.ini` (`original:soundfx.ini/InterceptorSounds`). Each entry `Name = "path\file.wav"` makes `cue:Name` mean `original:file.wav`. Cue names ignore case; an unknown cue, or a missing table, is a load error. |
 
 ### `campaign`
 

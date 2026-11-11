@@ -1,7 +1,8 @@
 # Rendering
 
 `src/render/`: draws one frame of the 3D scene with macroquad. It only *reads* the
-simulation. Plan: Stage 1.
+simulation. Plan: Stage 1; Stage 2 added looks (model sets with texture swaps), debris sets,
+effects with shock waves, station modules and their wrecks.
 
 ## Architecture Overview
 
@@ -15,6 +16,34 @@ flowchart LR
     GLO --> CP["draw_cockpit_model (3D cockpit, cockpit view only)<br/>flush + clear depth; 5 cm near plane"]
     CP --> HUD["2D HUD (hud::draw)"]
 ```
+
+### Looks: which model to draw
+
+```mermaid
+flowchart LR
+    SH["ship (class, hull fraction)"] --> MS["ruleset.model_set(class.model_set)"]
+    MS --> SW["ModelSet::swaps_for(hull, state)<br/>set swaps → damage levels below → state"]
+    SW --> MC["ModelCache::get_variant(intact, pack, scale, swaps)<br/>loaded once per distinct swap list"]
+    MC --> DRAW["draw_world"]
+    WR["World::wrecks"] --> WS["swaps_for(0, 'destroyed')<br/>placed at hub × offset"] --> DRAW
+```
+
+`Renderer::ship_look` picks the model a ship shows now: its model set's intact model with the
+texture swaps for its hull fraction (`content::looks::ModelSet::swaps_for`). Swaps match the
+model's textures by `looks::texture_key` (file name without folder or extension, lower-case).
+`ModelCache::get_variant` keys the cache by model, scale and swap list, so each damage level is
+built once and drawing it per frame costs nothing extra. Destroyed station modules with a
+`destroyed` state are drawn from `World::wrecks` on their hubs. OBJ `slot_<name>` groups are not
+part of the drawn mesh at all (the OBJ reader sets them aside as attachment points).
+
+**Effects** (`render::effects`). On a `Destroyed` event, `Effects::on_events` starts an
+`Explosion` with the model set's `destroyed_effect` (size × radius, duration, colour, and a
+**shock wave** — a ring of glows racing outwards in the wreck's plane — when `shockwave` is set),
+and throws the **debris set**: `pick` distinct pieces chosen with the effects' generator, each
+starting at its place in the object's model space with the object's velocity plus a random
+outward push and tumble, plus the generic `chunks`; wreckage darkens as it cools over its last
+third and disappears after the set's `life`. Missile detonations draw a fixed 25 m, 0.8 s
+fireball (the missile's `explosion` effect is not used yet).
 
 ### The 3D cockpit pass
 
@@ -112,7 +141,10 @@ Objects entirely behind the camera are skipped.
 |---|---|
 | `Renderer` | Owns the three materials, a generated radial `glow_texture`, `models: ModelCache`, the star list, and reusable vertex/index buffers. |
 | `camera::SpaceCamera` | `position`, `rotation`, `fov_y`, `aspect`, `z_near`; `new(...)`, `with_near(..)`; implements macroquad's `Camera` trait; `project` (world → screen pixels) and `local_direction` for the HUD. |
-| `effects::Effects` | `explosions`, `sparks`, `debris`, created by `on_events(&World)` and aged by `update(dt)`. |
+| `effects::Effects` | `explosions`, `sparks`, `debris`, created by `on_events(&World)` (from effects and debris sets) and aged by `update(dt)`. |
+| `effects::Explosion`, `Debris`, `Spark` | A fireball (with optional shock-wave plane), a tumbling piece with its life, a short spark. |
+| `gpu::ModelCache::get_variant` | A model with texture swaps, cached per distinct swap list. |
+| `Renderer::ship_look` | The model a ship shows now (model set + damage level). |
 | `starfield::Star`, `starfield::generate(seed, count)` | Seeded, uniform-on-the-sphere star directions. |
 | `push_billboard`, `push_streak` | Build camera-facing quads into the reusable buffers. |
 | `LAYER_DEPTH_BIAS`, `lit_vertex_source()` | Depth shift per overlay layer and the shader text with it filled in. |
@@ -128,8 +160,9 @@ Objects entirely behind the camera are skipped.
 - `draw_sky(&cam, seed, sun)`, `begin_solid(&cam, sun)`, `draw_model(&cam, &GpuModel, pos, rot, tint)`,
   `draw_model_lod(.., force_lod: Option<usize>)`, `draw_world(&Content, &World, &Effects, &cam, sun, hide)`,
   `draw_glows(&Content, &World, &Effects, &cam, hide)`, `draw_cockpit_model(&cam, &GpuModel, offset, sun)`,
-  `draw_axes`, `ship_model`.
-- `effects::explosion_curve(t) -> (size, brightness)`; `effects::DEBRIS_LIFE`, `SPARK_LIFE`.
+  `draw_axes`, `ship_model`, `ship_look(&Content, &World, &Ship)`.
+- `ModelCache::get(content, reference, pack, scale)`, `get_variant(.., &Swaps)`.
+- `effects::explosion_curve(t) -> (size, brightness)`; `effects::SPARK_LIFE`.
 
 ## Debugging
 
@@ -149,3 +182,8 @@ Objects entirely behind the camera are skipped.
   face info line shows UVs beyond 0..1).
 - A 3D cockpit that is invisible usually sits behind the eye: check `ModelOffset` and that the
   model's front faces −Z.
+- A damage texture that never appears: the swap's key must be the model's texture *name*
+  (no folder, no extension); open the class in the model viewer and press **D** to step through
+  its looks, and `--check` reports swapped textures that fail to load.
+- Debris that flies from the wrong place was modelled away from the object: pieces must be in
+  the object's own model space. The viewer's debris look pulls them apart from where they sit.

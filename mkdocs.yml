@@ -81,6 +81,9 @@ nav:
       - "Packs": modding/packs.md
       - "Rulesets and layering": modding/rulesets.md
       - "Behaviours and conditions": modding/behaviours.md
+      - "Looks: model sets, debris, effects": modding/looks.md
+      - "Missiles and mines": modding/weapons.md
+      - "Stations and modules": modding/stations.md
       - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md

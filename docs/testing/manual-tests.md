@@ -385,6 +385,12 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | MT-2-19 | Difficulty switch | Launcher | not run | | | |
 | MT-2-20 | Enemy accuracy by difficulty | `rocket-vs-saucer` | not run | | | Also `--soak` numbers |
 | MT-2-21 | HUD text fits the instruments | any | not run | | | |
+| MT-2-22 | Station modules close up | `outpost-strike`, `base-assault` | not run | | | Build `a062822` |
+| MT-2-23 | Shield modules and hub cascade | `outpost-strike`, `base-assault` | not run | | | |
+| MT-2-24 | Missile guidance kinds and mines | `combat-test` (Super Avenger), `dominion-raid` | not run | | | |
+| MT-2-25 | Debris and damage showcase; viewer looks | `debris-showcase`, model viewer | not run | | | |
+| MT-2-26 | Original sound cues | `gunnery-range`, `systems-trial` | not run | | | Needs the CD |
+| MT-2-27 | Duels and target preferences | `duel-*`, `mixed-dogfight`, `escort`, `rocket-vs-saucer` | not run | | | |
 
 ## Stage 2 cases
 
@@ -556,3 +562,52 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | Scenario | Any, in a 2D cockpit, the 3D Guard cockpit and the glass HUD (F2); small and large windows |
 | Steps | Page through every MFD page; trigger long messages (system damage, wingman status); watch the gauges, `power` and `systems`. |
 | Expected | All text stays inside its instrument box at every window size; the MFD text size does not change between pages; nothing overlaps the next instrument. |
+
+### MT-2-22 — Station modules close up
+
+| Field | |
+|---|---|
+| Scenario | `outpost-strike` (default) and `base-assault` (interceptor); chase view (F7/F8) and cockpit |
+| Steps | 1. Fly slowly round the station within a few hundred metres. 2. Watch the turrets/pods while the station turns. 3. Destroy one gun module. |
+| Expected | 1: every module sits on the hull at its place, standing out from the surface (not sunk in, not floating, not upside down); no slot squares are visible anywhere. 2: modules stay locked to the hull as it turns; gun modules swivel and fire at you in bursts. 3: the module explodes with debris; on the default stations its blackened wreck stays mounted (wrecked texture); interceptor modules (no `destroyed` state) disappear. |
+
+### MT-2-23 — Shield modules and hub cascade
+
+| Field | |
+|---|---|
+| Scenario | `outpost-strike`, then `base-assault` |
+| Steps | 1. Target the hub (T/R) and fire: watch the Target MFD's shields. 2. Destroy the shield pod (every shield module on the alien base). 3. Fire at the hub again. 4. Destroy the hub while some gun pods still live. |
+| Expected | 1: hits land on the hub's shields first. 2: "STATION SHIELDS DOWN"; the hub's shields read 0 and stay at 0. 3: hits go to armour and hull at once. 4: the hub explodes and **every remaining module and wreck goes with it**, each with its own explosion. |
+
+### MT-2-24 — Missile guidance kinds and mines
+
+| Field | |
+|---|---|
+| Scenario | `combat-test` in the Super Avenger (`--ship avenger`; one of each special missile), and `dominion-raid` (default; mines) in the Meteor and the Thunderbolt |
+| Steps | Cycle missiles (W) and fire each at a locked target: X-Winder, Sidestep, Permeator, Enveloping, Parallax, Passive Cloaking, Doppelganger; in the default campaign the cluster rocket (Thunderbolt) and the decoy rocket (Meteor). Let an enemy lock and fire at you after launching a parallax / decoy rocket. Fly near a Dominion space mine. |
+| Expected | Sidestep weaves and turns hard near the target. Permeator's damage skips the target's shields; Enveloping drains both shield facings. Parallax/decoy: two decoys fly off; enemy missiles often chase them. Passive Cloaking: drops behind you, stops and waits; it strikes an enemy passing within about 800 m. Doppelganger: a copy of your ship flies off; enemies sometimes chase it; it vanishes after a while. Cluster: splits into six seekers before reaching the target. Mine: explodes when you come within ~100–160 m (by difficulty), damaging everything nearby, and is gone. |
+
+### MT-2-25 — Debris and damage showcase; viewer looks
+
+| Field | |
+|---|---|
+| Scenario | `debris-showcase` in both campaigns; the model viewer |
+| Steps | 1. Look along the row of ships before firing. 2. Destroy them one by one with a single shot each, in cockpit and chase views. 3. In the model viewer, select a class and press D repeatedly. |
+| Expected | 1: every ship already shows its worst damage textures (scorched/burnt). 2: each explodes with its effect (size, colour; a shock-wave ring on large ships and aliens), its debris pieces fly apart from where they belonged and tumble, rubble chunks scatter; pieces darken and vanish after their life. Interceptor wrecks use the original chunk meshes and, for aliens, floating body parts. 3: intact → each damage level → each state → debris pulled apart, with the look's name on the info line. |
+
+### MT-2-26 — Original sound cues
+
+| Field | |
+|---|---|
+| Preconditions | Original data. |
+| Scenario | `gunnery-range`, `systems-trial` (interceptor) |
+| Steps | Fire beams and missiles, lock on, take hits, destroy a drone, cycle targets, switch tractor/cloak/ECM, jump out (H). Run `--check`. |
+| Expected | Each event plays the original's sound for its cue (laser `Beam1`, X-Winder `Missile1`, target lock, shield hit, small explosion, warp-out on the hyperjump …). `--check` reports no unknown cues. A test mod with `sounds: {lock: cue:Nope}` is reported as "unknown sound cue 'Nope'". |
+
+### MT-2-27 — Duels and target preferences
+
+| Field | |
+|---|---|
+| Scenario | Each `duel-<enemy>` arena of both campaigns; `mixed-dogfight`; `escort` (interceptor); `rocket-vs-saucer` (default) |
+| Steps | 1. Fly each duel at the lowest and highest difficulty. 2. In `mixed-dogfight`, watch who attacks whom. 3. In `escort`, defend the freighter. 4. In `rocket-vs-saucer`, hang back behind your two wingmen. |
+| Expected | 1: each enemy type flies and fights distinctly (saucers dart and dodge, the dreadnought's turrets track, the grappler/harbinger tries to tow disabled ships, robots are reckless); clearly harder at the top level. 2: several factions fight each other, not only the player. 3: the freighter is attacked and can be lost. 4: the saucers (`prefer: {player: …}`) still come for you, past wingmen up to about 1.3–1.5 times nearer; with no behaviour preference they would take the nearest ship. Station turrets (`station_turret`) shoot fighters before larger ships. |

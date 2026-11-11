@@ -100,7 +100,8 @@ on a disabled pack are skipped too. (XWVM offers the same whole-pack switch in i
 my-campaign/
   pack.yaml             the manifest (required)
   rules/*.yaml          ships, beams, missiles, objects, factions, cockpits, systems,
-                        behaviours, flight, power, damage, sounds
+                        behaviours, modelsets, debris, effects, flight, power, damage,
+                        sounds, audio
                         (all files loaded, in file-name order)
   campaign/*.yaml       campaigns: the campaign ruleset (name, difficulty levels)
   scenarios/*.yaml      playable arenas (all files loaded)

@@ -6,7 +6,7 @@ See the [testing policy](../best-practices/testing-policy.md) for what must be t
 
 `scripts/check.sh` on `main` runs every automated check:
 
-1. `cargo test --release` — all unit tests (236 on macOS at main `f638b44`).
+1. `cargo test --release` — all unit tests (253 on macOS at main `47629c0`).
 2. `cargo build --release`.
 3. `openinterceptor --check --no-original` — the original-free `default` campaign loads and
    validates. Since Stage 2 `--check` validates every campaign separately, each with its own

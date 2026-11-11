@@ -70,10 +70,14 @@ The gate fails if the committed schemas differ from the engine's.
 | `cockpits` | Cockpit art and/or 3D model, design space, instrument positions and anchors. |
 | `systems` | Damageable ship systems and special equipment (Stage 2). |
 | `behaviours` | AI state machines ([Behaviours and conditions](behaviours.md)). |
+| `modelsets` | Looks: model, damage-level texture swaps, states, debris set, explosion ([Looks](looks.md)). |
+| `debris` | Debris sets: pieces, how many, speed, spin, life, rubble. |
+| `effects` | Explosions and other effects. |
 | `flight` | Global flight and sensor settings. |
 | `power` | Global power-sharing rules: beam and shield charge levels, budget. |
 | `damage` | Global rules for damage to systems and repair. |
-| `sounds` | Event sounds. |
+| `sounds` | Event sounds (assets, or `cue:<Name>` from the cue table). |
+| `audio` | The sound cue table (`cue_table: original:soundfx.ini/<section>`). |
 | `campaign` | The campaign ruleset: name and difficulty levels (usually in `campaign/campaign.yaml`). |
 
 Any other top-level key is an error ("unknown key").
@@ -261,3 +265,25 @@ ships:
   lightning:
     max_speed: 700          # every other key keeps the interceptor pack's value
 ```
+
+## Sounds and the cue table
+
+`sounds:` maps the engine's event names to sounds; beams and missiles name their own `sound`.
+Any of these may be an asset (`sounds/blaster.wav`, `original:Xwinder.wav`) or a **cue**,
+`cue:<Name>`, looked up in a cue table — the original game's `soundfx.ini`, which names every
+sound effect:
+
+```yaml
+audio:
+  cue_table: original:soundfx.ini/InterceptorSounds
+sounds:
+  explosion: cue:SmallExplode
+  hyperspace: cue:WarpOut
+beams:
+  laser_cannon: {sound: cue:Beam1}
+```
+
+Each table entry's file name becomes an `original:` reference (sounds are found on the CD by
+name). Cue names ignore case; an unknown cue or a missing table is a load error naming the key.
+The `interceptor` pack uses the original's cue names throughout (Stage 2 item 2.12); a mod can
+replace any cue's sound by a file at its override path ([Overrides](overrides.md)).

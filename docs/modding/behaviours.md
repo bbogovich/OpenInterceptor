@@ -69,7 +69,37 @@ All keys with types and defaults: [Mod file reference › behaviours](reference.
 | `evade` | Weaves unpredictably at top speed (VCT hulls also slide). Leave it with a transition on `time_in_state`. | `duration` |
 | `retreat` | Runs from the nearest hostile at top speed, afterburning while energy lasts. | `jump: true` also starts the hyperdrive |
 | `turret` | Stays put; beams that can swivel (`turret_arc` on the ship class) track hostiles within `range` (and 95 % of the first beam's reach) and fire in bursts. | `range`, `burst`, `pause` |
+| `mine` | Waits; when a hostile is within `range`, detonates its first missile rack as an area blast and is gone ([Missiles and mines](weapons.md#mines)). | `range` (trigger distance) |
 | `tow` | Finds the nearest disabled, capturable hostile ship, closes in, tractors it and jumps out with it (tugs; needs a tractor beam fitted). | `range` (search radius, at least 5 km) |
+
+## Target preferences
+
+By default an attacker picks the **nearest** visible hostile (within 8 km for `attack`, `range`
+for `turret`). `prefer:` weights that choice: a hostile matching a selector counts as if it were
+`weight` times nearer, so `{player: 1.5}` chases the player over a wingman up to 1.5 times
+closer. When several selectors match one ship their weights multiply.
+
+```yaml
+behaviours:
+  saucer_raider:
+    prefer: {player: 1.5}          # go for the player
+  station_turret:
+    prefer: {fighter: 1.5}         # shoot fighters before freighters and stations
+  wraith:
+    prefer: {freighter: 3, class:lightning: 1.2}
+```
+
+| Selector | Matches |
+|---|---|
+| `player` | The ship the player flies. |
+| a ship kind | `fighter`, `freighter`, `capital`, `drone`, `station`, `probe`, `mine`, `debris`. |
+| `class:<id>` | Ships of that class. |
+| `faction:<id>` | Ships of that faction. |
+
+Weights must be above 0 (below 1 makes a match *less* attractive). Preferences only apply when
+the AI picks a new target: it keeps attacking its current one while that stays alive and
+visible. An unknown selector is a load error ("prefer: 'x' is not player, a ship kind,
+class:<id> or faction:<id>").
 
 **Wingmen** keep the role and orders of [Simulation › AI](../architecture/sim.md#ai-simai); when
 they engage they fly `attack` with the parameters and skill of their class's behaviour (its
@@ -163,7 +193,7 @@ Cloak lock-break chance by difficulty (Stage 2 item 2.7) is still a fixed `stren
 | Message (in `--check` or on the launcher) | Cause |
 |---|---|
 | `states.x: say what it does (do: attack, …)` | A state without `do:`. |
-| `states.x: unknown manoeuvre 'y'` | `do:` is not one of the eight manoeuvres. |
+| `states.x: unknown manoeuvre 'y'` | `do:` is not one of the nine manoeuvres. |
 | `start: no state 'b'` / `transitions[2]: no state 'b'` | A name that is not a state. |
 | `unknown name 'hul'` … | A query or constant that the object context does not have. |
 | `'hull' is a number, not a condition (compare it: 'hull > 0')` | The condition is not true/false. |

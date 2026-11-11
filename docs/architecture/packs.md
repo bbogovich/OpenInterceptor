@@ -57,11 +57,15 @@ Logic flow of `rules::build_at(sources, original, level)`:
    `original:<file>/<section>` read through the `OriginalLookup` and renamed by `snake_case`;
    depth limit 16 catches cycles) → `variants[level]` merged over it → every
    `{per_level: […]}` replaced by its entry → dropped if `delete: true`.
-5. **Type**: factions, beams, missiles, systems (built-ins of every `SystemKind` first), damage
-   and power, behaviours (conditions parsed and checked against the object schema with the
+5. **Type**: factions, beams, missiles (guidance, damage mode, cluster submunitions resolved by
+   id), systems (built-ins of every `SystemKind` first), damage and power, the sound cue table
+   (`audio.cue_table`; every `cue:<Name>` reference resolved), behaviours (with `prefer`
+   selectors), looks — effects (the engine's `explosion` added if none), debris sets, model sets
+   (texture swaps, damage levels, states) — (conditions parsed and checked against the object schema with the
    level names as constants; `builtin_attack` added if no pack defines it), then ships and
-   objects (which refer to the others by id; `class_systems` resolves `systems`, `systems+`,
-   `systems-`, `vct`), cockpits (with anchors), flight, sounds.
+   objects (which refer to the others by id; `model_set`, or a model set made from the
+   shorthand `model`/`debris`; `class_systems` resolves `systems`, `systems+`, `systems-`,
+   `vct`; `modules` as `(slot, class)`), cockpits (with anchors), flight, sounds.
 
 Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and `files::scenario()` validation (`Scenario::from_yaml`), and
@@ -133,17 +137,20 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `schema::Ty`, `Unit`, `Field`, `Problem` | A schema as data (`Num`, `Qty(Unit)`, `Bool`, `Text`, `Name`, `Asset`, `Condition`, `Enum`, `Numbers(n)`, `List`, `Dict`, `Struct`, `Def`); a validation problem with line, path and message. |
 | `schema::Get` | Typed reads from a node: `str`, `num`, `qty(key, unit)`, `bool`, `list`, `nums`, `map`, `node`. |
 | `files::{pack, rules, scenario, section, json_schemas}` | The schemas of every mod file type. |
+| `looks::ModelSet`, `DamageLevel`, `DebrisSet`, `EffectDef`, `Swaps`, `ModelSetId`, `DebrisId`, `EffectId` | Looks ([modder's guide](../modding/looks.md)); `ModelSet::swaps_for(hull, state)`, `looks::texture_key(reference)`. |
+| `rules::Guidance`, `rules::DamageMode` | Missile steering kinds and warhead modes. |
+| `behaviour::Selector` | A target-preference selector: `Player`, `Kind`, `Class`, `Faction`. |
 | `behaviour::BehaviourDef`, `StateDef`, `Manoeuvre`, `Params`, `Transition`, `Skill`, `BehaviourId` | A parsed behaviour ([Behaviours](../modding/behaviours.md)). |
 | `equipment::SystemKind` | The ten system kinds (`ALL`, `key`, `parse`, `is_switchable`). |
 | `equipment::SystemDef`, `SystemId` | A `systems:` definition (`builtin(kind)`, `parse`) and its index in `Ruleset::systems`. |
 | `equipment::PowerRules`, `DamageRules` | The `power` and `damage` sections, with defaults. |
 | `vfs::AssetRef` | `PackFile(String)` or `Original { file, resource }`. Parsing normalises `..` inside the pack and refuses paths that leave it. |
 | `vfs::OriginalData` | Lower-case file name → path for every file under the data folder (any CD/install layout), plus the opened resource DLLs. |
-| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `systems`, `behaviours`, `cockpits`, `flight: FlightRules` (with `hyperspace_time`), `power: PowerRules`, `damage: DamageRules`, `sounds`, `difficulty_levels`, `difficulty` (index played). |
+| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `systems`, `behaviours`, `model_sets`, `debris_sets`, `effects`, `cockpits`, `flight: FlightRules` (with `hyperspace_time`), `power: PowerRules`, `damage: DamageRules`, `sounds`, `difficulty_levels`, `difficulty` (index played). |
 | `rules::RulesSource`, `OriginalLookup` | One parsed rules file (`pack`, `file`, `doc`); the callback that finds an original INI section. |
 | `rules::CockpitDef`, `rules::Anchor` | A cockpit (image, model, offset, design, instruments, anchors); an anchored instrument (`at`, `normal`, `size`). |
 | `ShipClassId`, `BeamId`, `MissileId`, `FactionId` | Newtype indices (`u16`) into the ruleset's vectors. |
-| `rules::ShipClass` | A craft or object: model reference, durability, flight model, power, weapons, `systems: Vec<SystemId>`, `repair_rate`, `capturable`, `behaviour: Option<BehaviourId>`, `turret_arc`, debris. `kind: ShipKind` (Fighter, Freighter, Capital, Drone, Station, Probe, Mine, Debris). |
+| `rules::ShipClass` | A craft or object: model reference, durability, flight model, power, weapons, `systems: Vec<SystemId>`, `repair_rate`, `capturable`, `behaviour: Option<BehaviourId>`, `turret_arc`, `model_set: ModelSetId`, `modules: Vec<(slot, ShipClassId)>`, `shield_generator`. `kind: ShipKind` (Fighter, Freighter, Capital, Drone, Station, Probe, Mine, Debris). |
 | `rules::BeamClass`, `MissileClass`, `Faction`, `FlightRules`, `CockpitDef` | The other definitions. |
 | `scenario::Scenario`, `Placement`, `AiRole`, `NavPoint` | A playable arena and its objects; `Placement` has `destroyed_systems`, `hull` and `behaviour` since Stage 2. |
 
@@ -173,6 +180,9 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
   `pack::chain(&packs, id) -> Result<Vec<String>, String>`;
   `pack::active_set(&packs, id) -> Result<Vec<PackInfo>, String>`;
   `content::preferred_campaign(&packs) -> Option<String>`.
+- `ruleset.model_set(ModelSetId)`, `.debris_set(DebrisId)`, `.effect(EffectId)`, `.effect_id(id)`;
+  `DebrisSet::parse(id, Get, pack)`, `EffectDef::parse(id, Get)`, `EffectDef::builtin(id)`;
+  `Selector::parse(text)`.
 - `ruleset.system(SystemId)`; `SystemDef::builtin(kind)`, `SystemDef::parse(id, Get)`,
   `PowerRules::parse(Option<Get>)`, `PowerRules::levels()`, `PowerRules::letter(level)`,
   `DamageRules::parse(Option<Get>)`.

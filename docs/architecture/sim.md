@@ -20,10 +20,14 @@ flowchart TD
     D2 --> E["combat::step<br/>lock → beams → missile controls → link mode<br/>→ move_bolts → move_missiles"]
     E --> F["combat::ship_collisions"]
     F --> S["systems::step<br/>recharge → repair → disabled check<br/>→ tractors → countermeasures → hyperdrives"]
-    S --> G["clear one-shot controls and requests,<br/>since_hit += TICK, time += TICK"]
+    S --> WR["destroyed modules with a destroyed look → wrecks"]
+    WR --> MO["update_modules<br/>modules follow hubs, cascade, shield generators"]
+    MO --> EX["expiring ships (doppelgangers) counted down"]
+    EX --> G["clear one-shot controls and requests,<br/>since_hit += TICK, time += TICK"]
 ```
 
-In short: **AI → requests → flight → combat → collisions → systems**. Requests run before
+In short: **AI → requests → flight → combat (incl. missile guidance) → collisions → systems →
+modules**. Requests run before
 flight so a switch pressed this tick (a cloak, a power change) already counts; systems run last
 so that damage done this tick can knock a system out before repair and recharge look at it.
 
@@ -101,9 +105,9 @@ limit. Default 60 000 m.
 - **Bolts and missiles** test the *segment* travelled this tick against every other ship's
   `collision::Shape` (sphere broad phase, triangle mesh for stations) so fast shots cannot
   tunnel.
-- **Missiles** home with `rotate_towards` at `turn_rate`; impact damage on a hit; the proximity
-  fuse detonates on a near *miss* (inside `proximity_radius` and moving away); expired missiles
-  pop harmlessly.
+- **Missiles** are launched and flown by `sim::guidance` (below); impact damage on a hit; the
+  proximity fuse detonates on a near *miss* (inside `proximity_radius` and moving away);
+  expired missiles pop harmlessly.
 - **Damage** (`apply_damage`): fore or aft shield (by which side was hit) → armour → hull;
   hull ≤ 0 → `alive = false`, `Destroyed`, and every ship targeting or towing it lets go
   (`forget_ship`). Damage that gets past the armour without destroying the ship also strikes a
@@ -111,6 +115,44 @@ limit. Default 60 000 m.
 - **Collisions**: fighter–fighter spheres (60 % of radius) push apart and swap half their
   velocities; a fighter sweeping into a station mesh is backed out and bounced. Damage =
   relative speed × 0.1.
+
+### Missile guidance (`sim::guidance`, Stage 2)
+
+`combat` fires a missile through `guidance::launch`, which applies the class's launch-time
+behaviour; `guidance::step` (called by `combat::step` every tick) steers, moves and detonates
+every missile, collecting blasts first and applying them after the loop (the same two-phase
+pattern as the AI).
+
+```mermaid
+flowchart TD
+    L["guidance::launch(missile)"] --> CW{"guidance"}
+    CW -- cloaked_wait --> D1["slow to 20 %, life × 4"]
+    CW -- parallax --> D2["release decoys: harmless missiles<br/>flying away from the launcher"]
+    CW -- doppelganger --> D3["spawn a fragile copy of the launcher<br/>(expires); enemies may switch to it"]
+    S["guidance::step"] --> LU["lure: a missile homing on a decoy's launcher,<br/>within LURE_RANGE (2.5 km), switches to the decoy<br/>at LURE_CHANCE (0.8) per second"]
+    LU --> ST["steer: homing / sidestep (2 × turn inside 600 m, weave)<br/>/ cluster (split near the target or at half fuel)<br/>/ cloaked_wait (sleep until prey in trigger_range)<br/>/ dumbfire"]
+    ST --> HIT["segment test against ships → impact;<br/>proximity fuse; fuel out"]
+    HIT --> BL["blasts → apply_damage_mode<br/>(normal / bypass_shields / enveloping)"]
+```
+
+`area_blast(world, at, radius, damage, except)` damages every ship in `radius`, falling off
+linearly, `enveloping`; mines use it (`systems::handle_requests` on a `detonate` request:
+radius = 4 × the warhead's `proximity_radius`, at least 100 m). The modder's view:
+[Missiles and mines](../modding/weapons.md).
+
+### Station modules (Stage 2)
+
+`World::spawn_modules(hub, depth)` (called by `from_scenario` for every placed object) spawns
+each `modules` entry of the hub's class at its attachment point — an OBJ `slot_<name>` or an
+original manipulator index, looked up in the class's `collision::Shape::mounts` — turned so the
+module's −Z follows the slot's facing, with the hub's faction and `Ship::mount = (hub, offset,
+rotation)`; modules with a behaviour fly it (`turret`), the rest are idle; up to five levels.
+`update_modules` (every tick, after systems) puts each module back on its hub, destroys the
+modules of a destroyed hub, removes wrecks whose hub is gone, and zeroes a station's shields
+while none of its `shield_generator` modules survives ("STATION SHIELDS DOWN"). A destroyed
+module whose model set has a `destroyed` state becomes a `Wreck { class, hub, offset, rotation }`
+in `World::wrecks`, drawn by the renderer on its hub. Modder's view:
+[Stations and modules](../modding/stations.md).
 
 ### Systems (`sim::systems`, Stage 2)
 
@@ -209,6 +251,11 @@ flowchart TD
 - **Fire discipline.** `in_burst` alternates `burst` seconds of firing with `pause` seconds of
   holding; guns fire only inside `fire_cone` and inside `range` (and 95 % of the first beam's
   reach). Missiles every `missiles` seconds when locked (0 = never).
+- **Target choice.** `attack` and `turret` keep the current target while it lives and stays
+  visible; otherwise they pick `targeting::preferred_hostile` with the behaviour's `prefer`
+  weights (a matching hostile counts as `distance / weight`; several matches multiply), within
+  8 km (`attack`) or `range` (`turret`).
+- **Mines.** The `mine` manoeuvre sets `Requests::detonate` when a hostile is within `range`.
 - **Turrets.** `Controls::aim` (a world direction) lets a ship with `turret_arc > 0` fire its
   beams along the aim instead of the nose, if the aim is within the arc (`combat::fire_beams`);
   the `turret` manoeuvre stays put and sets it.
@@ -241,7 +288,11 @@ current order, and `DISABLED` if so.
 | `ShipId` | `{ index, generation }` — a generational handle. A destroyed ship's slot can be reused; the generation changes, so old ids resolve to `None`. |
 | `Ship` | Class, faction, name, position, rotation (`Quat`), velocity, angular velocity, throttle, reverse, afterburning, `braking`, `speed_hold`, hull/armor/shields/energy, `controls`, `pilot`, `target`, link mode, beam cooldowns, missile racks, `lock`, `since_hit`, `alive`; Stage 2: `power`, `systems`, `repairing`, `towing`, `hyperspace`, `disabled`, `departed`. Helpers `system(kind)`, `efficiency(kind)`, `is_on(kind)`, `cloaked()`. |
 | `Controls` | Pilot input for one tick: axes, slide, throttle set/delta, reverse toggle, match speed, afterburner, `brake` (held), `hold_speed` (flight computer target, m/s), `aim` (turret direction), fire, link/missile cycling, `requests`. `carry_unconsumed` keeps unconsumed one-shot presses across frames that run no tick. |
-| `Requests` | Edge-triggered power and equipment presses: `beam_charge`, `shield_charge`, `power_to_shields`, `power_to_beams`, `shield_balance`, `tractor`, `cloak`, `ecm`, `hyperspace`; `merge`. |
+| `Requests` | Edge-triggered power and equipment presses: `beam_charge`, `shield_charge`, `power_to_shields`, `power_to_beams`, `shield_balance`, `tractor`, `cloak`, `ecm`, `hyperspace`, `detonate` (mines); `merge`. |
+| `Wreck`, `World::wrecks` | A destroyed module left on its hub. |
+| `Ship::mount`, `Ship::expires` | A module's hub and place on it; seconds left for a short-lived ship (a doppelganger). |
+| `guidance::LURE_RANGE`, `LURE_CHANCE` | 2 500 m, 0.8 per second. |
+| `content::rules::Guidance`, `DamageMode` | The missile's steering kind and warhead mode. |
 | `Power`, `ShieldBalance` | Beam and shield level indices (0 = A) and `Equal` / `Forward` / `Aft`. |
 | `SystemState`, `Condition` | One fitted system: `id`, `kind`, `hp`, `max`, `destroyed`, `offline`, `on`; `set_hp`, `condition()`, `ONLINE_AT`. `Condition::{Ok, Damaged, Inoperative, Destroyed}` with `efficiency()` 1 / 0.5 / 0 / 0. |
 | `systems::Setting`, `systems::Tow` | Beam or shield (for `raise` / `cycle`); a tractor decision (`Pull(target, velocity, max accel)` or `Release(captor)`). |
@@ -268,6 +319,11 @@ current order, and `DISABLED` if so.
 - `combat::step(&mut World, dt)`, `apply_damage(world, id, amount, at)`, `ship_collisions`,
   `rotate_towards`, `mount_offset`.
 - `combat::forget_ship(world, id)` — every ship targeting or towing `id` lets go.
+- `guidance::launch(&mut World, Missile)`, `guidance::step(&mut World, dt, &Ruleset)`,
+  `guidance::area_blast(world, at, radius, damage, except)`.
+- `world.spawn_modules(hub, depth) -> Result<(), String>` (an unknown slot is an error).
+- `targeting::preferred_hostile(world, me, &[(Selector, f32)]) -> Option<(ShipId, distance)>` —
+  the nearest hostile with distances divided by matching preference weights.
 - `systems::handle_requests(&mut World)`, `systems::step(&mut World, dt)`,
   `raise(&mut Power, Setting, &PowerRules, switched) -> bool`, `cycle(...) -> bool`,
   `shield_caps(shields, balance, shift) -> (f32, f32)`, `power_message(&Power, &PowerRules)`,

@@ -54,7 +54,9 @@ stateDiagram-v2
   model, plus a dot on every vertex of faces towards the camera); **[ / ]** select a face
   (Shift ×10), outlined and numbered, with `viewer::face_info` on the info line (index, corners,
   texture, flags, overlay layer, UVs); **I** numbers every face towards the camera; **O** toggles
-  `Renderer::show_overlays` (restored on Esc). `--model NAME` opens the viewer on a model
+  `Renderer::show_overlays` (restored on Esc). **D** (class entries) cycles the class's looks
+  (`viewer::looks_of`: intact, each damage level, each named state, and the debris pieces pulled
+  apart from the centre), named on the info line (`look_label`). `--model NAME` opens the viewer on a model
   (`viewer::find_entry`: ship id or mesh name, whole names, case-insensitive).
 - **Asset browser** (`assets.rs`): every original texture, image (cockpits, HUD, menus,
   sprites) and sound, loaded exactly as the game loads them — so a pack override shows its
@@ -103,6 +105,12 @@ stateDiagram-v2
 | `dominion-raid` | default | A Dreadnought disc, raider saucers and robot sentinels attack the Guard station; three wingmen. |
 | `black-comet-ambush` | default | Escort a Prospector hauler past a cosmium asteroid while Black Comet hot-rods attack; neutral Senate and Cartel ships nearby. |
 | `systems-trial` | default | The default campaign's systems trial: a crippled raider saucer to tow and capture (Meteor or Thunderbolt), power controls, the Thunderbolt's cloak ("invisibility screen"), a Grappler that tries to drag the prize off. |
+| `duel-<enemy>` | both | You against one enemy type (default: scout saucer, raider saucer, dreadnought, robot sentinel, grappler, hot-rod; interceptor: wraith, spectre, phantasm, shade, harbinger, drone, pirate Lightning, Firestar and Avenger) — how it flies and fights at each difficulty. |
+| `mixed-dogfight` | both | Several factions at once, everyone hostile to someone. |
+| `escort` | interceptor | Escort an X-COM freighter against Wraiths and a Spectre. |
+| `debris-showcase` | both | Every class at 2 % hull in a row: damage textures at once, then one shot each shows explosion, shock wave and debris. Nothing shoots back. |
+| `base-assault` | interceptor | An alien base with plasma gun pods and shield pods; two wingmen. |
+| `outpost-strike` | default | A Dominion outpost with death-ray pods and a shield pod: shields drop with the pod, the pods die with the hub. |
 
 The Stage 1 `sample-arena` scenario (pack `sample`) was retired when the `sample` pack became
 the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
@@ -117,6 +125,7 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 | `controls::ControlsMenu` | The controls menu component (`new`, `frame`). |
 | `assets::AssetBrowser`, `assets::Tab`, `assets::entries(&Content, Tab)` | The asset browser; `entries` (pure) lists assets with their override pack. |
 | `launcher::Menu` | Pure menu state: `entries`, `selected`, `ship`, `playable`; `move_selection`, `move_ship`, `choosing`, `activate`. |
+| `viewer::Look`, `looks_of`, `look_label` | The D key's looks of a model set: `Intact`, `Damage(i)`, `State(i)`, `Debris`. |
 | `viewer::Orbit`, `viewer::wheel_steps` | Orbit camera maths (`pose`, `update`) and mouse-wheel steps. |
 | `flight::FlightSession` | World, player, view, MFD page, chase orbit, nav, pause/menu flags, accumulator, cockpit texture, 3D cockpit model and offset, design space, instruments. |
 | `flight::view_pose(View, pos, rot, radius, &ChaseOrbit)` | Camera placement per view (pure). |

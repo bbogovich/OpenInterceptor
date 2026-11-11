@@ -33,9 +33,16 @@ behind the same interfaces, so original and mod assets can be mixed freely.
 - **Texture coordinates repeat**: a UV of 0..4 tiles the texture four times across the face.
 - **One LOD** per OBJ model in Stage 1 (original models keep their four LODs). Multiple LOD
   files are planned for Stage 6.
-- **Attachment points** (engine glows, gun mounts) come only from original models' manipulators
-  in Stage 1; OBJ models get one engine glow at the back of their bounding box. Named attachment
-  objects in OBJ files are planned for Stage 2.
+- **Attachment points.** A group (or object) named **`slot_<name>`** is not drawn: it marks
+  where a station module mounts — at the centre of its faces, facing along its first face's
+  normal. One small square, wound counter-clockwise seen from where the module should point,
+  is enough. Modules are turned so their −Z follows that normal; model a module standing on
+  its base at the origin and extending along −Z. See [Stations and modules](stations.md).
+  Original models' attachment points are their manipulators, addressed by index. OBJ models get
+  one engine glow at the back of their bounding box.
+- **Looks.** Damage textures, named states, debris pieces and explosions belong to the model
+  set, not the model: see [Looks](looks.md). Debris pieces are modelled in the object's own
+  space so they reassemble it.
 - **Collision**: craft collide as spheres (bounding radius); stations (`kind: station`)
   collide against their triangles, so model the station's real shape.
 
@@ -49,7 +56,8 @@ the models, and `--check` reports texture names that fail to load.
 ## Checking a model
 
 Open it straight in the viewer: `openinterceptor --model <ship id or mesh name>`. In the viewer,
-**W** cycles solid / solid + wireframe / wireframe, **[ ]** select faces (Shift: ten at a time)
+**W** cycles solid / solid + wireframe / wireframe, **D** cycles the class's looks (intact, damage
+levels, states, debris pulled apart), **[ ]** select faces (Shift: ten at a time)
 and show each face's number, corner count, texture, flags, overlay layer and UVs, **I** labels
 every face towards the camera, and **O** hides overlay-flagged faces.
 
@@ -58,9 +66,20 @@ every face towards the camera, and **O** hides overlay-flagged faces.
 Every model of the `default` campaign — rockets, saucers, the robot sentinel, freighters,
 stations, rubble, debris pieces and the Guard 3D cockpit — is written by the Python scripts in
 `tools/default_assets/` (`models.py`, with `textures.py` for hull paint and its scorched and
-burnt damage variants, and `sounds.py` for synthesised effects). Run
+burnt damage variants — and *wrecked* for station modules — and `sounds.py` for synthesised
+effects). Run
 `python3 tools/default_assets/make_all.py` to rebuild them, or `make_all.py --check` to build
 twice and prove the output is byte-identical. The scripts use only the Python standard library,
 seed every random choice, and validate every model before writing it (closed solids wound
 counter-clockwise from outside, no degenerate faces, within a triangle budget). Look at them to
 see how a model, its `.mtl` materials and its textures are written programmatically.
+
+### The generator's conventions
+
+| Convention | In `tools/default_assets/` |
+|---|---|
+| Debris | Each model is cut by planes into its `<name>_debris<n>.obj` pieces, in the model's own space. |
+| Attachment points | `slot(name, at, normal)` adds one small square face in a group `slot_<name>`, centred on `at` and wound so its normal is `normal`; slots are open parts, so the validator checks them for degeneracy only, and debris cutting leaves them out. |
+| Station modules | Stand on their base at the origin and extend along −Z (the slot's normal), e.g. the Guard ray turret and force-field generator, the Dominion death-ray pod and shield pod. |
+| Damage textures | `<texture>_scorched.png`, `<texture>_burnt.png`; modules also `<texture>_wrecked.png` for their `destroyed` state. |
+| Instrument placement | The Guard cockpit's rectangles and anchors, written to `models/guard_cockpit.instruments.yaml`. |

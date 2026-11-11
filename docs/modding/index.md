@@ -27,7 +27,7 @@ flowchart LR
 | Stage | You can change |
 |---|---|
 | 1 | Ships (model, cockpit, flight values, mounts, hull/armour/shields, energy), the flight model itself (`newtonian` or `assisted`) and arena size, beam weapons, missiles, stations and objects, factions, cockpits (2D art at any resolution, own design space, 3D cockpit models), instrument layout, event sounds, scenarios with any mix of objects and nav points, additional models (OBJ) and textures (PNG/TGA), **per-asset replacement of any original model, texture, image or sound** |
-| 2 (in progress) | **Done:** mod kinds (`campaign`, `addon`, `library`) with `parent`, `targets`, `format`; **YAML mod files with schemas** (format 2: units, did-you-mean errors, editor completion); ship systems and special equipment (`systems`, `systems+`), power sharing (`power`), damage to systems and repair (`damage`), capture (`capturable`), hyperspace time, crippled scenario objects (`destroyed_systems`, `hull`), the `power` and `systems` instruments; **AI behaviours** as state machines with the condition language; **difficulty levels** with per-level values and variants; 3D cockpit instruments anchored in perspective and the F12 layout editor. **To come:** model sets, mines and probes, effects |
+| 2 (in progress) | **Done:** mod kinds (`campaign`, `addon`, `library`) with `parent`, `targets`, `format`; **YAML mod files with schemas** (format 2: units, did-you-mean errors, editor completion); ship systems and special equipment (`systems`, `systems+`), power sharing (`power`), damage to systems and repair (`damage`), capture (`capturable`), hyperspace time, crippled scenario objects (`destroyed_systems`, `hull`), the `power` and `systems` instruments; **AI behaviours** as state machines with the condition language; **difficulty levels** with per-level values and variants; 3D cockpit instruments anchored in perspective and the F12 layout editor; **looks** (model sets with damage textures and states, debris sets, effects); **missile guidance** kinds, damage modes and mines; **station modules** at attachment points; AI target preferences; the sound cue table. **To come:** probes, point defence, text keys |
 | 3 | Missions with objectives and triggers, wingman chatter, **scripts** |
 | 4 | Star map, bases and modules, research tree, manufacturing, economy, enemy strategy |
 | 5 | Menus, videos, music |
@@ -73,6 +73,9 @@ is read once, deterministically, at start-up.
 - [Packs](packs.md): folder layout, `pack.yaml`, asset references, re-skinning.
 - [Rulesets and layering](rulesets.md): the YAML rule format, units, difficulty and how mods override.
 - [Behaviours and conditions](behaviours.md): AI state machines and the condition language.
+- [Looks: model sets, debris and effects](looks.md): damage textures, wreck states, debris, explosions.
+- [Missiles and mines](weapons.md): guidance kinds, damage modes, decoys, cluster, mines.
+- [Stations and modules](stations.md): attachment points, turrets, shield generators.
 - [Mod file reference](reference.md): every key of every file type.
 - [Models and textures](models.md): bringing your own art.
 - [Overrides and extraction](overrides.md): replacing original assets; `--extract`; the HD cockpit walkthrough.
