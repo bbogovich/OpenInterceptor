@@ -34,6 +34,7 @@ objects:
     speed: 20
     destroyed_systems: [engines, manoeuvring]
     hull: 0.5
+    protect: true
     ai: idle
   shade:
     class: shade

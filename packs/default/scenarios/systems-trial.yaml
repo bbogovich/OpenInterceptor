@@ -7,7 +7,8 @@ description: >-
   A raider saucer drifts ahead with its rockets shot out. Tow it with the tractor ray
   (Shift+T; Meteor and Thunderbolt) and jump out with it (H) to capture it. Try the
   power controls (F9/F10, ; and ', S balance) and the Thunderbolt's invisibility screen
-  (Shift+C). A Grappler will try to drag it off first.
+  (Shift+C). A Grappler will try to drag it off first. The prize is marked PROTECT:
+  R (nearest enemy) skips it.
 player: thunderbolt
 player_position: [0, 0, 0]
 sun: [-0.4, 0.45, -0.8]
@@ -21,6 +22,7 @@ objects:
     speed: 15
     destroyed_systems: [engines, manoeuvring]
     hull: 0.5
+    protect: true
   grappler:
     class: grappler
     ai: enemy

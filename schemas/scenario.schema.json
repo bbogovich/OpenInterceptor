@@ -22,6 +22,7 @@
           "offset": {"description": "wingmen: formation slot relative to the leader", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
           "speed": {"description": "starting speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "destroyed_systems": {"description": "systems (kinds or ids) that start destroyed", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+          "protect": {"description": "an objective the player must keep alive: marked on the HUD, skipped by nearest-enemy targeting", "type": "boolean"},
           "hull": {"description": "starting hull fraction", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "behaviour": {"description": "behaviour id instead of the class's", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
         }}},

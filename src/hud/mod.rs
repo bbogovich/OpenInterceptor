@@ -265,12 +265,16 @@ pub fn mfd_lines(world: &World, player: ShipId, page: MfdPage, nav: Option<(&str
                 } else {
                     ""
                 };
-                vec![
-                    format!("{} [{}]", c.name, rules.faction(t.faction).name),
+                let mut lines = vec![format!("{} [{}]", c.name, rules.faction(t.faction).name)];
+                if t.protected_by == Some(me.faction) {
+                    lines.push("OBJECTIVE: PROTECT".into());
+                }
+                lines.extend([
                     format!("RANGE {}  SPD {:.0}", format_distance(dist), t.forward_speed()),
                     format!("SHD {:.0}/{:.0}  ARM {:.0}", t.shield_fore, t.shield_aft, t.armor),
                     format!("HULL {:.0}%  {lock}", 100.0 * t.hull / c.hull.max(1.0)),
-                ]
+                ]);
+                lines
             }
         },
         MfdPage::Weapons => {
@@ -382,6 +386,23 @@ impl MessageLog {
 pub fn faction_color(rules: &Ruleset, f: FactionId) -> [f32; 4] {
     let c = rules.faction(f).color;
     [c[0], c[1], c[2], 1.0]
+}
+
+/// The radar colour of a contact of faction `other` seen by faction `me`: friend, foe
+/// or neutral, in the campaign's `flight.radar_colors`.
+pub fn relation_color(rules: &Ruleset, me: FactionId, other: FactionId) -> [f32; 4] {
+    let c = rules.flight.radar_colors.of(rules.relation(me, other));
+    [c[0], c[1], c[2], 1.0]
+}
+
+/// The HUD colour of ship `s` for a player of faction `me`: the objective colour for
+/// something the player protects, otherwise friend, foe or neutral.
+pub fn contact_color(rules: &Ruleset, me: FactionId, s: &crate::sim::Ship) -> [f32; 4] {
+    if s.protected_by == Some(me) {
+        let c = rules.flight.radar_colors.objective;
+        return [c[0], c[1], c[2], 1.0];
+    }
+    relation_color(rules, me, s.faction)
 }
 
 pub mod draw;

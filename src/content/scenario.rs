@@ -21,6 +21,7 @@
 //!   wreck:
 //!     class: wraith
 //!     destroyed_systems: [engines, manoeuvring]   # start disabled (a capture target)
+//!     protect: true                               # an objective: keep it alive
 //!     hull: 40%
 //!     behaviour: wraith_ambush  # fly this behaviour instead of the class's
 //! nav:                          # optional navigation points (engine extension)
@@ -79,6 +80,9 @@ pub struct Placement {
     pub destroyed_systems: Vec<String>,
     /// Starting hull as a fraction of the class's hit points.
     pub hull: f32,
+    /// An objective the player must keep alive (`protect: true`): marked on the HUD and
+    /// skipped by "nearest enemy" for the player's side.
+    pub protect: bool,
     /// A behaviour id overriding the class's (`behaviour = scout_saucer`).
     pub behaviour: Option<String>,
 }
@@ -158,6 +162,7 @@ impl Scenario {
                 speed: o.num("speed").unwrap_or(0.0),
                 destroyed_systems: o.list("destroyed_systems").iter().map(|x| x.to_ascii_lowercase()).collect(),
                 hull: o.qty("hull", Unit::Fraction).unwrap_or(1.0).clamp(0.01, 1.0),
+                protect: o.bool("protect").unwrap_or(false),
                 behaviour: o.str("behaviour").map(str::to_string),
             });
         }
@@ -192,7 +197,7 @@ mod tests {
     fn parses_objects_and_nav_points() {
         let s = Scenario::parse(
             "id: t\ntitle: Test\nplayer: lightning\nsun: [0, 1, 0]\norder: 5\nobjects:\n  base: {class: xcom_base, position: [0, 0, -3000]}\n  \
-             w1: {class: lightning, ai: wingman, leader: player, offset: [10, 0, 5], speed: 100, destroyed_systems: [engines, vct], hull: 40%}\n\
+             w1: {class: lightning, ai: wingman, leader: player, offset: [10, 0, 5], speed: 100, destroyed_systems: [engines, vct], hull: 40%, protect: true}\n\
              nav:\n  alpha: {position: [1, 2, 3]}\n",
             2,
         )
@@ -207,6 +212,7 @@ mod tests {
         assert_eq!(s.objects[1].leader.as_deref(), Some("player"));
         assert_eq!(s.objects[1].offset, Vec3::new(10.0, 0.0, 5.0));
         assert_eq!(s.objects[1].destroyed_systems, vec!["engines", "vct"]);
+        assert!(s.objects[1].protect);
         assert_eq!((s.objects[0].hull, s.objects[1].hull), (1.0, 0.4));
         assert_eq!(s.nav_points[0].position, Vec3::new(1.0, 2.0, 3.0));
     }

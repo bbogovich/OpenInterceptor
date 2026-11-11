@@ -338,6 +338,9 @@ pub struct Ship {
     pub expires: Option<f32>,
     /// Station modules: the hub it is mounted on, and where (in the hub's frame).
     pub mount: Option<(ShipId, Vec3, Quat)>,
+    /// A scenario objective protected by this faction (the player's): its pilots never
+    /// pick it as the nearest enemy, and the HUD marks it.
+    pub protected_by: Option<FactionId>,
 }
 
 impl Ship {
@@ -631,6 +634,7 @@ impl World {
             departed: false,
             expires: None,
             mount: None,
+            protected_by: None,
         };
         let index = match self.ships.iter().position(|s| !s.alive) {
             Some(i) => {
@@ -891,6 +895,10 @@ impl World {
             }
             let id = w.spawn(class, faction, &p.name, p.position, rot, pilot);
             w.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
+            if p.protect {
+                let mine = w.get(player).map(|s| s.faction);
+                w.get_mut(id).expect("just spawned").protected_by = mine;
+            }
             for name in &p.destroyed_systems {
                 let kind = crate::content::equipment::SystemKind::parse(name);
                 let sid = rules.system_id(name);
@@ -1118,6 +1126,27 @@ mod tests {
         assert_eq!(targeting::preferred_hostile(&w, me, &[]).map(|t| t.0), Some(wing));
         let pick = targeting::preferred_hostile(&w, me, &[(Selector::Player, 2.0)]);
         assert_eq!(pick, Some((player, 500.0)), "500 m / 2 beats 300 m; the true distance is returned");
+    }
+
+    #[test]
+    fn protected_objectives_are_not_picked_as_the_nearest_enemy() {
+        let mut w = world();
+        let fighter = w.rules.ship_id("fighter").unwrap();
+        let (blue, red) = (w.rules.faction_id("blue").unwrap(), w.rules.faction_id("red").unwrap());
+        let me = w.spawn(fighter, blue, "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let prize = w.spawn(fighter, red, "prize", Vec3::new(0.0, 0.0, -200.0), Quat::IDENTITY, Pilot::External);
+        let foe = w.spawn(fighter, red, "foe", Vec3::new(0.0, 0.0, -900.0), Quat::IDENTITY, Pilot::External);
+        assert_eq!(targeting::nearest_hostile(&w, me), Some(prize));
+        w.get_mut(prize).unwrap().protected_by = Some(blue);
+        assert_eq!(targeting::nearest_hostile(&w, me), Some(foe), "the protected prize is skipped");
+        assert_eq!(targeting::preferred_hostile(&w, me, &[]).map(|t| t.0), Some(foe));
+        let cycled: Vec<_> = (0..2)
+            .scan(None, |cur, _| {
+                *cur = targeting::cycle(&w, me, *cur, true);
+                Some(*cur)
+            })
+            .collect();
+        assert!(cycled.contains(&Some(prize)), "T still reaches it");
     }
 
     #[test]

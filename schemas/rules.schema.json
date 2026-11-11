@@ -237,6 +237,12 @@
         "lock_angle": {"description": "missile lock cone half-angle", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
         "radar_range": {"description": "radar range", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
         "hyperspace_time": {"description": "hyperdrive countdown", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "radar_colors": {"description": "radar and target-marker colours by relation to the player", "type": "object", "additionalProperties": false, "properties": {
+            "friendly": {"description": "the player's own faction", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+            "hostile": {"description": "factions at war with the player's", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+            "neutral": {"description": "everyone else", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+            "objective": {"description": "objects the player must protect (scenario protect: true)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+          }},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

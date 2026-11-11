@@ -10,4 +10,4 @@ player_position: [0, 0, 0]
 starfield_seed: 7
 objects:
   grappler1: {class: grappler, ai: enemy, position: [0, 0, -4000], speed: 250}
-  wreck: {class: raider_saucer, faction: guard, position: [0, 0, -1500], destroyed_systems: [engines, manoeuvring], hull: 0.4}
+  wreck: {class: raider_saucer, faction: guard, position: [0, 0, -1500], destroyed_systems: [engines, manoeuvring], hull: 0.4, protect: true}

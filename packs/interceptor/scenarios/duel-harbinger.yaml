@@ -10,4 +10,4 @@ player_position: [0, 0, 0]
 starfield_seed: 7
 objects:
   harbinger1: {class: harbinger, ai: enemy, position: [0, 0, -4000], speed: 250}
-  wreck: {class: wraith, faction: xcom, position: [0, 0, -1500], destroyed_systems: [engines, manoeuvring], hull: 0.4}
+  wreck: {class: wraith, faction: xcom, position: [0, 0, -1500], destroyed_systems: [engines, manoeuvring], hull: 0.4, protect: true}

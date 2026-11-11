@@ -311,6 +311,16 @@ fn flight() -> Ty {
         f("lock_angle", Ty::Qty(Unit::Angle), "missile lock cone half-angle"),
         f("radar_range", dist(), "radar range"),
         f("hyperspace_time", time(), "hyperdrive countdown"),
+        f(
+            "radar_colors",
+            Ty::Struct(vec![
+                f("friendly", rgb(), "the player's own faction"),
+                f("hostile", rgb(), "factions at war with the player's"),
+                f("neutral", rgb(), "everyone else"),
+                f("objective", rgb(), "objects the player must protect (scenario protect: true)"),
+            ]),
+            "radar and target-marker colours by relation to the player",
+        ),
     ])
 }
 
@@ -399,6 +409,11 @@ pub fn scenario() -> Ty {
         f("offset", Ty::Numbers(3), "wingmen: formation slot relative to the leader"),
         f("speed", Ty::Num, "starting speed, m/s"),
         f("destroyed_systems", names(), "systems (kinds or ids) that start destroyed"),
+        f(
+            "protect",
+            Ty::Bool,
+            "an objective the player must keep alive: marked on the HUD, skipped by nearest-enemy targeting",
+        ),
         f("hull", Ty::Qty(Unit::Fraction), "starting hull fraction"),
         f("behaviour", name(), "behaviour id instead of the class's"),
     ]);

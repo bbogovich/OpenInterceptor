@@ -314,6 +314,49 @@ pub struct FlightRules {
     pub radar_range: f32,
     /// Seconds of hyperdrive countdown before a ship jumps out of the battle.
     pub hyperspace_time: f32,
+    /// Radar and target-marker colours by relation to the player:
+    /// `flight: {radar_colors: {friendly: […], hostile: […], neutral: […]}}`.
+    pub radar_colors: RadarColors,
+}
+
+/// What a contact is to the player, for its radar colour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Relation {
+    /// The player's own faction.
+    Friendly,
+    Hostile,
+    Neutral,
+}
+
+/// Radar colours (RGB, 0..1) for each [`Relation`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RadarColors {
+    pub friendly: [f32; 3],
+    pub hostile: [f32; 3],
+    pub neutral: [f32; 3],
+    /// Scenario objectives the player protects (`protect: true`).
+    pub objective: [f32; 3],
+}
+
+impl Default for RadarColors {
+    fn default() -> Self {
+        RadarColors {
+            friendly: [0.35, 1.0, 0.45],
+            hostile: [1.0, 0.25, 0.2],
+            neutral: [0.95, 0.85, 0.35],
+            objective: [0.4, 0.85, 1.0],
+        }
+    }
+}
+
+impl RadarColors {
+    pub fn of(&self, r: Relation) -> [f32; 3] {
+        match r {
+            Relation::Friendly => self.friendly,
+            Relation::Hostile => self.hostile,
+            Relation::Neutral => self.neutral,
+        }
+    }
 }
 
 /// A cockpit: 2D art, a 3D model, or both, plus where the instruments go.
@@ -443,6 +486,18 @@ impl Ruleset {
         self.cockpits.iter().find(|c| c.id.eq_ignore_ascii_case(id))
     }
     /// True if `a` treats `b` as an enemy (either side declaring hostility is enough).
+    /// What faction `other` is to faction `me`: its own side, an enemy (either side
+    /// hostile to the other), or neutral.
+    pub fn relation(&self, me: FactionId, other: FactionId) -> Relation {
+        if me == other {
+            Relation::Friendly
+        } else if self.hostile(me, other) || self.hostile(other, me) {
+            Relation::Hostile
+        } else {
+            Relation::Neutral
+        }
+    }
+
     pub fn hostile(&self, a: FactionId, b: FactionId) -> bool {
         let (fa, fb) = (self.faction(a), self.faction(b));
         fa.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fb.id))
@@ -873,6 +928,18 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         lock_angle: fl.and_then(|g| g.qty("lock_angle", Unit::Angle)).unwrap_or(10.0),
         radar_range: fl.and_then(|g| g.qty("radar_range", Unit::Distance)).unwrap_or(6000.0),
         hyperspace_time: fl.and_then(|g| g.qty("hyperspace_time", Unit::Time)).unwrap_or(10.0).max(0.0),
+        radar_colors: {
+            let d = RadarColors::default();
+            match fl.and_then(|g| g.node("radar_colors")).map(Get) {
+                Some(c) => RadarColors {
+                    friendly: rgb(c, "friendly", d.friendly),
+                    hostile: rgb(c, "hostile", d.hostile),
+                    neutral: rgb(c, "neutral", d.neutral),
+                    objective: rgb(c, "objective", d.objective),
+                },
+                None => d,
+            }
+        },
     };
     let sounds = sounds_node
         .map(|(n, pack)| {

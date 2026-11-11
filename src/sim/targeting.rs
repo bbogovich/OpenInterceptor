@@ -13,6 +13,7 @@
 
 use super::{ShipId, World};
 use crate::content::behaviour::Selector;
+use crate::content::rules::FactionId;
 
 /// Every live ship except `me` that `me`'s sensors can see (cloaked enemies beyond
 /// their cloak's range are invisible), as `(id, distance)`.
@@ -45,7 +46,7 @@ pub fn nearest_hostile(w: &World, me: ShipId) -> Option<ShipId> {
     let my_faction = w.get(me)?.faction;
     others(w, me)
         .into_iter()
-        .filter(|(id, _)| w.rules.hostile(my_faction, w.ships[id.index as usize].faction))
+        .filter(|(id, _)| fair_game(w, my_faction, &w.ships[id.index as usize]))
         .min_by(|a, b| a.1.total_cmp(&b.1))
         .map(|(id, _)| id)
 }
@@ -58,7 +59,7 @@ pub fn preferred_hostile(w: &World, me: ShipId, prefer: &[(Selector, f32)]) -> O
     let my_faction = w.get(me)?.faction;
     others(w, me)
         .into_iter()
-        .filter(|(id, _)| w.rules.hostile(my_faction, w.ships[id.index as usize].faction))
+        .filter(|(id, _)| fair_game(w, my_faction, &w.ships[id.index as usize]))
         .map(|(id, d)| {
             let s = &w.ships[id.index as usize];
             let weight: f32 = prefer.iter().filter(|(sel, _)| matches(w, s, sel)).map(|(_, k)| k).product();
@@ -66,6 +67,12 @@ pub fn preferred_hostile(w: &World, me: ShipId, prefer: &[(Selector, f32)]) -> O
         })
         .min_by(|a, b| a.2.total_cmp(&b.2))
         .map(|(id, d, _)| (id, d))
+}
+
+/// A hostile that faction `me` may pick automatically: not an objective `me` protects.
+/// (Cycling with T still reaches it, so the player can select it deliberately.)
+fn fair_game(w: &World, me: FactionId, s: &super::Ship) -> bool {
+    w.rules.hostile(me, s.faction) && s.protected_by != Some(me)
 }
 
 /// Whether ship `s` matches a target-preference selector.

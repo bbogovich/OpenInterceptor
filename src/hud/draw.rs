@@ -47,6 +47,29 @@ fn col(c: [f32; 4]) -> Color {
 
 const HUD_GREEN: Color = Color::new(0.35, 1.0, 0.45, 0.9);
 const HUD_DIM: Color = Color::new(0.35, 1.0, 0.45, 0.35);
+/// Instrument labels: dimmer than readings, bright enough to read.
+const HUD_LABEL: Color = Color::new(0.35, 1.0, 0.45, 0.75);
+
+/// Smallest text an instrument draws, in screen pixels: fitted text never shrinks
+/// below this (it is clipped instead), or it would be unreadable.
+const MIN_TEXT: f32 = 14.0;
+
+/// `size` raised to the legible minimum (scaled for instrument textures).
+fn legible(size: f32, f: &HudFrame) -> f32 {
+    size.max(MIN_TEXT * f.text_scale)
+}
+
+/// `s` shortened (ending in "..") so it fits `w` pixels at `size`.
+fn clip(s: &str, size: f32, w: f32) -> String {
+    if width_per_px(s) * size <= w {
+        return s.to_string();
+    }
+    let mut out: String = s.to_string();
+    while !out.is_empty() && width_per_px(&format!("{out}..")) * size > w {
+        out.pop();
+    }
+    format!("{out}..")
+}
 
 /// Draws text with its top-left at `(x, y)` at about `size` pixels: the size is
 /// snapped down to the glyph-cache ladder (see [`super::glyphs`]).
@@ -114,8 +137,9 @@ pub fn draw_instruments(f: &HudFrame) {
         status += "  ";
         status += &flag;
     }
-    let size = (9.0 * f.layout.scale).clamp(10.0, 16.0);
-    text(&status, f.layout.offset.x + 8.0, 40.0 * f.layout.scale, size, HUD_GREEN);
+    // Sized by the window, not the cockpit's design space: it is plain screen text.
+    let size = (screen_height() * 0.022).clamp(13.0, 26.0);
+    text(&status, f.layout.offset.x + 8.0, (40.0 * f.layout.scale).max(size * 1.5), size, HUD_GREEN);
 
     // Power and systems: in the cockpit's own rectangles, or a corner panel.
     // A cockpit without these rectangles gets small panels in the top-right corner of
@@ -169,9 +193,13 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
                 let local = me.rotation.inverse() * (s.position - me.position);
                 if let Some(p) = radar_point(local, front) {
                     let at = c + p * radius * 0.92;
-                    let color = col(super::faction_color(rules, s.faction));
+                    let color = col(super::contact_color(rules, me.faction, s));
                     let size = if rules.ship(s.class).kind.is_static() { blip * 1.7 } else { blip };
                     draw_rectangle(at.x - size, at.y - size, size * 2.0, size * 2.0, color);
+                    // An objective to protect also gets a ring, so it reads without colour.
+                    if s.protected_by == Some(me.faction) {
+                        draw_circle_lines(at.x, at.y, size * 2.6, f.text_scale.max(1.0), color);
+                    }
                     if Some(id) == me.target {
                         let b = size * 2.2;
                         draw_rectangle_lines(at.x - b, at.y - b, b * 2.0, b * 2.0, f.text_scale, WHITE);
@@ -195,18 +223,23 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
             draw_circle(c.x, c.y, thick * 0.8, color);
             if f.glass {
                 draw_circle_lines(c.x, c.y, radius, f.text_scale, HUD_DIM);
-                let size = fit_size(&[label], 1, radius * 0.9, radius * 0.4, 14.0 * f.text_scale);
-                text(label, c.x - radius * 0.45, c.y + radius * 0.45, size, HUD_DIM);
             }
+            // The label goes on every dial (cockpit art has no printed dial faces).
+            let size = legible(fit_size(&[label], 1, radius * 1.3, radius * 0.6, 24.0 * f.text_scale), f);
+            let w = width_per_px(label) * size;
+            text(label, c.x - w * 0.5, c.y + radius * 0.35, size, HUD_LABEL);
         }
         "mfd" => {
             let lines = mfd_lines(f.world, f.player, f.mfd, f.nav);
             // One size for every page (fitted to the longest page the MFD can show), so the
             // text does not jump as pages change; long lines shrink it further.
             let pad = r[2] * 0.04;
-            let size = fit_size(&lines, lines.len().max(6), r[2] - pad * 2.0, r[3] - pad * 2.0, 22.0 * f.text_scale);
-            for (i, l) in lines.iter().enumerate() {
-                text(l, r[0] + pad, r[1] + pad + i as f32 * size * 1.12, size, HUD_GREEN);
+            let (w, h) = (r[2] - pad * 2.0, r[3] - pad * 2.0);
+            let size = legible(fit_size(&lines, lines.len().max(6), w, h, 22.0 * f.text_scale), f);
+            // At the legible minimum a long line is clipped and extra lines are dropped.
+            let rows = ((h / (size * 1.12)) as usize).max(1);
+            for (i, l) in lines.iter().take(rows).enumerate() {
+                text(&clip(l, size, w), r[0] + pad, r[1] + pad + i as f32 * size * 1.12, size, HUD_GREEN);
             }
         }
         "message" => {
@@ -227,7 +260,7 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
 fn draw_power(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let p = power_readout(&f.world.rules, me);
     let col_w = r[2] / 4.0;
-    let size = fit_size(&["B-E"], 1, col_w * 0.95, r[3] * 0.16, 14.0 * f.text_scale);
+    let size = legible(fit_size(&["B-E"], 1, col_w * 0.95, r[3] * 0.2, 16.0 * f.text_scale), f);
     let label_h = size * 1.1;
     let bar_top = r[1] + label_h;
     let bar_h = r[3] - label_h - 2.0;
@@ -271,11 +304,10 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     if lamps.is_empty() {
         return;
     }
-    let cols = if r[2] > r[3] * 2.5 { lamps.len().min(10) } else { 2 };
-    let rows = lamps.len().div_ceil(cols);
+    let (cols, rows) = lamp_grid(lamps.len(), r[2], r[3]);
     let (cw, ch) = (r[2] / cols as f32, r[3] / rows as f32);
     let d = (ch * 0.45).min(cw * 0.25);
-    let size = fit_size(&["ENG"], 1, cw - d * 1.9, ch * 0.8, 14.0 * f.text_scale);
+    let size = legible(fit_size(&["ENG"], 1, cw - d * 1.9, ch * 0.8, 16.0 * f.text_scale), f);
     let blink = (f.now * 3.0) as i64 % 2 == 0;
     for (i, (label, lamp, repairing)) in lamps.iter().enumerate() {
         let (cx, cy) = (r[0] + cw * (i % cols) as f32, r[1] + ch * (i / cols) as f32);
@@ -298,6 +330,19 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     }
 }
 
+/// Columns and rows for `n` lamps in a `w` × `h` panel: the arrangement that gives the
+/// biggest label. A cell holds a lamp and a three-letter label, about four characters
+/// wide (a ProggyClean character is ~0.55 of the font size wide), and one line high.
+fn lamp_grid(n: usize, w: f32, h: f32) -> (usize, usize) {
+    let label_size = |cols: usize| {
+        let rows = n.div_ceil(cols);
+        let (cw, ch) = (w / cols as f32, h / rows as f32);
+        (cw / (4.0 * 0.55)).min(ch * 0.75)
+    };
+    let cols = (1..=n.max(1)).max_by(|&a, &b| label_size(a).total_cmp(&label_size(b))).unwrap_or(1);
+    (cols, n.div_ceil(cols).max(1))
+}
+
 /// Reticle, target brackets, lead indicator and off-screen arrow.
 pub fn draw_targeting(f: &HudFrame) {
     if !f.forward_view {
@@ -313,7 +358,7 @@ pub fn draw_targeting(f: &HudFrame) {
     draw_line(centre.x, centre.y + s * 0.4, centre.x, centre.y + s, 1.5, HUD_GREEN);
     let Some(target) = me.target.and_then(|t| f.world.get(t)) else { return };
     let rules = &f.world.rules;
-    let color = col(super::faction_color(rules, target.faction));
+    let color = col(super::contact_color(rules, me.faction, target));
     let radius = f.world.shapes[target.class.0 as usize].radius;
     match f.camera.project(target.position, screen) {
         Some(p) if p.x >= 0.0 && p.y >= 0.0 && p.x <= screen.x && p.y <= screen.y => {
@@ -349,7 +394,8 @@ pub fn draw_targeting(f: &HudFrame) {
                 let frac = (me.lock.progress / t).min(1.0);
                 draw_circle_lines(p.x, p.y, h * (2.2 - 1.2 * frac), 1.0, Color::new(1.0, 0.3, 0.3, 0.8));
             }
-            let label = format!("{} {}", rules.ship(target.class).name, super::format_distance(dist));
+            let protect = if target.protected_by == Some(me.faction) { "PROTECT " } else { "" };
+            let label = format!("{protect}{} {}", rules.ship(target.class).name, super::format_distance(dist));
             text(&label, p.x - h, p.y + h + 2.0, 11.0 * f.layout.scale.max(1.0), color);
             // Lead indicator: where to aim the beams.
             let speed = rules.ship(me.class).beams.first().map(|b| rules.beam(*b).speed).unwrap_or(2000.0);
@@ -389,4 +435,17 @@ pub fn draw_caption(s: &str, corner_right: bool) {
     let w = measure_text(s, None, size as u16, 1.0).width;
     let x = if corner_right { screen_width() - w - 10.0 } else { 10.0 };
     text(s, x, screen_height() - size - 8.0, size, Color::new(1.0, 1.0, 1.0, 0.7));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lamp_grids_follow_the_panel_shape() {
+        assert_eq!(lamp_grid(10, 100.0, 300.0), (2, 5), "tall panel: two columns");
+        let (cols, rows) = lamp_grid(10, 600.0, 60.0);
+        assert!(cols >= 5 && rows <= 2, "wide, short panel: few rows ({cols}x{rows})");
+        assert_eq!(lamp_grid(1, 50.0, 50.0), (1, 1));
+    }
 }
