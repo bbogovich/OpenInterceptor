@@ -202,6 +202,11 @@ impl ModelCache {
         tex
     }
 
+    /// Uploads a model built in code (a terrain mesh) rather than loaded from a pack.
+    pub fn upload_model(&mut self, content: &Content, model: Model, pack: usize) -> Rc<GpuModel> {
+        Rc::new(self.upload(content, model, pack))
+    }
+
     fn upload(&mut self, content: &Content, model: Model, pack: usize) -> GpuModel {
         let mut lods = Vec::with_capacity(model.lods.len());
         for lod in &model.lods {

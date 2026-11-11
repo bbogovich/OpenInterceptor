@@ -171,6 +171,7 @@ impl MissionRun {
             player_position: def.player_position,
             player_rotation: Vec3::ZERO,
             hazards: Default::default(), // missions place theirs after the roles
+            environment: None,           // set by the mission run
             sun_direction: def.sun,
             starfield_seed: def.starfield_seed,
             music: None,
@@ -186,6 +187,9 @@ impl MissionRun {
             if def.roles[i].arrive.is_none() {
                 run.spawn_role(&mut w, i, None, None)?;
             }
+        }
+        if let Some(e) = &def.environment {
+            w.set_environment(e)?;
         }
         // Hazards last, so the asteroids and mines keep clear of every craft placed.
         w.apply_hazards(&def.hazards)?;

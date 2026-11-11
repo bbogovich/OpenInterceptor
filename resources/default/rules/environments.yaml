@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Battle environments and terrains for the default campaign (Stage 3.3-3.5; R-MSN-008,
+# R-FLT-011, R-FLT-012). A mission or scenario picks one with `environment: <id>`;
+# without it the battle is in open space.
+environments:
+  orbit:
+    # High orbit over a blue world: open-space physics, a planet in the sky.
+    backdrop: {planet: {color: [0.30, 0.52, 0.95], size: 48, direction: [0.25, -0.55, -1]}}
+  pocket:
+    # A small, enclosed arena (a nebula pocket): tight, close-quarters fights.
+    arena: 12km
+    backdrop: {planet: {color: [0.55, 0.25, 0.60], size: 90, direction: [-0.3, 0.2, 1]}}
+  moon_surface:
+    # A cratered moon: thin air, low gravity, a dark violet sky with stars showing.
+    physics: atmosphere
+    gravity: 3.7
+    air_density: 0.35
+    ceiling: 9km
+    terrain: craters
+    sky: {top: [0.03, 0.02, 0.08], horizon: [0.32, 0.24, 0.34], fog: [0.30, 0.23, 0.32], fog_distance: 14km, stars: 0.6}
+  dusk_hills:
+    # Rolling hills at dusk: thick air, full gravity, a warm sky. Rockets need speed to fly.
+    physics: atmosphere
+    gravity: 9.8
+    air_density: 1.0
+    ceiling: 7km
+    terrain: hills
+    sky: {top: [0.10, 0.12, 0.30], horizon: [0.95, 0.55, 0.35], fog: [0.80, 0.50, 0.38], fog_distance: 10km, stars: 0.1}
+
+terrains:
+  craters:
+    generate: {kind: craters, seed: 7}
+    size: 30km
+    height: [0, 1600]
+    colors: {low: [0.30, 0.27, 0.26], high: [0.62, 0.58, 0.55], slope: [0.20, 0.18, 0.18]}
+  hills:
+    generate: {kind: hills, seed: 3}
+    size: 30km
+    height: [0, 1400]
+    colors: {low: [0.22, 0.33, 0.16], high: [0.55, 0.50, 0.32], slope: [0.36, 0.30, 0.22]}

@@ -51,6 +51,7 @@ pub mod camera;
 pub mod effects;
 pub mod gpu;
 pub mod starfield;
+pub mod terrain;
 
 use crate::content::Content;
 use crate::sim::{ShipId, World};
@@ -64,6 +65,7 @@ use macroquad::miniquad::{
 };
 use macroquad::prelude::*;
 use std::rc::Rc;
+use std::sync::Arc;
 
 const LIT_VERTEX: &str = r#"#version 100
 attribute vec3 position;
@@ -77,6 +79,11 @@ uniform mat4 Projection;
 uniform vec4 SunDirection;
 uniform vec4 Tint;
 // x = ambient, y = sun, z = rim, w = gamma (see `Lighting` and `Renderer::brightness`).
+// Fog: x = the distance at which things have faded fully into the fog (0 = no fog). Only
+// the vertex shader reads it: distances reach tens of kilometres, beyond what mediump
+// (the fragment shader's precision) can hold, so the fade is computed here.
+uniform vec4 FogDistance;
+varying mediump float fog;
 // Declared `mediump` in both shaders: GLSL ES requires a uniform shared by the vertex
 // and fragment shaders to have the same precision, or the program fails to link (the
 // vertex shader's default is highp, the fragment shader's is set to mediump below).
@@ -96,6 +103,9 @@ void main() {
     float edge = 1.0 - abs(dot(n, ray));
     float light = Light.x + Light.y * diffuse + Light.z * edge * edge * edge;
     color = vec4(color0.rgb / 255.0 * light + Tint.rgb, color0.a / 255.0);
+    float d = length((Model * vec4(position, 1.0)).xyz);
+    fog = FogDistance.x > 0.0 ? clamp(d / FogDistance.x, 0.0, 1.0) : 0.0;
+    fog = fog * fog;
     uv = texcoord;
 }"#;
 
@@ -105,8 +115,12 @@ varying mediump vec2 uv;
 varying lowp vec4 color;
 uniform sampler2D Texture;
 uniform mediump vec4 Light;
+// The fog's colour (fragment shader only; see FogDistance in the vertex shader).
+uniform mediump vec4 FogColor;
+varying mediump float fog;
 void main() {
     vec4 c = color * texture2D(Texture, uv);
+    c.rgb = mix(c.rgb, FogColor.rgb, fog);
     // Gamma (Light.w = 1 / brightness): below 1 lifts dark tones more than bright ones,
     // so shadowed hulls become visible without washing out lit faces.
     gl_FragColor = vec4(pow(c.rgb, vec3(Light.w)), c.a);
@@ -144,6 +158,85 @@ fn lit_vertex_source() -> String {
     LIT_VERTEX.replace("LAYER_BIAS", &format!("{LAYER_DEPTH_BIAS:.10}"))
 }
 
+/// The sky of an atmospheric battle: a dome around the camera coloured from the zenith
+/// to the horizon (and the horizon colour below it), drawn first, behind everything.
+fn draw_sky_dome(sky: &crate::content::environment::Sky) {
+    let to8 = |c: [f32; 3]| Color::new(c[0], c[1], c[2], 1.0);
+    let (top, horizon) = (to8(sky.top), to8(sky.horizon));
+    let r = SKY_DISTANCE * 0.9;
+    let (rings, segs) = (8usize, 24usize);
+    let mut vertices = Vec::new();
+    let mut indices = Vec::new();
+    // Elevation from −30° (below the horizon) to +90°; the colour blends up to the top.
+    for i in 0..=rings {
+        let e = (-30.0 + 120.0 * i as f32 / rings as f32).to_radians();
+        let t = (e.sin().max(0.0)).sqrt();
+        let c = Color::new(
+            horizon.r + (top.r - horizon.r) * t,
+            horizon.g + (top.g - horizon.g) * t,
+            horizon.b + (top.b - horizon.b) * t,
+            1.0,
+        );
+        for j in 0..=segs {
+            let a = j as f32 / segs as f32 * std::f32::consts::TAU;
+            let p = Vec3::new(e.cos() * a.cos(), e.sin(), e.cos() * a.sin()) * r;
+            vertices.push(Vertex::new(p.x, p.y, p.z, 0.0, 0.0, c));
+        }
+    }
+    for i in 0..rings {
+        for j in 0..segs {
+            let a = (i * (segs + 1) + j) as u16;
+            let b = a + (segs + 1) as u16;
+            indices.extend([a, b, a + 1, a + 1, b, b + 1]);
+        }
+    }
+    draw_mesh(&Mesh { vertices, indices, texture: None });
+}
+
+/// A planet hanging in the sky (orbit): a disc lit from the sun's side, with a soft limb.
+fn draw_planet(p: &crate::content::environment::Planet, sun: Vec3) {
+    let d = SKY_DISTANCE * 0.8;
+    let centre = p.direction * d;
+    let radius = d * (p.size.to_radians() * 0.5).tan();
+    // A frame on the disc facing the camera: `fwd` points from the planet to the eye.
+    let fwd = -p.direction;
+    let right = fwd.cross(Vec3::Y).try_normalize().unwrap_or(Vec3::X);
+    let up = right.cross(fwd);
+    let (rings, segs) = (10usize, 40usize);
+    let mut vertices = vec![];
+    let mut indices = vec![];
+    for i in 0..=rings {
+        let rr = i as f32 / rings as f32;
+        for j in 0..segs {
+            let a = j as f32 / segs as f32 * std::f32::consts::TAU;
+            let (x, y) = (rr * a.cos(), rr * a.sin());
+            // The sphere's surface normal under this point of the disc.
+            let z = (1.0 - (x * x + y * y)).max(0.0).sqrt();
+            let n = right * x + up * y + fwd * z;
+            let lit = (n.dot(sun).max(0.0) * 0.9 + 0.08).min(1.0) * (0.55 + 0.45 * z);
+            let c = Color::new(p.color[0] * lit, p.color[1] * lit, p.color[2] * lit, 1.0);
+            let pos = centre + (right * x + up * y) * radius;
+            vertices.push(Vertex::new(pos.x, pos.y, pos.z, 0.0, 0.0, c));
+        }
+    }
+    let centre_i = vertices.len() as u16;
+    let c0 = vertices[0].color;
+    vertices.push(Vertex::new(centre.x, centre.y, centre.z, 0.0, 0.0, Color::from_rgba(c0[0], c0[1], c0[2], 255)));
+    for j in 0..segs {
+        let k = (j + 1) % segs;
+        indices.extend([centre_i, (segs + j) as u16, (segs + k) as u16]);
+    }
+    for i in 1..rings {
+        for j in 0..segs {
+            let k = (j + 1) % segs;
+            let (a, b) = ((i * segs + j) as u16, (i * segs + k) as u16);
+            let (c, d) = (((i + 1) * segs + j) as u16, ((i + 1) * segs + k) as u16);
+            indices.extend([a, c, b, b, c, d]);
+        }
+    }
+    draw_mesh(&Mesh { vertices, indices, texture: None });
+}
+
 /// Distance at which sky objects are drawn (inside the far plane).
 const SKY_DISTANCE: f32 = 150_000.0;
 
@@ -162,6 +255,12 @@ pub struct Renderer {
     pub lighting: crate::content::rules::Lighting,
     /// The player's brightness setting (`graphics: {brightness: …}`, 1 = as authored).
     pub brightness: f32,
+    /// The battle's sky and planet (atmospheric and orbit environments); set by the
+    /// flight screen before drawing and cleared after, so other screens draw space.
+    pub env_sky: Option<crate::content::environment::Sky>,
+    pub planet: Option<crate::content::environment::Planet>,
+    /// The terrain mesh of the current battle, by terrain id (built once).
+    terrain: Option<(String, Rc<GpuModel>)>,
     stars: Vec<starfield::Star>,
     star_seed: u64,
     // Reused per-frame buffers (see the module docs).
@@ -262,6 +361,8 @@ impl Renderer {
                     UniformDesc::new("SunDirection", UniformType::Float4),
                     UniformDesc::new("Tint", UniformType::Float4),
                     UniformDesc::new("Light", UniformType::Float4),
+                    UniformDesc::new("FogDistance", UniformType::Float4),
+                    UniformDesc::new("FogColor", UniformType::Float4),
                 ],
                 ..Default::default()
             },
@@ -307,6 +408,9 @@ impl Renderer {
             show_overlays: true,
             lighting: Default::default(),
             brightness: 1.0,
+            env_sky: None,
+            planet: None,
+            terrain: None,
             stars: Vec::new(),
             star_seed: u64::MAX,
             glow_vertices: Vec::new(),
@@ -378,6 +482,12 @@ impl Renderer {
         self.lit.set_uniform("SunDirection", sun.normalize_or(Vec3::Y).extend(0.0));
         let l = self.lighting;
         self.lit.set_uniform("Light", Vec4::new(l.ambient, l.sun, l.rim, 1.0 / self.brightness.clamp(0.25, 4.0)));
+        let (fog_d, fog_c) = match self.env_sky {
+            Some(s) => (s.fog_distance, Vec4::new(s.fog[0], s.fog[1], s.fog[2], 1.0)),
+            None => (0.0, Vec4::ZERO),
+        };
+        self.lit.set_uniform("FogDistance", Vec4::new(fog_d, 0.0, 0.0, 0.0));
+        self.lit.set_uniform("FogColor", fog_c);
     }
 
     /// Draws the stars and the sun.
@@ -387,6 +497,10 @@ impl Renderer {
             self.star_seed = seed;
         }
         set_camera(cam);
+        if let Some(sky) = self.env_sky {
+            draw_sky_dome(&sky);
+        }
+        let star_light = self.env_sky.map(|s| s.stars).unwrap_or(1.0);
         self.sky_vertices.clear();
         self.sky_indices.clear();
         let right = cam.rotation * Vec3::X;
@@ -401,7 +515,10 @@ impl Renderer {
                 s.size * pixel,
                 right,
                 up,
-                s.color,
+                {
+                    let k = |c: u8| (c as f32 * star_light) as u8;
+                    [k(s.color[0]), k(s.color[1]), k(s.color[2]), s.color[3]]
+                },
             );
         }
         let sun_dir = sun.normalize_or(Vec3::Y);
@@ -436,6 +553,9 @@ impl Renderer {
         self.sky_vertices = mesh.vertices;
         self.sky_indices = mesh.indices;
         gl_use_default_material();
+        if let Some(p) = self.planet {
+            draw_planet(&p, sun_dir);
+        }
     }
 
     /// Draws every live ship (except `hide`, e.g. the player in cockpit view), debris.
@@ -449,6 +569,19 @@ impl Renderer {
         hide: Option<ShipId>,
     ) {
         self.begin_solid(cam, sun);
+        // The ground of an atmospheric battle (its mesh built once per terrain).
+        if let Some(field) = world.env.ground.clone() {
+            let def = world.rules.terrains.iter().find(|t| t.field.as_ref().is_some_and(|f| Arc::ptr_eq(f, &field)));
+            if let Some(def) = def {
+                if self.terrain.as_ref().is_none_or(|(id, _)| id != &def.id) {
+                    let model = terrain::terrain_model(def, &field);
+                    self.terrain = Some((def.id.clone(), self.models.upload_model(content, model, def.pack)));
+                }
+                if let Some((_, m)) = &self.terrain {
+                    self.draw_model(cam, m, Vec3::ZERO, Quat::IDENTITY, Vec3::ZERO);
+                }
+            }
+        }
         for i in 0..world.ships.len() {
             let s = &world.ships[i];
             if !s.alive || Some(world.id_of(i)) == hide {

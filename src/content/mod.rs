@@ -23,6 +23,7 @@
 //! ```
 
 pub mod behaviour;
+pub mod environment;
 pub mod equipment;
 pub mod files;
 pub mod hazards;
@@ -246,8 +247,33 @@ impl Content {
         }
         let mut rules = rules;
         errors.extend(resolve_text(&text, &mut rules, &mut scenarios));
-        warnings.extend(errors.iter().cloned());
-        Ok(Content { packs, campaign: wanted, campaigns, original, rules, scenarios, text, warnings, errors })
+        let mut content =
+            Content { packs, campaign: wanted, campaigns, original, rules, scenarios, text, warnings, errors };
+        // Terrains from heightmap images (generated ones were built with the rules).
+        let mut fields = Vec::new();
+        for (k, t) in content.rules.terrains.iter().enumerate() {
+            if let environment::TerrainSource::Heightmap(img) = &t.source {
+                match content.load_image(img, t.pack, false) {
+                    Ok(i) => fields.push((
+                        k,
+                        environment::Heightfield::from_image(
+                            i.width,
+                            i.height,
+                            &i.rgba,
+                            t.resolution,
+                            t.size,
+                            t.height,
+                        ),
+                    )),
+                    Err(e) => content.errors.push(format!("terrains.{}: heightmap {img}: {e}", t.id)),
+                }
+            }
+        }
+        for (k, f) in fields {
+            content.rules.terrains[k].field = Some(std::sync::Arc::new(f));
+        }
+        content.warnings.extend(content.errors.iter().cloned());
+        Ok(content)
     }
 
     fn original(&self) -> Result<&OriginalData, String> {

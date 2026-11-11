@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.4-3.6): dusk over rolling hills. Thick air and full gravity: keep
+# your speed above your wings' lift speed or you will sink; climb above 7 km to leave.
+id: surface-hills
+order: 101
+title: "@scenario.surface-hills.title"
+description: "@scenario.surface-hills.desc"
+player: choose
+environment: dusk_hills
+player_position: [0, 2200, 6000]
+sun: [0.7, 0.15, -0.7]
+starfield_seed: 44
+objects:
+  hotrod1: {class: hotrod, ai: enemy, position: [-700, 2000, 1500], speed: 250}
+  hotrod2: {class: hotrod, ai: enemy, position: [700, 2100, 1200], speed: 250}

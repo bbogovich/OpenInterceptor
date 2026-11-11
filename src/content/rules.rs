@@ -188,6 +188,15 @@ pub struct ShipClass {
     pub lock_speed: f32,
     /// Has vector-control thrusters (can slide sideways and vertically).
     pub vct: bool,
+    // --- Atmospheric flight (R-FLT-011) ----------------------------------------------
+    /// Top speed in an atmosphere with air density 1 (drag balances thrust there).
+    pub atmosphere_max_speed: f32,
+    /// Forward speed at which the wings carry the craft's weight (0 = no wings).
+    pub lift: f32,
+    /// Hovers: vertical thrust cancels gravity (saucers).
+    pub hover: bool,
+    /// Can enter an atmosphere at all.
+    pub atmospheric: bool,
     // --- Power and weapons ----------------------------------------------------------
     pub energy: f32,
     pub energy_recharge: f32,
@@ -589,6 +598,9 @@ pub struct Ruleset {
     pub behaviours: Vec<BehaviourDef>,
     /// Mission types (see [`super::mission`]).
     pub missions: Vec<super::mission::MissionDef>,
+    /// Battle environments and terrains (Stage 3.3–3.5; see [`super::environment`]).
+    pub environments: Vec<super::environment::EnvironmentDef>,
+    pub terrains: Vec<super::environment::TerrainDef>,
     pub model_sets: Vec<ModelSet>,
     pub debris_sets: Vec<DebrisSet>,
     pub effects: Vec<EffectDef>,
@@ -699,7 +711,9 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 12] = [
+const DEF_SECTIONS: [&str; 14] = [
+    "environments",
+    "terrains",
     "missions",
     "factions",
     "beams",
@@ -1226,10 +1240,35 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         }
     }
     missions.sort_by(|a, b| a.order.cmp(&b.order).then(a.id.cmp(&b.id)));
+    let mut terrains = Vec::new();
+    for (_, id, e) in of(&resolved, "terrains") {
+        match super::environment::TerrainDef::parse(id, Get(&e.node), e.pack) {
+            Ok(t) => terrains.push(t),
+            Err(msg) => errors.push(format!("{}: terrains.{id}: {msg}", e.origin)),
+        }
+    }
+    let mut environments = Vec::new();
+    for (_, id, e) in of(&resolved, "environments") {
+        match super::environment::EnvironmentDef::parse(id, Get(&e.node)) {
+            Ok(env) => {
+                if let Some(t) = env
+                    .terrain
+                    .as_ref()
+                    .filter(|t| !terrains.iter().any(|x: &super::environment::TerrainDef| &x.id == *t))
+                {
+                    errors.push(format!("{}: environments.{id}: unknown terrain '{t}'", e.origin));
+                }
+                environments.push(env)
+            }
+            Err(msg) => errors.push(format!("{}: environments.{id}: {msg}", e.origin)),
+        }
+    }
     errors.extend(cue_errors.into_inner());
     (
         Ruleset {
             missions,
+            environments,
+            terrains,
             ships,
             beams,
             missiles,
@@ -1660,6 +1699,13 @@ fn ship_class(
         angular_damp: g.num("angular_damp").unwrap_or(3.0),
         lock_speed: g.num("lock_speed").unwrap_or(1000.0),
         vct,
+        atmosphere_max_speed: g
+            .num("atmosphere_max_speed")
+            .unwrap_or(0.6 * g.num("max_speed").unwrap_or(400.0))
+            .max(1.0),
+        lift: g.num("lift").unwrap_or(if kind == ShipKind::Fighter { 120.0 } else { 0.0 }).max(0.0),
+        hover: g.bool("hover").unwrap_or(false),
+        atmospheric: g.bool("atmospheric").unwrap_or(true),
         energy: g.num("energy").unwrap_or(500.0),
         energy_recharge: g.num("energy_recharge").unwrap_or(40.0),
         beams: beam_ids,

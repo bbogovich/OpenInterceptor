@@ -306,7 +306,7 @@ pub fn think(w: &mut World) {
         // Whatever the behaviour wants, a pilot near a black hole first gets clear of it.
         let controls = match state.behaviour {
             Behaviour::Idle => controls,
-            _ => escape_black_hole(w, ship).unwrap_or(controls),
+            _ => escape_black_hole(w, ship).or_else(|| avoid_ground(w, ship)).unwrap_or(controls),
         };
         decisions.push((i, controls, target, state));
     }
@@ -522,6 +522,24 @@ pub fn formation_slot(w: &World, me: &Ship, leader: &Ship, offset: Vec3) -> Vec3
         Vec3::new(-min, 0.0, min * 0.3)
     };
     leader.position + leader.rotation * offset
+}
+
+/// Terrain avoidance in an atmosphere: below 150 m, or heading below 100 m within the
+/// next three seconds, a pilot pulls up to a climb ahead and holds a speed its wings can
+/// fly at. Returns the controls to use, or `None` when clear.
+pub fn avoid_ground(w: &World, ship: &Ship) -> Option<Controls> {
+    let h = w.ground_height(ship.position.x, ship.position.z)?;
+    let altitude = ship.position.y - h;
+    let soon = altitude + ship.velocity.y * 3.0;
+    if altitude > 150.0 && soon > 100.0 {
+        return None;
+    }
+    let flat = Vec3::new(ship.forward().x, 0.0, ship.forward().z).normalize_or(Vec3::NEG_Z);
+    let aim = ship.position + flat * 800.0 + Vec3::Y * 600.0;
+    let (pitch, yaw, roll, _) = steer_towards(ship, aim);
+    let class = w.rules.ship(ship.class);
+    let speed = (class.lift * 1.4).clamp(class.max_speed * 0.5, class.max_speed);
+    Some(Controls { pitch, yaw, roll, hold_speed: Some(speed), ..Default::default() })
 }
 
 /// Black-hole avoidance: inside four times its radius, or heading for it within ten,

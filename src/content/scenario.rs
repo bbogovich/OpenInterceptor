@@ -113,6 +113,8 @@ pub struct Scenario {
     pub starfield_seed: u64,
     /// Asteroid fields, minefields, a black hole, an ion storm (`hazards:`; R-MSN-009).
     pub hazards: super::hazards::Hazards,
+    /// The battle environment id (`environment:`; default open space; R-MSN-008).
+    pub environment: Option<String>,
     /// Music asset reference.
     pub music: Option<String>,
     pub objects: Vec<Placement>,
@@ -186,6 +188,7 @@ impl Scenario {
             player_rotation: vec3(g, "player_rotation", Vec3::ZERO),
             sun_direction: vec3(g, "sun", Vec3::new(-0.4, 0.5, -0.8)).normalize_or(Vec3::Y),
             starfield_seed: g.num("starfield_seed").unwrap_or(1.0) as u64,
+            environment: g.str("environment").map(str::to_string),
             hazards: match g.node("hazards") {
                 Some(n) => super::hazards::Hazards::parse(Get(n))?,
                 None => Default::default(),

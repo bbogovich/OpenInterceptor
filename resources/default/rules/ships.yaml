@@ -109,6 +109,8 @@ ships:
     engine_color: [1.0, 0.6, 0.2]
   # --- Umbral Dominion saucers and robots -----------------------------------------------
   scout_saucer:
+    hover: true                # in an atmosphere: hovers on its drive (no wings)
+    lift: 0
     name: "@ship.scout_saucer.name"
     description: "@ship.scout_saucer.desc"
     model_set: scout_saucer
@@ -130,6 +132,8 @@ ships:
     behaviour: saucer_scout
     engine_color: [0.5, 1.0, 0.3]
   raider_saucer:
+    hover: true                # in an atmosphere: hovers on its drive (no wings)
+    lift: 0
     name: "@ship.raider_saucer.name"
     description: "@ship.raider_saucer.desc"
     model_set: raider_saucer
@@ -153,6 +157,8 @@ ships:
     behaviour: saucer_raider
     engine_color: [0.5, 1.0, 0.3]
   dreadnought:
+    hover: true                # in an atmosphere: hovers on its drive (no wings)
+    lift: 0
     point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     name: "@ship.dreadnought.name"
     description: "@ship.dreadnought.desc"
@@ -178,6 +184,8 @@ ships:
     turret_arc: 150
     engine_color: [0.5, 1.0, 0.3]
   robot_sentinel:
+    hover: true                # in an atmosphere: hovers on its drive (no wings)
+    lift: 0
     name: "@ship.robot_sentinel.name"
     description: "@ship.robot_sentinel.desc"
     model_set: robot_sentinel
@@ -199,6 +207,8 @@ ships:
     behaviour: robot
     engine_color: [0.6, 0.8, 1.0]
   grappler:
+    hover: true                # in an atmosphere: hovers on its drive (no wings)
+    lift: 0
     name: "@ship.grappler.name"
     description: "@ship.grappler.desc"
     model_set: grappler
@@ -221,6 +231,8 @@ ships:
     behaviour: tug
     engine_color: [0.5, 1.0, 0.3]
   cargo_orb:
+    hover: true                # in an atmosphere: hovers on its drive (no wings)
+    lift: 0
     name: "@ship.cargo_orb.name"
     description: "@ship.cargo_orb.desc"
     model_set: cargo_orb

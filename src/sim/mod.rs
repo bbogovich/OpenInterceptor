@@ -28,6 +28,7 @@
 pub mod ai;
 pub mod collision;
 pub mod combat;
+pub mod env;
 pub mod flight;
 pub mod guidance;
 pub mod hazards;
@@ -604,6 +605,8 @@ pub struct World {
     pub contacts: Vec<(u32, u32)>,
     /// Field hazards acting every tick: a black hole, an ion storm (see [`hazards`]).
     pub hazards: hazards::ActiveHazards,
+    /// Where the battle is: open space, or an atmosphere over a ground (see [`env`]).
+    pub env: env::Env,
     /// Deterministic random-number state (xorshift), for AI variety.
     rng: u64,
 }
@@ -623,6 +626,7 @@ impl World {
             time: 0.0,
             contacts: Vec::new(),
             hazards: Default::default(),
+            env: Default::default(),
             rng: seed.max(1),
         }
     }
@@ -876,13 +880,16 @@ impl World {
         let ids: Vec<ShipId> = self.live_ids();
         for id in ids {
             let ship = &mut self.ships[id.index as usize];
+            env::air(ship, rules.ship(ship.class), &self.env, TICK);
             flight::step(ship, rules.ship(ship.class), &rules.flight, TICK);
-            // The arena edge: ships are halted against it.
-            let was_inside = (ship.position - ship.velocity * TICK).length() <= rules.flight.arena_radius;
-            if flight::hold_in_arena(ship, rules.flight.arena_radius) && was_inside {
+            // The arena edge: ships are halted against it (an environment may set it).
+            let arena = self.env.arena.unwrap_or(rules.flight.arena_radius);
+            let was_inside = (ship.position - ship.velocity * TICK).length() <= arena;
+            if flight::hold_in_arena(ship, arena) && was_inside {
                 self.events.push(SimEvent::Message { ship: id, text: "ARENA BOUNDARY".into() });
             }
         }
+        env::ground_and_ceiling(self);
         hazards::step(self, TICK);
         combat::step(self, TICK);
         combat::ship_collisions(self);
@@ -1036,6 +1043,9 @@ impl World {
                     state.leader = Some(lid);
                 }
             }
+        }
+        if let Some(e) = &scenario.environment {
+            w.set_environment(e)?;
         }
         w.apply_hazards(&scenario.hazards)?;
         Ok((w, player))

@@ -11,6 +11,7 @@
     "player_rotation": {"description": "yaw, pitch, roll in degrees", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
     "sun": {"description": "direction towards the sun", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
     "starfield_seed": {"description": "background stars", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+    "environment": {"description": "the battle environment (environments.<id>; default open space)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
     "hazards": {"description": "asteroids, a minefield, a black hole, an ion storm", "type": "object", "additionalProperties": false, "properties": {
         "asteroids": {"description": "an asteroid field", "type": "object", "additionalProperties": false, "properties": {
             "class": {"description": "the asteroid object class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},

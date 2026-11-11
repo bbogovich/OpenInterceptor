@@ -96,7 +96,6 @@ fn fit_size<S: AsRef<str>>(lines: &[S], rows: usize, w: f32, h: f32, max: f32) -
 /// Draws all instruments.
 pub fn draw_instruments(f: &HudFrame) {
     let Some(me) = f.world.get(f.player) else { return };
-    let rules = &f.world.rules;
     let skip = |name: &str| f.anchored.contains(name);
     let get = |name: &str| f.instruments.get(name).filter(|_| !skip(name)).map(|r| f.layout.rect(*r));
     if f.backdrops {
@@ -117,7 +116,7 @@ pub fn draw_instruments(f: &HudFrame) {
     // Throttle and status line: in the cockpit's `status` rectangle (drawn with the
     // instruments above), else plain screen text at the top left.
     if get("status").is_none() && !skip("status") {
-        let status = status_line(rules, me);
+        let status = status_line(f.world, me);
         // Sized by the window, not the cockpit's design space: it is plain screen text.
         let size = (screen_height() * 0.022).clamp(13.0, 26.0);
         text(&status, f.layout.offset.x + 8.0, (40.0 * f.layout.scale).max(size * 1.5), size, HUD_GREEN);
@@ -174,7 +173,8 @@ fn strip_text(f: &HudFrame, r: [f32; 4], s: &str, color: Color) {
 const HUD_BRIGHT: Color = Color::new(0.75, 1.0, 0.8, 1.0);
 
 /// The throttle and status line: throttle, speed, and the drive and system flags.
-fn status_line(rules: &crate::content::rules::Ruleset, me: &crate::sim::Ship) -> String {
+fn status_line(world: &crate::sim::World, me: &crate::sim::Ship) -> String {
+    let rules = &world.rules;
     let class = rules.ship(me.class);
     let v = me.body_velocity();
     let mut status = format!("THR {:>3.0}%  {:>4.0} m/s  {}", me.throttle * 100.0, v.z, drift_text(v));
@@ -196,11 +196,28 @@ fn status_line(rules: &crate::content::rules::Ruleset, me: &crate::sim::Ship) ->
     if me.simple_physics {
         status += "  SIMPLE";
     }
+    // Over a ground (atmospheric battles): altitude above it and vertical speed.
+    if let Some(alt) = altitude(world, me) {
+        status += &format!("  ALT {alt:>4.0}  VS {:+.0}", me.velocity.y);
+    }
     for flag in status_flags(me) {
         status += "  ";
         status += &flag;
     }
     status
+}
+
+/// Height above the ground in an atmospheric battle (`None` in space).
+pub fn altitude(world: &crate::sim::World, me: &crate::sim::Ship) -> Option<f32> {
+    world.ground_height(me.position.x, me.position.z).map(|h| me.position.y - h)
+}
+
+/// The artificial horizon's pitch ladder: for each of the given pitch angles (degrees,
+/// 0 = the horizon), the world-space direction of the ladder rung's centre, straight
+/// ahead of the camera in its compass direction.
+pub fn ladder_directions(camera_forward: Vec3, angles: &[f32]) -> Vec<(f32, Vec3)> {
+    let flat = Vec3::new(camera_forward.x, 0.0, camera_forward.z).normalize_or(Vec3::NEG_Z);
+    angles.iter().map(|&a| (a, (flat * a.to_radians().cos() + Vec3::Y * a.to_radians().sin()).normalize())).collect()
 }
 
 /// Sideways (X, + right) and vertical (Y, + up) drift in whole m/s, signed: "X+45 Y-12".
@@ -302,7 +319,7 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
         }
         "power" => draw_power(f, me, r),
         "systems" => draw_systems(f, me, r),
-        "status" => strip_text(f, r, &status_line(&f.world.rules, me), HUD_GREEN),
+        "status" => strip_text(f, r, &status_line(f.world, me), HUD_GREEN),
         _ => {}
     }
 }
@@ -469,6 +486,24 @@ pub fn draw_targeting(f: &HudFrame) {
             draw_line(p.x, p.y - r, p.x, p.y - r * 2.0, 1.5, HUD_GREEN);
         }
     }
+    // Artificial horizon (atmospheric battles): the horizon line and rungs every 10°.
+    if altitude(f.world, me).is_some() {
+        let fwd = f.camera.rotation * Vec3::NEG_Z;
+        let right = f.camera.rotation * Vec3::X;
+        let flat_right = Vec3::new(right.x, 0.0, right.z).normalize_or(Vec3::X);
+        for (a, d) in ladder_directions(fwd, &[-20.0, -10.0, 0.0, 10.0, 20.0]) {
+            let ahead = f.camera.position + d * 1000.0;
+            let half = if a == 0.0 { 160.0 } else { 60.0 };
+            let (l, r) = (ahead - flat_right * half, ahead + flat_right * half);
+            if let (Some(p), Some(q)) = (f.camera.project(l, screen), f.camera.project(r, screen)) {
+                let c = Color::new(HUD_GREEN.r, HUD_GREEN.g, HUD_GREEN.b, if a == 0.0 { 0.8 } else { 0.45 });
+                draw_line(p.x, p.y, q.x, q.y, if a == 0.0 { 1.5 } else { 1.0 }, c);
+                if a != 0.0 {
+                    text(&format!("{a:+.0}"), q.x + 4.0, q.y + 4.0, 12.0, c);
+                }
+            }
+        }
+    }
     let Some(target) = me.target.and_then(|t| f.world.get(t)) else { return };
     let rules = &f.world.rules;
     let color = col(super::contact_color(rules, me.faction, target));
@@ -592,6 +627,14 @@ mod tests {
         assert_eq!(g(0.1, true), Some((true, false)), "red");
         assert_eq!(g(0.0, true), Some((true, false)));
         assert_eq!(g(0.0, false), None, "down: blinks");
+    }
+
+    #[test]
+    fn the_pitch_ladder_sits_ahead_at_its_angles() {
+        let rungs = ladder_directions(Vec3::new(0.3, -0.5, -0.8), &[0.0, 10.0]);
+        assert!(rungs[0].1.y.abs() < 1e-6, "the horizon is level whatever the camera's pitch");
+        assert!((rungs[1].1.y - 10f32.to_radians().sin()).abs() < 1e-5);
+        assert!(rungs[0].1.dot(Vec3::new(0.3, 0.0, -0.8).normalize()) > 0.999, "same compass heading");
     }
 
     #[test]

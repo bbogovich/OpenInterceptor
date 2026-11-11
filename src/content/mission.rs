@@ -130,6 +130,8 @@ pub struct MissionDef {
     pub starfield_seed: u64,
     /// Asteroid fields, minefields, a black hole, an ion storm (`hazards:`; R-MSN-009).
     pub hazards: super::hazards::Hazards,
+    /// The battle environment id (`environment:`; default open space; R-MSN-008).
+    pub environment: Option<String>,
     pub sun: Vec3,
     /// Sort key in the launcher.
     pub order: i64,
@@ -317,6 +319,7 @@ impl MissionDef {
             chatter,
             debrief: g.map("debrief").iter().filter_map(|(k, v)| Some((k.clone(), v.as_str()?.to_string()))).collect(),
             starfield_seed: g.num("starfield_seed").unwrap_or(1.0) as u64,
+            environment: g.str("environment").map(str::to_string),
             hazards: match g.node("hazards") {
                 Some(n) => super::hazards::Hazards::parse(Get(n)).map_err(|e| format!("missions.{id}: {e}"))?,
                 None => Default::default(),

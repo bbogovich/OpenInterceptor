@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.3 environments): a 12 km pocket; the arena edge is close.
+id: env-pocket
+order: 99
+title: "@scenario.env-pocket.title"
+description: "@scenario.env-pocket.desc"
+player: choose
+environment: pocket
+starfield_seed: 42
+objects:
+  hotrod1: {class: hotrod, ai: enemy, position: [-1500, 300, -4000], speed: 300}
+  hotrod2: {class: hotrod, ai: enemy, position: [1500, -300, -4200], speed: 300}

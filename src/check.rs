@@ -201,6 +201,9 @@ pub fn run(content: &Content) -> Report {
     // Missions: the classes their hazards place must exist (scenarios are checked by
     // building them above, which places the hazards).
     for m in &rules.missions {
+        if let Some(e) = m.environment.as_ref().filter(|e| !rules.environments.iter().any(|x| &x.id == *e)) {
+            r.errors.push(format!("mission {}: unknown environment '{e}'", m.id));
+        }
         for c in m.hazards.classes() {
             if rules.ship_id(c).is_none() {
                 r.errors.push(format!("mission {}: hazards: unknown class '{c}'", m.id));

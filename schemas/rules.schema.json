@@ -70,6 +70,10 @@
           "angular_damp": {"description": "0 tight … 10 loose", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "lock_speed": {"description": "speed at which pitch and yaw fall to zero, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "vct": {"description": "fitted with vector control thrusters", "type": "boolean"},
+          "atmosphere_max_speed": {"description": "top speed in air of density 1 (default 60 % of max_speed)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "lift": {"description": "forward speed at which the wings carry the craft's weight; 0 = no wings", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hover": {"description": "hovers: vertical thrust cancels gravity", "type": "boolean"},
+          "atmospheric": {"description": "can enter an atmosphere (default true)", "type": "boolean"},
           "energy": {"description": "beam capacitor", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "energy_recharge": {"description": "capacitor recharge per second at full beam charge", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "beams": {"description": "one beam id per mount", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
@@ -122,6 +126,10 @@
           "angular_damp": {"description": "0 tight … 10 loose", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "lock_speed": {"description": "speed at which pitch and yaw fall to zero, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "vct": {"description": "fitted with vector control thrusters", "type": "boolean"},
+          "atmosphere_max_speed": {"description": "top speed in air of density 1 (default 60 % of max_speed)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "lift": {"description": "forward speed at which the wings carry the craft's weight; 0 = no wings", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hover": {"description": "hovers: vertical thrust cancels gravity", "type": "boolean"},
+          "atmospheric": {"description": "can enter an atmosphere (default true)", "type": "boolean"},
           "energy": {"description": "beam capacitor", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "energy_recharge": {"description": "capacitor recharge per second at full beam charge", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "beams": {"description": "one beam id per mount", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
@@ -225,6 +233,7 @@
           "briefing": {"description": "the briefing text (a @key)", "type": "string"},
           "order": {"description": "sort key in the launcher", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "starfield_seed": {"description": "the star field", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "environment": {"description": "the battle environment (environments.<id>; default open space)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "hazards": {"description": "asteroids, a minefield, a black hole, an ion storm", "type": "object", "additionalProperties": false, "properties": {
               "asteroids": {"description": "an asteroid field", "type": "object", "additionalProperties": false, "properties": {
                   "class": {"description": "the asteroid object class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -302,6 +311,49 @@
                 "line": {"description": "the line (a @key)", "type": "string"}
               }}},
           "debrief": {"description": "result: debrief text (a @key)", "type": "object", "additionalProperties": {"type": "string"}},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "environments": {"description": "battle environments by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "physics": {"description": "space (the flight model unchanged) or atmosphere", "enum": ["space", "atmosphere"]},
+          "arena": {"description": "arena radius for battles here (a pocket is small)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "gravity": {"description": "m/s² downwards (atmosphere; default 9.8)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "air_density": {"description": "scales drag and lift; 0 = vacuum (atmosphere; default 1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "ceiling": {"description": "climbing above this leaves the battle (to orbit)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "terrain": {"description": "the terrain under an atmospheric battle", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "sky": {"description": "a sky instead of black space", "type": "object", "additionalProperties": false, "properties": {
+              "top": {"description": "colour at the zenith", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "horizon": {"description": "colour at the horizon", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "fog": {"description": "fog colour (default: the horizon)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "fog_distance": {"description": "distance at which things fade into the fog", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "stars": {"description": "how much of the starfield shows, 0..1", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
+          "backdrop": {"description": "what hangs in the sky", "type": "object", "additionalProperties": false, "properties": {
+              "planet": {"description": "a planet in the sky (orbit)", "type": "object", "additionalProperties": false, "properties": {
+                  "color": {"description": "the planet's colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "size": {"description": "angular size, degrees", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "direction": {"description": "the direction it lies in", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+                }}
+            }},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "terrains": {"description": "terrains (heightfields) by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "generate": {"description": "generate the heights", "type": "object", "additionalProperties": false, "properties": {
+              "kind": {"description": "rolling hills or a cratered plain", "enum": ["hills", "craters"]},
+              "seed": {"description": "the random seed (the same seed, the same terrain)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
+          "heightmap": {"description": "or: a greyscale image (black low, white high)", "type": "string"},
+          "size": {"description": "side length of the square terrain", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "height": {"description": "[lowest, highest] ground, metres", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+          "colors": {"description": "ground colours", "type": "object", "additionalProperties": false, "properties": {
+              "low": {"description": "low ground", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "high": {"description": "high ground", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "slope": {"description": "steep slopes", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+            }},
+          "resolution": {"description": "grid points per side (17..257, default 129)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

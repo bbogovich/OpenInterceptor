@@ -319,6 +319,7 @@ impl FlightSession {
                 player_position: m.player_position,
                 player_rotation: Vec3::ZERO,
                 hazards: Default::default(), // missions place theirs after the roles
+                environment: None,           // set by the mission run
                 sun_direction: m.sun,
                 starfield_seed: m.starfield_seed,
                 music: None,
@@ -661,7 +662,14 @@ impl FlightSession {
         let hide = if shows_own_ship(view) { None } else { Some(self.player) };
 
         // --- Drawing ----------------------------------------------------------------
-        clear_background(BLACK);
+        // The battle's environment: a sky and fog (atmosphere), a planet (orbit).
+        let env = self.world.env.id.as_ref().and_then(|id| self.world.rules.environments.iter().find(|e| &e.id == id));
+        ctx.renderer.env_sky = env.and_then(|e| e.sky);
+        ctx.renderer.planet = env.and_then(|e| e.planet);
+        clear_background(match ctx.renderer.env_sky {
+            Some(s) => Color::new(s.horizon[0], s.horizon[1], s.horizon[2], 1.0),
+            None => BLACK,
+        });
         ctx.renderer.draw_sky(&cam, self.seed, self.sun);
         ctx.renderer.draw_world(&ctx.content, &self.world, &self.effects, &cam, self.sun, hide);
         ctx.renderer.draw_glows(&ctx.content, &self.world, &self.effects, &cam, hide, Some(self.player));
@@ -803,6 +811,9 @@ impl FlightSession {
         if self.help_open {
             draw_help(&ctx.bindings, screen);
         }
+        // Other screens draw plain space: the sky belongs to this battle only.
+        ctx.renderer.env_sky = None;
+        ctx.renderer.planet = None;
         Next::Stay
     }
 }

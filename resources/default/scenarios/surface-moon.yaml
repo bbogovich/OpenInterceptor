@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.4-3.6 atmospheric flight, terrain, altitude HUD): low over a
+# cratered moon. Thin air, low gravity; watch your altitude (ALT/VS on the status line).
+id: surface-moon
+order: 100
+title: "@scenario.surface-moon.title"
+description: "@scenario.surface-moon.desc"
+player: choose
+environment: moon_surface
+player_position: [0, 2600, 6000]
+sun: [-0.5, 0.35, -0.8]
+starfield_seed: 43
+objects:
+  raider1: {class: raider_saucer, ai: enemy, position: [-800, 2400, 1000], speed: 200}
+  scout1: {class: scout_saucer, ai: enemy, position: [900, 2200, 600], speed: 200}

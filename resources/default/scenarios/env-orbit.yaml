@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.3 environments): a fight in high orbit over a blue world.
+id: env-orbit
+order: 98
+title: "@scenario.env-orbit.title"
+description: "@scenario.env-orbit.desc"
+player: choose
+environment: orbit
+sun: [0.6, 0.4, -0.7]
+starfield_seed: 41
+objects:
+  scout1: {class: scout_saucer, ai: enemy, position: [-900, 200, -3500], speed: 250}
+  scout2: {class: scout_saucer, ai: enemy, position: [900, -200, -3800], speed: 250}
