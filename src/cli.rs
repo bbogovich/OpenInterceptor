@@ -28,6 +28,8 @@ OPTIONS:
                         interceptor when the data is available, else default)
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --mission <ID>      Start this mission directly, skipping the launcher
+    --console           Serve the tablet control console (settings: console.enabled)
+    --console-port <N>  Its port (default 8765; settings: console.port)
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
     --view <VIEW>       Start view for --scenario: cockpit, forward, left, right,
                         rear-left, rear-right, chase, chase-manual
@@ -62,6 +64,9 @@ pub struct Options {
     pub campaign: Option<String>,
     pub difficulty: Option<String>,
     pub language: Option<String>,
+    /// `--console`: serve the tablet control console.
+    pub console: bool,
+    pub console_port: Option<u16>,
     pub scenario: Option<String>,
     pub mission: Option<String>,
     pub ship: Option<String>,
@@ -98,6 +103,12 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--campaign" => o.campaign = Some(value("--campaign")?),
             "--difficulty" => o.difficulty = Some(value("--difficulty")?),
             "--language" => o.language = Some(value("--language")?),
+            "--console" => o.console = true,
+            "--console-port" => {
+                let v = value("--console-port")?;
+                o.console_port = Some(v.parse().map_err(|_| format!("--console-port needs a port number, not '{v}'"))?);
+                o.console = true;
+            }
             "--ship" => o.ship = Some(value("--ship")?),
             "--model" => o.model = Some(value("--model")?),
             "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),

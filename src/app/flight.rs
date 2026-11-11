@@ -222,7 +222,11 @@ pub struct FlightSession {
     nav_index: usize,
     paused: bool,
     menu_open: bool,
-    /// The keys help overlay (`?` or F12) is showing; the battle pauses under it.
+    /// Seconds since the last telemetry message to the console.
+    console_clock: f32,
+    /// The craft class the console's catalogue was built for (resent when it changes).
+    console_class: Option<crate::content::rules::ShipClassId>,
+    /// The keys help overlay (`?` or Shift+F1) is showing; the battle pauses under it.
     help_open: bool,
     mouse_flight: bool,
     accumulator: f32,
@@ -383,6 +387,8 @@ impl FlightSession {
             paused: false,
             menu_open: false,
             help_open: false,
+            console_clock: 0.0,
+            console_class: None,
             mouse_flight: false,
             accumulator: 0.0,
             cockpit,
@@ -418,7 +424,8 @@ impl FlightSession {
             }
             return Next::Stay;
         }
-        let raw = ctx.devices.read();
+        let mut raw = ctx.devices.read();
+        self.console_frame(ctx, &mut raw);
         // F12 in the cockpit view opens the layout editor (the battle pauses).
         let in_custom_cockpit = self.view == View::Cockpit && (self.cockpit.is_some() || self.cockpit_model.is_some());
         if raw.pressed.contains("f12") && in_custom_cockpit {
@@ -719,6 +726,11 @@ impl FlightSession {
             draw_text(&format!("COCKPIT LAYOUT: {name}"), 12.0, 22.0, 22.0, gold);
             draw_text(&ed.message, 12.0, 44.0, 18.0, WHITE);
         }
+        // Until a tablet pairs, show where to point it and the code to type.
+        if let Some(server) = ctx.console.as_ref().filter(|s| s.paired() == 0 || self.menu_open) {
+            let hint = format!("CONSOLE  {}   CODE {}", server.url, server.code);
+            draw_text(&hint, 12.0, screen.y - 12.0, 18.0, Color::new(0.5, 0.9, 0.6, 0.85));
+        }
         if self.menu_open {
             draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.0, 0.0, 0.6));
             draw_centered("MENU", screen.y * 0.35, 40.0, WHITE);
@@ -728,7 +740,7 @@ impl FlightSession {
                 22.0,
                 LIGHTGRAY,
             );
-            draw_centered("?  or  F12   every key, grouped", screen.y * 0.35 + 90.0, 18.0, GRAY);
+            draw_centered("?  or  Shift+F1   every key, grouped", screen.y * 0.35 + 90.0, 18.0, GRAY);
         }
         if self.help_open {
             draw_help(&ctx.bindings, screen);
@@ -738,6 +750,37 @@ impl FlightSession {
 }
 
 impl FlightSession {
+    /// One frame of the tablet console: its input joins this frame's `raw`; paired
+    /// consoles get the catalogue (again when the craft changes) and 20 Hz telemetry.
+    fn console_frame(&mut self, ctx: &mut AppContext, raw: &mut crate::input::RawInput) {
+        use crate::remote::{protocol, server::Event};
+        let Some(server) = &ctx.console else { return };
+        let class = self.world.get(self.player).map(|s| s.class);
+        let mut resend = class != self.console_class;
+        for e in server.poll() {
+            if let Event::Paired(id) = e {
+                let welcome = crate::remote::json::Obj::new()
+                    .str("type", "welcome")
+                    .num("version", protocol::VERSION as f64)
+                    .str("campaign", ctx.content.campaign.as_deref().unwrap_or(""))
+                    .end();
+                server.send(id, &welcome);
+                resend = true;
+            }
+            ctx.remote.apply(&e);
+        }
+        if resend {
+            server.broadcast(&protocol::catalogue(&self.world.rules, &self.world, self.player));
+            self.console_class = class;
+        }
+        self.console_clock += get_frame_time();
+        if self.console_clock >= 0.05 {
+            self.console_clock = 0.0;
+            server.broadcast(&protocol::telemetry(&self.world, self.player, self.world.time));
+        }
+        ctx.remote.merge_into(raw);
+    }
+
     /// One frame of the cockpit layout editor's input (see `hud::layout`).
     fn edit_layout(&mut self, ctx: &mut AppContext, raw: &crate::input::RawInput) {
         let Some(ed) = &mut self.editor else { return };
@@ -928,7 +971,7 @@ fn draw_help(bindings: &crate::input::Bindings, screen: Vec2) {
     draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.02, 0.0, 0.9));
     let size = (screen.y * 0.021).clamp(13.0, 20.0);
     let line = size * 1.25;
-    draw_centered("KEYS   (? or F12 or Esc to close)", size * 2.2, size * 1.4, Color::new(0.4, 1.0, 0.5, 1.0));
+    draw_centered("KEYS   (? or Shift+F1 or Esc to close)", size * 2.2, size * 1.4, Color::new(0.4, 1.0, 0.5, 1.0));
     let groups = crate::input::help_rows(bindings);
     let rows: usize = groups.iter().map(|(_, r)| r.len() + 2).sum();
     let top = size * 4.0;

@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- OpenInterceptor control console (C1: pairing, telemetry, every action as a button).
+     Served by the game itself (src/remote); plain HTML, CSS and custom elements, no build step. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>OpenInterceptor console</title>
+<link rel="stylesheet" href="console.css">
+</head>
+<body>
+<oi-pairing></oi-pairing>
+<main id="console" hidden>
+  <oi-telemetry></oi-telemetry>
+  <oi-throttle></oi-throttle>
+  <oi-actions></oi-actions>
+</main>
+<script src="console.js"></script>
+</body>
+</html>

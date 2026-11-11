@@ -50,6 +50,10 @@ pub struct AppContext {
     pub sounds: SoundBank,
     pub bindings: Bindings,
     pub devices: devices::Devices,
+    /// The tablet control console, when enabled (`--console` or `console.enabled`).
+    pub console: Option<crate::remote::server::ConsoleServer>,
+    /// What the console's buttons are holding or tapped, merged into each frame's input.
+    pub remote: crate::remote::RemoteInput,
 }
 
 /// What the app should do after a screen's frame.
@@ -130,6 +134,29 @@ fn remember_choice(id: &str, difficulty: Option<&str>) {
     }
 }
 
+/// Starts the console server if the command line or the settings ask for it. A port
+/// that is taken is reported and the game carries on without the console.
+fn start_console(options: &crate::cli::Options) -> Option<crate::remote::server::ConsoleServer> {
+    let settings = crate::cli::user_data_dir().map(|d| crate::settings::Settings::load(&d)).unwrap_or_default();
+    if !(options.console || settings.console) {
+        return None;
+    }
+    let port = options.console_port.or(settings.console_port).unwrap_or(crate::remote::server::DEFAULT_PORT);
+    // The pairing code's seed: the clock, so each run gets a new code.
+    let seed =
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos() as u64).unwrap_or(1);
+    match crate::remote::server::ConsoleServer::start(port, seed) {
+        Ok(s) => {
+            eprintln!("console: open {} on the tablet; pairing code {}", s.url, s.code);
+            Some(s)
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            None
+        }
+    }
+}
+
 /// Shows an error on screen until the user presses a key (used when content fails).
 async fn error_screen(message: &str) {
     loop {
@@ -185,7 +212,16 @@ pub async fn run(options: Options) {
     for e in &sounds.errors {
         eprintln!("sound: {e}");
     }
-    let mut ctx = AppContext { content, renderer, sounds, bindings: load_bindings(), devices: devices::Devices::new() };
+    let console = start_console(&options);
+    let mut ctx = AppContext {
+        content,
+        renderer,
+        sounds,
+        bindings: load_bindings(),
+        devices: devices::Devices::new(),
+        console,
+        remote: Default::default(),
+    };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),
         (None, Some(s)) => Some((s, false)),

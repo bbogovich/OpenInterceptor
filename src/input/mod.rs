@@ -231,7 +231,7 @@ pub const ACTIONS: &[ActionInfo] = &[
     a("pause", A::Pause, "P", "Start", G::Interface, "Pause"),
     a("menu", A::Menu, "Escape", "LeftShoulder+Start", G::Interface, "Menu"),
     a("mouse_flight", A::MouseFlight, "C", "", G::Interface, "Mouse flight on/off"),
-    a("help", A::Help, "Shift+Slash, F12", "", G::Interface, "Keys help (this list)"),
+    a("help", A::Help, "Shift+Slash, Shift+F1", "", G::Interface, "Keys help (this list)"),
 ];
 
 /// The keys help: every group in menu order, each with `(label, keys)` rows showing the
@@ -533,6 +533,13 @@ pub struct RawInput {
     pub pad: Option<PadState>,
     /// The pad as it was last frame, for detecting button presses.
     pub pad_previous: Option<PadState>,
+    /// Actions held on a remote control surface (the tablet console, later a USB
+    /// panel). They count exactly like a held key bound to the action.
+    pub remote_held: HashSet<Action>,
+    /// Actions tapped on a remote control surface this frame.
+    pub remote_pressed: HashSet<Action>,
+    /// A throttle position set on a remote slider (0..1), this frame.
+    pub remote_throttle: Option<f32>,
 }
 
 impl RawInput {
@@ -683,7 +690,7 @@ impl Frame<'_> {
                 && if k.shift { self.raw.shift } else { !self.raw.shift || !self.shifted.contains(k.key.as_str()) }
         });
         let pad = self.b.pad.get(&a).map(Vec::as_slice).unwrap_or(&[]);
-        key_held || pad.iter().any(|c| self.pad_chord_held(c))
+        key_held || pad.iter().any(|c| self.pad_chord_held(c)) || self.raw.remote_held.contains(&a)
     }
 
     fn pressed(&self, a: Action) -> bool {
@@ -692,7 +699,7 @@ impl Frame<'_> {
         // so `F` and `Shift+F` can do different things.
         let key = keys.iter().any(|k| self.raw.pressed.contains(&k.key) && k.shift == self.raw.shift);
         let pad = self.b.pad.get(&a).map(Vec::as_slice).unwrap_or(&[]);
-        key || pad.iter().any(|c| self.pad_chord_pressed(c))
+        key || pad.iter().any(|c| self.pad_chord_pressed(c)) || self.raw.remote_pressed.contains(&a)
     }
 
     fn axis(&self, neg: Action, pos: Action) -> f32 {
@@ -742,6 +749,9 @@ impl Bindings {
         }
         if f.pressed(A::ThrottleZero) {
             c.throttle_set = Some(0.0);
+        }
+        if let Some(t) = raw.remote_throttle {
+            c.throttle_set = Some(t.clamp(0.0, 1.0));
         }
         // Gamepad sticks add to (and are clamped with) the keys.
         if let Some(p) = &raw.pad {
@@ -823,11 +833,18 @@ mod tests {
         b.keys.insert(Action::Afterburner, vec![]);
         b.pad.insert(Action::Afterburner, vec![]);
         assert_eq!(find(&help_rows(&b), "Afterburner (hold)"), "unbound");
-        // `?` (Shift+Slash) and F12 open it.
+        // `?` (Shift+Slash) and Shift+F1 open it (F12 is the cockpit layout editor).
         let mut r = raw(&[], &["Slash"]);
         r.shift = true;
         assert_eq!(Bindings::default().translate(&r, false).1, vec![Command::Help]);
-        assert_eq!(Bindings::default().translate(&raw(&[], &["F12"]), false).1, vec![Command::Help]);
+        let mut r = raw(&[], &["F1"]);
+        r.shift = true;
+        assert_eq!(Bindings::default().translate(&r, false).1, vec![Command::Help]);
+        assert_ne!(
+            Bindings::default().translate(&raw(&[], &["F1"]), false).1,
+            vec![Command::Help],
+            "plain F1 is the cockpit view"
+        );
     }
 
     #[test]

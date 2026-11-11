@@ -39,6 +39,8 @@ impl Devices {
             mouse_right_pressed: is_mouse_button_pressed(MouseButton::Right),
             pad,
             pad_previous: self.previous_pad,
+            // The console's actions are merged in by the flight screen.
+            ..Default::default()
         };
         self.previous_pad = pad;
         // Debug aid (documented on the docs site): OI_DEBUG_KEYS=1 prints the name of
@@ -78,7 +80,6 @@ mod tests {
     /// Key names used by the default bindings, checked against `key_name` above.
     const KNOWN: &[&str] = &[
         "slash",
-        "f12",
         "up",
         "down",
         "left",

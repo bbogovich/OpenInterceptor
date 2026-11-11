@@ -29,6 +29,7 @@ pub mod input;
 pub mod mission;
 pub mod model;
 pub mod platform;
+pub mod remote;
 pub mod render;
 pub mod script;
 pub mod settings;
