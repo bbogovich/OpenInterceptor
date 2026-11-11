@@ -74,7 +74,7 @@ modelsets:
 
 A scenario places a station in a stage with `state: build_60`; **an object placed in a state has
 no modules and no point defence** (it is not finished). The strategy layer will pick the stage
-from build progress ([Logistics](../design/logistics.md#construction-stages-as-model-set-states)).
+from build progress ([Logistics](../specification/design/logistics.md#construction-stages-as-model-set-states)).
 `--check` loads every state mesh, and the viewer's **D** shows them.
 
 ## Debris sets

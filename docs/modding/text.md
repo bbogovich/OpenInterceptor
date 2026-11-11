@@ -51,7 +51,7 @@ imports:
 Every string of `LangFile1.txt` (3 645 on the reference CD) becomes available as
 `@orig.<KEY>` — for example `@orig.S_XCOM`. The original format is plain text, one string per
 line: a key, whitespace, then the text between the first and last double quote; `~` is a line
-break and lines starting with `/` are comments ([original formats](../original-game/formats/ini.md#language-files-langfile1txt)).
+break and lines starting with `/` are comments ([original formats](../specification/original-formats/ini.md#language-files-langfile1txt)).
 
 ## A translation addon
 

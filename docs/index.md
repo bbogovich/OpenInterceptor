@@ -16,11 +16,25 @@ is in the repository, ever.
        *Interceptor* is the worked example that proves the engine is complete.
     2. **Be an example of good Rust practice** for a 3D application or game engine: clear
        layering, small dependencies, modules commented for a Rust beginner, and unit tests for
-       all code. See [Learn Rust with this codebase](learn-rust/index.md) and
-       [Best practices](best-practices/index.md).
+       all code. See [Learn Rust with this codebase](learning/rust/index.md) and
+       [Best practices](learning/best-practices/index.md).
     3. **Play X-COM: Interceptor** from the player's data on current systems.
 
     The same order is in the repository's `CLAUDE.md` project rules.
+
+**Site version 0.10.0** ([revision history](reference/revision-history.md)).
+
+## Sections
+
+| Section | What it holds |
+|---|---|
+| [Definition](definition/index.md) | What the player or modder gets, and why: features, and the campaigns that define "done" |
+| [Specification](specification/index.md) | How it behaves: requirements, the mod formats and the original data formats |
+| [Implementation](implementation/index.md) | How it is built: plan, architecture, status, deviations, testing, build, workflows |
+| [User guide](user-guide/index.md) | Installing, running and playing |
+| [Modding](modding/index.md) | Building packs and campaigns: every rule and scenario key |
+| [Learning](learning/index.md) | Rust and engine practice taught from this codebase |
+| [Reference](reference/index.md) | The original game, and the histories of this site, the definition and the specification |
 
 ## Where things are
 
@@ -40,8 +54,8 @@ replaced by a mod file (with `--extract` producing editable copies), and cockpit
 repaints or 3D models. Stage 2 is **in progress** (build **0.2.2**): one campaign at a time —
 the original `interceptor` or the original-free default campaign *Perils of the Void* — with
 ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman orders and an
-in-game controls menu. See [implementation status](implementation-status.md) and the
-[plan](implementation-plan/index.md).
+in-game controls menu. See [implementation status](implementation/status.md) and the
+[plan](implementation/plan/index.md).
 
 ## Specification
 

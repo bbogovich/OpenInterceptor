@@ -33,7 +33,7 @@ The reader (`src/formats/yaml.rs`) accepts a strict subset of YAML and rejects t
 error naming the line: **no tabs** for indentation, no anchors (`&a`) or aliases (`*a`), no
 tags (`!!str`), one document per file, no complex keys (`? `), and plain text may not continue
 over several lines (use quotes, or `|` / `>` block text). Why a subset:
-[DEV-030](../deviations/index.md).
+[DEV-030](../implementation/deviations/index.md).
 
 **Values with units.** Distances, times, angles and fractions may carry a unit; a plain number
 is in the base unit.
@@ -94,7 +94,7 @@ Any other top-level key is an error ("unknown key").
    original:GameSettings.ini/Ship_IntType1` copies a section of the player's original INI file:
    original keys become field names by spelling (`HitPoints` → `hit_points`,
    `RateOfFire` → `rate_of_fire`), except `Side` → `faction`, a beam's `Range` (kilometres in
-   the original, [DEV-008](../deviations/index.md)) → `range` in km, and `LockAngleDegrees` →
+   the original, [DEV-008](../implementation/deviations/index.md)) → `range` in km, and `LockAngleDegrees` →
    `lock_angle`. Chains are allowed; a cycle (or a chain deeper than 16) is an error.
 4. `delete: true` removes a definition (a mod removing a ship it does not want).
 5. **List edits**: `<key>+: [items]` appends to the inherited or earlier list and `<key>-:

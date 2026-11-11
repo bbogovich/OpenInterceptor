@@ -3,7 +3,7 @@
 A **scenario** places fixed objects. A **mission** describes a battle by **roles** — groups of
 craft whose classes, counts and arrivals vary — and says when it is won, lost or drawn, and what
 happens then. Implemented in Stage 3 (part 1, app 0.3.0): `src/content/mission.rs` (the
-definitions), `src/mission/` (the runtime, [architecture](../architecture/mission.md)),
+definitions), `src/mission/` (the runtime, [architecture](../implementation/architecture/mission.md)),
 `src/script/battle.rs` (the battle conditions) and `src/script/action.rs` (outcome actions).
 
 Missions are a **rules section**, `missions:`, so they live in any rules folder (by convention
@@ -182,7 +182,7 @@ Quote an action that contains a comma or a `+` sign in a YAML flow list:
 
 | Campaign | Missions |
 |---|---|
-| `default` | `defend_station`, `convoy_ambush`, `construction_defence`, `intercept_scouts` (`missions/missions.yaml`; text in `text/en/missions.yaml`). Construction defence and convoy ambush are the [logistics](../design/logistics.md) missions; the strategy layer will generate them. |
+| `default` | `defend_station`, `convoy_ambush`, `construction_defence`, `intercept_scouts` (`missions/missions.yaml`; text in `text/en/missions.yaml`). Construction defence and convoy ambush are the [logistics](../specification/design/logistics.md) missions; the strategy layer will generate them. |
 | `interceptor` | `xcom_base_defense`, `defend_freighter_convoy`, `deep_space_encounter`, `attack_alien_outpost`, `destroy_alien_probe` — five of the original's 27 types, with the original's own names, briefings and debriefs by key (`@orig.BRIEFING_TYPE_1`, `@orig.DEBRIEF_XBASE_WIN` …, read from the CD); the force compositions are derived (DEV-041). `%s` in an original briefing is filled by the strategy layer later and shows as written for now. |
 
 `--soak <mission id>` plays a mission without a window and prints its result

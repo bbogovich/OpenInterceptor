@@ -11,7 +11,7 @@ packs that belong with it load — see [Mod kinds and the active set](#mod-kinds
 
 Default mods folder: macOS `~/Library/Application Support/OpenInterceptor/mods/`, Linux
 `$XDG_DATA_HOME/openinterceptor/mods/` (default `~/.local/share/openinterceptor/mods/`), or
-`settings.yaml` `paths: {mods: …}` ([Settings](../architecture/settings.md)).
+`settings.yaml` `paths: {mods: …}` ([Settings](../implementation/architecture/settings.md)).
 
 ## Mod kinds and the active set
 

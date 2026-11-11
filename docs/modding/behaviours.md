@@ -2,7 +2,7 @@
 
 How AI ships fly and fight is data: a **behaviour** in a pack's `behaviours:` section, named by
 a ship class (`behaviour: saucer_scout`) or by one scenario object (`behaviour: …` on the object).
-This is the Tier 1 design of [Format: behaviours and scripting](../design/format-behaviour.md),
+This is the Tier 1 design of [Format: behaviours and scripting](../specification/design/format-behaviour.md),
 implemented in Stage 2 (`src/content/behaviour.rs`, `src/script/`, `src/sim/ai.rs`).
 
 ## A behaviour
@@ -127,7 +127,7 @@ the AI picks a new target: it keeps attacking its current one while that stays a
 visible. An unknown selector is a load error ("prefer: 'x' is not player, a ship kind,
 class:<id> or faction:<id>").
 
-**Wingmen** keep the role and orders of [Simulation › AI](../architecture/sim.md#ai-simai); when
+**Wingmen** keep the role and orders of [Simulation › AI](../implementation/architecture/sim.md#ai-simai); when
 they engage they fly `attack` with the parameters and skill of their class's behaviour (its
 first `attack` state).
 

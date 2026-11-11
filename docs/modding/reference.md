@@ -225,7 +225,7 @@ Texture names match a model's textures by file name without folder or extension,
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `model` | `newtonian` / `assisted` | `newtonian` | Flight model ([Simulation](../architecture/sim.md#flight-model-simflight)). |
+| `model` | `newtonian` / `assisted` | `newtonian` | Flight model ([Simulation](../implementation/architecture/sim.md#flight-model-simflight)). |
 | `arena_radius` | distance | 60 km | Ships are halted at this distance from the centre (0 = none). |
 | `boost` | number | 150 | Afterburner speed bonus, m/s. |
 | `cost` | number | 50 | Afterburner energy per second. |

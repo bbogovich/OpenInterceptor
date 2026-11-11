@@ -29,7 +29,7 @@ behind the same interfaces, so original and mod assets can be mixed freely.
   facing the same way, **later in the file** than the face it covers. The engine detects such
   overlapping coplanar faces and draws the later one on top (a tiny depth bias), so there is no
   flicker and no need to lift the decal off the surface. Original models mark their decals
-  with a polygon flag instead ([XMSH](../original-game/formats/xmsh.md#polygon-flags-0x10)).
+  with a polygon flag instead ([XMSH](../specification/original-formats/xmsh.md#polygon-flags-0x10)).
 - **Texture coordinates repeat**: a UV of 0..4 tiles the texture four times across the face.
 - **One LOD** per OBJ model in Stage 1 (original models keep their four LODs). Multiple LOD
   files are planned for Stage 6.
@@ -50,7 +50,7 @@ behind the same interfaces, so original and mod assets can be mixed freely.
 
 A model's textures are looked up by name in every pack's `textures/` folder (`<name>.png`, then
 `<name>.tga`, newest pack first) before the original `XTXR` texture. To re-skin, export your
-image with the original texture's name — the [model viewer](../architecture/testbed.md) lists
+image with the original texture's name — the [model viewer](../implementation/architecture/testbed.md) lists
 the models, and `--check` reports texture names that fail to load.
 
 ## Checking a model
