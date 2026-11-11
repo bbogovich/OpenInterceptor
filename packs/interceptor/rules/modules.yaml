@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Station modules in battle. Hit points come from the original module sections
+# (M_XCOM*/M_ALIEN* in GameSettings.ini); meshes are the original turret and pod meshes;
+# which attachment point of XBASE7 (33 points) and AL-BASE01 (28) holds what is DERIVED
+# (the original builds bases from the strategy layer, Stage 4).
+
+behaviours:
+  station_turret:
+    states:
+      guns:
+        do: turret
+        range: 2.5km
+        burst: {per_level: [1s, 1.2s, 1.5s, 1.8s, 2.2s]}
+        pause: {per_level: [2s, 1.6s, 1.2s, 1s, 0.7s]}
+    skill:
+      aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}
+      reaction: {per_level: [1.2s, 1s, 0.8s, 0.6s, 0.45s]}
+
+modelsets:
+  xcom_turret: {intact: original:GUNTURRET2, debris: xcom_base, destroyed_effect: explosion_fighter}
+  xcom_module: {intact: original:XMMOD02, debris: xcom_base, destroyed_effect: explosion_capital}
+  alien_gun_pod: {intact: original:A-BMODG01, debris: alien_base, destroyed_effect: explosion_alien}
+  alien_pod: {intact: original:A-BMOD01, debris: alien_base, destroyed_effect: explosion_alien}
+
+objects:
+  xcom_beam_defense:
+    inherit: original:GameSettings.ini/M_XCOMBeamDefense_Laser
+    name: Beam defence module
+    model_set: xcom_turret
+    faction: xcom
+    beams: [laser_cannon, laser_cannon]
+    turret_arc: 180
+    behaviour: station_turret
+  xcom_shield_generator:
+    inherit: original:GameSettings.ini/M_XCOMShieldGeneratorType1
+    name: Shield generator module
+    model_set: xcom_module
+    faction: xcom
+    shield_generator: true
+  xcom_hangar:
+    inherit: original:GameSettings.ini/M_XCOMHangar
+    name: Hangar module
+    model_set: xcom_module
+    faction: xcom
+  alien_beam_pod:
+    inherit: original:GameSettings.ini/M_ALIENBeamDefense_PlasmaPulse
+    name: Alien plasma pod
+    model_set: alien_gun_pod
+    faction: alien
+    beams: [plasma_cannon]
+    turret_arc: 180
+    behaviour: station_turret
+  alien_shield_pod:
+    inherit: original:GameSettings.ini/M_ALIENShieldGeneratorType2
+    name: Alien shield pod
+    model_set: alien_pod
+    faction: alien
+    shield_generator: true

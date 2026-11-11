@@ -122,8 +122,11 @@ impl ModelLod {
 }
 
 /// A named point on the model with a facing direction (model space).
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Attachment {
+    /// The slot's name (OBJ `slot_<name>` groups); original manipulators are unnamed and
+    /// addressed by index.
+    pub name: Option<String>,
     pub position: Vec3,
     pub forward: Vec3,
 }
@@ -235,6 +238,7 @@ impl Model {
             .manipulators
             .iter()
             .map(|m| Attachment {
+                name: None,
                 position: from_d3d([m.matrix[0], m.matrix[1], m.matrix[2]]),
                 forward: from_d3d([m.matrix[9], m.matrix[10], m.matrix[11]]).normalize_or_zero(),
             })
@@ -322,7 +326,15 @@ impl Model {
             bounds_min: min,
             bounds_max: max,
             lods: vec![lod],
-            attachments: Vec::new(),
+            attachments: mesh
+                .slots
+                .iter()
+                .map(|(name, c, n)| Attachment {
+                    name: Some(name.clone()),
+                    position: Vec3::from(*c) * scale,
+                    forward: Vec3::from(*n).normalize_or(Vec3::NEG_Z),
+                })
+                .collect(),
         }
     }
 }

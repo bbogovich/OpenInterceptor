@@ -261,10 +261,10 @@ mod tests {
             bounds_min: Vec3::splat(-1.0),
             bounds_max: Vec3::new(1.0, 1.0, 4.0),
             lods: vec![],
-            attachments: vec![Attachment { position: Vec3::X, forward: Vec3::NEG_Z }],
+            attachments: vec![Attachment { name: None, position: Vec3::X, forward: Vec3::NEG_Z }],
         };
         assert_eq!(engine_points(&m), vec![Vec3::new(0.0, 0.0, 3.8)], "front-facing attachment ignored");
-        m.attachments.push(Attachment { position: Vec3::new(0.0, 0.0, 4.0), forward: Vec3::Z });
+        m.attachments.push(Attachment { name: None, position: Vec3::new(0.0, 0.0, 4.0), forward: Vec3::Z });
         assert_eq!(engine_points(&m), vec![Vec3::new(0.0, 0.0, 4.0)]);
     }
 

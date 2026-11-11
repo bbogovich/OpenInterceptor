@@ -438,6 +438,16 @@ impl Renderer {
             let flash = (1.0 - s.since_hit / 0.15).max(0.0) * 0.5;
             self.draw_model(cam, &model, s.position, s.rotation, Vec3::new(flash, flash * 0.3, 0.0));
         }
+        // Destroyed station modules, still on their hubs.
+        for wreck in &world.wrecks {
+            let Some(hub) = world.get(wreck.hub) else { continue };
+            let set = world.rules.model_set(world.rules.ship(wreck.class).model_set);
+            let swaps = set.swaps_for(1.0, Some("destroyed"));
+            if let Some(model) = self.models.get_variant(content, &set.intact, set.pack, set.scale, &swaps) {
+                let (pos, rot) = (hub.position + hub.rotation * wreck.offset, hub.rotation * wreck.rotation);
+                self.draw_model(cam, &model, pos, rot, Vec3::ZERO);
+            }
+        }
         for d in &effects.debris {
             if let Some(model) = self.models.get(content, &d.model, d.pack, d.scale) {
                 // Wreckage darkens as it cools, over its last third.

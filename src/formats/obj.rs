@@ -49,6 +49,10 @@ pub struct ObjMesh {
     pub materials: Vec<String>,
     /// `mtllib` file names referenced by the OBJ.
     pub material_libraries: Vec<String>,
+    /// Attachment points: faces in a group or object named `slot_<name>` are not drawn;
+    /// each such group becomes a slot at its faces' centre, facing along its first face's
+    /// normal: `(name, centre, normal)`.
+    pub slots: Vec<(String, [f32; 3], [f32; 3])>,
 }
 
 impl ObjMesh {
@@ -97,6 +101,9 @@ fn resolve(index: &str, len: usize, line: usize) -> FResult<u32> {
 pub fn parse(text: &str) -> FResult<ObjMesh> {
     let mut m = ObjMesh::default();
     let mut material: Option<u16> = None;
+    // The current `g`/`o` name; faces of `slot_*` groups are collected separately.
+    let mut group = String::new();
+    let mut slot_faces: Vec<(String, Vec<u32>)> = Vec::new();
     for (n, raw) in text.lines().enumerate() {
         let line = n + 1;
         let content = raw.split('#').next().unwrap_or("");
@@ -125,6 +132,14 @@ pub fn parse(text: &str) -> FResult<ObjMesh> {
                 if count < 3 {
                     return Err(FormatError::Invalid(format!("line {line}: face needs 3 corners")));
                 }
+                if let Some(name) = group.strip_prefix("slot_") {
+                    let corners: Vec<u32> = m.corners.drain(first as usize..).map(|c| c.position).collect();
+                    match slot_faces.iter_mut().find(|(n, _)| n == name) {
+                        Some((_, v)) => v.extend(corners),
+                        None => slot_faces.push((name.to_string(), corners)),
+                    }
+                    continue;
+                }
                 m.faces.push(Face { material, first, count: count as u16 });
             }
             "usemtl" => {
@@ -139,9 +154,20 @@ pub fn parse(text: &str) -> FResult<ObjMesh> {
                 material = Some(idx as u16);
             }
             "mtllib" => m.material_libraries.push(words.collect::<Vec<_>>().join(" ")),
-            // Groups, objects and smoothing groups do not affect how we draw.
+            "g" | "o" => group = words.collect::<Vec<_>>().join(" ").to_ascii_lowercase(),
+            // Smoothing groups do not affect how we draw.
             _ => {}
         }
+    }
+    for (name, corners) in slot_faces {
+        let p = |i: u32| glam::Vec3::from(m.positions[i as usize]);
+        let centre = corners.iter().map(|&i| p(i)).sum::<glam::Vec3>() / corners.len().max(1) as f32;
+        let normal = if corners.len() >= 3 {
+            (p(corners[1]) - p(corners[0])).cross(p(corners[2]) - p(corners[0])).normalize_or(glam::Vec3::NEG_Z)
+        } else {
+            glam::Vec3::NEG_Z
+        };
+        m.slots.push((name, centre.into(), normal.into()));
     }
     Ok(m)
 }
@@ -178,6 +204,17 @@ pub fn parse_mtl(text: &str) -> Vec<ObjMaterial> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn slot_groups_become_attachment_points() {
+        let m = parse("v 0 0 0\nv 1 0 0\nv 0 1 0\nv 4 0 -2\nv 6 0 -2\nv 4 2 -2\nf 1 2 3\ng slot_turret\nf 4 5 6\ng hull\nf 1 2 3\n").unwrap();
+        assert_eq!(m.faces.len(), 2, "the slot face is not drawn");
+        assert_eq!(m.slots.len(), 1);
+        let (name, c, n) = &m.slots[0];
+        assert_eq!(name, "turret");
+        assert!((c[0] - 14.0 / 3.0).abs() < 1e-5 && (c[2] + 2.0).abs() < 1e-6);
+        assert_eq!(*n, [0.0, 0.0, 1.0]);
+    }
 
     #[test]
     fn parses_positions_uvs_normals_and_faces() {

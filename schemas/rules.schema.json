@@ -81,6 +81,11 @@
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
           "engine_color": {"description": "engine glow colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "modules": {"description": "stations: modules mounted at the model's attachment points", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "slot": {"description": "attachment point: its index (original meshes) or slot name (OBJ slot_<name>)", "type": "string"},
+                "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+              }}},
+          "shield_generator": {"description": "modules: while one survives, its station's shields work", "type": "boolean"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -118,6 +123,11 @@
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
           "engine_color": {"description": "engine glow colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "modules": {"description": "stations: modules mounted at the model's attachment points", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "slot": {"description": "attachment point: its index (original meshes) or slot name (OBJ slot_<name>)", "type": "string"},
+                "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+              }}},
+          "shield_generator": {"description": "modules: while one survives, its station's shields work", "type": "boolean"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

@@ -11,6 +11,13 @@ objects:
     model_set: xcom_base
     hit_points: 6000
     shields: 1000
+    modules:
+      - {slot: '0', class: xcom_beam_defense}
+      - {slot: '1', class: xcom_beam_defense}
+      - {slot: '2', class: xcom_beam_defense}
+      - {slot: '3', class: xcom_shield_generator}
+      - {slot: '4', class: xcom_hangar}
+      - {slot: '5', class: xcom_shield_generator}
   xcom_outpost:
     name: Corporate Outpost
     faction: corporate
@@ -27,6 +34,13 @@ objects:
     model_set: alien_base
     hit_points: 8000
     shields: 1500
+    modules:
+      - {slot: '0', class: alien_beam_pod}
+      - {slot: '1', class: alien_shield_pod}
+      - {slot: '2', class: alien_beam_pod}
+      - {slot: '3', class: alien_shield_pod}
+      - {slot: '4', class: alien_beam_pod}
+      - {slot: '5', class: alien_beam_pod}
   alien_outpost:
     name: Alien Outpost
     faction: alien

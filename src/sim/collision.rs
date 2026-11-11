@@ -21,13 +21,33 @@ pub struct TriMesh {
     pub triangles: Vec<[Vec3; 3]>,
 }
 
-/// The collision shape of a ship class.
-#[derive(Debug, Clone, PartialEq)]
+/// The collision shape of a ship class, plus its attachment points (where station
+/// modules mount).
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Shape {
     /// Bounding radius, metres.
     pub radius: f32,
     /// Present for large objects; `None` means "use the sphere".
     pub mesh: Option<TriMesh>,
+    /// Attachment points in model space: `(name if any, position, facing)`.
+    pub mounts: Vec<(Option<String>, Vec3, Vec3)>,
+}
+
+impl Shape {
+    /// A plain sphere.
+    pub fn sphere(radius: f32) -> Shape {
+        Shape { radius, ..Default::default() }
+    }
+
+    /// The shape of a loaded model: its radius, its cheapest LOD as a triangle mesh for
+    /// static objects, and its attachment points.
+    pub fn from_model(model: &crate::model::Model, is_static: bool) -> Shape {
+        Shape {
+            radius: model.radius,
+            mesh: is_static.then(|| TriMesh { triangles: model.collision_lod().triangles().collect() }),
+            mounts: model.attachments.iter().map(|a| (a.name.clone(), a.position, a.forward)).collect(),
+        }
+    }
 }
 
 /// First intersection of the segment `a → b` with a sphere, as a fraction `t` in 0..=1
@@ -126,7 +146,7 @@ mod tests {
         let mesh = TriMesh {
             triangles: vec![[Vec3::new(-1.0, -1.0, 0.0), Vec3::new(1.0, -1.0, 0.0), Vec3::new(0.0, 1.0, 0.0)]],
         };
-        let shape = Shape { radius: 10.0, mesh: Some(mesh) };
+        let shape = Shape { radius: 10.0, mesh: Some(mesh), ..Default::default() };
         let pos = Vec3::new(0.0, 0.0, -100.0);
         // Rotated 90° about Y, the triangle now lies in the YZ plane: a segment along -Z
         // through its centre no longer hits it, but one along X does.
@@ -141,7 +161,7 @@ mod tests {
             segment_shape(Vec3::new(0.0, 50.0, 0.0), Vec3::new(0.0, 50.0, -200.0), &shape, pos, rot).is_none(),
             "broad phase"
         );
-        let sphere = Shape { radius: 2.0, mesh: None };
+        let sphere = Shape::sphere(2.0);
         assert!(segment_shape(Vec3::ZERO, Vec3::new(0.0, 0.0, -200.0), &sphere, pos, rot).is_some());
     }
 }

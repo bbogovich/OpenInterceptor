@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 2 testbed: a station with modules. Knock out the alien base's shield pods to
+# bring its shields down, silence its plasma pods, then destroy the hub (its pods go
+# with it).
+id: base-assault
+order: 26
+title: "Base assault: alien base with pods"
+description: >-
+  An alien base with plasma gun pods and shield pods. While a shield pod survives the
+  hub's shields hold; destroy the hub and every pod goes with it. Two wingmen fly with
+  you (] for orders).
+player: choose
+player_position: [0, 400, 1500]
+sun: [-0.4, 0.45, -0.8]
+starfield_seed: 31
+objects:
+  base:
+    class: alien_base
+    position: [0, 0, -1500]
+    ai: idle
+  wing1: {class: firestar, ai: wingman, leader: player, position: [-80, 400, 1540], offset: [-80, 0, 40]}
+  wing2: {class: lightning, ai: wingman, leader: player, position: [80, 400, 1540], offset: [80, 0, 40]}
+  wraith1: {class: wraith, ai: enemy, position: [-1200, 600, -800], speed: 300}
+  wraith2: {class: wraith, ai: enemy, position: [1200, 300, -900], speed: 300}

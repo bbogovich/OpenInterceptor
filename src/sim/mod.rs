@@ -336,6 +336,8 @@ pub struct Ship {
     pub departed: bool,
     /// Decoys (doppelgangers): seconds until it vanishes.
     pub expires: Option<f32>,
+    /// Station modules: the hub it is mounted on, and where (in the hub's frame).
+    pub mount: Option<(ShipId, Vec3, Quat)>,
 }
 
 impl Ship {
@@ -512,6 +514,15 @@ pub enum SimEvent {
     },
 }
 
+/// A destroyed module left on its station.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Wreck {
+    pub class: ShipClassId,
+    pub hub: ShipId,
+    pub offset: Vec3,
+    pub rotation: Quat,
+}
+
 /// The whole simulated space arena.
 pub struct World {
     /// Shared, read-only game rules. `Arc` = *atomically reference-counted* pointer: many
@@ -524,6 +535,10 @@ pub struct World {
     generations: Vec<u32>,
     pub bolts: Vec<Bolt>,
     pub missiles: Vec<Missile>,
+    /// Destroyed station modules still attached to their hub (drawn in their model
+    /// set's `destroyed` state): `(module class, hub, position and rotation in the hub's
+    /// frame)`.
+    pub wrecks: Vec<Wreck>,
     /// Events from the most recent `step`; cleared at the start of each step.
     pub events: Vec<SimEvent>,
     /// Simulated seconds since the start.
@@ -542,6 +557,7 @@ impl World {
             generations: Vec::new(),
             bolts: Vec::new(),
             missiles: Vec::new(),
+            wrecks: Vec::new(),
             events: Vec::new(),
             time: 0.0,
             rng: seed.max(1),
@@ -614,6 +630,7 @@ impl World {
             disabled: false,
             departed: false,
             expires: None,
+            mount: None,
         };
         let index = match self.ships.iter().position(|s| !s.alive) {
             Some(i) => {
@@ -628,6 +645,96 @@ impl World {
             }
         };
         ShipId { index: index as u32, generation: self.generations[index] }
+    }
+
+    /// Mounts the class's modules on station `hub` at its attachment points (and their
+    /// modules on them, and so on). Returns an error for a slot the model does not have.
+    pub fn spawn_modules(&mut self, hub: ShipId, depth: usize) -> Result<(), String> {
+        let Some(h) = self.get(hub) else { return Ok(()) };
+        let (class, faction, name) = (h.class, h.faction, h.name.clone());
+        let modules = self.rules.ship(class).modules.clone();
+        for (k, (slot, module)) in modules.into_iter().enumerate() {
+            let mounts = &self.shapes[class.0 as usize].mounts;
+            let found = match slot.parse::<usize>() {
+                Ok(i) => mounts.get(i),
+                Err(_) => mounts.iter().find(|(n, _, _)| n.as_deref() == Some(slot.as_str())),
+            };
+            let Some((_, at, facing)) = found.cloned() else {
+                return Err(format!("{name}: the model has no attachment point '{slot}'"));
+            };
+            let local = Quat::from_rotation_arc(Vec3::NEG_Z, facing.normalize_or(Vec3::NEG_Z));
+            let behaviour =
+                if self.rules.ship(module).behaviour.is_some() { ai::Behaviour::Enemy } else { ai::Behaviour::Idle };
+            let h = self.get(hub).expect("checked above");
+            let (pos, rot) = (h.position + h.rotation * at, h.rotation * local);
+            let id = self.spawn(
+                module,
+                faction,
+                &format!("{name}.{k}"),
+                pos,
+                rot,
+                Pilot::Ai(ai::AiState::new(behaviour, None, Vec3::ZERO)),
+            );
+            if let Some(m) = self.get_mut(id) {
+                m.mount = Some((hub, at, local));
+            }
+            if depth < 4 {
+                self.spawn_modules(id, depth + 1)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Keeps modules on their hubs, destroys the modules of destroyed hubs, and drops a
+    /// station's shields when its last shield generator is gone.
+    fn update_modules(&mut self) {
+        for i in 0..self.ships.len() {
+            let Some((hub, at, local)) = self.ships[i].mount.filter(|_| self.ships[i].alive) else { continue };
+            match self.get(hub).map(|h| (h.position, h.rotation)) {
+                Some((p, r)) => {
+                    let s = &mut self.ships[i];
+                    s.position = p + r * at;
+                    s.rotation = r * local;
+                    s.velocity = Vec3::ZERO;
+                }
+                None => {
+                    let id = self.id_of(i);
+                    let pos = self.ships[i].position;
+                    self.ships[i].alive = false;
+                    let radius = self.shapes[self.ships[i].class.0 as usize].radius;
+                    self.events.push(SimEvent::Destroyed { ship: id, position: pos, radius });
+                    combat::forget_ship(self, id);
+                }
+            }
+        }
+        // Wrecks of modules go with their hub.
+        let alive: Vec<ShipId> = self.wrecks.iter().map(|w| w.hub).filter(|h| self.get(*h).is_some()).collect();
+        self.wrecks.retain(|w| alive.contains(&w.hub));
+        // Shield generators.
+        for i in 0..self.ships.len() {
+            if !self.ships[i].alive
+                || !self
+                    .rules
+                    .ship(self.ships[i].class)
+                    .modules
+                    .iter()
+                    .any(|(_, m)| self.rules.ship(*m).shield_generator)
+            {
+                continue;
+            }
+            let hub = self.id_of(i);
+            let powered = self.ships.iter().any(|s| {
+                s.alive && s.mount.is_some_and(|(h, _, _)| h == hub) && self.rules.ship(s.class).shield_generator
+            });
+            if !powered {
+                let s = &mut self.ships[i];
+                if s.shield_fore > 0.0 || s.shield_aft > 0.0 {
+                    s.shield_fore = 0.0;
+                    s.shield_aft = 0.0;
+                    self.events.push(SimEvent::Message { ship: hub, text: "STATION SHIELDS DOWN".into() });
+                }
+            }
+        }
     }
 
     /// Resolves a handle to a live ship.
@@ -697,6 +804,22 @@ impl World {
         combat::step(self, TICK);
         combat::ship_collisions(self);
         systems::step(self, TICK);
+        // A destroyed module with a "destroyed" look stays on its station as a wreck.
+        for e in &self.events {
+            if let SimEvent::Destroyed { ship, .. } = e {
+                let s = &self.ships[ship.index as usize];
+                let has_wreck = self
+                    .rules
+                    .model_set(self.rules.ship(s.class).model_set)
+                    .states
+                    .iter()
+                    .any(|(n, _)| n == "destroyed");
+                if let (Some((hub, at, local)), true) = (s.mount, has_wreck) {
+                    self.wrecks.push(Wreck { class: s.class, hub, offset: at, rotation: local });
+                }
+            }
+        }
+        self.update_modules();
         // Decoys that have run their time vanish in a puff.
         for i in 0..self.ships.len() {
             let Some(left) = self.ships[i].expires.filter(|_| self.ships[i].alive) else { continue };
@@ -767,6 +890,7 @@ impl World {
                 state.def = Some(rules.behaviour_id(b).ok_or(format!("object {}: unknown behaviour '{b}'", p.name))?);
             }
             let id = w.spawn(class, faction, &p.name, p.position, rot, pilot);
+            w.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
             for name in &p.destroyed_systems {
                 let kind = crate::content::equipment::SystemKind::parse(name);
                 let sid = rules.system_id(name);
@@ -858,6 +982,13 @@ objects:
   base: {model: m, faction: grey, hit_points: 5000}
   gun: {model: m, faction: red, hit_points: 5000, beams: [laser], turret_arc: 180, behaviour: gunner}
   mine: {model: m, faction: red, kind: mine, hit_points: 10, missiles: {dart: 1}, behaviour: mine}
+  fort:
+    model: m
+    faction: red
+    hit_points: 3000
+    shields: 500
+    modules: [{slot: '0', class: gun}, {slot: gen, class: generator}]
+  generator: {model: m, faction: red, hit_points: 50, shield_generator: true}
 behaviours:
   sharp:
     states: {go: {do: attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0}}
@@ -888,7 +1019,7 @@ behaviours:
     }
 
     pub fn shapes(rules: &Ruleset) -> Arc<Vec<Shape>> {
-        Arc::new(rules.ships.iter().map(|_| Shape { radius: 5.0, mesh: None }).collect())
+        Arc::new(rules.ships.iter().map(|_| Shape::sphere(5.0)).collect())
     }
 
     pub fn world() -> World {
@@ -972,6 +1103,40 @@ mod tests {
             let s = Scenario::parse(text, 0).unwrap();
             assert!(World::from_scenario(&s, r.clone(), shapes(&r), None).is_err(), "{text}");
         }
+    }
+
+    #[test]
+    fn station_modules_mount_follow_and_fall_with_their_hub() {
+        let r = rules();
+        let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape::sphere(5.0)).collect();
+        let fort = r.ship_id("fort").unwrap();
+        shapes[fort.0 as usize].mounts =
+            vec![(None, Vec3::new(0.0, 50.0, 0.0), Vec3::Y), (Some("gen".into()), Vec3::new(30.0, 0.0, 0.0), Vec3::X)];
+        let mut w = World::new(r.clone(), Arc::new(shapes), 1);
+        let hub = w.spawn(fort, FactionId(1), "fort", Vec3::new(0.0, 0.0, -500.0), Quat::IDENTITY, Pilot::External);
+        w.spawn_modules(hub, 0).unwrap();
+        assert_eq!(w.live_ids().len(), 3, "hub, turret and generator");
+        let gun = w.ships.iter().find(|s| s.name == "fort.0").unwrap();
+        assert!((gun.position - Vec3::new(0.0, 50.0, -500.0)).length() < 1e-4, "at its attachment point");
+        assert!((gun.forward() - Vec3::Y).length() < 1e-4, "facing along the attachment");
+        // The hub moves: modules follow.
+        w.get_mut(hub).unwrap().position = Vec3::new(10.0, 0.0, -500.0);
+        w.step();
+        let gun = w.ships.iter().find(|s| s.name == "fort.0").unwrap();
+        assert!((gun.position.x - 10.0).abs() < 1e-3);
+        // The shield generator goes: the station's shields drop.
+        let gen = w.live_ids().into_iter().find(|id| w.get(*id).unwrap().name == "fort.1").unwrap();
+        w.get_mut(gen).unwrap().alive = false;
+        w.step();
+        assert_eq!(w.get(hub).unwrap().shield_fore, 0.0);
+        // The hub goes: every module goes with it.
+        crate::sim::combat::apply_damage(&mut w, hub, 1e9, Vec3::ZERO);
+        w.step();
+        assert!(w.live_ids().is_empty());
+        // A missing slot is an error.
+        let mut w = World::new(r.clone(), Arc::new(r.ships.iter().map(|_| Shape::sphere(5.0)).collect()), 1);
+        let hub = w.spawn(fort, FactionId(1), "fort", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        assert!(w.spawn_modules(hub, 0).unwrap_err().contains("no attachment point '0'"));
     }
 
     #[test]

@@ -56,14 +56,8 @@ pub fn collision_shapes(content: &Content) -> Vec<collision::Shape> {
         .ships
         .iter()
         .map(|class| match content.load_model(&class.model, class.model_pack, class.model_scale) {
-            Ok(m) => collision::Shape {
-                radius: m.radius,
-                mesh: class
-                    .kind
-                    .is_static()
-                    .then(|| collision::TriMesh { triangles: m.collision_lod().triangles().collect() }),
-            },
-            Err(_) => collision::Shape { radius: 10.0, mesh: None },
+            Ok(m) => collision::Shape::from_model(&m, class.kind.is_static()),
+            Err(_) => collision::Shape::sphere(10.0),
         })
         .collect()
 }

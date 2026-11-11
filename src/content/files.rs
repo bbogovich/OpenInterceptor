@@ -195,6 +195,15 @@ fn ship() -> Ty {
         f("turret_arc", Ty::Qty(Unit::Angle), "beams can aim this far off the nose (turrets)"),
         f("debris", Ty::List(Box::new(Ty::Asset)), "wreckage models"),
         f("engine_color", rgb(), "engine glow colour"),
+        f(
+            "modules",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("slot", Ty::Text, "attachment point: its index (original meshes) or slot name (OBJ slot_<name>)"),
+                f("class", name(), "the module's object id"),
+            ]))),
+            "stations: modules mounted at the model's attachment points",
+        ),
+        f("shield_generator", Ty::Bool, "modules: while one survives, its station's shields work"),
     ])
 }
 

@@ -80,11 +80,11 @@ pub fn run(content: &Content) -> Report {
                         }
                     }
                 }
-                shapes.push(crate::sim::collision::Shape { radius: model.radius, mesh: None });
+                shapes.push(crate::sim::collision::Shape::from_model(&model, false));
             }
             Err(e) => {
                 r.errors.push(format!("ship {}: model {}: {e}", class.id, class.model));
-                shapes.push(crate::sim::collision::Shape { radius: 10.0, mesh: None });
+                shapes.push(crate::sim::collision::Shape::sphere(10.0));
             }
         }
         if let Some(c) = &class.cockpit {

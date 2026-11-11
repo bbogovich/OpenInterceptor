@@ -167,6 +167,10 @@ pub struct ShipClass {
     pub behaviour: Option<BehaviourId>,
     /// Beam mounts can aim this many degrees off the nose (turrets; 0 = fixed guns).
     pub turret_arc: f32,
+    /// Stations: modules mounted at attachment points: `(slot, module class)`.
+    pub modules: Vec<(String, ShipClassId)>,
+    /// Modules: keeps its station's shields working while it survives.
+    pub shield_generator: bool,
     /// Model references for wreckage chunks.
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
@@ -748,6 +752,23 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             }
         }
     }
+    // Station modules name other classes.
+    for section in ["ships", "objects"] {
+        for (_, id, e) in of(&resolved, section) {
+            let Some(list) = Get(&e.node).node("modules").and_then(|n| n.as_seq()) else { continue };
+            let Some(me) = ships.iter().position(|c: &ShipClass| c.id == *id) else { continue };
+            let mut modules = Vec::new();
+            for m in list {
+                let g = Get(m);
+                let (Some(slot), Some(class)) = (g.str("slot"), g.str("class")) else { continue };
+                match ships.iter().position(|c| c.id.eq_ignore_ascii_case(class)) {
+                    Some(k) => modules.push((slot.to_ascii_lowercase(), ShipClassId(k as u16))),
+                    None => errors.push(format!("{}: {section}.{id}.modules: unknown class '{class}'", e.origin)),
+                }
+            }
+            ships[me].modules = modules;
+        }
+    }
     let mut cockpits = Vec::new();
     for (_, id, e) in of(&resolved, "cockpits") {
         let g = Get(&e.node);
@@ -1242,6 +1263,8 @@ fn ship_class(
         systems: system_ids,
         behaviour,
         turret_arc: g.qty("turret_arc", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
+        modules: Vec::new(), // resolved once every class is known
+        shield_generator: g.bool("shield_generator").unwrap_or(false),
         repair_rate: g.num("repair_rate").unwrap_or(damage.repair_rate).max(0.0),
         capturable: g
             .bool("capturable")

@@ -623,13 +623,14 @@ mod tests {
         assert!(w.events.iter().any(|e| matches!(e, SimEvent::Collision { .. })));
         // A station with a wall mesh across the fighter's path.
         let r = rules();
-        let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape { radius: 5.0, mesh: None }).collect();
+        let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape::sphere(5.0)).collect();
         let base = r.ship_id("base").unwrap();
         shapes[base.0 as usize] = Shape {
             radius: 100.0,
             mesh: Some(TriMesh {
                 triangles: vec![[Vec3::new(-50.0, -50.0, 0.0), Vec3::new(50.0, -50.0, 0.0), Vec3::new(0.0, 50.0, 0.0)]],
             }),
+            ..Default::default()
         };
         let mut w = World::new(r.clone(), Arc::new(shapes), 1);
         let f = r.ship_id("fighter").unwrap();

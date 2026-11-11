@@ -275,14 +275,8 @@ impl FlightSession {
         let mut shapes = Vec::with_capacity(rules.ships.len());
         for class in &rules.ships {
             let shape = match ctx.renderer.models.get(content, &class.model, class.model_pack, class.model_scale) {
-                Some(m) => collision::Shape {
-                    radius: m.radius,
-                    mesh: class
-                        .kind
-                        .is_static()
-                        .then(|| collision::TriMesh { triangles: m.model.collision_lod().triangles().collect() }),
-                },
-                None => collision::Shape { radius: 10.0, mesh: None },
+                Some(m) => collision::Shape::from_model(&m.model, class.kind.is_static()),
+                None => collision::Shape::sphere(10.0),
             };
             shapes.push(shape);
         }
