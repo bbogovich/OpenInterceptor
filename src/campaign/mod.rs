@@ -1216,6 +1216,49 @@ impl Campaign {
         (beams, missiles)
     }
 
+    // --- Testbed cheats (the original's own: payday, knowitall, quickbase) ----------
+
+    /// `payday`: a million more.
+    pub fn cheat_payday(&mut self) {
+        self.money += 1_000_000.0;
+        self.log("Cheat: payday".into());
+    }
+
+    /// `knowitall`: every topic researched.
+    pub fn cheat_knowitall(&mut self) {
+        self.known.iter_mut().for_each(|k| *k = true);
+        self.bases.iter_mut().for_each(|b| b.research = None);
+        self.log("Cheat: knowitall".into());
+    }
+
+    /// `quickbase`: every base and module under construction finished now.
+    pub fn cheat_quickbase(&mut self) {
+        let now = self.hours;
+        for b in &mut self.bases {
+            b.ready_at = b.ready_at.min(now);
+            for m in &mut b.modules {
+                m.ready_at = m.ready_at.min(now);
+            }
+        }
+        self.log("Cheat: quickbase".into());
+    }
+
+    /// Jump to battle: puts a ready craft with a pilot (the first found) at a detected
+    /// contact at once, as if its interception had arrived. Returns the craft.
+    pub fn cheat_jump(&mut self, contact: u32) -> Result<usize, String> {
+        let c = self.contacts.iter().find(|c| c.id == contact).ok_or("no such contact")?;
+        let pos = c.pos;
+        let k = (0..self.craft.len())
+            .find(|&k| {
+                self.craft[k].away.is_none()
+                    && self.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready)
+            })
+            .ok_or("no ready craft with a pilot")?;
+        self.craft[k].away = Some((contact, pos));
+        self.craft[k].route.clear();
+        Ok(k)
+    }
+
     /// Assigns a pilot to a craft (a craft has one pilot).
     pub fn assign(&mut self, pilot: usize, craft: Option<usize>) {
         if let Some(c) = craft {
@@ -1492,6 +1535,30 @@ mod tests {
         let packs = [save::PackRef { id: "default".into(), version: "test".into() }];
         let text = save::write(&c, "default", &packs);
         assert_eq!(save::read(&text, def, &packs).unwrap(), c);
+    }
+
+    #[test]
+    fn testbed_cheats_do_what_they_say() {
+        let (d, mut c) = sample();
+        let money = c.money;
+        c.cheat_payday();
+        assert_eq!(c.money, money + 1_000_000.0);
+        c.build_module(&d, 0, d.module("works").unwrap()).unwrap();
+        c.cheat_quickbase();
+        assert!(c.bases[0].modules.iter().all(|m| m.ready_at <= c.hours));
+        c.cheat_knowitall();
+        assert!(c.known.iter().all(|k| *k));
+        c.contacts.push(Contact {
+            id: 5,
+            raid: 0,
+            pos: [10.0, 0.0],
+            dest: [0.0, 0.0],
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+        });
+        let k = c.cheat_jump(5).unwrap();
+        assert_eq!(c.battle_party(5), vec![k]);
     }
 
     #[test]

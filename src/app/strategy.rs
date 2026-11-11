@@ -519,6 +519,31 @@ impl StrategyScreen {
                     self.act(def, *a);
                 }
             }
+            // Testbed cheats (Ctrl+…): the original's payday, knowitall and quickbase, and
+            // jump to battle from the chosen contact.
+            let ctrl = is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl);
+            if ctrl && is_key_pressed(KeyCode::M) {
+                self.campaign.cheat_payday();
+                self.say("Cheat: payday");
+            }
+            if ctrl && is_key_pressed(KeyCode::K) {
+                self.campaign.cheat_knowitall();
+                self.say("Cheat: knowitall");
+            }
+            if ctrl && is_key_pressed(KeyCode::B) {
+                self.campaign.cheat_quickbase();
+                self.say("Cheat: quickbase");
+            }
+            if ctrl && is_key_pressed(KeyCode::J) {
+                if let Some((_, Act::Intercept(id))) = rows.get(self.row) {
+                    match self.campaign.cheat_jump(*id) {
+                        Ok(_) => self.battle = Some(*id),
+                        Err(e) => self.say(e),
+                    }
+                } else {
+                    self.say("Choose a contact on the Contacts tab first");
+                }
+            }
             if is_key_pressed(KeyCode::F) && self.tab == Tab::Hangar {
                 if let Some((_, Act::AssignPilot(k))) = rows.get(self.row) {
                     let r = self.campaign.fit_best(def, *k);
