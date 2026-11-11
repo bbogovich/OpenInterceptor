@@ -29,6 +29,57 @@ function send(msg) {
   if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
 }
 
+/** Keeps the tablet's screen awake while the console is open.
+ *
+ *  1. The Screen Wake Lock API, where the browser offers it. Safari offers it only on
+ *     secure (https) pages, and the console is plain http on the local network, so on an
+ *     iPad this usually does not apply.
+ *  2. Otherwise a tiny black clip, muted, inline and looping, out of sight: browsers do
+ *     not let the screen sleep while a video plays. iOS allows muted inline playback, but
+ *     only reliably after a tap, so this starts on the first touch (the pairing tap).
+ *
+ *  Both are released by the browser when the page is hidden, so they are taken again
+ *  whenever it becomes visible. `keepAwakeState` is shown on the page. */
+let keepAwakeState = "screen may sleep";
+let wakeLock = null;
+let wakeVideo = null;
+
+async function keepAwake() {
+  if (document.visibilityState !== "visible") return;
+  if ("wakeLock" in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      keepAwakeState = "screen kept awake (wake lock)";
+      link.dispatchEvent(new CustomEvent("awake"));
+      return;
+    } catch (_) { /* not allowed here: fall through to the video */ }
+  }
+  if (!wakeVideo) {
+    wakeVideo = document.createElement("video");
+    wakeVideo.src = "keepawake.mp4";
+    wakeVideo.muted = true;
+    wakeVideo.loop = true;
+    wakeVideo.setAttribute("playsinline", "");
+    wakeVideo.setAttribute("muted", "");
+    // Out of sight, but still "playing" as far as the browser is concerned.
+    wakeVideo.style.cssText = "position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;bottom:0;left:0";
+    document.body.appendChild(wakeVideo);
+  }
+  try {
+    await wakeVideo.play();
+    keepAwakeState = "screen kept awake";
+  } catch (_) {
+    keepAwakeState = "tap the screen to keep it awake";
+  }
+  link.dispatchEvent(new CustomEvent("awake"));
+}
+
+document.addEventListener("visibilitychange", keepAwake);
+// Media playback needs a user gesture on iOS: try on every tap until it works.
+document.addEventListener("pointerdown", () => {
+  if (!keepAwakeState.startsWith("screen kept")) keepAwake();
+}, { passive: true });
+
 /** Pairing: the 6-digit code shown in the game. Accepted as soon as the sixth digit is
  *  typed (iPad number pads have no Enter key); remembered for this browser tab. */
 class OiPairing extends HTMLElement {
@@ -45,6 +96,7 @@ class OiPairing extends HTMLElement {
       if (code.length !== 6) { show("The code has six digits.", true); return; }
       try { sessionStorage.setItem("oi-code", code); } catch (_) { /* private mode */ }
       show("Connecting…");
+      keepAwake();
       connect(code);
     };
     this.querySelector("form").addEventListener("submit", (e) => { e.preventDefault(); pair(); });
@@ -70,11 +122,14 @@ class OiPairing extends HTMLElement {
 class OiTelemetry extends HTMLElement {
   connectedCallback() {
     const cells = [["craft", "Craft"], ["speed", "Speed m/s"], ["drift", "Drift X / Y"], ["hull", "Hull"],
-      ["energy", "Energy"], ["shields", "Shields fore / aft"], ["missile", "Missile"], ["target", "Target"]];
+      ["energy", "Energy"], ["shields", "Shields fore / aft"], ["missile", "Missile"], ["target", "Target"], ["awake", "Tablet"]];
     this.innerHTML = cells.map(([k, l]) =>
       `<div class="cell"><div class="label">${l}</div><div class="value" data-k="${k}">—</div></div>`).join("");
     const set = (k, v) => { this.querySelector(`[data-k="${k}"]`).textContent = v; };
     const pct = (f) => `${Math.round(f * 100)}%`;
+    const awake = () => set("awake", keepAwakeState);
+    link.addEventListener("awake", awake);
+    awake();
     link.addEventListener("telemetry", (e) => {
       const t = e.detail;
       if (!t.alive) { set("craft", t.state === "launcher" ? "Not flying (launcher)" : "DESTROYED"); return; }

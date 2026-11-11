@@ -68,6 +68,45 @@ pub fn response(status: &str, content_type: &str, body: &[u8]) -> Vec<u8> {
     out
 }
 
+/// A file, honouring a `Range: bytes=a-b` request with `206 Partial Content`. iOS Safari
+/// fetches video in ranges and will not play a clip from a server that ignores them.
+pub fn file_response(content_type: &str, body: &[u8], range: Option<&str>) -> Vec<u8> {
+    let Some((start, end)) = range.and_then(|r| parse_range(r, body.len())) else {
+        let mut out = response("200 OK", content_type, body);
+        // Say ranges are welcome (inserted after the status line).
+        let at = out.windows(2).position(|w| w == b"\r\n").map(|p| p + 2).unwrap_or(0);
+        out.splice(at..at, b"Accept-Ranges: bytes\r\n".iter().copied());
+        return out;
+    };
+    let part = &body[start..=end];
+    let mut out = format!(
+        "HTTP/1.1 206 Partial Content\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\n\
+         Content-Range: bytes {start}-{end}/{}\r\nAccept-Ranges: bytes\r\nCache-Control: no-store\r\n\
+         Connection: close\r\n\r\n",
+        part.len(),
+        body.len()
+    )
+    .into_bytes();
+    out.extend_from_slice(part);
+    out
+}
+
+/// `bytes=a-b`, `bytes=a-` or `bytes=-n` (the last n bytes) → an inclusive byte range
+/// within `len`, or `None` for anything else (then the whole file is sent).
+fn parse_range(header: &str, len: usize) -> Option<(usize, usize)> {
+    let spec = header.trim().strip_prefix("bytes=")?;
+    let (a, b) = spec.split_once('-')?;
+    if len == 0 || spec.contains(',') {
+        return None; // several ranges at once: not needed here
+    }
+    let (start, end) = match (a.trim(), b.trim()) {
+        ("", n) => (len.saturating_sub(n.parse().ok()?), len - 1),
+        (s, "") => (s.parse().ok()?, len - 1),
+        (s, e) => (s.parse().ok()?, e.parse::<usize>().ok()?.min(len - 1)),
+    };
+    (start <= end && start < len).then_some((start, end))
+}
+
 /// The `101 Switching Protocols` answer that turns the connection into a WebSocket.
 pub fn upgrade_response(accept: &str) -> Vec<u8> {
     format!(
@@ -86,6 +125,7 @@ pub fn content_type(path: &str) -> &'static str {
         "json" => "application/json",
         "svg" => "image/svg+xml",
         "png" => "image/png",
+        "mp4" => "video/mp4",
         _ => "application/octet-stream",
     }
 }
@@ -118,5 +158,26 @@ mod tests {
         );
         assert!(String::from_utf8(upgrade_response("abc")).unwrap().contains("Sec-WebSocket-Accept: abc\r\n"));
         assert_eq!(content_type("x.css"), "text/css; charset=utf-8");
+    }
+
+    #[test]
+    fn ranges_are_served_as_partial_content() {
+        let body = b"0123456789";
+        let text = |v: Vec<u8>| String::from_utf8(v).unwrap();
+        let first2 = text(file_response("video/mp4", body, Some("bytes=0-1")));
+        assert!(
+            first2.starts_with("HTTP/1.1 206")
+                && first2.contains("Content-Range: bytes 0-1/10")
+                && first2.ends_with("01")
+        );
+        assert!(text(file_response("video/mp4", body, Some("bytes=7-"))).ends_with("\r\n\r\n789"));
+        assert!(text(file_response("video/mp4", body, Some("bytes=-3"))).ends_with("\r\n\r\n789"));
+        assert!(text(file_response("video/mp4", body, Some("bytes=5-99"))).contains("bytes 5-9/10"));
+        let whole = text(file_response("video/mp4", body, None));
+        assert!(whole.starts_with("HTTP/1.1 200 OK\r\nAccept-Ranges: bytes\r\n") && whole.ends_with("0123456789"));
+        assert!(
+            text(file_response("video/mp4", body, Some("bytes=20-30"))).starts_with("HTTP/1.1 200"),
+            "out of range: whole file"
+        );
     }
 }

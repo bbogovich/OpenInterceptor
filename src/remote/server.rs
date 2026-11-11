@@ -58,10 +58,14 @@ pub struct ConsoleServer {
 }
 
 /// The files of the console page, built into the program so it needs nothing on disk.
-const FILES: &[(&str, &str)] = &[
-    ("/index.html", include_str!("../../web/console/index.html")),
-    ("/console.js", include_str!("../../web/console/console.js")),
-    ("/console.css", include_str!("../../web/console/console.css")),
+/// `include_bytes!` embeds a file's bytes in the program at compile time.
+const FILES: &[(&str, &[u8])] = &[
+    ("/index.html", include_bytes!("../../web/console/index.html")),
+    ("/console.js", include_bytes!("../../web/console/console.js")),
+    ("/console.css", include_bytes!("../../web/console/console.css")),
+    // A tiny black clip the page plays muted to keep a tablet awake (see the tool that
+    // makes it: tools/console_assets/make_keepawake.swift).
+    ("/keepawake.mp4", include_bytes!("../../web/console/keepawake.mp4")),
 ];
 
 impl ConsoleServer {
@@ -210,7 +214,7 @@ fn serve(
     if !req.is_websocket() {
         let path = if req.path == "/" { "/index.html" } else { req.path.as_str() };
         let reply = match FILES.iter().find(|(p, _)| *p == path) {
-            Some((p, body)) => http::response("200 OK", http::content_type(p), body.as_bytes()),
+            Some((p, body)) => http::file_response(http::content_type(p), body, req.header("range")),
             None => http::response("404 Not Found", "text/plain", b"not found"),
         };
         let _ = stream.write_all(&reply);
