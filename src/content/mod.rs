@@ -30,6 +30,7 @@ pub mod pack;
 pub mod rules;
 pub mod scenario;
 pub mod schema;
+pub mod text;
 pub mod vfs;
 
 use crate::formats::{ini::Ini, obj, tga, wav, xmsh, xtxr};
@@ -59,6 +60,8 @@ pub struct ContentConfig {
     pub campaign: Option<String>,
     /// The difficulty level id to play at (`None` = the campaign's default).
     pub difficulty: Option<String>,
+    /// The language of player-visible text (`text/<language>/`; `None` = `en`).
+    pub language: Option<String>,
 }
 
 /// The campaign loaded when none is chosen: `interceptor` when the player's data made it
@@ -83,6 +86,8 @@ pub struct Content {
     pub original: Option<OriginalData>,
     pub rules: Ruleset,
     pub scenarios: Vec<Scenario>,
+    /// Player-visible strings by key (already applied to rules and scenarios).
+    pub text: text::TextTable,
     /// Non-fatal problems (skipped packs, and every error below).
     pub warnings: Vec<String>,
     /// Problems in the mod files themselves (bad YAML, schema violations, unknown ids):
@@ -195,8 +200,44 @@ impl Content {
             }
         }
         scenarios.sort_by(|a, b| a.order.cmp(&b.order).then(a.title.cmp(&b.title)));
+        // 5. Text: every pack's text files in load order, then `@key` values resolved.
+        let language = cfg.language.clone().unwrap_or_else(|| "en".into());
+        let mut text = text::TextTable::default();
+        for p in &packs {
+            let dir =
+                [p.dir.join("text").join(&language), p.dir.join("text").join("en")].into_iter().find(|d| d.is_dir());
+            for path in dir.map(|d| yaml_files(&d)).unwrap_or_default() {
+                let file = format!("{}/text/{}", p.id, path.file_name().unwrap_or_default().to_string_lossy());
+                match read_yaml(&path) {
+                    Ok(doc) => {
+                        let mut problems = Vec::new();
+                        schema::validate(&doc, &files::text(), "", &mut problems);
+                        for p in &problems {
+                            errors.push(format!("{file}:{}: {}: {}", p.line, p.path, p.message));
+                        }
+                        for (reference, prefix) in text.add_file(&doc) {
+                            let read = reference
+                                .strip_prefix("original:")
+                                .ok_or(format!("imports: '{reference}' must be original:<file>"))
+                                .and_then(|f| {
+                                    original.as_ref().ok_or("needs the original data".to_string())?.read_file(f)
+                                });
+                            match read {
+                                Ok(bytes) => {
+                                    text.add_langfile(&bytes, &prefix);
+                                }
+                                Err(e) => errors.push(format!("{file}: imports {reference}: {e}")),
+                            }
+                        }
+                    }
+                    Err(e) => errors.push(format!("{file}:{e}")),
+                }
+            }
+        }
+        let mut rules = rules;
+        errors.extend(resolve_text(&text, &mut rules, &mut scenarios));
         warnings.extend(errors.iter().cloned());
-        Ok(Content { packs, campaign: wanted, campaigns, original, rules, scenarios, warnings, errors })
+        Ok(Content { packs, campaign: wanted, campaigns, original, rules, scenarios, text, warnings, errors })
     }
 
     fn original(&self) -> Result<&OriginalData, String> {
@@ -377,6 +418,39 @@ fn join(folder: &str, file: &str) -> String {
 
 /// Files in `dir` with the given extension, sorted by name (deterministic load order).
 /// The `.yaml` and `.yml` files in a folder, sorted by name.
+/// Replaces every `@key` in player-visible rule and scenario strings with its text.
+/// Returns an error per missing key; a missing key's value becomes the key itself.
+fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut [Scenario]) -> Vec<String> {
+    let mut errors = Vec::new();
+    let mut fix = |s: &mut String, at: &str| {
+        if let Err(key) = t.resolve(s).map(|v| *s = v) {
+            errors.push(format!("text: missing key '@{key}' ({at})"));
+            *s = key;
+        }
+    };
+    for c in &mut rules.ships {
+        fix(&mut c.name, &format!("{}.name", c.id));
+        fix(&mut c.description, &format!("{}.description", c.id));
+    }
+    for b in &mut rules.beams {
+        fix(&mut b.name, &format!("beams.{}.name", b.id));
+    }
+    for m in &mut rules.missiles {
+        fix(&mut m.name, &format!("missiles.{}.name", m.id));
+    }
+    for f in &mut rules.factions {
+        fix(&mut f.name, &format!("factions.{}.name", f.id));
+    }
+    for s in &mut rules.systems {
+        fix(&mut s.name, &format!("systems.{}.name", s.id));
+    }
+    for s in scenarios {
+        fix(&mut s.title, &format!("scenario {}.title", s.id));
+        fix(&mut s.description, &format!("scenario {}.description", s.id));
+    }
+    errors
+}
+
 pub fn yaml_files(dir: &Path) -> Vec<PathBuf> {
     let mut v = files_with_ext(dir, "yaml");
     v.extend(files_with_ext(dir, "yml"));

@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Player-visible text for the default campaign (English). Rules and scenarios name
+# these strings by key ("@ship.comet.name"); a translation is the same keys in
+# text/<language>/.
+text:
+  system.engines.name: "Atomic rockets"
+  system.manoeuvring.name: "Attitude jets"
+  system.sensors.name: "Radar"
+  system.shields.name: "Force-field generator"
+  system.hyperdrive.name: "Hyperdrive"
+  system.vct.name: "Gyro-jets"
+  system.tractor.name: "Tractor ray"
+  system.cloak.name: "Invisibility screen"
+  system.ecm.name: "Radar jammer"
+  system.damage_control.name: "Robot repair crew"

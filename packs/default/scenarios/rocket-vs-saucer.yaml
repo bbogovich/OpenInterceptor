@@ -2,8 +2,8 @@
 # Stage 2 testbed arena: the default campaign's basic dogfight.
 id: rocket-vs-saucer
 order: 10
-title: Rocket vs saucer
-description: "Two Guard wingmen and a choice of rocket against a flight of Dominion saucers near the Guard station. Wingmen: ] for the menu, Shift+F fire at will."
+title: "@scenario.rocket-vs-saucer.title"
+description: "@scenario.rocket-vs-saucer.desc"
 player: choose
 player_position: [0, 0, 600]
 sun: [-0.5, 0.4, -0.75]

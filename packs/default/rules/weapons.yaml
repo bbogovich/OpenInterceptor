@@ -5,7 +5,7 @@
 beams:
   # --- Guard ray guns ---------------------------------------------------------------------
   blaster:
-    name: Blaster
+    name: "@beam.blaster.name"
     damage: 22
     energy_cost: 8
     rate_of_fire: 4
@@ -14,7 +14,7 @@ beams:
     color: [1.0, 0.3, 0.2]
     sound: sounds/ray_zap.wav
   heat_ray:
-    name: Heat ray
+    name: "@beam.heat_ray.name"
     damage: 34
     energy_cost: 13
     rate_of_fire: 3
@@ -23,7 +23,7 @@ beams:
     color: [1.0, 0.65, 0.1]
     sound: sounds/heat_ray.wav
   disintegrator:
-    name: Disintegrator
+    name: "@beam.disintegrator.name"
     damage: 60
     energy_cost: 26
     rate_of_fire: 1.6
@@ -32,7 +32,7 @@ beams:
     color: [0.6, 0.9, 1.0]
     sound: sounds/disintegrator.wav
   ion_ray:
-    name: Ion ray
+    name: "@beam.ion_ray.name"
     damage: 30
     energy_cost: 12
     rate_of_fire: 3
@@ -42,7 +42,7 @@ beams:
     sound: sounds/ion_ray.wav
   # --- Dominion rays ----------------------------------------------------------------------
   paralyzer_ray:
-    name: Paralyzer ray
+    name: "@beam.paralyzer_ray.name"
     damage: 20
     energy_cost: 7
     rate_of_fire: 4
@@ -51,7 +51,7 @@ beams:
     color: [0.75, 0.3, 1.0]
     sound: sounds/ion_ray.wav
   death_ray:
-    name: Death ray
+    name: "@beam.death_ray.name"
     damage: 45
     energy_cost: 18
     rate_of_fire: 2.2
@@ -63,7 +63,7 @@ beams:
 missiles:
   # --- Rockets ----------------------------------------------------------------------------
   seeker:
-    name: Seeker rocket
+    name: "@missile.seeker.name"
     speed: 900
     duration: 8
     impact_damage: 150
@@ -73,7 +73,7 @@ missiles:
     color: [1.0, 1.0, 0.6]
     sound: sounds/seeker_launch.wav
   atomic_torpedo:
-    name: Atomic torpedo
+    name: "@missile.atomic_torpedo.name"
     speed: 600
     duration: 12
     impact_damage: 600
@@ -84,7 +84,7 @@ missiles:
     color: [0.6, 1.0, 0.6]
     sound: sounds/seeker_launch.wav
   cluster_rocket:
-    name: Cluster rocket
+    name: "@missile.cluster_rocket.name"
     guidance: cluster        # splits into six seekers near the target
     cluster: {missile: seeker, count: 6, at: 700m}
     speed: 750
@@ -96,7 +96,7 @@ missiles:
     color: [1.0, 0.8, 0.3]
     sound: sounds/seeker_launch.wav
   decoy_rocket:
-    name: Decoy rocket
+    name: "@missile.decoy_rocket.name"
     guidance: parallax       # two flares that draw enemy rockets
     decoys: 2
     speed: 850
@@ -108,7 +108,7 @@ missiles:
     color: [1.0, 1.0, 0.9]
     sound: sounds/seeker_launch.wav
   mine_warhead:
-    name: Space mine warhead
+    name: "@missile.mine_warhead.name"
     guidance: dumbfire
     speed: 0
     impact_damage: 0

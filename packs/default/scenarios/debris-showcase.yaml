@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: debris-showcase
 order: 90
-title: "Debris and damage showcase"
-description: >-
-  Every class at 2% hull, lined up: one shot each shows its explosion, shock wave and debris; damaged textures show on the way. Nothing shoots back.
+title: "@scenario.debris-showcase.title"
+description: "@scenario.debris-showcase.desc"
 player: choose
 player_position: [0, 100, 600]
 starfield_seed: 7

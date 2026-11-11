@@ -23,6 +23,7 @@
 //! from it, returning an error instead of panicking when the data is too short.
 
 pub mod ini;
+pub mod langfile;
 pub mod obj;
 pub mod pe;
 pub mod tga;

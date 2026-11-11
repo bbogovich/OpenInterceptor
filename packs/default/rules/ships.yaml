@@ -8,8 +8,8 @@
 
 ships:
   comet:
-    name: Comet
-    description: "Light interceptor rocket: quick, nimble and lightly armed."
+    name: "@ship.comet.name"
+    description: "@ship.comet.desc"
     model_set: comet
     faction: guard
     playable: true
@@ -33,8 +33,8 @@ ships:
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
   meteor:
-    name: Meteor
-    description: Twin-booster patrol rocket with a tractor ray and a robot repair crew.
+    name: "@ship.meteor.name"
+    description: "@ship.meteor.desc"
     model_set: meteor
     faction: guard
     playable: true
@@ -58,8 +58,8 @@ ships:
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
   thunderbolt:
-    name: Thunderbolt
-    description: "Heavy four-finned strike rocket. Carries every gadget the Guard has: jammer, tractor ray, invisibility screen, gyro-jets."
+    name: "@ship.thunderbolt.name"
+    description: "@ship.thunderbolt.desc"
     model_set: thunderbolt
     faction: guard
     playable: true
@@ -84,8 +84,8 @@ ships:
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
   victory:
-    name: Victory
-    description: "The Guard's flagship: an art-deco battleship rocket (story ship, Stage 5)."
+    name: "@ship.victory.name"
+    description: "@ship.victory.desc"
     model_set: victory
     faction: guard
     kind: capital
@@ -109,8 +109,8 @@ ships:
     engine_color: [1.0, 0.6, 0.2]
   # --- Umbral Dominion saucers and robots -----------------------------------------------
   scout_saucer:
-    name: Scout saucer
-    description: "Small domed saucer: fast, slippery, lightly armed."
+    name: "@ship.scout_saucer.name"
+    description: "@ship.scout_saucer.desc"
     model_set: scout_saucer
     faction: dominion
     hit_points: 80
@@ -130,8 +130,8 @@ ships:
     behaviour: saucer_scout
     engine_color: [0.5, 1.0, 0.3]
   raider_saucer:
-    name: Raider saucer
-    description: Fighting saucer with a ray-gun turret and an invisibility screen.
+    name: "@ship.raider_saucer.name"
+    description: "@ship.raider_saucer.desc"
     model_set: raider_saucer
     faction: dominion
     hit_points: 130
@@ -154,8 +154,8 @@ ships:
     engine_color: [0.5, 1.0, 0.3]
   dreadnought:
     point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
-    name: Dreadnought disc
-    description: The Regent's tiered battle disc.
+    name: "@ship.dreadnought.name"
+    description: "@ship.dreadnought.desc"
     model_set: dreadnought
     faction: dominion
     kind: capital
@@ -178,8 +178,8 @@ ships:
     turret_arc: 150
     engine_color: [0.5, 1.0, 0.3]
   robot_sentinel:
-    name: Robot sentinel
-    description: A tin-can robot with a jet pack and a ray in each claw.
+    name: "@ship.robot_sentinel.name"
+    description: "@ship.robot_sentinel.desc"
     model_set: robot_sentinel
     faction: dominion
     kind: drone
@@ -199,8 +199,8 @@ ships:
     behaviour: robot
     engine_color: [0.6, 0.8, 1.0]
   grappler:
-    name: Grappler
-    description: Tug saucer with grappling claws and a tractor ray; drags off disabled rockets.
+    name: "@ship.grappler.name"
+    description: "@ship.grappler.desc"
     model_set: grappler
     faction: dominion
     kind: capital
@@ -221,8 +221,8 @@ ships:
     behaviour: tug
     engine_color: [0.5, 1.0, 0.3]
   cargo_orb:
-    name: Cargo orb
-    description: Banded freighter sphere hauling cosmium to the Eclipse Engine.
+    name: "@ship.cargo_orb.name"
+    description: "@ship.cargo_orb.desc"
     model_set: cargo_orb
     faction: dominion
     kind: freighter
@@ -240,16 +240,16 @@ ships:
   # --- Third parties ----------------------------------------------------------------------
   senate_patrol:
     inherit: meteor
-    name: Senate patrol rocket
-    description: The Solar Senate's sleek white-and-gold patrol rocket.
+    name: "@ship.senate_patrol.name"
+    description: "@ship.senate_patrol.desc"
     model_set: senate_patrol
     faction: senate
     playable: false
     systems+: [ecm]
     behaviour: guard_pilot
   cartel_freighter:
-    name: Cartel freighter
-    description: A bulbous cargo rocket of the Nebula Cartel. Ask no questions.
+    name: "@ship.cartel_freighter.name"
+    description: "@ship.cartel_freighter.desc"
     model_set: cartel_freighter
     faction: cartel
     kind: freighter
@@ -268,8 +268,8 @@ ships:
     turret_arc: 180
     engine_color: [1.0, 0.7, 0.3]
   prospector_hauler:
-    name: Prospector hauler
-    description: A boxy ore hauler with a drill nose.
+    name: "@ship.prospector_hauler.name"
+    description: "@ship.prospector_hauler.desc"
     model_set: prospector_hauler
     faction: prospectors
     kind: freighter
@@ -285,8 +285,8 @@ ships:
     lock_speed: 500
     engine_color: [1.0, 0.6, 0.2]
   hotrod:
-    name: Black Comet hot-rod
-    description: "A raider's hot-rod rocket: flame paint and an oversized exhaust."
+    name: "@ship.hotrod.name"
+    description: "@ship.hotrod.desc"
     model_set: hotrod
     faction: raiders
     hit_points: 90

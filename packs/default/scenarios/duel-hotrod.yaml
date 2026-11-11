@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: duel-hotrod
 order: 63
-title: "Duel: hotrod"
-description: >-
-  You against 2 hotrods: test how this enemy flies and fights at each difficulty (D in the launcher).
+title: "@scenario.duel-hotrod.title"
+description: "@scenario.duel-hotrod.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

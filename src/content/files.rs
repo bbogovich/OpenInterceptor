@@ -461,6 +461,22 @@ pub fn scenario() -> Ty {
     ])
 }
 
+/// A text file (`text/<language>/*.yaml`): strings by key, and original language files
+/// imported by reference.
+pub fn text() -> Ty {
+    Ty::Struct(vec![
+        f("text", Ty::Dict(Box::new(Ty::Text)), "text key: the string (\"@key\" in rules refers to it)"),
+        f(
+            "imports",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("file", Ty::Asset, "an original language file: original:LangFile1.txt"),
+                f("prefix", name(), "keys are imported as <prefix>.<KEY> (default orig)"),
+            ]))),
+            "the original's language files, read from the player's CD",
+        ),
+    ])
+}
+
 /// Every file type's JSON Schema: `(file name, contents)`.
 pub fn json_schemas() -> Vec<(&'static str, String)> {
     use super::schema::json_schema;
@@ -468,6 +484,7 @@ pub fn json_schemas() -> Vec<(&'static str, String)> {
         ("pack.schema.json", json_schema("OpenInterceptor pack manifest (pack.yaml)", &pack())),
         ("rules.schema.json", json_schema("OpenInterceptor rules file (rules/*.yaml, campaign/*.yaml)", &rules())),
         ("scenario.schema.json", json_schema("OpenInterceptor scenario (scenarios/*.yaml)", &scenario())),
+        ("text.schema.json", json_schema("OpenInterceptor text (text/<language>/*.yaml)", &text())),
     ]
 }
 
@@ -478,7 +495,7 @@ mod tests {
 
     #[test]
     fn every_schema_builds_and_exports() {
-        for (name, ty) in [("pack", pack()), ("rules", rules()), ("scenario", scenario())] {
+        for (name, ty) in [("pack", pack()), ("rules", rules()), ("scenario", scenario()), ("text", text())] {
             let j = json_schema(name, &ty);
             assert_eq!(j.matches('{').count(), j.matches('}').count(), "{name}");
         }

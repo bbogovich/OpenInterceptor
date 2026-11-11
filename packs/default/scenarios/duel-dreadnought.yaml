@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: duel-dreadnought
 order: 65
-title: "Duel: dreadnought"
-description: >-
-  You against 1 dreadnought: test how this enemy flies and fights at each difficulty (D in the launcher).
+title: "@scenario.duel-dreadnought.title"
+description: "@scenario.duel-dreadnought.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

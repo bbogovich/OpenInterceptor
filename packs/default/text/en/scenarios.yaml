@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Player-visible text for the default campaign (English). Rules and scenarios name
+# these strings by key ("@ship.comet.name"); a translation is the same keys in
+# text/<language>/.
+text:
+  scenario.black-comet-ambush.title: "Black Comet ambush"
+  scenario.black-comet-ambush.desc: "Escort a Belt Prospectors ore hauler past a cosmium asteroid while Black Comet hot-rods attack. A Senate patrol rocket and a Cartel freighter are in the area; only the raiders are hostile."
+  scenario.debris-showcase.title: "Debris and damage showcase"
+  scenario.debris-showcase.desc: "Every class at 2% hull, lined up: one shot each shows its explosion, shock wave and debris; damaged textures show on the way. Nothing shoots back."
+  scenario.dominion-raid.title: "Dominion raid on the Guard station"
+  scenario.dominion-raid.desc: "A Dreadnought disc, raider saucers and robot sentinels strike the Guard station. Hold them off with three wingmen."
+  scenario.duel-dreadnought.title: "Duel: dreadnought"
+  scenario.duel-dreadnought.desc: "You against 1 dreadnought: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.duel-grappler.title: "Duel: grappler"
+  scenario.duel-grappler.desc: "You against 1 grappler: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.duel-hotrod.title: "Duel: hotrod"
+  scenario.duel-hotrod.desc: "You against 2 hotrods: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.duel-raider-saucer.title: "Duel: raider saucer"
+  scenario.duel-raider-saucer.desc: "You against 1 raider saucer: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.duel-robot-sentinel.title: "Duel: robot sentinel"
+  scenario.duel-robot-sentinel.desc: "You against 3 robot sentinels: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.duel-scout-saucer.title: "Duel: scout saucer"
+  scenario.duel-scout-saucer.desc: "You against 2 scout saucers: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.mixed-dogfight.title: "Mixed dogfight"
+  scenario.mixed-dogfight.desc: "Guard rockets, Senate patrols and Prospector haulers against saucers, robots and Black Comet hot-rods: everyone hostile to someone."
+  scenario.outpost-strike.title: "Strike: the Dominion outpost"
+  scenario.outpost-strike.desc: "A Dominion outpost guarded by death-ray pods and a shield pod. Knock out the shield pod to bring the hub's shields down, silence the pods, then destroy the hub: its pods go with it."
+  scenario.probe-net.title: "Probe net: sensors and jamming"
+  scenario.probe-net.desc: "Your Sky-Eye probe 7 km ahead shows the saucers around it on your radar long before your own sensors reach them. A Dominion jamming buoy sits on the way: fly within 2.5 km of it and your radar range halves and missile locks take twice as long. Shoot it down."
+  scenario.rocket-vs-saucer.title: "Rocket vs saucer"
+  scenario.rocket-vs-saucer.desc: "Two Guard wingmen and a choice of rocket against a flight of Dominion saucers near the Guard station. Wingmen: ] for the menu, Shift+F fire at will."
+  scenario.systems-trial.title: "Systems trial: salvage a crippled saucer"
+  scenario.systems-trial.desc: "A raider saucer drifts ahead with its rockets shot out. Tow it with the tractor ray (Shift+T; Meteor and Thunderbolt) and jump out with it (H) to capture it. Try the power controls (F9/F10, ; and ', S balance) and the Thunderbolt's invisibility screen (Shift+C). A Grappler will try to drag it off first. The prize is marked PROTECT: R (nearest enemy) skips it."

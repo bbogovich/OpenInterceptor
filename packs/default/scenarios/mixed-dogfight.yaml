@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: mixed-dogfight
 order: 40
-title: "Mixed dogfight"
-description: >-
-  Guard rockets, Senate patrols and Prospector haulers against saucers, robots and Black Comet hot-rods: everyone hostile to someone.
+title: "@scenario.mixed-dogfight.title"
+description: "@scenario.mixed-dogfight.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

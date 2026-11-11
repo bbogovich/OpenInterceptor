@@ -4,14 +4,14 @@
 
 objects:
   sky_eye_probe:
-    name: Sky-Eye probe
+    name: "@object.sky_eye_probe.name"
     kind: probe
     faction: guard
     model_set: sky_eye_probe
     hit_points: 50
     probe: {sensors: 8km}
   jammer_buoy:
-    name: Jamming buoy
+    name: "@object.jammer_buoy.name"
     kind: probe
     faction: dominion
     model_set: jammer_buoy

@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: duel-robot-sentinel
 order: 62
-title: "Duel: robot sentinel"
-description: >-
-  You against 3 robot sentinels: test how this enemy flies and fights at each difficulty (D in the launcher).
+title: "@scenario.duel-robot-sentinel.title"
+description: "@scenario.duel-robot-sentinel.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

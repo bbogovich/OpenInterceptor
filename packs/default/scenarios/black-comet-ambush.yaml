@@ -2,8 +2,8 @@
 # Stage 2 testbed: third parties. Escort a prospector hauler through a raider ambush.
 id: black-comet-ambush
 order: 16
-title: Black Comet ambush
-description: Escort a Belt Prospectors ore hauler past a cosmium asteroid while Black Comet hot-rods attack. A Senate patrol rocket and a Cartel freighter are in the area; only the raiders are hostile.
+title: "@scenario.black-comet-ambush.title"
+description: "@scenario.black-comet-ambush.desc"
 player: choose
 player_position: [0, 0, 0]
 sun: [0.5, 0.3, -0.8]

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenInterceptor text (text/<language>/*.yaml)",
+  "type": "object", "additionalProperties": false, "properties": {
+    "text": {"description": "text key: the string (\"@key\" in rules refers to it)", "type": "object", "additionalProperties": {"type": "string"}},
+    "imports": {"description": "the original's language files, read from the player's CD", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+          "file": {"description": "an original language file: original:LangFile1.txt", "type": "string"},
+          "prefix": {"description": "keys are imported as <prefix>.<KEY> (default orig)", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+        }}}
+  }
+}

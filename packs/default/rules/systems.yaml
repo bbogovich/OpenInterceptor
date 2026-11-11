@@ -5,43 +5,43 @@
 
 systems:
   engines:
-    name: Atomic rockets
+    name: "@system.engines.name"
     hit_points: 100
   manoeuvring:
-    name: Attitude jets
+    name: "@system.manoeuvring.name"
     hit_points: 100
   sensors:
-    name: Radar
+    name: "@system.sensors.name"
     hit_points: 60
   shields:
-    name: Force-field generator
+    name: "@system.shields.name"
     hit_points: 60
   hyperdrive:
-    name: Hyperdrive
+    name: "@system.hyperdrive.name"
     hit_points: 100
   vct:
-    name: Gyro-jets
+    name: "@system.vct.name"
     hit_points: 120
   tractor:
-    name: Tractor ray
+    name: "@system.tractor.name"
     hit_points: 200
     power: 2
     range: 300
     strength: 70
   cloak:
-    name: Invisibility screen
+    name: "@system.cloak.name"
     hit_points: 100
     power: 3
     range: 350
     strength: 30
   ecm:
-    name: Radar jammer
+    name: "@system.ecm.name"
     hit_points: 80
     power: 1
     range: 300
     strength: 12
   damage_control:
-    name: Robot repair crew
+    name: "@system.damage_control.name"
     hit_points: 120
     repair_rate: 4
 

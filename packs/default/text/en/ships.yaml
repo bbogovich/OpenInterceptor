@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Player-visible text for the default campaign (English). Rules and scenarios name
+# these strings by key ("@ship.comet.name"); a translation is the same keys in
+# text/<language>/.
+text:
+  ship.comet.name: "Comet"
+  ship.comet.desc: "Light interceptor rocket: quick, nimble and lightly armed."
+  ship.meteor.name: "Meteor"
+  ship.meteor.desc: "Twin-booster patrol rocket with a tractor ray and a robot repair crew."
+  ship.thunderbolt.name: "Thunderbolt"
+  ship.thunderbolt.desc: "Heavy four-finned strike rocket. Carries every gadget the Guard has: jammer, tractor ray, invisibility screen, gyro-jets."
+  ship.victory.name: "Victory"
+  ship.victory.desc: "The Guard's flagship: an art-deco battleship rocket (story ship, Stage 5)."
+  ship.scout_saucer.name: "Scout saucer"
+  ship.scout_saucer.desc: "Small domed saucer: fast, slippery, lightly armed."
+  ship.raider_saucer.name: "Raider saucer"
+  ship.raider_saucer.desc: "Fighting saucer with a ray-gun turret and an invisibility screen."
+  ship.dreadnought.name: "Dreadnought disc"
+  ship.dreadnought.desc: "The Regent's tiered battle disc."
+  ship.robot_sentinel.name: "Robot sentinel"
+  ship.robot_sentinel.desc: "A tin-can robot with a jet pack and a ray in each claw."
+  ship.grappler.name: "Grappler"
+  ship.grappler.desc: "Tug saucer with grappling claws and a tractor ray; drags off disabled rockets."
+  ship.cargo_orb.name: "Cargo orb"
+  ship.cargo_orb.desc: "Banded freighter sphere hauling cosmium to the Eclipse Engine."
+  ship.senate_patrol.name: "Senate patrol rocket"
+  ship.senate_patrol.desc: "The Solar Senate's sleek white-and-gold patrol rocket."
+  ship.cartel_freighter.name: "Cartel freighter"
+  ship.cartel_freighter.desc: "A bulbous cargo rocket of the Nebula Cartel. Ask no questions."
+  ship.prospector_hauler.name: "Prospector hauler"
+  ship.prospector_hauler.desc: "A boxy ore hauler with a drill nose."
+  ship.hotrod.name: "Black Comet hot-rod"
+  ship.hotrod.desc: "A raider's hot-rod rocket: flame paint and an oversized exhaust."

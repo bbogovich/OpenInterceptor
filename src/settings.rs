@@ -47,6 +47,8 @@ pub struct Settings {
     pub campaign: Option<String>,
     /// The difficulty level last chosen (`[game] difficulty`).
     pub difficulty: Option<String>,
+    /// The language of player-visible text (`game.language`, default `en`).
+    pub language: Option<String>,
 }
 
 impl Settings {
@@ -63,6 +65,7 @@ impl Settings {
             disabled_packs: Get(&packs).list("disabled"),
             campaign: text(&game, "campaign"),
             difficulty: text(&game, "difficulty"),
+            language: text(&game, "language"),
         }
     }
 
@@ -80,7 +83,14 @@ impl Settings {
             .collect();
         let campaign = ini.get("game", "campaign").filter(|v| !v.is_empty()).map(str::to_string);
         let difficulty = ini.get("game", "difficulty").filter(|v| !v.is_empty()).map(str::to_string);
-        Settings { original: path("original"), mods: path("mods"), disabled_packs, campaign, difficulty }
+        Settings {
+            original: path("original"),
+            mods: path("mods"),
+            disabled_packs,
+            campaign,
+            difficulty,
+            language: None,
+        }
     }
 
     /// Reads `<dir>/settings.yaml` (or an older `settings.ini`), or returns defaults.
@@ -110,10 +120,14 @@ impl Settings {
              # original: your X-COM: Interceptor CD, or a folder copied from it.\n\
              # mods: folder of mods (empty = the mods folder next to this file).\n\
              paths:\n{}\n# Pack ids switched off.\npacks:\n{}\n\
-             # The launcher's campaign and difficulty choices.\ngame:\n{}\n",
+             # The launcher's campaign and difficulty choices, and the text language.\ngame:\n{}\n",
             body(map(vec![("original", path(&self.original)), ("mods", path(&self.mods))])),
             body(map(vec![("disabled", disabled)])),
-            body(map(vec![("campaign", text(self.campaign.clone())), ("difficulty", text(self.difficulty.clone()))])),
+            body(map(vec![
+                ("campaign", text(self.campaign.clone())),
+                ("difficulty", text(self.difficulty.clone())),
+                ("language", text(self.language.clone())),
+            ])),
         )
     }
 
@@ -194,7 +208,8 @@ mod tests {
                 mods: None,
                 disabled_packs: vec!["a".into(), "b".into()],
                 campaign: Some("default".into()),
-                difficulty: None
+                difficulty: None,
+                language: None
             }
         );
         assert_eq!(Settings::parse_legacy_ini(&s.to_ini_text()), s);

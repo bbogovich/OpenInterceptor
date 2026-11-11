@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# The original's English text, read from the player's CD at run time and never copied
+# here: every string in LangFile1.txt is available to rules and scenarios as
+# "@orig.<KEY>" (for example the key S_XCOM). A translation addon replaces keys by
+# shipping its own text/<language>/ files.
+imports:
+  - {file: "original:LangFile1.txt", prefix: orig}

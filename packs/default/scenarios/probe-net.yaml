@@ -2,12 +2,8 @@
 # Stage 2 testbed: sensor and jamming probes.
 id: probe-net
 order: 19
-title: "Probe net: sensors and jamming"
-description: >-
-  Your Sky-Eye probe 7 km ahead shows the saucers around it on your radar long before
-  your own sensors reach them. A Dominion jamming buoy sits on the way: fly within
-  2.5 km of it and your radar range halves and missile locks take twice as long. Shoot
-  it down.
+title: "@scenario.probe-net.title"
+description: "@scenario.probe-net.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 12

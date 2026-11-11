@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Player-visible text for the default campaign (English). Rules and scenarios name
+# these strings by key ("@ship.comet.name"); a translation is the same keys in
+# text/<language>/.
+text:
+  beam.blaster.name: "Blaster"
+  beam.heat_ray.name: "Heat ray"
+  beam.disintegrator.name: "Disintegrator"
+  beam.ion_ray.name: "Ion ray"
+  beam.paralyzer_ray.name: "Paralyzer ray"
+  beam.death_ray.name: "Death ray"
+  missile.seeker.name: "Seeker rocket"
+  missile.atomic_torpedo.name: "Atomic torpedo"
+  missile.cluster_rocket.name: "Cluster rocket"
+  missile.decoy_rocket.name: "Decoy rocket"
+  missile.mine_warhead.name: "Space mine warhead"

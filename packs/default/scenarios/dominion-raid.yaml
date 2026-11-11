@@ -2,8 +2,8 @@
 # Stage 2 testbed arena: defend a station against a mixed Dominion force.
 id: dominion-raid
 order: 12
-title: Dominion raid on the Guard station
-description: A Dreadnought disc, raider saucers and robot sentinels strike the Guard station. Hold them off with three wingmen.
+title: "@scenario.dominion-raid.title"
+description: "@scenario.dominion-raid.desc"
 player: choose
 player_position: [0, 300, 0]
 sun: [0.3, 0.6, -0.7]

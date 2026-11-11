@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: duel-grappler
 order: 64
-title: "Duel: grappler"
-description: >-
-  You against 1 grappler: test how this enemy flies and fights at each difficulty (D in the launcher).
+title: "@scenario.duel-grappler.title"
+description: "@scenario.duel-grappler.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

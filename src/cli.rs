@@ -23,6 +23,7 @@ OPTIONS:
     --packs <DIR>       Folder of built-in packs (default: packs/ next to the program)
     --no-original       Ignore the original data even if available
     --difficulty <ID>   Play at this difficulty level (a level id of the campaign)
+    --language <CODE>   Text language: the packs' text/<CODE>/ folders (default en)
     --campaign <ID>     Load this campaign (default: the last one chosen, else
                         interceptor when the data is available, else default)
     --scenario <ID>     Start this scenario directly, skipping the launcher
@@ -59,6 +60,7 @@ pub struct Options {
     pub no_original: bool,
     pub campaign: Option<String>,
     pub difficulty: Option<String>,
+    pub language: Option<String>,
     pub scenario: Option<String>,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
@@ -92,6 +94,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--campaign" => o.campaign = Some(value("--campaign")?),
             "--difficulty" => o.difficulty = Some(value("--difficulty")?),
+            "--language" => o.language = Some(value("--language")?),
             "--ship" => o.ship = Some(value("--ship")?),
             "--model" => o.model = Some(value("--model")?),
             "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),
@@ -175,6 +178,7 @@ impl Options {
                 let same = self.campaign.is_none() || self.campaign == settings.campaign;
                 settings.difficulty.clone().filter(|_| same)
             }),
+            language: self.language.clone().or(settings.language.clone()),
             campaign: self.campaign.clone().or(settings.campaign),
         }
     }

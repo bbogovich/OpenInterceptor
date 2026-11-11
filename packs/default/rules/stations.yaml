@@ -14,8 +14,8 @@ objects:
       - {slot: turret6, class: guard_turret}
       - {slot: shield1, class: guard_shield_generator}
       - {slot: shield2, class: guard_shield_generator}
-    name: Guard station
-    description: "An art-deco spire with a docking ring: home of the Interplanetary Guard."
+    name: "@object.guard_station.name"
+    description: "@object.guard_station.desc"
     model_set: guard_station
     faction: guard
     hit_points: 8000
@@ -31,22 +31,22 @@ objects:
       - {slot: pod5, class: dominion_turret_pod}
       - {slot: pod6, class: dominion_turret_pod}
       - {slot: shield1, class: dominion_shield_pod}
-    name: Dominion outpost
-    description: A dark spiked hub of the Umbral Dominion.
+    name: "@object.dominion_outpost.name"
+    description: "@object.dominion_outpost.desc"
     model_set: dominion_outpost
     faction: dominion
     hit_points: 6000
     shields: 1200
     armor: 1500
   cosmium_asteroid:
-    name: Cosmium asteroid
-    description: A rock veined with glowing cosmium crystals.
+    name: "@object.cosmium_asteroid.name"
+    description: "@object.cosmium_asteroid.desc"
     model_set: cosmium_asteroid
     faction: neutral
     hit_points: 20000
   space_mine:
-    name: Dominion space mine
-    description: A spiked sphere that waits in the dark and goes off when a ship comes near.
+    name: "@object.space_mine.name"
+    description: "@object.space_mine.desc"
     model_set: robot_sentinel
     kind: mine
     faction: dominion
@@ -56,7 +56,7 @@ objects:
 
   # Station modules (mounted on the stations above).
   guard_turret:
-    name: Guard ray turret
+    name: "@object.guard_turret.name"
     model_set: guard_turret
     faction: guard
     hit_points: 300
@@ -65,14 +65,14 @@ objects:
     turret_arc: 180
     behaviour: station_turret
   guard_shield_generator:
-    name: Force-field generator
+    name: "@object.guard_shield_generator.name"
     model_set: guard_shield_generator
     faction: guard
     hit_points: 500
     armor: 150
     shield_generator: true
   dominion_turret_pod:
-    name: Death-ray pod
+    name: "@object.dominion_turret_pod.name"
     model_set: dominion_turret_pod
     faction: dominion
     hit_points: 280
@@ -81,7 +81,7 @@ objects:
     turret_arc: 180
     behaviour: station_turret
   dominion_shield_pod:
-    name: Shield pod
+    name: "@object.dominion_shield_pod.name"
     model_set: dominion_shield_pod
     faction: dominion
     hit_points: 450

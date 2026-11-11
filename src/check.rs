@@ -27,6 +27,8 @@ pub struct Report {
     pub images: usize,
     pub sounds: usize,
     pub scenarios: usize,
+    /// Text strings (pack text files plus imported original text).
+    pub texts: usize,
     /// Original meshes/textures parsed in the exhaustive pass.
     pub original_resources: usize,
     pub warnings: Vec<String>,
@@ -37,7 +39,7 @@ impl Report {
     /// One-line summary.
     pub fn summary(&self) -> String {
         format!(
-            "{} packs, {} ship classes, {} models, {} textures, {} images, {} sounds, {} scenarios, {} original resources; {} warnings, {} errors",
+            "{} packs, {} ship classes, {} models, {} textures, {} images, {} sounds, {} scenarios, {} texts, {} original resources; {} warnings, {} errors",
             self.packs,
             self.ships,
             self.models,
@@ -45,6 +47,7 @@ impl Report {
             self.images,
             self.sounds,
             self.scenarios,
+            self.texts,
             self.original_resources,
             self.warnings.len(),
             self.errors.len()
@@ -55,7 +58,12 @@ impl Report {
 /// Validates loaded content. Rules warnings from loading count as errors here: a
 /// definition that failed to load is a bug in the pack.
 pub fn run(content: &Content) -> Report {
-    let mut r = Report { packs: content.packs.len(), warnings: content.warnings.clone(), ..Default::default() };
+    let mut r = Report {
+        packs: content.packs.len(),
+        texts: content.text.len(),
+        warnings: content.warnings.clone(),
+        ..Default::default()
+    };
     // Problems in the mod files (bad YAML, schema violations, unknown ids) are errors;
     // the remaining warnings (skipped packs) stay warnings.
     r.errors.extend(content.errors.iter().cloned());

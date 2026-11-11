@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: duel-raider-saucer
 order: 61
-title: "Duel: raider saucer"
-description: >-
-  You against 1 raider saucer: test how this enemy flies and fights at each difficulty (D in the launcher).
+title: "@scenario.duel-raider-saucer.title"
+description: "@scenario.duel-raider-saucer.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

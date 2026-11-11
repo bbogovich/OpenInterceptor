@@ -2,13 +2,8 @@
 # Stage 2 testbed: ship systems in the default campaign.
 id: systems-trial
 order: 14
-title: "Systems trial: salvage a crippled saucer"
-description: >-
-  A raider saucer drifts ahead with its rockets shot out. Tow it with the tractor ray
-  (Shift+T; Meteor and Thunderbolt) and jump out with it (H) to capture it. Try the
-  power controls (F9/F10, ; and ', S balance) and the Thunderbolt's invisibility screen
-  (Shift+C). A Grappler will try to drag it off first. The prize is marked PROTECT:
-  R (nearest enemy) skips it.
+title: "@scenario.systems-trial.title"
+description: "@scenario.systems-trial.desc"
 player: thunderbolt
 player_position: [0, 0, 0]
 sun: [-0.4, 0.45, -0.8]

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Player-visible text for the default campaign (English). Rules and scenarios name
+# these strings by key ("@ship.comet.name"); a translation is the same keys in
+# text/<language>/.
+text:
+  faction.guard.name: "Interplanetary Guard"
+  faction.dominion.name: "Umbral Dominion"
+  faction.senate.name: "Solar Senate"
+  faction.cartel.name: "Nebula Cartel"
+  faction.prospectors.name: "Belt Prospectors"
+  faction.raiders.name: "Black Comet raiders"
+  faction.neutral.name: "Uncharted"

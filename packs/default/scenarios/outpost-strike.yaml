@@ -2,11 +2,8 @@
 # Stage 2 testbed: a station with modules in the default campaign.
 id: outpost-strike
 order: 18
-title: "Strike: the Dominion outpost"
-description: >-
-  A Dominion outpost guarded by death-ray pods and a shield pod. Knock out the shield pod
-  to bring the hub's shields down, silence the pods, then destroy the hub: its pods go
-  with it.
+title: "@scenario.outpost-strike.title"
+description: "@scenario.outpost-strike.desc"
 player: choose
 player_position: [0, 150, 900]
 starfield_seed: 61

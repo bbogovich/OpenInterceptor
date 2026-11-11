@@ -2,9 +2,8 @@
 # Stage 2 testbed arena (generated list; see the docs' testbed page).
 id: duel-scout-saucer
 order: 60
-title: "Duel: scout saucer"
-description: >-
-  You against 2 scout saucers: test how this enemy flies and fights at each difficulty (D in the launcher).
+title: "@scenario.duel-scout-saucer.title"
+description: "@scenario.duel-scout-saucer.desc"
 player: choose
 player_position: [0, 0, 0]
 starfield_seed: 7

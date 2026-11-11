@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Player-visible text for the default campaign (English). Rules and scenarios name
+# these strings by key ("@ship.comet.name"); a translation is the same keys in
+# text/<language>/.
+text:
+  object.guard_station.name: "Guard station"
+  object.guard_station.desc: "An art-deco spire with a docking ring: home of the Interplanetary Guard."
+  object.dominion_outpost.name: "Dominion outpost"
+  object.dominion_outpost.desc: "A dark spiked hub of the Umbral Dominion."
+  object.cosmium_asteroid.name: "Cosmium asteroid"
+  object.cosmium_asteroid.desc: "A rock veined with glowing cosmium crystals."
+  object.space_mine.name: "Dominion space mine"
+  object.space_mine.desc: "A spiked sphere that waits in the dark and goes off when a ship comes near."
+  object.guard_turret.name: "Guard ray turret"
+  object.guard_shield_generator.name: "Force-field generator"
+  object.dominion_turret_pod.name: "Death-ray pod"
+  object.dominion_shield_pod.name: "Shield pod"
+  object.sky_eye_probe.name: "Sky-Eye probe"
+  object.jammer_buoy.name: "Jamming buoy"
