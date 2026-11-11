@@ -393,6 +393,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | MT-2-27 | Duels and target preferences | `duel-*`, `mixed-dogfight`, `escort`, `rocket-vs-saucer` | not run | | | |
 | MT-2-28 | Protected objectives and radar colours | `systems-trial`, `rocket-vs-saucer` | not run | | | |
 | MT-2-29 | Cockpit text legibility | `rocket-vs-saucer`, `systems-trial` (default) | not run | | | |
+| MT-2-30 | Top display bar and shield rings | any `interceptor` duel, each hull; `rocket-vs-saucer` | not run | | | |
 
 ## Stage 2 cases
 
@@ -629,3 +630,11 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | Scenario | `rocket-vs-saucer` and `systems-trial` (default), cockpit (3D) view and exterior view, at full screen and in a small window |
 | Steps | 1. Read the throttle/speed line at the top left. 2. Read the dial labels (SPD NRG SHD HUL), the power labels and the system lamps. 3. Select a target and read the MFD. |
 | Expected | All text is readable in both views; dials carry labels in the cockpit; the lamps rearrange into rows that fit their panel; long MFD lines end in `..` rather than shrinking the page. |
+
+### MT-2-30 — Top display bar and shield rings
+
+| Field | |
+|---|---|
+| Scenario | `duel-wraith` (interceptor) flown in a Lightning, Firestar and Avenger (the three cockpits); `rocket-vs-saucer` (default), cockpit view |
+| Steps | 1. Read the top bar at start. 2. Throttle up, use afterburner. 3. Let the Wraith shoot your nose, then your tail. 4. Lower shield power (F10) and watch the power strip. |
+| Expected | 1: the message sits in the lit band; `THR … m/s` in the left strip; `B-x S-x F100 A100` and `SYSTEMS OK` in the right strip; nothing overlaps the bar's dividers. 2: the throttle line updates and shows `BURN`. 3: the front scope's ring turns amber/red as the fore shield drops, then the rear's; a downed facing blinks red. 4: the power strip's letters change; a damaged system appears in the systems strip in amber/red. |

@@ -31,18 +31,27 @@ cockpits:
 | `model` | none | Asset reference of a 3D cockpit model. |
 | `model_offset` | `[0, 0, 0]` | Where the model's origin sits relative to the pilot's eye, in metres. |
 | `model_scale` | `1` | Model units → metres. |
-| `instruments` | — | `name: [x, y, w, h]` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`. |
+| `instruments` | — | `name: [x, y, w, h]` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`, `status` (the throttle/speed line; without it the line is plain screen text at the top left). A rectangle more than five times wider than tall is a **strip** and gets the instrument's one-line form (below). |
 | `anchors` | none | 3D cockpits: `name: {at, normal, size}` — the instrument drawn in perspective on the model (below). |
 
 All instrument text — MFD pages, the message line, gauge labels, the `power` and `systems`
 labels — is sized to fit its instrument's box, so a small rectangle gets small text rather than
 text spilling out of it.
 
+## Shield rings
+
+Each radar scope carries a ring just inside its edge showing a shield facing: the front
+scope the fore shield, the rear scope the aft. Green above 66 %, amber above 33 %, red
+below, blinking red when the facing is down. Size the `radar_front` / `radar_rear`
+rectangles to the scope glass and the ring sits on its rim.
+
 ## The `power` and `systems` instruments (Stage 2)
 
 | Instrument | Shows |
 |---|---|
 | `power` | Four columns: `B-<level>` and `S-<level>` (beam and shield charge setting, A–E, one cell lit per level), then `F` and `A` bars for the fore and aft shields as a fraction of their balanced capacity (red below 25 %; the favoured facing's label is white). When the power budget is fully used, `used/budget` appears in yellow. |
+| `status` | The throttle, speed and drive/system flags line (`THR 20%  -274 m/s  VCT  BURN …`), fitted to the rectangle and clipped with `..` when long. |
+| strips | In a strip, `power` reads `B-<level> S-<level>  F<fore %> A<aft %>` (red when a facing is below 25 %), and `systems` lists only the systems that are not plain OK in their lamp colours, or `SYSTEMS OK`. The `interceptor` cockpits put `status`, `power` and `systems` in the two strips of the top display bar. |
 | `systems` | One lamp per fitted system with a three-letter label (`ENG`, `MAN`, `SEN`, `SHD`, `HYP`, `VCT`, `TRC`, `CLK`, `ECM`, `DCC`): green working, bright cyan switched on, amber damaged, red knocked out (blinking while being repaired), dark destroyed. |
 
 A cockpit that does **not** place them still gets them: small panels at the top right of the
