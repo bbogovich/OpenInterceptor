@@ -18,6 +18,8 @@ pub enum Entry {
     ModelViewer,
     AssetBrowser,
     Controls,
+    /// The simulator: set up a mission, then fly it.
+    Simulator,
     /// Index into `content.scenarios`.
     Scenario(usize),
     /// Index into `content.rules.missions`.
@@ -37,12 +39,13 @@ pub struct Menu {
 
 impl Menu {
     pub fn new(content: &Content) -> Menu {
-        let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls];
+        let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls, Entry::Simulator];
         entries.extend((0..content.scenarios.len()).map(Entry::Scenario));
         entries.extend((0..content.rules.missions.len()).map(Entry::Mission));
         let playable = content.rules.playable_ships().into_iter().map(|id| content.rules.ship(id).id.clone()).collect();
         // Start on the first scenario rather than the viewer.
-        Menu { selected: if entries.len() > 3 { 3 } else { 0 }, entries, ship: 0, playable }
+        let selected = entries.iter().position(|e| matches!(e, Entry::Scenario(_))).unwrap_or(0);
+        Menu { selected, entries, ship: 0, playable }
     }
 
     /// Moves the selection up or down, wrapping.
@@ -79,6 +82,7 @@ impl Menu {
             Entry::ModelViewer => Next::Viewer,
             Entry::AssetBrowser => Next::Assets,
             Entry::Controls => Next::Controls,
+            Entry::Simulator => Next::Simulator,
             Entry::Scenario(i) => {
                 let s = &content.scenarios[*i];
                 let ship = if s.player_class.is_none() { self.playable.get(self.ship).cloned() } else { None };
@@ -239,6 +243,7 @@ impl Launcher {
                 Entry::ModelViewer => "Model viewer".to_string(),
                 Entry::AssetBrowser => "Asset browser (textures, images, sounds)".to_string(),
                 Entry::Controls => "Controls (keyboard, gamepad, mouse)".to_string(),
+                Entry::Simulator => "Simulator (set up a mission and fly it)".to_string(),
                 Entry::Scenario(k) => content.scenarios[*k].title.clone(),
                 Entry::Mission(k) => format!("Mission: {}", content.rules.missions[*k].name),
             };
@@ -256,6 +261,7 @@ impl Launcher {
                 "Every texture, image and sound on the CD, as the game loads it - with pack overrides marked."
                     .to_string()
             }
+            Entry::Simulator => "Choose a mission, your ship, the environment, hazards and the size of the enemy force, then fly it.".to_string(),
             Entry::Controls => {
                 "Rebind every action to keys or gamepad buttons (hold LB for the second layer), and set stick and mouse options.".to_string()
             }
@@ -351,10 +357,10 @@ mod tests {
     fn menu_lists_viewer_and_scenarios_and_wraps() {
         let c = sample();
         let mut m = Menu::new(&c);
-        assert_eq!(m.entries[..3], [Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls]);
-        assert_eq!(m.entries.len(), 3 + c.scenarios.len() + c.rules.missions.len());
-        assert_eq!(m.selected, 3, "starts on the first scenario");
-        for _ in 0..4 {
+        assert_eq!(m.entries[..4], [Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls, Entry::Simulator]);
+        assert_eq!(m.entries.len(), 4 + c.scenarios.len() + c.rules.missions.len());
+        assert_eq!(m.selected, 4, "starts on the first scenario");
+        for _ in 0..5 {
             m.move_selection(false);
         }
         assert_eq!(m.selected, m.entries.len() - 1, "wraps upwards");
@@ -365,13 +371,15 @@ mod tests {
         assert!(matches!(m.activate(&c), Next::Assets));
         m.move_selection(true);
         assert!(matches!(m.activate(&c), Next::Controls));
+        m.move_selection(true);
+        assert!(matches!(m.activate(&c), Next::Simulator));
     }
 
     #[test]
     fn scenarios_start_with_the_chosen_ship_only_when_choosing() {
         let c = sample();
         let mut m = Menu::new(&c);
-        m.selected = 3;
+        m.selected = 4;
         // The first default arena lets the player choose: the launcher passes its pick.
         assert!(m.choosing(&c));
         m.move_ship(true);

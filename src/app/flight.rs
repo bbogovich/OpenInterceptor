@@ -238,6 +238,8 @@ pub struct FlightSession {
     menu_open: bool,
     /// Seconds since the last telemetry message to the console.
     console_clock: f32,
+    /// A simulator mission (a modified copy), kept so "again" flies the same setup.
+    custom: Option<crate::content::mission::MissionDef>,
     /// Hides the keys still held from the menu that started this battle (see StartGuard).
     start_guard: crate::input::StartGuard,
     /// Hits on the player's craft so far, and how many reached the hull: the console plays
@@ -310,19 +312,40 @@ impl FlightSession {
         Self::start_battle(ctx, id, ship, true)
     }
 
+    /// Starts a mission from a ready-made definition: the simulator's modified copy.
+    pub fn start_custom(
+        ctx: &mut AppContext,
+        def: crate::content::mission::MissionDef,
+        ship: Option<&str>,
+    ) -> Result<FlightSession, String> {
+        let id = def.id.clone();
+        let mut session = Self::start_with(ctx, &id, ship, Some(def.clone()))?;
+        session.custom = Some(def);
+        Ok(session)
+    }
+
     fn start_battle(
         ctx: &mut AppContext,
         id: &str,
         ship: Option<&str>,
         is_mission: bool,
     ) -> Result<FlightSession, String> {
-        let content = &ctx.content;
         let mission_def = match is_mission {
-            true => {
-                Some(content.rules.missions.iter().find(|m| m.id == id).ok_or(format!("no mission '{id}'"))?.clone())
-            }
+            true => Some(
+                ctx.content.rules.missions.iter().find(|m| m.id == id).ok_or(format!("no mission '{id}'"))?.clone(),
+            ),
             false => None,
         };
+        Self::start_with(ctx, id, ship, mission_def)
+    }
+
+    fn start_with(
+        ctx: &mut AppContext,
+        id: &str,
+        ship: Option<&str>,
+        mission_def: Option<crate::content::mission::MissionDef>,
+    ) -> Result<FlightSession, String> {
+        let content = &ctx.content;
         // A mission shows its name and briefing; its battle is built by the mission run.
         let scenario = match &mission_def {
             Some(m) => crate::content::scenario::Scenario {
@@ -442,6 +465,7 @@ impl FlightSession {
             help_open: false,
             console_clock: 0.0,
             start_guard: Default::default(),
+            custom: None,
             console_hits: [0, 0],
             console_class: None,
             console_target: None,
@@ -471,6 +495,9 @@ impl FlightSession {
 
     /// Where "fly again" goes: the same scenario or mission with the same ship.
     fn again(&self) -> Next {
+        if let Some(def) = &self.custom {
+            return Next::Simulate { mission: Box::new(def.clone()), ship: self.ship_choice.clone() };
+        }
         match &self.mission {
             Some(_) => Next::Mission { mission: self.scenario_id.clone(), ship: self.ship_choice.clone() },
             None => Next::Fly { scenario: self.scenario_id.clone(), ship: self.ship_choice.clone() },

@@ -33,6 +33,7 @@ pub mod controls;
 pub mod devices;
 pub mod flight;
 pub mod launcher;
+pub mod simulator;
 pub mod viewer;
 
 use crate::audio::SoundBank;
@@ -89,6 +90,13 @@ pub enum Next {
         mission: String,
         ship: Option<String>,
     },
+    /// The simulator's setup screen (from the launcher).
+    Simulator,
+    /// Fly a simulator mission: a modified copy of a mission (see `simulator::apply`).
+    Simulate {
+        mission: Box<crate::content::mission::MissionDef>,
+        ship: Option<String>,
+    },
     Quit,
 }
 
@@ -99,6 +107,7 @@ enum Screen {
     Viewer(viewer::ModelViewer),
     Assets(assets::AssetBrowser),
     Controls(controls::ControlsMenu),
+    Simulator(simulator::Simulator),
     Flight(Box<flight::FlightSession>),
 }
 
@@ -313,6 +322,7 @@ pub async fn run(options: Options) {
                 }
             }
             Screen::Flight(f) => f.frame(&mut ctx),
+            Screen::Simulator(s) => s.frame(&mut ctx),
         };
         match next {
             Next::Stay => {}
@@ -349,8 +359,12 @@ pub async fn run(options: Options) {
                     }
                 }
             }
-            Next::Fly { .. } | Next::Mission { .. } => {
+            Next::Simulator => screen = Screen::Simulator(simulator::Simulator::new()),
+            Next::Fly { .. } | Next::Mission { .. } | Next::Simulate { .. } => {
                 let started = match &next {
+                    Next::Simulate { mission, ship } => {
+                        flight::FlightSession::start_custom(&mut ctx, (**mission).clone(), ship.as_deref())
+                    }
                     Next::Mission { mission, ship } => {
                         flight::FlightSession::start_mission(&mut ctx, mission, ship.as_deref())
                     }
