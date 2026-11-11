@@ -190,4 +190,4 @@ nav:
           - "Controls": reference/original-game/controls.md
           - "CD layout": reference/original-game/cd-layout.md
       - "Revision history": reference/revision-history.md
-      - "Change history": reference/change-history.md
+      - "Change history": meta/change-history.md

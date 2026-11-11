@@ -12,7 +12,7 @@ never the mechanism that delivers it. The [specification](../specification/index
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
 Definition version **1.0.0** (79 features). Changes are listed in the
-[change history](../reference/change-history.md).
+[change history](../meta/change-history.md).
 
 ## Areas
 

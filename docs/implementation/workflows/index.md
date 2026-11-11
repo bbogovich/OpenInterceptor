@@ -23,7 +23,7 @@ supported by the `sio` client). The [definition](../../definition/index.md) and 
     3. issues are queued in `sio`, citing the requirements.
 2. **No approval gates.** The definition and the specification are a permanent record: IDs are
    never reused, and each page's revision history and the
-   [change history](../../reference/change-history.md) record every change.
+   [change history](../../meta/change-history.md) record every change.
 3. **The specification moves before the code**, so no spec sync is needed: code is written
    against requirements that already say what it must do. Requirements written from code that
    predates this workflow are marked *Reverse-engineered: yes*.

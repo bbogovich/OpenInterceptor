@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's CD.
 
 Specification version **1.0.0** (168 requirements). Changes are listed in the
-[change history](../reference/change-history.md).
+[change history](../meta/change-history.md).
 
 ## Requirements
 
