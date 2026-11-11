@@ -5320,6 +5320,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#external-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External tools
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5914,6 +5925,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#external-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External tools
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6042,6 +6064,19 @@ keep-alive, no chunking, no request bodies, no fragmented messages. Written in-c
 and RFC vectors), <code>remote::json</code> (~360) and threads from <code>std</code>. Decision: build in-crate; no
 dependency added. The console page itself (<code>web/console/</code>) is plain custom elements and CSS
 with no framework or build step.</p>
+<h2 id="external-tools">External tools<a class="headerlink" href="#external-tools" title="Permanent link">&para;</a></h2>
+<p>Programs the user may have installed, which the project calls but never links, bundles or
+requires, are <strong>not dependencies</strong>.</p>
+<p><strong>Blender (planned, MD10).</strong> A mod may carry <code>.blend</code> files as the source of its models. When
+Blender is installed, the Mod Designer runs it headless on save
+(<code>blender -b file.blend --python-expr …</code>) to export OBJ/MTL or <code>.glb</code>; without it, the exported
+files already in the pack are used. The engine never parses <code>.blend</code>, whose binary format changes
+between Blender versions. Blender is GPL, but it runs as a separate program on the user's own
+files and nothing of it enters the codebase. See
+<a href="../../../specification/requirements/modding/#r-mod-054-blender-sources">R-MOD-054</a>.</p>
+<p><strong><code>.glb</code> (planned, MD10)</strong> is read in-crate: the glTF JSON chunk with <code>remote::json</code> and the
+binary buffers; no crate is added
+(<a href="../../../specification/requirements/modding/#r-mod-053-single-file-models">R-MOD-053</a>).</p>
 <p>The next candidate is the Tier 2 scripting language (see <a href="../../../modding/scripting/">Scripting</a>).</p>
 
 

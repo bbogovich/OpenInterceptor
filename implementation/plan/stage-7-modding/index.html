@@ -5969,6 +5969,24 @@ and the engine renderer (D1), so the build produces two artifacts, the game and 
 <td><code>designer</code></td>
 <td><a href="../../../specification/requirements/modding/#r-mod-031-cutscene-designer-workspace">R-MOD-031</a>, <a href="../../../specification/requirements/modding/#r-mod-032-seeking-with-snapshots">R-MOD-032</a></td>
 </tr>
+<tr>
+<td>MD8</td>
+<td><strong>3D cockpit instrument placement</strong>: drag each instrument over the cockpit model; a ray from the eye through the cursor hits a face; the instrument is previewed applied to it (anchor <code>{at, normal, size}</code>), with adjustable size; saved as <code>cockpits.&lt;id&gt;.anchors</code>. Reuses <code>hud::layout::cursor_ray</code>, <code>ray_triangle</code>, <code>anchor_corners</code> and the F12 editor (<code>app/flight.rs</code> <code>edit_layout</code>), which could gain the drag with live preview first</td>
+<td><code>designer</code>, <code>hud::layout</code></td>
+<td><a href="../../../specification/requirements/modding/#r-mod-048-drag-instruments-onto-a-3d-cockpit">R-MOD-048</a>, <a href="../../../specification/requirements/modding/#r-mod-049-instrument-size-and-preview-on-the-surface">R-MOD-049</a></td>
+</tr>
+<tr>
+<td>MD9</td>
+<td><strong>Example mod: X-COM 3D cockpit, the first test case for the mod tools</strong>: an <code>interceptor</code> extension where the modder selects the cockpit images to extract (copied into the mod, provenance recorded), runs <em>Create 3D cockpit</em>, edits in Blender and places the instruments; the generic base cockpit in <code>resources/default</code> (original-free OBJ/MTL and textures from <code>tools/default_assets/</code>); the user's X-COM 3D cockpit example mod in <code>packs/</code> (original-free geometry, X-COM textures referenced from the original data, <code>requires_original: true</code>)</td>
+<td><code>designer</code>, <code>tools/default_assets</code>, <code>packs/</code></td>
+<td><a href="../../../specification/requirements/modding/#r-mod-050-create-a-3d-cockpit">R-MOD-050 – R-MOD-052</a></td>
+</tr>
+<tr>
+<td>MD10</td>
+<td><strong>Single-file models</strong>: OBJ/MTL stays fully supported; a <code>.glb</code> reader in-crate as an additional option; <code>.blend</code> sources exported through Blender, run headless when installed (Blender is an optional tool, not a dependency); materials keep their textures</td>
+<td><code>formats</code>, <code>model</code>, <code>designer</code></td>
+<td><a href="../../../specification/requirements/modding/#r-mod-053-single-file-models">R-MOD-053 – R-MOD-055</a></td>
+</tr>
 </tbody>
 </table>
 <p><strong>Exit</strong>: the remastered campaign plays the whole Interceptor campaign with its generated assets;

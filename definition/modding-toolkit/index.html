@@ -1024,6 +1024,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-mod-014-3d-cockpit-instrument-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-MOD-014 3D cockpit instrument placement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-mod-015-single-file-models-and-blender-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-MOD-015 Single-file models and Blender sources
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6145,6 +6167,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-mod-014-3d-cockpit-instrument-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-MOD-014 3D cockpit instrument placement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-mod-015-single-file-models-and-blender-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-MOD-015 Single-file models and Blender sources
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6241,15 +6285,33 @@
 <td><a href="#f-mod-013-shared-formations">F-MOD-013 Shared formations</a></td>
 <td>Planned</td>
 </tr>
+<tr>
+<td><a href="#f-mod-014-3d-cockpit-instrument-placement">F-MOD-014 3D cockpit instrument placement</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#f-mod-015-single-file-models-and-blender-sources">F-MOD-015 Single-file models and Blender sources</a></td>
+<td>Planned</td>
+</tr>
 </tbody>
 </table>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <h3 id="f-mod-001-packs-and-mod-kinds">F-MOD-001 Packs and mod kinds<a class="headerlink" href="#f-mod-001-packs-and-mod-kinds" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> Content comes in packs: campaigns, addons that change a campaign, and libraries shared between them; a campaign can extend another.</p>
+<p><strong>Packs and mods.</strong> Both use the same format; the difference is where they come from and whether a build includes them:</p>
+<ul>
+<li><strong>packs</strong> are "baked into" the game on build: <code>resources/</code> and the bundled <code>packs/</code>, included in a product bundle (<a href="../../specification/requirements/platforms/#r-plt-007-product-file">R-PLT-007</a>, <a href="../../specification/requirements/platforms/#r-plt-008-bundled-game-builds">R-PLT-008</a>);</li>
+<li><strong>mods</strong> are added externally, in the user's local mods folder.</li>
+</ul>
+<p>A mod that builds on another pack is an <strong>extension</strong>: the other pack is its base, and it adds to or overrides that pack's assets (<a href="../../specification/requirements/modding/#r-mod-023-new-pack-from-a-base">R-MOD-023</a>).</p>
+<div class="admonition note">
+<p class="admonition-title">Open</p>
+<p>Where exactly the line between a pack and a mod falls is to be settled: for example, whether a mod promoted into a product bundle becomes a pack. The user, 2026-11-11: "Will have to consider where the distinction is between pack and mod in that case, but conceptually packs are \"baked into\" the game on build where mods are added externally in user's local files."</p>
+</div>
 <p><strong>Why.</strong> Modding first.</p>
 <ul>
 <li><strong>Status:</strong> implemented</li>
-<li><strong>Source:</strong> Plan item 2.1.</li>
+<li><strong>Source:</strong> Plan item 2.1. Packs versus mods and the name <em>extension</em>: the user, 2026-11-11 ("Let's call it an extension as opposed to an override, since another pack is the base and we are either adding to or overriding assets.").</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/campaigns/#r-cpn-001-one-campaign-at-a-time">R-CPN-001</a>, <a href="../../specification/requirements/modding/#r-mod-001-pack-manifests">R-MOD-001</a>, <a href="../../specification/requirements/modding/#r-mod-002-load-order">R-MOD-002</a>, <a href="../../specification/requirements/modding/#r-mod-003-rules-layering">R-MOD-003</a>, <a href="../../specification/requirements/modding/#r-mod-004-gameplay-values-are-data">R-MOD-004</a>, <a href="../../specification/requirements/modding/#r-mod-011-paths-stay-inside-the-pack">R-MOD-011</a>, <a href="../../specification/requirements/modding/#r-mod-019-sound-cue-table">R-MOD-019</a>, <a href="../../specification/requirements/control-console/#r-con-020-console-theme-from-the-active-pack">R-CON-020</a></li>
 </ul>
 <h3 id="f-mod-002-readable-rule-files-that-explain-mistakes">F-MOD-002 Readable rule files that explain mistakes<a class="headerlink" href="#f-mod-002-readable-rule-files-that-explain-mistakes" title="Permanent link">&para;</a></h3>
@@ -6310,7 +6372,7 @@
 </ul>
 <h3 id="f-mod-009-mod-designer">F-MOD-009 Mod Designer<a class="headerlink" href="#f-mod-009-mod-designer" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> A companion application, separate from the game, for building packs and mods without editing files by hand:
-- a new pack or mod starts from a chosen <strong>base</strong> (the default campaign, <code>interceptor</code> or any installed pack);
+- a new pack or mod — a campaign, an addon or an <strong>extension</strong> of another pack, which adds to or overrides its assets — starts from a chosen <strong>base</strong> (the default campaign, <code>interceptor</code> or any installed pack);
 - any asset of the parent can be <strong>imported</strong>: it is copied with its dependencies (a model with its textures, a ship with its model set, debris, sounds and text) and converted from original formats where needed;
 - the copy is edited in an <strong>external program</strong> such as Blender and reloads live;
 - forms generated from the engine's schemas, a raw YAML view, "where is this used?", <strong>validation</strong> on every save, <strong>play</strong> in the testbed, and packaging as a folder or zip.</p>
@@ -6318,7 +6380,7 @@
 <p><strong>Why.</strong> Modding first: building a mod should not need a text editor and the file reference open side by side.</p>
 <ul>
 <li><strong>Status:</strong> planned</li>
-<li><strong>Source:</strong> The user's request, 2026-11-11, quoted in full on the <a href="../../specification/design/designer/">design page</a>: "Add to the longer term plan a companion app for a mod designer, which allows a user to define custom packs and mods to add to the game. On creation of a new pack or mod, user may choose a base to use for assets that they are going to override. When editing a mod, they can choose to import an asset from the parent. This duplicates the original asset and its dependencies (model plus textures in most cases) which the user can then edit in an external program, usually blender." Decisions D1 (macroquad UI, no new dependency) and D5 (a separate program in the same repository; two build artifacts), 2026-11-11. Plan items MD4, MD5.</li>
+<li><strong>Source:</strong> The user's request, 2026-11-11, quoted in full on the <a href="../../specification/design/designer/">design page</a>: "Add to the longer term plan a companion app for a mod designer, which allows a user to define custom packs and mods to add to the game. On creation of a new pack or mod, user may choose a base to use for assets that they are going to override. When editing a mod, they can choose to import an asset from the parent. This duplicates the original asset and its dependencies (model plus textures in most cases) which the user can then edit in an external program, usually blender." Decisions D1 (macroquad UI, no new dependency) and D5 (a separate program in the same repository; two build artifacts), 2026-11-11. The kind <em>extension</em> rather than <em>override</em>: the user, 2026-11-11. Plan items MD4, MD5.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/modding/#r-mod-021-designer-application">R-MOD-021</a>, <a href="../../specification/requirements/modding/#r-mod-022-files-stay-the-source-of-truth">R-MOD-022</a>, <a href="../../specification/requirements/modding/#r-mod-023-new-pack-from-a-base">R-MOD-023</a>, <a href="../../specification/requirements/modding/#r-mod-024-pack-tree-forms-and-yaml-view">R-MOD-024</a>, <a href="../../specification/requirements/modding/#r-mod-025-import-an-asset-with-its-dependencies">R-MOD-025</a>, <a href="../../specification/requirements/modding/#r-mod-026-where-an-asset-is-used">R-MOD-026</a>, <a href="../../specification/requirements/modding/#r-mod-027-external-editor-and-live-reload">R-MOD-027</a>, <a href="../../specification/requirements/modding/#r-mod-028-validate-on-save-play-in-the-testbed">R-MOD-028</a>, <a href="../../specification/requirements/modding/#r-mod-029-provenance-of-imported-assets">R-MOD-029</a>, <a href="../../specification/requirements/modding/#r-mod-030-package-a-pack">R-MOD-030</a></li>
 </ul>
 <h3 id="f-mod-010-cutscene-designer">F-MOD-010 Cutscene Designer<a class="headerlink" href="#f-mod-010-cutscene-designer" title="Permanent link">&para;</a></h3>
@@ -6361,6 +6423,23 @@
 <li><strong>Source:</strong> The user's request, 2026-11-11, quoted in full on the <a href="../../specification/design/designer/">design page</a>: "For fighters and ships, they can choose which formation to apply." Plan item MD1 (it also serves wingmen and replaces per-scenario slot offsets).</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/modding/#r-mod-039-formations-in-cutscenes">R-MOD-039</a>, <a href="../../specification/requirements/modding/#r-mod-047-shared-formations">R-MOD-047</a>, <a href="../../specification/requirements/combat/#r-cmb-022-wingmen-keep-their-distance">R-CMB-022</a></li>
 </ul>
+<h3 id="f-mod-014-3d-cockpit-instrument-placement">F-MOD-014 3D cockpit instrument placement<a class="headerlink" href="#f-mod-014-3d-cockpit-instrument-placement" title="Permanent link">&para;</a></h3>
+<p><strong>What.</strong> In the Mod Designer, the instruments of a 3D cockpit (radar, MFD, gauges, status, message, power, systems and so on) are placed by dragging each one around the screen over the cockpit model: a ray from the eye through the cursor finds the face below it, and the instrument is previewed applied to that face, at the hit point with the face's normal, at an adjustable size. The result is the cockpit's <code>anchors</code>. A mod extending a pack can <strong>create a 3D cockpit</strong> from the parent's: the modder picks the cockpit images to extract (copied into the mod, provenance recorded), starts from the parent's 3D model or, if there is none, a generic base cockpit from <code>resources/default</code>, edits it in Blender, then places the instruments.</p>
+<p>The first test case for the mod tools is exactly this: a mod extending <code>interceptor</code> with a 3D X-COM cockpit. The user also intends to design an X-COM 3D cockpit in Blender and ship it as an example mod that replaces the 2D cockpit image.</p>
+<p><strong>Why.</strong> Modding first: a 3D cockpit is only usable when its instruments sit on the right faces, and a modder should not have to measure anchors by hand.</p>
+<ul>
+<li><strong>Status:</strong> planned</li>
+<li><strong>Source:</strong> The user, 2026-11-11: "for xcom cockpits, we will be designing a 3d cockpit in blender to include as an example mod that substitutes the 3d to replace the 2d image. This raises a point for the mod design tools, they need to accommodate placement of the UI elements so that they are projected onto the correct faces in a 3d view. Simple handling will be to allow each element to be dragged around the screen to detemine their positions and then previewed by applying to the geometry that it is over. this will be the first test case for the mod design tools when available - a mod extending interceptor, where user selects the cockpit images to extract, they are copied into the mod, select to create a 3d cockpit (which will provide a generic base cockpit geometry defined in default if none is present in the parent). The user can then edit it in Blender." Plan items MD8, MD9.</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/modding/#r-mod-048-drag-instruments-onto-a-3d-cockpit">R-MOD-048</a>, <a href="../../specification/requirements/modding/#r-mod-049-instrument-size-and-preview-on-the-surface">R-MOD-049</a>, <a href="../../specification/requirements/modding/#r-mod-050-create-a-3d-cockpit">R-MOD-050</a>, <a href="../../specification/requirements/modding/#r-mod-051-generic-base-cockpit">R-MOD-051</a>, <a href="../../specification/requirements/modding/#r-mod-052-example-mod-x-com-3d-cockpit">R-MOD-052</a>, <a href="../../specification/requirements/cockpit-hud/#r-hud-004-anchored-3d-cockpit-instruments">R-HUD-004</a></li>
+</ul>
+<h3 id="f-mod-015-single-file-models-and-blender-sources">F-MOD-015 Single-file models and Blender sources<a class="headerlink" href="#f-mod-015-single-file-models-and-blender-sources" title="Permanent link">&para;</a></h3>
+<p><strong>What.</strong> OBJ/MTL with separate texture files stays a fully supported model format, the one the existing packs use. In addition, a model can be one <code>.glb</code> file (binary glTF: mesh, materials and textures together), read in-crate with no dependency. A mod can also carry its <code>.blend</code> files as the source: the designer exports them to OBJ/MTL or <code>.glb</code> through Blender, run headless when installed; the engine never reads <code>.blend</code>. Every import and export keeps each material with its texture images.</p>
+<p><strong>Why.</strong> A modder can package a model, its materials and its textures as one file, and keep the Blender source beside it.</p>
+<ul>
+<li><strong>Status:</strong> planned</li>
+<li><strong>Source:</strong> The user, 2026-11-11: "If possible, it would be ideal to allow the .blend files to be included in addtition to standaole mtl and obj objects so that a user can package the object, material, and textures into a single file, but that is not strictly necessary as long as the correct relationshps between materials and their texture images is consistently maintained." Confirmed: "ok that works. obj/mtl as in the existing packs of course would continue to be supported." Plan item MD10.</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/modding/#r-mod-053-single-file-models">R-MOD-053</a>, <a href="../../specification/requirements/modding/#r-mod-054-blender-sources">R-MOD-054</a>, <a href="../../specification/requirements/modding/#r-mod-055-materials-keep-their-textures">R-MOD-055</a>, <a href="../../specification/requirements/modding/#r-mod-010-open-model-and-image-formats">R-MOD-010</a></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6380,6 +6459,11 @@
 <td>1.7.0</td>
 <td>2026-11-11</td>
 <td>F-MOD-009 – F-MOD-013 (planned): Mod Designer, Cutscene Designer, cutscenes in the game, video cutscenes, shared formations (user request and decisions D1–D5)</td>
+</tr>
+<tr>
+<td>1.9.0</td>
+<td>2026-11-11</td>
+<td>F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned), from the user's message of 2026-11-11. F-MOD-001: packs (built into the game) versus mods (added from the user's mods folder), the term <em>extension</em>, Open note on where the line falls. F-MOD-009: the wizard's kind is <em>extension</em>, not <em>override</em></td>
 </tr>
 </tbody>
 </table>

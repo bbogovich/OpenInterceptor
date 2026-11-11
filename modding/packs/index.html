@@ -4111,6 +4111,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#packs-and-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packs and mods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mod-kinds-and-the-active-set" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5907,6 +5918,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#packs-and-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packs and mods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mod-kinds-and-the-active-set" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6035,6 +6057,24 @@ packs that belong with it load — see <a href="#mod-kinds-and-the-active-set">M
 <p>Default mods folder: macOS <code>~/Library/Application Support/OpenInterceptor/mods/</code>, Linux
 <code>$XDG_DATA_HOME/openinterceptor/mods/</code> (default <code>~/.local/share/openinterceptor/mods/</code>), or
 <code>settings.yaml</code> <code>paths: {mods: …}</code> (<a href="../../implementation/architecture/settings/">Settings</a>).</p>
+<h2 id="packs-and-mods">Packs and mods<a class="headerlink" href="#packs-and-mods" title="Permanent link">&para;</a></h2>
+<p>Packs and mods use the same format. The difference is where they come from and whether a build
+includes them:</p>
+<ul>
+<li><strong>packs</strong> are "baked into" the game on build: <code>resources/</code> and the bundled <code>packs/</code>, which a
+  product bundle includes;</li>
+<li><strong>mods</strong> are added externally, in the user's local mods folder.</li>
+</ul>
+<p>A mod built on another pack, which adds to it or overrides its assets, is an <strong>extension</strong> of that
+pack (planned in the Mod Designer;
+<a href="../../specification/requirements/modding/#r-mod-023-new-pack-from-a-base">R-MOD-023</a>). Today it
+is written as a campaign with <code>parent:</code> or an addon with <code>targets:</code>, below.</p>
+<div class="admonition note">
+<p class="admonition-title">Open</p>
+<p>Where exactly the line between a pack and a mod falls is to be settled, for example whether a
+mod promoted into a product bundle becomes a pack; and whether <code>extension</code> becomes a manifest
+kind or maps onto <code>addon</code> (MD4).</p>
+</div>
 <h2 id="mod-kinds-and-the-active-set">Mod kinds and the active set<a class="headerlink" href="#mod-kinds-and-the-active-set" title="Permanent link">&para;</a></h2>
 <p>Every pack is one of three <strong>kinds</strong> (<code>kind:</code> in <code>pack.yaml</code>; from <code>src/content/pack.rs</code>):</p>
 <table>

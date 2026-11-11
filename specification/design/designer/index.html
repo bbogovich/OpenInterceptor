@@ -2034,6 +2034,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#23-instruments-on-a-3d-cockpit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Instruments on a 3D cockpit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-first-test-case-an-x-com-3d-cockpit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 First test case: an X-COM 3D cockpit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-single-file-models-and-blender-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Single-file models and Blender sources
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6043,6 +6076,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#23-instruments-on-a-3d-cockpit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Instruments on a 3D cockpit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-first-test-case-an-x-com-3d-cockpit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 First test case: an X-COM 3D cockpit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-single-file-models-and-blender-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Single-file models and Blender sources
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6199,15 +6265,17 @@
 were answered by the user on 2026-11-11 (<a href="#7-decisions">Decisions</a>): D1 and D2 accepted (with
 the Linux video path recorded), D3 yes, D4 accepted with a further <code>harmless</code> flag, and D5 a
 separate designer program in the same repository. The Linux video path still needs its
-dependency evaluation before it is built.</p>
+dependency evaluation before it is built. Further decisions of 2026-11-11 added 3D cockpit
+instrument placement, the first test case (an X-COM 3D cockpit), single-file models and the
+name <em>extension</em> (<a href="#21-packs-and-mods">sections 2.1 – 2.5</a>).</p>
 </div>
-<p><strong>Features:</strong> <a href="../../../definition/modding-toolkit/#f-mod-009-mod-designer">F-MOD-009 – F-MOD-013</a>,
+<p><strong>Features:</strong> <a href="../../../definition/modding-toolkit/#f-mod-009-mod-designer">F-MOD-009 – F-MOD-015</a>,
 <a href="../../../definition/platforms/#f-plt-005-game-bundling">F-PLT-005</a>.
-<strong>Requirements:</strong> <a href="../../requirements/modding/#r-mod-021-designer-application">R-MOD-021 – R-MOD-047</a>,
+<strong>Requirements:</strong> <a href="../../requirements/modding/#r-mod-021-designer-application">R-MOD-021 – R-MOD-055</a>,
 <a href="../../requirements/platforms/#r-plt-007-product-file">R-PLT-007 – R-PLT-010</a>.
 <strong>Plan:</strong> MD1 in <a href="../../../implementation/plan/stage-4-strategy/#mod-and-cutscene-designer-md1">Stage 4</a>,
 MD2 – MD3 in <a href="../../../implementation/plan/stage-6-presentation/#mod-and-cutscene-designer-md2-md3">Stage 6</a>,
-MD4 – MD6 in <a href="../../../implementation/plan/stage-7-modding/#mod-and-cutscene-designer-md4-md6">Stage 7</a>,
+MD4 – MD6 and MD8 – MD10 in <a href="../../../implementation/plan/stage-7-modding/#mod-and-cutscene-designer-md4-md6">Stage 7</a>,
 MD7 in <a href="../../../implementation/plan/stage-8-release/#game-bundling-md7">Stage 8</a>
 (<a href="#6-where-it-goes-in-the-plan">where it goes</a>).</p>
 <p>A companion <strong>Mod Designer</strong> application lets a player build packs and mods without editing
@@ -6263,6 +6331,30 @@ packs and mods to their local folders."</p>
 <p>With decision D4 the user added: "Also a flag for the animations for their weapons to cause
 no damage."</p>
 </details>
+<details class="quote">
+<summary>Source: the user's message of 2026-11-11 (3D cockpits, extensions, packs and mods)</summary>
+<p>"for xcom cockpits, we will be designing a 3d cockpit in blender to include as an example mod
+that substitutes the 3d to replace the 2d image. This raises a point for the mod design tools,
+they need to accommodate placement of the UI elements so that they are projected onto the
+correct faces in a 3d view. Simple handling will be to allow each element to be dragged around
+the screen to detemine their positions and then previewed by applying to the geometry that it
+is over. this will be the first test case for the mod design tools when available - a mod
+extending interceptor, where user selects the cockpit images to extract, they are copied into
+the mod, select to create a 3d cockpit (which will provide a generic base cockpit geometry
+defined in default if none is present in the parent). The user can then edit it in Blender.
+If possible, it would be ideal to allow the .blend files to be included in addtition to
+standaole mtl and obj objects so that a user can package the object, material, and textures
+into a single file, but that is not strictly necessary as long as the correct relationshps
+between materials and their texture images is consistently maintained.</p>
+<p>Open points
+Hit static - correct, works well now
+Let's call it an extension as opposed to an override, since another pack is the base and we
+are either adding to or overriding assets. Will have to consider where the distinction is
+between pack and mod in that case, but conceptually packs are "baked into" the game on build
+where mods are added externally in user's local files."</p>
+<p>On the single-file plan (section 2.5): "ok that works. obj/mtl as in the existing packs of
+course would continue to be supported."</p>
+</details>
 <h2 id="1-goals-and-principles">1. Goals and principles<a class="headerlink" href="#1-goals-and-principles" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>The files stay the source of truth.</strong> The designer is a convenience over the documented
@@ -6298,7 +6390,7 @@ no damage."</p>
 <tbody>
 <tr>
 <td>New pack / mod</td>
-<td>Asks for an id, a name and a kind: <strong>campaign</strong> (a new game), <strong>addon</strong> (adds to a campaign) or <strong>override</strong> (replaces assets). Asks for a <strong>base</strong> to override: the default campaign (<code>resources/default</code>), <code>interceptor</code>, or any installed pack. Writes <code>pack.yaml</code> with <code>parent:</code> and creates the folder skeleton (<code>rules/</code>, <code>models/</code>, <code>textures/</code>, <code>sounds/</code>, <code>text/en/</code>, <code>missions/</code>, <code>scenarios/</code>, <code>cutscenes/</code>).</td>
+<td>Asks for an id, a name and a kind: <strong>campaign</strong> (a new game), <strong>addon</strong> (adds to a campaign) or <strong>extension</strong> (another pack is the base; it adds to or overrides that pack's assets). Asks for a <strong>base</strong>: the default campaign (<code>resources/default</code>), <code>interceptor</code>, or any installed pack. Writes <code>pack.yaml</code> with <code>parent:</code> and creates the folder skeleton (<code>rules/</code>, <code>models/</code>, <code>textures/</code>, <code>sounds/</code>, <code>text/en/</code>, <code>missions/</code>, <code>scenarios/</code>, <code>cutscenes/</code>).</td>
 </tr>
 <tr>
 <td>Open / edit</td>
@@ -6323,12 +6415,22 @@ no damage."</p>
 </tbody>
 </table>
 <div class="admonition note">
+<p class="admonition-title">Decided (2026-11-11): extension, not override</p>
+<p>The user: "Let's call it an extension as opposed to an override, since another pack is the base
+and we are either adding to or overriding assets." An extension declares <code>parent:</code> and adds to
+or overrides the base's assets.</p>
+</div>
+<div class="admonition note">
 <p class="admonition-title">Open</p>
 <p>The pack manifest's kinds today are <code>campaign</code>, <code>addon</code> and <code>library</code>
-(<a href="../../requirements/modding/#r-mod-001-pack-manifests">R-MOD-001</a>). The wizard's <strong>override</strong>
-kind is an addon that only replaces assets; whether it is written as <code>kind: addon</code> or becomes a
-manifest kind of its own is decided when MD4 is built.</p>
+(<a href="../../requirements/modding/#r-mod-001-pack-manifests">R-MOD-001</a>). Whether <strong>extension</strong>
+becomes a manifest kind of its own or maps onto <code>addon</code> is decided when MD4 is built.</p>
 </div>
+<p><strong>Packs and mods.</strong> The same format; the difference is where they come from and whether a build
+includes them. <strong>Packs</strong> are "baked into" the game on build: <code>resources/</code> and the bundled
+<code>packs/</code>, included in a product bundle (<a href="#5-bundling-a-complete-game">section 5</a>). <strong>Mods</strong> are
+added externally, in the user's local mods folder. <em>Open:</em> where exactly the line falls — for
+example, whether a mod promoted into a product bundle becomes a pack — is to be settled.</p>
 <h3 id="22-what-an-asset-and-its-dependencies-means">2.2 What "an asset and its dependencies" means<a class="headerlink" href="#22-what-an-asset-and-its-dependencies-means" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -6358,6 +6460,74 @@ manifest kind of its own is decided when MD4 is built.</p>
 </table>
 <p>A <strong>dependency graph</strong> built from the loaded content drives this. The same graph powers "where
 is this used?" and warns before deleting anything still referenced.</p>
+<h3 id="23-instruments-on-a-3d-cockpit">2.3 Instruments on a 3D cockpit<a class="headerlink" href="#23-instruments-on-a-3d-cockpit" title="Permanent link">&para;</a></h3>
+<p>A 3D cockpit's instruments (radar, MFD, gauges, status, message, power, systems…) are drawn
+on the model's surface at <strong>anchors</strong>, <code>{at, normal, size}</code>
+(<a href="../../../modding/cockpits/#a-3d-cockpit-instead-of-the-overlay">Cockpits</a>). In the designer:</p>
+<ol>
+<li>The modder <strong>drags</strong> an instrument around the screen over the cockpit model.</li>
+<li>On every frame of the drag, a ray from the eye through the cursor is intersected with the
+   model's triangles; the nearest hit gives the anchor's <code>at</code>, and the hit face's normal its
+   <code>normal</code>.</li>
+<li>The instrument is <strong>previewed applied to that face</strong>, drawn by the game's own
+   anchored-instrument path, so it looks as it will in the game. Over no face, it keeps its last
+   anchor.</li>
+<li>Its <strong>size</strong> on the surface is adjustable. Dropping keeps the anchor; saving writes
+   <code>cockpits.&lt;id&gt;.anchors</code> to the mod's rules.</li>
+</ol>
+<p>An instrument with only a 2D rectangle gains an anchor the same way; its rectangle still serves
+the other views.</p>
+<p><strong>Reuse.</strong> The engine already has the pieces: <code>hud::layout::cursor_ray</code> (the ray through the
+cursor), <code>hud::layout::ray_triangle</code> (the hit) and <code>hud::layout::anchor_corners</code> (the
+instrument's rectangle on the surface); the <code>cockpits.&lt;id&gt;.anchors</code> key; and the game's F12
+layout editor (<code>app/flight.rs</code>, <code>edit_layout</code>), which drags 2D rectangles and already places an
+existing anchor where the dashboard is clicked. The designer reuses them. As a first step, the
+F12 editor could gain the drag with live preview, and anchors for instruments that have none.</p>
+<p>Requirements: <a href="../../requirements/modding/#r-mod-048-drag-instruments-onto-a-3d-cockpit">R-MOD-048</a>,
+<a href="../../requirements/modding/#r-mod-049-instrument-size-and-preview-on-the-surface">R-MOD-049</a>.</p>
+<h3 id="24-first-test-case-an-x-com-3d-cockpit">2.4 First test case: an X-COM 3D cockpit<a class="headerlink" href="#24-first-test-case-an-x-com-3d-cockpit" title="Permanent link">&para;</a></h3>
+<p>The first test case for the mod tools, when they are available, is a mod that <strong>extends
+<code>interceptor</code></strong> with a 3D X-COM cockpit:</p>
+<ol>
+<li>The modder selects the cockpit images to extract. They are copied into the mod — converted
+   from the original data by the extractor, with their provenance recorded, for personal use
+   only and never bundled.</li>
+<li><strong>Create 3D cockpit</strong> copies the parent's cockpit model into the mod or, when the parent has
+   none, a <strong>generic base cockpit</strong> defined in <code>resources/default</code>: an original-free OBJ/MTL model
+   with its textures, generated by <code>tools/default_assets/</code>, with dashboard surfaces and default
+   anchors for the standard instruments.</li>
+<li>The modder edits the model in Blender (live reload, <a href="#21-packs-and-mods">2.1</a>).</li>
+<li>The modder places the instruments on it (<a href="#23-instruments-on-a-3d-cockpit">2.3</a>).</li>
+</ol>
+<p>Separately, the user intends to design an X-COM 3D cockpit in Blender and ship it as an
+<strong>example mod</strong> in <code>packs/</code> that replaces the 2D cockpit image with a 3D one. Its geometry is
+original-free; the X-COM cockpit textures are referenced from the player's original data, not
+copied, and the mod declares <code>requires_original: true</code>. <em>Open:</em> an MTL names its textures by file
+path, so how the model refers to a texture in the original data is settled with MD9.</p>
+<p>Requirements: <a href="../../requirements/modding/#r-mod-050-create-a-3d-cockpit">R-MOD-050</a>,
+<a href="../../requirements/modding/#r-mod-051-generic-base-cockpit">R-MOD-051</a>,
+<a href="../../requirements/modding/#r-mod-052-example-mod-x-com-3d-cockpit">R-MOD-052</a>.</p>
+<h3 id="25-single-file-models-and-blender-sources">2.5 Single-file models and Blender sources<a class="headerlink" href="#25-single-file-models-and-blender-sources" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>OBJ/MTL stays.</strong> Wavefront OBJ/MTL with separate texture files remains a fully supported
+  format: it is what the existing packs use, and nothing below replaces it.</li>
+<li><strong><code>.glb</code> as an additional option.</strong> Binary glTF is one file holding mesh, materials and
+  textures. Blender exports it natively, and the engine can read it in-crate: a JSON chunk (the
+  crate already has a JSON parser, <code>src/remote/json.rs</code>) and binary buffers. No dependency.</li>
+<li><strong><code>.blend</code> as the source only.</strong> A mod may carry its <code>.blend</code> files. When Blender is
+  installed, the designer runs it headless on save to export OBJ/MTL or <code>.glb</code>
+  (<code>blender -b file.blend --python-expr …</code>). The engine never parses <code>.blend</code>, whose binary
+  format changes between Blender versions. Blender is an optional external tool, not a
+  dependency (<a href="../../../learning/best-practices/dependencies/#external-tools">Dependency policy</a>).</li>
+<li><strong>Materials keep their textures.</strong> On every import and export, each material stays with its
+  texture images: MTL <code>map_Kd</code> paths are relative to the <code>.mtl</code> file and inside the pack.</li>
+</ul>
+<p>The user called single files "not strictly necessary as long as the correct relationshps between
+materials and their texture images is consistently maintained", and confirmed this plan: "ok that
+works. obj/mtl as in the existing packs of course would continue to be supported."</p>
+<p>Requirements: <a href="../../requirements/modding/#r-mod-053-single-file-models">R-MOD-053</a>,
+<a href="../../requirements/modding/#r-mod-054-blender-sources">R-MOD-054</a>,
+<a href="../../requirements/modding/#r-mod-055-materials-keep-their-textures">R-MOD-055</a>.</p>
 <h2 id="3-the-cutscene-designer">3. The Cutscene Designer<a class="headerlink" href="#3-the-cutscene-designer" title="Permanent link">&para;</a></h2>
 <p>A cutscene is a short film played by the engine at a campaign event, at the start of a
 specific mission, or as the campaign's introduction. The designer edits it on a timeline,
@@ -6612,6 +6782,24 @@ bundled into a product.
 <td><a href="../../../implementation/plan/stage-7-modding/#mod-and-cutscene-designer-md4-md6">Stage 7</a></td>
 </tr>
 <tr>
+<td>MD8</td>
+<td>3D cockpit instrument placement: drag each instrument over the cockpit model, ray-cast to the face below the cursor, preview applied to it, adjustable size, saved as <code>anchors</code></td>
+<td>Stage 7</td>
+<td><a href="../../../implementation/plan/stage-7-modding/#mod-and-cutscene-designer-md4-md6">Stage 7</a></td>
+</tr>
+<tr>
+<td>MD9</td>
+<td>First test case for the mod tools: an <code>interceptor</code> extension with a 3D X-COM cockpit (extract the cockpit images, Create 3D cockpit, edit in Blender, place instruments); the generic base cockpit in <code>resources/default</code>; the X-COM 3D cockpit example mod in <code>packs/</code></td>
+<td>Stage 7</td>
+<td><a href="../../../implementation/plan/stage-7-modding/#mod-and-cutscene-designer-md4-md6">Stage 7</a></td>
+</tr>
+<tr>
+<td>MD10</td>
+<td>Single-file models: <code>.glb</code> reader (in-crate) beside OBJ/MTL; <code>.blend</code> sources exported through Blender when installed; materials keep their textures</td>
+<td>Stage 7</td>
+<td><a href="../../../implementation/plan/stage-7-modding/#mod-and-cutscene-designer-md4-md6">Stage 7</a></td>
+</tr>
+<tr>
 <td>MD7</td>
 <td>Product bundling: the build's two artifacts (game and designer, D5); <code>product.yaml</code>, branded builds, release mode without developer tools, the provenance guard</td>
 <td>Stage 8</td>
@@ -6671,6 +6859,11 @@ bundled into a product.
 <td>1.7.0</td>
 <td>2026-11-11</td>
 <td>New page, with the user's decisions D1–D5 (D2's Linux path via <code>dlopen</code> still to be evaluated; D4 adds the <code>harmless</code> flag; D5 two build artifacts): the Mod Designer, the Cutscene Designer, video cutscenes, shared formations and game bundling, from the user's request of 2026-11-11; plan items MD1–MD7</td>
+</tr>
+<tr>
+<td>1.9.0</td>
+<td>2026-11-11</td>
+<td>From the user's message of 2026-11-11 (quoted): new sections 2.3 instruments on a 3D cockpit (drag, ray-cast to the face, preview), 2.4 the first test case (an <code>interceptor</code> extension with a 3D X-COM cockpit; the generic base cockpit; the example mod) and 2.5 single-file models (<code>.glb</code> beside OBJ/MTL, which stays fully supported, <code>.blend</code> as source only; confirmed by the user); the wizard's kind renamed <strong>extension</strong>; packs versus mods; plan items MD8–MD10</td>
 </tr>
 </tbody>
 </table>
