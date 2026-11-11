@@ -1,5 +1,5 @@
 ---
-spec_version: 1.8.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -19,7 +19,7 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 | [F-HUD-005 Cockpit layout editor](#f-hud-005-cockpit-layout-editor) | Implemented |
 | [F-HUD-006 Drift display](#f-hud-006-drift-display) | Implemented |
 | [F-HUD-007 Seeing other craft](#f-hud-007-seeing-other-craft) | Implemented |
-| [F-HUD-008 Atmosphere instruments](#f-hud-008-atmosphere-instruments) | Planned |
+| [F-HUD-008 Atmosphere instruments](#f-hud-008-atmosphere-instruments) | Implemented |
 
 ## Features
 
@@ -95,11 +95,11 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 
 ### F-HUD-008 Atmosphere instruments
 
-**What.** In an atmosphere the HUD shows altitude, vertical speed and a horizon.
+**What.** In an atmosphere the HUD shows altitude above the ground and vertical speed on the status line, and an artificial horizon with a pitch ladder.
 
 **Why.** Needed to fly over terrain.
 
-- **Status:** planned
+- **Status:** implemented (app 0.6.0)
 - **Source:** Plan item 3.6.
 - **Specified by:** [R-HUD-012](../specification/requirements/cockpit-hud.md#r-hud-012-atmosphere-instruments)
 
@@ -124,3 +124,4 @@ The view through the canopy keeps the same height whatever the screen's width.
 | 1.0.0 | 2026-11-11 | Bootstrap: F-HUD-001 – F-HUD-008 (8 features) |
 | 1.1.0 | 2026-11-11 | F-HUD-006 and F-HUD-007 implemented (app 0.3.1) |
 | 1.8.0 | 2026-11-11 | F-HUD-009 cockpits on wide screens |
+| 1.11.0 | 2026-11-11 | F-HUD-008 implemented (app 0.6.0) |

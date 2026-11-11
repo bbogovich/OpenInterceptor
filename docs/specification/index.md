@@ -1,5 +1,5 @@
 ---
-spec_version: 1.10.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's original data (an
   installed copy or the CD).
 
-Specification version **1.10.0** (217 requirements). Changes are listed in the
+Specification version **1.11.0** (217 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -84,3 +84,4 @@ Facts carry verified / derived / unknown marks.
 | 1.7.0 | 2026-11-11 | 208 requirements (R-FLT-013 and R-CMB-022 counted from 1.5.0–1.6.0; R-CON-022 – R-CON-024 (keep the tablet awake, press feedback, hit static), implemented; R-CON-025 start-key guard, implemented; R-CON-026 two console layouts, planned; R-MOD-021 – R-MOD-047 and R-PLT-007 – R-PLT-010 planned); new design page *Mod designer, cutscene designer and game bundling* |
 | 1.9.0 | 2026-11-11 | 217 requirements: R-HUD-013 (added in 1.8.0); R-MOD-048 – R-MOD-055 (planned: 3D cockpit instrument placement, Create 3D cockpit, the generic base cockpit, the X-COM 3D cockpit example mod, single-file models, Blender sources, materials keeping their textures) |
 | 1.10.0 | 2026-11-11 | 217 requirements: console C2 – C4 and C2b (app 0.4.11 – 0.5.0): R-CON-012 – R-CON-016, R-CON-018 – R-CON-021 implemented; the console protocol gains `power`, `model`, `contacts`, `event`, `theme` and `target` as built (R-MOD-055 implemented in 1.9.1) |
+| 1.11.0 | 2026-11-11 | 217 requirements: Stage 3.2 – 3.6 (app 0.5.1 – 0.6.1): R-MSN-008 battle environments (with ground installations), R-MSN-009 hazards, R-FLT-011 atmospheric flight, R-FLT-012 terrain and R-HUD-012 atmosphere instruments rewritten as built and implemented; the design page *Format: missions, environments, events* marks what is built |

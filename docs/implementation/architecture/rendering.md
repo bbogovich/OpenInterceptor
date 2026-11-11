@@ -3,7 +3,9 @@
 `src/render/`: draws one frame of the 3D scene with macroquad. It only *reads* the
 simulation. Plan: Stage 1; Stage 2 added looks (model sets with texture swaps), debris sets,
 effects with shock waves, station modules and their wrecks; app 0.3.1 lighting from the rules
-(rim light), a brightness gamma, distant dots and viewer-relative bolt streaks.
+(rim light), a brightness gamma, distant dots and viewer-relative bolt streaks; Stage 3 the black
+hole (app 0.5.1) and the battle environment — terrain, sky dome, distance fog and a planet
+backdrop (app 0.6.0).
 
 ## Architecture Overview
 
@@ -11,9 +13,9 @@ effects with shock waves, station modules and their wrecks; app 0.3.1 lighting f
 
 ```mermaid
 flowchart LR
-    CL["clear_background"] --> SKY["draw_sky<br/>2 500 stars + sun<br/>sky material: no depth, additive"]
-    SKY --> SOL["draw_world<br/>ships, stations, debris<br/>lit material: depth test + write"]
-    SOL --> GLO["draw_glows<br/>engines, bolts, missiles, sparks, explosions,<br/>distant dots<br/>glow material: depth test, no write, additive"]
+    CL["clear_background<br/>(black, or the sky's horizon colour)"] --> SKY["draw_sky<br/>sky dome (atmosphere), 2 500 stars (dimmed by sky.stars),<br/>planet disc (backdrop), sun<br/>sky material: no depth, additive"]
+    SKY --> SOL["draw_world<br/>terrain mesh, black-hole core,<br/>ships, stations, debris<br/>lit material: depth test + write, fog"]
+    SOL --> GLO["draw_glows<br/>engines, bolts, missiles, sparks, explosions,<br/>distant dots, black-hole accretion ring<br/>glow material: depth test, no write, additive"]
     GLO --> CP["draw_cockpit_model (3D cockpit, cockpit view only)<br/>flush + clear depth; 5 cm near plane"]
     CP --> HUD["2D HUD (hud::draw)"]
 ```
@@ -163,6 +165,38 @@ The streak points along the bolt's velocity **relative to the viewer**,
 relative to the pilot it streaks straight out of the guns, while a stationary observer would
 see it slanted.
 
+### Battle environments (app 0.6.0)
+
+The flight screen sets `Renderer::env_sky` and `Renderer::planet` from the battle's environment
+before drawing each frame, and clears them after, so the launcher, viewer and other screens still
+draw plain space. With a sky, the background is cleared to the horizon colour instead of black.
+
+- **Sky dome** (`draw_sky_dome`, drawn first in `draw_sky`): a dome of 8 rings × 24 segments around
+  the camera, from 30° below the horizon to the zenith, coloured from `horizon` to `top` by
+  `√max(sin(elevation), 0)` — the square root keeps the horizon band narrow. Stars are then drawn
+  with their colour scaled by `sky.stars`.
+- **Planet** (`draw_planet`): a disc facing the camera at 80 % of the sky distance, its radius set
+  by the angular `size`. Each vertex is shaded as if it were on a sphere (the normal is rebuilt
+  from the disc position), lit by the sun with a darker limb, so one flat mesh reads as a lit globe.
+- **Terrain** (`render::terrain::terrain_model`): the heightfield becomes an ordinary `Model` —
+  one vertex per grid point, two triangles per square, wound counter-clockwise seen from above so
+  the fronts face up for back-face culling. Vertex colours run from `low` to `high` by height,
+  blended to `slope` where the normal tips more than about 0.08 from vertical (full at 0.38), with
+  a fixed ±8 % per-vertex variation. It is uploaded once per terrain id through
+  `ModelCache::upload_model` and kept in `Renderer::terrain`, then drawn with `draw_model` like
+  any ship: lit by the sun, depth-tested, fogged.
+- **Fog** in the lit shader: the vertex stage computes `fog = clamp(d / FogDistance.x, 0, 1)²` from
+  the camera-relative position; the fragment stage mixes the colour towards `FogColor`.
+  `FogDistance.x = 0` (space) turns it off. See the precision note under [Debugging](#debugging).
+
+### Black hole
+
+A black hole (`World::hazards.black_hole`, app 0.5.1) is drawn in two parts: in `draw_world` a
+black sphere of the hole's `radius` that hides the stars and anything behind it, and in
+`draw_glows` an accretion ring of 48 additive orange glows at 1.6 – 1.85 × the radius, turning
+slowly with the battle time and bobbing a little out of plane, with fixed per-glow heat
+variations.
+
 LOD choice: `GpuModel::lod(distance)` picks the first LOD whose `switch_distance` exceeds the
 camera distance (the original values: e.g. 75 / 150 / 450 m / ∞ for the Lightning II).
 Objects entirely behind the camera are skipped.
@@ -185,6 +219,11 @@ Objects entirely behind the camera are skipped.
 | `GpuModel::lod_index(distance)` | Index of the LOD to draw; shared between `GpuModel::lods` and `model.lods`. |
 | `model::Face` | One original polygon: `first`, `count` (its corners are consecutive vertices), `group`, `flags`. |
 | `model::assign_overlay_layers`, `model::face_plane` | The overlay pass; a face's plane by Newell's method. |
+| `Renderer::env_sky`, `Renderer::planet` | The battle's `Sky` and `Planet` (set per frame by the flight screen, cleared after). |
+| `Renderer::terrain` | The current terrain's GPU model, by terrain id (built once). |
+| `terrain::terrain_model(&TerrainDef, &Heightfield) -> Model` | The terrain mesh, coloured by height and slope. |
+| `ModelCache::upload_model(content, Model, pack)` | Uploads a model built in code rather than loaded from a pack. |
+| `FogDistance`, `FogColor` | Lit-shader uniforms: vertex stage only, fragment stage only. |
 
 ## API Reference
 
@@ -216,6 +255,16 @@ Objects entirely behind the camera are skipped.
   test `render::tests::uniforms_shared_by_both_lit_shaders_match_exactly` compares every
   uniform the two lit shaders share and requires an explicit precision, so a new shared
   uniform cannot reintroduce the problem.
+- **Fog distance is computed in the vertex shader** (app 0.6.0). Battle distances reach tens of
+  kilometres, and the fragment shader's `precision mediump float` only guarantees about ±16 384
+  with a 10-bit mantissa, so `d / FogDistance` computed there would be coarse or overflow on some
+  GPUs. The vertex stage (highp by default) computes the fog factor, already in 0..1, and passes
+  it down as a `mediump` varying. Each uniform is declared in **one** stage only (`FogDistance` in
+  the vertex shader, `FogColor` in the fragment shader), which also sidesteps the
+  shared-uniform precision rule above.
+- An atmospheric battle with no visible ground: check the player starts above the terrain's
+  `height` range, and that `fog_distance` is not so short that the ground is fogged out; the
+  heightfield is cached per terrain id, so a changed terrain needs a new battle (not a new frame).
 - Engine glows come from rear-facing model attachments, else the back of the bounding box;
   `GpuModel::engines` is computed once at load, so drawing glows allocates nothing per frame.
 - A face that vanishes from one side is a back face: wind it the other way, or add a second

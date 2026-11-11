@@ -146,6 +146,7 @@ nav:
       - "Behaviours and conditions": modding/behaviours.md
       - "Looks: model sets, debris, effects": modding/looks.md
       - "Missiles and mines": modding/weapons.md
+      - "Environments and terrain": modding/environments.md
       - "Stations, modules and probes": modding/stations.md
       - "Text and translation": modding/text.md
       - "Missions": modding/missions.md

@@ -19,6 +19,8 @@ type and default: [Mod file reference › scenario files](reference.md#scenario-
 | `music` | Read but not played yet (Stage 5). |
 | `objects` | Placed objects by name (below). |
 | `nav` | Navigation points by name: `{position: [x, y, z]}` (an engine extension, DEV-002). `N` cycles them; the selected one shows on the MFD Nav page and as a blue diamond on screen. |
+| `environment` | The battle environment by id (`orbit`, `moon_surface`, …); default open space. See [Environments and terrain](environments.md). |
+| `hazards` | Asteroid field, minefield, black hole and ion storm, as in missions: [Missions › Hazards](missions.md#hazards). |
 
 ## Objects
 

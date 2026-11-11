@@ -9,8 +9,23 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 so it is not in the count from macOS.
 
 Since that count, tests named in the requirements' *Verified by* lines were added with apps
-0.4.3 – 0.5.0 without the full list being regenerated; those named below are listed (the
-summary rows of `hud`, `remote::protocol` and `sim::systems` include the 0.4.11 – 0.5.0 ones): app **0.5.0** (main `0a1c340`) adds
+0.4.3 – 0.6.1 without the full list being regenerated; those named below are listed (the
+summary rows of `hud`, `remote::protocol` and `sim::systems` include the 0.4.11 – 0.5.0 ones, and
+the rows of `content::hazards`, `content::environment`, `sim::hazards`, `sim::env`,
+`render::terrain` and `hud::draw` the 0.5.1 – 0.6.1 ones). A count of the `#[test]` functions in
+`src/` at main `de417df` (app 0.6.1), read with grep and not a build, gives **321** run on macOS
+(323 less the Linux-only test and the ignored helper below). App **0.6.1** (main `de417df`) adds
+`sim::env::tests::ground_installations_are_set_down_on_the_terrain`; app **0.6.0** (main
+`af003f6`) adds `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`,
+`generated_heightfields_span_their_range_are_deterministic_and_interpolate`,
+`sim::env::tests::drag_gravity_and_lift_act_in_air_and_not_in_space`,
+`ai_pilots_pull_up_near_the_ground`, `gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit`,
+`render::terrain::tests::terrain_meshes_face_up_and_colour_by_height` and
+`hud::draw::tests::the_pitch_ladder_sits_ahead_at_its_angles`; app **0.5.1** (main `70d68e2`) adds
+`content::hazards::tests::hazards_parse_with_defaults_and_report_mistakes` and
+`sim::hazards::tests::asteroid_fields_and_minefields_are_scattered_clear_of_craft`,
+`a_black_hole_pulls_harder_when_near_and_swallows_what_crosses_its_radius`,
+`ai_pilots_turn_away_from_a_black_hole`, `an_ion_storm_shortens_radar_range`. App **0.5.0** (main `0a1c340`) adds
 `remote::protocol::tests::themes_layer_per_cockpit_and_become_css_variables`; app **0.4.15**
 (main `e2b5012`) adds `remote::protocol::tests::contacts_are_in_the_players_axes_and_targets_decode`
 and `hud::tests::the_message_log_reports_what_is_new_since_a_count`; app **0.4.14** (main
@@ -25,7 +40,7 @@ the real page in a browser ([Remote console](../architecture/remote.md#debugging
 
 Not unit-tested, by design, and covered by [manual tests](manual-tests.md) instead: the
 `hud::draw` painting, the `Renderer`'s draw calls and shaders, macroquad device reading, sound
-playback, the 3D cockpit pass, anchored instruments drawn into textures, the asset browser's, controls menu's and layout editor's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.
+playback, the sky dome, planet disc, fog and terrain drawing, the black hole's look, the artificial horizon's drawing, the 3D cockpit pass, anchored instruments drawn into textures, the asset browser's, controls menu's and layout editor's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.
 
 ## Summary
 
@@ -46,6 +61,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `content::pack` | 7 | Manifest parsing and validation, **kind, parent, targets and format** (and their errors), **the active set for a chosen campaign** (parent chain, targeting addons, dependencies), dependency ordering, missing/duplicate/cyclic dependencies, discovery |
 | `content::rules` | 6 | Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, **`bolt_frame`, `bolt_carry` and `lighting` (unset keys keep defaults)**, cockpits; **later packs merge, delete and edit lists**; **difficulty variants and per-level values**; every error reported; **spelling of original keys** (`HitPoints` → `hit_points`, `Side` → `faction`, beam `Range` in km); **sound cues resolve through the original table** |
 | `content::equipment` | 3 | System kinds round trip and built-ins exist, `systems` definitions overriding built-ins, `power` parsing and validation (level counts, start levels) |
+| `content::hazards` | 1 | `hazards:` parses with defaults (count, radius, `sensors` as a fraction); a hazard without `class`, or a position without three numbers, is an error |
+| `content::environment` | 2 | Environments and terrains parse with defaults; mistakes reported (unknown `physics`, an atmosphere without a terrain, both or neither of `generate` / `heightmap`, an unknown generator); generated heightfields span their `height` range, are the same for the same seed and interpolate between grid points |
 | `content::looks` | 3 | Debris sets and effects parse with defaults; texture swaps accumulate with damage levels and state; texture keys ignore folders, case and extensions |
 | `content::mission` | 2 | A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action) |
 | `content::text` | 1 | Keys resolve, plain values pass through, imports are listed |
@@ -63,6 +80,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `sim::guidance` | 7 | Homing hits and dumbfire misses an offset target; sidestep still arrives; parallax decoys lure enemy missiles; cloaked wait sleeps until prey comes near; cluster splits into submunitions; doppelganger launches a decoy ship that expires; damage modes |
 | `mission` | 4 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; **the player's death is its own result (`killed`) with the lose outcomes** |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
+| `sim::hazards` | 4 | Asteroid fields and minefields are scattered in their sphere, clear of craft, deterministically, asteroids as scenery; a black hole pulls harder when near (capped) and swallows what crosses its radius; AI pilots turn away from it; an ion storm shortens radar range |
+| `sim::env` | 4 | Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the `lift` speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain |
 | `script` | 3 | Units and tokens; evaluation with precedence and short-circuit; **errors found when loading** (unknown names, argument counts, types) |
 | `script::object` | 1 | Query ids match the table; system names match the kinds; level names as constants |
 | `script::battle` | 1 | Query ids match the table; role names are checked names |
@@ -76,9 +95,10 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `render::effects` | 3 | Events create sparks/explosions/debris that age and expire, explosion curve, jitter range |
 | `render::gpu` | 3 | Per-texture chunks with local u16 indices and the overlay flag, splitting huge groups, engine glow points |
 | `render::starfield` | 1 | Same seed same sky, unit directions, uniform hemispheres |
+| `render::terrain` | 1 | Terrain meshes face up (counter-clockwise from above) and are coloured from low to high by height |
 | `hud` | 7 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), **power readout and system lamps**, message expiry; **the message log reports what is new since a count** (the console's events, kept-lines limit) |
 | `hud::layout` | 4 | Anchor corners lie on the surface with world up; rays pick the nearest surface; 2D dragging and anchor scaling; saved layouts are valid rules |
-| `hud::draw` | 3 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second** |
+| `hud::draw` | 4 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second**; **the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch** |
 | `hud::glyphs` | 1 | Text sizes snap down onto the glyph ladder |
 | `audio` | 2 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`) |
 | `app::assets` | 2 | Tab cycling; empty lists without original data |
@@ -123,7 +143,11 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`content::equipment`**: `kinds_round_trip_and_builtins_exist`, `power_section_parses_and_validates`, `system_definitions_override_builtins`
 
+**`content::environment`**: `environments_and_terrains_parse_and_report_mistakes`, `generated_heightfields_span_their_range_are_deterministic_and_interpolate`
+
 **`content::files`**: `every_schema_builds_and_exports`
+
+**`content::hazards`**: `hazards_parse_with_defaults_and_report_mistakes`
 
 **`content::looks`**: `debris_and_effects_parse_with_defaults`, `swaps_accumulate_with_damage_and_state`, `texture_keys_ignore_folders_case_and_extensions`
 
@@ -165,7 +189,7 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`hud`**: `gauges_sweep_and_read_the_ship`, `layout_scales_by_height_and_centres`, `messages_expire_and_keep_the_newest`, `mfd_pages_cycle_and_describe`, `power_and_system_readouts`, `radar_places_contacts_by_angle`, `the_message_log_reports_what_is_new_since_a_count`
 
-**`hud::draw`**: `drift_reads_signed_whole_metres_per_second`, `lamp_grids_follow_the_panel_shape`, `shield_rings_go_green_amber_red_then_blink`
+**`hud::draw`**: `drift_reads_signed_whole_metres_per_second`, `lamp_grids_follow_the_panel_shape`, `shield_rings_go_green_amber_red_then_blink`, `the_pitch_ladder_sits_ahead_at_its_angles`
 
 **`hud::glyphs`**: `sizes_snap_down_onto_the_ladder`
 
@@ -205,6 +229,8 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`render::starfield`**: `same_seed_same_sky_and_unit_directions`
 
+**`render::terrain`**: `terrain_meshes_face_up_and_colour_by_height`
+
 **`script`**: `errors_are_found_when_loading`, `evaluates_with_precedence_and_short_circuits`, `units_and_tokens`
 
 **`script::action`**: `actions_parse_and_check`
@@ -225,7 +251,11 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`sim::flight`**: `afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off`, `assisted_model_holds_throttle_speed_and_damps_drift`, `brake_stops_against_the_direction_of_travel`, `energy_and_shields_recharge_up_to_capacity`, `half_throttle_is_half_the_acceleration`, `helpers`, `newtonian_accelerates_to_the_cap_and_coasts`, `pitching_up_raises_the_nose_and_rates_fall_with_speed`, `reverse_thrust_slows_and_then_backs_up`, `speed_hold_matches_speed_and_cancels_drift`, `static_objects_do_not_move`, `the_arena_edge_halts_outward_motion`, `turning_does_not_steer_the_velocity`, `vct_thrusts_sideways`, `yaw_right_and_roll_right_turn_the_expected_way`
 
+**`sim::env`**: `ai_pilots_pull_up_near_the_ground`, `drag_gravity_and_lift_act_in_air_and_not_in_space`, `gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit`, `ground_installations_are_set_down_on_the_terrain`
+
 **`sim::guidance`**: `cloaked_wait_sleeps_until_prey_comes_near`, `cluster_splits_into_submunitions`, `damage_modes`, `doppelganger_launches_a_decoy_ship_that_expires`, `homing_hits_and_dumbfire_misses_an_offset_target`, `parallax_decoys_lure_enemy_missiles`, `sidestep_still_arrives`
+
+**`sim::hazards`**: `a_black_hole_pulls_harder_when_near_and_swallows_what_crosses_its_radius`, `ai_pilots_turn_away_from_a_black_hole`, `an_ion_storm_shortens_radar_range`, `asteroid_fields_and_minefields_are_scattered_clear_of_craft`
 
 **`sim::systems`**: `balance_caps_and_message`, `cloaked_ships_vanish_from_enemy_sensors_beyond_range`, `cycling_wraps_to_a`, `damage_knocks_systems_out_and_repairs_bring_them_back`, `disabled_when_engines_and_manoeuvring_are_out`, `ecm_makes_incoming_missiles_lose_their_target`, `hyperspace_counts_down_aborts_and_departs`, `raising_takes_power_from_the_other_setting`, `requests_change_power_and_balance`, `shield_balance_moves_points_forward_and_recharge_follows_power`, `sliders_set_power_levels_and_balance_outright`, `systems_can_be_destroyed_beyond_repair`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`, `tractor_needs_power_a_fitting_and_a_target_in_range`
 

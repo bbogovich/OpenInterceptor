@@ -1,5 +1,5 @@
 ---
-spec_version: 1.8.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -23,7 +23,7 @@ Features: [Cockpit & HUD](../../definition/cockpit-hud.md). How to read a requir
 | [R-HUD-009 Drift display](#r-hud-009-drift-display) | Implemented |
 | [R-HUD-010 Brightness setting](#r-hud-010-brightness-setting) | Implemented |
 | [R-HUD-011 Other craft visible at combat ranges](#r-hud-011-other-craft-visible-at-combat-ranges) | Implemented |
-| [R-HUD-012 Atmosphere instruments](#r-hud-012-atmosphere-instruments) | Planned |
+| [R-HUD-012 Atmosphere instruments](#r-hud-012-atmosphere-instruments) | Implemented |
 
 ## Requirements
 
@@ -169,14 +169,19 @@ Other craft MUST be visible to the player at combat ranges in every cockpit and 
 
 ### R-HUD-012 Atmosphere instruments
 
-In an atmosphere the HUD MUST show altitude, vertical speed and a horizon.
+In a battle over a ground (an atmospheric environment, R-MSN-008), the HUD MUST show:
 
-*Rationale:* Flight over terrain.
+- on the status line, after the speed and flight flags, `ALT n  VS ±n`: the height above the terrain directly below the craft and the vertical speed (+ up), in whole metres and metres per second;
+- in the forward view, an **artificial horizon**: a level horizon line straight ahead in the camera's compass direction, whatever the craft's pitch and roll, and a pitch ladder with shorter, labelled rungs at −20°, −10°, +10° and +20°.
+
+In space neither is shown.
+
+*Rationale:* Flight over terrain: the pilot needs to know how high they are, whether they are sinking, and which way is level.
 
 - Implements: [F-HUD-008](../../definition/cockpit-hud.md#f-hud-008-atmosphere-instruments)
-- Status: planned
-- Verified by: Planned.
-- See: [Stage 3](../../implementation/plan/stage-3-missions.md)
+- Status: implemented (app 0.6.0, main `af003f6`)
+- Verified by: `hud::draw::tests::the_pitch_ladder_sits_ahead_at_its_angles`; MT-3-44
+- See: [Cockpit and HUD](../../implementation/architecture/hud.md)
 
 ### R-HUD-013 Wide-screen side bands
 
@@ -200,3 +205,4 @@ The bands MUST be drawn after the 3D view and the cockpit art, and before the in
 | 1.0.0 | 2026-11-11 | Bootstrap: R-HUD-001 – R-HUD-012 (12 requirements; 8 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-HUD-009, R-HUD-010, R-HUD-011 implemented (app 0.3.1): drift status line and flight-path marker; `graphics.brightness` 0.5–2 as a gamma; `flight.lighting` with rim light and distant dots. R-HUD-010 and R-HUD-011 open notes resolved; R-HUD-009 keeps the original-cockpit question |
 | 1.8.0 | 2026-11-11 | R-HUD-013 wide-screen side bands |
+| 1.11.0 | 2026-11-11 | R-HUD-012 atmosphere instruments rewritten as built and implemented (app 0.6.0): `ALT n  VS ±n` on the status line, the artificial horizon with a pitch ladder at ±10° and ±20° |

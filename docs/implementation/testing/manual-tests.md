@@ -681,7 +681,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 (main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
 MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). MT-3-19 was revised for
 pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 covers Simple physics (0.4.6, main
-`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
+`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`); MT-3-33 – MT-3-36 the hazards (0.5.1, main `70d68e2`), MT-3-37 – MT-3-44 the environments, atmospheric flight, terrain, sky, fog and atmosphere HUD (0.6.0, main `af003f6`) and MT-3-45 – MT-3-46 the ground installations (0.6.1, main `de417df`) — their look and feel could not be judged from the agent environment, so they need the user. Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -718,6 +718,20 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-30 | Console: the target view | `mixed-dogfight` (default), with `--console` | not run | | | App 0.4.14; needs an iPad. Checked in Chrome (software WebGL) only |
 | MT-3-31 | Console: map views, gestures and tap to target | `mixed-dogfight` (default), with `--console` | not run | | | App 0.4.15; needs an iPad. Checked in Chrome only |
 | MT-3-32 | Console: themes per campaign and per cockpit | Launcher; `rocket-vs-saucer` (default); `combat-test` (`interceptor`), with `--console` | not run | | | App 0.5.0; needs an iPad and, for steps 4–6, original data. Checked in Chrome only |
+| MT-3-33 | Hazard: asteroid field | `hazard-asteroids` (default) | not run | | | App 0.5.1; needs the user |
+| MT-3-34 | Hazard: black hole | `hazard-black-hole` (default) | not run | | | App 0.5.1; needs the user |
+| MT-3-35 | Hazard: minefield in an ion storm | `hazard-minefield` (default) | not run | | | App 0.5.1; needs the user |
+| MT-3-36 | Hazards in the `interceptor` campaign | `hazard-asteroids`, `hazard-black-hole` (interceptor) | not run | | | App 0.5.1; needs the user and original data |
+| MT-3-37 | Orbit: the planet backdrop | `env-orbit` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-38 | Pocket: the small arena | `env-pocket` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-39 | Moon surface: sky, stars, fog and cratered terrain | `surface-moon` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-40 | Dusk hills: sky, fog and hill terrain | `surface-hills` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-41 | Atmospheric flight feels distinct from space (Stage 3 exit) | `surface-hills`, `surface-moon`, `rocket-vs-saucer` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-42 | Landing and crashing | `surface-moon` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-43 | The ceiling exit | `surface-hills` (default) | not run | | | App 0.6.0; needs the user |
+| MT-3-44 | ALT / VS and the artificial horizon | `surface-moon` (default); `env-orbit` | not run | | | App 0.6.0; needs the user |
+| MT-3-45 | Ground installation: defend the colony | `surface-colony` (default) | not run | | | App 0.6.1; needs the user |
+| MT-3-46 | Ground installations: flak strike | `surface-strike` (default) | not run | | | App 0.6.1; needs the user |
 
 ### The debrief (every mission case)
 
@@ -964,3 +978,115 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | Preconditions | MT-3-19 paired on an iPad. App 0.5.0 or later. For steps 4–6, original data for the `interceptor` campaign. |
 | Steps | 1. Start the game with the default campaign and pair from the launcher. 2. Start `rocket-vs-saucer` (default). 3. Press a few buttons, open a tile, look at the map and the shield rings. 4. Start the game with the `interceptor` campaign and pair again from the launcher. 5. Fly `combat-test` in the Lightning (cockpit A), then the Firestar (cockpit B), then the Avenger (cockpit C). 6. Return to the launcher. |
 | Expected | 1–3: the art-deco look: brass lines on midnight panels, cream text, amber values, a Futura-like font, small corners; a pressed button fills with brass; every control keeps its label and stays readable. 4: the green instrument look on a dark background. 5: the frames and highlights take each cockpit's tint — olive bronze for A, steel blue for B, red for C — as each battle starts. 6: the base look of the current campaign. No original image appears anywhere on the console. |
+
+### MT-3-33 — Hazard: asteroid field
+
+| Field | |
+|---|---|
+| Preconditions | App 0.5.1 or later; `--no-original` is enough. |
+| Steps | 1. Start `hazard-asteroids` (default) in any craft. 2. Fly into the field; watch the radar as you approach. 3. Shoot an asteroid until it breaks up. 4. Fly into one at moderate speed. 5. Quit and start the scenario again. |
+| Expected | 1: 45 asteroids tumble slowly ahead, none near your start. 2: asteroids appear on the radar only once within radar range, not from the start; the two saucers fly among them. 3: hits land and the asteroid is destroyed with its explosion and debris. 4: a collision with its sound and damage. 5: the field is laid out the same way every time. |
+
+### MT-3-34 — Hazard: black hole
+
+| Field | |
+|---|---|
+| Preconditions | App 0.5.1 or later. |
+| Steps | 1. Start `hazard-black-hole` (default). 2. Look towards the hole (ahead and slightly below). 3. Cut the throttle and let it pull you in, watching the speed. 4. Before the core, turn away and burn out with the afterburner. 5. Watch the saucers for a few minutes. 6. Finally, fly into the black core. |
+| Expected | 2: a black sphere hides the stars behind it, ringed by a slowly turning ring of orange glows. 3: the speed towards it grows, faster the closer you get. 4: you can still escape outside the core with full thrust. 5: the saucers fight but veer away from the hole; none falls in. 6: your craft is destroyed as it crosses the core's edge, and missiles fired near it curve towards it. |
+
+### MT-3-35 — Hazard: minefield in an ion storm
+
+| Field | |
+|---|---|
+| Preconditions | App 0.5.1 or later. |
+| Steps | 1. Start `hazard-minefield` (default). 2. Read the first message. 3. Watch the radar while flying towards the hauler ahead. 4. Try a missile lock on a mine or on the hauler. 5. Fly close to a mine. |
+| Expected | 2: `ION STORM: SENSORS AT 50%` at the start. 3: contacts appear at about half the usual radar range, so the mines show up late. 4: the lock builds visibly slower than in `rocket-vs-saucer`. 5: the mine goes off as in the Stage 2 mine cases. |
+
+### MT-3-36 — Hazards in the `interceptor` campaign
+
+| Field | |
+|---|---|
+| Preconditions | App 0.5.1 or later; original data for the `interceptor` campaign. |
+| Steps | 1. Start `hazard-asteroids` (interceptor). 2. Read the first message and watch the radar. 3. Start `hazard-black-hole` (interceptor) and fight the Wraith and the Spectre. |
+| Expected | 1: the original's asteroid model fills the belt and tumbles. 2: `ION STORM: SENSORS AT 40%`; the radar range is short. 3: the black core and accretion ring as in MT-3-34; the aliens steer clear of the hole. |
+
+### MT-3-37 — Orbit: the planet backdrop
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. Start `env-orbit` (default). 2. Look around, down and to the right. 3. Fight the two saucers. 4. Return to the launcher. |
+| Expected | 2: a large blue planet below and ahead, lit on the sun's side with a darker limb, behind the stars and all craft. Flight is ordinary space flight. 4: the launcher and any other scenario show plain black space (no planet carried over). |
+
+### MT-3-38 — Pocket: the small arena
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. Start `env-pocket` (default). 2. Note the purple planet behind you. 3. Fly straight out at full speed. |
+| Expected | 2: a purple planet fills a large part of the sky behind the start. 3: within about 12 km of the centre the flight is halted with `ARENA BOUNDARY` (much sooner than in other scenarios). |
+
+### MT-3-39 — Moon surface: sky, stars, fog and cratered terrain
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. Start `surface-moon` (default). 2. Look at the sky up, at the horizon and down. 3. Fly low over the ground towards the far edge. 4. Look at a distant crater and fly towards it. |
+| Expected | 2: a dark violet sky shading to a lighter mauve horizon, stars showing faintly through; grey, cratered ground below, lit by the sun, with darker steep crater walls and raised rims. 3: the ground fades into the fog colour with distance; no hard terrain edge is visible before the fog. 4: the crater gains detail and colour as you near it; no seams or holes in the ground; no flicker. |
+
+### MT-3-40 — Dusk hills: sky, fog and hill terrain
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. Start `surface-hills` (default). 2. Look around. 3. Fly low through the valleys. |
+| Expected | 2: a warm dusk sky — deep blue above, orange at the horizon — with almost no stars; rolling green-brown hills with darker slopes. 3: hills ahead fade in out of an orange haze; the hills block the view of craft behind them. |
+
+### MT-3-41 — Atmospheric flight feels distinct from space (Stage 3 exit)
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later; Realistic physics (MT-3-25). |
+| Steps | 1. In `surface-hills` with a Comet, fly level at full throttle, note the top speed; then cut the throttle. 2. Slow to under 120 m/s and hold the nose level. 3. Bank to 60° and pull. 4. Repeat 1 – 3 in `surface-moon`. 5. Compare with the same manoeuvres in `rocket-vs-saucer` (space). 6. Watch a saucer in `surface-hills`. |
+| Expected | 1: the top speed is lower than in space; with the throttle cut the craft slows down by itself. 2: below the stall speed the craft sinks (VS negative) even with the nose level. 3: the craft turns by banking and loses some height if not pulled harder. 4: on the moon the top speed is higher, stalling needs more speed but the sink is slow (low gravity). 5: in space nothing slows or pulls the craft — the difference is plain. 6: saucers hover and do not sink. Record the developer's verdict on "feels distinct from space". |
+
+### MT-3-42 — Landing and crashing
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. In `surface-moon`, descend to a flat crater floor and touch down gently (under 25 m/s of sink), wings level. 2. Take off again. 3. Dive into the ground steeply at speed. 4. Touch down gently but rolled over 60°. |
+| Expected | 1: the craft lands: it stops sinking, slides to a halt, no damage, no collision sound. 2: it can climb away. 3: a crash: collision sound, heavy damage (or destruction at high speed), a bounce. 4: a crash, although slow, because the craft is not upright. |
+
+### MT-3-43 — The ceiling exit
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. In `surface-hills`, climb steeply at full throttle, watching ALT. 2. Pass a height of 7 km (ALT plus the ground's height; the hills reach 1.4 km). |
+| Expected | 2: the battle ends for you as by a hyperspace jump, with `LEFT THE ATMOSPHERE` in the message log (the `retreat` path in a mission). |
+
+### MT-3-44 — ALT / VS and the artificial horizon
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.0 or later. |
+| Steps | 1. In `surface-moon`, read the status line while climbing and diving. 2. Fly over a crater rim and down into the crater at constant height. 3. Look at the forward view while pitching up and down and rolling. 4. Switch to chase and cockpit views. 5. Start `env-orbit`. |
+| Expected | 1: `ALT n  VS ±n` after the speed: VS positive climbing, negative diving. 2: ALT changes with the ground below although your height does not. 3: a level horizon line ahead with rungs at ±10° and ±20°, labelled; the horizon line stays level with the real horizon as you roll, and the rungs move as you pitch. 4: the instruments stay readable in each view. 5: no ALT, VS or horizon in space. |
+
+### MT-3-45 — Ground installation: defend the colony
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.1 or later. |
+| Steps | 1. Start `surface-colony` (default). 2. Find the colony (protected) on the ground ahead. 3. Fight off the two raider saucers. 4. Let a saucer attack the colony. |
+| Expected | 2: the colony sits on the moon's surface — neither floating above it nor buried — in the objective colour with a PROTECT label and radar ring. 3 – 4: the saucers attack it; hits on it are shown; it does not move or fall. |
+
+### MT-3-46 — Ground installations: flak strike
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.1 or later. |
+| Steps | 1. Start `surface-strike` (default). 2. Locate the three flak batteries on the hillside ahead. 3. Fly low and slow past one. 4. Attack fast and keep moving; destroy all three. |
+| Expected | 2: each battery sits on the ground where it stands, at different heights on the slope. 3: the batteries turn and fire death rays at you across a wide arc. 4: each can be destroyed; the turret stops firing when destroyed. |

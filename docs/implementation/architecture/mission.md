@@ -15,13 +15,20 @@ flowchart TD
     AC["script::action::MISSION_ACTIONS"] --> MP
     MP --> TX["Content: @keys resolved<br/>(name, briefing, debrief, chatter, message args)"]
     TX --> RU["Ruleset::missions (sorted by order)"]
-    RU --> ST["MissionRun::start(def, rules, shapes, player class)<br/>player + roles arriving at the start → World"]
+    RU --> ST["MissionRun::start(def, rules, shapes, player class)<br/>environment first → player + roles arriving at the start<br/>→ hazards last → World"]
     ST --> W["World"]
 ```
 
 **Layering.** `mission` sits between `sim` and `app`: it reads and spawns into a `World` (through
 `World::spawn_placement`, the same path scenario objects take), but the simulation knows nothing
 about missions, so `sim` stays testable on its own.
+
+**Start order (Stage 3).** `MissionRun::start` sets the mission's `environment:` on the new
+`World` **first** (`World::set_environment`), so that ground installations among the roles are
+set down on its terrain (app 0.6.1); then places the player and the roles that arrive at the
+start; and applies `hazards:` **last** (`World::apply_hazards`), so asteroids and mines keep
+300 m clear of every craft already placed. `World::from_scenario` follows the same order for
+scenarios. See [Simulation](sim.md#hazards-simhazards-app-051).
 
 ### One frame of a mission
 

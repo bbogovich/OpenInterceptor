@@ -133,6 +133,15 @@ stateDiagram-v2
 | `probe-net` | both | A friendly sensor probe 7 km ahead shows enemies on your radar early; a hostile jamming probe on the way halves your radar range and slows locks until you shoot it down. |
 | `construction-defence` | default | A research station at 60 % (`state: build_60`, protected, no guns yet) and a manufacturing frame at 25 %; Dominion raiders try to wreck them. |
 | `convoy-ambush` | default | Escort two cargo clippers (protected) from the mining facility while Black Comet hot-rods and a saucer pounce; a lost clipper loses its cargo. |
+| `hazard-asteroids` | both | Stage 3.2 hazards. Default: 45 cosmium asteroids in a 4 km sphere with two scout saucers hiding among them. Interceptor: 50 asteroids in an **ion storm** (radar at 40 %) with two Wraiths. Asteroids show on radar only within range. |
+| `hazard-black-hole` | both | A dogfight at the edge of a black hole (`pull: 12`, `radius: 450`): the pull grows as you near it, the core swallows what crosses it, the AI turns away. Default: two raider saucers; interceptor: a Wraith and a Spectre. |
+| `hazard-minefield` | default | 24 Dominion space mines in a 50 % **ion storm** (they show up late) between you and a Prospector hauler to reach. |
+| `env-orbit` | default | Stage 3.3: the `orbit` environment — a blue planet in the sky — with two scout saucers. |
+| `env-pocket` | default | The `pocket` environment: a 12 km arena under a purple planet, two hot-rods. |
+| `surface-moon` | default | Stage 3.4 – 3.6: `moon_surface` — low gravity, thin air, craters, a violet sky with stars; two saucers. Landing, crashing, ALT/VS and the horizon. |
+| `surface-hills` | default | `dusk_hills` — full gravity and thick air, rolling hills, a warm dusk sky and fog, the ceiling at 7 km; two hot-rods on wings. |
+| `surface-colony` | default | Stage 3.5 ground installations: defend a Guard colony (protected) set down on the moon from two raider saucers. |
+| `surface-strike` | default | Three Dominion flak batteries (ground turrets) in the hills: knock them out; they track low fliers. |
 
 The Stage 1 `sample-arena` scenario (pack `sample`) was retired when the `sample` pack became
 the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.

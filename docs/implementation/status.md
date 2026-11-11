@@ -7,7 +7,7 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [0 Foundation](plan/stage-0-foundation.md) | **Done** | Repository, SpecItOut manifest, gate, docs site; every asset type for stages 1–2 decoded and verified |
 | [1 Flight simulator](plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
-| [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later) | See [Stage 3 progress](#stage-3-progress) below |
+| [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later); hazards in **0.5.1**; environments, atmospheric flight, terrain and the atmosphere HUD in **0.6.0**; ground installations in **0.6.1** | See [Stage 3 progress](#stage-3-progress) below |
 | [4 Strategy layer](plan/stage-4-strategy.md) | Not started | |
 | [5 Campaigns](plan/stage-5-campaign.md) | Not started | |
 | [6 Presentation](plan/stage-6-presentation.md) | Not started | |
@@ -122,18 +122,26 @@ App **0.3.0**, main `d7553f5`; then app **0.3.1**, main `c583659` (the interlude
 fixes); app **0.4.0**, main `dfff71b` (console C1); **0.4.1**, main `42716d1` (lit shader link
 fix); **0.4.2**, main `bf7b7ce` (`resources/` layout); **292 unit tests** on macOS at 0.4.2. Then
 the console C2 – C4 and C2b: app **0.4.11** (`db2f264`), **0.4.14** (`e51eca9`), **0.4.15**
-(`e2b5012`) and **0.5.0** (`0a1c340`).
+(`e2b5012`) and **0.5.0** (`0a1c340`). Then Stage 3.2 – 3.6: app **0.5.1** (`70d68e2`, hazards), **0.6.0**
+(`af003f6`, environments, atmospheric flight, terrain, atmosphere HUD) and **0.6.1** (`de417df`,
+ground installations); at 0.6.1, **321 unit tests** on macOS by a count of the sources (not a build; see
+[Unit tests](testing/unit-tests.md)).
 
 | Item | Status | Where |
 |---|---|---|
 | Battle condition context (role names as constants) and checked outcome actions (battle / campaign scope) (3.1) | **Done** (campaign context: Stage 4) | `src/script/battle.rs`, `src/script/action.rs` |
-| Missions as data: roles, arrivals (`at:`, `arrive:`), waves, objectives, optional objectives, timer, outcomes, chatter, debrief (3.2) | **Done** (hazards planned) | `src/content/mission.rs`, `src/mission/` |
+| Missions as data: roles, arrivals (`at:`, `arrive:`), waves, objectives, optional objectives, timer, outcomes, chatter, debrief (3.2) | **Done** | `src/content/mission.rs`, `src/mission/` |
+| Hazards (3.2): asteroid fields and minefields scattered clear of craft (asteroids are radar scenery), black hole (1/d² pull capped at 20×, swallowing, black core and accretion ring, AI escape), ion storm (radar × `sensors`, half-speed locks, start message); `--check` validates hazard classes | **Done** (0.5.1, main `70d68e2`; soaked with the AI pilot; MT-3-33 – MT-3-36 not yet run) | `src/content/hazards.rs`, `src/sim/hazards.rs`, `src/sim/ai.rs`, `src/render/mod.rs` |
+| Battle environments (3.3): `environments:` and `environment: <id>`, arena, planet backdrop, sky | **Done** (0.6.0, main `af003f6`; backdrops from the map location in Stage 4; MT-3-37 – MT-3-40 not yet run) | `src/content/environment.rs`, `src/sim/env.rs`, `resources/default/rules/environments.yaml` |
+| Atmospheric flight (3.4): drag, gravity, lift, hover, landing, crashing, ceiling exit, AI ground avoidance; ship keys `atmosphere_max_speed`, `lift`, `hover`, `atmospheric` | **Done** (0.6.0; MT-3-41 – MT-3-43 not yet run) | `src/sim/env.rs`, `src/sim/ai.rs`, `src/content/rules.rs` |
+| Terrain (3.5): generated and heightmap heightfields, coloured terrain mesh, sky dome, distance fog; ground installations (`kind: ground`) and anti-air batteries | **Partial** (0.6.0; installations 0.6.1, main `de417df`; MT-3-45, MT-3-46 not yet run). Detail textures and scattered objects deferred | `src/content/environment.rs`, `src/render/terrain.rs`, `src/render/mod.rs`, `src/sim/mod.rs`, `resources/default/rules/ground.yaml` |
+| Atmosphere HUD (3.6): `ALT` / `VS` on the status line, artificial horizon and pitch ladder | **Done** (0.6.0; MT-3-44 not yet run) | `src/hud/draw.rs` |
 | Debrief screen; player jumping out = `retreat` (3.8) | **Done** (salvage/score applied in Stage 4) | `src/app/flight.rs` |
 | Launcher mission entries with scrolling; `--mission`; `--soak <mission>` | **Done** | `src/app/launcher.rs`, `src/soak.rs` |
 | AI missile launches only when closing in, staggered; per-pilot random sequences | **Done** | `src/sim/ai.rs`, `src/sim/mod.rs` |
 | `interceptor`: 5 of 27 mission types (3.11) | **Started** (compositions derived, DEV-041) | `packs/interceptor/missions/` |
 | `default`: 4 missions incl. the logistics missions (3.12, 3.13) | **Started** | `resources/default/missions/` |
-| Environments, atmospheric flight, terrain, simulator missions, Tier 2 decision (3.3–3.6, 3.9, 3.10) | **Not started** | |
+| Simulator missions, Tier 2 decision (3.9, 3.10) | **Not started** | |
 | Interlude F.1 — drift readout (`THR 60%  312 m/s  X+45 Y-12`) and flight-path marker | **Done** (0.3.1) | `src/sim/mod.rs` (`Ship::body_velocity`), `src/hud/draw.rs` |
 | Interlude F.2 — shot physics: bolts leave with ship velocity + ω × r + muzzle speed, then fly straight; `flight.bolt_frame: world \| ship`, `bolt_carry`; streaks relative to the viewer | **Done** (0.3.1) | `src/sim/combat.rs`, `src/content/rules.rs`, `src/render/` |
 | Interlude F.3 — visibility: `flight.lighting` (ambient, sun, rim, distant dots), `graphics.brightness` | **Done** (0.3.1) | `src/render/mod.rs`, `src/settings.rs` |
@@ -147,6 +155,6 @@ the console C2 – C4 and C2b: app **0.4.11** (`db2f264`), **0.4.14** (`e51eca9`
 | Interlude C5 — physical panel over USB serial (Arduino) | **Later** | |
 | Lit shader: the `Light` uniform states `mediump` in both stages (GLSL ES link error at start-up) | **Done** (0.4.1) | `src/render/mod.rs` |
 | `resources/` layout: `resources/default` (the default campaign), git-ignored `resources/xcom` (installed copy, tried first) and `resources/xcom-cd` (CD copy); `packs/` keeps the bundled mods; gate guard; app bundle ships `resources/default` (F-CMP-005, R-CMP-014, R-CMP-015) | **Done** (0.4.2) | `src/cli.rs`, `src/settings.rs`, `scripts/check.sh`, `tools/build_bundle.py` |
-| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-32 | **Not yet run** (MT-3-27's hit static confirmed by the user) | |
+| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-46 | **Not yet run** (MT-3-27's hit static confirmed by the user). The look of the hazards, sky, fog, terrain and horizon could not be seen from the agent environment: MT-3-33 – MT-3-46 need the user | |
 
-**Next**: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).
+**Next**: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes, including the hazard and environment cases MT-3-33 – MT-3-46 (sky, fog, terrain, landing, crashing, the ceiling exit, ALT/VS and the horizon); then terrain detail textures and scattered objects (3.5), simulator missions (3.9) and the Tier 2 decision (3.10). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).

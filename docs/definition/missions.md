@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,7 +15,7 @@ Requirements for these features: [Missions requirements](../specification/requir
 | [F-MSN-001 Missions as data](#f-msn-001-missions-as-data) | Implemented |
 | [F-MSN-002 Debrief](#f-msn-002-debrief) | Implemented |
 | [F-MSN-003 Radio chatter and voices](#f-msn-003-radio-chatter-and-voices) | In progress |
-| [F-MSN-004 Environments and hazards](#f-msn-004-environments-and-hazards) | Planned |
+| [F-MSN-004 Environments and hazards](#f-msn-004-environments-and-hazards) | Implemented |
 | [F-MSN-005 Simulator missions](#f-msn-005-simulator-missions) | Planned |
 | [F-MSN-006 Base defence the player can win](#f-msn-006-base-defence-the-player-can-win) | Implemented |
 | [F-MSN-007 Logistics missions](#f-msn-007-logistics-missions) | In progress |
@@ -54,11 +54,11 @@ Requirements for these features: [Missions requirements](../specification/requir
 
 ### F-MSN-004 Environments and hazards
 
-**What.** Battles happen in open space, in orbit, in pockets and on planet surfaces, with hazards such as asteroids, black-hole pull, minefields and ion storms.
+**What.** Battles happen in open space, in orbit over a planet, in small pockets and above planet surfaces with ground installations, with hazards such as asteroid fields, black-hole pull, minefields and ion storms. Environments and hazards are pack data that a mission or scenario names.
 
 **Why.** Variety, and the surface missions of the default campaign.
 
-- **Status:** planned
+- **Status:** implemented — hazards in app 0.5.1, environments in 0.6.0, ground installations in 0.6.1. Choosing the environment from the strategy map's location comes with Stage 4.
 - **Source:** Plan items 3.2 (hazards), 3.3–3.5.
 - **Specified by:** [R-MSN-008](../specification/requirements/missions.md#r-msn-008-battle-environments), [R-MSN-009](../specification/requirements/missions.md#r-msn-009-hazards)
 
@@ -98,3 +98,4 @@ Requirements for these features: [Missions requirements](../specification/requir
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-MSN-001 – F-MSN-007 (7 features) |
 | 1.1.0 | 2026-11-11 | F-MSN-006 implemented (app 0.3.1); also specified by R-MSN-003 and R-MSN-005 (the `killed` result) |
+| 1.11.0 | 2026-11-11 | F-MSN-004 implemented: hazards (app 0.5.1), environments (0.6.0), ground installations (0.6.1) |

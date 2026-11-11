@@ -1,5 +1,5 @@
 ---
-spec_version: 1.6.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -18,7 +18,7 @@ Requirements for these features: [Flight requirements](../specification/requirem
 | [F-FLT-004 Arena boundary](#f-flt-004-arena-boundary) | Implemented |
 | [F-FLT-005 Hyperspace departure](#f-flt-005-hyperspace-departure) | Implemented |
 | [F-FLT-006 Collisions](#f-flt-006-collisions) | Implemented |
-| [F-FLT-007 Atmospheric flight over terrain](#f-flt-007-atmospheric-flight-over-terrain) | Planned |
+| [F-FLT-007 Atmospheric flight over terrain](#f-flt-007-atmospheric-flight-over-terrain) | In progress |
 
 ## Features
 
@@ -101,7 +101,7 @@ Requirements for these features: [Flight requirements](../specification/requirem
 
 **Why.** New to this engine: it lets campaigns fight on worlds, not only in space (the default campaign has surface missions).
 
-- **Status:** planned
+- **Status:** in-progress — drag, gravity, lift, hover, landing, crashing and the ceiling exit, generated and heightmap terrain, the sky and fog, and ground installations are built (app 0.6.0 – 0.6.1). Scattered objects and detail textures on the terrain remain (plan item 3.5).
 - **Source:** Plan items 3.3–3.5.
 - **Specified by:** [R-FLT-011](../specification/requirements/flight.md#r-flt-011-atmospheric-flight), [R-FLT-012](../specification/requirements/flight.md#r-flt-012-terrain)
 
@@ -112,3 +112,4 @@ Requirements for these features: [Flight requirements](../specification/requirem
 | 1.0.0 | 2026-11-11 | Bootstrap: F-FLT-001 – F-FLT-007 (7 features) |
 | 1.5.0 | 2026-11-11 | F-FLT-006: impact, spin, tumble and one sound per contact |
 | 1.6.0 | 2026-11-11 | F-FLT-008 simple physics for beginners |
+| 1.11.0 | 2026-11-11 | F-FLT-007 in progress: atmospheric flight, terrain, sky, fog and ground installations built (app 0.6.0 – 0.6.1); scattered objects and detail textures remain |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.10.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -11,14 +11,14 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.10.0** (90 features). Changes are listed in the
+Definition version **1.11.0** (90 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
 
 | Area | Code | Features | Covers |
 |---|---|---|---|
-| [Flight](flight.md) | `FLT` | 8 | How a craft moves: the flight model, speed management, the arena, hyperspace and, later, flight in an atmosphere. |
+| [Flight](flight.md) | `FLT` | 8 | How a craft moves: the flight model, speed management, the arena, hyperspace and flight in an atmosphere over terrain. |
 | [Combat](combat.md) | `CMB` | 11 | Weapons, damage, ship systems, special equipment, targeting, wingmen and the enemies' behaviour. |
 | [Cockpit & HUD](cockpit-hud.md) | `HUD` | 9 | What the pilot sees: cockpits, views, instruments and the targeting display. |
 | [Controls & control console](control-console.md) | `CON` | 9 | How the pilot commands the craft: keyboard, mouse and gamepad bindings, finding the controls, and the tablet control console. |
@@ -57,3 +57,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.7.0 | 2026-11-11 | 87 features: F-FLT-008 (added in 1.6.0); F-MOD-009 – F-MOD-013 and F-PLT-005 (planned: Mod Designer, Cutscene Designer, cutscenes, video cutscenes, shared formations, game bundling) |
 | 1.9.0 | 2026-11-11 | 90 features: F-HUD-009 (added in 1.8.0); F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned) |
 | 1.10.0 | 2026-11-11 | 90 features: console C2 – C4 and C2b (app 0.4.11 – 0.5.0): F-CON-005, F-CON-006, F-CON-008, F-CON-009 implemented; F-CON-004 implemented except C5 |
+| 1.11.0 | 2026-11-11 | 90 features: Stage 3.2 – 3.6 (app 0.5.1 – 0.6.1): F-MSN-004 and F-HUD-008 implemented; F-FLT-007 in progress (scattered objects and detail textures remain) |

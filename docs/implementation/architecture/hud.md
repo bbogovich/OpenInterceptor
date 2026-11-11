@@ -76,6 +76,17 @@ second, signed (`drift_text`). All three come from `Ship::body_velocity()`, the 
 into the ship's own axes ([Simulation](sim.md)). In newtonian flight a turn changes the nose, not
 the motion, so after a hard turn X or Y shows how far the ship is sliding.
 
+**Atmosphere instruments (app 0.6.0).** Over a ground, `status_line` (which now takes the
+`World`) appends `ALT n  VS ±n`: `draw::altitude(world, ship)` — the height above
+`World::ground_height` under the craft, `None` in space — and the world vertical speed. In the
+forward views `draw_targeting` draws an **artificial horizon**: `ladder_directions(camera_forward,
+angles)` gives, for each pitch angle, a direction straight ahead in the camera's compass heading
+(its forward with the vertical part removed) tilted up by that angle. A point 1 km along it is
+projected, and a line is drawn across it along the camera's level right: 320 m long (at 1 km) for
+the horizon (0°), 120 m with a `+10`-style label for the rungs at −20°, −10°, +10°, +20°. Because the
+directions are built from the level heading, the horizon stays level on screen in world terms
+whatever the craft's pitch and roll.
+
 **Flight-path marker.** `draw_targeting` projects a point 1 km along the ship's velocity
 (when faster than 5 m/s) and draws a circle with three ticks (left, right, up) there: where the
 craft is actually going. With no drift it sits on the crosshair; sideways drift slides it off to
@@ -99,6 +110,8 @@ diamond.
 | `Lamp`, `system_lamps(&Ship)`, `system_abbrev(SystemKind)` | The `systems` instrument's lamps. |
 | `status_flags(&Ship) -> Vec<String>` | The status-strip flags. |
 | `draw::drift_text(body_velocity)` | `X+45 Y-12`: the drift part of the status line. |
+| `draw::altitude(&World, &Ship) -> Option<f32>` | Height above the ground (atmospheric battles). |
+| `draw::ladder_directions(camera_forward, &[f32]) -> Vec<(f32, Vec3)>` | The horizon's and pitch ladder's rung directions. |
 | `draw::HudFrame` | Everything a draw call needs that is not in the world, incl. `anchored` (instruments drawn on the 3D cockpit) and `text_scale`. |
 | `draw::INSTRUMENTS` | The ten instrument names, in the editor's Tab order. |
 | `layout::anchor_corners`, `anchor_point` | An anchor's corners in the camera frame; a point inside by (u, v). |
@@ -118,6 +131,7 @@ diamond.
 
 ## Debugging
 
+- No ALT/VS or horizon: they appear only when the battle has a ground (`World::env.ground`); in space and in `physics: space` environments they are hidden by design.
 - Power and systems panels appearing at the top right mean the cockpit has no
   `instruments.power` / `instruments.systems` rectangles; add them to place the instruments.
 - In a 3D cockpit, instruments that drift off their bezels on a narrow window point to a

@@ -78,6 +78,8 @@ The gate fails if the committed schemas differ from the engine's.
 | `damage` | Global rules for damage to systems and repair. |
 | `sounds` | Event sounds (assets, or `cue:<Name>` from the cue table). |
 | `audio` | The sound cue table (`cue_table: original:soundfx.ini/<section>`). |
+| `environments` | Battle environments: space or atmosphere, arena, gravity, air, ceiling, terrain, sky, planet ([Environments and terrain](environments.md)). |
+| `terrains` | Heightfields, generated or from an image, and their colours ([Environments and terrain](environments.md#terrains)). |
 | `console` | The tablet console's look: colours, font, corners, per cockpit ([Console themes](console-themes.md)). |
 | `campaign` | The campaign ruleset: name and difficulty levels (usually in `campaign/campaign.yaml`). |
 

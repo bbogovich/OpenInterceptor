@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.11.0
 status: current
 updated: 2026-11-11
 ---
@@ -12,9 +12,12 @@ updated: 2026-11-11
 (campaign events).** **Stage 3 part 1 (app 0.3.0) implemented mission types**: roles, arrivals
 (as a role's `at:` / `arrive:`), waves, objectives, optional objectives, timer, outcomes as
 checked actions, chatter and debriefs, flown from the launcher — documented for modders on
-[Missions](../../modding/missions.md). Still planned: `location`, `environment`, `backdrop`,
-`generated`, `refuse`, roles `from:` the strategy situation, `hazards`, chatter voices, simulator
-missions, environments, events and squadrons. Files in `missions/*.yaml` and
+[Missions](../../modding/missions.md). **Hazards** followed in app 0.5.1, **environments, atmospheric
+flight, terrain and the atmosphere HUD** in 0.6.0 and **ground installations** in 0.6.1 — documented on
+[Missions › Hazards](../../modding/missions.md#hazards) and [Environments and terrain](../../modding/environments.md);
+the notes below mark what was built and how it differs from this design. Still planned: `location`,
+`backdrop` from the map, `generated`, `refuse`, roles `from:` the strategy situation, chatter voices,
+simulator missions, terrain detail textures and scattered objects, events and squadrons. Files in `missions/*.yaml` and
 `events/*.yaml` (YAML, like every mod file). The [scenario format](../../modding/scenarios.md) stays for testbed
 arenas; a mission is a scenario with roles, waves, objectives and outcomes.
 
@@ -58,14 +61,14 @@ missions:
 
 | Key | Meaning |
 |---|---|
-| `location`, `environment`, `backdrop` | Where the battle happens and what the arena is like. |
+| `location`, `environment`, `backdrop` | Where the battle happens and what the arena is like. **`environment: <id>` implemented** (app 0.6.0; missions and scenarios); `location` and `backdrop: location` need the strategy map (Stage 4) — a planet backdrop is part of the environment for now. |
 | `generated` | The strategy-layer condition that creates the mission (squadron meets asset, request, event). Testbed and story missions omit it. |
 | `roles: {<name>: …}` | A group of objects: from the situation (the squadron that triggered it, the station under attack), from a class list with counts (per difficulty), or the player's launched craft. Each role has a behaviour and a faction. **Implemented** for class lists and counts (the player's craft is `player:`); `from:` the situation is Stage 4. |
 | `arrivals: {<role>: …}`, `waves: [..]` | When and where groups enter: time, condition, position (distance and bearing, edge, near another role, hyperspace in). **Implemented differently:** arrival is part of each role — `at: {distance, bearing, from, spread}` and `arrive: <condition>` — not a separate `arrivals:` map (DEV-040). Waves implemented (`{role, when, count, at}`, each once). Edge and hyperspace-in arrivals: planned. |
 | `objectives: {win, lose, draw}`, `optional: {<id>: …}` | Conditions; checked every tick. `draw` for draws (the original has win/draw/lose debriefs). **Implemented** (`lose` before `win`; optional objectives latched). |
 | `outcomes: {<result>: [..]}` | Action lists: score, salvage, capture, relation changes, map changes (outpost lost), flags, story steps. **Implemented** as checked actions; `message` runs in battle, campaign actions are listed on the debrief until Stage 4 applies them. |
 | `timer` | `timer: {after: 10min, then: lose}` for timed missions (the hijacked Nova Bomb, the arms dealer). **Implemented.** |
-| `hazards` | `{asteroids: dense, black_hole: {pull: 15}, minefield: {mines: 20}, ion_storm: {sensors: -60%}}`. *Planned.* |
+| `hazards` | **Implemented** (app 0.5.1; missions and scenarios), with explicit keys instead of the sketched shorthand: `{asteroids: {class, count, radius, center, spin}, minefield: {class, count, radius, center, faction}, black_hole: {position, pull, radius}, ion_storm: {sensors: 40%}}` — `sensors` is the fraction of radar range kept, not a reduction ([R-MSN-009](../requirements/missions.md#r-msn-009-hazards)). |
 | `chatter` | Radio lines by trigger. **Implemented** as `- {when: <condition>, line: "@chat.more_bogeys"}` (each said once); voices are planned. |
 | `debrief` | Debrief text per result. **Implemented.** |
 
@@ -85,6 +88,16 @@ The original fights only in space: deep space, around stations, in asteroid belt
 black hole. The format also supports **atmospheric and ground battles** — attacks on and
 defence of surface installations such as mining colonies and research outposts. The default
 campaign uses them; the `interceptor` campaign does not.
+
+!!! note "As built (app 0.6.0 – 0.6.1)"
+    Built: `physics: space | atmosphere`, `arena`, `gravity`, `air_density`, `ceiling`, `terrain` (the
+    design's `ground`), an inline `sky: {top, horizon, fog, fog_distance, stars}` (the design names a
+    sky), `backdrop: {planet: {color, size, direction}}`; terrains with `generate: {kind: craters | hills,
+    seed}` or `heightmap`, a single `size` (square), `height: [low, high]` as plain metres, `colors:
+    {low, high, slope}` and `resolution`. Open space is simply no `environment:` (there is no `space`
+    entry to define). Not built: `inherit` between environments (the rules' own `inherit` works),
+    `speed_of_sound`, `weather`, the terrain's `texture` (base and detail maps) and `objects`
+    (scattered rocks). Reference: [Environments and terrain](../../modding/environments.md).
 
 ```yaml
 environments:
@@ -132,6 +145,22 @@ Ship rules gain `drag_area`, `lift`, `hover`, `atmosphere_max_speed` (a cap) and
 Missiles get `drag_area` too. `flight: {model: newtonian}` (or `assisted`; implemented) stays
 the default for space; an environment's `physics` overrides it for its battles.
 
+!!! note "As built (app 0.6.0)"
+    The forces were simplified so that each is set by one number a modder can reason about
+    ([R-FLT-011](../requirements/flight.md#r-flt-011-atmospheric-flight)):
+
+    - drag `a = −k·ρ·|v|·v` with `k = acceleration / atmosphere_max_speed²` — full thrust balances
+      drag at `atmosphere_max_speed` (default 60 % of `max_speed`); there is no `drag_area`, and
+      missiles feel no drag;
+    - lift `g·ρ·(forward speed / lift)²` along the craft's up, capped at 2g, where `lift` is the
+      speed at which the wings carry the weight (default 120 m/s for fighters, 0 otherwise); no
+      angle-of-attack term;
+    - `hover: true` cancels gravity, with no power cost yet;
+    - a landing is any touchdown at no more than 25 m/s into the ground while upright (a fixed
+      `LANDING_SPEED`, not a per-ship `impact_speed`); a crash does (speed)² × 0.5 damage;
+    - above `ceiling` the craft leaves the battle (`Departed`, "LEFT THE ATMOSPHERE");
+    - `atmospheric` is read but not yet acted on (the mission screen comes with Stage 4).
+
 ### Ground installations
 
 Ground bases are object classes with `kind: ground` (static, placed on the terrain at a
@@ -139,6 +168,14 @@ surface point: `position: {surface: [12km, 4km]}`) and the usual model sets, mod
 (a behaviour with `do: turret` and ground arcs) and damage. Surface **anti-air** turrets, shield domes,
 landing pads (ships launch from them as an arrival), and buildings that are objectives
 (`roles: {colony: {class: mining_colony}}`) all use existing constructs.
+
+!!! note "As built (app 0.6.1)"
+    `kind: ground` exists: such an object is static and is set down on the terrain wherever it is
+    placed (at the ground height plus a quarter of its collision radius); the environment is set
+    before anything is placed. Positions are ordinary `[x, y, z]` — the y is replaced — rather than
+    `position: {surface: …}`. Anti-air is a `kind: ground` class with beams, a `turret_arc` and a
+    turret behaviour (the default campaign's `dominion_flak`). Shield domes and landing pads as
+    arrivals are not built.
 
 Mission types for the surface follow the same format: *Defend colony* (surface), *Raid
 research outpost*, *Ground strike*, *Rescue at the crash site*, with `location: surface` and an
@@ -197,3 +234,4 @@ tugs and escorts.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch) |
+| 1.11.0 | 2026-11-11 | Marked as built: `hazards` (app 0.5.1) with their explicit keys; `environment`, `environments`, `terrains` and atmospheric flight (0.6.0) with the simplified forces; ground installations (0.6.1). Not built: `location`/`backdrop` from the map, `speed_of_sound`, `weather`, terrain textures and scattered objects, shield domes, landing-pad arrivals |

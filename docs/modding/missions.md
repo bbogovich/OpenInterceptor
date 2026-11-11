@@ -76,6 +76,8 @@ missions:
 | `outcomes` | mapping result: list of actions | none | What each result does (below). Results: `win`, `lose`, `draw`, `retreat`, `killed`. A mission without `killed` outcomes uses its `lose` outcomes for it. |
 | `chatter` | list of `{when, line}` | none | Radio lines, each said once when its condition first holds. |
 | `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. |
+| `environment` | id | open space | Where the battle happens: an [environment](environments.md) such as `orbit` or `moon_surface`. |
+| `hazards` | mapping | none | Asteroid field, minefield, black hole, ion storm ([below](#hazards)). |
 
 ### Roles
 
@@ -145,6 +147,37 @@ station falling: the station's text is shown only when the station falls.
 The battle then freezes behind the **debrief**: the result, the debrief text, kills, losses and
 time, the optional objectives (met or not), and the outcome's campaign actions. **Enter** (pad
 **A**) flies the mission again; **Esc** or **L** returns to the launcher.
+
+## Hazards
+
+`hazards:` (app 0.5.1) puts a battle in an asteroid belt, a minefield, next to a black hole or in
+an ion storm. It works the same in a mission and in a [scenario](scenarios.md). Each part is
+optional, and everything is deterministic for the mission's `starfield_seed`.
+
+```yaml
+hazards:
+  asteroids:  {class: cosmium_asteroid, count: 45, radius: 4km, center: [0, 0, -4500], spin: 8}
+  minefield:  {class: space_mine, count: 24, radius: 2500m, center: [0, 0, -3500]}
+  black_hole: {position: [0, -500, -7000], pull: 12, radius: 450}
+  ion_storm:  {sensors: 50%}
+```
+
+| Hazard | Keys (defaults) | What happens |
+|---|---|---|
+| `asteroids` | `class` (required), `count` (40), `radius` (5 km), `center` (origin), `spin` (4 °/s), `faction` | `count` objects of `class` scattered uniformly through the sphere, never within 300 m of a craft already placed; each turns at a random rate up to `spin`. They are ordinary objects: they collide, stop shots and can be shot to pieces. Asteroids are **scenery**: they show on the radar only within radar range, so a field does not flood the scopes (stations still always show). |
+| `minefield` | the same; `count` (20), `radius` (2 km) | Mines of a `kind: mine` class ([Missiles and mines](weapons.md)), placed the same way, belonging to `faction` (default: the class's own). |
+| `black_hole` | `position` (origin), `pull` (15 m/s²), `radius` (400 m) | Every craft and missile that can move is pulled towards `position`: `pull` m/s² at 1 km, growing with 1/d² and capped at 20 × `pull` (so at 224 m and closer it pulls its hardest). A craft that crosses `radius` is destroyed. It is drawn as a black sphere of `radius` with a turning ring of orange glows. AI pilots turn away and burn out inside 4 × `radius`, or inside 10 × `radius` while heading in. |
+| `ion_storm` | `sensors` (40 %, at least 5 %) | Radar range is multiplied by `sensors`; missile locks build at half speed; the pilot is told `ION STORM: SENSORS AT 50%` as the battle starts. |
+
+Hazards are placed **last**, after every role (and in a scenario after every object), so the
+asteroids and mines keep clear of everyone. Stations and other objects that never move are not
+pulled by a black hole. Choosing numbers: a black hole's pull at distance d is
+`pull × (1000 / d)²`. With `pull: 12` and `radius: 450`, the pull at the edge of the radius is
+12 × (1000 / 450)² ≈ 59 m/s², so a craft that accelerates at 150 m/s² can still climb out from
+anywhere outside it if it thrusts away in time; one that coasts is drawn in.
+
+Testbed scenarios: `hazard-asteroids`, `hazard-black-hole` and `hazard-minefield` (default);
+`hazard-asteroids` (in an ion storm) and `hazard-black-hole` (interceptor).
 
 ## The battle context
 
@@ -224,3 +257,8 @@ by a unit test).
 | `outcomes.x: results are win, lose, draw, retreat and killed` | An unknown result name. |
 | `outcomes.win: unknown action 'teleport' (known: …)` | An unknown action, or a wrong argument. |
 | `chatter[2]: needs line:` | A chatter entry without its line. |
+| `hazards.minefield: needs a class` | A hazard without `class`. |
+| `hazards: position needs [x, y, z]` (or `center`) | A position with the wrong number of values. |
+| `mission x: hazards: unknown class 'y'` (`--check`) | A hazard class that the rules do not define. |
+| `hazards.asteroids: unknown faction 'y'` | A bad `faction` (reported when the battle starts). |
+| `mission x: unknown environment 'y'` (`--check`) | An `environment:` that no `environments:` entry defines. |

@@ -92,7 +92,7 @@ The same keys; `objects` defaults to `kind: station`.
 |---|---|---|---|
 | `name` | text | the id | Display name. |
 | `description` | text | empty | One line for the launcher and viewer. |
-| `kind` | `fighter`, `freighter`, `capital`, `drone`, `station`, `probe`, `mine`, `debris` | `fighter` / `station` | What sort of object it is. `station` and `mine` never move. |
+| `kind` | `fighter`, `freighter`, `capital`, `drone`, `station`, `probe`, `mine`, `debris`, `ground` | `fighter` / `station` | What sort of object it is. `station`, `mine` and `ground` never move; a `ground` installation is set down on the terrain wherever it is placed ([Environments and terrain](environments.md#ground-installations)). |
 | `faction` | id | `neutral` | Owning faction; must exist. |
 | `model_set` | id | — | The look: a [model set](#modelsets). Either `model_set` or `model` is required. |
 | `model` | asset | — | Shorthand for a model set of its own: `models/x.obj` or `original:MESH`. |
@@ -109,6 +109,10 @@ The same keys; `objects` defaults to `kind: station`.
 | `angular_damp` | number | 3 | 0 tight … 10 loose. |
 | `lock_speed` | number | 1000 | Speed at which pitch and yaw rates fall to zero, m/s. |
 | `vct` | bool | `false` | Fitted with vector control thrusters (adds the `vct` system). |
+| `atmosphere_max_speed` | number | 60 % of `max_speed` | Top speed in air of density 1, m/s: full thrust balances drag here ([atmospheric flight](environments.md#atmospheric-flight)). |
+| `lift` | number | 120 for `fighter`, else 0 | The forward speed, m/s, at which the wings carry the craft's weight; 0 = no wings. |
+| `hover` | bool | `false` | Hovers in an atmosphere: gravity does not pull it down (saucers). |
+| `atmospheric` | bool | `true` | Can enter an atmosphere. Read and validated; not yet acted on (Stage 4 hides such craft from surface missions). |
 | `energy` | number | 500 | Beam capacitor. |
 | `energy_recharge` | number | 40 | Capacitor recharge per second at full beam charge. |
 | `beams` | ids | none | One beam id per mount: `[laser, laser]`. |
@@ -290,6 +294,35 @@ A layer:
 | `font` | text | the page's | A CSS font list, e.g. `"Futura, 'Avenir Next', sans-serif"`. |
 | `corner` | number | the page's | Panel corner radius in pixels. |
 
+### `environments`
+
+Battle environments by id (app 0.6.0; guide: [Environments and terrain](environments.md)). A
+mission or scenario picks one with `environment: <id>`; without it the battle is in open space.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `physics` | `space`, `atmosphere` | `space` | `space`: the flight model unchanged. `atmosphere`: drag, gravity, lift, a ground and a ceiling. |
+| `arena` | distance | `flight.arena_radius` | Arena radius for battles here (a pocket is small). |
+| `gravity` | number | 9.8 in an atmosphere, else 0 | m/s², downwards (−Y). |
+| `air_density` | number | 1 in an atmosphere, else 0 | Scales drag and lift; 0 = vacuum. |
+| `ceiling` | distance | none | Climbing above this height leaves the battle ("LEFT THE ATMOSPHERE"). |
+| `terrain` | id | — | The [terrain](#terrains) under the battle; *required* with `physics: atmosphere`. |
+| `sky` | `{top, horizon, fog, fog_distance, stars}` | none (black space) | `top`, `horizon`: RGB at the zenith and the horizon (defaults `[0.05, 0.08, 0.2]`, `[0.5, 0.6, 0.75]`); `fog`: RGB (default the horizon); `fog_distance`: distance at which things have faded fully into the fog (default 15 km, at least 100 m); `stars`: how much of the starfield shows, 0–1 (default 0). |
+| `backdrop` | `{planet: {color, size, direction}}` | none | A planet in the sky: `color` RGB (default `[0.3, 0.5, 0.9]`), `size` its angular size in degrees (default 30, 1–170), `direction` where it lies (default `[0, -0.5, -1]`). |
+
+### `terrains`
+
+Terrains (heightfields) by id (app 0.6.0; guide: [Environments and terrain](environments.md#terrains)).
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `generate` | `{kind, seed}` | — | Generated heights: `kind` `hills` (default) or `craters`; `seed` a number (default 1). Give `generate` **or** `heightmap`, not both. |
+| `heightmap` | asset | — | A greyscale image (PNG or TGA): black = lowest, white = highest (the red channel). |
+| `size` | distance | 30 km | Side of the square terrain, centred on the origin (at least 1 km). |
+| `height` | 2 numbers | `[0, 1500]` | Lowest and highest ground, metres (plain numbers). |
+| `colors` | `{low, high, slope}` | greys | RGB of low ground, high ground and steep slopes. |
+| `resolution` | number | 129 | Grid points per side, 17–257 (the mesh and the height lookup). |
+
 ### `campaign`
 
 | Key | Type | Default | Meaning |
@@ -319,6 +352,20 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`, `killed` (the player's craft destroyed; without its own entry it takes the `lose` actions). |
 | `chatter` | list of `{when, line}` | none | Radio lines. |
 | `debrief` | mapping result: text | none | Debrief texts, by the same results (`killed` shows no text unless given). |
+| `environment` | id | open space | The battle [environment](#environments). |
+| `hazards` | [hazards](#hazards) | none | Asteroid field, minefield, black hole, ion storm. |
+
+### `hazards`
+
+In missions and scenarios (app 0.5.1; guide: [Missions › Hazards](missions.md#hazards)). Each
+part is optional.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `asteroids` | `{class, count, radius, center, spin, faction}` | — | An asteroid field: `count` (40) objects of `class` (*required*) scattered uniformly in the sphere `radius` (distance, 5 km) around `center` (3 numbers, origin), none within 300 m of a craft; each turns at a random rate up to `spin` (°/s, 4); `faction` default the class's. Shown on the radar only within range. |
+| `minefield` | the same | — | A minefield: `count` (20) mines of `class` (a `kind: mine` class) in `radius` (2 km). |
+| `black_hole` | `{position, pull, radius}` | — | Pulls craft and missiles towards `position` (3 numbers): `pull` m/s² at 1 km (15), growing with 1/d², capped at 20 × `pull`; a craft inside `radius` (distance, 400 m) is destroyed. |
+| `ion_storm` | `{sensors}` | — | Radar range × `sensors` (fraction, 40 %, at least 5 %); missile locks at half speed. |
 
 The schema type **either** (`Ty::Either`) lets a key take one of two forms: `count: 3` or
 `count: [2, 4]`; `bearing: [10, 5]` or `bearing: random`; `class: comet` or `class: [a, b]`.
@@ -348,6 +395,8 @@ Schema: `schemas/text.schema.json`. Guide: [Text and translation](text.md).
 | `music` | asset | none | Read but not played yet (Stage 5). |
 | `objects` | mapping name: object | none | Placed objects (below). |
 | `nav` | mapping name: `{position: [x, y, z]}` | none | Navigation points (engine extension, DEV-002). |
+| `environment` | id | open space | The battle [environment](#environments) (app 0.6.0). |
+| `hazards` | [hazards](#hazards) | none | Asteroid field, minefield, black hole, ion storm (app 0.5.1). |
 
 An object:
 

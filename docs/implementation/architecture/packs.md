@@ -78,11 +78,21 @@ Logic flow of `rules::build_at(sources, original, level)`:
    objects (which refer to the others by id; `model_set`, or a model set made from the
    shorthand `model`/`debris`; `class_systems` resolves `systems`, `systems+`, `systems-`,
    `vct`; `modules` as `(slot, class)`), then missions (`MissionDef::parse` against the
-   battle schema of their role names), cockpits (with anchors), flight, sounds.
+   battle schema of their role names; their `hazards:` through `content::hazards`), terrains
+(`TerrainDef::parse`; a generated heightfield is built here, once), environments
+(`EnvironmentDef::parse`, each `terrain:` checked against the terrains), cockpits (with
+anchors), flight, sounds. `environments` and `terrains` are definition sections like `ships`
+(`DEF_SECTIONS`), so `inherit`, `delete` and variants work on them.
 
 Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and `files::scenario()` validation (`Scenario::from_yaml`), and
 manifests through `files::pack()` (`PackInfo::parse`).
+
+**Heightmaps** (app 0.6.0): after the rules and text, `Content::load` reads each terrain with a
+`heightmap:` image from its pack (`load_image`) and builds its `Heightfield::from_image`; a failure
+is a content error naming the terrain. Generated terrains need no files, so they are built with the
+rules; heightmaps need the pack's files, so they wait for content loading. Either way the
+heightfield is stored once in `TerrainDef::field` (an `Arc`) and shared by every battle.
 
 **Text** (`content::text`, Stage 2): before the rules are typed, every active pack's
 `text/<language>/*.yaml` (falling back to `text/en/` for a pack without the language) is read
@@ -158,6 +168,9 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `schema::Get` | Typed reads from a node: `str`, `num`, `qty(key, unit)`, `bool`, `list`, `nums`, `map`, `node`. |
 | `files::{pack, rules, scenario, section, json_schemas}` | The schemas of every mod file type. |
 | `looks::ModelSet`, `DamageLevel`, `DebrisSet`, `EffectDef`, `Swaps`, `ModelSetId`, `DebrisId`, `EffectId` | Looks ([modder's guide](../../modding/looks.md)); `ModelSet::swaps_for(hull, state)`, `looks::texture_key(reference)`. |
+| `environment::EnvironmentDef`, `Physics`, `Sky`, `Planet` | One `environments:` entry ([Environments and terrain](../../modding/environments.md)); `Ruleset::environments`. |
+| `environment::TerrainDef`, `TerrainSource`, `Heightfield` | One `terrains:` entry (`Generate { kind, seed }` or `Heightmap(asset)`) and its heights, `field: Option<Arc<Heightfield>>`; `Ruleset::terrains`. |
+| `hazards::Hazards`, `Scatter`, `BlackHole`, `hazards::schema()` | A mission's or scenario's `hazards:` ([Missions › Hazards](../../modding/missions.md#hazards)); `Hazards::classes()` for `--check`. |
 | `mission::MissionDef` and friends | Parsed missions ([Missions](mission.md)); `Ruleset::missions`, sorted by `order`. |
 | `rules::Guidance`, `rules::DamageMode` | Missile steering kinds and warhead modes. |
 | `rules::PointDefence`, `rules::ProbeDef` | A class's point-defence guns (`range`, `rate`, `chance`, `energy`); a probe's `sensors` and `jamming` radii. |
@@ -170,7 +183,7 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `equipment::PowerRules`, `DamageRules` | The `power` and `damage` sections, with defaults. |
 | `vfs::AssetRef` | `PackFile(String)` or `Original { file, resource }`. Parsing normalises `..` inside the pack and refuses paths that leave it. |
 | `vfs::OriginalData` | Lower-case file name → path for every file under the data folder (any CD/install layout), plus the opened resource DLLs. |
-| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `systems`, `behaviours`, `model_sets`, `debris_sets`, `effects`, `cockpits`, `flight: FlightRules` (with `hyperspace_time`), `power: PowerRules`, `damage: DamageRules`, `sounds`, `difficulty_levels`, `difficulty` (index played). |
+| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `systems`, `behaviours`, `model_sets`, `debris_sets`, `effects`, `cockpits`, `environments`, `terrains`, `missions`, `flight: FlightRules` (with `hyperspace_time`), `power: PowerRules`, `damage: DamageRules`, `sounds`, `difficulty_levels`, `difficulty` (index played). |
 | `rules::RulesSource`, `OriginalLookup` | One parsed rules file (`pack`, `file`, `doc`); the callback that finds an original INI section. |
 | `rules::CockpitDef`, `rules::Anchor` | A cockpit (image, model, offset, design, instruments, anchors); an anchored instrument (`at`, `normal`, `size`). |
 | `ShipClassId`, `BeamId`, `MissileId`, `FactionId` | Newtype indices (`u16`) into the ruleset's vectors. |
