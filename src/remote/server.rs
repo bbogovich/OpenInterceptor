@@ -228,6 +228,9 @@ fn serve(
     // Short read timeouts turn the blocking socket into a polling loop: read whatever
     // arrived, handle it, write whatever the game queued, repeat.
     let _ = stream.set_read_timeout(Some(Duration::from_millis(15)));
+    // A write that cannot complete in 2 s means the tablet is gone: end the connection
+    // rather than block this thread (and keep the console's buttons held) indefinitely.
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(2)));
     let mut failures = 0u32;
     'conn: loop {
         match stream.read(&mut chunk) {

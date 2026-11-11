@@ -6,11 +6,16 @@
 //!
 //! ```text
 //!  console → game                         game → console
-//!  {type:"hello", code:"123456"}          {type:"welcome", version:1, game:…}
+//!  {type:"hello", code:"123456"}          {type:"welcome", version:1, campaign:…}
 //!                                         {type:"catalogue", groups:[…], actions:[…]}
 //!  {type:"action", name, value}           {type:"telemetry", …}    (20 Hz)
 //!  {type:"throttle", value}               {type:"denied", reason}  (bad code)
+//!  {type:"ping"}  (every 250 ms)
 //! ```
+//!
+//! The ping is a heartbeat: a console that falls silent for [`HOLD_TIMEOUT`] seconds
+//! (Wi-Fi dropped, tablet asleep) has its held buttons released, so the craft never
+//! keeps firing or burning on a button nobody is pressing.
 //!
 //! The *catalogue* is built from [`crate::input::ACTIONS`], the same table that drives the
 //! keyboard, the gamepad, the controls menu and the keys overlay. Each action says
@@ -172,7 +177,12 @@ pub enum Inbound {
         down: bool,
     },
     Throttle(f32),
+    /// The console is still there (see [`HOLD_TIMEOUT`]).
+    Ping,
 }
+
+/// Seconds without any message from a console before its held actions are released.
+pub const HOLD_TIMEOUT: f64 = 1.0;
 
 /// Decodes one console message.
 pub fn decode(text: &str) -> Result<Inbound, String> {
@@ -189,6 +199,7 @@ pub fn decode(text: &str) -> Result<Inbound, String> {
             let t = v.get("value").and_then(Json::as_f64).ok_or("throttle without a value")?;
             Ok(Inbound::Throttle(t.clamp(0.0, 1.0) as f32))
         }
+        Some("ping") => Ok(Inbound::Ping),
         Some(other) => Err(format!("unknown message type '{other}'")),
         None => Err("message without a type".into()),
     }

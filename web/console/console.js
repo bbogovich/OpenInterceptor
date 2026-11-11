@@ -9,7 +9,13 @@ let socket = null;
 
 function connect(code) {
   socket = new WebSocket(`ws://${location.host}/ws`);
-  socket.onopen = () => socket.send(JSON.stringify({ type: "hello", code }));
+  socket.onopen = () => {
+    socket.send(JSON.stringify({ type: "hello", code }));
+    // Heartbeat: the game releases this console's held buttons if it goes quiet for a
+    // second (Wi-Fi dropped, tablet asleep), so nothing stays pressed by accident.
+    const beat = setInterval(() => send({ type: "ping" }), 250);
+    socket.addEventListener("close", () => clearInterval(beat));
+  };
   socket.onmessage = (e) => {
     const msg = JSON.parse(e.data);
     link.dispatchEvent(new CustomEvent(msg.type, { detail: msg }));

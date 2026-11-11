@@ -767,7 +767,7 @@ impl FlightSession {
                 server.send(id, &welcome);
                 resend = true;
             }
-            ctx.remote.apply(&e);
+            ctx.remote.apply(&e, get_time());
         }
         if resend {
             server.broadcast(&protocol::catalogue(&self.world.rules, &self.world, self.player));
@@ -778,7 +778,7 @@ impl FlightSession {
             self.console_clock = 0.0;
             server.broadcast(&protocol::telemetry(&self.world, self.player, self.world.time));
         }
-        ctx.remote.merge_into(raw);
+        ctx.remote.merge_into(raw, get_time());
     }
 
     /// One frame of the cockpit layout editor's input (see `hud::layout`).
