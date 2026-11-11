@@ -744,6 +744,12 @@ impl World {
                 self.ships[index].position.y = h + self.shapes[class.0 as usize].radius * 0.25;
             } else if !kind.is_static() && p.y < h + 300.0 {
                 self.ships[index].position.y = h + 300.0;
+            } else if kind.is_static() {
+                // A station or other static object floats clear of the ground under it.
+                let r = self.shapes[class.0 as usize].radius;
+                if p.y < h + r {
+                    self.ships[index].position.y = h + r;
+                }
             }
         }
         ShipId { index: index as u32, generation: self.generations[index] }

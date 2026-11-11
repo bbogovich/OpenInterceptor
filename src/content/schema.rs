@@ -288,13 +288,14 @@ pub fn quantity(s: &str, unit: Unit) -> Result<f32, String> {
         (Unit::Time, "s") => 1.0,
         (Unit::Time, "min") => 60.0,
         (Unit::Time, "h") => 3600.0,
+        (Unit::Time, "d") => 86400.0,
         (Unit::Angle, "deg") => 1.0,
         // Divide rather than multiply by 0.01, so 40% is exactly 0.4.
         (Unit::Fraction, "%") => return Ok(v / 100.0),
         (u, other) => {
             let ok = match u {
                 Unit::Distance => "m, km",
-                Unit::Time => "s, min, h",
+                Unit::Time => "s, min, h, d",
                 Unit::Angle => "deg",
                 Unit::Fraction => "%",
             };

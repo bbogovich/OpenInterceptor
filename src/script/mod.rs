@@ -465,6 +465,7 @@ fn type_name(t: Type) -> &'static str {
 
 pub mod action;
 pub mod battle;
+pub mod campaign;
 pub mod object;
 
 #[cfg(test)]

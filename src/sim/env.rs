@@ -204,6 +204,11 @@ mod tests {
         assert_eq!(w.get(id).unwrap().position.y, 540.0, "300 m above the ground");
         let high = w.spawn(f, FactionId(0), "high", Vec3::new(0.0, 2000.0, 0.0), Quat::IDENTITY, Pilot::External);
         assert_eq!(w.get(high).unwrap().position.y, 2000.0, "high enough already");
+        // A station (static, not a ground installation) floats clear of the ground.
+        let base = w.rules.ship_id("base").unwrap();
+        let st = w.spawn(base, FactionId(0), "st", Vec3::new(0.0, 0.0, 0.0), Quat::IDENTITY, Pilot::External);
+        let r = w.shapes[base.0 as usize].radius;
+        assert!((w.get(st).unwrap().position.y - (240.0 + r)).abs() < 1e-3, "one radius above the ground");
     }
 
     #[test]

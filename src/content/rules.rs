@@ -1297,6 +1297,8 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 let idx = refs
                     .into_iter()
                     .map(|r| {
+                        // A clip may name a sound cue, like the `sounds:` section.
+                        let r = sound_ref(&r, &format!("voices.{id}.{line}"));
                         voice_clips.push((r, e.pack));
                         (voice_clips.len() - 1) as u32
                     })
@@ -1309,7 +1311,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     for m in &mut missions {
         for c in &mut m.chatter {
             if let Some(v) = &c.voice {
-                voice_clips.push((v.clone(), m.pack));
+                voice_clips.push((sound_ref(v, &format!("missions.{}.chatter", m.id)), m.pack));
                 c.voice_clip = Some((voice_clips.len() - 1) as u32);
             }
         }
