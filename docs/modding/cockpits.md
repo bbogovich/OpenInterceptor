@@ -146,6 +146,8 @@ cockpits:
     # … new instruments in 1280×720, and anchors (or place them with F12, below)
 ```
 
+**Using your own X-COM cockpit art on a 3D model:** a model's material can name the original art directly (`map_Kd original:CockpitA.dll#12000`), so the mod ships no copy of it. See [Tutorial: a 3D X-COM cockpit](3d-cockpit-tutorial.md).
+
 ## The cockpit layout editor (F12)
 
 In the cockpit view of any ship with a cockpit, **F12** opens the layout editor; the battle

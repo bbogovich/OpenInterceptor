@@ -1,5 +1,5 @@
 ---
-spec_version: 1.9.0
+spec_version: 1.9.1
 status: current
 updated: 2026-11-11
 ---
@@ -684,6 +684,7 @@ The bundled `packs/` MUST include an example mod that extends `interceptor` and 
 
 !!! note "Open"
     An MTL names its textures by file path (`map_Kd`); how a model in the repository refers to a texture in the player's original data (for example an `original:` reference resolved by the rules or by the loader) is settled with MD9.
+- The open question of how the example mod's model refers to the player's cockpit art is answered by `map_Kd original:` references (R-MOD-055, app 0.4.13); to be evaluated in practice.
 
 ### R-MOD-053 Single-file models
 
@@ -728,3 +729,5 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.0.0 | 2026-11-11 | Bootstrap: R-MOD-001 – R-MOD-020 (20 requirements; 16 reverse-engineered from the code) |
 | 1.7.0 | 2026-11-11 | R-MOD-021 – R-MOD-047 (planned): the Mod Designer (R-MOD-021 – R-MOD-030), the Cutscene Designer and cutscene files, playback, entities, actions, sounds, captions, cameras and cuts, the `harmless` and `aggressive` flags (R-MOD-031 – R-MOD-043), where cutscenes play and skipping (R-MOD-044, R-MOD-045), video cutscenes (R-MOD-046), shared formations (R-MOD-047), from the user's request of 2026-11-11 and the decisions D1–D5 |
 | 1.9.0 | 2026-11-11 | From the user's message of 2026-11-11: new R-MOD-048 – R-MOD-055 (planned): instruments dragged onto a 3D cockpit and previewed on the face below the cursor, their size and preview (MD8); Create 3D cockpit, the generic base cockpit in `resources/default` and the X-COM 3D cockpit example mod, the first test case for the mod tools (MD9); single-file `.glb` models as an additional option beside OBJ/MTL, which stays fully supported (confirmed by the user), `.blend` sources exported through Blender, materials keeping their textures (MD10). R-MOD-023: the wizard's kind is **extension** (declares `parent:`, adds to or overrides the base), Open note resolved; whether it is a manifest kind or maps onto `addon` stays open (MD4) |
+- As built (app 0.4.13, main 4346cba): `map_Kd original:<File>.dll#<id>` (an original image, colour key applied) and `map_Kd original:<NAME>` (an original texture) are kept as references and loaded from the player's data; the MTL parser treats only lines starting with `#` as comments; `--check` loads 3D cockpit models and their textures. Verified by `content::tests::pack_files_override_original_assets`, `formats::obj` MTL test, and a scratch mod against real data. User instructions: [Tutorial: a 3D X-COM cockpit](../../modding/3d-cockpit-tutorial.md). To be evaluated in practice (user, 2026-11-11: "provide instructions for this in the user documentation and we'll evaluate in practice how well it seems to work").
+| 1.9.1 | 2026-11-11 | R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note |

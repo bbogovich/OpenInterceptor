@@ -53,6 +53,17 @@ A model's textures are looked up by name in every pack's `textures/` folder (`<n
 image with the original texture's name — the [model viewer](../implementation/architecture/testbed.md) lists
 the models, and `--check` reports texture names that fail to load.
 
+## Textures from the player's original data
+
+A material may name original data instead of a file, so a mod can use the player's own art without shipping it:
+
+```text
+map_Kd original:CockpitA.dll#12000   # an original image (cockpit art); cyan becomes transparent
+map_Kd original:INTTOP               # an original model texture, by name
+```
+
+Only lines *starting* with `#` are comments; the `#` in `#12000` is part of the value. `--check` loads every such reference and reports one that does not exist. Walkthrough: [Tutorial: a 3D X-COM cockpit](3d-cockpit-tutorial.md). Status: new in app 0.4.13, being evaluated in practice.
+
 ## Checking a model
 
 Open it straight in the viewer: `openinterceptor --model <ship id or mesh name>`. In the viewer,

@@ -153,6 +153,7 @@ nav:
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md
       - "Cockpits (HD and 3D)": modding/cockpits.md
+      - "Tutorial: a 3D X-COM cockpit": modding/3d-cockpit-tutorial.md
       - "Scenarios and missions": modding/scenarios.md
       - "Scripting (design)": modding/scripting.md
       - "Campaigns (design)": modding/campaign.md
