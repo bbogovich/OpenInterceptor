@@ -139,6 +139,12 @@ pub fn apply_command(world: &mut World, player: ShipId, cmd: Command) -> Vec<Str
         Command::WingFormation => return order(world, player, ai::WingOrder::Formation, "WINGMEN: IGNORE MY TARGET"),
         Command::WingEvasive => return order(world, player, ai::WingOrder::Evasive, "WINGMEN: EVASIVE!"),
         Command::WingRetreat => return order(world, player, ai::WingOrder::Retreat, "WINGMEN: RETREAT!"),
+        Command::WingNextFormation => {
+            return vec![match ai::next_formation(world, player) {
+                Some(f) => format!("WINGMEN: FORM {}", f.replace('_', " ").to_uppercase()),
+                None => "NO WINGMEN".into(),
+            }]
+        }
         Command::WingStatus => {
             let lines = ai::wing_status(world, player);
             return if lines.is_empty() { vec!["NO WINGMEN".into()] } else { lines };

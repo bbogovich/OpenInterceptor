@@ -277,6 +277,7 @@
                 "state": {"description": "model-set state (a construction stage)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                 "hull": {"description": "starting hull", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "destroyed_systems": {"description": "systems that start destroyed", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+                "formation": {"description": "wingmen: the formation they fly in (formations.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                 "speed": {"description": "starting speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "at": {"description": "where it enters", "type": "object", "additionalProperties": false, "properties": {
                     "distance": {"description": "from the reference point", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -340,6 +341,14 @@
                   "direction": {"description": "the direction it lies in", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
                 }}
             }},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "formations": {"description": "formations wingmen (and cutscenes) fly in", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "shape": {"description": "a built-in shape", "enum": ["vee", "line_abreast", "echelon", "box", "diamond"]},
+          "slots": {"description": "custom slots [x, y, z] in spacing units; +x right, +z behind", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}},
+          "spacing": {"description": "metres per slot unit (default 60 m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -433,6 +442,7 @@
             "spin": {"description": "how strongly the angle of impact spins a ship; 1", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
             "tumble": {"description": "longest time a hard hit leaves the pilot without full control; 2.5s", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
           }},
+        "formation": {"description": "the formation wingmen fly in when a role names none (formations.<id>; vee)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "formation_gap": {"description": "wingman slots are at least this many x the combined radii from the leader; 3", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},

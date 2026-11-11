@@ -391,6 +391,8 @@ pub struct FlightRules {
     /// A wingman's formation slot is at least this many × the two ships' combined radii
     /// from its leader (`flight: {formation_gap: 3}`).
     pub formation_gap: f32,
+    /// The formation wingmen fly in when a role names none (`flight: {formation: vee}`).
+    pub formation: String,
 }
 
 /// How ships respond to hitting each other (see `sim::combat::ship_collisions`).
@@ -622,6 +624,8 @@ pub struct Ruleset {
     pub missions: Vec<super::mission::MissionDef>,
     /// Battle environments and terrains (Stage 3.3–3.5; see [`super::environment`]).
     pub environments: Vec<super::environment::EnvironmentDef>,
+    /// Formations (MD1; see [`super::formation`]).
+    pub formations: Vec<super::formation::FormationDef>,
     /// Radio voice sets (`voices: {<id>: {<line>: [clips]}}`) and every voice clip they
     /// and mission chatter use, by index (the audio layer loads them as `Voice(i)`).
     pub voices: Vec<VoiceSet>,
@@ -718,6 +722,12 @@ impl Ruleset {
             || fb.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fa.id))
     }
     /// Classes a player can choose to fly, in definition order.
+    /// A formation by id; an unknown id (or a campaign with none) gets the built-in vee.
+    pub fn formation(&self, id: Option<&str>) -> super::formation::FormationDef {
+        let id = id.unwrap_or(&self.flight.formation);
+        self.formations.iter().find(|f| f.id == id).cloned().unwrap_or_else(super::formation::FormationDef::fallback)
+    }
+
     pub fn playable_ships(&self) -> Vec<ShipClassId> {
         (0..self.ships.len()).filter(|&i| self.ships[i].playable).map(|i| ShipClassId(i as u16)).collect()
     }
@@ -737,7 +747,8 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 15] = [
+const DEF_SECTIONS: [&str; 16] = [
+    "formations",
     "voices",
     "environments",
     "terrains",
@@ -1216,6 +1227,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             }
         },
         formation_gap: fl.and_then(|g| g.num("formation_gap")).unwrap_or(3.0).max(0.0),
+        formation: fl.and_then(|g| g.str("formation")).unwrap_or("vee").to_string(),
     };
     // The console theme (R-CON-020).
     let layer = |g: Get, errors: &mut Vec<String>, at: &str| ThemeLayer {
@@ -1330,9 +1342,30 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             Err(msg) => errors.push(format!("{}: environments.{id}: {msg}", e.origin)),
         }
     }
+    let mut formations = Vec::new();
+    for (_, id, e) in of(&resolved, "formations") {
+        match super::formation::FormationDef::parse(id, Get(&e.node)) {
+            Ok(f) => formations.push(f),
+            Err(msg) => errors.push(format!("{}: formations.{id}: {msg}", e.origin)),
+        }
+    }
+    // Every formation named must exist (a campaign with none uses the built-in vee).
+    let named = std::iter::once(("flight.formation".to_string(), flight.formation.clone())).chain(
+        missions.iter().flat_map(|m| {
+            m.roles
+                .iter()
+                .filter_map(move |r| r.formation.clone().map(|f| (format!("missions.{}.roles.{}", m.id, r.name), f)))
+        }),
+    );
+    for (at, f) in named {
+        if !formations.is_empty() && !formations.iter().any(|x| x.id == f) {
+            errors.push(format!("{at}: unknown formation '{f}'"));
+        }
+    }
     errors.extend(cue_errors.into_inner());
     (
         Ruleset {
+            formations,
             voices,
             voice_clips,
             missions,

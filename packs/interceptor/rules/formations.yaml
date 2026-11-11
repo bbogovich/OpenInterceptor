@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Formations (MD1): the shapes wingmen fly in, shared later with cutscene formations.
+# Slots are in the leader's frame (+x right, +z behind) in units of `spacing`. A mission
+# role picks one with `formation: <id>`; otherwise flight.formation (vee) applies.
+formations:
+  vee: {shape: vee, spacing: 60m}
+  line_abreast: {shape: line_abreast, spacing: 70m}
+  echelon: {shape: echelon, spacing: 60m}
+  box: {shape: box, spacing: 70m}
+  diamond: {shape: diamond, spacing: 60m}

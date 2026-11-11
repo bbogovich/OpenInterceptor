@@ -784,6 +784,34 @@ pub fn order_wingmen(w: &mut World, leader: ShipId, order: WingOrder) -> usize {
     n
 }
 
+/// Orders `leader`'s wingmen into the next formation of the campaign's list (after the
+/// last one ordered, or the first). Each wingman takes the next slot, in ship order, and
+/// is told to form up. Returns the new formation's id, or `None` with no formations or
+/// no wingmen.
+pub fn next_formation(w: &mut World, leader: ShipId) -> Option<String> {
+    let list = &w.rules.formations;
+    if list.is_empty() {
+        return None;
+    }
+    let at = w.wing_formation.as_ref().and_then(|id| list.iter().position(|f| &f.id == id));
+    let f = list[at.map_or(0, |i| (i + 1) % list.len())].clone();
+    let mut k = 0;
+    for s in w.ships.iter_mut().filter(|s| s.alive) {
+        if let Pilot::Ai(state) = &mut s.pilot {
+            if state.behaviour == Behaviour::Wingman && state.leader == Some(leader) {
+                state.offset = f.slot(k);
+                state.order = WingOrder::Formation;
+                k += 1;
+            }
+        }
+    }
+    if k == 0 {
+        return None;
+    }
+    w.wing_formation = Some(f.id.clone());
+    Some(f.id)
+}
+
 /// One status line per wingman of `leader`: name, hull, shields and current order.
 pub fn wing_status(w: &World, leader: ShipId) -> Vec<String> {
     let mut out = Vec::new();
@@ -968,6 +996,38 @@ mod tests {
         w.get_mut(lead).unwrap().alive = false;
         w.step();
         assert_eq!(w.get(wing).unwrap().target, Some(foe));
+    }
+
+    #[test]
+    fn the_formation_order_cycles_the_campaigns_formations() {
+        use crate::content::formation::{FormationDef, Shape};
+        let mut w = world();
+        let lead = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "lead",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::External,
+        );
+        assert_eq!(next_formation(&mut w, lead), None, "no formations defined");
+        // `make_mut` clones the shared ruleset (copy-on-write) so this test can change it.
+        std::sync::Arc::make_mut(&mut w.rules).formations = vec![
+            FormationDef { id: "vee".into(), shape: Shape::Vee, spacing: 50.0 },
+            FormationDef { id: "line_abreast".into(), shape: Shape::LineAbreast, spacing: 50.0 },
+        ];
+        assert_eq!(next_formation(&mut w, lead), None, "no wingmen");
+        let a = spawn_ai(&mut w, "fighter", 0, Vec3::new(-60.0, 0.0, 30.0), Behaviour::Wingman, Some(lead));
+        let b = spawn_ai(&mut w, "fighter", 0, Vec3::new(60.0, 0.0, 30.0), Behaviour::Wingman, Some(lead));
+        let offset = |w: &World, id| match &w.get(id).unwrap().pilot {
+            Pilot::Ai(s) => s.offset,
+            _ => unreachable!(),
+        };
+        assert_eq!(next_formation(&mut w, lead).as_deref(), Some("vee"));
+        assert_eq!(offset(&w, b), Vec3::new(50.0, 0.0, 50.0));
+        assert_eq!(next_formation(&mut w, lead).as_deref(), Some("line_abreast"));
+        assert_eq!(offset(&w, a), Vec3::new(-50.0, 0.0, 0.0));
+        assert_eq!(next_formation(&mut w, lead).as_deref(), Some("vee"), "wraps around");
     }
 
     #[test]

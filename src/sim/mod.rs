@@ -607,6 +607,9 @@ pub struct World {
     pub contacts: Vec<(u32, u32)>,
     /// Field hazards acting every tick: a black hole, an ion storm (see [`hazards`]).
     pub hazards: hazards::ActiveHazards,
+    /// The formation the player's wingmen were last ordered into (an id in
+    /// `rules.formations`; `None` = the mission's own).
+    pub wing_formation: Option<String>,
     /// Where the battle is: open space, or an atmosphere over a ground (see [`env`]).
     pub env: env::Env,
     /// Deterministic random-number state (xorshift), for AI variety.
@@ -628,6 +631,7 @@ impl World {
             time: 0.0,
             contacts: Vec::new(),
             hazards: Default::default(),
+            wing_formation: None,
             env: Default::default(),
             rng: seed.max(1),
         }

@@ -82,6 +82,8 @@ pub struct RoleDef {
     /// Starting speed, m/s, along the craft's heading (towards the player's start).
     pub speed: f32,
     pub at: Arrival,
+    /// Wingmen: the formation they fly in (`formations.<id>`; default `flight.formation`).
+    pub formation: Option<String>,
     /// When it arrives: `None` = at the start.
     pub arrive: Option<Expr>,
 }
@@ -234,6 +236,7 @@ impl MissionDef {
                     Some(n) => arrival(Get(n), &role_names).map_err(at)?,
                     None => Arrival::default(),
                 },
+                formation: r.str("formation").map(str::to_string),
                 arrive: match r.str("arrive") {
                     Some(t) => Some(cond(t, &at("arrive".into()))?),
                     None => None,

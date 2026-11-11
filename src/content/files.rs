@@ -324,6 +324,7 @@ fn mission() -> Ty {
         f("state", name(), "model-set state (a construction stage)"),
         f("hull", Ty::Qty(Unit::Fraction), "starting hull"),
         f("destroyed_systems", names(), "systems that start destroyed"),
+        f("formation", name(), "wingmen: the formation they fly in (formations.<id>)"),
         f("speed", Ty::Num, "starting speed, m/s"),
         f("at", at(), "where it enters"),
         f("arrive", Ty::Condition, "when it enters (default: at the start)"),
@@ -493,6 +494,7 @@ fn flight() -> Ty {
             ]),
             "how collisions feel",
         ),
+        f("formation", Ty::Name, "the formation wingmen fly in when a role names none (formations.<id>; vee)"),
         f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
     ])
 }
@@ -576,6 +578,7 @@ pub fn rules_sections() -> Vec<Field> {
             "radio voice sets: line (acknowledge, status, down, engaging, kill): clip or clips",
         ),
         f("environments", dict(super::environment::environment_schema()), "battle environments by id"),
+        f("formations", dict(super::formation::formation_schema()), "formations wingmen (and cutscenes) fly in"),
         f("terrains", dict(super::environment::terrain_schema()), "terrains (heightfields) by id"),
         f("modelsets", dict(modelset()), "looks: models, damage textures, states, debris"),
         f("debris", dict(debris()), "debris sets by id"),

@@ -249,6 +249,17 @@ impl MissionRun {
         let pitch = look.y.clamp(-1.0, 1.0).asin().to_degrees();
         // Members side by side across the line of sight.
         let side = Quat::from_euler(glam::EulerRot::YXZ, yaw.to_radians(), 0.0, 0.0) * Vec3::X;
+        // Wingmen take the next free slots of their formation (MD1), counting the
+        // wingmen of every role already flying, so two wingman roles do not share slots.
+        let wingman = role.ai == crate::content::scenario::AiRole::Wingman;
+        let formation = w.rules.formation(role.formation.as_deref());
+        let mut wing_slot: usize = self
+            .roles
+            .iter()
+            .zip(&self.def.roles)
+            .filter(|(_, d)| d.ai == crate::content::scenario::AiRole::Wingman)
+            .map(|(r, _)| r.members.len())
+            .sum();
         for k in 0..n {
             let offset = (k as f32 - (n as f32 - 1.0) * 0.5) * at.spread;
             let class = role.classes
@@ -262,7 +273,12 @@ impl MissionRun {
                 rotation: Vec3::new(yaw, pitch, 0.0),
                 ai: role.ai,
                 leader: None,
-                offset: Vec3::new(offset, 0.0, 40.0),
+                offset: if wingman {
+                    wing_slot += 1;
+                    formation.slot(wing_slot - 1)
+                } else {
+                    Vec3::new(offset, 0.0, 40.0)
+                },
                 speed: role.speed,
                 destroyed_systems: role.destroyed_systems.clone(),
                 hull: role.hull,
@@ -473,6 +489,22 @@ mod tests {
         // Bearing 90° (yaw left): the middle member is 2 km along −X.
         assert!((s.position - Vec3::new(-2000.0, 0.0, 0.0)).length() < 1.0, "{:?}", s.position);
         assert!(s.forward().dot(Vec3::X) > 0.99, "facing the player");
+    }
+
+    #[test]
+    fn wingmen_take_successive_slots_of_their_formation() {
+        let (w, m) = mission(
+            "player: {class: fighter}\nroles:\n  a: {class: fighter, ai: wingman, count: 2, at: {distance: 0m}}\n  b: {class: fighter, ai: wingman, at: {distance: 0m}}\nobjectives: {win: time > 9s}\n",
+        );
+        // The test rules define no formations: the built-in vee (60 m) applies.
+        let slot = |id: ShipId| match &w.get(id).unwrap().pilot {
+            Pilot::Ai(s) => s.offset,
+            _ => panic!("an AI pilot"),
+        };
+        let vee = crate::content::formation::FormationDef::fallback();
+        assert_eq!(slot(m.roles[0].members[0]), vee.slot(0));
+        assert_eq!(slot(m.roles[0].members[1]), vee.slot(1));
+        assert_eq!(slot(m.roles[1].members[0]), vee.slot(2), "the second role continues the formation");
     }
 
     #[test]
