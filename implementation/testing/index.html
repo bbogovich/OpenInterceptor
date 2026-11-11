@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2861,6 +2861,8 @@
       
         
       
+        
+      
     
     
     
@@ -3235,6 +3237,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3675,6 +3705,8 @@
       
         
       
+        
+      
     
     
     
@@ -3800,6 +3832,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5325,7 +5385,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5731,7 +5791,8 @@
    validates. Since Stage 2 <code>--check</code> validates every campaign separately, each with its own
    active set of packs.</li>
 <li><code>openinterceptor --data &lt;data&gt; --check</code> — when the player's data is found
-   (<code>OPENINTERCEPTOR_DATA</code> or <code>./game</code>): every rule, ship model, debris model, texture,
+   (<code>OPENINTERCEPTOR_DATA</code>, else the first of <code>./resources/xcom</code> and <code>./resources/xcom-cd</code>
+   that holds files): every rule, ship model, debris model, texture,
    cockpit image, sound and scenario loads, and every original mesh and texture decodes
    (reference CD at build 0.2.0: 2 packs, 34 ship classes, 100 models incl. the then <code>sample</code>
    pack's 3D cockpit, 272 textures, 3 images, 20 sounds, 5 scenarios, 1 096 original
@@ -5740,8 +5801,10 @@
 <li>The committed JSON Schemas (<code>schemas/*.schema.json</code>) must equal what
    <code>--write-schemas</code> produces, so editors always see the engine's current schema.</li>
 <li>A guard that fails if any original asset file type (<code>exe dll cab smk aif aiff wav mps</code>) is
-   tracked by git — except <code>packs/default/sounds/*.wav</code>, the default campaign's own generated
-   sounds.</li>
+   tracked by git — except <code>resources/default/sounds/*.wav</code>, the default campaign's own
+   generated sounds.</li>
+<li>A guard that fails if any file under <code>resources/xcom/</code>, <code>resources/xcom-cd/</code> or the old
+   <code>game/</code> is tracked by git (app 0.4.2).</li>
 </ol>
 <p>Also kept clean before every commit (project rule): <code>cargo clippy --all-targets</code> with no
 warnings and <code>cargo fmt --check</code> (settings in <code>rustfmt.toml</code>: width 120).</p>

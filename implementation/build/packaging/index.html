@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2861,6 +2861,8 @@
       
         
       
+        
+      
     
     
     
@@ -3235,6 +3237,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3783,6 +3813,8 @@
       
         
       
+        
+      
     
     
     
@@ -3908,6 +3940,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5433,7 +5493,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5859,40 +5919,47 @@
 <h1 id="packaging">Packaging<a class="headerlink" href="#packaging" title="Permanent link">&para;</a></h1>
 <div class="admonition warning">
 <p class="admonition-title">Game data is never inside a build</p>
-<p>The app contains the engine and the built-in packs (which hold no original content). The
-player's CD, settings and mods live in the user data folder.</p>
+<p>The app contains the engine, the default campaign (<code>resources/default</code>) and the bundled
+mods (<code>packs/</code>), none of which hold original content. The player's original data (an
+installed copy or the CD), settings and mods live in the user data folder; the checkout's
+<code>resources/xcom*</code> folders are never copied into the app.</p>
 </div>
 <h2 id="plain-build">Plain build<a class="headerlink" href="#plain-build" title="Permanent link">&para;</a></h2>
 <p><code>cargo build --release</code> produces <code>target/release/openinterceptor</code>. It finds the original data
 automatically (<a href="../../architecture/settings/">Settings and data discovery</a>).</p>
 <h2 id="macos-app">macOS app<a class="headerlink" href="#macos-app" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>tools/build_bundle.py<span class="w">                    </span><span class="c1"># app + settings.yaml pointing at ./game</span>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>tools/build_bundle.py<span class="w">                    </span><span class="c1"># app + settings.yaml pointing at ./resources/xcom(-cd)</span>
 python3<span class="w"> </span>tools/build_bundle.py<span class="w"> </span>--data<span class="w"> </span>/Volumes/CD<span class="w"> </span><span class="c1"># settings point at another copy</span>
-python3<span class="w"> </span>tools/build_bundle.py<span class="w"> </span>--install-data<span class="w">     </span><span class="c1"># clone the CD into &lt;user data&gt;/original</span>
+python3<span class="w"> </span>tools/build_bundle.py<span class="w"> </span>--install-data<span class="w">     </span><span class="c1"># clone the data into &lt;user data&gt;/original</span>
 python3<span class="w"> </span>tools/build_bundle.py<span class="w"> </span>--no-settings<span class="w">      </span><span class="c1"># leave settings.yaml alone</span>
 python3<span class="w"> </span>tools/build_bundle.py<span class="w"> </span>--skip-build<span class="w">       </span><span class="c1"># reuse the last release build</span>
 </code></pre></div>
 <p><code>tools/build_bundle.py</code> (standard-library Python) builds the release binary, assembles
 <code>dist/OpenInterceptor-&lt;version&gt;.app</code> (<code>dist/</code> is git-ignored), and signs it ad hoc:</p>
-<div class="highlight"><pre><span></span><code>OpenInterceptor-0.3.1.app/Contents/
-  Info.plist                 identifier io.github.bbogovich.openinterceptor, version, game category
-  MacOS/openinterceptor
-  Resources/packs/           interceptor and default packs
+<div class="highlight"><pre><span></span><code>OpenInterceptor-0.4.2.app/Contents/
+  Info.plist                   identifier io.github.bbogovich.openinterceptor, version, game category
+  MacOS/openinterceptor        (the console page is built into the binary)
+  Resources/resources/default/ the default campaign
+  Resources/packs/             the bundled mods (interceptor)
   Resources/LICENSE            the MIT licence
 </code></pre></div>
 <p>Then it prepares the user data folder <code>~/Library/Application Support/OpenInterceptor/</code>:
-<code>settings.yaml</code> <code>paths.original</code> is set to <code>./game</code> (or <code>--data</code>), keeping any other
-settings; <code>--install-data</code> instead clones the CD into <code>original/</code> (an APFS clone costs almost no
-disk) and points the settings there; <code>mods/</code> is created. The program finds its packs at
-<code>../Resources/packs</code> relative to the executable, so it works when Finder starts it with <code>/</code> as
-the working directory (verified: the bundled binary run from <code>/</code> loads both packs and the CD,
-<code>--check</code> 0 errors).</p>
+<code>settings.yaml</code> <code>paths.original</code> is set to the checkout's <code>resources/xcom/</code> if it holds files,
+else <code>resources/xcom-cd/</code> (or <code>--data</code>), keeping any other settings; <code>--install-data</code> instead
+clones that data into <code>original/</code> (an APFS clone costs almost no disk) and points the settings
+there; <code>mods/</code> is created. The program finds <code>../Resources/resources</code> and <code>../Resources/packs</code>
+relative to the executable, so it works when Finder starts it with <code>/</code> as the working directory
+(verified at app 0.3.x with the old layout: the bundled binary run from <code>/</code> loaded both packs
+and the CD, <code>--check</code> 0 errors; to re-verify with <code>resources/</code> in MT-1-30).</p>
 <h3 id="build-numbers">Build numbers<a class="headerlink" href="#build-numbers" title="Permanent link">&para;</a></h3>
 <p>Like ArenaVM's per-phase apps, versions follow the implementation stages:
 <code>0.&lt;stage + 1&gt;.&lt;build&gt;</code>. The version is <code>Cargo.toml</code>'s; bump the last number for each new
 build of a stage. From Stage 2 on, a stage's in-progress deliveries continue the previous
 stage's numbering and the stage's own <code>0.&lt;stage + 1&gt;.0</code> marks it complete: the first Stage 2
-delivery is <strong>0.2.2</strong>, and <strong>0.3.0</strong> marks Stage 2 complete (it also carries Stage 3 part 1).</p>
+delivery is <strong>0.2.2</strong>, and <strong>0.3.0</strong> marks Stage 2 complete (it also carries Stage 3 part 1).
+The Stage 3 interlude departs from this: its console delivery took <strong>0.4.0</strong> although Stage 3
+is not complete, so 0.4.x builds are Stage 3 work in progress (see the
+<a href="../../status/">implementation status</a>).</p>
 <table>
 <thead>
 <tr>
@@ -5920,7 +5987,7 @@ delivery is <strong>0.2.2</strong>, and <strong>0.3.0</strong> marks Stage 2 com
 <tr>
 <td>3 Missions, environments and conditions</td>
 <td>0.4.x</td>
-<td>part 1 shipped in <strong>0.3.0</strong>; <strong>0.3.1</strong> — interlude playtest fixes: shot physics, drift readout and flight-path marker, lighting and brightness, the <code>killed</code> result, keys overlay</td>
+<td>part 1 shipped in <strong>0.3.0</strong>; <strong>0.3.1</strong> — interlude playtest fixes: shot physics, drift readout and flight-path marker, lighting and brightness, the <code>killed</code> result, keys overlay; <strong>0.4.0</strong> — tablet console C1 (in-crate HTTP/WebSocket server, protocol v1, pairing, telemetry, console actions); <strong>0.4.1</strong> — lit shader link fix (<code>Light</code> uniform precision); <strong>0.4.2</strong> — <code>resources/</code> layout (<code>resources/default</code>, <code>resources/xcom</code>, <code>resources/xcom-cd</code>)</td>
 </tr>
 <tr>
 <td>4 Strategy layer</td>
@@ -5950,7 +6017,7 @@ delivery is <strong>0.2.2</strong>, and <strong>0.3.0</strong> marks Stage 2 com
 </tbody>
 </table>
 <h2 id="linux-stage-8">Linux (Stage 8)<a class="headerlink" href="#linux-stage-8" title="Permanent link">&para;</a></h2>
-<p>A tarball with the binary, <code>packs/</code> and a <code>.desktop</code> file. AppImage is under consideration.</p>
+<p>A tarball with the binary, <code>resources/default</code>, <code>packs/</code> and a <code>.desktop</code> file. AppImage is under consideration.</p>
 <h2 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h2>
 <p>Kept buildable; gamepad (XInput) and packaging are planned for Stage 8.</p>
 

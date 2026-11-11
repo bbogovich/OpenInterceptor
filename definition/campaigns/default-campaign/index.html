@@ -1687,7 +1687,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -3050,6 +3050,8 @@
       
         
       
+        
+      
     
     
     
@@ -3424,6 +3426,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3862,6 +3892,8 @@
       
         
       
+        
+      
     
     
     
@@ -3987,6 +4019,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5512,7 +5572,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -6009,10 +6069,10 @@
 
 <h1 id="the-default-campaign">The default campaign<a class="headerlink" href="#the-default-campaign" title="Permanent link">&para;</a></h1>
 <p><strong>Status: design; built up stage by stage (<a href="../../../implementation/plan/">plan</a>). First
-playable content delivered in Stage 2</strong> (<code>packs/default</code>, which replaced the Stage 1 <code>sample</code>
-pack). Mod id <code>default</code>, kind <code>campaign</code>, <strong>no original content</strong>. Working title: <strong><em>Perils of
+playable content delivered in Stage 2</strong> (<code>resources/default</code> since app 0.4.2, before that
+<code>packs/default</code>, which replaced the Stage 1 <code>sample</code> pack). Mod id <code>default</code>, kind <code>campaign</code>, <strong>no original content</strong>. Working title: <strong><em>Perils of
 the Void</em></strong>.</p>
-<p>It is what the engine runs when no CD is present, the reference implementation of a complete
+<p>It is what the engine runs without the player's original data (an installed copy or the CD), the reference implementation of a complete
 campaign, and the template a modder copies to make their own. It uses every format construct
 the <code>interceptor</code> campaign uses, in a simpler form (<a href="../../../specification/design/coverage/">coverage</a>).</p>
 <h2 id="aesthetic-a-1950s-film-serial">Aesthetic: a 1950s film serial<a class="headerlink" href="#aesthetic-a-1950s-film-serial" title="Permanent link">&para;</a></h2>
@@ -6528,6 +6588,11 @@ rule), so the campaign grows with the engine:</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Definition 1.0.0 as background for the campaign features; logistics updated with the revised decisions (survey ships separate from supply ships, supply convoys, construction thresholds 0 / 60 / 90 %)</td>
+</tr>
+<tr>
+<td>1.3.0</td>
+<td>2026-11-11</td>
+<td>The campaign's folder is <code>resources/default</code> (F-CMP-005, app 0.4.2); "no CD" reworded as no original data</td>
 </tr>
 </tbody>
 </table>

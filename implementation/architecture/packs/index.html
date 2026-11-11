@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2863,6 +2863,8 @@
       
         
       
+        
+      
     
     
     
@@ -3387,6 +3389,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../testbed/" class="md-nav__link">
         
   
@@ -3805,6 +3835,8 @@
       
         
       
+        
+      
     
     
     
@@ -3930,6 +3962,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5455,7 +5515,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5909,6 +5969,14 @@ added mod kinds, the active set, <code>equipment</code>, behaviours and difficul
 file to <strong>YAML checked against schemas</strong> (mod format 2: <code>formats::yaml</code>, <code>content::schema</code>,
 <code>content::files</code>). The user-facing side is in
 <a href="../../../modding/">Modding</a>.</p>
+<p><strong>Where packs come from</strong> (app 0.4.2). <code>ContentConfig::pack_dirs</code> lists folders whose
+sub-folders with a <code>pack.yaml</code> are packs, in load order: <code>resources/</code> (what ships with the game:
+the default campaign in <code>resources/default</code>) then <code>packs/</code> (bundled mods such as
+<code>interceptor</code>); <code>mods_dir</code> (the user's mods) comes last. A later pack overrides an earlier one,
+so mods override resources. <code>cli::content_dirs</code> builds the list; <code>--packs</code> replaces only
+<code>packs/</code>. The player's original data in <code>resources/xcom/</code> or <code>resources/xcom-cd/</code> has no
+<code>pack.yaml</code>, so discovery skips it; it reaches the engine as <code>ContentConfig::original</code>
+(<a href="../settings/">Settings and data discovery</a>).</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart TD
     CFG["ContentConfig&lt;br/&gt;pack_dirs, mods_dir, original, no_original,&lt;br/&gt;disabled, campaign"] --&gt; D["pack::discover&lt;br/&gt;folders with pack.yaml&lt;br/&gt;(kind, parent, targets, format)"]
@@ -5969,7 +6037,7 @@ manifests through <code>files::pack()</code> (<code>PackInfo::parse</code>).</p>
 <p><strong>Text</strong> (<code>content::text</code>, Stage 2): before the rules are typed, every active pack's
 <code>text/&lt;language&gt;/*.yaml</code> (falling back to <code>text/en/</code> for a pack without the language) is read
 into one <code>TextTable</code>, later packs replacing keys; <code>imports:</code> read the original's language files
-from the CD by reference (<code>formats::langfile</code>) under a prefix (<code>orig.&lt;KEY&gt;</code>). <code>TextTable::resolve</code>
+from the original data by reference (<code>formats::langfile</code>) under a prefix (<code>orig.&lt;KEY&gt;</code>). <code>TextTable::resolve</code>
 turns <code>@key</code> values into strings in names, descriptions and scenario titles; a missing key is an
 error and shows as the key.</p>
 <p>The schemas are <strong>data</strong> (<code>schema::Ty</code> trees built in <code>files.rs</code>), so one description drives
@@ -5993,7 +6061,7 @@ campaign (a Stage 1 setup) every pack loads, as before.</p>
 <p><code>Content::load_*</code> parses an <code>AssetRef</code>. Pack-relative paths resolve in the pack that defined
 them. An <code>original:</code> reference first asks <code>find_override</code>: every active pack is searched,
 <strong>highest priority (latest in load order) first</strong>, for a file at the asset's override path
-(<code>vfs::override_paths</code>); only if none exists is the CD read.</p>
+(<code>vfs::override_paths</code>); only if none exists is the original data read.</p>
 <pre class="mermaid"><code>flowchart LR
     R["original:CockpitA.dll#12000"] --&gt; OP["override_paths(Image, 'CockpitA.dll', '12000')&lt;br/&gt;images/cockpita/12000.png | .tga"]
     OP --&gt; FO{"find_override:&lt;br/&gt;latest pack with the file?"}
@@ -6048,7 +6116,7 @@ original. Whole packs can be switched off with <code>packs.disabled</code> in <c
 </tr>
 <tr>
 <td><code>ContentConfig</code></td>
-<td>Where to look, which packs are <code>disabled</code>, which <code>campaign</code> and <code>difficulty</code> to load; built by <code>cli::Options::content_config</code> from the command line and <code>settings.yaml</code>.</td>
+<td>Where to look, which packs are <code>disabled</code>, which <code>campaign</code> and <code>difficulty</code> to load; built by <code>cli::Options::content_config</code> from the command line and <code>settings.yaml</code>; <code>pack_dirs</code> = <code>[resources/, packs/]</code>.</td>
 </tr>
 <tr>
 <td><code>preferred_campaign(&amp;[PackInfo])</code></td>

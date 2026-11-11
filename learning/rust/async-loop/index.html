@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5427,7 +5487,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5878,6 +5938,12 @@ Rust's <strong>async/await</strong>, so the loop reads like straight-line code.<
 <p>An <code>async fn</code> returns a <em>future</em>: a computation that can pause. <code>.await</code> pauses it until the
 awaited thing is ready. macroquad runs our <code>run</code> future on its own tiny executor, resuming it
 once per frame. There are no threads involved and no async runtime such as Tokio.</p>
+<p>The one exception is the tablet console (app 0.4.0): its network server runs on ordinary
+<code>std::thread</code> threads beside this loop, because a socket read must never hold up a frame. The
+game side only ever <em>polls</em> it — <code>ConsoleServer::poll</code> drains an <code>mpsc</code> channel with
+<code>try_iter</code>, which never blocks — so the frame loop stays single-threaded and needs no async
+runtime. <a href="../../networking/#threads-and-channels-in-rust">Networking → Threads and channels</a>
+explains <code>thread::spawn</code>, channels, <code>Arc&lt;Mutex&lt;…&gt;&gt;</code> and <code>AtomicBool</code> with that code.</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Anything that waits for a frame must be <code>async</code> and <code>.await</code>ed. In this codebase that is

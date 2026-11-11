@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5447,7 +5507,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5892,8 +5952,11 @@
 <h2 id="1-copy-the-default-campaign">1. Copy the default campaign<a class="headerlink" href="#1-copy-the-default-campaign" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nv">MODS</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/Library/Application Support/OpenInterceptor/mods"</span><span class="w">   </span><span class="c1"># Linux: ~/.local/share/openinterceptor/mods</span>
 mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$MODS</span><span class="s2">"</span>
-cp<span class="w"> </span>-R<span class="w"> </span>packs/default<span class="w"> </span><span class="s2">"</span><span class="nv">$MODS</span><span class="s2">/frontier"</span>
+cp<span class="w"> </span>-R<span class="w"> </span>resources/default<span class="w"> </span><span class="s2">"</span><span class="nv">$MODS</span><span class="s2">/frontier"</span><span class="w">   </span><span class="c1"># from a checkout; in the macOS app: Contents/Resources/resources/default</span>
 </code></pre></div>
+<p>The default campaign lives in <code>resources/default/</code> (before app 0.4.2: <code>packs/default/</code>). Your
+mods folder is loaded after <code>resources/</code> and <code>packs/</code>, so a mod always wins over what ships
+with the game.</p>
 <h2 id="2-give-it-its-own-id">2. Give it its own id<a class="headerlink" href="#2-give-it-its-own-id" title="Permanent link">&para;</a></h2>
 <p>Edit <code>frontier/pack.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># yaml-language-server: $schema=../schemas/pack.schema.json</span>

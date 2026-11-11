@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2861,6 +2861,8 @@
       
         
       
+        
+      
     
     
     
@@ -3235,6 +3237,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3781,6 +3811,8 @@
       
         
       
+        
+      
     
     
     
@@ -3906,6 +3938,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5431,7 +5491,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5882,7 +5942,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-3-missions/">3 Missions, environments and conditions</a></td>
-<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong></td>
+<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong></td>
 <td>See <a href="#stage-3-progress">Stage 3 progress</a> below</td>
 </tr>
 <tr>
@@ -6008,7 +6068,7 @@ CD on macOS. <strong>Signed off</strong> by the developer's playtest on 2026-11-
 <tr>
 <td><code>sample</code> original-free pack and generator, incl. a 3D cockpit</td>
 <td><strong>Done</strong>; in Stage 2 replaced by the <code>default</code> campaign and <code>tools/default_assets/</code></td>
-<td><code>packs/default</code> (was <code>packs/sample</code>)</td>
+<td><code>resources/default</code> (was <code>packs/sample</code>, then <code>packs/default</code> until app 0.4.2)</td>
 </tr>
 <tr>
 <td>Settings and data discovery (<code>settings.ini</code>, now <code>settings.yaml</code>, user data folder, automatic CD discovery)</td>
@@ -6146,7 +6206,7 @@ and <code>--soak</code> <code>f638b44</code>; looks <code>b097c83</code>; guidan
 <tr>
 <td><code>default</code> campaign <em>Perils of the Void</em>: rules, four scenarios, generated models, textures and sounds, 3D cockpit (2.14)</td>
 <td><strong>Partial</strong> (behaviours, difficulty variants, model sets to come)</td>
-<td><code>packs/default</code>, <code>tools/default_assets/</code></td>
+<td><code>resources/default</code> (was <code>packs/default</code>), <code>tools/default_assets/</code></td>
 </tr>
 <tr>
 <td><code>interceptor</code>: <code>rules/systems.yaml</code>, equipment fits, <code>systems-trial</code>, behaviours for every enemy type with five per-level values (derived), <code>campaign/campaign.yaml</code> (2.13)</td>
@@ -6237,7 +6297,8 @@ and <code>--soak</code> <code>f638b44</code>; looks <code>b097c83</code>; guidan
 </table>
 <h2 id="stage-3-progress">Stage 3 progress<a class="headerlink" href="#stage-3-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.3.0</strong>, main <code>d7553f5</code>; then app <strong>0.3.1</strong>, main <code>c583659</code> (the interlude's playtest
-fixes); <strong>276 unit tests</strong> on macOS.</p>
+fixes); app <strong>0.4.0</strong>, main <code>dfff71b</code> (console C1); <strong>0.4.1</strong>, main <code>42716d1</code> (lit shader link
+fix); <strong>0.4.2</strong>, main <code>bf7b7ce</code> (<code>resources/</code> layout); <strong>292 unit tests</strong> on macOS.</p>
 <table>
 <thead>
 <tr>
@@ -6280,7 +6341,7 @@ fixes); <strong>276 unit tests</strong> on macOS.</p>
 <tr>
 <td><code>default</code>: 4 missions incl. the logistics missions (3.12, 3.13)</td>
 <td><strong>Started</strong></td>
-<td><code>packs/default/missions/</code></td>
+<td><code>resources/default/missions/</code></td>
 </tr>
 <tr>
 <td>Environments, atmospheric flight, terrain, simulator missions, Tier 2 decision (3.3–3.6, 3.9, 3.10)</td>
@@ -6313,18 +6374,33 @@ fixes); <strong>276 unit tests</strong> on macOS.</p>
 <td><code>src/input/mod.rs</code>, <code>src/app/flight.rs</code></td>
 </tr>
 <tr>
-<td>Interlude C1–C5 — tablet control console</td>
-<td><strong>Started</strong> (remote action sets on <code>RawInput</code>, work in progress)</td>
-<td><code>src/input/mod.rs</code></td>
+<td>Interlude C1 — tablet console server and protocol: in-crate HTTP/1.1 and WebSocket (SHA-1, base64), JSON, protocol v1 (<code>hello</code>, <code>welcome</code>, <code>denied</code>, <code>catalogue</code> with per-action availability, 20 Hz <code>telemetry</code>, <code>action</code>, <code>throttle</code>), local-network peers only, 6-digit pairing code (three wrong codes close the connection), <code>--console</code> / <code>console.enabled</code>, port 8765; console input through <code>RawInput</code>; the C1 page (<code>oi-pairing</code>, <code>oi-telemetry</code>, <code>oi-throttle</code>, <code>oi-actions</code>); <code>tools/console_client.py</code></td>
+<td><strong>Done</strong> (0.4.0; manual cases MT-3-19 – MT-3-23 not yet run)</td>
+<td><code>src/remote/</code>, <code>web/console/</code>, <code>src/app/flight.rs</code>, <code>src/input/mod.rs</code></td>
 </tr>
 <tr>
-<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-18</td>
+<td>Interlude C2–C5 — console layout, tiles and themes; target viewport; 3D map; serial panel</td>
+<td><strong>Not started</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>Lit shader: the <code>Light</code> uniform states <code>mediump</code> in both stages (GLSL ES link error at start-up)</td>
+<td><strong>Done</strong> (0.4.1)</td>
+<td><code>src/render/mod.rs</code></td>
+</tr>
+<tr>
+<td><code>resources/</code> layout: <code>resources/default</code> (the default campaign), git-ignored <code>resources/xcom</code> (installed copy, tried first) and <code>resources/xcom-cd</code> (CD copy); <code>packs/</code> keeps the bundled mods; gate guard; app bundle ships <code>resources/default</code> (F-CMP-005, R-CMP-014, R-CMP-015)</td>
+<td><strong>Done</strong> (0.4.2)</td>
+<td><code>src/cli.rs</code>, <code>src/settings.rs</code>, <code>scripts/check.sh</code>, <code>tools/build_bundle.py</code></td>
+</tr>
+<tr>
+<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-24</td>
 <td><strong>Not yet run</strong></td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Next</strong>: the rest of the <a href="../plan/stage-3-interlude/">Stage 3 interlude</a> (the control console C1–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
+<p><strong>Next</strong>: the rest of the <a href="../plan/stage-3-interlude/">Stage 3 interlude</a> (the console manual passes MT-3-19 – MT-3-23, then C2–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
 
 
 

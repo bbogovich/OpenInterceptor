@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2943,6 +2943,8 @@
       
         
       
+        
+      
     
     
     
@@ -3317,6 +3319,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3755,6 +3785,8 @@
       
         
       
+        
+      
     
     
     
@@ -3880,6 +3912,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5405,7 +5465,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5802,7 +5862,8 @@
 
 <h1 id="stage-3-interlude-feedback-and-control-console">Stage 3 interlude — feedback and control console<a class="headerlink" href="#stage-3-interlude-feedback-and-control-console" title="Permanent link">&para;</a></h1>
 <p><strong>Status: in progress</strong> (2026-11-11). Feedback items F.1–F.5 are <strong>done</strong> in app <strong>0.3.1</strong>
-(main <code>c583659</code>); the control console (C1–C5) is next. User feedback from playing app 0.3.0, and the tablet control
+(main <code>c583659</code>); console item <strong>C1 is done</strong> in app <strong>0.4.0</strong> (main <code>dfff71b</code>; its manual
+cases MT-3-19 – MT-3-23 still need a run on an iPad); C2–C5 are next. User feedback from playing app 0.3.0, and the tablet control
 console, taken up before the rest of Stage 3 (environments and atmospheric flight). Each item
 cites the features and requirements it delivers; issues are filed in <code>sio</code> against those IDs.</p>
 <h2 id="feedback-items">Feedback items<a class="headerlink" href="#feedback-items" title="Permanent link">&para;</a></h2>
@@ -5869,6 +5930,7 @@ cites the features and requirements it delivers; issues are filed in <code>sio</
 <th>Features</th>
 <th>Requirements</th>
 <th>Module</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
@@ -5877,21 +5939,24 @@ cites the features and requirements it delivers; issues are filed in <code>sio</
 <td><strong>Server and protocol</strong>: HTTP and WebSocket server, off by default, local network only, pairing code, port 8765 (decision D2); the <a href="../../../specification/console-protocol/">console protocol</a></td>
 <td><a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a></td>
 <td>R-CON-009, R-CON-010, R-CON-011, R-CON-014</td>
-<td>new <code>console</code> module</td>
+<td><code>remote</code> (was planned as <code>console</code>), <code>web/console/</code></td>
+<td><strong>Done</strong> (0.4.0): <a href="../../architecture/remote/">Remote console</a>; protocol v1; a C1 page (pairing, telemetry, throttle, every action grouped, not-fitted disabled); <code>tools/console_client.py</code>; 15 unit tests incl. an end-to-end socket test. Radar <code>contacts</code> and <code>event</code> messages (R-CON-014) move to C4</td>
 </tr>
 <tr>
 <td>C2</td>
 <td><strong>Components and layout</strong>: custom web components; HUD top row, centre display, shields left, power right, function-group tiles with control strips, per-pack theme</td>
 <td><a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a>, <a href="../../../definition/control-console/#f-con-008-console-function-group-tiles">F-CON-008</a>, <a href="../../../definition/control-console/#f-con-009-console-themed-by-the-active-campaign">F-CON-009</a></td>
 <td>R-CON-012, R-CON-013, R-CON-018 – R-CON-021</td>
-<td>console page, <code>packs/*</code></td>
+<td>console page, <code>packs/*</code>, <code>resources/default</code></td>
+<td>Next</td>
 </tr>
 <tr>
 <td>C3</td>
-<td><strong>Target viewport</strong>: the target's model at its true angle relative to the player</td>
+<td><strong>Target viewport</strong>: the target's model at its true angle relative to the player (the relative rotation is already in <code>telemetry</code>)</td>
 <td><a href="../../../definition/control-console/#f-con-005-console-target-viewport">F-CON-005</a></td>
 <td>R-CON-015</td>
-<td>console page, <code>console</code></td>
+<td>console page, <code>remote</code></td>
+<td>Not started</td>
 </tr>
 <tr>
 <td>C4</td>
@@ -5899,22 +5964,29 @@ cites the features and requirements it delivers; issues are filed in <code>sio</
 <td><a href="../../../definition/control-console/#f-con-006-console-3d-map">F-CON-006</a></td>
 <td>R-CON-016</td>
 <td>console page</td>
+<td>Not started</td>
 </tr>
 <tr>
 <td>C5</td>
 <td><strong>Arduino</strong> (later): the protocol over USB serial for a physical panel</td>
 <td><a href="../../../definition/control-console/#f-con-007-physical-control-panel">F-CON-007</a></td>
 <td>R-CON-017</td>
-<td><code>console</code>, <code>platform</code></td>
+<td><code>remote</code>, <code>platform</code></td>
+<td>Not started</td>
 </tr>
 </tbody>
 </table>
 <h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Dependencies.</strong> The server (HTTP, WebSocket framing) and the console page are to be written
-  in-crate and with plain web components; anything else needs the dependency evaluation first.</li>
-<li><strong>Settings.</strong> The console's on/off switch, port and pairing are settings; the keys are open
-  (R-CON-009).</li>
+<li><strong>Dependencies.</strong> The server (HTTP, WebSocket framing, SHA-1, base64, JSON) and the console
+  page are written in-crate and with plain web components (C1): no dependency was added.</li>
+<li><strong>Settings.</strong> <code>console: {enabled, port}</code> in <code>settings.yaml</code>, <code>--console</code> and
+  <code>--console-port N</code> (C1; R-CON-009 resolved).</li>
+<li><strong>Also in this period.</strong> App 0.4.1 fixed a start-up shader error (the lit shader's <code>Light</code>
+  uniform needs the same precision in both stages; <a href="../../architecture/rendering/#debugging">Rendering</a>),
+  and app 0.4.2 moved the default campaign to <code>resources/default</code> with the player's original
+  data in <code>resources/xcom</code> or <code>resources/xcom-cd</code>
+  (<a href="../../../definition/compatibility/#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game">F-CMP-005</a>).</li>
 <li><strong>F1.</strong> The request named F1 for the overlay, which selects cockpit view 1. Resolved: F1 stays the
   original's view key (no deviation); the overlay is on <code>?</code> (Shift+Slash) and Shift+F1. F12 is
   the cockpit layout editor's key in custom cockpits, so it is not used (R-CON-008).</li>

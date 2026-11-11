@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2861,6 +2861,8 @@
       
         
       
+        
+      
     
     
     
@@ -3235,6 +3237,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3766,6 +3796,8 @@
       
         
       
+        
+      
     
     
     
@@ -3891,6 +3923,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5416,7 +5476,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5864,27 +5924,36 @@ already part of macroquad's tree. Everything else is in the crate. See the
 <div class="highlight"><pre><span></span><code>OpenInterceptor/
   Cargo.toml  Cargo.lock  build.rs
   src/                 the engine (see Architecture)
-  packs/interceptor/   rules + scenarios binding the original CD data
-  packs/default/       the original-free default campaign, Perils of the Void
+  resources/default/   the default campaign, Perils of the Void: everything the game
+                       ships, in editable formats (YAML, OBJ, PNG, WAV)
+  resources/xcom/      your installed copy of Interceptor (optional, git-ignored)
+  resources/xcom-cd/   your CD copy (optional, git-ignored)
+  packs/interceptor/   bundled mod: rules + scenarios binding the original data
+  web/console/         the tablet console page (embedded in the binary)
   tools/               default_assets/ (generates the default campaign's models, textures
-                       and sounds: python3 tools/default_assets/make_all.py [--check]),
-                       build_bundle.py (macOS app bundle)
+                       and sounds into resources/default:
+                       python3 tools/default_assets/make_all.py [--check]),
+                       build_bundle.py (macOS app bundle),
+                       console_client.py (console test client)
   macos/shim/          the Objective-C gamepad shim (oi_platform.m)
   CLAUDE.md            project rules (objectives, no original content, quality bar)
   rustfmt.toml         formatting (width 120)
   scripts/check.sh     the quality gate
-  game/                your CD copy (git-ignored)
   engine-docs/         worktree of the docs branch (git-ignored on main)
 </code></pre></div>
 <h2 id="day-to-day">Day to day<a class="headerlink" href="#day-to-day" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>cargo<span class="w"> </span>run<span class="w"> </span>--release<span class="w"> </span>--<span class="w"> </span>--data<span class="w"> </span>game<span class="w">          </span><span class="c1"># launcher</span>
+<div class="highlight"><pre><span></span><code>cargo<span class="w"> </span>run<span class="w"> </span>--release<span class="w">                         </span><span class="c1"># launcher (original data found in resources/xcom*)</span>
 cargo<span class="w"> </span><span class="nb">test</span><span class="w">                                  </span><span class="c1"># unit tests</span>
 cargo<span class="w"> </span>clippy<span class="w"> </span>--all-targets<span class="w">                  </span><span class="c1"># lints (kept at zero warnings)</span>
 cargo<span class="w"> </span>fmt<span class="w">                                   </span><span class="c1"># formatting</span>
 scripts/check.sh<span class="w">                            </span><span class="c1"># everything the gate runs</span>
 cargo<span class="w"> </span>check<span class="w"> </span>--target<span class="w"> </span>x86_64-unknown-linux-gnu<span class="w">   </span><span class="c1"># type-check the Linux paths from macOS</span>
 </code></pre></div>
-<p><code>OPENINTERCEPTOR_DATA</code> points the gate at a data folder other than <code>game/</code>.</p>
+<p>The gate (<code>scripts/check.sh</code>) runs the original-data checks on <code>OPENINTERCEPTOR_DATA</code> if set,
+else on the first of <code>resources/xcom/</code> and <code>resources/xcom-cd/</code> that holds files, and skips
+them when there is none. It fails if any file under <code>resources/xcom*</code> (or the old <code>game/</code>) is
+tracked by Git. A checkout from before app 0.4.2 that kept its data in <code>game/</code> should move it
+to <code>resources/xcom-cd/</code> (a CD copy) or <code>resources/xcom/</code> (an installed copy).</p>
 
 
 

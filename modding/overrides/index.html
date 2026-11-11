@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5414,7 +5474,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5822,8 +5882,8 @@
 
 <h1 id="overrides-and-extraction">Overrides and extraction<a class="headerlink" href="#overrides-and-extraction" title="Permanent link">&para;</a></h1>
 <p>Any original asset can be replaced <strong>one file at a time</strong>: put a file at the asset's
-<em>override path</em> inside an active pack, and the engine uses it instead of the CD's version.
-Everything you do not replace still comes from the CD. The highest-priority pack wins (the
+<em>override path</em> inside an active pack, and the engine uses it instead of the original version.
+Everything you do not replace still comes from the original data (your installed copy or CD). The highest-priority pack wins (the
 last one in load order), so several mods can stack.</p>
 <table>
 <thead>
@@ -5860,7 +5920,7 @@ last one in load order), so several mods can stack.</p>
 are used as they are — the original cockpits' cyan colour key is <em>not</em> applied, so mark
 see-through areas with PNG alpha.</p>
 <h2 id="extracting-the-originals">Extracting the originals<a class="headerlink" href="#extracting-the-originals" title="Permanent link">&para;</a></h2>
-<p>You do not need to know the names: the engine converts the whole CD for you, writing every
+<p>You do not need to know the names: the engine converts all of your original data for you, writing every
 asset <strong>at its override path</strong>:</p>
 <div class="highlight"><pre><span></span><code>openinterceptor<span class="w"> </span>--extract<span class="w"> </span>~/Desktop/interceptor-extracted
 <span class="c1"># extract: 297 models, 799 textures, 3244 images, 792 sounds, 27 reference files; 0 errors</span>
@@ -5873,7 +5933,7 @@ asset <strong>at its override path</strong>:</p>
   sounds/&lt;name&gt;.wav         16-bit PCM (sound effects and music loops)
   original-data/            the original INI and text files, for reference (read-only data)
 </code></pre></div>
-<p>The extracted files are converted copies of copyrighted content from <strong>your</strong> CD: use them to
+<p>The extracted files are converted copies of copyrighted content from <strong>your</strong> copy of the game: use them to
 make your own art, keep them to yourself, and never put them in a mod you share. A shared mod
 should contain only files you made.</p>
 <p>To find which file you want, open the launcher's <strong>Asset browser</strong>: it lists every texture,

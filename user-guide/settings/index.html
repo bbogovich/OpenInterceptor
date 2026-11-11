@@ -14,7 +14,7 @@
         <link rel="prev" href="../controls/">
       
       
-        <link rel="next" href="../../modding/">
+        <link rel="next" href="../console/">
       
       
         
@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3673,6 +3703,8 @@
       
         
       
+        
+      
     
     
     
@@ -3886,6 +3918,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -5403,7 +5463,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5823,10 +5883,11 @@ means the default.</p>
 </tbody>
 </table>
 <p>It holds <code>settings.yaml</code>, <code>bindings.yaml</code> (your keys, see <a href="../controls/">Controls</a>), <code>mods/</code>
-(your mods) and optionally <code>original/</code> (a copy of the CD).</p>
+(your mods) and optionally <code>original/</code> (a copy of your original data: an installed copy or
+the CD).</p>
 <h2 id="settingsyaml"><code>settings.yaml</code><a class="headerlink" href="#settingsyaml" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">paths</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">original</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/Users/me/Interceptor CD</span>
+<span class="w">  </span><span class="nt">original</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/Users/me/Games/XCOM Interceptor</span>
 <span class="w">  </span><span class="nt">mods</span><span class="p">:</span>
 <span class="nt">packs</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">hd-cockpit-test</span><span class="p p-Indicator">]</span>
@@ -5836,6 +5897,9 @@ means the default.</p>
 <span class="w">  </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">en</span>
 <span class="nt">graphics</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">brightness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2</span>
+<span class="nt">console</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8765</span>
 </code></pre></div>
 <table>
 <thead>
@@ -5849,7 +5913,7 @@ means the default.</p>
 <tr>
 <td><code>paths.original</code></td>
 <td>found automatically</td>
-<td>The <em>Interceptor</em> CD or install folder. <code>--data</code> and the <code>OPENINTERCEPTOR_DATA</code> variable take precedence; without any, the engine looks in <code>original/</code> in the user data folder and in a development checkout's <code>game/</code> (<a href="../getting-started/">Getting started</a>).</td>
+<td>Your original data (optional): an installed <em>Interceptor</em> or the CD. <code>--data</code> and the <code>OPENINTERCEPTOR_DATA</code> variable take precedence; without any, the engine looks in <code>original/</code> in the user data folder, then in a development checkout's <code>resources/xcom/</code> (installed copy) and <code>resources/xcom-cd/</code> (CD copy) (<a href="../getting-started/#folder-layout">Folder layout</a>).</td>
 </tr>
 <tr>
 <td><code>paths.mods</code></td>
@@ -5881,12 +5945,22 @@ means the default.</p>
 <td>1</td>
 <td>The picture's brightness: 1 is as authored, from 0.5 (darker) to 2 (brighter); values outside are clamped. It lifts dark tones more than bright ones (a gamma), so ships in shadow become easier to see without washing out lit faces. The HUD and cockpit art are not changed. Read when the game starts.</td>
 </tr>
+<tr>
+<td><code>console.enabled</code></td>
+<td><code>false</code></td>
+<td>Serve the <a href="../console/">tablet control console</a> (<code>--console</code> turns it on for one run).</td>
+</tr>
+<tr>
+<td><code>console.port</code></td>
+<td>8765</td>
+<td>The console's port; change it if another program uses 8765 (<code>--console-port</code> overrides it).</td>
+</tr>
 </tbody>
 </table>
 <h2 id="other-ways-to-set-them">Other ways to set them<a class="headerlink" href="#other-ways-to-set-them" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The command line overrides <code>paths</code>, <code>game.campaign</code>, <code>game.difficulty</code> and <code>game.language</code>
-  for one run (<a href="../getting-started/#command-line-options">Getting started</a>).</li>
+<li>The command line overrides <code>paths</code>, <code>game.campaign</code>, <code>game.difficulty</code>, <code>game.language</code>
+  and <code>console</code> for one run (<a href="../getting-started/#command-line-options">Getting started</a>).</li>
 <li>How bright ships are in a campaign is also the campaign's choice: a modder sets the lighting
   with <code>flight: {lighting: …}</code> (<a href="../../modding/reference/#flight">Mod file reference</a>).
   <code>graphics.brightness</code> adjusts the result for your screen.</li>

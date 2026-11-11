@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5464,7 +5524,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5921,9 +5981,16 @@
 
 
 <h1 id="packs">Packs<a class="headerlink" href="#packs" title="Permanent link">&para;</a></h1>
-<p>A <strong>pack</strong> is a folder of content with a <code>pack.yaml</code> manifest. The engine loads the built-in
-packs (the <code>packs/</code> folder next to the program, or <code>--packs &lt;dir&gt;</code>), then every mod in the user
-mods folder (or <code>--mods &lt;dir&gt;</code>). Within a folder, packs are found in folder-name order and then
+<p>A <strong>pack</strong> is a folder of content with a <code>pack.yaml</code> manifest. The engine loads packs from three
+places, in this order (app 0.4.2):</p>
+<ol>
+<li><code>resources/</code> — what ships with the game: the default campaign in <code>resources/default/</code>;</li>
+<li><code>packs/</code> — the bundled mods, such as <code>interceptor</code> (<code>--packs &lt;dir&gt;</code> replaces this folder only);</li>
+<li>the user mods folder (or <code>--mods &lt;dir&gt;</code>).</li>
+</ol>
+<p>Later packs override earlier ones, so a mod overrides resources. The player's original data
+(<code>resources/xcom/</code>, <code>resources/xcom-cd/</code> or a folder given with <code>--data</code>) is not a pack: it has
+no <code>pack.yaml</code> and is read only through <code>original:</code> references. Within a folder, packs are found in folder-name order and then
 <strong>ordered so that every pack comes after the packs it depends on</strong> (otherwise keeping that
 order). Later packs override earlier ones, key by key.</p>
 <p>Since Stage 2 not every pack found is loaded: the player plays <strong>one campaign</strong>, and only the
@@ -6041,7 +6108,8 @@ for a newer OpenInterceptor; a missing <code>format</code> means the current one
 <p>Converting a format-1 mod by hand: section <code>[ship:comet]</code> becomes <code>ships:</code> / <code>comet:</code>, keys
 become snake_case (<code>MaxSpeed = 620</code> → <code>max_speed: 620</code>), comma lists become <code>[a, b]</code>, <code>yes/no</code>
 become <code>true/false</code>, <code>Systems.add = ecm</code> becomes <code>systems+: [ecm]</code>, and <code>;</code> comments become
-<code>#</code>. The built-in packs in <code>packs/</code> show the result for every section.</p>
+<code>#</code>. The built-in packs in <code>resources/default/</code> and <code>packs/interceptor/</code> show the result for
+every section.</p>
 <h2 id="switching-packs-on-and-off">Switching packs on and off<a class="headerlink" href="#switching-packs-on-and-off" title="Permanent link">&para;</a></h2>
 <p>A pack in the active set loads unless its id is listed in <code>settings.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">packs</span><span class="p">:</span>
@@ -6152,6 +6220,7 @@ on a disabled pack are skipped too. (XWVM offers the same whole-pack switch in i
 <thead>
 <tr>
 <th>Pack</th>
+<th>Folder</th>
 <th>Needs original data</th>
 <th>Contents</th>
 </tr>
@@ -6159,13 +6228,15 @@ on a disabled pack are skipped too. (XWVM offers the same whole-pack switch in i
 <tbody>
 <tr>
 <td><code>default</code></td>
+<td><code>resources/default</code></td>
 <td>no</td>
 <td>Campaign <strong>Perils of the Void</strong>: the original-free default campaign — 1950s film-serial rocket ships of the Interplanetary Guard against the flying saucers of the Umbral Dominion. Seven factions, six beams and two missiles, playable rockets <code>comet</code>, <code>meteor</code>, <code>thunderbolt</code> flown from the 3D cockpit <code>guard</code>, saucers, a robot sentinel, freighters, stations, systems and power rules, behaviours with four difficulty levels, and the scenarios <code>rocket-vs-saucer</code>, <code>dominion-raid</code>, <code>black-comet-ambush</code>, <code>systems-trial</code>. Models, textures and sounds are generated by <code>tools/default_assets/</code>. <strong>Copy this to start a mod</strong> — see <a href="../first-mod/">Make your first mod</a>.</td>
 </tr>
 <tr>
 <td><code>interceptor</code></td>
+<td><code>packs/interceptor</code></td>
 <td>yes</td>
-<td>Campaign. Rules that inherit the original <code>GameSettings.ini</code> sections, the class → mesh mapping, cockpits, systems and power rules (<code>rules/systems.yaml</code>), the campaign ruleset with the original's five difficulty levels, event sounds, and the test scenarios <code>flight-test</code>, <code>combat-test</code>, <code>gunnery-range</code>, <code>station-tour</code>, <code>systems-trial</code>. <strong>No assets</strong>: every model, texture, image and sound is an <code>original:</code> reference into the player's CD.</td>
+<td>Campaign. Rules that inherit the original <code>GameSettings.ini</code> sections, the class → mesh mapping, cockpits, systems and power rules (<code>rules/systems.yaml</code>), the campaign ruleset with the original's five difficulty levels, event sounds, and the test scenarios <code>flight-test</code>, <code>combat-test</code>, <code>gunnery-range</code>, <code>station-tour</code>, <code>systems-trial</code>. <strong>No assets</strong>: every model, texture, image and sound is an <code>original:</code> reference into the player's original data (an installed copy or the CD).</td>
 </tr>
 </tbody>
 </table>

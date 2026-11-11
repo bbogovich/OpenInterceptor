@@ -960,6 +960,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-CMP-005 A resources folder that says what ships with the game
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1624,7 +1635,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2987,6 +2998,8 @@
       
         
       
+        
+      
     
     
     
@@ -3361,6 +3374,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3799,6 +3840,8 @@
       
         
       
+        
+      
     
     
     
@@ -3924,6 +3967,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5449,7 +5520,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5850,6 +5921,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-CMP-005 A resources folder that says what ships with the game
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5910,6 +5992,10 @@
 <td><a href="#f-cmp-004-deviations-on-the-record">F-CMP-004 Deviations on the record</a></td>
 <td>Implemented</td>
 </tr>
+<tr>
+<td><a href="#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game">F-CMP-005 A resources folder that says what ships with the game</a></td>
+<td>Implemented</td>
+</tr>
 </tbody>
 </table>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
@@ -5945,6 +6031,17 @@
 <li><strong>Source:</strong> Project rules; Deviations page.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/compatibility/#r-cmp-013-facts-and-deviations-marked">R-CMP-013</a></li>
 </ul>
+<h3 id="f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game">F-CMP-005 A resources folder that says what ships with the game<a class="headerlink" href="#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game" title="Permanent link">&para;</a></h3>
+<p><strong>What.</strong> Content bundled with the game lives in one <code>resources/</code> folder:
+- <code>resources/default/</code> holds the default campaign and every one of its assets, in modern editable formats. It is the equivalent of the X-COM game's contents.
+- <code>resources/xcom/</code> (an installed copy of X-COM: Interceptor) and <code>resources/xcom-cd/</code> (a copy of the CD) are empty, git-ignored places where a player adds their own original data for a personal build.</p>
+<p>Mods (<code>packs/</code>, and the user's mods folder) override resources as before. The interceptor campaign is such a mod.</p>
+<p><strong>Why.</strong> Most players will not own X-COM: Interceptor, and those who do more likely have it installed than a CD copy. A <code>game/</code> folder at the root suggested the game itself was included. The new layout makes it explicit which assets the default campaign provides and what belongs to an installed mod.</p>
+<ul>
+<li><strong>Status:</strong> implemented (app 0.4.2, main <code>bf7b7ce</code>)</li>
+<li><strong>Source:</strong> User request, 2026-11-11: "Rather than a \"game\" folder in the repo root, which is misleading because it gives the impression that the game itself is there, it should be a \"resources\" folder that contains core assets bundled with the game for the default campaign in one subfolder, and gitignored xcom and xcom-cd subfolders that a user would manually add to for their personal build." "the default campaign's content in resources is the equivalent the xcom game contents, but with all files in modern editable formats."</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/compatibility/#r-cmp-014-resources-folder">R-CMP-014</a>, <a href="../../specification/requirements/compatibility/#r-cmp-015-installed-copy-or-cd-copy">R-CMP-015</a></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -5959,6 +6056,16 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: F-CMP-001 – F-CMP-004 (4 features)</td>
+</tr>
+<tr>
+<td>1.2.0</td>
+<td>2026-11-11</td>
+<td>F-CMP-005 resources folder</td>
+</tr>
+<tr>
+<td>1.3.0</td>
+<td>2026-11-11</td>
+<td>F-CMP-005 listed in the status table; implemented in app 0.4.2</td>
 </tr>
 </tbody>
 </table>

@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2863,6 +2863,8 @@
       
         
       
+        
+      
     
     
     
@@ -3237,6 +3239,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3675,6 +3705,8 @@
       
         
       
+        
+      
     
     
     
@@ -3800,6 +3832,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5325,7 +5385,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5694,10 +5754,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#data-flow-from-the-cd-to-a-frame" class="md-nav__link">
+  <a href="#data-flow-from-the-data-to-a-frame" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data flow: from the CD to a frame
+        Data flow: from the data to a frame
       
     </span>
   </a>
@@ -5800,8 +5860,9 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
     subgraph L7["7 · Application"]
         APP["app&lt;br/&gt;launcher, viewer, asset browser, flight session"]
         CK["check&lt;br/&gt;headless validation"]
-        EX["extract&lt;br/&gt;CD → OBJ/PNG/WAV"]
+        EX["extract&lt;br/&gt;original data → OBJ/PNG/WAV"]
         CLI["cli + settings&lt;br/&gt;options, user data folder"]
+        RM["remote&lt;br/&gt;tablet console: HTTP, WebSocket,&lt;br/&gt;protocol, server threads"]
     end
     subgraph LM["6½ · Missions"]
         MI["mission&lt;br/&gt;MissionRun: roles, waves, objectives, debrief"]
@@ -5828,7 +5889,8 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
     subgraph L1["1 · Formats"]
         F["formats&lt;br/&gt;pe, xmsh, xtxr, tga, wav, ini, yaml, obj"]
     end
-    APP --&gt; R &amp; H &amp; AU &amp; IN &amp; S &amp; C &amp; MI
+    APP --&gt; R &amp; H &amp; AU &amp; IN &amp; S &amp; C &amp; MI &amp; RM
+    RM --&gt; IN &amp; S &amp; C &amp; H
     MI --&gt; S &amp; C &amp; SC
     CK --&gt; S &amp; C &amp; F
     R --&gt; S &amp; C &amp; M
@@ -5841,10 +5903,10 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
     M --&gt; F</code></pre>
 <p><code>sim</code> never calls <code>render</code>, <code>hud</code>, <code>audio</code> or macroquad: it is plain data advanced at a fixed
 rate, which is what makes it deterministic and unit-testable.</p>
-<h3 id="data-flow-from-the-cd-to-a-frame">Data flow: from the CD to a frame<a class="headerlink" href="#data-flow-from-the-cd-to-a-frame" title="Permanent link">&para;</a></h3>
+<h3 id="data-flow-from-the-data-to-a-frame">Data flow: from the data to a frame<a class="headerlink" href="#data-flow-from-the-data-to-a-frame" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
-    CD[("player's CD&lt;br/&gt;DLLs, INI, WAV")] --&gt; OD["content::vfs::OriginalData&lt;br/&gt;files by name + pe::ResourceFile"]
-    PK[("packs/*&lt;br/&gt;pack.yaml, rules, scenarios (YAML), OBJ, PNG")] --&gt; CT["content::Content::load"]
+    CD[("player's original data (optional)&lt;br/&gt;installed copy or CD: DLLs, INI, WAV")] --&gt; OD["content::vfs::OriginalData&lt;br/&gt;files by name + pe::ResourceFile"]
+    PK[("resources/default, packs/*, mods/*&lt;br/&gt;pack.yaml, rules, scenarios (YAML), OBJ, PNG")] --&gt; CT["content::Content::load"]
     OD --&gt; CT
     CT --&gt; RU["content::rules::Ruleset"]
     CT --&gt; SC["content::scenario::Scenario"]
@@ -5861,7 +5923,8 @@ rate, which is what makes it deterministic and unit-testable.</p>
 <p><code>app::flight::FlightSession::frame</code>:</p>
 <pre class="mermaid"><code>flowchart TD
     A["next_frame().await"] --&gt; B["app::devices::Devices::read → RawInput"]
-    B --&gt; C["Bindings::translate → Controls, Vec&amp;lt;Command&amp;gt;, ChaseInput"]
+    B --&gt; B2["console_frame: console events → RemoteInput,&lt;br/&gt;merged into RawInput; catalogue, telemetry out"]
+    B2 --&gt; C["Bindings::translate → Controls, Vec&amp;lt;Command&amp;gt;, ChaseInput"]
     C --&gt; D["apply commands now&lt;br/&gt;targeting, views, MFD, wing orders, pause"]
     D --&gt; E["player.controls = controls.carry_unconsumed(&amp;previous)"]
     E --&gt; F{"accumulator ≥ TICK (1/60 s)?"}
@@ -5926,20 +5989,25 @@ simulation:</p>
 <td><code>src/app/flight.rs</code></td>
 <td>One running scenario: world, camera view, HUD state, accumulator.</td>
 </tr>
+<tr>
+<td><code>ConsoleServer</code></td>
+<td><code>src/remote/server.rs</code></td>
+<td>The tablet console's server threads, seen from the game: <code>poll</code> events, <code>broadcast</code> messages (<a href="remote/">Remote console</a>).</td>
+</tr>
 </tbody>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
 <p>Each layer's public API is on its own page: <a href="formats/">Formats</a>, <a href="packs/">Packs, VFS and
 rules</a>, <a href="assets/">Assets and GPU cache</a>, <a href="sim/">Simulation</a>, <a href="script/">Conditions</a>, <a href="mission/">Missions</a>,
 <a href="rendering/">Rendering</a>, <a href="hud/">HUD</a>, <a href="input/">Input</a>, <a href="audio/">Audio</a>,
-<a href="platform/">Platform</a>, <a href="testbed/">Testbed</a>. <code>cargo doc --open</code> renders the <code>///</code> comments
+<a href="platform/">Platform</a>, <a href="remote/">Remote console</a>, <a href="testbed/">Testbed</a>. <code>cargo doc --open</code> renders the <code>///</code> comments
 of every item.</p>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>openinterceptor --check [--data &lt;cd&gt;]</code> loads and validates everything without a window and
+<li><code>openinterceptor --check [--data &lt;original data&gt;]</code> loads and validates everything without a window and
   prints each error with the file and section it came from. <code>--list</code> prints packs, playable
   ships and scenarios.</li>
-<li><code>openinterceptor --data &lt;cd&gt; --scenario flight-test --ship lightning --view chase</code> starts a
+<li><code>openinterceptor --data &lt;original data&gt; --scenario flight-test --ship lightning --view chase</code> starts a
   scenario directly, skipping the launcher.</li>
 <li><code>OI_DEBUG_KEYS=1</code> prints the name of every key pressed (the name to use in <code>bindings.yaml</code>).</li>
 <li>Load problems that do not stop the program (missing texture, bad sound) are printed to

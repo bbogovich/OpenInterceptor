@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5422,7 +5482,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5935,6 +5995,16 @@ modders (implicit typing such as <code>no</code> → false, anchors and aliases)
 mappings, lists, scalars, block text and comments — about 750 lines in <code>formats::yaml</code>, with
 every value kept as text until the schema types it, so errors can name the file, line and key.
 Decision: build in-crate (<a href="../../../implementation/deviations/">DEV-030</a>).</p>
+<p><strong>Console networking, evaluated (C1, app 0.4.0).</strong> The tablet console needs an HTTP server, the
+WebSocket protocol, SHA-1 and base64 for its handshake, and JSON. The usual crates (<code>tungstenite</code>
+or an async web framework, <code>sha1</code>, <code>base64</code>, <code>serde_json</code>) would bring in <code>serde</code>, often an
+async runtime, and their trees — for a server that serves three embedded files and exchanges
+small JSON messages with one or two tablets. Only a fraction would be used: no TLS, no
+keep-alive, no chunking, no request bodies, no fragmented messages. Written in-crate:
+<code>remote::http</code> (~120 lines), <code>remote::ws</code> with SHA-1 and base64 (~260, tested against the FIPS
+and RFC vectors), <code>remote::json</code> (~360) and threads from <code>std</code>. Decision: build in-crate; no
+dependency added. The console page itself (<code>web/console/</code>) is plain custom elements and CSS
+with no framework or build step.</p>
 <p>The next candidate is the Tier 2 scripting language (see <a href="../../../modding/scripting/">Scripting</a>).</p>
 
 

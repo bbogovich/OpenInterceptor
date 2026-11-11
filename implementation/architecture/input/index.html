@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2863,6 +2863,8 @@
       
         
       
+        
+      
     
     
     
@@ -3365,6 +3367,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../testbed/" class="md-nav__link">
         
   
@@ -3783,6 +3813,8 @@
       
         
       
+        
+      
     
     
     
@@ -3908,6 +3940,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5433,7 +5493,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5890,11 +5950,13 @@ is on <a href="../../../reference/original-game/controls/">Controls</a>.</p>
   console without further work. F12 is not bound to it: in a custom cockpit F12 opens the
   layout editor (<a href="../../../modding/cockpits/">Cockpits</a>).</li>
 <li>
-<p><strong>Remote action sets</strong> (work in progress for the control console, interlude C1). <code>RawInput</code>
+<p><strong>Remote action sets</strong> (the control console, interlude C1, app 0.4.0). <code>RawInput</code>
   gains <code>remote_held</code> and <code>remote_pressed</code> (sets of <code>Action</code>) and <code>remote_throttle</code>. A remote
   surface — the tablet console, later a USB panel — fills them, and <code>translate</code> treats a held or
   tapped remote action exactly like a key bound to it, so the console needs no second path into
-  the simulation. A remote throttle position sets <code>Controls::throttle_set</code>.</p>
+  the simulation. A remote throttle position sets <code>Controls::throttle_set</code> (clamped to 0–1).
+  <code>remote::RemoteInput</code> fills the sets each frame from the console's events (one held set per
+  console, released when it disconnects); see <a href="../remote/#input-path">Remote console</a>.</p>
 </li>
 <li>
 <p><strong>Key names</strong> are macroquad's <code>KeyCode</code> variant names, lower-cased (<code>KeyCode::Kp7</code> →
@@ -5999,7 +6061,7 @@ a capture after 8 s (<code>CAPTURE_TIMEOUT</code>).</p>
 </tr>
 <tr>
 <td><code>RawInput</code></td>
-<td>One frame of device state (keys, mouse, pad; remote action sets for the console, in progress).</td>
+<td>One frame of device state (keys, mouse, pad; remote action sets filled by the console).</td>
 </tr>
 <tr>
 <td><code>Command</code></td>

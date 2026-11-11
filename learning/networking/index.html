@@ -25,7 +25,7 @@
     
     
       
-        <title>Networking (planned) - OpenInterceptor — Implementation</title>
+        <title>Networking - OpenInterceptor — Implementation</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Networking (planned)
+              Networking
             
           </span>
         </div>
@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5325,6 +5385,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -5332,7 +5410,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5341,6 +5419,80 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-websocket-handshake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The WebSocket handshake
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frames
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#masking-why-every-browser-frame-is-xored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Masking: why every browser frame is XORed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#defensive-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Defensive limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threads-and-channels-in-rust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threads and channels in Rust
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -5672,6 +5824,69 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-websocket-handshake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The WebSocket handshake
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frames
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#masking-why-every-browser-frame-is-xored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Masking: why every browser frame is XORed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#defensive-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Defensive limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threads-and-channels-in-rust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threads and channels in Rust
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -5688,11 +5903,159 @@
 
 
 <h1 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">&para;</a></h1>
-<div class="admonition note">
-<p class="admonition-title">Planned</p>
-<p>This section is <strong>planned</strong> and not yet written. It will teach networking using
-OpenInterceptor's own code and data as the worked example.</p>
-</div>
+<p>Networking taught from OpenInterceptor's own code. The first worked example is the
+<strong>tablet control console</strong> (<code>src/remote/</code>, app 0.4.0): a game that serves a web page and a
+WebSocket to a tablet on the local network, with every protocol layer written in the crate.
+How the pieces fit is on <a href="../../implementation/architecture/remote/">Remote console</a>; this
+page explains the protocol mechanics.</p>
+<p>More sections (the protocol's design, latency and rates, a serial transport) will follow as the
+console grows.</p>
+<h2 id="the-websocket-handshake">The WebSocket handshake<a class="headerlink" href="#the-websocket-handshake" title="Permanent link">&para;</a></h2>
+<p>A browser cannot open a raw TCP socket. What it can do is send an HTTP request and ask for the
+connection to be <strong>upgraded</strong> to a WebSocket (RFC 6455). The tablet's page does this with
+<code>new WebSocket("ws://&lt;host&gt;/ws")</code>, which sends:</p>
+<div class="highlight"><pre><span></span><code><span class="nf">GET</span> <span class="nn">/ws</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">192.168.1.20:8765</span>
+<span class="na">Upgrade</span><span class="o">:</span> <span class="l">websocket</span>
+<span class="na">Connection</span><span class="o">:</span> <span class="l">Upgrade</span>
+<span class="na">Sec-WebSocket-Key</span><span class="o">:</span> <span class="l">dGhlIHNhbXBsZSBub25jZQ==</span>
+<span class="na">Sec-WebSocket-Version</span><span class="o">:</span> <span class="l">13</span>
+</code></pre></div>
+<p><code>Sec-WebSocket-Key</code> is 16 random bytes in base64, new for every connection. The server must
+prove that it understood the request as a WebSocket upgrade — not, say, a plain web server that
+echoes headers back — by transforming the key in a fixed way:</p>
+<ol>
+<li>append the fixed GUID <code>258EAFA5-E914-47DA-95CA-C5AB0DC85B11</code> (the same for every server);</li>
+<li>take the <strong>SHA-1</strong> of that text;</li>
+<li>encode the 20-byte digest in <strong>base64</strong>.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/remote/ws.rs</span>
+<span class="k">const</span><span class="w"> </span><span class="n">GUID</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"</span><span class="p">;</span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">accept_key</span><span class="p">(</span><span class="n">client_key</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="kt">str</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">base64</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sha1</span><span class="p">(</span><span class="fm">format!</span><span class="p">(</span><span class="s">"{}{GUID}"</span><span class="p">,</span><span class="w"> </span><span class="n">client_key</span><span class="p">.</span><span class="n">trim</span><span class="p">()).</span><span class="n">as_bytes</span><span class="p">()))</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>and answer with status 101:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">101</span> <span class="ne">Switching Protocols</span>
+<span class="na">Upgrade</span><span class="o">:</span> <span class="l">websocket</span>
+<span class="na">Connection</span><span class="o">:</span> <span class="l">Upgrade</span>
+<span class="na">Sec-WebSocket-Accept</span><span class="o">:</span> <span class="l">s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</span>
+</code></pre></div>
+<p>For the key above, RFC 6455 §1.3 gives exactly that accept value, so the unit test
+<code>remote::ws::sha1_and_base64_match_the_published_test_vectors</code> checks <code>accept_key</code> against it,
+along with SHA-1's FIPS 180 examples and base64's RFC 4648 examples. Test vectors from the
+standard are the cheapest way to know a hand-written algorithm is right.</p>
+<p>SHA-1 is no longer safe for signatures, but here it is only a checksum that proves the server
+read the key; that use is unaffected. From the 101 response on, the same TCP connection carries
+WebSocket <strong>frames</strong> instead of HTTP.</p>
+<p><strong>In the code.</strong> <code>remote::http::parse_request</code> reads the request head up to the blank line
+(<code>\r\n\r\n</code>) — returning <code>Ok(None)</code> while it has not all arrived, because TCP delivers a stream
+of bytes, not messages — and <code>Request::is_websocket</code> checks the method, the <code>Upgrade</code> header and
+the key. <code>remote::server::serve</code> then writes <code>http::upgrade_response(&amp;ws::accept_key(key))</code>.</p>
+<h2 id="frames">Frames<a class="headerlink" href="#frames" title="Permanent link">&para;</a></h2>
+<p>Each WebSocket message travels as one or more frames:</p>
+<div class="highlight"><pre><span></span><code> byte 0            byte 1                   then                       then           then
++-----+--------+------+-------------+  +-------------------------+  +-----------+  +---------+
+| FIN | opcode | MASK | length (7b) |  | 2 or 8 more length bytes|  | 4-byte    |  | payload |
+| 1b  | 4b     | 1b   |             |  | if length is 126 or 127 |  | mask key  |  |         |
++-----+--------+------+-------------+  +-------------------------+  +-----------+  +---------+
+</code></pre></div>
+<ul>
+<li><strong>FIN</strong> marks the last frame of a message; <strong>opcode</strong> says what it is: 1 text, 2 binary,
+  8 close, 9 ping, 10 pong (0 continues a split message).</li>
+<li>The 7-bit <strong>length</strong> holds the payload length directly up to 125. The value <strong>126</strong> means "the
+  real length is in the next 2 bytes", <strong>127</strong> "in the next 8 bytes" (big-endian). A 300-byte
+  masked console message therefore starts <code>81 FE 01 2C</code>: final text frame, mask bit plus 126,
+  then the 16-bit length 300.</li>
+<li>The <strong>MASK</strong> bit and the 4-byte mask key are present on frames from the client.</li>
+</ul>
+<p><code>ws::decode</code> returns <code>Ok(None)</code> when the buffer does not yet hold a whole frame, and the number
+of bytes it used when it does, so the connection loop can drain exactly one frame and keep any
+bytes of the next:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/remote/server.rs, the connection loop (simplified)</span>
+<span class="k">loop</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">frame</span><span class="p">,</span><span class="w"> </span><span class="n">used</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="n">ws</span><span class="p">::</span><span class="n">decode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="nb">Some</span><span class="p">(</span><span class="n">f</span><span class="p">))</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">f</span><span class="p">,</span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="nb">None</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">break</span><span class="p">,</span><span class="w">        </span><span class="c1">// wait for more bytes from the socket</span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">break</span><span class="w"> </span><span class="nl">'conn</span><span class="p">,</span><span class="w">    </span><span class="c1">// protocol violation: drop the connection</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="n">buf</span><span class="p">.</span><span class="n">drain</span><span class="p">(</span><span class="o">..</span><span class="n">used</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// … handle frame.opcode and frame.payload</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="masking-why-every-browser-frame-is-xored">Masking: why every browser frame is XORed<a class="headerlink" href="#masking-why-every-browser-frame-is-xored" title="Permanent link">&para;</a></h2>
+<p>Every frame a browser sends is <strong>masked</strong>: the browser picks 4 random bytes per frame and XORs
+payload byte <code>i</code> with mask byte <code>i % 4</code>. Masking is not encryption — the key is sent right in
+front of the payload. Its purpose is to protect <strong>proxies and caches</strong> in the network path. A
+malicious page could otherwise choose payload bytes that look like an HTTP request to a
+confused intermediary and poison its cache; with a random mask chosen by the browser, the page
+cannot control the bytes that appear on the wire.</p>
+<p>So the rules are asymmetric:</p>
+<table>
+<thead>
+<tr>
+<th>Direction</th>
+<th>Masked?</th>
+<th>What OpenInterceptor does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Client → server</td>
+<td><strong>Always</strong> (RFC 6455 §5.3)</td>
+<td><code>ws::decode</code> refuses an unmasked frame as an error ("client frames must be masked") and unmasks the payload</td>
+</tr>
+<tr>
+<td>Server → client</td>
+<td><strong>Never</strong></td>
+<td><code>ws::encode</code> writes the plain payload</td>
+</tr>
+</tbody>
+</table>
+<p>Unmasking is one line, because XOR undoes itself (<code>(b ^ m) ^ m == b</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/remote/ws.rs, decode</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">mask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="n">buf</span><span class="p">[</span><span class="n">at</span><span class="p">],</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">at</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">at</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">at</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">3</span><span class="p">]];</span>
+<span class="n">at</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">payload</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">at</span><span class="o">..</span><span class="n">at</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">len</span><span class="p">].</span><span class="n">iter</span><span class="p">().</span><span class="n">enumerate</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="n">mask</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">4</span><span class="p">]).</span><span class="n">collect</span><span class="p">();</span>
+</code></pre></div>
+<p>RFC 6455 §5.7 has a worked example: the masked text frame <code>"Hello"</code> is</p>
+<div class="highlight"><pre><span></span><code>81 85 37 FA 21 3D 7F 9F 4D 51 58
+│  │  └─ mask ──┘ └─ "Hello" XOR mask ┘
+│  └ MASK bit set, length 5
+└ FIN + opcode 1 (text)
+</code></pre></div>
+<p>and <code>remote::ws::frames_decode_masked_wait_for_more_bytes_and_encode</code> decodes exactly those
+bytes. The server's unmasked reply of the same message is just <code>81 05 48 65 6C 6C 6F</code>.</p>
+<p><code>tools/console_client.py</code> (Python standard library) does the client's side by hand — random key,
+handshake, masked frames — which makes it a second, independent implementation to test the
+server against.</p>
+<h2 id="defensive-limits">Defensive limits<a class="headerlink" href="#defensive-limits" title="Permanent link">&para;</a></h2>
+<p>A server on a network must assume its peer may be broken or hostile. The console server:</p>
+<ul>
+<li>refuses a request head over 16 KB and a frame over 64 KB (<code>http::MAX_HEAD</code>, <code>ws::MAX_FRAME</code>)
+  before allocating for it, so a bogus 8-byte length cannot make it reserve gigabytes;</li>
+<li>rejects nesting deeper than 32 levels in JSON, so <code>[[[[…</code> cannot overflow the stack of the
+  recursive-descent parser;</li>
+<li>serves only peers on the local network (<code>server::is_local</code>) and acts only after the pairing
+  code.</li>
+</ul>
+<h2 id="threads-and-channels-in-rust">Threads and channels in Rust<a class="headerlink" href="#threads-and-channels-in-rust" title="Permanent link">&para;</a></h2>
+<p>The game loop must never wait for the network, so the server runs on its own threads and the
+game talks to them through <strong>channels</strong> (<code>std::sync::mpsc</code>). A channel has a <code>Sender</code> and a
+<code>Receiver</code>; each end can be <strong>moved</strong> to another thread, and values sent through it change
+owner, so no data is shared and nothing needs a lock:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">tx</span><span class="p">,</span><span class="w"> </span><span class="n">events</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">mpsc</span><span class="p">::</span><span class="n">channel</span><span class="p">();</span><span class="w">      </span><span class="c1">// tx: Sender&lt;Event&gt;, events: Receiver&lt;Event&gt;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">thread</span><span class="p">::</span><span class="n">spawn</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">accept_loop</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span><span class="w"> </span><span class="n">code</span><span class="p">,</span><span class="w"> </span><span class="n">tx</span><span class="p">,</span><span class="w"> </span><span class="n">clients</span><span class="p">,</span><span class="w"> </span><span class="n">stop</span><span class="p">));</span><span class="w">  </span><span class="c1">// tx moves in</span>
+<span class="c1">// … later, once per frame on the game thread:</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">new_events</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Event</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">events</span><span class="p">.</span><span class="n">try_iter</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span><span class="w">   </span><span class="c1">// never blocks</span>
+</code></pre></div>
+<p>The one piece of state both sides need — the list of connected clients — is an
+<code>Arc&lt;Mutex&lt;Vec&lt;Client&gt;&gt;&gt;</code>: <code>Arc</code> (atomically reference-counted) lets several threads own it,
+and <code>Mutex</code> lets one at a time change it. Simple flags such as "this client has paired" and
+"stop accepting" are <code>Arc&lt;AtomicBool&gt;</code>, which needs no lock at all. The compiler enforces this:
+a type that is not safe to send between threads (an <code>Rc</code>, a <code>RefCell</code>) cannot be moved into
+<code>thread::spawn</code>, so the mistakes that cause data races elsewhere do not compile.</p>
 
 
 

@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3673,6 +3703,8 @@
       
         
       
+        
+      
     
     
     
@@ -3816,10 +3848,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#put-the-game-data-in-place" class="md-nav__link">
+  <a href="#folder-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Put the game data in place
+        Folder layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#put-your-original-data-in-place-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Put your original data in place (optional)
       
     </span>
   </a>
@@ -3939,6 +3982,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5464,7 +5535,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5832,10 +5903,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#put-the-game-data-in-place" class="md-nav__link">
+  <a href="#folder-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Put the game data in place
+        Folder layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#put-your-original-data-in-place-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Put your original data in place (optional)
       
     </span>
   </a>
@@ -5927,30 +6009,74 @@
 <li><strong>macOS</strong> 11+ (Apple silicon) with the Xcode command line tools, or <strong>Linux</strong> with X11
   (Wayland through XWayland) and OpenGL 3. On Debian/Ubuntu install
   <code>libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev</code> first.</li>
-<li>For original content: your own <em>X-COM: Interceptor</em> CD, copied to a folder. For modding with
-  only original-free packs, nothing else is needed.</li>
+<li>Nothing else for the default campaign: everything the game ships is in the repository, in
+  editable formats. Original data is optional: to play the <code>interceptor</code> campaign you need
+  your own <em>X-COM: Interceptor</em>, an installed copy or the CD.</li>
 </ul>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/bbogovich/OpenInterceptor.git
 <span class="nb">cd</span><span class="w"> </span>OpenInterceptor
 cargo<span class="w"> </span>build<span class="w"> </span>--release
 </code></pre></div>
-<h2 id="put-the-game-data-in-place">Put the game data in place<a class="headerlink" href="#put-the-game-data-in-place" title="Permanent link">&para;</a></h2>
-<p>Copy the CD contents (the folder with <code>Resources/</code>, <code>ProgramFiles/</code> and <code>Animations/</code>) to
-<code>OpenInterceptor/game/Game/</code> in a development checkout. If your copy has the CD audio tracks
-extracted, put them in <code>game/CD Audio/</code>. The <code>game/</code> folder is git-ignored.</p>
+<h2 id="folder-layout">Folder layout<a class="headerlink" href="#folder-layout" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Holds</th>
+<th>In Git</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>resources/default/</code></td>
+<td>The default campaign, <em>Perils of the Void</em>: everything the game ships, in editable formats (YAML, OBJ, PNG, WAV)</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>resources/xcom/</code></td>
+<td>Your installed copy of <em>X-COM: Interceptor</em> (optional; tried first)</td>
+<td>no, git-ignored</td>
+</tr>
+<tr>
+<td><code>resources/xcom-cd/</code></td>
+<td>A copy of your <em>X-COM: Interceptor</em> CD (optional)</td>
+<td>no, git-ignored</td>
+</tr>
+<tr>
+<td><code>packs/</code></td>
+<td>Bundled mods, such as <code>interceptor</code> (which needs your original data). Mods override resources</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>&lt;user data folder&gt;/mods/</code></td>
+<td>Your own mods (<code>--mods</code> or <code>settings.yaml</code> <code>paths.mods</code> moves it)</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<p>Content is loaded from <code>resources/</code> first, then <code>packs/</code>, then your mods; a later pack
+overrides an earlier one. <code>--packs DIR</code> replaces only the bundled-mods folder.</p>
+<h2 id="put-your-original-data-in-place-optional">Put your original data in place (optional)<a class="headerlink" href="#put-your-original-data-in-place-optional" title="Permanent link">&para;</a></h2>
+<p>Most players will play the default campaign and can skip this. If you own <em>X-COM:
+Interceptor</em>, copy <strong>an installed copy</strong> of the game to <code>resources/xcom/</code> in your checkout, or
+<strong>the CD contents</strong> (the folder with <code>Resources/</code>, <code>ProgramFiles/</code> and <code>Animations/</code>) to
+<code>resources/xcom-cd/</code>. If your copy has the CD audio tracks extracted, put them in a
+<code>CD Audio/</code> folder inside it. Both folders are git-ignored, and each counts only once it
+holds files.</p>
 <p>You rarely need <code>--data</code>: the engine looks, in order, at <code>--data</code>, the
 <code>OPENINTERCEPTOR_DATA</code> variable, <code>settings.yaml</code> <code>paths: {original: …}</code> in the user data folder,
-<code>&lt;user data folder&gt;/original</code>, and finally <code>game/</code> in the development checkout
-(<a href="../../implementation/architecture/settings/">Settings and data discovery</a>). An installed copy keeps the CD (or
-a copy of it), <code>settings.yaml</code>, <code>bindings.yaml</code> and <code>mods/</code> in the user data folder (a
-<code>settings.ini</code> or <code>bindings.ini</code> from an earlier build is read once and replaced by the YAML
-file).</p>
+<code>&lt;user data folder&gt;/original</code>, then <code>resources/xcom/</code> and finally <code>resources/xcom-cd/</code> in the
+development checkout (<a href="../../implementation/architecture/settings/">Settings and data discovery</a>).
+An installed app keeps your original data (or a copy of it), <code>settings.yaml</code>, <code>bindings.yaml</code>
+and <code>mods/</code> in the user data folder (a <code>settings.ini</code> or <code>bindings.ini</code> from an earlier build
+is read once and replaced by the YAML file).</p>
 <h2 id="build-the-macos-app">Build the macOS app<a class="headerlink" href="#build-the-macos-app" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>tools/build_bundle.py<span class="w">            </span><span class="c1"># dist/OpenInterceptor-0.3.0.app</span>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>tools/build_bundle.py<span class="w">            </span><span class="c1"># dist/OpenInterceptor-&lt;version&gt;.app</span>
 </code></pre></div>
-<p>The app contains the engine and the built-in packs, never game data. The script points
-<code>settings.yaml</code> at <code>game/</code> (or <code>--data PATH</code>); <code>--install-data</code> clones the CD into the user data
+<p>The app contains the engine, <code>resources/default</code> and the bundled mods in <code>packs/</code>, never
+original data. The script points <code>settings.yaml</code> at <code>resources/xcom/</code> (else
+<code>resources/xcom-cd/</code>, or <code>--data PATH</code>); <code>--install-data</code> clones that data into the user data
 folder instead, as a real install would. Open the app from Finder. See
 <a href="../../implementation/build/packaging/">Packaging</a>.</p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">&para;</a></h2>
@@ -5961,7 +6087,7 @@ target/release/openinterceptor
 target/release/openinterceptor<span class="w"> </span>--no-original
 
 <span class="c1"># Choose the campaign (default: the last one chosen in the launcher, else interceptor</span>
-<span class="c1"># when the CD is found, else default):</span>
+<span class="c1"># when original data is found, else default):</span>
 target/release/openinterceptor<span class="w"> </span>--campaign<span class="w"> </span>default
 
 <span class="c1"># ... at a chosen difficulty level:</span>
@@ -5974,10 +6100,13 @@ target/release/openinterceptor<span class="w"> </span>--no-original<span class="
 target/release/openinterceptor<span class="w"> </span>--no-original<span class="w"> </span>--soak<span class="w"> </span>defend_station<span class="w"> </span>--soak-pilot<span class="w"> </span>ai<span class="w"> </span>--seconds<span class="w"> </span><span class="m">400</span>
 
 <span class="c1"># Go straight to one scenario with one ship:</span>
-target/release/openinterceptor<span class="w"> </span>--data<span class="w"> </span>game<span class="w"> </span>--scenario<span class="w"> </span>flight-test<span class="w"> </span>--ship<span class="w"> </span>lightning
+target/release/openinterceptor<span class="w"> </span>--data<span class="w"> </span>resources/xcom<span class="w"> </span>--scenario<span class="w"> </span>flight-test<span class="w"> </span>--ship<span class="w"> </span>lightning
 
 <span class="c1"># ... and start in the chase view:</span>
-target/release/openinterceptor<span class="w"> </span>--data<span class="w"> </span>game<span class="w"> </span>--scenario<span class="w"> </span>flight-test<span class="w"> </span>--ship<span class="w"> </span>firestar<span class="w"> </span>--view<span class="w"> </span>chase
+target/release/openinterceptor<span class="w"> </span>--data<span class="w"> </span>resources/xcom<span class="w"> </span>--scenario<span class="w"> </span>flight-test<span class="w"> </span>--ship<span class="w"> </span>firestar<span class="w"> </span>--view<span class="w"> </span>chase
+
+<span class="c1"># Serve the tablet control console (the game shows the URL and pairing code):</span>
+target/release/openinterceptor<span class="w"> </span>--console
 
 <span class="c1"># Headless validation of every campaign, pack, model and texture; list what loaded:</span>
 target/release/openinterceptor<span class="w"> </span>--check
@@ -6006,7 +6135,7 @@ scripts/check.sh
 <tbody>
 <tr>
 <td><code>--data &lt;PATH&gt;</code></td>
-<td>The <em>Interceptor</em> CD or install folder. Without it: <code>OPENINTERCEPTOR_DATA</code>, then <code>settings.yaml</code>, then <code>&lt;user data&gt;/original</code>, then <code>game/</code> in a checkout.</td>
+<td>Your original data: an installed <em>Interceptor</em> or the CD. Without it: <code>OPENINTERCEPTOR_DATA</code>, then <code>settings.yaml</code>, then <code>&lt;user data&gt;/original</code>, then <code>resources/xcom</code> (installed copy) and <code>resources/xcom-cd</code> (CD copy) in a checkout.</td>
 </tr>
 <tr>
 <td><code>--mods &lt;DIR&gt;</code></td>
@@ -6014,7 +6143,15 @@ scripts/check.sh
 </tr>
 <tr>
 <td><code>--packs &lt;DIR&gt;</code></td>
-<td>Folder of built-in packs (default: <code>packs/</code> next to the program, or the source tree).</td>
+<td>Folder of bundled mods (default: <code>packs/</code> next to the program, or the source tree). It replaces only that folder: <code>resources/</code> (the default campaign) is always loaded first.</td>
+</tr>
+<tr>
+<td><code>--console</code></td>
+<td>Serve the <a href="../console/">tablet control console</a> (settings: <code>console.enabled</code>).</td>
+</tr>
+<tr>
+<td><code>--console-port &lt;N&gt;</code></td>
+<td>The console's port (default 8765; settings: <code>console.port</code>); implies <code>--console</code>.</td>
 </tr>
 <tr>
 <td><code>--no-original</code></td>

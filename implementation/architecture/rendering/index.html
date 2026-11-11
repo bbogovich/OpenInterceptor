@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2863,6 +2863,8 @@
       
         
       
+        
+      
     
     
     
@@ -3475,6 +3477,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../testbed/" class="md-nav__link">
         
   
@@ -3893,6 +3923,8 @@
       
         
       
+        
+      
     
     
     
@@ -4018,6 +4050,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5543,7 +5603,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -6199,7 +6259,8 @@ context) instead of macroquad's default clamp, which smeared edge pixels across 
 (the "incomplete" Patton, the asteroids, many debris chunks). The UV varying is <code>mediump</code>, not
 <code>lowp</code>, so tiled coordinates keep their precision on GL ES devices.</p>
 <h3 id="lighting-rim-and-brightness-app-031">Lighting, rim and brightness (app 0.3.1)<a class="headerlink" href="#lighting-rim-and-brightness-app-031" title="Permanent link">&para;</a></h3>
-<p>The lit shader's light comes from the <code>Light</code> uniform, a <code>vec4</code>: x = ambient, y = sun,
+<p>The lit shader's light comes from the <code>Light</code> uniform, a <code>mediump vec4</code> declared identically in
+both stages (see <a href="#debugging">Debugging</a>): x = ambient, y = sun,
 z = rim, w = gamma. <code>Renderer::lighting</code> is the campaign's <code>flight: {lighting: …}</code>
 (<code>content::rules::Lighting</code>, defaults 0.30 / 0.85 / 0 / 4 px, which reproduce the earlier fixed
 lighting); the flight screen copies it in each frame. In the vertex shader the model matrix
@@ -6320,6 +6381,16 @@ Objects entirely behind the camera are skipped.</p>
 </li>
 <li>If a scene is black except the HUD, check the shader compile error returned by
   <code>Renderer::new</code> (shown on the start-up error screen).</li>
+<li><strong>"Shader error" at start-up, program fails to link</strong> (fixed in app 0.4.1, main <code>42716d1</code>):
+  in GLSL ES a uniform declared in both the vertex and the fragment shader must have the same
+  type <strong>and precision</strong>, or the program does not link. The lit shader's <code>Light</code> uniform is
+  used by both; the vertex shader's default float precision is <code>highp</code> and the fragment
+  shader's <code>precision mediump float</code> makes it <code>mediump</code> there, so a bare <code>uniform vec4 Light;</code>
+  in both had two different precisions. Both now declare <code>uniform mediump vec4 Light;</code>. Some
+  desktop drivers accept the mismatch, so it can pass on one machine and fail on another. The
+  test <code>render::tests::uniforms_shared_by_both_lit_shaders_match_exactly</code> compares every
+  uniform the two lit shaders share and requires an explicit precision, so a new shared
+  uniform cannot reintroduce the problem.</li>
 <li>Engine glows come from rear-facing model attachments, else the back of the bounding box;
   <code>GpuModel::engines</code> is computed once at load, so drawing glows allocates nothing per frame.</li>
 <li>A face that vanishes from one side is a back face: wind it the other way, or add a second

@@ -25,7 +25,7 @@
     
     
       
-        <title>Console protocol (planned) - OpenInterceptor — Implementation</title>
+        <title>Console protocol - OpenInterceptor — Implementation</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Console protocol (planned)
+              Console protocol
             
           </span>
         </div>
@@ -1507,7 +1507,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -1532,7 +1532,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -1587,10 +1587,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#messages" class="md-nav__link">
+  <a href="#messages-version-1-as-built" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Messages
+        Messages (version 1, as built)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Messages (version 1, as built)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-game" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console → game
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#game-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Game → console
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#messages-still-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages still planned
       
     </span>
   </a>
@@ -2970,6 +3009,8 @@
       
         
       
+        
+      
     
     
     
@@ -3344,6 +3385,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3782,6 +3851,8 @@
       
         
       
+        
+      
     
     
     
@@ -3907,6 +3978,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5432,7 +5531,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5800,10 +5899,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#messages" class="md-nav__link">
+  <a href="#messages-version-1-as-built" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Messages
+        Messages (version 1, as built)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Messages (version 1, as built)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-game" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console → game
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#game-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Game → console
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#messages-still-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages still planned
       
     </span>
   </a>
@@ -5850,19 +5988,27 @@
 
 
 <h1 id="console-protocol">Console protocol<a class="headerlink" href="#console-protocol" title="Permanent link">&para;</a></h1>
-<p><strong>Status: planned.</strong> The messages the game and a control console exchange. The console is the
-tablet page served by the game (<a href="../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a>);
-later, a physical panel over USB serial (<a href="../../definition/control-console/#f-con-007-physical-control-panel">F-CON-007</a>).
-Requirements: <a href="../requirements/control-console/">R-CON-009 – R-CON-021</a>.</p>
-<p>The message names, their direction and their rates below are decided. Field lists are a first
-draft, marked <em>planned</em>: implementation (interlude items C1–C4) fixes them, and this page is
-updated in the same change.</p>
+<p><strong>Status: version 1 implemented (C1, app 0.4.0); the rest planned.</strong> The messages the game and a
+control console exchange. The console is the tablet page served by the game
+(<a href="../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a>); later, a
+physical panel over USB serial (<a href="../../definition/control-console/#f-con-007-physical-control-panel">F-CON-007</a>).
+Requirements: <a href="../requirements/control-console/">R-CON-009 – R-CON-021</a>. How it is built:
+<a href="../../implementation/architecture/remote/">Remote console</a>.</p>
+<p>Protocol <strong>version 1</strong> below is as built (<code>src/remote/protocol.rs</code>): <code>hello</code>, <code>welcome</code>,
+<code>denied</code>, <code>catalogue</code>, <code>telemetry</code>, <code>action</code> and <code>throttle</code>. The messages marked <em>planned</em>
+(<code>theme</code>, <code>contacts</code>, <code>model</code>, <code>event</code>) keep the names, directions and rates already decided;
+their fields are fixed when interlude items C2–C4 build them, and this page is updated in the
+same change.</p>
 <h2 id="transport">Transport<a class="headerlink" href="#transport" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Each message is one JSON object with a <code>type</code> field.</li>
-<li><strong>WebSocket</strong> (first transport): the game serves the console page and the socket over HTTP on
-  the local network only, port <strong>8765</strong> by default and changeable in the settings. The console is
-  <strong>off by default</strong> (decision D2).</li>
+<li>Each message is one JSON object with a <code>type</code> field, sent as one WebSocket text frame.</li>
+<li><strong>WebSocket</strong> (first transport, built): the game serves the console page (<code>/</code>,
+  <code>/console.js</code>, <code>/console.css</code>, built into the program) and the socket (a WebSocket upgrade
+  on any path; the page uses <code>/ws</code>) over HTTP/1.1 on port <strong>8765</strong> by default
+  (<code>console.port</code> in <code>settings.yaml</code>, <code>--console-port</code>). The console is <strong>off by default</strong>
+  (decision D2): <code>--console</code> or <code>console.enabled</code> turns it on.</li>
+<li><strong>Local network only</strong>: connections from addresses that are not private, link-local,
+  unique-local or loopback are dropped without an answer.</li>
 <li><strong>USB serial</strong> (later, for an Arduino panel): the same messages, one per line. The protocol
   never depends on the transport.</li>
 </ul>
@@ -5870,18 +6016,179 @@ updated in the same change.</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant C as Console
     participant G as Game
-    C-&gt;&gt;G: hello (pairing code)
-    G-&gt;&gt;C: welcome
-    G-&gt;&gt;C: catalogue
-    G-&gt;&gt;C: theme
-    loop while paired
-        G--&gt;&gt;C: telemetry (20 Hz)
-        G--&gt;&gt;C: contacts (5 Hz)
-        G--&gt;&gt;C: model (once per target class)
-        G--&gt;&gt;C: event (as it happens)
-        C-&gt;&gt;G: action {name, value}
+    C-&gt;&gt;G: hello {code}
+    alt wrong code
+        G-&gt;&gt;C: denied {reason}
+        Note over C,G: the third wrong code closes the connection
+    else right code
+        G-&gt;&gt;C: welcome {version, campaign}
+        G-&gt;&gt;C: catalogue {groups, actions}
+        loop while paired
+            G--&gt;&gt;C: telemetry (20 Hz)
+            G--&gt;&gt;C: catalogue (again when the craft class changes)
+            C-&gt;&gt;G: action {name, value}
+            C-&gt;&gt;G: throttle {value}
+        end
     end</code></pre>
-<h2 id="messages">Messages<a class="headerlink" href="#messages" title="Permanent link">&para;</a></h2>
+<p>Until a console has paired, every message other than <code>hello</code> is ignored, as is any message
+that does not decode. When the connection closes, everything that console was holding is
+released.</p>
+<h2 id="messages-version-1-as-built">Messages (version 1, as built)<a class="headerlink" href="#messages-version-1-as-built" title="Permanent link">&para;</a></h2>
+<h3 id="console-game">Console → game<a class="headerlink" href="#console-game" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Fields</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hello</code></td>
+<td><code>code</code>: string</td>
+<td>The 6-digit pairing code the game shows. A right code pairs; a wrong one gets <code>denied</code>, and the third wrong code on a connection closes it.</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>name</code>: string, <code>value</code>: number (default 1)</td>
+<td>A catalogue action. For a <code>hold</code> action, <code>value</code> 1 presses and 0 releases it; for a <code>tap</code> action, a value above 0.5 fires it once. An unknown name is ignored. An action the craft cannot perform reaches the game like the bound key would, and does nothing.</td>
+</tr>
+<tr>
+<td><code>throttle</code></td>
+<td><code>value</code>: number</td>
+<td>The throttle position, clamped to 0 – 1, as if set from a slider.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello"</span><span class="p">,</span><span class="w"> </span><span class="nt">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123456"</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"action"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fire_beams"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"action"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fire_beams"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"throttle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="game-console">Game → console<a class="headerlink" href="#game-console" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>When</th>
+<th>Fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>welcome</code></td>
+<td>Right code</td>
+<td><code>version</code> (1), <code>campaign</code> (the active campaign's id, empty if none).</td>
+</tr>
+<tr>
+<td><code>denied</code></td>
+<td>Wrong code</td>
+<td><code>reason</code> (<code>"wrong pairing code"</code>).</td>
+</tr>
+<tr>
+<td><code>catalogue</code></td>
+<td>After <code>welcome</code>; again whenever the player's craft class changes</td>
+<td><code>groups</code>: <code>[{id, title}]</code> in menu order (<code>flight</code>, <code>throttle</code>, <code>weapons</code>, <code>targeting</code>, <code>power</code>, <code>wingmen</code>, <code>views</code>, <code>camera</code>, <code>interface</code>). <code>actions</code>: <code>[{name, group, label, kind, available}]</code> for <strong>every</strong> action of the catalogue (R-CON-007): <code>name</code> as in <code>bindings.yaml</code>, <code>group</code> one of the ids above, <code>label</code> the display name, <code>kind</code> <code>"hold"</code> or <code>"tap"</code>, <code>available</code> false when the craft has no equipment for it (R-CON-019).</td>
+</tr>
+<tr>
+<td><code>telemetry</code></td>
+<td><strong>20 Hz</strong> while paired</td>
+<td>See below.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Availability.</strong> An action is unavailable when the current craft lacks what it needs: <code>cloak</code>,
+<code>ecm</code> and <code>tractor</code> need that system fitted; the four VCT slides need a class with <code>vct</code>;
+missile firing and cycling need missiles aboard; beam firing, link cycling, beam charge and
+power-to-beams need a class with beams. Every other action is always available. Unavailable
+actions are still listed, so the console shows them disabled, never hidden.</p>
+<p><strong><code>telemetry</code> fields.</strong> Fractions are 0 – 1; distances in metres, speeds in m/s.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>time</code></td>
+<td>number</td>
+<td>Mission time, seconds.</td>
+</tr>
+<tr>
+<td><code>alive</code></td>
+<td>bool</td>
+<td>False once the player's craft is gone; then no other field is sent.</td>
+</tr>
+<tr>
+<td><code>craft</code></td>
+<td>string</td>
+<td>The craft class's name.</td>
+</tr>
+<tr>
+<td><code>velocity</code></td>
+<td><code>[x, y, z]</code></td>
+<td>Velocity in the craft's body axes: x right, y up, <strong>z forward</strong> (so <code>z</code> is forward speed and <code>x</code>, <code>y</code> are the drift).</td>
+</tr>
+<tr>
+<td><code>throttle</code></td>
+<td>number</td>
+<td>Throttle position, 0 – 1.</td>
+</tr>
+<tr>
+<td><code>hull</code>, <code>energy</code></td>
+<td>number</td>
+<td>Fractions of the class's maximum.</td>
+</tr>
+<tr>
+<td><code>shields</code></td>
+<td><code>[fore, aft]</code></td>
+<td>Shield fractions.</td>
+</tr>
+<tr>
+<td><code>power</code></td>
+<td><code>[beam, shield, levels, used, budget]</code></td>
+<td>The power distribution, as on the HUD's power readout.</td>
+</tr>
+<tr>
+<td><code>link</code></td>
+<td>string</td>
+<td>The beam link mode, lower case.</td>
+</tr>
+<tr>
+<td><code>afterburner</code>, <code>braking</code></td>
+<td>bool</td>
+<td>Afterburner lit; brake held.</td>
+</tr>
+<tr>
+<td><code>missile</code></td>
+<td><code>{name, count}</code></td>
+<td>The selected missile rack; absent when the craft carries none.</td>
+</tr>
+<tr>
+<td><code>systems</code></td>
+<td><code>[{kind, health, destroyed, on}]</code></td>
+<td>Each fitted system: its kind (lower case), health fraction, destroyed, switched on.</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td>object</td>
+<td>Absent without a target. <code>name</code> (class name), <code>relation</code> (<code>friendly</code>, <code>hostile</code>, <code>neutral</code>), <code>protect</code> (the target is protected by the player's faction), <code>distance</code>, <code>closing</code> (closing speed, positive while the gap shrinks), <code>hull</code>, <code>shields [fore, aft]</code>, and <code>rotation [x, y, z, w]</code>: the target's orientation <strong>in the player's body axes</strong> (the conjugate of the player's rotation times the target's), for the target viewport (R-CON-015).</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"telemetry"</span><span class="p">,</span><span class="w"> </span><span class="nt">"time"</span><span class="p">:</span><span class="w"> </span><span class="mf">12.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"alive"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"craft"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w"> </span><span class="nt">"velocity"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">],</span>
+<span class="w"> </span><span class="nt">"throttle"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="nt">"hull"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"energy"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span><span class="w"> </span><span class="nt">"shields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">],</span><span class="w"> </span><span class="nt">"power"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">],</span>
+<span class="w"> </span><span class="nt">"link"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w"> </span><span class="nt">"afterburner"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">"braking"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">"missile"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">},</span>
+<span class="w"> </span><span class="nt">"systems"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cloak"</span><span class="p">,</span><span class="w"> </span><span class="nt">"health"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"destroyed"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">"on"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}],</span>
+<span class="w"> </span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w"> </span><span class="nt">"relation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hostile"</span><span class="p">,</span><span class="w"> </span><span class="nt">"protect"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">"distance"</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"closing"</span><span class="p">:</span><span class="w"> </span><span class="mi">35</span><span class="p">,</span><span class="w"> </span><span class="nt">"hull"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"shields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="nt">"rotation"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.707</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.707</span><span class="p">]}}</span>
+</code></pre></div>
+<p><em>Values in the examples are illustrative.</em></p>
+<h2 id="messages-still-planned">Messages still planned<a class="headerlink" href="#messages-still-planned" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -5893,69 +6200,41 @@ updated in the same change.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>hello</code></td>
-<td>console → game</td>
-<td>On connect</td>
-<td>The pairing code shown by the game; a client name and protocol version.</td>
-</tr>
-<tr>
-<td><code>welcome</code></td>
-<td>game → console</td>
-<td>Code accepted</td>
-<td>Protocol version, the active campaign. A wrong code closes the connection.</td>
-</tr>
-<tr>
-<td><code>catalogue</code></td>
-<td>game → console</td>
-<td>After <code>welcome</code>; again whenever the craft changes</td>
-<td>The action catalogue (R-CON-007): each action's id, name, group, description and value kind, and <strong>its availability for the current craft</strong> (a feature the craft lacks, such as cloak or ECM not fitted or no missiles, is marked not fitted). Every function group is always listed (R-CON-019).</td>
-</tr>
-<tr>
 <td><code>theme</code></td>
 <td>game → console</td>
 <td>After <code>welcome</code>; again when the campaign or craft changes</td>
-<td>The active pack's console theme (R-CON-020): colours, fonts, frames and images taken from the pack's own console assets — never original art (R-CON-021).</td>
-</tr>
-<tr>
-<td><code>telemetry</code></td>
-<td>game → console</td>
-<td><strong>20 Hz</strong></td>
-<td>The player craft's state: speed with drift components, throttle, energy, shields fore and aft, hull, power settings, system conditions, weapons and missiles, lock, current target.</td>
+<td>The active pack's console theme (R-CON-020): colours, fonts, frames and images taken from the pack's own console assets — never original art (R-CON-021). Interlude item C2.</td>
 </tr>
 <tr>
 <td><code>contacts</code></td>
 <td>game → console</td>
 <td><strong>5 Hz</strong></td>
-<td>Radar contacts with position relative to the player, faction and kind; nav points.</td>
+<td>Radar contacts with position relative to the player, faction and kind; nav points (R-CON-014). Item C4.</td>
 </tr>
 <tr>
 <td><code>model</code></td>
 <td>game → console</td>
 <td>Once per target class, when first targeted</td>
-<td>The target's mesh, <strong>decimated</strong>, for the viewport (R-CON-015). The orientation itself travels in <code>telemetry</code>.</td>
-</tr>
-<tr>
-<td><code>action</code></td>
-<td>console → game</td>
-<td>On a tap or slider move</td>
-<td><code>{name, value}</code>: a catalogue action and its value (a press, or a level for sliders). Unknown or unavailable actions are ignored (R-CON-011).</td>
+<td>The target's mesh, <strong>decimated</strong>, for the viewport (R-CON-015). The orientation already travels in <code>telemetry</code>. Item C3.</td>
 </tr>
 <tr>
 <td><code>event</code></td>
 <td>game → console</td>
 <td>As it happens</td>
-<td>Messages and events (system damaged, missile lock, shield down, mission result).</td>
+<td>Messages and events (system damaged, missile lock, shield down, mission result) (R-CON-014).</td>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"action"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"power_shields_up"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
-</code></pre></div>
-<p><em>The action name in the example is illustrative; names come from the catalogue.</em></p>
 <h2 id="open">Open<a class="headerlink" href="#open" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Field names and units of every message; the protocol version scheme.</li>
-<li>The pairing code's length and lifetime, and how the game shows it.</li>
-<li>The decimation budget for <code>model</code>, and whether textures are sent.</li>
+<li>The pairing code's lifetime: in version 1 it is chosen when the game starts and lasts for the
+  run. Whether it should change after a pairing, or time out, is open.</li>
+<li>A client name and protocol version in <code>hello</code> (version 1 sends neither); how a version
+  mismatch is reported.</li>
+<li>A per-action description in <code>catalogue</code> (R-CON-007): version 1 sends the label only.</li>
+<li>Field lists of <code>theme</code>, <code>contacts</code>, <code>model</code> and <code>event</code>; the decimation budget for <code>model</code>,
+  and whether textures are sent.</li>
+<li>Slider-valued actions other than the throttle (power levels), for the C2 layout.</li>
 <li>Line framing and the message subset for the serial transport.</li>
 <li>The theme's file format in a pack.</li>
 </ul>
@@ -5973,6 +6252,11 @@ updated in the same change.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap (planned): transport, session, messages <code>hello</code>, <code>welcome</code>, <code>catalogue</code> (with per-action availability), <code>theme</code>, <code>telemetry</code>, <code>contacts</code>, <code>model</code>, <code>action</code>, <code>event</code></td>
+</tr>
+<tr>
+<td>1.3.0</td>
+<td>2026-11-11</td>
+<td>Version 1 as built (C1, app 0.4.0): <code>hello {code}</code>, <code>welcome {version, campaign}</code>, <code>denied {reason}</code>, <code>catalogue {groups, actions:[{name, group, label, kind, available}]}</code> with the availability rules, the <code>telemetry</code> fields (body-axis velocity, power, systems, target with relative rotation), <code>action {name, value}</code> hold and tap semantics and the new <code>throttle {value}</code>; the local-network rule and the three-wrong-codes limit. <code>theme</code>, <code>contacts</code>, <code>model</code>, <code>event</code> remain planned; open items revised</td>
 </tr>
 </tbody>
 </table>

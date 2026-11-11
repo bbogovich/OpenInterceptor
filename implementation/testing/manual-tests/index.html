@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2861,6 +2861,8 @@
       
         
       
+        
+      
     
     
     
@@ -3235,6 +3237,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -4579,6 +4609,72 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-3-19-console-pairing-from-an-ipad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-19 — Console: pairing from an iPad
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-20-console-hold-and-tap-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-20 — Console: hold and tap buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-21-console-features-not-fitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-21 — Console: features not fitted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-22-console-reconnecting-and-letting-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-22 — Console: reconnecting and letting go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-23-console-throttle-slider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-23 — Console: throttle slider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-24-original-data-from-resourcesxcom-or-resourcesxcom-cd-start-up-without-a-shader-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-24 — Original data from resources/xcom or resources/xcom-cd; start-up without a shader error
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4774,6 +4870,8 @@
       
         
       
+        
+      
     
     
     
@@ -4899,6 +4997,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -6424,7 +6550,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -7816,6 +7942,72 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-3-19-console-pairing-from-an-ipad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-19 — Console: pairing from an iPad
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-20-console-hold-and-tap-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-20 — Console: hold and tap buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-21-console-features-not-fitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-21 — Console: features not fitted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-22-console-reconnecting-and-letting-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-22 — Console: reconnecting and letting go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-23-console-throttle-slider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-23 — Console: throttle slider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-24-original-data-from-resourcesxcom-or-resourcesxcom-cd-start-up-without-a-shader-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-24 — Original data from resources/xcom or resources/xcom-cd; start-up without a shader error
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7843,8 +8035,9 @@
 real devices). Each stage's cases must be run and recorded as passed before the stage is
 complete. Record results in the table (date, tester, platform, result, notes); keep earlier
 rows when re-running a case.</p>
-<p><strong>How to run</strong>: <code>cargo build --release</code>, then <code>target/release/openinterceptor</code> (the CD is
-found automatically — see <a href="../../architecture/settings/">Settings</a>), or open
+<p><strong>How to run</strong>: <code>cargo build --release</code>, then <code>target/release/openinterceptor</code> (original data —
+an installed copy in <code>resources/xcom/</code> or a CD copy in <code>resources/xcom-cd/</code> — is found
+automatically; see <a href="../../architecture/settings/">Settings</a>), or open
 <code>dist/OpenInterceptor-&lt;version&gt;.app</code> built by <code>python3 tools/build_bundle.py</code>. Every case names its launcher entry; to jump
 straight in use <code>--scenario &lt;id&gt; --ship &lt;id&gt;</code> (and <code>--view chase</code> for an outside view). Ship ids:
 <code>lightning</code>, <code>firestar</code>, <code>avenger</code> (<code>interceptor</code> campaign); <code>comet</code>, <code>meteor</code>, <code>thunderbolt</code>
@@ -9287,7 +9480,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the CD</td>
+<td>Needs original data</td>
 </tr>
 <tr>
 <td>MT-2-27</td>
@@ -9770,7 +9963,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <tbody>
 <tr>
 <td>Preconditions</td>
-<td>A test mod copied from <code>packs/default</code> into the mods folder (id changed).</td>
+<td>A test mod copied from <code>resources/default</code> (before app 0.4.2: <code>packs/default</code>) into the mods folder (id changed).</td>
 </tr>
 <tr>
 <td>Steps</td>
@@ -10152,7 +10345,8 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 </table>
 <h2 id="stage-3-results">Stage 3 results<a class="headerlink" href="#stage-3-results" title="Permanent link">&para;</a></h2>
 <p>App 0.3.0 (main <code>d7553f5</code>); MT-3-13 – MT-3-18 cover the interlude's playtest fixes in app 0.3.1
-(main <code>c583659</code>). Each mission case: fly it once to a <strong>win</strong> and once to a <strong>loss</strong>, and read the
+(main <code>c583659</code>); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main <code>dfff71b</code>), and
+MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2, main <code>bf7b7ce</code>). Each mission case: fly it once to a <strong>win</strong> and once to a <strong>loss</strong>, and read the
 <strong>debrief</strong> each time.</p>
 <table>
 <thead>
@@ -10210,7 +10404,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the CD</td>
+<td>Needs original data</td>
 </tr>
 <tr>
 <td>MT-3-06</td>
@@ -10219,7 +10413,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the CD</td>
+<td>Needs original data</td>
 </tr>
 <tr>
 <td>MT-3-07</td>
@@ -10228,7 +10422,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the CD</td>
+<td>Needs original data</td>
 </tr>
 <tr>
 <td>MT-3-08</td>
@@ -10237,7 +10431,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the CD</td>
+<td>Needs original data</td>
 </tr>
 <tr>
 <td>MT-3-09</td>
@@ -10246,7 +10440,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the CD</td>
+<td>Needs original data</td>
 </tr>
 <tr>
 <td>MT-3-10</td>
@@ -10328,6 +10522,60 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <td></td>
 <td></td>
 <td></td>
+</tr>
+<tr>
+<td>MT-3-19</td>
+<td>Console: pairing from an iPad</td>
+<td>any, with <code>--console</code></td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>Needs the user: the game could not be started from the agent environment</td>
+</tr>
+<tr>
+<td>MT-3-20</td>
+<td>Console: hold and tap buttons</td>
+<td><code>rocket-vs-saucer</code> (default)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>Needs the user</td>
+</tr>
+<tr>
+<td>MT-3-21</td>
+<td>Console: features not fitted</td>
+<td><code>rocket-vs-saucer</code>; <code>systems-trial</code> (default)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>Needs the user</td>
+</tr>
+<tr>
+<td>MT-3-22</td>
+<td>Console: reconnecting and letting go</td>
+<td><code>rocket-vs-saucer</code> (default)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>Needs the user</td>
+</tr>
+<tr>
+<td>MT-3-23</td>
+<td>Console: throttle slider</td>
+<td><code>rocket-vs-saucer</code> (default)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>Needs the user</td>
+</tr>
+<tr>
+<td>MT-3-24</td>
+<td>Original data from <code>resources/xcom</code> or <code>resources/xcom-cd</code>; start-up without a shader error</td>
+<td>Launcher</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.4.1 / 0.4.2; needs original data for steps 2–4</td>
 </tr>
 </tbody>
 </table>
@@ -10627,7 +10875,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <tbody>
 <tr>
 <td>Steps</td>
-<td><code>rocket-vs-saucer</code> (default) and <code>combat-test</code> (interceptor, needs the CD): let the enemies close from beyond 5 km, and fly away from them; look at them against the stars and against the sun. Fly a mission with a protected object (<code>defend_station</code>).</td>
+<td><code>rocket-vs-saucer</code> (default) and <code>combat-test</code> (interceptor, needs original data): let the enemies close from beyond 5 km, and fly away from them; look at them against the stars and against the sun. Fly a mission with a protected object (<code>defend_station</code>).</td>
 </tr>
 <tr>
 <td>Expected</td>
@@ -10665,7 +10913,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <tbody>
 <tr>
 <td>Steps</td>
-<td><code>--no-original --mission defend_station --ship comet --difficulty space_ace</code>: fly at the raiders and let them kill you. Then <code>--mission xcom_base_defense --ship lightning --difficulty veteran</code> (needs the CD) and do the same. Then let the station fall while you survive.</td>
+<td><code>--no-original --mission defend_station --ship comet --difficulty space_ace</code>: fly at the raiders and let them kill you. Then <code>--mission xcom_base_defense --ship lightning --difficulty veteran</code> (needs original data) and do the same. Then let the station fall while you survive.</td>
 </tr>
 <tr>
 <td>Expected</td>
@@ -10689,6 +10937,144 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <tr>
 <td>Expected</td>
 <td>The battle pauses under a dark panel titled KEYS listing every action under its group (Flight, Throttle and speed, Weapons, Targeting, Power and systems, Wingmen and comms, Views, Chase camera, Interface), in several columns if needed, each with its current keys then pad buttons. After the rebinding the afterburner row shows the new key and no pad button (or "unbound" with neither). <code>?</code>, Shift+F1 and Esc close it and the battle resumes. Plain F1 still selects the cockpit view. The pause menu shows a line pointing to <code>?</code> instead of a key list. In a custom cockpit F12 still opens the layout editor.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-19-console-pairing-from-an-ipad">MT-3-19 — Console: pairing from an iPad<a class="headerlink" href="#mt-3-19-console-pairing-from-an-ipad" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>The computer and an iPad on the same Wi-Fi (not a guest network).</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Start <code>openinterceptor --console --no-original --scenario rocket-vs-saucer --ship comet</code>; read the terminal line and the bottom-left hint. 2. On the iPad open the URL in Safari. 3. Type a wrong code three times. 4. Reload, type the right code. 5. Watch the telemetry while flying; open the menu (Esc) in the game. 6. Quit; start again with <code>console: {enabled: true, port: 9000}</code> in <code>settings.yaml</code> and no <code>--console</code>; pair again on port 9000. 7. Start a second program on the same port first (for example <code>python3 -m http.server 9000</code>), then the game.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the terminal prints <code>console: open http://&lt;address&gt;:8765 on the tablet; pairing code NNNNNN</code>, and the flight screen shows <code>CONSOLE &lt;url&gt;   CODE NNNNNN</code> at the bottom left. 2: the pairing page asks for the code. 3: each wrong code shows <em>wrong pairing code</em>; after the third the page shows <em>Disconnected</em>. 4: the page switches to the console as the sixth digit is typed; the bottom-left hint disappears in the game. 5: craft, speed, drift, hull, energy, shields, missile and target update smoothly (about 20 times a second); the hint shows again while the menu is open. 6: the console works on port 9000 without <code>--console</code>. 7: the game reports that the port is not available and runs normally without the console.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-20-console-hold-and-tap-buttons">MT-3-20 — Console: hold and tap buttons<a class="headerlink" href="#mt-3-20-console-hold-and-tap-buttons" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>MT-3-19 paired.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Hold <em>Yaw left</em> (or another turn) on the iPad for two seconds, then lift the finger. 2. Hold <em>Afterburner</em>; slide the finger off the button while still touching the screen. 3. Hold <em>Fire beams</em> with an enemy ahead. 4. Tap <em>Next target</em> several times; tap a view button (cockpit, chase). 5. Hold a turn on the iPad and the opposite turn on the keyboard at the same time.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the craft turns for as long as the button is held and stops when it is released, exactly as with the key. 2: the afterburner lights while held and goes out when the finger leaves the button. 3: beams fire continuously while held. 4: each tap moves the target once and changes the view once (no repeats). 5: the two inputs combine as two keys would; nothing sticks afterwards.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-21-console-features-not-fitted">MT-3-21 — Console: features not fitted<a class="headerlink" href="#mt-3-21-console-features-not-fitted" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>MT-3-19 paired.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. In <code>rocket-vs-saucer</code> with the Comet, look at the Power and systems and Weapons groups. 2. Tap a disabled button. 3. Fly <code>systems-trial</code> (default) with the Thunderbolt, then with the Meteor, re-pairing if needed. 4. Run <code>tools/console_client.py &lt;address&gt; &lt;code&gt;</code> from the computer for each craft.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: every group is shown; actions the craft has no equipment for (for example cloak, ECM, tractor, the VCT slides, missiles or beams, whichever the craft lacks) are greyed and labelled <em>not fitted</em>; all other buttons are active. 2: nothing happens. 3: the Thunderbolt's cloak button is active; the list changes with the craft (the catalogue is resent when the craft class changes). 4: the client's <code>not fitted:</code> list matches the greyed buttons.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-22-console-reconnecting-and-letting-go">MT-3-22 — Console: reconnecting and letting go<a class="headerlink" href="#mt-3-22-console-reconnecting-and-letting-go" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>MT-3-19 paired.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Hold <em>Yaw left</em> and, while holding, close the Safari tab with the other hand. 1b. Open the page again, pair, hold <em>Yaw left</em> and turn the iPad's Wi-Fi off; time how long the craft keeps turning. 2. Turn Wi-Fi back on and reload the page. 3. Quit the game with the page open; start it again; enter the new code. 4. Pair a second device (a phone or a laptop browser) at the same time; hold a turn on one and release on the other.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the craft stops turning as soon as the tab closes (the console's held actions are released). 1b: the craft stops turning once the game notices the connection is gone; record the delay in the notes. C1 has no keep-alive or write timeout, so after a Wi-Fi drop this may take as long as the system's TCP timeout: a delay of more than a few seconds is a finding to file. 2: the page reconnects with the remembered code and the console returns. 3: the page shows <em>Disconnected. Enter the code to reconnect.</em>; the old code is refused (<em>wrong pairing code</em>), the new one pairs. 4: both devices show telemetry; one device releasing does not release the other's held button.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-23-console-throttle-slider">MT-3-23 — Console: throttle slider<a class="headerlink" href="#mt-3-23-console-throttle-slider" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>MT-3-19 paired.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Drag the throttle slider from 0 to 100 % and back, slowly and then quickly. 2. Change the throttle from the keyboard (or stick) while not touching the slider. 3. Set 50 % on the slider, then hold the keyboard's throttle-up key.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the craft's throttle (HUD <code>THR</code>) follows the slider and the percentage label; no lag beyond a frame or two. 2: the slider moves to follow the game's throttle. 3: the keyboard changes the throttle from 50 % and the slider follows; the slider does not fight it while untouched.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-24-original-data-from-resourcesxcom-or-resourcesxcom-cd-start-up-without-a-shader-error">MT-3-24 — Original data from <code>resources/xcom</code> or <code>resources/xcom-cd</code>; start-up without a shader error<a class="headerlink" href="#mt-3-24-original-data-from-resourcesxcom-or-resourcesxcom-cd-start-up-without-a-shader-error" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>A checkout at app 0.4.2 or later. For steps 2–4, your own original data.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. With <code>resources/xcom/</code> and <code>resources/xcom-cd/</code> empty and no other data configured, start the game and run <code>--list</code>. 2. Put a CD copy in <code>resources/xcom-cd/</code>; run <code>--list</code> and the launcher. 3. Also put an installed copy in <code>resources/xcom/</code>; run <code>--list</code>. 4. Run <code>scripts/check.sh</code>; <code>git status</code>. 5. Build the app with <code>python3 tools/build_bundle.py</code> and open it from Finder.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>Every start shows no shader error (the lit shader links; app 0.4.1) and ships are lit. 1: only the default campaign loads, with no error. 2: <code>interceptor</code> loads from the CD copy. 3: the installed copy is used (it is tried first). 4: the gate runs the original-data checks on the folder found and passes; <code>git status</code> shows nothing under <code>resources/xcom*</code>. 5: the app opens with the default campaign (<code>Contents/Resources/resources/default</code>) and the bundled mods, and finds the original data through <code>settings.yaml</code>.</td>
 </tr>
 </tbody>
 </table>

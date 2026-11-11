@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../user-guide/settings/">
+        <link rel="prev" href="../user-guide/console/">
       
       
         <link rel="next" href="first-mod/">
@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2859,6 +2859,8 @@
       
         
       
+        
+      
     
     
     
@@ -3233,6 +3235,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3671,6 +3701,8 @@
       
         
       
+        
+      
     
     
     
@@ -3796,6 +3828,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5323,7 +5383,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5738,8 +5798,8 @@ is data in a <strong>pack</strong>, and packs layer on top of each other.</p>
 models, textures, sounds, rules and missions. Such a pack runs with <code>--no-original</code> and can be
 shared freely, because it contains nothing of MicroProse's.</p>
 <pre class="mermaid"><code>flowchart LR
-    CD[("player's CD&lt;br/&gt;(optional)")] --&gt; I["pack: interceptor&lt;br/&gt;rules + scenarios"]
-    S["campaign: default&lt;br/&gt;original-free"]
+    CD[("player's original data&lt;br/&gt;installed copy or CD (optional)")] --&gt; I["packs/interceptor&lt;br/&gt;rules + scenarios"]
+    S["resources/default&lt;br/&gt;campaign: default, original-free"]
     M1["mods/my-campaign&lt;br/&gt;(user mods folder)"]
     M2["mods/balance-tweak"]
     I --&gt; L{{"layered ruleset&lt;br/&gt;later packs override earlier"}}
@@ -5823,7 +5883,7 @@ repository; ModDB refused automated access) describe its approach:</p>
 <tr>
 <td>Granularity</td>
 <td>Per pack; no documented per-asset override scheme</td>
-<td><strong>Per asset</strong>: a file at the override path replaces one original asset; everything else still comes from the CD</td>
+<td><strong>Per asset</strong>: a file at the override path replaces one original asset; everything else still comes from the original data</td>
 </tr>
 <tr>
 <td>Cockpits</td>

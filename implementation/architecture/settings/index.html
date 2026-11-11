@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2863,6 +2863,8 @@
       
         
       
+        
+      
     
     
     
@@ -3348,6 +3350,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../testbed/" class="md-nav__link">
         
   
@@ -3766,6 +3796,8 @@
       
         
       
+        
+      
     
     
     
@@ -3891,6 +3923,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5416,7 +5476,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5829,34 +5889,50 @@ layout); the launcher grows a settings screen in Stage 5.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <p>An installed OpenInterceptor separates <strong>what ships with the program</strong> from <strong>what belongs to
 the player</strong>:</p>
-<div class="highlight"><pre><span></span><code>OpenInterceptor-0.3.0.app/Contents/           (the program — safe to share)
+<div class="highlight"><pre><span></span><code>OpenInterceptor-&lt;version&gt;.app/Contents/      (the program — safe to share)
   MacOS/openinterceptor
-  Resources/packs/interceptor, packs/default  (built-in packs: no original content)
+  Resources/resources/default                (the default campaign: what the game ships)
+  Resources/packs/interceptor                (bundled mods: no original content)
 
 ~/Library/Application Support/OpenInterceptor/      (macOS)
 $XDG_DATA_HOME/openinterceptor/ or ~/.local/share/openinterceptor/   (Linux)
-  settings.yaml    paths: original, mods; packs: disabled; game: campaign, difficulty, language
+  settings.yaml    paths: original, mods; packs: disabled; game: campaign, difficulty, language;
+                   graphics: brightness; console: enabled, port
   bindings.yaml    controls (created on first run)
-  original/        optional copy of the CD (tools/build_bundle.py --install-data)
+  original/        optional copy of the original data, installed copy or CD
+                   (tools/build_bundle.py --install-data)
   mods/            one folder per mod
 </code></pre></div>
+<p>A development checkout has the same split (app 0.4.2, spec <a href="../../../specification/requirements/compatibility/#r-cmp-014-resources-folder">R-CMP-014</a>):</p>
+<div class="highlight"><pre><span></span><code>OpenInterceptor/
+  resources/default/   the default campaign, in editable formats (in Git)
+  resources/xcom/      the developer's installed copy of Interceptor (git-ignored)
+  resources/xcom-cd/   the developer's CD copy (git-ignored)
+  packs/interceptor/   bundled mods (in Git)
+</code></pre></div>
+<p>Packs are loaded from <code>resources/</code> then <code>packs/</code> (<code>cli::content_dirs</code>), then the user's mods,
+so a mod overrides resources. The original-data folders have no <code>pack.yaml</code> and are skipped as
+packs. <code>--packs DIR</code> replaces only the second folder.</p>
 <p>Finding the original data (<code>settings::resolve_original</code>) — the first candidate that exists
 wins:</p>
 <pre class="mermaid"><code>flowchart TD
     A["--data PATH&lt;br/&gt;(returned even if missing, so the error names it)"] --&gt;|not given| B["OPENINTERCEPTOR_DATA&lt;br/&gt;(merged into --data by cli::parse)"]
     B --&gt;|not set| C["settings.yaml paths.original&lt;br/&gt;(relative paths are relative to the user data folder)"]
     C --&gt;|missing| D["&lt;user data&gt;/original"]
-    D --&gt;|missing| E["game/ in the development checkout&lt;br/&gt;(CARGO_MANIFEST_DIR)"]
-    E --&gt;|missing| F["no original data:&lt;br/&gt;only original-free packs load"]</code></pre>
+    D --&gt;|missing| E["resources/xcom/ in the development checkout&lt;br/&gt;(an installed copy; CARGO_MANIFEST_DIR)"]
+    E --&gt;|empty or missing| E2["resources/xcom-cd/ in the development checkout&lt;br/&gt;(a CD copy)"]
+    E2 --&gt;|empty or missing| F["no original data:&lt;br/&gt;only original-free packs load"]</code></pre>
 <p>The mods folder is <code>--mods</code>, else <code>paths.mods</code>, else <code>&lt;user data&gt;/mods</code>. <code>packs.disabled</code>
 lists pack ids to switch off (whole-pack activation, like XWVM's Game Content screen).
 <code>game.campaign</code> and <code>game.difficulty</code> are the campaign and difficulty level to load; the
 launcher's campaign switch (Tab) and difficulty switch (D) write them (<code>app::remember_campaign</code>),
 and <code>--campaign</code> / <code>--difficulty</code> override them for one run. Empty means the default choice
 (<code>interceptor</code> if its data is available, else <code>default</code>; the campaign's <code>default_difficulty</code>).</p>
+<p>The two checkout folders count only once they hold files: they may exist empty in any
+checkout, and an empty <code>resources/xcom/</code> must not hide a filled <code>resources/xcom-cd/</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># settings.yaml</span>
 <span class="nt">paths</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">original</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/Users/me/Interceptor CD</span>
+<span class="w">  </span><span class="nt">original</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/Users/me/Games/XCOM Interceptor</span>
 <span class="w">  </span><span class="nt">mods</span><span class="p">:</span>
 <span class="nt">packs</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">hd-cockpit-test</span><span class="p p-Indicator">]</span>
@@ -5866,7 +5942,12 @@ and <code>--campaign</code> / <code>--difficulty</code> override them for one ru
 <span class="w">  </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">en</span><span class="w">              </span><span class="c1"># text/&lt;language&gt;/ folders (--language overrides)</span>
 <span class="nt">graphics</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">brightness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2</span><span class="w">           </span><span class="c1"># 1 = as authored; 0.5 (darker) to 2 (brighter)</span>
+<span class="nt">console</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">             </span><span class="c1"># serve the tablet control console (default false)</span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8765</span><span class="w">                </span><span class="c1"># 1–65535; anything else is ignored</span>
 </code></pre></div>
+<p><code>console.enabled</code> accepts <code>true</code>, <code>yes</code> or <code>on</code>; <code>--console</code> and <code>--console-port N</code> turn it on
+for one run (<a href="../remote/">Remote console</a>).</p>
 <p><code>graphics.brightness</code> (app 0.3.1) is read once at start-up into <code>Renderer::brightness</code> and
 applied as a gamma of 1 / brightness in the lit shader (<a href="../rendering/">Rendering</a>); values
 outside 0.5–2 are clamped, and an empty value means 1. The player's guide is
@@ -5876,8 +5957,8 @@ outside 0.5–2 are clamped, and an empty value means 1. The player's guide is
 (<code>parse_legacy_ini</code>), and the next save writes <code>settings.yaml</code>. <code>bindings.ini</code> is read once and
 saved straight away as <code>bindings.yaml</code> (<code>app::load_bindings</code>). The old files are left in place
 and ignored from then on.</p>
-<p><code>tools/build_bundle.py</code> presets <code>paths.original</code> to the checkout's <code>game/</code> folder (or
-<code>--data</code>), so a freshly built app finds the CD at once.</p>
+<p><code>tools/build_bundle.py</code> presets <code>paths.original</code> to the checkout's <code>resources/xcom/</code> (else
+<code>resources/xcom-cd/</code>, or <code>--data</code>), so a freshly built app finds the original data at once.</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -5889,19 +5970,27 @@ and ignored from then on.</p>
 <tbody>
 <tr>
 <td><code>Settings</code></td>
-<td><code>original: Option&lt;PathBuf&gt;</code>, <code>mods: Option&lt;PathBuf&gt;</code>, <code>disabled_packs: Vec&lt;String&gt;</code>, <code>campaign: Option&lt;String&gt;</code>, <code>difficulty: Option&lt;String&gt;</code>, <code>language: Option&lt;String&gt;</code>, <code>brightness: Option&lt;f32&gt;</code> (<code>graphics.brightness</code>, clamped 0.5–2).</td>
+<td><code>original: Option&lt;PathBuf&gt;</code>, <code>mods: Option&lt;PathBuf&gt;</code>, <code>disabled_packs: Vec&lt;String&gt;</code>, <code>campaign: Option&lt;String&gt;</code>, <code>difficulty: Option&lt;String&gt;</code>, <code>language: Option&lt;String&gt;</code>, <code>brightness: Option&lt;f32&gt;</code> (<code>graphics.brightness</code>, clamped 0.5–2), <code>console: bool</code> and <code>console_port: Option&lt;u16&gt;</code> (<code>console.enabled</code>, <code>console.port</code>).</td>
 </tr>
 <tr>
 <td><code>settings::Source</code></td>
-<td>Which rule found the data: <code>CommandLine</code>, <code>Environment</code>, <code>SettingsFile</code>, <code>UserDataFolder</code>, <code>DevelopmentTree</code>.</td>
+<td>Which rule found the data: <code>CommandLine</code>, <code>Environment</code>, <code>SettingsFile</code>, <code>UserDataFolder</code>, <code>DevelopmentTree</code> (<code>resources/xcom</code> or <code>resources/xcom-cd</code>).</td>
 </tr>
 <tr>
 <td><code>cli::user_data_dir()</code></td>
 <td>The per-user folder for this platform.</td>
 </tr>
 <tr>
-<td><code>cli::find_packs_dir(exe)</code></td>
-<td><code>./packs</code>, next to the program, <code>../Resources/packs</code> inside an app bundle, then the source tree.</td>
+<td><code>cli::find_packs_dir(exe)</code>, <code>cli::find_resources_dir(exe)</code></td>
+<td>The <code>packs/</code> and <code>resources/</code> folders: in the working directory, next to the program, in <code>../Resources/</code> inside an app bundle, then the source tree (<code>find_dir</code>).</td>
+</tr>
+<tr>
+<td><code>cli::content_dirs(resources, packs)</code></td>
+<td>The pack folders in load order: <code>resources/</code> then <code>packs/</code>.</td>
+</tr>
+<tr>
+<td><code>content::checkout_dirs()</code></td>
+<td>The checkout's <code>resources/</code> and <code>packs/</code>, for tests and tools that load the real campaigns.</td>
 </tr>
 </tbody>
 </table>
@@ -5911,7 +6000,8 @@ and ignored from then on.</p>
   <code>Settings::load(dir)</code> (<code>settings.yaml</code>, else a legacy <code>settings.ini</code>, else defaults),
   <code>settings.to_yaml_text()</code>, <code>settings.save(dir)</code> (writes <code>settings.yaml</code>).</li>
 <li><code>resolve_original(cli, env, &amp;settings, user_dir, dev_tree) -&gt; Option&lt;(PathBuf, Source)&gt;</code> —
-  pure apart from <code>is_dir</code> checks; tested with temporary folders.</li>
+  pure apart from <code>is_dir</code> and read-dir checks; tested with temporary folders
+  (<code>original_data_is_found_in_order</code>).</li>
 <li><code>cli::Options::content_config()</code> assembles a <code>ContentConfig</code> from all of the above
   (<code>campaign</code> = <code>--campaign</code>, else <code>game.campaign</code>; <code>difficulty</code> = <code>--difficulty</code>, else
   <code>game.difficulty</code> <strong>only when the loaded campaign is <code>game.campaign</code></strong> — a remembered level
@@ -5921,7 +6011,13 @@ and ignored from then on.</p>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>openinterceptor --list</code> shows which packs loaded; if <code>interceptor</code> is missing, no data
-  folder was found — check <code>settings.yaml</code> or pass <code>--data</code>.</li>
+  folder was found — check <code>settings.yaml</code>, pass <code>--data</code>, or put the data in
+  <code>resources/xcom/</code> (installed copy) or <code>resources/xcom-cd/</code> (CD copy) in a checkout.</li>
+<li>A checkout that still has its data in the old <code>game/</code> folder is no longer searched: move it
+  to <code>resources/xcom-cd/</code> (or <code>resources/xcom/</code> for an installed copy). <code>game/</code> stays
+  git-ignored so it can never be committed.</li>
+<li>The default campaign is missing: <code>resources/</code> was not found next to the program. In an app
+  bundle it is <code>Contents/Resources/resources/default</code>.</li>
 <li>The launcher always loads the last campaign chosen there; if a campaign seems "stuck", look
   at <code>game.campaign</code> (or pass <code>--campaign</code>); the same for <code>game.difficulty</code>. <code>--list</code> marks the loaded campaign with <code>*</code>.</li>
 <li>Unknown keys in <code>settings.yaml</code> are ignored, so a newer file still works with an older build.</li>

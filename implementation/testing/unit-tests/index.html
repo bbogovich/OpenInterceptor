@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2861,6 +2861,8 @@
       
         
       
+        
+      
     
     
     
@@ -3235,6 +3237,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3755,6 +3785,8 @@
       
         
       
+        
+      
     
     
     
@@ -3880,6 +3912,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5405,7 +5465,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5801,7 +5861,7 @@
 
 
 <h1 id="unit-tests">Unit tests<a class="headerlink" href="#unit-tests" title="Permanent link">&para;</a></h1>
-<p>Every module's tests, as of main <code>c583659</code> (build 0.3.1): <strong>276 tests</strong> on macOS (277 on
+<p>Every module's tests, as of main <code>bf7b7ce</code> (build 0.4.2): <strong>292 tests</strong> on macOS (293 on
 Linux), run with <code>cargo test</code> by the gate. Tests
 live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <strong>synthetic data built in the
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
@@ -5878,7 +5938,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <tr>
 <td><code>content</code></td>
 <td>5</td>
-<td>Loading packs/rules/scenarios/models from temp folders, skipping packs that need the CD, scenario replacement, <strong>per-asset overrides</strong> of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs</td>
+<td>Loading packs/rules/scenarios/models from temp folders, skipping packs that need original data, scenario replacement, <strong>per-asset overrides</strong> of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs</td>
 </tr>
 <tr>
 <td><code>content::pack</code></td>
@@ -5938,7 +5998,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <tr>
 <td><code>settings</code></td>
 <td>2</td>
-<td>settings.yaml parse/save round trip incl. <code>packs.disabled</code>, <code>game.campaign</code>, <code>game.difficulty</code> and <strong><code>graphics.brightness</code> (clamped)</strong>, and the legacy settings.ini reader; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths)</td>
+<td>settings.yaml parse/save round trip incl. <code>packs.disabled</code>, <code>game.campaign</code>, <code>game.difficulty</code> <strong><code>graphics.brightness</code> (clamped)</strong> and <strong><code>console.enabled</code> / <code>console.port</code> (an out-of-range port is ignored)</strong>, and the legacy settings.ini reader; <strong>original data found in order</strong> (command line, environment, settings, user data folder, then the checkout's <code>resources/xcom</code> before <code>resources/xcom-cd</code>, an empty folder skipped; relative paths)</td>
 </tr>
 <tr>
 <td><code>sim</code></td>
@@ -6022,8 +6082,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>render</code></td>
-<td>3</td>
-<td>Billboard and streak geometry, colour helpers, overlay depth bias pasted into the shader</td>
+<td>4</td>
+<td>Billboard and streak geometry, colour helpers, overlay depth bias pasted into the shader; <strong>uniforms shared by both lit shaders match exactly, with an explicit precision</strong> (the <code>Light</code> link fix, 0.4.1)</td>
 </tr>
 <tr>
 <td><code>render::camera</code></td>
@@ -6108,7 +6168,37 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <tr>
 <td><code>cli</code></td>
 <td>4</td>
-<td>Every option incl. <code>--extract</code>, <code>--view</code>, <code>--model</code>, <code>--campaign</code>, <code>--screenshot</code>, <code>--frames</code>, environment variable precedence, unknown/incomplete options, packs folder discovery</td>
+<td>Every option incl. <code>--extract</code>, <code>--view</code>, <code>--model</code>, <code>--campaign</code>, <code>--screenshot</code>, <code>--frames</code>, environment variable precedence, unknown/incomplete options; <strong>content folders are <code>resources/</code> then <code>packs/</code>, and <code>--packs</code> replaces only the mods folder</strong></td>
+</tr>
+<tr>
+<td><code>remote</code></td>
+<td>1</td>
+<td><strong>Console input</strong>: held actions last until released, taps fire once, the throttle is one-shot, the bindings see a console-held action like a held key, a console that leaves lets go</td>
+</tr>
+<tr>
+<td><code>remote::ws</code></td>
+<td>3</td>
+<td><strong>SHA-1 and base64 match the published vectors</strong> (FIPS 180 and RFC 4648; the RFC 6455 handshake example), masked frames decode (the RFC 6455 §5.7 examples), partial frames wait for more bytes, back-to-back frames, 16-bit lengths, unmasked server frames with 16- and 64-bit lengths; <strong>protocol violations are errors</strong> (unmasked, unknown opcode, too large)</td>
+</tr>
+<tr>
+<td><code>remote::json</code></td>
+<td>3</td>
+<td>Objects, arrays, strings with escapes, numbers with exponents; <strong>bad and hostile input is an error</strong> (unclosed, trailing commas, trailing text, nesting deeper than 32); the writer's compact objects (numbers to 3 decimals, NaN as <code>null</code>) parse back</td>
+</tr>
+<tr>
+<td><code>remote::http</code></td>
+<td>2</td>
+<td>A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed</td>
+</tr>
+<tr>
+<td><code>remote::protocol</code></td>
+<td>3</td>
+<td>Console messages decode, unknown actions and types are refused, throttle clamped; <strong>the catalogue lists every action and marks missing equipment unavailable</strong>; <strong>telemetry reports drift in body axes and the target's rotation relative to the player</strong></td>
+</tr>
+<tr>
+<td><code>remote::server</code></td>
+<td>3</td>
+<td><strong>Only local-network peers are served</strong> (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; <strong>end to end over a real localhost socket</strong>: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received</td>
 </tr>
 <tr>
 <td><code>soak</code></td>
@@ -6118,6 +6208,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tbody>
 </table>
 <h2 id="test-names">Test names<a class="headerlink" href="#test-names" title="Permanent link">&para;</a></h2>
+<p>Generated from the <code>#[test]</code> functions in <code>src/</code> at main <code>bf7b7ce</code> (read with grep, not a build).</p>
 <p><strong><code>app::assets</code></strong>: <code>no_original_data_means_empty_lists</code>, <code>tabs_cycle</code></p>
 <p><strong><code>app::devices</code></strong>: <code>key_names_match_the_bindings_vocabulary</code>, <code>known_names_are_real_keycodes</code></p>
 <p><strong><code>app::flight</code></strong>: <code>chase_orbit_responds_and_resets</code>, <code>cockpit_fov_widens_only_on_narrow_screens</code>, <code>commands_target_and_order_wingmen</code>, <code>events_become_pilot_messages</code>, <code>views_place_the_camera</code></p>
@@ -6125,7 +6216,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>app::viewer</code></strong>: <code>a_still_wheel_does_not_zoom</code>, <code>default_entries_list_every_class</code>, <code>display_modes_cycle</code>, <code>entries_are_found_by_ship_id_or_mesh_name</code>, <code>face_info_describes_a_face</code>, <code>looks_cover_damage_states_and_debris</code>, <code>near_plane_moves_out_to_the_model</code>, <code>orbit_input_clamps</code>, <code>orbit_looks_at_the_origin_from_its_distance</code></p>
 <p><strong><code>audio</code></strong>: <code>attenuation_falls_with_distance</code>, <code>events_choose_sounds_and_volumes</code></p>
 <p><strong><code>check</code></strong>: <code>broken_definitions_are_errors</code>, <code>the_default_campaign_passes</code></p>
-<p><strong><code>cli</code></strong>: <code>environment_supplies_data_and_flags_override_it</code>, <code>errors_for_unknown_or_incomplete_options</code>, <code>finds_the_source_tree_packs</code>, <code>parses_every_option</code></p>
+<p><strong><code>cli</code></strong>: <code>content_dirs_are_resources_then_packs</code>, <code>environment_supplies_data_and_flags_override_it</code>, <code>errors_for_unknown_or_incomplete_options</code>, <code>parses_every_option</code></p>
 <p><strong><code>content</code></strong>: <code>empty_pack_dirs_are_an_error</code>, <code>loads_original_free_packs_rules_scenarios_and_models</code>, <code>pack_files_override_original_assets</code>, <code>png_and_tga_pack_images_decode</code>, <code>scaling_scales_everything</code></p>
 <p><strong><code>content::behaviour</code></strong>: <code>parses_states_transitions_and_skill</code>, <code>reports_mistakes</code>, <code>target_preferences_parse_and_reject_unknown_selectors</code>, <code>the_builtin_attack_is_valid</code></p>
 <p><strong><code>content::equipment</code></strong>: <code>kinds_round_trip_and_builtins_exist</code>, <code>power_section_parses_and_validates</code>, <code>system_definitions_override_builtins</code></p>
@@ -6158,7 +6249,14 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>input::gamepad</code></strong>: <code>axes_are_normalised</code>, <code>buttons_round_trip_names_and_bits</code></p>
 <p><strong><code>mission</code></strong>: <code>arrivals_waves_chatter_and_a_win</code>, <code>lose_beats_win_and_the_timer_ends_it</code>, <code>roles_are_placed_counted_and_faced_at_the_player</code>, <code>the_players_death_is_its_own_result_with_the_lose_outcomes</code></p>
 <p><strong><code>model</code></strong>: <code>empty_obj_has_zero_bounds</code>, <code>faces_record_their_corners_and_group</code>, <code>faces_that_only_touch_or_face_away_are_not_layered</code>, <code>later_overlapping_face_is_layered_on_top</code>, <code>lod_selection_by_distance</code>, <code>mirrored_triangles_keep_outward_winding</code>, <code>obj_models_use_materials_scale_and_flip_v</code>, <code>overlay_flag_beats_file_order</code>, <code>xmsh_is_triangulated_grouped_and_mirrored</code></p>
-<p><strong><code>render</code></strong>: <code>billboards_and_streaks_build_two_triangles</code>, <code>colour_helpers_clamp</code>, <code>layer_bias_reaches_the_shader</code></p>
+<p><strong><code>platform::linux</code></strong>: <code>events_map_to_xinput_layout</code></p>
+<p><strong><code>remote</code></strong>: <code>held_actions_last_until_released_and_taps_fire_once</code></p>
+<p><strong><code>remote::http</code></strong>: <code>bad_requests_are_errors_and_responses_are_well_formed</code>, <code>parses_a_websocket_upgrade_and_waits_for_the_blank_line</code></p>
+<p><strong><code>remote::json</code></strong>: <code>bad_and_hostile_input_is_an_error</code>, <code>parses_objects_arrays_strings_and_numbers</code>, <code>writes_compact_objects_that_parse_back</code></p>
+<p><strong><code>remote::protocol</code></strong>: <code>decodes_console_messages_and_refuses_unknown_ones</code>, <code>telemetry_reports_drift_and_the_targets_relative_rotation</code>, <code>the_catalogue_lists_every_action_and_marks_missing_equipment</code></p>
+<p><strong><code>remote::server</code></strong>: <code>only_local_network_peers_are_served</code>, <code>pairing_codes_are_six_digits_and_vary_with_the_seed</code>, <code>serves_the_page_pairs_and_relays_actions_over_a_real_socket</code></p>
+<p><strong><code>remote::ws</code></strong>: <code>frames_decode_masked_wait_for_more_bytes_and_encode</code>, <code>protocol_violations_are_errors</code>, <code>sha1_and_base64_match_the_published_test_vectors</code></p>
+<p><strong><code>render</code></strong>: <code>billboards_and_streaks_build_two_triangles</code>, <code>colour_helpers_clamp</code>, <code>layer_bias_reaches_the_shader</code>, <code>uniforms_shared_by_both_lit_shaders_match_exactly</code></p>
 <p><strong><code>render::camera</code></strong>: <code>model_matrices_are_camera_relative</code>, <code>near_plane_changes_only_depth</code>, <code>points_ahead_project_to_the_centre_and_behind_is_none</code>, <code>rotation_turns_the_view</code></p>
 <p><strong><code>render::effects</code></strong>: <code>events_create_effects_that_expire</code>, <code>explosion_curve_grows_and_fades</code>, <code>jitter_stays_in_range</code></p>
 <p><strong><code>render::gpu</code></strong>: <code>engines_use_rear_attachments_or_the_back_centre</code>, <code>groups_become_chunks_with_local_indices</code>, <code>huge_groups_are_split</code></p>
@@ -6167,7 +6265,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>script::action</code></strong>: <code>actions_parse_and_check</code></p>
 <p><strong><code>script::battle</code></strong>: <code>ids_match_and_roles_are_checked_names</code></p>
 <p><strong><code>script::object</code></strong>: <code>ids_match_the_table_and_system_names_match_the_kinds</code></p>
-<p><strong><code>settings</code></strong>: <code>parses_and_round_trips</code>, <code>resolution_order_prefers_explicit_and_existing</code></p>
+<p><strong><code>settings</code></strong>: <code>original_data_is_found_in_order</code>, <code>parses_and_round_trips</code></p>
 <p><strong><code>sim</code></strong>: <code>ai_pilots_switch_cloak_ecm_and_power_by_condition</code>, <code>body_velocity_reads_drift_in_the_ships_own_axes</code>, <code>generational_handles_detect_reuse</code>, <code>match_speed_copies_the_targets_speed</code>, <code>preferences_pull_the_ai_past_a_nearer_target</code>, <code>probes_extend_radar_and_jam_their_enemies</code>, <code>protected_objectives_are_not_picked_as_the_nearest_enemy</code>, <code>random_is_deterministic_and_in_range</code>, <code>scenario_errors_are_reported</code>, <code>scenario_spawns_player_objects_and_leaders</code>, <code>ship_axes_follow_the_engine_convention</code>, <code>station_modules_mount_follow_and_fall_with_their_hub</code>, <code>step_advances_time_and_clears_edge_controls</code>, <code>unconsumed_presses_carry_over_held_inputs_do_not</code></p>
 <p><strong><code>sim::ai</code></strong>: <code>aim_skill_decides_accuracy</code>, <code>disabled_ships_drift</code>, <code>enemy_hunts_and_damages_a_hostile</code>, <code>evasive_ends_and_retreat_jumps_out</code>, <code>lead_point_anticipates_motion</code>, <code>mines_go_off_when_an_enemy_comes_near</code>, <code>orders_switch_wingmen_to_attack</code>, <code>steering_turns_towards_points</code>, <code>target_drones_circle_and_idle_ships_sit</code>, <code>transitions_switch_states_on_conditions</code>, <code>tugs_tow_disabled_enemies_away</code>, <code>turrets_fire_off_the_nose</code>, <code>wingman_closes_on_its_slot</code></p>
 <p><strong><code>sim::collision</code></strong>: <code>segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code></p>

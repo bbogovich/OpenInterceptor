@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../platform/">
+        <link rel="prev" href="../remote/">
       
       
         <link rel="next" href="../extract/">
@@ -1496,7 +1496,7 @@
   <span class="md-ellipsis">
     
   
-    Console protocol (planned)
+    Console protocol
   
 
     
@@ -2863,6 +2863,8 @@
       
         
       
+        
+      
     
     
     
@@ -3237,6 +3239,34 @@
     
   
     Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
   
 
     
@@ -3783,6 +3813,8 @@
       
         
       
+        
+      
     
     
     
@@ -3908,6 +3940,34 @@
     
   
     Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
   
 
     
@@ -5433,7 +5493,7 @@
   <span class="md-ellipsis">
     
   
-    Networking (planned)
+    Networking
   
 
     
@@ -5926,7 +5986,8 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   message display; when it ends, the battle freezes behind the <strong>debrief</strong> (result, text, kills,
   losses, time, optional objectives, campaign actions; long text wrapped). Enter (pad A) flies it
   again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.</li>
-<li><strong>Flight session</strong> (<code>flight.rs</code>): see the frame loop on the
+<li>
+<p><strong>Flight session</strong> (<code>flight.rs</code>): see the frame loop on the
   <a href="../#logic-flow-one-frame-of-a-flight-session">overview</a>. Views F1–F8; after death the
   camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher; it
   points to <code>?</code> for the keys instead of listing them); P pauses; <code>?</code> (or Shift+F1) opens the
@@ -5935,7 +5996,8 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   design space in the cockpit view and the default glass layout in the other views. A 3D
   cockpit on a window narrower than its design widens the field of view (<code>cockpit_fov</code>), and
   its anchored instruments are drawn on the dashboard in perspective (<code>draw_anchored</code>).
-  Stage 2 additions:<ul>
+  Stage 2 additions:</p>
+<ul>
 <li><strong>Cockpit layout editor</strong> (F12 in the cockpit view; the battle pauses): <code>LayoutEditor</code>
   holds the selected instrument, the drag in progress and a status message; <code>edit_layout</code>
   handles Tab, 2D drags and nudges, 3D ray picks on the cockpit model's top LOD, resizing
@@ -5953,6 +6015,16 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   "… CAPTURED", "HYPERJUMP COMPLETE". <code>L</code> repeats the last message.</li>
 <li><strong>Jumped-out end screen</strong>: "JUMPED TO HYPERSPACE", with the captured prizes listed;
   Enter flies again, Esc returns to the menu.</li>
+</ul>
+<p>Stage 3 interlude additions:</p>
+<ul>
+<li><strong>Tablet console</strong> (C1, app 0.4.0): when the console is on (<code>--console</code>,
+  <code>console.enabled</code>), <code>app::start_console</code> starts a <code>remote::server::ConsoleServer</code> into
+  <code>AppContext::console</code> (a taken port is reported and the game carries on without it).
+  Each frame <code>FlightSession::console_frame</code> merges the console's input into <code>RawInput</code>,
+  sends <code>welcome</code> and the <code>catalogue</code> (again when the player's craft class changes) and
+  20 Hz <code>telemetry</code>. Until a console pairs, and while the menu is open, the bottom-left
+  corner shows <code>CONSOLE &lt;url&gt;   CODE &lt;code&gt;</code>. See <a href="../remote/">Remote console</a>.</li>
 </ul>
 </li>
 </ul>
