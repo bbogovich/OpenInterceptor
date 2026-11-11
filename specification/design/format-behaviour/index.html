@@ -2015,10 +2015,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#language-decision-stage-3-entry" class="md-nav__link">
+  <a href="#language-decision-stage-310-awaiting-the-user" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language decision (Stage 3 entry)
+        Language decision (Stage 3.10) — awaiting the user
       
     </span>
   </a>
@@ -3920,6 +3920,8 @@
       
         
       
+        
+      
     
     
     
@@ -4086,6 +4088,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4104,6 +4134,8 @@
       
         
           
+        
+      
         
       
         
@@ -4467,6 +4499,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6143,10 +6203,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#language-decision-stage-3-entry" class="md-nav__link">
+  <a href="#language-decision-stage-310-awaiting-the-user" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language decision (Stage 3 entry)
+        Language decision (Stage 3.10) — awaiting the user
       
     </span>
   </a>
@@ -6190,7 +6250,7 @@
 <p><strong>Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2</strong>; actions,
 the battle and campaign contexts, the remaining manoeuvres, targeting preferences and Tier 2
 are design. Replaces the open question on <a href="../../../modding/scripting/">Scripting</a> with a two-tier
-design; the Tier 2 language decision is taken at the start of Stage 3. The implemented form is
+design; the Tier 2 language decision is evaluated (Stage 3.10) and awaits the user. The implemented form is
 documented for modders on <a href="../../../modding/behaviours/">Behaviours and conditions</a>.</p>
 <h2 id="two-tiers">Two tiers<a class="headerlink" href="#two-tiers" title="Permanent link">&para;</a></h2>
 <table>
@@ -6373,29 +6433,36 @@ Tier 2 hook.</p>
 <li>Scripts may keep state only through the API (<code>set_flag</code>, <code>counter</code>, object variables), so
   saves never need to serialise a script VM.</li>
 </ul>
-<h3 id="language-decision-stage-3-entry">Language decision (Stage 3 entry)<a class="headerlink" href="#language-decision-stage-3-entry" title="Permanent link">&para;</a></h3>
+<h3 id="language-decision-stage-310-awaiting-the-user">Language decision (Stage 3.10) — awaiting the user<a class="headerlink" href="#language-decision-stage-310-awaiting-the-user" title="Permanent link">&para;</a></h3>
+<p>The full evaluation is on the dependency page:
+<a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Tier 2 scripting, evaluated</a>.
+<strong>No decision has been made.</strong></p>
 <table>
 <thead>
 <tr>
 <th>Option</th>
-<th>Assessment</th>
+<th>Assessment (summary)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Lua 5.4 via <code>mlua</code></strong> (recommended)</td>
-<td>The modding standard; small, fast, sandboxable; MIT. Cost: a vendored C library and an FFI boundary, evaluated under the <a href="../../../learning/best-practices/dependencies/">dependency policy</a>.</td>
+<td>(a) <strong>Lua 5.4 via <code>mlua</code></strong></td>
+<td>The modding standard; fast; MIT. Costs: bundled C sources, a C compiler on every platform, an FFI boundary, opt-in sandboxing, determinism care (<code>f64</code>, table iteration order). <strong>The fallback</strong> if mods need a full general-purpose language.</td>
 </tr>
 <tr>
-<td>Rhai</td>
-<td>Pure Rust, MIT/Apache; slower; fewer modders know it.</td>
+<td>(b) <code>rhai</code></td>
+<td>Pure Rust, MIT/Apache; slower; few modders know it; a larger crate tree; errors at run time. Reconsider only if a pure-Rust or WebAssembly build becomes a requirement.</td>
 </tr>
 <tr>
-<td>Grow Tier 1 into a full language</td>
-<td>No dependency, but loops, functions and tooling are the expensive part; rejected unless both candidates fail evaluation.</td>
+<td>(c) <strong>Grow Tier 1</strong> into a small statement language (variables, <code>if</code>/<code>else</code>, bounded loops, functions, calls into the same checked API)</td>
+<td>No dependency; checked at load, deterministic and sandboxed by construction; the parser, checker and evaluator exist. Ceiling: no general-purpose data structures. <strong>Recommended as the default</strong> by the evaluator.</td>
 </tr>
 </tbody>
 </table>
+<p>Earlier drafts of this page recommended (a) and rejected (c) unless both crates failed
+evaluation; the evaluation found (c) far cheaper than that assumed, because the language's
+hard parts already exist. The hook syntax above (<code>do: script</code>, <code>script(...)</code>) is the same for
+any choice; the <code>.lua</code> file names in the examples are placeholders.</p>
 <p>Because both shipped campaigns need only Tier 1, the choice can be made on its merits without
 blocking any campaign work.</p>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
@@ -6412,6 +6479,11 @@ blocking any campaign work.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Specification 1.0.0 as a normative format page; requirements link here</td>
+</tr>
+<tr>
+<td>1.12.0</td>
+<td>2026-11-11</td>
+<td>Tier 2 language decision: summary of the recorded evaluation ((a) <code>mlua</code>, (b) <code>rhai</code>, (c) grow Tier 1); evaluator recommends (c), fallback (a); awaiting the user's decision</td>
 </tr>
 </tbody>
 </table>

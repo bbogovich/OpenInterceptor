@@ -3396,6 +3396,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-simulator-app-063" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The simulator (app 0.6.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scenarios-shipped" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3852,6 +3863,8 @@
       
         
       
+        
+      
     
     
     
@@ -4018,6 +4031,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4036,6 +4077,8 @@
       
         
           
+        
+      
         
       
         
@@ -4399,6 +4442,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -5992,6 +6063,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-simulator-app-063" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The simulator (app 0.6.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scenarios-shipped" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6061,7 +6143,8 @@
 <p><code>src/app/</code>: the interactive program — a small state machine of screens sharing one
 <code>AppContext</code>. Every stage adds scenarios here so its features can be play-tested. Plan:
 Stage 1; Stage 2 added the controls menu, the campaign switch, the wingman comms menu, system
-and hyperspace messages, and <code>--screenshot</code>.</p>
+and hyperspace messages, and <code>--screenshot</code>; Stage 3 the missions, the debrief, radio voices
+(app 0.6.2) and the <strong>simulator</strong> (app 0.6.3).</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>stateDiagram-v2
     [*] --&gt; Launcher
@@ -6076,6 +6159,10 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
     AssetBrowser --&gt; Launcher: Esc
     Launcher --&gt; Controls: Enter on Controls (Next::Controls)
     Controls --&gt; Launcher: Esc (save bindings.yaml)
+    Launcher --&gt; Simulator: Enter on Simulator (Next::Simulator)
+    Simulator --&gt; FlightSession: Enter on Fly (Next::Simulate, a modified mission)
+    Simulator --&gt; Launcher: Esc
+    FlightSession --&gt; FlightSession: Enter after a simulator debrief (Next::Simulate, same setup)
     Launcher --&gt; Launcher: Tab or D (Next::Reload) reloads Content for another campaign or difficulty
     FlightSession --&gt; Launcher: Esc menu → L
     FlightSession --&gt; FlightSession: Esc menu → K (controls menu inside the session)
@@ -6093,8 +6180,10 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   <strong>X</strong>) to the next difficulty level (<code>launcher::next_difficulty</code>), each returning
   <code>Next::Reload { campaign, difficulty }</code>: the app reloads <code>Content</code> (the ruleset is rebuilt at
   that level), saves the choice in <code>settings.yaml</code> (<code>game.campaign</code>, <code>game.difficulty</code>), and shows any
-  load error on the launcher. Entries: the model viewer, the asset browser, <strong>Controls</strong>, every scenario, then every <strong>mission</strong> (<em>Mission: name</em>, its briefing as the description; <a href="../mission/">Missions</a>). The list scrolls to keep the selection near the middle (<code>Menu::first_visible</code>, "^ more" / "v more"). Scenarios are
-  sorted by <code>order</code> (the first scenario is selected at start). For
+  load error on the launcher. Entries: the model viewer, the asset browser, <strong>Controls</strong>, the <strong>Simulator</strong> (app 0.6.3), every scenario, then every <strong>mission</strong> (<em>Mission: name</em>, its briefing as the description; <a href="../mission/">Missions</a>). The list scrolls to keep the selection near the middle (<code>Menu::first_visible</code>, "^ more" / "v more"). Scenarios are
+  sorted by <code>order</code>; the first scenario is selected at start, found by searching the entries
+  (<code>Entry::Scenario</code>) rather than by a fixed index, so adding an entry above the scenarios does
+  not move the start. For
   <code>player: choose</code> scenarios, Left/Right picks among playable ship classes, previewed as a
   turning model with name, description and stats. Keyboard, mouse (click to select, click
   again to start) and gamepad (D-pad, A/Start, Back to quit). Skipped-pack warnings and start
@@ -6127,6 +6216,10 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   message display; when it ends, the battle freezes behind the <strong>debrief</strong> (result, text, kills,
   losses, time, optional objectives, campaign actions; long text wrapped). Enter (pad A) flies it
   again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.</li>
+<li><strong>Radio voices</strong> (app 0.6.2): the flight screen decides when a pilot speaks — wing orders
+  and status requests (<code>acknowledge</code>, <code>status</code>), a wingman lost (<code>down</code>, said by another),
+  chatter clips (<code>MissionRun::voices</code>) and the computer voice at the debrief
+  (<code>mission_accomplished</code> / <code>mission_failed</code>). See <a href="../audio/">Audio</a>.</li>
 <li>
 <p><strong>Flight session</strong> (<code>flight.rs</code>): see the frame loop on the
   <a href="../#logic-flow-one-frame-of-a-flight-session">overview</a>. Views F1–F8; after death the
@@ -6168,6 +6261,83 @@ and hyperspace messages, and <code>--screenshot</code>.</p>
   corner shows <code>CONSOLE &lt;url&gt;   CODE &lt;code&gt;</code>. See <a href="../remote/">Remote console</a>.</li>
 </ul>
 </li>
+</ul>
+<h3 id="the-simulator-app-063">The simulator (app 0.6.3)<a class="headerlink" href="#the-simulator-app-063" title="Permanent link">&para;</a></h3>
+<p><code>app::simulator</code> (Stage 3.9, R-MSN-010): a setup screen in front of any mission of the loaded
+campaign. Rows, chosen with Up/Down and changed with Left/Right; Enter flies; Esc returns to the
+launcher:</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>Values</th>
+<th>Effect on the copy (<code>simulator::apply</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mission</td>
+<td>every mission, in launcher order</td>
+<td>The mission to copy. Its briefing is shown below the rows.</td>
+</tr>
+<tr>
+<td>Ship</td>
+<td>the playable ships</td>
+<td>The player's craft; "(the mission's own)" when the mission names <code>player.class</code>.</td>
+</tr>
+<tr>
+<td>Environment</td>
+<td>the mission's own (or open space), then every environment</td>
+<td><code>environment</code> replaced.</td>
+</tr>
+<tr>
+<td>Asteroids</td>
+<td>off / on</td>
+<td>40 objects of the campaign's asteroid class in a 4.5 km sphere 4.5 km ahead, spin 6 °/s.</td>
+</tr>
+<tr>
+<td>Minefield</td>
+<td>off / on</td>
+<td>20 mines of the campaign's mine class in a 2.5 km sphere 4.5 km ahead.</td>
+</tr>
+<tr>
+<td>Black hole</td>
+<td>off / on</td>
+<td>A black hole 9 km ahead and 800 m below, <code>pull</code> 12, <code>radius</code> 450 m.</td>
+</tr>
+<tr>
+<td>Ion storm</td>
+<td>off / on</td>
+<td>Radar at 40 %.</td>
+</tr>
+<tr>
+<td>Enemy force</td>
+<td>×0.5, ×1, ×1.5, ×2</td>
+<td>Every enemy role's count range and every wave of an enemy role scaled and rounded, never below 1. Friendly and objective roles are unchanged.</td>
+</tr>
+<tr>
+<td>Fly</td>
+<td>—</td>
+<td>Starts the copy.</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Hazard classes</strong> come from the campaign itself (<code>simulator::hazard_classes</code>): the asteroid
+  class is the first object class whose id contains <code>asteroid</code>, the mine class the first of
+  <code>kind: mine</code>. A campaign without one shows "(none in this campaign)" on that row and the
+  toggle does nothing — the simulator never assumes a class a mod may not have.</li>
+<li><strong>Refusal</strong>: <code>simulator::ship_allowed</code> refuses a ship with <code>atmospheric: false</code> in an
+  environment with <code>physics: atmosphere</code>; the reason is shown under the rows and nothing starts.</li>
+<li><strong>Flying</strong>: Fly returns <code>Next::Simulate { mission, ship }</code> with the modified <code>MissionDef</code>
+  (boxed: it is large); the app starts it with <code>FlightSession::start_custom</code>, which keeps the
+  copy in <code>FlightSession::custom</code> so that "again" from the debrief (or R in the pause menu)
+  returns <code>Next::Simulate</code> with the same setup instead of the original mission.</li>
+<li>The difficulty level is the launcher's (D); the mission's own values per level apply before
+  the force multiplier.</li>
+<li>With the defaults (own environment, no hazards, ×1) the copy equals the mission (tested).</li>
+<li><code>SimSetup</code> is plain data and <code>apply</code> and <code>ship_allowed</code> are pure, so the logic is unit-tested
+  without a window; the drawing is a manual test (MT-3-51 – MT-3-54).</li>
 </ul>
 <h3 id="scenarios-shipped">Scenarios shipped<a class="headerlink" href="#scenarios-shipped" title="Permanent link">&para;</a></h3>
 <table>
@@ -6333,7 +6503,27 @@ the <code>default</code> campaign; <code>rocket-vs-saucer</code> takes its place
 </tr>
 <tr>
 <td><code>Next</code></td>
-<td><code>Stay</code>, <code>Launcher</code>, <code>Viewer</code>, <code>Assets</code>, <code>Controls</code>, <code>Reload { campaign, difficulty }</code>, <code>Fly { scenario, ship }</code>, <code>Mission { mission, ship }</code>, <code>Quit</code>.</td>
+<td><code>Stay</code>, <code>Launcher</code>, <code>Viewer</code>, <code>Assets</code>, <code>Controls</code>, <code>Reload { campaign, difficulty }</code>, <code>Fly { scenario, ship }</code>, <code>Mission { mission, ship }</code>, and since app 0.6.3 <code>Simulator</code> (the setup screen) and <code>Simulate { mission: Box&lt;MissionDef&gt;, ship }</code> (fly a modified mission), <code>Quit</code>.</td>
+</tr>
+<tr>
+<td><code>launcher::Entry</code></td>
+<td><code>ModelViewer</code>, <code>AssetBrowser</code>, <code>Controls</code>, <code>Simulator</code>, <code>Scenario(i)</code>, <code>Mission(i)</code>.</td>
+</tr>
+<tr>
+<td><code>simulator::Simulator</code>, <code>SimSetup</code>, <code>FORCES</code></td>
+<td>The setup screen (<code>new</code>, <code>frame</code>); the choices (indices and switches); the force multipliers <code>[0.5, 1, 1.5, 2]</code>.</td>
+</tr>
+<tr>
+<td><code>simulator::apply(&amp;MissionDef, &amp;SimSetup, &amp;Ruleset) -&gt; MissionDef</code></td>
+<td>The modified copy (pure, tested).</td>
+</tr>
+<tr>
+<td><code>simulator::hazard_classes(&amp;Ruleset)</code>, <code>simulator::ship_allowed(&amp;Ruleset, ShipClassId, Option&lt;&amp;str&gt;)</code></td>
+<td>The campaign's asteroid and mine classes; why a ship may not fly in an environment (<code>None</code> = allowed).</td>
+</tr>
+<tr>
+<td><code>flight::FlightSession::start_custom(ctx, MissionDef, ship)</code></td>
+<td>Starts a simulator mission and remembers it for "again".</td>
 </tr>
 <tr>
 <td><code>launcher::next_campaign(&amp;Content)</code>, <code>next_difficulty(&amp;Content) -&gt; Option&lt;String&gt;</code></td>
@@ -6389,6 +6579,8 @@ the <code>default</code> campaign; <code>rocket-vs-saucer</code> takes its place
 <ul>
 <li><code>app::run(Options).await</code>.</li>
 <li><code>FlightSession::start(&amp;mut AppContext, scenario_id, ship: Option&lt;&amp;str&gt;) -&gt; Result&lt;FlightSession, String&gt;</code>,
+  <code>FlightSession::start_custom(&amp;mut AppContext, MissionDef, ship: Option&lt;&amp;str&gt;)</code>,
+  <code>Simulator::new().frame(&amp;mut ctx) -&gt; Next</code>,
   <code>session.frame(&amp;mut ctx) -&gt; Next</code>, <code>session.view</code>.</li>
 <li><code>Launcher::new(&amp;ctx).frame(&amp;mut ctx)</code>, <code>ModelViewer::new(&amp;ctx).frame(&amp;mut ctx)</code>,
   <code>AssetBrowser::new(&amp;ctx).frame(&amp;mut ctx).await</code>.</li>
@@ -6409,6 +6601,9 @@ the <code>default</code> campaign; <code>rocket-vs-saucer</code> takes its place
   how long the defended object holds on its own (<code>SoakPilot::Idle</code>).</li>
 <li>A layout saved by F12 that seems ignored: the addon targets the campaign that was loaded when
   it was saved; check <code>--list</code> shows <code>&lt;campaign&gt;-cockpit-&lt;id&gt;</code> and that it is not disabled.</li>
+<li>A simulator row that does nothing: the campaign has no asteroid class (no id containing
+  <code>asteroid</code>) or no <code>kind: mine</code> class; the row says "(none in this campaign)". A Fly that does
+  nothing: read the orange line under the rows (a ship that cannot enter an atmosphere).</li>
 <li><code>openinterceptor --mission defend_station --ship comet</code> starts a mission directly;
   <code>--soak defend_station --soak-pilot ai --seconds 400</code> plays it headless and prints the result.</li>
 </ul>

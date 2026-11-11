@@ -3740,6 +3740,8 @@
       
         
       
+        
+      
     
     
     
@@ -3906,6 +3908,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3924,6 +3954,8 @@
       
         
           
+        
+      
         
       
         
@@ -4287,6 +4319,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -5907,6 +5967,11 @@
 <td>0.2.0</td>
 <td>2026-11-10</td>
 <td>Reconciled with the Stage 1 code as built (main <code>cf374a7</code>): architecture pages with real symbols, data/logic/event flows; controls from the bindings tables; modding reference for every rules and scenario key, plus <em>Make your first mod</em>; deviations DEV-008 – DEV-018; dependency evaluation (macroquad audio, glam, image); generated unit-test list (146); Stage 1 manual cases rewritten for the real scenarios; implementation status; command-line reference</td>
+</tr>
+<tr>
+<td>0.18.0</td>
+<td>2026-11-11</td>
+<td><strong>Definition and Specification 1.12.0.</strong> <strong>Stage 3.7, 3.9 and 3.12 (app 0.6.2 – 0.6.4; main <code>5bdb47f</code>, <code>1d13b59</code>, <code>c3fb959</code>, <code>3866c34</code>, <code>90653b9</code>):</strong> radio voices, the simulator and five default missions. R-MSN-007 (voices) and R-MSN-010 (simulator) rewritten as built and implemented, with an Open note asking the user to identify the <code>interceptor</code> pilot clips; F-MSN-003, F-MSN-005 implemented; R-CPN-004 progress note; R-TST-009 partly met and F-TST-004 in progress (the mission browser is the simulator; the condition console is not built). <strong>Stage 3.10:</strong> the Tier 2 scripting dependency evaluation — <code>mlua</code>, <code>rhai</code>, growing <code>script::*</code> — on <em>Dependency policy</em>, recommending growing the in-crate language with <code>mlua</code> as the fallback, <strong>awaiting the user's decision</strong> (R-MOD-015, <em>Format: behaviours and scripting</em>, <em>Scripting</em>). Modding: new page <em>Radio voices</em>; <code>voices</code>, ship <code>voice</code>, chatter <code>voice</code>, <code>mission_accomplished</code> / <code>mission_failed</code> and <code>atmospheric</code> (now used by the simulator) in the <em>Mod file reference</em>; <em>Missions</em> gains the five new missions as examples; <em>Environments and terrain</em>. User guide: new page <em>Simulator</em>. Architecture: <em>Audio</em> (voice clips, <code>SoundKey::Voice</code>), <em>Testbed</em> (the simulator screen, <code>Next::Simulator</code>, <code>Next::Simulate</code>, the launcher's start), <em>Missions</em> (<code>voices</code>, <code>kills()</code>, the 300 m spawn lift), <em>Packs</em> (voices, the eight-level original-data index). Status and Stage 3 plan (3.7, 3.9, 3.12 done; 3.10 awaiting the decision; 3.1, 3.11, 3.13 remain); unit-test list (four new tests; 325 by a source count); MT-3-47 – MT-3-59</td>
 </tr>
 <tr>
 <td>0.17.0</td>

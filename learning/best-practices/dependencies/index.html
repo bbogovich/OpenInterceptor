@@ -3740,6 +3740,8 @@
       
         
       
+        
+      
     
     
     
@@ -3906,6 +3908,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3924,6 +3954,8 @@
       
         
           
+        
+      
         
       
         
@@ -4287,6 +4319,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -5435,6 +5495,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier 2 scripting, evaluated (Stage 3.10) — awaiting the user's decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 2 scripting, evaluated (Stage 3.10) — awaiting the user&#39;s decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommendation-the-evaluators-awaiting-the-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation (the evaluator's; awaiting the user)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-candidates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next candidates
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6040,6 +6139,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier 2 scripting, evaluated (Stage 3.10) — awaiting the user's decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 2 scripting, evaluated (Stage 3.10) — awaiting the user&#39;s decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommendation-the-evaluators-awaiting-the-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendation (the evaluator's; awaiting the user)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-candidates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next candidates
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6181,7 +6319,147 @@ files and nothing of it enters the codebase. See
 <p><strong><code>.glb</code> (planned, MD10)</strong> is read in-crate: the glTF JSON chunk with <code>remote::json</code> and the
 binary buffers; no crate is added
 (<a href="../../../specification/requirements/modding/#r-mod-053-single-file-models">R-MOD-053</a>).</p>
-<p>The next candidate is the Tier 2 scripting language (see <a href="../../../modding/scripting/">Scripting</a>).</p>
+<h2 id="tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Tier 2 scripting, evaluated (Stage 3.10) — awaiting the user's decision<a class="headerlink" href="#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Awaiting the user's decision</p>
+<p>This is the evaluation <a href="../../../specification/requirements/modding/#r-mod-015-tier-2-scripting-decision">R-MOD-015</a>
+asks for <strong>before</strong> a second-tier script language is added. <strong>No decision has been made.</strong>
+The recommendation below is the evaluator's; the user decides. Nothing is added to
+<code>Cargo.toml</code> until then. GitHub issue #16.</p>
+</div>
+<p><strong>The question.</strong> Tier 1 — behaviours as state machines, missions as definitions, and the
+checked condition and action language (<code>script::*</code>) — carries both shipped campaigns. Tier 2 is
+for what Tier 1 cannot express: logic with memory and branching, such as a boss with phases, a
+custom ending, or an event chain that counts and remembers
+(<a href="../../../specification/design/format-behaviour/#tier-2-scripts">Format: behaviours and scripting › Tier 2</a>).
+Whatever the language, the <a href="../../../specification/design/format-behaviour/#tier-2-scripts">design</a>
+already fixes its contract: scripts are called through hooks, see <strong>only</strong> the documented query
+and action API, run on the 60 Hz simulation tick, are deterministic (no clock, files or network;
+random numbers only from the game's generator) and keep state only through the API, so a save
+never serialises a script VM.</p>
+<p>Three options:</p>
+<ul>
+<li><strong>(a) <code>mlua</code></strong> — Rust bindings to Lua 5.4 (or LuaJIT, or Luau), building the Lua C sources
+  that it bundles (the <code>vendored</code> feature).</li>
+<li><strong>(b) <code>rhai</code></strong> — an embedded scripting language written in Rust.</li>
+<li><strong>(c) Grow <code>script::*</code></strong> — extend the in-crate condition and action language into a small
+  statement language: local variables, <code>if</code> / <code>else</code>, bounded loops, functions, and calls into
+  the same checked queries and actions.</li>
+</ul>
+<p><strong>What could not be verified.</strong> This evaluation was written without network access. Release
+history, maintainer counts and dependency trees below are from the evaluator's knowledge of the
+crates up to 2025, marked <em>(unverified)</em>; before adding either crate, check them on crates.io
+and the repositories, and record the exact version and <code>cargo tree</code> output here. The lines-of-code
+figures for (c) are counted from main <code>90653b9</code>; the estimate of its growth is <em>derived</em>.</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>(a) <code>mlua</code></th>
+<th>(b) <code>rhai</code></th>
+<th>(c) grow <code>script::*</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Feature complexity</strong></td>
+<td>A full language VM — garbage collector, coroutines, tables, closures, standard library — is genuinely hard; so is a <em>safe</em> binding over Lua's C API (errors that <code>longjmp</code>, userdata lifetimes, panics across the FFI boundary). Not something to build here.</td>
+<td>The same scope in pure Rust: parser, AST optimiser, closures, modules, a dynamic value type. Genuinely hard to build, but more than Tier 2 needs.</td>
+<td>Modest, and the hard parts exist: the lexer, recursive-descent parser, type checker and evaluator are ~540 lines in <code>script/mod.rs</code>, with the battle and object contexts (~160 lines each) and actions (~150). Statements, scopes, a call stack and an operation budget add an estimated <strong>800 – 1 200 lines</strong> with tests <em>(derived)</em>. The expensive part is design and documentation, not code.</td>
+</tr>
+<tr>
+<td><strong>Stability</strong></td>
+<td>Lua 5.4 itself: decades of slow, careful releases from a three-person team at PUC-Rio. <code>mlua</code>: a 2019 fork of <code>rlua</code>, still <strong>0.x</strong> — its minor releases (0.9 → 0.10 → 0.11) have changed the API <em>(unverified)</em>. One principal maintainer: <strong>bus factor ≈ 1</strong> <em>(unverified)</em>. LuaJIT is effectively one maintainer and stops at Lua 5.1 semantics.</td>
+<td>1.x since 2021 with frequent releases that have kept 1.x compatible <em>(unverified)</em>. Started by one author, maintained for several years mainly by one other in the <code>rhaiscript</code> organisation: <strong>bus factor ≈ 1</strong> <em>(unverified)</em>.</td>
+<td>Ours. It changes only when this project changes it; no upstream can break the build. The cost is that we carry it forever.</td>
+</tr>
+<tr>
+<td><strong>Transitive tree</strong></td>
+<td><code>mlua-sys</code> plus <code>lua-src</code> (or <code>luajit-src</code>) for the bundled C sources; at build time <strong><code>cc</code></strong> and <strong><code>pkg-config</code></strong>, and a <strong>C compiler</strong> on every platform (macOS already needs one for the gamepad shim; Linux and Windows builders would too). A handful of small Rust crates besides (for example <code>bstr</code>, <code>num-traits</code>, <code>rustc-hash</code>) <em>(unverified)</em>. C code in the process; cross-compiling and a WebAssembly build (macroquad can target the web) become harder.</td>
+<td>Pure Rust, but <strong>several crates</strong>: for example <code>ahash</code> (with <code>getrandom</code>, <code>once_cell</code>, <code>zerocopy</code>), <code>smartstring</code>, <code>thin-vec</code>, <code>num-traits</code>, <code>bitflags</code>, a time crate, and the procedural macro crate <code>rhai_codegen</code> with <code>syn</code>, <code>quote</code>, <code>proc-macro2</code> — roughly 15 – 20 crates and noticeably longer clean builds <em>(unverified)</em>.</td>
+<td><strong>None.</strong></td>
+</tr>
+<tr>
+<td><strong>How much would be used</strong></td>
+<td>A small fraction: one VM state, a dozen registered functions, a few userdata types, limits. Not async, serde, modules, the C module loader or most of the standard library.</td>
+<td>A small fraction: <code>Engine</code>, compile to AST, registered functions, limits. Not modules, serde, metadata, the optimiser's levels or the codegen macros beyond registration.</td>
+<td>All of it, by construction: only what modders need is built.</td>
+</tr>
+<tr>
+<td><strong>Licence</strong></td>
+<td><code>mlua</code> MIT; Lua 5.4 MIT; LuaJIT MIT; Luau MIT.</td>
+<td>MIT OR Apache-2.0.</td>
+<td>The project's own (MIT).</td>
+</tr>
+<tr>
+<td><strong>Sandboxing</strong></td>
+<td>Possible but <strong>opt-in</strong>: load only safe libraries (no <code>io</code>, <code>os</code>, <code>package</code>, <code>debug</code>, <code>load</code> of bytecode), a memory limit, an instruction-count hook to stop runaway scripts. The VM is C: a bug there or in the binding is memory-unsafe in our process. <strong>Determinism needs care</strong>: Lua uses <code>f64</code> where the simulation uses <code>f32</code>, and <code>pairs()</code> order over string-keyed tables depends on a per-state hash seed that Lua 5.4 randomises by default <em>(derived)</em> — replays could diverge unless that is controlled.</td>
+<td>Good: no file, network or clock access unless registered; limits on operations, call depth, string, array and map sizes, and a progress callback to abort. Memory-safe Rust. Maps are ordered, so iteration is deterministic <em>(unverified)</em>. Errors such as calling an unknown function surface <strong>at run time</strong>, not at load.</td>
+<td><strong>By construction</strong>: the only effects are the actions in the checked table, the only inputs the documented queries, values are <code>f32</code> like the simulation, and there is no I/O to remove. Every name, argument and type is <strong>checked when the files load</strong>, as conditions are today; an operation budget per hook call guarantees that a loop finishes.</td>
+</tr>
+<tr>
+<td><strong>Modder experience</strong></td>
+<td>Lua is the most widely known game-modding language; editors, tutorials and debuggers exist.</td>
+<td>Rust-like syntax; few modders know it; good error messages.</td>
+<td>One language from condition to script: a modder who writes <code>hull &lt; 25%</code> today writes <code>if hull &lt; 25% { message(@msg.retreat) }</code> tomorrow, and <code>--check</code> catches mistakes before play. No outside tutorials or debugger; the docs site must teach it.</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>Fast (LuaJIT very fast).</td>
+<td>A tree-walking interpreter, several times slower than Lua <em>(unverified)</em>; fine for hooks, poor for per-tick logic on many ships.</td>
+<td>Like today's conditions: a tree walk over pre-resolved query indices with no allocation. Fast enough for hooks; not a general-purpose fast path.</td>
+</tr>
+<tr>
+<td><strong>Teaching value (objective 2)</strong></td>
+<td>Shows FFI and embedding, which <code>platform</code> already shows.</td>
+<td>Shows embedding a Rust library.</td>
+<td>Shows how an interpreter grows from expressions to statements, scopes and a call stack — a classic exercise, in code already documented for beginners.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What (c) would be.</strong> A <em>small</em> statement language over the same checked API, not a
+general-purpose one:</p>
+<div class="highlight"><pre><span></span><code># a hook body (illustrative syntax, not a decided design)
+let shots = 0
+if hull &lt; 25% and not system_damaged(engines) {
+    message(@msg.guardian_enraged)
+    for each member of guards { order(member, attack_player) }
+} else {
+    shots = shots + 1
+}
+def enraged() { return hull &lt; 25% }
+</code></pre></div>
+<ul>
+<li>Local variables (numbers, true/false, names) live for one hook call; anything that must last
+  goes through actions (<code>set_flag</code>, counters, object variables), as the design requires.</li>
+<li>Loops are bounded: over a role's members or a counted range, plus an operation budget per call.</li>
+<li>Functions are defined in the pack and checked for their arguments; no recursion (or a fixed
+  depth).</li>
+<li>Strings, tables, closures and libraries are deliberately out of scope.</li>
+</ul>
+<p><strong>Its ceiling.</strong> (c) cannot host what needs general-purpose data structures or algorithms: a
+procedural generator, a custom AI planner, string processing, a mod's own data tables. If mods
+need that, a real language is needed, and the choice between (a) and (b) comes back.</p>
+<h3 id="recommendation-the-evaluators-awaiting-the-user">Recommendation (the evaluator's; awaiting the user)<a class="headerlink" href="#recommendation-the-evaluators-awaiting-the-user" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Default: (c), grow <code>script::*</code>.</strong> Under the dependency policy a dependency is added only
+   when building the feature here would be prohibitively expensive. It would not be: the lexer,
+   parser, checker and evaluator exist; mods already use the language; it is checked at load,
+   deterministic and sandboxed by construction; and it adds nothing to the tree. Both shipped
+   campaigns need only Tier 1, so the extension can be built when a mod first needs it.</li>
+<li><strong>Fallback: (a), <code>mlua</code> with Lua 5.4 (vendored)</strong>, if mods turn out to need a full
+   general-purpose language. Lua is what modders know, it is fast, and its C core is among the
+   most stable code there is; the costs — a C build, an FFI boundary, opt-in sandboxing and the
+   determinism care above — are known and containable behind the same hook API. It would need
+   the version, <code>cargo tree</code> and the sandbox and determinism settings recorded here first.</li>
+<li><strong>(b) <code>rhai</code></strong> is not recommended now: it costs more crates than (a) for a language few
+   modders know, with run-time rather than load-time errors. It is the option to reconsider if
+   a pure-Rust or WebAssembly build becomes a requirement, where (a)'s C code is the obstacle.</li>
+</ol>
+<p>Whatever is chosen, the hook API is the same, so a Tier 1 definition that calls a hook does not
+change if the language behind it does.</p>
+<h2 id="next-candidates">Next candidates<a class="headerlink" href="#next-candidates" title="Permanent link">&para;</a></h2>
+<p>None pending. The Tier 2 language above awaits the user's decision.</p>
 
 
 

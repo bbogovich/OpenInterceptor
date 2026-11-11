@@ -3824,6 +3824,8 @@
       
         
       
+        
+      
     
     
     
@@ -3990,6 +3992,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4008,6 +4038,8 @@
       
         
           
+        
+      
         
       
         
@@ -4371,6 +4403,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6012,9 +6072,17 @@ so it is not in the count from macOS.</p>
 0.4.3 – 0.6.1 without the full list being regenerated; those named below are listed (the
 summary rows of <code>hud</code>, <code>remote::protocol</code> and <code>sim::systems</code> include the 0.4.11 – 0.5.0 ones, and
 the rows of <code>content::hazards</code>, <code>content::environment</code>, <code>sim::hazards</code>, <code>sim::env</code>,
-<code>render::terrain</code> and <code>hud::draw</code> the 0.5.1 – 0.6.1 ones). A count of the <code>#[test]</code> functions in
-<code>src/</code> at main <code>de417df</code> (app 0.6.1), read with grep and not a build, gives <strong>321</strong> run on macOS
-(323 less the Linux-only test and the ignored helper below). App <strong>0.6.1</strong> (main <code>de417df</code>) adds
+<code>render::terrain</code> and <code>hud::draw</code> the 0.5.1 – 0.6.1 ones, and the rows of <code>app::flight</code>,
+<code>app::simulator</code> and <code>sim::env</code> the 0.6.2 – 0.6.4 ones). A count of the <code>#[test]</code> functions in
+<code>src/</code> at main <code>90653b9</code> (app 0.6.4), read with grep and not a build, gives <strong>325</strong> run on macOS
+(327 less the Linux-only test and the ignored helper below; 321 at main <code>de417df</code>, app 0.6.1).
+App <strong>0.6.4</strong> (main <code>90653b9</code>) adds
+<code>sim::env::tests::craft_spawned_low_over_a_ground_are_lifted_clear_of_it</code>; app <strong>0.6.3</strong> (main
+<code>1d13b59</code>) adds <code>app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only</code>
+and <code>ships_that_cannot_enter_an_atmosphere_are_refused_there</code> (and updates the launcher's menu
+tests for the Simulator entry); app <strong>0.6.2</strong> (main <code>5bdb47f</code>) adds
+<code>app::flight::tests::a_wingman_answers_in_its_own_voice</code> (and voice sets in
+<code>content::rules::tests::builds_typed_definitions_with_inheritance</code>). App <strong>0.6.1</strong> (main <code>de417df</code>) adds
 <code>sim::env::tests::ground_installations_are_set_down_on_the_terrain</code>; app <strong>0.6.0</strong> (main
 <code>af003f6</code>) adds <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>,
 <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code>,
@@ -6118,7 +6186,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <tr>
 <td><code>content::rules</code></td>
 <td>6</td>
-<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong></td>
+<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, <strong>voice sets and their clips</strong>, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong></td>
 </tr>
 <tr>
 <td><code>content::equipment</code></td>
@@ -6227,8 +6295,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::env</code></td>
-<td>4</td>
-<td>Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the <code>lift</code> speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain</td>
+<td>5</td>
+<td>Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the <code>lift</code> speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain; <strong>craft spawned below 300 m over a ground are lifted to 300 m</strong></td>
 </tr>
 <tr>
 <td><code>script</code></td>
@@ -6337,13 +6405,18 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>app::flight</code></td>
-<td>5</td>
-<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages)</td>
+<td>6</td>
+<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one)</td>
+</tr>
+<tr>
+<td><code>app::simulator</code></td>
+<td>2</td>
+<td><strong>A setup changes only the environment, hazards and enemy force</strong> (the defaults change nothing; enemies ×2, friends unchanged, never below one); <strong>ships that cannot enter an atmosphere are refused there</strong></td>
 </tr>
 <tr>
 <td><code>app::launcher</code></td>
 <td>3</td>
-<td>Menu entries (viewer, asset browser, controls, scenarios) and wrapping, ship choice only when choosing, <strong>next campaign</strong>, text wrapping</td>
+<td>Menu entries (viewer, asset browser, controls, simulator, scenarios; starting on the first scenario) and wrapping, ship choice only when choosing, <strong>next campaign</strong>, text wrapping</td>
 </tr>
 <tr>
 <td><code>app::viewer</code></td>
@@ -6406,8 +6479,9 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <p>Generated from the <code>#[test]</code> functions in <code>src/</code> at main <code>bf7b7ce</code> (read with grep, not a build).</p>
 <p><strong><code>app::assets</code></strong>: <code>no_original_data_means_empty_lists</code>, <code>tabs_cycle</code></p>
 <p><strong><code>app::devices</code></strong>: <code>key_names_match_the_bindings_vocabulary</code>, <code>known_names_are_real_keycodes</code></p>
-<p><strong><code>app::flight</code></strong>: <code>chase_orbit_responds_and_resets</code>, <code>cockpit_fov_widens_only_on_narrow_screens</code>, <code>commands_target_and_order_wingmen</code>, <code>events_become_pilot_messages</code>, <code>views_place_the_camera</code></p>
+<p><strong><code>app::flight</code></strong>: <code>a_wingman_answers_in_its_own_voice</code>, <code>chase_orbit_responds_and_resets</code>, <code>cockpit_fov_widens_only_on_narrow_screens</code>, <code>commands_target_and_order_wingmen</code>, <code>events_become_pilot_messages</code>, <code>views_place_the_camera</code></p>
 <p><strong><code>app::launcher</code></strong>: <code>menu_lists_viewer_and_scenarios_and_wraps</code>, <code>scenarios_start_with_the_chosen_ship_only_when_choosing</code>, <code>wrapping_text</code></p>
+<p><strong><code>app::simulator</code></strong>: <code>a_setup_changes_environment_hazards_and_enemy_force_only</code>, <code>ships_that_cannot_enter_an_atmosphere_are_refused_there</code></p>
 <p><strong><code>app::viewer</code></strong>: <code>a_still_wheel_does_not_zoom</code>, <code>default_entries_list_every_class</code>, <code>display_modes_cycle</code>, <code>entries_are_found_by_ship_id_or_mesh_name</code>, <code>face_info_describes_a_face</code>, <code>looks_cover_damage_states_and_debris</code>, <code>near_plane_moves_out_to_the_model</code>, <code>orbit_input_clamps</code>, <code>orbit_looks_at_the_origin_from_its_distance</code></p>
 <p><strong><code>audio</code></strong>: <code>attenuation_falls_with_distance</code>, <code>events_choose_sounds_and_volumes</code></p>
 <p><strong><code>check</code></strong>: <code>broken_definitions_are_errors</code>, <code>the_default_campaign_passes</code></p>
@@ -6469,7 +6543,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <p><strong><code>sim::collision</code></strong>: <code>segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code></p>
 <p><strong><code>sim::combat</code></strong>: <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>, <code>a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>beams_fire_cost_energy_respect_cooldown_and_hit</code>, <code>beams_need_energy</code>, <code>damage_layers_and_aft_shield</code>, <code>empty_racks_report_and_cycle</code>, <code>fighters_bounce_off_each_other_and_stations</code>, <code>link_modes_cycle_and_change_how_many_fire</code>, <code>lock_builds_in_the_cone_and_missile_homes_in</code>, <code>lock_is_lost_outside_the_cone_and_dumbfire_works</code>, <code>point_defence_shoots_down_hostile_missiles</code>, <code>proximity_fuse_fires_on_a_near_miss</code>, <code>rotate_towards_limits_the_turn</code>, <code>with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried</code></p>
 <p><strong><code>sim::flight</code></strong>: <code>afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off</code>, <code>assisted_model_holds_throttle_speed_and_damps_drift</code>, <code>brake_stops_against_the_direction_of_travel</code>, <code>energy_and_shields_recharge_up_to_capacity</code>, <code>half_throttle_is_half_the_acceleration</code>, <code>helpers</code>, <code>newtonian_accelerates_to_the_cap_and_coasts</code>, <code>pitching_up_raises_the_nose_and_rates_fall_with_speed</code>, <code>reverse_thrust_slows_and_then_backs_up</code>, <code>speed_hold_matches_speed_and_cancels_drift</code>, <code>static_objects_do_not_move</code>, <code>the_arena_edge_halts_outward_motion</code>, <code>turning_does_not_steer_the_velocity</code>, <code>vct_thrusts_sideways</code>, <code>yaw_right_and_roll_right_turn_the_expected_way</code></p>
-<p><strong><code>sim::env</code></strong>: <code>ai_pilots_pull_up_near_the_ground</code>, <code>drag_gravity_and_lift_act_in_air_and_not_in_space</code>, <code>gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit</code>, <code>ground_installations_are_set_down_on_the_terrain</code></p>
+<p><strong><code>sim::env</code></strong>: <code>ai_pilots_pull_up_near_the_ground</code>, <code>craft_spawned_low_over_a_ground_are_lifted_clear_of_it</code>, <code>drag_gravity_and_lift_act_in_air_and_not_in_space</code>, <code>gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit</code>, <code>ground_installations_are_set_down_on_the_terrain</code></p>
 <p><strong><code>sim::guidance</code></strong>: <code>cloaked_wait_sleeps_until_prey_comes_near</code>, <code>cluster_splits_into_submunitions</code>, <code>damage_modes</code>, <code>doppelganger_launches_a_decoy_ship_that_expires</code>, <code>homing_hits_and_dumbfire_misses_an_offset_target</code>, <code>parallax_decoys_lure_enemy_missiles</code>, <code>sidestep_still_arrives</code></p>
 <p><strong><code>sim::hazards</code></strong>: <code>a_black_hole_pulls_harder_when_near_and_swallows_what_crosses_its_radius</code>, <code>ai_pilots_turn_away_from_a_black_hole</code>, <code>an_ion_storm_shortens_radar_range</code>, <code>asteroid_fields_and_minefields_are_scattered_clear_of_craft</code></p>
 <p><strong><code>sim::systems</code></strong>: <code>balance_caps_and_message</code>, <code>cloaked_ships_vanish_from_enemy_sensors_beyond_range</code>, <code>cycling_wraps_to_a</code>, <code>damage_knocks_systems_out_and_repairs_bring_them_back</code>, <code>disabled_when_engines_and_manoeuvring_are_out</code>, <code>ecm_makes_incoming_missiles_lose_their_target</code>, <code>hyperspace_counts_down_aborts_and_departs</code>, <code>raising_takes_power_from_the_other_setting</code>, <code>requests_change_power_and_balance</code>, <code>shield_balance_moves_points_forward_and_recharge_follows_power</code>, <code>sliders_set_power_levels_and_balance_outright</code>, <code>systems_can_be_destroyed_beyond_repair</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>, <code>tractor_needs_power_a_fitting_and_a_target_in_range</code></p>

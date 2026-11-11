@@ -3802,6 +3802,8 @@
       
         
       
+        
+      
     
     
     
@@ -3968,6 +3970,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3986,6 +4016,8 @@
       
         
           
+        
+      
         
       
         
@@ -4349,6 +4381,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -5961,7 +6021,8 @@
 <p><strong>Version 0.4.0. Status: in progress</strong> — part 1 (missions as data) shipped in app 0.3.0, main
 <code>d7553f5</code>, 2026-11-11; hazards in app 0.5.1 (main <code>70d68e2</code>); environments, atmospheric flight,
 terrain and the atmosphere HUD in app 0.6.0 (main <code>af003f6</code>); ground installations in app 0.6.1
-(main <code>de417df</code>). Missions become data: roles, waves, objectives and
+(main <code>de417df</code>); radio voices in app 0.6.2 (main <code>5bdb47f</code>); the simulator in app 0.6.3 (main
+<code>1d13b59</code>, <code>c3fb959</code>); five more default missions in app 0.6.4 (main <code>3866c34</code>, <code>90653b9</code>). Missions become data: roles, waves, objectives and
 outcomes, in space and — new to this engine — on planet surfaces with atmospheric flight.</p>
 <p>Design: <a href="../../../specification/design/format-missions/">missions and events</a>,
 <a href="../../../specification/design/format-behaviour/">behaviours and scripting</a>.</p>
@@ -6016,7 +6077,7 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.7</td>
 <td>Wingman comms menu and orders; radio chatter by trigger; voices</td>
 <td><code>sim</code>, <code>audio</code>, <code>hud</code></td>
-<td><strong>Partial:</strong> wingman comms menu and orders (Stage 2); radio chatter by condition (missions). Voices planned.</td>
+<td><strong>Done</strong> (voices app 0.6.2, main <code>5bdb47f</code>): wingman comms menu and orders (Stage 2); radio chatter by condition (missions); <code>voices:</code> sets and ship <code>voice:</code> — wingmen answer orders (<code>acknowledge</code>) and status requests (<code>status</code>), another reports a wingman lost (<code>down</code>); chatter <code>voice:</code> clips; the computer voice at the debrief (<code>mission_accomplished</code>, <code>mission_failed</code>). Default: synthesised <code>guard_pilot</code> clips; <code>interceptor</code>: computer voice from the cue table, <strong>pilot clips not mapped</strong> until their lines are identified (Open note, R-MSN-007). GitHub #14.</td>
 </tr>
 <tr>
 <td>3.8</td>
@@ -6028,13 +6089,13 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.9</td>
 <td>Simulator missions with a setup screen</td>
 <td><code>app</code></td>
-<td>Planned.</td>
+<td><strong>Done</strong> (app 0.6.3, main <code>1d13b59</code>, <code>c3fb959</code>): the launcher's <em>Simulator</em> — mission, ship, environment, asteroids, minefield, black hole, ion storm, enemy force (×0.5 – ×2), Fly; a modified copy of the mission (<code>simulator::apply</code>) flown by the ordinary mission code; "again" flies the same setup; <code>atmospheric: false</code> refused in an atmosphere. GitHub #15.</td>
 </tr>
 <tr>
 <td>3.10</td>
-<td><strong>Tier 2 script language decision</strong> (Lua via <code>mlua</code> recommended): dependency evaluation recorded on the dependency page, then hooks (<code>do: script</code>, <code>do: ["script(...)"]</code>) and the sandboxed API</td>
+<td><strong>Tier 2 script language decision</strong>: dependency evaluation recorded on the dependency page, then hooks (<code>do: script</code>, <code>do: ["script(...)"]</code>) and the sandboxed API</td>
 <td><code>script</code></td>
-<td>Planned.</td>
+<td><strong>Evaluation recorded; awaiting the user's decision.</strong> <a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Tier 2 scripting, evaluated</a> compares (a) <code>mlua</code> (Lua 5.4), (b) <code>rhai</code> and (c) growing <code>script::*</code> into a small statement language; the evaluator recommends (c) as the default under the dependency policy, with (a) as the fallback if mods need a full general-purpose language. Hooks and the API follow the decision. GitHub #16.</td>
 </tr>
 <tr>
 <td>3.11</td>
@@ -6046,7 +6107,7 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.12</td>
 <td><code>default</code>: the 11 generated mission types (2 on surfaces) and chapter missions 1, 2, 4, 5 playable from the testbed; terrain and sky assets generated</td>
 <td><code>resources/default</code>, <code>tools</code></td>
-<td><strong>Started:</strong> 4 missions — <code>defend_station</code>, <code>convoy_ambush</code>, <code>construction_defence</code>, <code>intercept_scouts</code> — with text in <code>text/en/missions.yaml</code>.</td>
+<td><strong>Done for Stage 3</strong> (app 0.6.4, main <code>3866c34</code>, <code>90653b9</code>): nine missions — <code>defend_station</code>, <code>convoy_ambush</code>, <code>construction_defence</code>, <code>intercept_scouts</code>, and <code>colony_defence</code> (<code>moon_surface</code>, protect <code>guard_colony</code>), <code>ground_strike</code> (<code>dusk_hills</code>, <code>dominion_flak</code>, a timer draw), <code>outpost_raid</code> (<code>orbit</code>, <code>dominion_outpost</code>, wingmen), <code>asteroid_hunt</code> (asteroid hazard), <code>pocket_ambush</code> (<code>pocket</code>, 65 % ion storm, hot-rods) — each with briefing, chatter and debriefs including <code>killed</code>. Craft spawned below 300 m over a ground are lifted to 300 m. Terrain and sky are generated by the environments (no separate assets). <strong>Moved:</strong> the chapter story missions go with the arc (Stage 5); generating the mission types from the campaign is the strategy layer (Stage 4). GitHub #18.</td>
 </tr>
 <tr>
 <td>3.13</td>
@@ -6057,10 +6118,13 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 </tbody>
 </table>
 <p><strong>Testbed adds</strong> (so far: missions on the launcher with scrolling, <code>--mission</code>, <code>--soak &lt;mission&gt;</code>;
+the <strong>simulator</strong> as the mission browser (app 0.6.3; every mission of the loaded campaign, the
+force on its screen, the difficulty from the launcher) and, with its environments, the terrain
+sandbox;
 hazard scenarios <code>hazard-asteroids</code>, <code>hazard-black-hole</code>, <code>hazard-minefield</code> and environment
 scenarios <code>env-orbit</code>, <code>env-pocket</code>, <code>surface-moon</code>, <code>surface-hills</code>, <code>surface-colony</code>,
-<code>surface-strike</code> — the surface ones serve as the terrain flight sandbox for now): a mission browser (every mission type of both campaigns, with difficulty and
-force choices), a terrain flight sandbox (atmospheric handling on several worlds), and a
+<code>surface-strike</code>. Remaining: a condition-language console (GitHub #20). Planned originally: a mission browser (every mission type of both campaigns, with difficulty and
+force choices — done as the simulator), a terrain flight sandbox (atmospheric handling on several worlds — done through the simulator and the surface scenarios), and a
 condition-language console.</p>
 <p><strong>Exit</strong>: every mission type winnable and losable in the testbed; atmospheric flight feels
 distinct from space (manual test); the language fully unit-tested (parser, types, evaluation,

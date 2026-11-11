@@ -14,7 +14,7 @@
         <link rel="prev" href="../text/">
       
       
-        <link rel="next" href="../reference/">
+        <link rel="next" href="../voices/">
       
       
         
@@ -3740,6 +3740,8 @@
       
         
       
+        
+      
     
     
     
@@ -3906,6 +3908,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3926,6 +3956,8 @@
       
         
           
+        
+      
         
       
         
@@ -4454,6 +4486,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The missions shipped">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples-environments-hazards-and-ground-installations-app-064" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples: environments, hazards and ground installations (app 0.6.4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4471,6 +4520,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -6157,6 +6234,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The missions shipped">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples-environments-hazards-and-ground-installations-app-064" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples: environments, hazards and ground installations (app 0.6.4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6325,9 +6419,9 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 </tr>
 <tr>
 <td><code>chatter</code></td>
-<td>list of <code>{when, line}</code></td>
+<td>list of <code>{when, line, voice}</code></td>
 <td>none</td>
-<td>Radio lines, each said once when its condition first holds.</td>
+<td>Radio lines, each said once when its condition first holds. <code>voice</code> (optional, app 0.6.2) is a sound asset spoken on the radio with the line: <code>voice: sounds/colony_control.wav</code> (<a href="../voices/">Radio voices</a>).</td>
 </tr>
 <tr>
 <td><code>debrief</code></td>
@@ -6771,7 +6865,7 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 <tbody>
 <tr>
 <td><code>default</code></td>
-<td><code>defend_station</code>, <code>convoy_ambush</code>, <code>construction_defence</code>, <code>intercept_scouts</code> (<code>missions/missions.yaml</code>; text in <code>text/en/missions.yaml</code>). Construction defence and convoy ambush are the <a href="../../specification/design/logistics/">logistics</a> missions; the strategy layer will generate them.</td>
+<td><code>defend_station</code>, <code>convoy_ambush</code>, <code>construction_defence</code>, <code>intercept_scouts</code>, and since app 0.6.4 <code>colony_defence</code>, <code>ground_strike</code>, <code>outpost_raid</code>, <code>asteroid_hunt</code>, <code>pocket_ambush</code> (<code>missions/missions.yaml</code>; text in <code>text/en/missions.yaml</code>). Construction defence and convoy ambush are the <a href="../../specification/design/logistics/">logistics</a> missions; the strategy layer will generate them. The five newer ones are worked examples of environments, hazards and ground installations (below).</td>
 </tr>
 <tr>
 <td><code>interceptor</code></td>
@@ -6779,6 +6873,55 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 </tr>
 </tbody>
 </table>
+<h3 id="examples-environments-hazards-and-ground-installations-app-064">Examples: environments, hazards and ground installations (app 0.6.4)<a class="headerlink" href="#examples-environments-hazards-and-ground-installations-app-064" title="Permanent link">&para;</a></h3>
+<p>Five missions of the default campaign each show one feature a mission can use. Read them in
+<code>resources/default/missions/missions.yaml</code>; copy one as the start of your own.</p>
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>Shows</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>colony_defence</code></td>
+<td>A surface battle protecting a ground installation</td>
+<td><code>environment: moon_surface</code>; the role <code>colony: {class: guard_colony, ai: idle, protect: true}</code> (a <code>kind: ground</code> class, set down on the terrain); raiders placed <code>from: colony</code>; a wave while the colony lives; <code>lose: destroyed(colony)</code>; an optional <code>colony_untouched: hull(colony) &gt; 90%</code>; a chatter line with a radio <code>voice:</code>.</td>
+</tr>
+<tr>
+<td><code>ground_strike</code></td>
+<td>Attacking ground turrets, with a time limit</td>
+<td><code>environment: dusk_hills</code>; <code>flak: {class: dominion_flak, ai: enemy, at: {…, spread: 1200m}}</code> — anti-air batteries spread along the hills; an escort that arrives after 60 s (<code>arrive:</code>); <code>timer: {after: 6min, then: draw}</code>.</td>
+</tr>
+<tr>
+<td><code>outpost_raid</code></td>
+<td>A raid in orbit, with wingmen</td>
+<td><code>environment: orbit</code> (the planet backdrop); a <code>dominion_outpost</code> with guards placed <code>from: outpost</code>; two Meteor wingmen; <code>outcomes: {win: [score(outpost_destroyed), salvage]}</code>.</td>
+</tr>
+<tr>
+<td><code>asteroid_hunt</code></td>
+<td>A hazard in open space</td>
+<td>No environment; <code>hazards: {asteroids: {class: cosmium_asteroid, count: 50, radius: 5km, center: [0, 0, -5000], spin: 8}}</code>; scouts spread among the rocks; a 5-minute timer to a draw.</td>
+</tr>
+<tr>
+<td><code>pocket_ambush</code></td>
+<td>A small arena with a sensor hazard</td>
+<td><code>environment: pocket</code> (a 12 km arena); <code>hazards: {ion_storm: {sensors: 65%}}</code>; hot-rods close by.</td>
+</tr>
+</tbody>
+</table>
+<p>Each has a <code>killed</code> debrief (<code>@debrief.killed</code>) so that being shot down never shows the text for
+the objective failing. Over a terrain, craft placed less than 300 m above the ground start at
+300 m (app 0.6.4), so a role placed <code>from</code> a ground installation does not start inside a hill;
+installations themselves are set down on the ground.</p>
+<p>Measured with <code>--soak &lt;mission&gt; --soak-pilot ai --difficulty cadet</code> (app 0.6.4):
+<code>colony_defence</code> win at 43 s, <code>outpost_raid</code> win at 99 s; <code>ground_strike</code>, <code>asteroid_hunt</code> and
+<code>pocket_ambush</code> make kills but are still running at 300 s — the AI pilot is a weaker pilot than a
+player, so these are not balance verdicts.</p>
+<p>The launcher's <strong>Simulator</strong> flies any mission with another environment, added hazards and a
+larger or smaller enemy force, without editing its file (<a href="../../user-guide/simulator/">User guide › Simulator</a>).</p>
 <p><code>--soak &lt;mission id&gt;</code> plays a mission without a window and prints its result
 (<code>soak mission defend_station (ranger, ai): lose after 132 s; &lt;n&gt; kills</code>); see
 <a href="../validating/">Validating a mod</a>. <code>--soak-pilot</code> chooses who flies the player's craft:
@@ -6831,6 +6974,10 @@ by a unit test).</p>
 <tr>
 <td><code>chatter[2]: needs line:</code></td>
 <td>A chatter entry without its line.</td>
+</tr>
+<tr>
+<td>a chatter <code>voice:</code> clip that does not load</td>
+<td>The start-up <code>sound: …</code> line names it (<code>--check</code> does not load voice clips yet); the line is still shown, silently.</td>
 </tr>
 <tr>
 <td><code>hazards.minefield: needs a class</code></td>

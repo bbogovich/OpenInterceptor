@@ -3835,6 +3835,8 @@
       
         
       
+        
+      
     
     
     
@@ -4001,6 +4003,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4019,6 +4049,8 @@
       
         
           
+        
+      
         
       
         
@@ -4382,6 +4414,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6024,14 +6084,15 @@
 
 
 <h1 id="audio">Audio<a class="headerlink" href="#audio" title="Permanent link">&para;</a></h1>
-<p><code>src/audio.rs</code>: sound effects driven by simulation events. Plan: Stage 1 (event sounds);
-music loops and CD audio are Stage 5.</p>
+<p><code>src/audio.rs</code>: sound effects driven by simulation events, and radio voice clips. Plan: Stage 1
+(event sounds); radio voices Stage 3.7 (app 0.6.2); music loops and CD audio are Stage 5.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
-    R["Ruleset: sounds, beam sound, missile sound"] --&gt; L["SoundBank::load (async)&lt;br/&gt;Content::load_sound → wav::decode (PCM / MS ADPCM / IMA ADPCM)&lt;br/&gt;→ Pcm::to_wav_bytes → load_sound_from_bytes"]
+    R["Ruleset: sounds, beam sound, missile sound,&lt;br/&gt;voice_clips"] --&gt; L["SoundBank::load (async)&lt;br/&gt;Content::load_sound → wav::decode (PCM / MS ADPCM / IMA ADPCM)&lt;br/&gt;→ Pcm::to_wav_bytes → load_sound_from_bytes"]
     EV["world.events"] --&gt; ES["event_sound(world, event, listener, ear)&lt;br/&gt;→ (SoundKey, volume)"]
     ES --&gt; P["SoundBank::play"]
-    L --&gt; P</code></pre>
+    L --&gt; P
+    FS["app::flight: wing order, wingman lost,&lt;br/&gt;MissionRun::voices, debrief"] --&gt;|"SoundKey::Voice(i),&lt;br/&gt;Named(mission_accomplished / failed)"| P</code></pre>
 <p><code>event_sound</code> is pure and tested: beam and missile sounds use the firing ship's weapon;
 hits use <code>shield_hit</code> or <code>hull_hit</code>; destruction uses <code>big_explosion</code> for objects with radius
 over 100 m, else <code>explosion</code> (always at least 15 % volume); <code>lock</code> and <code>denied</code> only for the
@@ -6048,6 +6109,25 @@ about 350 m).</p>
 <code>soundfx.ini</code> — whose entry's file name becomes <code>original:&lt;file&gt;.wav</code>. By the time <code>SoundBank</code>
 loads, every reference is an ordinary asset, so cues need no run-time code. Unknown cues and a
 missing table are load errors.</p>
+<p><strong>Radio voices (Stage 3.7, app 0.6.2).</strong> The rules collect every voice clip in one list,
+<code>Ruleset::voice_clips</code> (<code>(reference, pack)</code> pairs): first each voice set's clips
+(<code>voices: {&lt;set&gt;: {&lt;line&gt;: clip or [clips]}}</code>, kept as <code>VoiceSet { id, lines }</code> with the clip
+indices), then each mission chatter line's <code>voice:</code>. <code>SoundBank::load</code> loads clip <code>i</code> as
+<code>SoundKey::Voice(i)</code>, beside the named sounds. The audio layer does not decide <em>when</em> a voice
+speaks: the flight screen (<code>app::flight</code>) does —</p>
+<ul>
+<li>a wing order plays <code>acknowledge</code> and a status request <code>status</code>, from the first living wingman
+  of the player whose ship has a voice set with that line (<code>flight::wingman_voice</code>; the clip is
+  picked from the line's list by the battle time);</li>
+<li>when one of the player's wingmen is destroyed, <em>another</em> wingman says <code>down</code>;</li>
+<li>chatter clips are queued by the mission (<code>MissionRun::voices</code>) as their lines are said, and
+  the screen plays and clears them each frame;</li>
+<li>when the debrief appears, the named sound <code>mission_accomplished</code> (a win) or <code>mission_failed</code>
+  (any other result) plays — the computer voice.</li>
+</ul>
+<p>A ship's voice is resolved to an index when the ship spawns (<code>Ship::voice</code>); an unknown set
+named by a ship is a rules error. Voice lines without a clip, and ships without a voice, are
+simply silent.</p>
 <p>Playback uses macroquad's <code>audio</code> feature (quad-snd: CoreAudio on macOS, ALSA on Linux).</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
@@ -6060,15 +6140,27 @@ missing table are load errors.</p>
 <tbody>
 <tr>
 <td><code>SoundKey</code></td>
-<td><code>Named(&amp;'static str)</code>, <code>Beam(u16)</code>, <code>Missile(u16)</code>.</td>
+<td><code>Named(&amp;'static str)</code>, <code>Beam(u16)</code>, <code>Missile(u16)</code>, <code>Effect(u16)</code>, and since app 0.6.2 <code>Voice(u32)</code> (an index into <code>Ruleset::voice_clips</code>).</td>
 </tr>
 <tr>
 <td><code>NAMED</code></td>
-<td>The sixteen event names: <code>explosion</code>, <code>big_explosion</code>, <code>shield_hit</code>, <code>hull_hit</code>, <code>lock</code>, <code>missile_launch</code>, <code>afterburner</code>, <code>target</code>, <code>denied</code>, <code>collision</code>, and since Stage 2 <code>system_damage</code>, <code>tractor</code>, <code>cloak</code>, <code>ecm</code>, <code>hyperspace</code>, <code>point_defence</code>.</td>
+<td>The eighteen named sounds: since app 0.6.2 <code>mission_accomplished</code> and <code>mission_failed</code> (the computer voice at the debrief), and the event names <code>explosion</code>, <code>big_explosion</code>, <code>shield_hit</code>, <code>hull_hit</code>, <code>lock</code>, <code>missile_launch</code>, <code>afterburner</code>, <code>target</code>, <code>denied</code>, <code>collision</code>, and since Stage 2 <code>system_damage</code>, <code>tractor</code>, <code>cloak</code>, <code>ecm</code>, <code>hyperspace</code>, <code>point_defence</code>.</td>
 </tr>
 <tr>
 <td><code>SoundKey::Effect(i)</code></td>
 <td>The sound of effect <code>i</code> (an event name from <code>sounds:</code> or an asset in the effect's pack), loaded with the bank.</td>
+</tr>
+<tr>
+<td><code>rules::VoiceSet</code>, <code>VoiceSet::clips(line)</code></td>
+<td>A voice set: <code>id</code> and <code>lines</code> (line name → clip indices); <code>clips</code> is empty for a line the voice lacks.</td>
+</tr>
+<tr>
+<td><code>Ruleset::voices</code>, <code>Ruleset::voice_clips</code></td>
+<td>The voice sets, and every voice clip (sets first, then chatter) as <code>(reference, pack)</code>.</td>
+</tr>
+<tr>
+<td><code>flight::wingman_voice(&amp;World, player, except, line, pick)</code></td>
+<td>A clip of <code>line</code> from the first living wingman of <code>player</code> (not <code>except</code>) with a voice that has it (pure, tested).</td>
 </tr>
 <tr>
 <td><code>SoundBank</code></td>
@@ -6086,6 +6178,9 @@ missing table are load errors.</p>
 <ul>
 <li>Sounds that fail to load are printed at start-up as <code>sound: …</code> lines; <code>--check</code> loads every
   referenced sound too.</li>
+<li>A wingman that says nothing: its ship class needs <code>voice: &lt;set&gt;</code>, the set needs the line
+  (<code>acknowledge</code>, <code>status</code>, <code>down</code>), and the clip must load (a failed clip prints a <code>sound: …</code>
+  line). Only the player's own wingmen (AI <code>wingman</code> led by the player) speak.</li>
 <li>No sound at all on Linux: the build needs the ALSA development package (<code>libasound2-dev</code>).</li>
 <li>A <code>cue:</code> sound that is silent: <code>--check</code> names unknown cues (<code>sounds.x: unknown sound cue 'Y'</code>);
   if the cue resolves, the asset browser shows whether the original file (or its override)

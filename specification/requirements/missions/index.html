@@ -3958,6 +3958,8 @@
       
         
       
+        
+      
     
     
     
@@ -4124,6 +4126,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4142,6 +4172,8 @@
       
         
           
+        
+      
         
       
         
@@ -4505,6 +4537,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6299,7 +6359,7 @@
 </tr>
 <tr>
 <td><a href="#r-msn-007-voices">R-MSN-007 Voices</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-msn-008-battle-environments">R-MSN-008 Battle environments</a></td>
@@ -6311,7 +6371,7 @@
 </tr>
 <tr>
 <td><a href="#r-msn-010-simulator-missions">R-MSN-010 Simulator missions</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-msn-011-base-defence-balance">R-MSN-011 Base defence balance</a></td>
@@ -6389,14 +6449,26 @@
 <li>See: <a href="../../../modding/missions/">Missions (modding)</a></li>
 </ul>
 <h3 id="r-msn-007-voices">R-MSN-007 Voices<a class="headerlink" href="#r-msn-007-voices" title="Permanent link">&para;</a></h3>
-<p>Chatter and the computer voice SHOULD play recorded or original voice samples.</p>
-<p><em>Rationale:</em> Atmosphere.</p>
+<p>Chatter and the computer voice SHOULD play recorded or original voice samples. As built:</p>
+<ul>
+<li>A pack MUST be able to define radio voice sets as data, <code>voices: {&lt;set&gt;: {&lt;line&gt;: clip or [clips]}}</code>, and a ship class MUST be able to name one with <code>voice: &lt;set&gt;</code>; an unknown set MUST be a rules error.</li>
+<li>When the player gives a wing order (fire at will, attack my target, ignore my target, evasive, retreat), one of the player's living wingmen whose voice has the line MUST play an <code>acknowledge</code> clip; a status request MUST play a <code>status</code> clip; when one of the player's wingmen is destroyed, <em>another</em> MUST play a <code>down</code> clip. With several clips for a line, one is chosen each time.</li>
+<li>A mission chatter entry MAY name a clip with <code>voice:</code>; it MUST play when the line is said.</li>
+<li>When the debrief appears, the named sound <code>mission_accomplished</code> MUST play for a win and <code>mission_failed</code> for any other result (the computer voice).</li>
+<li>A ship without a voice, a voice without the line, or a campaign without these sounds MUST stay silent without error.</li>
+</ul>
+<p>The <code>default</code> campaign MUST ship the voice set <code>guard_pilot</code> (synthesised radio clips, used by the Comet, Meteor, Thunderbolt and Victory) and the two mission sounds; the <code>interceptor</code> campaign maps the computer voice from the original's cue table (<code>Comp_MissionAccomplished</code>, <code>Comp_MissionFailed</code>).</p>
+<p><em>Rationale:</em> Atmosphere, and the original's radio and computer voice. Voices are data, so a mod can give its pilots voices without code.</p>
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-003-radio-chatter-and-voices">F-MSN-003</a>, <a href="../../../definition/campaigns/features/#f-cpn-007-presentation">F-CPN-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../../implementation/plan/stage-6-presentation/">Stage 6</a></li>
+<li>Status: implemented (app 0.6.2, main <code>5bdb47f</code>)</li>
+<li>Verified by: <code>app::flight::tests::a_wingman_answers_in_its_own_voice</code>, <code>content::rules::tests::builds_typed_definitions_with_inheritance</code> (voice sets and clips); MT-3-47 – MT-3-50</li>
+<li>See: <a href="../../../modding/voices/">Radio voices (modding)</a>, <a href="../../../implementation/architecture/audio/">Audio</a></li>
 </ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>The <code>interceptor</code> campaign's <strong>pilot</strong> chatter clips (the numbered <code>FPilot1xx</code> and <code>MPilotxxx</code> files) are not mapped to voice lines: which line each clip says is not known (<em>unknown</em>), and a wrong mapping would put the wrong words in a wingman's mouth. The user is asked to identify the lines by listening (for example in the launcher's asset browser, Sounds tab) so that <code>packs/interceptor</code> can map them to <code>acknowledge</code>, <code>status</code>, <code>down</code> and later lines. Also open: <code>cue:</code> references are not resolved inside <code>voices:</code> or chatter <code>voice:</code>, and <code>--check</code> does not load voice clips (app 0.6.4).</p>
+</div>
 <h3 id="r-msn-008-battle-environments">R-MSN-008 Battle environments<a class="headerlink" href="#r-msn-008-battle-environments" title="Permanent link">&para;</a></h3>
 <p>A pack MUST be able to define battle environments as data, <code>environments: {&lt;id&gt;: {physics, arena, gravity, air_density, ceiling, terrain, sky, backdrop}}</code>, and a mission or scenario MUST be able to name one with <code>environment: &lt;id&gt;</code>. Without it the battle MUST take place in open space, exactly as before.</p>
 <ul>
@@ -6440,14 +6512,25 @@
 <li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a>, <a href="../../../modding/missions/#hazards">Missions › Hazards</a>, <a href="../../../implementation/deviations/">Deviations (DEV-045)</a></li>
 </ul>
 <h3 id="r-msn-010-simulator-missions">R-MSN-010 Simulator missions<a class="headerlink" href="#r-msn-010-simulator-missions" title="Permanent link">&para;</a></h3>
-<p>The player MUST be able to set up a simulator mission on a setup screen and fly it.</p>
-<p><em>Rationale:</em> Original simulator.</p>
+<p>The player MUST be able to set up a simulator mission on a setup screen and fly it. As built, the setup screen (the launcher's <em>Simulator</em> entry) MUST offer:</p>
 <ul>
-<li>Implements: <a href="../../../definition/missions/#f-msn-005-simulator-missions">F-MSN-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../../implementation/plan/stage-3-missions/">Stage 3</a></li>
+<li>the <strong>mission</strong> (any mission of the loaded campaign) and the <strong>ship</strong> (any playable ship, unless the mission fixes the player's class);</li>
+<li>the <strong>environment</strong>: the mission's own, or any environment of the campaign;</li>
+<li><strong>asteroids</strong>, a <strong>minefield</strong>, a <strong>black hole</strong> and an <strong>ion storm</strong>, each on or off. Asteroids and mines MUST use the campaign's own classes (the first class whose id contains <code>asteroid</code>; the first <code>kind: mine</code> class); when the campaign has none, the row MUST say so and add nothing;</li>
+<li>the <strong>enemy force</strong>, ×0.5, ×1, ×1.5 or ×2, scaling every enemy role's count range and every enemy wave, rounded and never below one. Friendly and objective roles MUST be unchanged.</li>
 </ul>
+<p>The choices MUST produce a modified copy of the mission that is flown by the ordinary mission code; with the defaults (own environment, no hazards, ×1) the copy MUST equal the mission. A ship with <code>atmospheric: false</code> MUST be refused in an environment with <code>physics: atmosphere</code>, with the reason shown. Flying again from the debrief MUST fly the same setup. The difficulty level is the launcher's.</p>
+<p><em>Rationale:</em> The original's simulator; practice, and trying a mission in other conditions without editing it.</p>
+<ul>
+<li>Implements: <a href="../../../definition/missions/#f-msn-005-simulator-missions">F-MSN-005</a>, <a href="../../../definition/testbed-tools/#f-tst-004-debugging-tools-for-missions-and-campaigns">F-TST-004</a></li>
+<li>Status: implemented (app 0.6.3, main <code>1d13b59</code>, <code>c3fb959</code>)</li>
+<li>Verified by: <code>app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only</code>, <code>ships_that_cannot_enter_an_atmosphere_are_refused_there</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-3-51 – MT-3-54</li>
+<li>See: <a href="../../../user-guide/simulator/">User guide › Simulator</a>, <a href="../../../implementation/architecture/testbed/#the-simulator-app-063">Testbed › The simulator</a></li>
+</ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>The <code>interceptor</code> campaign's own simulator mission types (R-CPN-005) are separate mission definitions still to be written (plan item 3.11); the simulator screen flies whatever missions a campaign defines.</p>
+</div>
 <h3 id="r-msn-011-base-defence-balance">R-MSN-011 Base defence balance<a class="headerlink" href="#r-msn-011-base-defence-balance" title="Permanent link">&para;</a></h3>
 <p>In every base-defence mission, at every difficulty including the lowest, the base MUST survive long enough for the player to engage more than one attacker. Measured with <code>--soak &lt;mission&gt; --soak-pilot idle</code> (the player's craft sits still and does nothing): at the lowest level an undefended base or station MUST hold for at least 150 s.</p>
 <p><em>Rationale:</em> User request (F-MSN-006).</p>
@@ -6499,6 +6582,11 @@
 <td>1.11.0</td>
 <td>2026-11-11</td>
 <td>R-MSN-009 hazards rewritten as built and implemented (app 0.5.1): asteroid fields and minefields as scattered objects (asteroids are radar scenery), the black hole's 1/d² pull capped at 20 × <code>pull</code>, its look and the AI's escape, the ion storm's radar factor, half-speed locks and start message; defaults stated. R-MSN-008 battle environments rewritten as built and implemented (app 0.6.0): <code>environments:</code> data, <code>environment: &lt;id&gt;</code>, <code>physics</code>, <code>arena</code>, <code>backdrop.planet</code>, <code>sky</code>; ground installations (<code>kind: ground</code>, set down on the terrain) and anti-air batteries as ground turrets (app 0.6.1); Open note keeps the map location</td>
+</tr>
+<tr>
+<td>1.12.0</td>
+<td>2026-11-11</td>
+<td>R-MSN-007 voices rewritten as built and implemented (app 0.6.2): <code>voices:</code> sets, ship <code>voice:</code>, the <code>acknowledge</code>, <code>status</code> and <code>down</code> lines, chatter <code>voice:</code>, <code>mission_accomplished</code> / <code>mission_failed</code>; Open note: the <code>interceptor</code> pilot clips are not mapped until their lines are identified. R-MSN-010 simulator rewritten as built and implemented (app 0.6.3): the setup rows, the modified copy, the atmospheric refusal, flying again</td>
 </tr>
 </tbody>
 </table>

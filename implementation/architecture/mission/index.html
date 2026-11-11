@@ -3233,6 +3233,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-simulator-app-063" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The simulator (app 0.6.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ai-changes-made-with-missions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3885,6 +3896,8 @@
       
         
       
+        
+      
     
     
     
@@ -4051,6 +4064,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4069,6 +4110,8 @@
       
         
           
+        
+      
         
       
         
@@ -4432,6 +4475,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6058,6 +6129,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-simulator-app-063" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The simulator (app 0.6.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ai-changes-made-with-missions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6152,7 +6234,7 @@ scenarios. See <a href="../sim/#hazards-simhazards-app-051">Simulation</a>.</p>
     FS["FlightSession::frame"] --&gt; STEP["World::step() × n ticks"]
     STEP --&gt; UP["MissionRun::update(&amp;mut World)&lt;br/&gt;after every tick"]
     UP --&gt; L1["1. losses per role from member state&lt;br/&gt;(destroyed, departed, captured events)"]
-    L1 --&gt; L2["2. arrive: conditions → spawn_role;&lt;br/&gt;waves (once); chatter (once) → message lines;&lt;br/&gt;optional objectives latched"]
+    L1 --&gt; L2["2. arrive: conditions → spawn_role;&lt;br/&gt;waves (once); chatter (once) → message lines&lt;br/&gt;(and its voice clip → voices);&lt;br/&gt;optional objectives latched"]
     L2 --&gt; L3["3. end: retreat (player departed) →&lt;br/&gt;killed (player destroyed) →&lt;br/&gt;lose → win → draw → timer"]
     L3 --&gt;|result| DB["Debrief: result, text, optional (met?),&lt;br/&gt;campaign actions, kills, losses, seconds;&lt;br/&gt;battle actions (message) run"]
     DB --&gt; OV["debrief overlay over the frozen battle&lt;br/&gt;Enter: again · Esc/L: launcher"]</code></pre>
@@ -6169,6 +6251,13 @@ scenarios. See <a href="../sim/#hazards-simhazards-app-051">Simulation</a>.</p>
 <li><strong>Determinism</strong>: the mission's random choices come from its own generator seeded by
   <code>starfield_seed</code>, and condition <code>random(p)</code> from the same stream, so a mission replays
   identically with the same inputs.</li>
+<li><strong>Chatter voices</strong> (app 0.6.2): a chatter line with <code>voice:</code> also pushes its clip (an index
+  into <code>Ruleset::voice_clips</code>) onto <code>MissionRun::voices</code> when it is said; the flight screen
+  plays and clears that list every frame, and plays the computer voice (<code>mission_accomplished</code>
+  or <code>mission_failed</code>) when the debrief appears (<a href="../audio/">Audio</a>).</li>
+<li><strong>Spawning over a ground</strong> (app 0.6.4): over a terrain, <code>World::spawn</code> lifts any craft placed
+  less than 300 m above the ground to 300 m (ground installations are still set down on it). A
+  role placed <code>from</code> a ground installation would otherwise start inside a hill.</li>
 <li><strong>Conditions</strong> are evaluated through <code>BattleCx</code>, which implements the script language's
   <code>Context</code> for this battle; role names are constants of the battle schema, compiled to indices.</li>
 </ul>
@@ -6190,7 +6279,15 @@ selection near the middle (<code>launcher::Menu::first_visible</code>, "^ more" 
 Selecting one returns <code>Next::Mission { mission, ship }</code>; <code>--mission &lt;id&gt;</code> starts one directly.
 <code>soak::run_mission</code> plays a mission headless with the passive, AI or idle pilot and reports the
 result (<code>--soak &lt;mission id&gt;</code>). A unit test holds the balance promise of R-MSN-011: in the
-default campaign at cadet, <code>defend_station</code> with the idle pilot is still running after 150 s.</p>
+default campaign at cadet, <code>defend_station</code> with the idle pilot is still running after 150 s.
+Since app 0.6.4 the soak report counts kills while the mission is still running
+(<code>MissionRun::kills()</code>); before, a mission that ran out of time read 0 kills.</p>
+<h3 id="the-simulator-app-063">The simulator (app 0.6.3)<a class="headerlink" href="#the-simulator-app-063" title="Permanent link">&para;</a></h3>
+<p>The simulator (<code>app::simulator</code>, <a href="../testbed/#the-simulator-app-063">Testbed</a>) flies a
+<strong>modified copy</strong> of a mission: <code>simulator::apply</code> returns a new <code>MissionDef</code> with the chosen
+environment and hazards and its enemy roles and waves scaled, and <code>FlightSession::start_custom</code>
+starts it through the same <code>MissionRun</code> as any other mission. Nothing in <code>mission</code> knows it is
+a simulation.</p>
 <h3 id="ai-changes-made-with-missions">AI changes made with missions<a class="headerlink" href="#ai-changes-made-with-missions" title="Permanent link">&para;</a></h3>
 <p>Enemies now launch missiles only when closing in (within 2.5 × their attack <code>range</code>, at least
 2 km); the first launch comes 3 s plus a random part of one interval into the attack, and each
@@ -6211,11 +6308,11 @@ so pilots that start together do not act together.</p>
 </tr>
 <tr>
 <td><code>RoleDef</code>, <code>Arrival</code>, <code>WaveDef</code>, <code>ChatterDef</code></td>
-<td>A role (classes, count range, faction, AI, behaviour, protect, state, hull, destroyed systems, speed, <code>at</code>, <code>arrive</code>); an arrival (<code>distance</code>, <code>bearing</code>, <code>from</code>, <code>spread</code>); a wave; a radio line.</td>
+<td>A role (classes, count range, faction, AI, behaviour, protect, state, hull, destroyed systems, speed, <code>at</code>, <code>arrive</code>); an arrival (<code>distance</code>, <code>bearing</code>, <code>from</code>, <code>spread</code>); a wave; a radio line (<code>when</code>, <code>line</code>, and since app 0.6.2 <code>voice</code> with its <code>voice_clip</code> index, filled in by the rules).</td>
 </tr>
 <tr>
 <td><code>mission::MissionRun</code></td>
-<td>The running mission: its definition, the player's id, per-role <code>RoleRun</code>s, wave/chatter/optional latches, its generator, kills, losses, <code>debrief</code>.</td>
+<td>The running mission: its definition, the player's id, per-role <code>RoleRun</code>s, wave/chatter/optional latches, its generator, kills, losses, <code>debrief</code>, and <code>voices</code> (chatter clips said and not yet played). <code>kills()</code> reads the kills so far, also while the battle runs.</td>
 </tr>
 <tr>
 <td><code>mission::RoleRun</code></td>
@@ -6249,6 +6346,10 @@ so pilots that start together do not act together.</p>
 <td><code>app::Next::Mission</code>, <code>FlightSession::start_mission</code></td>
 <td>Starting a mission from the launcher or <code>--mission</code>.</td>
 </tr>
+<tr>
+<td><code>app::Next::Simulate</code>, <code>FlightSession::start_custom</code></td>
+<td>Starting a simulator mission: a ready-made, modified <code>MissionDef</code> (app 0.6.3).</td>
+</tr>
 </tbody>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
@@ -6257,7 +6358,8 @@ so pilots that start together do not act together.</p>
   <code>def.outcome(result) -&gt; &amp;[Action]</code>.</li>
 <li><code>MissionRun::start(&amp;MissionDef, Arc&lt;Ruleset&gt;, Arc&lt;Vec&lt;Shape&gt;&gt;, Option&lt;ShipClassId&gt;) -&gt;
   Result&lt;(World, MissionRun), String&gt;</code>; <code>run.update(&amp;mut World) -&gt; Vec&lt;String&gt;</code> (message lines);
-  <code>run.spawn_role(&amp;mut World, role, count, at) -&gt; Result&lt;usize, String&gt;</code>.</li>
+  <code>run.spawn_role(&amp;mut World, role, count, at) -&gt; Result&lt;usize, String&gt;</code>; <code>run.kills() -&gt; u32</code>;
+  <code>run.voices</code> (drained by the flight screen).</li>
 <li><code>script::battle::schema(&amp;[String], &amp;[String]) -&gt; Schema</code>;
   <code>script::action::parse(text, MISSION_ACTIONS) -&gt; Result&lt;Action, String&gt;</code>; <code>action.display()</code>.</li>
 <li><code>soak::run_mission(&amp;Content, id, ship, seconds, pilot)</code>.</li>

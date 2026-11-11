@@ -4431,6 +4431,8 @@
       
         
       
+        
+      
     
     
     
@@ -4597,6 +4599,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4615,6 +4645,8 @@
       
         
           
+        
+      
         
       
         
@@ -4978,6 +5010,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -7277,7 +7337,7 @@
 </tr>
 <tr>
 <td><a href="#r-mod-015-tier-2-scripting-decision">R-MOD-015 Tier 2 scripting decision</a></td>
-<td>Planned</td>
+<td>Planned (evaluation recorded; awaiting the user's decision)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-016-headless-validation">R-MOD-016 Headless validation</a></td>
@@ -7586,10 +7646,18 @@
 <p><em>Rationale:</em> Dependency policy.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-005-conditions-actions-and-scripting">F-MOD-005</a></li>
-<li>Status: planned</li>
+<li>Status: planned — <strong>evaluation recorded, awaiting the user's decision</strong> (1.12.0)</li>
 <li>Verified by: Planned.</li>
-<li>See: <a href="../../../modding/scripting/">Scripting (design)</a></li>
+<li>See: <a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Dependency policy › Tier 2 scripting, evaluated</a>, <a href="../../../modding/scripting/">Scripting (design)</a></li>
 </ul>
+<div class="admonition question">
+<p class="admonition-title">Open — awaiting the user's decision</p>
+<p>The evaluation of (a) <code>mlua</code> (Lua 5.4), (b) <code>rhai</code> and (c) growing the in-crate condition
+and action language into a small statement language is on the dependency page. The
+evaluator recommends (c) as the default under the dependency policy, with (a) as the
+fallback if mods need a full general-purpose language. <strong>No decision has been made</strong>; the
+hooks and the API follow the user's choice. GitHub issue #16.</p>
+</div>
 <h3 id="r-mod-016-headless-validation">R-MOD-016 Headless validation<a class="headerlink" href="#r-mod-016-headless-validation" title="Permanent link">&para;</a></h3>
 <p><code>--check</code> MUST validate the active campaign headlessly and report every error; the default campaign MUST pass with no errors and the full reference CD with no errors.</p>
 <p><em>Rationale:</em> Mistakes found before playing.</p>
@@ -8028,6 +8096,11 @@
 <td>1.9.1</td>
 <td>2026-11-11</td>
 <td>R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note</td>
+</tr>
+<tr>
+<td>1.12.0</td>
+<td>2026-11-11</td>
+<td>R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) <code>mlua</code>, (b) <code>rhai</code>, (c) grow <code>script::*</code>; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed</td>
 </tr>
 </tbody>
 </table>

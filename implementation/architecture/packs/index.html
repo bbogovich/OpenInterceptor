@@ -3874,6 +3874,8 @@
       
         
       
+        
+      
     
     
     
@@ -4040,6 +4042,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4058,6 +4088,8 @@
       
         
           
+        
+      
         
       
         
@@ -4421,6 +4453,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6173,8 +6233,12 @@ so mods override resources. <code>cli::content_dirs</code> builds the list; <cod
    battle schema of their role names; their <code>hazards:</code> through <code>content::hazards</code>), terrains
 (<code>TerrainDef::parse</code>; a generated heightfield is built here, once), environments
 (<code>EnvironmentDef::parse</code>, each <code>terrain:</code> checked against the terrains), cockpits (with
-anchors), flight, sounds. <code>environments</code> and <code>terrains</code> are definition sections like <code>ships</code>
-(<code>DEF_SECTIONS</code>), so <code>inherit</code>, <code>delete</code> and variants work on them.</li>
+anchors), flight, sounds, and since app 0.6.2 <strong>voices</strong>: each <code>voices:</code> set becomes a
+<code>VoiceSet</code> whose lines hold indices into one list of every voice clip, <code>Ruleset::voice_clips</code>
+(the sets' clips first, then each mission chatter line's <code>voice:</code>, whose index is written back
+into its <code>ChatterDef::voice_clip</code>); a ship naming an unknown voice set is an error.
+<code>environments</code>, <code>terrains</code> and <code>voices</code> are definition sections like <code>ships</code> (<code>DEF_SECTIONS</code>),
+so <code>inherit</code>, <code>delete</code> and variants work on them.</li>
 </ol>
 <p>Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and <code>files::scenario()</code> validation (<code>Scenario::from_yaml</code>), and
@@ -6362,11 +6426,11 @@ original. Whole packs can be switched off with <code>packs.disabled</code> in <c
 </tr>
 <tr>
 <td><code>vfs::OriginalData</code></td>
-<td>Lower-case file name → path for every file under the data folder (any CD/install layout), plus the opened resource DLLs.</td>
+<td>Lower-case file name → path for every file under the data folder (any CD/install layout, indexed to eight folder levels by <code>vfs::index_files</code>), plus the opened resource DLLs.</td>
 </tr>
 <tr>
 <td><code>rules::Ruleset</code></td>
-<td><code>ships</code>, <code>beams</code>, <code>missiles</code>, <code>factions</code>, <code>systems</code>, <code>behaviours</code>, <code>model_sets</code>, <code>debris_sets</code>, <code>effects</code>, <code>cockpits</code>, <code>environments</code>, <code>terrains</code>, <code>missions</code>, <code>flight: FlightRules</code> (with <code>hyperspace_time</code>), <code>power: PowerRules</code>, <code>damage: DamageRules</code>, <code>sounds</code>, <code>difficulty_levels</code>, <code>difficulty</code> (index played).</td>
+<td><code>ships</code>, <code>beams</code>, <code>missiles</code>, <code>factions</code>, <code>systems</code>, <code>behaviours</code>, <code>model_sets</code>, <code>debris_sets</code>, <code>effects</code>, <code>cockpits</code>, <code>environments</code>, <code>terrains</code>, <code>missions</code>, <code>flight: FlightRules</code> (with <code>hyperspace_time</code>), <code>power: PowerRules</code>, <code>damage: DamageRules</code>, <code>sounds</code>, <code>difficulty_levels</code>, <code>difficulty</code> (index played); since app 0.6.2 <code>voices: Vec&lt;VoiceSet&gt;</code> and <code>voice_clips: Vec&lt;(String, usize)&gt;</code>.</td>
 </tr>
 <tr>
 <td><code>rules::RulesSource</code>, <code>OriginalLookup</code></td>
@@ -6444,6 +6508,11 @@ original. Whole packs can be switched off with <code>packs.disabled</code> in <c
   campaign's parent).</li>
 <li>"pack 'x' skipped" means it needs <code>--data</code> (or a dependency was skipped); "pack 'x' is
   disabled in settings" means <code>settings.yaml</code> switched it off.</li>
+<li>An original file that "is not found" although it is on the disc: the original-data index
+  (<code>vfs::index_files</code>) reaches <strong>eight</strong> folder levels below the data folder (four before app
+  0.6.2; the CD's computer-voice clips sit six deep, under
+  <code>Game/ProgramFiles/SoundFX/Chatter/ComputerVoice</code>). A copy nested deeper than that is not
+  indexed.</li>
 <li>Is my override used? Open the launcher's <strong>Asset browser</strong>: overridden textures, images and
   sounds are marked <code>[overridden by &lt;pack&gt;]</code>.</li>
 <li>A key that "does nothing": check the section id prefix (<code>ship:</code> vs <code>object:</code>) and that a

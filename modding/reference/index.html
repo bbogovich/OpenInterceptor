@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../missions/">
+        <link rel="prev" href="../voices/">
       
       
         <link rel="next" href="../models/">
@@ -3740,6 +3740,8 @@
       
         
       
+        
+      
     
     
     
@@ -3906,6 +3908,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3926,6 +3956,8 @@
       
         
           
+        
+      
         
       
         
@@ -4306,6 +4338,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -4539,6 +4599,17 @@
     <span class="md-ellipsis">
       
         sounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#voices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        voices
       
     </span>
   </a>
@@ -6375,6 +6446,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#voices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        voices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#audio" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6899,6 +6981,12 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td>Cockpit for the player's view; without one, glass instruments.</td>
 </tr>
 <tr>
+<td><code>voice</code></td>
+<td>id</td>
+<td>none</td>
+<td>The <a href="#voices">radio voice set</a> its pilot speaks with (app 0.6.2). An unknown set is an error; without one the pilot is silent.</td>
+</tr>
+<tr>
 <td><code>hit_points</code></td>
 <td>number</td>
 <td>100</td>
@@ -6980,7 +7068,7 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td><code>atmospheric</code></td>
 <td>bool</td>
 <td><code>true</code></td>
-<td>Can enter an atmosphere. Read and validated; not yet acted on (Stage 4 hides such craft from surface missions).</td>
+<td>Can enter an atmosphere. <code>false</code>: the Simulator refuses the craft in an environment with <code>physics: atmosphere</code> ("The … cannot enter an atmosphere", app 0.6.3); Stage 4 will also hide it from surface missions.</td>
 </tr>
 <tr>
 <td><code>energy</code></td>
@@ -7657,8 +7745,43 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <h3 id="sounds"><code>sounds</code><a class="headerlink" href="#sounds" title="Permanent link">&para;</a></h3>
 <p><code>&lt;event&gt;: &lt;asset&gt;</code> for the events the engine plays: <code>explosion</code>, <code>big_explosion</code>, <code>shield_hit</code>,
 <code>hull_hit</code>, <code>lock</code>, <code>missile_launch</code>, <code>afterburner</code>, <code>target</code>, <code>denied</code>, <code>collision</code>,
-<code>system_damage</code>, <code>tractor</code>, <code>cloak</code>, <code>ecm</code>, <code>hyperspace</code>, <code>point_defence</code> (a point-defence shot). Beam and missile sounds are set on
+<code>system_damage</code>, <code>tractor</code>, <code>cloak</code>, <code>ecm</code>, <code>hyperspace</code>, <code>point_defence</code> (a point-defence shot), and
+since app 0.6.2 the computer voice at the end of a mission: <code>mission_accomplished</code> (a win) and
+<code>mission_failed</code> (any other result), played when the debrief appears. Beam and missile sounds are set on
 each weapon. Any sound reference may be <code>cue:&lt;Name&gt;</code>, a cue of the <a href="#audio">audio</a> cue table.</p>
+<h3 id="voices"><code>voices</code><a class="headerlink" href="#voices" title="Permanent link">&para;</a></h3>
+<p>Radio voice sets (app 0.6.2; guide: <a href="../voices/">Radio voices</a>). A definition section:
+<code>voices: {&lt;set id&gt;: {&lt;line&gt;: clip or [clips]}}</code>. Ships choose one with <code>voice: &lt;set id&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>When it is said</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>acknowledge</code></td>
+<td>A wingman answers a wing order (fire at will, attack my target, ignore my target, evasive, retreat).</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>A wingman answers a status request.</td>
+</tr>
+<tr>
+<td><code>down</code></td>
+<td>Another wingman, when one of the player's wingmen is destroyed.</td>
+</tr>
+<tr>
+<td><code>engaging</code>, <code>kill</code></td>
+<td>Reserved names; not yet said by the engine. Other line names are kept and ignored.</td>
+</tr>
+</tbody>
+</table>
+<p>A clip is a sound asset (<code>sounds/x.wav</code>, <code>original:&lt;file&gt;.wav</code>); with a list, one is picked
+each time. Unlike the <code>sounds:</code> section, <code>cue:&lt;Name&gt;</code> is <strong>not</strong> resolved in voice clips (app
+0.6.4), and <code>--check</code> does not load them: a clip that fails to load is reported on start-up as a
+<code>sound: …</code> line.</p>
 <h3 id="audio"><code>audio</code><a class="headerlink" href="#audio" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7960,9 +8083,9 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 </tr>
 <tr>
 <td><code>chatter</code></td>
-<td>list of <code>{when, line}</code></td>
+<td>list of <code>{when, line, voice}</code></td>
 <td>none</td>
-<td>Radio lines.</td>
+<td>Radio lines; <code>voice</code> is a clip spoken with the line (app 0.6.2).</td>
 </tr>
 <tr>
 <td><code>debrief</code></td>

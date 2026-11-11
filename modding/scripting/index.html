@@ -3740,6 +3740,8 @@
       
         
       
+        
+      
     
     
     
@@ -3906,6 +3908,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3926,6 +3956,8 @@
       
         
           
+        
+      
         
       
         
@@ -4289,6 +4321,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -5896,8 +5956,11 @@
   <strong>Implemented in Stage 2:</strong> behaviours and the condition language in the object context —
   see <a href="../behaviours/">Behaviours and conditions</a>. Actions, and the mission and event contexts,
   come with Stage 3.</li>
-<li><strong>Tier 2</strong> (decided at the start of Stage 3): optional scripts called through hooks, with Lua
-  5.4 via <code>mlua</code> recommended, subject to the <a href="../../learning/best-practices/dependencies/">dependency policy</a>.</li>
+<li><strong>Tier 2</strong> (Stage 3.10, <strong>awaiting the user's decision</strong>): optional scripts called through
+  hooks. The <a href="../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">evaluation</a>
+  compares Lua 5.4 via <code>mlua</code>, <code>rhai</code>, and growing the condition and action language into a small
+  statement language (variables, <code>if</code>/<code>else</code>, bounded loops, functions); it recommends the last
+  as the default, with Lua as the fallback. Until the decision, write Tier 1.</li>
 </ul>
 
 

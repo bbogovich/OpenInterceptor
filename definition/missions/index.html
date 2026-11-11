@@ -3901,6 +3901,8 @@
       
         
       
+        
+      
     
     
     
@@ -4067,6 +4069,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4085,6 +4115,8 @@
       
         
           
+        
+      
         
       
         
@@ -4448,6 +4480,34 @@
     
   
     Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
   
 
     
@@ -6171,7 +6231,7 @@
 </tr>
 <tr>
 <td><a href="#f-msn-003-radio-chatter-and-voices">F-MSN-003 Radio chatter and voices</a></td>
-<td>In progress</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#f-msn-004-environments-and-hazards">F-MSN-004 Environments and hazards</a></td>
@@ -6179,7 +6239,7 @@
 </tr>
 <tr>
 <td><a href="#f-msn-005-simulator-missions">F-MSN-005 Simulator missions</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#f-msn-006-base-defence-the-player-can-win">F-MSN-006 Base defence the player can win</a></td>
@@ -6209,11 +6269,11 @@
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/missions/#r-msn-005-debrief">R-MSN-005</a></li>
 </ul>
 <h3 id="f-msn-003-radio-chatter-and-voices">F-MSN-003 Radio chatter and voices<a class="headerlink" href="#f-msn-003-radio-chatter-and-voices" title="Permanent link">&para;</a></h3>
-<p><strong>What.</strong> Pilots talk on the radio when things happen; later, with voices.</p>
+<p><strong>What.</strong> Pilots talk on the radio when things happen, in their own voices: wingmen answer orders and report losses, chatter lines can be spoken, and a computer voice announces the end of a mission.</p>
 <p><strong>Why.</strong> Atmosphere and information.</p>
 <ul>
-<li><strong>Status:</strong> in-progress</li>
-<li><strong>Source:</strong> Plan item 3.7 (chatter done; voices planned).</li>
+<li><strong>Status:</strong> implemented — chatter in app 0.3.0, voices in app 0.6.2. The <code>interceptor</code> campaign's numbered pilot clips are not mapped yet (which line each says is unknown; Open note on R-MSN-007); its computer voice is.</li>
+<li><strong>Source:</strong> Plan item 3.7.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/missions/#r-msn-006-radio-chatter">R-MSN-006</a>, <a href="../../specification/requirements/missions/#r-msn-007-voices">R-MSN-007</a></li>
 </ul>
 <h3 id="f-msn-004-environments-and-hazards">F-MSN-004 Environments and hazards<a class="headerlink" href="#f-msn-004-environments-and-hazards" title="Permanent link">&para;</a></h3>
@@ -6225,10 +6285,10 @@
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/missions/#r-msn-008-battle-environments">R-MSN-008</a>, <a href="../../specification/requirements/missions/#r-msn-009-hazards">R-MSN-009</a></li>
 </ul>
 <h3 id="f-msn-005-simulator-missions">F-MSN-005 Simulator missions<a class="headerlink" href="#f-msn-005-simulator-missions" title="Permanent link">&para;</a></h3>
-<p><strong>What.</strong> The player sets up and flies practice battles from a setup screen.</p>
-<p><strong>Why.</strong> The original has simulator missions.</p>
+<p><strong>What.</strong> The player sets up and flies practice battles from a setup screen: any mission, in any environment, with hazards added and the enemy force scaled.</p>
+<p><strong>Why.</strong> The original has simulator missions; practice; trying a mission in other conditions without editing it.</p>
 <ul>
-<li><strong>Status:</strong> planned</li>
+<li><strong>Status:</strong> implemented (app 0.6.3): the launcher's <em>Simulator</em>. The <code>interceptor</code> campaign's own simulator mission types are part of its mission set (plan item 3.11).</li>
 <li><strong>Source:</strong> Plan item 3.9.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/missions/#r-msn-010-simulator-missions">R-MSN-010</a></li>
 </ul>
@@ -6272,6 +6332,11 @@
 <td>1.11.0</td>
 <td>2026-11-11</td>
 <td>F-MSN-004 implemented: hazards (app 0.5.1), environments (0.6.0), ground installations (0.6.1)</td>
+</tr>
+<tr>
+<td>1.12.0</td>
+<td>2026-11-11</td>
+<td>F-MSN-003 implemented: radio voices (app 0.6.2); <code>interceptor</code> pilot clips not yet mapped. F-MSN-005 implemented: the simulator (app 0.6.3)</td>
 </tr>
 </tbody>
 </table>
