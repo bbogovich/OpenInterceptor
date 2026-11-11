@@ -24,9 +24,10 @@ within its triangle budget) before it is written; then it is cut into debris pie
 import math
 import os
 import random
+import zlib
 
 from common import (Model, Part, Face, lathe, torus, sphere, cylinder_between, prism, box, frame, icosphere, frame_from_z,
-                    Z_TO_Y, IDENTITY, rot_x, scale_m, add, sub, mul, dot, cross, norm, length,
+                    Z_TO_Y, IDENTITY, rot_x, scale_m, mat_apply, add, sub, mul, dot, cross, norm, length,
                     validate_model, write_model, make_debris, PACK)
 
 # ---------------------------------------------------------------------------------------
@@ -646,24 +647,28 @@ def guard_station():
             (60, 19, "hull"), (60, 20.5, "chrome"), (62, 20.5, "chrome"), (62, 13, "hull"), (85, 13, "hull"),
             (85, 14, "chrome"), (87, 14, "chrome"), (87, 7, "hull"), (100, 7, "teal"), (104, 5, "chrome"),
             (150, 0.0, "chrome")]
-    m.add(upright(lathe("tower", prof, "hull", 24, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=4)))
+    # Parts are tagged (see T) for the construction stages; tags do not change the mesh.
+    m.add(T(upright(lathe("tower", prof, "hull", 24, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=4)),
+            "column", (0, -150, 0), (0, 150, 0), 32))
     for a in (45, 135, 225, 315):  # deco buttress fins
         m.add(fin(f"buttress{a}", a, [(12, -60), (12, 80), (24, 72), (38, -10), (38, -50)], "red", 3.0, 3.0,
                   root_s=13, axis="y"))
-    m.add(upright(torus("ring", 115, 7, "hull", 40, 8, uv=(0, 6, 0, 1)), y=-25))
+    m.add(T(upright(torus("ring", 115, 7, "hull", 40, 8, uv=(0, 6, 0, 1)), y=-25), "ring", (0, -25, 0), 115, 14))
     for a in (0, 90, 180, 270):
         r = math.radians(a)
         d = (math.sin(r), 0, -math.cos(r))
-        m.add(cylinder_between("spoke", add(mul(d, 28), (0, -25, 0)), add(mul(d, 110), (0, -25, 0)), 3.0, "chrome", 8))
+        p0, p1 = add(mul(d, 28), (0, -25, 0)), add(mul(d, 110), (0, -25, 0))
+        m.add(T(cylinder_between("spoke", p0, p1, 3.0, "chrome", 8), "column", p0, p1, 3.0))
     for a in (45, 135, 225, 315):
         r = math.radians(a)
         d = (math.sin(r), 0, -math.cos(r))
         root = add(mul(d, 22), (0, 45, 0))
         tip = add(mul(d, 75), (0, 45, 0))
-        m.add(cylinder_between("arm", root, tip, 3.5, "cream", 8))
-        m.add(cylinder_between("cradle", add(tip, (0, -6, 0)), add(tip, (0, 6, 0)), 7, "red", 12))
-        m.add(cylinder_between("cradle_light", add(tip, (0, 6, 0)), add(tip, (0, 8, 0)), 4, "lights", 12))
-    m.add(sphere("beacon", 4.0, "lights", 10, 5).transformed(IDENTITY, (0, 118, 0)))
+        m.add(T(cylinder_between("arm", root, tip, 3.5, "cream", 8), "column", root, tip, 3.5))
+        c0, c1 = add(tip, (0, -6, 0)), add(tip, (0, 6, 0))
+        m.add(T(cylinder_between("cradle", c0, c1, 7, "red", 12), "column", c0, c1, 7))
+        m.add(T(cylinder_between("cradle_light", add(tip, (0, 6, 0)), add(tip, (0, 8, 0)), 4, "lights", 12), "detail"))
+    m.add(T(sphere("beacon", 4.0, "lights", 10, 5).transformed(IDENTITY, (0, 118, 0)), "detail"))
     # Module mounts. Turrets 1-4 on the outer rim of the habitat ring (between the
     # spokes' outer ends, at torus vertices so they sit exactly on the surface), turrets
     # 5-6 on the outer faces of two docking cradles, shields on the upper spire tier.
@@ -870,6 +875,358 @@ def jammer_buoy():
     for d in ((0, 1, 0), (0, -1, 0), norm((1, 0.9, 1)), norm((-1, 0.9, -1)), norm((1, -0.9, -1)), norm((-1, -0.9, 1))):
         m.add(cylinder_between("spike", mul(d, 1.2), mul(d, 2.5), 0.16, "black", 6, radius_b=0.0))
     return m
+
+
+# ---------------------------------------------------------------------------------------
+# Logistics: Guard facilities, the supply clipper and its cargo pod
+# ---------------------------------------------------------------------------------------
+#
+# Facility parts carry a `tag` describing their rough shape, which the construction
+# stages below use to put scaffolding where the part will be:
+#   ("column", a, b, r) - something round of radius r from point a to point b;
+#   ("ring", centre, R, h) - a horizontal ring of radius R and height h;
+#   ("box", lo, hi)     - an axis-aligned block;
+#   ("base",)           - present from the start (the anchoring asteroid);
+#   ("detail",)         - fitted last (domes, dishes, antennas, lamps).
+# Untagged parts are small hull pieces: built, but never scaffolded.
+
+def T(part, *tag):
+    """Tags a part (see above) and returns it, so a builder can write m.add(T(...))."""
+    part.tag = tag
+    return part
+
+
+def facility_mats(texture):
+    return dict(STATION, hull=((1, 1, 1), texture), rock=((1, 1, 1), "asteroid_rock.png"),
+                ore=((0.22, 0.2, 0.18), None), glass=((0.75, 0.92, 1.0), None), **SLOT)
+
+
+def ring_slot(m, name, R, y, deg):
+    d = horizontal(deg)
+    m.add(slot(name, add(mul(d, R), (0, y, 0)), d))
+
+
+def mining_facility():
+    """Guard ore refinery, ~200 m: a refinery tower anchored in an asteroid, three
+    drilling derricks, three ore hoppers on legs feeding conveyor booms, and a docking
+    cradle on a long arm."""
+    m = Model("mining_facility", facility_mats("mining_facility.png"), CAPITAL)
+    rock = icosphere("rock", 46, "rock", 2, rough=0.15, seed=31, uv=True).transformed(scale_m(1.2, 0.7, 1.0), (0, -10, 0))
+    m.add(T(rock, "base"))
+    prof = [(10, 16, "hull"), (20, 16, "chrome"), (22, 18, "chrome"), (24, 18, "hull"), (24, 15, "hull"), (70, 15, "chrome"),
+            (70, 17, "chrome"), (72, 17, "hull"), (72, 13, "hull"), (100, 13, "chrome"), (100, 15, "chrome"),
+            (102, 15, "hull"), (102, 11, "hull"), (112, 11, "chrome"), (114, 9, "chrome")]
+    m.add(T(upright(lathe("tower", prof, "hull", 24, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=3)),
+            "column", (0, 10, 0), (0, 114, 0), 18))
+    for k, a in enumerate((0, 120, 240)):
+        c = mul(horizontal(a), 48)
+        hop = [(28, 0.0, "chrome"), (30, 3, "red"), (46, 12, "hull"), (60, 12, "chrome"), (61, 12.8, "chrome"),
+               (62, 12.8, "ore"), (62, 0.0, "ore")]
+        m.add(T(upright(lathe("hopper", hop, "hull", 16, uv=(0, 1, 0, 1), uv_mode="around"), x=c[0], z=c[2]),
+                "column", (c[0], 28, c[2]), (c[0], 62, c[2]), 13))
+        for b in (0, 120, 240):
+            leg = add(c, mul(horizontal(b + 60), 9))
+            m.add(cylinder_between("leg", add(leg, (0, 44, 0)), add(leg, (0, -4, 0)), 1.2, "chrome", 6))
+        top = add(c, (0, 62, 0))
+        end = add(mul(horizontal(a), 15), (0, 88, 0))
+        m.add(T(cylinder_between("conveyor", top, end, 2.4, "red", 4), "column", top, end, 3))
+        m.add(T(sphere("hopper_lamp", 1.6, "lights", 8, 4).transformed(IDENTITY, add(top, (0, 2, 0))), "detail"))
+    for a in (60, 180, 300):  # drilling derricks: square tapered towers over drill pipes
+        c = mul(horizontal(a), 30)
+        der = lathe("derrick", [(12, 7, "red"), (70, 1.6, "chrome"), (75, 1.6, "chrome")], "red", 4, phase=45,
+                    smooth=False)
+        m.add(T(upright(der, x=c[0], z=c[2]), "column", (c[0], 12, c[2]), (c[0], 75, c[2]), 7))
+        m.add(cylinder_between("drill_pipe", add(c, (0, 14, 0)), add(c, (0, -12, 0)), 1.0, "chrome", 6))
+        m.add(T(sphere("derrick_lamp", 1.2, "lights", 8, 4).transformed(IDENTITY, add(c, (0, 77, 0))), "detail"))
+    arm_a, arm_b = (14, 106, 0), (92, 106, 0)
+    m.add(T(cylinder_between("dock_arm", arm_a, arm_b, 3.5, "cream", 8), "column", arm_a, arm_b, 3.5))
+    m.add(T(box("cradle", 84, 102, 96, 100, -12, 12, "red"), "box", (84, 96, -12), (102, 100, 12)))
+    for z0 in (-12, 9):
+        m.add(T(box("cradle_side", 84, 102, 100, 110, z0, z0 + 3, "red"), "box", (84, 100, z0), (102, 110, z0 + 3)))
+    m.add(T(cylinder_between("mast", (92, 110, 0), (92, 128, 0), 0.6, "chrome", 6), "detail"))
+    m.add(T(sphere("beacon", 1.8, "lights", 8, 4).transformed(IDENTITY, (92, 129, 0)), "detail"))
+    for k, a in enumerate((45, 135, 225, 315)):
+        ring_slot(m, f"slot_turret{k + 1}", 13, 86, a)
+    m.add(slot("slot_shield1", (0, 114, 0), (0, 1, 0)))
+    return m
+
+
+def research_station():
+    """Guard observatory, ~180 m: a hub with a telescope dome and its tube, two
+    laboratory rings on spokes, and three radio dishes on the outer ring."""
+    m = Model("research_station", facility_mats("research_station.png"), CAPITAL)
+    prof = [(-60, 6, "chrome"), (-40, 10, "chrome"), (-22, 22, "hull"), (-20, 26, "chrome"), (-17, 26, "hull"),
+            (-17, 24, "hull"), (17, 24, "chrome"), (17, 26, "chrome"), (20, 26, "hull"), (22, 20, "hull"), (24, 18, "hull")]
+    m.add(T(upright(lathe("hub", prof, "hull", 24, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=3)),
+            "column", (0, -60, 0), (0, 24, 0), 26))
+    m.add(T(upright(torus("lab_ring", 75, 6, "hull", 36, 8, uv=(0, 8, 0, 1))), "ring", (0, 0, 0), 75, 12))
+    for a in (30, 90, 150, 210, 270, 330):
+        p0, p1 = mul(horizontal(a), 24), mul(horizontal(a), 69.5)
+        m.add(T(cylinder_between("spoke", p0, p1, 2.5, "chrome", 8), "column", p0, p1, 2.5))
+    m.add(T(upright(torus("lab_ring2", 45, 4, "hull", 28, 6, uv=(0, 5, 0, 1)), y=-35), "ring", (0, -35, 0), 45, 8))
+    for a in (0, 90, 180, 270):
+        p0, p1 = add(mul(horizontal(a), 17), (0, -35, 0)), add(mul(horizontal(a), 41.5), (0, -35, 0))
+        m.add(T(cylinder_between("spoke2", p0, p1, 1.8, "chrome", 6), "column", p0, p1, 1.8))
+    # Observatory: a drum, a dome and the telescope tube poking out of its slit.
+    m.add(T(upright(lathe("dome_drum", [(23, 17, "cream"), (32, 17, "chrome"), (33, 16, "chrome")], "cream", 24)), "detail"))
+    m.add(T(upright(dome("dome", 32.5, 16, 14, "chrome", 24, 5)), "detail"))
+    m.add(T(cylinder_between("telescope", (0, 40, 0), (11, 68, -13), 3.6, "cream", 12), "detail"))
+    m.add(T(cylinder_between("telescope_ring", (8.2, 61, -9.7), (9.0, 63, -10.6), 4.2, "red", 12), "detail"))
+    for a in (0, 120, 240):  # radio dishes on masts, tilted outward
+        base = add(mul(horizontal(a), 75), (0, 5, 0))
+        top = add(base, (0, 16, 0))
+        m.add(T(cylinder_between("dish_mast", base, top, 0.9, "chrome", 6), "detail"))
+        aim = norm(add(mul(horizontal(a), 0.6), (0, 1, 0)))
+        dish = lathe("dish", [(0.0, 0.0, "cream"), (2.6, 9.0, "chrome"), (3.2, 8.6, "cream"), (0.6, 0.0, "cream")],
+                     "cream", 16, crease=30)
+        m.add(T(dish.transformed(frame_from_z(aim), top), "detail"))
+        m.add(T(cylinder_between("feed", top, add(top, mul(aim, 7)), 0.3, "chrome", 5), "detail"))
+    for k, a in enumerate((60, 180, 300)):
+        ring_slot(m, f"slot_turret{k + 1}", 81, 0, a)
+    m.add(slot("slot_shield1", (0, -60, 0), (0, -1, 0)))
+    return m
+
+
+def manufacturing_center():
+    """Guard orbital factory, ~250 m long: a spine with two smelter drums, side cargo
+    bays, and two assembly gantries around a rocket hull under construction."""
+    m = Model("manufacturing_center", facility_mats("manufacturing_center.png"), CAPITAL)
+    spine = [(-125, 10, "chrome"), (-121, 12, "hull"), (-100, 12, "chrome"), (-99, 13.5, "chrome"), (-97, 13.5, "hull"),
+             (-96, 12, "hull"), (96, 12, "chrome"), (97, 13.5, "chrome"), (99, 13.5, "hull"), (100, 12, "hull"),
+             (121, 12, "chrome"), (125, 10, "chrome")]
+    m.add(T(lathe("spine", spine, "hull", 16, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=2),
+            "column", (0, 0, -125), (0, 0, 125), 13.5))
+    drum1 = [(-84, 18, "chrome"), (-80, 30, "hull"), (-62, 30, "chrome"), (-61, 31.5, "chrome"), (-59, 31.5, "hull"),
+             (-58, 30, "hull"), (-40, 30, "chrome"), (-36, 18, "chrome")]
+    m.add(T(lathe("smelter1", drum1, "hull", 24, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=3),
+            "column", (0, 0, -84), (0, 0, -36), 31.5))
+    drum2 = [(-24, 16, "chrome"), (-20, 26, "hull"), (16, 26, "chrome"), (20, 16, "chrome")]
+    m.add(T(lathe("smelter2", drum2, "hull", 24, uv=(0, 1, 0, 1), uv_mode="around", u_repeat=3),
+            "column", (0, 0, -24), (0, 0, 20), 26))
+    m.add(T(torus("furnace_glow", 26.2, 1.2, "exhaust", 32, 4).transformed(IDENTITY, (0, 0, 10)), "detail"))
+    for sx in (-1, 1):  # cargo bays either side
+        lo, hi = (min(sx * 14, sx * 44), -14, 26), (max(sx * 14, sx * 44), 14, 56)
+        m.add(T(box("cargo_bay", lo[0], hi[0], lo[1], hi[1], lo[2], hi[2], "hull", uv_scale=1 / 16), "box", lo, hi))
+        m.add(box("bay_door", lo[0] + 2, hi[0] - 2, 14, 15, 29, 53, "red"))
+    for z in (66, 110):  # assembly gantries: two legs and a beam each
+        for x0 in (-46, 40):
+            m.add(T(box("gantry_leg", x0, x0 + 6, -16, 46, z, z + 5, "red"), "box", (x0, -16, z), (x0 + 6, 46, z + 5)))
+        m.add(T(box("gantry_beam", -46, 46, 40, 46, z, z + 5, "cream"), "box", (-46, 40, z), (46, 46, z + 5)))
+        m.add(T(box("gantry_hook", -2, 2, 30, 40, z + 1, z + 4, "chrome"), "detail"))
+    rocket = ogive(64, 76, 8, 4, "chrome") + [(76, 8.5, "red"), (104, 8.5, "red"), (108, 7, "chrome")]
+    m.add(T(lathe("rocket_in_build", rocket, "red", 16).transformed(IDENTITY, (0, 26, 0)), "detail"))
+    for z in (-110, 70):
+        m.add(T(cylinder_between("mast", (0, 13, z), (0, 34, z), 0.8, "chrome", 6), "detail"))
+        m.add(T(sphere("beacon", 1.6, "lights", 8, 4).transformed(IDENTITY, (0, 35, z)), "detail"))
+    m.add(slot("slot_turret1", (30, 0, -70), (1, 0, 0)))
+    m.add(slot("slot_turret2", (-30, 0, -70), (-1, 0, 0)))
+    m.add(slot("slot_turret3", (0, 26, -8), (0, 1, 0)))
+    m.add(slot("slot_turret4", (0, -26, -8), (0, -1, 0)))
+    m.add(slot("slot_shield1", (0, 0, -125), (0, 0, -1)))
+    m.add(slot("slot_shield2", (0, 0, 125), (0, 0, 1)))
+    return m
+
+
+POD_MATS = dict(GUARD, pod=((1, 1, 1), "cargo_pod.png"))
+
+
+def pod_parts(centre=(0, 0, 0)):
+    """A 6 x 6 x 14 m cargo container with chrome ribs, red end frames, lifting lugs and
+    a docking latch on top, centred on `centre`."""
+    cx, cy, cz = centre
+    parts = [box("container", cx - 3, cx + 3, cy - 3, cy + 3, cz - 7, cz + 7, "pod", uv_scale=1 / 8)]
+    for z in (-3.5, 3.5):
+        parts.append(box("rib", cx - 3.2, cx + 3.2, cy - 3.2, cy + 3.2, cz + z - 0.3, cz + z + 0.3, "chrome"))
+    for z in (-7.2, 6.6):
+        parts.append(box("end_frame", cx - 3.3, cx + 3.3, cy - 3.3, cy + 3.3, cz + z, cz + z + 0.6, "red"))
+    parts.append(cylinder_between("latch", (cx, cy + 3, cz), (cx, cy + 3.8, cz), 0.6, "chrome", 8))
+    return parts
+
+
+def supply_pod():
+    """Detachable Guard cargo container, ~15 m."""
+    m = Model("supply_pod", POD_MATS, FIGHTER)
+    for p in pod_parts():
+        m.add(p)
+    return m
+
+
+def supply_ship():
+    """Guard cargo clipper, ~85 m: a rocket-nosed cab with portholes, a spine carrying
+    twelve cargo pods, and a chunky four-bell engine block."""
+    m = Model("supply_ship", POD_MATS, 3000)
+    cab = ogive(-42, -30, 7.0, 5, "chrome") + [(-30, 7.3, "hull"), (-21, 8.0, "hull"), (-19, 8.6, "chrome"),
+                                               (-17, 8.6, "hull"), (-15, 7.6, "hull"), (-14, 7.0, "chrome")]
+    m.add(lathe("cab", cab, "hull", 16, uv=(0, 1, 0, 1)))
+    m.add(ellipsoid("canopy", (0, 6.2, -26), (3.0, 2.4, 5.0), "glass"))
+    m.add(box("spine", -3, 3, -3, 3, -16, 33, "red"))
+    for z in (-8, 7.5, 23):
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                for p in pod_parts((sx * 6.4, sy * 3.4, z)):
+                    m.add(p)
+    m.add(box("engine_block", -11, 11, -9, 9, 31, 40, "cream"))
+    m.add(box("engine_trim", -11.4, 11.4, -9.4, 9.4, 33, 34.5, "chrome"))
+    for sx in (-5.5, 5.5):
+        for sy in (-4.5, 4.5):
+            m.add(bell("bell", 39, 8, 2.6, 4.0, 12).transformed(IDENTITY, (sx, sy, 0)))
+    m.add(fin("fin_top", 0, [(8.5, 24), (8.5, 39), (16, 46), (16, 41)], "red", 0.8, 0.4))
+    m.add(fin("fin_bottom", 180, [(8.5, 24), (8.5, 39), (14, 45), (14, 41)], "red", 0.8, 0.4))
+    return m
+
+
+# ---------------------------------------------------------------------------------------
+# Construction stages
+# ---------------------------------------------------------------------------------------
+
+def beam(name, a, b, w, mat="scaffold"):
+    """A triangular girder from a to b, about `w` thick, its texture running
+    along it (one hazard repeat per 8 widths)."""
+    L = length(sub(b, a))
+    reps = max(1, round(L / (8 * w)))
+    # Three sides: a triangular girder is 12 triangles against a square one's 16, and
+    # scaffolding is mostly girders.
+    part = lathe(name, [(0.0, w * 1.4), (L, w * 1.4)], mat, 3, uv=(0, reps, 0, 1), smooth=False)
+    return part.transformed(frame_from_z(sub(b, a)), a)
+
+
+def scaffold(tag, full=True):
+    """Scaffolding around a tagged part: returns (girder parts, node points). A column
+    gets posts, rings of girders and diagonal braces; a ring gets a truss of two
+    polygons with posts; a box gets its twelve edges. `full=False` gives the sparse
+    remnant left over once a part is finished (posts and a top ring only)."""
+    parts, nodes = [], []
+    kind = tag[0]
+    if kind == "column":
+        a, b, r = tag[1], tag[2], tag[3] * 1.12
+        L = length(sub(b, a))
+        M = frame_from_z(sub(b, a))
+        posts = 6 if r > 12 else 4
+        rings = max(2, min(4, round(L / max(2 * r, 12)) + 1))
+        w = max(0.25, min(1.0, r * 0.035))
+
+        def P(k, i):
+            ang = 2 * math.pi * k / posts + math.pi / posts
+            return add(a, mat_apply(M, (r * math.cos(ang), r * math.sin(ang), L * i / (rings - 1))))
+
+        for k in range(posts) if full else range(0, posts, 2):
+            parts.append(beam("post", P(k, 0), P(k, rings - 1), w))
+        for i in range(rings) if full else (rings - 1,):
+            for k in range(posts):
+                parts.append(beam("girder", P(k, i), P(k + 1, i), w))
+                nodes.append(P(k, i))
+        if full and posts == 6:  # braces only on the big columns, to save triangles
+            for i in range(rings - 1):
+                for k in range(0, posts, 2):
+                    parts.append(beam("brace", P(k, i), P(k + 1, i + 1), w * 0.8))
+    elif kind == "ring":
+        c, R, h = tag[1], tag[2], tag[3]
+        segs, w = 12, 0.8
+
+        def P(k, s):
+            d = horizontal(360 * k / segs + 15)
+            return add(add(c, mul(d, R)), (0, s * (h * 0.65), 0))
+
+        for k in range(segs):
+            for s in (-1, 1) if full else (1,):
+                parts.append(beam("girder", P(k, s), P(k + 1, s), w))
+                nodes.append(P(k, s))
+            if full or k % 3 == 0:
+                parts.append(beam("post", P(k, -1), P(k, 1), w))
+            if full and k % 2 == 0:
+                parts.append(beam("brace", P(k, -1), P(k + 1, 1), w * 0.8))
+    elif kind == "box":
+        lo, hi = tag[1], tag[2]
+        pad = 1.0
+        lo, hi = sub(lo, (pad, pad, pad)), add(hi, (pad, pad, pad))
+        w = max(0.25, min(0.8, min(sub(hi, lo)) * 0.06))
+        corners = [(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]
+        for i in range(8):
+            for j in range(i + 1, 8):
+                diff = sum(1 for q in range(3) if corners[i][q] != corners[j][q])
+                if diff == 1 and (full or corners[i][1] == hi[1] or corners[j][1] == hi[1]):
+                    parts.append(beam("girder", corners[i], corners[j], w))
+        nodes += corners
+    return parts, nodes
+
+
+def lamps(nodes, rng, every, size):
+    """Construction lights on some scaffold nodes, and a red blinker on the highest."""
+    out = [sphere("work_light", size, "lights", 6, 3).transformed(IDENTITY, p) for i, p in enumerate(nodes) if i % every == 0]
+    if nodes:
+        top = max(nodes, key=lambda p: (p[1], p[0], p[2]))
+        out.append(sphere("blinker", size * 1.4, "blinker", 6, 3).transformed(IDENTITY, add(top, (0, size * 2, 0))))
+    return out
+
+
+def build_stage(builder, stage):
+    """`<name>_build1..3`: the facility under construction, in the finished model's own
+    space so the stages swap in place. Stage 3 (~90%) is the whole hull without its
+    details (domes, dishes, antennas, lamps) and a few scaffold remnants; stage 2 (~60%)
+    keeps the core and a seeded selection of hull parts, scaffolding the rest; stage 1
+    (~25%) is bare scaffolding over every part's outline with a few hull plates."""
+    model = builder()
+    name = f"{model.name}_build{stage}"
+    rng = random.Random(zlib.crc32(name.encode()))  # a seed from the name: stable across runs
+    mats = dict(model.materials, scaffold=((1, 1, 1), "scaffold.png"), lights=((1.0, 0.92, 0.55), None),
+                blinker=((1.0, 0.15, 0.1), None), cream=GUARD["cream"])
+    out = Model(name, mats, CAPITAL)
+    parts = [p for p in model.parts if not p.name.startswith("slot_")]
+    tag = lambda p: getattr(p, "tag", ("plain",))
+    base = [p for p in parts if tag(p)[0] == "base"]
+    hull = [p for p in parts if tag(p)[0] not in ("base", "detail")]
+    shaped = [p for p in hull if tag(p)[0] in ("column", "ring", "box")]
+
+    def extent(p):
+        lo, hi = p.bounds()
+        return length(sub(hi, lo))
+
+    core = max(shaped, key=extent)
+    out.parts = list(base)
+    nodes = []
+    if stage == 3:
+        out.parts += hull
+        for p in rng.sample(sorted(shaped, key=lambda q: q.name)[1:], 2):
+            g, nd = scaffold(tag(p), full=False)
+            out.parts += g
+            nodes += nd
+        every = 6
+    elif stage == 2:
+        others = [p for p in hull if p is not core]
+        keep = set(id(p) for p in rng.sample(others, max(0, round(0.6 * len(hull)) - 1)))
+        for p in hull:
+            if p is core or id(p) in keep:
+                out.parts.append(p)
+            elif tag(p)[0] in ("column", "ring", "box"):
+                g, nd = scaffold(tag(p))
+                out.parts += g
+                nodes += nd
+        every = 4
+    else:
+        for p in shaped:
+            g, nd = scaffold(tag(p))
+            out.parts += g
+            nodes += nd
+        # A few hull plates already hung on the core's scaffold.
+        kind = tag(core)
+        if kind[0] == "column":
+            a, b, r = kind[1], kind[2], kind[3]
+            M = frame_from_z(sub(b, a))
+            L = length(sub(b, a))
+            for k in range(5):
+                ang = 2 * math.pi * rng.random()
+                t = rng.uniform(0.15, 0.85)
+                radial = mat_apply(M, (math.cos(ang), math.sin(ang), 0))
+                centre = add(a, mat_apply(M, (r * math.cos(ang), r * math.sin(ang), L * t)))
+                axis = norm(sub(b, a))
+                tangent = cross(axis, radial)
+                from common import oriented_box
+                out.parts.append(oriented_box("plate", centre, (tangent, axis, radial),
+                                              (r * 0.35, min(L * 0.08, r * 0.6), max(0.3, r * 0.03)), "cream"))
+        every = 3
+    size = max(0.6, min(2.5, extent(core) * 0.006))
+    out.parts += lamps(nodes, rng, every, size)
+    return out
 
 
 # ---------------------------------------------------------------------------------------
@@ -1155,6 +1512,12 @@ SHIPS = [
     # Station modules (appended last so the debris seeds of the models above stay put).
     (guard_turret, 3), (guard_shield_generator, 3), (dominion_turret_pod, 3), (dominion_shield_pod, 3),
     (sky_eye_probe, 3), (jammer_buoy, 3),
+    (mining_facility, 3), (research_station, 3), (manufacturing_center, 3), (supply_ship, 3), (supply_pod, 2),
+] + [
+    # Construction stages (functools.partial-like closures; the default arguments bind
+    # the loop values at definition time).
+    (lambda b=b, s=s: build_stage(b, s), 2)
+    for b in (mining_facility, research_station, manufacturing_center, guard_station) for s in (1, 2, 3)
 ]
 
 

@@ -120,7 +120,9 @@ impl Effects {
                         color: fx.color,
                         shockwave: fx.shockwave.then(|| s.up()),
                     });
-                    if let Some(d) = set.debris.map(|id| world.rules.debris_set(id).clone()) {
+                    if let Some(d) =
+                        set.debris_for(s.look_state.as_deref()).map(|id| world.rules.debris_set(id).clone())
+                    {
                         self.throw_debris(&d, s, set.scale, *radius);
                     }
                 }

@@ -575,6 +575,7 @@ mod tests {
             ],
             states: vec![("building".into(), vec![("hull".into(), "c.png".into())])],
             state_models: Vec::new(),
+            state_debris: Vec::new(),
             debris: Some(DebrisId(0)),
             destroyed_effect: None,
         };

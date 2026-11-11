@@ -31,3 +31,5 @@ text:
   ship.prospector_hauler.desc: "A boxy ore hauler with a drill nose."
   ship.hotrod.name: "Black Comet hot-rod"
   ship.hotrod.desc: "A raider's hot-rod rocket: flame paint and an oversized exhaust."
+  ship.supply_ship.name: "Cargo clipper"
+  ship.supply_ship.desc: "The Guard's supply ship: a cab, a spine of twelve cargo pods and four big engine bells. Slow, sturdy, and a juicy target."

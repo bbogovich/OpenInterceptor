@@ -172,6 +172,125 @@ debris:
     spin: [60, 180]
     life: 10s
 
+  mining_facility:
+    pieces: [models/mining_facility_debris1.obj, models/mining_facility_debris2.obj, models/mining_facility_debris3.obj]
+    pick: [2, 3]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj, models/chunk3.obj], count: 10, speed: [20, 80]}
+  research_station:
+    pieces: [models/research_station_debris1.obj, models/research_station_debris2.obj, models/research_station_debris3.obj]
+    pick: [2, 3]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj, models/chunk3.obj], count: 10, speed: [20, 80]}
+  manufacturing_center:
+    pieces: [models/manufacturing_center_debris1.obj, models/manufacturing_center_debris2.obj, models/manufacturing_center_debris3.obj]
+    pick: [2, 3]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj, models/chunk3.obj], count: 10, speed: [20, 80]}
+  supply_ship:
+    pieces: [models/supply_ship_debris1.obj, models/supply_ship_debris2.obj, models/supply_ship_debris3.obj]
+    pick: [2, 3]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj, models/chunk3.obj], count: 10, speed: [20, 80]}
+  supply_pod:
+    pieces: [models/supply_pod_debris1.obj, models/supply_pod_debris2.obj]
+    pick: [2, 2]
+    speed: [10, 40]
+    spin: [30, 120]
+    life: 15s
+  guard_station_build1:
+    pieces: [models/guard_station_build1_debris1.obj, models/guard_station_build1_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  guard_station_build2:
+    pieces: [models/guard_station_build2_debris1.obj, models/guard_station_build2_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  guard_station_build3:
+    pieces: [models/guard_station_build3_debris1.obj, models/guard_station_build3_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  mining_facility_build1:
+    pieces: [models/mining_facility_build1_debris1.obj, models/mining_facility_build1_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  mining_facility_build2:
+    pieces: [models/mining_facility_build2_debris1.obj, models/mining_facility_build2_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  mining_facility_build3:
+    pieces: [models/mining_facility_build3_debris1.obj, models/mining_facility_build3_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  research_station_build1:
+    pieces: [models/research_station_build1_debris1.obj, models/research_station_build1_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  research_station_build2:
+    pieces: [models/research_station_build2_debris1.obj, models/research_station_build2_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  research_station_build3:
+    pieces: [models/research_station_build3_debris1.obj, models/research_station_build3_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  manufacturing_center_build1:
+    pieces: [models/manufacturing_center_build1_debris1.obj, models/manufacturing_center_build1_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  manufacturing_center_build2:
+    pieces: [models/manufacturing_center_build2_debris1.obj, models/manufacturing_center_build2_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+  manufacturing_center_build3:
+    pieces: [models/manufacturing_center_build3_debris1.obj, models/manufacturing_center_build3_debris2.obj]
+    pick: [2, 2]
+    speed: [5, 30]
+    spin: [5, 40]
+    life: 25s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj], count: 8, speed: [20, 70]}
+
 modelsets:
   cargo_orb:
     intact: models/cargo_orb.obj
@@ -228,6 +347,10 @@ modelsets:
       - {below: 66%, textures: {guard_station: textures/guard_station_scorched.png}}
       - {below: 33%, textures: {guard_station: textures/guard_station_burnt.png}}
     debris: guard_station
+    states:
+      build_25: {model: models/guard_station_build1.obj, debris: guard_station_build1}
+      build_60: {model: models/guard_station_build2.obj, debris: guard_station_build2}
+      build_90: {model: models/guard_station_build3.obj, debris: guard_station_build3}
     destroyed_effect: explosion_station
   hotrod:
     intact: models/hotrod.obj
@@ -341,4 +464,50 @@ modelsets:
       - {below: 66%, textures: {jammer_buoy: textures/jammer_buoy_scorched.png}}
       - {below: 33%, textures: {jammer_buoy: textures/jammer_buoy_burnt.png}}
     debris: jammer_buoy
+    destroyed_effect: explosion_small
+  mining_facility:
+    intact: models/mining_facility.obj
+    damage:
+      - {below: 66%, textures: {mining_facility: textures/mining_facility_scorched.png}}
+      - {below: 33%, textures: {mining_facility: textures/mining_facility_burnt.png}}
+    states:
+      build_25: {model: models/mining_facility_build1.obj, debris: mining_facility_build1}
+      build_60: {model: models/mining_facility_build2.obj, debris: mining_facility_build2}
+      build_90: {model: models/mining_facility_build3.obj, debris: mining_facility_build3}
+    debris: mining_facility
+    destroyed_effect: explosion_station
+  research_station:
+    intact: models/research_station.obj
+    damage:
+      - {below: 66%, textures: {research_station: textures/research_station_scorched.png}}
+      - {below: 33%, textures: {research_station: textures/research_station_burnt.png}}
+    states:
+      build_25: {model: models/research_station_build1.obj, debris: research_station_build1}
+      build_60: {model: models/research_station_build2.obj, debris: research_station_build2}
+      build_90: {model: models/research_station_build3.obj, debris: research_station_build3}
+    debris: research_station
+    destroyed_effect: explosion_station
+  manufacturing_center:
+    intact: models/manufacturing_center.obj
+    damage:
+      - {below: 66%, textures: {manufacturing_center: textures/manufacturing_center_scorched.png}}
+      - {below: 33%, textures: {manufacturing_center: textures/manufacturing_center_burnt.png}}
+    states:
+      build_25: {model: models/manufacturing_center_build1.obj, debris: manufacturing_center_build1}
+      build_60: {model: models/manufacturing_center_build2.obj, debris: manufacturing_center_build2}
+      build_90: {model: models/manufacturing_center_build3.obj, debris: manufacturing_center_build3}
+    debris: manufacturing_center
+    destroyed_effect: explosion_station
+  supply_ship:
+    intact: models/supply_ship.obj
+    damage:
+      - {below: 66%, textures: {guard_hull: textures/guard_hull_scorched.png, cargo_pod: textures/cargo_pod_scorched.png}}
+      - {below: 33%, textures: {guard_hull: textures/guard_hull_burnt.png, cargo_pod: textures/cargo_pod_burnt.png}}
+    debris: supply_ship
+    destroyed_effect: explosion_large
+  supply_pod:
+    intact: models/supply_pod.obj
+    damage:
+      - {below: 50%, textures: {cargo_pod: textures/cargo_pod_scorched.png}}
+    debris: supply_pod
     destroyed_effect: explosion_small

@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Logistics facilities and supply craft (the strategy layer that moves resources
+# between them is Stage 4; see the docs' Logistics design). In battle they are stations
+# with turrets and shield generators, and freighters to escort or ambush. Facilities
+# have construction stages (model-set states build_25, build_60, build_90) for
+# construction-defence missions.
+
+objects:
+  mining_facility:
+    name: "@object.mining_facility.name"
+    description: "@object.mining_facility.desc"
+    model_set: mining_facility
+    faction: guard
+    kind: station
+    hit_points: 9000
+    shields: 1500
+    armor: 400
+    point_defence: {range: 1km, rate: 3, chance: 35%, energy: 3}
+    modules:
+      - {slot: turret1, class: guard_turret}
+      - {slot: turret2, class: guard_turret}
+      - {slot: turret3, class: guard_turret}
+      - {slot: turret4, class: guard_turret}
+      - {slot: shield1, class: guard_shield_generator}
+  research_station:
+    name: "@object.research_station.name"
+    description: "@object.research_station.desc"
+    model_set: research_station
+    faction: guard
+    kind: station
+    hit_points: 7000
+    shields: 2000
+    armor: 300
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
+    modules:
+      - {slot: turret1, class: guard_turret}
+      - {slot: turret2, class: guard_turret}
+      - {slot: turret3, class: guard_turret}
+      - {slot: shield1, class: guard_shield_generator}
+  manufacturing_center:
+    name: "@object.manufacturing_center.name"
+    description: "@object.manufacturing_center.desc"
+    model_set: manufacturing_center
+    faction: guard
+    kind: station
+    hit_points: 11000
+    shields: 1800
+    armor: 500
+    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
+    modules:
+      - {slot: turret1, class: guard_turret}
+      - {slot: turret2, class: guard_turret}
+      - {slot: turret3, class: guard_turret}
+      - {slot: turret4, class: guard_turret}
+      - {slot: shield1, class: guard_shield_generator}
+      - {slot: shield2, class: guard_shield_generator}
+  supply_pod:
+    name: "@object.supply_pod.name"
+    description: "@object.supply_pod.desc"
+    model_set: supply_pod
+    faction: guard
+    kind: freighter
+    hit_points: 150
+    armor: 50
+
+ships:
+  supply_ship:
+    name: "@ship.supply_ship.name"
+    description: "@ship.supply_ship.desc"
+    model_set: supply_ship
+    faction: guard
+    kind: freighter
+    playable: false
+    hit_points: 1400
+    shields: 400
+    armor: 200
+    max_speed: 220
+    acceleration: 35
+    roll_rate: 20
+    pitch_rate: 12
+    yaw_rate: 12
+    angular_damp: 5
+    lock_speed: 400
+    point_defence: {range: 700m, rate: 2, chance: 30%, energy: 4}
+    engine_color: [1.0, 0.7, 0.3]

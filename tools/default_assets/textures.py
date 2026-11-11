@@ -467,6 +467,78 @@ def jammer_buoy():
     return module_drum(violet, black, green, (0.05, 0.02, 0.08), 1601)
 
 
+def station_skin(base, pilaster, band, window, seed, row_step=16, stripe=None):
+    """A Guard facility skin in the around layout (256 square): pilasters, rows of lit
+    windows, chrome bands and an optional hazard stripe band - the guard_station look
+    in other colours, so each facility reads as its own building."""
+    c = Canvas(256, 256)
+    c.shade(lambda x, y, p: base)
+    for x in range(0, 256, 32):
+        c.rect(x, 0, x + 4, 256, pilaster)
+        c.rect(x + 4, 0, x + 5, 256, mix(pilaster, (0, 0, 0), 0.4))
+    rng = random.Random(seed)
+    for row in range(0, 256, row_step):
+        for x in range(8, 256, 32):
+            for k in range(3):
+                col = window if rng.random() < 0.75 else (0.2, 0.2, 0.25)
+                c.rect(x + k * 7, row + 5, x + k * 7 + 4, row + 11, col)
+    for y in (0, 128):
+        c.rect(0, y, 256, y + 4, band)
+    if stripe:
+        for y in range(224, 240):
+            for x in range(256):
+                c.blend(x, y, (0.1, 0.1, 0.1) if ((x + y) // 8) % 2 == 0 else stripe)
+    grime(c, seed + 1, 0.1, 18)
+    return c
+
+
+def mining_facility():
+    """Ore refinery: rust-orange and cream with a hazard stripe."""
+    return station_skin((0.86, 0.80, 0.66), (0.72, 0.32, 0.10), (0.82, 0.85, 0.9), (1.0, 0.8, 0.4), 1701,
+                        stripe=(1.0, 0.78, 0.1))
+
+
+def research_station():
+    """Observatory: cream and teal with dense, cool-lit laboratory windows."""
+    return station_skin((0.94, 0.91, 0.80), (0.08, 0.55, 0.55), (0.85, 0.87, 0.92), (0.75, 0.92, 1.0), 1801, row_step=12)
+
+
+def manufacturing_center():
+    """Orbital factory: red and cream with warm furnace-lit windows and hazard trim."""
+    return station_skin((0.90, 0.84, 0.70), (0.72, 0.10, 0.08), (0.80, 0.82, 0.88), (1.0, 0.65, 0.3), 1901,
+                        row_step=20, stripe=(1.0, 0.78, 0.1))
+
+
+def cargo_pod():
+    """Planar tile for cargo containers (8 m per tile): ribbed cream plating, a red
+    band with a stencilled star, rivets and hazard-striped edges."""
+    c = Canvas(256, 256)
+    c.shade(lambda x, y, p: (0.92, 0.87, 0.72) if (x // 16) % 2 == 0 else (0.84, 0.79, 0.64))
+    c.rect(0, 96, 256, 160, (0.76, 0.11, 0.08))
+    c.polygon(star_points(128, 128, 22, 9), (0.95, 0.9, 0.75))
+    for y in (0, 248):
+        for yy in range(y, y + 8):
+            for x in range(256):
+                c.blend(x, yy, (0.1, 0.1, 0.1) if ((x + yy) // 8) % 2 == 0 else (1.0, 0.78, 0.1))
+    panel_lines(c, [0, 128], [92, 164], (0.3, 0.25, 0.2), (0.8, 0.8, 0.85), 8)
+    grime(c, 2001, 0.12, 20)
+    return c
+
+
+def scaffold():
+    """Construction girders: diagonal yellow and black hazard bands with dark edges and
+    bolt heads (u runs along a girder, v around it)."""
+    c = Canvas(256, 256)
+    c.shade(lambda x, y, p: (1.0, 0.80, 0.12) if ((x + y) // 32) % 2 == 0 else (0.09, 0.08, 0.07))
+    for y in range(0, 256, 64):  # the girder's edges (four sides around)
+        c.rect(0, y, 256, y + 4, (0.25, 0.22, 0.18))
+    for x in range(8, 256, 32):
+        for y in range(32, 256, 64):
+            c.disc(x, y, 3, (0.55, 0.55, 0.58), wrap=True)
+    grime(c, 2101, 0.2, 16)
+    return c
+
+
 # Station module textures also get a `_wrecked` variant (a destroyed module left in place).
 MODULE_TEXTURES = {"guard_turret", "guard_shield_generator", "dominion_turret_pod", "dominion_shield_pod"}
 
@@ -477,6 +549,8 @@ TEXTURES = [
     ("guard_turret", guard_turret), ("guard_shield_generator", guard_shield_generator),
     ("dominion_turret_pod", dominion_turret_pod), ("dominion_shield_pod", dominion_shield_pod),
     ("sky_eye_probe", sky_eye_probe), ("jammer_buoy", jammer_buoy),
+    ("mining_facility", mining_facility), ("research_station", research_station),
+    ("manufacturing_center", manufacturing_center), ("cargo_pod", cargo_pod), ("scaffold", scaffold),
 ]
 
 

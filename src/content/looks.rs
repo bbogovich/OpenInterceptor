@@ -13,7 +13,7 @@
 //!       - {below: 33%, textures: {guard_hull: textures/guard_hull_burnt.png}}
 //!     states:                                   # named conditions (stations: building…)
 //!       building: {textures: {xmmod: original:hang-const}}
-//!       build_25: {model: models/station_build1.obj}   # a stage with its own mesh
+//!       build_25: {model: models/station_build1.obj, debris: station_build1}   # own mesh and debris
 //!     debris: comet                             # the debris set used when it explodes
 //!     destroyed_effect: explosion_small
 //! debris:
@@ -73,11 +73,18 @@ pub struct ModelSet {
     pub states: Vec<(String, Swaps)>,
     /// States that replace the whole mesh (construction stages): `(state, model)`.
     pub state_models: Vec<(String, String)>,
+    /// States with their own debris (a half-built station breaks into its own pieces).
+    pub state_debris: Vec<(String, DebrisId)>,
     pub debris: Option<DebrisId>,
     pub destroyed_effect: Option<EffectId>,
 }
 
 impl ModelSet {
+    /// The debris set for an object destroyed in `state`.
+    pub fn debris_for(&self, state: Option<&str>) -> Option<DebrisId> {
+        state.and_then(|n| self.state_debris.iter().find(|(k, _)| k == n)).map(|(_, d)| *d).or(self.debris)
+    }
+
     /// The model to draw in `state`: the state's own mesh if it has one (a construction
     /// stage), else the intact model.
     pub fn model_for(&self, state: Option<&str>) -> &str {
@@ -263,6 +270,7 @@ mod tests {
             ],
             states: vec![("building".into(), vec![("hull".into(), "frame.png".into())])],
             state_models: vec![("build_25".into(), "frame.obj".into())],
+            state_debris: vec![("build_25".into(), DebrisId(3))],
             debris: None,
             destroyed_effect: None,
         };

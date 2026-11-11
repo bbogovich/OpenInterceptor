@@ -910,7 +910,10 @@ impl World {
                 state.def = Some(rules.behaviour_id(b).ok_or(format!("object {}: unknown behaviour '{b}'", p.name))?);
             }
             let id = w.spawn(class, faction, &p.name, p.position, rot, pilot);
-            w.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
+            // A station shown in a state (under construction) has no modules yet.
+            if p.state.is_none() {
+                w.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
+            }
             if p.protect {
                 let mine = w.get(player).map(|s| s.faction);
                 w.get_mut(id).expect("just spawned").protected_by = mine;

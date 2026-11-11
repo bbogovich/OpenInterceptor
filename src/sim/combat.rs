@@ -70,7 +70,8 @@ fn point_defence(w: &mut World, dt: f32) {
         if !s.alive {
             continue;
         }
-        let Some(pd) = rules.ship(s.class).point_defence else { continue };
+        // An object shown in a state (a station under construction) has no guns yet.
+        let Some(pd) = rules.ship(s.class).point_defence.filter(|_| s.look_state.is_none()) else { continue };
         s.pd_cooldown = (s.pd_cooldown - dt).max(0.0);
         if s.pd_cooldown > 0.0 || s.energy < pd.energy {
             continue;

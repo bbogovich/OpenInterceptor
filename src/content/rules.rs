@@ -1216,6 +1216,7 @@ struct Looks<'a> {
 fn model_set(id: &str, g: Get, pack: usize, debris: &[DebrisSet], effects: &[EffectDef]) -> Result<ModelSet, String> {
     use super::looks::{swaps, DamageLevel};
     let intact = g.str("intact").ok_or("a model set needs intact: <model>")?.to_string();
+    let debris_sets = debris;
     let debris = match g.str("debris") {
         Some(d) => Some(
             debris
@@ -1255,6 +1256,15 @@ fn model_set(id: &str, g: Get, pack: usize, debris: &[DebrisSet], effects: &[Eff
         textures: swaps(g, "textures"),
         damage,
         states: g.map("states").iter().map(|(k, v)| (k.to_ascii_lowercase(), swaps(Get(v), "textures"))).collect(),
+        state_debris: g
+            .map("states")
+            .iter()
+            .filter_map(|(k, v)| {
+                let id = Get(v).str("debris")?;
+                let found = debris_sets.iter().position(|d| d.id.eq_ignore_ascii_case(id));
+                found.map(|i| (k.to_ascii_lowercase(), DebrisId(i as u16)))
+            })
+            .collect(),
         state_models: g
             .map("states")
             .iter()
@@ -1372,6 +1382,7 @@ fn ship_class(
                 damage: Vec::new(),
                 states: Vec::new(),
                 state_models: Vec::new(),
+                state_debris: Vec::new(),
                 debris,
                 destroyed_effect: None,
             });

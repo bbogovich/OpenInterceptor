@@ -223,6 +223,7 @@
               }}},
           "states": {"description": "named conditions: build_25, destroyed … (scenario objects pick one with state:)", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
                 "model": {"description": "a mesh replacing the intact one in this state (construction stages)", "type": "string"},
+                "debris": {"description": "debris set used when destroyed in this state", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                 "textures": {"description": "texture name: replacement", "type": "object", "additionalProperties": {"type": "string"}}
               }}},
           "debris": {"description": "debris set id used when destroyed", "type": "string", "pattern": "^[a-z0-9_.-]+$"},

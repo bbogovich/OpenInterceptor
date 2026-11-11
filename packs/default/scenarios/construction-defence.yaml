@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Testbed: a facility under construction (model-set state build_60), protected.
+id: construction-defence
+order: 20
+title: "@scenario.construction-defence.title"
+description: "@scenario.construction-defence.desc"
+player: choose
+player_position: [0, 200, 1200]
+starfield_seed: 77
+objects:
+  lab: {class: research_station, position: [0, 0, -300], state: build_60, protect: true}
+  frame: {class: manufacturing_center, position: [900, -150, -900], rotation: [0, 40, 0], state: build_25}
+  wing1: {class: meteor, ai: wingman, leader: player, position: [-70, 200, 1240], offset: [-70, 0, 40]}
+  raider1: {class: raider_saucer, ai: enemy, position: [-1500, 400, -4500], speed: 300}
+  raider2: {class: raider_saucer, ai: enemy, position: [1500, 300, -4700], speed: 300}
+  scout1: {class: scout_saucer, ai: enemy, position: [0, 600, -5000], speed: 300}

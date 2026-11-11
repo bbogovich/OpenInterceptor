@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Testbed: escort supply clippers through an ambush.
+id: convoy-ambush
+order: 21
+title: "@scenario.convoy-ambush.title"
+description: "@scenario.convoy-ambush.desc"
+player: choose
+player_position: [0, 100, 300]
+starfield_seed: 88
+objects:
+  mine: {class: mining_facility, position: [-600, -300, 2500]}
+  clipper1: {class: supply_ship, ai: target, position: [-150, 0, 0], speed: 120, protect: true}
+  clipper2: {class: supply_ship, ai: target, position: [150, 0, -150], speed: 120, protect: true}
+  hotrod1: {class: hotrod, ai: enemy, position: [-2500, 300, -3500], speed: 350}
+  hotrod2: {class: hotrod, ai: enemy, position: [2500, 200, -3600], speed: 350}
+  raider1: {class: raider_saucer, ai: enemy, position: [0, 800, -4500], speed: 300}

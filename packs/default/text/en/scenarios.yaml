@@ -31,3 +31,7 @@ text:
   scenario.rocket-vs-saucer.desc: "Two Guard wingmen and a choice of rocket against a flight of Dominion saucers near the Guard station. Wingmen: ] for the menu, Shift+F fire at will."
   scenario.systems-trial.title: "Systems trial: salvage a crippled saucer"
   scenario.systems-trial.desc: "A raider saucer drifts ahead with its rockets shot out. Tow it with the tractor ray (Shift+T; Meteor and Thunderbolt) and jump out with it (H) to capture it. Try the power controls (F9/F10, ; and ', S balance) and the Thunderbolt's invisibility screen (Shift+C). A Grappler will try to drag it off first. The prize is marked PROTECT: R (nearest enemy) skips it."
+  scenario.construction-defence.title: "Construction defence: the half-built research station"
+  scenario.construction-defence.desc: "A research station stands at 60 percent, scaffolding and all. Dominion raiders want it wrecked before it is finished. Keep them off it; it cannot shoot back yet."
+  scenario.convoy-ambush.title: "Convoy ambush: escort the cargo clippers"
+  scenario.convoy-ambush.desc: "Two cargo clippers haul ore from the mining facility towards the factory. Black Comet hot-rods and a saucer pounce. If a clipper dies, its cargo is lost."

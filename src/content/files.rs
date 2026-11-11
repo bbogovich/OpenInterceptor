@@ -120,6 +120,7 @@ fn modelset() -> Ty {
             "states",
             Ty::Dict(Box::new(Ty::Struct(vec![
                 f("model", Ty::Asset, "a mesh replacing the intact one in this state (construction stages)"),
+                f("debris", name(), "debris set used when destroyed in this state"),
                 f("textures", swaps(), "texture name: replacement"),
             ]))),
             "named conditions: build_25, destroyed … (scenario objects pick one with state:)",
@@ -440,6 +441,7 @@ pub fn scenario() -> Ty {
         f("offset", Ty::Numbers(3), "wingmen: formation slot relative to the leader"),
         f("speed", Ty::Num, "starting speed, m/s"),
         f("destroyed_systems", names(), "systems (kinds or ids) that start destroyed"),
+        f("state", name(), "model-set state to show it in (a construction stage such as build_60)"),
         f(
             "protect",
             Ty::Bool,
