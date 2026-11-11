@@ -30,6 +30,7 @@ pub mod collision;
 pub mod combat;
 pub mod flight;
 pub mod guidance;
+pub mod hazards;
 pub mod systems;
 pub mod targeting;
 
@@ -302,6 +303,9 @@ pub struct Ship {
     pub velocity: Vec3,
     /// Body-space angular velocity, radians/s: x = pitch, y = yaw, z = roll.
     pub angular_velocity: Vec3,
+    /// Scenery placed by a hazard (asteroids): shown on radar only within range, like a
+    /// moving craft, rather than always as stations are (40 rocks would fill the scope).
+    pub scenery: bool,
     /// Simple (no-drift) physics for this ship: its velocity always follows its nose
     /// (the player's choice on the easy levels; see `flight::simple`).
     pub simple_physics: bool,
@@ -598,6 +602,8 @@ pub struct World {
     /// persists (one ship pushing against another) counts as one impact, not one per
     /// tick. Each pair is `(lower slot, higher slot)`.
     pub contacts: Vec<(u32, u32)>,
+    /// Field hazards acting every tick: a black hole, an ion storm (see [`hazards`]).
+    pub hazards: hazards::ActiveHazards,
     /// Deterministic random-number state (xorshift), for AI variety.
     rng: u64,
 }
@@ -616,6 +622,7 @@ impl World {
             events: Vec::new(),
             time: 0.0,
             contacts: Vec::new(),
+            hazards: Default::default(),
             rng: seed.max(1),
         }
     }
@@ -665,6 +672,7 @@ impl World {
             angular_velocity: Vec3::ZERO,
             tumble: 0.0,
             simple_physics: false,
+            scenery: false,
             throttle: 0.0,
             reverse: false,
             afterburning: false,
@@ -875,6 +883,7 @@ impl World {
                 self.events.push(SimEvent::Message { ship: id, text: "ARENA BOUNDARY".into() });
             }
         }
+        hazards::step(self, TICK);
         combat::step(self, TICK);
         combat::ship_collisions(self);
         systems::step(self, TICK);
@@ -1028,6 +1037,7 @@ impl World {
                 }
             }
         }
+        w.apply_hazards(&scenario.hazards)?;
         Ok((w, player))
     }
 }

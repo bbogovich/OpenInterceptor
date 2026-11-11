@@ -513,10 +513,12 @@ pub fn on_radar(w: &World, observer: &Ship, other: &Ship) -> bool {
     if !detectable(w, observer, other) {
         return false;
     }
-    if w.rules.ship(other.class).max_speed <= 0.0 {
+    if w.rules.ship(other.class).max_speed <= 0.0 && !other.scenery {
         return true;
     }
-    let range = w.rules.flight.radar_range * if jammed(w, observer) { 0.5 } else { 1.0 };
+    // Jamming halves the range; an ion storm cuts it to its sensors factor.
+    let range =
+        w.rules.flight.radar_range * if jammed(w, observer) { 0.5 } else { 1.0 } * w.hazards.ion_storm.unwrap_or(1.0);
     if observer.position.distance(other.position) <= range {
         return true;
     }

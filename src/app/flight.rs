@@ -318,6 +318,7 @@ impl FlightSession {
                 player_class: m.player_class.clone(),
                 player_position: m.player_position,
                 player_rotation: Vec3::ZERO,
+                hazards: Default::default(), // missions place theirs after the roles
                 sun_direction: m.sun,
                 starfield_seed: m.starfield_seed,
                 music: None,
@@ -404,6 +405,10 @@ impl FlightSession {
         };
         let mut messages = MessageLog::default();
         messages.push(0.0, scenario.title.to_uppercase());
+        // Tell the pilot about an ion storm (it shortens their radar).
+        if let Some(f) = world.hazards.ion_storm {
+            messages.push(0.0, format!("ION STORM: SENSORS AT {:.0}%", f * 100.0));
+        }
         Ok(FlightSession {
             world,
             player,

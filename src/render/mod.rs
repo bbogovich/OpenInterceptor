@@ -482,6 +482,11 @@ impl Renderer {
             }
         }
         gl_use_default_material();
+        // A black hole's core: a black sphere that hides the stars behind it (its glow
+        // ring is drawn with the other glows).
+        if let Some(b) = world.hazards.black_hole {
+            draw_sphere(b.position - cam.position, b.radius, None, BLACK);
+        }
     }
 
     /// Draws engine glows, bolts, missiles, sparks and explosions.
@@ -526,6 +531,25 @@ impl Renderer {
             }
         }
         self.push_distant_dots(world, cam, hide, player);
+        // A black hole's accretion disc: a ring of glows turning slowly around it.
+        if let Some(b) = world.hazards.black_hole {
+            let n = 48;
+            for k in 0..n {
+                let a = k as f32 / n as f32 * std::f32::consts::TAU + world.time as f32 * 0.15;
+                let r = b.radius * (1.6 + 0.25 * ((k * 7 % 5) as f32 / 5.0));
+                let p = b.position + Vec3::new(a.cos() * r, (a * 3.0).sin() * b.radius * 0.08, a.sin() * r);
+                let heat = 0.6 + 0.4 * ((k * 13 % 7) as f32 / 7.0);
+                push_billboard(
+                    &mut self.glow_vertices,
+                    &mut self.glow_indices,
+                    rel(p),
+                    b.radius * 0.7,
+                    right,
+                    up,
+                    rgb8([1.0, 0.55 * heat, 0.2 * heat], 0.55),
+                );
+            }
+        }
         for b in &world.bolts {
             let tail = b.position - (b.velocity - cam.velocity).normalize_or_zero() * b.streak_length();
             let dist = rel(b.position).length();

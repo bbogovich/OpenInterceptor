@@ -198,6 +198,15 @@ pub fn run(content: &Content) -> Report {
             r.scenarios += 1;
         }
     }
+    // Missions: the classes their hazards place must exist (scenarios are checked by
+    // building them above, which places the hazards).
+    for m in &rules.missions {
+        for c in m.hazards.classes() {
+            if rules.ship_id(c).is_none() {
+                r.errors.push(format!("mission {}: hazards: unknown class '{c}'", m.id));
+            }
+        }
+    }
     // Exhaustive pass over the original data: every mesh and texture must decode.
     // The exhaustive pass over the CD runs only for an active set that uses it.
     let uses_original = content.packs.iter().any(|p| p.requires_original);

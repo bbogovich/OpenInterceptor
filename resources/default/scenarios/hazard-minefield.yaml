@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.2 hazards): a Dominion minefield in an ion storm; the storm cuts
+# radar range to half, so the mines show up late.
+id: hazard-minefield
+order: 97
+title: "@scenario.hazard-minefield.title"
+description: "@scenario.hazard-minefield.desc"
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 33
+hazards:
+  minefield: {class: space_mine, count: 24, radius: 2500m, center: [0, 0, -3500]}
+  ion_storm: {sensors: 50%}
+objects:
+  hauler: {class: prospector_hauler, ai: target, position: [0, 100, -6500], speed: 60}

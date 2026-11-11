@@ -118,8 +118,9 @@ fn update_lock(w: &mut World, i: usize, dt: f32) {
     // ECM halves the rate.
     let rate = ship.efficiency(SystemKind::Sensors)
         * if t.is_on(SystemKind::Ecm) { 0.5 } else { 1.0 }
-        // A jamming probe nearby halves it again.
-        * if super::systems::jammed(w, ship) { 0.5 } else { 1.0 };
+        // A jamming probe nearby halves it again, and so does an ion storm.
+        * if super::systems::jammed(w, ship) { 0.5 } else { 1.0 }
+        * if w.hazards.ion_storm.is_some() { 0.5 } else { 1.0 };
     let id = w.id_of(i);
     let lock_time = m.lock_time;
     let s = &mut w.ships[i];

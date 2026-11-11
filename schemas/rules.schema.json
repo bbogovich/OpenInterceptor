@@ -225,6 +225,32 @@
           "briefing": {"description": "the briefing text (a @key)", "type": "string"},
           "order": {"description": "sort key in the launcher", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "starfield_seed": {"description": "the star field", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hazards": {"description": "asteroids, a minefield, a black hole, an ion storm", "type": "object", "additionalProperties": false, "properties": {
+              "asteroids": {"description": "an asteroid field", "type": "object", "additionalProperties": false, "properties": {
+                  "class": {"description": "the asteroid object class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "count": {"description": "how many", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "radius": {"description": "the sphere they are scattered in", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "center": {"description": "the sphere's centre [x, y, z], metres", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "spin": {"description": "largest turn rate, degrees per second", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "faction": {"description": "their faction (default: the class's own)", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+                }},
+              "minefield": {"description": "a minefield", "type": "object", "additionalProperties": false, "properties": {
+                  "class": {"description": "the mine class (kind: mine)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "count": {"description": "how many", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "radius": {"description": "the sphere they are scattered in", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "center": {"description": "the sphere's centre [x, y, z], metres", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "spin": {"description": "largest turn rate, degrees per second", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "faction": {"description": "their faction (default: the class's own)", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+                }},
+              "black_hole": {"description": "a black hole", "type": "object", "additionalProperties": false, "properties": {
+                  "position": {"description": "where it is [x, y, z], metres", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "pull": {"description": "acceleration towards it at 1 km, m/s² (grows with 1/d²)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "radius": {"description": "craft closer than this are destroyed", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+                }},
+              "ion_storm": {"description": "an ion storm", "type": "object", "additionalProperties": false, "properties": {
+                  "sensors": {"description": "radar range factor, e.g. 40%", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+                }}
+            }},
           "sun": {"description": "direction of the sun", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
           "player": {"description": "the player's craft", "type": "object", "additionalProperties": false, "properties": {
               "class": {"description": "the player's ship class, or choose", "type": "string", "pattern": "^[a-z0-9_.-]+$"},

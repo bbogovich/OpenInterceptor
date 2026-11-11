@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.2 hazards): an asteroid belt battle in an ion storm.
+id: hazard-asteroids
+order: 91
+title: "Hazard: asteroid belt in an ion storm"
+description: >-
+  Alien fighters in an asteroid belt. The ion storm cuts your radar to 40 % of its range.
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 14
+hazards:
+  asteroids: {class: asteroid, count: 50, radius: 5km, center: [0, 0, -5000], spin: 6}
+  ion_storm: {sensors: 40%}
+objects:
+  wraith1: {class: wraith, ai: enemy, position: [-800, 300, -5000], speed: 300}
+  wraith2: {class: wraith, ai: enemy, position: [900, -200, -5600], speed: 300}

@@ -128,6 +128,8 @@ pub struct MissionDef {
     /// `(result, text)`.
     pub debrief: Vec<(String, String)>,
     pub starfield_seed: u64,
+    /// Asteroid fields, minefields, a black hole, an ion storm (`hazards:`; R-MSN-009).
+    pub hazards: super::hazards::Hazards,
     pub sun: Vec3,
     /// Sort key in the launcher.
     pub order: i64,
@@ -315,6 +317,10 @@ impl MissionDef {
             chatter,
             debrief: g.map("debrief").iter().filter_map(|(k, v)| Some((k.clone(), v.as_str()?.to_string()))).collect(),
             starfield_seed: g.num("starfield_seed").unwrap_or(1.0) as u64,
+            hazards: match g.node("hazards") {
+                Some(n) => super::hazards::Hazards::parse(Get(n)).map_err(|e| format!("missions.{id}: {e}"))?,
+                None => Default::default(),
+            },
             sun: vec3(g, "sun", Vec3::new(-0.4, 0.45, -0.8)),
             order: g.num("order").unwrap_or(100.0) as i64,
             pack,

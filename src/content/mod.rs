@@ -25,6 +25,7 @@
 pub mod behaviour;
 pub mod equipment;
 pub mod files;
+pub mod hazards;
 pub mod looks;
 pub mod mission;
 pub mod pack;

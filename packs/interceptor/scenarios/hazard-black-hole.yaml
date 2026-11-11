@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.2 hazards): the original's black-hole battles. Its pull grows as you
+# near it; inside its radius a craft is lost.
+id: hazard-black-hole
+order: 92
+title: "Hazard: black hole"
+description: >-
+  Alien fighters near a black hole. Keep your speed up and stay clear of its core.
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 18
+hazards:
+  black_hole: {position: [0, -400, -7500], pull: 12, radius: 450}
+objects:
+  wraith1: {class: wraith, ai: enemy, position: [-1200, 300, -3500], speed: 300}
+  spectre1: {class: spectre, ai: enemy, position: [1200, 300, -3800], speed: 300}

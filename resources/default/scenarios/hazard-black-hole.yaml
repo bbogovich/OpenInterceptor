@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.2 hazards): a dogfight at the edge of a black hole. Keep your speed
+# up; anything that crosses its radius is lost.
+id: hazard-black-hole
+order: 96
+title: "@scenario.hazard-black-hole.title"
+description: "@scenario.hazard-black-hole.desc"
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 21
+hazards:
+  black_hole: {position: [0, -500, -7000], pull: 12, radius: 450}
+objects:
+  raider1: {class: raider_saucer, ai: enemy, position: [-1200, 300, -3000], speed: 300}
+  raider2: {class: raider_saucer, ai: enemy, position: [1200, 300, -3200], speed: 300}

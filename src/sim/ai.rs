@@ -303,6 +303,11 @@ pub fn think(w: &mut World) {
                 None => (Controls::default(), None),
             },
         };
+        // Whatever the behaviour wants, a pilot near a black hole first gets clear of it.
+        let controls = match state.behaviour {
+            Behaviour::Idle => controls,
+            _ => escape_black_hole(w, ship).unwrap_or(controls),
+        };
         decisions.push((i, controls, target, state));
     }
     for (i, controls, target, state) in decisions {
@@ -517,6 +522,29 @@ pub fn formation_slot(w: &World, me: &Ship, leader: &Ship, offset: Vec3) -> Vec3
         Vec3::new(-min, 0.0, min * 0.3)
     };
     leader.position + leader.rotation * offset
+}
+
+/// Black-hole avoidance: inside four times its radius, or heading for it within ten,
+/// a pilot turns away and burns out. Returns the controls to use, or `None` when clear.
+pub fn escape_black_hole(w: &World, ship: &Ship) -> Option<Controls> {
+    let b = w.hazards.black_hole?;
+    let to = b.position - ship.position;
+    let d = to.length();
+    let heading_in = ship.velocity.dot(to) > 0.0;
+    if d > b.radius * 10.0 || (d > b.radius * 4.0 && !heading_in) {
+        return None;
+    }
+    let away = ship.position - to.normalize_or(Vec3::Y) * 1000.0;
+    let (pitch, yaw, roll, _) = steer_towards(ship, away);
+    let class = w.rules.ship(ship.class);
+    Some(Controls {
+        pitch,
+        yaw,
+        roll,
+        hold_speed: Some(class.max_speed),
+        afterburner: ship.energy > 0.2 * class.energy,
+        ..Default::default()
+    })
 }
 
 /// Collision avoidance: if another craft is inside our avoidance zone (twice the combined

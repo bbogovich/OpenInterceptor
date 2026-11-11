@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.2 hazards): a cosmium asteroid field with saucers hiding in it.
+id: hazard-asteroids
+order: 95
+title: "@scenario.hazard-asteroids.title"
+description: "@scenario.hazard-asteroids.desc"
+player: choose
+player_position: [0, 0, 0]
+starfield_seed: 12
+hazards:
+  asteroids: {class: cosmium_asteroid, count: 45, radius: 4km, center: [0, 0, -4500], spin: 8}
+objects:
+  scout1: {class: scout_saucer, ai: enemy, position: [-600, 200, -4500], speed: 250}
+  scout2: {class: scout_saucer, ai: enemy, position: [700, -300, -5200], speed: 250}

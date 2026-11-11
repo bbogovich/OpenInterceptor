@@ -328,6 +328,7 @@ fn mission() -> Ty {
         f("briefing", Ty::Text, "the briefing text (a @key)"),
         f("order", Ty::Num, "sort key in the launcher"),
         f("starfield_seed", Ty::Num, "the star field"),
+        f("hazards", super::hazards::schema(), "asteroids, a minefield, a black hole, an ion storm"),
         f("sun", Ty::Numbers(3), "direction of the sun"),
         f(
             "player",
@@ -628,6 +629,7 @@ pub fn scenario() -> Ty {
         f("player_rotation", Ty::Numbers(3), "yaw, pitch, roll in degrees"),
         f("sun", Ty::Numbers(3), "direction towards the sun"),
         f("starfield_seed", Ty::Num, "background stars"),
+        f("hazards", super::hazards::schema(), "asteroids, a minefield, a black hole, an ion storm"),
         f("music", Ty::Asset, "music"),
         f("objects", Ty::Dict(Box::new(object)), "placed objects by name"),
         f("nav", Ty::Dict(Box::new(Ty::Struct(vec![f("position", Ty::Numbers(3), "metres")]))), "navigation points"),
