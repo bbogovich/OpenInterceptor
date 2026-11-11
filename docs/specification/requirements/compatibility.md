@@ -1,5 +1,5 @@
 ---
-spec_version: 1.2.0
+spec_version: 1.3.0
 status: current
 updated: 2026-11-11
 ---
@@ -25,6 +25,8 @@ Features: [Compatibility (original data)](../../definition/compatibility.md). Ho
 | [R-CMP-011 Bad data never panics](#r-cmp-011-bad-data-never-panics) | Implemented |
 | [R-CMP-012 No original content](#r-cmp-012-no-original-content) | Implemented |
 | [R-CMP-013 Facts and deviations marked](#r-cmp-013-facts-and-deviations-marked) | Implemented |
+| [R-CMP-014 Resources folder](#r-cmp-014-resources-folder) | Implemented |
+| [R-CMP-015 Installed copy or CD copy](#r-cmp-015-installed-copy-or-cd-copy) | Implemented |
 
 ## Requirements
 
@@ -36,7 +38,7 @@ The original data MUST be found in this order: command line, environment, settin
 
 - Implements: [F-CMP-001](../../definition/compatibility.md#f-cmp-001-play-from-the-players-own-cd)
 - Status: implemented
-- Verified by: `settings::resolution_order_prefers_explicit_and_existing`; `cli::environment_supplies_data_and_flags_override_it`
+- Verified by: `settings::original_data_is_found_in_order`; `cli::environment_supplies_data_and_flags_override_it`
 - Reverse-engineered: yes
 - See: [Settings and data discovery](../../implementation/architecture/settings.md)
 
@@ -198,7 +200,8 @@ Rationale: it makes explicit what the game provides and what a mod or the player
 
 - Implements: [F-CMP-005](../../definition/compatibility.md#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game)
 - Status: implemented
-- Verified by: `cli::tests::content_dirs_are_resources_then_packs`; `scripts/check.sh` refuses tracked files under `resources/xcom*`.
+- Verified by: `cli::tests::content_dirs_are_resources_then_packs`; `scripts/check.sh` refuses tracked files under `resources/xcom*` (and the old `game/`).
+- See: [Getting started → Folder layout](../../user-guide/getting-started.md#folder-layout), [Settings and data discovery](../../implementation/architecture/settings.md)
 
 ### R-CMP-015 Installed copy or CD copy
 
@@ -208,7 +211,8 @@ Rationale: an installed copy is the more likely thing a player still has.
 
 - Implements: [F-CMP-005](../../definition/compatibility.md#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game)
 - Status: implemented
-- Verified by: `settings::tests::original_data_is_found_in_order`.
+- Verified by: `settings::tests::original_data_is_found_in_order` (an empty `resources/xcom` is skipped; once it holds files it wins over `resources/xcom-cd`).
+- See: [Settings and data discovery](../../implementation/architecture/settings.md)
 
 ## Revision history
 
@@ -216,3 +220,4 @@ Rationale: an installed copy is the more likely thing a player still has.
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CMP-001 – R-CMP-013 (13 requirements; 11 reverse-engineered from the code) |
 | 1.2.0 | 2026-11-11 | R-CMP-014 resources folder; R-CMP-015 installed copy or CD copy |
+| 1.3.0 | 2026-11-11 | R-CMP-014 and R-CMP-015 listed in the status table (implemented, app 0.4.2); R-CMP-001 Verified by: `settings::resolution_order_prefers_explicit_and_existing` renamed `original_data_is_found_in_order` |

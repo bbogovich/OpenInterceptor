@@ -4,12 +4,11 @@ How to install, run and play OpenInterceptor.
 
 | Page | Contents |
 |---|---|
-| [Getting started](getting-started.md) | Building, finding the player's data, the command line |
+| [Getting started](getting-started.md) | Building, the folder layout, finding the player's original data, the command line |
 | [Controls](controls.md) | The keys overlay (`?`), the action groups, rebinding keys and gamepad buttons |
-| [Settings](settings.md) | `settings.yaml`: data paths, packs, campaign, difficulty, language, brightness |
+| [Settings](settings.md) | `settings.yaml`: data paths, packs, campaign, difficulty, language, brightness, console |
+| [Tablet console](console.md) | Turning on the control console, pairing a tablet, what the C1 page offers |
 
 Pages to come:
 
 - **The testbed**: the scenario launcher, arenas, missions and the viewers.
-- **The tablet control console**: using a tablet on the local network as a second control
-  surface.

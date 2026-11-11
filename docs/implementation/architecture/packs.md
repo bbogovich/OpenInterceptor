@@ -9,6 +9,15 @@ file to **YAML checked against schemas** (mod format 2: `formats::yaml`, `conten
 `content::files`). The user-facing side is in
 [Modding](../../modding/index.md).
 
+**Where packs come from** (app 0.4.2). `ContentConfig::pack_dirs` lists folders whose
+sub-folders with a `pack.yaml` are packs, in load order: `resources/` (what ships with the game:
+the default campaign in `resources/default`) then `packs/` (bundled mods such as
+`interceptor`); `mods_dir` (the user's mods) comes last. A later pack overrides an earlier one,
+so mods override resources. `cli::content_dirs` builds the list; `--packs` replaces only
+`packs/`. The player's original data in `resources/xcom/` or `resources/xcom-cd/` has no
+`pack.yaml`, so discovery skips it; it reaches the engine as `ContentConfig::original`
+([Settings and data discovery](settings.md)).
+
 ## Architecture Overview
 
 ```mermaid
@@ -78,7 +87,7 @@ manifests through `files::pack()` (`PackInfo::parse`).
 **Text** (`content::text`, Stage 2): before the rules are typed, every active pack's
 `text/<language>/*.yaml` (falling back to `text/en/` for a pack without the language) is read
 into one `TextTable`, later packs replacing keys; `imports:` read the original's language files
-from the CD by reference (`formats::langfile`) under a prefix (`orig.<KEY>`). `TextTable::resolve`
+from the original data by reference (`formats::langfile`) under a prefix (`orig.<KEY>`). `TextTable::resolve`
 turns `@key` values into strings in names, descriptions and scenario titles; a missing key is an
 error and shows as the key.
 
@@ -111,7 +120,7 @@ campaign (a Stage 1 setup) every pack loads, as before.
 `Content::load_*` parses an `AssetRef`. Pack-relative paths resolve in the pack that defined
 them. An `original:` reference first asks `find_override`: every active pack is searched,
 **highest priority (latest in load order) first**, for a file at the asset's override path
-(`vfs::override_paths`); only if none exists is the CD read.
+(`vfs::override_paths`); only if none exists is the original data read.
 
 ```mermaid
 flowchart LR
@@ -139,7 +148,7 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | Symbol | What it is |
 |---|---|
 | `Content` | Active packs in load order, `campaign` (the one loaded), `campaigns` (every playable `(id, name)`), `original: Option<OriginalData>`, `rules: Ruleset`, `scenarios`, `warnings`. |
-| `ContentConfig` | Where to look, which packs are `disabled`, which `campaign` and `difficulty` to load; built by `cli::Options::content_config` from the command line and `settings.yaml`. |
+| `ContentConfig` | Where to look, which packs are `disabled`, which `campaign` and `difficulty` to load; built by `cli::Options::content_config` from the command line and `settings.yaml`; `pack_dirs` = `[resources/, packs/]`. |
 | `preferred_campaign(&[PackInfo])` | The campaign loaded when none is chosen. |
 | `vfs::AssetKind` | `Model`, `Texture`, `Image`, `Sound` — selects the override naming rule. |
 | `pack::PackInfo` | A parsed `pack.yaml`: `id`, `name`, `version`, `description`, `kind`, `parent`, `targets`, `depends`, `requires_original`, `format`, `dir`. |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.3.0
 status: current
 updated: 2026-11-11
 ---
@@ -47,7 +47,7 @@ The command line MUST accept the documented options (including `--scenario`, `--
 
 - Implements: [F-TST-001](../../definition/testbed-tools.md#f-tst-001-testbed), [F-TST-003](../../definition/testbed-tools.md#f-tst-003-headless-runs)
 - Status: implemented
-- Verified by: `cli::parses_every_option`, `errors_for_unknown_or_incomplete_options`, `environment_supplies_data_and_flags_override_it`, `finds_the_source_tree_packs`; MT-3-11
+- Verified by: `cli::parses_every_option`, `errors_for_unknown_or_incomplete_options`, `environment_supplies_data_and_flags_override_it`, `content_dirs_are_resources_then_packs`; MT-3-11
 - Reverse-engineered: yes
 - See: [Getting started](../../user-guide/getting-started.md)
 
@@ -176,3 +176,4 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-TST-001 – R-TST-012 (12 requirements; 9 reverse-engineered from the code) |
+| 1.3.0 | 2026-11-11 | R-TST-002 Verified by: `cli::finds_the_source_tree_packs` renamed `content_dirs_are_resources_then_packs` (app 0.4.2) |

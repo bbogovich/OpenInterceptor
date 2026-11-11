@@ -15,7 +15,7 @@ Design: [interface, text and media](../../specification/design/format-interface.
 | 6.5 | Voices and chatter playback; computer voice | `audio` |
 | 6.6 | Cockpit additions: comms panel, custom instruments | `hud` |
 | 6.7 | `interceptor`: screens laid out with the original wrapper art at 640×480; music sets; talking heads | `packs/interceptor` |
-| 6.8 | `default`: the art-deco skin, chapter title cards and recaps, synthesised music and stings (generator tools for UI art) | `packs/default`, `tools` |
+| 6.8 | `default`: the art-deco skin, chapter title cards and recaps, synthesised music and stings (generator tools for UI art) | `resources/default`, `tools` |
 
 **Exit**: every screen of both campaigns skinned; video and music working; manual
 presentation tests recorded.

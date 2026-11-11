@@ -128,7 +128,8 @@ context) instead of macroquad's default clamp, which smeared edge pixels across 
 
 ### Lighting, rim and brightness (app 0.3.1)
 
-The lit shader's light comes from the `Light` uniform, a `vec4`: x = ambient, y = sun,
+The lit shader's light comes from the `Light` uniform, a `mediump vec4` declared identically in
+both stages (see [Debugging](#debugging)): x = ambient, y = sun,
 z = rim, w = gamma. `Renderer::lighting` is the campaign's `flight: {lighting: …}`
 (`content::rules::Lighting`, defaults 0.30 / 0.85 / 0 / 4 px, which reproduce the earlier fixed
 lighting); the flight screen copies it in each frame. In the vertex shader the model matrix
@@ -205,6 +206,16 @@ Objects entirely behind the camera are skipped.
   `std::mem::take`, draw, then move them back — no allocation after the first frame.
 - If a scene is black except the HUD, check the shader compile error returned by
   `Renderer::new` (shown on the start-up error screen).
+- **"Shader error" at start-up, program fails to link** (fixed in app 0.4.1, main `42716d1`):
+  in GLSL ES a uniform declared in both the vertex and the fragment shader must have the same
+  type **and precision**, or the program does not link. The lit shader's `Light` uniform is
+  used by both; the vertex shader's default float precision is `highp` and the fragment
+  shader's `precision mediump float` makes it `mediump` there, so a bare `uniform vec4 Light;`
+  in both had two different precisions. Both now declare `uniform mediump vec4 Light;`. Some
+  desktop drivers accept the mismatch, so it can pass on one machine and fail on another. The
+  test `render::tests::uniforms_shared_by_both_lit_shaders_match_exactly` compares every
+  uniform the two lit shaders share and requires an explicit precision, so a new shared
+  uniform cannot reintroduce the problem.
 - Engine glows come from rear-facing model attachments, else the back of the bounding box;
   `GpuModel::engines` is computed once at load, so drawing glows allocates nothing per frame.
 - A face that vanishes from one side is a back face: wind it the other way, or add a second

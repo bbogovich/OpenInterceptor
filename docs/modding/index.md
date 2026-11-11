@@ -11,8 +11,8 @@ shared freely, because it contains nothing of MicroProse's.
 
 ```mermaid
 flowchart LR
-    CD[("player's CD<br/>(optional)")] --> I["pack: interceptor<br/>rules + scenarios"]
-    S["campaign: default<br/>original-free"]
+    CD[("player's original data<br/>installed copy or CD (optional)")] --> I["packs/interceptor<br/>rules + scenarios"]
+    S["resources/default<br/>campaign: default, original-free"]
     M1["mods/my-campaign<br/>(user mods folder)"]
     M2["mods/balance-tweak"]
     I --> L{{"layered ruleset<br/>later packs override earlier"}}
@@ -58,7 +58,7 @@ repository; ModDB refused automated access) describe its approach:
 | Original assets | Read from the player's install; none shipped | Same |
 | Modern content | A separate HD Asset Pack download (new ship models, 3D cockpits, re-recorded music) | Any pack or mod |
 | Switching | Whole packs activated in the launcher's *Game Content* screen | Whole packs switched off in `settings.yaml` (`packs: {disabled: […]}`) |
-| Granularity | Per pack; no documented per-asset override scheme | **Per asset**: a file at the override path replaces one original asset; everything else still comes from the CD |
+| Granularity | Per pack; no documented per-asset override scheme | **Per asset**: a file at the override path replaces one original asset; everything else still comes from the original data |
 | Cockpits | Legacy VGA cockpit or a 3D cockpit with instruments on in-cockpit screens | Original 2D cockpit, HD/widescreen 2D art with its own design space, or a 3D cockpit model with instruments anchored in perspective on its dashboard, placed with the in-game layout editor |
 | Missions | "Sidecar" XML beside the unmodified original mission | Scenario YAML files; rules `inherit` from original INI sections without editing them |
 | Tools | No public extractor; community format tools | Built-in `--extract` to OBJ/PNG/WAV at override paths |

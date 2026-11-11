@@ -22,8 +22,9 @@ flowchart TB
     subgraph L7["7 · Application"]
         APP["app<br/>launcher, viewer, asset browser, flight session"]
         CK["check<br/>headless validation"]
-        EX["extract<br/>CD → OBJ/PNG/WAV"]
+        EX["extract<br/>original data → OBJ/PNG/WAV"]
         CLI["cli + settings<br/>options, user data folder"]
+        RM["remote<br/>tablet console: HTTP, WebSocket,<br/>protocol, server threads"]
     end
     subgraph LM["6½ · Missions"]
         MI["mission<br/>MissionRun: roles, waves, objectives, debrief"]
@@ -50,7 +51,8 @@ flowchart TB
     subgraph L1["1 · Formats"]
         F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj"]
     end
-    APP --> R & H & AU & IN & S & C & MI
+    APP --> R & H & AU & IN & S & C & MI & RM
+    RM --> IN & S & C & H
     MI --> S & C & SC
     CK --> S & C & F
     R --> S & C & M
@@ -66,12 +68,12 @@ flowchart TB
 `sim` never calls `render`, `hud`, `audio` or macroquad: it is plain data advanced at a fixed
 rate, which is what makes it deterministic and unit-testable.
 
-### Data flow: from the CD to a frame
+### Data flow: from the data to a frame
 
 ```mermaid
 flowchart LR
-    CD[("player's CD<br/>DLLs, INI, WAV")] --> OD["content::vfs::OriginalData<br/>files by name + pe::ResourceFile"]
-    PK[("packs/*<br/>pack.yaml, rules, scenarios (YAML), OBJ, PNG")] --> CT["content::Content::load"]
+    CD[("player's original data (optional)<br/>installed copy or CD: DLLs, INI, WAV")] --> OD["content::vfs::OriginalData<br/>files by name + pe::ResourceFile"]
+    PK[("resources/default, packs/*, mods/*<br/>pack.yaml, rules, scenarios (YAML), OBJ, PNG")] --> CT["content::Content::load"]
     OD --> CT
     CT --> RU["content::rules::Ruleset"]
     CT --> SC["content::scenario::Scenario"]
@@ -93,7 +95,8 @@ flowchart LR
 ```mermaid
 flowchart TD
     A["next_frame().await"] --> B["app::devices::Devices::read → RawInput"]
-    B --> C["Bindings::translate → Controls, Vec&lt;Command&gt;, ChaseInput"]
+    B --> B2["console_frame: console events → RemoteInput,<br/>merged into RawInput; catalogue, telemetry out"]
+    B2 --> C["Bindings::translate → Controls, Vec&lt;Command&gt;, ChaseInput"]
     C --> D["apply commands now<br/>targeting, views, MFD, wing orders, pause"]
     D --> E["player.controls = controls.carry_unconsumed(&previous)"]
     E --> F{"accumulator ≥ TICK (1/60 s)?"}
@@ -131,21 +134,22 @@ flowchart LR
 | `World` | `src/sim/mod.rs` | The battle: ships, bolts, missiles, events. Changed only by `World::step`. |
 | `Renderer` | `src/render/mod.rs` | Owns shaders and GPU caches; draws a `World` from a `SpaceCamera`. |
 | `FlightSession` | `src/app/flight.rs` | One running scenario: world, camera view, HUD state, accumulator. |
+| `ConsoleServer` | `src/remote/server.rs` | The tablet console's server threads, seen from the game: `poll` events, `broadcast` messages ([Remote console](remote.md)). |
 
 ## API Reference
 
 Each layer's public API is on its own page: [Formats](formats.md), [Packs, VFS and
 rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md), [Missions](mission.md),
 [Rendering](rendering.md), [HUD](hud.md), [Input](input.md), [Audio](audio.md),
-[Platform](platform.md), [Testbed](testbed.md). `cargo doc --open` renders the `///` comments
+[Platform](platform.md), [Remote console](remote.md), [Testbed](testbed.md). `cargo doc --open` renders the `///` comments
 of every item.
 
 ## Debugging
 
-- `openinterceptor --check [--data <cd>]` loads and validates everything without a window and
+- `openinterceptor --check [--data <original data>]` loads and validates everything without a window and
   prints each error with the file and section it came from. `--list` prints packs, playable
   ships and scenarios.
-- `openinterceptor --data <cd> --scenario flight-test --ship lightning --view chase` starts a
+- `openinterceptor --data <original data> --scenario flight-test --ship lightning --view chase` starts a
   scenario directly, skipping the launcher.
 - `OI_DEBUG_KEYS=1` prints the name of every key pressed (the name to use in `bindings.yaml`).
 - Load problems that do not stop the program (missing texture, bad sound) are printed to

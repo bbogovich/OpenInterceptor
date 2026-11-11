@@ -12,4 +12,4 @@ design. This section collects the teaching material.
 | [Mathematics](mathematics/index.md) | Planned | — |
 | [Physics](physics/index.md) | Planned | — |
 | [Engine](engine/index.md) | Planned | — |
-| [Networking](networking/index.md) | Planned | — |
+| [Networking](networking/index.md) | Started | The WebSocket handshake and frame masking, defensive limits, threads and channels (the tablet console) |

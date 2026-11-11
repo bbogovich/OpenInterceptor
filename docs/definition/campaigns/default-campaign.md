@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.3.0
 status: current
 updated: 2026-11-11
 ---
@@ -7,11 +7,11 @@ updated: 2026-11-11
 # The default campaign
 
 **Status: design; built up stage by stage ([plan](../../implementation/plan/index.md)). First
-playable content delivered in Stage 2** (`packs/default`, which replaced the Stage 1 `sample`
-pack). Mod id `default`, kind `campaign`, **no original content**. Working title: ***Perils of
+playable content delivered in Stage 2** (`resources/default` since app 0.4.2, before that
+`packs/default`, which replaced the Stage 1 `sample` pack). Mod id `default`, kind `campaign`, **no original content**. Working title: ***Perils of
 the Void***.
 
-It is what the engine runs when no CD is present, the reference implementation of a complete
+It is what the engine runs without the player's original data (an installed copy or the CD), the reference implementation of a complete
 campaign, and the template a modder copies to make their own. It uses every format construct
 the `interceptor` campaign uses, in a simpler form ([coverage](../../specification/design/coverage.md)).
 
@@ -230,3 +230,4 @@ rule), so the campaign grows with the engine:
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Definition 1.0.0 as background for the campaign features; logistics updated with the revised decisions (survey ships separate from supply ships, supply convoys, construction thresholds 0 / 60 / 90 %) |
+| 1.3.0 | 2026-11-11 | The campaign's folder is `resources/default` (F-CMP-005, app 0.4.2); "no CD" reworded as no original data |

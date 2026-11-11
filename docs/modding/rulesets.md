@@ -121,7 +121,7 @@ ships:
 A campaign lists its difficulty levels, easiest first, in its campaign ruleset:
 
 ```yaml
-# packs/default/campaign/campaign.yaml
+# resources/default/campaign/campaign.yaml
 campaign:
   name: Perils of the Void
   difficulty: [cadet, ranger, captain, space_ace]

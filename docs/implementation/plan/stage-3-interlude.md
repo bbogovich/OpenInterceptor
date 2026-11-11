@@ -1,7 +1,8 @@
 # Stage 3 interlude — feedback and control console
 
 **Status: in progress** (2026-11-11). Feedback items F.1–F.5 are **done** in app **0.3.1**
-(main `c583659`); the control console (C1–C5) is next. User feedback from playing app 0.3.0, and the tablet control
+(main `c583659`); console item **C1 is done** in app **0.4.0** (main `dfff71b`; its manual
+cases MT-3-19 – MT-3-23 still need a run on an iPad); C2–C5 are next. User feedback from playing app 0.3.0, and the tablet control
 console, taken up before the rest of Stage 3 (environments and atmospheric flight). Each item
 cites the features and requirements it delivers; issues are filed in `sio` against those IDs.
 
@@ -17,20 +18,25 @@ cites the features and requirements it delivers; issues are filed in `sio` again
 
 ## Control console items
 
-| # | Item | Features | Requirements | Module |
-|---|---|---|---|---|
-| C1 | **Server and protocol**: HTTP and WebSocket server, off by default, local network only, pairing code, port 8765 (decision D2); the [console protocol](../../specification/console-protocol.md) | [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console) | R-CON-009, R-CON-010, R-CON-011, R-CON-014 | new `console` module |
-| C2 | **Components and layout**: custom web components; HUD top row, centre display, shields left, power right, function-group tiles with control strips, per-pack theme | [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console), [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles), [F-CON-009](../../definition/control-console.md#f-con-009-console-themed-by-the-active-campaign) | R-CON-012, R-CON-013, R-CON-018 – R-CON-021 | console page, `packs/*` |
-| C3 | **Target viewport**: the target's model at its true angle relative to the player | [F-CON-005](../../definition/control-console.md#f-con-005-console-target-viewport) | R-CON-015 | console page, `console` |
-| C4 | **Map**: a 3D map view modelled on *TIE Fighter*'s | [F-CON-006](../../definition/control-console.md#f-con-006-console-3d-map) | R-CON-016 | console page |
-| C5 | **Arduino** (later): the protocol over USB serial for a physical panel | [F-CON-007](../../definition/control-console.md#f-con-007-physical-control-panel) | R-CON-017 | `console`, `platform` |
+| # | Item | Features | Requirements | Module | Status |
+|---|---|---|---|---|---|
+| C1 | **Server and protocol**: HTTP and WebSocket server, off by default, local network only, pairing code, port 8765 (decision D2); the [console protocol](../../specification/console-protocol.md) | [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console) | R-CON-009, R-CON-010, R-CON-011, R-CON-014 | `remote` (was planned as `console`), `web/console/` | **Done** (0.4.0): [Remote console](../architecture/remote.md); protocol v1; a C1 page (pairing, telemetry, throttle, every action grouped, not-fitted disabled); `tools/console_client.py`; 15 unit tests incl. an end-to-end socket test. Radar `contacts` and `event` messages (R-CON-014) move to C4 |
+| C2 | **Components and layout**: custom web components; HUD top row, centre display, shields left, power right, function-group tiles with control strips, per-pack theme | [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console), [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles), [F-CON-009](../../definition/control-console.md#f-con-009-console-themed-by-the-active-campaign) | R-CON-012, R-CON-013, R-CON-018 – R-CON-021 | console page, `packs/*`, `resources/default` | Next |
+| C3 | **Target viewport**: the target's model at its true angle relative to the player (the relative rotation is already in `telemetry`) | [F-CON-005](../../definition/control-console.md#f-con-005-console-target-viewport) | R-CON-015 | console page, `remote` | Not started |
+| C4 | **Map**: a 3D map view modelled on *TIE Fighter*'s | [F-CON-006](../../definition/control-console.md#f-con-006-console-3d-map) | R-CON-016 | console page | Not started |
+| C5 | **Arduino** (later): the protocol over USB serial for a physical panel | [F-CON-007](../../definition/control-console.md#f-con-007-physical-control-panel) | R-CON-017 | `remote`, `platform` | Not started |
 
 ## Notes
 
-- **Dependencies.** The server (HTTP, WebSocket framing) and the console page are to be written
-  in-crate and with plain web components; anything else needs the dependency evaluation first.
-- **Settings.** The console's on/off switch, port and pairing are settings; the keys are open
-  (R-CON-009).
+- **Dependencies.** The server (HTTP, WebSocket framing, SHA-1, base64, JSON) and the console
+  page are written in-crate and with plain web components (C1): no dependency was added.
+- **Settings.** `console: {enabled, port}` in `settings.yaml`, `--console` and
+  `--console-port N` (C1; R-CON-009 resolved).
+- **Also in this period.** App 0.4.1 fixed a start-up shader error (the lit shader's `Light`
+  uniform needs the same precision in both stages; [Rendering](../architecture/rendering.md#debugging)),
+  and app 0.4.2 moved the default campaign to `resources/default` with the player's original
+  data in `resources/xcom` or `resources/xcom-cd`
+  ([F-CMP-005](../../definition/compatibility.md#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game)).
 - **F1.** The request named F1 for the overlay, which selects cockpit view 1. Resolved: F1 stays the
   original's view key (no deviation); the overlay is on `?` (Shift+Slash) and Shift+F1. F12 is
   the cockpit layout editor's key in custom cockpits, so it is not used (R-CON-008).

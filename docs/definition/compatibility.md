@@ -1,5 +1,5 @@
 ---
-spec_version: 1.2.0
+spec_version: 1.3.0
 status: current
 updated: 2026-11-11
 ---
@@ -16,6 +16,7 @@ Requirements for these features: [Compatibility (original data) requirements](..
 | [F-CMP-002 Original formats read faithfully](#f-cmp-002-original-formats-read-faithfully) | In progress |
 | [F-CMP-003 No original content in the project](#f-cmp-003-no-original-content-in-the-project) | Implemented |
 | [F-CMP-004 Deviations on the record](#f-cmp-004-deviations-on-the-record) | Implemented |
+| [F-CMP-005 A resources folder that says what ships with the game](#f-cmp-005-a-resources-folder-that-says-what-ships-with-the-game) | Implemented |
 
 ## Features
 
@@ -69,7 +70,7 @@ Mods (`packs/`, and the user's mods folder) override resources as before. The in
 
 **Why.** Most players will not own X-COM: Interceptor, and those who do more likely have it installed than a CD copy. A `game/` folder at the root suggested the game itself was included. The new layout makes it explicit which assets the default campaign provides and what belongs to an installed mod.
 
-- **Status:** implemented
+- **Status:** implemented (app 0.4.2, main `bf7b7ce`)
 - **Source:** User request, 2026-11-11: "Rather than a \"game\" folder in the repo root, which is misleading because it gives the impression that the game itself is there, it should be a \"resources\" folder that contains core assets bundled with the game for the default campaign in one subfolder, and gitignored xcom and xcom-cd subfolders that a user would manually add to for their personal build." "the default campaign's content in resources is the equivalent the xcom game contents, but with all files in modern editable formats."
 - **Specified by:** [R-CMP-014](../specification/requirements/compatibility.md#r-cmp-014-resources-folder), [R-CMP-015](../specification/requirements/compatibility.md#r-cmp-015-installed-copy-or-cd-copy)
 
@@ -79,3 +80,4 @@ Mods (`packs/`, and the user's mods folder) override resources as before. The in
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CMP-001 – F-CMP-004 (4 features) |
 | 1.2.0 | 2026-11-11 | F-CMP-005 resources folder |
+| 1.3.0 | 2026-11-11 | F-CMP-005 listed in the status table; implemented in app 0.4.2 |

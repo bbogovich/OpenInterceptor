@@ -101,6 +101,16 @@ stateDiagram-v2
     - **Jumped-out end screen**: "JUMPED TO HYPERSPACE", with the captured prizes listed;
       Enter flies again, Esc returns to the menu.
 
+    Stage 3 interlude additions:
+
+    - **Tablet console** (C1, app 0.4.0): when the console is on (`--console`,
+      `console.enabled`), `app::start_console` starts a `remote::server::ConsoleServer` into
+      `AppContext::console` (a taken port is reported and the game carries on without it).
+      Each frame `FlightSession::console_frame` merges the console's input into `RawInput`,
+      sends `welcome` and the `catalogue` (again when the player's craft class changes) and
+      20 Hz `telemetry`. Until a console pairs, and while the menu is open, the bottom-left
+      corner shows `CONSOLE <url>   CODE <code>`. See [Remote console](remote.md).
+
 ### Scenarios shipped
 
 | Id | Pack | What it tests |

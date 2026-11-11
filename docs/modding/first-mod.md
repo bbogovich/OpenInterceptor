@@ -8,8 +8,12 @@ A walkthrough that builds a new, original-free campaign from the `default` campa
 ```sh
 MODS="$HOME/Library/Application Support/OpenInterceptor/mods"   # Linux: ~/.local/share/openinterceptor/mods
 mkdir -p "$MODS"
-cp -R packs/default "$MODS/frontier"
+cp -R resources/default "$MODS/frontier"   # from a checkout; in the macOS app: Contents/Resources/resources/default
 ```
+
+The default campaign lives in `resources/default/` (before app 0.4.2: `packs/default/`). Your
+mods folder is loaded after `resources/` and `packs/`, so a mod always wins over what ships
+with the game.
 
 ## 2. Give it its own id
 

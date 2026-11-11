@@ -36,11 +36,13 @@ flowchart LR
   therefore appears in parsing, the defaults, the controls menu, the overlay and (later) the
   console without further work. F12 is not bound to it: in a custom cockpit F12 opens the
   layout editor ([Cockpits](../../modding/cockpits.md)).
-- **Remote action sets** (work in progress for the control console, interlude C1). `RawInput`
+- **Remote action sets** (the control console, interlude C1, app 0.4.0). `RawInput`
   gains `remote_held` and `remote_pressed` (sets of `Action`) and `remote_throttle`. A remote
   surface — the tablet console, later a USB panel — fills them, and `translate` treats a held or
   tapped remote action exactly like a key bound to it, so the console needs no second path into
-  the simulation. A remote throttle position sets `Controls::throttle_set`.
+  the simulation. A remote throttle position sets `Controls::throttle_set` (clamped to 0–1).
+  `remote::RemoteInput` fills the sets each frame from the console's events (one held set per
+  console, released when it disconnects); see [Remote console](remote.md#input-path).
 
 - **Key names** are macroquad's `KeyCode` variant names, lower-cased (`KeyCode::Kp7` →
   `kp7`), produced by `app::devices::key_name`. Every key macroquad knows is therefore bindable.
@@ -122,7 +124,7 @@ a capture after 8 s (`CAPTURE_TIMEOUT`).
 | `PadChord` | A button plus optional modifier button; `plain`, `parse`, `text`. |
 | `StickLayout` | `Space` or `Aircraft`. |
 | `Bindings` | `keys: HashMap<Action, Vec<KeyChord>>`, `pad: HashMap<Action, Vec<PadChord>>`, `dead_zone`, `mouse_range`, `pad_invert_pitch`, `stick_layout`, `mouse_invert`; `from_yaml`, `to_yaml_text`, legacy `from_ini`, `translate`. |
-| `RawInput` | One frame of device state (keys, mouse, pad; remote action sets for the console, in progress). |
+| `RawInput` | One frame of device state (keys, mouse, pad; remote action sets filled by the console). |
 | `Command` | One-shot app requests: targeting, MFD, `View(View)`, `WingMenu`, wing orders (`WingFireAtWill`, `WingAttackMyTarget`, `WingFormation`, `WingEvasive`, `WingRetreat`, `WingStatus`), `RepeatMessage`, `NextNav`, `Pause`, `Menu`, `MouseFlight`, `Help`. Power and equipment presses go to `Controls::requests` instead. |
 | `View` | `Cockpit`, `Forward`, `Left`, `Right`, `RearLeft`, `RearRight`, `Chase`, `ChaseManual`; `View::parse` for `--view`. |
 | `ChaseInput` | Chase-camera yaw/pitch/zoom/reset this frame. |

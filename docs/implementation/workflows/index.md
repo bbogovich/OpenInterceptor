@@ -15,7 +15,8 @@ are GitHub Issues, which the client syncs (`sio issues sync`); nothing else writ
 The project follows the **Rapid Prototyping** workflow (a SpecItOut proposal, P65; not yet
 supported by the `sio` client). The [definition](../../definition/index.md) and the
 [specification](../../specification/index.md) live on this site: version 1.0.0 from
-2026-11-11, 1.1.0 since the interlude's playtest fixes (app 0.3.1).
+2026-11-11, 1.1.0 since the interlude's playtest fixes (app 0.3.1), 1.2.0 with the `resources/`
+folder (F-CMP-005) and 1.3.0 with console C1 (app 0.4.0).
 
 1. **Each user request**, in the same pass and **before any code**:
     1. a feature (`F-<AREA>-NNN`) is created or updated on the definition page for its area;

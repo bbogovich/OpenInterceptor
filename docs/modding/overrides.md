@@ -1,8 +1,8 @@
 # Overrides and extraction
 
 Any original asset can be replaced **one file at a time**: put a file at the asset's
-*override path* inside an active pack, and the engine uses it instead of the CD's version.
-Everything you do not replace still comes from the CD. The highest-priority pack wins (the
+*override path* inside an active pack, and the engine uses it instead of the original version.
+Everything you do not replace still comes from the original data (your installed copy or CD). The highest-priority pack wins (the
 last one in load order), so several mods can stack.
 
 | Original asset | Override path in your pack | Format |
@@ -18,7 +18,7 @@ see-through areas with PNG alpha.
 
 ## Extracting the originals
 
-You do not need to know the names: the engine converts the whole CD for you, writing every
+You do not need to know the names: the engine converts all of your original data for you, writing every
 asset **at its override path**:
 
 ```sh
@@ -36,7 +36,7 @@ interceptor-extracted/
   original-data/            the original INI and text files, for reference (read-only data)
 ```
 
-The extracted files are converted copies of copyrighted content from **your** CD: use them to
+The extracted files are converted copies of copyrighted content from **your** copy of the game: use them to
 make your own art, keep them to yourself, and never put them in a mod you share. A shared mod
 should contain only files you made.
 

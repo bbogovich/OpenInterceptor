@@ -12,7 +12,8 @@ See the [testing policy](../../learning/best-practices/testing-policy.md) for wh
    validates. Since Stage 2 `--check` validates every campaign separately, each with its own
    active set of packs.
 4. `openinterceptor --data <data> --check` — when the player's data is found
-   (`OPENINTERCEPTOR_DATA` or `./game`): every rule, ship model, debris model, texture,
+   (`OPENINTERCEPTOR_DATA`, else the first of `./resources/xcom` and `./resources/xcom-cd`
+   that holds files): every rule, ship model, debris model, texture,
    cockpit image, sound and scenario loads, and every original mesh and texture decodes
    (reference CD at build 0.2.0: 2 packs, 34 ship classes, 100 models incl. the then `sample`
    pack's 3D cockpit, 272 textures, 3 images, 20 sounds, 5 scenarios, 1 096 original
@@ -21,8 +22,10 @@ See the [testing policy](../../learning/best-practices/testing-policy.md) for wh
 5. The committed JSON Schemas (`schemas/*.schema.json`) must equal what
    `--write-schemas` produces, so editors always see the engine's current schema.
 6. A guard that fails if any original asset file type (`exe dll cab smk aif aiff wav mps`) is
-   tracked by git — except `packs/default/sounds/*.wav`, the default campaign's own generated
-   sounds.
+   tracked by git — except `resources/default/sounds/*.wav`, the default campaign's own
+   generated sounds.
+7. A guard that fails if any file under `resources/xcom/`, `resources/xcom-cd/` or the old
+   `game/` is tracked by git (app 0.4.2).
 
 Also kept clean before every commit (project rule): `cargo clippy --all-targets` with no
 warnings and `cargo fmt --check` (settings in `rustfmt.toml`: width 120).

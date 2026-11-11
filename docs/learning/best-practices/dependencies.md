@@ -54,4 +54,15 @@ mappings, lists, scalars, block text and comments — about 750 lines in `format
 every value kept as text until the schema types it, so errors can name the file, line and key.
 Decision: build in-crate ([DEV-030](../../implementation/deviations/index.md)).
 
+**Console networking, evaluated (C1, app 0.4.0).** The tablet console needs an HTTP server, the
+WebSocket protocol, SHA-1 and base64 for its handshake, and JSON. The usual crates (`tungstenite`
+or an async web framework, `sha1`, `base64`, `serde_json`) would bring in `serde`, often an
+async runtime, and their trees — for a server that serves three embedded files and exchanges
+small JSON messages with one or two tablets. Only a fraction would be used: no TLS, no
+keep-alive, no chunking, no request bodies, no fragmented messages. Written in-crate:
+`remote::http` (~120 lines), `remote::ws` with SHA-1 and base64 (~260, tested against the FIPS
+and RFC vectors), `remote::json` (~360) and threads from `std`. Decision: build in-crate; no
+dependency added. The console page itself (`web/console/`) is plain custom elements and CSS
+with no framework or build step.
+
 The next candidate is the Tier 2 scripting language (see [Scripting](../../modding/scripting.md)).

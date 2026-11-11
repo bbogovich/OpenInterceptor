@@ -16,7 +16,7 @@ Design: [mod structure](../../specification/design/mod-structure.md), [Intercept
 | 7.5 | `recolour` and `composite` generators | `recipe` |
 | 7.6 | Viewer: patch hot-reload and before/after comparison; model-set state browser | `app::viewer` |
 | 7.7 | **`interceptor-remastered`**: `parent = interceptor`; ×4 textures and ×2 images; the enhanced X-1A Lightning II mesh patch | `packs/interceptor-remastered` |
-| 7.8 | `default`: balance pass, complete encyclopaedia | `packs/default` |
+| 7.8 | `default`: balance pass, complete encyclopaedia | `resources/default` |
 | 7.9 | Modding guide finished: tutorials from "change one number" through "an addon" and "a campaign that extends another" to "a new campaign", built on the default campaign | docs |
 
 **Exit**: the remastered campaign plays the whole Interceptor campaign with its generated assets;

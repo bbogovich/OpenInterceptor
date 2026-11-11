@@ -6,8 +6,9 @@
 - **macOS** 11+ (Apple silicon) with the Xcode command line tools, or **Linux** with X11
   (Wayland through XWayland) and OpenGL 3. On Debian/Ubuntu install
   `libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev` first.
-- For original content: your own *X-COM: Interceptor* CD, copied to a folder. For modding with
-  only original-free packs, nothing else is needed.
+- Nothing else for the default campaign: everything the game ships is in the repository, in
+  editable formats. Original data is optional: to play the `interceptor` campaign you need
+  your own *X-COM: Interceptor*, an installed copy or the CD.
 
 ## Build
 
@@ -17,28 +18,45 @@ cd OpenInterceptor
 cargo build --release
 ```
 
-## Put the game data in place
+## Folder layout
 
-Copy the CD contents (the folder with `Resources/`, `ProgramFiles/` and `Animations/`) to
-`OpenInterceptor/game/Game/` in a development checkout. If your copy has the CD audio tracks
-extracted, put them in `game/CD Audio/`. The `game/` folder is git-ignored.
+| Folder | Holds | In Git |
+|---|---|---|
+| `resources/default/` | The default campaign, *Perils of the Void*: everything the game ships, in editable formats (YAML, OBJ, PNG, WAV) | yes |
+| `resources/xcom/` | Your installed copy of *X-COM: Interceptor* (optional; tried first) | no, git-ignored |
+| `resources/xcom-cd/` | A copy of your *X-COM: Interceptor* CD (optional) | no, git-ignored |
+| `packs/` | Bundled mods, such as `interceptor` (which needs your original data). Mods override resources | yes |
+| `<user data folder>/mods/` | Your own mods (`--mods` or `settings.yaml` `paths.mods` moves it) | no |
+
+Content is loaded from `resources/` first, then `packs/`, then your mods; a later pack
+overrides an earlier one. `--packs DIR` replaces only the bundled-mods folder.
+
+## Put your original data in place (optional)
+
+Most players will play the default campaign and can skip this. If you own *X-COM:
+Interceptor*, copy **an installed copy** of the game to `resources/xcom/` in your checkout, or
+**the CD contents** (the folder with `Resources/`, `ProgramFiles/` and `Animations/`) to
+`resources/xcom-cd/`. If your copy has the CD audio tracks extracted, put them in a
+`CD Audio/` folder inside it. Both folders are git-ignored, and each counts only once it
+holds files.
 
 You rarely need `--data`: the engine looks, in order, at `--data`, the
 `OPENINTERCEPTOR_DATA` variable, `settings.yaml` `paths: {original: …}` in the user data folder,
-`<user data folder>/original`, and finally `game/` in the development checkout
-([Settings and data discovery](../implementation/architecture/settings.md)). An installed copy keeps the CD (or
-a copy of it), `settings.yaml`, `bindings.yaml` and `mods/` in the user data folder (a
-`settings.ini` or `bindings.ini` from an earlier build is read once and replaced by the YAML
-file).
+`<user data folder>/original`, then `resources/xcom/` and finally `resources/xcom-cd/` in the
+development checkout ([Settings and data discovery](../implementation/architecture/settings.md)).
+An installed app keeps your original data (or a copy of it), `settings.yaml`, `bindings.yaml`
+and `mods/` in the user data folder (a `settings.ini` or `bindings.ini` from an earlier build
+is read once and replaced by the YAML file).
 
 ## Build the macOS app
 
 ```sh
-python3 tools/build_bundle.py            # dist/OpenInterceptor-0.3.0.app
+python3 tools/build_bundle.py            # dist/OpenInterceptor-<version>.app
 ```
 
-The app contains the engine and the built-in packs, never game data. The script points
-`settings.yaml` at `game/` (or `--data PATH`); `--install-data` clones the CD into the user data
+The app contains the engine, `resources/default` and the bundled mods in `packs/`, never
+original data. The script points `settings.yaml` at `resources/xcom/` (else
+`resources/xcom-cd/`, or `--data PATH`); `--install-data` clones that data into the user data
 folder instead, as a real install would. Open the app from Finder. See
 [Packaging](../implementation/build/packaging.md).
 
@@ -52,7 +70,7 @@ target/release/openinterceptor
 target/release/openinterceptor --no-original
 
 # Choose the campaign (default: the last one chosen in the launcher, else interceptor
-# when the CD is found, else default):
+# when original data is found, else default):
 target/release/openinterceptor --campaign default
 
 # ... at a chosen difficulty level:
@@ -65,10 +83,13 @@ target/release/openinterceptor --no-original --mission defend_station --ship com
 target/release/openinterceptor --no-original --soak defend_station --soak-pilot ai --seconds 400
 
 # Go straight to one scenario with one ship:
-target/release/openinterceptor --data game --scenario flight-test --ship lightning
+target/release/openinterceptor --data resources/xcom --scenario flight-test --ship lightning
 
 # ... and start in the chase view:
-target/release/openinterceptor --data game --scenario flight-test --ship firestar --view chase
+target/release/openinterceptor --data resources/xcom --scenario flight-test --ship firestar --view chase
+
+# Serve the tablet control console (the game shows the URL and pairing code):
+target/release/openinterceptor --console
 
 # Headless validation of every campaign, pack, model and texture; list what loaded:
 target/release/openinterceptor --check
@@ -91,9 +112,11 @@ scripts/check.sh
 
 | Option | Meaning |
 |---|---|
-| `--data <PATH>` | The *Interceptor* CD or install folder. Without it: `OPENINTERCEPTOR_DATA`, then `settings.yaml`, then `<user data>/original`, then `game/` in a checkout. |
+| `--data <PATH>` | Your original data: an installed *Interceptor* or the CD. Without it: `OPENINTERCEPTOR_DATA`, then `settings.yaml`, then `<user data>/original`, then `resources/xcom` (installed copy) and `resources/xcom-cd` (CD copy) in a checkout. |
 | `--mods <DIR>` | Folder of user mods (default: `settings.yaml` `paths: {mods: …}`, else `mods/` in the user data folder). |
-| `--packs <DIR>` | Folder of built-in packs (default: `packs/` next to the program, or the source tree). |
+| `--packs <DIR>` | Folder of bundled mods (default: `packs/` next to the program, or the source tree). It replaces only that folder: `resources/` (the default campaign) is always loaded first. |
+| `--console` | Serve the [tablet control console](console.md) (settings: `console.enabled`). |
+| `--console-port <N>` | The console's port (default 8765; settings: `console.port`); implies `--console`. |
 | `--no-original` | Ignore the original data even if available. |
 | `--campaign <ID>` | Load this campaign (default: the last one chosen in the launcher, else `interceptor` when the data is available, else `default`). |
 | `--difficulty <ID>` | Play at this difficulty level, a level id of the campaign (default: the last one chosen, else the campaign's `default_difficulty`). |

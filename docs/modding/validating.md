@@ -2,7 +2,7 @@
 
 ```sh
 openinterceptor --check --mods ~/my-mods            # original-free mods
-openinterceptor --check --mods ~/my-mods --data /path/to/interceptor-cd
+openinterceptor --check --mods ~/my-mods --data /path/to/interceptor   # an installed copy or the CD
 openinterceptor --list  --mods ~/my-mods            # what loaded: packs, playable ships, scenarios
 ```
 

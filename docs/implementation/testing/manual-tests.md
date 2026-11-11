@@ -5,8 +5,9 @@ real devices). Each stage's cases must be run and recorded as passed before the 
 complete. Record results in the table (date, tester, platform, result, notes); keep earlier
 rows when re-running a case.
 
-**How to run**: `cargo build --release`, then `target/release/openinterceptor` (the CD is
-found automatically — see [Settings](../architecture/settings.md)), or open
+**How to run**: `cargo build --release`, then `target/release/openinterceptor` (original data —
+an installed copy in `resources/xcom/` or a CD copy in `resources/xcom-cd/` — is found
+automatically; see [Settings](../architecture/settings.md)), or open
 `dist/OpenInterceptor-<version>.app` built by `python3 tools/build_bundle.py`. Every case names its launcher entry; to jump
 straight in use `--scenario <id> --ship <id>` (and `--view chase` for an outside view). Ship ids:
 `lightning`, `firestar`, `avenger` (`interceptor` campaign); `comet`, `meteor`, `thunderbolt`
@@ -389,7 +390,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | MT-2-23 | Shield modules and hub cascade | `outpost-strike`, `base-assault` | not run | | | |
 | MT-2-24 | Missile guidance kinds and mines | `combat-test` (Super Avenger), `dominion-raid` | not run | | | |
 | MT-2-25 | Debris and damage showcase; viewer looks | `debris-showcase`, model viewer | not run | | | |
-| MT-2-26 | Original sound cues | `gunnery-range`, `systems-trial` | not run | | | Needs the CD |
+| MT-2-26 | Original sound cues | `gunnery-range`, `systems-trial` | not run | | | Needs original data |
 | MT-2-27 | Duels and target preferences | `duel-*`, `mixed-dogfight`, `escort`, `rocket-vs-saucer` | not run | | | |
 | MT-2-28 | Protected objectives and radar colours | `systems-trial`, `rocket-vs-saucer` | not run | | | |
 | MT-2-29 | Cockpit text legibility | `rocket-vs-saucer`, `systems-trial` (default) | not run | | | |
@@ -542,7 +543,7 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 
 | Field | |
 |---|---|
-| Preconditions | A test mod copied from `packs/default` into the mods folder (id changed). |
+| Preconditions | A test mod copied from `resources/default` (before app 0.4.2: `packs/default`) into the mods folder (id changed). |
 | Steps | In the copy: 1. misspell a key (`max_sped: 700`); 2. give a bad unit (`range: 2.4kn`); 3. indent one line with a tab; 4. write a condition with a typo (`when: "hul < 20%"`); 5. put a format-1 `pack.ini` folder beside it. Run `openinterceptor --check --no-original` after each, then open the launcher. |
 | Expected | Each problem is reported with the file, line and key path: 1: "unknown key (did you mean 'max_speed'?)"; 2: "unknown unit 'kn' … (use m, km)"; 3: a tab error with the line; 4: "unknown name 'hul'" for that behaviour; 5: "pack.ini is the old INI mod format (format 1) …". `--check` exits with status 1 for 1–4; the launcher shows the problems in orange and still offers the rest of the content. |
 
@@ -677,7 +678,8 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 ## Stage 3 results
 
 App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest fixes in app 0.3.1
-(main `c583659`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
+(main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
+MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -686,11 +688,11 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 | MT-3-02 | `convoy_ambush` | Mission (default) | not run | | | |
 | MT-3-03 | `construction_defence` | Mission (default) | not run | | | |
 | MT-3-04 | `intercept_scouts` | Mission (default) | not run | | | |
-| MT-3-05 | `xcom_base_defense` | Mission (interceptor) | not run | | | Needs the CD |
-| MT-3-06 | `defend_freighter_convoy` | Mission (interceptor) | not run | | | Needs the CD |
-| MT-3-07 | `deep_space_encounter` | Mission (interceptor) | not run | | | Needs the CD |
-| MT-3-08 | `attack_alien_outpost` | Mission (interceptor) | not run | | | Needs the CD |
-| MT-3-09 | `destroy_alien_probe` | Mission (interceptor) | not run | | | Needs the CD |
+| MT-3-05 | `xcom_base_defense` | Mission (interceptor) | not run | | | Needs original data |
+| MT-3-06 | `defend_freighter_convoy` | Mission (interceptor) | not run | | | Needs original data |
+| MT-3-07 | `deep_space_encounter` | Mission (interceptor) | not run | | | Needs original data |
+| MT-3-08 | `attack_alien_outpost` | Mission (interceptor) | not run | | | Needs original data |
+| MT-3-09 | `destroy_alien_probe` | Mission (interceptor) | not run | | | Needs original data |
 | MT-3-10 | Launcher mission list and scrolling | Launcher | not run | | | |
 | MT-3-11 | `--mission` and retry from the debrief | — | not run | | | |
 | MT-3-12 | Soak baseline | `--soak <mission>` | not run | | | Expected numbers below |
@@ -700,6 +702,12 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 | MT-3-16 | Brightness setting | any | not run | | | |
 | MT-3-17 | The `killed` debrief | `defend_station`; `xcom_base_defense` | not run | | | |
 | MT-3-18 | Keys overlay | any | not run | | | |
+| MT-3-19 | Console: pairing from an iPad | any, with `--console` | not run | | | Needs the user: the game could not be started from the agent environment |
+| MT-3-20 | Console: hold and tap buttons | `rocket-vs-saucer` (default) | not run | | | Needs the user |
+| MT-3-21 | Console: features not fitted | `rocket-vs-saucer`; `systems-trial` (default) | not run | | | Needs the user |
+| MT-3-22 | Console: reconnecting and letting go | `rocket-vs-saucer` (default) | not run | | | Needs the user |
+| MT-3-23 | Console: throttle slider | `rocket-vs-saucer` (default) | not run | | | Needs the user |
+| MT-3-24 | Original data from `resources/xcom` or `resources/xcom-cd`; start-up without a shader error | Launcher | not run | | | App 0.4.1 / 0.4.2; needs original data for steps 2–4 |
 
 ### The debrief (every mission case)
 
@@ -809,7 +817,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 
 | Field | |
 |---|---|
-| Steps | `rocket-vs-saucer` (default) and `combat-test` (interceptor, needs the CD): let the enemies close from beyond 5 km, and fly away from them; look at them against the stars and against the sun. Fly a mission with a protected object (`defend_station`). |
+| Steps | `rocket-vs-saucer` (default) and `combat-test` (interceptor, needs original data): let the enemies close from beyond 5 km, and fly away from them; look at them against the stars and against the sun. Fly a mission with a protected object (`defend_station`). |
 | Expected | Far craft on the radar show as a dot in their radar colour (red hostile, green friendly, cyan for the protected station) that fades into the model as they come near, without a pop. Hulls seen side-on have a bright outline, dark alien hulls included. A cloaked enemy beyond sensor range shows no dot. |
 
 ### MT-3-16 — Brightness setting
@@ -823,7 +831,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 
 | Field | |
 |---|---|
-| Steps | `--no-original --mission defend_station --ship comet --difficulty space_ace`: fly at the raiders and let them kill you. Then `--mission xcom_base_defense --ship lightning --difficulty veteran` (needs the CD) and do the same. Then let the station fall while you survive. |
+| Steps | `--no-original --mission defend_station --ship comet --difficulty space_ace`: fly at the raiders and let them kill you. Then `--mission xcom_base_defense --ship lightning --difficulty veteran` (needs original data) and do the same. Then let the station fall while you survive. |
 | Expected | When the player dies: headline YOUR CRAFT WAS DESTROYED, no base-lost text (or the mission's own `killed` text), campaign effects those of the mission's `lose` outcomes. When the station falls with the player alive: MISSION FAILED with the lose text. |
 
 ### MT-3-18 — Keys overlay
@@ -832,3 +840,51 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 |---|---|
 | Steps | In any flight press `?` (Shift+/); look through the list; press `?` again. Open it with Shift+F1 and close it with Esc. Rebind afterburner in the controls menu (Esc, K) to another key and clear its pad button, then open the overlay again. Press F1 (no Shift) in flight. Open the pause menu (Esc). |
 | Expected | The battle pauses under a dark panel titled KEYS listing every action under its group (Flight, Throttle and speed, Weapons, Targeting, Power and systems, Wingmen and comms, Views, Chase camera, Interface), in several columns if needed, each with its current keys then pad buttons. After the rebinding the afterburner row shows the new key and no pad button (or "unbound" with neither). `?`, Shift+F1 and Esc close it and the battle resumes. Plain F1 still selects the cockpit view. The pause menu shows a line pointing to `?` instead of a key list. In a custom cockpit F12 still opens the layout editor. |
+
+### MT-3-19 — Console: pairing from an iPad
+
+| Field | |
+|---|---|
+| Preconditions | The computer and an iPad on the same Wi-Fi (not a guest network). |
+| Steps | 1. Start `openinterceptor --console --no-original --scenario rocket-vs-saucer --ship comet`; read the terminal line and the bottom-left hint. 2. On the iPad open the URL in Safari. 3. Type a wrong code three times. 4. Reload, type the right code. 5. Watch the telemetry while flying; open the menu (Esc) in the game. 6. Quit; start again with `console: {enabled: true, port: 9000}` in `settings.yaml` and no `--console`; pair again on port 9000. 7. Start a second program on the same port first (for example `python3 -m http.server 9000`), then the game. |
+| Expected | 1: the terminal prints `console: open http://<address>:8765 on the tablet; pairing code NNNNNN`, and the flight screen shows `CONSOLE <url>   CODE NNNNNN` at the bottom left. 2: the pairing page asks for the code. 3: each wrong code shows *wrong pairing code*; after the third the page shows *Disconnected*. 4: the page switches to the console as the sixth digit is typed; the bottom-left hint disappears in the game. 5: craft, speed, drift, hull, energy, shields, missile and target update smoothly (about 20 times a second); the hint shows again while the menu is open. 6: the console works on port 9000 without `--console`. 7: the game reports that the port is not available and runs normally without the console. |
+
+### MT-3-20 — Console: hold and tap buttons
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired. |
+| Steps | 1. Hold *Yaw left* (or another turn) on the iPad for two seconds, then lift the finger. 2. Hold *Afterburner*; slide the finger off the button while still touching the screen. 3. Hold *Fire beams* with an enemy ahead. 4. Tap *Next target* several times; tap a view button (cockpit, chase). 5. Hold a turn on the iPad and the opposite turn on the keyboard at the same time. |
+| Expected | 1: the craft turns for as long as the button is held and stops when it is released, exactly as with the key. 2: the afterburner lights while held and goes out when the finger leaves the button. 3: beams fire continuously while held. 4: each tap moves the target once and changes the view once (no repeats). 5: the two inputs combine as two keys would; nothing sticks afterwards. |
+
+### MT-3-21 — Console: features not fitted
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired. |
+| Steps | 1. In `rocket-vs-saucer` with the Comet, look at the Power and systems and Weapons groups. 2. Tap a disabled button. 3. Fly `systems-trial` (default) with the Thunderbolt, then with the Meteor, re-pairing if needed. 4. Run `tools/console_client.py <address> <code>` from the computer for each craft. |
+| Expected | 1: every group is shown; actions the craft has no equipment for (for example cloak, ECM, tractor, the VCT slides, missiles or beams, whichever the craft lacks) are greyed and labelled *not fitted*; all other buttons are active. 2: nothing happens. 3: the Thunderbolt's cloak button is active; the list changes with the craft (the catalogue is resent when the craft class changes). 4: the client's `not fitted:` list matches the greyed buttons. |
+
+### MT-3-22 — Console: reconnecting and letting go
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired. |
+| Steps | 1. Hold *Yaw left* and, while holding, close the Safari tab with the other hand. 1b. Open the page again, pair, hold *Yaw left* and turn the iPad's Wi-Fi off; time how long the craft keeps turning. 2. Turn Wi-Fi back on and reload the page. 3. Quit the game with the page open; start it again; enter the new code. 4. Pair a second device (a phone or a laptop browser) at the same time; hold a turn on one and release on the other. |
+| Expected | 1: the craft stops turning as soon as the tab closes (the console's held actions are released). 1b: the craft stops turning once the game notices the connection is gone; record the delay in the notes. C1 has no keep-alive or write timeout, so after a Wi-Fi drop this may take as long as the system's TCP timeout: a delay of more than a few seconds is a finding to file. 2: the page reconnects with the remembered code and the console returns. 3: the page shows *Disconnected. Enter the code to reconnect.*; the old code is refused (*wrong pairing code*), the new one pairs. 4: both devices show telemetry; one device releasing does not release the other's held button. |
+
+### MT-3-23 — Console: throttle slider
+
+| Field | |
+|---|---|
+| Preconditions | MT-3-19 paired. |
+| Steps | 1. Drag the throttle slider from 0 to 100 % and back, slowly and then quickly. 2. Change the throttle from the keyboard (or stick) while not touching the slider. 3. Set 50 % on the slider, then hold the keyboard's throttle-up key. |
+| Expected | 1: the craft's throttle (HUD `THR`) follows the slider and the percentage label; no lag beyond a frame or two. 2: the slider moves to follow the game's throttle. 3: the keyboard changes the throttle from 50 % and the slider follows; the slider does not fight it while untouched. |
+
+### MT-3-24 — Original data from `resources/xcom` or `resources/xcom-cd`; start-up without a shader error
+
+| Field | |
+|---|---|
+| Preconditions | A checkout at app 0.4.2 or later. For steps 2–4, your own original data. |
+| Steps | 1. With `resources/xcom/` and `resources/xcom-cd/` empty and no other data configured, start the game and run `--list`. 2. Put a CD copy in `resources/xcom-cd/`; run `--list` and the launcher. 3. Also put an installed copy in `resources/xcom/`; run `--list`. 4. Run `scripts/check.sh`; `git status`. 5. Build the app with `python3 tools/build_bundle.py` and open it from Finder. |
+| Expected | Every start shows no shader error (the lit shader links; app 0.4.1) and ships are lit. 1: only the default campaign loads, with no error. 2: `interceptor` loads from the CD copy. 3: the installed copy is used (it is tried first). 4: the gate runs the original-data checks on the folder found and passes; `git status` shows nothing under `resources/xcom*`. 5: the app opens with the default campaign (`Contents/Resources/resources/default`) and the bundled mods, and finds the original data through `settings.yaml`. |

@@ -67,7 +67,7 @@ nav:
           - "Compatibility": specification/requirements/compatibility.md
           - "Platforms": specification/requirements/platforms.md
           - "Testbed & tools": specification/requirements/testbed-tools.md
-      - "Console protocol (planned)": specification/console-protocol.md
+      - "Console protocol": specification/console-protocol.md
       - "Mod formats and design":
           - "The original, system by system": specification/design/original-analysis.md
           - "Mod structure": specification/design/mod-structure.md
@@ -118,6 +118,7 @@ nav:
           - "Input and gamepads": implementation/architecture/input.md
           - "Audio": implementation/architecture/audio.md
           - "Platform layer": implementation/architecture/platform.md
+          - "Remote console": implementation/architecture/remote.md
           - "Testbed": implementation/architecture/testbed.md
           - "Extractor": implementation/architecture/extract.md
       - "Implementation status": implementation/status.md
@@ -135,6 +136,7 @@ nav:
       - "Getting started": user-guide/getting-started.md
       - "Controls": user-guide/controls.md
       - "Settings": user-guide/settings.md
+      - "Tablet console": user-guide/console.md
   - "Modding":
       - modding/index.md
       - "Make your first mod": modding/first-mod.md
@@ -183,7 +185,7 @@ nav:
       - "Mathematics (planned)": learning/mathematics/index.md
       - "Physics (planned)": learning/physics/index.md
       - "Engine (planned)": learning/engine/index.md
-      - "Networking (planned)": learning/networking/index.md
+      - "Networking": learning/networking/index.md
   - "Reference":
       - reference/index.md
       - "Original game":

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.3.0
 status: current
 updated: 2026-11-11
 ---
@@ -20,17 +20,17 @@ Features: [Controls & control console](../../definition/control-console.md). How
 | [R-CON-006 Mouse flight and chords](#r-con-006-mouse-flight-and-chords) | Implemented |
 | [R-CON-007 Action catalogue](#r-con-007-action-catalogue) | Implemented |
 | [R-CON-008 Controls overlay](#r-con-008-controls-overlay) | Implemented |
-| [R-CON-009 Console server](#r-con-009-console-server) | Planned |
-| [R-CON-010 Console protocol](#r-con-010-console-protocol) | Planned |
-| [R-CON-011 Console actions are game actions](#r-con-011-console-actions-are-game-actions) | Planned |
-| [R-CON-012 Console page from web components](#r-con-012-console-page-from-web-components) | Planned |
-| [R-CON-013 Console layout](#r-con-013-console-layout) | Planned |
-| [R-CON-014 Console telemetry](#r-con-014-console-telemetry) | Planned |
+| [R-CON-009 Console server](#r-con-009-console-server) | Implemented |
+| [R-CON-010 Console protocol](#r-con-010-console-protocol) | Implemented |
+| [R-CON-011 Console actions are game actions](#r-con-011-console-actions-are-game-actions) | Implemented |
+| [R-CON-012 Console page from web components](#r-con-012-console-page-from-web-components) | Partial (C1 page) |
+| [R-CON-013 Console layout](#r-con-013-console-layout) | Partial (C1 page) |
+| [R-CON-014 Console telemetry](#r-con-014-console-telemetry) | Implemented |
 | [R-CON-015 Target viewport](#r-con-015-target-viewport) | Planned |
 | [R-CON-016 3D map view](#r-con-016-3d-map-view) | Planned |
 | [R-CON-017 Serial transport](#r-con-017-serial-transport) | Planned |
 | [R-CON-018 Function-group tiles](#r-con-018-function-group-tiles) | Planned |
-| [R-CON-019 Features the craft lacks are disabled, not hidden](#r-con-019-features-the-craft-lacks-are-disabled-not-hidden) | Planned |
+| [R-CON-019 Features the craft lacks are disabled, not hidden](#r-con-019-features-the-craft-lacks-are-disabled-not-hidden) | Partial (catalogue and buttons) |
 | [R-CON-020 Console theme from the active pack](#r-con-020-console-theme-from-the-active-pack) | Planned |
 | [R-CON-021 Console theme assets are original-free](#r-con-021-console-theme-assets-are-original-free) | Planned |
 
@@ -120,7 +120,7 @@ Each action MUST have, in the one action table (R-CON-001), an id, a display nam
 - See: [Input and gamepads](../../implementation/architecture/input.md)
 
 !!! note "As built"
-    `input::ACTIONS` is the catalogue: each entry has its id (`name`, the `bindings.yaml` name), a display name (`label`), its default keys and pad buttons, and its `group`. It drives parsing, the defaults, the controls menu and the keys overlay (`input::help_rows`); the console's `catalogue` message (C1) will be built from it too. The label serves as the short description for now: a separate description field is not in the table yet and is due with the console's catalogue.
+    `input::ACTIONS` is the catalogue: each entry has its id (`name`, the `bindings.yaml` name), a display name (`label`), its default keys and pad buttons, and its `group`. It drives parsing, the defaults, the controls menu and the keys overlay (`input::help_rows`); and, since C1 (app 0.4.0), the console's `catalogue` message (`remote::protocol::catalogue`). The label serves as the short description: the catalogue sends `label`, and a separate description field is not in the table yet. That part stays open; it is not needed until the C2 layout shows more than a button label.
 
 ### R-CON-008 Controls overlay
 
@@ -143,12 +143,12 @@ The game MUST be able to serve the console page and a WebSocket endpoint. The co
 *Rationale:* Decision D2: safe by default.
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: planned
-- Verified by: Planned (interlude item C1).
-- See: [Console protocol](../console-protocol.md)
+- Status: implemented
+- Verified by: `remote::server::only_local_network_peers_are_served`, `pairing_codes_are_six_digits_and_vary_with_the_seed`, `serves_the_page_pairs_and_relays_actions_over_a_real_socket`; `remote::http::parses_a_websocket_upgrade_and_waits_for_the_blank_line`, `bad_requests_are_errors_and_responses_are_well_formed`; `remote::ws::sha1_and_base64_match_the_published_test_vectors`, `frames_decode_masked_wait_for_more_bytes_and_encode`, `protocol_violations_are_errors`; `settings::tests::parses_and_round_trips` (the `console` keys); MT-3-19
+- See: [Console protocol](../console-protocol.md), [Remote console](../../implementation/architecture/remote.md), [Tablet console](../../user-guide/console.md)
 
-!!! question "Open"
-    The settings keys, how "local network only" is enforced, and how the pairing code is shown to the player.
+!!! note "Resolved (C1, app 0.4.0)"
+    **Settings keys:** `console: {enabled, port}` in `settings.yaml` (default off, 8765), and `--console` / `--console-port N` for one run. **Local network only:** each accepted connection's peer address is checked (`remote::server::is_local`): private, link-local, IPv6 unique-local and loopback addresses (and IPv4-mapped forms of them) are served; any other connection is dropped without an answer. **Pairing code:** six digits chosen at start-up, printed in the terminal and shown at the bottom left of the flight screen with the URL until a console pairs (and while the menu is open); three wrong codes close the connection.
 
 ### R-CON-010 Console protocol
 
@@ -157,9 +157,12 @@ Game and console MUST exchange the JSON messages of the [console protocol](../co
 *Rationale:* A later USB serial transport reuses it.
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console), [F-CON-007](../../definition/control-console.md#f-con-007-physical-control-panel)
-- Status: planned
-- Verified by: Planned (interlude item C1).
+- Status: implemented
+- Verified by: `remote::protocol::decodes_console_messages_and_refuses_unknown_ones`, `the_catalogue_lists_every_action_and_marks_missing_equipment`; `remote::json::parses_objects_arrays_strings_and_numbers`, `bad_and_hostile_input_is_an_error`, `writes_compact_objects_that_parse_back`; `remote::server::serves_the_page_pairs_and_relays_actions_over_a_real_socket`
 - See: [Console protocol](../console-protocol.md)
+
+!!! note "As built"
+    Protocol version 1: `hello`, `action`, `throttle` from the console; `welcome`, `denied`, `catalogue`, `telemetry` from the game. `remote::protocol` builds and decodes the JSON text only; the WebSocket framing is in `remote::ws`, so a serial transport can carry the same text.
 
 ### R-CON-011 Console actions are game actions
 
@@ -168,9 +171,12 @@ An `action` from the console MUST have the same effect as the bound input for th
 *Rationale:* One set of actions, however they are triggered.
 
 - Implements: [F-CON-003](../../definition/control-console.md#f-con-003-one-action-catalogue-with-a-controls-overlay), [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: planned
-- Verified by: Planned (interlude item C1).
-- See: [Console protocol](../console-protocol.md)
+- Status: implemented
+- Verified by: `remote::tests::held_actions_last_until_released_and_taps_fire_once`, `remote::protocol::decodes_console_messages_and_refuses_unknown_ones`; MT-3-20
+- See: [Console protocol](../console-protocol.md), [Remote console](../../implementation/architecture/remote.md#input-path)
+
+!!! note "As built"
+    Console input joins the frame's `RawInput` (`remote_held`, `remote_pressed`, `remote_throttle`) through `remote::RemoteInput`, and `Bindings::translate` treats a held or tapped console action exactly like a bound key; `sim` is untouched. Names outside `input::ACTIONS` are refused by the decoder. A console that disconnects releases everything it held.
 
 ### R-CON-012 Console page from web components
 
@@ -179,9 +185,12 @@ The console page MUST be built from custom web components and CSS, with no frame
 *Rationale:* Lightweight, dependency-free web UI (project dependency policy).
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: planned
-- Verified by: Planned (interlude item C2).
-- See: [Dependency policy](../../learning/best-practices/dependencies.md)
+- Status: partial
+- Verified by: `remote::server::serves_the_page_pairs_and_relays_actions_over_a_real_socket` (the page is served); MT-3-19 – MT-3-23
+- See: [Dependency policy](../../learning/best-practices/dependencies.md), [Remote console](../../implementation/architecture/remote.md)
+
+!!! note "As built (C1)"
+    `web/console/` (`index.html`, `console.css`, `console.js`) is embedded in the binary and served by the game. It is made of four custom elements (`oi-pairing`, `oi-telemetry`, `oi-throttle`, `oi-actions`) with no framework and no build step. This is the C1 page; the C2 page (tiles, themes) completes the requirement.
 
 ### R-CON-013 Console layout
 
@@ -190,8 +199,11 @@ The console MUST show the exterior-view HUD in its top row, a widened display co
 *Rationale:* User request (F-CON-004).
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: planned
+- Status: partial
 - Verified by: Planned (interlude item C2; a manual test).
+
+!!! note "As built (C1)"
+    The C1 page is a working layout, not the one required here: telemetry cells, a throttle slider, then every action as a button under its group title. The HUD row, display console, shield and power columns come with C2.
 
 !!! question "Open"
     The grouping of the remaining functions.
@@ -203,9 +215,12 @@ While paired, the game MUST send craft telemetry at 20 Hz and radar contacts at 
 *Rationale:* Real-time knowledge of the craft's condition.
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: planned
-- Verified by: Planned (interlude item C1).
-- See: [Console protocol](../console-protocol.md)
+- Status: implemented
+- Verified by: `remote::protocol::telemetry_reports_drift_and_the_targets_relative_rotation`; MT-3-19
+- See: [Console protocol](../console-protocol.md#game-console)
+
+!!! note "As built (C1)"
+    Craft telemetry is sent at 20 Hz to every paired console (`app::flight::FlightSession::console_frame`). Radar contacts (5 Hz) and events are not sent yet: they are the `contacts` and `event` messages, still planned on the [Console protocol](../console-protocol.md#messages-still-planned) page, with C4.
 
 ### R-CON-015 Target viewport
 
@@ -269,9 +284,12 @@ Every function group MUST be shown for every craft. A control for a feature the 
 *Rationale:* All function groups are common to every craft by design; only individual features differ (user correction, F-CON-008).
 
 - Implements: [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles)
-- Status: planned
-- Verified by: Planned (interlude item C2).
+- Status: partial
+- Verified by: `remote::protocol::the_catalogue_lists_every_action_and_marks_missing_equipment`; MT-3-21
 - See: [Console protocol](../console-protocol.md)
+
+!!! note "As built (C1)"
+    Availability is sent per action in `catalogue` and resent when the craft class changes; the C1 page shows an unavailable action's button greyed, not tappable and labelled "not fitted". The group status cards arrive with the C2 tiles (R-CON-018).
 
 !!! question "Open"
     Whether a fitted but destroyed system is shown as not fitted or as damaged (read here: damaged, from telemetry).
@@ -307,3 +325,4 @@ Console theme assets MUST be new art made for this project and kept in the pack'
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CON-001 – R-CON-021 (21 requirements; 6 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-CON-007 and R-CON-008 implemented (app 0.3.1): `input::ACTIONS` with `help_rows`; the keys overlay on `?` / Shift+F1 (action `help`), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation |
+| 1.3.0 | 2026-11-11 | Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from `input::ACTIONS`; the description field stays open |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.3.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,7 +15,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 | [F-CON-001 Rebindable keyboard, mouse and gamepad](#f-con-001-rebindable-keyboard-mouse-and-gamepad) | Implemented |
 | [F-CON-002 Every original piloting function](#f-con-002-every-original-piloting-function) | Implemented |
 | [F-CON-003 One action catalogue, with a controls overlay](#f-con-003-one-action-catalogue-with-a-controls-overlay) | Implemented |
-| [F-CON-004 Tablet control console](#f-con-004-tablet-control-console) | Planned |
+| [F-CON-004 Tablet control console](#f-con-004-tablet-control-console) | Partial (C1) |
 | [F-CON-005 Console target viewport](#f-con-005-console-target-viewport) | Planned |
 | [F-CON-006 Console 3D map](#f-con-006-console-3d-map) | Planned |
 | [F-CON-007 Physical control panel](#f-con-007-physical-control-panel) | Planned |
@@ -50,7 +50,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** User request: "There are a large number of keyboard shortcuts to keep track of."
 
-- **Status:** implemented (app 0.3.1): the keys overlay on `?` or Shift+F1; the console's use of the catalogue comes with C1.
+- **Status:** implemented (app 0.3.1): the keys overlay on `?` or Shift+F1; since C1 (app 0.4.0) the console's `catalogue` is built from the same table.
 - **Source:** User request (feedback); interlude item F.5.
 - **Specified by:** [R-CON-001](../specification/requirements/control-console.md#r-con-001-one-action-table), [R-CON-007](../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-008](../specification/requirements/control-console.md#r-con-008-controls-overlay), [R-CON-011](../specification/requirements/control-console.md#r-con-011-console-actions-are-game-actions)
 
@@ -60,7 +60,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** Immersion, always knowing the craft's condition, and reaching features that are otherwise forgotten. Primary use: an iPad alongside a joystick or gamepad.
 
-- **Status:** planned
+- **Status:** partial. C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (`--console` or `console.enabled`; port 8765, `console.port`), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. The layout described above comes with C2. See [Tablet console](../user-guide/console.md).
 - **Source:** User request; decision D2 (off by default; local network only; pairing code; port 8765, changeable); interlude items C1 and C2.
 - **Specified by:** [R-CON-007](../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-009](../specification/requirements/control-console.md#r-con-009-console-server), [R-CON-010](../specification/requirements/control-console.md#r-con-010-console-protocol), [R-CON-011](../specification/requirements/control-console.md#r-con-011-console-actions-are-game-actions), [R-CON-012](../specification/requirements/control-console.md#r-con-012-console-page-from-web-components), [R-CON-013](../specification/requirements/control-console.md#r-con-013-console-layout), [R-CON-014](../specification/requirements/control-console.md#r-con-014-console-telemetry)
 
@@ -120,3 +120,4 @@ Requirements for these features: [Controls & control console requirements](../sp
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CON-001 – F-CON-009 (9 features) |
 | 1.1.0 | 2026-11-11 | F-CON-003 implemented (app 0.3.1) |
+| 1.3.0 | 2026-11-11 | F-CON-004 partial: console C1 built (app 0.4.0); F-CON-003 status note updated |

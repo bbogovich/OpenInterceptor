@@ -43,6 +43,13 @@ An `async fn` returns a *future*: a computation that can pause. `.await` pauses 
 awaited thing is ready. macroquad runs our `run` future on its own tiny executor, resuming it
 once per frame. There are no threads involved and no async runtime such as Tokio.
 
+The one exception is the tablet console (app 0.4.0): its network server runs on ordinary
+`std::thread` threads beside this loop, because a socket read must never hold up a frame. The
+game side only ever *polls* it — `ConsoleServer::poll` drains an `mpsc` channel with
+`try_iter`, which never blocks — so the frame loop stays single-threaded and needs no async
+runtime. [Networking → Threads and channels](../networking/index.md#threads-and-channels-in-rust)
+explains `thread::spawn`, channels, `Arc<Mutex<…>>` and `AtomicBool` with that code.
+
 ## Consequences
 
 - Anything that waits for a frame must be `async` and `.await`ed. In this codebase that is
