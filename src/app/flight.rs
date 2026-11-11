@@ -952,18 +952,22 @@ impl FlightSession {
                     Ok(m) => {
                         let lod = m.lods.iter().find(|l| l.triangle_count() <= protocol::MODEL_TRIANGLE_BUDGET);
                         let lod = lod.unwrap_or_else(|| m.lods.last().expect("a model always has a LOD"));
-                        let colors: Vec<[f32; 3]> = lod
+                        // Each textured group: its average colour (shown until the
+                        // image loads) and the image itself, shrunk, as a PNG.
+                        let (colors, textures): (Vec<[f32; 3]>, Vec<Option<String>>) = lod
                             .groups
                             .iter()
-                            .map(|g| match &g.texture {
-                                Some(t) => content
-                                    .load_texture(t, c.model_pack)
-                                    .map(|img| protocol::average_color(&img.rgba))
-                                    .unwrap_or([0.7, 0.7, 0.7]),
-                                None => [0.7, 0.7, 0.7],
+                            .map(|g| {
+                                match g.texture.as_ref().and_then(|t| content.load_texture(t, c.model_pack).ok()) {
+                                    Some(img) => (
+                                        protocol::average_color(&img.rgba),
+                                        Some(protocol::texture_url(img.width, img.height, &img.rgba)),
+                                    ),
+                                    None => ([0.7, 0.7, 0.7], None),
+                                }
                             })
-                            .collect();
-                        protocol::model(&c.name, &m, &colors)
+                            .unzip();
+                        protocol::model(&c.name, &m, &colors, &textures)
                     }
                     Err(_) => crate::remote::json::Obj::new().str("type", "model").str("name", &c.name).end(),
                 };

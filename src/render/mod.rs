@@ -260,7 +260,8 @@ pub struct Renderer {
     pub env_sky: Option<crate::content::environment::Sky>,
     pub planet: Option<crate::content::environment::Planet>,
     /// The terrain mesh of the current battle, by terrain id (built once).
-    terrain: Option<(String, Rc<GpuModel>)>,
+    /// (Normal and X-mirrored meshes, for the mirror-image tiles to the horizon.)
+    terrain: Option<(String, [Rc<GpuModel>; 2])>,
     stars: Vec<starfield::Star>,
     star_seed: u64,
     // Reused per-frame buffers (see the module docs).
@@ -574,11 +575,29 @@ impl Renderer {
             let def = world.rules.terrains.iter().find(|t| t.field.as_ref().is_some_and(|f| Arc::ptr_eq(f, &field)));
             if let Some(def) = def {
                 if self.terrain.as_ref().is_none_or(|(id, _)| id != &def.id) {
-                    let model = terrain::terrain_model(def, &field);
-                    self.terrain = Some((def.id.clone(), self.models.upload_model(content, model, def.pack)));
+                    let mut up = |mirror| {
+                        self.models.upload_model(content, terrain::terrain_model(def, &field, mirror), def.pack)
+                    };
+                    let meshes = [up(false), up(true)];
+                    self.terrain = Some((def.id.clone(), meshes));
                 }
-                if let Some((_, m)) = &self.terrain {
-                    self.draw_model(cam, m, Vec3::ZERO, Quat::IDENTITY, Vec3::ZERO);
+                if let Some((_, meshes)) = &self.terrain {
+                    // Every tile within sight (the fog distance, else three fields), up
+                    // to 7 × 7 around the one under the camera.
+                    let reach = self.env_sky.as_ref().map_or(field.size * 3.0, |s| s.fog_distance * 1.1);
+                    let n = ((reach / field.size).ceil() as i32 + 1).min(3);
+                    let ci = ((cam.position.x / field.size) + 0.5).floor() as i32;
+                    let cj = ((cam.position.z / field.size) + 0.5).floor() as i32;
+                    for i in ci - n..=ci + n {
+                        for j in cj - n..=cj + n {
+                            let (mirror, at, rot) = terrain::tile_placement(&field, i, j);
+                            let flat = Vec3::new(at.x - cam.position.x, 0.0, at.z - cam.position.z);
+                            if flat.length() - field.size * 0.75 > reach {
+                                continue;
+                            }
+                            self.draw_model(cam, &meshes[mirror as usize], at, rot, Vec3::ZERO);
+                        }
+                    }
                 }
             }
         }

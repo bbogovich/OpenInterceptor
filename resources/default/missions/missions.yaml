@@ -15,7 +15,7 @@ missions:
       wing: {class: comet, ai: wingman, count: 2, at: {distance: 0m, spread: 80m}}
       raiders:
         class: [scout_saucer, raider_saucer]
-        count: {per_level: [[2, 3], [3, 4], [4, 5], [5, 6]]}
+        count: {per_level: [[2, 2], [3, 4], [4, 5], [5, 6]]}
         at: {distance: 6km, from: station, bearing: random}
       robots: {class: robot_sentinel, count: 2, arrive: "time > 75s and alive(station)", at: {distance: 5km, from: station, bearing: random}}
     waves:

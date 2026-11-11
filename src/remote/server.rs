@@ -321,8 +321,23 @@ mod tests {
                         "v 0 0 -2\nv -1 0 1\nv 1 0 1\nv 0 0.5 1\nf 1 3 2\nf 1 2 4\nf 1 4 3\nf 2 3 4\n",
                     )
                     .unwrap();
-                    let m = crate::model::Model::from_obj("sample", &mesh, 1.0, &[]);
-                    server.broadcast(&protocol::model("Wraith", &m, &[[0.6, 0.75, 0.6]]));
+                    let mut m = crate::model::Model::from_obj("sample", &mesh, 1.0, &[]);
+                    // Textured with a generated checkerboard (exercises the uvs and image path).
+                    m.lods[0].groups[0].texture = Some("checker".into());
+                    for (k, v) in m.lods[0].vertices.iter_mut().enumerate() {
+                        v.uv = glam::Vec2::new((k % 2) as f32 * 2.0, (k / 2 % 2) as f32 * 2.0);
+                    }
+                    let checker: Vec<u8> = (0..64 * 64)
+                        .flat_map(|i| {
+                            if (i % 64 / 8 + i / 64 / 8) % 2 == 0 {
+                                [230, 60, 40, 255]
+                            } else {
+                                [240, 220, 60, 255]
+                            }
+                        })
+                        .collect();
+                    let url = protocol::texture_url(64, 64, &checker);
+                    server.broadcast(&protocol::model("Wraith", &m, &[[0.6, 0.75, 0.6]], &[Some(url)]));
                     // The default campaign's theme, from its rules file (the art-deco look).
                     if let Ok(c) = crate::content::Content::load(&crate::content::ContentConfig {
                         pack_dirs: crate::content::checkout_dirs(),

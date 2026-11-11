@@ -406,12 +406,16 @@ class OiTargetView extends HTMLElement {
     const label = this.querySelector(".label");
     const gl = canvas.getContext("webgl", { antialias: true, premultipliedAlpha: false });
     if (!gl) { label.textContent = "3D view not available in this browser"; return; }
-    const vs = `attribute vec3 p; attribute vec3 n; attribute vec3 c; uniform mat4 mvp; uniform mat3 rot;
-      varying vec3 col; void main() {
+    // Flat-shaded: each corner carries its triangle's normal. A textured group samples
+    // its image at the corner's uv; an untextured one uses its colour.
+    const vs = `attribute vec3 p; attribute vec3 n; attribute vec3 c; attribute vec2 t; uniform mat4 mvp; uniform mat3 rot;
+      varying vec3 col; varying vec2 uv; varying float light; void main() {
         vec3 nn = normalize(rot * n);
-        float l = 0.35 + 0.65 * max(dot(nn, normalize(vec3(-0.5, 0.7, 0.6))), 0.0);
-        col = c * l; gl_Position = mvp * vec4(p, 1.0); }`;
-    const fs = `precision mediump float; varying vec3 col; void main() { gl_FragColor = vec4(col, 1.0); }`;
+        light = 0.35 + 0.65 * max(dot(nn, normalize(vec3(-0.5, 0.7, 0.6))), 0.0);
+        col = c; uv = t; gl_Position = mvp * vec4(p, 1.0); }`;
+    const fs = `precision mediump float; varying vec3 col; varying vec2 uv; varying float light;
+      uniform sampler2D tex; uniform float textured;
+      void main() { vec3 base = textured > 0.5 ? texture2D(tex, uv).rgb : col; gl_FragColor = vec4(base * light, 1.0); }`;
     const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
     const prog = gl.createProgram();
     gl.attachShader(prog, shader(gl.VERTEX_SHADER, vs));
@@ -419,16 +423,40 @@ class OiTargetView extends HTMLElement {
     gl.linkProgram(prog);
     gl.useProgram(prog);
     const loc = { p: gl.getAttribLocation(prog, "p"), n: gl.getAttribLocation(prog, "n"), c: gl.getAttribLocation(prog, "c"),
-      mvp: gl.getUniformLocation(prog, "mvp"), rot: gl.getUniformLocation(prog, "rot") };
+      t: gl.getAttribLocation(prog, "t"), mvp: gl.getUniformLocation(prog, "mvp"), rot: gl.getUniformLocation(prog, "rot"),
+      tex: gl.getUniformLocation(prog, "tex"), textured: gl.getUniformLocation(prog, "textured") };
+    let parts = []; // per group: { first, count, texture (a WebGL texture once its image loads) }
+    // WebGL 1 repeats a texture only if its sides are powers of two, and the original
+    // models' uvs do run past 0..1, so each image is redrawn onto a 128 × 128 canvas.
+    const textureFrom = (url, part) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = c.height = 128;
+        c.getContext("2d").drawImage(img, 0, 0, 128, 128);
+        const tx = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tx);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        part.texture = tx;
+      };
+      img.src = url;
+    };
     const buf = gl.createBuffer();
     let count = 0;
     let quat = [0, 0, 0, 1];
     let name = null;
-    // Expand each triangle with its own flat normal: [x y z nx ny nz r g b] per corner.
+    // Expand each triangle with its own flat normal: [x y z nx ny nz r g b u v] per corner.
     const load = (m) => {
       const out = [];
+      for (const tp of parts) if (tp.texture) gl.deleteTexture(tp.texture);
+      parts = [];
       for (const g of m.groups || []) {
-        const P = g.positions, I = g.indices, [r, gg, b] = g.color;
+        const P = g.positions, I = g.indices, [r, gg, b] = g.color, U = g.uvs || [];
+        const part = { first: out.length / 11, count: 0, texture: null };
         for (let i = 0; i + 2 < I.length; i += 3) {
           const a = I[i] * 3, b2 = I[i + 1] * 3, c = I[i + 2] * 3;
           const u = [P[b2] - P[a], P[b2 + 1] - P[a + 1], P[b2 + 2] - P[a + 2]];
@@ -436,12 +464,18 @@ class OiTargetView extends HTMLElement {
           let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
           const len = Math.hypot(...n) || 1;
           n = n.map((x) => x / len);
-          for (const k of [a, b2, c]) out.push(P[k], P[k + 1], P[k + 2], ...n, r, gg, b);
+          for (const k of [a, b2, c]) {
+            const q = (k / 3) * 2;
+            out.push(P[k], P[k + 1], P[k + 2], ...n, r, gg, b, U[q] || 0, U[q + 1] || 0);
+          }
         }
+        part.count = out.length / 11 - part.first;
+        parts.push(part);
+        if (g.texture) textureFrom(g.texture, part);
       }
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(out), gl.STATIC_DRAW);
-      count = out.length / 9;
+      count = out.length / 11;
       name = m.name;
     };
     link.addEventListener("model", (e) => load(e.detail));
@@ -474,11 +508,18 @@ class OiTargetView extends HTMLElement {
       gl.uniformMatrix4fv(loc.mvp, false, new Float32Array(mvp));
       gl.uniformMatrix3fv(loc.rot, false, new Float32Array(r));
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      const stride = 36;
+      const stride = 44;
       gl.enableVertexAttribArray(loc.p); gl.vertexAttribPointer(loc.p, 3, gl.FLOAT, false, stride, 0);
       gl.enableVertexAttribArray(loc.n); gl.vertexAttribPointer(loc.n, 3, gl.FLOAT, false, stride, 12);
       gl.enableVertexAttribArray(loc.c); gl.vertexAttribPointer(loc.c, 3, gl.FLOAT, false, stride, 24);
-      gl.drawArrays(gl.TRIANGLES, 0, count);
+      if (loc.t >= 0) { gl.enableVertexAttribArray(loc.t); gl.vertexAttribPointer(loc.t, 2, gl.FLOAT, false, stride, 36); }
+      gl.uniform1i(loc.tex, 0);
+      gl.activeTexture(gl.TEXTURE0);
+      for (const part of parts) {
+        gl.uniform1f(loc.textured, part.texture ? 1 : 0);
+        if (part.texture) gl.bindTexture(gl.TEXTURE_2D, part.texture);
+        gl.drawArrays(gl.TRIANGLES, part.first, part.count);
+      }
     };
     requestAnimationFrame(draw);
   }

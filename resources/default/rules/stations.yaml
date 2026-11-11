@@ -18,7 +18,8 @@ objects:
     description: "@object.guard_station.desc"
     model_set: guard_station
     faction: guard
-    hit_points: 8000
+    # Sturdier at cadet: the defence missions promise 150 s undefended there (soak test).
+    hit_points: {per_level: [11000, 8000, 8000, 8000]}
     shields: 1500
     armor: 2000
   dominion_outpost:

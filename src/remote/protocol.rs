@@ -212,9 +212,11 @@ pub const MODEL_TRIANGLE_BUDGET: usize = 3000;
 /// normalised to radius 1, as flat-shaded groups with one colour each.
 ///
 /// `colors` gives each material group's colour (RGB 0..1): the texture's average for a
-/// textured group, so the shape reads correctly without sending textures. Positions are
+/// textured group, shown until (or if) its texture cannot be drawn. `textures` gives a
+/// textured group's image as a `data:image/png;base64,…` URL (see [`texture_url`]); such
+/// a group also carries `uvs`, two per vertex, so the page can map it. Positions are
 /// rounded to 3 decimals, which is plenty at viewport size and keeps the message small.
-pub fn model(name: &str, model: &crate::model::Model, colors: &[[f32; 3]]) -> String {
+pub fn model(name: &str, model: &crate::model::Model, colors: &[[f32; 3]], textures: &[Option<String>]) -> String {
     let lod = model
         .lods
         .iter()
@@ -226,12 +228,18 @@ pub fn model(name: &str, model: &crate::model::Model, colors: &[[f32; 3]]) -> St
         // Only the vertices this group uses, renumbered from 0.
         let mut map = std::collections::HashMap::new();
         let mut positions = Vec::new();
+        let mut uvs = Vec::new();
         let mut indices = Vec::with_capacity(g.indices.len());
+        let texture = textures.get(gi).cloned().flatten().filter(|_| g.texture.is_some());
         for &i in &g.indices {
             let next = map.len() as u32;
             let k = *map.entry(i).or_insert_with(|| {
-                let p = lod.vertices[i as usize].position * scale;
+                let v = &lod.vertices[i as usize];
+                let p = v.position * scale;
                 positions.extend([p.x as f64, p.y as f64, p.z as f64]);
+                if texture.is_some() {
+                    uvs.extend([v.uv.x as f64, v.uv.y as f64]);
+                }
                 next
             });
             indices.push(k as f64);
@@ -245,18 +253,26 @@ pub fn model(name: &str, model: &crate::model::Model, colors: &[[f32; 3]]) -> St
             }
             _ => colors.get(gi).copied().unwrap_or([0.7, 0.7, 0.7]),
         };
-        groups.push(
-            Obj::new()
-                .nums("color", &[c[0] as f64, c[1] as f64, c[2] as f64])
-                .nums("positions", &positions)
-                .nums("indices", &indices)
-                .end(),
-        );
+        let mut o = Obj::new()
+            .nums("color", &[c[0] as f64, c[1] as f64, c[2] as f64])
+            .nums("positions", &positions)
+            .nums("indices", &indices);
+        if let Some(url) = texture {
+            o = o.nums("uvs", &uvs).str("texture", &url);
+        }
+        groups.push(o.end());
     }
     Obj::new().str("type", "model").str("name", name).raw("groups", &array(&groups)).end()
 }
 
 /// The average colour of an RGBA image (RGB 0..1), ignoring transparent pixels.
+/// A texture for the console: shrunk to at most 128 pixels a side and encoded as a PNG
+/// `data:` URL, which a browser can load straight into an image.
+pub fn texture_url(width: u32, height: u32, rgba: &[u8]) -> String {
+    let (w, h, small) = crate::formats::png::downscale(width, height, rgba, 128);
+    format!("data:image/png;base64,{}", super::ws::base64(&crate::formats::png::encode_rgba(w, h, &small)))
+}
+
 pub fn average_color(rgba: &[u8]) -> [f32; 3] {
     let (mut sum, mut n) = ([0u64; 3], 0u64);
     for p in rgba.chunks_exact(4).filter(|p| p[3] > 16) {
@@ -423,7 +439,7 @@ mod tests {
     fn model_messages_are_normalised_and_coloured_per_group() {
         let mesh = crate::formats::obj::parse("v 0 0 0\nv 2 0 0\nv 0 2 0\nv 0 0 2\nf 1 2 3\nf 1 3 4\n").unwrap();
         let m = crate::model::Model::from_obj("t", &mesh, 1.0, &[]);
-        let msg = super::super::json::parse(&model("Wraith", &m, &[[0.2, 0.4, 0.6]])).unwrap();
+        let msg = super::super::json::parse(&model("Wraith", &m, &[[0.2, 0.4, 0.6]], &[])).unwrap();
         assert_eq!(msg.get("name").and_then(Json::as_str), Some("Wraith"));
         let Some(Json::Arr(groups)) = msg.get("groups") else { panic!() };
         let Some(Json::Arr(pos)) = groups[0].get("positions") else { panic!() };
@@ -431,6 +447,19 @@ mod tests {
         assert!(max <= 1.0 + 1e-6, "normalised to radius 1: {max}");
         let Some(Json::Arr(idx)) = groups[0].get("indices") else { panic!() };
         assert_eq!(idx.len(), 6, "two triangles");
+        assert!(groups[0].get("uvs").is_none(), "untextured: no uvs");
+        // A textured group carries its image and two uvs per vertex.
+        let mut tm = m.clone();
+        tm.lods[0].groups[0].texture = Some("t.png".into());
+        let url = texture_url(1, 1, &[1, 2, 3, 255]);
+        assert!(url.starts_with("data:image/png;base64,iVBOR"), "{url}");
+        let msg = super::super::json::parse(&model("W", &tm, &[[0.5; 3]], &[Some(url)])).unwrap();
+        let Some(Json::Arr(groups)) = msg.get("groups") else { panic!() };
+        let (Some(Json::Arr(uv)), Some(Json::Arr(p))) = (groups[0].get("uvs"), groups[0].get("positions")) else {
+            panic!()
+        };
+        assert_eq!(uv.len() / 2, p.len() / 3);
+        assert!(groups[0].get("texture").is_some());
         assert_eq!(
             average_color(&[255, 0, 0, 255, 0, 0, 255, 255, 9, 9, 9, 0]),
             [0.5, 0.0, 0.5],

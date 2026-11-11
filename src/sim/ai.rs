@@ -306,7 +306,12 @@ pub fn think(w: &mut World) {
         // Whatever the behaviour wants, a pilot near a black hole first gets clear of it.
         let controls = match state.behaviour {
             Behaviour::Idle => controls,
-            _ => escape_black_hole(w, ship).or_else(|| avoid_ground(w, ship)).unwrap_or(controls),
+            // Then the ground, then anything it is about to fly into (the controls keep
+            // their fire buttons: avoiding does not stop a pilot shooting).
+            _ => escape_black_hole(w, ship)
+                .or_else(|| avoid_ground(w, ship))
+                .or_else(|| avoid_collision(w, id).map(|c| Controls { fire_beams: controls.fire_beams, ..c }))
+                .unwrap_or(controls),
         };
         decisions.push((i, controls, target, state));
     }
@@ -565,40 +570,82 @@ pub fn escape_black_hole(w: &World, ship: &Ship) -> Option<Controls> {
     })
 }
 
-/// Collision avoidance: if another craft is inside our avoidance zone (twice the combined
-/// radii) and we are closing on it, steer away from it and slow down. Returns the
-/// controls to use instead of the normal ones, or `None` when the way is clear.
+/// How far ahead collision avoidance looks, seconds.
+pub const AVOID_HORIZON: f32 = 2.5;
+
+/// Collision avoidance, for every AI pilot. Each other object's path is projected
+/// against ours (both at constant velocity) to its **closest approach** within
+/// [`AVOID_HORIZON`] seconds; if that miss distance would be under 1.5 × the combined
+/// radii plus 10 m (for a static object, the combined radii plus 30 m), or something is already inside twice the combined radii and
+/// closing, the pilot steers to widen the miss and, if the danger is ahead, eases off.
+/// Returns the controls to use instead of the normal ones, or `None` when the way is clear.
+///
+/// The maths: with relative position `r` and relative velocity `v` (the other's minus
+/// ours), the gap at time `t` is `r + v·t`; its length is smallest at `t* = −(r·v)/|v|²`.
 pub fn avoid_collision(w: &World, me: ShipId) -> Option<Controls> {
     let ship = w.get(me)?;
+    // Turrets and other static objects cannot move out of the way (and must keep aiming).
+    let mine = w.rules.ship(ship.class);
+    if mine.kind.is_static() || mine.max_speed <= 0.0 {
+        return None;
+    }
     let my_r = w.shapes[ship.class.0 as usize].radius;
-    let mut worst: Option<(f32, Vec3, Vec3)> = None; // (time to contact, away, other's velocity)
+    // (time to closest approach, miss vector, where it is now, its velocity)
+    let mut worst: Option<(f32, Vec3, Vec3, Vec3)> = None;
     for (i, o) in w.ships.iter().enumerate() {
         if !o.alive || w.id_of(i) == me {
             continue;
         }
-        let zone = 2.0 * (my_r + w.shapes[o.class.0 as usize].radius);
-        let to = o.position - ship.position;
-        let dist = to.length();
-        if dist > zone || dist < 1e-3 {
+        // My own wingmen keep clear of me (they avoid their leader); a leader swerving
+        // from them as they form up would never fly straight.
+        if matches!(&o.pilot, Pilot::Ai(s) if s.behaviour == Behaviour::Wingman && s.leader == Some(me)) {
             continue;
         }
-        // Closing speed along the line between us (positive = getting closer).
-        let closing = (ship.velocity - o.velocity).dot(to / dist);
-        if closing <= 0.0 && dist > zone * 0.5 {
-            continue; // opening, and not dangerously close
+        let both = my_r + w.shapes[o.class.0 as usize].radius;
+        let r = o.position - ship.position;
+        let v = o.velocity - ship.velocity;
+        let dist = r.length();
+        if dist < 1e-3 || dist > both + v.length() * AVOID_HORIZON + 50.0 {
+            continue; // cannot reach us within the horizon
         }
-        let ttc = if closing > 0.0 { dist / closing } else { 0.0 };
-        if worst.is_none_or(|(t, ..)| ttc < t) {
-            worst = Some((ttc, -to / dist, o.velocity));
+        let is_static = w.rules.ship(o.class).kind.is_static();
+        // Statics and the pilot's own target are attacked head-on, so they are only
+        // avoided at the last moment: a firing pass must not be broken off early.
+        let attacking = ship.target == Some(w.id_of(i));
+        let horizon = if is_static || attacking { 1.0 } else { AVOID_HORIZON };
+        let t = if v.length_squared() > 1e-6 { -r.dot(v) / v.length_squared() } else { 0.0 };
+        if t > horizon {
+            continue; // the closest approach is further off than we look
+        }
+        let t = t.max(0.0);
+        let miss = r + v * t;
+        let closing = -v.dot(r / dist);
+        let inside = dist < 2.0 * both && closing > 0.0;
+        // A station or other static object only needs its hull cleared (attack runs on
+        // it must still get close); craft get a wider berth, as they can swerve too.
+        let margin = if is_static { both + 30.0 } else { 1.5 * both + 10.0 };
+        let inside = inside && (dist < margin || !is_static);
+        if miss.length() > margin && !inside {
+            continue;
+        }
+        if worst.is_none_or(|(wt, ..)| t < wt) {
+            worst = Some((t, miss, r, o.velocity));
         }
     }
-    let (_, away, other_v) = worst?;
+    let (_, miss, now, other_v) = worst?;
     let class = w.rules.ship(ship.class);
-    // Aim off to the side away from the other craft, keeping the general heading.
-    let aim = ship.position + away * 400.0 + ship.forward() * 200.0;
+    // Steer so the other passes further away: away from where it will be at closest
+    // approach. A dead-on course (no miss at all) breaks to the pilot's own upper right.
+    let away = match (-miss).try_normalize() {
+        Some(a) => a,
+        None => (ship.rotation * Vec3::new(0.7, 0.7, 0.0)).normalize(),
+    };
+    // Mostly sideways: a hard break, still a little forwards so speed is not lost.
+    let aim = ship.position + away * 400.0 + ship.forward() * 50.0;
     let (pitch, yaw, roll, _) = steer_towards(ship, aim);
-    // Slow to the other craft's speed less a margin when it is ahead of us.
-    let ahead = (-away).dot(ship.forward()) > 0.0;
+    // Ease off to the other craft's speed less a margin when it is ahead of us.
+    // (Judged by where it is now: on a dead-on course the miss vector is nearly zero.)
+    let ahead = now.dot(ship.forward()) > 0.0;
     let other_speed = other_v.dot(ship.forward()).max(0.0);
     let hold = if ahead { (other_speed - 40.0).max(0.0) } else { class.max_speed };
     Some(Controls { pitch, yaw, roll, hold_speed: Some(hold.min(class.max_speed)), ..Default::default() })
@@ -916,6 +963,26 @@ mod tests {
         let roomy = formation_slot(&w, m, l, Vec3::new(-60.0, 0.0, 30.0));
         assert_eq!(roomy, Vec3::new(-60.0, 0.0, 30.0), "a wide slot is kept");
         assert!(formation_slot(&w, m, l, Vec3::ZERO).length() >= 30.0);
+    }
+
+    #[test]
+    fn collision_avoidance_predicts_the_closest_approach() {
+        let mut w = world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = spawn_ai(&mut w, "raider", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        w.get_mut(me).unwrap().velocity = Vec3::NEG_Z * 200.0;
+        // Head-on, 400 m apart, closing at 400 m/s: one second to impact.
+        let other = w.spawn(f, FactionId(0), "o", Vec3::new(0.0, 0.0, -400.0), Quat::IDENTITY, Pilot::External);
+        w.get_mut(other).unwrap().velocity = Vec3::Z * 200.0;
+        let c = avoid_collision(&w, me).expect("on a collision course");
+        assert!(c.pitch.abs() + c.yaw.abs() > 0.3, "breaking away");
+        assert_eq!(c.hold_speed, Some(0.0), "and slowing: the danger is ahead");
+        // The same craft passing 300 m to the side: no danger.
+        w.get_mut(other).unwrap().position.x = 300.0;
+        assert!(avoid_collision(&w, me).is_none());
+        // Far beyond the horizon: no danger yet.
+        w.get_mut(other).unwrap().position = Vec3::new(0.0, 0.0, -5000.0);
+        assert!(avoid_collision(&w, me).is_none());
     }
 
     #[test]

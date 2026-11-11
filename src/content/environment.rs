@@ -215,8 +215,26 @@ impl Heightfield {
         -self.size * 0.5 + self.size * i as f32 / (self.n - 1) as f32
     }
 
-    /// The ground height under `(x, z)`, bilinearly interpolated.
+    /// Folds a coordinate anywhere on the infinite ground back into the field's square.
+    /// The ground goes on to the horizon as **mirror-image tiles** of the field: the tile
+    /// next door is the field reflected across the shared edge, so heights meet exactly at
+    /// every edge (no cliffs, no seams). Tile `i` covers `[(i - ½)·size, (i + ½)·size]`;
+    /// odd tiles are reflected.
+    pub fn fold(&self, x: f32) -> f32 {
+        let s = self.size;
+        let u = x + s * 0.5; // 0..s inside the field itself
+        let i = (u / s).floor();
+        let mut local = u - i * s;
+        if (i as i64).rem_euclid(2) == 1 {
+            local = s - local;
+        }
+        local - s * 0.5
+    }
+
+    /// The ground height under `(x, z)` (anywhere: see [`Heightfield::fold`]), bilinearly
+    /// interpolated.
     pub fn height_at(&self, x: f32, z: f32) -> f32 {
+        let (x, z) = (self.fold(x), self.fold(z));
         let cell = self.size / (self.n - 1) as f32;
         let fx = ((x + self.size * 0.5) / cell).clamp(0.0, (self.n - 1) as f32);
         let fz = ((z + self.size * 0.5) / cell).clamp(0.0, (self.n - 1) as f32);
@@ -427,10 +445,15 @@ mod tests {
         assert_ne!(a, Heightfield::generate("craters", 8, 65, 20000.0, [0.0, 1200.0]));
         let (lo, hi) = a.heights.iter().fold((f32::MAX, f32::MIN), |(l, h), &x| (l.min(x), h.max(x)));
         assert!((lo - 0.0).abs() < 1e-3 && (hi - 1200.0).abs() < 1e-2);
-        // Interpolation: a grid point gives its own height; outside, the edge continues.
+        // Interpolation: a grid point gives its own height; beyond the edge the ground
+        // continues as a mirror image (the same height as far back inside).
         let (x, z) = (a.coord(10), a.coord(20));
         assert!((a.height_at(x, z) - a.heights[20 * 65 + 10]).abs() < 1e-3);
-        assert_eq!(a.height_at(1e9, 1e9), a.heights[65 * 65 - 1]);
+        let edge = a.size * 0.5;
+        for d in [10.0, 1234.5, 9000.0] {
+            assert!((a.height_at(edge + d, z) - a.height_at(edge - d, z)).abs() < 1e-2, "mirrored at {d}");
+        }
+        assert!((a.height_at(x + 2.0 * a.size, z) - a.height_at(x, z)).abs() < 1e-2, "two tiles over: the same");
         assert!(a.normal_at(0.0, 0.0).y > 0.0, "normals point up");
         let flat = Heightfield { n: 3, size: 100.0, heights: vec![5.0; 9] };
         assert_eq!(flat.normal_at(0.0, 0.0), Vec3::Y);

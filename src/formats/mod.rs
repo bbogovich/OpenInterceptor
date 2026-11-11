@@ -26,6 +26,7 @@ pub mod ini;
 pub mod langfile;
 pub mod obj;
 pub mod pe;
+pub mod png;
 pub mod tga;
 pub mod wav;
 pub mod xmsh;
