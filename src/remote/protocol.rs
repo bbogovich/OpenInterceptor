@@ -99,6 +99,39 @@ pub fn catalogue(rules: &Ruleset, world: &World, player: ShipId) -> String {
     Obj::new().str("type", "catalogue").raw("groups", &array(&groups)).raw("actions", &array(&actions)).end()
 }
 
+/// The `catalogue` when no battle is running (the launcher): every action, all marked
+/// available, since there is no craft yet. The battle sends the real one on start.
+pub fn catalogue_idle() -> String {
+    let mut groups: Vec<crate::input::Group> = Vec::new();
+    for a in ACTIONS {
+        if !groups.contains(&a.group) {
+            groups.push(a.group);
+        }
+    }
+    let groups: Vec<String> = groups
+        .iter()
+        .map(|g| Obj::new().str("id", &format!("{g:?}").to_lowercase()).str("title", g.title()).end())
+        .collect();
+    let actions: Vec<String> = ACTIONS
+        .iter()
+        .map(|a| {
+            Obj::new()
+                .str("name", a.name)
+                .str("group", &format!("{:?}", a.group).to_lowercase())
+                .str("label", a.label)
+                .str("kind", if HELD.contains(&a.action) { "hold" } else { "tap" })
+                .bool("available", true)
+                .end()
+        })
+        .collect();
+    Obj::new().str("type", "catalogue").raw("groups", &array(&groups)).raw("actions", &array(&actions)).end()
+}
+
+/// The `telemetry` sent while no battle is running: the console shows "not flying".
+pub fn telemetry_idle(screen: &str) -> String {
+    Obj::new().str("type", "telemetry").bool("alive", false).str("state", screen).end()
+}
+
 /// The `telemetry` message: what the console shows, read from the world.
 pub fn telemetry(world: &World, player: ShipId, time: f64) -> String {
     let rules = &world.rules;

@@ -111,6 +111,7 @@ impl Launcher {
     }
 
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
+        super::console_idle(ctx, "launcher");
         let raw = ctx.devices.read();
         let pressed = |k: &str| raw.pressed.contains(k);
         let pad_pressed = |b| raw.pad.is_some_and(|p| p.button(b) && !raw.pad_previous.unwrap_or_default().button(b));

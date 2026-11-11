@@ -8,6 +8,7 @@ const link = new EventTarget();
 let socket = null;
 
 function connect(code) {
+  if (socket && socket.readyState <= WebSocket.OPEN) socket.close(); // one connection at a time
   socket = new WebSocket(`ws://${location.host}/ws`);
   socket.onopen = () => {
     socket.send(JSON.stringify({ type: "hello", code }));
@@ -20,6 +21,7 @@ function connect(code) {
     const msg = JSON.parse(e.data);
     link.dispatchEvent(new CustomEvent(msg.type, { detail: msg }));
   };
+  socket.onerror = () => link.dispatchEvent(new CustomEvent("failed"));
   socket.onclose = () => link.dispatchEvent(new CustomEvent("closed"));
 }
 
@@ -27,30 +29,40 @@ function send(msg) {
   if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
 }
 
-/** Pairing: the 6-digit code shown in the game. Remembered for this browser tab. */
+/** Pairing: the 6-digit code shown in the game. Accepted as soon as the sixth digit is
+ *  typed (iPad number pads have no Enter key); remembered for this browser tab. */
 class OiPairing extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `<form><h1>OpenInterceptor console</h1>
       <p>Enter the pairing code shown in the game.</p>
-      <input inputmode="numeric" maxlength="6" autocomplete="off" aria-label="Pairing code">
-      <p class="error"></p></form>`;
+      <input inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" aria-label="Pairing code">
+      <p class="status"></p></form>`;
     const input = this.querySelector("input");
-    const error = this.querySelector(".error");
-    this.querySelector("form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      sessionStorage.setItem("oi-code", input.value);
-      connect(input.value);
+    const status = this.querySelector(".status");
+    const show = (text, bad) => { status.textContent = text; status.classList.toggle("error", !!bad); };
+    const pair = () => {
+      const code = input.value.replace(/\D/g, "");
+      if (code.length !== 6) { show("The code has six digits.", true); return; }
+      try { sessionStorage.setItem("oi-code", code); } catch (_) { /* private mode */ }
+      show("Connecting…");
+      connect(code);
+    };
+    this.querySelector("form").addEventListener("submit", (e) => { e.preventDefault(); pair(); });
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(0, 6);
+      if (input.value.length === 6) pair();
     });
-    input.addEventListener("input", () => { if (input.value.length === 6) this.querySelector("form").requestSubmit(); });
-    link.addEventListener("denied", (e) => { error.textContent = e.detail.reason; input.value = ""; });
-    link.addEventListener("catalogue", () => { this.hidden = true; document.getElementById("console").hidden = false; });
+    link.addEventListener("denied", (e) => { show(e.detail.reason, true); input.value = ""; input.focus(); });
+    link.addEventListener("welcome", () => { this.hidden = true; document.getElementById("console").hidden = false; });
     link.addEventListener("closed", () => {
       this.hidden = false; document.getElementById("console").hidden = true;
-      error.textContent = "Disconnected. Enter the code to reconnect.";
+      show("Disconnected. Enter the code to reconnect.", true);
     });
-    let saved = null;
-    try { saved = sessionStorage.getItem("oi-code"); } catch (_) { /* private mode */ }
-    if (saved) { input.value = saved; connect(saved); }
+    link.addEventListener("failed", () => show("Could not reach the game. Is it still running?", true));
+    // A code in the address (…/?code=123456, e.g. from a QR code) pairs straight away.
+    let saved = new URLSearchParams(location.search).get("code");
+    try { saved = saved || sessionStorage.getItem("oi-code"); } catch (_) { /* private mode */ }
+    if (saved) { input.value = saved; pair(); } else { input.focus(); }
   }
 }
 
@@ -65,7 +77,7 @@ class OiTelemetry extends HTMLElement {
     const pct = (f) => `${Math.round(f * 100)}%`;
     link.addEventListener("telemetry", (e) => {
       const t = e.detail;
-      if (!t.alive) { set("craft", "DESTROYED"); return; }
+      if (!t.alive) { set("craft", t.state === "launcher" ? "Not flying (launcher)" : "DESTROYED"); return; }
       const [x, y, z] = t.velocity;
       set("craft", t.craft);
       set("speed", Math.round(z));

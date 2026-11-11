@@ -61,6 +61,8 @@ pub struct AppContext {
     pub notices: Vec<String>,
     /// The player chose Simple physics (applies on the first three difficulty levels).
     pub simple_physics: bool,
+    /// The half-second count of the last idle console status (see [`console_idle`]).
+    pub console_idle_tick: u64,
 }
 
 /// What the app should do after a screen's frame.
@@ -138,6 +140,24 @@ fn remember_choice(id: &str, difficulty: Option<&str>) {
     s.difficulty = difficulty.map(str::to_string);
     if let Err(e) = s.save(&dir) {
         eprintln!("settings not saved: {e}");
+    }
+}
+
+/// The tablet console while no battle is running (launcher and other screens): a
+/// console that pairs gets the catalogue at once, and a "not flying" status twice a
+/// second, so the page never sits waiting. Input is ignored until a battle starts.
+pub fn console_idle(ctx: &mut AppContext, screen: &str) {
+    let Some(server) = &ctx.console else { return };
+    for e in server.poll() {
+        if let crate::remote::server::Event::Paired(_) = e {
+            server.broadcast(&crate::remote::protocol::catalogue_idle());
+        }
+    }
+    // Twice a second is plenty for a status line (get_time is seconds since start).
+    let half = (get_time() * 2.0) as u64;
+    if half != ctx.console_idle_tick {
+        ctx.console_idle_tick = half;
+        server.broadcast(&crate::remote::protocol::telemetry_idle(screen));
     }
 }
 
@@ -249,6 +269,7 @@ pub async fn run(options: Options) {
         simple_physics: crate::cli::user_data_dir()
             .map(|d| crate::settings::Settings::load(&d).simple_physics)
             .unwrap_or(false),
+        console_idle_tick: 0,
     };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),

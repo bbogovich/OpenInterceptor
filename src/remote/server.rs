@@ -259,6 +259,10 @@ fn serve(
                     match protocol::decode(&text) {
                         Ok(protocol::Inbound::Hello { code: c }) if c == code => {
                             paired.store(true, Ordering::Relaxed);
+                            // Answer at once, from this thread: the page knows it is paired
+                            // even if the game is busy (or between screens).
+                            let welcome = format!(r#"{{"type":"welcome","version":{}}}"#, protocol::VERSION);
+                            let _ = stream.write_all(&ws::encode(ws::Opcode::Text, welcome.as_bytes()));
                             let _ = events.send(Event::Paired(id));
                         }
                         Ok(protocol::Inbound::Hello { .. }) => {
@@ -293,6 +297,27 @@ fn serve(
 mod tests {
     use super::*;
     use std::net::{Ipv4Addr, Ipv6Addr};
+
+    /// Not a unit test: serves the console page on 127.0.0.1:8790 (code from seed 7) for
+    /// 20 s, answering like the launcher does, so the real page can be tried in a browser:
+    /// `cargo test serve_for_a_browser -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn serve_for_a_browser() {
+        let server = ConsoleServer::start(8790, 7).unwrap();
+        println!("http://127.0.0.1:8790/?code={}", server.code);
+        let end = std::time::Instant::now() + Duration::from_secs(20);
+        while std::time::Instant::now() < end {
+            for e in server.poll() {
+                println!("event {e:?}");
+                if let Event::Paired(_) = e {
+                    server.broadcast(&protocol::catalogue_idle());
+                }
+            }
+            server.broadcast(&protocol::telemetry_idle("launcher"));
+            std::thread::sleep(Duration::from_millis(500));
+        }
+    }
 
     #[test]
     fn only_local_network_peers_are_served() {
@@ -375,6 +400,7 @@ mod tests {
         ws.write_all(&text_frame(r#"{"type":"hello","code":"000000x"}"#)).unwrap();
         assert!(read_text(&mut ws).contains("denied"));
         ws.write_all(&text_frame(&format!(r#"{{"type":"hello","code":"{}"}}"#, server.code))).unwrap();
+        assert!(read_text(&mut ws).contains(r#""type":"welcome""#), "answered at once by the server");
         ws.write_all(&text_frame(r#"{"type":"action","name":"next_target","value":1}"#)).unwrap();
         let mut got = Vec::new();
         for _ in 0..100 {
