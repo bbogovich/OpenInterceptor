@@ -48,6 +48,21 @@ fn text(s: &str, x: f32, y: f32, size: f32, color: Color) {
     draw_text(s, x, y + size * 0.8, size, color);
 }
 
+/// Width of `s` per pixel of font size (text width scales linearly with size, so one
+/// measurement at a reference size gives every size).
+fn width_per_px(s: &str) -> f32 {
+    measure_text(s, None, 64, 1.0).width / 64.0
+}
+
+/// The largest font size, at most `max`, at which `rows` lines (the widest being the
+/// longest of `lines`) fit a `w` × `h` box with a little padding.
+fn fit_size<S: AsRef<str>>(lines: &[S], rows: usize, w: f32, h: f32, max: f32) -> f32 {
+    let widest = lines.iter().map(|l| width_per_px(l.as_ref())).fold(0.0f32, f32::max);
+    let by_h = h * 0.92 / (rows.max(1) as f32 * 1.12);
+    let by_w = if widest > 0.0 { w * 0.92 / widest } else { max };
+    by_h.min(by_w).min(max).max(5.0)
+}
+
 /// Draws all instruments.
 pub fn draw_instruments(f: &HudFrame) {
     let Some(me) = f.world.get(f.player) else { return };
@@ -90,7 +105,7 @@ pub fn draw_instruments(f: &HudFrame) {
             }
         }
         if f.glass {
-            text(if front { "F" } else { "R" }, r[0], r[1], 10.0 * f.layout.scale.max(1.0), HUD_DIM);
+            text(if front { "F" } else { "R" }, r[0], r[1], (r[3] * 0.12).min(14.0), HUD_DIM);
         }
     }
     // Gauges: speed, energy, shields, hull.
@@ -106,21 +121,25 @@ pub fn draw_instruments(f: &HudFrame) {
         draw_circle(c.x, c.y, 1.5, color);
         if f.glass {
             draw_circle_lines(c.x, c.y, radius, 1.0, HUD_DIM);
-            text(label, c.x - radius, c.y + radius * 0.6, 9.0 * f.layout.scale.max(1.0), HUD_DIM);
+            let size = fit_size(&[label], 1, radius * 0.9, radius * 0.4, 14.0);
+            text(label, c.x - radius * 0.45, c.y + radius * 0.45, size, HUD_DIM);
         }
     }
     // MFD.
     if let Some(r) = get("mfd") {
         let lines = mfd_lines(f.world, f.player, f.mfd, f.nav);
-        let size = (r[3] / 5.5).max(10.0);
+        // One size for every page (fitted to the longest page the MFD can show), so the
+        // text does not jump as pages change; long lines shrink it further.
+        let pad = r[2] * 0.04;
+        let size = fit_size(&lines, lines.len().max(6), r[2] - pad * 2.0, r[3] - pad * 2.0, 22.0);
         for (i, l) in lines.iter().enumerate() {
-            text(l, r[0] + 4.0, r[1] + 3.0 + i as f32 * size * 1.05, size, HUD_GREEN);
+            text(l, r[0] + pad, r[1] + pad + i as f32 * size * 1.12, size, HUD_GREEN);
         }
     }
     // Message line.
     if let Some(r) = get("message") {
-        let size = (r[3] * 0.8).max(11.0);
         if let Some(m) = f.messages.visible(f.now, 1).last() {
+            let size = fit_size(&[m], 1, r[2], r[3], 20.0);
             let w = measure_text(m, None, size as u16, 1.0).width;
             text(m, r[0] + (r[2] - w) * 0.5, r[1] + (r[3] - size) * 0.5, size, HUD_GREEN);
         }
@@ -148,7 +167,7 @@ pub fn draw_instruments(f: &HudFrame) {
         status += "  ";
         status += &flag;
     }
-    let size = 10.0 * f.layout.scale.max(1.0);
+    let size = (9.0 * f.layout.scale).clamp(10.0, 16.0);
     text(&status, f.layout.offset.x + 8.0, 40.0 * f.layout.scale, size, HUD_GREEN);
 
     // Power and systems: in the cockpit's own rectangles, or a corner panel.
@@ -175,9 +194,9 @@ pub fn draw_instruments(f: &HudFrame) {
 /// fore/aft shield bars with the balance marker.
 fn draw_power(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let p = power_readout(&f.world.rules, me);
-    let size = (r[3] / 7.0).max(8.0);
-    let label_h = size * 1.1;
     let col_w = r[2] / 4.0;
+    let size = fit_size(&["B-E"], 1, col_w * 0.95, r[3] * 0.16, 14.0);
+    let label_h = size * 1.1;
     let bar_top = r[1] + label_h;
     let bar_h = r[3] - label_h - 2.0;
     let levels = p.levels.max(1) as f32;
@@ -223,7 +242,8 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let cols = if r[2] > r[3] * 2.5 { lamps.len().min(10) } else { 2 };
     let rows = lamps.len().div_ceil(cols);
     let (cw, ch) = (r[2] / cols as f32, r[3] / rows as f32);
-    let size = (ch * 0.6).min(cw / 2.6).max(7.0);
+    let d = (ch * 0.45).min(cw * 0.25);
+    let size = fit_size(&["ENG"], 1, cw - d * 1.9, ch * 0.8, 14.0);
     let blink = (f.now * 3.0) as i64 % 2 == 0;
     for (i, (label, lamp, repairing)) in lamps.iter().enumerate() {
         let (cx, cy) = (r[0] + cw * (i % cols) as f32, r[1] + ch * (i / cols) as f32);
@@ -235,7 +255,6 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
             Lamp::Out => Color::new(1.0, 0.15, 0.1, 1.0),
             Lamp::Destroyed => Color::new(0.25, 0.25, 0.25, 1.0),
         };
-        let d = (ch * 0.45).min(cw * 0.25);
         draw_circle(cx + d * 0.8, cy + ch * 0.5, d * 0.5, color);
         text(
             label,

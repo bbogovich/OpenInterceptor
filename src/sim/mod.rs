@@ -87,6 +87,9 @@ pub struct Controls {
     pub cycle_missile: bool,
     /// Power and equipment switches (all edge-triggered).
     pub requests: Requests,
+    /// Turrets: the world direction to fire beams along, if the class's `TurretArc`
+    /// allows it (stations and gun platforms aim without turning the hull).
+    pub aim: Option<Vec3>,
 }
 
 /// One-press requests to the ship's power and equipment, as pilots make them from the
@@ -717,6 +720,10 @@ impl World {
                 AiRole::Enemy => Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, Vec3::ZERO)),
                 AiRole::Target => Pilot::Ai(ai::AiState::new(ai::Behaviour::Target, None, Vec3::ZERO)),
             };
+            let mut pilot = pilot;
+            if let (Some(b), Pilot::Ai(state)) = (&p.behaviour, &mut pilot) {
+                state.def = Some(rules.behaviour_id(b).ok_or(format!("object {}: unknown behaviour '{b}'", p.name))?);
+            }
             let id = w.spawn(class, faction, &p.name, p.position, rot, pilot);
             for name in &p.destroyed_systems {
                 let kind = crate::content::equipment::SystemKind::parse(name);
@@ -785,7 +792,15 @@ pub(crate) mod test_support {
              Acceleration=300\nRollRate=200\nPitchRate=100\nYawRate=100\nAngularDamp=2\nLockSpeed=1000\nEnergy=500\n\
              EnergyRecharge=50\nBeams=laser,laser\nMissiles=dart*2\nVCT=yes\n\
              [ship:raider]\ninherit=ship:fighter\nFaction=red\nPlayable=no\n\
-             [object:base]\nModel=m\nFaction=grey\nHitPoints=5000\n",
+             [object:base]\nModel=m\nFaction=grey\nHitPoints=5000\n\
+             [behaviour:sharp]\nState.go = attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0\nSkill = aim: 1, reaction: 0.1s\n\
+             [behaviour:wild]\nState.go = attack, fire_cone: 1, burst: 1s, pause: 0s, missiles: 0\nSkill = aim: 0, reaction: 0.4s\n\
+             [behaviour:jumpy]\nState.engage = attack\nState.dodge = evade, duration: 2s\n\
+             Go.1 = engage > dodge : hit_recently(1s)\nGo.2 = dodge > engage : time_in_state > 2s\n\
+             [behaviour:gunner]\nState.guns = turret, range: 3km, burst: 1s, pause: 0s\nSkill = aim: 1, reaction: 0.1s\n\
+             [behaviour:tug]\nState.work = tow, range: 5km\n\
+             [object:gun]\nModel=m\nFaction=red\nHitPoints=5000\nBeams=laser\nTurretArc=180\nBehaviour=gunner\n\
+             [ship:tug]\ninherit=ship:raider\nSystems.add=tractor\nBehaviour=tug\n",
         );
         let (r, errors) = rules::build(&[rules::RulesSource { pack: 0, ini }], &|_: &str, _: &str| None);
         assert!(errors.is_empty(), "{errors:?}");

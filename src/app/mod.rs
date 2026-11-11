@@ -60,8 +60,12 @@ pub enum Next {
     Assets,
     /// The controls menu (from the launcher).
     Controls,
-    /// Reload the content for another campaign, then return to the launcher.
-    Campaign(String),
+    /// Reload the content for another campaign and/or difficulty level, then return to
+    /// the launcher.
+    Reload {
+        campaign: Option<String>,
+        difficulty: Option<String>,
+    },
     /// Start a scenario: its id and the chosen player ship class id.
     Fly {
         scenario: String,
@@ -105,11 +109,13 @@ pub fn save_bindings(b: &Bindings) -> Result<std::path::PathBuf, String> {
     Ok(path)
 }
 
-/// Records the chosen campaign in `settings.ini` so the next start loads it.
-fn remember_campaign(id: &str) {
+/// Records the chosen campaign and difficulty in `settings.ini` so the next start uses
+/// them.
+fn remember_choice(id: &str, difficulty: Option<&str>) {
     let Some(dir) = crate::cli::user_data_dir() else { return };
     let mut s = crate::settings::Settings::load(&dir);
     s.campaign = Some(id.to_string());
+    s.difficulty = difficulty.map(str::to_string);
     if let Err(e) = s.save(&dir) {
         eprintln!("settings not saved: {e}");
     }
@@ -209,9 +215,12 @@ pub async fn run(options: Options) {
             Next::Viewer => screen = Screen::Viewer(viewer::ModelViewer::new(&ctx)),
             Next::Assets => screen = Screen::Assets(assets::AssetBrowser::new(&ctx)),
             Next::Controls => screen = Screen::Controls(controls::ControlsMenu::new(&ctx)),
-            Next::Campaign(id) => {
+            Next::Reload { campaign, difficulty } => {
                 let mut cfg = options.content_config();
-                cfg.campaign = Some(id.clone());
+                // A campaign switch starts at that campaign's default difficulty.
+                cfg.campaign = campaign.clone().or(ctx.content.campaign.clone());
+                cfg.difficulty = difficulty.clone();
+                let id = cfg.campaign.clone().unwrap_or_default();
                 match Content::load(&cfg) {
                     Ok(content) => {
                         // Cached GPU models are keyed by pack index, which changes with
@@ -219,7 +228,8 @@ pub async fn run(options: Options) {
                         ctx.renderer.models = Default::default();
                         ctx.sounds = SoundBank::load(&content).await;
                         ctx.content = content;
-                        remember_campaign(&id);
+                        let level = ctx.content.rules.difficulty_levels.get(ctx.content.rules.difficulty).cloned();
+                        remember_choice(&id, level.as_deref());
                         screen = Screen::Launcher(launcher::Launcher::new(&ctx));
                     }
                     Err(e) => {

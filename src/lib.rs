@@ -29,5 +29,6 @@ pub mod input;
 pub mod model;
 pub mod platform;
 pub mod render;
+pub mod script;
 pub mod settings;
 pub mod sim;

@@ -21,6 +21,7 @@
 //!  player's CD ────────────────┘
 //! ```
 
+pub mod behaviour;
 pub mod equipment;
 pub mod pack;
 pub mod rules;
@@ -52,6 +53,8 @@ pub struct ContentConfig {
     pub disabled: Vec<String>,
     /// The campaign to play. `None` picks [`preferred_campaign`].
     pub campaign: Option<String>,
+    /// The difficulty level id to play at (`None` = the campaign's default).
+    pub difficulty: Option<String>,
 }
 
 /// The campaign loaded when none is chosen: `interceptor` when the player's data made it
@@ -149,7 +152,12 @@ impl Content {
         // 3. Rules.
         let mut sources = Vec::new();
         for (i, p) in packs.iter().enumerate() {
-            for path in files_with_ext(&p.dir.join("rules"), "ini") {
+            // `campaign/` holds the campaign ruleset (difficulty levels now; game flow
+            // from Stage 4); it merges with the rules like any rules file.
+            let files = files_with_ext(&p.dir.join("campaign"), "ini")
+                .into_iter()
+                .chain(files_with_ext(&p.dir.join("rules"), "ini"));
+            for path in files {
                 match std::fs::read(&path) {
                     Ok(bytes) => sources.push(RulesSource { pack: i, ini: Ini::parse_bytes(&bytes) }),
                     Err(e) => warnings.push(format!("{}: {e}", path.display())),
@@ -161,7 +169,7 @@ impl Content {
             let ini = Ini::parse_bytes(&o.read_file(file).ok()?);
             ini.section(section).cloned()
         };
-        let (rules, rule_errors) = rules::build(&sources, &lookup);
+        let (rules, rule_errors) = rules::build_at(&sources, &lookup, cfg.difficulty.as_deref());
         warnings.extend(rule_errors);
         // 4. Scenarios (a later pack's scenario with the same id replaces the earlier one).
         let mut scenarios: Vec<Scenario> = Vec::new();

@@ -32,6 +32,17 @@
 //! (`original:GameSettings.ini/Ship_IntType1`), which is how the Interceptor pack reuses
 //! the real balance data instead of copying numbers. Chains are allowed; cycles are errors.
 //!
+//! ## Difficulty
+//!
+//! The campaign lists its difficulty levels (`[campaign] Difficulty = cadet, ranger,
+//! captain, space_ace`) and the game is played at one of them. Two things then vary:
+//!
+//! - **Variants**: a section named `kind:id@level` (`[behaviour:wraith@superhuman]`)
+//!   *replaces* `kind:id` at that level. It inherits the base definition unless it says
+//!   `inherit = …` itself, so it only needs the keys that differ.
+//! - **Per-level values**: any value written with `|` gives one entry per level, in
+//!   order (`HitPoints = 80 | 100 | 120 | 150`); a shorter list repeats its last entry.
+//!
 //! ## Index handles instead of references
 //!
 //! A ship refers to its beams by [`BeamId`], a small *newtype* around an index into
@@ -39,6 +50,7 @@
 //! `Copy`, and cost 2 bytes. The newtype wrapper stops us from accidentally passing a
 //! beam index where a missile index is expected — the compiler catches it.
 
+use super::behaviour::{BehaviourDef, BehaviourId};
 use super::equipment::{DamageRules, PowerRules, SystemDef, SystemId, SystemKind};
 use crate::formats::ini::{Ini, Section};
 use std::collections::HashMap;
@@ -144,6 +156,10 @@ pub struct ShipClass {
     pub repair_rate: f32,
     /// A disabled ship of this class can be captured with a tractor beam.
     pub capturable: bool,
+    /// The AI behaviour flown by AI pilots of this class (`Behaviour = <id>`).
+    pub behaviour: Option<BehaviourId>,
+    /// Beam mounts can aim this many degrees off the nose (turrets; 0 = fixed guns).
+    pub turret_arc: f32,
     /// Model references for wreckage chunks.
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
@@ -277,6 +293,11 @@ pub struct Ruleset {
     pub flight: FlightRules,
     pub power: PowerRules,
     pub damage: DamageRules,
+    pub behaviours: Vec<BehaviourDef>,
+    /// The campaign's difficulty level ids (`[campaign] Difficulty`), easiest first.
+    pub difficulty_levels: Vec<String>,
+    /// Index of the level being played.
+    pub difficulty: usize,
     /// Named sound effects from the `[sounds]` section: event name (lower case) →
     /// (asset reference, pack index). Events the engine plays: `explosion`,
     /// `big_explosion`, `shield_hit`, `hull_hit`, `lock`, `missile_launch`,
@@ -311,6 +332,16 @@ impl Ruleset {
     pub fn system_id(&self, id: &str) -> Option<SystemId> {
         self.systems.iter().position(|s| s.id.eq_ignore_ascii_case(id)).map(|i| SystemId(i as u16))
     }
+    pub fn behaviour(&self, id: BehaviourId) -> &BehaviourDef {
+        &self.behaviours[id.0 as usize]
+    }
+    pub fn behaviour_id(&self, id: &str) -> Option<BehaviourId> {
+        self.behaviours.iter().position(|b| b.id.eq_ignore_ascii_case(id)).map(|i| BehaviourId(i as u16))
+    }
+    /// The schema for object-context conditions, with this campaign's level names.
+    pub fn object_schema(&self) -> crate::script::Schema {
+        crate::script::object::schema(&self.difficulty_levels)
+    }
     pub fn cockpit(&self, id: &str) -> Option<&CockpitDef> {
         self.cockpits.iter().find(|c| c.id.eq_ignore_ascii_case(id))
     }
@@ -342,6 +373,12 @@ pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 /// Errors are collected rather than stopping at the first: a modder fixing a file wants
 /// to see every problem at once. A definition with an error is skipped.
 pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Vec<String>) {
+    build_at(sources, original, None)
+}
+
+/// [`build`] at a chosen difficulty level (by id; `None` = the campaign's
+/// `DefaultDifficulty`, else the middle level).
+pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Option<&str>) -> (Ruleset, Vec<String>) {
     let mut errors = Vec::new();
     // 1. Merge all files, remembering which pack last touched each section (for paths).
     let mut merged = Ini::default();
@@ -352,9 +389,31 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
             section_pack.insert(s.name.to_ascii_lowercase(), src.pack);
         }
     }
-    // 2. Resolve inheritance for every section.
+    // The difficulty levels and the one being played.
+    let campaign = merged.section("campaign");
+    let difficulty_levels = campaign.map(|c| list(c, "Difficulty")).unwrap_or_default();
+    let wanted = level
+        .map(str::to_ascii_lowercase)
+        .or_else(|| campaign.and_then(|c| c.get_nonempty("DefaultDifficulty")).map(str::to_ascii_lowercase));
+    let difficulty = match wanted {
+        Some(w) => difficulty_levels.iter().position(|l| *l == w).unwrap_or_else(|| {
+            if !difficulty_levels.is_empty() {
+                errors.push(format!("[campaign]: unknown difficulty '{w}'"));
+            }
+            difficulty_levels.len() / 2
+        }),
+        None => difficulty_levels.len() / 2,
+    };
+    let level_id = difficulty_levels.get(difficulty).cloned();
+    // 2. Resolve inheritance for every section. Difficulty variants (`kind:id@level`)
+    // wait until the base definitions are resolved.
     let mut resolved: Vec<Section> = Vec::new();
+    let mut variants: Vec<&Section> = Vec::new();
     for s in merged.sections() {
+        if s.name.contains('@') {
+            variants.push(s);
+            continue;
+        }
         match resolve(&merged, s, original, 0) {
             Ok(r) => {
                 if !r.get_bool("delete").unwrap_or(false) {
@@ -362,6 +421,39 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
                 }
             }
             Err(e) => errors.push(format!("[{}]: {e}", s.name)),
+        }
+    }
+    // The variants for the level being played replace their base definitions.
+    for v in variants {
+        let (base, at) = v.name.split_once('@').expect("variants contain '@'");
+        if Some(at.trim().to_ascii_lowercase()) != level_id {
+            if !difficulty_levels.iter().any(|l| l.eq_ignore_ascii_case(at.trim())) {
+                errors.push(format!("[{}]: unknown difficulty level '{}'", v.name, at.trim()));
+            }
+            continue;
+        }
+        let mut section = v.clone();
+        if section.get_nonempty("inherit").is_none() {
+            section.set("inherit", base.trim());
+        }
+        match resolve(&merged, &section, original, 0) {
+            Ok(mut r) => {
+                r.name = base.trim().to_string();
+                resolved.retain(|s| !s.name.eq_ignore_ascii_case(base.trim()));
+                if !r.get_bool("delete").unwrap_or(false) {
+                    resolved.push(r);
+                }
+            }
+            Err(e) => errors.push(format!("[{}]: {e}", v.name)),
+        }
+    }
+    // Per-level values: `a | b | c` picks the entry for the level being played.
+    for s in &mut resolved {
+        for (_, value) in &mut s.entries {
+            if value.contains('|') {
+                let parts: Vec<&str> = value.split('|').map(str::trim).collect();
+                *value = parts[difficulty.min(parts.len() - 1)].to_string();
+            }
         }
     }
     let pack_of = |s: &Section| *section_pack.get(&s.name.to_ascii_lowercase()).unwrap_or(&0);
@@ -437,10 +529,30 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
         errors.push(e);
         PowerRules::default()
     });
+    // Behaviours, with conditions checked against the object context and this
+    // campaign's level names.
+    let schema = crate::script::object::schema(&difficulty_levels);
+    let mut behaviours = Vec::new();
+    for (id, s) in of_kind("behaviour") {
+        match BehaviourDef::parse(&id, s, &schema) {
+            Ok(b) => behaviours.push(b),
+            Err(e) => errors.push(format!("[{}]: {e}", s.name)),
+        }
+    }
+    // The engine's fallback behaviour for armed AI ships whose class names none.
+    if !behaviours.iter().any(|b| b.id == "builtin_attack") {
+        behaviours.push(BehaviourDef::builtin_attack(&schema));
+    }
     let mut ships = Vec::new();
     for kind in ["ship", "object"] {
         for (id, s) in of_kind(kind) {
-            let refs = ClassRefs { factions: &factions, beams: &beams, missiles: &missiles, systems: &systems };
+            let refs = ClassRefs {
+                factions: &factions,
+                beams: &beams,
+                missiles: &missiles,
+                systems: &systems,
+                behaviours: &behaviours,
+            };
             match ship_class(&id, s, kind, &refs, &damage, &section_pack) {
                 Ok(c) => ships.push(c),
                 Err(e) => errors.push(format!("[{}]: {e}", s.name)),
@@ -506,7 +618,24 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
     let sounds = global("sounds")
         .map(|s| s.entries.iter().map(|(k, v)| (k.to_ascii_lowercase(), (v.clone(), pack_of(s)))).collect())
         .unwrap_or_default();
-    (Ruleset { ships, beams, missiles, factions, cockpits, systems, flight, power, damage, sounds }, errors)
+    (
+        Ruleset {
+            ships,
+            beams,
+            missiles,
+            factions,
+            cockpits,
+            systems,
+            flight,
+            power,
+            damage,
+            behaviours,
+            difficulty_levels,
+            difficulty,
+            sounds,
+        },
+        errors,
+    )
 }
 
 /// Copies inherited keys under the section's own keys, recursively.
@@ -554,6 +683,7 @@ struct ClassRefs<'a> {
     beams: &'a [BeamClass],
     missiles: &'a [MissileClass],
     systems: &'a [SystemDef],
+    behaviours: &'a [BehaviourDef],
 }
 
 /// The systems a class has when its section has no `Systems` key: what any craft of its
@@ -610,7 +740,17 @@ fn ship_class(
     damage: &DamageRules,
     section_pack: &HashMap<String, usize>,
 ) -> Result<ShipClass, String> {
-    let ClassRefs { factions, beams, missiles, systems } = *refs;
+    let ClassRefs { factions, beams, missiles, systems, behaviours } = *refs;
+    let behaviour = match s.get_nonempty("Behaviour") {
+        Some(b) => Some(
+            behaviours
+                .iter()
+                .position(|x| x.id.eq_ignore_ascii_case(b))
+                .map(|i| BehaviourId(i as u16))
+                .ok_or(format!("unknown behaviour '{b}'"))?,
+        ),
+        None => None,
+    };
     let default_kind = if kind_prefix == "object" { ShipKind::Station } else { ShipKind::Fighter };
     let kind = match s.get_nonempty("Kind") {
         Some(k) => ShipKind::parse(k).ok_or(format!("unknown Kind '{k}'"))?,
@@ -671,6 +811,8 @@ fn ship_class(
         beams: beam_ids,
         missiles: missile_ids,
         systems: system_ids,
+        behaviour,
+        turret_arc: s.get_f32("TurretArc").unwrap_or(0.0).clamp(0.0, 180.0),
         repair_rate: s.get_f32("RepairRate").unwrap_or(damage.repair_rate).max(0.0),
         capturable: s
             .get_bool("Capturable")
@@ -778,6 +920,36 @@ mod tests {
             ("models/mybase.obj", 1),
             "paths resolve in the overriding pack"
         );
+    }
+
+    #[test]
+    fn difficulty_variants_and_per_level_values() {
+        let lookup = original_lookup();
+        let ini = Ini::parse(
+            "[campaign]\nDifficulty = cadet, ranger, captain, ace\nDefaultDifficulty = ranger\n\
+             [faction:a]\n[behaviour:b]\nState.go = attack\nSkill = aim: 0.5\n\
+             [behaviour:b@ace]\nSkill = aim: 0.9\n\
+             [ship:s]\nModel=m\nFaction=a\nHitPoints = 80 | 100 | 120\nBehaviour = b\n",
+        );
+        let src = || vec![RulesSource { pack: 0, ini: ini.clone() }];
+        let (r, e) = build(&src(), &lookup);
+        assert!(e.is_empty(), "{e:?}");
+        assert_eq!((r.difficulty, r.difficulty_levels.len()), (1, 4), "default level");
+        let s = r.ship(r.ship_id("s").unwrap());
+        assert_eq!(s.hull, 100.0);
+        assert_eq!(r.behaviour(s.behaviour.unwrap()).skill.aim, 0.5);
+        let (r, e) = build_at(&src(), &lookup, Some("ace"));
+        assert!(e.is_empty(), "{e:?}");
+        let s = r.ship(r.ship_id("s").unwrap());
+        assert_eq!(s.hull, 120.0, "a short list repeats its last value");
+        let b = r.behaviour(s.behaviour.unwrap());
+        assert_eq!((b.skill.aim, b.states.len()), (0.9, 1), "the variant inherits the base and replaces it");
+        assert_eq!(r.behaviours.len(), 2, "b and the built-in fallback");
+        let (_, e) = build_at(&src(), &lookup, Some("god"));
+        assert!(e.iter().any(|x| x.contains("unknown difficulty 'god'")));
+        let bad = Ini::parse("[campaign]\nDifficulty = a, b\n[behaviour:x@zzz]\nState.s = idle\n");
+        let (_, e) = build(&[RulesSource { pack: 0, ini: bad }], &lookup);
+        assert!(e.iter().any(|x| x.contains("unknown difficulty level 'zzz'")), "{e:?}");
     }
 
     #[test]

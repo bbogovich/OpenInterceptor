@@ -108,7 +108,12 @@ impl Launcher {
         }
         if pressed("tab") || pad_pressed(Button::Y) {
             if let Some(next) = next_campaign(&ctx.content) {
-                return Next::Campaign(next);
+                return Next::Reload { campaign: Some(next), difficulty: None };
+            }
+        }
+        if pressed("d") || pad_pressed(Button::X) {
+            if let Some(level) = next_difficulty(&ctx.content) {
+                return Next::Reload { campaign: None, difficulty: Some(level) };
             }
         }
         // Mouse: click a line to select it; click again to start.
@@ -175,7 +180,12 @@ impl Launcher {
             .map(|(_, name)| name.as_str())
             .unwrap_or("(none)");
         let switch = if content.campaigns.len() > 1 { "   (Tab: switch campaign)" } else { "" };
-        draw_text(&format!("Campaign: {campaign}{switch}"), 40.0, 92.0, 22.0, Color::new(1.0, 0.8, 0.4, 1.0));
+        let r = &content.rules;
+        let level = match r.difficulty_levels.get(r.difficulty) {
+            Some(l) => format!("   Difficulty: {}   (D: change)", l.replace('_', " ")),
+            None => String::new(),
+        };
+        draw_text(&format!("Campaign: {campaign}{switch}{level}"), 40.0, 92.0, 22.0, Color::new(1.0, 0.8, 0.4, 1.0));
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
         draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, GRAY);
         for (i, e) in self.menu.entries.iter().enumerate() {
@@ -217,7 +227,7 @@ impl Launcher {
             draw_text(n, 40.0, screen_height() - 150.0 + i as f32 * 22.0, 18.0, ORANGE);
         }
         draw_text(
-            "Up/Down choose   Left/Right ship   Enter start   Tab campaign   Esc quit",
+            "Up/Down choose   Left/Right ship   Enter start   Tab campaign   D difficulty   Esc quit",
             40.0,
             screen_height() - 24.0,
             18.0,
@@ -234,6 +244,12 @@ pub fn next_campaign(content: &Content) -> Option<String> {
     }
     let i = list.iter().position(|(id, _)| Some(id.as_str()) == content.campaign.as_deref()).unwrap_or(0);
     Some(list[(i + 1) % list.len()].0.clone())
+}
+
+/// The next difficulty level (wrapping), if the campaign defines more than one.
+pub fn next_difficulty(content: &Content) -> Option<String> {
+    let r = &content.rules;
+    (r.difficulty_levels.len() > 1).then(|| r.difficulty_levels[(r.difficulty + 1) % r.difficulty_levels.len()].clone())
 }
 
 /// Word-wraps `s` to lines of at most `width` characters.

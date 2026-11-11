@@ -22,6 +22,7 @@ OPTIONS:
     --mods <DIR>        Folder of user mods (default: the user data folder's mods/)
     --packs <DIR>       Folder of built-in packs (default: packs/ next to the program)
     --no-original       Ignore the original data even if available
+    --difficulty <ID>   Play at this difficulty level (a level id of the campaign)
     --campaign <ID>     Load this campaign (default: the last one chosen, else
                         interceptor when the data is available, else default)
     --scenario <ID>     Start this scenario directly, skipping the launcher
@@ -50,6 +51,7 @@ pub struct Options {
     pub packs: Option<PathBuf>,
     pub no_original: bool,
     pub campaign: Option<String>,
+    pub difficulty: Option<String>,
     pub scenario: Option<String>,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
@@ -78,6 +80,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--packs" => o.packs = Some(PathBuf::from(value("--packs")?)),
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--campaign" => o.campaign = Some(value("--campaign")?),
+            "--difficulty" => o.difficulty = Some(value("--difficulty")?),
             "--ship" => o.ship = Some(value("--ship")?),
             "--model" => o.model = Some(value("--model")?),
             "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),
@@ -143,6 +146,7 @@ impl Options {
             no_original: self.no_original,
             disabled: settings.disabled_packs,
             campaign: self.campaign.clone().or(settings.campaign),
+            difficulty: self.difficulty.clone().or(settings.difficulty),
         }
     }
 }

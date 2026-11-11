@@ -29,6 +29,7 @@
 //! class = wraith
 //! destroyed_systems = engines, manoeuvring   ; start disabled (a capture target)
 //! hull = 0.4                    ; start at 40% hull
+//! behaviour = wraith_ambush     ; fly this behaviour instead of the class's
 //!
 //! [nav.alpha]                   ; optional navigation points (engine extension)
 //! position = 0, 0, -3000
@@ -85,6 +86,8 @@ pub struct Placement {
     pub destroyed_systems: Vec<String>,
     /// Starting hull as a fraction of the class's hit points.
     pub hull: f32,
+    /// A behaviour id overriding the class's (`behaviour = scout_saucer`).
+    pub behaviour: Option<String>,
 }
 
 /// A navigation point.
@@ -161,6 +164,7 @@ impl Scenario {
                         .filter(|x| !x.is_empty())
                         .collect(),
                     hull: sec.get_f32("hull").unwrap_or(1.0).clamp(0.01, 1.0),
+                    behaviour: sec.get_nonempty("behaviour").map(str::to_string),
                 });
             } else if let Some(name) = sec.name.strip_prefix("nav.") {
                 nav_points.push(NavPoint {

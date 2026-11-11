@@ -139,6 +139,15 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     s.next_mount = (group.last().copied().unwrap_or(0) + 1) % n;
     drop_cloak(s, id, &mut w.events);
     let (pos, rot, vel, faction) = (s.position, s.rotation, s.velocity, s.faction);
+    // Fixed guns fire along the nose; turrets along the requested aim, if it is within
+    // their arc of the nose.
+    let fwd = rot * Vec3::NEG_Z;
+    let dir = match s.controls.aim {
+        Some(a) if class.turret_arc > 0.0 && a.normalize_or(fwd).dot(fwd) >= class.turret_arc.to_radians().cos() => {
+            a.normalize_or(fwd)
+        }
+        _ => fwd,
+    };
     for &k in &group {
         let beam = rules.beam(class.beams[k]);
         s.beam_cooldown[k] = 1.0 / beam.rate_of_fire;
@@ -147,7 +156,7 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
             owner: id,
             faction,
             position: muzzle,
-            velocity: vel + rot * Vec3::NEG_Z * beam.speed,
+            velocity: vel + dir * beam.speed,
             life: beam.range / beam.speed,
             age: 0.0,
             muzzle_speed: beam.speed,
