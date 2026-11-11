@@ -1387,6 +1387,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-hud-013-wide-screen-side-bands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-HUD-013 Wide-screen side bands
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1764,6 +1775,8 @@
       
         
       
+        
+      
     
     
     
@@ -2101,6 +2114,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -6088,6 +6136,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-hud-013-wide-screen-side-bands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-HUD-013 Wide-screen side bands
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6312,6 +6371,18 @@
 <li>Verified by: Planned.</li>
 <li>See: <a href="../../../implementation/plan/stage-3-missions/">Stage 3</a></li>
 </ul>
+<h3 id="r-hud-013-wide-screen-side-bands">R-HUD-013 Wide-screen side bands<a class="headerlink" href="#r-hud-013-wide-screen-side-bands" title="Permanent link">&para;</a></h3>
+<p>A 2D cockpit stays centred at its design aspect, filling the screen height. A cockpit MAY define <code>wide:</code> in its pack data:
+- <code>blackout: true</code> covers the side bands left and right of the art in <code>color</code> (default black);
+- <code>from</code> (design-space y, default 0) starts the bands lower, so only the sides of the dashboard are covered and space still shows beside the canopy;
+- <code>left</code> and <code>right</code> name images stretched to fill each band below <code>from</code>, over the colour (extension art made for wide screens). They must be the pack's own art, never original content.</p>
+<p>The bands MUST be drawn after the 3D view and the cockpit art, and before the instruments. They MUST NOT change the field of view or the instrument layout.</p>
+<p><em>Rationale:</em> 4:3 cockpit art on wide screens (see F-HUD-009).</p>
+<ul>
+<li>Implements: <a href="../../../definition/cockpit-hud/#f-hud-009-cockpits-on-wide-screens">F-HUD-009</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>hud::tests::side_bands_cover_the_screen_beside_the_cockpit</code>; the rules test <code>builds_typed_definitions_with_inheritance</code> (keys); manual test on a 16:9 screen</li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6331,6 +6402,11 @@
 <td>1.1.0</td>
 <td>2026-11-11</td>
 <td>R-HUD-009, R-HUD-010, R-HUD-011 implemented (app 0.3.1): drift status line and flight-path marker; <code>graphics.brightness</code> 0.5–2 as a gamma; <code>flight.lighting</code> with rim light and distant dots. R-HUD-010 and R-HUD-011 open notes resolved; R-HUD-009 keeps the original-cockpit question</td>
+</tr>
+<tr>
+<td>1.8.0</td>
+<td>2026-11-11</td>
+<td>R-HUD-013 wide-screen side bands</td>
 </tr>
 </tbody>
 </table>

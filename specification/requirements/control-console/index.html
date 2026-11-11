@@ -1521,6 +1521,61 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-con-022-keep-the-tablet-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-022 Keep the tablet awake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-023-button-press-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-023 Button press feedback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-024-hit-static" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-024 Hit static
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-025 Keys held at the start of a battle are ignored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-026-two-console-layouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-026 Two console layouts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1842,6 +1897,8 @@
   
     
     
+      
+        
       
         
       
@@ -2200,6 +2257,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -6286,6 +6378,61 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-con-022-keep-the-tablet-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-022 Keep the tablet awake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-023-button-press-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-023 Button press feedback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-024-hit-static" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-024 Hit static
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-025 Keys held at the start of a battle are ignored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-con-026-two-console-layouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-CON-026 Two console layouts
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6414,6 +6561,26 @@
 <td><a href="#r-con-021-console-theme-assets-are-original-free">R-CON-021 Console theme assets are original-free</a></td>
 <td>Planned</td>
 </tr>
+<tr>
+<td><a href="#r-con-022-keep-the-tablet-awake">R-CON-022 Keep the tablet awake</a></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><a href="#r-con-023-button-press-feedback">R-CON-023 Button press feedback</a></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><a href="#r-con-024-hit-static">R-CON-024 Hit static</a></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><a href="#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored">R-CON-025 Keys held at the start of a battle are ignored</a></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><a href="#r-con-026-two-console-layouts">R-CON-026 Two console layouts</a></td>
+<td>Planned</td>
+</tr>
 </tbody>
 </table>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
@@ -6516,6 +6683,10 @@
 <p class="admonition-title">Resolved (C1, app 0.4.0)</p>
 <p><strong>Settings keys:</strong> <code>console: {enabled, port}</code> in <code>settings.yaml</code> (default off, 8765), and <code>--console</code> / <code>--console-port N</code> for one run. <strong>Local network only:</strong> each accepted connection's peer address is checked (<code>remote::server::is_local</code>): private, link-local, IPv6 unique-local and loopback addresses (and IPv4-mapped forms of them) are served; any other connection is dropped without an answer. <strong>Pairing code:</strong> six digits chosen at start-up, printed in the terminal and shown at the bottom left of the flight screen with the URL until a console pairs (and while the menu is open); three wrong codes close the connection.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.4.7, main <code>c42d773</code>)</p>
+<p><strong>Pairing works on every screen.</strong> The server's connection thread answers a right code with <code>welcome {version}</code> itself, at once, so the page knows it is paired even when no battle is running (before 0.4.7 only the flight screen answered, and a tablet paired from the launcher waited for ever). The page pairs as soon as the sixth digit is typed (an iPad's number pad has no Enter key), shows <em>Connecting…</em> and its errors (<em>Could not reach the game</em>, a wrong code, <em>Disconnected</em>), and accepts the code in the address (<code>/?code=123456</code>, for a future QR code).</p>
+</div>
 <h3 id="r-con-010-console-protocol">R-CON-010 Console protocol<a class="headerlink" href="#r-con-010-console-protocol" title="Permanent link">&para;</a></h3>
 <p>Game and console MUST exchange the JSON messages of the <a href="../../console-protocol/">console protocol</a>; the protocol MUST NOT depend on the transport.</p>
 <p><em>Rationale:</em> A later USB serial transport reuses it.</p>
@@ -6527,7 +6698,7 @@
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built</p>
-<p>Protocol version 1: <code>hello</code>, <code>action</code>, <code>throttle</code> from the console; <code>welcome</code>, <code>denied</code>, <code>catalogue</code>, <code>telemetry</code> from the game. <code>remote::protocol</code> builds and decodes the JSON text only; the WebSocket framing is in <code>remote::ws</code>, so a serial transport can carry the same text.</p>
+<p>Protocol version 1: <code>hello</code>, <code>action</code>, <code>throttle</code> from the console; <code>welcome</code>, <code>denied</code>, <code>catalogue</code>, <code>telemetry</code> from the game. Since app 0.4.7 the server sends <code>welcome {version}</code> the moment the code is right, and the flight screen sends <code>welcome {version, campaign}</code> again during a battle; outside a battle (the launcher) the game sends a catalogue with every action available and an idle <code>telemetry {alive: false, state}</code> twice a second. <code>remote::protocol</code> builds and decodes the JSON text only; the WebSocket framing is in <code>remote::ws</code>, so a serial transport can carry the same text.</p>
 </div>
 <h3 id="r-con-011-console-actions-are-game-actions">R-CON-011 Console actions are game actions<a class="headerlink" href="#r-con-011-console-actions-are-game-actions" title="Permanent link">&para;</a></h3>
 <p>An <code>action</code> from the console MUST have the same effect as the bound input for that action from the catalogue; the console MUST NOT offer actions outside the catalogue.</p>
@@ -6566,7 +6737,7 @@
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (C1)</p>
-<p>The C1 page is a working layout, not the one required here: telemetry cells, a throttle slider, then every action as a button under its group title. The HUD row, display console, shield and power columns come with C2.</p>
+<p>The C1 page is a working layout, not the one required here: telemetry cells, a throttle slider, then every action as a button under its group title. The HUD row, display console, shield and power columns come with C2, as the <strong>Cockpit</strong> layout; the C1 layout stays as <strong>All-in-one</strong> (<a href="#r-con-026-two-console-layouts">R-CON-026</a>).</p>
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
@@ -6583,7 +6754,7 @@
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (C1)</p>
-<p>Craft telemetry is sent at 20 Hz to every paired console (<code>app::flight::FlightSession::console_frame</code>). Radar contacts (5 Hz) and events are not sent yet: they are the <code>contacts</code> and <code>event</code> messages, still planned on the <a href="../../console-protocol/#messages-still-planned">Console protocol</a> page, with C4.</p>
+<p>Craft telemetry is sent at 20 Hz to every paired console (<code>app::flight::FlightSession::console_frame</code>). Radar contacts (5 Hz) and events are not sent yet: they are the <code>contacts</code> and <code>event</code> messages, still planned on the <a href="../../console-protocol/#messages-still-planned">Console protocol</a> page, with C4. Outside a battle (app 0.4.7) the launcher sends <code>telemetry {alive: false, state: "launcher"}</code> twice a second, which the page shows as <em>Not flying (launcher)</em>.</p>
 </div>
 <h3 id="r-con-015-target-viewport">R-CON-015 Target viewport<a class="headerlink" href="#r-con-015-target-viewport" title="Permanent link">&para;</a></h3>
 <p>The console's centre display MUST show the current target's model at its true orientation relative to the player's craft. The game MUST send each target class's mesh once, decimated.</p>
@@ -6675,6 +6846,67 @@
 <li>Verified by: Planned (interlude item C2).</li>
 <li>See: <a href="../../../definition/campaigns/default-campaign/">The default campaign</a></li>
 </ul>
+<h3 id="r-con-022-keep-the-tablet-awake">R-CON-022 Keep the tablet awake<a class="headerlink" href="#r-con-022-keep-the-tablet-awake" title="Permanent link">&para;</a></h3>
+<p>The console MUST keep the tablet's screen awake while the page is open and visible. It MUST use the Screen Wake Lock API where the browser allows it and otherwise play a tiny, muted, looping inline video made for the project; it MUST take the lock again when the page becomes visible, and MUST show whether the screen is being kept awake. The server MUST serve the clip with HTTP range requests (<code>206 Partial Content</code>).</p>
+<p><em>Rationale:</em> User request, 2026-11-11: "tablet goes to sleep while page displayed; some function in page needs to keep alive. browser will keep tablet alive during media streaming for video display, so there are some kind of mechanisms in place to prevent sleep. Unclear to what extent this is possible." Safari offers the wake lock only on secure (https) pages, so an iPad on the plain-http console needs the video; iOS Safari plays video only from a server that honours ranges.</p>
+<ul>
+<li>Implements: <a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>remote::http::ranges_are_served_as_partial_content</code>; MT-3-26</li>
+<li>See: <a href="../../console-protocol/#keeping-the-tablet-awake">Console protocol</a>, <a href="../../../implementation/architecture/remote/#keeping-the-tablet-awake">Remote console</a>, <a href="../../../user-guide/console/#keeping-the-screen-on">Tablet console</a></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.4.8, main <code>f1c8be8</code>)</p>
+<p>Written as planned and built in the same pass. The clip is <code>web/console/keepawake.mp4</code> (black, 2 KB), generated with AVFoundation by <code>tools/console_assets/make_keepawake.swift</code>: the project's own output, not third-party. It is started on the pairing tap, again on any tap until it runs, and whenever the page becomes visible. Checked in headless Chrome over localhost (the wake-lock path) and over the LAN address (the video path); not yet on an iPad (MT-3-26).</p>
+</div>
+<h3 id="r-con-023-button-press-feedback">R-CON-023 Button press feedback<a class="headerlink" href="#r-con-023-button-press-feedback" title="Permanent link">&para;</a></h3>
+<p>Every console button, tap or hold, MUST visibly show that it is pressed: its background MUST fill with the button's border colour and its text MUST turn black. A hold button MUST stay so while it is held; a tap MUST show it for at least 150 ms.</p>
+<p><em>Rationale:</em> User request, 2026-11-11: "Initial test on console works well, better button press feedback needed so that it's clean when user has pressed the button. for the style currently applied, the button should highlight with the border color and text switch to black. Add brief static effects when a craft is hit by weapons fire."</p>
+<ul>
+<li>Implements: <a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a></li>
+<li>Status: implemented (app 0.4.9)</li>
+<li>Verified by: MT-3-27</li>
+<li>See: <a href="../../../user-guide/console/#what-works-in-c1">Tablet console</a></li>
+</ul>
+<h3 id="r-con-024-hit-static">R-CON-024 Hit static<a class="headerlink" href="#r-con-024-hit-static" title="Permanent link">&para;</a></h3>
+<p>When the player's craft is hit by weapons fire, the console MUST show a brief static (noise) effect, about 0.4 s long and fading out: lighter when the shields absorb the hit, stronger when the hull is struck. <code>telemetry</code> MUST carry running counts of hits on the player's craft (<code>hits</code>) and of hull hits (<code>hull_hits</code>); the page plays the effect when a count rises.</p>
+<p><em>Rationale:</em> User request, 2026-11-11 (as R-CON-023): "Add brief static effects when a craft is hit by weapons fire."</p>
+<ul>
+<li>Implements: <a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a></li>
+<li>Status: implemented (app 0.4.9)</li>
+<li>Verified by: MT-3-27</li>
+<li>See: <a href="../../console-protocol/#game-console">Console protocol</a></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Interpretation awaiting the user's confirmation</p>
+<p>"A craft" is read as <strong>the player's craft</strong>, and the effect as appearing <strong>on the console</strong> (not on the game's screen, and not for hits on other craft).</p>
+</div>
+<h3 id="r-con-025-keys-held-at-the-start-of-a-battle-are-ignored">R-CON-025 Keys held at the start of a battle are ignored<a class="headerlink" href="#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored" title="Permanent link">&para;</a></h3>
+<p>Keys, gamepad buttons, triggers and mouse buttons that are held when a battle starts MUST be ignored until they are released; a fresh press of the same input MUST then work normally.</p>
+<p><em>Rationale:</em> User request, 2026-11-11: "When mission is started by pressing enter on the menu or restart prompt, a laser fires immediately at start of mission because of the enter press. that first keypress should be suppressed." Enter (and the pad's A button) both start a mission and fire or burn in flight.</p>
+<ul>
+<li>Implements: <a href="../../../definition/control-console/#f-con-001-rebindable-keyboard-mouse-and-gamepad">F-CON-001</a></li>
+<li>Status: implemented</li>
+<li>Verified by: <code>input::tests::keys_held_when_a_battle_starts_are_ignored_until_released</code>; MT-3-28</li>
+<li>See: <a href="../../../implementation/architecture/input/">Input and gamepads</a></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.4.10, main <code>4edc9d7</code>)</p>
+<p><code>input::StartGuard</code> records the keys, pad buttons, triggers and mouse button held on a battle's first frame and filters them out of every later frame until each is let go. It is applied first in the flight screen's frame, right after the devices are read, so the launcher's, the restart prompt's and the debrief's Enter never fires the guns.</p>
+</div>
+<h3 id="r-con-026-two-console-layouts">R-CON-026 Two console layouts<a class="headerlink" href="#r-con-026-two-console-layouts" title="Permanent link">&para;</a></h3>
+<p>The console page MUST offer two layouts, switchable on the page and remembered per tablet:</p>
+<ul>
+<li><strong>All-in-one:</strong> the C1 layout — telemetry cells, the throttle slider, and every action group expanded as a grid of buttons;</li>
+<li><strong>Cockpit:</strong> the proposal's layout (R-CON-013) — the exterior-view HUD strip on top; the display console in the centre (target data now, the target viewport with C3, the map with C4); shield rings on the left; power sliders on the right; the function-group tiles below, expanding and collapsing (R-CON-018).</li>
+</ul>
+<p><em>Rationale:</em> User request, 2026-11-11: "ipad UI is very different from the design proposal but useful. the page should support two modes, the collected \"all-in-one\" control scheme in the current design, and the version from the proposal PDF."</p>
+<ul>
+<li>Implements: <a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a>, <a href="../../../definition/control-console/#f-con-008-console-function-group-tiles">F-CON-008</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned (interlude item C2; a manual test).</li>
+<li>See: <a href="../../../implementation/plan/stage-3-interlude/">Stage 3 interlude</a>, <a href="../../../user-guide/console/">Tablet console</a></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6704,6 +6936,11 @@
 <td>1.3.0</td>
 <td>2026-11-11</td>
 <td>Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from <code>input::ACTIONS</code>; the description field stays open</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td>Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own <code>welcome</code>, pairing on the sixth digit, <code>?code=</code>, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented. New R-CON-023 button press feedback and R-CON-024 hit static (<code>hits</code>, <code>hull_hits</code> in telemetry), implemented in app 0.4.9; the hit-static interpretation (the player's craft, on the console) awaits the user's confirmation. New R-CON-025 keys held at the start of a battle are ignored (app 0.4.10), implemented; new R-CON-026 two console layouts, All-in-one and Cockpit (C2), planned; R-CON-013 note</td>
 </tr>
 </tbody>
 </table>

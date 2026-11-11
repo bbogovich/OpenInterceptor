@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5867,6 +5904,14 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p>Since that count, tests named in the requirements' <em>Verified by</em> lines were added with apps
+0.4.3 – 0.4.10 without the full list being regenerated; those named below are listed: app
+0.4.10 (main <code>4edc9d7</code>) adds <code>input::keys_held_when_a_battle_starts_are_ignored_until_released</code>;
+app 0.4.8 (main <code>f1c8be8</code>) adds <code>remote::http::ranges_are_served_as_partial_content</code>, and app 0.4.7
+(main <code>c42d773</code>) adds the <strong>ignored</strong> helper <code>remote::server::tests::serve_for_a_browser</code>, which
+is not a unit test and is not counted: <code>cargo test serve_for_a_browser -- --ignored --nocapture</code>
+serves the console page on <code>127.0.0.1:8790</code> for 20 s, answering like the launcher, for trying
+the real page in a browser (<a href="../../architecture/remote/#debugging">Remote console</a>).</p>
 <p>Not unit-tested, by design, and covered by <a href="../manual-tests/">manual tests</a> instead: the
 <code>hud::draw</code> painting, the <code>Renderer</code>'s draw calls and shaders, macroquad device reading, sound
 playback, the 3D cockpit pass, anchored instruments drawn into textures, the asset browser's, controls menu's and layout editor's drawing and the macOS gamepad shim — they need a window, a GPU, speakers or a controller.</p>
@@ -6187,8 +6232,8 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 </tr>
 <tr>
 <td><code>remote::http</code></td>
-<td>2</td>
-<td>A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed</td>
+<td>3</td>
+<td>A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed; <strong>byte ranges are served as <code>206 Partial Content</code></strong> (<code>a-b</code>, <code>a-</code>, <code>-n</code>, clamped end; no range or out of range gives the whole file with <code>Accept-Ranges</code>)</td>
 </tr>
 <tr>
 <td><code>remote::protocol</code></td>
@@ -6198,7 +6243,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <tr>
 <td><code>remote::server</code></td>
 <td>3</td>
-<td><strong>Only local-network peers are served</strong> (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; <strong>end to end over a real localhost socket</strong>: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received</td>
+<td><strong>Only local-network peers are served</strong> (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; <strong>end to end over a real localhost socket</strong>: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received; <strong><code>welcome</code> answered at once by the server</strong> (0.4.7). Plus one ignored helper, <code>serve_for_a_browser</code> (not counted)</td>
 </tr>
 <tr>
 <td><code>soak</code></td>
@@ -6244,17 +6289,17 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 <p><strong><code>hud::draw</code></strong>: <code>drift_reads_signed_whole_metres_per_second</code>, <code>lamp_grids_follow_the_panel_shape</code>, <code>shield_rings_go_green_amber_red_then_blink</code></p>
 <p><strong><code>hud::glyphs</code></strong>: <code>sizes_snap_down_onto_the_ladder</code></p>
 <p><strong><code>hud::layout</code></strong>: <code>corners_lie_on_the_surface_with_world_up</code>, <code>dragging_and_scaling</code>, <code>rays_pick_the_nearest_surface</code>, <code>saved_layouts_are_valid_rules</code></p>
-<p><strong><code>input</code></strong>: <code>a_shift_chord_does_not_also_trigger_the_plain_held_key</code>, <code>bindings_file_overrides_and_round_trips</code>, <code>chase_camera_keys</code>, <code>chord_parsing_and_dead_zone</code>, <code>default_keys_follow_the_original_layout</code>, <code>every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad</code>, <code>gamepad_sticks_buttons_and_presses</code>, <code>mouse_flight_only_when_enabled</code>, <code>one_shot_commands_and_shift_chords</code>, <code>pad_modifier_layer_reaches_every_power_control</code>, <code>power_and_equipment_keys_follow_the_original</code>, <code>stick_layouts_and_mouse_inversion</code>, <code>the_keys_help_lists_every_action_with_its_current_keys</code>, <code>view_names_parse</code></p>
+<p><strong><code>input</code></strong>: <code>a_shift_chord_does_not_also_trigger_the_plain_held_key</code>, <code>bindings_file_overrides_and_round_trips</code>, <code>chase_camera_keys</code>, <code>chord_parsing_and_dead_zone</code>, <code>default_keys_follow_the_original_layout</code>, <code>every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad</code>, <code>gamepad_sticks_buttons_and_presses</code>, <code>mouse_flight_only_when_enabled</code>, <code>one_shot_commands_and_shift_chords</code>, <code>keys_held_when_a_battle_starts_are_ignored_until_released</code>, <code>pad_modifier_layer_reaches_every_power_control</code>, <code>power_and_equipment_keys_follow_the_original</code>, <code>stick_layouts_and_mouse_inversion</code>, <code>the_keys_help_lists_every_action_with_its_current_keys</code>, <code>view_names_parse</code></p>
 <p><strong><code>input::editor</code></strong>: <code>capturing_a_key_rebinds_and_steals_it_from_others</code>, <code>capturing_pad_plain_presses_and_chords</code>, <code>clear_reset_and_settings</code>, <code>pretty_names</code>, <code>rows_are_grouped_and_headers_are_skipped</code></p>
 <p><strong><code>input::gamepad</code></strong>: <code>axes_are_normalised</code>, <code>buttons_round_trip_names_and_bits</code></p>
 <p><strong><code>mission</code></strong>: <code>arrivals_waves_chatter_and_a_win</code>, <code>lose_beats_win_and_the_timer_ends_it</code>, <code>roles_are_placed_counted_and_faced_at_the_player</code>, <code>the_players_death_is_its_own_result_with_the_lose_outcomes</code></p>
 <p><strong><code>model</code></strong>: <code>empty_obj_has_zero_bounds</code>, <code>faces_record_their_corners_and_group</code>, <code>faces_that_only_touch_or_face_away_are_not_layered</code>, <code>later_overlapping_face_is_layered_on_top</code>, <code>lod_selection_by_distance</code>, <code>mirrored_triangles_keep_outward_winding</code>, <code>obj_models_use_materials_scale_and_flip_v</code>, <code>overlay_flag_beats_file_order</code>, <code>xmsh_is_triangulated_grouped_and_mirrored</code></p>
 <p><strong><code>platform::linux</code></strong>: <code>events_map_to_xinput_layout</code></p>
 <p><strong><code>remote</code></strong>: <code>held_actions_last_until_released_and_taps_fire_once</code></p>
-<p><strong><code>remote::http</code></strong>: <code>bad_requests_are_errors_and_responses_are_well_formed</code>, <code>parses_a_websocket_upgrade_and_waits_for_the_blank_line</code></p>
+<p><strong><code>remote::http</code></strong>: <code>bad_requests_are_errors_and_responses_are_well_formed</code>, <code>parses_a_websocket_upgrade_and_waits_for_the_blank_line</code>, <code>ranges_are_served_as_partial_content</code></p>
 <p><strong><code>remote::json</code></strong>: <code>bad_and_hostile_input_is_an_error</code>, <code>parses_objects_arrays_strings_and_numbers</code>, <code>writes_compact_objects_that_parse_back</code></p>
 <p><strong><code>remote::protocol</code></strong>: <code>decodes_console_messages_and_refuses_unknown_ones</code>, <code>telemetry_reports_drift_and_the_targets_relative_rotation</code>, <code>the_catalogue_lists_every_action_and_marks_missing_equipment</code></p>
-<p><strong><code>remote::server</code></strong>: <code>only_local_network_peers_are_served</code>, <code>pairing_codes_are_six_digits_and_vary_with_the_seed</code>, <code>serves_the_page_pairs_and_relays_actions_over_a_real_socket</code></p>
+<p><strong><code>remote::server</code></strong>: <code>only_local_network_peers_are_served</code>, <code>pairing_codes_are_six_digits_and_vary_with_the_seed</code>, <code>serves_the_page_pairs_and_relays_actions_over_a_real_socket</code>; ignored helper: <code>serve_for_a_browser</code></p>
 <p><strong><code>remote::ws</code></strong>: <code>frames_decode_masked_wait_for_more_bytes_and_encode</code>, <code>protocol_violations_are_errors</code>, <code>sha1_and_base64_match_the_published_test_vectors</code></p>
 <p><strong><code>render</code></strong>: <code>billboards_and_streaks_build_two_triangles</code>, <code>colour_helpers_clamp</code>, <code>layer_bias_reaches_the_shader</code>, <code>uniforms_shared_by_both_lit_shaders_match_exactly</code></p>
 <p><strong><code>render::camera</code></strong>: <code>model_matrices_are_camera_relative</code>, <code>near_plane_changes_only_depth</code>, <code>points_ahead_project_to_the_centre_and_behind_is_none</code>, <code>rotation_turns_the_view</code></p>

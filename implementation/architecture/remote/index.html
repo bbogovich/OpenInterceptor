@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -3335,6 +3372,39 @@
     <span class="md-ellipsis">
       
         A connection's life
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pairing-on-any-screen-app-047" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pairing on any screen (app 0.4.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keeping-the-tablet-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping the tablet awake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#press-feedback-and-hit-static-app-049" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Press feedback and hit static (app 0.4.9)
       
     </span>
   </a>
@@ -5884,6 +5954,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pairing-on-any-screen-app-047" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pairing on any screen (app 0.4.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keeping-the-tablet-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping the tablet awake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#press-feedback-and-hit-static-app-049" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Press feedback and hit static (app 0.4.9)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#input-path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5961,7 +6064,9 @@
 
 
 <h1 id="remote-console">Remote console<a class="headerlink" href="#remote-console" title="Permanent link">&para;</a></h1>
-<p><code>src/remote/</code>: the <strong>tablet control console</strong> (interlude item C1, app 0.4.0, main <code>dfff71b</code>).
+<p><code>src/remote/</code>: the <strong>tablet control console</strong> (interlude item C1, app 0.4.0, main <code>dfff71b</code>;
+pairing from any screen in 0.4.7, main <code>c42d773</code>; keeping the tablet awake in 0.4.8, main
+<code>f1c8be8</code>).
 The game serves a web page and a WebSocket to a tablet on the local network; the tablet shows
 the craft's condition live and sends the pilot's button presses back. Requirements
 <a href="../../../specification/requirements/control-console/#r-con-009-console-server">R-CON-009 – R-CON-014</a>;
@@ -5969,8 +6074,8 @@ the wire format is the <a href="../../../specification/console-protocol/">Consol
 player's guide is <a href="../../../user-guide/console/">Tablet console</a>.</p>
 <p>Everything — HTTP, the WebSocket handshake and frames, SHA-1, base64 and JSON — is written in
 the crate: no dependency was added (<a href="../../../learning/best-practices/dependencies/">dependency policy</a>).
-The page in <code>web/console/</code> is plain HTML, CSS and custom elements, built into the binary with
-<code>include_str!</code>.</p>
+The page in <code>web/console/</code> is plain HTML, CSS and custom elements, plus a 2 KB video clip,
+built into the binary with <code>include_bytes!</code> (which embeds a file's bytes at compile time).</p>
 <p><code>remote</code> sits in the application layer: it uses threads and sockets, and reads the world only
 to describe it. <code>sim</code> knows nothing about it.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
@@ -5983,6 +6088,7 @@ to describe it. <code>sim</code> knows nothing about it.</p>
         CN["one thread per connection&lt;br/&gt;http::parse_request →&lt;br/&gt;file or ws upgrade;&lt;br/&gt;ws::decode → protocol::decode"]
     end
     subgraph Game["Game loop (app::flight)"]
+        CI["app::console_idle&lt;br/&gt;(launcher)"]
         CF["FlightSession::console_frame"]
         RI["remote::RemoteInput"]
         RW["RawInput&lt;br/&gt;remote_held · remote_pressed · remote_throttle"]
@@ -5990,10 +6096,13 @@ to describe it. <code>sim</code> knows nothing about it.</p>
         W["sim::World"]
         PR["protocol::catalogue / telemetry"]
     end
-    PG -- "GET / · /console.js · /console.css" --&gt; CN
+    PG -- "GET / · /console.js · /console.css · /keepawake.mp4 (Range)" --&gt; CN
     PG -- "hello · action · throttle&lt;br/&gt;(masked frames)" --&gt; CN
     AC --&gt; CN
     CN -- "Event (mpsc channel)" --&gt; CF
+    CN -- "Event" --&gt; CI
+    CI -- "catalogue_idle · telemetry_idle" --&gt; CN
+    CN -- "welcome (at once, on the right code)" --&gt; PG
     CF --&gt; RI --&gt; RW --&gt; BT --&gt; W
     W --&gt; PR --&gt; CF
     CF -- "broadcast / send&lt;br/&gt;(per-client channel)" --&gt; CN
@@ -6016,8 +6125,14 @@ connected clients.</p>
     alt wrong code
         S-&gt;&gt;T: denied (third wrong code: connection closed)
     else right code
+        S-&gt;&gt;T: welcome {version} (the connection thread, at once)
         S-&gt;&gt;G: Event::Paired(id)
-        G-&gt;&gt;T: welcome, catalogue
+        alt launcher (app::console_idle)
+            G-&gt;&gt;T: catalogue_idle (every action available)
+            G-&gt;&gt;T: telemetry {alive: false, state: "launcher"} (twice a second)
+        else flight (FlightSession::console_frame)
+            G-&gt;&gt;T: welcome {version, campaign}, catalogue
+        end
         loop every frame
             T-&gt;&gt;S: action / throttle
             S-&gt;&gt;G: Event::Input(id, Inbound)
@@ -6026,6 +6141,55 @@ connected clients.</p>
     end
     T--xS: socket closes
     S-&gt;&gt;G: Event::Left(id): its held actions are released</code></pre>
+<h3 id="pairing-on-any-screen-app-047">Pairing on any screen (app 0.4.7)<a class="headerlink" href="#pairing-on-any-screen-app-047" title="Permanent link">&para;</a></h3>
+<p>Before 0.4.7 only <code>FlightSession::console_frame</code> answered <code>Event::Paired</code>, so a tablet paired
+while the launcher was open waited for ever. Now:</p>
+<ul>
+<li>the <strong>connection thread</strong> writes <code>welcome {version}</code> straight onto its own socket the moment
+  the code is right (<code>remote::server::serve</code>), so the page knows it is paired whatever the game
+  is doing;</li>
+<li>the <strong>launcher</strong> calls <code>app::console_idle(ctx, "launcher")</code> each frame: on <code>Event::Paired</code> it
+  broadcasts <code>protocol::catalogue_idle()</code> (every action of <code>input::ACTIONS</code>, all available, as
+  there is no craft yet), and twice a second <code>protocol::telemetry_idle("launcher")</code>
+  (<code>{alive: false, state: "launcher"}</code>), counted by <code>AppContext::console_idle_tick</code>. Console
+  input is ignored until a battle starts;</li>
+<li>in a battle the flight screen still sends <code>welcome {version, campaign}</code> and the real
+  catalogue.</li>
+</ul>
+<p>The <strong>page</strong> (<code>web/console/console.js</code>, <code>OiPairing</code>) pairs as soon as the sixth digit is typed
+(iPad number pads have no Enter key), shows <em>Connecting…</em> and errors (<em>Could not reach the
+game</em>, the <code>denied</code> reason, <em>Disconnected</em>), takes <code>?code=123456</code> from the address, and switches
+to the console on <code>welcome</code> rather than <code>catalogue</code>. <code>console.css</code> has
+<code>[hidden] { display: none !important; }</code>: the custom elements' own <code>display: grid</code> rules had
+beaten the <code>hidden</code> attribute, so the pairing screen could not hide.</p>
+<h3 id="keeping-the-tablet-awake">Keeping the tablet awake<a class="headerlink" href="#keeping-the-tablet-awake" title="Permanent link">&para;</a></h3>
+<p><code>keepAwake()</code> in <code>console.js</code> (app 0.4.8,
+<a href="../../../specification/requirements/control-console/#r-con-022-keep-the-tablet-awake">R-CON-022</a>):</p>
+<ol>
+<li><code>navigator.wakeLock.request("screen")</code> where the browser allows it. Safari allows it only on
+   secure (https) pages, and the console is plain http on the local network, so on an iPad this
+   usually fails.</li>
+<li>Otherwise a hidden <code>&lt;video&gt;</code> (1 px, almost transparent) plays <code>keepawake.mp4</code> muted, inline
+   (<code>playsinline</code>) and looping: browsers do not let the screen sleep during video playback. iOS
+   allows muted inline playback reliably only after a tap, so it is started from the pairing tap
+   and retried on every <code>pointerdown</code> until it runs.</li>
+</ol>
+<p>Both are released by the browser when the page is hidden, so <code>visibilitychange</code> takes them
+again. The state is shown in the telemetry grid's <strong>Tablet</strong> cell. The clip (black, 2 KB) is
+made by <code>tools/console_assets/make_keepawake.swift</code> with AVFoundation — the project's own
+output, not a third-party file.</p>
+<p>iOS Safari fetches video in byte ranges and will not play it from a server that ignores them, so
+<code>remote::http::file_response</code> answers <code>Range: bytes=a-b</code>, <code>bytes=a-</code> and <code>bytes=-n</code> with
+<code>206 Partial Content</code> and a <code>Content-Range</code> header, and every whole-file answer carries
+<code>Accept-Ranges: bytes</code>. Several ranges at once, or a range outside the file, get the whole file.</p>
+<h3 id="press-feedback-and-hit-static-app-049">Press feedback and hit static (app 0.4.9)<a class="headerlink" href="#press-feedback-and-hit-static-app-049" title="Permanent link">&para;</a></h3>
+<p>Every button shows its pressed state — background filled with its border colour, black text —
+while held, or for at least 150 ms after a tap
+(<a href="../../../specification/requirements/control-console/#r-con-023-button-press-feedback">R-CON-023</a>).
+<code>telemetry</code> carries running counts <code>hits</code> and <code>hull_hits</code> for the player's craft; when either
+rises the page plays about 0.4 s of fading static, stronger for a hull hit
+(<a href="../../../specification/requirements/control-console/#r-con-024-hit-static">R-CON-024</a>). Counts
+rather than one-off events mean a dropped or merged telemetry message never loses a hit.</p>
 <h3 id="input-path">Input path<a class="headerlink" href="#input-path" title="Permanent link">&para;</a></h3>
 <p>A console button reaches the simulation the same way a key does:</p>
 <ol>
@@ -6118,7 +6282,19 @@ letting go does not release another's buttons.</p>
 </tr>
 <tr>
 <td><code>FlightSession::console_frame</code></td>
-<td>One frame of console work in flight: poll, apply, (re)send the catalogue, 20 Hz telemetry, merge input.</td>
+<td>One frame of console work in flight: poll, apply, <code>welcome {version, campaign}</code>, (re)send the catalogue, 20 Hz telemetry, merge input.</td>
+</tr>
+<tr>
+<td><code>app::console_idle</code></td>
+<td>One frame of console work outside a battle (the launcher): the idle catalogue on pairing, idle telemetry twice a second; input ignored.</td>
+</tr>
+<tr>
+<td><code>AppContext::console_idle_tick</code></td>
+<td>The half-second count of the last idle telemetry.</td>
+</tr>
+<tr>
+<td><code>remote::server::FILES</code></td>
+<td>The embedded page files (<code>&amp;[u8]</code>): <code>index.html</code>, <code>console.js</code>, <code>console.css</code>, <code>keepawake.mp4</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -6134,7 +6310,9 @@ letting go does not release another's buttons.</p>
 <li><strong>Protocol</strong> (<code>remote::protocol</code>):
   <code>decode(text) -&gt; Result&lt;Inbound, String&gt;</code>;
   <code>catalogue(&amp;Ruleset, &amp;World, ShipId) -&gt; String</code>;
+  <code>catalogue_idle() -&gt; String</code> (every action, all available: no craft yet);
   <code>telemetry(&amp;World, ShipId, time) -&gt; String</code>;
+  <code>telemetry_idle(screen) -&gt; String</code> (<code>{alive: false, state: screen}</code>);
   <code>available(&amp;Ruleset, &amp;World, ShipId, Action) -&gt; bool</code> (cloak, ECM, tractor need the system
   fitted; VCT slides need <code>vct</code>; missiles need missiles aboard; beam actions need beams).</li>
 <li><strong>WebSocket</strong> (<code>remote::ws</code>): <code>sha1(&amp;[u8]) -&gt; [u8; 20]</code>, <code>base64(&amp;[u8]) -&gt; String</code>,
@@ -6142,6 +6320,8 @@ letting go does not release another's buttons.</p>
   (<code>Ok(None)</code> = wait for more bytes), <code>encode(Opcode, payload) -&gt; Vec&lt;u8&gt;</code> (unmasked, final).</li>
 <li><strong>HTTP</strong> (<code>remote::http</code>): <code>parse_request(&amp;[u8]) -&gt; Result&lt;Option&lt;(Request, usize)&gt;, String&gt;</code>,
   <code>Request::header</code>, <code>Request::is_websocket</code>, <code>response(status, content_type, body)</code>,
+  <code>file_response(content_type, body, range: Option&lt;&amp;str&gt;)</code> (<code>206 Partial Content</code> for one
+  byte range, else <code>200</code> with <code>Accept-Ranges: bytes</code>),
   <code>upgrade_response(accept)</code>, <code>content_type(path)</code>.</li>
 <li><strong>JSON</strong> (<code>remote::json</code>): <code>parse(text) -&gt; Result&lt;Json, String&gt;</code> (recursive descent; nesting deeper
   than 32 levels is an error, so hostile input cannot overflow the stack), <code>Json::get</code>, <code>as_str</code>,
@@ -6180,8 +6360,25 @@ code</code> means the code is not the current run's.
   menu, keys overlay, a dead craft) stops them too. An unavailable action (<em>not fitted</em>) does
   nothing by design.
 - Tests: <code>remote::server::serves_the_page_pairs_and_relays_actions_over_a_real_socket</code> runs the
-  whole path over a real localhost socket on a port derived from the process id.</p>
+  whole path over a real localhost socket on a port derived from the process id, and checks
+  that <code>welcome</code> comes from the server at once.
+- <strong>The real page in a browser, without the game</strong>: the ignored helper test
+  <code>remote::server::tests::serve_for_a_browser</code> serves the page on <code>127.0.0.1:8790</code> (pairing
+  code from seed 7) for 20 s, answering like the launcher (idle catalogue and telemetry), and
+  prints a <code>…/?code=NNNNNN</code> address to open:</p>
+<div class="highlight"><pre><span></span><code>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>serve_for_a_browser<span class="w"> </span>--<span class="w"> </span>--ignored<span class="w"> </span>--nocapture
+</code></pre></div>
 </li>
+<li>
+<p><strong>The page waits after the code</strong> (before app 0.4.7): pairing from the launcher was never
+  answered; update. If the pairing screen stays on top after <em>Connecting…</em>, check that
+  <code>console.css</code> still has the <code>[hidden]</code> rule.</p>
+</li>
+<li><strong>The tablet still goes to sleep</strong>: look at the <strong>Tablet</strong> cell. <em>tap the screen to keep it
+  awake</em> means the clip could not start without a gesture: tap once. If it says <em>screen kept
+  awake</em> and the tablet still sleeps, check that <code>/keepawake.mp4</code> is served with <code>206</code> to a
+  <code>Range</code> request (<code>curl -r 0-1 -i http://&lt;address&gt;:8765/keepawake.mp4</code>); as a last resort set
+  the iPad's Auto-Lock to <em>Never</em>.</li>
 </ul>
 
 

@@ -1626,6 +1626,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keeping-the-tablet-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping the tablet awake
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#messages-still-planned" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1675,6 +1686,8 @@
   
     
     
+      
+        
       
         
       
@@ -2033,6 +2046,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5938,6 +5986,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keeping-the-tablet-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping the tablet awake
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#messages-still-planned" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6003,12 +6062,15 @@ same change.</p>
 <ul>
 <li>Each message is one JSON object with a <code>type</code> field, sent as one WebSocket text frame.</li>
 <li><strong>WebSocket</strong> (first transport, built): the game serves the console page (<code>/</code>,
-  <code>/console.js</code>, <code>/console.css</code>, built into the program) and the socket (a WebSocket upgrade
+  <code>/console.js</code>, <code>/console.css</code> and <code>/keepawake.mp4</code>, built into the program; files honour
+  HTTP <code>Range</code> requests with <code>206 Partial Content</code> since app 0.4.8) and the socket (a WebSocket upgrade
   on any path; the page uses <code>/ws</code>) over HTTP/1.1 on port <strong>8765</strong> by default
   (<code>console.port</code> in <code>settings.yaml</code>, <code>--console-port</code>). The console is <strong>off by default</strong>
   (decision D2): <code>--console</code> or <code>console.enabled</code> turns it on.</li>
 <li><strong>Local network only</strong>: connections from addresses that are not private, link-local,
   unique-local or loopback are dropped without an answer.</li>
+<li><strong>Pairing from the address</strong> (app 0.4.7): <code>/?code=123456</code> pairs straight away with that
+  code, for a future QR code shown by the game.</li>
 <li><strong>USB serial</strong> (later, for an Arduino panel): the same messages, one per line. The protocol
   never depends on the transport.</li>
 </ul>
@@ -6021,15 +6083,28 @@ same change.</p>
         G-&gt;&gt;C: denied {reason}
         Note over C,G: the third wrong code closes the connection
     else right code
-        G-&gt;&gt;C: welcome {version, campaign}
-        G-&gt;&gt;C: catalogue {groups, actions}
-        loop while paired
-            G--&gt;&gt;C: telemetry (20 Hz)
-            G--&gt;&gt;C: catalogue (again when the craft class changes)
-            C-&gt;&gt;G: action {name, value}
-            C-&gt;&gt;G: throttle {value}
+        G-&gt;&gt;C: welcome {version} (server, at once)
+        alt no battle running (launcher)
+            G-&gt;&gt;C: catalogue (every action available)
+            loop twice a second
+                G--&gt;&gt;C: telemetry {alive: false, state: "launcher"}
+            end
+        else in a battle
+            G-&gt;&gt;C: welcome {version, campaign} (flight screen)
+            G-&gt;&gt;C: catalogue {groups, actions}
+            loop while paired
+                G--&gt;&gt;C: telemetry (20 Hz)
+                G--&gt;&gt;C: catalogue (again when the craft class changes)
+                C-&gt;&gt;G: action {name, value}
+                C-&gt;&gt;G: throttle {value}
+            end
         end
     end</code></pre>
+<p>Since app 0.4.7 (main <code>c42d773</code>) the <strong>server answers a right code itself</strong>: its connection
+thread sends <code>welcome {version}</code> at once, so the page knows it is paired on any screen. Before,
+only the flight screen answered, and a tablet paired from the launcher waited for ever. During a
+battle the flight screen also sends <code>welcome {version, campaign}</code>. The page switches from the
+pairing screen to the console on <code>welcome</code> (not on <code>catalogue</code>).</p>
 <p>Until a console has paired, every message other than <code>hello</code> is ignored, as is any message
 that does not decode. When the connection closes, everything that console was holding is
 released.</p>
@@ -6083,8 +6158,8 @@ released.</p>
 <tbody>
 <tr>
 <td><code>welcome</code></td>
-<td>Right code</td>
-<td><code>version</code> (1), <code>campaign</code> (the active campaign's id, empty if none).</td>
+<td>Right code: from the server at once with <code>version</code> only; during a battle the flight screen sends it again with <code>campaign</code></td>
+<td><code>version</code> (1), <code>campaign</code> (the active campaign's id, empty if none; flight screen only).</td>
 </tr>
 <tr>
 <td><code>denied</code></td>
@@ -6093,13 +6168,13 @@ released.</p>
 </tr>
 <tr>
 <td><code>catalogue</code></td>
-<td>After <code>welcome</code>; again whenever the player's craft class changes</td>
+<td>After <code>welcome</code>; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with <strong>every action marked available</strong>, since there is no craft yet; the battle sends the real one when it starts</td>
 <td><code>groups</code>: <code>[{id, title}]</code> in menu order (<code>flight</code>, <code>throttle</code>, <code>weapons</code>, <code>targeting</code>, <code>power</code>, <code>wingmen</code>, <code>views</code>, <code>camera</code>, <code>interface</code>). <code>actions</code>: <code>[{name, group, label, kind, available}]</code> for <strong>every</strong> action of the catalogue (R-CON-007): <code>name</code> as in <code>bindings.yaml</code>, <code>group</code> one of the ids above, <code>label</code> the display name, <code>kind</code> <code>"hold"</code> or <code>"tap"</code>, <code>available</code> false when the craft has no equipment for it (R-CON-019).</td>
 </tr>
 <tr>
 <td><code>telemetry</code></td>
-<td><strong>20 Hz</strong> while paired</td>
-<td>See below.</td>
+<td><strong>20 Hz</strong> while paired in a battle; <strong>twice a second</strong> outside one</td>
+<td>See below. Outside a battle: <code>{alive: false, state}</code> only, with <code>state</code> the screen (<code>"launcher"</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -6126,7 +6201,17 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 <tr>
 <td><code>alive</code></td>
 <td>bool</td>
-<td>False once the player's craft is gone; then no other field is sent.</td>
+<td>False once the player's craft is gone, or when no battle is running; then no other field is sent except <code>state</code>.</td>
+</tr>
+<tr>
+<td><code>hits</code>, <code>hull_hits</code></td>
+<td>number</td>
+<td>Running counts, since the battle began, of weapon hits on the player's craft and of those that struck the hull (app 0.4.9). The page plays a brief static effect when either rises: lighter for a shield hit, stronger for a hull hit (<a href="../requirements/control-console/#r-con-024-hit-static">R-CON-024</a>).</td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>string</td>
+<td>Only when no battle is running: the screen the game is on (<code>"launcher"</code>). The page shows <em>Not flying (launcher)</em>; <code>alive: false</code> without <code>state</code> is shown as <em>DESTROYED</em>.</td>
 </tr>
 <tr>
 <td><code>craft</code></td>
@@ -6193,6 +6278,23 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 <span class="w">            </span><span class="nt">"closing"</span><span class="p">:</span><span class="w"> </span><span class="mi">35</span><span class="p">,</span><span class="w"> </span><span class="nt">"hull"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"shields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="nt">"rotation"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.707</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.707</span><span class="p">]}}</span>
 </code></pre></div>
 <p><em>Values in the examples are illustrative.</em></p>
+<h2 id="keeping-the-tablet-awake">Keeping the tablet awake<a class="headerlink" href="#keeping-the-tablet-awake" title="Permanent link">&para;</a></h2>
+<p>Not a message: the page itself keeps the tablet's screen on while it is open (app 0.4.8, main
+<code>f1c8be8</code>, <a href="../requirements/control-console/#r-con-022-keep-the-tablet-awake">R-CON-022</a>).</p>
+<ol>
+<li>The <strong>Screen Wake Lock API</strong> (<code>navigator.wakeLock.request("screen")</code>) where the browser
+   allows it. Safari allows it only on secure (https) pages, so it does not apply to an iPad on
+   the plain-http console.</li>
+<li>Otherwise a <strong>tiny black clip</strong>, <code>/keepawake.mp4</code> (2 KB, generated by
+   <code>tools/console_assets/make_keepawake.swift</code> with AVFoundation; the project's own output),
+   played muted, inline and looping, out of sight: browsers do not let the screen sleep while a
+   video plays. iOS Safari plays video only from a server that honours <code>Range</code> requests, hence
+   <code>206 Partial Content</code>.</li>
+</ol>
+<p>It starts on the pairing tap, again on any tap until it runs (iOS needs a user gesture for
+media), and again whenever the page becomes visible (the browser releases both when it is
+hidden). The telemetry grid's <strong>Tablet</strong> cell shows <em>screen kept awake</em>, <em>screen kept awake (wake
+lock)</em> or <em>tap the screen to keep it awake</em>.</p>
 <h2 id="messages-still-planned">Messages still planned<a class="headerlink" href="#messages-still-planned" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6232,6 +6334,8 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 </table>
 <h2 id="open">Open<a class="headerlink" href="#open" title="Permanent link">&para;</a></h2>
 <ul>
+<li>The QR code that would carry <code>?code=</code> (the page accepts it since app 0.4.7; the game does not
+  show one yet).</li>
 <li>The pairing code's lifetime: in version 1 it is chosen when the game starts and lasts for the
   run. Whether it should change after a pairing, or time out, is open.</li>
 <li>A client name and protocol version in <code>hello</code> (version 1 sends neither); how a version
@@ -6267,6 +6371,11 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 <td>1.3.0</td>
 <td>2026-11-11</td>
 <td>Version 1 as built (C1, app 0.4.0): <code>hello {code}</code>, <code>welcome {version, campaign}</code>, <code>denied {reason}</code>, <code>catalogue {groups, actions:[{name, group, label, kind, available}]}</code> with the availability rules, the <code>telemetry</code> fields (body-axis velocity, power, systems, target with relative rotation), <code>action {name, value}</code> hold and tap semantics and the new <code>throttle {value}</code>; the local-network rule and the three-wrong-codes limit. <code>theme</code>, <code>contacts</code>, <code>model</code>, <code>event</code> remain planned; open items revised</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td>Pairing fix (app 0.4.7): the server sends <code>welcome {version}</code> at once; the flight screen's <code>welcome {version, campaign}</code>; the launcher's catalogue (every action available) and idle <code>telemetry {alive: false, state}</code> twice a second; <code>?code=</code> in the address; the page shows the console on <code>welcome</code>. Keeping the tablet awake (app 0.4.8): wake lock or the <code>keepawake.mp4</code> clip; files served with HTTP ranges. <code>telemetry</code> gains <code>hits</code> and <code>hull_hits</code> (app 0.4.9)</td>
 </tr>
 </tbody>
 </table>

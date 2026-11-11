@@ -1548,6 +1548,8 @@
       
         
       
+        
+      
     
     
     
@@ -1885,6 +1887,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5810,7 +5847,7 @@ against. It has three parts:</p>
 <li>the <strong>original data formats</strong>, normative for reading the player's original data (an
   installed copy or the CD).</li>
 </ul>
-<p>Specification version <strong>1.3.0</strong> (170 requirements). Changes are listed in the
+<p>Specification version <strong>1.7.0</strong> (208 requirements). Changes are listed in the
 <a href="../meta/change-history/">change history</a>.</p>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
@@ -5826,13 +5863,13 @@ against. It has three parts:</p>
 <tr>
 <td><a href="requirements/flight/">Flight</a></td>
 <td><code>FLT</code></td>
-<td>12</td>
+<td>13</td>
 <td><a href="../definition/flight/">Flight</a></td>
 </tr>
 <tr>
 <td><a href="requirements/combat/">Combat</a></td>
 <td><code>CMB</code></td>
-<td>21</td>
+<td>22</td>
 <td><a href="../definition/combat/">Combat</a></td>
 </tr>
 <tr>
@@ -5844,7 +5881,7 @@ against. It has three parts:</p>
 <tr>
 <td><a href="requirements/control-console/">Controls &amp; control console</a></td>
 <td><code>CON</code></td>
-<td>21</td>
+<td>26</td>
 <td><a href="../definition/control-console/">Controls &amp; control console</a></td>
 </tr>
 <tr>
@@ -5868,7 +5905,7 @@ against. It has three parts:</p>
 <tr>
 <td><a href="requirements/modding/">Modding toolkit</a></td>
 <td><code>MOD</code></td>
-<td>20</td>
+<td>47</td>
 <td><a href="../definition/modding-toolkit/">Modding toolkit</a></td>
 </tr>
 <tr>
@@ -5880,7 +5917,7 @@ against. It has three parts:</p>
 <tr>
 <td><a href="requirements/platforms/">Platforms</a></td>
 <td><code>PLT</code></td>
-<td>6</td>
+<td>10</td>
 <td><a href="../definition/platforms/">Platforms</a></td>
 </tr>
 <tr>
@@ -5953,6 +5990,10 @@ requirements, then issues.</p>
 <td>Screens, text, video, music</td>
 </tr>
 <tr>
+<td><a href="design/designer/">Mod designer, cutscene designer and game bundling</a></td>
+<td>The Mod Designer, cutscenes (file format, playback, cameras), video cutscenes, shared formations, product bundles (planned; decisions D1–D5 made)</td>
+</tr>
+<tr>
 <td><a href="design/coverage/">Coverage matrix</a></td>
 <td>Every original system against the formats</td>
 </tr>
@@ -5985,6 +6026,11 @@ Facts carry verified / derived / unknown marks.</p>
 <td>1.3.0</td>
 <td>2026-11-11</td>
 <td>170 requirements (R-CMP-014, R-CMP-015 added in 1.2.0); console C1 (app 0.4.0): R-CON-009 – R-CON-011 and R-CON-014 implemented, R-CON-012, R-CON-013, R-CON-019 partial; the console protocol records version 1 as built; R-CMP-014, R-CMP-015 implemented (app 0.4.2)</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td>208 requirements (R-FLT-013 and R-CMB-022 counted from 1.5.0–1.6.0; R-CON-022 – R-CON-024 (keep the tablet awake, press feedback, hit static), implemented; R-CON-025 start-key guard, implemented; R-CON-026 two console layouts, planned; R-MOD-021 – R-MOD-047 and R-PLT-007 – R-PLT-010 planned); new design page <em>Mod designer, cutscene designer and game bundling</em></td>
 </tr>
 </tbody>
 </table>

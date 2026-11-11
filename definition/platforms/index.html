@@ -995,6 +995,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-plt-005-game-bundling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-PLT-005 Game bundling
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1674,6 +1685,8 @@
       
         
       
+        
+      
     
     
     
@@ -2011,6 +2024,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5910,6 +5958,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-plt-005-game-bundling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-PLT-005 Game bundling
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5944,7 +6003,7 @@
 
 
 <h1 id="platforms">Platforms<a class="headerlink" href="#platforms" title="Permanent link">&para;</a></h1>
-<p>Where OpenInterceptor runs and how it is shipped.</p>
+<p>Where OpenInterceptor runs and how it is shipped, including (planned) a creator's own bundled game.</p>
 <p>Requirements for these features: <a href="../../specification/requirements/platforms/">Platforms requirements</a>.</p>
 <table>
 <thead>
@@ -5968,6 +6027,10 @@
 </tr>
 <tr>
 <td><a href="#f-plt-004-release-packages">F-PLT-004 Release packages</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#f-plt-005-game-bundling">F-PLT-005 Game bundling</a></td>
 <td>Planned</td>
 </tr>
 </tbody>
@@ -6005,6 +6068,14 @@
 <li><strong>Source:</strong> Stage 8.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/platforms/#r-plt-001-macos-app">R-PLT-001</a>, <a href="../../specification/requirements/platforms/#r-plt-004-release-packages">R-PLT-004</a></li>
 </ul>
+<h3 id="f-plt-005-game-bundling">F-PLT-005 Game bundling<a class="headerlink" href="#f-plt-005-game-bundling" title="Permanent link">&para;</a></h3>
+<p><strong>What.</strong> A creator can release a complete game: the engine plus chosen packs, named and branded as their own, starting straight in their campaign, with developer tools hidden — downloaded and played with nothing to install. Players' own mods still load on top. Nothing original can ever be bundled. The build produces two artifacts, the game and the designer.</p>
+<p><strong>Why.</strong> Modding first: a custom campaign can become a game in its own right.</p>
+<ul>
+<li><strong>Status:</strong> planned</li>
+<li><strong>Source:</strong> The user's request, 2026-11-11, quoted in full on the <a href="../../specification/design/designer/">design page</a>: "Build system needs to accommodate bundling specific mods/packs into the distributable or application bundle so that users can release a complete game without requiring manual download and installation of packs and mods to their local folders." Decision D5, 2026-11-11 (two build artifacts). Plan item MD7.</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/platforms/#r-plt-007-product-file">R-PLT-007</a>, <a href="../../specification/requirements/platforms/#r-plt-008-bundled-game-builds">R-PLT-008</a>, <a href="../../specification/requirements/platforms/#r-plt-009-nothing-original-is-bundled">R-PLT-009</a>, <a href="../../specification/requirements/platforms/#r-plt-010-validate-before-bundling">R-PLT-010</a>, <a href="../../specification/requirements/modding/#r-mod-029-provenance-of-imported-assets">R-MOD-029</a></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6019,6 +6090,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: F-PLT-001 – F-PLT-004 (4 features)</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td>F-PLT-005 game bundling (planned)</td>
 </tr>
 </tbody>
 </table>

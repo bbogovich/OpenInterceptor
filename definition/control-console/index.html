@@ -1729,6 +1729,8 @@
       
         
       
+        
+      
     
     
     
@@ -2066,6 +2068,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -6108,8 +6145,8 @@
 <p><strong>Why.</strong> Players and their hardware differ; a gamepad has far fewer buttons than the keyboard.</p>
 <ul>
 <li><strong>Status:</strong> implemented</li>
-<li><strong>Source:</strong> Plan items 1.10 and 2.15; DEV-003, DEV-004, DEV-028.</li>
-<li><strong>Specified by:</strong> <a href="../../specification/requirements/control-console/#r-con-001-one-action-table">R-CON-001</a>, <a href="../../specification/requirements/control-console/#r-con-003-bindings-file">R-CON-003</a>, <a href="../../specification/requirements/control-console/#r-con-004-controls-menu">R-CON-004</a>, <a href="../../specification/requirements/control-console/#r-con-005-gamepad">R-CON-005</a>, <a href="../../specification/requirements/control-console/#r-con-006-mouse-flight-and-chords">R-CON-006</a></li>
+<li><strong>Source:</strong> Plan items 1.10 and 2.15; DEV-003, DEV-004, DEV-028. User request, 2026-11-11: "When mission is started by pressing enter on the menu or restart prompt, a laser fires immediately at start of mission because of the enter press. that first keypress should be suppressed." (R-CON-025, app 0.4.10).</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/control-console/#r-con-001-one-action-table">R-CON-001</a>, <a href="../../specification/requirements/control-console/#r-con-003-bindings-file">R-CON-003</a>, <a href="../../specification/requirements/control-console/#r-con-004-controls-menu">R-CON-004</a>, <a href="../../specification/requirements/control-console/#r-con-005-gamepad">R-CON-005</a>, <a href="../../specification/requirements/control-console/#r-con-006-mouse-flight-and-chords">R-CON-006</a>, <a href="../../specification/requirements/control-console/#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored">R-CON-025</a></li>
 </ul>
 <h3 id="f-con-002-every-original-piloting-function">F-CON-002 Every original piloting function<a class="headerlink" href="#f-con-002-every-original-piloting-function" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> All piloting functions of the original game have a default key: power, tractor, cloak, ECM, hyperspace, wingman comms, message repeat.</p>
@@ -6131,9 +6168,9 @@
 <p><strong>What.</strong> A web page served by the game turns a tablet on the local network into a second control surface beside a joystick or gamepad: live craft state goes out, the pilot's actions come back, in real time. The top row shows the exterior-view HUD; the centre a widened display console like the cockpit's; shield rings and shield controls sit on the left, power sliders on the right, and other functions grouped below. Off by default, local network only, paired with a code.</p>
 <p><strong>Why.</strong> Immersion, always knowing the craft's condition, and reaching features that are otherwise forgotten. Primary use: an iPad alongside a joystick or gamepad.</p>
 <ul>
-<li><strong>Status:</strong> partial. C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (<code>--console</code> or <code>console.enabled</code>; port 8765, <code>console.port</code>), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. The layout described above comes with C2. See <a href="../../user-guide/console/">Tablet console</a>.</li>
-<li><strong>Source:</strong> User request; decision D2 (off by default; local network only; pairing code; port 8765, changeable); interlude items C1 and C2.</li>
-<li><strong>Specified by:</strong> <a href="../../specification/requirements/control-console/#r-con-007-action-catalogue">R-CON-007</a>, <a href="../../specification/requirements/control-console/#r-con-009-console-server">R-CON-009</a>, <a href="../../specification/requirements/control-console/#r-con-010-console-protocol">R-CON-010</a>, <a href="../../specification/requirements/control-console/#r-con-011-console-actions-are-game-actions">R-CON-011</a>, <a href="../../specification/requirements/control-console/#r-con-012-console-page-from-web-components">R-CON-012</a>, <a href="../../specification/requirements/control-console/#r-con-013-console-layout">R-CON-013</a>, <a href="../../specification/requirements/control-console/#r-con-014-console-telemetry">R-CON-014</a></li>
+<li><strong>Status:</strong> partial. C1 (app 0.4.0) is built: the game serves the console page and a WebSocket (<code>--console</code> or <code>console.enabled</code>; port 8765, <code>console.port</code>), local network only, paired with a 6-digit code; the page shows live telemetry, a throttle slider and every action as a button, with features the craft lacks shown disabled. Since app 0.4.7 a tablet pairs from any screen, the launcher included, as soon as the sixth digit is typed; since 0.4.8 the page keeps the tablet's screen awake; since 0.4.9 buttons show clearly when pressed and the console shows brief static when the player's craft is hit. The layout described above comes with C2 as the <strong>Cockpit</strong> layout; the page will offer it beside the C1 <strong>All-in-one</strong> layout, switchable on the page and remembered per tablet (user request, 2026-11-11: "ipad UI is very different from the design proposal but useful. the page should support two modes, the collected "all-in-one" control scheme in the current design, and the version from the proposal PDF."). See <a href="../../user-guide/console/">Tablet console</a>.</li>
+<li><strong>Source:</strong> User request; decision D2 (off by default; local network only; pairing code; port 8765, changeable); interlude items C1 and C2. User request, 2026-11-11: "tablet goes to sleep while page displayed; some function in page needs to keep alive. browser will keep tablet alive during media streaming for video display, so there are some kind of mechanisms in place to prevent sleep. Unclear to what extent this is possible." User request, 2026-11-11: "Initial test on console works well, better button press feedback needed so that it's clean when user has pressed the button. for the style currently applied, the button should highlight with the border color and text switch to black. Add brief static effects when a craft is hit by weapons fire."</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/control-console/#r-con-007-action-catalogue">R-CON-007</a>, <a href="../../specification/requirements/control-console/#r-con-009-console-server">R-CON-009</a>, <a href="../../specification/requirements/control-console/#r-con-010-console-protocol">R-CON-010</a>, <a href="../../specification/requirements/control-console/#r-con-011-console-actions-are-game-actions">R-CON-011</a>, <a href="../../specification/requirements/control-console/#r-con-012-console-page-from-web-components">R-CON-012</a>, <a href="../../specification/requirements/control-console/#r-con-013-console-layout">R-CON-013</a>, <a href="../../specification/requirements/control-console/#r-con-014-console-telemetry">R-CON-014</a>, <a href="../../specification/requirements/control-console/#r-con-022-keep-the-tablet-awake">R-CON-022</a>, <a href="../../specification/requirements/control-console/#r-con-023-button-press-feedback">R-CON-023</a>, <a href="../../specification/requirements/control-console/#r-con-024-hit-static">R-CON-024</a>, <a href="../../specification/requirements/control-console/#r-con-026-two-console-layouts">R-CON-026</a></li>
 </ul>
 <h3 id="f-con-005-console-target-viewport">F-CON-005 Console target viewport<a class="headerlink" href="#f-con-005-console-target-viewport" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> The console's centre display shows the current target's model, turned to its true angle relative to the player.</p>
@@ -6165,7 +6202,7 @@
 <ul>
 <li><strong>Status:</strong> planned</li>
 <li><strong>Source:</strong> User request (iPad UI); interlude item C2.</li>
-<li><strong>Specified by:</strong> <a href="../../specification/requirements/control-console/#r-con-018-function-group-tiles">R-CON-018</a>, <a href="../../specification/requirements/control-console/#r-con-019-features-the-craft-lacks-are-disabled-not-hidden">R-CON-019</a></li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/control-console/#r-con-018-function-group-tiles">R-CON-018</a>, <a href="../../specification/requirements/control-console/#r-con-026-two-console-layouts">R-CON-026</a>, <a href="../../specification/requirements/control-console/#r-con-019-features-the-craft-lacks-are-disabled-not-hidden">R-CON-019</a></li>
 </ul>
 <h3 id="f-con-009-console-themed-by-the-active-campaign">F-CON-009 Console themed by the active campaign<a class="headerlink" href="#f-con-009-console-themed-by-the-active-campaign" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> The console's look comes from the active campaign or mod. For <em>Interceptor</em> the console uses new assets made for this project, kept in the <code>interceptor</code> pack, styled after the current craft's cockpit overlay, with every control clearly labelled. The default campaign uses its retro (art-deco) style. No original art is reproduced in the console.</p>
@@ -6199,6 +6236,11 @@
 <td>1.3.0</td>
 <td>2026-11-11</td>
 <td>F-CON-004 partial: console C1 built (app 0.4.0); F-CON-003 status note updated</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td>F-CON-004: pairing from any screen (app 0.4.7); the tablet is kept awake (app 0.4.8, R-CON-022); press feedback and hit static (app 0.4.9, R-CON-023, R-CON-024); two layouts, All-in-one and Cockpit (C2, R-CON-026). F-CON-001: keys held at a battle's start are ignored (app 0.4.10, R-CON-025)</td>
 </tr>
 </tbody>
 </table>

@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5766,6 +5803,11 @@
 <td>0.2.0</td>
 <td>2026-11-10</td>
 <td>Reconciled with the Stage 1 code as built (main <code>cf374a7</code>): architecture pages with real symbols, data/logic/event flows; controls from the bindings tables; modding reference for every rules and scenario key, plus <em>Make your first mod</em>; deviations DEV-008 – DEV-018; dependency evaluation (macroquad audio, glam, image); generated unit-test list (146); Stage 1 manual cases rewritten for the real scenarios; implementation status; command-line reference</td>
+</tr>
+<tr>
+<td>0.14.0</td>
+<td>2026-11-11</td>
+<td><strong>Definition and Specification 1.7.0.</strong> <strong>Mod designer, cutscene designer and game bundling (planned):</strong> new normative design page (sections 1–7, the cutscene YAML example, decisions D1–D5 as answered by the user: macroquad UI; OS media framework with GStreamer via <code>dlopen</code> on Linux, to be evaluated; captions; beginner autopilot with <code>aggressive</code> and the new <code>harmless</code> flag; a separate designer program and two build artifacts); F-MOD-009 – F-MOD-013, F-PLT-005; R-MOD-021 – R-MOD-047, R-PLT-007 – R-PLT-010; plan items MD1 (Stage 4), MD2 – MD3 (Stage 6), MD4 – MD6 (Stage 7), MD7 (Stage 8); format-interface video link; GitHub issues with the new <code>designer</code> label. <strong>Console pairing fix (app 0.4.7, main <code>c42d773</code>):</strong> the server's own <code>welcome</code>, the launcher's catalogue and idle telemetry with <code>state</code>, pairing on the sixth digit, <code>?code=</code>, the <code>[hidden]</code> fix — on the <em>Console protocol</em>, R-CON-009/010/014 notes, <em>Remote console</em> architecture, <em>Tablet console</em> guide, MT-3-19 revised, the ignored <code>serve_for_a_browser</code> helper in the unit-test list. <strong>Keeping the tablet awake (app 0.4.8, main <code>f1c8be8</code>):</strong> new R-CON-022 (implemented), F-CON-004, protocol and architecture sections, user-guide section with the Auto-Lock fallback, HTTP ranges, <code>remote::http::ranges_are_served_as_partial_content</code>, MT-3-26. <strong>Press feedback and hit static (app 0.4.9):</strong> R-CON-023, R-CON-024 (implemented; <code>hits</code>, <code>hull_hits</code> in telemetry; interpretation awaiting the user's confirmation), guide, architecture, MT-3-27. <strong>Start-key guard (app 0.4.10, main <code>4edc9d7</code>):</strong> R-CON-025 (implemented, <code>input::StartGuard</code>), input architecture, MT-3-28. <strong>Two console layouts (C2, planned):</strong> R-CON-026, F-CON-004 and F-CON-008, the C2 plan row, the guide. <strong>Simple physics (app 0.4.6):</strong> user guide (<em>Controls › Simple physics</em>, <em>Getting started</em>), MT-3-25. Index counts corrected (87 features, 208 requirements)</td>
 </tr>
 <tr>
 <td>0.13.0</td>

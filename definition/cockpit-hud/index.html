@@ -602,6 +602,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-hud-009-cockpits-on-wide-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-HUD-009 Cockpits on wide screens
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1718,6 +1729,8 @@
       
         
       
+        
+      
     
     
     
@@ -2055,6 +2068,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5998,6 +6046,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#f-hud-009-cockpits-on-wide-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F-HUD-009 Cockpits on wide screens
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6141,6 +6200,17 @@
 <li><strong>Source:</strong> Plan item 3.6.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/cockpit-hud/#r-hud-012-atmosphere-instruments">R-HUD-012</a></li>
 </ul>
+<h3 id="f-hud-009-cockpits-on-wide-screens">F-HUD-009 Cockpits on wide screens<a class="headerlink" href="#f-hud-009-cockpits-on-wide-screens" title="Permanent link">&para;</a></h3>
+<p><strong>What.</strong> A cockpit drawn for 4:3 (the original's 640×480 art) looks right on a wide screen. A pack can define, per cockpit:
+- side bands that block the 3D view on either side of the cockpit art, in a colour (black by default), either full height or only beside the dashboard;
+- and/or extension art that fills those bands.</p>
+<p>The view through the canopy keeps the same height whatever the screen's width.</p>
+<p><strong>Why.</strong> On a 16:9 or wider screen the 4:3 art sits in the middle, with space showing through at the sides, where the cockpit should be.</p>
+<ul>
+<li><strong>Status:</strong> implemented</li>
+<li><strong>Source:</strong> User request, 2026-11-11: "we need to accommodate wide screens. The main problem is the cockpit consoles, which in the original proportions are 4x3 aspect ratio. Simplest solution is add override in the packs that extend the cockpit image to account for wider screens or to have a blackout area defined where the 3d view is blocked on either side of the cockpit base zone such that the player view vertical area remains consistent."</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/cockpit-hud/#r-hud-013-wide-screen-side-bands">R-HUD-013</a></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6160,6 +6230,11 @@
 <td>1.1.0</td>
 <td>2026-11-11</td>
 <td>F-HUD-006 and F-HUD-007 implemented (app 0.3.1)</td>
+</tr>
+<tr>
+<td>1.8.0</td>
+<td>2026-11-11</td>
+<td>F-HUD-009 cockpits on wide screens</td>
 </tr>
 </tbody>
 </table>

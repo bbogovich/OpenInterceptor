@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -3865,10 +3902,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#action-groups" class="md-nav__link">
+  <a href="#simple-physics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Action groups
+        Simple physics
       
     </span>
   </a>
@@ -5831,10 +5868,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#action-groups" class="md-nav__link">
+  <a href="#simple-physics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Action groups
+        Simple physics
       
     </span>
   </a>
@@ -5896,7 +5933,21 @@ views). <strong>F12</strong> in the cockpit view of a ship with cockpit art open
 <a href="../../modding/cockpits/">cockpit layout editor</a> instead.</p>
 <p>The overlay is built from the same action table as the bindings file and the controls menu, so
 it always shows what the keys really do, including your own changes.</p>
-<h2 id="action-groups">Action groups<a class="headerlink" href="#action-groups" title="Permanent link">&para;</a></h2>
+<h2 id="simple-physics">Simple physics<a class="headerlink" href="#simple-physics" title="Permanent link">&para;</a></h2>
+<p>OpenInterceptor flies <strong>Realistic</strong> (Newtonian) physics by default: the craft keeps drifting in
+the direction it was going after you turn, until thrust or the brake changes it. Players used to
+traditional space fighter games can choose <strong>Simple</strong> physics instead:</p>
+<ul>
+<li>In the <strong>launcher</strong>, press <strong>P</strong>. The campaign line shows <em>Physics: Simple (P: change)</em> or
+  <em>Physics: Realistic (P: change)</em>. The choice is saved in <code>settings.yaml</code> (<code>game.physics</code>,
+  <a href="../settings/">Settings</a>).</li>
+<li>In Simple, your craft always travels where its nose points, at the speed the throttle sets,
+  with no drift after a turn or a collision. The slide (VCT) keys still move it sideways.
+  Enemy and wingman craft fly as before.</li>
+<li>Simple is offered only on the campaign's <strong>first three difficulty levels</strong>. At higher levels
+  the launcher shows <em>Physics: Realistic (always, at this level)</em> and P does nothing.</li>
+<li>In flight, the HUD's status line shows <strong>SIMPLE</strong> while it is in use.</li>
+</ul>
 <table>
 <thead>
 <tr>

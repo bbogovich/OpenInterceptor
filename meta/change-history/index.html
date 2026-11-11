@@ -1544,6 +1544,8 @@
       
         
       
+        
+      
     
     
     
@@ -1881,6 +1883,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5760,6 +5797,18 @@ its own revision history.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.8.0</td>
+<td>2026-11-11</td>
+<td><strong>Definition:</strong> <a href="../../definition/cockpit-hud/">definition/cockpit-hud.md</a>. <strong>Specification:</strong> <a href="../../specification/requirements/cockpit-hud/">specification/requirements/cockpit-hud.md</a></td>
+<td>F-HUD-009 and R-HUD-013: cockpits on wide screens: side bands (blackout, from, extension art) per cockpit (<code>cockpits.&lt;id&gt;.wide</code>).</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td><strong>Definition:</strong> <a href="../../definition/">definition/index.md</a>, <a href="../../definition/modding-toolkit/">definition/modding-toolkit.md</a>, <a href="../../definition/platforms/">definition/platforms.md</a>, <a href="../../definition/control-console/">definition/control-console.md</a>. <strong>Specification:</strong> <a href="../../specification/">specification/index.md</a>, <a href="../../specification/design/designer/">specification/design/designer.md</a> (new), <a href="../../specification/design/format-interface/">specification/design/format-interface.md</a>, <a href="../../specification/requirements/modding/">specification/requirements/modding.md</a>, <a href="../../specification/requirements/platforms/">specification/requirements/platforms.md</a>, <a href="../../specification/requirements/control-console/">specification/requirements/control-console.md</a>, <a href="../../specification/console-protocol/">specification/console-protocol.md</a></td>
+<td><strong>Mod designer, cutscene designer and game bundling</strong> (planned; user request and decisions D1–D5 of 2026-11-11): new design page; F-MOD-009 – F-MOD-013, F-PLT-005; R-MOD-021 – R-MOD-047, R-PLT-007 – R-PLT-010 (the <code>harmless</code> and <code>aggressive</code> flags; video on Linux via GStreamer loaded with <code>dlopen</code>, to be evaluated; two build artifacts, game and designer); plan items MD1–MD7. <strong>Console:</strong> pairing from any screen (app 0.4.7, main <code>c42d773</code>): the server's own <code>welcome</code>, the launcher's catalogue and idle telemetry with <code>state</code>, <code>?code=</code> (R-CON-009, R-CON-010, R-CON-014 notes); new R-CON-022 keep the tablet awake (app 0.4.8, main <code>f1c8be8</code>), R-CON-023 button press feedback and R-CON-024 hit static (app 0.4.9; <code>hits</code>, <code>hull_hits</code> in telemetry; interpretation awaiting confirmation), implemented, and F-CON-004 updated. R-CON-025 keys held at a battle's start are ignored (app 0.4.10, main <code>4edc9d7</code>), implemented (F-CON-001); R-CON-026 two console layouts, All-in-one and Cockpit (C2), planned (F-CON-004, F-CON-008). Index counts corrected: 87 features, 208 requirements.</td>
+</tr>
 <tr>
 <td>1.6.0</td>
 <td>2026-11-11</td>

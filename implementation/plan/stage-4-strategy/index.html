@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -2745,6 +2782,17 @@
     <span class="md-ellipsis">
       
         Work items
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mod-and-cutscene-designer-md1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mod and cutscene designer (MD1)
       
     </span>
   </a>
@@ -5799,6 +5847,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#mod-and-cutscene-designer-md1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mod and cutscene designer (MD1)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5925,6 +5984,28 @@ and "jump to battle" from any contact.</p>
 <code>interceptor</code> campaign deliberately does not use (it stays faithful to the original; an addon
 could add it). It is all YAML data and a campaign may leave it out. Decisions and the one open
 question (cargo capacity): <a href="../../../specification/design/logistics/#decisions-2026-11-11">Logistics</a>.</p>
+<h2 id="mod-and-cutscene-designer-md1">Mod and cutscene designer (MD1)<a class="headerlink" href="#mod-and-cutscene-designer-md1" title="Permanent link">&para;</a></h2>
+<p>From the <a href="../../../specification/design/designer/">mod designer, cutscene designer and game bundling</a> design (decisions D1–D5
+made 2026-11-11). The design places MD1 at "Stage 3 / 4"; it is planned here, in Stage 4. It
+comes first because it <strong>also serves wingmen</strong>: battles use it before any cutscene does.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Module</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MD1</td>
+<td><strong>Shared formations</strong>: <code>formations:</code> pack data (vee, line abreast, echelon, box, diamond, custom), used by wingmen first; replaces today's per-scenario slot offsets; keeps the <code>flight.formation_gap</code> spacing (<a href="../../../specification/requirements/combat/#r-cmb-022-wingmen-keep-their-distance">R-CMB-022</a>). Later used by cutscene formations (MD2)</td>
+<td><code>content</code>, <code>sim::ai</code></td>
+<td><a href="../../../specification/requirements/modding/#r-mod-047-shared-formations">R-MOD-047</a>, <a href="../../../specification/requirements/modding/#r-mod-039-formations-in-cutscenes">R-MOD-039</a></td>
+</tr>
+</tbody>
+</table>
 <p><strong>Exit</strong>: both campaigns' strategy layers run for 6 game months without errors, with economy,
 research and bases behaving as specified; save/load round-trips (unit tests on synthetic
 campaigns; manual long-run test).</p>

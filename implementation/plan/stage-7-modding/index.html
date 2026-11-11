@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -2829,6 +2866,17 @@
     <span class="md-ellipsis">
       
         Work items
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mod-and-cutscene-designer-md4-md6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mod and cutscene designer (MD4-MD6)
       
     </span>
   </a>
@@ -5799,6 +5847,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#mod-and-cutscene-designer-md4-md6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mod and cutscene designer (MD4-MD6)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5874,6 +5933,41 @@ extend a campaign.</p>
 <td>7.9</td>
 <td>Modding guide finished: tutorials from "change one number" through "an addon" and "a campaign that extends another" to "a new campaign", built on the default campaign</td>
 <td>docs</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mod-and-cutscene-designer-md4-md6">Mod and cutscene designer (MD4-MD6)<a class="headerlink" href="#mod-and-cutscene-designer-md4-md6" title="Permanent link">&para;</a></h2>
+<p>From the <a href="../../../specification/design/designer/">mod designer, cutscene designer and game bundling</a> design (decisions D1–D5
+made 2026-11-11). The designer is a <strong>separate program in the same repository</strong> (D5): a second
+binary, <code>openinterceptor-designer</code>, sharing the engine library, built with macroquad's UI module
+and the engine renderer (D1), so the build produces two artifacts, the game and the designer.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Module</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MD4</td>
+<td><strong>Designer application shell</strong>: the second binary and build artifact; pack wizard with base selection and folder skeleton; pack tree, schema-driven forms and the YAML view; undo; saving that keeps hand-written files; validation on save; play in the testbed; export as folder or zip</td>
+<td><code>designer</code> (new binary)</td>
+<td><a href="../../../specification/requirements/modding/#r-mod-021-designer-application">R-MOD-021 – R-MOD-024</a>, <a href="../../../specification/requirements/modding/#r-mod-028-validate-on-save-play-in-the-testbed">R-MOD-028</a>, <a href="../../../specification/requirements/modding/#r-mod-030-package-a-pack">R-MOD-030</a></td>
+</tr>
+<tr>
+<td>MD5</td>
+<td><strong>Asset import</strong> with dependencies (including conversion from original formats by the extractor), external editor launch, live reload, "where used", provenance recording in <code>pack.yaml</code></td>
+<td><code>designer</code>, <code>extract</code></td>
+<td><a href="../../../specification/requirements/modding/#r-mod-025-import-an-asset-with-its-dependencies">R-MOD-025 – R-MOD-027</a>, <a href="../../../specification/requirements/modding/#r-mod-029-provenance-of-imported-assets">R-MOD-029</a></td>
+</tr>
+<tr>
+<td>MD6</td>
+<td><strong>Cutscene Designer</strong>: outline, 3D map, preview, timeline with keyframes, cameras and cuts, sounds, captions, scrubbing with snapshots every 2 s</td>
+<td><code>designer</code></td>
+<td><a href="../../../specification/requirements/modding/#r-mod-031-cutscene-designer-workspace">R-MOD-031</a>, <a href="../../../specification/requirements/modding/#r-mod-032-seeking-with-snapshots">R-MOD-032</a></td>
 </tr>
 </tbody>
 </table>

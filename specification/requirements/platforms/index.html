@@ -1566,6 +1566,50 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-plt-007-product-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-007 Product file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-plt-008-bundled-game-builds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-008 Bundled game builds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-plt-009-nothing-original-is-bundled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-009 Nothing original is bundled
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-plt-010-validate-before-bundling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-010 Validate before bundling
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1677,6 +1721,8 @@
   
     
     
+      
+        
       
         
       
@@ -2035,6 +2081,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -5956,6 +6037,50 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#r-plt-007-product-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-007 Product file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-plt-008-bundled-game-builds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-008 Bundled game builds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-plt-009-nothing-original-is-bundled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-009 Nothing original is bundled
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-plt-010-validate-before-bundling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-PLT-010 Validate before bundling
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5990,7 +6115,7 @@
 
 
 <h1 id="platforms-requirements">Platforms requirements<a class="headerlink" href="#platforms-requirements" title="Permanent link">&para;</a></h1>
-<p>Requirements for the macOS, Linux and Windows builds, packaging and dependencies.</p>
+<p>Requirements for the macOS, Linux and Windows builds, packaging, dependencies and (planned) bundling a complete game.</p>
 <p>Features: <a href="../../../definition/platforms/">Platforms</a>. How to read a requirement: <a href="../../#reading-a-requirement">Specification</a>.</p>
 <table>
 <thead>
@@ -6023,6 +6148,22 @@
 <tr>
 <td><a href="#r-plt-006-unsafe-only-at-boundaries">R-PLT-006 Unsafe only at boundaries</a></td>
 <td>Implemented</td>
+</tr>
+<tr>
+<td><a href="#r-plt-007-product-file">R-PLT-007 Product file</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-plt-008-bundled-game-builds">R-PLT-008 Bundled game builds</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-plt-009-nothing-original-is-bundled">R-PLT-009 Nothing original is bundled</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-plt-010-validate-before-bundling">R-PLT-010 Validate before bundling</a></td>
+<td>Planned</td>
 </tr>
 </tbody>
 </table>
@@ -6089,6 +6230,50 @@
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../learning/rust/ffi-unsafe/">FFI, repr(C) and unsafe</a></li>
 </ul>
+<h3 id="r-plt-007-product-file">R-PLT-007 Product file<a class="headerlink" href="#r-plt-007-product-file" title="Permanent link">&para;</a></h3>
+<p>A creator's project MUST be able to describe a complete game in a product file, <code>product.yaml</code>: name, version, bundle id and icon; splash image and intro cutscene; the packs to include, in load order; the default campaign; whether the testbed, model viewer and developer tools are shown (off for a release); licence and credit files.</p>
+<p><em>Rationale:</em> The user's request: "release a complete game without requiring manual download and installation of packs and mods".</p>
+<ul>
+<li>Implements: <a href="../../../definition/platforms/#f-plt-005-game-bundling">F-PLT-005</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned (MD7).</li>
+<li>See: <a href="../../design/designer/#5-bundling-a-complete-game">Mod designer: bundling a complete game</a></li>
+</ul>
+<h3 id="r-plt-008-bundled-game-builds">R-PLT-008 Bundled game builds<a class="headerlink" href="#r-plt-008-bundled-game-builds" title="Permanent link">&para;</a></h3>
+<p>The build MUST produce two artifacts from the one repository: the <strong>game</strong> and the <strong>designer</strong> (R-MOD-021). From a product file, the build tool (<code>tools/build_bundle.py --product product.yaml</code>, or the designer's "Package game") MUST build a product bundle from the game artifact that:</p>
+<ul>
+<li>contains the engine, <code>resources/default</code> when the product uses it, and exactly the listed packs;</li>
+<li>is named and branded as the product;</li>
+<li>starts directly in the product's default campaign;</li>
+<li>hides the testbed, model viewer and developer tools when the product says so;</li>
+<li>still loads the player's own mods from their user folder on top.</li>
+</ul>
+<p>It MUST write the macOS <code>.app</code>, and the Linux and Windows packages once those exist (R-PLT-004).</p>
+<p><em>Rationale:</em> A creator ships a game in its own right; players install nothing by hand. The designer is a separate program (decision D5, 2026-11-11), not part of a product.</p>
+<ul>
+<li>Implements: <a href="../../../definition/platforms/#f-plt-005-game-bundling">F-PLT-005</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned (MD7).</li>
+<li>See: <a href="../../design/designer/#5-bundling-a-complete-game">Mod designer: bundling a complete game</a>, <a href="../../../implementation/build/packaging/">Packaging</a></li>
+</ul>
+<h3 id="r-plt-009-nothing-original-is-bundled">R-PLT-009 Nothing original is bundled<a class="headerlink" href="#r-plt-009-nothing-original-is-bundled" title="Permanent link">&para;</a></h3>
+<p>The bundler MUST refuse a pack with <code>requires_original</code>, and any file recorded as converted from original data (R-MOD-029). A pack built on <code>interceptor</code> MAY be shared as a mod, but MUST NOT be bundled into a product.</p>
+<p><em>Rationale:</em> No original content is ever distributed (project rule).</p>
+<ul>
+<li>Implements: <a href="../../../definition/platforms/#f-plt-005-game-bundling">F-PLT-005</a>, <a href="../../../definition/compatibility/#f-cmp-003-no-original-content-in-the-project">F-CMP-003</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned (MD7).</li>
+<li>See: <a href="../../design/designer/#5-bundling-a-complete-game">Mod designer: bundling a complete game</a></li>
+</ul>
+<h3 id="r-plt-010-validate-before-bundling">R-PLT-010 Validate before bundling<a class="headerlink" href="#r-plt-010-validate-before-bundling" title="Permanent link">&para;</a></h3>
+<p>The full validator MUST run on the product's packs and report no errors before a bundle is written.</p>
+<p><em>Rationale:</em> A released game starts without content errors.</p>
+<ul>
+<li>Implements: <a href="../../../definition/platforms/#f-plt-005-game-bundling">F-PLT-005</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned (MD7).</li>
+<li>See: <a href="../modding/#r-mod-017-full-validator">R-MOD-017</a></li>
+</ul>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6103,6 +6288,11 @@
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap: R-PLT-001 – R-PLT-006 (6 requirements; 4 reverse-engineered from the code)</td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>2026-11-11</td>
+<td>R-PLT-007 – R-PLT-010 (planned): game bundling — the product file, two build artifacts (game and designer, decision D5) and branded product builds, the provenance guard, validation first</td>
 </tr>
 </tbody>
 </table>

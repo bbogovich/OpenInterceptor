@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -4669,6 +4706,50 @@
     <span class="md-ellipsis">
       
         MT-3-24 — Original data from resources/xcom or resources/xcom-cd; start-up without a shader error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-25-simple-physics-for-beginners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-25 — Simple physics for beginners
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-26-console-the-tablet-stays-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-26 — Console: the tablet stays awake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-27-console-press-feedback-and-hit-static" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-27 — Console: press feedback and hit static
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-28-no-shot-from-the-start-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-28 — No shot from the start key
       
     </span>
   </a>
@@ -8008,6 +8089,50 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-3-25-simple-physics-for-beginners" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-25 — Simple physics for beginners
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-26-console-the-tablet-stays-awake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-26 — Console: the tablet stays awake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-27-console-press-feedback-and-hit-static" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-27 — Console: press feedback and hit static
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-3-28-no-shot-from-the-start-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-3-28 — No shot from the start key
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10346,7 +10471,9 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 <h2 id="stage-3-results">Stage 3 results<a class="headerlink" href="#stage-3-results" title="Permanent link">&para;</a></h2>
 <p>App 0.3.0 (main <code>d7553f5</code>); MT-3-13 – MT-3-18 cover the interlude's playtest fixes in app 0.3.1
 (main <code>c583659</code>); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main <code>dfff71b</code>), and
-MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2, main <code>bf7b7ce</code>). Each mission case: fly it once to a <strong>win</strong> and once to a <strong>loss</strong>, and read the
+MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2, main <code>bf7b7ce</code>). MT-3-19 was revised for
+pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>); MT-3-25 covers Simple physics (0.4.6, main
+<code>9671555</code>) MT-3-26 keeping the tablet awake (0.4.8, main <code>f1c8be8</code>) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main <code>4edc9d7</code>). Each mission case: fly it once to a <strong>win</strong> and once to a <strong>loss</strong>, and read the
 <strong>debrief</strong> each time.</p>
 <table>
 <thead>
@@ -10526,11 +10653,11 @@ MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2
 <tr>
 <td>MT-3-19</td>
 <td>Console: pairing from an iPad</td>
-<td>any, with <code>--console</code></td>
+<td>Launcher and any scenario, with <code>--console</code></td>
 <td>not run</td>
 <td></td>
 <td></td>
-<td>Needs the user: the game could not be started from the agent environment</td>
+<td>Needs the user. Revised for app 0.4.7: pairing from the launcher, the code accepted on the sixth digit; checked in headless Chrome against a live server (paired, 9 groups, 65 buttons, "Not flying (launcher)")</td>
 </tr>
 <tr>
 <td>MT-3-20</td>
@@ -10576,6 +10703,42 @@ MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2
 <td></td>
 <td></td>
 <td>App 0.4.1 / 0.4.2; needs original data for steps 2–4</td>
+</tr>
+<tr>
+<td>MT-3-25</td>
+<td>Simple physics for beginners</td>
+<td>Launcher; <code>rocket-vs-saucer</code> (default)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.4.6</td>
+</tr>
+<tr>
+<td>MT-3-26</td>
+<td>Console: the tablet stays awake</td>
+<td>any, with <code>--console</code></td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.4.8; needs an iPad. Checked in headless Chrome only (localhost: wake lock; LAN address: video)</td>
+</tr>
+<tr>
+<td>MT-3-27</td>
+<td>Console: press feedback and hit static</td>
+<td><code>rocket-vs-saucer</code> (default), with <code>--console</code></td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.4.9; hit-static interpretation awaiting the user's confirmation</td>
+</tr>
+<tr>
+<td>MT-3-28</td>
+<td>No shot from the start key</td>
+<td>Launcher; any mission</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.4.10</td>
 </tr>
 </tbody>
 </table>
@@ -10951,15 +11114,15 @@ MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2
 <tbody>
 <tr>
 <td>Preconditions</td>
-<td>The computer and an iPad on the same Wi-Fi (not a guest network).</td>
+<td>The computer and an iPad on the same Wi-Fi (not a guest network). App 0.4.7 or later.</td>
 </tr>
 <tr>
 <td>Steps</td>
-<td>1. Start <code>openinterceptor --console --no-original --scenario rocket-vs-saucer --ship comet</code>; read the terminal line and the bottom-left hint. 2. On the iPad open the URL in Safari. 3. Type a wrong code three times. 4. Reload, type the right code. 5. Watch the telemetry while flying; open the menu (Esc) in the game. 6. Quit; start again with <code>console: {enabled: true, port: 9000}</code> in <code>settings.yaml</code> and no <code>--console</code>; pair again on port 9000. 7. Start a second program on the same port first (for example <code>python3 -m http.server 9000</code>), then the game.</td>
+<td>1. Start <code>openinterceptor --console --no-original</code> and stay on the <strong>launcher</strong>; read the terminal line and the launcher's console status. 2. On the iPad open the URL in Safari. 3. Type a wrong code three times. 4. Reload, and type the right code <strong>without pressing anything after the sixth digit</strong>. 5. Start <code>rocket-vs-saucer</code> with the Comet from the launcher; watch the telemetry while flying; open the menu (Esc) in the game. 6. Quit; start again with <code>console: {enabled: true, port: 9000}</code> in <code>settings.yaml</code> and no <code>--console</code>; open <code>http://&lt;address&gt;:9000/?code=&lt;code&gt;</code> directly. 7. Quit the game with the page open, then type a code. 8. Start a second program on the same port first (for example <code>python3 -m http.server 9000</code>), then the game.</td>
 </tr>
 <tr>
 <td>Expected</td>
-<td>1: the terminal prints <code>console: open http://&lt;address&gt;:8765 on the tablet; pairing code NNNNNN</code>, and the flight screen shows <code>CONSOLE &lt;url&gt;   CODE NNNNNN</code> at the bottom left. 2: the pairing page asks for the code. 3: each wrong code shows <em>wrong pairing code</em>; after the third the page shows <em>Disconnected</em>. 4: the page switches to the console as the sixth digit is typed; the bottom-left hint disappears in the game. 5: craft, speed, drift, hull, energy, shields, missile and target update smoothly (about 20 times a second); the hint shows again while the menu is open. 6: the console works on port 9000 without <code>--console</code>. 7: the game reports that the port is not available and runs normally without the console.</td>
+<td>1: the terminal prints <code>console: open http://&lt;address&gt;:8765 on the tablet; pairing code NNNNNN</code>, and the launcher shows the console's address and code. 2: the pairing page asks for the code, with the number pad. 3: each wrong code shows <em>wrong pairing code</em>; after the third the page shows <em>Disconnected</em>. 4: <em>Connecting…</em> shows as the sixth digit is typed, then the console appears at once (no Enter needed), on the launcher; the craft cell reads <em>Not flying (launcher)</em> and every group and button is shown. 5: when the battle starts the buttons reflect the Comet (<em>not fitted</em> where it lacks equipment); craft, speed, drift, hull, energy, shields, missile and target update smoothly (about 20 times a second); the bottom-left hint shows again while the menu is open. 6: the page pairs from the address alone, on port 9000, without <code>--console</code>. 7: <em>Could not reach the game. Is it still running?</em> 8: the game reports that the port is not available and runs normally without the console.</td>
 </tr>
 </tbody>
 </table>
@@ -11075,6 +11238,98 @@ MT-3-24 the lit-shader fix (0.4.1) and the <code>resources/</code> layout (0.4.2
 <tr>
 <td>Expected</td>
 <td>Every start shows no shader error (the lit shader links; app 0.4.1) and ships are lit. 1: only the default campaign loads, with no error. 2: <code>interceptor</code> loads from the CD copy. 3: the installed copy is used (it is tried first). 4: the gate runs the original-data checks on the folder found and passes; <code>git status</code> shows nothing under <code>resources/xcom*</code>. 5: the app opens with the default campaign (<code>Contents/Resources/resources/default</code>) and the bundled mods, and finds the original data through <code>settings.yaml</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-25-simple-physics-for-beginners">MT-3-25 — Simple physics for beginners<a class="headerlink" href="#mt-3-25-simple-physics-for-beginners" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.4.6 or later.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Start <code>openinterceptor --no-original</code>; on the launcher set difficulty (D) to the first level and press <strong>P</strong> until it reads <em>Physics: Simple</em>. 2. Start <code>rocket-vs-saucer</code> with the Comet. Full throttle, then yaw 90° and hold the nose there; throttle down to 0; collide gently with the saucer. 3. Back on the launcher, press P to <em>Realistic</em> and repeat step 2. 4. Step D through the levels to the fourth (<code>space_ace</code> in the default campaign) and press P. 5. Back on the first level, quit and start again.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the launcher's campaign line reads <em>Physics: Simple (P: change)</em>; <code>settings.yaml</code> gets <code>game: {physics: simple}</code>. 2: the HUD status line shows <strong>SIMPLE</strong>; the craft always travels where its nose points — after the yaw the velocity turns with the nose and the drift readout stays X 0 Y 0; at throttle 0 the craft slows to a stop; after the collision any sideways drift is gone at once. Enemy craft behave as before. 3: no SIMPLE on the HUD; the craft drifts after the yaw, as in MT-3-13. 4: on the second and third levels Simple is still offered; on the fourth the line reads <em>Physics: Realistic (always, at this level)</em>, P does nothing and the HUD shows no SIMPLE. 5: the choice is remembered.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-26-console-the-tablet-stays-awake">MT-3-26 — Console: the tablet stays awake<a class="headerlink" href="#mt-3-26-console-the-tablet-stays-awake" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>MT-3-19 paired, on an iPad over plain http. iPad Auto-Lock set to its shortest time (for example 30 seconds). App 0.4.8 or later.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Pair, then leave the iPad untouched on the console page for three times the Auto-Lock time, on the launcher and then in a battle. 2. Read the telemetry's <strong>Tablet</strong> cell. 3. Switch to another app and back to Safari; wait again. 4. Lock the iPad, unlock it and return to the page; tap once if the cell asks. 5. Repeat step 1 in a desktop browser opened on <code>http://127.0.0.1:8765</code> on the game's computer.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the iPad's screen does not dim or lock while the page is open. 2: the cell reads <em>screen kept awake</em> (the silent video; Safari offers no wake lock over http). No video is visible and no sound plays. 3 and 4: after returning, the cell again reads <em>screen kept awake</em> (at most after one tap, when it says <em>tap the screen to keep it awake</em>), and the screen stays on. 5: the cell reads <em>screen kept awake (wake lock)</em>. If the iPad still sleeps, record it as a finding; the user-guide fallback is Settings › Display &amp; Brightness › Auto-Lock.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-27-console-press-feedback-and-hit-static">MT-3-27 — Console: press feedback and hit static<a class="headerlink" href="#mt-3-27-console-press-feedback-and-hit-static" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>MT-3-19 paired, in <code>rocket-vs-saucer</code> with the Comet. App 0.4.9 or later.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Hold <em>Yaw left</em> for two seconds, then release. 2. Tap <em>Next target</em> quickly, several times. 3. Let the saucer shoot you while your shields are up. 4. Let it keep shooting until hits reach the hull. 5. Fly clear and watch the console for a while without being hit.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the button fills with its border colour and its text turns black for the whole hold, and returns to normal on release. 2: every tap visibly lights the button (at least about 0.15 s), even a very quick one. 3: each shield hit shows a light burst of static on the console, about 0.4 s, fading out. 4: hull hits show a stronger static burst. 5: no static without hits; the buttons stay readable during the effect.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-3-28-no-shot-from-the-start-key">MT-3-28 — No shot from the start key<a class="headerlink" href="#mt-3-28-no-shot-from-the-start-key" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.4.10 or later.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. In the launcher choose <code>defend_station</code> (default) and press <strong>Enter</strong>, holding it for a second. 2. Release Enter, then press it again. 3. Open the menu (Esc) and restart (R); then end the mission and press Enter on the debrief, holding it. 4. With a gamepad, start a mission with <strong>A</strong> and keep it held; release it and press again. 5. Start a mission while holding the fire mouse button (mouse flight on).</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: no beam fires at the start, however long Enter is held. 2: the second press fires normally. 3: the retried mission starts without a shot. 4: no A action in flight until A is released and pressed again. 5: no shot until the mouse button is released and pressed again.</td>
 </tr>
 </tbody>
 </table>

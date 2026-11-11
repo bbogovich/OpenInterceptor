@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -6929,6 +6966,12 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <td>mapping name: <code>{at, normal, size}</code></td>
 <td>none</td>
 <td>3D cockpits: instruments drawn in perspective on the model's surface (below).</td>
+</tr>
+<tr>
+<td><code>wide</code></td>
+<td><code>{blackout, color, from, left, right}</code></td>
+<td>none</td>
+<td>Wide screens: the bands left and right of narrower 2D cockpit art. <code>blackout: true</code> fills them with <code>color</code> (default black), hiding the 3D view there; <code>from</code> (design-space y, default 0) starts them lower, e.g. at the dashboard's top so space still shows beside the canopy; <code>left</code>/<code>right</code> are your own images stretched over each band (<a href="../../specification/requirements/cockpit-hud/#r-hud-013-wide-screen-side-bands">R-HUD-013</a>).</td>
 </tr>
 </tbody>
 </table>

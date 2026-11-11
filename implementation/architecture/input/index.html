@@ -1546,6 +1546,8 @@
       
         
       
+        
+      
     
     
     
@@ -1883,6 +1885,41 @@
     
   
     Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
   
 
     
@@ -3251,6 +3288,17 @@
     <span class="md-ellipsis">
       
         The controls menu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keys-held-when-a-battle-starts-app-0410" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keys held when a battle starts (app 0.4.10)
       
     </span>
   </a>
@@ -5861,6 +5909,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#keys-held-when-a-battle-starts-app-0410" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keys held when a battle starts (app 0.4.10)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6022,6 +6081,14 @@ slots and two pad slots. <code>activate</code> starts a <code>Capture</code>:</p
 <code>clear</code>, <code>reset_selected</code> and <code>reset_all</code> restore defaults. The screen is a component with a
 <code>frame</code> method so the launcher and the in-flight pause menu (<code>K</code>) can both host it; it gives up
 a capture after 8 s (<code>CAPTURE_TIMEOUT</code>).</p>
+<h3 id="keys-held-when-a-battle-starts-app-0410">Keys held when a battle starts (app 0.4.10)<a class="headerlink" href="#keys-held-when-a-battle-starts-app-0410" title="Permanent link">&para;</a></h3>
+<p>Enter starts a mission from the launcher, the restart prompt and the debrief, and Enter is
+also a fire key; the pad's A button both starts and acts in flight. <code>input::StartGuard</code>, applied
+first in the flight screen's frame right after the devices are read, records the keys, pad
+buttons, triggers and mouse button held on the battle's first frame and filters each out of
+every later frame until it is released; a fresh press then works normally
+(<a href="../../../specification/requirements/control-console/#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored">R-CON-025</a>;
+test <code>keys_held_when_a_battle_starts_are_ignored_until_released</code>).</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
