@@ -1,5 +1,5 @@
 ---
-spec_version: 1.5.0
+spec_version: 1.6.0
 status: current
 updated: 2026-11-11
 ---
@@ -82,6 +82,19 @@ Requirements for these features: [Flight requirements](../specification/requirem
 - **Source:** Plan item 1.7; user request, 2026-11-11: "Formation flying - problems frequently occur where a wingman collides with the player and continues pushing, resulting in a \"hammering\" series of sounds. Formations probably need to have a bit more distance, and wingman fighters should actively try to avoid collisions. Collision should also cause more of an impact and result in directional changes and spin based on relative velocity and angle of impact. This will result in a collision causing fighter to \"spin out of control\". A collision that persists (fighter effectively pushing and staying attached to another) should only play the impact sound effect on initial impact."
 - **Specified by:** [R-FLT-009](../specification/requirements/flight.md#r-flt-009-collisions)
 
+### F-FLT-008 Simple physics for beginners
+
+**What.** A player-selectable physics mode, **Simple** or **Realistic**.
+- In Simple mode the player's craft always travels where its nose points, at a speed set by the engine power, with no drift: it flies like a traditional space fighter game.
+- Realistic is the Newtonian model with drift.
+- The choice is offered only on the campaign's first three difficulty levels. Higher levels always use Realistic.
+
+**Why.** Beginners used to traditional fighter games find drift hard. Higher levels keep the full simulation.
+
+- **Status:** implemented
+- **Source:** User request, 2026-11-11: "Add a physics mode toggle - Simple and Realistic. Simple physics will function more like a general space fighter simulator similar to x-wing, where navigation always follows the player direction based on direction and engine power without the physics drift applied. This makes it easier for beginner players who are used to more traditional fighter games. The toggle is only available on the first three difficulty levels, anything higher always uses realistic physics."
+- **Specified by:** [R-FLT-013](../specification/requirements/flight.md#r-flt-013-simple-physics-mode)
+
 ### F-FLT-007 Atmospheric flight over terrain
 
 **What.** On planet surfaces craft feel drag, gravity and lift, can hover and land, and fly over terrain with ground installations, a sky and fog.
@@ -98,3 +111,4 @@ Requirements for these features: [Flight requirements](../specification/requirem
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-FLT-001 – F-FLT-007 (7 features) |
 | 1.5.0 | 2026-11-11 | F-FLT-006: impact, spin, tumble and one sound per contact |
+| 1.6.0 | 2026-11-11 | F-FLT-008 simple physics for beginners |

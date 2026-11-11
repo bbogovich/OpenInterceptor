@@ -28,6 +28,7 @@ game:
   campaign: default
   difficulty: ranger
   language: en
+  physics: simple       # or realistic
 graphics:
   brightness: 1.2
 console:
@@ -43,6 +44,7 @@ console:
 | `game.campaign` | the last chosen, else `interceptor` if its data is found, else `default` | The campaign to load; the launcher's Tab writes it, `--campaign` overrides it for one run. |
 | `game.difficulty` | the campaign's default level | A difficulty level of `game.campaign` (the launcher's D writes it, `--difficulty` overrides it). Ignored when another campaign is loaded. |
 | `game.language` | `en` | The text language: the packs' `text/<language>/` folders (`--language` overrides it). |
+| `game.physics` | `realistic` | `simple`: the player's craft always flies where its nose points, with no drift, like a traditional space fighter game. Used only on a campaign's first three difficulty levels; higher levels always fly `realistic`. The launcher's **P** key switches it ([R-FLT-013](../specification/requirements/flight.md#r-flt-013-simple-physics-mode)). |
 | `graphics.brightness` | 1 | The picture's brightness: 1 is as authored, from 0.5 (darker) to 2 (brighter); values outside are clamped. It lifts dark tones more than bright ones (a gamma), so ships in shadow become easier to see without washing out lit faces. The HUD and cockpit art are not changed. Read when the game starts. |
 | `console.enabled` | `false` | Serve the [tablet control console](console.md) (`--console` turns it on for one run). |
 | `console.port` | 8765 | The console's port; change it if another program uses 8765 (`--console-port` overrides it). |

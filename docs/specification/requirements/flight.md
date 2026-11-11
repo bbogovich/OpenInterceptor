@@ -1,5 +1,5 @@
 ---
-spec_version: 1.5.0
+spec_version: 1.6.0
 status: current
 updated: 2026-11-11
 ---
@@ -182,9 +182,28 @@ A surface environment MUST provide a heightfield from an image or a generator (c
 - Verified by: Planned.
 - See: [Format: missions, environments, events](../design/format-missions.md)
 
+### R-FLT-013 Simple physics mode
+
+The player MUST be able to choose `simple` or `realistic` physics: in the launcher (key P), or with `game: {physics: simple}` in settings.yaml. The default is `realistic`.
+
+**Simple** applies to the player's craft only:
+- its velocity MUST always lie along its nose, at the throttle (or speed-hold, afterburner, brake) speed, reached at the craft's acceleration;
+- sideways and vertical velocity MUST be only what the slide (VCT) thrusters ask for, with no drift left after turning or after a collision.
+
+The choice MUST take effect only when the campaign's difficulty is one of its first three levels. At any higher level the player MUST fly Realistic, and the launcher MUST say so.
+
+AI craft always fly the campaign's own model (`flight.model`).
+
+*Rationale:* An easier entry for players used to traditional fighter games, without changing the challenge at higher levels or the AI's behaviour.
+
+- Implements: [F-FLT-008](../../definition/flight.md#f-flt-008-simple-physics-for-beginners)
+- Status: implemented
+- Verified by: `sim::flight::tests::simple_physics_has_no_drift`, `sim::flight::tests::simple_physics_only_on_the_first_three_levels`, `settings::tests::parses_and_round_trips`
+
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-FLT-001 – R-FLT-012 (12 requirements; 10 reverse-engineered from the code) |
 | 1.5.0 | 2026-11-11 | R-FLT-009 revised: impulse with restitution, spin from glancing speed and impact angle, tumble, one impact per contact (`flight.collision`) |
+| 1.6.0 | 2026-11-11 | R-FLT-013 simple physics mode |
