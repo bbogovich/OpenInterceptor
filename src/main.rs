@@ -120,6 +120,9 @@ fn headless(options: &cli::Options) -> Option<i32> {
         for id in ids {
             let mut cfg = options.content_config();
             cfg.campaign = (!id.is_empty()).then_some(id.clone());
+            // The data is checked at each campaign's default level unless one was asked
+            // for: the player's remembered level may not exist in another campaign.
+            cfg.difficulty = options.difficulty.clone();
             let content = match Content::load(&cfg) {
                 Ok(c) => c,
                 Err(e) => {

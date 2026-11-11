@@ -169,8 +169,13 @@ impl Options {
             original: original.map(|(p, _)| p),
             no_original: self.no_original,
             disabled: settings.disabled_packs,
+            // The remembered difficulty belongs to the remembered campaign: it is used only
+            // when that campaign is the one being loaded (levels differ between campaigns).
+            difficulty: self.difficulty.clone().or_else(|| {
+                let same = self.campaign.is_none() || self.campaign == settings.campaign;
+                settings.difficulty.clone().filter(|_| same)
+            }),
             campaign: self.campaign.clone().or(settings.campaign),
-            difficulty: self.difficulty.clone().or(settings.difficulty),
         }
     }
 }
