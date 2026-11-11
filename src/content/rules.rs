@@ -36,14 +36,13 @@
 //!
 //! ## Difficulty
 //!
-//! The campaign lists its difficulty levels (`[campaign] Difficulty = cadet, ranger,
-//! captain, space_ace`) and the game is played at one of them. Two things then vary:
+//! The campaign lists its difficulty levels (`campaign: {difficulty: [cadet, ranger,
+//! captain, space_ace]}`) and the game is played at one of them. Two things then vary:
 //!
-//! - **Variants**: a section named `kind:id@level` (`[behaviour:wraith@superhuman]`)
-//!   *replaces* `kind:id` at that level. It inherits the base definition unless it says
-//!   `inherit = …` itself, so it only needs the keys that differ.
-//! - **Per-level values**: any value written with `|` gives one entry per level, in
-//!   order (`HitPoints = 80 | 100 | 120 | 150`); a shorter list repeats its last entry.
+//! - **Variants**: a definition's `variants: {<level>: {…}}` merges into it when the game
+//!   is played at that level, so a variant only needs the keys that differ.
+//! - **Per-level values**: any number may be written `{per_level: [80, 100, 120, 150]}`,
+//!   one value per level in order; a shorter list repeats its last entry.
 //!
 //! ## Index handles instead of references
 //!
