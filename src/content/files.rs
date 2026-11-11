@@ -354,7 +354,16 @@ pub fn rules_sections() -> Vec<Field> {
         f("flight", flight(), "flight model and sensors"),
         f("power", power(), "beam/shield charge settings"),
         f("damage", damage(), "damage to systems and repair"),
-        f("sounds", dict(Ty::Asset), "event name: sound"),
+        f("sounds", dict(Ty::Asset), "event name: sound (an asset, or cue:<Name> from the cue table)"),
+        f(
+            "audio",
+            Ty::Def(vec![f(
+                "cue_table",
+                Ty::Asset,
+                "a table of named sound cues: original:<file>/<section> (the original's soundfx.ini)",
+            )]),
+            "sound cue table",
+        ),
         f("campaign", campaign(), "the campaign ruleset"),
     ]
 }

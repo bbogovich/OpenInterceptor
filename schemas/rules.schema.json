@@ -259,7 +259,13 @@
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
       }},
-    "sounds": {"description": "event name: sound", "type": "object", "additionalProperties": {"type": "string"}},
+    "sounds": {"description": "event name: sound (an asset, or cue:<Name> from the cue table)", "type": "object", "additionalProperties": {"type": "string"}},
+    "audio": {"description": "sound cue table", "type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+        "cue_table": {"description": "a table of named sound cues: original:<file>/<section> (the original's soundfx.ini)", "type": "string"},
+        "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+        "delete": {"type": "boolean"},
+        "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+      }},
     "campaign": {"description": "the campaign ruleset", "type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
         "name": {"description": "campaign title", "type": "string"},
         "difficulty": {"description": "difficulty level ids, easiest first", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},

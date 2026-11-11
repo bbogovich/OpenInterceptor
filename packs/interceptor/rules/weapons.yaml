@@ -8,37 +8,37 @@ beams:
     inherit: original:GameSettings.ini/LaserCannon
     name: Laser Cannon
     color: [1.0, 0.25, 0.2]
-    sound: original:lasercannon.wav
+    sound: cue:Beam1
   heavy_laser:
     inherit: original:GameSettings.ini/HeavyLaser
     name: Heavy Laser
     color: [1.0, 0.5, 0.1]
-    sound: original:HeavyLaser.wav
+    sound: cue:Beam2
   gatling_laser:
     inherit: original:GameSettings.ini/GatlingLaser
     name: Gatling Laser
     color: [1.0, 0.9, 0.2]
-    sound: original:GatlingLaser.wav
+    sound: cue:Beam3
   tracer_cannon:
     inherit: original:GameSettings.ini/TracerCannon
     name: Tracer Cannon
     color: [0.4, 1.0, 1.0]
-    sound: original:tracercannon.wav
+    sound: cue:Beam5
   phase_cannon:
     inherit: original:GameSettings.ini/PhaseCannon
     name: Phase Cannon
     color: [0.6, 0.4, 1.0]
-    sound: original:PhaseCannon.wav
+    sound: cue:Beam4
   plasma_cannon:
     inherit: original:GameSettings.ini/PlasmaCannon
     name: Plasma Cannon
     color: [0.3, 1.0, 0.3]
-    sound: original:plasmacannon.wav
+    sound: cue:Beam6
   tachyon_pulser:
     inherit: original:GameSettings.ini/TachyonPulser
     name: Tachyon Pulser
     color: [0.9, 0.3, 1.0]
-    sound: original:TachyonPulser.wav
+    sound: cue:Beam8
 
 missiles:
   # Missiles: speed, duration, impact and proximity damage from the original. Turn rate
@@ -50,7 +50,7 @@ missiles:
     turn_rate: 100
     lock_time: 2.0
     color: [1.0, 0.85, 0.5]
-    sound: original:Xwinder.wav
+    sound: cue:Missile1
   permeator:
     inherit: original:GameSettings.ini/PermeatorMissile
     name: Permeator
@@ -58,7 +58,7 @@ missiles:
     turn_rate: 90
     lock_time: 2.5
     color: [0.6, 1.0, 0.6]
-    sound: original:PermeatorLaunch.wav
+    sound: cue:Missile3
   sidestep:
     inherit: original:GameSettings.ini/SidestepMissile
     name: Sidestep
@@ -66,21 +66,21 @@ missiles:
     turn_rate: 160
     lock_time: 2.0
     color: [0.6, 0.8, 1.0]
-    sound: original:Xwinder.wav
+    sound: cue:Missile1
   fusion:
     inherit: original:GameSettings.ini/FusionMissile
     name: Fusion Missile
     turn_rate: 40
     lock_time: 3.0
     color: [1.0, 0.4, 0.9]
-    sound: original:fusionLaunch.wav
+    sound: cue:Missile2
   elerium_torpedo:
     inherit: original:GameSettings.ini/EleriumTorpedo
     name: Elerium Torpedo
     turn_rate: 80
     lock_time: 2.0
     color: [0.4, 1.0, 0.4]
-    sound: original:AlienMissileLaunch.wav
+    sound: cue:Missile6
   enveloping_torpedo:
     inherit: original:GameSettings.ini/EnvelopingFusionTorpedo
     name: Enveloping Fusion Torpedo
@@ -88,7 +88,7 @@ missiles:
     turn_rate: 60
     lock_time: 2.5
     color: [1.0, 0.6, 0.9]
-    sound: original:fusionLaunch.wav
+    sound: cue:Missile2
   parallax_torpedo:
     inherit: original:GameSettings.ini/ParallaxTorpedo
     name: Parallax Torpedo
@@ -97,7 +97,7 @@ missiles:
     turn_rate: 80
     lock_time: 2.0
     color: [0.9, 0.9, 1.0]
-    sound: original:AlienMissileLaunch.wav
+    sound: cue:Missile6
   cloaking_torpedo:
     inherit: original:GameSettings.ini/PassiveCloakingTorpedo
     name: Passive Cloaking Torpedo
@@ -106,7 +106,7 @@ missiles:
     turn_rate: 90
     lock_time: 0.5
     color: [0.5, 0.5, 0.6]
-    sound: original:MissileCloak.wav
+    sound: cue:MissileCloak
   doppelganger:
     inherit: original:GameSettings.ini/DoppelgangerMissile
     name: Doppelganger
@@ -114,4 +114,4 @@ missiles:
     turn_rate: 0
     lock_time: 0.5
     color: [1.0, 1.0, 1.0]
-    sound: original:DoppleLaunch.wav
+    sound: cue:Missile4

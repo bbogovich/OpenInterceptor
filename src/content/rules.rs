@@ -605,6 +605,40 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         pick_levels(&mut node, difficulty);
         Some((node, e.pack))
     };
+    // The sound cue table: `cue:<Name>` in any sound reference names a cue. Problems
+    // found while resolving go to their own list (a `RefCell`, so the read-only closure
+    // below can still record them while `global` holds `errors`), merged at the end.
+    let cue_errors: std::cell::RefCell<Vec<String>> = Default::default();
+    let cues: HashMap<String, String> =
+        match global("audio").and_then(|(n, _)| Get(&n).str("cue_table").map(str::to_string)) {
+            Some(table) => match table.strip_prefix("original:").and_then(|r| r.split_once('/')) {
+                Some((file, section)) => match original(file.trim(), section.trim()) {
+                    Some(sec) => {
+                        sec.entries.iter().filter_map(|(k, v)| Some((k.to_ascii_lowercase(), cue_file(v)?))).collect()
+                    }
+                    None => {
+                        cue_errors.borrow_mut().push(format!("audio: cue table {table} not found"));
+                        HashMap::new()
+                    }
+                },
+                None => {
+                    cue_errors
+                        .borrow_mut()
+                        .push(format!("audio: cue_table must be original:<file>/<section>, not '{table}'"));
+                    HashMap::new()
+                }
+            },
+            None => HashMap::new(),
+        };
+    let sound_ref = |r: &str, where_: &str| -> String {
+        match r.strip_prefix("cue:") {
+            Some(name) => cues.get(&name.trim().to_ascii_lowercase()).cloned().unwrap_or_else(|| {
+                cue_errors.borrow_mut().push(format!("{where_}: unknown sound cue '{name}'"));
+                r.to_string()
+            }),
+            None => r.to_string(),
+        }
+    };
     let flight_node = global("flight");
     let power_node = global("power");
     let damage_node = global("damage");
@@ -641,7 +675,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 speed: g.num("speed").unwrap_or(2000.0).max(1.0),
                 range: g.qty("range", Unit::Distance).unwrap_or(3000.0),
                 color: rgb(g, "color", [1.0, 0.2, 0.2]),
-                sound: g.str("sound").map(str::to_string),
+                sound: g.str("sound").map(|x| sound_ref(x, &format!("beams.{id}.sound"))),
                 pack: e.pack,
                 id: id.clone(),
             }
@@ -660,7 +694,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),
                 lock_time: g.qty("lock_time", Unit::Time).unwrap_or(2.0),
                 color: rgb(g, "color", [1.0, 0.8, 0.4]),
-                sound: g.str("sound").map(str::to_string),
+                sound: g.str("sound").map(|x| sound_ref(x, &format!("missiles.{id}.sound"))),
                 pack: e.pack,
                 guidance: g.str("guidance").and_then(Guidance::parse).unwrap_or(Guidance::Homing),
                 damage_mode: match g.str("damage") {
@@ -846,10 +880,13 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             n.as_map()
                 .unwrap_or(&[])
                 .iter()
-                .filter_map(|(k, v)| Some((k.to_ascii_lowercase(), (v.as_str()?.to_string(), pack))))
+                .filter_map(|(k, v)| {
+                    Some((k.to_ascii_lowercase(), (sound_ref(v.as_str()?, &format!("sounds.{k}")), pack)))
+                })
                 .collect()
         })
         .unwrap_or_default();
+    errors.extend(cue_errors.into_inner());
     (
         Ruleset {
             ships,
@@ -977,6 +1014,14 @@ fn original_section(reference: &str, section: &str, original: &OriginalLookup) -
         }
     }
     Ok(Node { value: Value::Map(entries), line: 0 })
+}
+
+/// A cue table entry's file, as an original asset reference: `"SoundFX\\Gadgets\\ok.wav" ;`
+/// → `original:ok.wav` (sounds are found on the CD by file name).
+fn cue_file(value: &str) -> Option<String> {
+    let v = value.split(';').next()?.trim().trim_matches('"').trim();
+    let name = v.rsplit(['\\', '/']).next()?.trim();
+    (!name.is_empty()).then(|| format!("original:{name}"))
 }
 
 /// `HitPoints` → `hit_points`, `RateOfFire` → `rate_of_fire`.
@@ -1461,6 +1506,23 @@ flight: {model: warp}
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }
+    }
+
+    #[test]
+    fn sound_cues_resolve_through_the_original_table() {
+        let ini = Ini::parse("[S]\nCloak = \"SoundFX\\\\SpaceFlight\\\\cloak.wav\"\nBeam1 = LaserCannon.wav ;\n");
+        let lookup =
+            move |file: &str, section: &str| (file == "soundfx.ini").then(|| ini.section(section).cloned()).flatten();
+        let text = "audio: {cue_table: original:soundfx.ini/S}\nsounds: {cloak: 'cue:Cloak', boom: 'cue:Nope'}\nbeams: {b: {sound: 'cue:beam1'}}\n";
+        let (r, e) = build(&[source(0, text)], &lookup);
+        assert_eq!(r.sounds["cloak"].0, "original:cloak.wav");
+        assert_eq!(
+            r.beams[0].sound.as_deref(),
+            Some("original:LaserCannon.wav"),
+            "cue names ignore case; comments dropped"
+        );
+        assert!(e.iter().any(|x| x.contains("unknown sound cue 'Nope'")), "{e:?}");
+        assert_eq!(cue_file("\"a\\\\b\\\\c.wav\""), Some("original:c.wav".into()));
     }
 
     #[test]
