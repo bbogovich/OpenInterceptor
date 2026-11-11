@@ -1,5 +1,5 @@
 ---
-spec_version: 1.3.0
+spec_version: 1.4.0
 status: current
 updated: 2026-11-11
 ---
@@ -178,6 +178,8 @@ An `action` from the console MUST have the same effect as the bound input for th
 !!! note "As built"
     Console input joins the frame's `RawInput` (`remote_held`, `remote_pressed`, `remote_throttle`) through `remote::RemoteInput`, and `Bindings::translate` treats a held or tapped console action exactly like a bound key; `sim` is untouched. Names outside `input::ACTIONS` are refused by the decoder. A console that disconnects releases everything it held.
 
+
+A console that sends nothing for 1 s MUST have its held actions released (heartbeat `ping` every 250 ms), so a dropped connection never leaves an action held. Verified by `remote::tests::a_silent_console_lets_go_but_a_pinging_one_keeps_holding`.
 ### R-CON-012 Console page from web components
 
 The console page MUST be built from custom web components and CSS, with no framework, and served by the game itself.
@@ -215,7 +217,7 @@ While paired, the game MUST send craft telemetry at 20 Hz and radar contacts at 
 *Rationale:* Real-time knowledge of the craft's condition.
 
 - Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: implemented
+- Status: partial (craft telemetry at 20 Hz is built; radar contacts at 5 Hz and events are planned with C4)
 - Verified by: `remote::protocol::telemetry_reports_drift_and_the_targets_relative_rotation`; MT-3-19
 - See: [Console protocol](../console-protocol.md#game-console)
 
@@ -325,4 +327,5 @@ Console theme assets MUST be new art made for this project and kept in the pack'
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CON-001 – R-CON-021 (21 requirements; 6 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-CON-007 and R-CON-008 implemented (app 0.3.1): `input::ACTIONS` with `help_rows`; the keys overlay on `?` / Shift+F1 (action `help`), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation |
+| 1.4.0 | 2026-11-11 | R-CON-011: held actions released after 1 s of silence (heartbeat). R-CON-014 status corrected to partial |
 | 1.3.0 | 2026-11-11 | Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from `input::ACTIONS`; the description field stays open |
