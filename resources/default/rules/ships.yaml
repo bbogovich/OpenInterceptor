@@ -8,6 +8,7 @@
 
 ships:
   comet:
+    voice: guard_pilot
     name: "@ship.comet.name"
     description: "@ship.comet.desc"
     model_set: comet
@@ -33,6 +34,7 @@ ships:
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
   meteor:
+    voice: guard_pilot
     name: "@ship.meteor.name"
     description: "@ship.meteor.desc"
     model_set: meteor
@@ -58,6 +60,7 @@ ships:
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
   thunderbolt:
+    voice: guard_pilot
     name: "@ship.thunderbolt.name"
     description: "@ship.thunderbolt.desc"
     model_set: thunderbolt
@@ -84,6 +87,7 @@ ships:
     behaviour: guard_pilot
     engine_color: [1.0, 0.55, 0.15]
   victory:
+    voice: guard_pilot
     name: "@ship.victory.name"
     description: "@ship.victory.desc"
     model_set: victory

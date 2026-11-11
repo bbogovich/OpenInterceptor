@@ -168,6 +168,8 @@ pub struct ShipClass {
     pub playable: bool,
     /// Cockpit id for the player's view, if this class can be flown from inside.
     pub cockpit: Option<String>,
+    /// The radio voice set its pilot speaks with (`voice: <voices id>`; R-MSN-007).
+    pub voice: Option<String>,
     // --- Durability ------------------------------------------------------------
     /// Hull points: when they reach zero the ship is destroyed.
     pub hull: f32,
@@ -480,6 +482,22 @@ impl ConsoleTheme {
     }
 }
 
+/// The radio lines a pilot's voice can say, with their clips (indices into
+/// [`Ruleset::voice_clips`]). Lines: `acknowledge` (an order), `status` (a status
+/// report), `down` (a wingman lost), `engaging`, `kill` (any others a mod adds are kept).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct VoiceSet {
+    pub id: String,
+    pub lines: Vec<(String, Vec<u32>)>,
+}
+
+impl VoiceSet {
+    /// The clips for `line` (empty if this voice has none).
+    pub fn clips(&self, line: &str) -> &[u32] {
+        self.lines.iter().find(|(l, _)| l == line).map(|(_, c)| c.as_slice()).unwrap_or(&[])
+    }
+}
+
 /// What a contact is to the player, for its radar colour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Relation {
@@ -604,6 +622,10 @@ pub struct Ruleset {
     pub missions: Vec<super::mission::MissionDef>,
     /// Battle environments and terrains (Stage 3.3–3.5; see [`super::environment`]).
     pub environments: Vec<super::environment::EnvironmentDef>,
+    /// Radio voice sets (`voices: {<id>: {<line>: [clips]}}`) and every voice clip they
+    /// and mission chatter use, by index (the audio layer loads them as `Voice(i)`).
+    pub voices: Vec<VoiceSet>,
+    pub voice_clips: Vec<(String, usize)>,
     pub terrains: Vec<super::environment::TerrainDef>,
     pub model_sets: Vec<ModelSet>,
     pub debris_sets: Vec<DebrisSet>,
@@ -715,7 +737,8 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 14] = [
+const DEF_SECTIONS: [&str; 15] = [
+    "voices",
     "environments",
     "terrains",
     "missions",
@@ -1244,6 +1267,46 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         }
     }
     missions.sort_by(|a, b| a.order.cmp(&b.order).then(a.id.cmp(&b.id)));
+    // Voice sets and every voice clip (sets first, then mission chatter).
+    let mut voice_clips: Vec<(String, usize)> = Vec::new();
+    let mut voices = Vec::new();
+    for (_, id, e) in of(&resolved, "voices") {
+        let lines = e
+            .node
+            .as_map()
+            .unwrap_or(&[])
+            .iter()
+            .map(|(line, v)| {
+                let refs: Vec<String> = match (v.as_seq(), v.as_str()) {
+                    (Some(s), _) => s.iter().filter_map(|x| x.as_str().map(str::to_string)).collect(),
+                    (None, Some(one)) => vec![one.to_string()],
+                    _ => Vec::new(),
+                };
+                let idx = refs
+                    .into_iter()
+                    .map(|r| {
+                        voice_clips.push((r, e.pack));
+                        (voice_clips.len() - 1) as u32
+                    })
+                    .collect();
+                (line.to_ascii_lowercase(), idx)
+            })
+            .collect();
+        voices.push(VoiceSet { id: id.clone(), lines });
+    }
+    for m in &mut missions {
+        for c in &mut m.chatter {
+            if let Some(v) = &c.voice {
+                voice_clips.push((v.clone(), m.pack));
+                c.voice_clip = Some((voice_clips.len() - 1) as u32);
+            }
+        }
+    }
+    for s in &ships {
+        if let Some(v) = s.voice.as_ref().filter(|v| !voices.iter().any(|x: &VoiceSet| &x.id == *v)) {
+            errors.push(format!("ships.{}: unknown voice '{v}'", s.id));
+        }
+    }
     let mut terrains = Vec::new();
     for (_, id, e) in of(&resolved, "terrains") {
         match super::environment::TerrainDef::parse(id, Get(&e.node), e.pack) {
@@ -1270,6 +1333,8 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     errors.extend(cue_errors.into_inner());
     (
         Ruleset {
+            voices,
+            voice_clips,
             missions,
             environments,
             terrains,
@@ -1691,6 +1756,7 @@ fn ship_class(
         model_set,
         playable: g.bool("playable").unwrap_or(false),
         cockpit: g.str("cockpit").map(str::to_string),
+        voice: g.str("voice").map(str::to_string),
         hull: g.num("hit_points").unwrap_or(100.0),
         armor: g.num("armor").unwrap_or(0.0),
         shields,
@@ -1789,6 +1855,8 @@ cockpits:
     model_offset: [0, -0.5, 0]
     design: [1920, 1080]
     anchors: {mfd: {at: [0, -0.3, -0.8], normal: [0, 0.4, 0.9], size: [0.2, 0.15]}}
+voices:
+  radio: {acknowledge: [models/a.wav, models/b.wav], down: models/down.wav}
 flight: {boost: 120, bolt_frame: ship, bolt_carry: 0.2s, lighting: {rim: 0.4}}
 sounds: {lock: 'original:target lock.wav'}
 ";
@@ -1818,6 +1886,9 @@ sounds: {lock: 'original:target lock.wav'}
             WideFill { blackout: true, color: [0.0; 3], from: 305.0, left: Some("images/l.png".into()), right: None }
         );
         assert_eq!((rules.flight.bolt_frame, rules.flight.bolt_carry), (BoltFrame::Ship, 0.2));
+        let v = &rules.voices[0];
+        assert_eq!((v.id.as_str(), v.clips("acknowledge"), v.clips("down")), ("radio", &[0u32, 1][..], &[2u32][..]));
+        assert_eq!(rules.voice_clips[2], ("models/down.wav".to_string(), 0));
         assert_eq!(rules.flight.lighting, Lighting { rim: 0.4, ..Lighting::default() }, "unset keys keep defaults");
         assert_eq!(
             (a.design, a.model.as_deref(), a.image.as_deref()),

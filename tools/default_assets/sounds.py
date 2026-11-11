@@ -484,6 +484,46 @@ def theremin_sting():
 
 LOOPS = {"afterburner", "saucer_hum"}  # seamless loops: their ends must not be faded
 
+def squelch(seconds, seed, level=0.35):
+    """A radio squelch: a short burst of band-limited noise, as a channel opens or closes."""
+    rng = random.Random(seed)
+    out = []
+    y = 0.0
+    for i in range(n_samples(seconds)):
+        x = rng.uniform(-1.0, 1.0)
+        y += 0.35 * (x - y)  # one-pole low-pass: hiss rather than white noise
+        out.append(y * level * env_ad(i / RATE, 0.002, seconds))
+    return out
+
+
+def radio_ack():
+    """Wingman acknowledges an order: squelch, a two-tone chirp, squelch (no words)."""
+    return squelch(0.05, 3) + beeps([1320, 1760], 0.07, 0.03, wave_fn=sine, level=0.45) + squelch(0.06, 4)
+
+
+def radio_status():
+    """Wingman status report: squelch and three quick chirps."""
+    return squelch(0.05, 5) + beeps([1175, 1175, 1568], 0.05, 0.03, wave_fn=sine, level=0.45) + squelch(0.05, 6)
+
+
+def radio_down():
+    """A wingman lost: squelch, a falling tone, and a long crackle as the channel dies."""
+    T = 0.6
+    p = Phase()
+    tone = [sine(p.step(900 - 600 * (i / RATE) / T)) * 0.45 * env_ad(i / RATE, 0.01, T) for i in range(n_samples(T))]
+    return squelch(0.05, 7) + tone + squelch(0.35, 8, level=0.5)
+
+
+def mission_win():
+    """Mission accomplished: a bright rising arpeggio."""
+    return beeps([523, 659, 784, 1047], 0.12, 0.02, wave_fn=tri, level=0.5) + [0.0] * n_samples(0.2)
+
+
+def mission_fail():
+    """Mission failed: a slow falling minor figure."""
+    return beeps([659, 587, 523, 415], 0.18, 0.03, wave_fn=tri, level=0.45) + [0.0] * n_samples(0.2)
+
+
 SOUNDS = [
     ("ray_zap", ray_zap), ("heat_ray", heat_ray), ("disintegrator", disintegrator), ("ion_ray", ion_ray),
     ("seeker_launch", seeker_launch), ("explosion", explosion), ("big_explosion", big_explosion),
@@ -491,6 +531,8 @@ SOUNDS = [
     ("target", target), ("denied", denied), ("collision", collision), ("hyperspace", hyperspace),
     ("tractor", tractor), ("cloak", cloak), ("system_damage", system_damage), ("ui_click", ui_click),
     ("theremin_sting", theremin_sting), ("saucer_hum", saucer_hum),
+    ("radio_ack", radio_ack), ("radio_status", radio_status), ("radio_down", radio_down),
+    ("mission_win", mission_win), ("mission_fail", mission_fail),
 ]
 
 

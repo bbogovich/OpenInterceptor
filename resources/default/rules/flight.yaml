@@ -32,3 +32,5 @@ sounds:
   ecm: sounds/target.wav
   hyperspace: sounds/hyperspace.wav
   point_defence: sounds/ray_zap.wav
+  mission_accomplished: sounds/mission_win.wav
+  mission_failed: sounds/mission_fail.wav

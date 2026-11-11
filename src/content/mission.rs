@@ -102,6 +102,10 @@ pub struct WaveDef {
 pub struct ChatterDef {
     pub when: Expr,
     pub line: String,
+    /// A radio clip spoken with the line (`voice:`; an asset in the mission's pack).
+    pub voice: Option<String>,
+    /// Its index in [`super::rules::Ruleset::voice_clips`], filled in by the rules.
+    pub voice_clip: Option<u32>,
 }
 
 /// A mission type.
@@ -299,6 +303,8 @@ impl MissionDef {
             chatter.push(ChatterDef {
                 when: cond(c.str("when").ok_or(format!("{at}: needs when:"))?, &at)?,
                 line: c.str("line").ok_or(format!("{at}: needs line:"))?.to_string(),
+                voice: c.str("voice").map(str::to_string),
+                voice_clip: None,
             });
         }
         let player = g.node("player").map(Get);

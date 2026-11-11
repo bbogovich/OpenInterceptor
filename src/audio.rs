@@ -25,6 +25,8 @@ pub enum SoundKey {
     Missile(u16),
     /// The sound of an effect (index into `rules.effects`).
     Effect(u16),
+    /// A radio voice clip (index into `rules.voice_clips`).
+    Voice(u32),
 }
 
 /// Volume falls off with distance: full within 50 m, half at ~350 m.
@@ -102,7 +104,9 @@ pub fn event_sound(world: &World, e: &SimEvent, listener: ShipId, ear: Vec3) -> 
 }
 
 /// Named event sounds the engine knows about.
-pub const NAMED: [&str; 16] = [
+pub const NAMED: [&str; 18] = [
+    "mission_accomplished",
+    "mission_failed",
     "explosion",
     "big_explosion",
     "shield_hit",
@@ -155,6 +159,9 @@ impl SoundBank {
             if let Some(s) = &m.sound {
                 wanted.push((SoundKey::Missile(i as u16), s.clone(), m.pack));
             }
+        }
+        for (i, (r, p)) in rules.voice_clips.iter().enumerate() {
+            wanted.push((SoundKey::Voice(i as u32), r.clone(), *p));
         }
         for (key, reference, pack) in wanted {
             match content.load_sound(&reference, pack) {

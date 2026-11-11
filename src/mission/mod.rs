@@ -71,6 +71,9 @@ pub struct MissionRun {
     losses: u32,
     /// Set when the battle ends.
     pub debrief: Option<Debrief>,
+    /// Voice clips of chatter lines said since the screen last took them (indices into
+    /// `Ruleset::voice_clips`); the app plays and clears them.
+    pub voices: Vec<u32>,
 }
 
 /// xorshift64: the mission's own deterministic random numbers (counts, bearings).
@@ -160,6 +163,7 @@ impl MissionRun {
             kills: 0,
             losses: 0,
             debrief: None,
+            voices: Vec::new(),
         };
         // An empty scenario carrying the player and the battle's look; roles go in
         // through `spawn_role`, the same path waves use.
@@ -351,6 +355,7 @@ impl MissionRun {
             if !self.chatter_done[k] && check(self, w, &c.when) {
                 self.chatter_done[k] = true;
                 lines.push(c.line);
+                self.voices.extend(c.voice_clip);
             }
         }
         for k in 0..self.def.optional.len() {

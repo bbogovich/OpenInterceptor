@@ -111,6 +111,20 @@ pub const WING_MENU: [(&str, Command); 6] = [
 
 /// Applies a targeting or wingman command to the world. Returns lines for the message
 /// line (a status report has one per wingman).
+/// A clip of `line` from the voice of one of the player's wingmen (`except` excluded),
+/// for the radio: the first wingman with a voice set that has the line. `pick` chooses
+/// among its clips.
+pub fn wingman_voice(world: &World, player: ShipId, except: Option<ShipId>, line: &str, pick: usize) -> Option<u32> {
+    world.ships.iter().enumerate().find_map(|(i, s)| {
+        let id = world.id_of(i);
+        let ours = s.alive
+            && Some(id) != except
+            && matches!(&s.pilot, crate::sim::Pilot::Ai(a) if a.behaviour == crate::sim::ai::Behaviour::Wingman && a.leader == Some(player));
+        let clips = world.rules.voices.get(s.voice? as usize)?.clips(line);
+        (ours && !clips.is_empty()).then(|| clips[pick % clips.len()])
+    })
+}
+
 pub fn apply_command(world: &mut World, player: ShipId, cmd: Command) -> Vec<String> {
     let Some(current) = world.get(player).map(|s| s.target) else { return Vec::new() };
     let new_target = match cmd {
@@ -589,6 +603,20 @@ impl FlightSession {
                         if !lines.is_empty() {
                             ctx.sounds.play(&crate::audio::SoundKey::Named("target"), 0.5);
                         }
+                        // A wingman answers on the radio (R-MSN-007).
+                        let line = match other {
+                            Command::WingStatus => Some("status"),
+                            Command::WingFireAtWill
+                            | Command::WingAttackMyTarget
+                            | Command::WingFormation
+                            | Command::WingEvasive
+                            | Command::WingRetreat => Some("acknowledge"),
+                            _ => None,
+                        };
+                        let pick = (self.world.time * 7.0) as usize;
+                        if let Some(clip) = line.and_then(|l| wingman_voice(&self.world, self.player, None, l, pick)) {
+                            ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                        }
                         for text in lines {
                             self.messages.push(self.world.time, text);
                         }
@@ -621,8 +649,17 @@ impl FlightSession {
                     self.messages.push(self.world.time, m);
                 }
                 if let Some(m) = &mut self.mission {
+                    let ended = m.debrief.is_some();
                     for line in m.update(&mut self.world) {
                         self.messages.push(self.world.time, line);
+                    }
+                    // Chatter spoken on the radio, and the computer's verdict at the end.
+                    for clip in m.voices.drain(..) {
+                        ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                    }
+                    if let (false, Some(d)) = (ended, &m.debrief) {
+                        let name = if d.result == "win" { "mission_accomplished" } else { "mission_failed" };
+                        ctx.sounds.play(&crate::audio::SoundKey::Named(name), 0.9);
                     }
                 }
                 for e in &self.world.events {
@@ -630,6 +667,17 @@ impl FlightSession {
                         if *ship == self.player {
                             self.console_hits[0] += 1;
                             self.console_hits[1] += u32::from(!*shield);
+                        }
+                    }
+                    // A wingman lost: another says so on the radio.
+                    if let SimEvent::Destroyed { ship, .. } = e {
+                        let was_wingman = matches!(&self.world.ships[ship.index as usize].pilot,
+                            crate::sim::Pilot::Ai(a) if a.behaviour == crate::sim::ai::Behaviour::Wingman && a.leader == Some(self.player));
+                        if was_wingman {
+                            let pick = (self.world.time * 11.0) as usize;
+                            if let Some(clip) = wingman_voice(&self.world, self.player, Some(*ship), "down", pick) {
+                                ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                            }
                         }
                     }
                     if let SimEvent::Captured { captor, prize } = e {
@@ -1238,6 +1286,29 @@ mod tests {
         assert!(c.yaw > 0.0 && c.pitch > 0.25 && c.distance < 3.2);
         c.apply(&ChaseInput { reset: true, ..Default::default() }, 0.0);
         assert_eq!(c, ChaseOrbit::default());
+    }
+
+    #[test]
+    fn a_wingman_answers_in_its_own_voice() {
+        use crate::content::rules::{FactionId, VoiceSet};
+        let mut w = crate::sim::test_support::world();
+        let mut rules = (*w.rules).clone();
+        rules.voices = vec![VoiceSet {
+            id: "v".into(),
+            lines: vec![("acknowledge".into(), vec![4, 5]), ("down".into(), vec![9])],
+        }];
+        w.rules = std::sync::Arc::new(rules);
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(f, FactionId(0), "me", glam::Vec3::ZERO, glam::Quat::IDENTITY, crate::sim::Pilot::External);
+        assert_eq!(wingman_voice(&w, me, None, "acknowledge", 0), None, "no wingmen yet");
+        let ai = crate::sim::ai::AiState::new(crate::sim::ai::Behaviour::Wingman, Some(me), glam::Vec3::X * 60.0);
+        let wing =
+            w.spawn(f, FactionId(0), "wing", glam::Vec3::X * 60.0, glam::Quat::IDENTITY, crate::sim::Pilot::Ai(ai));
+        assert_eq!(wingman_voice(&w, me, None, "acknowledge", 0), None, "a wingman without a voice says nothing");
+        w.get_mut(wing).unwrap().voice = Some(0);
+        assert_eq!(wingman_voice(&w, me, None, "acknowledge", 1), Some(5));
+        assert_eq!(wingman_voice(&w, me, None, "status", 0), None, "a line the voice lacks");
+        assert_eq!(wingman_voice(&w, me, Some(wing), "down", 0), None, "the lost wingman is not the speaker");
     }
 
     #[test]

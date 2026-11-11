@@ -40,3 +40,8 @@ sounds:
   ecm: cue:Beep2
   hyperspace: cue:WarpOut
   point_defence: cue:Beam5
+  # The computer voice (named cues in the original's sound table).
+  mission_accomplished: cue:Comp_MissionAccomplished
+  mission_failed: cue:Comp_MissionFailed
+  # Pilot radio voices (voices: <set>) are not mapped yet: the original's FPilot/MPilot
+  # chatter clips are numbered, and which line each one says is not known (R-MSN-007).

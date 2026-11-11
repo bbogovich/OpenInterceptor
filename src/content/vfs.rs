@@ -233,7 +233,9 @@ impl OriginalData {
 
 /// Recursively records files under `dir` (to a small depth: CD layouts are shallow).
 fn index_files(dir: &Path, depth: usize, out: &mut HashMap<String, PathBuf>) {
-    if depth > 4 {
+    // Eight levels: the CD's computer-voice clips sit at
+    // Game/ProgramFiles/SoundFX/Chatter/ComputerVoice, and an installed copy may nest deeper.
+    if depth > 8 {
         return;
     }
     let Ok(entries) = std::fs::read_dir(dir) else { return };

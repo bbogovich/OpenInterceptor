@@ -176,6 +176,7 @@ fn ship() -> Ty {
         f("model_scale", Ty::Num, "model units to metres"),
         f("playable", Ty::Bool, "the player may fly it"),
         f("cockpit", name(), "cockpit id for the player's view"),
+        f("voice", name(), "the radio voice set its pilot speaks with (voices.<id>)"),
         f("hit_points", Ty::Num, "hull points"),
         f("armor", Ty::Num, "armour points (absorbed after shields)"),
         f("shields", Ty::Num, "shield points per facing (fore and aft)"),
@@ -382,6 +383,7 @@ fn mission() -> Ty {
             Ty::List(Box::new(Ty::Struct(vec![
                 f("when", Ty::Condition, "said once when this first holds"),
                 f("line", Ty::Text, "the line (a @key)"),
+                f("voice", Ty::Asset, "a radio clip spoken with the line"),
             ]))),
             "radio lines",
         ),
@@ -568,6 +570,11 @@ pub fn rules_sections() -> Vec<Field> {
         f("cockpits", dict(cockpit()), "cockpits by id"),
         f("behaviours", dict(behaviour()), "AI behaviours by id"),
         f("missions", dict(mission()), "mission types by id"),
+        f(
+            "voices",
+            dict(Ty::Dict(Box::new(Ty::Either(Box::new(Ty::List(Box::new(Ty::Asset))), Box::new(Ty::Asset))))),
+            "radio voice sets: line (acknowledge, status, down, engaging, kill): clip or clips",
+        ),
         f("environments", dict(super::environment::environment_schema()), "battle environments by id"),
         f("terrains", dict(super::environment::terrain_schema()), "terrains (heightfields) by id"),
         f("modelsets", dict(modelset()), "looks: models, damage textures, states, debris"),

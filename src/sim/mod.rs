@@ -304,6 +304,8 @@ pub struct Ship {
     pub velocity: Vec3,
     /// Body-space angular velocity, radians/s: x = pitch, y = yaw, z = roll.
     pub angular_velocity: Vec3,
+    /// The pilot's radio voice set (index into `Ruleset::voices`), from the class.
+    pub voice: Option<u16>,
     /// Scenery placed by a hazard (asteroids): shown on radar only within range, like a
     /// moving craft, rather than always as stations are (40 rocks would fill the scope).
     pub scenery: bool,
@@ -677,6 +679,10 @@ impl World {
             tumble: 0.0,
             simple_physics: false,
             scenery: false,
+            voice: {
+                let v = self.rules.ship(class).voice.as_deref();
+                v.and_then(|v| self.rules.voices.iter().position(|s| s.id == v)).map(|i| i as u16)
+            },
             throttle: 0.0,
             reverse: false,
             afterburning: false,

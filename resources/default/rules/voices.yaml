@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Radio voices (Stage 3.7; R-MSN-007). The default campaign has no recorded speech yet:
+# its Guard pilots answer with synthesised radio chirps (tools/default_assets/sounds.py).
+voices:
+  guard_pilot:
+    acknowledge: [sounds/radio_ack.wav]
+    status: [sounds/radio_status.wav]
+    down: [sounds/radio_down.wav]
