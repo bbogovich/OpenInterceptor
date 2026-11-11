@@ -232,6 +232,9 @@ Texture names match a model's textures by file name without folder or extension,
 | `lock_angle` | angle | 10° | Missile lock cone half-angle. |
 | `radar_range` | distance | 6000 m | Mobile contacts beyond it are hidden from the radar. |
 | `hyperspace_time` | time | 10 s | Hyperdrive countdown (doubled while the hyperdrive is damaged). |
+| `bolt_frame` | `world` / `ship` | `world` | How a beam shot moves once fired. `world` is physics: it leaves with the ship's velocity plus the muzzle's turn velocity plus its muzzle speed, then flies straight. `ship` (arcade): for `bolt_carry` it moves in the ship's frame, turning with the nose, then flies straight ([Simulation](../implementation/architecture/sim.md#combat-simcombat)). |
+| `bolt_carry` | time | 0.3 s | With `bolt_frame: ship`, how long a shot stays in the ship's frame. |
+| `lighting` | map | see below | How ships are lit: `ambient` (light everywhere, 0.30), `sun` (extra light on faces towards the sun, 0.85), `rim` (extra light on edges seen side-on, outlining hulls against space, 0), `distant_dot` (pixels: a ship on the player's radar smaller than this on screen is drawn as a dot in its radar colour, 4; 0 = off). Keys left out keep their defaults ([Rendering](../implementation/architecture/rendering.md#lighting-rim-and-brightness-app-031)). |
 | `radar_colors` | map | see below | Radar blip and target-marker colours by relation to the player: `friendly` (own faction, default green), `hostile` (either side hostile, red), `neutral` (yellow), `objective` (objects with `protect: true`, cyan). Each is `[r, g, b]`, 0..1. |
 
 ### `power`
@@ -292,9 +295,9 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `objectives` | `{win, lose, draw}` | none | Conditions; `lose` is checked before `win`. |
 | `optional` | mapping name: condition | none | Latched optional objectives. |
 | `timer` | `{after, then}` | none | Time limit and its result. |
-| `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`. |
+| `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`, `killed` (the player's craft destroyed; without its own entry it takes the `lose` actions). |
 | `chatter` | list of `{when, line}` | none | Radio lines. |
-| `debrief` | mapping result: text | none | Debrief texts. |
+| `debrief` | mapping result: text | none | Debrief texts, by the same results (`killed` shows no text unless given). |
 
 The schema type **either** (`Ty::Either`) lets a key take one of two forms: `count: 3` or
 `count: [2, 4]`; `bearing: [10, 5]` or `bearing: random`; `class: comet` or `class: [a, b]`.

@@ -4,7 +4,8 @@
 bindings from an editable YAML file (`bindings.yaml`). The device reading itself is in `src/app/devices.rs`
 (keyboard, mouse) and `src/platform/` (gamepads). The in-game controls menu is modelled in
 `src/input/editor.rs` and drawn by `src/app/controls.rs`. Plan: Stage 1; Stage 2 added the
-power, equipment and wingman actions, gamepad chords and the controls menu. The default layout
+power, equipment and wingman actions, gamepad chords and the controls menu; app 0.3.1 the keys
+overlay (`help`, `help_rows`). The default layout
 is on [Controls](../../reference/original-game/controls.md).
 
 ## Architecture Overview
@@ -28,6 +29,18 @@ flowchart LR
   `to_yaml_text`, the controls menu and the [Controls](../../reference/original-game/controls.md) tables all
   come from it, so they cannot drift apart. Entries are built with a `const fn a(…)` so the
   whole table is a compile-time constant.
+- **Keys overlay** (app 0.3.1). `help_rows(&Bindings)` turns the table into the overlay's
+  content: every `Group` in table order, each with `(label, keys)` rows showing the player's
+  *current* keys, then pad buttons (`pad A`), or "unbound". The action `help` (`?` =
+  Shift+Slash, and Shift+F1) toggles it; `app::flight::draw_help` paints it. A new action
+  therefore appears in parsing, the defaults, the controls menu, the overlay and (later) the
+  console without further work. F12 is not bound to it: in a custom cockpit F12 opens the
+  layout editor ([Cockpits](../../modding/cockpits.md)).
+- **Remote action sets** (work in progress for the control console, interlude C1). `RawInput`
+  gains `remote_held` and `remote_pressed` (sets of `Action`) and `remote_throttle`. A remote
+  surface — the tablet console, later a USB panel — fills them, and `translate` treats a held or
+  tapped remote action exactly like a key bound to it, so the console needs no second path into
+  the simulation. A remote throttle position sets `Controls::throttle_set`.
 
 - **Key names** are macroquad's `KeyCode` variant names, lower-cased (`KeyCode::Kp7` →
   `kp7`), produced by `app::devices::key_name`. Every key macroquad knows is therefore bindable.
@@ -102,15 +115,15 @@ a capture after 8 s (`CAPTURE_TIMEOUT`).
 
 | Symbol | What it is |
 |---|---|
-| `Action` | Every bindable action (64). |
+| `Action` | Every bindable action (65, with `Help`). |
 | `ACTIONS`, `ActionInfo`, `info(action)` | The single table: `name`, `action`, `keys`, `pad`, `group`, `label` — one source for parsing, defaults, the menu and docs. |
 | `Group` | `Flight`, `Throttle`, `Weapons`, `Targeting`, `Power`, `Wingmen`, `Views`, `Camera`, `Interface`; `title()`. |
 | `KeyChord` | A key name plus optional Shift; `parse`, `text`. |
 | `PadChord` | A button plus optional modifier button; `plain`, `parse`, `text`. |
 | `StickLayout` | `Space` or `Aircraft`. |
 | `Bindings` | `keys: HashMap<Action, Vec<KeyChord>>`, `pad: HashMap<Action, Vec<PadChord>>`, `dead_zone`, `mouse_range`, `pad_invert_pitch`, `stick_layout`, `mouse_invert`; `from_yaml`, `to_yaml_text`, legacy `from_ini`, `translate`. |
-| `RawInput` | One frame of device state. |
-| `Command` | One-shot app requests: targeting, MFD, `View(View)`, `WingMenu`, wing orders (`WingFireAtWill`, `WingAttackMyTarget`, `WingFormation`, `WingEvasive`, `WingRetreat`, `WingStatus`), `RepeatMessage`, `NextNav`, `Pause`, `Menu`, `MouseFlight`. Power and equipment presses go to `Controls::requests` instead. |
+| `RawInput` | One frame of device state (keys, mouse, pad; remote action sets for the console, in progress). |
+| `Command` | One-shot app requests: targeting, MFD, `View(View)`, `WingMenu`, wing orders (`WingFireAtWill`, `WingAttackMyTarget`, `WingFormation`, `WingEvasive`, `WingRetreat`, `WingStatus`), `RepeatMessage`, `NextNav`, `Pause`, `Menu`, `MouseFlight`, `Help`. Power and equipment presses go to `Controls::requests` instead. |
 | `View` | `Cockpit`, `Forward`, `Left`, `Right`, `RearLeft`, `RearRight`, `Chase`, `ChaseManual`; `View::parse` for `--view`. |
 | `ChaseInput` | Chase-camera yaw/pitch/zoom/reset this frame. |
 | `gamepad::PadState`, `gamepad::Button` | XInput-layout controller state and button names. |
@@ -124,7 +137,8 @@ a capture after 8 s (`CAPTURE_TIMEOUT`).
   `Bindings::from_ini(&Ini)` for migrating an old `bindings.ini`.
 - `bindings.translate(&RawInput, mouse_flight: bool) -> (Controls, Vec<Command>, ChaseInput)`.
 - `KeyChord::parse("Shift+F")`, `PadChord::parse("LeftShoulder+A")`, `input::canonical(name)`,
-  `input::dead(v, dz)`, `input::info(Action) -> &ActionInfo`.
+  `input::dead(v, dz)`, `input::info(Action) -> &ActionInfo`,
+  `input::help_rows(&Bindings) -> Vec<(Group, Vec<(&str, String)>)>`.
 - `Editor::new(&Bindings)`, `row`, `move_row`, `move_column`, `activate`, `cancel`,
   `capture_key(key, shift)`, `capture_pad(&now, &previous)`, `assign_key`, `assign_pad`,
   `clear`, `reset_selected`, `reset_all`, `adjust(delta)`, `cell(action, column)`,

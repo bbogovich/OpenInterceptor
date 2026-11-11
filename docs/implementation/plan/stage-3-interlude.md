@@ -1,18 +1,19 @@
 # Stage 3 interlude — feedback and control console
 
-**Status: planned** (2026-11-11). User feedback from playing app 0.3.0, and the tablet control
+**Status: in progress** (2026-11-11). Feedback items F.1–F.5 are **done** in app **0.3.1**
+(main `c583659`); the control console (C1–C5) is next. User feedback from playing app 0.3.0, and the tablet control
 console, taken up before the rest of Stage 3 (environments and atmospheric flight). Each item
 cites the features and requirements it delivers; issues are filed in `sio` against those IDs.
 
 ## Feedback items
 
-| # | Item | Features | Requirements | Module |
-|---|---|---|---|---|
-| F.1 | **Drift display**: the speed indicator shows forward speed and sideways (X) and vertical (Y) drift, plus a flight-path marker | [F-HUD-006](../../definition/cockpit-hud.md#f-hud-006-drift-display) | [R-HUD-009](../../specification/requirements/cockpit-hud.md#r-hud-009-drift-display) | `hud` |
-| F.2 | **Shot physics**: shots inherit the craft's velocity plus the turn velocity at the muzzle, then move independently of the craft's orientation; a rules option, physics by default (decision D1) | [F-CMB-011](../../definition/combat.md#f-cmb-011-shot-physics) | [R-CMB-021](../../specification/requirements/combat.md#r-cmb-021-shot-physics), [R-CMB-002](../../specification/requirements/combat.md#r-cmb-002-bolt-travel) | `sim::combat`, `content::rules` |
-| F.3 | **Visibility**: other fighters easy to see; a brightness setting | [F-HUD-007](../../definition/cockpit-hud.md#f-hud-007-seeing-other-craft) | [R-HUD-010](../../specification/requirements/cockpit-hud.md#r-hud-010-brightness-setting), [R-HUD-011](../../specification/requirements/cockpit-hud.md#r-hud-011-other-craft-visible-at-combat-ranges) | `render`, `settings` |
-| F.4 | **Base-defence balance**: the player has time to engage more than one attacker, even on the lowest level | [F-MSN-006](../../definition/missions.md#f-msn-006-base-defence-the-player-can-win) | [R-MSN-011](../../specification/requirements/missions.md#r-msn-011-base-defence-balance) | `packs/*/missions`, `soak` |
-| F.5 | **Action catalogue and controls overlay**: one catalogue drives keys, the overlay and the console | [F-CON-003](../../definition/control-console.md#f-con-003-one-action-catalogue-with-a-controls-overlay) | [R-CON-007](../../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-008](../../specification/requirements/control-console.md#r-con-008-controls-overlay) | `input`, `hud`, `app::flight` |
+| # | Item | Features | Requirements | Module | Status |
+|---|---|---|---|---|---|
+| F.1 | **Drift display**: the speed indicator shows forward speed and sideways (X) and vertical (Y) drift, plus a flight-path marker | [F-HUD-006](../../definition/cockpit-hud.md#f-hud-006-drift-display) | [R-HUD-009](../../specification/requirements/cockpit-hud.md#r-hud-009-drift-display) | `hud` | **Done** (0.3.1): status line `THR 60%  312 m/s  X+45 Y-12` (`Ship::body_velocity`); flight-path marker |
+| F.2 | **Shot physics**: shots inherit the craft's velocity plus the turn velocity at the muzzle, then move independently of the craft's orientation; a rules option, physics by default (decision D1) | [F-CMB-011](../../definition/combat.md#f-cmb-011-shot-physics) | [R-CMB-021](../../specification/requirements/combat.md#r-cmb-021-shot-physics), [R-CMB-002](../../specification/requirements/combat.md#r-cmb-002-bolt-travel) | `sim::combat`, `content::rules` | **Done** (0.3.1): `flight.bolt_frame: world \| ship`, `bolt_carry`; streaks relative to the viewer (`SpaceCamera::velocity`) |
+| F.3 | **Visibility**: other fighters easy to see; a brightness setting | [F-HUD-007](../../definition/cockpit-hud.md#f-hud-007-seeing-other-craft) | [R-HUD-010](../../specification/requirements/cockpit-hud.md#r-hud-010-brightness-setting), [R-HUD-011](../../specification/requirements/cockpit-hud.md#r-hud-011-other-craft-visible-at-combat-ranges) | `render`, `settings` | **Done** (0.3.1): `flight.lighting` (ambient, sun, rim, distant dots); `graphics.brightness` |
+| F.4 | **Base-defence balance**: the player has time to engage more than one attacker, even on the lowest level | [F-MSN-006](../../definition/missions.md#f-msn-006-base-defence-the-player-can-win) | [R-MSN-011](../../specification/requirements/missions.md#r-msn-011-base-defence-balance) | `packs/*/missions`, `soak` | **Done** (0.3.1): measured with `--soak-pilot idle`; the base was not too weak — the player's death was reported as the base lost. New result `killed`; cadet regression test (150 s) |
+| F.5 | **Action catalogue and controls overlay**: one catalogue drives keys, the overlay and the console | [F-CON-003](../../definition/control-console.md#f-con-003-one-action-catalogue-with-a-controls-overlay) | [R-CON-007](../../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-008](../../specification/requirements/control-console.md#r-con-008-controls-overlay) | `input`, `hud`, `app::flight` | **Done** (0.3.1): keys overlay on `?` (action `help`, `input::help_rows`); the pause menu points to it |
 
 ## Control console items
 
@@ -30,8 +31,9 @@ cites the features and requirements it delivers; issues are filed in `sio` again
   in-crate and with plain web components; anything else needs the dependency evaluation first.
 - **Settings.** The console's on/off switch, port and pairing are settings; the keys are open
   (R-CON-009).
-- **F1.** The request names F1 for the overlay, which today selects cockpit view 1 (R-CON-008,
-  open).
+- **F1.** The request named F1 for the overlay, which selects cockpit view 1. Resolved: F1 stays the
+  original's view key (no deviation); the overlay is on `?` (Shift+Slash) and Shift+F1. F12 is
+  the cockpit layout editor's key in custom cockpits, so it is not used (R-CON-008).
 
 **Exit**: unit tests for the drift components, shot velocity, the catalogue and the protocol
 messages; manual test cases for the drift display, visibility, the overlay, base defence at the

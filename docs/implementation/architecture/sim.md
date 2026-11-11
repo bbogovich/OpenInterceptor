@@ -100,8 +100,25 @@ limit. Default 60 000 m.
   TRACTOR BEAM ON"); firing beams or a missile drops an active cloak ("CLOAK DROPPED").
 - **Beams**: `LinkMode::Linked` fires mounts in pairs, `Full` all at once, `Unlinked` one at a
   time; each mount has a cooldown of `1 / rate_of_fire`; energy is checked for the whole group
-  (`NoEnergy` event and a 0.5 s hold if short). Bolts inherit the ship's velocity; life =
-  range / speed.
+  (`NoEnergy` event and a 0.5 s hold if short). Life = range / speed.
+- **Bolt launch (app 0.3.1, R-CMB-021).** A bolt starts at its muzzle, `pos + r` with
+  `r = rotation × mount_offset`, and leaves with exactly the muzzle's velocity plus its own
+  muzzle speed along the gun: `velocity = ship.velocity + ω × r + dir × beam.speed`. `ω` is the
+  ship's turn rate in world axes; `Ship::angular_velocity` is kept in body axes, so
+  `ω = rotation × angular_velocity`. A gun on the right wing of a ship yawing left is swinging
+  forwards, and its shot keeps that speed. After launch the bolt flies straight, whatever the
+  ship does (`flight.bolt_frame: world`, the default).
+- **`bolt_frame: ship`** (the arcade option): the bolt also stores its offset and velocity in
+  the owner's body axes (`local_offset`, `local_velocity`, made with `rotation.conjugate()`)
+  and a `carry` time from `flight.bolt_carry`. While `carry > 0` and the owner lives,
+  `move_bolts` places it from the owner each tick (`owner.position + owner.rotation ×
+  local_offset`), so it turns with the nose; its `velocity` is set to the move it makes, so the
+  hit test sweeps the real path. When the carry runs out it keeps that last velocity and flies
+  straight.
+- **Body velocity.** `Ship::body_velocity()` is the velocity in the ship's own axes,
+  `rotation.conjugate() × velocity`, with z negated so forward reads positive: `x` sideways
+  drift (+ right), `y` vertical drift (+ up), `z` forward speed. The HUD's drift readout shows
+  it ([Cockpit and HUD](hud.md)).
 - **Bolts and missiles** test the *segment* travelled this tick against every other ship's
   `collision::Shape` (sphere broad phase, triangle mesh for stations) so fast shots cannot
   tunnel.
@@ -331,7 +348,8 @@ current order, and `DISABLED` if so.
 | `FlightModel` | `Newtonian` or `Assisted` (`flight.model`), in `FlightRules` with `arena_radius`. |
 | `Pilot` | `External` (the player) or `Ai(AiState)`. |
 | `SimEvent` | `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded { position, effect }`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`, `PointDefence { ship, from, to, hit }`. |
-| `Bolt`, `Missile`, `Lock`, `LinkMode` | Projectiles and weapon state. |
+| `Bolt`, `Missile`, `Lock`, `LinkMode` | Projectiles and weapon state. `Bolt::carry`, `local_offset`, `local_velocity`: the `bolt_frame: ship` carry (above). |
+| `content::rules::BoltFrame`, `FlightRules::bolt_carry` | `World` (default) or `Ship`; the carry time (0.3 s). |
 | `collision::Shape`, `TriMesh` | Bounding radius plus optional triangle mesh. |
 | `TICK` | `1.0 / 60.0`. |
 
@@ -368,6 +386,7 @@ current order, and `DISABLED` if so.
   `ai::nearest_prize(world, me, within) -> Option<ShipId>`.
 - `targeting::cycle`, `nearest_hostile`, `in_sights(world, me, max_angle_deg)`, `off_nose_angle`.
 - `collision::segment_sphere`, `segment_triangle` (Möller–Trumbore), `segment_shape`.
+- `ship.body_velocity() -> Vec3` — velocity in body axes (x right, y up, z forward).
 - `sim::euler(Vec3 degrees)` — yaw/pitch/roll to a quaternion (positive yaw turns left).
 
 ## Debugging
@@ -392,7 +411,7 @@ current order, and `DISABLED` if so.
 - An enemy that "does nothing": check its role (`ai: enemy` in the scenario) and that its
   behaviour's states can act (an `attack` state with a `range` its beams reach). `--check`
   reports behaviours whose conditions do not parse.
-- Balance by numbers: `--soak <scenario> --ship <id> --difficulty <level> [--soak-pilot ai]`
+- Balance by numbers: `--soak <scenario> --ship <id> --difficulty <level> [--soak-pilot ai|idle]`
   plays the battle without a window and reports how long the player lasted, hits taken and
   enemies destroyed; the default campaign's balance promise is held by a unit test of the
   same runner (`soak`).

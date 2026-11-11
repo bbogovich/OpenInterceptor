@@ -75,8 +75,10 @@ stateDiagram-v2
   again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.
 - **Flight session** (`flight.rs`): see the frame loop on the
   [overview](index.md#logic-flow-one-frame-of-a-flight-session). Views F1–F8; after death the
-  camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher); P
-  pauses. The player's cockpit may have 2D art, a 3D model, or both; the HUD uses the cockpit's
+  camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher; it
+  points to `?` for the keys instead of listing them); P pauses; `?` (or Shift+F1) opens the
+  **keys overlay** (`draw_help`, `help_open`), which pauses the battle and lists every action by
+  group with its current keys, in as many columns as the screen needs. The player's cockpit may have 2D art, a 3D model, or both; the HUD uses the cockpit's
   design space in the cockpit view and the default glass layout in the other views. A 3D
   cockpit on a window narrower than its design widens the field of view (`cockpit_fov`), and
   its anchored instruments are drawn on the dashboard in perspective (`draw_anchored`).
@@ -164,6 +166,8 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 - `openinterceptor --campaign default --soak rocket-vs-saucer --ship comet --difficulty cadet`
   plays the scenario headless and prints the player's fate (`src/soak.rs`): how long a passive
   ship survives, or whether an AI-flown one wins (`--soak-pilot ai`), per difficulty level.
+  `--soak-pilot idle` leaves the player's craft sitting still: in a defence mission it measures
+  how long the defended object holds on its own (`SoakPilot::Idle`).
 - A layout saved by F12 that seems ignored: the addon targets the campaign that was loaded when
   it was saved; check `--list` shows `<campaign>-cockpit-<id>` and that it is not disabled.
 - `openinterceptor --mission defend_station --ship comet` starts a mission directly;

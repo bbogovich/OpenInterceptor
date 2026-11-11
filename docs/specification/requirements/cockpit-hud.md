@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -20,9 +20,9 @@ Features: [Cockpit & HUD](../../definition/cockpit-hud.md). How to read a requir
 | [R-HUD-006 Gauges, readouts and messages](#r-hud-006-gauges-readouts-and-messages) | Implemented |
 | [R-HUD-007 Targeting display](#r-hud-007-targeting-display) | Implemented |
 | [R-HUD-008 Cockpit layout editor](#r-hud-008-cockpit-layout-editor) | Implemented |
-| [R-HUD-009 Drift display](#r-hud-009-drift-display) | Planned |
-| [R-HUD-010 Brightness setting](#r-hud-010-brightness-setting) | Planned |
-| [R-HUD-011 Other craft visible at combat ranges](#r-hud-011-other-craft-visible-at-combat-ranges) | Planned |
+| [R-HUD-009 Drift display](#r-hud-009-drift-display) | Implemented |
+| [R-HUD-010 Brightness setting](#r-hud-010-brightness-setting) | Implemented |
+| [R-HUD-011 Other craft visible at combat ranges](#r-hud-011-other-craft-visible-at-combat-ranges) | Implemented |
 | [R-HUD-012 Atmosphere instruments](#r-hud-012-atmosphere-instruments) | Planned |
 
 ## Requirements
@@ -129,41 +129,43 @@ The speed indicator MUST show forward speed and the sideways (X) and vertical (Y
 
 *Rationale:* User request (F-HUD-006): newtonian flight allows drift the pilot cannot otherwise see.
 
+In the glass HUD's status line this is `THR 60%  312 m/s  X+45 Y-12`: forward speed, then sideways (X, + right) and vertical (Y, + up) drift in whole metres per second, signed. The flight-path marker is a circle with three ticks at the point the velocity vector projects to; with no drift it sits on the crosshair.
+
 - Implements: [F-HUD-006](../../definition/cockpit-hud.md#f-hud-006-drift-display)
-- Status: planned
-- Verified by: Planned (interlude item F.1).
+- Status: implemented
+- Verified by: `sim::tests::body_velocity_reads_drift_in_the_ships_own_axes`, `hud::draw::tests::drift_reads_signed_whole_metres_per_second`; MT-3-13
 - See: [Cockpit and HUD](../../implementation/architecture/hud.md)
 
 !!! question "Open"
-    How the original cockpits' speed gauge shows three values, and the marker's look, are not designed.
+    How the original cockpits' speed gauge would show three values is not designed: the drift readout is on the status line, which every view shows. The marker's look is settled (above).
 
 ### R-HUD-010 Brightness setting
 
-The player MUST be able to set the picture's brightness in the settings, where 1 means as authored.
+The player MUST be able to set the picture's brightness in the settings, where 1 means as authored. The setting is `graphics: {brightness: …}` in `settings.yaml`, from 0.5 (darker) to 2 (brighter); values outside are clamped. It MUST lift dark tones more than bright ones (a gamma of 1 / brightness on the lit models).
 
 *Rationale:* User request (F-HUD-007).
 
 - Implements: [F-HUD-007](../../definition/cockpit-hud.md#f-hud-007-seeing-other-craft)
-- Status: planned
-- Verified by: Planned (interlude item F.3).
-- See: [Settings and data discovery](../../implementation/architecture/settings.md)
+- Status: implemented
+- Verified by: `settings::tests::parses_and_round_trips`; MT-3-16
+- See: [Settings and data discovery](../../implementation/architecture/settings.md), [Settings (user guide)](../../user-guide/settings.md)
 
-!!! question "Open"
-    Range and where it is set in game (settings file only, or an options screen).
+!!! note "Where it is set"
+    The settings file only, for now; an in-game options screen belongs to Stage 6 (presentation).
 
 ### R-HUD-011 Other craft visible at combat ranges
 
-Other craft MUST be visible to the player at combat ranges in every cockpit and view.
+Other craft MUST be visible to the player at combat ranges in every cockpit and view. The campaign's rules MUST set the lighting (`flight: {lighting: {ambient, sun, rim, distant_dot}}`): a rim light outlines hulls seen edge-on, and a craft on the player's radar MUST NOT be drawn smaller than `distant_dot` pixels — smaller craft are drawn as a dot in their radar colour (the objective colour if protected).
 
 *Rationale:* User request (F-HUD-007): "it is difficult to see other fighters".
 
 - Implements: [F-HUD-007](../../definition/cockpit-hud.md#f-hud-007-seeing-other-craft)
-- Status: planned
-- Verified by: Planned (interlude item F.3; a manual test).
-- See: [Rendering](../../implementation/architecture/rendering.md)
+- Status: implemented
+- Verified by: `content::rules::tests::builds_typed_definitions_with_inheritance` (the lighting keys); MT-3-15
+- See: [Rendering](../../implementation/architecture/rendering.md), [Mod file reference (`flight`)](../../modding/reference.md#flight)
 
-!!! question "Open"
-    The means (lighting, minimum on-screen size, contact markers or outlines) and a measurable criterion are not decided.
+!!! note "Criterion"
+    The measurable part is the minimum on-screen size (`distant_dot`, 4 px in both packs). Whether a craft is *easy* to see is judged in play (MT-3-15).
 
 ### R-HUD-012 Atmosphere instruments
 
@@ -181,3 +183,4 @@ In an atmosphere the HUD MUST show altitude, vertical speed and a horizon.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-HUD-001 – R-HUD-012 (12 requirements; 8 reverse-engineered from the code) |
+| 1.1.0 | 2026-11-11 | R-HUD-009, R-HUD-010, R-HUD-011 implemented (app 0.3.1): drift status line and flight-path marker; `graphics.brightness` 0.5–2 as a gamma; `flight.lighting` with rim light and distant dots. R-HUD-010 and R-HUD-011 open notes resolved; R-HUD-009 keeps the original-cockpit question |

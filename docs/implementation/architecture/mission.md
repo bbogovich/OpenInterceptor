@@ -31,7 +31,7 @@ flowchart LR
     STEP --> UP["MissionRun::update(&mut World)<br/>after every tick"]
     UP --> L1["1. losses per role from member state<br/>(destroyed, departed, captured events)"]
     L1 --> L2["2. arrive: conditions → spawn_role;<br/>waves (once); chatter (once) → message lines;<br/>optional objectives latched"]
-    L2 --> L3["3. end: retreat (player departed) →<br/>lose → win → draw → timer"]
+    L2 --> L3["3. end: retreat (player departed) →<br/>killed (player destroyed) →<br/>lose → win → draw → timer"]
     L3 -->|result| DB["Debrief: result, text, optional (met?),<br/>campaign actions, kills, losses, seconds;<br/>battle actions (message) run"]
     DB --> OV["debrief overlay over the frozen battle<br/>Enter: again · Esc/L: launcher"]
 ```
@@ -51,14 +51,29 @@ flowchart LR
 - **Conditions** are evaluated through `BattleCx`, which implements the script language's
   `Context` for this battle; role names are constants of the battle schema, compiled to indices.
 
+### The `killed` result (app 0.3.1)
+
+When the player's craft is destroyed — its slot no longer holds it (`!World::same_slot`, the
+slot may have been reused) or it is not `alive` — the result is `killed`, checked **before** the
+mission's own conditions. Before 0.3.1 a mission whose `lose` condition included
+`not player_alive` reported the player's death as a loss, and the debrief showed the `lose`
+text, which usually describes the objective failing ("the base was destroyed"). Measured with
+the idle soak pilot, that was what players of `xcom_base_defense` saw on veteran: the base was
+fine, the player had been killed in 15–18 s.
+
+`killed` takes the mission's own `outcomes: {killed: …}` if it has any, else its `lose`
+outcomes; the debrief text is `debrief: {killed: …}` if given, else empty. The debrief panel's
+headline is "YOUR CRAFT WAS DESTROYED".
+
 ### Launcher, `--mission`, soak
 
 The launcher lists missions after the scenarios (*Mission: name*, the briefing as the
 description, the ship choice when `player.class` is `choose`) and scrolls the list to keep the
 selection near the middle (`launcher::Menu::first_visible`, "^ more" / "v more" markers).
 Selecting one returns `Next::Mission { mission, ship }`; `--mission <id>` starts one directly.
-`soak::run_mission` plays a mission headless with the passive or AI pilot and reports the result
-(`--soak <mission id>`).
+`soak::run_mission` plays a mission headless with the passive, AI or idle pilot and reports the
+result (`--soak <mission id>`). A unit test holds the balance promise of R-MSN-011: in the
+default campaign at cadet, `defend_station` with the idle pilot is still running after 150 s.
 
 ### AI changes made with missions
 
@@ -75,7 +90,7 @@ so pilots that start together do not act together.
 | `RoleDef`, `Arrival`, `WaveDef`, `ChatterDef` | A role (classes, count range, faction, AI, behaviour, protect, state, hull, destroyed systems, speed, `at`, `arrive`); an arrival (`distance`, `bearing`, `from`, `spread`); a wave; a radio line. |
 | `mission::MissionRun` | The running mission: its definition, the player's id, per-role `RoleRun`s, wave/chatter/optional latches, its generator, kills, losses, `debrief`. |
 | `mission::RoleRun` | `members`, `arrived`, `destroyed`, `retreated`, `captured`. |
-| `mission::Debrief` | `result`, `text`, `optional: Vec<(name, met)>`, `campaign` actions (as text), `kills`, `losses`, `seconds`. |
+| `mission::Debrief` | `result` (`win`, `lose`, `draw`, `retreat`, `killed`), `text`, `optional: Vec<(name, met)>`, `campaign` actions (as text), `kills`, `losses`, `seconds`. |
 | `mission::BattleCx` | The battle `Context` for conditions. |
 | `script::battle::QUERIES`, `schema(roles, levels)` | The battle context's queries. |
 | `script::action::{ActionDef, Action, Scope, MISSION_ACTIONS}` | Outcome actions with `Battle` or `Campaign` scope. |
@@ -99,7 +114,7 @@ so pilots that start together do not act together.
 - `--check` reports every mission problem with file, line and path (`missions.x: roles.y…`,
   unknown roles in conditions, unknown actions).
 - `--mission <id> --ship <id>` jumps straight in; `--soak <id> --difficulty <level>
-  [--soak-pilot ai]` plays it headless and prints `soak mission <id> (<level>, <pilot>): <result>
+  [--soak-pilot ai|idle]` plays it headless and prints `soak mission <id> (<level>, <pilot>): <result>
   after <n> s; <k> kills` — the quickest way to check that a mission can be both won and lost.
 - A role that never appears: its `arrive:` condition never held, or its `at.from` role has no
   survivors (it then appears at the player's start). `arrived(role)` in a chatter line makes

@@ -158,8 +158,9 @@ strategy layer; the pause menu quits).
 | `mfd_prev` | Previous MFD page | `Comma` | `DpadLeft` | the `<` key |
 | `next_nav` | Next nav point | `N` | — | engine extension ([DEV-002](../../implementation/deviations/index.md)) |
 | `pause` | Pause | `P` | `Start` |  |
-| `menu` | Menu | `Escape` | `LeftShoulder+Start` | pause menu: Esc resume, R restart, K controls, L back to launcher |
+| `menu` | Menu | `Escape` | `LeftShoulder+Start` | pause menu: Esc resume, R restart, K controls, L back to launcher; points to `?` for the keys |
 | `mouse_flight` | Mouse flight on/off | `C` | — | toggles mouse flight (hides and confines the cursor) |
+| `help` | Keys help (this list) | `Shift+Slash`, `Shift+F1` | — | the keys overlay (`?`): every action by group with its current keys; pauses the battle; Esc also closes it ([Controls](../../user-guide/controls.md)). Engine extension; F1 stays the cockpit view |
 
 **Shift chords and held keys.** A `Shift+` chord only fires with Shift held, and a plain key
 only fires without it, so `F` and `Shift+F` can do different things. While Shift is held, a key

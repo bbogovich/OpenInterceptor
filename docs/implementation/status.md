@@ -7,7 +7,7 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [0 Foundation](plan/stage-0-foundation.md) | **Done** | Repository, SpecItOut manifest, gate, docs site; every asset type for stages 1–2 decoded and verified |
 | [1 Flight simulator](plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
-| [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0 | See [Stage 3 progress](#stage-3-progress) below |
+| [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1** | See [Stage 3 progress](#stage-3-progress) below |
 | [4 Strategy layer](plan/stage-4-strategy.md) | Not started | |
 | [5 Campaigns](plan/stage-5-campaign.md) | Not started | |
 | [6 Presentation](plan/stage-6-presentation.md) | Not started | |
@@ -118,7 +118,8 @@ and `--soak` `f638b44`; looks `b097c83`; guidance and mines `7997e53`; station m
 
 ## Stage 3 progress
 
-App **0.3.0**, main `d7553f5`; **269 unit tests** on macOS.
+App **0.3.0**, main `d7553f5`; then app **0.3.1**, main `c583659` (the interlude's playtest
+fixes); **276 unit tests** on macOS.
 
 | Item | Status | Where |
 |---|---|---|
@@ -130,6 +131,12 @@ App **0.3.0**, main `d7553f5`; **269 unit tests** on macOS.
 | `interceptor`: 5 of 27 mission types (3.11) | **Started** (compositions derived, DEV-041) | `packs/interceptor/missions/` |
 | `default`: 4 missions incl. the logistics missions (3.12, 3.13) | **Started** | `packs/default/missions/` |
 | Environments, atmospheric flight, terrain, simulator missions, Tier 2 decision (3.3–3.6, 3.9, 3.10) | **Not started** | |
-| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-12 | **Not yet run** | |
+| Interlude F.1 — drift readout (`THR 60%  312 m/s  X+45 Y-12`) and flight-path marker | **Done** (0.3.1) | `src/sim/mod.rs` (`Ship::body_velocity`), `src/hud/draw.rs` |
+| Interlude F.2 — shot physics: bolts leave with ship velocity + ω × r + muzzle speed, then fly straight; `flight.bolt_frame: world \| ship`, `bolt_carry`; streaks relative to the viewer | **Done** (0.3.1) | `src/sim/combat.rs`, `src/content/rules.rs`, `src/render/` |
+| Interlude F.3 — visibility: `flight.lighting` (ambient, sun, rim, distant dots), `graphics.brightness` | **Done** (0.3.1) | `src/render/mod.rs`, `src/settings.rs` |
+| Interlude F.4 — base defence: measured with `--soak-pilot idle`; the `killed` result; cadet regression test | **Done** (0.3.1) | `src/mission/mod.rs`, `src/soak.rs` |
+| Interlude F.5 — keys overlay (`?`, action `help`) from `input::ACTIONS` | **Done** (0.3.1) | `src/input/mod.rs`, `src/app/flight.rs` |
+| Interlude C1–C5 — tablet control console | **Started** (remote action sets on `RawInput`, work in progress) | `src/input/mod.rs` |
+| Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-18 | **Not yet run** | |
 
-**Next**: the [Stage 3 interlude](plan/stage-3-interlude.md) (feedback items F.1–F.5 and the control console C1–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).
+**Next**: the rest of the [Stage 3 interlude](plan/stage-3-interlude.md) (the control console C1–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).

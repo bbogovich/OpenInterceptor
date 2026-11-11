@@ -52,7 +52,14 @@ game:
   campaign: default
   difficulty: ranger        # a level of game.campaign: ignored when another campaign loads
   language: en              # text/<language>/ folders (--language overrides)
+graphics:
+  brightness: 1.2           # 1 = as authored; 0.5 (darker) to 2 (brighter)
 ```
+
+`graphics.brightness` (app 0.3.1) is read once at start-up into `Renderer::brightness` and
+applied as a gamma of 1 / brightness in the lit shader ([Rendering](rendering.md)); values
+outside 0.5–2 are clamped, and an empty value means 1. The player's guide is
+[Settings](../../user-guide/settings.md).
 
 **Migration.** Builds before the YAML formats wrote `settings.ini` and `bindings.ini`. When
 `settings.yaml` does not exist, `Settings::load` reads `settings.ini` instead
@@ -67,7 +74,7 @@ and ignored from then on.
 
 | Symbol | What it is |
 |---|---|
-| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`, `difficulty: Option<String>`, `language: Option<String>`. |
+| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`, `difficulty: Option<String>`, `language: Option<String>`, `brightness: Option<f32>` (`graphics.brightness`, clamped 0.5–2). |
 | `settings::Source` | Which rule found the data: `CommandLine`, `Environment`, `SettingsFile`, `UserDataFolder`, `DevelopmentTree`. |
 | `cli::user_data_dir()` | The per-user folder for this platform. |
 | `cli::find_packs_dir(exe)` | `./packs`, next to the program, `../Resources/packs` inside an app bundle, then the source tree. |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -22,7 +22,7 @@ Requirements for these features: [Combat requirements](../specification/requirem
 | [F-CMB-008 Enemies driven by data, with difficulty levels](#f-cmb-008-enemies-driven-by-data-with-difficulty-levels) | Implemented |
 | [F-CMB-009 Stations with modules](#f-cmb-009-stations-with-modules) | Implemented |
 | [F-CMB-010 Damage looks, debris and explosions](#f-cmb-010-damage-looks-debris-and-explosions) | In progress |
-| [F-CMB-011 Shot physics](#f-cmb-011-shot-physics) | Planned |
+| [F-CMB-011 Shot physics](#f-cmb-011-shot-physics) | Implemented |
 
 ## Features
 
@@ -132,7 +132,7 @@ Requirements for these features: [Combat requirements](../specification/requirem
 
 **Why.** User request: "Weapons, when fired, should start with the same angular momentum as the craft so that they appear to fire forwards in a straight line relative to the player." Decision D1 (2026-11-11): a rules option, physics by default.
 
-- **Status:** planned
+- **Status:** implemented (app 0.3.1)
 - **Source:** User request (feedback); decision D1; interlude item F.2.
 - **Specified by:** [R-CMB-002](../specification/requirements/combat.md#r-cmb-002-bolt-travel), [R-CMB-021](../specification/requirements/combat.md#r-cmb-021-shot-physics)
 
@@ -141,3 +141,4 @@ Requirements for these features: [Combat requirements](../specification/requirem
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CMB-001 – F-CMB-011 (11 features) |
+| 1.1.0 | 2026-11-11 | F-CMB-011 implemented (app 0.3.1) |

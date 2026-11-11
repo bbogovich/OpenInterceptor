@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -22,7 +22,7 @@ Features: [Missions](../../definition/missions.md). How to read a requirement: [
 | [R-MSN-008 Battle environments](#r-msn-008-battle-environments) | Planned |
 | [R-MSN-009 Hazards](#r-msn-009-hazards) | Planned |
 | [R-MSN-010 Simulator missions](#r-msn-010-simulator-missions) | Planned |
-| [R-MSN-011 Base defence balance](#r-msn-011-base-defence-balance) | Planned |
+| [R-MSN-011 Base defence balance](#r-msn-011-base-defence-balance) | Implemented |
 | [R-MSN-012 Logistics missions](#r-msn-012-logistics-missions) | Implemented |
 
 ## Requirements
@@ -53,13 +53,13 @@ A role MUST be able to arrive at a position relative to another (`at: {distance,
 
 ### R-MSN-003 Objectives, timer and outcomes
 
-A mission MUST evaluate win, draw and lose conditions and optional objectives in the battle context; lose MUST beat win in the same tick; a timer MUST end the mission with its stated result; outcomes MUST be lists of checked actions with battle or campaign scope.
+A mission MUST evaluate win, draw and lose conditions and optional objectives in the battle context; lose MUST beat win in the same tick; a timer MUST end the mission with its stated result; outcomes MUST be lists of checked actions with battle or campaign scope. The results are `win`, `lose`, `draw`, `retreat` and `killed`. The engine MUST set `killed` when the player's craft is destroyed, checked before the mission's own conditions; `killed` MUST take the mission's `lose` outcomes unless the mission gives `outcomes: {killed: …}`.
 
-*Rationale:* Clear, testable results.
+*Rationale:* Clear, testable results; the debrief must say what actually happened (the player's death is not the objective failing).
 
-- Implements: [F-MSN-001](../../definition/missions.md#f-msn-001-missions-as-data)
+- Implements: [F-MSN-001](../../definition/missions.md#f-msn-001-missions-as-data), [F-MSN-006](../../definition/missions.md#f-msn-006-base-defence-the-player-can-win)
 - Status: implemented
-- Verified by: `mission::lose_beats_win_and_the_timer_ends_it`; `script::action::actions_parse_and_check`; `script::battle::ids_match_and_roles_are_checked_names`
+- Verified by: `mission::lose_beats_win_and_the_timer_ends_it`, `the_players_death_is_its_own_result_with_the_lose_outcomes`; `script::action::actions_parse_and_check`; `script::battle::ids_match_and_roles_are_checked_names`
 - Reverse-engineered: yes
 - See: [Missions (architecture)](../../implementation/architecture/mission.md), [Conditions (script)](../../implementation/architecture/script.md)
 
@@ -77,13 +77,13 @@ Mistakes in a mission file (unknown role, bad timer result, unknown action) MUST
 
 ### R-MSN-005 Debrief
 
-At the end of a mission the debrief MUST show the result, its text, kills, losses, time, optional objectives and the campaign actions, and MUST offer a retry. The player jumping out MUST count as `retreat`.
+At the end of a mission the debrief MUST show the result, its text, kills, losses, time, optional objectives and the campaign actions, and MUST offer a retry. The player jumping out MUST count as `retreat`. For `killed` the headline MUST be "YOUR CRAFT WAS DESTROYED" and the text MUST be the mission's `debrief: {killed: …}` if given, otherwise none (never the `lose` text, which describes the objective).
 
 *Rationale:* Closure and feedback.
 
 - Implements: [F-MSN-002](../../definition/missions.md#f-msn-002-debrief)
 - Status: implemented
-- Verified by: MT-3-01 – MT-3-11 (the debrief in every mission case)
+- Verified by: `mission::the_players_death_is_its_own_result_with_the_lose_outcomes`; MT-3-01 – MT-3-11 (the debrief in every mission case), MT-3-17
 - Reverse-engineered: yes
 - See: [Missions (architecture)](../../implementation/architecture/mission.md)
 
@@ -148,17 +148,17 @@ The player MUST be able to set up a simulator mission on a setup screen and fly 
 
 ### R-MSN-011 Base defence balance
 
-In every base-defence mission, at every difficulty including the lowest, the base MUST survive long enough for the player to engage more than one attacker.
+In every base-defence mission, at every difficulty including the lowest, the base MUST survive long enough for the player to engage more than one attacker. Measured with `--soak <mission> --soak-pilot idle` (the player's craft sits still and does nothing): at the lowest level an undefended base or station MUST hold for at least 150 s.
 
 *Rationale:* User request (F-MSN-006).
 
 - Implements: [F-MSN-006](../../definition/missions.md#f-msn-006-base-defence-the-player-can-win)
-- Status: planned
-- Verified by: Planned (interlude item F.4; soak runs and a manual test).
+- Status: implemented
+- Verified by: `soak::tests::at_cadet_an_undefended_station_holds_for_150_seconds`; MT-3-01, MT-3-05, MT-3-12, MT-3-17
 - See: [Missions (modding)](../../modding/missions.md), [Manual tests (MT-3-01, MT-3-05)](../../implementation/testing/manual-tests.md)
 
-!!! question "Open"
-    A measurable threshold (for example a minimum time to destroy the base at the lowest level, measured with `--soak`), and which values change (base shields and hull, attacker counts and arrivals, point defence). The changes are pack data.
+!!! note "Finding (app 0.3.1)"
+    Measured with the idle pilot, `xcom_base_defense` at beginner still had 2 390 of 6 000 hull after 400 s, and the AI pilot won in 75 s with the base untouched. On veteran the mission ended at 15–18 s because the *player's* craft was destroyed by elerium torpedoes, while the debrief showed the base-lost text. The base was not too weak; the result was mislabelled. The fix is the `killed` result (R-MSN-003, R-MSN-005), not a change of pack values. Default campaign, `defend_station`, idle pilot: cadet still running at 400 s; ranger lose at 140 s; space ace killed at 8 s.
 
 ### R-MSN-012 Logistics missions
 
@@ -180,3 +180,4 @@ The `convoy_ambush` and `construction_defence` missions MUST be playable: protec
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-MSN-001 – R-MSN-012 (12 requirements; 7 reverse-engineered from the code) |
+| 1.1.0 | 2026-11-11 | R-MSN-011 implemented (app 0.3.1) with a measurable threshold (an undefended station holds 150 s at the lowest level, `--soak-pilot idle`); open note resolved. R-MSN-003: the `killed` result, set by the engine, with the `lose` outcomes by default. R-MSN-005: the `killed` headline and debrief text |

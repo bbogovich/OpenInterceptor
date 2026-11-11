@@ -1,6 +1,6 @@
 # Unit tests
 
-Every module's tests, as of main `d7553f5` (build 0.3.0): **269 tests** on macOS (270 on
+Every module's tests, as of main `c583659` (build 0.3.1): **276 tests** on macOS (277 on
 Linux), run with `cargo test` by the gate. Tests
 live next to the code in `#[cfg(test)] mod tests` blocks and use **synthetic data built in the
 test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.
@@ -29,7 +29,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `model` | 9 | XMSH → engine model (mirroring, triangulation, groups, colours, bounds), outward winding after mirroring, **face table** (corner ranges, groups surviving empty-group removal), **overlay layers** (later face on top, overlay flag beats file order, touching or back-to-back faces not layered, OBJ duplicate face layered), LOD by distance, OBJ conversion, empty OBJ |
 | `content` | 5 | Loading packs/rules/scenarios/models from temp folders, skipping packs that need the CD, scenario replacement, **per-asset overrides** of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs |
 | `content::pack` | 7 | Manifest parsing and validation, **kind, parent, targets and format** (and their errors), **the active set for a chosen campaign** (parent chain, targeting addons, dependencies), dependency ordering, missing/duplicate/cyclic dependencies, discovery |
-| `content::rules` | 6 | Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, cockpits; **later packs merge, delete and edit lists**; **difficulty variants and per-level values**; every error reported; **spelling of original keys** (`HitPoints` → `hit_points`, `Side` → `faction`, beam `Range` in km); **sound cues resolve through the original table** |
+| `content::rules` | 6 | Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, **`bolt_frame`, `bolt_carry` and `lighting` (unset keys keep defaults)**, cockpits; **later packs merge, delete and edit lists**; **difficulty variants and per-level values**; every error reported; **spelling of original keys** (`HitPoints` → `hit_points`, `Side` → `faction`, beam `Range` in km); **sound cues resolve through the original table** |
 | `content::equipment` | 3 | System kinds round trip and built-ins exist, `systems` definitions overriding built-ins, `power` parsing and validation (level counts, start levels) |
 | `content::looks` | 3 | Debris sets and effects parse with defaults; texture swaps accumulate with damage levels and state; texture keys ignore folders, case and extensions |
 | `content::mission` | 2 | A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action) |
@@ -39,21 +39,21 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `content::behaviour` | 4 | States, transitions and skill parsed (units, per-state parameters); mistakes reported (no `do`, unknown manoeuvre or state, bad condition); the built-in attack behaviour is valid; **target preferences parse and reject unknown selectors** |
 | `content::scenario` | 3 | Objects and nav points (incl. `destroyed_systems`, `hull`), `player: choose`, **errors name the line and path** |
 | `content::vfs` | 4 | Asset reference parsing and `..` normalisation, refusing escaping paths, **override path naming**, original data found by name in any layout, digit-named resources, resource and file listing |
-| `settings` | 2 | settings.yaml parse/save round trip incl. `packs.disabled`, `game.campaign` and `game.difficulty`, and the legacy settings.ini reader; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths) |
-| `sim` | 13 | Generational handles, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold; **target preferences pull the AI past a nearer target**, **station modules mount, follow and fall with their hub**; **probes extend radar and jam their enemies**, **AI pilots switch cloak, ECM and power by condition**, **protected objectives are not picked as the nearest enemy** |
+| `settings` | 2 | settings.yaml parse/save round trip incl. `packs.disabled`, `game.campaign`, `game.difficulty` and **`graphics.brightness` (clamped)**, and the legacy settings.ini reader; original-data resolution order (command line, environment, settings, user data folder, development tree, relative paths) |
+| `sim` | 14 | Generational handles, **body velocity reads drift in the ship's own axes**, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold; **target preferences pull the AI past a nearer target**, **station modules mount, follow and fall with their hub**; **probes extend radar and jam their enemies**, **AI pilots switch cloak, ECM and power by condition**, **protected objectives are not picked as the nearest enemy** |
 | `sim::flight` | 15 | Helpers (turn factor, damping, approach, approach_vec); **newtonian**: acceleration to the cap and coasting, half throttle, reverse thrust, brake stops exactly, turning keeps the velocity, speed hold and drift cancelling, afterburner cap and bleed-off, VCT thrust; pitch/yaw/roll directions and speed falloff; **assisted** model end to end; recharge; static objects; arena edge |
-| `sim::combat` | 12 | Beams (energy, cooldown, hits on the aft shield), **bolt streak never trails behind the muzzle**, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; **point defence shoots down hostile missiles** |
+| `sim::combat` | 14 | Beams (energy, cooldown, hits on the aft shield), **bolt streak never trails behind the muzzle**, **a bolt leaves with the muzzle's velocity (ω × r) then flies straight**, **with `bolt_frame: ship` it turns with the nose while carried**, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; **point defence shoots down hostile missiles** |
 | `sim::ai` | 13 | Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, **aim skill decides accuracy**, **transitions switch states on conditions**, **turrets fire off the nose**, **tugs tow disabled enemies away**, disabled ships drift, target and idle behaviours; **mines go off when an enemy comes near** |
 | `sim::systems` | 13 | **Power**: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; **damage**: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; **hyperspace** countdown, abort and departure; **tractor** hold and capture on jump, and its refusals (power, fitting, range); **cloak** hides from enemy sensors beyond range; **ECM** makes missiles lose their target |
 | `sim::guidance` | 7 | Homing hits and dumbfire misses an offset target; sidestep still arrives; parallax decoys lure enemy missiles; cloaked wait sleeps until prey comes near; cluster splits into submunitions; doppelganger launches a decoy ship that expires; damage modes |
-| `mission` | 3 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it |
+| `mission` | 4 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; **the player's death is its own result (`killed`) with the lose outcomes** |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
 | `script` | 3 | Units and tokens; evaluation with precedence and short-circuit; **errors found when loading** (unknown names, argument counts, types) |
 | `script::object` | 1 | Query ids match the table; system names match the kinds; level names as constants |
 | `script::battle` | 1 | Query ids match the table; role names are checked names |
 | `script::action` | 1 | Actions parse and are checked (names, argument kinds, battle or campaign scope) |
 | `sim::collision` | 3 | Segment–sphere, segment–triangle, shapes with meshes in model space and the broad phase |
-| `input` | 13 | Original default layout incl. brake, **power and equipment keys**, one-shot commands and Shift chords, **a Shift chord does not trigger the plain held key**, gamepad sticks/buttons/presses and dead zone, **pad modifier layer reaches every power control**, **every action reachable from the keyboard and flight actions from the pad**, **stick layouts and mouse inversion**, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing |
+| `input` | 14 | **The keys help lists every action with its current keys**, Original default layout incl. brake, **power and equipment keys**, one-shot commands and Shift chords, **a Shift chord does not trigger the plain held key**, gamepad sticks/buttons/presses and dead zone, **pad modifier layer reaches every power control**, **every action reachable from the keyboard and flight actions from the pad**, **stick layouts and mouse inversion**, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing |
 | `input::editor` | 5 | Rows grouped with headers skipped, capturing a key rebinds and takes it from other actions, capturing plain pad presses and chords, clear / reset / settings, pretty names |
 | `input::gamepad` | 2 | Button names and bits round trip, axis normalisation |
 | `render` | 3 | Billboard and streak geometry, colour helpers, overlay depth bias pasted into the shader |
@@ -63,7 +63,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `render::starfield` | 1 | Same seed same sky, unit directions, uniform hemispheres |
 | `hud` | 6 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), **power readout and system lamps**, message expiry |
 | `hud::layout` | 4 | Anchor corners lie on the surface with world up; rays pick the nearest surface; 2D dragging and anchor scaling; saved layouts are valid rules |
-| `hud::draw` | 2 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink |
+| `hud::draw` | 3 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second** |
 | `hud::glyphs` | 1 | Text sizes snap down onto the glyph ladder |
 | `audio` | 2 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`) |
 | `app::assets` | 2 | Tab cycling; empty lists without original data |
@@ -74,7 +74,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 | `check` | 2 | The **default campaign** passes; broken definitions become errors |
 | `extract` | 3 | OBJ export round-trips through the mod loader (positions, triangles, uvs, materials, flat colours), PNG encoding round trip, a full extraction of a synthetic CD writes every override path (incl. cockpit cyan → alpha) |
 | `cli` | 4 | Every option incl. `--extract`, `--view`, `--model`, `--campaign`, `--screenshot`, `--frames`, environment variable precedence, unknown/incomplete options, packs folder discovery |
-| `soak` | 1 | The default campaign's difficulty scales enemy lethality (headless battle runs) |
+| `soak` | 2 | The default campaign's difficulty scales enemy lethality (headless battle runs); **at cadet an undefended station holds for 150 s** (idle pilot) |
 
 ## Test names
 
@@ -142,19 +142,19 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 
 **`hud`**: `gauges_sweep_and_read_the_ship`, `layout_scales_by_height_and_centres`, `messages_expire_and_keep_the_newest`, `mfd_pages_cycle_and_describe`, `power_and_system_readouts`, `radar_places_contacts_by_angle`
 
-**`hud::draw`**: `lamp_grids_follow_the_panel_shape`, `shield_rings_go_green_amber_red_then_blink`
+**`hud::draw`**: `drift_reads_signed_whole_metres_per_second`, `lamp_grids_follow_the_panel_shape`, `shield_rings_go_green_amber_red_then_blink`
 
 **`hud::glyphs`**: `sizes_snap_down_onto_the_ladder`
 
 **`hud::layout`**: `corners_lie_on_the_surface_with_world_up`, `dragging_and_scaling`, `rays_pick_the_nearest_surface`, `saved_layouts_are_valid_rules`
 
-**`input`**: `a_shift_chord_does_not_also_trigger_the_plain_held_key`, `bindings_file_overrides_and_round_trips`, `chase_camera_keys`, `chord_parsing_and_dead_zone`, `default_keys_follow_the_original_layout`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`, `gamepad_sticks_buttons_and_presses`, `mouse_flight_only_when_enabled`, `one_shot_commands_and_shift_chords`, `pad_modifier_layer_reaches_every_power_control`, `power_and_equipment_keys_follow_the_original`, `stick_layouts_and_mouse_inversion`, `view_names_parse`
+**`input`**: `a_shift_chord_does_not_also_trigger_the_plain_held_key`, `bindings_file_overrides_and_round_trips`, `chase_camera_keys`, `chord_parsing_and_dead_zone`, `default_keys_follow_the_original_layout`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`, `gamepad_sticks_buttons_and_presses`, `mouse_flight_only_when_enabled`, `one_shot_commands_and_shift_chords`, `pad_modifier_layer_reaches_every_power_control`, `power_and_equipment_keys_follow_the_original`, `stick_layouts_and_mouse_inversion`, `the_keys_help_lists_every_action_with_its_current_keys`, `view_names_parse`
 
 **`input::editor`**: `capturing_a_key_rebinds_and_steals_it_from_others`, `capturing_pad_plain_presses_and_chords`, `clear_reset_and_settings`, `pretty_names`, `rows_are_grouped_and_headers_are_skipped`
 
 **`input::gamepad`**: `axes_are_normalised`, `buttons_round_trip_names_and_bits`
 
-**`mission`**: `arrivals_waves_chatter_and_a_win`, `lose_beats_win_and_the_timer_ends_it`, `roles_are_placed_counted_and_faced_at_the_player`
+**`mission`**: `arrivals_waves_chatter_and_a_win`, `lose_beats_win_and_the_timer_ends_it`, `roles_are_placed_counted_and_faced_at_the_player`, `the_players_death_is_its_own_result_with_the_lose_outcomes`
 
 **`model`**: `empty_obj_has_zero_bounds`, `faces_record_their_corners_and_group`, `faces_that_only_touch_or_face_away_are_not_layered`, `later_overlapping_face_is_layered_on_top`, `lod_selection_by_distance`, `mirrored_triangles_keep_outward_winding`, `obj_models_use_materials_scale_and_flip_v`, `overlay_flag_beats_file_order`, `xmsh_is_triangulated_grouped_and_mirrored`
 
@@ -178,13 +178,13 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 
 **`settings`**: `parses_and_round_trips`, `resolution_order_prefers_explicit_and_existing`
 
-**`sim`**: `ai_pilots_switch_cloak_ecm_and_power_by_condition`, `generational_handles_detect_reuse`, `match_speed_copies_the_targets_speed`, `preferences_pull_the_ai_past_a_nearer_target`, `probes_extend_radar_and_jam_their_enemies`, `protected_objectives_are_not_picked_as_the_nearest_enemy`, `random_is_deterministic_and_in_range`, `scenario_errors_are_reported`, `scenario_spawns_player_objects_and_leaders`, `ship_axes_follow_the_engine_convention`, `station_modules_mount_follow_and_fall_with_their_hub`, `step_advances_time_and_clears_edge_controls`, `unconsumed_presses_carry_over_held_inputs_do_not`
+**`sim`**: `ai_pilots_switch_cloak_ecm_and_power_by_condition`, `body_velocity_reads_drift_in_the_ships_own_axes`, `generational_handles_detect_reuse`, `match_speed_copies_the_targets_speed`, `preferences_pull_the_ai_past_a_nearer_target`, `probes_extend_radar_and_jam_their_enemies`, `protected_objectives_are_not_picked_as_the_nearest_enemy`, `random_is_deterministic_and_in_range`, `scenario_errors_are_reported`, `scenario_spawns_player_objects_and_leaders`, `ship_axes_follow_the_engine_convention`, `station_modules_mount_follow_and_fall_with_their_hub`, `step_advances_time_and_clears_edge_controls`, `unconsumed_presses_carry_over_held_inputs_do_not`
 
 **`sim::ai`**: `aim_skill_decides_accuracy`, `disabled_ships_drift`, `enemy_hunts_and_damages_a_hostile`, `evasive_ends_and_retreat_jumps_out`, `lead_point_anticipates_motion`, `mines_go_off_when_an_enemy_comes_near`, `orders_switch_wingmen_to_attack`, `steering_turns_towards_points`, `target_drones_circle_and_idle_ships_sit`, `transitions_switch_states_on_conditions`, `tugs_tow_disabled_enemies_away`, `turrets_fire_off_the_nose`, `wingman_closes_on_its_slot`
 
 **`sim::collision`**: `segment_sphere_hits_misses_and_inside`, `segment_triangle_hits_inside_only`, `shapes_use_mesh_in_model_space`
 
-**`sim::combat`**: `a_new_bolt_streak_never_reaches_behind_the_muzzle`, `beams_fire_cost_energy_respect_cooldown_and_hit`, `beams_need_energy`, `damage_layers_and_aft_shield`, `empty_racks_report_and_cycle`, `fighters_bounce_off_each_other_and_stations`, `link_modes_cycle_and_change_how_many_fire`, `lock_builds_in_the_cone_and_missile_homes_in`, `lock_is_lost_outside_the_cone_and_dumbfire_works`, `point_defence_shoots_down_hostile_missiles`, `proximity_fuse_fires_on_a_near_miss`, `rotate_towards_limits_the_turn`
+**`sim::combat`**: `a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight`, `a_new_bolt_streak_never_reaches_behind_the_muzzle`, `beams_fire_cost_energy_respect_cooldown_and_hit`, `beams_need_energy`, `damage_layers_and_aft_shield`, `empty_racks_report_and_cycle`, `fighters_bounce_off_each_other_and_stations`, `link_modes_cycle_and_change_how_many_fire`, `lock_builds_in_the_cone_and_missile_homes_in`, `lock_is_lost_outside_the_cone_and_dumbfire_works`, `point_defence_shoots_down_hostile_missiles`, `proximity_fuse_fires_on_a_near_miss`, `rotate_towards_limits_the_turn`, `with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried`
 
 **`sim::flight`**: `afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off`, `assisted_model_holds_throttle_speed_and_damps_drift`, `brake_stops_against_the_direction_of_travel`, `energy_and_shields_recharge_up_to_capacity`, `half_throttle_is_half_the_acceleration`, `helpers`, `newtonian_accelerates_to_the_cap_and_coasts`, `pitching_up_raises_the_nose_and_rates_fall_with_speed`, `reverse_thrust_slows_and_then_backs_up`, `speed_hold_matches_speed_and_cancels_drift`, `static_objects_do_not_move`, `the_arena_edge_halts_outward_motion`, `turning_does_not_steer_the_velocity`, `vct_thrusts_sideways`, `yaw_right_and_roll_right_turn_the_expected_way`
 
@@ -194,7 +194,7 @@ playback, the 3D cockpit pass, anchored instruments drawn into textures, the ass
 
 **`sim::targeting`**: `cycles_forwards_and_backwards_with_wraparound`, `in_sights_picks_the_most_central`, `nearest_hostile_ignores_friends`, `nothing_to_target`
 
-**`soak`**: `default_campaign_difficulty_scales_enemy_lethality`
+**`soak`**: `at_cadet_an_undefended_station_holds_for_150_seconds`, `default_campaign_difficulty_scales_enemy_lethality`
 
 ## Running
 

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.0.0** (79 features). Changes are listed in the
+Definition version **1.1.0** (79 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -52,3 +52,4 @@ Remastered* — and the game design that the mod formats implement.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: eleven area pages, 79 features from the stage plans, the design pages, the status page and the user's feedback and console requests |
+| 1.1.0 | 2026-11-11 | Playtest fixes (app 0.3.1): F-HUD-006, F-HUD-007, F-CMB-011, F-MSN-006 and F-CON-003 implemented |

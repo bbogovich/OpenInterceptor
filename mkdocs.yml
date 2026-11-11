@@ -133,6 +133,8 @@ nav:
   - "User guide":
       - user-guide/index.md
       - "Getting started": user-guide/getting-started.md
+      - "Controls": user-guide/controls.md
+      - "Settings": user-guide/settings.md
   - "Modding":
       - modding/index.md
       - "Make your first mod": modding/first-mod.md

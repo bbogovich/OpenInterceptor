@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -14,7 +14,7 @@ against. It has three parts:
 - the **mod formats and design** pages, normative for the files a modder writes;
 - the **original data formats**, normative for reading the player's CD.
 
-Specification version **1.0.0** (168 requirements). Changes are listed in the
+Specification version **1.1.0** (168 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -77,3 +77,4 @@ Facts carry verified / derived / unknown marks.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: requirement pages for eleven areas (168 requirements), the planned console protocol; format pages adopted as normative |
+| 1.1.0 | 2026-11-11 | Playtest fixes (app 0.3.1): R-HUD-009 – R-HUD-011, R-CMB-021, R-MSN-011, R-CON-007 and R-CON-008 implemented; R-CMB-002, R-MSN-003 and R-MSN-005 revised (turn velocity and viewer-relative streaks; the `killed` result) |

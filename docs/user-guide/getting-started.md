@@ -12,7 +12,7 @@
 ## Build
 
 ```sh
-git clone <repo> OpenInterceptor
+git clone https://github.com/bbogovich/OpenInterceptor.git
 cd OpenInterceptor
 cargo build --release
 ```
@@ -105,7 +105,7 @@ scripts/check.sh
 | `--screenshot <PNG>` | With `--scenario` or `--model`: render the starting screen for `--frames` frames, save it as a PNG and exit. |
 | `--frames <N>` | Frames to run before `--screenshot` (default 120). |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; `--campaign` checks one. |
-| `--soak <SCENARIO or MISSION>` | Play a scenario — or a mission, which then prints its result (`soak mission <id> (<level>, <pilot>): <result> after <n> s; <k> kills`) — without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots) or `ai` (its class's behaviour). Use with `--ship`, `--campaign`, `--difficulty`. |
+| `--soak <SCENARIO or MISSION>` | Play a scenario — or a mission, which then prints its result (`soak mission <id> (<level>, <pilot>): <result> after <n> s; <k> kills`) — without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots), `ai` (its class's behaviour) or `idle` (sits still and does nothing: how long a defended object holds on its own). Use with `--ship`, `--campaign`, `--difficulty`. |
 | `--language <CODE>` | Text language: the packs' `text/<CODE>/` folders (default `en`, or `settings.yaml` `game.language`). |
 | `--write-schemas <DIR>` | Write the JSON Schema files of the mod file types (`pack.schema.json`, `rules.schema.json`, `scenario.schema.json`) for editor completion and checking, then exit. |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](../modding/overrides.md)), then exit. |
@@ -123,7 +123,7 @@ Linux.
 The launcher lists the model viewer, the asset browser and the test scenarios from every
 loaded pack: Up/Down to
 choose, Left/Right to pick a ship, Enter to start, Esc to quit. In flight, Esc opens the menu
-(R restart, L back to the launcher). Default controls follow the original game; see [Controls](../reference/original-game/controls.md).
+(R restart, L back to the launcher) and `?` lists every key ([Controls](controls.md)). Default controls follow the original game; see the [controls reference](../reference/original-game/controls.md).
 Flight is newtonian by default: throttle is thrust and the ship coasts; `Z` reverses thrust,
 hold `B` to brake, `M` holds the target's speed.
 

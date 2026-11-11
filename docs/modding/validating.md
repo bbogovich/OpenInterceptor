@@ -32,7 +32,8 @@ target it and their dependencies), so an addon is validated with each campaign i
 Validation happens at the difficulty level being loaded (the default unless `--difficulty` is
 given), so a typo inside one level's `variants` entry is reported whichever level is played.
 For balance across levels, `--soak <scenario> --difficulty <level>` plays a battle without a
-window and reports the player's fate.
+window and reports the player's fate; `--soak-pilot passive | ai | idle` chooses who flies the
+player's craft (`idle` sits still: how long a defended object holds on its own).
 
 **In your editor.** Point each file at its JSON Schema (`# yaml-language-server:
 $schema=…`, see [Rulesets](rulesets.md#the-yaml-subset)) and most of these mistakes are

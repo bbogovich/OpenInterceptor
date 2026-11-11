@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -18,8 +18,8 @@ Features: [Controls & control console](../../definition/control-console.md). How
 | [R-CON-004 Controls menu](#r-con-004-controls-menu) | Implemented |
 | [R-CON-005 Gamepad](#r-con-005-gamepad) | Implemented |
 | [R-CON-006 Mouse flight and chords](#r-con-006-mouse-flight-and-chords) | Implemented |
-| [R-CON-007 Action catalogue](#r-con-007-action-catalogue) | Planned |
-| [R-CON-008 Controls overlay](#r-con-008-controls-overlay) | Planned |
+| [R-CON-007 Action catalogue](#r-con-007-action-catalogue) | Implemented |
+| [R-CON-008 Controls overlay](#r-con-008-controls-overlay) | Implemented |
 | [R-CON-009 Console server](#r-con-009-console-server) | Planned |
 | [R-CON-010 Console protocol](#r-con-010-console-protocol) | Planned |
 | [R-CON-011 Console actions are game actions](#r-con-011-console-actions-are-game-actions) | Planned |
@@ -115,23 +115,26 @@ Each action MUST have, in the one action table (R-CON-001), an id, a display nam
 *Rationale:* User request (F-CON-003): one catalogue drives keys, the overlay and the console.
 
 - Implements: [F-CON-003](../../definition/control-console.md#f-con-003-one-action-catalogue-with-a-controls-overlay), [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
-- Status: planned
-- Verified by: Planned (interlude item F.5).
+- Status: implemented
+- Verified by: `input::the_keys_help_lists_every_action_with_its_current_keys`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`; MT-3-18
 - See: [Input and gamepads](../../implementation/architecture/input.md)
+
+!!! note "As built"
+    `input::ACTIONS` is the catalogue: each entry has its id (`name`, the `bindings.yaml` name), a display name (`label`), its default keys and pad buttons, and its `group`. It drives parsing, the defaults, the controls menu and the keys overlay (`input::help_rows`); the console's `catalogue` message (C1) will be built from it too. The label serves as the short description for now: a separate description field is not in the table yet and is due with the console's catalogue.
 
 ### R-CON-008 Controls overlay
 
-A key MUST toggle an in-flight overlay listing the actions by group with their current bindings, without leaving the battle.
+A key MUST toggle an in-flight overlay listing the actions by group with their current bindings, without leaving the battle. The overlay is the action `help`, bound by default to `?` (Shift+Slash) and Shift+F1; it pauses the battle and lists every action by group with the player's current keys and pad buttons ("unbound" if none). Esc or the `help` key closes it.
 
 *Rationale:* User request (F-CON-003).
 
 - Implements: [F-CON-003](../../definition/control-console.md#f-con-003-one-action-catalogue-with-a-controls-overlay)
-- Status: planned
-- Verified by: Planned (interlude item F.5; a manual test).
-- See: [Input and gamepads](../../implementation/architecture/input.md)
+- Status: implemented
+- Verified by: `input::the_keys_help_lists_every_action_with_its_current_keys`; MT-3-18
+- See: [Input and gamepads](../../implementation/architecture/input.md), [Controls (user guide)](../../user-guide/controls.md)
 
-!!! question "Open"
-    The request names F1, which today selects cockpit view 1 (views F1–F8, an original key). Which key opens the overlay, and whether view 1 moves (a deviation), is to be decided.
+!!! note "Resolved: F1 stays a view key"
+    The request named F1, which selects cockpit view 1 (views F1–F8, an original key). F1 keeps its original meaning, so there is no deviation; the overlay uses `?` and Shift+F1 (a Shift chord never triggers the plain key, R-CON-006). F12 is not used for it: F12 opens the cockpit layout editor in custom cockpits (R-HUD-008).
 
 ### R-CON-009 Console server
 
@@ -303,3 +306,4 @@ Console theme assets MUST be new art made for this project and kept in the pack'
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CON-001 – R-CON-021 (21 requirements; 6 reverse-engineered from the code) |
+| 1.1.0 | 2026-11-11 | R-CON-007 and R-CON-008 implemented (app 0.3.1): `input::ACTIONS` with `help_rows`; the keys overlay on `?` / Shift+F1 (action `help`), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -14,7 +14,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 |---|---|
 | [F-CON-001 Rebindable keyboard, mouse and gamepad](#f-con-001-rebindable-keyboard-mouse-and-gamepad) | Implemented |
 | [F-CON-002 Every original piloting function](#f-con-002-every-original-piloting-function) | Implemented |
-| [F-CON-003 One action catalogue, with a controls overlay](#f-con-003-one-action-catalogue-with-a-controls-overlay) | Planned |
+| [F-CON-003 One action catalogue, with a controls overlay](#f-con-003-one-action-catalogue-with-a-controls-overlay) | Implemented |
 | [F-CON-004 Tablet control console](#f-con-004-tablet-control-console) | Planned |
 | [F-CON-005 Console target viewport](#f-con-005-console-target-viewport) | Planned |
 | [F-CON-006 Console 3D map](#f-con-006-console-3d-map) | Planned |
@@ -50,7 +50,7 @@ Requirements for these features: [Controls & control console requirements](../sp
 
 **Why.** User request: "There are a large number of keyboard shortcuts to keep track of."
 
-- **Status:** planned
+- **Status:** implemented (app 0.3.1): the keys overlay on `?` or Shift+F1; the console's use of the catalogue comes with C1.
 - **Source:** User request (feedback); interlude item F.5.
 - **Specified by:** [R-CON-001](../specification/requirements/control-console.md#r-con-001-one-action-table), [R-CON-007](../specification/requirements/control-console.md#r-con-007-action-catalogue), [R-CON-008](../specification/requirements/control-console.md#r-con-008-controls-overlay), [R-CON-011](../specification/requirements/control-console.md#r-con-011-console-actions-are-game-actions)
 
@@ -119,3 +119,4 @@ Requirements for these features: [Controls & control console requirements](../sp
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CON-001 – F-CON-009 (9 features) |
+| 1.1.0 | 2026-11-11 | F-CON-003 implemented (app 0.3.1) |

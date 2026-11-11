@@ -22,7 +22,7 @@ is in the repository, ever.
 
     The same order is in the repository's `CLAUDE.md` project rules.
 
-**Site version 0.11.0**; Definition and Specification **1.0.0** ([revision history](reference/revision-history.md)).
+**Site version 0.12.0**; Definition and Specification **1.1.0** ([revision history](reference/revision-history.md)).
 
 ## Sections
 
@@ -51,10 +51,11 @@ Stage 0 (foundation and format analysis) is **complete**. Stage 1 (the flight si
 is **complete**, signed off on 2026-11-10 — every original ship, station and cockpit flies or
 renders from the player's CD, an original-free pack plays without it, any original asset can be
 replaced by a mod file (with `--extract` producing editable copies), and cockpits can be HD
-repaints or 3D models. Stage 2 is **in progress** (build **0.2.2**): one campaign at a time —
-the original `interceptor` or the original-free default campaign *Perils of the Void* — with
-ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman orders and an
-in-game controls menu. See [implementation status](implementation/status.md) and the
+repaints or 3D models. Stage 2 (combat, objects and behaviours) is **complete** in app 0.3.0,
+which also carries Stage 3 part 1 (missions). App **0.3.1** delivers the playtest fixes of the
+[Stage 3 interlude](implementation/plan/stage-3-interlude.md): a drift readout and flight-path
+marker, shot physics, visibility (rim light, distant dots, brightness), the `killed` mission
+result and a keys overlay (`?`). See [implementation status](implementation/status.md) and the
 [plan](implementation/plan/index.md).
 
 ## How work flows: Rapid Prototyping
@@ -68,11 +69,14 @@ ahead of the code. When the prototype is complete they seed the formal definitio
 specification of a production version, built through the SpecItOut fast track.
 
 Definition and Specification **1.0.0** (2026-11-11): 79 features and 168
-requirements, those for the code already built marked *reverse-engineered*. Until `sio` supports
+requirements, those for the code already built marked *reverse-engineered*; **1.1.0** marks the
+interlude's feedback items implemented ([change history](meta/change-history.md)). Until `sio` supports
 a `prototype` kind the project runs as `kind: implementation` with `spec` pointing at
 `docs/specification` (DEV-042).
 
-## Licence
+## Licence and repository
 
-The engine is **MIT**. *X-COM* and *Interceptor* are trademarks of their owners; this project is
+The engine is **MIT** (`LICENSE`). The repository is public at
+[github.com/bbogovich/OpenInterceptor](https://github.com/bbogovich/OpenInterceptor); issues are
+GitHub Issues, reached through the `sio` client. *X-COM* and *Interceptor* are trademarks of their owners; this project is
 not affiliated with or endorsed by them.

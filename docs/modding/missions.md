@@ -72,10 +72,10 @@ missions:
 | `waves` | list | none | Reinforcements (below). |
 | `objectives` | `{win, lose, draw}` | none | Conditions that end the battle (below). |
 | `optional` | mapping name: condition | none | Optional objectives, latched when first met and reported on the debrief. |
-| `timer` | `{after, then}` | none | A time limit: after `after` (a time) the result is `then` (`win`, `lose`, `draw` or `retreat`; default `draw`). |
-| `outcomes` | mapping result: list of actions | none | What each result does (below). Results: `win`, `lose`, `draw`, `retreat`. |
+| `timer` | `{after, then}` | none | A time limit: after `after` (a time) the result is `then` (`win`, `lose`, `draw`, `retreat` or `killed`; default `draw`). |
+| `outcomes` | mapping result: list of actions | none | What each result does (below). Results: `win`, `lose`, `draw`, `retreat`, `killed`. A mission without `killed` outcomes uses its `lose` outcomes for it. |
 | `chatter` | list of `{when, line}` | none | Radio lines, each said once when its condition first holds. |
-| `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). |
+| `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. |
 
 ### Roles
 
@@ -120,10 +120,27 @@ no survivors) is placed relative to the player's start.
 Every tick after the simulation step the mission checks, in this order:
 
 1. the player jumped out (hyperspace) → **`retreat`**;
-2. `lose` → **`lose`** (checked first, so a simultaneous win and loss is a loss);
-3. `win` → **`win`**;
-4. `draw` → **`draw`**;
-5. the `timer` → its `then`.
+2. the player's craft was destroyed → **`killed`** (set by the engine, before the mission's own
+   conditions);
+3. `lose` → **`lose`** (checked first, so a simultaneous win and loss is a loss);
+4. `win` → **`win`**;
+5. `draw` → **`draw`**;
+6. the `timer` → its `then`.
+
+**`killed`** is the player's death as its own result. Its debrief headline is "YOUR CRAFT WAS
+DESTROYED"; it applies the mission's `outcomes: {killed: […]}` if there are any, else the `lose`
+outcomes, and shows `debrief: {killed: …}` if given, else no text. A `lose` condition such as
+`destroyed(station) or not player_alive` therefore no longer reports the player's death as the
+station falling: the station's text is shown only when the station falls.
+
+```yaml
+    outcomes:
+      lose: [lose(guard_station), score(station_lost)]
+      killed: [score(pilot_lost)]          # optional; else the lose outcomes apply
+    debrief:
+      lose: "@debrief.defend_station.lose"
+      killed: "@debrief.killed"            # optional; else no text
+```
 
 The battle then freezes behind the **debrief**: the result, the debrief text, kills, losses and
 time, the optional objectives (met or not), and the outcome's campaign actions. **Enter** (pad
@@ -187,7 +204,12 @@ Quote an action that contains a comma or a `+` sign in a YAML flow list:
 
 `--soak <mission id>` plays a mission without a window and prints its result
 (`soak mission defend_station (ranger, ai): lose after 132 s; <n> kills`); see
-[Validating a mod](validating.md).
+[Validating a mod](validating.md). `--soak-pilot` chooses who flies the player's craft:
+`passive` (flies at the nearest enemy, never shoots), `ai` (its class's behaviour) or `idle`
+(sits still and does nothing). The idle pilot measures how long a defended object holds on its
+own — the balance check for a defence mission: at the lowest level an undefended station or base
+should hold for at least 150 s (R-MSN-011; the default campaign's `defend_station` is held to it
+by a unit test).
 
 ## Common errors
 
@@ -198,7 +220,7 @@ Quote an action that contains a comma or a `+` sign in a YAML flow list:
 | `unknown name 'raider'` (in a condition) | A misspelled role or query; role names are checked. |
 | `waves[0]: unknown role 'z'` / `at.from: unknown role 'z'` | A wave or arrival names a role that does not exist. |
 | `roles.y.ai: 'x' is not enemy, wingman, target or idle` | A bad `ai`. |
-| `timer.then: 'x' is not win, lose, draw or retreat` | A bad timer result. |
-| `outcomes.x: results are win, lose, draw and retreat` | An unknown result name. |
+| `timer.then: 'x' is not win, lose, draw, retreat or killed` | A bad timer result. |
+| `outcomes.x: results are win, lose, draw, retreat and killed` | An unknown result name. |
 | `outcomes.win: unknown action 'teleport' (known: …)` | An unknown action, or a wrong argument. |
 | `chatter[2]: needs line:` | A chatter entry without its line. |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -17,7 +17,7 @@ Requirements for these features: [Missions requirements](../specification/requir
 | [F-MSN-003 Radio chatter and voices](#f-msn-003-radio-chatter-and-voices) | In progress |
 | [F-MSN-004 Environments and hazards](#f-msn-004-environments-and-hazards) | Planned |
 | [F-MSN-005 Simulator missions](#f-msn-005-simulator-missions) | Planned |
-| [F-MSN-006 Base defence the player can win](#f-msn-006-base-defence-the-player-can-win) | Planned |
+| [F-MSN-006 Base defence the player can win](#f-msn-006-base-defence-the-player-can-win) | Implemented |
 | [F-MSN-007 Logistics missions](#f-msn-007-logistics-missions) | In progress |
 
 ## Features
@@ -78,9 +78,9 @@ Requirements for these features: [Missions requirements](../specification/requir
 
 **Why.** User request: "Base destroyed too easily, player doesn't have time to engage more than one fighter before the aliens successfully destroy the base even on beginner."
 
-- **Status:** planned
+- **Status:** implemented (app 0.3.1). Measured, the base was not falling too fast: on the harder levels the *player's* craft was destroyed and the debrief showed the base-lost text. The player's death is now its own result, `killed`.
 - **Source:** User request (feedback); interlude item F.4.
-- **Specified by:** [R-MSN-011](../specification/requirements/missions.md#r-msn-011-base-defence-balance)
+- **Specified by:** [R-MSN-003](../specification/requirements/missions.md#r-msn-003-objectives-timer-and-outcomes), [R-MSN-005](../specification/requirements/missions.md#r-msn-005-debrief), [R-MSN-011](../specification/requirements/missions.md#r-msn-011-base-defence-balance)
 
 ### F-MSN-007 Logistics missions
 
@@ -97,3 +97,4 @@ Requirements for these features: [Missions requirements](../specification/requir
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-MSN-001 – F-MSN-007 (7 features) |
+| 1.1.0 | 2026-11-11 | F-MSN-006 implemented (app 0.3.1); also specified by R-MSN-003 and R-MSN-005 (the `killed` result) |

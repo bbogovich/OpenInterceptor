@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -32,7 +32,7 @@ Features: [Combat](../../definition/combat.md). How to read a requirement: [Spec
 | [R-CMB-018 Station modules](#r-cmb-018-station-modules) | Implemented |
 | [R-CMB-019 Model sets and damage looks](#r-cmb-019-model-sets-and-damage-looks) | Implemented |
 | [R-CMB-020 Debris and explosions](#r-cmb-020-debris-and-explosions) | Implemented |
-| [R-CMB-021 Shot physics](#r-cmb-021-shot-physics) | Planned |
+| [R-CMB-021 Shot physics](#r-cmb-021-shot-physics) | Implemented |
 
 ## Requirements
 
@@ -50,13 +50,13 @@ Each beam mount MUST have a cooldown of `1 / rate_of_fire`; a group MUST fire on
 
 ### R-CMB-002 Bolt travel
 
-A bolt MUST live for `range / speed`, start at its muzzle with its streak never reaching behind the muzzle, and inherit the firing ship's velocity.
+A bolt MUST live for `range / speed`, start at its muzzle with its streak never reaching behind the muzzle, and inherit the firing ship's velocity plus the muzzle's turn velocity (R-CMB-021). Its streak MUST be drawn along its velocity *relative to the viewer*, so shots from a drifting craft streak straight out of its guns.
 
 *Rationale:* Shots must look as if they leave the gun.
 
 - Implements: [F-CMB-001](../../definition/combat.md#f-cmb-001-beam-weapons), [F-CMB-011](../../definition/combat.md#f-cmb-011-shot-physics)
 - Status: implemented
-- Verified by: `sim::combat::a_new_bolt_streak_never_reaches_behind_the_muzzle`; MT-1-34
+- Verified by: `sim::combat::a_new_bolt_streak_never_reaches_behind_the_muzzle`, `a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight`; MT-1-34, MT-3-14
 - Reverse-engineered: yes
 - See: [Simulation](../../implementation/architecture/sim.md)
 
@@ -292,18 +292,18 @@ Destruction MUST spawn the object's debris set (pieces with offsets, speed and s
 
 A ruleset option MUST choose how shots move, and the default MUST be physics: a shot MUST leave the muzzle with the craft's velocity plus the craft's turn velocity at the muzzle (angular velocity × muzzle offset) plus its own muzzle speed, and once fired MUST move independently of the craft's orientation.
 
+The option is `flight: {bolt_frame: world | ship}`. `world` (the default) is the physics above. With `ship`, a shot MUST move in its owner's frame for `flight.bolt_carry` (a time, default 0.3 s), turning with the nose, and then fly straight with its last velocity.
+
 *Rationale:* User request (F-CMB-011); decision D1.
 
 - Implements: [F-CMB-011](../../definition/combat.md#f-cmb-011-shot-physics)
-- Status: planned
-- Verified by: Planned (interlude item F.2).
-- See: [Simulation](../../implementation/architecture/sim.md)
-
-!!! question "Open"
-    The option's key name and what its non-default value does are not yet specified.
+- Status: implemented
+- Verified by: `sim::combat::a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight`, `with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried`; `content::rules::builds_typed_definitions_with_inheritance`; MT-3-14
+- See: [Simulation](../../implementation/architecture/sim.md), [Mod file reference (`flight`)](../../modding/reference.md#flight)
 
 ## Revision history
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CMB-001 – R-CMB-021 (21 requirements; 20 reverse-engineered from the code) |
+| 1.1.0 | 2026-11-11 | R-CMB-021 implemented (app 0.3.1): `flight.bolt_frame` (`world` default, `ship` with `bolt_carry`), open note resolved. R-CMB-002: bolts also carry the muzzle's turn velocity; streaks drawn relative to the viewer |

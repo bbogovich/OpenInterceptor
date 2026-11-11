@@ -676,8 +676,9 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 
 ## Stage 3 results
 
-App 0.3.0 (main `d7553f5`). Each mission case: fly it once to a **win** and once to a **loss**,
-and read the **debrief** each time.
+App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest fixes in app 0.3.1
+(main `c583659`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
+**debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
 |---|---|---|---|---|---|---|
@@ -693,17 +694,23 @@ and read the **debrief** each time.
 | MT-3-10 | Launcher mission list and scrolling | Launcher | not run | | | |
 | MT-3-11 | `--mission` and retry from the debrief | — | not run | | | |
 | MT-3-12 | Soak baseline | `--soak <mission>` | not run | | | Expected numbers below |
+| MT-3-13 | Drift readout and flight-path marker | `rocket-vs-saucer` (default) | not run | | | |
+| MT-3-14 | Shot streaks while drifting and turning | `rocket-vs-saucer` (default) | not run | | | Also `bolt_frame: ship` |
+| MT-3-15 | Distant dots and rim light | `rocket-vs-saucer`; a mission | not run | | | Both campaigns |
+| MT-3-16 | Brightness setting | any | not run | | | |
+| MT-3-17 | The `killed` debrief | `defend_station`; `xcom_base_defense` | not run | | | |
+| MT-3-18 | Keys overlay | any | not run | | | |
 
 ### The debrief (every mission case)
 
-| Expected | When the mission ends the battle freezes behind a panel: the result (WIN / LOSE / DRAW / RETREAT), the mission's debrief text for it (original text by key for `interceptor`), *Kills n   Losses n   Time m:ss*, each optional objective ticked or not, and "Campaign effects (applied by the strategy layer)" listing the outcome's campaign actions. Enter (pad A) flies the mission again; Esc or L returns to the launcher. Jumping out (H) before the end gives RETREAT. |
+| Expected | When the mission ends the battle freezes behind a panel: the headline for the result (MISSION ACCOMPLISHED / MISSION FAILED / MISSION ENDED / LEFT THE BATTLE, and YOUR CRAFT WAS DESTROYED when the player died), the mission's debrief text for it (original text by key for `interceptor`), *Kills n   Losses n   Time m:ss*, each optional objective ticked or not, and "Campaign effects (applied by the strategy layer)" listing the outcome's campaign actions. Enter (pad A) flies the mission again; Esc or L returns to the launcher. Jumping out (H) before the end gives RETREAT; being destroyed gives YOUR CRAFT WAS DESTROYED with the mission's `killed` text or none (never the lose text). |
 |---|---|
 
 ### MT-3-01 — `defend_station`
 
 | Field | |
 |---|---|
-| Steps | Win: defend the Guard station with your two Comet wingmen until all raiders and the late robot sentinels are destroyed. Lose: let the saucers destroy the station (or die). |
+| Steps | Win: defend the Guard station with your two Comet wingmen until all raiders and the late robot sentinels are destroyed. Lose: let the saucers destroy the station (dying gives *killed*, MT-3-17). |
 | Expected | Raiders arrive from a random bearing 6 km beyond the station; "saucers inbound" chatter; robots arrive after 75 s ("robots" chatter); reinforcements when fewer than two raiders remain; "station hurt" chatter below 50 % hull. Win: debrief WIN with optional *station untouched* / *no losses*; campaign effects `score(station_defended)`, `salvage`, `relation(guard, +5)`. Lose: LOSE with `lose(guard_station)`, `score(station_lost)`. |
 
 ### MT-3-02 — `convoy_ambush`
@@ -780,6 +787,48 @@ and read the **debrief** each time.
 
 | Field | |
 |---|---|
-| Steps | For each mission: `openinterceptor --campaign <c> --soak <mission> --soak-pilot ai --seconds 400 --difficulty <level>` (interceptor with `--ship avenger`); then the passive pilot. |
+| Steps | For each mission: `openinterceptor --campaign <c> --soak <mission> --soak-pilot ai --seconds 400 --difficulty <level>` (interceptor with `--ship avenger`); then the passive pilot; for the defence missions also `--soak-pilot idle`. |
 | Expected (baseline at `d7553f5`) | **Default, ranger, AI pilot:** `defend_station` lose at 132 s; `convoy_ambush` win at 64 s; `construction_defence` win at 97 s; `intercept_scouts` win at 72 s. Passive pilots lose or draw. **Interceptor, Super Avenger:** beginner wins all five; veteran: base defence lose, convoy win, deep space lose, outpost win, probe lose; superhuman mostly lose (three elerium torpedoes kill an Avenger: the original values 400 impact against 250 armour + 200 shield + 400 hull). Re-run after balance changes; a mission that only ever wins or only ever loses at every level needs attention. |
+| Expected (idle pilot, `c583659`) | **Default, `defend_station`:** cadet still running at 400 s (the unit test holds ≥ 150 s); ranger lose at 140 s; space ace killed at 8 s. **Interceptor, `xcom_base_defense`, beginner:** the base still has about 2 390 of 6 000 hull at 400 s; the AI pilot wins in about 75 s with the base untouched. On veteran the result is *killed* at 15–18 s (elerium torpedoes), not *lose*. |
 
+### MT-3-13 — Drift readout and flight-path marker
+
+| Field | |
+|---|---|
+| Steps | `openinterceptor --no-original --scenario rocket-vs-saucer --ship comet --view chase` (glass HUD); full throttle until about 300 m/s; throttle to 0; yaw 90° right and hold the nose there; then pitch up. Repeat in the cockpit view and with `--campaign interceptor --ship avenger`. |
+| Expected | The status line reads `THR n%  <forward> m/s  X<±n> Y<±n>`. Flying straight: X and Y near 0 and the flight-path marker (a circle with ticks left, right and up) on the crosshair. After the yaw right the forward speed falls towards 0 and X becomes about −300 (drifting to the ship's left), and the marker slides to the left edge or off screen; pitching up makes Y negative. Brake (`B`) or match speed brings X and Y back to 0. |
+
+### MT-3-14 — Shot streaks while drifting and turning
+
+| Field | |
+|---|---|
+| Steps | As MT-3-13: set up a sideways drift (X about ±200), then fire beams (Enter) in the cockpit and chase views; then fire while yawing hard. Then make an addon with `flight: {bolt_frame: ship, bolt_carry: 0.5s}` and repeat. |
+| Expected | Physics (default): drifting, shots streak straight out of the guns from the pilot's view (they share the drift) and do not slant across the screen. While yawing, shots leave straight from the muzzles and then stay on their line: the nose turns away from them. With `bolt_frame: ship` the shots swing round with the nose for about half a second, then fly straight. |
+
+### MT-3-15 — Distant dots and rim light
+
+| Field | |
+|---|---|
+| Steps | `rocket-vs-saucer` (default) and `combat-test` (interceptor, needs the CD): let the enemies close from beyond 5 km, and fly away from them; look at them against the stars and against the sun. Fly a mission with a protected object (`defend_station`). |
+| Expected | Far craft on the radar show as a dot in their radar colour (red hostile, green friendly, cyan for the protected station) that fades into the model as they come near, without a pop. Hulls seen side-on have a bright outline, dark alien hulls included. A cloaked enemy beyond sensor range shows no dot. |
+
+### MT-3-16 — Brightness setting
+
+| Field | |
+|---|---|
+| Steps | Quit; in `settings.yaml` set `graphics: {brightness: 2}`, start and look at a ship in shadow; then `0.5`; then `9`; then delete the key. |
+| Expected | 2: shadowed hull areas clearly lighter, lit faces not washed out. 0.5: darker. 9 behaves as 2 (clamped). Without the key: as authored (1). The HUD and cockpit art are not affected. |
+
+### MT-3-17 — The `killed` debrief
+
+| Field | |
+|---|---|
+| Steps | `--no-original --mission defend_station --ship comet --difficulty space_ace`: fly at the raiders and let them kill you. Then `--mission xcom_base_defense --ship lightning --difficulty veteran` (needs the CD) and do the same. Then let the station fall while you survive. |
+| Expected | When the player dies: headline YOUR CRAFT WAS DESTROYED, no base-lost text (or the mission's own `killed` text), campaign effects those of the mission's `lose` outcomes. When the station falls with the player alive: MISSION FAILED with the lose text. |
+
+### MT-3-18 — Keys overlay
+
+| Field | |
+|---|---|
+| Steps | In any flight press `?` (Shift+/); look through the list; press `?` again. Open it with Shift+F1 and close it with Esc. Rebind afterburner in the controls menu (Esc, K) to another key and clear its pad button, then open the overlay again. Press F1 (no Shift) in flight. Open the pause menu (Esc). |
+| Expected | The battle pauses under a dark panel titled KEYS listing every action under its group (Flight, Throttle and speed, Weapons, Targeting, Power and systems, Wingmen and comms, Views, Chase camera, Interface), in several columns if needed, each with its current keys then pad buttons. After the rebinding the afterburner row shows the new key and no pad button (or "unbound" with neither). `?`, Shift+F1 and Esc close it and the battle resumes. Plain F1 still selects the cockpit view. The pause menu shows a line pointing to `?` instead of a key list. In a custom cockpit F12 still opens the layout editor. |

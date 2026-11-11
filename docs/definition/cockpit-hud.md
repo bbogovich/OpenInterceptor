@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.1.0
 status: current
 updated: 2026-11-11
 ---
@@ -17,8 +17,8 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 | [F-HUD-003 Flight instruments](#f-hud-003-flight-instruments) | Implemented |
 | [F-HUD-004 Targeting display](#f-hud-004-targeting-display) | Implemented |
 | [F-HUD-005 Cockpit layout editor](#f-hud-005-cockpit-layout-editor) | Implemented |
-| [F-HUD-006 Drift display](#f-hud-006-drift-display) | Planned |
-| [F-HUD-007 Seeing other craft](#f-hud-007-seeing-other-craft) | Planned |
+| [F-HUD-006 Drift display](#f-hud-006-drift-display) | Implemented |
+| [F-HUD-007 Seeing other craft](#f-hud-007-seeing-other-craft) | Implemented |
 | [F-HUD-008 Atmosphere instruments](#f-hud-008-atmosphere-instruments) | Planned |
 
 ## Features
@@ -79,7 +79,7 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 
 **Why.** User request: "Indicator displaying current speed should display both X and Y since the physics system allows sideways drift."
 
-- **Status:** planned
+- **Status:** implemented (app 0.3.1)
 - **Source:** User request (feedback); interlude item F.1.
 - **Specified by:** [R-HUD-009](../specification/requirements/cockpit-hud.md#r-hud-009-drift-display)
 
@@ -89,7 +89,7 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 
 **Why.** User request: "it is difficult to see other fighters"; a brightness level.
 
-- **Status:** planned
+- **Status:** implemented (app 0.3.1)
 - **Source:** User request (feedback); interlude item F.3.
 - **Specified by:** [R-HUD-010](../specification/requirements/cockpit-hud.md#r-hud-010-brightness-setting), [R-HUD-011](../specification/requirements/cockpit-hud.md#r-hud-011-other-craft-visible-at-combat-ranges)
 
@@ -108,3 +108,4 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-HUD-001 – F-HUD-008 (8 features) |
+| 1.1.0 | 2026-11-11 | F-HUD-006 and F-HUD-007 implemented (app 0.3.1) |

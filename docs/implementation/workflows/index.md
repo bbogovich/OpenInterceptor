@@ -5,16 +5,17 @@ How work is done in this project, following SpecItOut.
 ## Issues
 
 Issues are reached only through the `sio` client (`sio issues list | show | create | comment …`),
-with `SPECITOUT_ACTOR` set. The forge is `none`: issues live on the orphan `issues` branch,
-written only by the client. Labels: `formats`, `packs`, `flight`, `combat`, `render`, `input`,
+with `SPECITOUT_ACTOR` set. The forge is **GitHub**: the repository is public at
+[github.com/bbogovich/OpenInterceptor](https://github.com/bbogovich/OpenInterceptor) and issues
+are GitHub Issues, which the client syncs (`sio issues sync`); nothing else writes them. Labels: `formats`, `packs`, `flight`, `combat`, `render`, `input`,
 `testbed`, `campaign`, `platform`, `docs`.
 
 ## Rapid Prototyping
 
 The project follows the **Rapid Prototyping** workflow (a SpecItOut proposal, P65; not yet
 supported by the `sio` client). The [definition](../../definition/index.md) and the
-[specification](../../specification/index.md) live on this site, at version 1.0.0 from
-2026-11-11.
+[specification](../../specification/index.md) live on this site: version 1.0.0 from
+2026-11-11, 1.1.0 since the interlude's playtest fixes (app 0.3.1).
 
 1. **Each user request**, in the same pass and **before any code**:
     1. a feature (`F-<AREA>-NNN`) is created or updated on the definition page for its area;

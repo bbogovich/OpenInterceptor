@@ -70,6 +70,17 @@ drawn under the message line, extended with `BRAKE` while braking and `HOLD n` w
 flight computer holds a speed, and the Stage 2 status flags (`status_flags`): `DISABLED`,
 `CLOAKED`, `TRACTOR`, `ECM`, `JUMP n` (hyperspace countdown).
 
+**Drift readout (app 0.3.1).** The status line reads `THR 60%  312 m/s  X+45 Y-12`: throttle,
+forward speed, then sideways (X, + right) and vertical (Y, + up) drift in whole metres per
+second, signed (`drift_text`). All three come from `Ship::body_velocity()`, the velocity turned
+into the ship's own axes ([Simulation](sim.md)). In newtonian flight a turn changes the nose, not
+the motion, so after a hard turn X or Y shows how far the ship is sliding.
+
+**Flight-path marker.** `draw_targeting` projects a point 1 km along the ship's velocity
+(when faster than 5 m/s) and draws a circle with three ticks (left, right, up) there: where the
+craft is actually going. With no drift it sits on the crosshair; sideways drift slides it off to
+the side.
+
 **Targeting** (forward views): a reticle; corner brackets sized by the target's angular size;
 name and range; a lead circle (where to aim beams); a lock-progress ring, then a red lock
 diamond and `LOCK`; an arrow on a ring when the target is off-screen. Nav points draw a blue
@@ -87,6 +98,7 @@ diamond.
 | `PowerReadout`, `power_readout(&Ruleset, &Ship)` | What the `power` instrument shows: levels, steps used and budget, balance, fore/aft fractions. |
 | `Lamp`, `system_lamps(&Ship)`, `system_abbrev(SystemKind)` | The `systems` instrument's lamps. |
 | `status_flags(&Ship) -> Vec<String>` | The status-strip flags. |
+| `draw::drift_text(body_velocity)` | `X+45 Y-12`: the drift part of the status line. |
 | `draw::HudFrame` | Everything a draw call needs that is not in the world, incl. `anchored` (instruments drawn on the 3D cockpit) and `text_scale`. |
 | `draw::INSTRUMENTS` | The ten instrument names, in the editor's Tab order. |
 | `layout::anchor_corners`, `anchor_point` | An anchor's corners in the camera frame; a point inside by (u, v). |

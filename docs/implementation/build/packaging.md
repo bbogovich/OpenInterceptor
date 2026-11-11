@@ -23,11 +23,11 @@ python3 tools/build_bundle.py --skip-build       # reuse the last release build
 `dist/OpenInterceptor-<version>.app` (`dist/` is git-ignored), and signs it ad hoc:
 
 ```text
-OpenInterceptor-0.3.0.app/Contents/
+OpenInterceptor-0.3.1.app/Contents/
   Info.plist                 identifier io.github.bbogovich.openinterceptor, version, game category
   MacOS/openinterceptor
   Resources/packs/           interceptor and default packs
-  Resources/LICENSE-MIT
+  Resources/LICENSE            the MIT licence
 ```
 
 Then it prepares the user data folder `~/Library/Application Support/OpenInterceptor/`:
@@ -51,7 +51,7 @@ delivery is **0.2.2**, and **0.3.0** marks Stage 2 complete (it also carries Sta
 | 0 Foundation | 0.1.x | (no app; analysis, formats, docs) |
 | 1 Flight simulator | 0.2.x | **0.2.0** — first app: newtonian flight, overrides, `--extract`, HD/3D cockpits, asset browser; **0.2.1** — mesh rendering fixes (tiled textures, back-face culling, overlay layers), viewer mesh tools and `--model`, bolt streaks, radar alignment |
 | 2 Combat, objects and behaviours | 0.3.x | **0.2.2** — mod kinds and campaign choice, ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman orders, controls menu and gamepad chords, `power`/`systems` instruments, default campaign *Perils of the Void*, `--screenshot`, then YAML mod files, behaviours, looks, guidance, modules, probes, text keys; **0.3.0** — Stage 2 complete, plus Stage 3 part 1 (missions) |
-| 3 Missions, environments and conditions | 0.4.x | part 1 shipped in **0.3.0** |
+| 3 Missions, environments and conditions | 0.4.x | part 1 shipped in **0.3.0**; **0.3.1** — interlude playtest fixes: shot physics, drift readout and flight-path marker, lighting and brightness, the `killed` result, keys overlay |
 | 4 Strategy layer | 0.5.x | — |
 | 5 Campaigns | 0.6.x | — |
 | 6 Presentation | 0.7.x | — |
