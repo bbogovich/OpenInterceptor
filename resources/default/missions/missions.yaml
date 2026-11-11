@@ -102,3 +102,117 @@ missions:
     outcomes:
       win: [score(scouts_intercepted)]
     debrief: {win: "@debrief.scouts.win", draw: "@debrief.scouts.draw", lose: "@debrief.scouts.lose", retreat: "@debrief.retreat"}
+
+  # Stage 3.12: surface, environment and hazard missions.
+  colony_defence:
+    name: "@mission.colony_defence.name"
+    briefing: "@mission.colony_defence.brief"
+    order: 5
+    environment: moon_surface
+    starfield_seed: 45
+    sun: [-0.5, 0.35, -0.8]
+    player: {class: choose, position: [0, 2200, 3000]}
+    roles:
+      colony: {class: guard_colony, ai: idle, protect: true, at: {distance: 3km, bearing: [0, 0]}}
+      raiders:
+        class: [raider_saucer, scout_saucer]
+        count: {per_level: [[2, 2], [2, 3], [3, 4], [4, 5]]}
+        at: {distance: 7km, from: colony, bearing: random}
+    waves:
+      - {role: raiders, when: "time > 90s and alive(colony)", count: [1, 2]}
+    objectives:
+      lose: destroyed(colony)
+      win: destroyed_all(raiders)
+    optional: {colony_untouched: hull(colony) > 90%}
+    outcomes:
+      win: [score(colony_defended), "relation(guard, +5)"]
+      lose: [lose(guard_colony), score(colony_lost)]
+    chatter:
+      - {when: "time > 3s", line: "@chat.colony_inbound", voice: sounds/radio_status.wav}
+      - {when: "hull(colony) < 50%", line: "@chat.colony_hurt"}
+    debrief: {win: "@debrief.colony.win", lose: "@debrief.colony.lose", killed: "@debrief.killed", retreat: "@debrief.retreat"}
+
+  ground_strike:
+    name: "@mission.ground_strike.name"
+    briefing: "@mission.ground_strike.brief"
+    order: 6
+    environment: dusk_hills
+    starfield_seed: 46
+    sun: [0.7, 0.15, -0.7]
+    player: {class: choose, position: [0, 2500, 7000]}
+    roles:
+      flak:
+        class: dominion_flak
+        ai: enemy
+        count: {per_level: [[3, 3], [4, 4], [5, 5], [6, 6]]}
+        at: {distance: 4km, bearing: [0, 0], spread: 1200m}
+      escort: {class: scout_saucer, count: 2, arrive: "time > 60s", at: {distance: 6km, bearing: random}}
+    objectives:
+      win: destroyed_all(flak)
+    timer: {after: 6min, then: draw}
+    outcomes:
+      win: [score(flak_destroyed)]
+    chatter:
+      - {when: "time > 3s", line: "@chat.flak_ahead"}
+      - {when: arrived(escort), line: "@chat.saucers_inbound"}
+    debrief: {win: "@debrief.flak.win", draw: "@debrief.flak.draw", killed: "@debrief.killed", retreat: "@debrief.retreat"}
+
+  outpost_raid:
+    name: "@mission.outpost_raid.name"
+    briefing: "@mission.outpost_raid.brief"
+    order: 7
+    environment: orbit
+    starfield_seed: 47
+    player: {class: choose}
+    roles:
+      outpost: {class: dominion_outpost, ai: enemy, at: {distance: 5km, bearing: [0, 0]}}
+      wing: {class: meteor, ai: wingman, count: 2, at: {distance: 0m, spread: 80m}}
+      guards:
+        class: [raider_saucer, robot_sentinel]
+        count: {per_level: [[2, 2], [2, 3], [3, 4], [4, 5]]}
+        at: {distance: 1500m, from: outpost, bearing: random}
+    objectives:
+      win: destroyed(outpost)
+    outcomes:
+      win: [score(outpost_destroyed), salvage]
+    debrief: {win: "@debrief.outpost.win", killed: "@debrief.killed", retreat: "@debrief.retreat"}
+
+  asteroid_hunt:
+    name: "@mission.asteroid_hunt.name"
+    briefing: "@mission.asteroid_hunt.brief"
+    order: 8
+    starfield_seed: 48
+    player: {class: choose}
+    hazards:
+      asteroids: {class: cosmium_asteroid, count: 50, radius: 5km, center: [0, 0, -5000], spin: 8}
+    roles:
+      prey:
+        class: scout_saucer
+        count: {per_level: [[2, 2], [3, 3], [3, 4], [4, 5]]}
+        at: {distance: 5km, bearing: random, spread: 2km}
+    objectives:
+      win: destroyed_all(prey)
+    timer: {after: 5min, then: draw}
+    outcomes:
+      win: [score(scouts_destroyed)]
+    debrief: {win: "@debrief.scouts.win", draw: "@debrief.scouts.draw", killed: "@debrief.killed", retreat: "@debrief.retreat"}
+
+  pocket_ambush:
+    name: "@mission.pocket_ambush.name"
+    briefing: "@mission.pocket_ambush.brief"
+    order: 9
+    environment: pocket
+    starfield_seed: 49
+    player: {class: choose}
+    hazards:
+      ion_storm: {sensors: 65%}
+    roles:
+      hotrods:
+        class: hotrod
+        count: {per_level: [[3, 3], [3, 4], [4, 5], [5, 6]]}
+        at: {distance: 3km, bearing: random, spread: 600m}
+    objectives:
+      win: destroyed_all(hotrods)
+    outcomes:
+      win: [score(raiders_destroyed), "relation(raiders, -5)"]
+    debrief: {win: "@debrief.pocket.win", killed: "@debrief.killed", retreat: "@debrief.retreat"}

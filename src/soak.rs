@@ -124,7 +124,7 @@ pub fn run_mission(
         destroyed_at: (!s.alive && !s.departed).then_some((w.time - 0.0) as f32),
         seconds: d.as_ref().map(|d| d.seconds).unwrap_or(seconds),
         hits_taken: 0,
-        kills: d.as_ref().map(|d| d.kills as usize).unwrap_or(0),
+        kills: run.kills() as usize,
         enemies: 0,
         hull: (s.hull / rules.ship(s.class).hull.max(1.0)).clamp(0.0, 1.0),
     };

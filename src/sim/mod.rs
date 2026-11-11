@@ -730,12 +730,16 @@ impl World {
                 self.ships.len() - 1
             }
         };
-        // A ground installation sits on the terrain, whatever height it was placed at.
-        if self.rules.ship(class).kind == crate::content::rules::ShipKind::Ground {
-            let s = &self.ships[index];
-            if let Some(h) = self.ground_height(s.position.x, s.position.z) {
-                let lift = self.shapes[class.0 as usize].radius * 0.25;
-                self.ships[index].position.y = h + lift;
+        // Over a ground: an installation sits on the terrain, whatever height it was
+        // placed at; a craft placed below 300 m above it (a role placed "from" something
+        // on the ground) is lifted to 300 m, so it does not start inside a hill.
+        let p = self.ships[index].position;
+        if let Some(h) = self.ground_height(p.x, p.z) {
+            let kind = self.rules.ship(class).kind;
+            if kind == crate::content::rules::ShipKind::Ground {
+                self.ships[index].position.y = h + self.shapes[class.0 as usize].radius * 0.25;
+            } else if !kind.is_static() && p.y < h + 300.0 {
+                self.ships[index].position.y = h + 300.0;
             }
         }
         ShipId { index: index as u32, generation: self.generations[index] }

@@ -143,6 +143,11 @@ impl Context for BattleCx<'_> {
 }
 
 impl MissionRun {
+    /// Enemy craft destroyed so far (also while the battle is still running).
+    pub fn kills(&self) -> u32 {
+        self.kills
+    }
+
     /// Builds the battle for `def`: the player (class `player_class` when the mission
     /// lets the player choose) and every role that arrives at the start.
     pub fn start(
