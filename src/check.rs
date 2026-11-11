@@ -204,7 +204,6 @@ pub fn run(content: &Content) -> Report {
 mod tests {
     use super::*;
     use crate::content::ContentConfig;
-    use std::path::PathBuf;
 
     /// The repository's own default campaign must always pass the check: it is the
     /// template modders copy, and the one campaign every build can test without

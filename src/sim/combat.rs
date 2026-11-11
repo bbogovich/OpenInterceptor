@@ -423,11 +423,32 @@ pub fn forget_ship(w: &mut World, id: ShipId) {
     }
 }
 
-/// Resolves ship-versus-ship and ship-versus-station contacts.
+/// Collisions between ships, as an *impulse*: the instant push two bodies exchange when
+/// they hit, which changes their velocities (not their positions) in one step.
+///
+/// For two bodies with inverse masses `1/ma`, `1/mb` meeting along the unit normal `n`
+/// at approach speed `vn = (va − vb)·n < 0`, the impulse that leaves them separating at
+/// `e × |vn|` (`e` = restitution) is `j = −(1 + e)·vn / (1/ma + 1/mb)`; each body's
+/// velocity changes by `±j·n / m`. A ship's mass is taken as its radius cubed (volume),
+/// and a station is immovable (inverse mass 0).
+///
+/// Impacts also *spin* ships, which is what makes a collision feel violent:
+/// - **glancing:** the sideways (tangential) speed at the contact drags the hull round,
+///   like friction: angular change = (r × f) / I, with `r` the lever from the ship's
+///   centre to the contact point and `I` a sphere's moment of inertia, 0.4·m·r²;
+/// - **angle of impact:** a blow from the side turns the nose about `forward × n`, more
+///   for a lighter ship and a harder hit (`flight.collision.spin`).
+///
+/// A hard spin starts a *tumble* (`Ship::tumble`): the pilot's turn authority is cut for
+/// a moment, so the craft spins out of control, then recovers. Damage and the impact
+/// sound happen once per contact: pairs already touching last tick (`World::contacts`)
+/// are only kept apart.
 pub fn ship_collisions(w: &mut World) {
     let rules = w.rules.clone();
+    let cr = rules.flight.collision;
     let n = w.ships.len();
     let mut damage: Vec<(usize, f32, Vec3)> = Vec::new();
+    let mut touching: Vec<(u32, u32)> = Vec::new();
     for i in 0..n {
         for j in (i + 1)..n {
             if !w.ships[i].alive || !w.ships[j].alive {
@@ -442,42 +463,87 @@ pub fn ship_collisions(w: &mut World) {
             let (m, o) = if si { (j, i) } else { (i, j) };
             let shape_o = &w.shapes[w.ships[o].class.0 as usize];
             let rm = w.shapes[w.ships[m].class.0 as usize].radius * BODY_RADIUS_FRACTION;
+            let ro = shape_o.radius * BODY_RADIUS_FRACTION;
             let (pm, po) = (w.ships[m].position, w.ships[o].position);
-            let contact = if shape_o.mesh.is_some() {
+            let on_mesh = shape_o.mesh.is_some();
+            let contact = if on_mesh {
                 // Sweep the mobile ship's centre over its last tick of motion.
                 let prev = pm - w.ships[m].velocity * super::TICK;
                 let ahead = pm + (pm - prev).normalize_or_zero() * rm;
                 segment_shape(prev, ahead, shape_o, po, w.ships[o].rotation).is_some()
             } else {
-                pm.distance(po) < rm + shape_o.radius * BODY_RADIUS_FRACTION
+                pm.distance(po) < rm + ro
             };
             if !contact {
                 continue;
             }
-            let rel = (w.ships[m].velocity - w.ships[o].velocity).length();
-            if si || sj || shape_o.mesh.is_some() {
-                // Bounce off the static object: back out and reverse.
+            touching.push((i as u32, j as u32));
+            let first = !w.contacts.contains(&(i as u32, j as u32));
+            let o_static = si || sj;
+            // Inverse masses: radius cubed stands in for mass; a station never moves.
+            let inv = |r: f32| 1.0 / (r * r * r).max(1.0);
+            let (im, io) = (inv(rm), if o_static { 0.0 } else { inv(ro) });
+            let v_rel = w.ships[m].velocity - w.ships[o].velocity;
+            // The contact normal, from `o` towards `m`. Against a mesh the surface normal
+            // is unknown, so the reverse of the approach direction stands in for it.
+            let normal = if on_mesh {
+                (-v_rel).try_normalize().unwrap_or_else(|| (pm - po).normalize_or(Vec3::Y))
+            } else {
+                (pm - po).normalize_or(Vec3::Y)
+            };
+            // 1. Separate: out of the overlap, shared by inverse mass.
+            if on_mesh {
                 let v = w.ships[m].velocity;
                 w.ships[m].position -= v * super::TICK * 2.0;
-                w.ships[m].velocity = -v * 0.3;
             } else {
-                // Two mobile ships: push apart along the line between centres.
-                let normal = (pm - po).normalize_or(Vec3::Y);
-                let overlap = rm + shape_o.radius * BODY_RADIUS_FRACTION - pm.distance(po);
-                w.ships[m].position += normal * overlap * 0.5;
-                w.ships[o].position -= normal * overlap * 0.5;
-                let (vm, vo) = (w.ships[m].velocity, w.ships[o].velocity);
-                w.ships[m].velocity = vo * 0.5;
-                w.ships[o].velocity = vm * 0.5;
+                let overlap = (rm + ro - pm.distance(po)).max(0.0);
+                let share = |a: f32| if im + io > 0.0 { a / (im + io) } else { 0.0 };
+                w.ships[m].position += normal * overlap * share(im);
+                w.ships[o].position -= normal * overlap * share(io);
             }
-            let dmg = rel * 0.1;
-            let at = (pm + po) * 0.5;
-            damage.push((m, dmg, at));
-            damage.push((o, dmg, at));
-            let id = w.id_of(m);
-            w.events.push(SimEvent::Collision { ship: id, position: at });
+            // 2. Bounce, only while approaching (a pair pressed together exchanges no
+            // further impulse, so it cannot keep re-spinning or re-damaging).
+            let vn = v_rel.dot(normal);
+            if vn >= 0.0 {
+                continue;
+            }
+            let jn = -(1.0 + cr.restitution) * vn / (im + io);
+            w.ships[m].velocity += normal * jn * im;
+            w.ships[o].velocity -= normal * jn * io;
+            // 3. Spin. Friction along the sliding direction, capped by the normal impulse.
+            let tangent = v_rel - normal * vn;
+            let jt = (0.3 * jn).min(tangent.length() / (im + io));
+            let slide = tangent.normalize_or_zero();
+            for (k, sign, inv_mass, radius) in [(m, 1.0, im, rm), (o, -1.0, io, ro)] {
+                if inv_mass == 0.0 {
+                    continue;
+                }
+                let s = &mut w.ships[k];
+                let n_k = normal * sign; // the direction this ship is pushed
+                let lever = -n_k * radius; // centre → contact point
+                let friction = -slide * jt * sign;
+                let inertia = 0.4 * radius * radius / inv_mass; // 0.4·m·r²
+                let glancing = lever.cross(friction) / inertia.max(1e-3);
+                let dv = jn * inv_mass; // this ship's change of speed
+                let angled = s.forward().cross(n_k) * cr.spin * 0.5 * dv / radius.max(1.0);
+                let spin = (glancing + angled).clamp_length_max(6.0);
+                // World-space spin into the ship's body axes (see `Ship::angular_velocity`).
+                s.angular_velocity += s.rotation.conjugate() * spin;
+                if spin.length() > 0.5 {
+                    s.tumble = s.tumble.max((spin.length() * 0.8).min(cr.tumble));
+                }
+            }
+            if first {
+                let at = (pm + po) * 0.5;
+                let dmg = -vn * 0.1;
+                damage.push((m, dmg, at));
+                damage.push((o, dmg, at));
+                let id = w.id_of(m);
+                w.events.push(SimEvent::Collision { ship: id, position: at });
+            }
         }
     }
+    w.contacts = touching;
     for (k, dmg, at) in damage {
         if dmg > 1.0 {
             let id = w.id_of(k);
@@ -812,5 +878,61 @@ mod tests {
         let s = w.get(me).unwrap();
         assert!(s.velocity.z > 0.0, "bounced back");
         assert!(w.get(st).is_some());
+    }
+
+    #[test]
+    fn a_glancing_hit_sends_a_fighter_tumbling() {
+        let (mut w, me, foe) = duel();
+        // The foe sits just off my right side; I slide into it sideways while flying ahead.
+        w.get_mut(foe).unwrap().position = Vec3::new(5.5, 0.0, 0.0);
+        w.get_mut(me).unwrap().velocity = Vec3::new(60.0, 0.0, -150.0);
+        ship_collisions(&mut w);
+        let s = w.get(me).unwrap();
+        assert!(s.velocity.x < 60.0, "pushed back off the foe: {:?}", s.velocity);
+        assert!(s.angular_velocity.length() > 0.5, "the side impact spins the craft: {:?}", s.angular_velocity);
+        assert!(s.tumble > 0.0, "and starts a tumble");
+        let foe_s = w.get(foe).unwrap();
+        assert!(foe_s.velocity.x > 0.0 && foe_s.tumble > 0.0, "the foe is knocked away and spun too");
+        // During the tumble the stick barely turns the ship; afterwards control returns.
+        let class = w.rules.ship(s.class).clone();
+        let flight = w.rules.flight.clone();
+        let mut ship = s.clone();
+        ship.controls = crate::sim::Controls { yaw: 1.0, ..Default::default() };
+        let spin_before = ship.angular_velocity;
+        crate::sim::flight::step(&mut ship, &class, &flight, TICK);
+        assert!((ship.angular_velocity - spin_before).length() < 0.2, "spin persists, control is weak");
+        for _ in 0..(4.0 / TICK) as usize {
+            crate::sim::flight::step(&mut ship, &class, &flight, TICK);
+        }
+        assert_eq!(ship.tumble, 0.0, "recovered");
+    }
+
+    #[test]
+    fn pressed_together_ships_make_one_impact() {
+        let (mut w, me, foe) = duel();
+        w.get_mut(foe).unwrap().position = Vec3::new(0.0, 0.0, -5.5);
+        let mut impacts = 0;
+        for _ in 0..30 {
+            // A wingman that keeps pushing: velocity into the other ship every tick.
+            w.get_mut(me).unwrap().velocity = Vec3::NEG_Z * 40.0;
+            let p = w.get(me).unwrap().position;
+            w.get_mut(me).unwrap().position = p + Vec3::NEG_Z * 40.0 * TICK;
+            w.events.clear();
+            ship_collisions(&mut w);
+            impacts += w.events.iter().filter(|e| matches!(e, SimEvent::Collision { .. })).count();
+        }
+        assert_eq!(impacts, 1, "one impact sound for one continuous contact");
+        // Parting and touching again is a new impact.
+        w.get_mut(me).unwrap().position = Vec3::new(0.0, 0.0, 50.0);
+        w.events.clear();
+        ship_collisions(&mut w);
+        assert!(w.contacts.is_empty());
+        w.get_mut(foe).unwrap().velocity = Vec3::ZERO; // the pushes left it drifting away
+        let foe_at = w.get(foe).unwrap().position; // and shoved along
+        let s = w.get_mut(me).unwrap();
+        s.position = foe_at + Vec3::Z * 5.5;
+        s.velocity = Vec3::NEG_Z * 40.0; // closing again
+        ship_collisions(&mut w);
+        assert_eq!(w.events.iter().filter(|e| matches!(e, SimEvent::Collision { .. })).count(), 1);
     }
 }

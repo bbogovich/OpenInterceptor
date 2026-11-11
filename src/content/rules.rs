@@ -371,6 +371,28 @@ pub struct FlightRules {
     pub bolt_carry: f32,
     /// Scene lighting: `flight: {lighting: {ambient, sun, rim, distant_dot}}`.
     pub lighting: Lighting,
+    /// How collisions feel: `flight: {collision: {restitution, spin, tumble}}`.
+    pub collision: CollisionRules,
+    /// A wingman's formation slot is at least this many × the two ships' combined radii
+    /// from its leader (`flight: {formation_gap: 3}`).
+    pub formation_gap: f32,
+}
+
+/// How ships respond to hitting each other (see `sim::combat::ship_collisions`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CollisionRules {
+    /// Bounciness of an impact: 0 = the ships stop together, 1 = a perfect bounce.
+    pub restitution: f32,
+    /// How strongly the angle of impact sets a ship spinning (1 = the engine's default).
+    pub spin: f32,
+    /// Longest time (seconds) a hard hit leaves the pilot without full control.
+    pub tumble: f32,
+}
+
+impl Default for CollisionRules {
+    fn default() -> Self {
+        CollisionRules { restitution: 0.5, spin: 1.0, tumble: 2.5 }
+    }
 }
 
 /// How a bolt (beam-weapon shot) moves once fired.
@@ -1065,6 +1087,18 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 None => d,
             }
         },
+        collision: {
+            let d = CollisionRules::default();
+            match fl.and_then(|g| g.node("collision")).map(Get) {
+                Some(c) => CollisionRules {
+                    restitution: c.num("restitution").unwrap_or(d.restitution).clamp(0.0, 1.0),
+                    spin: c.num("spin").unwrap_or(d.spin).max(0.0),
+                    tumble: c.qty("tumble", Unit::Time).unwrap_or(d.tumble).max(0.0),
+                },
+                None => d,
+            }
+        },
+        formation_gap: fl.and_then(|g| g.num("formation_gap")).unwrap_or(3.0).max(0.0),
     };
     let sounds = sounds_node
         .map(|(n, pack)| {

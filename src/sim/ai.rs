@@ -469,7 +469,11 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
         return (attack(w, me, t, state, &params, &skill), Some(t));
     }
     let class = w.rules.ship(ship.class);
-    let slot = leader.position + leader.rotation * state.offset;
+    let slot = formation_slot(w, ship, leader, state.offset);
+    // Something about to hit us (often the leader itself): get clear first.
+    if let Some(c) = avoid_collision(w, me) {
+        return (c, None);
+    }
     let to_slot = slot - ship.position;
     let dist = to_slot.length();
     let mut c = Controls::default();
@@ -495,6 +499,63 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
         c.afterburner = wanted > max + 50.0 && leader.afterburning;
     }
     (c, None)
+}
+
+/// The world position of a wingman's formation slot: `offset` in the leader's frame, but
+/// never closer to the leader than `flight.formation_gap` × the two ships' combined radii
+/// (a slot from data that is too tight is pushed straight out along its own direction).
+pub fn formation_slot(w: &World, me: &Ship, leader: &Ship, offset: Vec3) -> Vec3 {
+    let radius = |s: &Ship| w.shapes[s.class.0 as usize].radius;
+    let min = w.rules.flight.formation_gap * (radius(me) + radius(leader));
+    let len = offset.length();
+    let offset = if len >= min {
+        offset
+    } else if len > 1e-3 {
+        offset * (min / len)
+    } else {
+        // No offset at all: off the leader's left wing and a little behind.
+        Vec3::new(-min, 0.0, min * 0.3)
+    };
+    leader.position + leader.rotation * offset
+}
+
+/// Collision avoidance: if another craft is inside our avoidance zone (twice the combined
+/// radii) and we are closing on it, steer away from it and slow down. Returns the
+/// controls to use instead of the normal ones, or `None` when the way is clear.
+pub fn avoid_collision(w: &World, me: ShipId) -> Option<Controls> {
+    let ship = w.get(me)?;
+    let my_r = w.shapes[ship.class.0 as usize].radius;
+    let mut worst: Option<(f32, Vec3, Vec3)> = None; // (time to contact, away, other's velocity)
+    for (i, o) in w.ships.iter().enumerate() {
+        if !o.alive || w.id_of(i) == me {
+            continue;
+        }
+        let zone = 2.0 * (my_r + w.shapes[o.class.0 as usize].radius);
+        let to = o.position - ship.position;
+        let dist = to.length();
+        if dist > zone || dist < 1e-3 {
+            continue;
+        }
+        // Closing speed along the line between us (positive = getting closer).
+        let closing = (ship.velocity - o.velocity).dot(to / dist);
+        if closing <= 0.0 && dist > zone * 0.5 {
+            continue; // opening, and not dangerously close
+        }
+        let ttc = if closing > 0.0 { dist / closing } else { 0.0 };
+        if worst.is_none_or(|(t, ..)| ttc < t) {
+            worst = Some((ttc, -to / dist, o.velocity));
+        }
+    }
+    let (_, away, other_v) = worst?;
+    let class = w.rules.ship(ship.class);
+    // Aim off to the side away from the other craft, keeping the general heading.
+    let aim = ship.position + away * 400.0 + ship.forward() * 200.0;
+    let (pitch, yaw, roll, _) = steer_towards(ship, aim);
+    // Slow to the other craft's speed less a margin when it is ahead of us.
+    let ahead = (-away).dot(ship.forward()) > 0.0;
+    let other_speed = other_v.dot(ship.forward()).max(0.0);
+    let hold = if ahead { (other_speed - 40.0).max(0.0) } else { class.max_speed };
+    Some(Controls { pitch, yaw, roll, hold_speed: Some(hold.min(class.max_speed)), ..Default::default() })
 }
 
 /// The pilot's aim point at `target`: refreshed every `reaction` seconds (with a new aim
@@ -765,6 +826,45 @@ mod tests {
         }
         let end = w.get(wing).unwrap().position.distance(Vec3::new(-60.0, 0.0, 30.0));
         assert!(end < start * 0.3, "from {start} to {end}");
+    }
+
+    #[test]
+    fn formation_slots_keep_a_gap_from_the_leader() {
+        let mut w = world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let lead = w.spawn(f, FactionId(0), "lead", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let wing = w.spawn(f, FactionId(0), "wing", Vec3::X * 100.0, Quat::IDENTITY, Pilot::External);
+        let (l, m) = (w.get(lead).unwrap(), w.get(wing).unwrap());
+        // Test shapes are 5 m spheres: gap 3 × (5 + 5) = 30 m.
+        let tight = formation_slot(&w, m, l, Vec3::new(5.0, 0.0, 0.0));
+        assert!((tight.length() - 30.0).abs() < 1e-3, "pushed out to the gap: {tight:?}");
+        assert!(tight.x > 0.0, "along its own direction");
+        let roomy = formation_slot(&w, m, l, Vec3::new(-60.0, 0.0, 30.0));
+        assert_eq!(roomy, Vec3::new(-60.0, 0.0, 30.0), "a wide slot is kept");
+        assert!(formation_slot(&w, m, l, Vec3::ZERO).length() >= 30.0);
+    }
+
+    #[test]
+    fn a_wingman_steers_clear_of_the_leader() {
+        let mut w = world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let lead = w.spawn(f, FactionId(0), "lead", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        w.get_mut(lead).unwrap().velocity = Vec3::NEG_Z * 100.0;
+        // Right behind the leader, its slot ahead of the leader: the direct path to it
+        // goes straight through the leader, and the wingman is closing fast.
+        let ai = AiState::new(Behaviour::Wingman, Some(lead), Vec3::new(0.0, 0.0, -10.0));
+        let wing = w.spawn(f, FactionId(0), "wing", Vec3::new(0.0, 0.0, 45.0), Quat::IDENTITY, Pilot::Ai(ai));
+        w.get_mut(wing).unwrap().velocity = Vec3::NEG_Z * 220.0;
+        let mut closest = f32::MAX;
+        let mut impacts = 0;
+        for _ in 0..(5.0 / super::super::TICK) as usize {
+            w.step();
+            let (a, b) = (w.get(lead).unwrap().position, w.get(wing).unwrap().position);
+            closest = closest.min(a.distance(b));
+            impacts += w.events.iter().filter(|e| matches!(e, crate::sim::SimEvent::Collision { .. })).count();
+        }
+        assert_eq!(impacts, 0, "no collision (closest {closest:.1} m)");
+        assert!(closest > 6.0, "kept clear: {closest:.1} m");
     }
 
     #[test]

@@ -134,8 +134,17 @@ fn turn(ship: &mut Ship, class: &ShipClass, c: &Controls, dt: f32) {
         -c.yaw.clamp(-1.0, 1.0) * class.yaw_rate.to_radians() * factor,
         -c.roll.clamp(-1.0, 1.0) * class.roll_rate.to_radians(),
     );
+    // A collision tumble (see `combat::ship_collisions`): the stick has a quarter of its
+    // authority and the impact's spin dies away six times more slowly, so the craft
+    // spins out of control for a moment, then recovers.
+    let (desired, damping) = if ship.tumble > 0.0 {
+        ship.tumble = (ship.tumble - dt).max(0.0);
+        (desired * 0.25, damping_time(class.angular_damp) * 6.0)
+    } else {
+        (desired, damping_time(class.angular_damp))
+    };
     // Exponential smoothing: frame-rate independent because it uses exp(-dt/τ).
-    let blend = 1.0 - (-dt / damping_time(class.angular_damp)).exp();
+    let blend = 1.0 - (-dt / damping).exp();
     ship.angular_velocity += (desired - ship.angular_velocity) * blend;
     ship.rotation = (ship.rotation * Quat::from_scaled_axis(ship.angular_velocity * dt)).normalize();
 }

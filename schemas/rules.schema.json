@@ -339,6 +339,12 @@
             "rim": {"description": "extra light on edges seen side-on, outlining hulls (0)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
             "distant_dot": {"description": "pixels: smaller ships are drawn as a dot in their radar colour (4; 0 = off)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
           }},
+        "collision": {"description": "how collisions feel", "type": "object", "additionalProperties": false, "properties": {
+            "restitution": {"description": "bounciness, 0 (stop together) to 1 (perfect bounce); 0.5", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "spin": {"description": "how strongly the angle of impact spins a ship; 1", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "tumble": {"description": "longest time a hard hit leaves the pilot without full control; 2.5s", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
+        "formation_gap": {"description": "wingman slots are at least this many x the combined radii from the leader; 3", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

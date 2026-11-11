@@ -465,6 +465,16 @@ fn flight() -> Ty {
             ]),
             "how ships are lit",
         ),
+        f(
+            "collision",
+            Ty::Struct(vec![
+                f("restitution", Ty::Num, "bounciness, 0 (stop together) to 1 (perfect bounce); 0.5"),
+                f("spin", Ty::Num, "how strongly the angle of impact spins a ship; 1"),
+                f("tumble", time(), "longest time a hard hit leaves the pilot without full control; 2.5s"),
+            ]),
+            "how collisions feel",
+        ),
+        f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
     ])
 }
 

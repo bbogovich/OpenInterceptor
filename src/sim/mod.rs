@@ -291,6 +291,9 @@ pub struct Ship {
     pub velocity: Vec3,
     /// Body-space angular velocity, radians/s: x = pitch, y = yaw, z = roll.
     pub angular_velocity: Vec3,
+    /// Seconds left of a collision tumble: while above zero the pilot's turn authority
+    /// is reduced and the impact's spin dies away slowly (see `flight::turn`).
+    pub tumble: f32,
     /// 0..=1 fraction of max speed (negative when reversing).
     pub throttle: f32,
     pub reverse: bool,
@@ -577,6 +580,10 @@ pub struct World {
     pub events: Vec<SimEvent>,
     /// Simulated seconds since the start.
     pub time: f64,
+    /// Pairs of ship slots touching at the end of the last tick, so a collision that
+    /// persists (one ship pushing against another) counts as one impact, not one per
+    /// tick. Each pair is `(lower slot, higher slot)`.
+    pub contacts: Vec<(u32, u32)>,
     /// Deterministic random-number state (xorshift), for AI variety.
     rng: u64,
 }
@@ -594,6 +601,7 @@ impl World {
             wrecks: Vec::new(),
             events: Vec::new(),
             time: 0.0,
+            contacts: Vec::new(),
             rng: seed.max(1),
         }
     }
@@ -641,6 +649,7 @@ impl World {
             rotation,
             velocity: Vec3::ZERO,
             angular_velocity: Vec3::ZERO,
+            tumble: 0.0,
             throttle: 0.0,
             reverse: false,
             afterburning: false,
