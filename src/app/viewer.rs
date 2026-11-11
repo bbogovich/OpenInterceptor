@@ -590,9 +590,9 @@ mod tests {
 
     #[test]
     fn default_entries_list_every_class() {
-        let packs = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
+        let packs = crate::content::checkout_dirs();
         let c = crate::content::Content::load(&crate::content::ContentConfig {
-            pack_dirs: vec![packs],
+            pack_dirs: packs,
             no_original: true,
             ..Default::default()
         })

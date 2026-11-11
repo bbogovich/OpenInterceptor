@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Build OpenInterceptor as a macOS app: dist/OpenInterceptor-<version>.app
 
-    python3 tools/build_bundle.py                    # app + settings pointing at ./game
+    python3 tools/build_bundle.py                    # app + settings pointing at ./resources/xcom(-cd)
     python3 tools/build_bundle.py --data /Volumes/CD # settings point at another copy
     python3 tools/build_bundle.py --install-data     # also clone the CD into the user data folder
     python3 tools/build_bundle.py --no-settings      # leave settings.yaml alone
 
-The app contains the engine and the built-in packs (packs/), never any game data, so the
+The app contains the engine, resources/default and the bundled mods (packs/), never any original data, so the
 app itself is safe to share. The player's data lives in the user data folder, as in a
 real install:
 
@@ -90,7 +90,10 @@ def update_settings(original: Path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--data", type=Path, default=ROOT / "game", help="the Interceptor CD or a copy (default: ./game)")
+    default_data = next((d for d in (ROOT / "resources" / "xcom", ROOT / "resources" / "xcom-cd")
+                         if d.is_dir() and any(d.iterdir())), ROOT / "resources" / "xcom")
+    parser.add_argument("--data", type=Path, default=default_data,
+                        help="an installed copy of Interceptor or a CD copy (default: ./resources/xcom, else ./resources/xcom-cd)")
     parser.add_argument("--install-data", action="store_true", help="clone the CD into the user data folder's original/")
     parser.add_argument("--no-settings", action="store_true", help="do not touch settings.yaml")
     parser.add_argument("--skip-build", action="store_true", help="reuse the last release build")
@@ -114,7 +117,9 @@ def main():
     resources = contents / "Resources"
     resources.mkdir()
     shutil.copy2(engine, contents / "MacOS" / "openinterceptor")
-    # Built-in packs ship inside the app (they hold no original content).
+    # What ships with the game: resources/default (the default campaign), never the
+    # player's resources/xcom*; and the bundled mods in packs/. Neither holds original content.
+    shutil.copytree(ROOT / "resources" / "default", resources / "resources" / "default")
     shutil.copytree(ROOT / "packs", resources / "packs")
     shutil.copy2(ROOT / "LICENSE", resources / "LICENSE")
     with open(contents / "Info.plist", "wb") as file:

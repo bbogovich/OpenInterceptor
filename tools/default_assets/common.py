@@ -33,9 +33,9 @@ import random
 import struct
 import zlib
 
-# Folder layout: this file lives in tools/default_assets/, the pack in packs/default/.
+# Folder layout: this file lives in tools/default_assets/, the pack in resources/default/.
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PACK = os.path.join(ROOT, "packs", "default")
+PACK = os.path.join(ROOT, "resources", "default")
 
 
 # ---------------------------------------------------------------------------------------

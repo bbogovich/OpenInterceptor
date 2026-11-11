@@ -1,4 +1,8 @@
-# The player's own game data — NEVER committed (copyrighted MicroProse content).
+# The player's own original data — NEVER committed (copyrighted MicroProse content).
+# resources/xcom: an installed copy of X-COM: Interceptor; resources/xcom-cd: a CD copy.
+/resources/xcom/
+/resources/xcom-cd/
+# The old location, still ignored so an older checkout's copy can never be committed.
 /game/
 /dist/
 /build/
@@ -23,9 +27,9 @@
 *.xmsh
 *.xtxr
 # Except test fixtures created from scratch by this project.
-!/packs/default/**/*.tga
+!/resources/default/**/*.tga
 # The default campaign's sounds are synthesised by tools/default_assets/sounds.py.
-!/packs/default/sounds/*.wav
+!/resources/default/sounds/*.wav
 .DS_Store
 site/
 __pycache__/

@@ -17,7 +17,7 @@
 //!
 //! ```text
 //!  packs/interceptor ─┐                     ┌─> Ruleset (ships, beams, …)
-//!  packs/default ─────┼─> Content::load ────┼─> Vec<Scenario>
+//!  resources/default ─┼─> Content::load ────┼─> Vec<Scenario>
 //!  mods/…  ───────────┘        │            └─> asset loaders (Model, Image, Pcm)
 //!  player's CD ────────────────┘
 //! ```
@@ -74,6 +74,14 @@ pub fn preferred_campaign(packs: &[PackInfo]) -> Option<String> {
         .find(|id| campaigns.iter().any(|p| p.id == **id))
         .map(|id| id.to_string())
         .or_else(|| campaigns.first().map(|p| p.id.clone()))
+}
+
+/// The development checkout's content folders, `resources/` then `packs/` (as
+/// [`crate::cli::content_dirs`] finds them in a checkout). For tests and tools that load
+/// the real campaigns.
+pub fn checkout_dirs() -> Vec<PathBuf> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    vec![root.join("resources"), root.join("packs")]
 }
 
 /// Everything loaded: the result of [`Content::load`].

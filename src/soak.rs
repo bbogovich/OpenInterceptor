@@ -211,9 +211,9 @@ mod tests {
     use crate::content::ContentConfig;
 
     fn content(level: &str) -> Content {
-        let packs = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
+        let packs = crate::content::checkout_dirs();
         Content::load(&ContentConfig {
-            pack_dirs: vec![packs],
+            pack_dirs: packs,
             no_original: true,
             difficulty: Some(level.into()),
             ..Default::default()

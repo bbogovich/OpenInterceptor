@@ -33,7 +33,8 @@
 //! A `settings.ini` from an earlier build is read once and replaced by `settings.yaml`.
 //!
 //! The original data is looked for in a fixed order ([`resolve_original`]), so a
-//! development checkout (with the CD copied to `game/`) and an installed app both work
+//! development checkout (with an installed copy in `resources/xcom/` or a CD copy in
+//! `resources/xcom-cd/`) and an installed app both work
 //! without typing a path every time.
 
 use crate::content::schema::Get;
@@ -136,7 +137,7 @@ impl Settings {
         let body = |n: Node| n.to_yaml().lines().map(|l| format!("  {l}")).collect::<Vec<_>>().join("\n");
         format!(
             "# OpenInterceptor settings. Paths may be absolute or relative to this folder.\n\
-             # original: your X-COM: Interceptor CD, or a folder copied from it.\n\
+             # original: your X-COM: Interceptor, installed or a copy of the CD (optional).\n\
              # mods: folder of mods (empty = the mods folder next to this file).\n\
              paths:\n{}\n# Pack ids switched off.\npacks:\n{}\n\
              # The launcher's campaign and difficulty choices, and the text language.\ngame:\n{}\n\
@@ -205,7 +206,9 @@ pub enum Source {
 
 /// Picks the original-data folder. The first candidate that *exists* wins, in this
 /// order: command line, environment variable, `settings.yaml`, `<user data>/original`,
-/// then the development checkout's `game/` folder. A path given explicitly on the
+/// then the development checkout's `resources/xcom/` (an installed copy of the game)
+/// and `resources/xcom-cd/` (a CD copy). Those two exist in every checkout, empty, so
+/// they count only once something has been put in them. A path given explicitly on the
 /// command line is returned even if it does not exist, so the error names it.
 pub fn resolve_original(
     cli: Option<&Path>,
@@ -225,9 +228,17 @@ pub fn resolve_original(
         (env.map(Path::to_path_buf), Source::Environment),
         (settings.original.as_deref().map(relative_to_user), Source::SettingsFile),
         (user_dir.map(|u| u.join("original")), Source::UserDataFolder),
-        (dev_tree.map(|d| d.join("game")), Source::DevelopmentTree),
     ];
-    candidates.into_iter().find_map(|(p, s)| p.filter(|p| p.is_dir()).map(|p| (p, s)))
+    let found = candidates.into_iter().find_map(|(p, s)| p.filter(|p| p.is_dir()).map(|p| (p, s)));
+    let has_files = |p: &Path| std::fs::read_dir(p).is_ok_and(|mut d| d.next().is_some());
+    found.or_else(|| {
+        let dev = dev_tree?;
+        ["xcom", "xcom-cd"]
+            .iter()
+            .map(|f| dev.join("resources").join(f))
+            .find(|p| has_files(p))
+            .map(|p| (p, Source::DevelopmentTree))
+    })
 }
 
 #[cfg(test)]
@@ -270,12 +281,14 @@ mod tests {
     }
 
     #[test]
-    fn resolution_order_prefers_explicit_and_existing() {
+    fn original_data_is_found_in_order() {
         let root = std::env::temp_dir().join(format!("oi-settings-{}", std::process::id()));
         let (user, dev, cd) = (root.join("user"), root.join("dev"), root.join("cd"));
-        for d in [user.join("original"), dev.join("game"), cd.clone()] {
+        let (installed, disc) = (dev.join("resources/xcom"), dev.join("resources/xcom-cd"));
+        for d in [user.join("original"), installed.clone(), disc.clone(), cd.clone()] {
             std::fs::create_dir_all(d).unwrap();
         }
+        std::fs::write(disc.join("Readme.txt"), "x").unwrap();
         let none = Settings::default();
         let with_cd = Settings { original: Some(cd.clone()), ..Default::default() };
         let r = |cli: Option<&Path>, env: Option<&Path>, s: &Settings| {
@@ -286,12 +299,16 @@ mod tests {
         assert_eq!(r(None, Some(Path::new("/missing")), &with_cd).unwrap(), (cd.clone(), Source::SettingsFile));
         assert_eq!(r(None, None, &none).unwrap(), (user.join("original"), Source::UserDataFolder));
         std::fs::remove_dir_all(user.join("original")).unwrap();
-        assert_eq!(r(None, None, &none).unwrap(), (dev.join("game"), Source::DevelopmentTree));
+        // The checkout's folders: the empty installed-copy folder is skipped...
+        assert_eq!(r(None, None, &none).unwrap(), (disc.clone(), Source::DevelopmentTree));
+        // ...and once it holds the game, the installed copy wins over the CD copy.
+        std::fs::write(installed.join("xobjects1.dll"), "x").unwrap();
+        assert_eq!(r(None, None, &none).unwrap(), (installed.clone(), Source::DevelopmentTree));
         // A relative settings path is relative to the user data folder.
         std::fs::create_dir_all(user.join("disc")).unwrap();
         let rel = Settings { original: Some("disc".into()), ..Default::default() };
         assert_eq!(r(None, None, &rel).unwrap(), (user.join("disc"), Source::SettingsFile));
-        std::fs::remove_dir_all(dev.join("game")).unwrap();
+        std::fs::remove_dir_all(dev.join("resources")).unwrap();
         assert_eq!(resolve_original(None, None, &none, Some(&user), Some(&dev)), None);
         std::fs::remove_dir_all(&root).unwrap();
     }

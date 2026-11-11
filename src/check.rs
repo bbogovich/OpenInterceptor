@@ -211,9 +211,9 @@ mod tests {
     /// original data.
     #[test]
     fn the_default_campaign_passes() {
-        let packs = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
+        let packs = crate::content::checkout_dirs();
         let content =
-            Content::load(&ContentConfig { pack_dirs: vec![packs], no_original: true, ..Default::default() }).unwrap();
+            Content::load(&ContentConfig { pack_dirs: packs, no_original: true, ..Default::default() }).unwrap();
         let report = run(&content);
         assert!(report.errors.is_empty(), "{:#?}", report.errors);
         assert!(

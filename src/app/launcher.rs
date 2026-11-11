@@ -312,8 +312,8 @@ mod tests {
     use crate::content::ContentConfig;
 
     fn sample() -> Content {
-        let packs = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
-        Content::load(&ContentConfig { pack_dirs: vec![packs], no_original: true, ..Default::default() }).unwrap()
+        let packs = crate::content::checkout_dirs();
+        Content::load(&ContentConfig { pack_dirs: packs, no_original: true, ..Default::default() }).unwrap()
     }
 
     #[test]

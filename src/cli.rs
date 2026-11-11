@@ -17,7 +17,8 @@ USAGE:
 OPTIONS:
     --data <PATH>       The X-COM: Interceptor CD or install folder. Without it:
                         OPENINTERCEPTOR_DATA, then settings.yaml paths.original, then
-                        <user data>/original, then game/ in a development checkout.
+                        <user data>/original, then resources/xcom (an installed copy)
+                        or resources/xcom-cd (a CD copy) in a development checkout.
                         If none is found, only original-free packs load.
     --mods <DIR>        Folder of user mods (default: the user data folder's mods/)
     --packs <DIR>       Folder of built-in packs (default: packs/ next to the program)
@@ -161,13 +162,32 @@ pub fn user_data_dir() -> Option<PathBuf> {
 /// Finds the built-in `packs/` folder: the current folder, next to the program, inside a
 /// macOS app bundle's `Resources`, or the source tree (for `cargo run`).
 pub fn find_packs_dir(exe: Option<&Path>) -> Option<PathBuf> {
-    let mut candidates = vec![PathBuf::from("packs")];
+    find_dir("packs", exe)
+}
+
+/// Finds the `resources` folder (the default campaign; see [`content_dirs`]).
+pub fn find_resources_dir(exe: Option<&Path>) -> Option<PathBuf> {
+    find_dir("resources", exe)
+}
+
+/// The first existing `name` folder: in the working directory, next to the program,
+/// in a macOS app's `Resources`, then in the development checkout.
+fn find_dir(name: &str, exe: Option<&Path>) -> Option<PathBuf> {
+    let mut candidates = vec![PathBuf::from(name)];
     if let Some(dir) = exe.and_then(Path::parent) {
-        candidates.push(dir.join("packs"));
-        candidates.push(dir.join("../Resources/packs"));
+        candidates.push(dir.join(name));
+        candidates.push(dir.join("../Resources").join(name));
     }
-    candidates.push(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs"));
+    candidates.push(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name));
     candidates.into_iter().find(|p| p.is_dir())
+}
+
+/// Where packs are loaded from, in order: `resources/` (what ships with the game: the
+/// default campaign in `resources/default`) then `packs/` (bundled mods such as
+/// `interceptor`). `--packs` replaces the second. Later packs override earlier ones, so
+/// mods override resources.
+pub fn content_dirs(resources: Option<PathBuf>, packs: Option<PathBuf>) -> Vec<PathBuf> {
+    resources.into_iter().chain(packs).collect()
 }
 
 impl Options {
@@ -181,7 +201,10 @@ impl Options {
         let dev_tree = Path::new(env!("CARGO_MANIFEST_DIR"));
         let original = resolve_original(self.data.as_deref(), None, &settings, user.as_deref(), Some(dev_tree));
         ContentConfig {
-            pack_dirs: self.packs.clone().or_else(|| find_packs_dir(exe.as_deref())).into_iter().collect(),
+            pack_dirs: content_dirs(
+                find_resources_dir(exe.as_deref()),
+                self.packs.clone().or_else(|| find_packs_dir(exe.as_deref())),
+            ),
             mods_dir: self.mods.clone().or(settings.mods.clone()).or_else(|| user.map(|d| d.join("mods"))),
             original: original.map(|(p, _)| p),
             no_original: self.no_original,
@@ -244,10 +267,12 @@ mod tests {
     }
 
     #[test]
-    fn finds_the_source_tree_packs() {
+    fn content_dirs_are_resources_then_packs() {
         assert!(find_packs_dir(None).is_some());
+        let resources = find_resources_dir(None).expect("the checkout has resources/");
+        assert!(resources.join("default/pack.yaml").is_file(), "the default campaign lives in resources/default");
         let cfg = parse(&args("--packs /x"), None).unwrap().content_config();
-        assert_eq!(cfg.pack_dirs, vec![PathBuf::from("/x")]);
+        assert_eq!(cfg.pack_dirs, vec![resources, PathBuf::from("/x")], "--packs replaces only the mods folder");
         assert!(user_data_dir().is_some());
     }
 }

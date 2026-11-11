@@ -6,7 +6,7 @@ Run from anywhere:
     python3 tools/default_assets/make_all.py            # build everything
     python3 tools/default_assets/make_all.py --check    # build twice, prove the output is identical
 
-It writes into packs/default/:
+It writes into resources/default/:
 
 * `models/`   - ships, stations, rubble, debris pieces and the Guard 3D cockpit (OBJ +
                 MTL), plus `guard_cockpit.instruments.yaml` (models.py);

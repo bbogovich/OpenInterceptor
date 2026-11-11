@@ -331,7 +331,7 @@ mod tests {
         std::fs::remove_dir_all(&root).unwrap();
         // Without original data there is nothing to extract.
         let packs_only = Content::load(&crate::content::ContentConfig {
-            pack_dirs: vec![std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs")],
+            pack_dirs: crate::content::checkout_dirs(),
             no_original: true,
             ..Default::default()
         })

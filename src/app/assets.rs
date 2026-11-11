@@ -237,13 +237,10 @@ mod tests {
 
     #[test]
     fn no_original_data_means_empty_lists() {
-        let packs = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("packs");
-        let c = Content::load(&crate::content::ContentConfig {
-            pack_dirs: vec![packs],
-            no_original: true,
-            ..Default::default()
-        })
-        .unwrap();
+        let packs = crate::content::checkout_dirs();
+        let c =
+            Content::load(&crate::content::ContentConfig { pack_dirs: packs, no_original: true, ..Default::default() })
+                .unwrap();
         for t in Tab::ALL {
             assert!(entries(&c, t).is_empty());
         }
