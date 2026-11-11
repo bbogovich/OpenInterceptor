@@ -54,6 +54,11 @@ pub struct AppContext {
     pub console: Option<crate::remote::server::ConsoleServer>,
     /// What the console's buttons are holding or tapped, merged into each frame's input.
     pub remote: crate::remote::RemoteInput,
+    /// One line on the launcher saying whether the console is on, and where to point the
+    /// tablet (or why it could not start).
+    pub console_status: String,
+    /// Problems the player should see on the launcher (a broken settings.yaml…).
+    pub notices: Vec<String>,
 }
 
 /// What the app should do after a screen's frame.
@@ -136,10 +141,10 @@ fn remember_choice(id: &str, difficulty: Option<&str>) {
 
 /// Starts the console server if the command line or the settings ask for it. A port
 /// that is taken is reported and the game carries on without the console.
-fn start_console(options: &crate::cli::Options) -> Option<crate::remote::server::ConsoleServer> {
+fn start_console(options: &crate::cli::Options) -> (Option<crate::remote::server::ConsoleServer>, String) {
     let settings = crate::cli::user_data_dir().map(|d| crate::settings::Settings::load(&d)).unwrap_or_default();
     if !(options.console || settings.console) {
-        return None;
+        return (None, "Tablet console: off   (console: {enabled: true} in settings.yaml, or --console)".into());
     }
     let port = options.console_port.or(settings.console_port).unwrap_or(crate::remote::server::DEFAULT_PORT);
     // The pairing code's seed: the clock, so each run gets a new code.
@@ -148,11 +153,12 @@ fn start_console(options: &crate::cli::Options) -> Option<crate::remote::server:
     match crate::remote::server::ConsoleServer::start(port, seed) {
         Ok(s) => {
             eprintln!("console: open {} on the tablet; pairing code {}", s.url, s.code);
-            Some(s)
+            let status = format!("Tablet console: on   open {} on the tablet, pairing code {}", s.url, s.code);
+            (Some(s), status)
         }
         Err(e) => {
             eprintln!("{e}");
-            None
+            (None, format!("Tablet console: could not start: {e}"))
         }
     }
 }
@@ -212,7 +218,12 @@ pub async fn run(options: Options) {
     for e in &sounds.errors {
         eprintln!("sound: {e}");
     }
-    let console = start_console(&options);
+    let (console, console_status) = start_console(&options);
+    let mut notices = Vec::new();
+    if let Some(problem) = crate::cli::user_data_dir().and_then(|d| crate::settings::Settings::load_checked(&d).1) {
+        eprintln!("warning: {problem}");
+        notices.push(problem);
+    }
     let mut ctx = AppContext {
         content,
         renderer,
@@ -221,6 +232,8 @@ pub async fn run(options: Options) {
         devices: devices::Devices::new(),
         console,
         remote: Default::default(),
+        console_status,
+        notices,
     };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),

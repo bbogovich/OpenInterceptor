@@ -213,6 +213,7 @@ impl Launcher {
         draw_text(&format!("Campaign: {campaign}{switch}{level}"), 40.0, 92.0, 22.0, Color::new(1.0, 0.8, 0.4, 1.0));
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
         draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, GRAY);
+
         let rows = visible_rows(top, line_h);
         let first = self.menu.first_visible(rows);
         for (i, e) in self.menu.entries.iter().enumerate().skip(first).take(rows) {
@@ -258,9 +259,22 @@ impl Launcher {
         if let Some(e) = &self.error {
             notes.insert(0, format!("Could not start: {e}"));
         }
+        // A broken settings.yaml first: it explains most other problems (lost paths).
+        for (k, n) in ctx.notices.iter().enumerate() {
+            notes.insert(k, n.clone());
+        }
         for (i, n) in notes.iter().take(3).enumerate() {
             draw_text(n, 40.0, screen_height() - 150.0 + i as f32 * 22.0, 18.0, ORANGE);
         }
+        // Whether the tablet console is on, and where to point the tablet.
+        let on = ctx.console.is_some();
+        draw_text(
+            &ctx.console_status,
+            40.0,
+            screen_height() - 56.0,
+            18.0,
+            if on { Color::new(0.5, 1.0, 0.6, 1.0) } else { GRAY },
+        );
         draw_text(
             "Up/Down choose   Left/Right ship   Enter start   Tab campaign   D difficulty   Esc quit",
             40.0,

@@ -115,10 +115,22 @@ impl Settings {
 
     /// Reads `<dir>/settings.yaml` (or an older `settings.ini`), or returns defaults.
     pub fn load(dir: &Path) -> Settings {
-        if let Ok(t) = std::fs::read_to_string(dir.join("settings.yaml")) {
-            return Settings::parse(&t);
+        Settings::load_checked(dir).0
+    }
+
+    /// Like [`Settings::load`], but also returns what is wrong with a `settings.yaml` that
+    /// is not valid YAML. Such a file gives the defaults, which silently drops every
+    /// setting in it (the original-data path, the console…), so the app shows this
+    /// message instead of leaving the player to guess.
+    pub fn load_checked(dir: &Path) -> (Settings, Option<String>) {
+        let path = dir.join("settings.yaml");
+        if let Ok(t) = std::fs::read_to_string(&path) {
+            let problem =
+                yaml::parse(&t).err().map(|e| format!("{} is not valid YAML, so it was ignored: {e}", path.display()));
+            return (Settings::parse(&t), problem);
         }
-        std::fs::read_to_string(dir.join("settings.ini")).map(|t| Settings::parse_legacy_ini(&t)).unwrap_or_default()
+        let legacy = std::fs::read_to_string(dir.join("settings.ini")).map(|t| Settings::parse_legacy_ini(&t));
+        (legacy.unwrap_or_default(), None)
     }
 
     /// The settings as YAML text, with comments for a player editing it by hand.
@@ -277,6 +289,21 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("oi-settings-save-{}", std::process::id()));
         s.save(&dir).unwrap();
         assert_eq!(Settings::load(&dir), s);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_broken_settings_file_is_reported_not_silently_ignored() {
+        let dir = std::env::temp_dir().join(format!("oi-settings-broken-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        // The mistake a player made: a section name without its colon.
+        std::fs::write(dir.join("settings.yaml"), "paths:\n  original: /cd\nconsole\n  enabled: true\n").unwrap();
+        let (s, problem) = Settings::load_checked(&dir);
+        assert_eq!(s, Settings::default(), "unreadable, so the defaults");
+        assert!(problem.unwrap().contains("not valid YAML"));
+        std::fs::write(dir.join("settings.yaml"), "console: {enabled: true}\n").unwrap();
+        let (s, problem) = Settings::load_checked(&dir);
+        assert!(s.console && problem.is_none());
         std::fs::remove_dir_all(&dir).unwrap();
     }
 
