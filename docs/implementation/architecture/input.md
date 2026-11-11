@@ -113,6 +113,16 @@ slots and two pad slots. `activate` starts a `Capture`:
 `frame` method so the launcher and the in-flight pause menu (`K`) can both host it; it gives up
 a capture after 8 s (`CAPTURE_TIMEOUT`).
 
+### Keys held when a battle starts (app 0.4.10)
+
+Enter starts a mission from the launcher, the restart prompt and the debrief, and Enter is
+also a fire key; the pad's A button both starts and acts in flight. `input::StartGuard`, applied
+first in the flight screen's frame right after the devices are read, records the keys, pad
+buttons, triggers and mouse button held on the battle's first frame and filters each out of
+every later frame until it is released; a fresh press then works normally
+([R-CON-025](../../specification/requirements/control-console.md#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored);
+test `keys_held_when_a_battle_starts_are_ignored_until_released`).
+
 ## Key Symbols
 
 | Symbol | What it is |

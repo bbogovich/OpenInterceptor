@@ -90,6 +90,14 @@ your shields take the hit, stronger when the hull is struck.
 
 Several tablets can pair at once; each one's held buttons are tracked separately.
 
+## Two layouts (coming with C2)
+
+The next console version (C2) offers two layouts, switched on the page and remembered by each
+tablet: **All-in-one**, the page described here with every control laid out at once, and
+**Cockpit**, laid out like a cockpit — the exterior HUD strip on top, the display console in the
+centre, shield rings on the left, power sliders on the right and the function groups as tiles
+below that open and close.
+
 ## Keeping the screen on
 
 While the console page is open, it keeps the tablet's screen from going to sleep (app 0.4.8).

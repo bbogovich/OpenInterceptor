@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's original data (an
   installed copy or the CD).
 
-Specification version **1.7.0** (206 requirements). Changes are listed in the
+Specification version **1.7.0** (208 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -25,7 +25,7 @@ Specification version **1.7.0** (206 requirements). Changes are listed in the
 | [Flight](requirements/flight.md) | `FLT` | 13 | [Flight](../definition/flight.md) |
 | [Combat](requirements/combat.md) | `CMB` | 22 | [Combat](../definition/combat.md) |
 | [Cockpit & HUD](requirements/cockpit-hud.md) | `HUD` | 12 | [Cockpit & HUD](../definition/cockpit-hud.md) |
-| [Controls & control console](requirements/control-console.md) | `CON` | 24 | [Controls & control console](../definition/control-console.md) |
+| [Controls & control console](requirements/control-console.md) | `CON` | 26 | [Controls & control console](../definition/control-console.md) |
 | [Missions](requirements/missions.md) | `MSN` | 12 | [Missions](../definition/missions.md) |
 | [Strategy & logistics](requirements/strategy-logistics.md) | `STR` | 27 | [Strategy & logistics](../definition/strategy-logistics.md) |
 | [Campaigns](requirements/campaigns.md) | `CPN` | 12 | [Campaigns](../definition/campaigns/features.md) |
@@ -81,4 +81,4 @@ Facts carry verified / derived / unknown marks.
 | 1.0.0 | 2026-11-11 | Bootstrap: requirement pages for eleven areas (168 requirements), the planned console protocol; format pages adopted as normative |
 | 1.1.0 | 2026-11-11 | Playtest fixes (app 0.3.1): R-HUD-009 – R-HUD-011, R-CMB-021, R-MSN-011, R-CON-007 and R-CON-008 implemented; R-CMB-002, R-MSN-003 and R-MSN-005 revised (turn velocity and viewer-relative streaks; the `killed` result) |
 | 1.3.0 | 2026-11-11 | 170 requirements (R-CMP-014, R-CMP-015 added in 1.2.0); console C1 (app 0.4.0): R-CON-009 – R-CON-011 and R-CON-014 implemented, R-CON-012, R-CON-013, R-CON-019 partial; the console protocol records version 1 as built; R-CMP-014, R-CMP-015 implemented (app 0.4.2) |
-| 1.7.0 | 2026-11-11 | 206 requirements (R-FLT-013 and R-CMB-022 counted from 1.5.0–1.6.0; R-CON-022 – R-CON-024 (keep the tablet awake, press feedback, hit static), implemented; R-MOD-021 – R-MOD-047 and R-PLT-007 – R-PLT-010 planned); new design page *Mod designer, cutscene designer and game bundling* |
+| 1.7.0 | 2026-11-11 | 208 requirements (R-FLT-013 and R-CMB-022 counted from 1.5.0–1.6.0; R-CON-022 – R-CON-024 (keep the tablet awake, press feedback, hit static), implemented; R-CON-025 start-key guard, implemented; R-CON-026 two console layouts, planned; R-MOD-021 – R-MOD-047 and R-PLT-007 – R-PLT-010 planned); new design page *Mod designer, cutscene designer and game bundling* |

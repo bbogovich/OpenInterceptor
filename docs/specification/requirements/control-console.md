@@ -36,6 +36,8 @@ Features: [Controls & control console](../../definition/control-console.md). How
 | [R-CON-022 Keep the tablet awake](#r-con-022-keep-the-tablet-awake) | Implemented |
 | [R-CON-023 Button press feedback](#r-con-023-button-press-feedback) | Implemented |
 | [R-CON-024 Hit static](#r-con-024-hit-static) | Implemented |
+| [R-CON-025 Keys held at the start of a battle are ignored](#r-con-025-keys-held-at-the-start-of-a-battle-are-ignored) | Implemented |
+| [R-CON-026 Two console layouts](#r-con-026-two-console-layouts) | Planned |
 
 ## Requirements
 
@@ -211,7 +213,7 @@ The console MUST show the exterior-view HUD in its top row, a widened display co
 - Verified by: Planned (interlude item C2; a manual test).
 
 !!! note "As built (C1)"
-    The C1 page is a working layout, not the one required here: telemetry cells, a throttle slider, then every action as a button under its group title. The HUD row, display console, shield and power columns come with C2.
+    The C1 page is a working layout, not the one required here: telemetry cells, a throttle slider, then every action as a button under its group title. The HUD row, display console, shield and power columns come with C2, as the **Cockpit** layout; the C1 layout stays as **All-in-one** ([R-CON-026](#r-con-026-two-console-layouts)).
 
 !!! question "Open"
     The grouping of the remaining functions.
@@ -366,6 +368,34 @@ When the player's craft is hit by weapons fire, the console MUST show a brief st
 !!! note "Interpretation awaiting the user's confirmation"
     "A craft" is read as **the player's craft**, and the effect as appearing **on the console** (not on the game's screen, and not for hits on other craft).
 
+### R-CON-025 Keys held at the start of a battle are ignored
+
+Keys, gamepad buttons, triggers and mouse buttons that are held when a battle starts MUST be ignored until they are released; a fresh press of the same input MUST then work normally.
+
+*Rationale:* User request, 2026-11-11: "When mission is started by pressing enter on the menu or restart prompt, a laser fires immediately at start of mission because of the enter press. that first keypress should be suppressed." Enter (and the pad's A button) both start a mission and fire or burn in flight.
+
+- Implements: [F-CON-001](../../definition/control-console.md#f-con-001-rebindable-keyboard-mouse-and-gamepad)
+- Status: implemented
+- Verified by: `input::tests::keys_held_when_a_battle_starts_are_ignored_until_released`; MT-3-28
+- See: [Input and gamepads](../../implementation/architecture/input.md)
+
+!!! note "As built (app 0.4.10, main `4edc9d7`)"
+    `input::StartGuard` records the keys, pad buttons, triggers and mouse button held on a battle's first frame and filters them out of every later frame until each is let go. It is applied first in the flight screen's frame, right after the devices are read, so the launcher's, the restart prompt's and the debrief's Enter never fires the guns.
+
+### R-CON-026 Two console layouts
+
+The console page MUST offer two layouts, switchable on the page and remembered per tablet:
+
+- **All-in-one:** the C1 layout — telemetry cells, the throttle slider, and every action group expanded as a grid of buttons;
+- **Cockpit:** the proposal's layout (R-CON-013) — the exterior-view HUD strip on top; the display console in the centre (target data now, the target viewport with C3, the map with C4); shield rings on the left; power sliders on the right; the function-group tiles below, expanding and collapsing (R-CON-018).
+
+*Rationale:* User request, 2026-11-11: "ipad UI is very different from the design proposal but useful. the page should support two modes, the collected \"all-in-one\" control scheme in the current design, and the version from the proposal PDF."
+
+- Implements: [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console), [F-CON-008](../../definition/control-console.md#f-con-008-console-function-group-tiles)
+- Status: planned
+- Verified by: Planned (interlude item C2; a manual test).
+- See: [Stage 3 interlude](../../implementation/plan/stage-3-interlude.md), [Tablet console](../../user-guide/console.md)
+
 ## Revision history
 
 | Version | Date | Change |
@@ -374,4 +404,4 @@ When the player's craft is hit by weapons fire, the console MUST show a brief st
 | 1.1.0 | 2026-11-11 | R-CON-007 and R-CON-008 implemented (app 0.3.1): `input::ACTIONS` with `help_rows`; the keys overlay on `?` / Shift+F1 (action `help`), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation |
 | 1.4.0 | 2026-11-11 | R-CON-011: held actions released after 1 s of silence (heartbeat). R-CON-014 status corrected to partial |
 | 1.3.0 | 2026-11-11 | Console C1 (app 0.4.0): R-CON-009, R-CON-010, R-CON-011 and R-CON-014 implemented (R-CON-014: craft telemetry; contacts and events still planned); R-CON-012, R-CON-013 and R-CON-019 partial (the C1 page, per-action availability). R-CON-009 open note resolved (settings keys, local-network check, pairing code). R-CON-007 note: the catalogue is built from `input::ACTIONS`; the description field stays open |
-| 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented. New R-CON-023 button press feedback and R-CON-024 hit static (`hits`, `hull_hits` in telemetry), implemented in app 0.4.9; the hit-static interpretation (the player's craft, on the console) awaits the user's confirmation |
+| 1.7.0 | 2026-11-11 | Console pairing fix (app 0.4.7): R-CON-009, R-CON-010 and R-CON-014 notes (the server's own `welcome`, pairing on the sixth digit, `?code=`, the launcher's catalogue and idle telemetry). New R-CON-022 keep the tablet awake (app 0.4.8), implemented. New R-CON-023 button press feedback and R-CON-024 hit static (`hits`, `hull_hits` in telemetry), implemented in app 0.4.9; the hit-static interpretation (the player's craft, on the console) awaits the user's confirmation. New R-CON-025 keys held at the start of a battle are ignored (app 0.4.10), implemented; new R-CON-026 two console layouts, All-in-one and Cockpit (C2), planned; R-CON-013 note |

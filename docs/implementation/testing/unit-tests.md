@@ -9,8 +9,9 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 so it is not in the count from macOS.
 
 Since that count, tests named in the requirements' *Verified by* lines were added with apps
-0.4.3 – 0.4.8 without the full list being regenerated; the remote console's are below: app
-0.4.8 (main `f1c8be8`) adds `remote::http::ranges_are_served_as_partial_content`, and app 0.4.7
+0.4.3 – 0.4.10 without the full list being regenerated; those named below are listed: app
+0.4.10 (main `4edc9d7`) adds `input::keys_held_when_a_battle_starts_are_ignored_until_released`;
+app 0.4.8 (main `f1c8be8`) adds `remote::http::ranges_are_served_as_partial_content`, and app 0.4.7
 (main `c42d773`) adds the **ignored** helper `remote::server::tests::serve_for_a_browser`, which
 is not a unit test and is not counted: `cargo test serve_for_a_browser -- --ignored --nocapture`
 serves the console page on `127.0.0.1:8790` for 20 s, answering like the launcher, for trying
@@ -164,7 +165,7 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`hud::layout`**: `corners_lie_on_the_surface_with_world_up`, `dragging_and_scaling`, `rays_pick_the_nearest_surface`, `saved_layouts_are_valid_rules`
 
-**`input`**: `a_shift_chord_does_not_also_trigger_the_plain_held_key`, `bindings_file_overrides_and_round_trips`, `chase_camera_keys`, `chord_parsing_and_dead_zone`, `default_keys_follow_the_original_layout`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`, `gamepad_sticks_buttons_and_presses`, `mouse_flight_only_when_enabled`, `one_shot_commands_and_shift_chords`, `pad_modifier_layer_reaches_every_power_control`, `power_and_equipment_keys_follow_the_original`, `stick_layouts_and_mouse_inversion`, `the_keys_help_lists_every_action_with_its_current_keys`, `view_names_parse`
+**`input`**: `a_shift_chord_does_not_also_trigger_the_plain_held_key`, `bindings_file_overrides_and_round_trips`, `chase_camera_keys`, `chord_parsing_and_dead_zone`, `default_keys_follow_the_original_layout`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`, `gamepad_sticks_buttons_and_presses`, `mouse_flight_only_when_enabled`, `one_shot_commands_and_shift_chords`, `keys_held_when_a_battle_starts_are_ignored_until_released`, `pad_modifier_layer_reaches_every_power_control`, `power_and_equipment_keys_follow_the_original`, `stick_layouts_and_mouse_inversion`, `the_keys_help_lists_every_action_with_its_current_keys`, `view_names_parse`
 
 **`input::editor`**: `capturing_a_key_rebinds_and_steals_it_from_others`, `capturing_pad_plain_presses_and_chords`, `clear_reset_and_settings`, `pretty_names`, `rows_are_grouped_and_headers_are_skipped`
 
