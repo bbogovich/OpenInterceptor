@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Guard pilots (Stage 4.13) and mission scores.
+
+pilots:
+  stats: {flying: [30, 90], gunnery: [30, 90], nerve: [40, 100]}
+  ranks: {cadet: 0, ensign: 3, lieutenant: 10, captain: 24, commander: 40}
+  salary: 6000
+  recruit_fee: 40000
+  pool: 5
+  heal_days: 12
+  survive: 70%
+  names: [Ace Halloran, Dixie Moreau, Buck Kowalski, Vera Strand, Sal Navarro, Penny Ito, Rex Calloway,
+          Lulu Bianchi, Hank Osei, Mae Delacroix, Jet Ramirez, Nora Lindqvist, Clancy Obi, Ruby Fairweather]
+
+scores:
+  station_defended: 150
+  station_lost: -400
+  station_abandoned: -150
+  convoy_delivered: 80
+  convoy_lost: -120
+  scouts_destroyed: 60
+  colony_defended: 140
+  colony_lost: -300
+  flak_destroyed: 120
+  outpost_destroyed: 200
+  raiders_destroyed: 70
+  undefended: -100

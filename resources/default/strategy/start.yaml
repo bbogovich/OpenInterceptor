@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# How a new Perils of the Void campaign begins (Stage 4.13).
+
+start:
+  date: 2084-03-01
+  money: 2500000
+  map: reach
+  pilots: 4
+  bases: [{type: guard_base, system: mercury_gate, name: Gatehouse}]
+  craft: [{hull: comet, base: 0, count: 3}]
+  research: [rocketry]
+  stock: {blaster: 6, seeker: 12}
+
+flags: [regent_revealed]

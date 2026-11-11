@@ -244,6 +244,8 @@ pub struct FlightSession {
     menu_open: bool,
     /// Seconds since the last telemetry message to the console.
     console_clock: f32,
+    /// A campaign battle: the debrief returns to the strategy screen, with the result.
+    pub campaign_battle: bool,
     /// A simulator mission (a modified copy), kept so "again" flies the same setup.
     custom: Option<crate::content::mission::MissionDef>,
     /// Hides the keys still held from the menu that started this battle (see StartGuard).
@@ -472,6 +474,7 @@ impl FlightSession {
             console_clock: 0.0,
             start_guard: Default::default(),
             custom: None,
+            campaign_battle: false,
             console_hits: [0, 0],
             console_class: None,
             console_target: None,
@@ -580,7 +583,19 @@ impl FlightSession {
         }
 
         // --- Debrief: the mission is over ---------------------------------------------
-        if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) {
+        if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) && self.campaign_battle {
+            // A campaign battle: any key returns to the campaign with the result.
+            if raw.pressed.contains("enter") || raw.pressed.contains("escape") {
+                if let Some(d) = self.mission.as_ref().and_then(|m| m.debrief.as_ref()) {
+                    ctx.battle_report = Some(super::strategy::BattleReport {
+                        result: d.result.clone(),
+                        actions: d.campaign.clone(),
+                        kills: d.kills,
+                    });
+                }
+                return Next::Strategy;
+            }
+        } else if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) {
             if raw.pressed.contains("enter") || raw.pad.is_some_and(|p| p.button(crate::input::gamepad::Button::A)) {
                 return self.again();
             }
@@ -597,8 +612,13 @@ impl FlightSession {
         } else if self.menu_open {
             if raw.pressed.contains("escape") {
                 self.menu_open = false;
-            } else if raw.pressed.contains("r") {
+            } else if raw.pressed.contains("r") && !self.campaign_battle {
                 return self.again();
+            } else if (raw.pressed.contains("l") || raw.pressed.contains("q")) && self.campaign_battle {
+                // Leaving a campaign battle early is a retreat.
+                ctx.battle_report =
+                    Some(super::strategy::BattleReport { result: "retreat".into(), actions: Vec::new(), kills: 0 });
+                return Next::Strategy;
             } else if raw.pressed.contains("l") || raw.pressed.contains("q") {
                 return Next::Launcher;
             } else if raw.pressed.contains("k") {

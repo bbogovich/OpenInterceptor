@@ -29,6 +29,7 @@ OPTIONS:
                         interceptor when the data is available, else default)
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --mission <ID>      Start this mission directly, skipping the launcher
+    --strategy          Start a new campaign's strategy layer directly
     --console           Serve the tablet control console (settings: console.enabled)
     --console-port <N>  Its port (default 8765; settings: console.port)
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
@@ -70,6 +71,8 @@ pub struct Options {
     pub console_port: Option<u16>,
     pub scenario: Option<String>,
     pub mission: Option<String>,
+    /// `--strategy`: open a new campaign's strategy screen directly.
+    pub strategy: bool,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
     pub model: Option<String>,
@@ -101,6 +104,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--packs" => o.packs = Some(PathBuf::from(value("--packs")?)),
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--mission" => o.mission = Some(value("--mission")?),
+            "--strategy" => o.strategy = true,
             "--campaign" => o.campaign = Some(value("--campaign")?),
             "--difficulty" => o.difficulty = Some(value("--difficulty")?),
             "--language" => o.language = Some(value("--language")?),

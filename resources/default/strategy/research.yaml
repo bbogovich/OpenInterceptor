@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The Guard's research tree (Stage 4.13). Labs do the work: each base studies one topic at
+# 6 work units an hour for its hub plus 12 per working lab.
+
+research_model:
+  mode: labs
+  rate: 6 + module_count(laboratory) * 12
+  switching: keep_progress
+
+research:
+  rocketry: {name: Rocketry, size: 100, description: "The Guard's own rocket engineering."}
+  heat_rays: {name: Heat rays, size: 1800, requires: research(rocketry), unlocks: [items.heat_ray]}
+  ion_rays: {name: Ion rays, size: 3600, requires: research(heat_rays), unlocks: [items.ion_ray]}
+  saucer_hulls: {name: Saucer hull analysis, size: 2400, requires: salvaged(saucer_raid) or salvaged(scout_probe), unlocks: [items.atomic_torpedo]}
+  saucer_propulsion: {name: Saucer propulsion, size: 5000, requires: research(saucer_hulls), unlocks: [hulls.meteor]}
+  disintegrators: {name: Disintegrators, size: 6000, requires: research(ion_rays) and research(saucer_hulls), unlocks: [items.disintegrator]}
+  deep_radar: {name: Deep radar, size: 2500, requires: research(rocketry), unlocks: [modules.deep_radar]}
+  shipyards: {name: Orbital shipyards, size: 3000, requires: research(rocketry), unlocks: [modules.shipyard]}
+  thunderbolt_design: {name: Thunderbolt design, size: 7000, requires: research(saucer_propulsion) and research(shipyards), unlocks: [hulls.thunderbolt]}
+  robot_brains: {name: Robot brains, size: 4500, requires: salvaged(robot_raid), unlocks: [items.cluster_rocket]}
+  victory_design: {name: Project Victory, size: 12000, requires: research(thunderbolt_design) and research(disintegrators), unlocks: [hulls.victory]}
+  regents_engine: {name: "The Regent's Engine", size: 9000, requires: research(robot_brains) and research(deep_radar), description: "Where the cosmium goes."}

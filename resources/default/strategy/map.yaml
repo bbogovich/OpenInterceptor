@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The star map of Perils of the Void (Stage 4.13): a fixed, hand-made map of six frontier
+# systems joined by seven lanes, and the Regent's dark moon, hidden until the Guard's
+# sensors find it. Map units: 1 unit = 0.001 light years.
+
+maps:
+  reach:
+    kind: fixed
+    travel: lanes
+    unit_ly: 0.001
+    systems:
+      mercury_gate: {name: Mercury Gate, pos: [1200, 2600], class: yellow}
+      ajax: {name: Ajax, pos: [3300, 1500], class: red_dwarf}
+      cinder: {name: Cinder, pos: [3600, 3900], class: orange}
+      vesta_reach: {name: Vesta Reach, pos: [5600, 2500], class: white}
+      tycho_drift: {name: Tycho Drift, pos: [7400, 1200], class: red_dwarf}
+      nebula_haven: {name: Nebula Haven, pos: [7700, 3800], class: blue}
+      dark_moon: {name: The Dark Moon, pos: [9800, 2600], class: black_hole, hidden: true}
+    lanes:
+      - {between: [mercury_gate, ajax]}
+      - {between: [mercury_gate, cinder]}
+      - {between: [ajax, vesta_reach]}
+      - {between: [cinder, vesta_reach]}
+      - {between: [vesta_reach, tycho_drift]}
+      - {between: [vesta_reach, nebula_haven]}
+      - {between: [tycho_drift, nebula_haven]}
+
+star_classes:
+  yellow: {color: [1.0, 0.92, 0.55], weight: 3}
+  orange: {color: [1.0, 0.7, 0.35], weight: 3}
+  red_dwarf: {color: [1.0, 0.45, 0.35], weight: 4}
+  white: {color: [0.95, 0.95, 1.0], weight: 2}
+  blue: {color: [0.55, 0.7, 1.0], weight: 1}
+  black_hole: {color: [0.5, 0.2, 0.7], weight: 0}

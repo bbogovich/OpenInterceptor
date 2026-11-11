@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Dominion and raider flights the campaign launches (Stage 4.13). Intercepting one flies
+# its mission; one that arrives unopposed wrecks a module of the base it attacks. The
+# Regent's own planning (Stage 5) will replace these rolls with a strategist.
+
+raids:
+  scout_probe: {name: Dominion scouts, mission: intercept_scouts, faction: dominion, every: 3d, chance: 60%, target: system, speed: 260}
+  saucer_raid: {name: Saucer raid, mission: defend_station, faction: dominion, every: 5d, chance: 45%, target: base, speed: 220, requires: day >= 10}
+  colony_raid: {name: Colony raid, mission: colony_defence, faction: dominion, every: 7d, chance: 35%, target: system, speed: 220, requires: day >= 20}
+  robot_raid: {name: Robot assault, mission: outpost_raid, faction: dominion, every: 9d, chance: 30%, target: base, speed: 200, requires: day >= 45}
+  comet_ambush: {name: Black Comet ambush, mission: pocket_ambush, faction: raiders, every: 6d, chance: 30%, target: system, speed: 300, requires: day >= 15}

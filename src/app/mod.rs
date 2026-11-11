@@ -34,6 +34,7 @@ pub mod devices;
 pub mod flight;
 pub mod launcher;
 pub mod simulator;
+pub mod strategy;
 pub mod viewer;
 
 use crate::audio::SoundBank;
@@ -64,6 +65,10 @@ pub struct AppContext {
     pub simple_physics: bool,
     /// The half-second count of the last idle console status (see [`console_idle`]).
     pub console_idle_tick: u64,
+    /// The campaign's strategy screen, kept here while one of its battles is flown.
+    pub campaign: Option<Box<strategy::StrategyScreen>>,
+    /// A campaign battle's result, left by the flight screen for the strategy screen.
+    pub battle_report: Option<strategy::BattleReport>,
 }
 
 /// What the app should do after a screen's frame.
@@ -92,6 +97,17 @@ pub enum Next {
     },
     /// The simulator's setup screen (from the launcher).
     Simulator,
+    /// Start a new campaign (the strategy layer).
+    NewCampaign,
+    /// Continue the saved campaign.
+    LoadCampaign,
+    /// Back to the campaign kept in `AppContext::campaign` (after one of its battles).
+    Strategy,
+    /// Fly a campaign battle: a mission id and the player's hull.
+    CampaignBattle {
+        mission: String,
+        ship: Option<String>,
+    },
     /// Fly a simulator mission: a modified copy of a mission (see `simulator::apply`).
     Simulate {
         mission: Box<crate::content::mission::MissionDef>,
@@ -108,6 +124,7 @@ enum Screen {
     Assets(assets::AssetBrowser),
     Controls(controls::ControlsMenu),
     Simulator(simulator::Simulator),
+    Strategy(Box<strategy::StrategyScreen>),
     Flight(Box<flight::FlightSession>),
 }
 
@@ -280,6 +297,8 @@ pub async fn run(options: Options) {
             .map(|d| crate::settings::Settings::load(&d).simple_physics)
             .unwrap_or(false),
         console_idle_tick: 0,
+        campaign: None,
+        battle_report: None,
     };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),
@@ -303,6 +322,10 @@ pub async fn run(options: Options) {
                 Screen::Launcher(launcher::Launcher::new(&ctx))
             }
         },
+        None if options.strategy => match strategy::StrategyScreen::new_campaign(&ctx) {
+            Some(s) => Screen::Strategy(Box::new(s)),
+            None => Screen::Launcher(launcher::Launcher::new(&ctx)),
+        },
         None => match &options.model {
             Some(name) => Screen::Viewer(viewer::ModelViewer::open_at(&ctx, name)),
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),
@@ -323,6 +346,7 @@ pub async fn run(options: Options) {
             }
             Screen::Flight(f) => f.frame(&mut ctx),
             Screen::Simulator(s) => s.frame(&mut ctx),
+            Screen::Strategy(s) => s.frame(&mut ctx),
         };
         match next {
             Next::Stay => {}
@@ -360,6 +384,60 @@ pub async fn run(options: Options) {
                 }
             }
             Next::Simulator => screen = Screen::Simulator(simulator::Simulator::new()),
+            Next::NewCampaign | Next::LoadCampaign => {
+                let made = if matches!(next, Next::NewCampaign) {
+                    strategy::StrategyScreen::new_campaign(&ctx)
+                        .ok_or("this campaign has no strategy layer".to_string())
+                } else {
+                    strategy::StrategyScreen::load(&ctx)
+                };
+                match made {
+                    Ok(s) => screen = Screen::Strategy(Box::new(s)),
+                    Err(e) => {
+                        let mut l = launcher::Launcher::new(&ctx);
+                        l.error = Some(e);
+                        screen = Screen::Launcher(l);
+                    }
+                }
+            }
+            Next::Strategy => {
+                show_mouse(true);
+                set_cursor_grab(false);
+                match ctx.campaign.take() {
+                    Some(mut s) => {
+                        if let Some(r) = ctx.battle_report.take() {
+                            s.battle_done(&ctx, r);
+                        }
+                        screen = Screen::Strategy(s);
+                    }
+                    None => screen = Screen::Launcher(launcher::Launcher::new(&ctx)),
+                }
+            }
+            Next::CampaignBattle { mission, ship } => {
+                // Keep the strategy screen (and its campaign) while the battle is flown.
+                let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
+                if let Screen::Strategy(s) = old {
+                    ctx.campaign = Some(s);
+                }
+                match flight::FlightSession::start_mission(&mut ctx, &mission, ship.as_deref()) {
+                    Ok(mut f) => {
+                        f.campaign_battle = true;
+                        screen = Screen::Flight(Box::new(f));
+                    }
+                    Err(e) => {
+                        // The battle cannot be flown: count it as broken off.
+                        eprintln!("error: {e}");
+                        ctx.battle_report =
+                            Some(strategy::BattleReport { result: "retreat".into(), actions: Vec::new(), kills: 0 });
+                        if let Some(mut s) = ctx.campaign.take() {
+                            if let Some(r) = ctx.battle_report.take() {
+                                s.battle_done(&ctx, r);
+                            }
+                            screen = Screen::Strategy(s);
+                        }
+                    }
+                }
+            }
             Next::Fly { .. } | Next::Mission { .. } | Next::Simulate { .. } => {
                 let started = match &next {
                     Next::Simulate { mission, ship } => {

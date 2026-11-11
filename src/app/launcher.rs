@@ -20,6 +20,10 @@ pub enum Entry {
     Controls,
     /// The simulator: set up a mission, then fly it.
     Simulator,
+    /// A new campaign (the strategy layer; only for campaigns that have one).
+    NewCampaign,
+    /// Continue the saved campaign.
+    ContinueCampaign,
     /// Index into `content.scenarios`.
     Scenario(usize),
     /// Index into `content.rules.missions`.
@@ -39,12 +43,21 @@ pub struct Menu {
 
 impl Menu {
     pub fn new(content: &Content) -> Menu {
-        let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls, Entry::Simulator];
+        // A campaign with a strategy layer is played first of all: its entries lead.
+        let mut entries = Vec::new();
+        if content.rules.strategy.is_some() {
+            entries.extend([Entry::ContinueCampaign, Entry::NewCampaign]);
+        }
+        entries.extend([Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls, Entry::Simulator]);
         entries.extend((0..content.scenarios.len()).map(Entry::Scenario));
         entries.extend((0..content.rules.missions.len()).map(Entry::Mission));
         let playable = content.rules.playable_ships().into_iter().map(|id| content.rules.ship(id).id.clone()).collect();
-        // Start on the first scenario rather than the viewer.
-        let selected = entries.iter().position(|e| matches!(e, Entry::Scenario(_))).unwrap_or(0);
+        // Start on the campaign, else on the first scenario rather than the viewer.
+        let selected = if content.rules.strategy.is_some() {
+            0
+        } else {
+            entries.iter().position(|e| matches!(e, Entry::Scenario(_))).unwrap_or(0)
+        };
         Menu { selected, entries, ship: 0, playable }
     }
 
@@ -83,6 +96,8 @@ impl Menu {
             Entry::AssetBrowser => Next::Assets,
             Entry::Controls => Next::Controls,
             Entry::Simulator => Next::Simulator,
+            Entry::NewCampaign => Next::NewCampaign,
+            Entry::ContinueCampaign => Next::LoadCampaign,
             Entry::Scenario(i) => {
                 let s = &content.scenarios[*i];
                 let ship = if s.player_class.is_none() { self.playable.get(self.ship).cloned() } else { None };
@@ -244,6 +259,8 @@ impl Launcher {
                 Entry::AssetBrowser => "Asset browser (textures, images, sounds)".to_string(),
                 Entry::Controls => "Controls (keyboard, gamepad, mouse)".to_string(),
                 Entry::Simulator => "Simulator (set up a mission and fly it)".to_string(),
+                Entry::NewCampaign => "Campaign: new game".to_string(),
+                Entry::ContinueCampaign => "Campaign: continue".to_string(),
                 Entry::Scenario(k) => content.scenarios[*k].title.clone(),
                 Entry::Mission(k) => format!("Mission: {}", content.rules.missions[*k].name),
             };
@@ -261,6 +278,8 @@ impl Launcher {
                 "Every texture, image and sound on the CD, as the game loads it - with pack overrides marked."
                     .to_string()
             }
+            Entry::NewCampaign => "Start the campaign: bases, research, the economy and the war on the star map, with its battles flown here.".to_string(),
+            Entry::ContinueCampaign => "Continue the saved campaign (saved on leaving the map, or with F5).".to_string(),
             Entry::Simulator => "Choose a mission, your ship, the environment, hazards and the size of the enemy force, then fly it.".to_string(),
             Entry::Controls => {
                 "Rebind every action to keys or gamepad buttons (hold LB for the second layer), and set stick and mouse options.".to_string()
@@ -357,15 +376,22 @@ mod tests {
     fn menu_lists_viewer_and_scenarios_and_wraps() {
         let c = sample();
         let mut m = Menu::new(&c);
-        assert_eq!(m.entries[..4], [Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls, Entry::Simulator]);
-        assert_eq!(m.entries.len(), 4 + c.scenarios.len() + c.rules.missions.len());
-        assert_eq!(m.selected, 4, "starts on the first scenario");
-        for _ in 0..5 {
+        // The default campaign has a strategy layer: its two entries lead, selected first.
+        assert_eq!(m.entries[..2], [Entry::ContinueCampaign, Entry::NewCampaign]);
+        assert_eq!(m.entries[2..6], [Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls, Entry::Simulator]);
+        assert_eq!(m.entries.len(), 6 + c.scenarios.len() + c.rules.missions.len());
+        assert_eq!(m.selected, 0, "starts on the campaign");
+        assert!(matches!(m.activate(&c), Next::LoadCampaign));
+        m.move_selection(true);
+        assert!(matches!(m.activate(&c), Next::NewCampaign));
+        m.selected = 6;
+        for _ in 0..7 {
             m.move_selection(false);
         }
         assert_eq!(m.selected, m.entries.len() - 1, "wraps upwards");
         m.move_selection(true);
-        assert_eq!(m.selected, 0);
+        assert_eq!(m.selected, 0, "wraps downwards");
+        m.selected = 2;
         assert!(matches!(m.activate(&c), Next::Viewer));
         m.move_selection(true);
         assert!(matches!(m.activate(&c), Next::Assets));
@@ -379,7 +405,7 @@ mod tests {
     fn scenarios_start_with_the_chosen_ship_only_when_choosing() {
         let c = sample();
         let mut m = Menu::new(&c);
-        m.selected = 4;
+        m.selected = 6;
         // The first default arena lets the player choose: the launcher passes its pick.
         assert!(m.choosing(&c));
         m.move_ship(true);

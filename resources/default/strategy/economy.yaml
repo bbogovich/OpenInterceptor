@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The Guard's economy (Stage 4.13): the Senate's stipend, equipment, hulls, base modules.
+
+economy:
+  delivery: 48h
+  salvage_per_kill: 15000
+
+incomes:
+  senate_stipend: {name: Senate stipend, every: 30d, amount: 400000 + 60000 * bases + month_score * 200}
+  cosmium_sales: {name: Cosmium sales, every: 7d, amount: 12000 * module_count(cosmium_refinery)}
+
+expenses:
+  fuel: {name: Fuel and stores, every: 7d, amount: 4000 * craft}
+
+items:
+  blaster: {name: Blaster, kind: beam, cost: 40000, sell_price: 20000, prod_time: 300}
+  heat_ray: {name: Heat ray, kind: beam, cost: 90000, sell_price: 45000, prod_time: 600}
+  ion_ray: {name: Ion ray, kind: beam, cost: 150000, sell_price: 75000, prod_time: 900}
+  disintegrator: {name: Disintegrator, kind: beam, cost: 260000, sell_price: 130000, prod_time: 1400}
+  seeker: {name: Seeker rocket, kind: missile, cost: 6000, sell_price: 3000, prod_time: 40, size: 0.2}
+  atomic_torpedo: {name: Atomic torpedo, kind: missile, cost: 30000, sell_price: 15000, prod_time: 150, size: 0.5}
+  cluster_rocket: {name: Cluster rocket, kind: missile, cost: 22000, sell_price: 11000, prod_time: 120, size: 0.4}
+  cosmium: {name: Cosmium, kind: goods, cost: 0, sell_price: 9000, size: 0.1}
+
+hulls:
+  comet: {cost: 450000, prod_time: 6000, upkeep: 9000, speed: 700, slots: {beam: 2, missile: 2, special: 1}}
+  meteor: {cost: 700000, prod_time: 9000, upkeep: 14000, speed: 800, slots: {beam: 2, missile: 3, special: 2}}
+  thunderbolt: {cost: 1100000, prod_time: 14000, upkeep: 20000, speed: 750, slots: {beam: 3, missile: 4, special: 2}}
+  victory: {cost: 1900000, prod_time: 22000, upkeep: 30000, speed: 900, slots: {beam: 4, missile: 4, special: 3}}
+
+base_modules:
+  hangar: {name: Hangar, group: hangar, cost: 250000, build_time: 10d, maintenance: 8000, effects: {hangar: 3}}
+  quarters: {name: Crew quarters, group: quarters, cost: 120000, build_time: 7d, maintenance: 4000, effects: {quarters: 6}}
+  radar: {name: Radar dish, group: sensor, cost: 150000, build_time: 7d, maintenance: 5000, effects: {sensor_range: 2400}}
+  deep_radar: {name: Deep radar array, group: sensor, cost: 400000, build_time: 14d, maintenance: 12000, effects: {sensor_range: 4500}}
+  laboratory: {name: Laboratory, group: research, cost: 300000, build_time: 12d, maintenance: 12000, effects: {research_rate: 12}}
+  workshop: {name: Workshop, group: production, cost: 280000, build_time: 12d, maintenance: 10000, effects: {production_rate: 10}}
+  shipyard: {name: Orbital shipyard, group: production, cost: 650000, build_time: 21d, maintenance: 20000, effects: {production_rate: 30}}
+  cosmium_refinery: {name: Cosmium refinery, group: industry, cost: 500000, build_time: 18d, maintenance: 9000, effects: {income: 1}}
+  ray_battery: {name: Ray battery, group: defence, cost: 200000, build_time: 7d, maintenance: 6000, effects: {defence: 1}}
+
+base_types:
+  guard_base:
+    name: Guard base
+    cost: 1800000
+    build_time: 21d
+    max_bases: 6
+    sensor_range: 1200
+    hangar: 2
+    quarters: 4
+    max_distance: 3500
+    limits: {hangar: 3, sensor: 1, research: 3, production: 2, industry: 2, defence: 4, quarters: 2}
+    template: [hangar, radar, laboratory]
