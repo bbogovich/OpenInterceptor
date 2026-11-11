@@ -141,6 +141,46 @@ impl ModelCache {
         loaded
     }
 
+    /// Like [`ModelCache::get`], with some textures replaced (a model set's damage level
+    /// or state). Each distinct set of swaps is loaded and cached once.
+    pub fn get_variant(
+        &mut self,
+        content: &Content,
+        reference: &str,
+        pack: usize,
+        scale: f32,
+        swaps: &crate::content::looks::Swaps,
+    ) -> Option<Rc<GpuModel>> {
+        if swaps.is_empty() {
+            return self.get(content, reference, pack, scale);
+        }
+        let tag: Vec<String> = swaps.iter().map(|(a, b)| format!("{a}>{b}")).collect();
+        let key = (format!("{reference}@{scale}#{}", tag.join(",")), pack);
+        if let Some(m) = self.models.get(&key) {
+            return m.clone();
+        }
+        let loaded = match content.load_model(reference, pack, scale) {
+            Ok(mut model) => {
+                for lod in &mut model.lods {
+                    for g in &mut lod.groups {
+                        let Some(t) = &g.texture else { continue };
+                        let k = crate::content::looks::texture_key(t);
+                        if let Some((_, new)) = swaps.iter().find(|(name, _)| *name == k) {
+                            g.texture = Some(new.clone());
+                        }
+                    }
+                }
+                Some(Rc::new(self.upload(content, model, pack)))
+            }
+            Err(e) => {
+                self.errors.push(format!("{reference}: {e}"));
+                None
+            }
+        };
+        self.models.insert(key, loaded.clone());
+        loaded
+    }
+
     fn texture(&mut self, content: &Content, name: &str, pack: usize) -> Option<Texture2D> {
         let key = (name.to_ascii_lowercase(), pack);
         if let Some(t) = self.textures.get(&key) {

@@ -8,13 +8,16 @@
 use crate::sim::{SimEvent, World};
 use glam::{Quat, Vec3};
 
-/// An expanding fireball.
+/// An expanding fireball (and, optionally, a shock-wave ring).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Explosion {
     pub position: Vec3,
     pub radius: f32,
     pub age: f32,
     pub life: f32,
+    pub color: [f32; 3],
+    /// The plane of the shock-wave ring (its normal), if the effect has one.
+    pub shockwave: Option<Vec3>,
 }
 
 /// A short-lived flash where a shot hit.
@@ -38,10 +41,9 @@ pub struct Debris {
     pub rotation: Quat,
     pub spin: Vec3,
     pub age: f32,
+    /// Seconds it lasts (from its debris set).
+    pub life: f32,
 }
-
-/// Seconds a debris chunk lives.
-pub const DEBRIS_LIFE: f32 = 12.0;
 /// Seconds a spark lives.
 pub const SPARK_LIFE: f32 = 0.25;
 
@@ -72,34 +74,95 @@ impl Effects {
                 SimEvent::Hit { position, shield, .. } => {
                     self.sparks.push(Spark { position: *position, age: 0.0, shield: *shield })
                 }
-                SimEvent::MissileExploded { position } => {
-                    self.explosions.push(Explosion { position: *position, radius: 25.0, age: 0.0, life: 0.8 })
-                }
+                SimEvent::MissileExploded { position } => self.explosions.push(Explosion {
+                    position: *position,
+                    radius: 25.0,
+                    age: 0.0,
+                    life: 0.8,
+                    color: [1.0, 0.6, 0.25],
+                    shockwave: None,
+                }),
                 SimEvent::Destroyed { ship, position, radius } => {
-                    self.explosions.push(Explosion { position: *position, radius: radius * 2.5, age: 0.0, life: 1.6 });
                     // The slot still holds the dead ship's data this tick.
                     let s = &world.ships[ship.index as usize];
                     let class = world.rules.ship(s.class);
-                    let base_velocity = s.velocity;
-                    let (pack, scale) = (class.model_pack, class.model_scale);
-                    for chunk in class.debris.clone() {
-                        let velocity = base_velocity + self.jitter3() * 40.0;
-                        let spin = self.jitter3() * 2.0;
-                        let offset = self.jitter3() * *radius * 0.3;
-                        self.debris.push(Debris {
-                            model: chunk,
-                            pack,
-                            scale,
-                            position: *position + offset,
-                            velocity,
-                            rotation: s.rotation,
-                            spin,
-                            age: 0.0,
-                        });
+                    let set = world.rules.model_set(class.model_set);
+                    let fx = set
+                        .destroyed_effect
+                        .or_else(|| world.rules.effect_id("explosion"))
+                        .map(|id| world.rules.effect(id).clone())
+                        .unwrap_or_else(|| crate::content::looks::EffectDef::builtin("explosion"));
+                    self.explosions.push(Explosion {
+                        position: *position,
+                        radius: radius * fx.size,
+                        age: 0.0,
+                        life: fx.duration,
+                        color: fx.color,
+                        shockwave: fx.shockwave.then(|| s.up()),
+                    });
+                    if let Some(d) = set.debris.map(|id| world.rules.debris_set(id).clone()) {
+                        self.throw_debris(&d, s, set.scale, *radius);
                     }
                 }
                 _ => {}
             }
+        }
+    }
+
+    /// A number in `lo..hi`.
+    fn between(&mut self, (lo, hi): (f32, f32)) -> f32 {
+        lo + (hi - lo) * (self.jitter() * 0.5 + 0.5)
+    }
+
+    /// Throws a destroyed object's pieces outwards from where it was, tumbling.
+    ///
+    /// Pieces are modelled in the object's own space (placed at the object they
+    /// reassemble it), so each starts where it belongs and flies off on its own course:
+    /// the object's velocity plus a random outward push.
+    fn throw_debris(&mut self, d: &crate::content::looks::DebrisSet, s: &crate::sim::Ship, scale: f32, radius: f32) {
+        let span = d.pick.1.saturating_sub(d.pick.0) + 1;
+        let count = (d.pick.0 + ((self.jitter() * 0.5 + 0.5) * span as f32) as u32).min(d.pieces.len() as u32);
+        // Choose `count` distinct pieces: shuffle indices with the effects' generator.
+        let mut order: Vec<usize> = (0..d.pieces.len()).collect();
+        for i in (1..order.len()).rev() {
+            let j = (((self.jitter() * 0.5 + 0.5) * (i + 1) as f32) as usize).min(i);
+            order.swap(i, j);
+        }
+        for &k in order.iter().take(count as usize) {
+            let dir = self.jitter3().normalize_or(Vec3::Y);
+            let speed = self.between(d.speed);
+            let spin = self.jitter3().normalize_or(Vec3::X) * self.between(d.spin).to_radians();
+            self.debris.push(Debris {
+                model: d.pieces[k].clone(),
+                pack: d.pack,
+                scale,
+                position: s.position,
+                velocity: s.velocity + dir * speed,
+                rotation: s.rotation,
+                spin,
+                age: 0.0,
+                life: d.life,
+            });
+        }
+        for n in 0..d.chunk_count {
+            if d.chunks.is_empty() {
+                break;
+            }
+            let model = d.chunks[n as usize % d.chunks.len()].clone();
+            let dir = self.jitter3().normalize_or(Vec3::Z);
+            let speed = self.between(d.chunk_speed);
+            let spin = self.jitter3() * 3.0;
+            self.debris.push(Debris {
+                model,
+                pack: d.pack,
+                scale: 1.0,
+                position: s.position + dir * radius * 0.3,
+                velocity: s.velocity + dir * speed,
+                rotation: s.rotation,
+                spin,
+                age: 0.0,
+                life: d.life * 0.6,
+            });
         }
     }
 
@@ -118,7 +181,7 @@ impl Effects {
             d.position += d.velocity * dt;
             d.rotation = (d.rotation * Quat::from_scaled_axis(d.spin * dt)).normalize();
         }
-        self.debris.retain(|d| d.age < DEBRIS_LIFE);
+        self.debris.retain(|d| d.age < d.life);
     }
 }
 
@@ -140,7 +203,10 @@ mod tests {
     fn events_create_effects_that_expire() {
         let mut w = world();
         let mut rules = (*w.rules).clone();
-        rules.ships[0].debris = vec!["models/chunk.obj".into(), "models/chunk2.obj".into()];
+        let pieces = vec!["models/chunk.obj".to_string(), "models/chunk2.obj".to_string()];
+        rules.debris_sets.push(crate::content::looks::DebrisSet::from_list("t", pieces, 0));
+        let set = rules.ships[0].model_set.0 as usize;
+        rules.model_sets[set].debris = Some(crate::content::looks::DebrisId(rules.debris_sets.len() as u16 - 1));
         w.rules = std::sync::Arc::new(rules);
         let f = w.rules.ship_id("fighter").unwrap();
         let id = w.spawn(f, FactionId(0), "x", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
@@ -157,7 +223,9 @@ mod tests {
         assert!(fx.sparks.is_empty(), "sparks are brief");
         assert_eq!(fx.explosions.len(), 1, "missile blast gone, ship explosion remains");
         assert_ne!(fx.debris[0].position, start, "debris drifts");
-        fx.update(DEBRIS_LIFE);
+        assert!(fx.debris[0].velocity.length() > 5.0, "thrown outwards");
+        assert_ne!(fx.debris[0].velocity, fx.debris[1].velocity, "each on its own course");
+        fx.update(12.0);
         assert!(fx.debris.is_empty() && fx.explosions.is_empty());
     }
 

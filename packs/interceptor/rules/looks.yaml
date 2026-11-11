@@ -1,0 +1,338 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Looks of X-COM: Interceptor: the original's wreck table and each class's model set.
+#
+# The program holds a table of 28 named wreck sets of five chunk meshes each (sets with
+# fewer chunks repeat the first), plus generic rubble (chunk1-6), alien body parts that
+# float in alien wrecks, and the shock-wave meshes. The set names (in comments) and mesh
+# names below are read from Interceptor.exe (VERIFIED); which class uses which set
+# follows the names (DERIVED). "Random" sets throw 3 to 5 of their chunks.
+# Explosions: the original uses XSPT sprite animations, not yet decoded; the fireballs
+# here are the engine's (DEVIATION).
+
+effects:
+  explosion_fighter: {size: 2.5, duration: 1.3s, color: [1, 0.62, 0.25]}
+  explosion_alien: {size: 2.5, duration: 1.4s, color: [0.6, 0.9, 1], shockwave: true}
+  explosion_capital: {size: 2, duration: 2.6s, color: [1, 0.55, 0.2], shockwave: true}
+  explosion_station: {size: 1.5, duration: 4s, color: [1, 0.75, 0.4], shockwave: true}
+
+debris:
+  ufo_a:  # UFOARandom
+    pieces: [original:A-SHIPA2, original:A-SHIPA3, original:A-SHIPA4, original:A-SHIPA5, original:A-SHIPA6]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:SEC_HEAD, original:SEC_ARM, original:SEC_LEG, original:CHUNKF1, original:CHUNKF2], count: 4, speed: [40, 120]}
+  ufo_b:  # UFOBRandom
+    pieces: [original:A-SHIPB2, original:A-SHIPB3, original:A-SHIPB4, original:A-SHIPB5, original:A-SHIPB2]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:SEC_HEAD, original:SEC_ARM, original:SEC_LEG, original:CHUNKF1, original:CHUNKF2], count: 4, speed: [40, 120]}
+  ufo_c:  # UFOCRandom
+    pieces: [original:A-SHIPC2, original:A-SHIPC3, original:A-SHIPC4, original:A-SHIPC5, original:A-SHIPC2]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:SEC_HEAD, original:SEC_ARM, original:SEC_LEG, original:CHUNKF1, original:CHUNKF2], count: 4, speed: [40, 120]}
+  ufo_freighter:  # UFOFrtRandom
+    pieces: [original:A-FRT1, original:A-FRT2, original:A-FRT3, original:A-FRT4, original:A-FRT1]
+    pick: [3, 5]
+    speed: [8, 35]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 8, speed: [30, 90]}
+  ufo_shade:  # UFOShade
+    pieces: [original:ASHADC1, original:ASHADC2, original:ASHADC3, original:ASHADC4, original:ASHADC5]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:SEC_HEAD, original:SEC_ARM, original:SEC_LEG, original:CHUNKF1, original:CHUNKF2], count: 4, speed: [40, 120]}
+  ufo_tug:  # UFOTug
+    pieces: [original:A-TUGCH1, original:A-TUGCH2, original:A-TUGCH3, original:A-TUGCH4, original:A-TUGCH1]
+    pick: [3, 5]
+    speed: [8, 35]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 8, speed: [30, 90]}
+  xcom_a:  # XCOMARandom
+    pieces: [original:X-SHIPA1, original:X-SHIPA2, original:X-SHIPA3, original:X-SHIPA4, original:X-SHIPA1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  xcom_b:  # XCOMBRandom
+    pieces: [original:X-SHIPB1, original:X-SHIPB2, original:X-SHIPB3, original:X-SHIPB4, original:X-SHIPB1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  xcom_c:  # XCOMCRandom
+    pieces: [original:X-SHIPC1, original:X-SHIPC2, original:X-SHIPC3, original:X-SHIPC4, original:X-SHIPC1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  xcom_freighter:  # XCOMFrtRandom
+    pieces: [original:XFRGTCH1, original:XFRGTCH2, original:XFRGTCH3, original:XFRGTCH4, original:XFRGTCH5]
+    pick: [3, 5]
+    speed: [8, 35]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 8, speed: [30, 90]}
+  pirate_a:  # PIRATEARandom
+    pieces: [original:XPIRATA1, original:XPIRATA2, original:XPIRATA3, original:XPIRATA4, original:XPIRATA1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  pirate_b:  # PIRATEBRandom
+    pieces: [original:XPIRATB1, original:XPIRATB2, original:XPIRATB3, original:XPIRATB4, original:XPIRATB1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  pirate_c:  # PIRATECRandom
+    pieces: [original:XPIRATC1, original:XPIRATC2, original:XPIRATC3, original:XPIRATC4, original:XPIRATC1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  pirate_freighter:  # PIRATEFrtRandom
+    pieces: [original:XPIRFRT1, original:XPIRFRT2, original:XPIRFRT3, original:XPIRFRT4, original:XPIRFRT1]
+    pick: [3, 5]
+    speed: [8, 35]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 8, speed: [30, 90]}
+  corp_a:  # CORPARandom
+    pieces: [original:XCORPA1, original:XCORPA2, original:XCORPA3, original:XCORPA4, original:XCORPA1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  corp_b:  # CORPBRandom
+    pieces: [original:XCORPB1, original:XCORPB2, original:XCORPB3, original:XCORPB4, original:XCORPB1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  corp_c:  # CORPCRandom
+    pieces: [original:XCORPC1, original:XCORPC2, original:XCORPC3, original:XCORPC4, original:XCORPC1]
+    pick: [3, 5]
+    speed: [20, 70]
+    spin: [40, 160]
+    life: 18s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 4, speed: [40, 120]}
+  xcom_outpost:  # XCOMOutpostRandom
+    pieces: [original:XOUTCH1, original:XOUTCH2, original:XOUTCH3, original:XOUTCH4, original:XOUTCH5]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  xcom_base:  # XCOMBaseRandom
+    pieces: [original:XBASECH1, original:XBASECH2, original:XBASECH3, original:XBASECH5, original:XBASECH6]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  xcom_opp:  # XCOMOPPRandom
+    pieces: [original:XOPPCH1, original:XOPPCH2, original:XOPPCH3, original:XOPPCH5, original:XOPPCH7]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  patton:  # XCOMPatton
+    pieces: [original:XKPAT1, original:XKPAT2, original:XKPAT3, original:XKPAT5, original:XKPAT6]
+    pick: [3, 5]
+    speed: [8, 35]
+    spin: [5, 40]
+    life: 30s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3], count: 8, speed: [30, 90]}
+  arms_dealer:  # ARMSDealer
+    pieces: [original:XPIRARM1, original:XPIRARM2, original:XPIRARM3, original:XPIRARM4, original:XPIRARM1]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  pirate_base:  # PirateBase
+    pieces: [original:XPIRBAS1, original:XPIRBAS2, original:XPIRBAS3, original:XPIRBAS4, original:XPIRBAS1]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  science_station:  # SciCenter
+    pieces: [original:XSCIC1, original:XSCIC2, original:XSCIC3, original:XSCIC4, original:XSCIC2]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  alien_base:  # AlienBase
+    pieces: [original:ABASECH1, original:ABASECH2, original:ABASECH3, original:ABASECH4, original:ABASECH5]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  alien_opp:  # AlienOPP
+    pieces: [original:A-OPPCH1, original:A-OPPCH2, original:A-OPPCH3, original:A-OPPCH4, original:A-OPPCH5]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  alien_outpost:  # AlienOutpost
+    pieces: [original:A-ORBCH2, original:A-ORBCH3, original:A-ORBCH3, original:A-ORBCH4, original:A-ORBCH5]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+  landing_pad:  # LandingPad
+    pieces: [original:XLANDPC1, original:XLANDPC2, original:XLANDPC3, original:XLANDPC4, original:XLANDPC1]
+    pick: [5, 5]
+    speed: [4, 20]
+    spin: [2, 12]
+    life: 45s
+    chunks: {models: [original:CHUNK1, original:CHUNK2, original:CHUNK3, original:CHUNK4, original:CHUNK5, original:CHUNK6], count: 16, speed: [15, 70]}
+
+modelsets:
+  lightning:
+    intact: original:INTTYPEA
+    debris: xcom_a
+    destroyed_effect: explosion_fighter
+  firestar:
+    intact: original:FIRESTAR6
+    debris: xcom_b
+    destroyed_effect: explosion_fighter
+  avenger:
+    intact: original:AVENGER16
+    debris: xcom_c
+    destroyed_effect: explosion_fighter
+  wraith:
+    intact: original:ALIENSH3
+    debris: ufo_a
+    destroyed_effect: explosion_alien
+  spectre:
+    intact: original:ALIENB4
+    debris: ufo_b
+    destroyed_effect: explosion_alien
+  phantasm:
+    intact: original:ALIENC7
+    debris: ufo_c
+    destroyed_effect: explosion_alien
+  shade:
+    intact: original:SHADE
+    debris: ufo_shade
+    destroyed_effect: explosion_alien
+  harbinger:
+    intact: original:ALTUG04
+    debris: ufo_tug
+    destroyed_effect: explosion_capital
+  spirit:
+    intact: original:AL-FREIG6
+    debris: ufo_freighter
+    destroyed_effect: explosion_capital
+  alien_container:
+    intact: original:DDC4
+    debris: ufo_freighter
+    destroyed_effect: explosion_capital
+  drone:
+    intact: original:DRONE01
+    destroyed_effect: explosion_alien
+  pirate_lightning:
+    intact: original:P-TYPEA
+    debris: pirate_a
+    destroyed_effect: explosion_fighter
+  pirate_firestar:
+    intact: original:P-TYPEB
+    debris: pirate_b
+    destroyed_effect: explosion_fighter
+  pirate_avenger:
+    intact: original:P-AVENGER16
+    debris: pirate_c
+    destroyed_effect: explosion_fighter
+  rogue_freighter:
+    intact: original:P-FRE98-5
+    debris: pirate_freighter
+    destroyed_effect: explosion_capital
+  corporate_lightning:
+    intact: original:CORTYPEA
+    debris: corp_a
+    destroyed_effect: explosion_fighter
+  corporate_firestar:
+    intact: original:C-TYPEB
+    debris: corp_b
+    destroyed_effect: explosion_fighter
+  corporate_avenger:
+    intact: original:C-AVENGER16
+    debris: corp_c
+    destroyed_effect: explosion_fighter
+  xcom_freighter:
+    intact: original:XFRE98-5
+    debris: xcom_freighter
+    destroyed_effect: explosion_capital
+  patton:
+    intact: original:CPAT
+    debris: patton
+    destroyed_effect: explosion_capital
+  xcom_base:
+    intact: original:XBASE7
+    debris: xcom_base
+    destroyed_effect: explosion_station
+  xcom_outpost:
+    intact: original:XOUT6
+    debris: xcom_outpost
+    destroyed_effect: explosion_station
+  xcom_opp:
+    intact: original:XOPP
+    debris: xcom_opp
+    destroyed_effect: explosion_station
+  alien_base:
+    intact: original:AL-BASE01
+    debris: alien_base
+    destroyed_effect: explosion_station
+  alien_outpost:
+    intact: original:ALORBOUT
+    debris: alien_outpost
+    destroyed_effect: explosion_station
+  alien_opp:
+    intact: original:AL-OPP7
+    debris: alien_opp
+    destroyed_effect: explosion_station
+  pirate_base:
+    intact: original:PBASE3
+    debris: pirate_base
+    destroyed_effect: explosion_station
+  arms_dealer:
+    intact: original:ARMS4
+    debris: arms_dealer
+    destroyed_effect: explosion_station
+  science_station:
+    intact: original:SCICENTER02
+    debris: science_station
+    destroyed_effect: explosion_station
+  nova_science:
+    intact: original:NOVA2
+    debris: science_station
+    destroyed_effect: explosion_station
+  asteroid:
+    intact: original:ROID100
+    destroyed_effect: explosion_station

@@ -54,6 +54,7 @@
 
 use super::behaviour::{BehaviourDef, BehaviourId};
 use super::equipment::{DamageRules, PowerRules, SystemDef, SystemId, SystemKind};
+use super::looks::{DebrisId, DebrisSet, EffectDef, EffectId, ModelSet, ModelSetId};
 use super::schema::{Get, Unit};
 use crate::formats::ini::Section;
 use crate::formats::yaml::{Node, Value};
@@ -160,7 +161,9 @@ pub struct ShipClass {
     pub repair_rate: f32,
     /// A disabled ship of this class can be captured with a tractor beam.
     pub capturable: bool,
-    /// The AI behaviour flown by AI pilots of this class (`Behaviour = <id>`).
+    /// The class's look: model, damage textures, states, debris, explosion.
+    pub model_set: ModelSetId,
+    /// The AI behaviour flown by AI pilots of this class (`behaviour: <id>`).
     pub behaviour: Option<BehaviourId>,
     /// Beam mounts can aim this many degrees off the nose (turrets; 0 = fixed guns).
     pub turret_arc: f32,
@@ -313,6 +316,9 @@ pub struct Ruleset {
     pub power: PowerRules,
     pub damage: DamageRules,
     pub behaviours: Vec<BehaviourDef>,
+    pub model_sets: Vec<ModelSet>,
+    pub debris_sets: Vec<DebrisSet>,
+    pub effects: Vec<EffectDef>,
     /// The campaign's difficulty level ids (`[campaign] Difficulty`), easiest first.
     pub difficulty_levels: Vec<String>,
     /// Index of the level being played.
@@ -350,6 +356,18 @@ impl Ruleset {
     }
     pub fn system_id(&self, id: &str) -> Option<SystemId> {
         self.systems.iter().position(|s| s.id.eq_ignore_ascii_case(id)).map(|i| SystemId(i as u16))
+    }
+    pub fn model_set(&self, id: ModelSetId) -> &ModelSet {
+        &self.model_sets[id.0 as usize]
+    }
+    pub fn debris_set(&self, id: DebrisId) -> &DebrisSet {
+        &self.debris_sets[id.0 as usize]
+    }
+    pub fn effect(&self, id: EffectId) -> &EffectDef {
+        &self.effects[id.0 as usize]
+    }
+    pub fn effect_id(&self, id: &str) -> Option<EffectId> {
+        self.effects.iter().position(|e| e.id.eq_ignore_ascii_case(id)).map(|i| EffectId(i as u16))
     }
     pub fn behaviour(&self, id: BehaviourId) -> &BehaviourDef {
         &self.behaviours[id.0 as usize]
@@ -390,8 +408,19 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 8] =
-    ["factions", "beams", "missiles", "ships", "objects", "systems", "cockpits", "behaviours"];
+const DEF_SECTIONS: [&str; 11] = [
+    "factions",
+    "beams",
+    "missiles",
+    "ships",
+    "objects",
+    "systems",
+    "cockpits",
+    "behaviours",
+    "modelsets",
+    "debris",
+    "effects",
+];
 
 /// A definition (or global section) while merging: its tree, the pack that last wrote it
 /// and where (for messages).
@@ -607,6 +636,21 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     if !behaviours.iter().any(|b| b.id == "builtin_attack") {
         behaviours.push(BehaviourDef::builtin_attack(&object_schema));
     }
+    // Looks: effects, debris sets and model sets (ships refer to them).
+    let mut effects: Vec<EffectDef> =
+        of(&resolved, "effects").map(|(_, id, e)| EffectDef::parse(id, Get(&e.node))).collect();
+    if !effects.iter().any(|x| x.id == "explosion") {
+        effects.push(EffectDef::builtin("explosion"));
+    }
+    let mut debris_sets: Vec<DebrisSet> =
+        of(&resolved, "debris").map(|(_, id, e)| DebrisSet::parse(id, Get(&e.node), e.pack)).collect();
+    let mut model_sets: Vec<ModelSet> = Vec::new();
+    for (_, id, e) in of(&resolved, "modelsets") {
+        match model_set(id, Get(&e.node), e.pack, &debris_sets, &effects) {
+            Ok(m) => model_sets.push(m),
+            Err(msg) => errors.push(format!("{}: modelsets.{id}: {msg}", e.origin)),
+        }
+    }
     let mut ships = Vec::new();
     for section in ["ships", "objects"] {
         for (_, id, e) in of(&resolved, section) {
@@ -617,7 +661,8 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 systems: &systems,
                 behaviours: &behaviours,
             };
-            match ship_class(id, Get(&e.node), section, &refs, &damage, e.pack) {
+            let looks = Looks { model_sets: &mut model_sets, debris_sets: &mut debris_sets, effects: &effects };
+            match ship_class(id, Get(&e.node), section, &refs, &damage, e.pack, looks) {
                 Ok(c) => ships.push(c),
                 Err(msg) => errors.push(format!("{}: {section}.{id}: {msg}", e.origin)),
             }
@@ -716,6 +761,9 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             power,
             damage,
             behaviours,
+            model_sets,
+            debris_sets,
+            effects,
             difficulty_levels,
             difficulty,
             sounds,
@@ -884,6 +932,62 @@ fn rect(map: &Node, key: &str) -> Option<[f32; 4]> {
     (v.len() == 4).then(|| [v[0], v[1], v[2], v[3]])
 }
 
+/// The look definitions a ship class refers to or creates (mutable: a class written
+/// with the `model:`/`debris:` shorthand adds a model set of its own).
+struct Looks<'a> {
+    model_sets: &'a mut Vec<ModelSet>,
+    debris_sets: &'a mut Vec<DebrisSet>,
+    effects: &'a [EffectDef],
+}
+
+/// Parses a `modelsets:` definition.
+fn model_set(id: &str, g: Get, pack: usize, debris: &[DebrisSet], effects: &[EffectDef]) -> Result<ModelSet, String> {
+    use super::looks::{swaps, DamageLevel};
+    let intact = g.str("intact").ok_or("a model set needs intact: <model>")?.to_string();
+    let debris = match g.str("debris") {
+        Some(d) => Some(
+            debris
+                .iter()
+                .position(|x| x.id.eq_ignore_ascii_case(d))
+                .map(|i| DebrisId(i as u16))
+                .ok_or(format!("unknown debris set '{d}'"))?,
+        ),
+        None => None,
+    };
+    let destroyed_effect = match g.str("destroyed_effect") {
+        Some(x) => Some(
+            effects
+                .iter()
+                .position(|e| e.id.eq_ignore_ascii_case(x))
+                .map(|i| EffectId(i as u16))
+                .ok_or(format!("unknown effect '{x}'"))?,
+        ),
+        None => None,
+    };
+    let mut damage: Vec<DamageLevel> = g
+        .node("damage")
+        .and_then(|n| n.as_seq())
+        .unwrap_or(&[])
+        .iter()
+        .map(|l| DamageLevel {
+            below: Get(l).qty("below", Unit::Fraction).unwrap_or(0.5),
+            swaps: swaps(Get(l), "textures"),
+        })
+        .collect();
+    damage.sort_by(|a, b| b.below.total_cmp(&a.below));
+    Ok(ModelSet {
+        id: id.to_string(),
+        intact,
+        pack,
+        scale: g.num("scale").unwrap_or(1.0),
+        textures: swaps(g, "textures"),
+        damage,
+        states: g.map("states").iter().map(|(k, v)| (k.to_ascii_lowercase(), swaps(Get(v), "textures"))).collect(),
+        debris,
+        destroyed_effect,
+    })
+}
+
 /// The definitions a ship class may refer to, bundled to keep the argument list short.
 struct ClassRefs<'a> {
     factions: &'a [Faction],
@@ -944,6 +1048,7 @@ fn ship_class(
     refs: &ClassRefs,
     damage: &DamageRules,
     pack: usize,
+    looks: Looks,
 ) -> Result<ShipClass, String> {
     let ClassRefs { factions, beams, missiles, systems, behaviours } = *refs;
     let default_kind = if section == "objects" { ShipKind::Station } else { ShipKind::Fighter };
@@ -966,7 +1071,38 @@ fn ship_class(
         .iter()
         .position(|f| f.id.eq_ignore_ascii_case(faction_name))
         .ok_or(format!("unknown faction '{faction_name}'"))?;
-    let model = g.str("model").ok_or("no model")?.to_string();
+    // The look: a named model set, or one made from the `model:`/`debris:` shorthand.
+    let model_set = match g.str("model_set") {
+        Some(m) => looks
+            .model_sets
+            .iter()
+            .position(|x| x.id.eq_ignore_ascii_case(m))
+            .map(|i| ModelSetId(i as u16))
+            .ok_or(format!("unknown model set '{m}'"))?,
+        None => {
+            let model = g.str("model").ok_or("no model (give model: or model_set:)")?.to_string();
+            let pieces = g.list("debris");
+            let debris = (!pieces.is_empty()).then(|| {
+                looks.debris_sets.push(DebrisSet::from_list(&format!("{section}.{id}"), pieces, pack));
+                DebrisId(looks.debris_sets.len() as u16 - 1)
+            });
+            looks.model_sets.push(ModelSet {
+                id: format!("{section}.{id}"),
+                intact: model,
+                pack,
+                scale: g.num("model_scale").unwrap_or(1.0),
+                textures: Vec::new(),
+                damage: Vec::new(),
+                states: Vec::new(),
+                debris,
+                destroyed_effect: None,
+            });
+            ModelSetId(looks.model_sets.len() as u16 - 1)
+        }
+    };
+    let set = &looks.model_sets[model_set.0 as usize];
+    let _ = looks.effects;
+    let (model, model_pack, model_scale) = (set.intact.clone(), set.pack, set.scale);
     let beam_ids = g
         .list("beams")
         .iter()
@@ -1002,8 +1138,9 @@ fn ship_class(
         kind,
         faction: FactionId(faction as u16),
         model,
-        model_pack: pack,
-        model_scale: g.num("model_scale").unwrap_or(1.0),
+        model_pack,
+        model_scale,
+        model_set,
         playable: g.bool("playable").unwrap_or(false),
         cockpit: g.str("cockpit").map(str::to_string),
         hull: g.num("hit_points").unwrap_or(100.0),

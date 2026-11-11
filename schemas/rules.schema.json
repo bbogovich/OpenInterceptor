@@ -34,6 +34,7 @@
           "lock_time": {"description": "seconds in the lock cone to lock on", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "color": {"description": "trail colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
           "sound": {"description": "launch sound", "type": "string"},
+          "explosion": {"description": "effect id of its detonation", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -43,7 +44,8 @@
           "description": {"description": "one line for the viewer and encyclopaedia", "type": "string"},
           "kind": {"description": "what sort of object it is", "enum": ["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris"]},
           "faction": {"description": "owning faction id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
-          "model": {"description": "model reference: models/x.obj or original:MESH", "type": "string"},
+          "model_set": {"description": "the look: a model set id (instead of model and debris)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "model": {"description": "model reference: models/x.obj or original:MESH (shorthand for a model set)", "type": "string"},
           "model_scale": {"description": "model units to metres", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "playable": {"description": "the player may fly it", "type": "boolean"},
           "cockpit": {"description": "cockpit id for the player's view", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -79,7 +81,8 @@
           "description": {"description": "one line for the viewer and encyclopaedia", "type": "string"},
           "kind": {"description": "what sort of object it is", "enum": ["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris"]},
           "faction": {"description": "owning faction id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
-          "model": {"description": "model reference: models/x.obj or original:MESH", "type": "string"},
+          "model_set": {"description": "the look: a model set id (instead of model and debris)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "model": {"description": "model reference: models/x.obj or original:MESH (shorthand for a model set)", "type": "string"},
           "model_scale": {"description": "model units to metres", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "playable": {"description": "the player may fly it", "type": "boolean"},
           "cockpit": {"description": "cockpit id for the player's view", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -160,6 +163,48 @@
               "aim": {"description": "0 wild … 1 perfect", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
               "reaction": {"description": "seconds between looks at the target", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
             }},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "modelsets": {"description": "looks: models, damage textures, states, debris", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "intact": {"description": "the normal model (all its LODs)", "type": "string"},
+          "scale": {"description": "model units to metres", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "textures": {"description": "texture name: replacement, always applied", "type": "object", "additionalProperties": {"type": "string"}},
+          "damage": {"description": "damage levels as the hull falls (cumulative)", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "below": {"description": "applies while the hull is below this fraction", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "textures": {"description": "texture name: replacement", "type": "object", "additionalProperties": {"type": "string"}}
+              }}},
+          "states": {"description": "named conditions: building, destroyed …", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+                "textures": {"description": "texture name: replacement", "type": "object", "additionalProperties": {"type": "string"}}
+              }}},
+          "debris": {"description": "debris set id used when destroyed", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "destroyed_effect": {"description": "effect id of the explosion", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "debris": {"description": "debris sets by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "pieces": {"description": "piece models, in the object's own model space", "type": "array", "items": {"type": "string"}},
+          "pick": {"description": "[min, max] pieces thrown, chosen at random", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "speed": {"description": "[min, max] outward speed, m/s", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "spin": {"description": "[min, max] tumble, degrees per second", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "life": {"description": "how long the pieces last", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "chunks": {"description": "generic rubble", "type": "object", "additionalProperties": false, "properties": {
+              "models": {"description": "generic rubble models", "type": "array", "items": {"type": "string"}},
+              "count": {"description": "how many", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "speed": {"description": "[min, max] m/s", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
+            }},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "effects": {"description": "explosions and other effects by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "size": {"description": "fireball size: × the object's radius (missiles: metres)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "duration": {"description": "how long it lasts", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "color": {"description": "fireball colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "shockwave": {"description": "an expanding ring of light", "type": "boolean"},
+          "sound": {"description": "sound event name or asset", "type": "string"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

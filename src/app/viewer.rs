@@ -121,6 +121,50 @@ pub struct ViewerEntry {
     pub reference: String,
     pub pack: usize,
     pub scale: f32,
+    /// The class's model set (class entries only), for the D key's looks.
+    pub set: Option<crate::content::looks::ModelSetId>,
+}
+
+/// One look of a model set, cycled with D.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Look {
+    Intact,
+    /// A damage level (index into the set's `damage`).
+    Damage(usize),
+    /// A named state (index into the set's `states`).
+    State(usize),
+    /// The debris pieces, pulled apart.
+    Debris,
+}
+
+/// Every look a model set can show, in the order D cycles them.
+pub fn looks_of(set: &crate::content::looks::ModelSet) -> Vec<Look> {
+    let mut v = vec![Look::Intact];
+    v.extend((0..set.damage.len()).map(Look::Damage));
+    v.extend((0..set.states.len()).map(Look::State));
+    if set.debris.is_some() {
+        v.push(Look::Debris);
+    }
+    v
+}
+
+/// A look's name for the info line.
+pub fn look_label(set: &crate::content::looks::ModelSet, look: &Look) -> String {
+    match look {
+        Look::Intact => "intact".into(),
+        Look::Damage(i) => format!("damage: hull below {:.0}%", set.damage[*i].below * 100.0),
+        Look::State(i) => format!("state: {}", set.states[*i].0),
+        Look::Debris => "debris (pieces pulled apart)".into(),
+    }
+}
+
+/// The texture swaps a look shows.
+pub fn look_swaps(set: &crate::content::looks::ModelSet, look: &Look) -> crate::content::looks::Swaps {
+    match look {
+        Look::Damage(i) => set.swaps_for(set.damage[*i].below - 1e-4, None),
+        Look::State(i) => set.swaps_for(1.0, Some(&set.states[*i].0)),
+        _ => set.swaps_for(1.0, None),
+    }
 }
 
 /// The viewer screen.
@@ -138,6 +182,8 @@ pub struct ModelViewer {
     /// The selected face (index into the drawn LOD's faces), if any.
     face: Option<usize>,
     labels: bool,
+    /// Index into [`looks_of`] for the selected class.
+    look: usize,
 }
 
 /// Builds the list: ship classes first, then raw original meshes.
@@ -151,6 +197,7 @@ pub fn entries(content: &crate::content::Content) -> Vec<ViewerEntry> {
             reference: s.model.clone(),
             pack: s.model_pack,
             scale: s.model_scale,
+            set: Some(s.model_set),
         })
         .collect();
     v.extend(content.original_mesh_names().into_iter().map(|n| ViewerEntry {
@@ -158,6 +205,7 @@ pub fn entries(content: &crate::content::Content) -> Vec<ViewerEntry> {
         reference: format!("original:{n}"),
         pack: 0,
         scale: 1.0,
+        set: None,
     }));
     v
 }
@@ -196,6 +244,7 @@ impl ModelViewer {
             display: Display::Solid,
             face: None,
             labels: false,
+            look: 0,
         }
     }
 
@@ -219,6 +268,10 @@ impl ModelViewer {
         }
         if changed {
             self.face = None;
+            self.look = 0;
+        }
+        if pressed("d") {
+            self.look += 1;
         }
         if pressed("w") {
             self.display = self.display.next();
@@ -259,7 +312,17 @@ impl ModelViewer {
             draw_text("No models.", 40.0, 60.0, 30.0, WHITE);
             return Next::Stay;
         };
-        let model = ctx.renderer.models.get(&ctx.content, &entry.reference, entry.pack, entry.scale);
+        // The look to show (D cycles them): a model set's damage levels, states, debris.
+        let set = entry.set.map(|id| ctx.content.rules.model_set(id).clone());
+        let looks = set.as_ref().map(looks_of).unwrap_or_else(|| vec![Look::Intact]);
+        let look = looks[self.look % looks.len()].clone();
+        let model = match &set {
+            Some(set) => {
+                let swaps = look_swaps(set, &look);
+                ctx.renderer.models.get_variant(&ctx.content, &set.intact, set.pack, set.scale, &swaps)
+            }
+            None => ctx.renderer.models.get(&ctx.content, &entry.reference, entry.pack, entry.scale),
+        };
         if let Some(m) = &model {
             if changed || self.fitted != Some(self.selected) {
                 self.orbit.distance = (m.radius * 2.8).max(5.0);
@@ -281,7 +344,24 @@ impl ModelViewer {
                 self.face = Some((current + face_move * face_step).rem_euclid(n) as usize);
             }
             let model_rot = Quat::from_rotation_y(self.angle);
-            if self.display != Display::Wire {
+            if let (Look::Debris, Some(d)) = (&look, set.as_ref().and_then(|s| s.debris)) {
+                // Each piece sits where it belongs in the object; push it out along the
+                // direction of its own centre so the cut lines show.
+                let debris = ctx.content.rules.debris_set(d).clone();
+                ctx.renderer.begin_solid(&cam, sun);
+                for piece in &debris.pieces {
+                    if let Some(p) = ctx.renderer.models.get(&ctx.content, piece, debris.pack, entry.scale) {
+                        let lod = p.model.lods.first();
+                        let centre = lod
+                            .map(|l| {
+                                l.vertices.iter().map(|v| v.position).sum::<Vec3>() / l.vertices.len().max(1) as f32
+                            })
+                            .unwrap_or_default();
+                        let out = model_rot * centre.normalize_or_zero() * m.radius * 0.35;
+                        ctx.renderer.draw_model_lod(&cam, &p, out, model_rot, Vec3::ZERO, Some(0));
+                    }
+                }
+            } else if self.display != Display::Wire {
                 ctx.renderer.begin_solid(&cam, sun);
                 ctx.renderer.draw_model_lod(&cam, m, Vec3::ZERO, model_rot, Vec3::ZERO, Some(lod_index));
             }
@@ -312,7 +392,17 @@ impl ModelViewer {
                     if ctx.renderer.show_overlays { "shown" } else { "hidden" },
                     self.orbit.distance
                 ),
-                self.face.map(|f| face_info(lod, f)).unwrap_or_default(),
+                match &set {
+                    Some(set) if looks.len() > 1 => {
+                        format!(
+                            "look {}/{}: {}   (D: next look)",
+                            self.look % looks.len() + 1,
+                            looks.len(),
+                            look_label(set, &look)
+                        )
+                    }
+                    _ => self.face.map(|f| face_info(lod, f)).unwrap_or_default(),
+                },
             ];
             for (i, l) in lines.iter().enumerate() {
                 draw_text(l, 20.0, 34.0 + i as f32 * 24.0, if i == 0 { 28.0 } else { 20.0 }, WHITE);
@@ -326,7 +416,7 @@ impl ModelViewer {
         }
         draw_text(
             &format!(
-                "{}/{}   PgUp/PgDn (B/N) model   arrows/drag orbit   +/- wheel zoom   L LOD   Space spin   W wireframe   [ ] face   I labels   O overlays   Esc back",
+                "{}/{}   PgUp/PgDn (B/N) model   arrows/drag orbit   +/- wheel zoom   L LOD   Space spin   W wireframe   [ ] face   I labels   O overlays   D look   Esc back",
                 self.selected + 1,
                 n
             ),
@@ -409,7 +499,8 @@ mod tests {
 
     #[test]
     fn entries_are_found_by_ship_id_or_mesh_name() {
-        let e = |label: &str| ViewerEntry { label: label.into(), reference: String::new(), pack: 0, scale: 1.0 };
+        let e =
+            |label: &str| ViewerEntry { label: label.into(), reference: String::new(), pack: 0, scale: 1.0, set: None };
         let list = [e("Dart (dart)"), e("mesh \"XBASE7\""), e("mesh \"A-FRT3\"")];
         assert_eq!(find_entry(&list, "dart"), Some(0));
         assert_eq!(find_entry(&list, "xbase7"), Some(1));
@@ -463,6 +554,32 @@ mod tests {
         o.update(0.0, 0.0, -10.0, 1.0);
         assert_eq!(o.distance, 7.5);
         assert_eq!(o.yaw, 1.0);
+    }
+
+    #[test]
+    fn looks_cover_damage_states_and_debris() {
+        use crate::content::looks::{DamageLevel, DebrisId, ModelSet};
+        let set = ModelSet {
+            id: "s".into(),
+            intact: "m".into(),
+            pack: 0,
+            scale: 1.0,
+            textures: vec![],
+            damage: vec![
+                DamageLevel { below: 0.66, swaps: vec![("hull".into(), "a.png".into())] },
+                DamageLevel { below: 0.33, swaps: vec![("hull".into(), "b.png".into())] },
+            ],
+            states: vec![("building".into(), vec![("hull".into(), "c.png".into())])],
+            debris: Some(DebrisId(0)),
+            destroyed_effect: None,
+        };
+        let looks = looks_of(&set);
+        assert_eq!(looks, vec![Look::Intact, Look::Damage(0), Look::Damage(1), Look::State(0), Look::Debris]);
+        assert_eq!(look_swaps(&set, &Look::Damage(0))[0].1, "a.png");
+        assert_eq!(look_swaps(&set, &Look::Damage(1))[0].1, "b.png", "the worse level shows its own swap");
+        assert_eq!(look_swaps(&set, &Look::State(0))[0].1, "c.png");
+        assert!(look_swaps(&set, &Look::Intact).is_empty());
+        assert_eq!(look_label(&set, &Look::Damage(1)), "damage: hull below 33%");
     }
 
     #[test]

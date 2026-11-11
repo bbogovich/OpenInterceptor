@@ -25,6 +25,7 @@
 pub mod behaviour;
 pub mod equipment;
 pub mod files;
+pub mod looks;
 pub mod pack;
 pub mod rules;
 pub mod scenario;

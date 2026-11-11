@@ -305,6 +305,16 @@ impl Renderer {
         self.models.get(content, &c.model, c.model_pack, c.model_scale)
     }
 
+    /// The model for a ship as it looks now: its model set with the damage level its
+    /// hull has reached (texture swaps).
+    pub fn ship_look(&mut self, content: &Content, world: &World, ship: &crate::sim::Ship) -> Option<Rc<GpuModel>> {
+        let c = world.rules.ship(ship.class);
+        let set = world.rules.model_set(c.model_set);
+        let hull = if c.hull > 0.0 { ship.hull / c.hull } else { 1.0 };
+        let swaps = set.swaps_for(hull, None);
+        self.models.get_variant(content, &set.intact, set.pack, set.scale, &swaps)
+    }
+
     /// Draws a model with the lit material, choosing the LOD by distance. Call after
     /// `begin_solid`.
     pub fn draw_model(&self, cam: &SpaceCamera, model: &GpuModel, position: Vec3, rotation: Quat, tint: Vec3) {
@@ -418,7 +428,7 @@ impl Renderer {
             if !s.alive || Some(world.id_of(i)) == hide {
                 continue;
             }
-            let Some(model) = self.ship_model(content, world, s.class) else { continue };
+            let Some(model) = self.ship_look(content, world, s) else { continue };
             // Cull objects that are entirely behind the camera.
             let rel = s.position - cam.position;
             if rel.dot(cam.rotation * Vec3::NEG_Z) < -model.radius {
@@ -430,7 +440,8 @@ impl Renderer {
         }
         for d in &effects.debris {
             if let Some(model) = self.models.get(content, &d.model, d.pack, d.scale) {
-                let fade = 1.0 - (d.age / effects::DEBRIS_LIFE);
+                // Wreckage darkens as it cools, over its last third.
+                let fade = (3.0 * (1.0 - d.age / d.life)).min(1.0);
                 self.draw_model(cam, &model, d.position, d.rotation, Vec3::splat((fade - 1.0) * 0.3));
             }
         }
@@ -543,8 +554,27 @@ impl Renderer {
                 x.radius * size,
                 right,
                 up,
-                rgb8([1.0, 0.6, 0.25], bright),
+                rgb8(x.color, bright),
             );
+            // Shock wave: a ring of glows racing outwards in the wreck's plane.
+            if let Some(n) = x.shockwave {
+                let t = x.age / x.life;
+                let (a, b) = (n.any_orthonormal_vector(), n.cross(n.any_orthonormal_vector()));
+                let ring = x.radius * (0.5 + 3.5 * t);
+                for k in 0..48 {
+                    let ang = k as f32 / 48.0 * std::f32::consts::TAU;
+                    let p = x.position + (a * ang.cos() + b * ang.sin()) * ring;
+                    push_billboard(
+                        &mut self.glow_vertices,
+                        &mut self.glow_indices,
+                        rel(p),
+                        x.radius * 0.25,
+                        right,
+                        up,
+                        rgb8([0.7, 0.85, 1.0], (1.0 - t) * 0.6),
+                    );
+                }
+            }
             push_billboard(
                 &mut self.glow_vertices,
                 &mut self.glow_indices,

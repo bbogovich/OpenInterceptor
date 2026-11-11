@@ -8,57 +8,57 @@ objects:
   xcom_base:
     name: X-COM Base
     faction: xcom
-    model: original:XBASE7
+    model_set: xcom_base
     hit_points: 6000
     shields: 1000
   xcom_outpost:
     name: Corporate Outpost
     faction: corporate
-    model: original:XOUT6
+    model_set: xcom_outpost
     hit_points: 4000
   xcom_opp:
     name: Ore Processing Plant
     faction: corporate
-    model: original:XOPP
+    model_set: xcom_opp
     hit_points: 4000
   alien_base:
     name: Alien Base
     faction: alien
-    model: original:AL-BASE01
+    model_set: alien_base
     hit_points: 8000
     shields: 1500
   alien_outpost:
     name: Alien Outpost
     faction: alien
-    model: original:ALORBOUT
+    model_set: alien_outpost
     hit_points: 5000
   alien_opp:
     name: Alien Mining Platform
     faction: alien
-    model: original:AL-OPP7
+    model_set: alien_opp
     hit_points: 5000
   pirate_base:
     name: Pirate Base
     faction: pirate
-    model: original:PBASE3
+    model_set: pirate_base
     hit_points: 5000
   arms_dealer:
     name: Arms Dealer Base
     faction: neutral
-    model: original:ARMS4
+    model_set: arms_dealer
     hit_points: 4000
   science_station:
     name: GSC Science Station
     faction: corporate
-    model: original:SCICENTER02
+    model_set: science_station
     hit_points: 3000
   nova_science:
     name: Nova Science Station
     faction: corporate
-    model: original:NOVA2
+    model_set: nova_science
     hit_points: 3000
   asteroid:
     name: Asteroid
     faction: neutral
-    model: original:ROID100
+    model_set: asteroid
     hit_points: 20000

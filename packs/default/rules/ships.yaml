@@ -10,7 +10,7 @@ ships:
   comet:
     name: Comet
     description: "Light interceptor rocket: quick, nimble and lightly armed."
-    model: models/comet.obj
+    model_set: comet
     faction: guard
     playable: true
     cockpit: guard
@@ -31,12 +31,11 @@ ships:
     missiles: {seeker: 4}
     systems+: [ecm]
     behaviour: guard_pilot
-    debris: [models/comet_debris1.obj, models/comet_debris2.obj, models/comet_debris3.obj, models/comet_debris4.obj]
     engine_color: [1.0, 0.55, 0.15]
   meteor:
     name: Meteor
     description: Twin-booster patrol rocket with a tractor ray and a robot repair crew.
-    model: models/meteor.obj
+    model_set: meteor
     faction: guard
     playable: true
     cockpit: guard
@@ -57,12 +56,11 @@ ships:
     missiles: {seeker: 4, atomic_torpedo: 1}
     systems+: [ecm, damage_control, tractor]
     behaviour: guard_pilot
-    debris: [models/meteor_debris1.obj, models/meteor_debris2.obj, models/meteor_debris3.obj, models/meteor_debris4.obj]
     engine_color: [1.0, 0.55, 0.15]
   thunderbolt:
     name: Thunderbolt
     description: "Heavy four-finned strike rocket. Carries every gadget the Guard has: jammer, tractor ray, invisibility screen, gyro-jets."
-    model: models/thunderbolt.obj
+    model_set: thunderbolt
     faction: guard
     playable: true
     cockpit: guard
@@ -84,12 +82,11 @@ ships:
     missiles: {seeker: 4, atomic_torpedo: 3}
     systems+: [ecm, damage_control, tractor, cloak]
     behaviour: guard_pilot
-    debris: [models/thunderbolt_debris1.obj, models/thunderbolt_debris2.obj, models/thunderbolt_debris3.obj, models/thunderbolt_debris4.obj]
     engine_color: [1.0, 0.55, 0.15]
   victory:
     name: Victory
     description: "The Guard's flagship: an art-deco battleship rocket (story ship, Stage 5)."
-    model: models/victory.obj
+    model_set: victory
     faction: guard
     kind: capital
     hit_points: 4000
@@ -109,13 +106,12 @@ ships:
     systems+: [ecm, damage_control]
     behaviour: gun_platform
     turret_arc: 150
-    debris: [models/victory_debris1.obj, models/victory_debris2.obj, models/victory_debris3.obj, models/victory_debris4.obj, models/victory_debris5.obj]
     engine_color: [1.0, 0.6, 0.2]
   # --- Umbral Dominion saucers and robots -----------------------------------------------
   scout_saucer:
     name: Scout saucer
     description: "Small domed saucer: fast, slippery, lightly armed."
-    model: models/scout_saucer.obj
+    model_set: scout_saucer
     faction: dominion
     hit_points: 80
     shields: 60
@@ -132,12 +128,11 @@ ships:
     vct: true
     beams: [paralyzer_ray]
     behaviour: saucer_scout
-    debris: [models/scout_saucer_debris1.obj, models/scout_saucer_debris2.obj, models/scout_saucer_debris3.obj, models/scout_saucer_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   raider_saucer:
     name: Raider saucer
     description: Fighting saucer with a ray-gun turret and an invisibility screen.
-    model: models/raider_saucer.obj
+    model_set: raider_saucer
     faction: dominion
     hit_points: 130
     shields: 100
@@ -156,12 +151,11 @@ ships:
     missiles: {seeker: 2}
     systems+: [cloak]
     behaviour: saucer_raider
-    debris: [models/raider_saucer_debris1.obj, models/raider_saucer_debris2.obj, models/raider_saucer_debris3.obj, models/raider_saucer_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   dreadnought:
     name: Dreadnought disc
     description: The Regent's tiered battle disc.
-    model: models/dreadnought.obj
+    model_set: dreadnought
     faction: dominion
     kind: capital
     hit_points: 1500
@@ -181,12 +175,11 @@ ships:
     systems+: [ecm]
     behaviour: gun_platform
     turret_arc: 150
-    debris: [models/dreadnought_debris1.obj, models/dreadnought_debris2.obj, models/dreadnought_debris3.obj, models/dreadnought_debris4.obj, models/dreadnought_debris5.obj]
     engine_color: [0.5, 1.0, 0.3]
   robot_sentinel:
     name: Robot sentinel
     description: A tin-can robot with a jet pack and a ray in each claw.
-    model: models/robot_sentinel.obj
+    model_set: robot_sentinel
     faction: dominion
     kind: drone
     hit_points: 50
@@ -203,12 +196,11 @@ ships:
     vct: true
     beams: [paralyzer_ray]
     behaviour: robot
-    debris: [models/robot_sentinel_debris1.obj, models/robot_sentinel_debris2.obj, models/robot_sentinel_debris3.obj]
     engine_color: [0.6, 0.8, 1.0]
   grappler:
     name: Grappler
     description: Tug saucer with grappling claws and a tractor ray; drags off disabled rockets.
-    model: models/grappler.obj
+    model_set: grappler
     faction: dominion
     kind: capital
     hit_points: 600
@@ -226,12 +218,11 @@ ships:
     beams: [paralyzer_ray]
     systems+: [tractor]
     behaviour: tug
-    debris: [models/grappler_debris1.obj, models/grappler_debris2.obj, models/grappler_debris3.obj, models/grappler_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   cargo_orb:
     name: Cargo orb
     description: Banded freighter sphere hauling cosmium to the Eclipse Engine.
-    model: models/cargo_orb.obj
+    model_set: cargo_orb
     faction: dominion
     kind: freighter
     hit_points: 900
@@ -244,23 +235,21 @@ ships:
     yaw_rate: 12
     angular_damp: 6
     lock_speed: 500
-    debris: [models/cargo_orb_debris1.obj, models/cargo_orb_debris2.obj, models/cargo_orb_debris3.obj, models/cargo_orb_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   # --- Third parties ----------------------------------------------------------------------
   senate_patrol:
     inherit: meteor
     name: Senate patrol rocket
     description: The Solar Senate's sleek white-and-gold patrol rocket.
-    model: models/senate_patrol.obj
+    model_set: senate_patrol
     faction: senate
     playable: false
     systems+: [ecm]
     behaviour: guard_pilot
-    debris: [models/senate_patrol_debris1.obj, models/senate_patrol_debris2.obj, models/senate_patrol_debris3.obj, models/senate_patrol_debris4.obj]
   cartel_freighter:
     name: Cartel freighter
     description: A bulbous cargo rocket of the Nebula Cartel. Ask no questions.
-    model: models/cartel_freighter.obj
+    model_set: cartel_freighter
     faction: cartel
     kind: freighter
     hit_points: 700
@@ -276,12 +265,11 @@ ships:
     beams: [blaster]
     behaviour: gun_platform
     turret_arc: 180
-    debris: [models/cartel_freighter_debris1.obj, models/cartel_freighter_debris2.obj, models/cartel_freighter_debris3.obj, models/cartel_freighter_debris4.obj, models/cartel_freighter_debris5.obj]
     engine_color: [1.0, 0.7, 0.3]
   prospector_hauler:
     name: Prospector hauler
     description: A boxy ore hauler with a drill nose.
-    model: models/prospector_hauler.obj
+    model_set: prospector_hauler
     faction: prospectors
     kind: freighter
     hit_points: 500
@@ -294,12 +282,11 @@ ships:
     yaw_rate: 15
     angular_damp: 5
     lock_speed: 500
-    debris: [models/prospector_hauler_debris1.obj, models/prospector_hauler_debris2.obj, models/prospector_hauler_debris3.obj, models/prospector_hauler_debris4.obj]
     engine_color: [1.0, 0.6, 0.2]
   hotrod:
     name: Black Comet hot-rod
     description: "A raider's hot-rod rocket: flame paint and an oversized exhaust."
-    model: models/hotrod.obj
+    model_set: hotrod
     faction: raiders
     hit_points: 90
     shields: 40
@@ -316,5 +303,4 @@ ships:
     beams: [blaster, blaster]
     missiles: {seeker: 2}
     behaviour: raider_hotrod
-    debris: [models/hotrod_debris1.obj, models/hotrod_debris2.obj, models/hotrod_debris3.obj]
     engine_color: [1.0, 0.35, 0.1]

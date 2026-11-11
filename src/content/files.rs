@@ -78,6 +78,64 @@ fn missile() -> Ty {
         f("lock_time", time(), "seconds in the lock cone to lock on"),
         f("color", rgb(), "trail colour"),
         f("sound", Ty::Asset, "launch sound"),
+        f("explosion", name(), "effect id of its detonation"),
+    ])
+}
+
+fn swaps() -> Ty {
+    Ty::Dict(Box::new(Ty::Asset))
+}
+
+fn modelset() -> Ty {
+    Ty::Def(vec![
+        f("intact", Ty::Asset, "the normal model (all its LODs)"),
+        f("scale", Ty::Num, "model units to metres"),
+        f("textures", swaps(), "texture name: replacement, always applied"),
+        f(
+            "damage",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("below", Ty::Qty(Unit::Fraction), "applies while the hull is below this fraction"),
+                f("textures", swaps(), "texture name: replacement"),
+            ]))),
+            "damage levels as the hull falls (cumulative)",
+        ),
+        f(
+            "states",
+            Ty::Dict(Box::new(Ty::Struct(vec![f("textures", swaps(), "texture name: replacement")]))),
+            "named conditions: building, destroyed …",
+        ),
+        f("debris", name(), "debris set id used when destroyed"),
+        f("destroyed_effect", name(), "effect id of the explosion"),
+    ])
+}
+
+fn debris() -> Ty {
+    let pair = || Ty::List(Box::new(Ty::Num));
+    Ty::Def(vec![
+        f("pieces", Ty::List(Box::new(Ty::Asset)), "piece models, in the object's own model space"),
+        f("pick", pair(), "[min, max] pieces thrown, chosen at random"),
+        f("speed", pair(), "[min, max] outward speed, m/s"),
+        f("spin", pair(), "[min, max] tumble, degrees per second"),
+        f("life", time(), "how long the pieces last"),
+        f(
+            "chunks",
+            Ty::Struct(vec![
+                f("models", Ty::List(Box::new(Ty::Asset)), "generic rubble models"),
+                f("count", Ty::Num, "how many"),
+                f("speed", pair(), "[min, max] m/s"),
+            ]),
+            "generic rubble",
+        ),
+    ])
+}
+
+fn effect() -> Ty {
+    Ty::Def(vec![
+        f("size", Ty::Num, "fireball size: × the object's radius (missiles: metres)"),
+        f("duration", time(), "how long it lasts"),
+        f("color", rgb(), "fireball colour"),
+        f("shockwave", Ty::Bool, "an expanding ring of light"),
+        f("sound", Ty::Text, "sound event name or asset"),
     ])
 }
 
@@ -92,7 +150,8 @@ fn ship() -> Ty {
             "what sort of object it is",
         ),
         f("faction", name(), "owning faction id"),
-        f("model", Ty::Asset, "model reference: models/x.obj or original:MESH"),
+        f("model_set", name(), "the look: a model set id (instead of model and debris)"),
+        f("model", Ty::Asset, "model reference: models/x.obj or original:MESH (shorthand for a model set)"),
         f("model_scale", Ty::Num, "model units to metres"),
         f("playable", Ty::Bool, "the player may fly it"),
         f("cockpit", name(), "cockpit id for the player's view"),
@@ -263,6 +322,9 @@ pub fn rules_sections() -> Vec<Field> {
         f("systems", dict(system()), "ship systems by id"),
         f("cockpits", dict(cockpit()), "cockpits by id"),
         f("behaviours", dict(behaviour()), "AI behaviours by id"),
+        f("modelsets", dict(modelset()), "looks: models, damage textures, states, debris"),
+        f("debris", dict(debris()), "debris sets by id"),
+        f("effects", dict(effect()), "explosions and other effects by id"),
         f("flight", flight(), "flight model and sensors"),
         f("power", power(), "beam/shield charge settings"),
         f("damage", damage(), "damage to systems and repair"),

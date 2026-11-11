@@ -87,15 +87,32 @@ pub fn run(content: &Content) -> Report {
                 shapes.push(crate::sim::collision::Shape { radius: 10.0, mesh: None });
             }
         }
-        for d in &class.debris {
-            match content.load_model(d, class.model_pack, class.model_scale) {
-                Ok(_) => r.models += 1,
-                Err(e) => r.errors.push(format!("ship {}: debris {d}: {e}", class.id)),
-            }
-        }
         if let Some(c) = &class.cockpit {
             if rules.cockpit(c).is_none() {
                 r.errors.push(format!("ship {}: unknown cockpit '{c}'", class.id));
+            }
+        }
+    }
+    // Model sets: every swapped texture loads; debris sets: every piece and chunk loads.
+    for set in &rules.model_sets {
+        let swapped = set.textures.iter().chain(set.damage.iter().flat_map(|d| d.swaps.iter()));
+        for (_, t) in swapped.chain(set.states.iter().flat_map(|(_, s)| s.iter())) {
+            if textures_seen.insert((t.clone(), set.pack)) {
+                match content.load_texture(t, set.pack) {
+                    Ok(_) => r.textures += 1,
+                    Err(e) => r.errors.push(format!("model set {}: texture {t}: {e}", set.id)),
+                }
+            }
+        }
+    }
+    let mut pieces_seen = HashSet::new();
+    for d in &rules.debris_sets {
+        for piece in d.pieces.iter().chain(d.chunks.iter()) {
+            if pieces_seen.insert((piece.clone(), d.pack)) {
+                match content.load_model(piece, d.pack, 1.0) {
+                    Ok(_) => r.models += 1,
+                    Err(e) => r.errors.push(format!("debris {}: {piece}: {e}", d.id)),
+                }
             }
         }
     }
