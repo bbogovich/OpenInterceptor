@@ -34,6 +34,11 @@ OPTIONS:
     --screenshot <PNG>  Render the starting screen (with --scenario or --model) for
                         --frames frames (default 120), save it as a PNG and exit
     --frames <N>        Frames to run before --screenshot
+    --soak <SCENARIO>   Play a scenario without a window for --seconds (default 60) and
+                        report what happened to the player (balance testing); the
+                        player is --soak-pilot passive (default) or ai
+    --seconds <N>       Length of a --soak run
+    --soak-pilot <P>    passive or ai
     --write-schemas <DIR>  Write JSON Schema files for the mod file types (pack.yaml,
                         rules, scenarios) for editor completion and checking, then exit
     --check             Validate all content without opening a window, then exit
@@ -60,6 +65,9 @@ pub struct Options {
     pub model: Option<String>,
     pub screenshot: Option<PathBuf>,
     pub write_schemas: Option<PathBuf>,
+    pub soak: Option<String>,
+    pub seconds: Option<f32>,
+    pub soak_ai: bool,
     pub frames: Option<u32>,
     pub check: bool,
     pub extract: Option<PathBuf>,
@@ -88,6 +96,18 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--model" => o.model = Some(value("--model")?),
             "--screenshot" => o.screenshot = Some(PathBuf::from(value("--screenshot")?)),
             "--write-schemas" => o.write_schemas = Some(PathBuf::from(value("--write-schemas")?)),
+            "--soak" => o.soak = Some(value("--soak")?),
+            "--seconds" => {
+                let v = value("--seconds")?;
+                o.seconds = Some(v.parse().map_err(|_| format!("--seconds needs a number, not '{v}'"))?);
+            }
+            "--soak-pilot" => {
+                o.soak_ai = match value("--soak-pilot")?.as_str() {
+                    "ai" => true,
+                    "passive" => false,
+                    other => return Err(format!("--soak-pilot is passive or ai, not '{other}'")),
+                }
+            }
             "--frames" => {
                 let v = value("--frames")?;
                 o.frames = Some(v.parse().map_err(|_| format!("--frames needs a number, not '{v}'"))?);

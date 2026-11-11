@@ -30,6 +30,7 @@ ships:
     beams: [blaster, blaster]
     missiles: {seeker: 4}
     systems+: [ecm]
+    behaviour: guard_pilot
     debris: [models/comet_debris1.obj, models/comet_debris2.obj, models/comet_debris3.obj, models/comet_debris4.obj]
     engine_color: [1.0, 0.55, 0.15]
   meteor:
@@ -55,6 +56,7 @@ ships:
     beams: [heat_ray, heat_ray, blaster, blaster]
     missiles: {seeker: 4, atomic_torpedo: 1}
     systems+: [ecm, damage_control, tractor]
+    behaviour: guard_pilot
     debris: [models/meteor_debris1.obj, models/meteor_debris2.obj, models/meteor_debris3.obj, models/meteor_debris4.obj]
     engine_color: [1.0, 0.55, 0.15]
   thunderbolt:
@@ -81,6 +83,7 @@ ships:
     beams: [disintegrator, disintegrator, heat_ray, heat_ray]
     missiles: {seeker: 4, atomic_torpedo: 3}
     systems+: [ecm, damage_control, tractor, cloak]
+    behaviour: guard_pilot
     debris: [models/thunderbolt_debris1.obj, models/thunderbolt_debris2.obj, models/thunderbolt_debris3.obj, models/thunderbolt_debris4.obj]
     engine_color: [1.0, 0.55, 0.15]
   victory:
@@ -104,6 +107,8 @@ ships:
     energy_recharge: 200
     beams: [disintegrator, disintegrator, disintegrator, disintegrator, heat_ray, heat_ray]
     systems+: [ecm, damage_control]
+    behaviour: gun_platform
+    turret_arc: 150
     debris: [models/victory_debris1.obj, models/victory_debris2.obj, models/victory_debris3.obj, models/victory_debris4.obj, models/victory_debris5.obj]
     engine_color: [1.0, 0.6, 0.2]
   # --- Umbral Dominion saucers and robots -----------------------------------------------
@@ -126,6 +131,7 @@ ships:
     energy_recharge: 50
     vct: true
     beams: [paralyzer_ray]
+    behaviour: saucer_scout
     debris: [models/scout_saucer_debris1.obj, models/scout_saucer_debris2.obj, models/scout_saucer_debris3.obj, models/scout_saucer_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   raider_saucer:
@@ -149,6 +155,7 @@ ships:
     beams: [paralyzer_ray, paralyzer_ray, death_ray]
     missiles: {seeker: 2}
     systems+: [cloak]
+    behaviour: saucer_raider
     debris: [models/raider_saucer_debris1.obj, models/raider_saucer_debris2.obj, models/raider_saucer_debris3.obj, models/raider_saucer_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   dreadnought:
@@ -172,6 +179,8 @@ ships:
     energy_recharge: 150
     beams: [death_ray, death_ray, death_ray, death_ray]
     systems+: [ecm]
+    behaviour: gun_platform
+    turret_arc: 150
     debris: [models/dreadnought_debris1.obj, models/dreadnought_debris2.obj, models/dreadnought_debris3.obj, models/dreadnought_debris4.obj, models/dreadnought_debris5.obj]
     engine_color: [0.5, 1.0, 0.3]
   robot_sentinel:
@@ -193,6 +202,7 @@ ships:
     energy_recharge: 40
     vct: true
     beams: [paralyzer_ray]
+    behaviour: robot
     debris: [models/robot_sentinel_debris1.obj, models/robot_sentinel_debris2.obj, models/robot_sentinel_debris3.obj]
     engine_color: [0.6, 0.8, 1.0]
   grappler:
@@ -215,6 +225,7 @@ ships:
     energy_recharge: 60
     beams: [paralyzer_ray]
     systems+: [tractor]
+    behaviour: tug
     debris: [models/grappler_debris1.obj, models/grappler_debris2.obj, models/grappler_debris3.obj, models/grappler_debris4.obj]
     engine_color: [0.5, 1.0, 0.3]
   cargo_orb:
@@ -244,6 +255,7 @@ ships:
     faction: senate
     playable: false
     systems+: [ecm]
+    behaviour: guard_pilot
     debris: [models/senate_patrol_debris1.obj, models/senate_patrol_debris2.obj, models/senate_patrol_debris3.obj, models/senate_patrol_debris4.obj]
   cartel_freighter:
     name: Cartel freighter
@@ -262,6 +274,8 @@ ships:
     angular_damp: 5
     lock_speed: 500
     beams: [blaster]
+    behaviour: gun_platform
+    turret_arc: 180
     debris: [models/cartel_freighter_debris1.obj, models/cartel_freighter_debris2.obj, models/cartel_freighter_debris3.obj, models/cartel_freighter_debris4.obj, models/cartel_freighter_debris5.obj]
     engine_color: [1.0, 0.7, 0.3]
   prospector_hauler:
@@ -301,5 +315,6 @@ ships:
     energy_recharge: 45
     beams: [blaster, blaster]
     missiles: {seeker: 2}
+    behaviour: raider_hotrod
     debris: [models/hotrod_debris1.obj, models/hotrod_debris2.obj, models/hotrod_debris3.obj]
     engine_color: [1.0, 0.35, 0.1]

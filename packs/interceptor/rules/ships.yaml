@@ -34,6 +34,7 @@ ships:
     systems+: [ecm, damage_control]
     debris: [original:X-SHIPA1, original:X-SHIPA2, original:X-SHIPA3, original:X-SHIPA4]
     engine_color: [0.5, 0.7, 1.0]
+    behaviour: xcom_pilot
   firestar:
     inherit: original:GameSettings.ini/Ship_IntType2
     name: S-2 Firestar
@@ -52,6 +53,7 @@ ships:
     systems+: [ecm, damage_control, tractor]
     debris: [original:X-SHIPB1, original:X-SHIPB2, original:X-SHIPB3, original:X-SHIPB4]
     engine_color: [0.5, 0.7, 1.0]
+    behaviour: xcom_pilot
   avenger:
     inherit: original:GameSettings.ini/Ship_IntType3
     name: M-3 Super Avenger
@@ -74,6 +76,7 @@ ships:
   # --- Aliens ---------------------------------------------------------------------------
   # Alien hulls have no flight values in the original file (they were coded per class);
   # the values here are engine estimates tuned to the documented roles.
+    behaviour: xcom_pilot
   wraith:
     inherit: original:GameSettings.ini/Ship_AlienType1
     name: Wraith
@@ -91,6 +94,7 @@ ships:
     missiles: {elerium_torpedo: 2}
     debris: [original:ASHADC1, original:ASHADC2, original:ASHADC3]
     engine_color: [0.4, 1.0, 0.4]
+    behaviour: wraith
   spectre:
     inherit: original:GameSettings.ini/Ship_AlienType2
     name: Spectre
@@ -108,6 +112,7 @@ ships:
     missiles: {elerium_torpedo: 3}
     debris: [original:ASHADC2, original:ASHADC4]
     engine_color: [0.4, 1.0, 0.4]
+    behaviour: spectre
   phantasm:
     inherit: original:GameSettings.ini/Ship_AlienType3
     name: Phantasm
@@ -125,6 +130,7 @@ ships:
     missiles: {elerium_torpedo: 3}
     debris: [original:ASHADC3, original:ASHADC5]
     engine_color: [0.4, 1.0, 0.4]
+    behaviour: phantasm
   shade:
     inherit: original:GameSettings.ini/Ship_AlienType4
     name: Shade
@@ -144,6 +150,7 @@ ships:
     missiles: {elerium_torpedo: 4}
     debris: [original:ASHADC1, original:ASHADC4]
     engine_color: [0.8, 0.4, 1.0]
+    behaviour: shade
   harbinger:
     inherit: original:GameSettings.ini/Ship_AlienType5
     name: Harbinger
@@ -162,6 +169,7 @@ ships:
     beams: [tachyon_pulser, tachyon_pulser]
     debris: [original:A-TUGCH1, original:A-TUGCH2, original:A-TUGCH3, original:A-TUGCH4]
     engine_color: [0.4, 1.0, 0.4]
+    behaviour: harbinger
   alien_container:
     inherit: original:GameSettings.ini/Ship_AlienType6
     name: Alien Container
@@ -203,6 +211,7 @@ ships:
     beams: [plasma_cannon]
     engine_color: [0.4, 1.0, 0.4]
   # --- Pirates and corporations (same three hulls, different paint) ---------------------
+    behaviour: drone
   pirate_lightning:
     inherit: lightning
     faction: pirate
@@ -210,6 +219,7 @@ ships:
     name: Pirate Lightning II
     model: original:P-TYPEA
     debris: [original:XPIRATA1, original:XPIRATA2, original:XPIRATA3, original:XPIRATA4]
+    behaviour: human_pilot
   pirate_firestar:
     inherit: firestar
     faction: pirate
@@ -217,6 +227,7 @@ ships:
     name: Pirate Firestar
     model: original:P-TYPEB
     debris: [original:XPIRATB1, original:XPIRATB2, original:XPIRATB3, original:XPIRATB4]
+    behaviour: human_pilot
   pirate_avenger:
     inherit: avenger
     faction: pirate
@@ -224,6 +235,7 @@ ships:
     name: Pirate Super Avenger
     model: original:P-AVENGER16
     debris: [original:XPIRATC1, original:XPIRATC3, original:XPIRATC4]
+    behaviour: human_pilot
   rogue_freighter:
     inherit: original:GameSettings.ini/Ship_PirateFreighter
     name: Rogue Freighter
@@ -246,6 +258,7 @@ ships:
     name: Corporate Lightning II
     model: original:CORTYPEA
     debris: [original:XCORPA1, original:XCORPA2, original:XCORPA3, original:XCORPA4]
+    behaviour: human_pilot
   corporate_firestar:
     inherit: firestar
     faction: corporate
@@ -253,6 +266,7 @@ ships:
     name: Corporate Firestar
     model: original:C-TYPEB
     debris: [original:XCORPB1, original:XCORPB2, original:XCORPB3, original:XCORPB4]
+    behaviour: human_pilot
   corporate_avenger:
     inherit: avenger
     faction: corporate
@@ -260,6 +274,7 @@ ships:
     name: Corporate Super Avenger
     model: original:C-AVENGER16
     debris: [original:XCORPC1, original:XCORPC3, original:XCORPC4]
+    behaviour: human_pilot
   xcom_freighter:
     inherit: original:GameSettings.ini/Ship_XCOMFreighter
     name: Star Ranger Freighter

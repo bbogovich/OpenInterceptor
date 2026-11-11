@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# How the Dominion's pilots (and their robots) fly and fight. Skill and fire discipline
+# are given per difficulty level (cadet, ranger, captain, space_ace): at cadet saucers
+# aim badly, react slowly and fire short bursts with long pauses.
+#
+# Docs: Modding > Behaviours (states, transitions, conditions, skill).
+
+behaviours:
+  # Small, slippery saucers: dart in, fire a burst, dodge when hit.
+  saucer_scout:
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: 1.6km
+        fire_cone: 3
+        burst: {per_level: [0.6s, 0.8s, 1s, 1.2s]}
+        pause: {per_level: [2s, 1.6s, 1.2s, 0.9s]}
+        missiles: 0
+      dodge: {do: evade, duration: 2.5s}
+      flee: {do: retreat, jump: false}
+    transitions:
+      - {from: engage, to: dodge, when: "hit_recently(0.3s) and random(0.35)"}
+      - {from: dodge, to: engage, when: "time_in_state > 2.5s"}
+      - {from: "*", to: flee, when: "hull < 15% and difficulty >= captain"}
+    skill:
+      aim: {per_level: [0.15, 0.3, 0.45, 0.6]}
+      reaction: {per_level: [1.4s, 1.0s, 0.8s, 0.55s]}
+
+  # Fighting saucers: steadier, with seeker rockets from ranger up.
+  saucer_raider:
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: 1.8km
+        fire_cone: 3
+        burst: {per_level: [0.8s, 1s, 1.2s, 1.5s]}
+        pause: {per_level: [1.8s, 1.4s, 1.1s, 0.8s]}
+        missiles: {per_level: [0, 14s, 11s, 8s]}
+      dodge: {do: evade, duration: 2s}
+      flee: {do: retreat, jump: true}
+    transitions:
+      - {from: engage, to: dodge, when: "hit_recently(0.3s) and random(0.25)"}
+      - {from: dodge, to: engage, when: "time_in_state > 2s"}
+      - {from: "*", to: flee, when: "hull < 20% and difficulty >= ranger"}
+    skill:
+      aim: {per_level: [0.2, 0.35, 0.5, 0.65]}
+      reaction: {per_level: [1.2s, 0.9s, 0.7s, 0.5s]}
+
+  # Tin-can robots: reckless and inaccurate.
+  robot:
+    states:
+      engage:
+        do: attack
+        range: 1.4km
+        fire_cone: 4
+        burst: 0.8s
+        pause: {per_level: [2s, 1.6s, 1.2s, 1s]}
+        missiles: 0
+    skill:
+      aim: {per_level: [0.1, 0.2, 0.3, 0.45]}
+      reaction: {per_level: [1.5s, 1.2s, 0.9s, 0.7s]}
+
+  # The Dreadnought disc and other gun platforms: turrets that track targets.
+  gun_platform:
+    states:
+      guns:
+        do: turret
+        range: 2.6km
+        burst: {per_level: [1s, 1.2s, 1.5s, 2s]}
+        pause: {per_level: [2.5s, 2s, 1.5s, 1s]}
+    skill:
+      aim: {per_level: [0.25, 0.4, 0.55, 0.7]}
+      reaction: {per_level: [1.2s, 1s, 0.8s, 0.6s]}
+
+  # Grappler tugs: drag off disabled rockets; fight back when shot at.
+  tug:
+    start: work
+    states:
+      work: {do: tow, range: 6km}
+      fight: {do: attack, range: 1.2km, burst: 0.8s, pause: 2s, missiles: 0}
+    transitions:
+      - {from: work, to: fight, when: "not prize_near(6km) and threats(1.5km) > 0"}
+      - {from: fight, to: work, when: "prize_near(6km)"}
+    skill: {aim: 0.3, reaction: 1s}
+
+  # Black Comet hot-rods: fast and wild.
+  raider_hotrod:
+    states:
+      engage:
+        do: attack
+        range: 1.5km
+        fire_cone: 4
+        burst: 1s
+        pause: {per_level: [1.8s, 1.5s, 1.2s, 1s]}
+        missiles: {per_level: [0, 0, 16s, 12s]}
+      dodge: {do: evade, duration: 2s}
+    transitions:
+      - {from: engage, to: dodge, when: "hit_recently(0.3s) and random(0.2)"}
+      - {from: dodge, to: engage, when: "time_in_state > 2s"}
+    skill:
+      aim: {per_level: [0.15, 0.3, 0.4, 0.55]}
+      reaction: {per_level: [1.3s, 1s, 0.8s, 0.6s]}
+
+  # The Guard's own pilots (wingmen and allied patrols): steady and loyal.
+  guard_pilot:
+    states:
+      engage: {do: attack, range: 1.8km, fire_cone: 3, burst: 1.2s, pause: 0.8s, missiles: 10s}
+    skill: {aim: 0.55, reaction: 0.7s}

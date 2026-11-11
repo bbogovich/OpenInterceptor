@@ -4,7 +4,7 @@
 //! `--list`, `--check`), otherwise open the window and hand over to the testbed app.
 //! All real work lives in the library crate (`src/lib.rs`).
 
-use openinterceptor::{app, check, cli, content::Content, extract};
+use openinterceptor::{app, check, cli, content::Content, extract, soak};
 
 /// Window settings.
 fn window_conf(fullscreen: bool) -> macroquad::conf::Conf {
@@ -47,7 +47,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
         }
         return Some(0);
     }
-    if !(options.check || options.list || options.extract.is_some()) {
+    if !(options.check || options.list || options.extract.is_some() || options.soak.is_some()) {
         return None;
     }
     let content = match Content::load(&options.content_config()) {
@@ -65,6 +65,26 @@ fn headless(options: &cli::Options) -> Option<i32> {
                 }
                 println!("extract: {} -> {}", r.summary(), out.display());
                 i32::from(!r.errors.is_empty())
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                1
+            }
+        });
+    }
+    if let Some(sc) = &options.soak {
+        let pilot = if options.soak_ai { soak::SoakPilot::Ai } else { soak::SoakPilot::Passive };
+        let seconds = options.seconds.unwrap_or(60.0);
+        return Some(match soak::run(&content, sc, options.ship.as_deref(), seconds, pilot) {
+            Ok(r) => {
+                let level = content.rules.difficulty_levels.get(content.rules.difficulty).cloned().unwrap_or_default();
+                println!(
+                    "soak {sc} ({}, {level}, {}): {}",
+                    options.ship.as_deref().unwrap_or("scenario ship"),
+                    if options.soak_ai { "ai" } else { "passive" },
+                    r.summary()
+                );
+                0
             }
             Err(e) => {
                 eprintln!("error: {e}");

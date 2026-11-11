@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# AI behaviours for X-COM: Interceptor. The original's AI is hard-coded; these
+# definitions are DERIVED from the strategy guide's descriptions of each class (Wraiths
+# are agile and evasive, Phantasms lead heavy-beam assaults, Harbingers tow disabled
+# ships, drones are fast and reckless) and tuned in the testbed. Values per level run
+# beginner, experienced, veteran, genius, superhuman.
+
+behaviours:
+  wraith:
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: 1.6km
+        fire_cone: 3
+        burst: {per_level: [0.6s, 0.8s, 1s, 1.2s, 1.5s]}
+        pause: {per_level: [2s, 1.6s, 1.2s, 0.9s, 0.6s]}
+        missiles: {per_level: [0, 0, 14s, 11s, 8s]}
+      jink: {do: evade, duration: 2s}
+      flee: {do: retreat, jump: true}
+    transitions:
+      - {from: engage, to: jink, when: "hit_recently(0.3s) and random(0.4)"}
+      - {from: jink, to: engage, when: "time_in_state > 2s"}
+      - {from: "*", to: flee, when: "hull < 15% and difficulty >= veteran"}
+    skill:
+      aim: {per_level: [0.2, 0.35, 0.5, 0.65, 0.8]}
+      reaction: {per_level: [1.3s, 1s, 0.8s, 0.6s, 0.4s]}
+
+  spectre:
+    inherit: wraith
+    states:
+      engage:
+        missiles: {per_level: [0, 14s, 11s, 9s, 7s]}
+
+  phantasm:
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: 2km
+        fire_cone: 3
+        burst: {per_level: [1s, 1.2s, 1.5s, 1.8s, 2.2s]}
+        pause: {per_level: [2s, 1.6s, 1.2s, 1s, 0.7s]}
+        missiles: {per_level: [0, 16s, 12s, 10s, 8s]}
+    skill:
+      aim: {per_level: [0.25, 0.4, 0.55, 0.7, 0.85]}
+      reaction: {per_level: [1.2s, 1s, 0.8s, 0.6s, 0.45s]}
+
+  # Elite Aereon pilots.
+  shade:
+    inherit: phantasm
+    states:
+      engage:
+        fire_cone: 2
+      jink: {do: evade, duration: 1.5s}
+    transitions:
+      - {from: engage, to: jink, when: "hit_recently(0.3s) and random(0.5)"}
+      - {from: jink, to: engage, when: "time_in_state > 1.5s"}
+    skill:
+      aim: {per_level: [0.35, 0.5, 0.65, 0.8, 0.9]}
+      reaction: {per_level: [1s, 0.8s, 0.6s, 0.45s, 0.3s]}
+
+  # Tows cargo and tries to capture disabled ships (guide).
+  harbinger:
+    start: work
+    states:
+      work: {do: tow, range: 6km}
+      fight: {do: attack, range: 1.2km, burst: 0.8s, pause: 2s, missiles: 0}
+    transitions:
+      - {from: work, to: fight, when: "not prize_near(6km) and threats(1.5km) > 0"}
+      - {from: fight, to: work, when: "prize_near(6km)"}
+    skill: {aim: 0.3, reaction: 1s}
+
+  drone:
+    states:
+      engage:
+        do: attack
+        range: 1.4km
+        fire_cone: 4
+        burst: 1s
+        pause: {per_level: [1.8s, 1.5s, 1.2s, 1s, 0.8s]}
+        missiles: 0
+    skill:
+      aim: {per_level: [0.1, 0.2, 0.3, 0.45, 0.6]}
+      reaction: {per_level: [1.5s, 1.2s, 0.9s, 0.7s, 0.5s]}
+
+  # Pirates and corporate pilots fly the same human hulls.
+  human_pilot:
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: 1.8km
+        fire_cone: 3
+        burst: 1.2s
+        pause: {per_level: [1.8s, 1.4s, 1.1s, 0.9s, 0.7s]}
+        missiles: {per_level: [0, 15s, 12s, 10s, 8s]}
+      flee: {do: retreat, jump: true}
+    transitions:
+      - {from: "*", to: flee, when: "hull < 25%"}
+    skill:
+      aim: {per_level: [0.2, 0.35, 0.5, 0.6, 0.7]}
+      reaction: {per_level: [1.2s, 1s, 0.8s, 0.65s, 0.5s]}
+
+  # X-COM wingmen.
+  xcom_pilot:
+    states:
+      engage: {do: attack, range: 1.8km, fire_cone: 3, burst: 1.2s, pause: 0.8s, missiles: 10s}
+    skill: {aim: 0.55, reaction: 0.7s}
