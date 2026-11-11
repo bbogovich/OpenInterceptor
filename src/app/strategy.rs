@@ -344,8 +344,13 @@ impl StrategyScreen {
                         .map(|p| p.name.clone())
                         .unwrap_or("no pilot".into());
                     let state = if cr.away.is_some() { " (away)" } else { "" };
+                    let fit: Vec<&str> = cr.fit.iter().map(|(_, i)| def.items[*i].name.as_str()).collect();
+                    let fit = if fit.is_empty() { "standard fit".to_string() } else { fit.join(", ") };
                     rows.push((
-                        format!("{} at {} - {pilot}{state}", cr.name, c.bases[cr.base].name),
+                        format!(
+                            "{} at {} - {pilot}{state} [{fit}] (Enter: pilot, F: fit best)",
+                            cr.name, c.bases[cr.base].name
+                        ),
                         Act::AssignPilot(k),
                     ));
                 }
@@ -453,7 +458,8 @@ impl StrategyScreen {
                 if let (Some(&k), Some(r)) = (party.first(), raid) {
                     self.flying = Some(PendingBattle { contact: id });
                     let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
-                    return Next::CampaignBattle { mission: def.raids[r].mission.clone(), ship: Some(ship) };
+                    let loadout = self.campaign.loadout(def, k);
+                    return Next::CampaignBattle { mission: def.raids[r].mission.clone(), ship: Some(ship), loadout };
                 }
             } else if is_key_pressed(KeyCode::Escape) {
                 self.battle = None;
@@ -511,6 +517,12 @@ impl StrategyScreen {
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
                 if let Some((_, a)) = rows.get(self.row) {
                     self.act(def, *a);
+                }
+            }
+            if is_key_pressed(KeyCode::F) && self.tab == Tab::Hangar {
+                if let Some((_, Act::AssignPilot(k))) = rows.get(self.row) {
+                    let r = self.campaign.fit_best(def, *k);
+                    self.say(r.unwrap_or_else(|e| e));
                 }
             }
             if is_key_pressed(KeyCode::S) && self.tab == Tab::Market {

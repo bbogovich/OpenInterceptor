@@ -17,9 +17,9 @@ items:
   heat_ray: {name: Heat ray, kind: beam, cost: 90000, sell_price: 45000, prod_time: 600}
   ion_ray: {name: Ion ray, kind: beam, cost: 150000, sell_price: 75000, prod_time: 900}
   disintegrator: {name: Disintegrator, kind: beam, cost: 260000, sell_price: 130000, prod_time: 1400}
-  seeker: {name: Seeker rocket, kind: missile, cost: 6000, sell_price: 3000, prod_time: 40, size: 0.2}
-  atomic_torpedo: {name: Atomic torpedo, kind: missile, cost: 30000, sell_price: 15000, prod_time: 150, size: 0.5}
-  cluster_rocket: {name: Cluster rocket, kind: missile, cost: 22000, sell_price: 11000, prod_time: 120, size: 0.4}
+  seeker: {name: Seeker rocket, kind: missile, cost: 6000, sell_price: 3000, prod_time: 40, size: 0.2, rounds: 4}
+  atomic_torpedo: {name: Atomic torpedo, kind: missile, cost: 30000, sell_price: 15000, prod_time: 150, size: 0.5, rounds: 2}
+  cluster_rocket: {name: Cluster rocket, kind: missile, cost: 22000, sell_price: 11000, prod_time: 120, size: 0.4, rounds: 3}
   cosmium: {name: Cosmium, kind: goods, cost: 0, sell_price: 9000, size: 0.1}
 
 hulls:

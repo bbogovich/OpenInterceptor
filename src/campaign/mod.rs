@@ -1046,6 +1046,57 @@ impl Campaign {
         }
     }
 
+    /// Fits a craft with the best equipment in its base's store, slot by slot: for each
+    /// slot kind the hull has (`beam`, `missile`, …), the costliest item of that kind
+    /// available, as many as there are slots (a missile slot takes `rounds` of its
+    /// missile). What was fitted before goes back into the store first.
+    pub fn fit_best(&mut self, def: &StrategyDef, k: usize) -> Result<String, String> {
+        let base = self.craft[k].base;
+        for (_, item) in std::mem::take(&mut self.craft[k].fit) {
+            self.add_stock(base, item, def.items[item].rounds);
+        }
+        let mut fitted = Vec::new();
+        for (slot, count) in def.hulls[self.craft[k].hull].slots.clone() {
+            for _ in 0..count {
+                // The best item of this slot's kind with enough in store.
+                let best = self.bases[base]
+                    .stock
+                    .iter()
+                    .filter(|(i, n)| def.items[*i].kind == slot && *n >= def.items[*i].rounds)
+                    .max_by(|a, b| def.items[a.0].cost.total_cmp(&def.items[b.0].cost))
+                    .map(|(i, _)| *i);
+                let Some(i) = best else { break };
+                self.take_stock(base, i, def.items[i].rounds);
+                self.craft[k].fit.push((slot.clone(), i));
+                fitted.push(def.items[i].name.clone());
+            }
+        }
+        if fitted.is_empty() {
+            return Err("nothing in store fits this craft".into());
+        }
+        Ok(format!("{} fitted: {}", self.craft[k].name, fitted.join(", ")))
+    }
+
+    /// A craft's weapons for battle: beam item ids (one per fitted beam slot) and
+    /// missile item ids with their rounds. Empty when nothing is fitted (the class's own
+    /// weapons are flown then).
+    pub fn loadout(&self, def: &StrategyDef, k: usize) -> (Vec<String>, Vec<(String, u32)>) {
+        let mut beams = Vec::new();
+        let mut missiles: Vec<(String, u32)> = Vec::new();
+        for (slot, i) in &self.craft[k].fit {
+            let it = &def.items[*i];
+            match slot.as_str() {
+                "beam" => beams.push(it.id.clone()),
+                "missile" => match missiles.iter_mut().find(|(id, _)| *id == it.id) {
+                    Some((_, n)) => *n += it.rounds,
+                    None => missiles.push((it.id.clone(), it.rounds)),
+                },
+                _ => {}
+            }
+        }
+        (beams, missiles)
+    }
+
     /// Assigns a pilot to a craft (a craft has one pilot).
     pub fn assign(&mut self, pilot: usize, craft: Option<usize>) {
         if let Some(c) = craft {
@@ -1185,6 +1236,21 @@ mod tests {
         // A second base: within reach of a system with no base.
         c.build_base(&d, 0, 1, "Outpost").unwrap();
         assert!(c.build_base(&d, 0, 1, "Again").is_err(), "one base per system");
+    }
+
+    #[test]
+    fn craft_are_fitted_from_the_store_and_fly_their_loadout() {
+        let (d, mut c) = sample();
+        let laser = d.item("laser").unwrap();
+        // Two lasers in store, the rocket has two beam slots.
+        let msg = c.fit_best(&d, 0).unwrap();
+        assert!(msg.contains("Laser") || msg.contains("laser"), "{msg}");
+        assert_eq!(c.stock_of(laser), 0);
+        assert_eq!(c.loadout(&d, 0), (vec!["laser".to_string(), "laser".to_string()], vec![]));
+        assert!(c.fit_best(&d, 1).is_err(), "nothing left for the second craft");
+        // Refitting returns the old fit first.
+        c.fit_best(&d, 0).unwrap();
+        assert_eq!(c.craft[0].fit.len(), 2);
     }
 
     #[test]

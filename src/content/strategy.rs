@@ -231,6 +231,8 @@ pub struct Item {
     pub prod_time: f32,
     pub size: f32,
     pub requires: Option<Expr>,
+    /// A missile: rounds one missile slot holds (fitting takes this many from store).
+    pub rounds: u32,
 }
 
 /// `hulls.<id>`: the strategy side of a ship class (same id).
@@ -578,6 +580,7 @@ impl StrategyDef {
                 prod_time: g.num("prod_time").unwrap_or(0.0),
                 size: g.num("size").unwrap_or(1.0),
                 requires: cond(g.str("requires"), &format!("items.{id}.requires"), errors),
+                rounds: g.num("rounds").unwrap_or(1.0).max(1.0) as u32,
             })
             .collect();
         let hulls: Vec<Hull> = of(defs, "hulls")
@@ -944,6 +947,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("prod_time", Ty::Num, "work units to manufacture (0: bought only)"),
                 f("size", Ty::Num, "storage space"),
                 f("requires", expr(), "available when this holds"),
+                f("rounds", Ty::Num, "missiles: rounds one missile slot holds"),
             ])),
             "equipment and goods",
         ),

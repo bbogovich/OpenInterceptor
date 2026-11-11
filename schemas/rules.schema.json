@@ -587,6 +587,7 @@
           "prod_time": {"description": "work units to manufacture (0: bought only)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "size": {"description": "storage space", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "requires": {"description": "available when this holds", "type": "string"},
+          "rounds": {"description": "missiles: rounds one missile slot holds", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

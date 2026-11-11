@@ -113,6 +113,37 @@ pub const WING_MENU: [(&str, Command); 6] = [
 /// line (a status report has one per wingman).
 /// A clip of `line` from the voice of one of the player's wingmen (`except` excluded),
 /// for the radio: the first wingman with a voice set that has the line. `pick` chooses
+/// The campaign loadout on a battle's world (see [`FlightSession::apply_loadout`]).
+pub fn apply_loadout(world: &mut World, player: ShipId, beams: &[String], missiles: &[(String, u32)]) {
+    let Some(class) = world.get(player).map(|s| s.class) else { return };
+    let rules = std::sync::Arc::make_mut(&mut world.rules);
+    let beam_ids: Vec<_> = beams
+        .iter()
+        .filter_map(|b| rules.beams.iter().position(|x| &x.id == b))
+        .map(|i| crate::content::rules::BeamId(i as u16))
+        .collect();
+    let racks: Vec<_> = missiles
+        .iter()
+        .filter_map(|(m, n)| {
+            rules.missiles.iter().position(|x| &x.id == m).map(|i| (crate::content::rules::MissileId(i as u16), *n))
+        })
+        .collect();
+    if !beam_ids.is_empty() {
+        rules.ships[class.0 as usize].beams = beam_ids;
+    }
+    let mounts = rules.ships[class.0 as usize].beams.len();
+    for s in world.ships.iter_mut().filter(|s| s.alive && s.class == class) {
+        s.beam_cooldown = vec![0.0; mounts];
+        s.next_mount = 0;
+    }
+    if let Some(me) = world.get_mut(player) {
+        if !racks.is_empty() {
+            me.missiles = racks;
+            me.selected_rack = 0;
+        }
+    }
+}
+
 /// among its clips.
 pub fn wingman_voice(world: &World, player: ShipId, except: Option<ShipId>, line: &str, pick: usize) -> Option<u32> {
     world.ships.iter().enumerate().find_map(|(i, s)| {
@@ -318,6 +349,18 @@ impl FlightSession {
     /// [`crate::mission::MissionRun`]).
     pub fn start_mission(ctx: &mut AppContext, id: &str, ship: Option<&str>) -> Result<FlightSession, String> {
         Self::start_battle(ctx, id, ship, true)
+    }
+
+    /// Fits the player's craft with a campaign loadout (Stage 4.7): `beams` are beam ids
+    /// (one per mount) and `missiles` missile ids with rounds. Ids that are not beams or
+    /// missiles of this campaign are skipped; with no beams the class's own are kept.
+    ///
+    /// Beams belong to the ship *class*, so the class is changed in this battle's own
+    /// copy of the rules (`Arc::make_mut` copies the shared ruleset the first time it is
+    /// changed) — the content everyone else uses is untouched. Other craft of the same
+    /// class in this battle (wingmen) fly the same fit.
+    pub fn apply_loadout(&mut self, beams: &[String], missiles: &[(String, u32)]) {
+        apply_loadout(&mut self.world, self.player, beams, missiles);
     }
 
     /// Starts a mission from a ready-made definition: the simulator's modified copy.
@@ -1343,6 +1386,26 @@ mod tests {
         assert!(c.yaw > 0.0 && c.pitch > 0.25 && c.distance < 3.2);
         c.apply(&ChaseInput { reset: true, ..Default::default() }, 0.0);
         assert_eq!(c, ChaseOrbit::default());
+    }
+
+    #[test]
+    fn a_campaign_loadout_refits_the_players_class_in_this_battle_only() {
+        let mut w = crate::sim::test_support::world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, glam::Quat::IDENTITY, crate::sim::Pilot::External);
+        let shared = w.rules.clone();
+        let beam = w.rules.beams[0].id.clone();
+        let missile = w.rules.missiles[0].id.clone();
+        apply_loadout(&mut w, me, &[beam.clone(), beam.clone(), beam], &[(missile, 7), ("nope".into(), 3)]);
+        assert_eq!(w.rules.ship(f).beams.len(), 3, "three beam mounts now");
+        assert_eq!(w.get(me).unwrap().beam_cooldown.len(), 3);
+        assert_eq!(w.get(me).unwrap().missiles, vec![(crate::content::rules::MissileId(0), 7)], "unknown ids skipped");
+        assert_eq!(shared.ship(f).beams.len(), 2, "the shared rules are untouched");
+        // An empty loadout keeps the class's own weapons.
+        let mut w2 = crate::sim::test_support::world();
+        let me2 = w2.spawn(f, FactionId(0), "me", Vec3::ZERO, glam::Quat::IDENTITY, crate::sim::Pilot::External);
+        apply_loadout(&mut w2, me2, &[], &[]);
+        assert_eq!(w2.rules.ship(f).beams.len(), 2);
     }
 
     #[test]
