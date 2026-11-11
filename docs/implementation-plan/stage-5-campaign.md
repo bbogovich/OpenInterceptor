@@ -22,7 +22,7 @@ Design: [campaign and game flow](../design/format-campaign.md),
 | 5.8 | `interceptor`: the Doomsday arc (five messages and their gates), the Doomsday plan per difficulty, MacArthur and the final mission, the seven side missions, the alien strategist from `Think.ini` and the guide, news and report triggers | `packs/interceptor` |
 | 5.9 | `default`: the 12-chapter serial arc with progress-based triggers, the Eclipse Engine plan, the Dominion strategist, dynamic relations among the six factions (Senate, Cartel, Prospectors, raiders), chapter title cards (plain), narrator text | `packs/default` |
 | 5.10 | Fidelity: the [open items](../design/coverage.md#open-items-data-the-original-keeps-in-code) closed or recorded as *derived* | `packs/interceptor`, docs |
-| 5.11 | **Rival logistics** (default campaign): the Dominion strategist builds mines and ships cosmium by convoy (the Eclipse Engine shipments use the same convoys), raids the Guard's supply lanes and strikes facilities under construction; third-party convoys (Prospectors, Cartel) with relation effects | `campaign::strategist`, `packs/default` |
+| 5.11 | **Rival logistics** (default campaign): the Dominion's mines, cosmium shipments (the Eclipse Engine's convoys) and **supply depots** storing captured cargo (the player seizes a destroyed depot's stock); raids on the Guard's lanes and strikes on facilities under construction; **third-party convoys**: Prospector expeditions (to a system under investigation, pause, home) and Cartel runs to random destinations, with relation effects | `campaign::strategist`, `packs/default` |
 
 **Testbed adds**: an event and arc debugger (fire events, set flags and plan progress, view
 relations), and campaign start-at-chapter for the default campaign.

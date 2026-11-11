@@ -112,6 +112,8 @@ stateDiagram-v2
 | `base-assault` | interceptor | An alien base with plasma gun pods and shield pods; two wingmen. |
 | `outpost-strike` | default | A Dominion outpost with death-ray pods and a shield pod: shields drop with the pod, the pods die with the hub. |
 | `probe-net` | both | A friendly sensor probe 7 km ahead shows enemies on your radar early; a hostile jamming probe on the way halves your radar range and slows locks until you shoot it down. |
+| `construction-defence` | default | A research station at 60 % (`state: build_60`, protected, no guns yet) and a manufacturing frame at 25 %; Dominion raiders try to wreck them. |
+| `convoy-ambush` | default | Escort two cargo clippers (protected) from the mining facility while Black Comet hot-rods and a saucer pounce; a lost clipper loses its cargo. |
 
 The Stage 1 `sample-arena` scenario (pack `sample`) was retired when the `sample` pack became
 the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.

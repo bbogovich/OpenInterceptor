@@ -45,7 +45,7 @@ maps:
 
 ### Sensors and probes
 
-*Survey probes* that report a system's deposits and facility suitability are designed on
+*Survey probes* (range: the launching station's radar range) that report a system's deposits and facility suitability are designed on
 [Logistics](logistics.md#survey-probes). Battle probes (`probe: {sensors, jamming}`) are
 implemented ([Stations, modules and probes](../modding/stations.md#probes)).
 
@@ -163,12 +163,14 @@ evaluations:
 | `deliveries` | How goods arrive | Outpost freighters (100 CSU; lost with cargo) | Supply rocket |
 | `storage` | Units and limits | CSU; cargo module 1000; full = no orders, loot jettisoned | Same rule |
 
-**Logistics (default campaign, planned).** Resources with deposits per system, three
-production facility types (mining facility, research station, manufacturing center), time-based
-extraction and recipes, supply convoys on the lanes that can be ambushed, survey probes, site-
-specific research branches and fighter assignment are designed on
+**Logistics (default campaign, planned).** Resources with deposits per system, three production
+facility types (mining facility, research station, manufacturing center), a demand-driven order
+chain (main base ← manufacturing ← mining) with time-based extraction and recipes, automatic
+government supply ships on fixed lanes with a 25 % ambush roll at launch, enemy supply depots,
+survey probes, site-specific research branches and facility fighter pools are designed on
 [Logistics: facilities and supply lines](logistics.md). A campaign that leaves those sections out
-keeps the simpler `deliveries` model above (as `interceptor` does).
+keeps the simpler `deliveries` model above — as `interceptor` does, by decision, to stay faithful
+to the original.
 
 Item economy keys go on the items themselves: `cost`, `sell_price`, `prod_time` (0 = bought off
 the shelf), `size` (storage), `maintenance`, `requires`.

@@ -96,29 +96,37 @@ recognition (funding at 0 for 60 days).
 ## Logistics: mines, research stations and foundries (planned)
 
 The user has asked for the default campaign's strategy layer to run on **supply lines**
-([design](logistics.md)):
+([design](logistics.md); decisions recorded 2026-11-11):
 
 - **New base types**: mining facility, research station, manufacturing center, built in star
   systems according to their resources; research stations only in systems meeting a research
   site's criteria (a nebula, a pulsar…).
-- **Resources** mined over time (cosmium first) supply research stations and manufacturing
-  centers; manufacturing is time-based by recipe.
-- **Supply ships** carry resources from mines to foundries and research stations, and products
-  from foundries to the Guard's bases, dispatched when the deliverables are ready. The Dominion
-  and the raiders ambush them; a destroyed or captured convoy never delivers.
+- **Supply and demand**: the main base orders components (for fighters and other technology)
+  from manufacturing centers; manufacturing orders materials from mining facilities; nothing is
+  produced until its materials have arrived. Resources and components are campaign data.
+- **Supply ships** are automatic, provided by the government, and travel the fixed lanes. Each
+  launch has a 25 % chance of an ambush at a random point on its route; destroyed cargo is lost,
+  captured cargo goes to the Dominion's supply depots (destroy a depot to seize it).
 - **Research stations** open tech branches that ordinary bases cannot research (for example
-  theremin shielding at a nebula lab).
-- **Survey probes** (the Sky-Eye) are sent from a base to nearby systems to find which station
-  types they suit.
-- **Fighters** can be assigned to the new facilities, defending them and escorting their convoys.
-- **Construction** takes time and passes through construction stages, each with its own model
-  (scaffold, frame, cladding); the Dominion may try to destroy a facility before it is finished.
+  theremin shielding at a nebula lab); materials are needed only to begin a project.
+- **Survey probes** (the Sky-Eye) are sent to systems within the base's radar range to find
+  which station types they suit.
+- **Fighters** are built at main bases and transferred to a facility's own pool, defending it
+  and escorting its supply ships.
+- **Construction** takes time and passes through three construction stages, each with its own
+  mesh and debris (implemented: `build_25`, `build_60`, `build_90`); from 50 % the Dominion may
+  attack a facility under construction, at most three times per location.
+- **Third-party convoys**: Prospectors fly expeditions (to a system, pause, home); the Cartel's
+  destinations are random, even uncharted stars.
 
 This fits the premise — both sides race to mine the belts — and gives the Escort and Convoy raid
 mission types a strategic cause. The Regent's Eclipse Engine shipments use the same convoys.
 Owners: Stage 4 (economy and logistics), Stage 3 (convoy-ambush and construction-defence
-missions), Stage 5 (the Dominion's use of supply lines); the generator will produce the stage
-models. Open questions are listed on the [design page](logistics.md#open-questions).
+missions), Stage 5 (the Dominion's depots and third-party convoys). Already built in Stage 2: the
+facility and supply-craft objects, their construction-stage models and debris, and the
+`construction-defence` and `convoy-ambush` testbed arenas. Still open: supply-ship cargo
+capacity ([design page](logistics.md#open-questions)). The `interceptor` campaign stays without
+logistics.
 
 ## Content at a glance
 

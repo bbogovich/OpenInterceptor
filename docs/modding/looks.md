@@ -41,7 +41,7 @@ The Stage 1 keys still work: a class with `model:` (and `debris:` as a list of p
 | `intact` | The normal model, with all its LODs (`models/x.obj` or `original:MESH`); `scale` converts model units to metres. |
 | `textures` | Swaps always applied: `texture name: replacement`. |
 | `damage` | A list of levels, each `{below: <hull fraction>, textures: {…}}`. Every level the hull is below applies, in order, so the worst level wins where two swap the same texture. |
-| `states` | Named conditions with their own swaps: `building` (construction, later stages), `destroyed` (see below). |
+| `states` | Named conditions, each with `textures` swaps, optionally its own **`model`** (a mesh replacing the intact one in that state; collision keeps the intact shape) and its own **`debris`** set: construction stages (`build_25`, `build_60`, `build_90`), `destroyed` (see below). A scenario object shows a state with `state:`. |
 | `debris` | The debris set thrown when the object is destroyed. |
 | `destroyed_effect` | The effect of its explosion (default: the engine's `explosion`). |
 
@@ -57,6 +57,25 @@ vanish when it is destroyed: it stays mounted on its station as a wreck drawn wi
 
 The renderer loads each distinct combination of swaps once and caches it, so damage levels cost
 nothing per frame.
+
+**Construction stages.** The default campaign's facilities (mining facility, research station,
+manufacturing center) and the Guard station have three construction stages, each a state with
+its own mesh and debris:
+
+```yaml
+modelsets:
+  mining_facility:
+    intact: models/mining_facility.obj
+    states:
+      build_25: {model: models/mining_facility_build1.obj, debris: mining_facility_build1}
+      build_60: {model: models/mining_facility_build2.obj, debris: mining_facility_build2}
+      build_90: {model: models/mining_facility_build3.obj, debris: mining_facility_build3}
+```
+
+A scenario places a station in a stage with `state: build_60`; **an object placed in a state has
+no modules and no point defence** (it is not finished). The strategy layer will pick the stage
+from build progress ([Logistics](../design/logistics.md#construction-stages-as-model-set-states)).
+`--check` loads every state mesh, and the viewer's **D** shows them.
 
 ## Debris sets
 

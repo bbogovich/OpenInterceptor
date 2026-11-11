@@ -54,6 +54,8 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
   with the station's faction, named `<station>.<n>`. A module class with a `behaviour` fights
   (a `turret` behaviour aims its swivelling beams within `turret_arc`); one without sits idle.
   Modules may carry modules of their own (up to five levels deep).
+- **Unfinished stations.** A station placed with `state:` (a construction stage) spawns **no
+  modules** and fires no point defence.
 - **Following.** Every tick each module is placed back on its hub's attachment point, so it
   moves and turns with the station.
 - **Shield generators.** A station with `shield_generator` modules keeps its shields only while

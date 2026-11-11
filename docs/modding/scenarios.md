@@ -35,6 +35,7 @@ type and default: [Mod file reference › scenario files](reference.md#scenario-
 | `protect` | `true` marks an **objective to protect**: shown in the objective colour with a radar ring and a PROTECT label, and skipped by nearest-enemy targeting. Use it on a capture target so it is not shot by accident. |
 | `hull` | Starting hull fraction (`40%` or `0.4`). |
 | `behaviour` | A behaviour id to fly instead of the class's ([Behaviours](behaviours.md)) — an ambush, a guard that only patrols. |
+| `state` | Show the object in a model-set state, e.g. a construction stage (`state: build_60`); such an object has no modules or point defence ([Looks](looks.md#model-sets)). |
 
 ## Example
 

@@ -194,7 +194,7 @@ A state:
 | `scale` | number | 1 | Model units to metres. |
 | `textures` | mapping texture name: asset | none | Swaps always applied. |
 | `damage` | list of `{below, textures}` | none | Damage levels: while the hull is below `below` (a fraction), its swaps apply; cumulative, the worst level wins. |
-| `states` | mapping state: `{textures}` | none | Named conditions: `destroyed` (a mounted module's wreck), `building` (later stages). |
+| `states` | mapping state: `{model, debris, textures}` | none | Named conditions: construction stages (`build_25` …), `destroyed` (a mounted module's wreck). `model` replaces the intact mesh in that state; `debris` is the debris set used when destroyed in that state; `textures` swaps. |
 | `debris` | id | none | Debris set thrown when destroyed. |
 | `destroyed_effect` | id | `explosion` | Effect of its explosion. |
 
@@ -316,3 +316,4 @@ An object:
 | `protect` | bool | false | An objective the player must keep alive: drawn in the `objective` radar colour with a ring, labelled PROTECT on the target brackets and the MFD, and never picked by "nearest enemy" (R) for the player or the player's wingmen. T can still select it. |
 | `hull` | fraction | 100 % | Starting hull. |
 | `behaviour` | id | the class's | Behaviour to fly instead of the class's. |
+| `state` | id | none | Model-set state to show it in (a construction stage such as `build_60`); an object placed in a state gets no modules or point defence. |
