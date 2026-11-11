@@ -1,5 +1,5 @@
 ---
-spec_version: 1.9.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -82,7 +82,7 @@ A mod that builds on another pack is an **extension**: the other pack is its bas
 
 ### F-MOD-005 Conditions, actions and scripting
 
-**What.** Behaviours, missions and campaign rules use a small checked language of conditions and actions; a second-tier script language is to be decided.
+**What.** Behaviours, missions and campaign rules use a small checked language of conditions and actions; a second-tier script language is to be decided (evaluation recorded in 1.12.0, awaiting the user's decision).
 
 **Why.** Rules that depend on the situation, without code changes.
 
@@ -213,3 +213,4 @@ The first test case for the mod tools is exactly this: a mod extending `intercep
 | 1.0.0 | 2026-11-11 | Bootstrap: F-MOD-001 – F-MOD-008 (8 features) |
 | 1.7.0 | 2026-11-11 | F-MOD-009 – F-MOD-013 (planned): Mod Designer, Cutscene Designer, cutscenes in the game, video cutscenes, shared formations (user request and decisions D1–D5) |
 | 1.9.0 | 2026-11-11 | F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned), from the user's message of 2026-11-11. F-MOD-001: packs (built into the game) versus mods (added from the user's mods folder), the term *extension*, Open note on where the line falls. F-MOD-009: the wizard's kind is *extension*, not *override* |
+| 1.12.0 | 2026-11-11 | F-MOD-005: the Tier 2 evaluation is recorded on the dependency page (R-MOD-015); awaiting the user's decision |

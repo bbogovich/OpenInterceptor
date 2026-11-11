@@ -101,7 +101,7 @@ Ship keys that tune it (every ship class; [reference](reference.md#ships-and-obj
 | `atmosphere_max_speed` | 60 % of `max_speed` | Top speed in air of density 1, m/s. |
 | `lift` | 120 for `fighter`, 0 for every other kind | The wing speed that carries the weight, m/s; 0 = no wings. |
 | `hover` | `false` | Gravity does not pull it down. The default campaign's saucers, dreadnought, robot sentinel, grappler and cargo orb hover; the rockets fly on wings. |
-| `atmospheric` | `true` | Can enter an atmosphere; read but not yet acted on. |
+| `atmospheric` | `true` | Can enter an atmosphere. `false` (a craft without heat shields or wings, say) is refused in an `atmosphere` environment by the Simulator (app 0.6.3); the strategy layer will also keep it out of surface missions (Stage 4). |
 
 **Choosing numbers.** A craft's stall speed is its `lift` speed scaled by the air:
 level flight needs `forward speed = lift / √ρ`. In `dusk_hills` (ρ = 1) a fighter with

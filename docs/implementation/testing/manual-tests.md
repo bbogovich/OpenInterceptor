@@ -681,7 +681,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 (main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
 MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). MT-3-19 was revised for
 pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 covers Simple physics (0.4.6, main
-`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`); MT-3-33 – MT-3-36 the hazards (0.5.1, main `70d68e2`), MT-3-37 – MT-3-44 the environments, atmospheric flight, terrain, sky, fog and atmosphere HUD (0.6.0, main `af003f6`) and MT-3-45 – MT-3-46 the ground installations (0.6.1, main `de417df`) — their look and feel could not be judged from the agent environment, so they need the user. Each mission case: fly it once to a **win** and once to a **loss**, and read the
+`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`); MT-3-33 – MT-3-36 the hazards (0.5.1, main `70d68e2`), MT-3-37 – MT-3-44 the environments, atmospheric flight, terrain, sky, fog and atmosphere HUD (0.6.0, main `af003f6`) MT-3-45 – MT-3-46 the ground installations (0.6.1, main `de417df`), MT-3-47 – MT-3-50 the radio voices (0.6.2, main `5bdb47f`), MT-3-51 – MT-3-54 the simulator (0.6.3, main `1d13b59`) and MT-3-55 – MT-3-59 the five new default missions (0.6.4, main `3866c34`) — their look, sound and feel could not be judged from the agent environment, so they need the user. Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -732,6 +732,19 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-44 | ALT / VS and the artificial horizon | `surface-moon` (default); `env-orbit` | not run | | | App 0.6.0; needs the user |
 | MT-3-45 | Ground installation: defend the colony | `surface-colony` (default) | not run | | | App 0.6.1; needs the user |
 | MT-3-46 | Ground installations: flak strike | `surface-strike` (default) | not run | | | App 0.6.1; needs the user |
+| MT-3-47 | Voices: wingmen answer orders and status requests | `rocket-vs-saucer` (default) | not run | | | App 0.6.2; needs the user |
+| MT-3-48 | Voices: a wingman lost | `rocket-vs-saucer` (default) | not run | | | App 0.6.2; needs the user |
+| MT-3-49 | Voices: spoken chatter | `colony_defence` (default) | not run | | | App 0.6.2; needs the user |
+| MT-3-50 | Voices: the computer voice at the debrief | any default mission; `xcom_base_defense` (interceptor) | not run | | | App 0.6.2; needs the user, and original data for step 3 |
+| MT-3-51 | Simulator: the setup rows | Launcher › Simulator (both campaigns) | not run | | | App 0.6.3; needs the user |
+| MT-3-52 | Simulator: Fly with environment, hazards and force | Simulator, `defend_station` (default) | not run | | | App 0.6.3; needs the user |
+| MT-3-53 | Simulator: again with the same setup | Simulator (default) | not run | | | App 0.6.3; needs the user |
+| MT-3-54 | Simulator: a ship that cannot enter an atmosphere | Simulator with a test addon (default) | not run | | | App 0.6.3; needs the user |
+| MT-3-55 | `colony_defence` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: win at 43 s |
+| MT-3-56 | `ground_strike` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: still running at 300 s |
+| MT-3-57 | `outpost_raid` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: win at 99 s |
+| MT-3-58 | `asteroid_hunt` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: still running at 300 s |
+| MT-3-59 | `pocket_ambush` | Mission (default) | not run | | | App 0.6.4; AI soak at cadet: still running at 300 s |
 
 ### The debrief (every mission case)
 
@@ -821,6 +834,7 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 |---|---|
 | Steps | For each mission: `openinterceptor --campaign <c> --soak <mission> --soak-pilot ai --seconds 400 --difficulty <level>` (interceptor with `--ship avenger`); then the passive pilot; for the defence missions also `--soak-pilot idle`. |
 | Expected (baseline at `d7553f5`) | **Default, ranger, AI pilot:** `defend_station` lose at 132 s; `convoy_ambush` win at 64 s; `construction_defence` win at 97 s; `intercept_scouts` win at 72 s. Passive pilots lose or draw. **Interceptor, Super Avenger:** beginner wins all five; veteran: base defence lose, convoy win, deep space lose, outpost win, probe lose; superhuman mostly lose (three elerium torpedoes kill an Avenger: the original values 400 impact against 250 armour + 200 shield + 400 hull). Re-run after balance changes; a mission that only ever wins or only ever loses at every level needs attention. |
+| Expected (AI pilot, cadet, app 0.6.4, main `3866c34`) | `colony_defence` win at 43 s; `outpost_raid` win at 99 s; `ground_strike`, `asteroid_hunt` and `pocket_ambush` make kills (counted while running since 0.6.4) but are still running at 300 s. |
 | Expected (idle pilot, `c583659`) | **Default, `defend_station`:** cadet still running at 400 s (the unit test holds ≥ 150 s); ranger lose at 140 s; space ace killed at 8 s. **Interceptor, `xcom_base_defense`, beginner:** the base still has about 2 390 of 6 000 hull at 400 s; the AI pilot wins in about 75 s with the base untouched. On veteran the result is *killed* at 15–18 s (elerium torpedoes), not *lose*. |
 
 ### MT-3-13 — Drift readout and flight-path marker
@@ -1090,3 +1104,102 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | Preconditions | App 0.6.1 or later. |
 | Steps | 1. Start `surface-strike` (default). 2. Locate the three flak batteries on the hillside ahead. 3. Fly low and slow past one. 4. Attack fast and keep moving; destroy all three. |
 | Expected | 2: each battery sits on the ground where it stands, at different heights on the slope. 3: the batteries turn and fire death rays at you across a wide arc. 4: each can be destroyed; the turret stops firing when destroyed. |
+
+### MT-3-47 — Voices: wingmen answer orders and status requests
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.2 or later; default campaign; sound on. |
+| Steps | 1. Start `rocket-vs-saucer` in any ship (your two Comet wingmen have the `guard_pilot` voice). 2. Open the comms menu (`]`) and give each order in turn: 1 fire at will, 2 attack my target, 3 ignore my target, 4 evasive, 5 retreat. 3. Ask for a status report (6). 4. Repeat a few orders. |
+| Expected | 2: each order plays the short *acknowledge* radio chirp, as well as the order's message line. 3: the status request plays the different *status* chirp, with one message line per wingman. 4: the radio answers every time; nothing plays when no wingman is alive. |
+
+### MT-3-48 — Voices: a wingman lost
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.2 or later; default campaign. |
+| Steps | 1. Start `rocket-vs-saucer`. 2. Order the wingmen to attack (`]`, 2) and let the saucers destroy one (stay back). 3. Let the second be destroyed too. |
+| Expected | 2: when the first wingman is destroyed, the *down* clip plays (said by the surviving wingman). 3: when the last one is destroyed, nothing is said — nobody is left to say it. |
+
+### MT-3-49 — Voices: spoken chatter
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.2 or later (the mission from 0.6.4). |
+| Steps | 1. Start *Mission: Colony defence*. 2. Wait for the first chatter line (about 3 s). 3. Let the colony fall below half hull. |
+| Expected | 2: "Colony control: saucers on the horizon, coming in low!" on the message line, with a radio clip playing at the same moment. 3: "we're taking hits" appears with no clip (that line has no `voice:`). |
+
+### MT-3-50 — Voices: the computer voice at the debrief
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.2 or later. Step 3 needs original data. |
+| Steps | 1. Win any default mission (`intercept_scouts` is quick). 2. Lose one, or be shot down, or jump out (H). 3. In the `interceptor` campaign, win and lose `xcom_base_defense`. 4. In the `interceptor` campaign, give wing orders in `flight-test`. |
+| Expected | 1: the *mission win* sting plays once as the debrief appears. 2: the *mission fail* sting plays once for lose, killed, draw or retreat. 3: the original computer voice says the mission was accomplished, or failed. 4: the wingmen answer silently (their pilot clips are not mapped yet; R-MSN-007 Open note). |
+
+### MT-3-51 — Simulator: the setup rows
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.3 or later. |
+| Steps | 1. Open the launcher (default campaign); the selection starts on the first scenario. Move up to *Simulator (set up a mission and fly it)* and press Enter. 2. Move through every row with Up/Down; change each with Left and Right. 3. Choose a mission whose player craft is fixed, if the campaign has one. 4. Esc. 5. Tab to `interceptor` (original data) and open the simulator again. |
+| Expected | 1: the SIMULATOR screen, rows Mission, Ship, Environment, Asteroids, Minefield, Black hole, Ion storm, Enemy force, Fly; the chosen row highlighted; the mission's briefing below. 2: Mission cycles every mission (briefing follows); Ship the playable ships; Environment "<id> (the mission's)" or "open space", then each environment; the four hazards on/off; Enemy force x0.5, x1, x1.5, x2; all wrap. 3: Ship shows "(the mission's own)". 4: back to the launcher. 5: the interceptor's missions; a hazard the campaign has no class for reads "(none in this campaign)" and does not change. |
+
+### MT-3-52 — Simulator: Fly with environment, hazards and force
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.3 or later; default campaign. |
+| Steps | 1. Simulator: `Defend the station`, Comet, defaults; Fly. 2. Again with Environment `moon_surface`, all four hazards on, force x2. 3. Again with force x0.5 and `orbit`. |
+| Expected | 1: the mission exactly as from the launcher. 2: the battle is over the moon (sky, craters, ALT/VS); asteroids and mines ahead, a black hole far ahead and below whose pull you feel when you approach, "ION STORM: SENSORS AT 40%" at the start; about twice the raiders (and robots) of a normal run, while your two wingmen and the station are unchanged. Note where the station sits: static objects other than ground installations are neither lifted nor set down over a terrain, so a space mission's station may sit partly inside a hill or crater rim — record what you see. 3: a planet in the sky; about half the raiders, never none. |
+
+### MT-3-53 — Simulator: again with the same setup
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.3 or later. |
+| Steps | 1. Fly a simulator setup with a non-default environment and a hazard. 2. Finish the battle (win, lose or die) and press Enter at the debrief. 3. During that battle, open the pause menu and press R. 4. Esc or L from the debrief. |
+| Expected | 2 – 3: the same mission starts again with the same ship, environment, hazards and force (not the unmodified mission). 4: back to the launcher. |
+
+### MT-3-54 — Simulator: a ship that cannot enter an atmosphere
+
+| Field | |
+|---|---|
+| Preconditions | App 0.6.3 or later. A test addon `mods/default-noair/` with `pack.yaml` (`kind: addon`, `targets: [default]`) and `rules/ships.yaml` setting `ships: {meteor: {atmospheric: false}}`. |
+| Steps | 1. Simulator: a mission that lets you choose, Ship Meteor, Environment `dusk_hills`; Fly. 2. Change any row. 3. Environment `orbit`; Fly. 4. Remove the addon. |
+| Expected | 1: nothing starts; "The Meteor cannot enter an atmosphere: choose another ship or environment." in orange under the rows. 2: the message clears. 3: the battle starts (space is fine). |
+
+### MT-3-55 — `colony_defence`
+
+| Field | |
+|---|---|
+| Steps | Win: keep the Guard colony on the moon alive and destroy every raider and the reinforcements that come after 90 s. Lose: let the saucers destroy the colony. Also be shot down once. |
+| Expected | Over `moon_surface`; the colony 3 km ahead, set down on the ground, marked PROTECT; raiders 7 km beyond it, starting at least 300 m above the ground; "Colony control: saucers on the horizon" with a radio clip; "taking hits" below 50 %. Win: `score(colony_defended)`, `relation(guard, +5)`, optional *colony untouched*. Lose: `lose(guard_colony)`, `score(colony_lost)`. Killed: "Your rocket was shot down." |
+
+### MT-3-56 — `ground_strike`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy every flak battery in the hills (3 at cadet … 6 at space ace). Draw: let 6 minutes pass. Also be shot down once. |
+| Expected | Over `dusk_hills`; the batteries spread along the slopes 4 km ahead, on the ground, firing at you; two scout saucers arrive after 60 s ("saucers inbound"); "Flak batteries ahead" at the start. Win: `score(flak_destroyed)`, the flak win text. After 6 min: DRAW with "Some batteries still stand". |
+
+### MT-3-57 — `outpost_raid`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy the Dominion outpost with your two Meteor wingmen. Also be shot down once, and jump out once. |
+| Expected | In `orbit` (planet backdrop); the outpost 5 km ahead with guards (raider saucers, robot sentinels) around it; win when the outpost is destroyed, whatever guards remain: `score(outpost_destroyed)`, `salvage`. Killed and retreat show their own texts. |
+
+### MT-3-58 — `asteroid_hunt`
+
+| Field | |
+|---|---|
+| Steps | Win: find and destroy every scout among the asteroids. Draw: let 5 minutes pass. |
+| Expected | Open space with 50 turning cosmium asteroids in a 5 km field ahead, shown on radar only within range; the scouts spread among them. Win: `score(scouts_destroyed)`; after 5 min: DRAW. |
+
+### MT-3-59 — `pocket_ambush`
+
+| Field | |
+|---|---|
+| Steps | Win: destroy every hot-rod. Also be shot down once. |
+| Expected | The `pocket` environment (a 12 km arena under a purple planet); "ION STORM: SENSORS AT 65%" at the start and a shorter radar range; hot-rods 3 km away. Win: `score(raiders_destroyed)`, `relation(raiders, -5)`. |

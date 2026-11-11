@@ -99,6 +99,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `model_scale` | number | 1 | Model units to metres. |
 | `playable` | bool | `false` | The player may fly it (offered in the launcher). |
 | `cockpit` | id | none | Cockpit for the player's view; without one, glass instruments. |
+| `voice` | id | none | The [radio voice set](#voices) its pilot speaks with (app 0.6.2). An unknown set is an error; without one the pilot is silent. |
 | `hit_points` | number | 100 | Hull points. |
 | `armor` | number | 0 | Armour points, absorbed after shields. |
 | `shields` | number | 0 | Shield points per facing (fore and aft). |
@@ -112,7 +113,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `atmosphere_max_speed` | number | 60 % of `max_speed` | Top speed in air of density 1, m/s: full thrust balances drag here ([atmospheric flight](environments.md#atmospheric-flight)). |
 | `lift` | number | 120 for `fighter`, else 0 | The forward speed, m/s, at which the wings carry the craft's weight; 0 = no wings. |
 | `hover` | bool | `false` | Hovers in an atmosphere: gravity does not pull it down (saucers). |
-| `atmospheric` | bool | `true` | Can enter an atmosphere. Read and validated; not yet acted on (Stage 4 hides such craft from surface missions). |
+| `atmospheric` | bool | `true` | Can enter an atmosphere. `false`: the Simulator refuses the craft in an environment with `physics: atmosphere` ("The … cannot enter an atmosphere", app 0.6.3); Stage 4 will also hide it from surface missions. |
 | `energy` | number | 500 | Beam capacitor. |
 | `energy_recharge` | number | 40 | Capacitor recharge per second at full beam charge. |
 | `beams` | ids | none | One beam id per mount: `[laser, laser]`. |
@@ -267,8 +268,27 @@ Texture names match a model's textures by file name without folder or extension,
 
 `<event>: <asset>` for the events the engine plays: `explosion`, `big_explosion`, `shield_hit`,
 `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`,
-`system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`, `point_defence` (a point-defence shot). Beam and missile sounds are set on
+`system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`, `point_defence` (a point-defence shot), and
+since app 0.6.2 the computer voice at the end of a mission: `mission_accomplished` (a win) and
+`mission_failed` (any other result), played when the debrief appears. Beam and missile sounds are set on
 each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audio) cue table.
+
+### `voices`
+
+Radio voice sets (app 0.6.2; guide: [Radio voices](voices.md)). A definition section:
+`voices: {<set id>: {<line>: clip or [clips]}}`. Ships choose one with `voice: <set id>`.
+
+| Line | When it is said |
+|---|---|
+| `acknowledge` | A wingman answers a wing order (fire at will, attack my target, ignore my target, evasive, retreat). |
+| `status` | A wingman answers a status request. |
+| `down` | Another wingman, when one of the player's wingmen is destroyed. |
+| `engaging`, `kill` | Reserved names; not yet said by the engine. Other line names are kept and ignored. |
+
+A clip is a sound asset (`sounds/x.wav`, `original:<file>.wav`); with a list, one is picked
+each time. Unlike the `sounds:` section, `cue:<Name>` is **not** resolved in voice clips (app
+0.6.4), and `--check` does not load them: a clip that fails to load is reported on start-up as a
+`sound: …` line.
 
 ### `audio`
 
@@ -350,7 +370,7 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `optional` | mapping name: condition | none | Latched optional objectives. |
 | `timer` | `{after, then}` | none | Time limit and its result. |
 | `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`, `killed` (the player's craft destroyed; without its own entry it takes the `lose` actions). |
-| `chatter` | list of `{when, line}` | none | Radio lines. |
+| `chatter` | list of `{when, line, voice}` | none | Radio lines; `voice` is a clip spoken with the line (app 0.6.2). |
 | `debrief` | mapping result: text | none | Debrief texts, by the same results (`killed` shows no text unless given). |
 | `environment` | id | open space | The battle [environment](#environments). |
 | `hazards` | [hazards](#hazards) | none | Asteroid field, minefield, black hole, ion storm. |

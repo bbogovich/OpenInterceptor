@@ -1,5 +1,5 @@
 ---
-spec_version: 1.11.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -18,10 +18,10 @@ Features: [Missions](../../definition/missions.md). How to read a requirement: [
 | [R-MSN-004 Mission mistakes found on load](#r-msn-004-mission-mistakes-found-on-load) | Implemented |
 | [R-MSN-005 Debrief](#r-msn-005-debrief) | Implemented |
 | [R-MSN-006 Radio chatter](#r-msn-006-radio-chatter) | Implemented |
-| [R-MSN-007 Voices](#r-msn-007-voices) | Planned |
+| [R-MSN-007 Voices](#r-msn-007-voices) | Implemented |
 | [R-MSN-008 Battle environments](#r-msn-008-battle-environments) | Implemented |
 | [R-MSN-009 Hazards](#r-msn-009-hazards) | Implemented |
-| [R-MSN-010 Simulator missions](#r-msn-010-simulator-missions) | Planned |
+| [R-MSN-010 Simulator missions](#r-msn-010-simulator-missions) | Implemented |
 | [R-MSN-011 Base defence balance](#r-msn-011-base-defence-balance) | Implemented |
 | [R-MSN-012 Logistics missions](#r-msn-012-logistics-missions) | Implemented |
 
@@ -104,14 +104,25 @@ A mission MUST be able to play chatter lines when their conditions become true.
 
 ### R-MSN-007 Voices
 
-Chatter and the computer voice SHOULD play recorded or original voice samples.
+Chatter and the computer voice SHOULD play recorded or original voice samples. As built:
 
-*Rationale:* Atmosphere.
+- A pack MUST be able to define radio voice sets as data, `voices: {<set>: {<line>: clip or [clips]}}`, and a ship class MUST be able to name one with `voice: <set>`; an unknown set MUST be a rules error.
+- When the player gives a wing order (fire at will, attack my target, ignore my target, evasive, retreat), one of the player's living wingmen whose voice has the line MUST play an `acknowledge` clip; a status request MUST play a `status` clip; when one of the player's wingmen is destroyed, *another* MUST play a `down` clip. With several clips for a line, one is chosen each time.
+- A mission chatter entry MAY name a clip with `voice:`; it MUST play when the line is said.
+- When the debrief appears, the named sound `mission_accomplished` MUST play for a win and `mission_failed` for any other result (the computer voice).
+- A ship without a voice, a voice without the line, or a campaign without these sounds MUST stay silent without error.
+
+The `default` campaign MUST ship the voice set `guard_pilot` (synthesised radio clips, used by the Comet, Meteor, Thunderbolt and Victory) and the two mission sounds; the `interceptor` campaign maps the computer voice from the original's cue table (`Comp_MissionAccomplished`, `Comp_MissionFailed`).
+
+*Rationale:* Atmosphere, and the original's radio and computer voice. Voices are data, so a mod can give its pilots voices without code.
 
 - Implements: [F-MSN-003](../../definition/missions.md#f-msn-003-radio-chatter-and-voices), [F-CPN-007](../../definition/campaigns/features.md#f-cpn-007-presentation)
-- Status: planned
-- Verified by: Planned.
-- See: [Stage 6](../../implementation/plan/stage-6-presentation.md)
+- Status: implemented (app 0.6.2, main `5bdb47f`)
+- Verified by: `app::flight::tests::a_wingman_answers_in_its_own_voice`, `content::rules::tests::builds_typed_definitions_with_inheritance` (voice sets and clips); MT-3-47 – MT-3-50
+- See: [Radio voices (modding)](../../modding/voices.md), [Audio](../../implementation/architecture/audio.md)
+
+!!! question "Open"
+    The `interceptor` campaign's **pilot** chatter clips (the numbered `FPilot1xx` and `MPilotxxx` files) are not mapped to voice lines: which line each clip says is not known (*unknown*), and a wrong mapping would put the wrong words in a wingman's mouth. The user is asked to identify the lines by listening (for example in the launcher's asset browser, Sounds tab) so that `packs/interceptor` can map them to `acknowledge`, `status`, `down` and later lines. Also open: `cue:` references are not resolved inside `voices:` or chatter `voice:`, and `--check` does not load voice clips (app 0.6.4).
 
 ### R-MSN-008 Battle environments
 
@@ -160,14 +171,24 @@ An unknown class or faction in a hazard MUST be an error: `--check` reports it f
 
 ### R-MSN-010 Simulator missions
 
-The player MUST be able to set up a simulator mission on a setup screen and fly it.
+The player MUST be able to set up a simulator mission on a setup screen and fly it. As built, the setup screen (the launcher's *Simulator* entry) MUST offer:
 
-*Rationale:* Original simulator.
+- the **mission** (any mission of the loaded campaign) and the **ship** (any playable ship, unless the mission fixes the player's class);
+- the **environment**: the mission's own, or any environment of the campaign;
+- **asteroids**, a **minefield**, a **black hole** and an **ion storm**, each on or off. Asteroids and mines MUST use the campaign's own classes (the first class whose id contains `asteroid`; the first `kind: mine` class); when the campaign has none, the row MUST say so and add nothing;
+- the **enemy force**, ×0.5, ×1, ×1.5 or ×2, scaling every enemy role's count range and every enemy wave, rounded and never below one. Friendly and objective roles MUST be unchanged.
 
-- Implements: [F-MSN-005](../../definition/missions.md#f-msn-005-simulator-missions)
-- Status: planned
-- Verified by: Planned.
-- See: [Stage 3](../../implementation/plan/stage-3-missions.md)
+The choices MUST produce a modified copy of the mission that is flown by the ordinary mission code; with the defaults (own environment, no hazards, ×1) the copy MUST equal the mission. A ship with `atmospheric: false` MUST be refused in an environment with `physics: atmosphere`, with the reason shown. Flying again from the debrief MUST fly the same setup. The difficulty level is the launcher's.
+
+*Rationale:* The original's simulator; practice, and trying a mission in other conditions without editing it.
+
+- Implements: [F-MSN-005](../../definition/missions.md#f-msn-005-simulator-missions), [F-TST-004](../../definition/testbed-tools.md#f-tst-004-debugging-tools-for-missions-and-campaigns)
+- Status: implemented (app 0.6.3, main `1d13b59`, `c3fb959`)
+- Verified by: `app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only`, `ships_that_cannot_enter_an_atmosphere_are_refused_there`; `app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps`; MT-3-51 – MT-3-54
+- See: [User guide › Simulator](../../user-guide/simulator.md), [Testbed › The simulator](../../implementation/architecture/testbed.md#the-simulator-app-063)
+
+!!! question "Open"
+    The `interceptor` campaign's own simulator mission types (R-CPN-005) are separate mission definitions still to be written (plan item 3.11); the simulator screen flies whatever missions a campaign defines.
 
 ### R-MSN-011 Base defence balance
 
@@ -205,3 +226,4 @@ The `convoy_ambush` and `construction_defence` missions MUST be playable: protec
 | 1.0.0 | 2026-11-11 | Bootstrap: R-MSN-001 – R-MSN-012 (12 requirements; 7 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-MSN-011 implemented (app 0.3.1) with a measurable threshold (an undefended station holds 150 s at the lowest level, `--soak-pilot idle`); open note resolved. R-MSN-003: the `killed` result, set by the engine, with the `lose` outcomes by default. R-MSN-005: the `killed` headline and debrief text |
 | 1.11.0 | 2026-11-11 | R-MSN-009 hazards rewritten as built and implemented (app 0.5.1): asteroid fields and minefields as scattered objects (asteroids are radar scenery), the black hole's 1/d² pull capped at 20 × `pull`, its look and the AI's escape, the ion storm's radar factor, half-speed locks and start message; defaults stated. R-MSN-008 battle environments rewritten as built and implemented (app 0.6.0): `environments:` data, `environment: <id>`, `physics`, `arena`, `backdrop.planet`, `sky`; ground installations (`kind: ground`, set down on the terrain) and anti-air batteries as ground turrets (app 0.6.1); Open note keeps the map location |
+| 1.12.0 | 2026-11-11 | R-MSN-007 voices rewritten as built and implemented (app 0.6.2): `voices:` sets, ship `voice:`, the `acknowledge`, `status` and `down` lines, chatter `voice:`, `mission_accomplished` / `mission_failed`; Open note: the `interceptor` pilot clips are not mapped until their lines are identified. R-MSN-010 simulator rewritten as built and implemented (app 0.6.3): the setup rows, the modified copy, the atmospheric refusal, flying again |

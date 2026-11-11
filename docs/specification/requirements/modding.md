@@ -1,5 +1,5 @@
 ---
-spec_version: 1.9.1
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -26,7 +26,7 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-012 Text keys](#r-mod-012-text-keys) | Implemented |
 | [R-MOD-013 Condition language](#r-mod-013-condition-language) | Implemented |
 | [R-MOD-014 Campaign context](#r-mod-014-campaign-context) | Planned |
-| [R-MOD-015 Tier 2 scripting decision](#r-mod-015-tier-2-scripting-decision) | Planned |
+| [R-MOD-015 Tier 2 scripting decision](#r-mod-015-tier-2-scripting-decision) | Planned (evaluation recorded; awaiting the user's decision) |
 | [R-MOD-016 Headless validation](#r-mod-016-headless-validation) | Implemented |
 | [R-MOD-017 Full validator](#r-mod-017-full-validator) | Planned |
 | [R-MOD-018 Recipes](#r-mod-018-recipes) | Planned |
@@ -244,9 +244,16 @@ Before a second-tier script language is added, its dependency evaluation MUST be
 *Rationale:* Dependency policy.
 
 - Implements: [F-MOD-005](../../definition/modding-toolkit.md#f-mod-005-conditions-actions-and-scripting)
-- Status: planned
+- Status: planned — **evaluation recorded, awaiting the user's decision** (1.12.0)
 - Verified by: Planned.
-- See: [Scripting (design)](../../modding/scripting.md)
+- See: [Dependency policy › Tier 2 scripting, evaluated](../../learning/best-practices/dependencies.md#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision), [Scripting (design)](../../modding/scripting.md)
+
+!!! question "Open — awaiting the user's decision"
+    The evaluation of (a) `mlua` (Lua 5.4), (b) `rhai` and (c) growing the in-crate condition
+    and action language into a small statement language is on the dependency page. The
+    evaluator recommends (c) as the default under the dependency policy, with (a) as the
+    fallback if mods need a full general-purpose language. **No decision has been made**; the
+    hooks and the API follow the user's choice. GitHub issue #16.
 
 ### R-MOD-016 Headless validation
 
@@ -731,3 +738,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.9.0 | 2026-11-11 | From the user's message of 2026-11-11: new R-MOD-048 – R-MOD-055 (planned): instruments dragged onto a 3D cockpit and previewed on the face below the cursor, their size and preview (MD8); Create 3D cockpit, the generic base cockpit in `resources/default` and the X-COM 3D cockpit example mod, the first test case for the mod tools (MD9); single-file `.glb` models as an additional option beside OBJ/MTL, which stays fully supported (confirmed by the user), `.blend` sources exported through Blender, materials keeping their textures (MD10). R-MOD-023: the wizard's kind is **extension** (declares `parent:`, adds to or overrides the base), Open note resolved; whether it is a manifest kind or maps onto `addon` stays open (MD4) |
 - As built (app 0.4.13, main 4346cba): `map_Kd original:<File>.dll#<id>` (an original image, colour key applied) and `map_Kd original:<NAME>` (an original texture) are kept as references and loaded from the player's data; the MTL parser treats only lines starting with `#` as comments; `--check` loads 3D cockpit models and their textures. Verified by `content::tests::pack_files_override_original_assets`, `formats::obj` MTL test, and a scratch mod against real data. User instructions: [Tutorial: a 3D X-COM cockpit](../../modding/3d-cockpit-tutorial.md). To be evaluated in practice (user, 2026-11-11: "provide instructions for this in the user documentation and we'll evaluate in practice how well it seems to work").
 | 1.9.1 | 2026-11-11 | R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note |
+| 1.12.0 | 2026-11-11 | R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) `mlua`, (b) `rhai`, (c) grow `script::*`; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed |

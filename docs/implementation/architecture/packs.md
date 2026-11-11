@@ -81,8 +81,12 @@ Logic flow of `rules::build_at(sources, original, level)`:
    battle schema of their role names; their `hazards:` through `content::hazards`), terrains
 (`TerrainDef::parse`; a generated heightfield is built here, once), environments
 (`EnvironmentDef::parse`, each `terrain:` checked against the terrains), cockpits (with
-anchors), flight, sounds. `environments` and `terrains` are definition sections like `ships`
-(`DEF_SECTIONS`), so `inherit`, `delete` and variants work on them.
+anchors), flight, sounds, and since app 0.6.2 **voices**: each `voices:` set becomes a
+`VoiceSet` whose lines hold indices into one list of every voice clip, `Ruleset::voice_clips`
+(the sets' clips first, then each mission chatter line's `voice:`, whose index is written back
+into its `ChatterDef::voice_clip`); a ship naming an unknown voice set is an error.
+`environments`, `terrains` and `voices` are definition sections like `ships` (`DEF_SECTIONS`),
+so `inherit`, `delete` and variants work on them.
 
 Every problem is collected; a broken definition is skipped, the rest still load. Scenarios go
 through the same parse and `files::scenario()` validation (`Scenario::from_yaml`), and
@@ -182,8 +186,8 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
 | `equipment::SystemDef`, `SystemId` | A `systems:` definition (`builtin(kind)`, `parse`) and its index in `Ruleset::systems`. |
 | `equipment::PowerRules`, `DamageRules` | The `power` and `damage` sections, with defaults. |
 | `vfs::AssetRef` | `PackFile(String)` or `Original { file, resource }`. Parsing normalises `..` inside the pack and refuses paths that leave it. |
-| `vfs::OriginalData` | Lower-case file name → path for every file under the data folder (any CD/install layout), plus the opened resource DLLs. |
-| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `systems`, `behaviours`, `model_sets`, `debris_sets`, `effects`, `cockpits`, `environments`, `terrains`, `missions`, `flight: FlightRules` (with `hyperspace_time`), `power: PowerRules`, `damage: DamageRules`, `sounds`, `difficulty_levels`, `difficulty` (index played). |
+| `vfs::OriginalData` | Lower-case file name → path for every file under the data folder (any CD/install layout, indexed to eight folder levels by `vfs::index_files`), plus the opened resource DLLs. |
+| `rules::Ruleset` | `ships`, `beams`, `missiles`, `factions`, `systems`, `behaviours`, `model_sets`, `debris_sets`, `effects`, `cockpits`, `environments`, `terrains`, `missions`, `flight: FlightRules` (with `hyperspace_time`), `power: PowerRules`, `damage: DamageRules`, `sounds`, `difficulty_levels`, `difficulty` (index played); since app 0.6.2 `voices: Vec<VoiceSet>` and `voice_clips: Vec<(String, usize)>`. |
 | `rules::RulesSource`, `OriginalLookup` | One parsed rules file (`pack`, `file`, `doc`); the callback that finds an original INI section. |
 | `rules::CockpitDef`, `rules::Anchor` | A cockpit (image, model, offset, design, instruments, anchors); an anchored instrument (`at`, `normal`, `size`). |
 | `ShipClassId`, `BeamId`, `MissileId`, `FactionId` | Newtype indices (`u16`) into the ruleset's vectors. |
@@ -241,6 +245,11 @@ original. Whole packs can be switched off with `packs.disabled` in `settings.yam
   campaign's parent).
 - "pack 'x' skipped" means it needs `--data` (or a dependency was skipped); "pack 'x' is
   disabled in settings" means `settings.yaml` switched it off.
+- An original file that "is not found" although it is on the disc: the original-data index
+  (`vfs::index_files`) reaches **eight** folder levels below the data folder (four before app
+  0.6.2; the CD's computer-voice clips sit six deep, under
+  `Game/ProgramFiles/SoundFX/Chatter/ComputerVoice`). A copy nested deeper than that is not
+  indexed.
 - Is my override used? Open the launcher's **Asset browser**: overridden textures, images and
   sounds are marked `[overridden by <pack>]`.
 - A key that "does nothing": check the section id prefix (`ship:` vs `object:`) and that a

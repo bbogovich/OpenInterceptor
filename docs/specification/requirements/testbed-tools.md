@@ -1,5 +1,5 @@
 ---
-spec_version: 1.3.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -20,7 +20,7 @@ Features: [Testbed & tools](../../definition/testbed-tools.md). How to read a re
 | [R-TST-006 Soak runs](#r-tst-006-soak-runs) | Implemented |
 | [R-TST-007 Screenshots](#r-tst-007-screenshots) | Implemented |
 | [R-TST-008 Scenarios per stage](#r-tst-008-scenarios-per-stage) | Implemented |
-| [R-TST-009 Mission and condition tools](#r-tst-009-mission-and-condition-tools) | Planned |
+| [R-TST-009 Mission and condition tools](#r-tst-009-mission-and-condition-tools) | Planned (partly met) |
 | [R-TST-010 Strategy and campaign tools](#r-tst-010-strategy-and-campaign-tools) | Planned |
 | [R-TST-011 Campaign soak](#r-tst-011-campaign-soak) | Planned |
 | [R-TST-012 Asset generators](#r-tst-012-asset-generators) | Implemented |
@@ -130,9 +130,12 @@ The testbed MUST add a mission browser with difficulty and force choices, a terr
 *Rationale:* Stage 3 testbed adds.
 
 - Implements: [F-TST-004](../../definition/testbed-tools.md#f-tst-004-debugging-tools-for-missions-and-campaigns)
-- Status: planned
-- Verified by: Planned.
-- See: [Stage 3](../../implementation/plan/stage-3-missions.md)
+- Status: planned — partly met: the mission browser and the terrain sandbox exist (app 0.6.3); the condition console is not built
+- Verified by: `app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only`; MT-3-51 – MT-3-54 (mission browser); MT-3-39 – MT-3-43 (terrain)
+- See: [Stage 3](../../implementation/plan/stage-3-missions.md), [User guide › Simulator](../../user-guide/simulator.md)
+
+!!! note "Progress (app 0.6.3)"
+    **Mission browser:** met by the [Simulator](../../user-guide/simulator.md) (R-MSN-010) — every mission of the loaded campaign, with the force choice (×0.5 – ×2) on the screen and the difficulty from the launcher (D); switch campaigns with Tab to browse the other campaign's missions. **Terrain flight sandbox:** the simulator flies any mission in any environment, and the `surface-moon`, `surface-hills`, `surface-colony` and `surface-strike` scenarios fly the surfaces directly. **Condition console:** not built — typing a condition and seeing its value live in a battle remains to do.
 
 ### R-TST-010 Strategy and campaign tools
 
@@ -177,3 +180,4 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-TST-001 – R-TST-012 (12 requirements; 9 reverse-engineered from the code) |
 | 1.3.0 | 2026-11-11 | R-TST-002 Verified by: `cli::finds_the_source_tree_packs` renamed `content_dirs_are_resources_then_packs` (app 0.4.2) |
+| 1.12.0 | 2026-11-11 | R-TST-009 partly met (status stays planned): the mission browser is the simulator (app 0.6.3), the terrain sandbox is the simulator's environments and the surface scenarios; the condition console is not built |

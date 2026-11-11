@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,7 +15,7 @@ Requirements for these features: [Testbed & tools requirements](../specification
 | [F-TST-001 Testbed](#f-tst-001-testbed) | Implemented |
 | [F-TST-002 Model viewer and asset browser](#f-tst-002-model-viewer-and-asset-browser) | Implemented |
 | [F-TST-003 Headless runs](#f-tst-003-headless-runs) | Implemented |
-| [F-TST-004 Debugging tools for missions and campaigns](#f-tst-004-debugging-tools-for-missions-and-campaigns) | Planned |
+| [F-TST-004 Debugging tools for missions and campaigns](#f-tst-004-debugging-tools-for-missions-and-campaigns) | In progress |
 | [F-TST-005 Original-free asset generators](#f-tst-005-original-free-asset-generators) | Implemented |
 
 ## Features
@@ -56,9 +56,9 @@ Requirements for these features: [Testbed & tools requirements](../specification
 
 **Why.** Later stages need their own playtest tools.
 
-- **Status:** planned
+- **Status:** in-progress — the mission browser is the simulator (app 0.6.3), and the simulator's environments with the surface scenarios serve as the terrain sandbox; the condition console (Stage 3) and the strategy and campaign tools (Stages 4 – 5) remain.
 - **Source:** Testbed adds of Stages 3–5.
-- **Specified by:** [R-TST-009](../specification/requirements/testbed-tools.md#r-tst-009-mission-and-condition-tools), [R-TST-010](../specification/requirements/testbed-tools.md#r-tst-010-strategy-and-campaign-tools)
+- **Specified by:** [R-TST-009](../specification/requirements/testbed-tools.md#r-tst-009-mission-and-condition-tools), [R-MSN-010](../specification/requirements/missions.md#r-msn-010-simulator-missions), [R-TST-010](../specification/requirements/testbed-tools.md#r-tst-010-strategy-and-campaign-tools)
 
 ### F-TST-005 Original-free asset generators
 
@@ -75,3 +75,4 @@ Requirements for these features: [Testbed & tools requirements](../specification
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-TST-001 – F-TST-005 (5 features) |
+| 1.12.0 | 2026-11-11 | F-TST-004 in progress: the mission browser (the simulator, app 0.6.3) and the terrain sandbox; condition console and strategy tools remain |

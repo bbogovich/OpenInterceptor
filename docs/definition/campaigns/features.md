@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -48,7 +48,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** Modding first: proves the engine stands alone and is the worked example for modders.
 
-- **Status:** in-progress
+- **Status:** in-progress — rules, scenarios, nine missions (five using environments, hazards and ground installations, app 0.6.4), radio voices (app 0.6.2).
 - **Source:** Design page *The default campaign*; plan items 2.14, 3.12, 4.13, 5.9, 6.8, 7.8.
 - **Specified by:** [R-STR-017](../../specification/requirements/strategy-logistics.md#r-str-017-supply-vessel-model), [R-CPN-003](../../specification/requirements/campaigns.md#r-cpn-003-default-campaign-plays-without-the-cd), [R-CPN-004](../../specification/requirements/campaigns.md#r-cpn-004-default-campaign-content), [R-TST-012](../../specification/requirements/testbed-tools.md#r-tst-012-asset-generators)
 
@@ -88,7 +88,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** The campaigns look and sound finished.
 
-- **Status:** planned
+- **Status:** planned — radio voices and the computer voice are built (R-MSN-007, app 0.6.2); screens, video and music remain
 - **Source:** Plan items 6.1–6.6.
 - **Specified by:** [R-MSN-007](../../specification/requirements/missions.md#r-msn-007-voices), [R-CPN-011](../../specification/requirements/campaigns.md#r-cpn-011-screens-and-skins), [R-CPN-012](../../specification/requirements/campaigns.md#r-cpn-012-video-and-music)
 
@@ -97,3 +97,4 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CPN-001 – F-CPN-007 (7 features) |
+| 1.12.0 | 2026-11-11 | F-CPN-003: nine default missions and radio voices noted. F-CPN-007: radio and computer voices built (R-MSN-007); the rest planned |

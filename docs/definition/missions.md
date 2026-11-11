@@ -1,5 +1,5 @@
 ---
-spec_version: 1.11.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -14,9 +14,9 @@ Requirements for these features: [Missions requirements](../specification/requir
 |---|---|
 | [F-MSN-001 Missions as data](#f-msn-001-missions-as-data) | Implemented |
 | [F-MSN-002 Debrief](#f-msn-002-debrief) | Implemented |
-| [F-MSN-003 Radio chatter and voices](#f-msn-003-radio-chatter-and-voices) | In progress |
+| [F-MSN-003 Radio chatter and voices](#f-msn-003-radio-chatter-and-voices) | Implemented |
 | [F-MSN-004 Environments and hazards](#f-msn-004-environments-and-hazards) | Implemented |
-| [F-MSN-005 Simulator missions](#f-msn-005-simulator-missions) | Planned |
+| [F-MSN-005 Simulator missions](#f-msn-005-simulator-missions) | Implemented |
 | [F-MSN-006 Base defence the player can win](#f-msn-006-base-defence-the-player-can-win) | Implemented |
 | [F-MSN-007 Logistics missions](#f-msn-007-logistics-missions) | In progress |
 
@@ -44,12 +44,12 @@ Requirements for these features: [Missions requirements](../specification/requir
 
 ### F-MSN-003 Radio chatter and voices
 
-**What.** Pilots talk on the radio when things happen; later, with voices.
+**What.** Pilots talk on the radio when things happen, in their own voices: wingmen answer orders and report losses, chatter lines can be spoken, and a computer voice announces the end of a mission.
 
 **Why.** Atmosphere and information.
 
-- **Status:** in-progress
-- **Source:** Plan item 3.7 (chatter done; voices planned).
+- **Status:** implemented — chatter in app 0.3.0, voices in app 0.6.2. The `interceptor` campaign's numbered pilot clips are not mapped yet (which line each says is unknown; Open note on R-MSN-007); its computer voice is.
+- **Source:** Plan item 3.7.
 - **Specified by:** [R-MSN-006](../specification/requirements/missions.md#r-msn-006-radio-chatter), [R-MSN-007](../specification/requirements/missions.md#r-msn-007-voices)
 
 ### F-MSN-004 Environments and hazards
@@ -64,11 +64,11 @@ Requirements for these features: [Missions requirements](../specification/requir
 
 ### F-MSN-005 Simulator missions
 
-**What.** The player sets up and flies practice battles from a setup screen.
+**What.** The player sets up and flies practice battles from a setup screen: any mission, in any environment, with hazards added and the enemy force scaled.
 
-**Why.** The original has simulator missions.
+**Why.** The original has simulator missions; practice; trying a mission in other conditions without editing it.
 
-- **Status:** planned
+- **Status:** implemented (app 0.6.3): the launcher's *Simulator*. The `interceptor` campaign's own simulator mission types are part of its mission set (plan item 3.11).
 - **Source:** Plan item 3.9.
 - **Specified by:** [R-MSN-010](../specification/requirements/missions.md#r-msn-010-simulator-missions)
 
@@ -99,3 +99,4 @@ Requirements for these features: [Missions requirements](../specification/requir
 | 1.0.0 | 2026-11-11 | Bootstrap: F-MSN-001 – F-MSN-007 (7 features) |
 | 1.1.0 | 2026-11-11 | F-MSN-006 implemented (app 0.3.1); also specified by R-MSN-003 and R-MSN-005 (the `killed` result) |
 | 1.11.0 | 2026-11-11 | F-MSN-004 implemented: hazards (app 0.5.1), environments (0.6.0), ground installations (0.6.1) |
+| 1.12.0 | 2026-11-11 | F-MSN-003 implemented: radio voices (app 0.6.2); `interceptor` pilot clips not yet mapped. F-MSN-005 implemented: the simulator (app 0.6.3) |

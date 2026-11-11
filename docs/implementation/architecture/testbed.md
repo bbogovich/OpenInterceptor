@@ -3,7 +3,8 @@
 `src/app/`: the interactive program — a small state machine of screens sharing one
 `AppContext`. Every stage adds scenarios here so its features can be play-tested. Plan:
 Stage 1; Stage 2 added the controls menu, the campaign switch, the wingman comms menu, system
-and hyperspace messages, and `--screenshot`.
+and hyperspace messages, and `--screenshot`; Stage 3 the missions, the debrief, radio voices
+(app 0.6.2) and the **simulator** (app 0.6.3).
 
 ## Architecture Overview
 
@@ -21,6 +22,10 @@ stateDiagram-v2
     AssetBrowser --> Launcher: Esc
     Launcher --> Controls: Enter on Controls (Next::Controls)
     Controls --> Launcher: Esc (save bindings.yaml)
+    Launcher --> Simulator: Enter on Simulator (Next::Simulator)
+    Simulator --> FlightSession: Enter on Fly (Next::Simulate, a modified mission)
+    Simulator --> Launcher: Esc
+    FlightSession --> FlightSession: Enter after a simulator debrief (Next::Simulate, same setup)
     Launcher --> Launcher: Tab or D (Next::Reload) reloads Content for another campaign or difficulty
     FlightSession --> Launcher: Esc menu → L
     FlightSession --> FlightSession: Esc menu → K (controls menu inside the session)
@@ -39,8 +44,10 @@ stateDiagram-v2
   **X**) to the next difficulty level (`launcher::next_difficulty`), each returning
   `Next::Reload { campaign, difficulty }`: the app reloads `Content` (the ruleset is rebuilt at
   that level), saves the choice in `settings.yaml` (`game.campaign`, `game.difficulty`), and shows any
-  load error on the launcher. Entries: the model viewer, the asset browser, **Controls**, every scenario, then every **mission** (*Mission: name*, its briefing as the description; [Missions](mission.md)). The list scrolls to keep the selection near the middle (`Menu::first_visible`, "^ more" / "v more"). Scenarios are
-  sorted by `order` (the first scenario is selected at start). For
+  load error on the launcher. Entries: the model viewer, the asset browser, **Controls**, the **Simulator** (app 0.6.3), every scenario, then every **mission** (*Mission: name*, its briefing as the description; [Missions](mission.md)). The list scrolls to keep the selection near the middle (`Menu::first_visible`, "^ more" / "v more"). Scenarios are
+  sorted by `order`; the first scenario is selected at start, found by searching the entries
+  (`Entry::Scenario`) rather than by a fixed index, so adding an entry above the scenarios does
+  not move the start. For
   `player: choose` scenarios, Left/Right picks among playable ship classes, previewed as a
   turning model with name, description and stats. Keyboard, mouse (click to select, click
   again to start) and gamepad (D-pad, A/Start, Back to quit). Skipped-pack warnings and start
@@ -73,6 +80,10 @@ stateDiagram-v2
   message display; when it ends, the battle freezes behind the **debrief** (result, text, kills,
   losses, time, optional objectives, campaign actions; long text wrapped). Enter (pad A) flies it
   again, Esc or L returns to the launcher; the pause menu's R also restarts the mission.
+- **Radio voices** (app 0.6.2): the flight screen decides when a pilot speaks — wing orders
+  and status requests (`acknowledge`, `status`), a wingman lost (`down`, said by another),
+  chatter clips (`MissionRun::voices`) and the computer voice at the debrief
+  (`mission_accomplished` / `mission_failed`). See [Audio](audio.md).
 - **Flight session** (`flight.rs`): see the frame loop on the
   [overview](index.md#logic-flow-one-frame-of-a-flight-session). Views F1–F8; after death the
   camera orbits the wreck; Esc opens a menu (Esc resume, R restart, K controls, L launcher; it
@@ -110,6 +121,40 @@ stateDiagram-v2
       sends `welcome` and the `catalogue` (again when the player's craft class changes) and
       20 Hz `telemetry`. Until a console pairs, and while the menu is open, the bottom-left
       corner shows `CONSOLE <url>   CODE <code>`. See [Remote console](remote.md).
+
+### The simulator (app 0.6.3)
+
+`app::simulator` (Stage 3.9, R-MSN-010): a setup screen in front of any mission of the loaded
+campaign. Rows, chosen with Up/Down and changed with Left/Right; Enter flies; Esc returns to the
+launcher:
+
+| Row | Values | Effect on the copy (`simulator::apply`) |
+|---|---|---|
+| Mission | every mission, in launcher order | The mission to copy. Its briefing is shown below the rows. |
+| Ship | the playable ships | The player's craft; "(the mission's own)" when the mission names `player.class`. |
+| Environment | the mission's own (or open space), then every environment | `environment` replaced. |
+| Asteroids | off / on | 40 objects of the campaign's asteroid class in a 4.5 km sphere 4.5 km ahead, spin 6 °/s. |
+| Minefield | off / on | 20 mines of the campaign's mine class in a 2.5 km sphere 4.5 km ahead. |
+| Black hole | off / on | A black hole 9 km ahead and 800 m below, `pull` 12, `radius` 450 m. |
+| Ion storm | off / on | Radar at 40 %. |
+| Enemy force | ×0.5, ×1, ×1.5, ×2 | Every enemy role's count range and every wave of an enemy role scaled and rounded, never below 1. Friendly and objective roles are unchanged. |
+| Fly | — | Starts the copy. |
+
+- **Hazard classes** come from the campaign itself (`simulator::hazard_classes`): the asteroid
+  class is the first object class whose id contains `asteroid`, the mine class the first of
+  `kind: mine`. A campaign without one shows "(none in this campaign)" on that row and the
+  toggle does nothing — the simulator never assumes a class a mod may not have.
+- **Refusal**: `simulator::ship_allowed` refuses a ship with `atmospheric: false` in an
+  environment with `physics: atmosphere`; the reason is shown under the rows and nothing starts.
+- **Flying**: Fly returns `Next::Simulate { mission, ship }` with the modified `MissionDef`
+  (boxed: it is large); the app starts it with `FlightSession::start_custom`, which keeps the
+  copy in `FlightSession::custom` so that "again" from the debrief (or R in the pause menu)
+  returns `Next::Simulate` with the same setup instead of the original mission.
+- The difficulty level is the launcher's (D); the mission's own values per level apply before
+  the force multiplier.
+- With the defaults (own environment, no hazards, ×1) the copy equals the mission (tested).
+- `SimSetup` is plain data and `apply` and `ship_allowed` are pure, so the logic is unit-tested
+  without a window; the drawing is a manual test (MT-3-51 – MT-3-54).
 
 ### Scenarios shipped
 
@@ -151,7 +196,12 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 | Symbol | What it is |
 |---|---|
 | `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`. |
-| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, `Quit`. |
+| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, and since app 0.6.3 `Simulator` (the setup screen) and `Simulate { mission: Box<MissionDef>, ship }` (fly a modified mission), `Quit`. |
+| `launcher::Entry` | `ModelViewer`, `AssetBrowser`, `Controls`, `Simulator`, `Scenario(i)`, `Mission(i)`. |
+| `simulator::Simulator`, `SimSetup`, `FORCES` | The setup screen (`new`, `frame`); the choices (indices and switches); the force multipliers `[0.5, 1, 1.5, 2]`. |
+| `simulator::apply(&MissionDef, &SimSetup, &Ruleset) -> MissionDef` | The modified copy (pure, tested). |
+| `simulator::hazard_classes(&Ruleset)`, `simulator::ship_allowed(&Ruleset, ShipClassId, Option<&str>)` | The campaign's asteroid and mine classes; why a ship may not fly in an environment (`None` = allowed). |
+| `flight::FlightSession::start_custom(ctx, MissionDef, ship)` | Starts a simulator mission and remembers it for "again". |
 | `launcher::next_campaign(&Content)`, `next_difficulty(&Content) -> Option<String>` | The campaign / difficulty level after the current one (wrapping), if there is another. |
 | `controls::ControlsMenu` | The controls menu component (`new`, `frame`). |
 | `assets::AssetBrowser`, `assets::Tab`, `assets::entries(&Content, Tab)` | The asset browser; `entries` (pure) lists assets with their override pack. |
@@ -169,6 +219,8 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 
 - `app::run(Options).await`.
 - `FlightSession::start(&mut AppContext, scenario_id, ship: Option<&str>) -> Result<FlightSession, String>`,
+  `FlightSession::start_custom(&mut AppContext, MissionDef, ship: Option<&str>)`,
+  `Simulator::new().frame(&mut ctx) -> Next`,
   `session.frame(&mut ctx) -> Next`, `session.view`.
 - `Launcher::new(&ctx).frame(&mut ctx)`, `ModelViewer::new(&ctx).frame(&mut ctx)`,
   `AssetBrowser::new(&ctx).frame(&mut ctx).await`.
@@ -189,5 +241,8 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
   how long the defended object holds on its own (`SoakPilot::Idle`).
 - A layout saved by F12 that seems ignored: the addon targets the campaign that was loaded when
   it was saved; check `--list` shows `<campaign>-cockpit-<id>` and that it is not disabled.
+- A simulator row that does nothing: the campaign has no asteroid class (no id containing
+  `asteroid`) or no `kind: mine` class; the row says "(none in this campaign)". A Fly that does
+  nothing: read the orange line under the rows (a ship that cannot enter an atmosphere).
 - `openinterceptor --mission defend_station --ship comet` starts a mission directly;
   `--soak defend_station --soak-pilot ai --seconds 400` plays it headless and prints the result.

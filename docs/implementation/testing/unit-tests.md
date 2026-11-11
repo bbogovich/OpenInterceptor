@@ -12,9 +12,17 @@ Since that count, tests named in the requirements' *Verified by* lines were adde
 0.4.3 – 0.6.1 without the full list being regenerated; those named below are listed (the
 summary rows of `hud`, `remote::protocol` and `sim::systems` include the 0.4.11 – 0.5.0 ones, and
 the rows of `content::hazards`, `content::environment`, `sim::hazards`, `sim::env`,
-`render::terrain` and `hud::draw` the 0.5.1 – 0.6.1 ones). A count of the `#[test]` functions in
-`src/` at main `de417df` (app 0.6.1), read with grep and not a build, gives **321** run on macOS
-(323 less the Linux-only test and the ignored helper below). App **0.6.1** (main `de417df`) adds
+`render::terrain` and `hud::draw` the 0.5.1 – 0.6.1 ones, and the rows of `app::flight`,
+`app::simulator` and `sim::env` the 0.6.2 – 0.6.4 ones). A count of the `#[test]` functions in
+`src/` at main `90653b9` (app 0.6.4), read with grep and not a build, gives **325** run on macOS
+(327 less the Linux-only test and the ignored helper below; 321 at main `de417df`, app 0.6.1).
+App **0.6.4** (main `90653b9`) adds
+`sim::env::tests::craft_spawned_low_over_a_ground_are_lifted_clear_of_it`; app **0.6.3** (main
+`1d13b59`) adds `app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only`
+and `ships_that_cannot_enter_an_atmosphere_are_refused_there` (and updates the launcher's menu
+tests for the Simulator entry); app **0.6.2** (main `5bdb47f`) adds
+`app::flight::tests::a_wingman_answers_in_its_own_voice` (and voice sets in
+`content::rules::tests::builds_typed_definitions_with_inheritance`). App **0.6.1** (main `de417df`) adds
 `sim::env::tests::ground_installations_are_set_down_on_the_terrain`; app **0.6.0** (main
 `af003f6`) adds `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`,
 `generated_heightfields_span_their_range_are_deterministic_and_interpolate`,
@@ -59,7 +67,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `model` | 9 | XMSH → engine model (mirroring, triangulation, groups, colours, bounds), outward winding after mirroring, **face table** (corner ranges, groups surviving empty-group removal), **overlay layers** (later face on top, overlay flag beats file order, touching or back-to-back faces not layered, OBJ duplicate face layered), LOD by distance, OBJ conversion, empty OBJ |
 | `content` | 5 | Loading packs/rules/scenarios/models from temp folders, skipping packs that need original data, scenario replacement, **per-asset overrides** of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs |
 | `content::pack` | 7 | Manifest parsing and validation, **kind, parent, targets and format** (and their errors), **the active set for a chosen campaign** (parent chain, targeting addons, dependencies), dependency ordering, missing/duplicate/cyclic dependencies, discovery |
-| `content::rules` | 6 | Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, hostility, flight model and arena defaults, **`bolt_frame`, `bolt_carry` and `lighting` (unset keys keep defaults)**, cockpits; **later packs merge, delete and edit lists**; **difficulty variants and per-level values**; every error reported; **spelling of original keys** (`HitPoints` → `hit_points`, `Side` → `faction`, beam `Range` in km); **sound cues resolve through the original table** |
+| `content::rules` | 6 | Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, **voice sets and their clips**, hostility, flight model and arena defaults, **`bolt_frame`, `bolt_carry` and `lighting` (unset keys keep defaults)**, cockpits; **later packs merge, delete and edit lists**; **difficulty variants and per-level values**; every error reported; **spelling of original keys** (`HitPoints` → `hit_points`, `Side` → `faction`, beam `Range` in km); **sound cues resolve through the original table** |
 | `content::equipment` | 3 | System kinds round trip and built-ins exist, `systems` definitions overriding built-ins, `power` parsing and validation (level counts, start levels) |
 | `content::hazards` | 1 | `hazards:` parses with defaults (count, radius, `sensors` as a fraction); a hazard without `class`, or a position without three numbers, is an error |
 | `content::environment` | 2 | Environments and terrains parse with defaults; mistakes reported (unknown `physics`, an atmosphere without a terrain, both or neither of `generate` / `heightmap`, an unknown generator); generated heightfields span their `height` range, are the same for the same seed and interpolate between grid points |
@@ -81,7 +89,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `mission` | 4 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; **the player's death is its own result (`killed`) with the lose outcomes** |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
 | `sim::hazards` | 4 | Asteroid fields and minefields are scattered in their sphere, clear of craft, deterministically, asteroids as scenery; a black hole pulls harder when near (capped) and swallows what crosses its radius; AI pilots turn away from it; an ion storm shortens radar range |
-| `sim::env` | 4 | Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the `lift` speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain |
+| `sim::env` | 5 | Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the `lift` speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain; **craft spawned below 300 m over a ground are lifted to 300 m** |
 | `script` | 3 | Units and tokens; evaluation with precedence and short-circuit; **errors found when loading** (unknown names, argument counts, types) |
 | `script::object` | 1 | Query ids match the table; system names match the kinds; level names as constants |
 | `script::battle` | 1 | Query ids match the table; role names are checked names |
@@ -103,8 +111,9 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `audio` | 2 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`) |
 | `app::assets` | 2 | Tab cycling; empty lists without original data |
 | `app::devices` | 2 | Key names match the bindings vocabulary |
-| `app::flight` | 5 | Camera pose for every view, **3D cockpit field of view widens only on narrow screens**, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages) |
-| `app::launcher` | 3 | Menu entries (viewer, asset browser, controls, scenarios) and wrapping, ship choice only when choosing, **next campaign**, text wrapping |
+| `app::flight` | 6 | Camera pose for every view, **3D cockpit field of view widens only on narrow screens**, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), **a wingman answers in its own voice** (only the player's wingmen, only with the line, never the lost one) |
+| `app::simulator` | 2 | **A setup changes only the environment, hazards and enemy force** (the defaults change nothing; enemies ×2, friends unchanged, never below one); **ships that cannot enter an atmosphere are refused there** |
+| `app::launcher` | 3 | Menu entries (viewer, asset browser, controls, simulator, scenarios; starting on the first scenario) and wrapping, ship choice only when choosing, **next campaign**, text wrapping |
 | `app::viewer` | 9 | Orbit pose and clamping, entries for every class, wheel steps, **display-mode cycle, fitted near plane, face info line, finding a model by ship id or mesh name**; **looks cover damage levels, states and debris** |
 | `check` | 2 | The **default campaign** passes; broken definitions become errors |
 | `extract` | 3 | OBJ export round-trips through the mod loader (positions, triangles, uvs, materials, flat colours), PNG encoding round trip, a full extraction of a synthetic CD writes every override path (incl. cockpit cyan → alpha) |
@@ -125,9 +134,11 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`app::devices`**: `key_names_match_the_bindings_vocabulary`, `known_names_are_real_keycodes`
 
-**`app::flight`**: `chase_orbit_responds_and_resets`, `cockpit_fov_widens_only_on_narrow_screens`, `commands_target_and_order_wingmen`, `events_become_pilot_messages`, `views_place_the_camera`
+**`app::flight`**: `a_wingman_answers_in_its_own_voice`, `chase_orbit_responds_and_resets`, `cockpit_fov_widens_only_on_narrow_screens`, `commands_target_and_order_wingmen`, `events_become_pilot_messages`, `views_place_the_camera`
 
 **`app::launcher`**: `menu_lists_viewer_and_scenarios_and_wraps`, `scenarios_start_with_the_chosen_ship_only_when_choosing`, `wrapping_text`
+
+**`app::simulator`**: `a_setup_changes_environment_hazards_and_enemy_force_only`, `ships_that_cannot_enter_an_atmosphere_are_refused_there`
 
 **`app::viewer`**: `a_still_wheel_does_not_zoom`, `default_entries_list_every_class`, `display_modes_cycle`, `entries_are_found_by_ship_id_or_mesh_name`, `face_info_describes_a_face`, `looks_cover_damage_states_and_debris`, `near_plane_moves_out_to_the_model`, `orbit_input_clamps`, `orbit_looks_at_the_origin_from_its_distance`
 
@@ -251,7 +262,7 @@ Generated from the `#[test]` functions in `src/` at main `bf7b7ce` (read with gr
 
 **`sim::flight`**: `afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off`, `assisted_model_holds_throttle_speed_and_damps_drift`, `brake_stops_against_the_direction_of_travel`, `energy_and_shields_recharge_up_to_capacity`, `half_throttle_is_half_the_acceleration`, `helpers`, `newtonian_accelerates_to_the_cap_and_coasts`, `pitching_up_raises_the_nose_and_rates_fall_with_speed`, `reverse_thrust_slows_and_then_backs_up`, `speed_hold_matches_speed_and_cancels_drift`, `static_objects_do_not_move`, `the_arena_edge_halts_outward_motion`, `turning_does_not_steer_the_velocity`, `vct_thrusts_sideways`, `yaw_right_and_roll_right_turn_the_expected_way`
 
-**`sim::env`**: `ai_pilots_pull_up_near_the_ground`, `drag_gravity_and_lift_act_in_air_and_not_in_space`, `gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit`, `ground_installations_are_set_down_on_the_terrain`
+**`sim::env`**: `ai_pilots_pull_up_near_the_ground`, `craft_spawned_low_over_a_ground_are_lifted_clear_of_it`, `drag_gravity_and_lift_act_in_air_and_not_in_space`, `gentle_touchdowns_land_hard_ones_crash_and_the_ceiling_is_an_exit`, `ground_installations_are_set_down_on_the_terrain`
 
 **`sim::guidance`**: `cloaked_wait_sleeps_until_prey_comes_near`, `cluster_splits_into_submunitions`, `damage_modes`, `doppelganger_launches_a_decoy_ship_that_expires`, `homing_hits_and_dumbfire_misses_an_offset_target`, `parallax_decoys_lure_enemy_missiles`, `sidestep_still_arrives`
 

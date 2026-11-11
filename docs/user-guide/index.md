@@ -8,6 +8,7 @@ How to install, run and play OpenInterceptor.
 | [Controls](controls.md) | The keys overlay (`?`), the action groups, rebinding keys and gamepad buttons |
 | [Settings](settings.md) | `settings.yaml`: data paths, packs, campaign, difficulty, language, brightness, console |
 | [Tablet console](console.md) | Turning on the control console, pairing a tablet, what the C1 page offers |
+| [Simulator](simulator.md) | Setting up a mission (environment, hazards, enemy force) and flying it |
 
 Pages to come:
 

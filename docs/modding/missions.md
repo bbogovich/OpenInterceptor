@@ -74,7 +74,7 @@ missions:
 | `optional` | mapping name: condition | none | Optional objectives, latched when first met and reported on the debrief. |
 | `timer` | `{after, then}` | none | A time limit: after `after` (a time) the result is `then` (`win`, `lose`, `draw`, `retreat` or `killed`; default `draw`). |
 | `outcomes` | mapping result: list of actions | none | What each result does (below). Results: `win`, `lose`, `draw`, `retreat`, `killed`. A mission without `killed` outcomes uses its `lose` outcomes for it. |
-| `chatter` | list of `{when, line}` | none | Radio lines, each said once when its condition first holds. |
+| `chatter` | list of `{when, line, voice}` | none | Radio lines, each said once when its condition first holds. `voice` (optional, app 0.6.2) is a sound asset spoken on the radio with the line: `voice: sounds/colony_control.wav` ([Radio voices](voices.md)). |
 | `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. |
 | `environment` | id | open space | Where the battle happens: an [environment](environments.md) such as `orbit` or `moon_surface`. |
 | `hazards` | mapping | none | Asteroid field, minefield, black hole, ion storm ([below](#hazards)). |
@@ -232,8 +232,34 @@ Quote an action that contains a comma or a `+` sign in a YAML flow list:
 
 | Campaign | Missions |
 |---|---|
-| `default` | `defend_station`, `convoy_ambush`, `construction_defence`, `intercept_scouts` (`missions/missions.yaml`; text in `text/en/missions.yaml`). Construction defence and convoy ambush are the [logistics](../specification/design/logistics.md) missions; the strategy layer will generate them. |
+| `default` | `defend_station`, `convoy_ambush`, `construction_defence`, `intercept_scouts`, and since app 0.6.4 `colony_defence`, `ground_strike`, `outpost_raid`, `asteroid_hunt`, `pocket_ambush` (`missions/missions.yaml`; text in `text/en/missions.yaml`). Construction defence and convoy ambush are the [logistics](../specification/design/logistics.md) missions; the strategy layer will generate them. The five newer ones are worked examples of environments, hazards and ground installations (below). |
 | `interceptor` | `xcom_base_defense`, `defend_freighter_convoy`, `deep_space_encounter`, `attack_alien_outpost`, `destroy_alien_probe` — five of the original's 27 types, with the original's own names, briefings and debriefs by key (`@orig.BRIEFING_TYPE_1`, `@orig.DEBRIEF_XBASE_WIN` …, read from the CD); the force compositions are derived (DEV-041). `%s` in an original briefing is filled by the strategy layer later and shows as written for now. |
+
+### Examples: environments, hazards and ground installations (app 0.6.4)
+
+Five missions of the default campaign each show one feature a mission can use. Read them in
+`resources/default/missions/missions.yaml`; copy one as the start of your own.
+
+| Mission | Shows | How |
+|---|---|---|
+| `colony_defence` | A surface battle protecting a ground installation | `environment: moon_surface`; the role `colony: {class: guard_colony, ai: idle, protect: true}` (a `kind: ground` class, set down on the terrain); raiders placed `from: colony`; a wave while the colony lives; `lose: destroyed(colony)`; an optional `colony_untouched: hull(colony) > 90%`; a chatter line with a radio `voice:`. |
+| `ground_strike` | Attacking ground turrets, with a time limit | `environment: dusk_hills`; `flak: {class: dominion_flak, ai: enemy, at: {…, spread: 1200m}}` — anti-air batteries spread along the hills; an escort that arrives after 60 s (`arrive:`); `timer: {after: 6min, then: draw}`. |
+| `outpost_raid` | A raid in orbit, with wingmen | `environment: orbit` (the planet backdrop); a `dominion_outpost` with guards placed `from: outpost`; two Meteor wingmen; `outcomes: {win: [score(outpost_destroyed), salvage]}`. |
+| `asteroid_hunt` | A hazard in open space | No environment; `hazards: {asteroids: {class: cosmium_asteroid, count: 50, radius: 5km, center: [0, 0, -5000], spin: 8}}`; scouts spread among the rocks; a 5-minute timer to a draw. |
+| `pocket_ambush` | A small arena with a sensor hazard | `environment: pocket` (a 12 km arena); `hazards: {ion_storm: {sensors: 65%}}`; hot-rods close by. |
+
+Each has a `killed` debrief (`@debrief.killed`) so that being shot down never shows the text for
+the objective failing. Over a terrain, craft placed less than 300 m above the ground start at
+300 m (app 0.6.4), so a role placed `from` a ground installation does not start inside a hill;
+installations themselves are set down on the ground.
+
+Measured with `--soak <mission> --soak-pilot ai --difficulty cadet` (app 0.6.4):
+`colony_defence` win at 43 s, `outpost_raid` win at 99 s; `ground_strike`, `asteroid_hunt` and
+`pocket_ambush` make kills but are still running at 300 s — the AI pilot is a weaker pilot than a
+player, so these are not balance verdicts.
+
+The launcher's **Simulator** flies any mission with another environment, added hazards and a
+larger or smaller enemy force, without editing its file ([User guide › Simulator](../user-guide/simulator.md)).
 
 `--soak <mission id>` plays a mission without a window and prints its result
 (`soak mission defend_station (ranger, ai): lose after 132 s; <n> kills`); see
@@ -257,6 +283,7 @@ by a unit test).
 | `outcomes.x: results are win, lose, draw, retreat and killed` | An unknown result name. |
 | `outcomes.win: unknown action 'teleport' (known: …)` | An unknown action, or a wrong argument. |
 | `chatter[2]: needs line:` | A chatter entry without its line. |
+| a chatter `voice:` clip that does not load | The start-up `sound: …` line names it (`--check` does not load voice clips yet); the line is still shown, silently. |
 | `hazards.minefield: needs a class` | A hazard without `class`. |
 | `hazards: position needs [x, y, z]` (or `center`) | A position with the wrong number of values. |
 | `mission x: hazards: unknown class 'y'` (`--check`) | A hazard class that the rules do not define. |

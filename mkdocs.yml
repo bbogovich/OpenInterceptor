@@ -138,6 +138,7 @@ nav:
       - "Controls": user-guide/controls.md
       - "Settings": user-guide/settings.md
       - "Tablet console": user-guide/console.md
+      - "Simulator": user-guide/simulator.md
   - "Modding":
       - modding/index.md
       - "Make your first mod": modding/first-mod.md
@@ -150,6 +151,7 @@ nav:
       - "Stations, modules and probes": modding/stations.md
       - "Text and translation": modding/text.md
       - "Missions": modding/missions.md
+      - "Radio voices": modding/voices.md
       - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md

@@ -37,7 +37,7 @@ flowchart LR
     FS["FlightSession::frame"] --> STEP["World::step() × n ticks"]
     STEP --> UP["MissionRun::update(&mut World)<br/>after every tick"]
     UP --> L1["1. losses per role from member state<br/>(destroyed, departed, captured events)"]
-    L1 --> L2["2. arrive: conditions → spawn_role;<br/>waves (once); chatter (once) → message lines;<br/>optional objectives latched"]
+    L1 --> L2["2. arrive: conditions → spawn_role;<br/>waves (once); chatter (once) → message lines<br/>(and its voice clip → voices);<br/>optional objectives latched"]
     L2 --> L3["3. end: retreat (player departed) →<br/>killed (player destroyed) →<br/>lose → win → draw → timer"]
     L3 -->|result| DB["Debrief: result, text, optional (met?),<br/>campaign actions, kills, losses, seconds;<br/>battle actions (message) run"]
     DB --> OV["debrief overlay over the frozen battle<br/>Enter: again · Esc/L: launcher"]
@@ -55,6 +55,13 @@ flowchart LR
 - **Determinism**: the mission's random choices come from its own generator seeded by
   `starfield_seed`, and condition `random(p)` from the same stream, so a mission replays
   identically with the same inputs.
+- **Chatter voices** (app 0.6.2): a chatter line with `voice:` also pushes its clip (an index
+  into `Ruleset::voice_clips`) onto `MissionRun::voices` when it is said; the flight screen
+  plays and clears that list every frame, and plays the computer voice (`mission_accomplished`
+  or `mission_failed`) when the debrief appears ([Audio](audio.md)).
+- **Spawning over a ground** (app 0.6.4): over a terrain, `World::spawn` lifts any craft placed
+  less than 300 m above the ground to 300 m (ground installations are still set down on it). A
+  role placed `from` a ground installation would otherwise start inside a hill.
 - **Conditions** are evaluated through `BattleCx`, which implements the script language's
   `Context` for this battle; role names are constants of the battle schema, compiled to indices.
 
@@ -81,6 +88,16 @@ Selecting one returns `Next::Mission { mission, ship }`; `--mission <id>` starts
 `soak::run_mission` plays a mission headless with the passive, AI or idle pilot and reports the
 result (`--soak <mission id>`). A unit test holds the balance promise of R-MSN-011: in the
 default campaign at cadet, `defend_station` with the idle pilot is still running after 150 s.
+Since app 0.6.4 the soak report counts kills while the mission is still running
+(`MissionRun::kills()`); before, a mission that ran out of time read 0 kills.
+
+### The simulator (app 0.6.3)
+
+The simulator (`app::simulator`, [Testbed](testbed.md#the-simulator-app-063)) flies a
+**modified copy** of a mission: `simulator::apply` returns a new `MissionDef` with the chosen
+environment and hazards and its enemy roles and waves scaled, and `FlightSession::start_custom`
+starts it through the same `MissionRun` as any other mission. Nothing in `mission` knows it is
+a simulation.
 
 ### AI changes made with missions
 
@@ -94,8 +111,8 @@ so pilots that start together do not act together.
 | Symbol | What it is |
 |---|---|
 | `content::mission::MissionDef` | A parsed mission: `id`, `name`, `briefing`, `order`, `player_class`, `player_position`, `roles`, `waves`, `win`/`lose`/`draw`, `optional`, `timer`, `outcomes`, `chatter`, `debrief`, `starfield_seed`. |
-| `RoleDef`, `Arrival`, `WaveDef`, `ChatterDef` | A role (classes, count range, faction, AI, behaviour, protect, state, hull, destroyed systems, speed, `at`, `arrive`); an arrival (`distance`, `bearing`, `from`, `spread`); a wave; a radio line. |
-| `mission::MissionRun` | The running mission: its definition, the player's id, per-role `RoleRun`s, wave/chatter/optional latches, its generator, kills, losses, `debrief`. |
+| `RoleDef`, `Arrival`, `WaveDef`, `ChatterDef` | A role (classes, count range, faction, AI, behaviour, protect, state, hull, destroyed systems, speed, `at`, `arrive`); an arrival (`distance`, `bearing`, `from`, `spread`); a wave; a radio line (`when`, `line`, and since app 0.6.2 `voice` with its `voice_clip` index, filled in by the rules). |
+| `mission::MissionRun` | The running mission: its definition, the player's id, per-role `RoleRun`s, wave/chatter/optional latches, its generator, kills, losses, `debrief`, and `voices` (chatter clips said and not yet played). `kills()` reads the kills so far, also while the battle runs. |
 | `mission::RoleRun` | `members`, `arrived`, `destroyed`, `retreated`, `captured`. |
 | `mission::Debrief` | `result` (`win`, `lose`, `draw`, `retreat`, `killed`), `text`, `optional: Vec<(name, met)>`, `campaign` actions (as text), `kills`, `losses`, `seconds`. |
 | `mission::BattleCx` | The battle `Context` for conditions. |
@@ -104,6 +121,7 @@ so pilots that start together do not act together.
 | `schema::Ty::Either` | A schema type with two accepted forms (`count`, `bearing`, `class`). |
 | `World::spawn_placement`, `World::same_slot` | Spawn one placed object; whether an id's slot still holds its ship. |
 | `app::Next::Mission`, `FlightSession::start_mission` | Starting a mission from the launcher or `--mission`. |
+| `app::Next::Simulate`, `FlightSession::start_custom` | Starting a simulator mission: a ready-made, modified `MissionDef` (app 0.6.3). |
 
 ## API Reference
 
@@ -111,7 +129,8 @@ so pilots that start together do not act together.
   `def.outcome(result) -> &[Action]`.
 - `MissionRun::start(&MissionDef, Arc<Ruleset>, Arc<Vec<Shape>>, Option<ShipClassId>) ->
   Result<(World, MissionRun), String>`; `run.update(&mut World) -> Vec<String>` (message lines);
-  `run.spawn_role(&mut World, role, count, at) -> Result<usize, String>`.
+  `run.spawn_role(&mut World, role, count, at) -> Result<usize, String>`; `run.kills() -> u32`;
+  `run.voices` (drained by the flight screen).
 - `script::battle::schema(&[String], &[String]) -> Schema`;
   `script::action::parse(text, MISSION_ACTIONS) -> Result<Action, String>`; `action.display()`.
 - `soak::run_mission(&Content, id, ship, seconds, pilot)`.

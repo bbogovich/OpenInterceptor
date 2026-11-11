@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.12.0
 status: current
 updated: 2026-11-11
 ---
@@ -9,7 +9,7 @@ updated: 2026-11-11
 **Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2**; actions,
 the battle and campaign contexts, the remaining manoeuvres, targeting preferences and Tier 2
 are design. Replaces the open question on [Scripting](../../modding/scripting.md) with a two-tier
-design; the Tier 2 language decision is taken at the start of Stage 3. The implemented form is
+design; the Tier 2 language decision is evaluated (Stage 3.10) and awaits the user. The implemented form is
 documented for modders on [Behaviours and conditions](../../modding/behaviours.md).
 
 ## Two tiers
@@ -192,13 +192,22 @@ events:
 - Scripts may keep state only through the API (`set_flag`, `counter`, object variables), so
   saves never need to serialise a script VM.
 
-### Language decision (Stage 3 entry)
+### Language decision (Stage 3.10) — awaiting the user
 
-| Option | Assessment |
+The full evaluation is on the dependency page:
+[Tier 2 scripting, evaluated](../../learning/best-practices/dependencies.md#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision).
+**No decision has been made.**
+
+| Option | Assessment (summary) |
 |---|---|
-| **Lua 5.4 via `mlua`** (recommended) | The modding standard; small, fast, sandboxable; MIT. Cost: a vendored C library and an FFI boundary, evaluated under the [dependency policy](../../learning/best-practices/dependencies.md). |
-| Rhai | Pure Rust, MIT/Apache; slower; fewer modders know it. |
-| Grow Tier 1 into a full language | No dependency, but loops, functions and tooling are the expensive part; rejected unless both candidates fail evaluation. |
+| (a) **Lua 5.4 via `mlua`** | The modding standard; fast; MIT. Costs: bundled C sources, a C compiler on every platform, an FFI boundary, opt-in sandboxing, determinism care (`f64`, table iteration order). **The fallback** if mods need a full general-purpose language. |
+| (b) `rhai` | Pure Rust, MIT/Apache; slower; few modders know it; a larger crate tree; errors at run time. Reconsider only if a pure-Rust or WebAssembly build becomes a requirement. |
+| (c) **Grow Tier 1** into a small statement language (variables, `if`/`else`, bounded loops, functions, calls into the same checked API) | No dependency; checked at load, deterministic and sandboxed by construction; the parser, checker and evaluator exist. Ceiling: no general-purpose data structures. **Recommended as the default** by the evaluator. |
+
+Earlier drafts of this page recommended (a) and rejected (c) unless both crates failed
+evaluation; the evaluation found (c) far cheaper than that assumed, because the language's
+hard parts already exist. The hook syntax above (`do: script`, `script(...)`) is the same for
+any choice; the `.lua` file names in the examples are placeholders.
 
 Because both shipped campaigns need only Tier 1, the choice can be made on its merits without
 blocking any campaign work.
@@ -208,3 +217,4 @@ blocking any campaign work.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
+| 1.12.0 | 2026-11-11 | Tier 2 language decision: summary of the recorded evaluation ((a) `mlua`, (b) `rhai`, (c) grow Tier 1); evaluator recommends (c), fallback (a); awaiting the user's decision |
