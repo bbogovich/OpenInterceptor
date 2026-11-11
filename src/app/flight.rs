@@ -837,6 +837,9 @@ impl FlightSession {
         }
         if resend {
             server.broadcast(&protocol::catalogue(&self.world.rules, &self.world, self.player));
+            // The console takes the look of the campaign and of this craft's cockpit.
+            let cockpit = class.and_then(|c| self.world.rules.ship(c).cockpit.clone());
+            server.broadcast(&protocol::theme(&self.world.rules.console.for_cockpit(cockpit.as_deref())));
             self.console_class = class;
             self.console_target = None; // a new console needs the target model too
         }

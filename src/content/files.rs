@@ -489,6 +489,39 @@ fn flight() -> Ty {
     ])
 }
 
+fn console_layer() -> Ty {
+    Ty::Struct(vec![
+        f(
+            "colors",
+            Ty::Struct(vec![
+                f("bg", rgb(), "page background"),
+                f("panel", rgb(), "panel background"),
+                f("line", rgb(), "borders, and the fill of a pressed button"),
+                f("ink", rgb(), "text"),
+                f("dim", rgb(), "labels and secondary text"),
+                f("hot", rgb(), "values and highlights"),
+                f("warn", rgb(), "warnings (amber)"),
+                f("danger", rgb(), "danger (red)"),
+                f("off", rgb(), "features not fitted"),
+            ]),
+            "colours (RGB 0..1)",
+        ),
+        f("font", Ty::Text, "a CSS font list, e.g. \"Futura, 'Avenir Next', sans-serif\""),
+        f("corner", Ty::Num, "panel corner radius in pixels"),
+    ])
+}
+
+fn console_theme() -> Ty {
+    Ty::Def(vec![
+        f("theme", console_layer(), "the campaign's console theme"),
+        f(
+            "cockpits",
+            Ty::Dict(Box::new(console_layer())),
+            "per cockpit id: overrides while flying a craft with that cockpit",
+        ),
+    ])
+}
+
 fn power() -> Ty {
     Ty::Def(vec![
         f("beam_recharge", Ty::List(Box::new(Ty::Num)), "per level A, B, …: fraction of the ship's energy_recharge"),
@@ -533,6 +566,7 @@ pub fn rules_sections() -> Vec<Field> {
         f("debris", dict(debris()), "debris sets by id"),
         f("effects", dict(effect()), "explosions and other effects by id"),
         f("flight", flight(), "flight model and sensors"),
+        f("console", console_theme(), "the tablet console's look: colours, font, corners; per cockpit"),
         f("power", power(), "beam/shield charge settings"),
         f("damage", damage(), "damage to systems and repair"),
         f("sounds", dict(Ty::Asset), "event name: sound (an asset, or cue:<Name> from the cue table)"),

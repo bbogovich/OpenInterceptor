@@ -151,6 +151,7 @@ pub fn console_idle(ctx: &mut AppContext, screen: &str) {
     for e in server.poll() {
         if let crate::remote::server::Event::Paired(_) = e {
             server.broadcast(&crate::remote::protocol::catalogue_idle());
+            server.broadcast(&crate::remote::protocol::theme(&ctx.content.rules.console.base));
         }
     }
     // Twice a second is plenty for a status line (get_time is seconds since start).

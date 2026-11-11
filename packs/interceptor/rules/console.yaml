@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The tablet console's look for X-COM: Interceptor (R-CON-020). New, original-free
+# styling: the page's green instrument look, tinted while flying each craft with that
+# cockpit's accent colour (measured from the player's cockpit art: A olive bronze,
+# B steel blue, C red). No original art is used or copied.
+console:
+  theme:
+    colors:
+      bg: [0.02, 0.04, 0.02]
+      hot: [0.49, 1.00, 0.61]
+    font: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+    corner: 4
+  cockpits:
+    a:
+      colors: {panel: [0.09, 0.10, 0.07], line: [0.55, 0.47, 0.27], dim: [0.55, 0.53, 0.42]}
+    b:
+      colors: {panel: [0.06, 0.08, 0.10], line: [0.35, 0.47, 0.55], hot: [0.60, 0.85, 1.00], dim: [0.45, 0.55, 0.62]}
+    c:
+      colors: {panel: [0.10, 0.05, 0.05], line: [0.60, 0.12, 0.12], hot: [1.00, 0.55, 0.45], dim: [0.62, 0.45, 0.43]}

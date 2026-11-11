@@ -356,6 +356,41 @@
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
       }},
+    "console": {"description": "the tablet console's look: colours, font, corners; per cockpit", "type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+        "theme": {"description": "the campaign's console theme", "type": "object", "additionalProperties": false, "properties": {
+            "colors": {"description": "colours (RGB 0..1)", "type": "object", "additionalProperties": false, "properties": {
+                "bg": {"description": "page background", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "panel": {"description": "panel background", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "line": {"description": "borders, and the fill of a pressed button", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "ink": {"description": "text", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "dim": {"description": "labels and secondary text", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "hot": {"description": "values and highlights", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "warn": {"description": "warnings (amber)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "danger": {"description": "danger (red)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "off": {"description": "features not fitted", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+              }},
+            "font": {"description": "a CSS font list, e.g. \"Futura, 'Avenir Next', sans-serif\"", "type": "string"},
+            "corner": {"description": "panel corner radius in pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
+        "cockpits": {"description": "per cockpit id: overrides while flying a craft with that cockpit", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+              "colors": {"description": "colours (RGB 0..1)", "type": "object", "additionalProperties": false, "properties": {
+                  "bg": {"description": "page background", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "panel": {"description": "panel background", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "line": {"description": "borders, and the fill of a pressed button", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "ink": {"description": "text", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "dim": {"description": "labels and secondary text", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "hot": {"description": "values and highlights", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "warn": {"description": "warnings (amber)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "danger": {"description": "danger (red)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "off": {"description": "features not fitted", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+                }},
+              "font": {"description": "a CSS font list, e.g. \"Futura, 'Avenir Next', sans-serif\"", "type": "string"},
+              "corner": {"description": "panel corner radius in pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }}},
+        "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+        "delete": {"type": "boolean"},
+        "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+      }},
     "power": {"description": "beam/shield charge settings", "type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
         "beam_recharge": {"description": "per level A, B, …: fraction of the ship's energy_recharge", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
         "shield_recharge": {"description": "per level: fraction of the ship's shield_recharge", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},

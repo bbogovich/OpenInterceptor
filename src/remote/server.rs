@@ -323,6 +323,15 @@ mod tests {
                     .unwrap();
                     let m = crate::model::Model::from_obj("sample", &mesh, 1.0, &[]);
                     server.broadcast(&protocol::model("Wraith", &m, &[[0.6, 0.75, 0.6]]));
+                    // The default campaign's theme, from its rules file (the art-deco look).
+                    if let Ok(c) = crate::content::Content::load(&crate::content::ContentConfig {
+                        pack_dirs: crate::content::checkout_dirs(),
+                        no_original: true,
+                        campaign: Some("default".into()),
+                        ..Default::default()
+                    }) {
+                        server.broadcast(&protocol::theme(&c.rules.console.base));
+                    }
                 }
             }
             // A sample of in-flight telemetry, so every panel has something to show.

@@ -316,6 +316,27 @@ pub fn contacts(world: &World, player: ShipId) -> String {
     Obj::new().str("type", "contacts").num("range", rules.flight.radar_range as f64).raw("list", &array(&list)).end()
 }
 
+/// The `theme` message (R-CON-020): CSS variables for the console page from a theme
+/// layer (`--bg`, `--line`…, `--font`, `--corner`). An empty layer sends no variables
+/// and the page keeps its own look.
+pub fn theme(layer: &crate::content::rules::ThemeLayer) -> String {
+    let hex = |c: [f32; 3]| {
+        let b = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u8;
+        format!("#{:02x}{:02x}{:02x}", b(c[0]), b(c[1]), b(c[2]))
+    };
+    let mut vars = Obj::new();
+    for (k, c) in &layer.colors {
+        vars = vars.str(&format!("--{k}"), &hex(*c));
+    }
+    if let Some(f) = &layer.font {
+        vars = vars.str("--font", f);
+    }
+    if let Some(r) = layer.corner {
+        vars = vars.str("--corner", &format!("{r}px"));
+    }
+    Obj::new().str("type", "theme").raw("vars", &vars.end()).end()
+}
+
 /// The `event` message: one line from the pilot's message log.
 pub fn event(text: &str) -> String {
     Obj::new().str("type", "event").str("text", text).end()
@@ -443,6 +464,31 @@ mod tests {
         );
         assert!(decode(r#"{"type":"target","id":"x"}"#).is_err());
         assert_eq!(event("SHIELDS DOWN"), r#"{"type":"event","text":"SHIELDS DOWN"}"#);
+    }
+
+    #[test]
+    fn themes_layer_per_cockpit_and_become_css_variables() {
+        use crate::content::rules::{ConsoleTheme, ThemeLayer};
+        let theme = ConsoleTheme {
+            base: ThemeLayer {
+                colors: vec![("line".into(), [0.0, 1.0, 0.0]), ("bg".into(), [0.0, 0.0, 0.0])],
+                font: Some("Futura, sans-serif".into()),
+                corner: None,
+            },
+            cockpits: [(
+                "a".to_string(),
+                ThemeLayer { colors: vec![("line".into(), [1.0, 0.5, 0.0])], font: None, corner: Some(2.0) },
+            )]
+            .into_iter()
+            .collect(),
+        };
+        let msg = super::super::json::parse(&super::theme(&theme.for_cockpit(Some("A")))).unwrap();
+        let vars = msg.get("vars").unwrap();
+        assert_eq!(vars.get("--line").and_then(Json::as_str), Some("#ff8000"), "the cockpit's override");
+        assert_eq!(vars.get("--bg").and_then(Json::as_str), Some("#000000"), "the base's");
+        assert_eq!(vars.get("--font").and_then(Json::as_str), Some("Futura, sans-serif"));
+        assert_eq!(vars.get("--corner").and_then(Json::as_str), Some("2px"));
+        assert_eq!(super::theme(&ThemeLayer::default()), r#"{"type":"theme","vars":{}}"#);
     }
 
     #[test]

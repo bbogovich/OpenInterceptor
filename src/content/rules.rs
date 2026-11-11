@@ -429,6 +429,44 @@ impl Default for Lighting {
     }
 }
 
+/// The colour names a console theme may set (CSS variables of the console page).
+pub const CONSOLE_COLORS: [&str; 9] = ["bg", "panel", "line", "ink", "dim", "hot", "warn", "danger", "off"];
+
+/// One layer of a console theme: colours by name (see [`CONSOLE_COLORS`]), a CSS font
+/// list, and the panels' corner radius in pixels. Unset values fall through to the layer
+/// below (the campaign's base theme, then the page's own defaults).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ThemeLayer {
+    pub colors: Vec<(String, [f32; 3])>,
+    pub font: Option<String>,
+    pub corner: Option<f32>,
+}
+
+/// The console theme of a campaign: a base, and overrides per cockpit id, so the console
+/// can follow the craft being flown (X-COM: the colours of that craft's cockpit).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ConsoleTheme {
+    pub base: ThemeLayer,
+    pub cockpits: HashMap<String, ThemeLayer>,
+}
+
+impl ConsoleTheme {
+    /// The theme for a craft with cockpit `cockpit`: the base with that cockpit's
+    /// overrides applied on top.
+    pub fn for_cockpit(&self, cockpit: Option<&str>) -> ThemeLayer {
+        let mut t = self.base.clone();
+        if let Some(o) = cockpit.and_then(|c| self.cockpits.get(&c.to_ascii_lowercase())) {
+            for (k, v) in &o.colors {
+                t.colors.retain(|(n, _)| n != k);
+                t.colors.push((k.clone(), *v));
+            }
+            t.font = o.font.clone().or(t.font);
+            t.corner = o.corner.or(t.corner);
+        }
+        t
+    }
+}
+
 /// What a contact is to the player, for its radar colour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Relation {
@@ -544,6 +582,8 @@ pub struct Ruleset {
     /// Ship systems: the built-in kinds first (ids = kind names), then pack additions.
     pub systems: Vec<SystemDef>,
     pub flight: FlightRules,
+    /// The tablet console's look (`console: {theme, cockpits}`; R-CON-020).
+    pub console: ConsoleTheme,
     pub power: PowerRules,
     pub damage: DamageRules,
     pub behaviours: Vec<BehaviourDef>,
@@ -831,6 +871,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         }
     };
     let flight_node = global("flight");
+    let console_node = global("console");
     let power_node = global("power");
     let damage_node = global("damage");
     let sounds_node = global("sounds");
@@ -1135,6 +1176,35 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         },
         formation_gap: fl.and_then(|g| g.num("formation_gap")).unwrap_or(3.0).max(0.0),
     };
+    // The console theme (R-CON-020).
+    let layer = |g: Get, errors: &mut Vec<String>, at: &str| ThemeLayer {
+        colors: g
+            .map("colors")
+            .iter()
+            .filter_map(|(k, _)| {
+                let k = k.to_ascii_lowercase();
+                if !CONSOLE_COLORS.contains(&k.as_str()) {
+                    errors
+                        .push(format!("console.{at}colors.{k}: not a console colour ({})", CONSOLE_COLORS.join(", ")));
+                    return None;
+                }
+                Some((k.clone(), rgb(g.node("colors").map(Get)?, &k, [0.0; 3])))
+            })
+            .collect(),
+        font: g.str("font").map(str::to_string),
+        corner: g.num("corner"),
+    };
+    let console = match console_node.as_ref().map(|(n, _)| Get(n)) {
+        Some(c) => ConsoleTheme {
+            base: c.node("theme").map(|t| layer(Get(t), &mut errors, "theme.")).unwrap_or_default(),
+            cockpits: c
+                .map("cockpits")
+                .iter()
+                .map(|(id, v)| (id.to_ascii_lowercase(), layer(Get(v), &mut errors, &format!("cockpits.{id}."))))
+                .collect(),
+        },
+        None => ConsoleTheme::default(),
+    };
     let sounds = sounds_node
         .map(|(n, pack)| {
             n.as_map()
@@ -1167,6 +1237,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             cockpits,
             systems,
             flight,
+            console,
             power,
             damage,
             behaviours,

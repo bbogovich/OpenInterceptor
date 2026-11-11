@@ -176,6 +176,16 @@ class OiThrottle extends HTMLElement {
   }
 }
 
+/** The campaign's theme (R-CON-020): CSS variables set on the page. Variables a theme
+ *  leaves out return to the page's own defaults (console.css). */
+let themed = [];
+link.addEventListener("theme", (e) => {
+  const root = document.documentElement.style;
+  for (const k of themed) root.removeProperty(k);
+  themed = Object.keys(e.detail.vars || {});
+  for (const k of themed) root.setProperty(k, e.detail.vars[k]);
+});
+
 /** The latest catalogue and telemetry, for elements built after they arrive. */
 let catalogue = null;
 let latest = null;
@@ -394,7 +404,7 @@ class OiTargetView extends HTMLElement {
     this.innerHTML = `<canvas></canvas><p class="label">No target</p>`;
     const canvas = this.querySelector("canvas");
     const label = this.querySelector(".label");
-    const gl = canvas.getContext("webgl", { antialias: true });
+    const gl = canvas.getContext("webgl", { antialias: true, premultipliedAlpha: false });
     if (!gl) { label.textContent = "3D view not available in this browser"; return; }
     const vs = `attribute vec3 p; attribute vec3 n; attribute vec3 c; uniform mat4 mvp; uniform mat3 rot;
       varying vec3 col; void main() {
@@ -452,7 +462,7 @@ class OiTargetView extends HTMLElement {
       if (!w || !h || !count || this.classList.contains("empty")) return;
       if (canvas.width !== w * devicePixelRatio) { canvas.width = w * devicePixelRatio; canvas.height = h * devicePixelRatio; }
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0.02, 0.04, 0.03, 1);
+      gl.clearColor(0, 0, 0, 0); // transparent: the themed panel shows through
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.enable(gl.DEPTH_TEST);
       // The player looks along −Z; the target sits 3 radii ahead, turned by `quat`.
