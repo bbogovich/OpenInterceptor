@@ -2,7 +2,10 @@
 # The three original cockpits. Which hull uses which cockpit is DERIVED (one per hull).
 # Instrument.<name> = x, y, width, height in the 640x480 design space of the image.
 # Instruments the engine draws: message, radar_front, radar_rear, mfd, gauge1..gauge4
-# (speed, energy, shields, hull). Move them to match your own cockpit art.
+# (speed, energy, shields, hull), status (throttle line), power, systems. Move them to
+# match your own cockpit art. A strip much wider than tall gets an instrument's one-line
+# form. All three cockpits share the top display bar, measured from the art: a lit band
+# at y 9-19 (x 115-529) and two strips at y 26-37 (x 115-262 and 268-529).
 # The radar rectangles enclose the round glass of each scope, measured from the art
 # (crosshair centre +-1 px); the engine draws contacts only, the art supplies the rings.
 #
@@ -11,7 +14,10 @@ cockpits:
   a:
     image: original:CockpitA.dll#12000
     instruments:
-      message: [118, 12, 410, 24]
+      message: [117, 9, 410, 11]
+      status: [117, 26, 144, 11]
+      power: [270, 26, 112, 11]
+      systems: [384, 26, 144, 11]
       radar_front: [111, 332, 60, 60]
       radar_rear: [473, 332, 60, 60]
       mfd: [246, 338, 156, 82]
@@ -22,7 +28,10 @@ cockpits:
   b:
     image: original:CockpitB.dll#12200
     instruments:
-      message: [118, 12, 410, 24]
+      message: [117, 9, 410, 11]
+      status: [117, 26, 144, 11]
+      power: [270, 26, 112, 11]
+      systems: [384, 26, 144, 11]
       radar_front: [126, 366, 56, 56]
       radar_rear: [462, 366, 56, 56]
       mfd: [248, 324, 146, 76]
@@ -33,7 +42,10 @@ cockpits:
   c:
     image: original:CockpitC.dll#12400
     instruments:
-      message: [118, 12, 410, 24]
+      message: [117, 9, 410, 11]
+      status: [117, 26, 144, 11]
+      power: [270, 26, 112, 11]
+      systems: [384, 26, 144, 11]
       radar_front: [26, 361, 53, 53]
       radar_rear: [560, 361, 53, 53]
       mfd: [250, 377, 136, 72]

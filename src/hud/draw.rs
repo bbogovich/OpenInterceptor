@@ -114,32 +114,14 @@ pub fn draw_instruments(f: &HudFrame) {
             draw_instrument(f, me, name, r);
         }
     }
-    // Throttle and status strip under the message line.
-    let class = rules.ship(me.class);
-    let speed = me.forward_speed();
-    let mut status = format!("THR {:>3.0}%  {:>4.0} m/s", me.throttle * 100.0, speed);
-    if me.reverse {
-        status += "  REV";
+    // Throttle and status line: in the cockpit's `status` rectangle (drawn with the
+    // instruments above), else plain screen text at the top left.
+    if get("status").is_none() && !skip("status") {
+        let status = status_line(rules, me);
+        // Sized by the window, not the cockpit's design space: it is plain screen text.
+        let size = (screen_height() * 0.022).clamp(13.0, 26.0);
+        text(&status, f.layout.offset.x + 8.0, (40.0 * f.layout.scale).max(size * 1.5), size, HUD_GREEN);
     }
-    if me.afterburning {
-        status += "  BURN";
-    }
-    if me.braking {
-        status += "  BRAKE";
-    }
-    if let Some(h) = me.speed_hold {
-        status += &format!("  HOLD {h:.0}");
-    }
-    if class.vct {
-        status += "  VCT";
-    }
-    for flag in status_flags(me) {
-        status += "  ";
-        status += &flag;
-    }
-    // Sized by the window, not the cockpit's design space: it is plain screen text.
-    let size = (screen_height() * 0.022).clamp(13.0, 26.0);
-    text(&status, f.layout.offset.x + 8.0, (40.0 * f.layout.scale).max(size * 1.5), size, HUD_GREEN);
 
     // Power and systems: in the cockpit's own rectangles, or a corner panel.
     // A cockpit without these rectangles gets small panels in the top-right corner of
@@ -162,8 +144,60 @@ pub fn draw_instruments(f: &HudFrame) {
 }
 
 /// Every instrument the HUD knows how to draw.
-pub const INSTRUMENTS: [&str; 10] =
-    ["radar_front", "radar_rear", "gauge1", "gauge2", "gauge3", "gauge4", "mfd", "message", "power", "systems"];
+pub const INSTRUMENTS: [&str; 11] = [
+    "radar_front",
+    "radar_rear",
+    "gauge1",
+    "gauge2",
+    "gauge3",
+    "gauge4",
+    "mfd",
+    "message",
+    "power",
+    "systems",
+    "status",
+];
+
+/// A strip (much wider than tall) gets the one-line form of an instrument.
+fn is_strip(r: [f32; 4]) -> bool {
+    r[2] > r[3] * 5.0
+}
+
+/// One line of text fitted to a strip: as large as the strip allows, clipped if long.
+fn strip_text(f: &HudFrame, r: [f32; 4], s: &str, color: Color) {
+    let size = legible(fit_size(&[s], 1, f32::INFINITY, r[3], 22.0 * f.text_scale), f).min(r[3] * 1.1);
+    let pad = size * 0.3;
+    text(&clip(s, size, r[2] - pad * 2.0), r[0] + pad, r[1] + (r[3] - size) * 0.5, size, color);
+}
+
+/// Message text: brighter than instrument green, readable on lit display bands.
+const HUD_BRIGHT: Color = Color::new(0.75, 1.0, 0.8, 1.0);
+
+/// The throttle and status line: throttle, speed, and the drive and system flags.
+fn status_line(rules: &crate::content::rules::Ruleset, me: &crate::sim::Ship) -> String {
+    let class = rules.ship(me.class);
+    let mut status = format!("THR {:>3.0}%  {:>4.0} m/s", me.throttle * 100.0, me.forward_speed());
+    if me.reverse {
+        status += "  REV";
+    }
+    if me.afterburning {
+        status += "  BURN";
+    }
+    if me.braking {
+        status += "  BRAKE";
+    }
+    if let Some(h) = me.speed_hold {
+        status += &format!("  HOLD {h:.0}");
+    }
+    if class.vct {
+        status += "  VCT";
+    }
+    for flag in status_flags(me) {
+        status += "  ";
+        status += &flag;
+    }
+    status
+}
 
 /// Draws one instrument into the rectangle `r` (pixels of whatever is being drawn to:
 /// the screen, or an instrument texture for a 3D cockpit).
@@ -174,6 +208,14 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
             let front = name == "radar_front";
             let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
             let radius = r[2].min(r[3]) * 0.5;
+            // Shield ring: the front scope shows the fore shield, the rear scope the aft,
+            // as a coloured ring just inside the scope's edge.
+            let p = power_readout(&f.world.rules, me);
+            let blink = (f.now * 4.0) as i64 % 2 == 0;
+            if let Some(ring) = shield_ring_color(if front { p.fore } else { p.aft }, blink) {
+                let thick = (radius * 0.07).max(1.5 * f.text_scale);
+                draw_circle_lines(c.x, c.y, radius - thick * 0.5, thick, ring);
+            }
             // Cockpit art has its own scope rings; the engine adds rings only on the
             // plain glass HUD, so they never sit slightly off the painted ones.
             if f.glass {
@@ -244,13 +286,15 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
         }
         "message" => {
             if let Some(m) = f.messages.visible(f.now, 1).last() {
-                let size = fit_size(&[m], 1, r[2], r[3], 20.0 * f.text_scale);
+                let size = legible(fit_size(&[m], 1, r[2], r[3], 20.0 * f.text_scale), f).min(r[3] * 1.1);
+                let m = &clip(m, size, r[2]);
                 let w = measure_text(m, None, size as u16, 1.0).width;
-                text(m, r[0] + (r[2] - w) * 0.5, r[1] + (r[3] - size) * 0.5, size, HUD_GREEN);
+                text(m, r[0] + (r[2] - w) * 0.5, r[1] + (r[3] - size) * 0.5, size, HUD_BRIGHT);
             }
         }
         "power" => draw_power(f, me, r),
         "systems" => draw_systems(f, me, r),
+        "status" => strip_text(f, r, &status_line(&f.world.rules, me), HUD_GREEN),
         _ => {}
     }
 }
@@ -259,6 +303,18 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
 /// fore/aft shield bars with the balance marker.
 fn draw_power(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let p = power_readout(&f.world.rules, me);
+    if is_strip(r) {
+        let line = format!(
+            "B-{} S-{}  F{:.0} A{:.0}",
+            PowerRules::letter(p.beam),
+            PowerRules::letter(p.shield),
+            p.fore * 100.0,
+            p.aft * 100.0
+        );
+        let low = p.fore < 0.25 || p.aft < 0.25;
+        strip_text(f, r, &line, if low { RED } else { HUD_GREEN });
+        return;
+    }
     let col_w = r[2] / 4.0;
     let size = legible(fit_size(&["B-E"], 1, col_w * 0.95, r[3] * 0.2, 16.0 * f.text_scale), f);
     let label_h = size * 1.1;
@@ -304,6 +360,25 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     if lamps.is_empty() {
         return;
     }
+    if is_strip(r) {
+        // One line: only the systems that are not plain OK, in their lamp colour.
+        let odd: Vec<_> = lamps.iter().filter(|(_, l, _)| *l != Lamp::Ok).collect();
+        if odd.is_empty() {
+            strip_text(f, r, "SYSTEMS OK", HUD_GREEN);
+            return;
+        }
+        let size = legible(fit_size(&["ENG"], 1, f32::INFINITY, r[3], 22.0 * f.text_scale), f).min(r[3] * 1.1);
+        let mut x = r[0] + size * 0.3;
+        for (label, lamp, _) in odd {
+            let w = width_per_px(label) * size;
+            if x + w > r[0] + r[2] {
+                break;
+            }
+            text(label, x, r[1] + (r[3] - size) * 0.5, size, lamp_color(*lamp, false, false));
+            x += w + size * 0.6;
+        }
+        return;
+    }
     let (cols, rows) = lamp_grid(lamps.len(), r[2], r[3]);
     let (cw, ch) = (r[2] / cols as f32, r[3] / rows as f32);
     let d = (ch * 0.45).min(cw * 0.25);
@@ -311,14 +386,7 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
     let blink = (f.now * 3.0) as i64 % 2 == 0;
     for (i, (label, lamp, repairing)) in lamps.iter().enumerate() {
         let (cx, cy) = (r[0] + cw * (i % cols) as f32, r[1] + ch * (i / cols) as f32);
-        let color = match lamp {
-            Lamp::Ok => Color::new(0.2, 0.85, 0.3, 0.9),
-            Lamp::On => Color::new(0.3, 0.95, 1.0, 1.0),
-            Lamp::Damaged => Color::new(1.0, 0.7, 0.1, 1.0),
-            Lamp::Out if *repairing && blink => Color::new(0.45, 0.05, 0.05, 1.0),
-            Lamp::Out => Color::new(1.0, 0.15, 0.1, 1.0),
-            Lamp::Destroyed => Color::new(0.25, 0.25, 0.25, 1.0),
-        };
+        let color = lamp_color(*lamp, *repairing, blink);
         draw_circle(cx + d * 0.8, cy + ch * 0.5, d * 0.5, color);
         text(
             label,
@@ -327,6 +395,31 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
             size,
             if *lamp == Lamp::Destroyed { GRAY } else { HUD_GREEN },
         );
+    }
+}
+
+/// The shield ring's colour for a facing at `frac` of its capacity: green when strong,
+/// amber when weakened, red when low, and blinking red (`None` on the off beat) when the
+/// shield is down.
+fn shield_ring_color(frac: f32, blink: bool) -> Option<Color> {
+    let a = 0.85;
+    match frac {
+        f if f > 0.66 => Some(Color::new(0.2, 0.9, 0.35, a)),
+        f if f > 0.33 => Some(Color::new(1.0, 0.75, 0.1, a)),
+        f if f > 0.02 => Some(Color::new(1.0, 0.2, 0.1, a)),
+        _ => blink.then_some(Color::new(1.0, 0.1, 0.05, a)),
+    }
+}
+
+/// A system lamp's colour; a system out of action and being repaired blinks dark.
+fn lamp_color(lamp: Lamp, repairing: bool, blink: bool) -> Color {
+    match lamp {
+        Lamp::Ok => Color::new(0.2, 0.85, 0.3, 0.9),
+        Lamp::On => Color::new(0.3, 0.95, 1.0, 1.0),
+        Lamp::Damaged => Color::new(1.0, 0.7, 0.1, 1.0),
+        Lamp::Out if repairing && blink => Color::new(0.45, 0.05, 0.05, 1.0),
+        Lamp::Out => Color::new(1.0, 0.15, 0.1, 1.0),
+        Lamp::Destroyed => Color::new(0.5, 0.5, 0.5, 1.0),
     }
 }
 
@@ -440,6 +533,16 @@ pub fn draw_caption(s: &str, corner_right: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shield_rings_go_green_amber_red_then_blink() {
+        let g = |f, b| shield_ring_color(f, b).map(|c| (c.r > 0.5, c.g > 0.5));
+        assert_eq!(g(1.0, true), Some((false, true)), "green");
+        assert_eq!(g(0.5, true), Some((true, true)), "amber");
+        assert_eq!(g(0.1, true), Some((true, false)), "red");
+        assert_eq!(g(0.0, true), Some((true, false)));
+        assert_eq!(g(0.0, false), None, "down: blinks");
+    }
 
     #[test]
     fn lamp_grids_follow_the_panel_shape() {
