@@ -6059,6 +6059,11 @@ released.</p>
 <td><code>value</code>: number</td>
 <td>The throttle position, clamped to 0 – 1, as if set from a slider.</td>
 </tr>
+<tr>
+<td><code>ping</code></td>
+<td>none</td>
+<td>Heartbeat, every 250 ms. A console silent for 1 s (<code>HOLD_TIMEOUT</code>) has its held actions released, so a dropped connection never leaves a button pressed.</td>
+</tr>
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hello"</span><span class="p">,</span><span class="w"> </span><span class="nt">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123456"</span><span class="p">}</span>
@@ -6252,6 +6257,11 @@ actions are still listed, so the console shows them disabled, never hidden.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Bootstrap (planned): transport, session, messages <code>hello</code>, <code>welcome</code>, <code>catalogue</code> (with per-action availability), <code>theme</code>, <code>telemetry</code>, <code>contacts</code>, <code>model</code>, <code>action</code>, <code>event</code></td>
+</tr>
+<tr>
+<td>1.4.0</td>
+<td>2026-11-11</td>
+<td><code>ping</code> heartbeat and the 1 s hold timeout (app 0.4.3)</td>
 </tr>
 <tr>
 <td>1.3.0</td>

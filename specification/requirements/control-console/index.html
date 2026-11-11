@@ -6542,6 +6542,7 @@
 <p class="admonition-title">As built</p>
 <p>Console input joins the frame's <code>RawInput</code> (<code>remote_held</code>, <code>remote_pressed</code>, <code>remote_throttle</code>) through <code>remote::RemoteInput</code>, and <code>Bindings::translate</code> treats a held or tapped console action exactly like a bound key; <code>sim</code> is untouched. Names outside <code>input::ACTIONS</code> are refused by the decoder. A console that disconnects releases everything it held.</p>
 </div>
+<p>A console that sends nothing for 1 s MUST have its held actions released (heartbeat <code>ping</code> every 250 ms), so a dropped connection never leaves an action held. Verified by <code>remote::tests::a_silent_console_lets_go_but_a_pinging_one_keeps_holding</code>.</p>
 <h3 id="r-con-012-console-page-from-web-components">R-CON-012 Console page from web components<a class="headerlink" href="#r-con-012-console-page-from-web-components" title="Permanent link">&para;</a></h3>
 <p>The console page MUST be built from custom web components and CSS, with no framework, and served by the game itself.</p>
 <p><em>Rationale:</em> Lightweight, dependency-free web UI (project dependency policy).</p>
@@ -6576,7 +6577,7 @@
 <p><em>Rationale:</em> Real-time knowledge of the craft's condition.</p>
 <ul>
 <li>Implements: <a href="../../../definition/control-console/#f-con-004-tablet-control-console">F-CON-004</a></li>
-<li>Status: implemented</li>
+<li>Status: partial (craft telemetry at 20 Hz is built; radar contacts at 5 Hz and events are planned with C4)</li>
 <li>Verified by: <code>remote::protocol::telemetry_reports_drift_and_the_targets_relative_rotation</code>; MT-3-19</li>
 <li>See: <a href="../../console-protocol/#game-console">Console protocol</a></li>
 </ul>
@@ -6693,6 +6694,11 @@
 <td>1.1.0</td>
 <td>2026-11-11</td>
 <td>R-CON-007 and R-CON-008 implemented (app 0.3.1): <code>input::ACTIONS</code> with <code>help_rows</code>; the keys overlay on <code>?</code> / Shift+F1 (action <code>help</code>), pausing the battle. R-CON-008 open note resolved: F1 stays the cockpit-view key, no deviation</td>
+</tr>
+<tr>
+<td>1.4.0</td>
+<td>2026-11-11</td>
+<td>R-CON-011: held actions released after 1 s of silence (heartbeat). R-CON-014 status corrected to partial</td>
 </tr>
 <tr>
 <td>1.3.0</td>
