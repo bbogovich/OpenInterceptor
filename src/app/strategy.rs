@@ -426,7 +426,7 @@ impl StrategyScreen {
             Act::Intercept(id) => {
                 let ready: Vec<usize> =
                     (0..c.craft.len()).filter(|&k| c.craft[k].base == base && c.craft[k].away.is_none()).collect();
-                c.intercept(id, &ready)
+                c.intercept(def, id, &ready)
             }
         };
         match r {
@@ -641,6 +641,13 @@ impl StrategyScreen {
             draw_rectangle_lines(p.x - 9.0, p.y - 9.0, 18.0, 18.0, 2.0, col);
         }
         for k in c.contacts.iter().filter(|k| k.detected) {
+            // Its way ahead: the lane stops, then the destination.
+            let mut from = to_screen(k.pos);
+            for q in k.route.iter().chain(std::iter::once(&k.dest)) {
+                let to = to_screen(*q);
+                draw_line(from.x, from.y, to.x, to.y, 1.0, Color::new(1.0, 0.3, 0.3, 0.5));
+                from = to;
+            }
             let p = to_screen(k.pos);
             draw_triangle(vec2(p.x, p.y - 7.0), vec2(p.x - 6.0, p.y + 5.0), vec2(p.x + 6.0, p.y + 5.0), RED);
             draw_text(&def.raids[k.raid].name, p.x + 8.0, p.y + 14.0, 16.0, Color::new(1.0, 0.5, 0.5, 1.0));

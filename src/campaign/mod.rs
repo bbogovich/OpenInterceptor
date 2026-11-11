@@ -24,7 +24,7 @@
 
 pub mod save;
 
-use crate::content::strategy::{MapKind, RaidTarget, StrategyDef};
+use crate::content::strategy::{MapKind, RaidTarget, StrategyDef, Travel};
 use crate::script::{self, Context, Expr, Value};
 use std::cell::Cell;
 
@@ -118,6 +118,8 @@ pub struct Craft {
     pub fit: Vec<(String, usize)>,
     /// Out on an interception: the contact id it flies to, and its map position.
     pub away: Option<(u32, [f32; 2])>,
+    /// On a lane map: the systems still to pass through (to the contact, or home).
+    pub route: Vec<[f32; 2]>,
 }
 
 /// An enemy flight on the map.
@@ -133,6 +135,8 @@ pub struct Contact {
     pub target_base: Option<usize>,
     /// Seen by the player's sensors (stays seen).
     pub detected: bool,
+    /// On a lane map: the systems still to pass through before `dest`.
+    pub route: Vec<[f32; 2]>,
 }
 
 /// A delivery on its way.
@@ -437,6 +441,7 @@ impl Campaign {
     fn add_craft(&mut self, def: &StrategyDef, hull: usize, base: usize) {
         let n = self.craft.iter().filter(|c| c.hull == hull).count() + 1;
         self.craft.push(Craft {
+            route: Vec::new(),
             name: format!("{}-{n}", def.hulls[hull].id.to_uppercase()),
             hull,
             base,
@@ -663,18 +668,25 @@ impl Campaign {
     }
 
     /// Sends craft from their bases to intercept a contact.
-    pub fn intercept(&mut self, contact: u32, craft: &[usize]) -> Result<(), String> {
+    pub fn intercept(&mut self, def: &StrategyDef, contact: u32, craft: &[usize]) -> Result<(), String> {
         let Some(c) = self.contacts.iter().find(|c| c.id == contact) else { return Err("no such contact".into()) };
         if !c.detected {
             return Err("not detected".into());
         }
+        let target = c.pos;
         let mut sent = 0;
         for &k in craft {
             if self.craft.get(k).is_some_and(|c| c.away.is_none())
                 && self.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready)
             {
-                let home = self.systems[self.bases[self.craft[k].base].system].pos;
+                let home_sys = self.bases[self.craft[k].base].system;
+                let home = self.systems[home_sys].pos;
                 self.craft[k].away = Some((contact, home));
+                // On a lane map, along the lanes to the system nearest the contact.
+                if def.map.travel == Travel::Lanes {
+                    let to = self.nearest_system(target);
+                    self.craft[k].route = self.lane_route(def, home_sys, to);
+                }
                 sent += 1;
             }
         }
@@ -824,8 +836,18 @@ impl Campaign {
         // Contacts move; sensors find them; unopposed arrivals hit their targets.
         let mut arrived = Vec::new();
         for c in &mut self.contacts {
-            if travel(&mut c.pos, c.dest, def.raids[c.raid].speed * dt as f32) {
-                arrived.push(c.id);
+            let step = def.raids[c.raid].speed * dt as f32;
+            match c.route.first().copied() {
+                Some(next) => {
+                    if travel(&mut c.pos, next, step) {
+                        c.route.remove(0);
+                    }
+                }
+                None => {
+                    if travel(&mut c.pos, c.dest, step) {
+                        arrived.push(c.id);
+                    }
+                }
             }
         }
         for k in 0..self.contacts.len() {
@@ -850,6 +872,16 @@ impl Campaign {
         for k in 0..self.craft.len() {
             let Some((id, mut pos)) = self.craft[k].away else { continue };
             let speed = def.hulls[self.craft[k].hull].speed * dt as f32;
+            // Lane stops first (to the contact's system, or home).
+            if let Some(next) = self.craft[k].route.first().copied() {
+                if travel(&mut pos, next, speed) {
+                    self.craft[k].route.remove(0);
+                }
+                let home = self.systems[self.bases[self.craft[k].base].system].pos;
+                let done = id == u32::MAX && self.craft[k].route.is_empty() && pos == home;
+                self.craft[k].away = if done { None } else { Some((id, pos)) };
+                continue;
+            }
             match self.contacts.iter().find(|c| c.id == id) {
                 Some(c) => {
                     if travel(&mut pos, c.pos, speed) && !events.iter().any(|e| matches!(e, Event::Battle { .. })) {
@@ -858,8 +890,17 @@ impl Campaign {
                     self.craft[k].away = Some((id, pos));
                 }
                 None => {
-                    // The contact is gone: fly home.
-                    let home = self.systems[self.bases[self.craft[k].base].system].pos;
+                    // The contact is gone: fly home (along the lanes on a lane map).
+                    let home_sys = self.bases[self.craft[k].base].system;
+                    let home = self.systems[home_sys].pos;
+                    if def.map.travel == Travel::Lanes && id != u32::MAX {
+                        let from = self.nearest_system(pos);
+                        let mut route = vec![self.systems[from].pos];
+                        route.extend(self.lane_route(def, from, home_sys));
+                        self.craft[k].route = route;
+                        self.craft[k].away = Some((u32::MAX, pos));
+                        continue;
+                    }
                     self.craft[k].away = if travel(&mut pos, home, speed) { None } else { Some((u32::MAX, pos)) };
                 }
             }
@@ -870,6 +911,64 @@ impl Campaign {
             }
             self.unopposed(def, id, events);
         }
+    }
+
+    /// The system nearest a map point.
+    pub fn nearest_system(&self, p: [f32; 2]) -> usize {
+        (0..self.systems.len())
+            .min_by(|a, b| distance(self.systems[*a].pos, p).total_cmp(&distance(self.systems[*b].pos, p)))
+            .unwrap_or(0)
+    }
+
+    /// The shortest way along the map's lanes from system `from` to system `to`, as the
+    /// positions of the systems after `from` (ending with `to`). Dijkstra's algorithm:
+    /// repeatedly settle the unsettled system with the shortest known distance and
+    /// relax its lanes. Empty when `from == to`; a straight hop when no lanes join them.
+    pub fn lane_route(&self, def: &StrategyDef, from: usize, to: usize) -> Vec<[f32; 2]> {
+        if from == to {
+            return Vec::new();
+        }
+        let n = self.systems.len();
+        let index = |id: &str| self.systems.iter().position(|s| s.id == id);
+        let lanes: Vec<(usize, usize)> =
+            def.map.lanes.iter().filter_map(|(a, b)| Some((index(a)?, index(b)?))).collect();
+        let mut dist = vec![f32::MAX; n];
+        let mut prev = vec![usize::MAX; n];
+        let mut settled = vec![false; n];
+        dist[from] = 0.0;
+        while let Some(u) =
+            (0..n).filter(|&i| !settled[i] && dist[i] < f32::MAX).min_by(|a, b| dist[*a].total_cmp(&dist[*b]))
+        {
+            if u == to {
+                break;
+            }
+            settled[u] = true;
+            for &(a, b) in &lanes {
+                let v = if a == u {
+                    b
+                } else if b == u {
+                    a
+                } else {
+                    continue;
+                };
+                let d = dist[u] + distance(self.systems[u].pos, self.systems[v].pos);
+                if d < dist[v] {
+                    dist[v] = d;
+                    prev[v] = u;
+                }
+            }
+        }
+        if prev[to] == usize::MAX {
+            return vec![self.systems[to].pos];
+        }
+        // Walk back from `to` to `from`, then reverse.
+        let mut path = vec![to];
+        let mut at = to;
+        while prev[at] != from && prev[at] != usize::MAX {
+            at = prev[at];
+            path.push(at);
+        }
+        path.iter().rev().map(|&s| self.systems[s].pos).collect()
     }
 
     /// Reveals hidden systems inside the player's sensor range.
@@ -911,7 +1010,27 @@ impl Campaign {
         let pos = [centre[0] + a.cos() * reach, centre[1] + a.sin() * reach];
         let id = self.next_contact;
         self.next_contact += 1;
-        self.contacts.push(Contact { id, raid: r, pos, dest, target_base, detected: false });
+        // On a lane map, raiders come in along the lanes from the free system farthest
+        // from their target (often the hidden dark moon).
+        let (pos, route) = match def.map.travel {
+            Travel::Lanes => {
+                let to = self.nearest_system(dest);
+                let entry =
+                    (0..self.systems.len()).filter(|s| !self.bases.iter().any(|b| b.system == *s) && *s != to).max_by(
+                        |a, b| distance(self.systems[*a].pos, dest).total_cmp(&distance(self.systems[*b].pos, dest)),
+                    );
+                match entry {
+                    Some(e) => {
+                        let mut route = self.lane_route(def, e, to);
+                        route.pop(); // the last stop is `dest` itself
+                        (self.systems[e].pos, route)
+                    }
+                    None => (pos, Vec::new()),
+                }
+            }
+            Travel::Free => (pos, Vec::new()),
+        };
+        self.contacts.push(Contact { id, raid: r, pos, dest, target_base, detected: false, route });
     }
 
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
@@ -1278,7 +1397,7 @@ mod tests {
                     Event::Notice(t) if t.starts_with("Contact") => {
                         detected = true;
                         let id = c.contacts.iter().find(|x| x.detected).unwrap().id;
-                        c.intercept(id, &[0]).unwrap();
+                        c.intercept(&d, id, &[0]).unwrap();
                     }
                     Event::Battle { contact } => battle = Some(contact),
                     _ => {}
@@ -1304,6 +1423,7 @@ mod tests {
             dest: [0.0, 0.0],
             target_base: None,
             detected: true,
+            route: Vec::new(),
         });
         c.craft[1].away = Some((99, [0.0, 0.0]));
         c.battle_result(&d, 99, "killed", &[], 0);
@@ -1337,7 +1457,7 @@ mod tests {
                     Event::Notice(t) if t.starts_with("Contact") => {
                         if let Some(id) = c.contacts.iter().rev().find(|x| x.detected).map(|x| x.id) {
                             let free: Vec<usize> = (0..c.craft.len()).filter(|&k| c.craft[k].away.is_none()).collect();
-                            let _ = c.intercept(id, &free[..free.len().min(1)]);
+                            let _ = c.intercept(def, id, &free[..free.len().min(1)]);
                         }
                     }
                     Event::Battle { contact } => {
@@ -1372,6 +1492,17 @@ mod tests {
         let packs = [save::PackRef { id: "default".into(), version: "test".into() }];
         let text = save::write(&c, "default", &packs);
         assert_eq!(save::read(&text, def, &packs).unwrap(), c);
+    }
+
+    #[test]
+    fn lane_maps_route_along_lanes() {
+        let (d, c) = sample();
+        // Lanes a-b and a-c only: b to c goes through a.
+        let (a, b, cc) = (0, 1, 2);
+        assert_eq!(c.lane_route(&d, b, cc), vec![c.systems[a].pos, c.systems[cc].pos]);
+        assert_eq!(c.lane_route(&d, a, b), vec![c.systems[b].pos]);
+        assert!(c.lane_route(&d, a, a).is_empty());
+        assert_eq!(c.nearest_system([2900.0, 100.0]), b);
     }
 
     #[test]

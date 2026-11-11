@@ -49,6 +49,11 @@ fn nums(v: &[f64]) -> Node {
     seq(v.iter().map(|x| n(*x)).collect())
 }
 
+/// Lane waypoints as a flat list `[x0, y0, x1, y1, …]`.
+fn route(r: &[[f32; 2]]) -> Node {
+    nums(&r.iter().flat_map(|p| [p[0] as f64, p[1] as f64]).collect::<Vec<_>>())
+}
+
 /// Writes a campaign as a save document.
 pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
     let product = |p: &Product| match p {
@@ -148,6 +153,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                                 .collect()),
                         ),
                         ("away", k.away.map_or(Node::null(0), |(id, p)| nums(&[id as f64, p[0] as f64, p[1] as f64]))),
+                        ("route", route(&k.route)),
                     ])
                 })
                 .collect()),
@@ -167,6 +173,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("dest", nums(&[k.dest[0] as f64, k.dest[1] as f64])),
                         ("target_base", k.target_base.map_or(Node::null(0), |b| n(b as f64))),
                         ("detected", s(k.detected)),
+                        ("route", route(&k.route)),
                     ])
                 })
                 .collect()),
@@ -246,6 +253,8 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
     let numbers = |node: &Node| -> Vec<f64> {
         node.as_seq().unwrap_or(&[]).iter().filter_map(|x| x.as_str()?.parse().ok()).collect()
     };
+    let waypoints =
+        |node: &Node| -> Vec<[f32; 2]> { numbers(node).chunks_exact(2).map(|p| [p[0] as f32, p[1] as f32]).collect() };
     let product = |t: &str| -> Result<Product, String> {
         match t.split_once(':') {
             Some(("item", i)) => i.parse::<usize>().ok().filter(|i| *i < def.items.len()).map(Product::Item),
@@ -360,6 +369,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             base: idx(k, "base", bases.len(), "a craft's base")?,
             fit,
             away,
+            route: k.node("route").map(&waypoints).unwrap_or_default(),
         });
     }
     let mut contacts = Vec::new();
@@ -374,6 +384,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             dest: [d.first().copied().unwrap_or(0.0) as f32, d.get(1).copied().unwrap_or(0.0) as f32],
             target_base: opt(k, "target_base"),
             detected: k.bool("detected").unwrap_or(false),
+            route: k.node("route").map(&waypoints).unwrap_or_default(),
         });
     }
     let mut deliveries = Vec::new();
