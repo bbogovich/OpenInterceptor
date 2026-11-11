@@ -112,6 +112,12 @@ pub fn ship_allowed(rules: &Ruleset, ship: crate::content::rules::ShipClassId, e
 const ROWS: [&str; 9] =
     ["Mission", "Ship", "Environment", "Asteroids", "Minefield", "Black hole", "Ion storm", "Enemy force", "Fly"];
 
+impl Default for Simulator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Simulator {
     pub fn new() -> Simulator {
         Simulator { setup: SimSetup { force: 1, ..Default::default() }, row: 0, note: None }
