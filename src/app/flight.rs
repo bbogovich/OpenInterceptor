@@ -113,6 +113,12 @@ pub const WING_MENU: [(&str, Command); 6] = [
 /// line (a status report has one per wingman).
 /// A clip of `line` from the voice of one of the player's wingmen (`except` excluded),
 /// for the radio: the first wingman with a voice set that has the line. `pick` chooses
+/// Whether the debrief is due: `delay` seconds after the result was decided at
+/// `ended_at` (a result with no recorded time shows at once).
+pub fn debrief_due(ended_at: Option<f64>, now: f64, delay: f32) -> bool {
+    ended_at.is_none_or(|t| now >= t + delay as f64)
+}
+
 /// The campaign loadout on a battle's world (see [`FlightSession::apply_loadout`]).
 pub fn apply_loadout(world: &mut World, player: ShipId, beams: &[String], missiles: &[(String, u32)]) {
     let Some(class) = world.get(player).map(|s| s.class) else { return };
@@ -277,6 +283,11 @@ pub struct FlightSession {
     console_clock: f32,
     /// A campaign battle: the debrief returns to the strategy screen, with the result.
     pub campaign_battle: bool,
+    /// World time the mission's result was decided (the debrief waits
+    /// `flight.debrief_delay` after it, so the battle can be watched to its end).
+    ended_at: Option<f64>,
+    /// The player asked for the debrief now (Enter during the wait).
+    skip_wait: bool,
     /// A simulator mission (a modified copy), kept so "again" flies the same setup.
     custom: Option<crate::content::mission::MissionDef>,
     /// Hides the keys still held from the menu that started this battle (see StartGuard).
@@ -361,6 +372,24 @@ impl FlightSession {
     /// class in this battle (wingmen) fly the same fit.
     pub fn apply_loadout(&mut self, beams: &[String], missiles: &[(String, u32)]) {
         apply_loadout(&mut self.world, self.player, beams, missiles);
+    }
+
+    /// Seconds still to wait before the debrief (0 once it shows).
+    fn debrief_wait_left(&self) -> f64 {
+        match self.ended_at {
+            Some(t) => (t + self.world.rules.flight.debrief_delay as f64 - self.world.time).max(0.0),
+            None => 0.0,
+        }
+    }
+
+    /// Whether the debrief panel is up: the mission has a result, and the wait after it
+    /// is over (or was skipped, or the player left the battle, when there is nothing
+    /// left to watch).
+    fn debrief_shown(&self) -> bool {
+        let Some(d) = self.mission.as_ref().and_then(|m| m.debrief.as_ref()) else { return false };
+        self.skip_wait
+            || d.result == "retreat"
+            || debrief_due(self.ended_at, self.world.time, self.world.rules.flight.debrief_delay)
     }
 
     /// Starts a mission from a ready-made definition: the simulator's modified copy.
@@ -518,6 +547,8 @@ impl FlightSession {
             start_guard: Default::default(),
             custom: None,
             campaign_battle: false,
+            ended_at: None,
+            skip_wait: false,
             console_hits: [0, 0],
             console_class: None,
             console_target: None,
@@ -626,7 +657,13 @@ impl FlightSession {
         }
 
         // --- Debrief: the mission is over ---------------------------------------------
-        if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) && self.campaign_battle {
+        // Between the result and the debrief, Enter skips the wait.
+        if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) && !self.debrief_shown() {
+            if raw.pressed.contains("enter") {
+                self.skip_wait = true;
+                return Next::Stay; // this press only opens the debrief
+            }
+        } else if self.debrief_shown() && self.campaign_battle {
             // A campaign battle: any key returns to the campaign with the result.
             if raw.pressed.contains("enter") || raw.pressed.contains("escape") {
                 if let Some(d) = self.mission.as_ref().and_then(|m| m.debrief.as_ref()) {
@@ -638,7 +675,7 @@ impl FlightSession {
                 }
                 return Next::Strategy;
             }
-        } else if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) {
+        } else if self.debrief_shown() {
             if raw.pressed.contains("enter") || raw.pad.is_some_and(|p| p.button(crate::input::gamepad::Button::A)) {
                 return self.again();
             }
@@ -729,7 +766,7 @@ impl FlightSession {
         self.chase.apply(&chase_input, dt);
 
         // --- Simulation -------------------------------------------------------------
-        let over = self.mission.as_ref().is_some_and(|m| m.debrief.is_some());
+        let over = self.debrief_shown();
         if !self.paused && !self.menu_open && !self.help_open && self.editor.is_none() && !over {
             if let Some(s) = self.world.get_mut(self.player) {
                 // Whatever is still set in `s.controls` was not consumed by a tick yet.
@@ -754,6 +791,7 @@ impl FlightSession {
                         ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
                     }
                     if let (false, Some(d)) = (ended, &m.debrief) {
+                        self.ended_at = Some(self.world.time);
                         let name = if d.result == "win" { "mission_accomplished" } else { "mission_failed" };
                         ctx.sounds.play(&crate::audio::SoundKey::Named(name), 0.9);
                     }
@@ -906,7 +944,25 @@ impl FlightSession {
             draw_centered("PAUSED (P)", screen.y * 0.3, 36.0, YELLOW);
         }
         if let Some(d) = self.mission.as_ref().and_then(|m| m.debrief.as_ref()) {
-            draw_debrief(d, screen);
+            if self.debrief_shown() {
+                draw_debrief(d, screen);
+            } else {
+                // The result is in; the battle plays on until the debrief.
+                let left = self.debrief_wait_left().ceil();
+                let verdict = match d.result.as_str() {
+                    "win" => "MISSION ACCOMPLISHED",
+                    "lose" => "MISSION FAILED",
+                    "killed" => "YOUR CRAFT WAS DESTROYED",
+                    _ => "MISSION ENDED",
+                };
+                draw_centered(verdict, screen.y * 0.22, 36.0, YELLOW);
+                draw_centered(
+                    &format!("Debrief in {left:.0} s  (Enter: now)"),
+                    screen.y * 0.22 + 34.0,
+                    22.0,
+                    LIGHTGRAY,
+                );
+            }
         }
         if let Some(ed) = &self.editor {
             let name = hud::draw::INSTRUMENTS[ed.selected];
@@ -1386,6 +1442,14 @@ mod tests {
         assert!(c.yaw > 0.0 && c.pitch > 0.25 && c.distance < 3.2);
         c.apply(&ChaseInput { reset: true, ..Default::default() }, 0.0);
         assert_eq!(c, ChaseOrbit::default());
+    }
+
+    #[test]
+    fn the_debrief_waits_for_the_delay_after_the_result() {
+        assert!(!debrief_due(Some(100.0), 110.0, 30.0), "still watching");
+        assert!(debrief_due(Some(100.0), 130.0, 30.0));
+        assert!(debrief_due(Some(100.0), 100.0, 0.0), "no delay: at once");
+        assert!(debrief_due(None, 0.0, 30.0));
     }
 
     #[test]

@@ -393,6 +393,9 @@ pub struct FlightRules {
     pub formation_gap: f32,
     /// The formation wingmen fly in when a role names none (`flight: {formation: vee}`).
     pub formation: String,
+    /// Seconds the battle runs on after a mission's result before the debrief appears,
+    /// so the last explosion can be watched (`flight: {debrief_delay: 30s}`).
+    pub debrief_delay: f32,
 }
 
 /// How ships respond to hitting each other (see `sim::combat::ship_collisions`).
@@ -1237,6 +1240,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         },
         formation_gap: fl.and_then(|g| g.num("formation_gap")).unwrap_or(3.0).max(0.0),
         formation: fl.and_then(|g| g.str("formation")).unwrap_or("vee").to_string(),
+        debrief_delay: fl.and_then(|g| g.qty("debrief_delay", Unit::Time)).unwrap_or(30.0).max(0.0),
     };
     // The console theme (R-CON-020).
     let layer = |g: Get, errors: &mut Vec<String>, at: &str| ThemeLayer {

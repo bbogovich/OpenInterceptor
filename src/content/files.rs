@@ -494,6 +494,11 @@ fn flight() -> Ty {
             ]),
             "how collisions feel",
         ),
+        f(
+            "debrief_delay",
+            Ty::Qty(Unit::Time),
+            "the battle runs on this long after the result before the debrief; 30s",
+        ),
         f("formation", Ty::Name, "the formation wingmen fly in when a role names none (formations.<id>; vee)"),
         f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
     ])
