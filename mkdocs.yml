@@ -37,13 +37,37 @@ nav:
   - "Home": index.md
   - "Definition":
       - definition/index.md
+      - "Flight": definition/flight.md
+      - "Combat": definition/combat.md
+      - "Cockpit & HUD": definition/cockpit-hud.md
+      - "Controls & control console": definition/control-console.md
+      - "Missions": definition/missions.md
+      - "Strategy & logistics": definition/strategy-logistics.md
       - "Campaigns":
           - definition/campaigns/index.md
+          - "Campaign features": definition/campaigns/features.md
           - "The Interceptor campaign mod": definition/campaigns/interceptor-campaign.md
           - "The default campaign": definition/campaigns/default-campaign.md
           - "Interceptor Remastered": definition/campaigns/remastered.md
+      - "Modding toolkit": definition/modding-toolkit.md
+      - "Compatibility (original data)": definition/compatibility.md
+      - "Platforms": definition/platforms.md
+      - "Testbed & tools": definition/testbed-tools.md
   - "Specification":
       - specification/index.md
+      - "Requirements":
+          - "Flight": specification/requirements/flight.md
+          - "Combat": specification/requirements/combat.md
+          - "Cockpit & HUD": specification/requirements/cockpit-hud.md
+          - "Controls & control console": specification/requirements/control-console.md
+          - "Missions": specification/requirements/missions.md
+          - "Strategy & logistics": specification/requirements/strategy-logistics.md
+          - "Campaigns": specification/requirements/campaigns.md
+          - "Modding": specification/requirements/modding.md
+          - "Compatibility": specification/requirements/compatibility.md
+          - "Platforms": specification/requirements/platforms.md
+          - "Testbed & tools": specification/requirements/testbed-tools.md
+      - "Console protocol (planned)": specification/console-protocol.md
       - "Mod formats and design":
           - "The original, system by system": specification/design/original-analysis.md
           - "Mod structure": specification/design/mod-structure.md
@@ -74,6 +98,7 @@ nav:
           - "Stage 1 — Flight simulator": implementation/plan/stage-1-flight.md
           - "Stage 2 — Enemies and combat": implementation/plan/stage-2-combat.md
           - "Stage 3 — Missions and scripting": implementation/plan/stage-3-missions.md
+          - "Stage 3 interlude — Feedback and control console": implementation/plan/stage-3-interlude.md
           - "Stage 4 — Strategy layer": implementation/plan/stage-4-strategy.md
           - "Stage 5 — Campaigns": implementation/plan/stage-5-campaign.md
           - "Stage 6 — Presentation": implementation/plan/stage-6-presentation.md

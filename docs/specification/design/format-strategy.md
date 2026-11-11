@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Format: strategy layer
 
 **Status: design; implemented in [Stage 4](../../implementation/plan/stage-4-strategy.md) (map,
@@ -45,8 +51,8 @@ maps:
 
 ### Sensors and probes
 
-*Survey probes* (range: the launching station's radar range) that report a system's deposits and facility suitability are designed on
-[Logistics](logistics.md#survey-probes). Battle probes (`probe: {sensors, jamming}`) are
+*Survey ships* (a separate craft from supply ships; range: the launching station's radar range) that report a system's deposits and facility suitability are designed on
+[Logistics](logistics.md#survey-ships). Battle probes (`probe: {sensors, jamming}`) are
 implemented ([Stations, modules and probes](../../modding/stations.md#probes)).
 
 `sensor` keys on bases, ships, outposts and probes give a **map range**; contacts are visible
@@ -166,8 +172,8 @@ evaluations:
 **Logistics (default campaign, planned).** Resources with deposits per system, three production
 facility types (mining facility, research station, manufacturing center), a demand-driven order
 chain (main base ← manufacturing ← mining) with time-based extraction and recipes, automatic
-government supply ships on fixed lanes with a 25 % ambush roll at launch, enemy supply depots,
-survey probes, site-specific research branches and facility fighter pools are designed on
+government supply convoys on fixed lanes with the attack point chosen at launch, enemy supply depots,
+survey ships, site-specific research branches and facility fighter pools are designed on
 [Logistics: facilities and supply lines](logistics.md). A campaign that leaves those sections out
 keeps the simpler `deliveries` model above — as `interceptor` does, by decision, to stay faithful
 to the original.
@@ -323,3 +329,9 @@ strategists:
 
 The strategist launches **squadrons** on **flight plans**; when squadrons and player assets
 meet, a [mission](format-missions.md) is generated.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch) |

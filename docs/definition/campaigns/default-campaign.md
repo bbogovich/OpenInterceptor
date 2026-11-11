@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # The default campaign
 
 **Status: design; built up stage by stage ([plan](../../implementation/plan/index.md)). First
@@ -95,6 +101,8 @@ recognition (funding at 0 for 60 days).
 
 ## Logistics: mines, research stations and foundries (planned)
 
+Features: [Strategy & logistics](../strategy-logistics.md) (F-STR-005 – F-STR-009).
+
 The user has asked for the default campaign's strategy layer to run on **supply lines**
 ([design](../../specification/design/logistics.md); decisions recorded 2026-11-11):
 
@@ -104,17 +112,21 @@ The user has asked for the default campaign's strategy layer to run on **supply 
 - **Supply and demand**: the main base orders components (for fighters and other technology)
   from manufacturing centers; manufacturing orders materials from mining facilities; nothing is
   produced until its materials have arrived. Resources and components are campaign data.
-- **Supply ships** are automatic, provided by the government, and travel the fixed lanes. Each
-  launch has a 25 % chance of an ambush at a random point on its route; destroyed cargo is lost,
-  captured cargo goes to the Dominion's supply depots (destroy a depot to seize it).
+- **Supply convoys** are automatic, provided by the government, and travel the fixed lanes as
+  convoys of several large vessels (a core vessel with attached cargo containers), each carrying
+  an even share of the cargo, so a partly destroyed convoy still delivers the surviving share.
+  Where along its route a convoy will be attacked is chosen at random at launch; destroyed cargo
+  is lost, captured cargo goes to the Dominion's supply depots (destroy a depot to seize it).
 - **Research stations** open tech branches that ordinary bases cannot research (for example
   theremin shielding at a nebula lab); materials are needed only to begin a project.
-- **Survey probes** (the Sky-Eye) are sent to systems within the base's radar range to find
-  which station types they suit.
+- **Survey ships** — a different mission and craft from supply ships — are sent to systems
+  within the base's radar range to find which station types they suit; when one launches, a
+  25 % roll decides whether it will be attacked.
 - **Fighters** are built at main bases and transferred to a facility's own pool, defending it
   and escorting its supply ships.
 - **Construction** takes time and passes through three construction stages, each with its own
-  mesh and debris (implemented: `build_25`, `build_60`, `build_90`); from 50 % the Dominion may
+  mesh and debris (implemented: `build_25` from 0 %, `build_60` from 60 %, `build_90` from 90 %,
+  thresholds confirmed); from 50 % the Dominion may
   attack a facility under construction, at most three times per location.
 - **Third-party convoys**: Prospectors fly expeditions (to a system, pause, home); the Cartel's
   destinations are random, even uncharted stars.
@@ -124,8 +136,8 @@ mission types a strategic cause. The Regent's Eclipse Engine shipments use the s
 Owners: Stage 4 (economy and logistics), Stage 3 (convoy-ambush and construction-defence
 missions), Stage 5 (the Dominion's depots and third-party convoys). Already built in Stage 2: the
 facility and supply-craft objects, their construction-stage models and debris, and the
-`construction-defence` and `convoy-ambush` testbed arenas. Still open: supply-ship cargo
-capacity ([design page](../../specification/design/logistics.md#open-questions)). The `interceptor` campaign stays without
+`construction-defence` and `convoy-ambush` testbed arenas. Still open: supply-vessel cargo
+capacity (TBD, set by tech-tree balance) ([design page](../../specification/design/logistics.md#open-questions)). The `interceptor` campaign stays without
 logistics.
 
 ## Content at a glance
@@ -212,3 +224,9 @@ rule), so the campaign grows with the engine:
 | 5 | Factions with dynamic relations, the Dominion strategist, the Eclipse Engine plan, all 12 chapters: a complete playable campaign |
 | 6 | Screens skinned with the art-deco UI, chapter title cards, music, narrator text |
 | 7 | Balance pass, complete encyclopaedia, the modding tutorial built on this campaign |
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Definition 1.0.0 as background for the campaign features; logistics updated with the revised decisions (survey ships separate from supply ships, supply convoys, construction thresholds 0 / 60 / 90 %) |

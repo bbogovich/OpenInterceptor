@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # INI rule files
 
 Plain Windows INI: `[Section]`, `Key=Value`, `;` comments (also after values), tabs as
@@ -43,3 +49,8 @@ the line; `~` is a line break; anything else is skipped. `formats::langfile` rea
 player's CD at run time when a pack's text file `imports:` them; the strings become `@orig.<KEY>`
 text keys and are never copied into a pack ([Text and translation](../../modding/text.md)).
 
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

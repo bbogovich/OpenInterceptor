@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # XMSH meshes
 
 Every 3D object (ships, stations, debris, asteroids, nebula billboards, planets) is an `XMSH`
@@ -138,3 +144,9 @@ A fighter: four LODs from ~310 to ~140 vertices and ~200 to ~35 polygons. The X-
 
 The model viewer's wireframe and face selection (see [Testbed](../../implementation/architecture/testbed.md))
 show each polygon's index, flags, layer and UVs, which helps this research.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

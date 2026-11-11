@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Interceptor Remastered
 
 **Status: design; scheduled in [Stage 7](../../implementation/plan/stage-7-modding.md).** The
@@ -137,3 +143,9 @@ on the texture override paths, every model in the game picks them up without a r
 - The enhanced Lightning at every LOD distance; no cracks, no flipped faces (wireframe and
   culling), paint aligned with the new geometry.
 - A full mission flown with the remastered campaign; frame time unchanged within 10%.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Definition 1.0.0 as background for the campaign features |

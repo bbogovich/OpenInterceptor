@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Format: space objects and models
 
 **Status: design.** Extends the `ships:` and `objects:` sections of the rules files
@@ -181,3 +187,9 @@ modules:
 Explosions, shock waves, shield flashes, engine trails, beam impacts: sprite or particle
 definitions using images (the original XSPT sprites, or pack PNG sequences), size, duration,
 light and sound. Stage 2 implements the set the original uses; mods add their own.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Game design and mod format
 
 **Status: design, version 1 draft (2026-11-10).** Nothing in this section is implemented yet
@@ -28,7 +34,7 @@ Three mods define what "done" means:
 | [Mod structure](../../specification/design/mod-structure.md) | Mod kinds, `parent`, folder layout, load order, ids, overrides, generated assets. |
 | [Format: campaign and game flow](../../specification/design/format-campaign.md) | The campaign ruleset: start state, calendar, phases, difficulty, victory and defeat. |
 | [Format: strategy layer](../../specification/design/format-strategy.md) | Star map, factions and relations, economy, research, bases and modules, ships, equipment, pilots. |
-| [Logistics](../../specification/design/logistics.md) | Planned for the default campaign: resources and deposits, mining facilities, research stations, manufacturing centers, supply convoys and ambushes, survey probes, construction stages; open questions. |
+| [Logistics](../../specification/design/logistics.md) | Planned for the default campaign: resources and deposits, mining facilities, research stations, manufacturing centers, supply convoys and ambushes, survey ships, construction stages; open questions. |
 | [Format: space objects and models](../../specification/design/format-objects.md) | Object descriptors, model sets (intact, damage, debris, construction states), mounts. |
 | [Format: missions and events](../../specification/design/format-missions.md) | Mission types and generation, objectives, outcomes; scripted campaign events. |
 | [Format: behaviours and scripting](../../specification/design/format-behaviour.md) | AI and object behaviours with difficulty variants; the condition/action language; scripts. |
@@ -57,3 +63,9 @@ Three mods define what "done" means:
    the remastered mod is *recipes* that the engine applies to the player's own files.
 5. **Everything is validated.** Every reference, condition and expression is checked at load
    (`--check`) with a message naming the file, line and key path.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Definition 1.0.0 as background for the campaign features |

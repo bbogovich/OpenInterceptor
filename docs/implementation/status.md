@@ -132,4 +132,4 @@ App **0.3.0**, main `d7553f5`; **269 unit tests** on macOS.
 | Environments, atmospheric flight, terrain, simulator missions, Tier 2 decision (3.3–3.6, 3.9, 3.10) | **Not started** | |
 | Stage 3 [manual tests](testing/manual-tests.md#stage-3-results) MT-3-01 … MT-3-12 | **Not yet run** | |
 
-**Next**: the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).
+**Next**: the [Stage 3 interlude](plan/stage-3-interlude.md) (feedback items F.1–F.5 and the control console C1–C4) and the Stage 2 and Stage 3 manual passes; then environments and atmospheric flight (3.3–3.5). The strategy-layer logistics of the default campaign are designed on [Logistics](../specification/design/logistics.md).

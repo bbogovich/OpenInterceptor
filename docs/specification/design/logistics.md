@@ -1,6 +1,12 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Logistics: resources, facilities and supply lines
 
-**Status: planned (design); decisions recorded 2026-11-11.** A strategy-layer capability for the
+**Status: planned (design); decisions recorded 2026-11-11, revised the same day (survey and supply separated, supply convoys, construction thresholds).** Requirements: [Strategy & logistics](../requirements/strategy-logistics.md) (R-STR-012 – R-STR-027). A strategy-layer capability for the
 **default campaign** (*Perils of the Void*). The `interceptor` campaign will **not** use it: it
 stays a faithful match of the original (outposts, OPPs and freighter deliveries,
 [Economy](format-strategy.md#economy)); an optional addon could add logistics to it. Everything
@@ -26,14 +32,17 @@ flowchart LR
     MI -- "supply ship (auto) with materials" --> MA
     MA -- "supply ship (auto) with components" --> BA
     MI -- "supply ship: materials to begin a project" --> RS["research station<br/>site-specific tech branches"]
-    PR["survey probe<br/>within the base's radar range"] --> SV["survey result:<br/>deposits, research site, suitability"]
+    PR["survey ship<br/>within the base's radar range"] --> SV["survey result:<br/>deposits, research site, suitability"]
     SV --> BU["build a facility<br/>(time; 3 construction stages; attackable from 50 %)"]
-    EN["enemy"] -. "25 % of launches: ambush at a random point" .-> MI & MA
+    EN["enemy"] -. "attack point on the route chosen at launch" .-> MI & MA
+    EN -. "25 % attack roll at launch" .-> PR
 ```
 
-1. **Survey.** A base launches a survey probe to a system **within its current radar range**; the
-   probe reports the system's deposits and whether it suits a mining facility, a research
-   station or a manufacturing center.
+1. **Survey.** A base launches a **survey ship** to a system **within its current radar range**;
+   the survey ship reports the system's deposits and whether it suits a mining facility, a research
+   station or a manufacturing center. When a survey ship launches, a **25 % roll** decides
+   whether it will be attacked. Survey ships and supply ships are **different mission profiles
+   and different craft**.
 2. **Build.** A facility is built in a system that meets its type's requirements. Building takes
    time and passes through **three construction stages**; from **50 %** the enemy may try to
    destroy it (a construction-defence mission), at most **three times** per location.
@@ -43,11 +52,11 @@ flowchart LR
    center's store. This is the familiar "bases produce fighters and parts" model with a supply
    chain behind it: a basic supply-and-demand simulation in which demand creates orders and
    orders pull materials along the chain.
-4. **Ship.** When a delivery is ready, a **supply ship** is dispatched **automatically** along
-   the fixed lanes; supply ships are provided by the government — the player does not buy or
-   manage them. At launch, a **25 % chance** decides whether the ship will be ambushed, and if
-   so **where along its route** (chosen at random at launch). A destroyed or captured ship's
-   cargo never arrives.
+4. **Ship.** When a delivery is ready, a **supply convoy** is dispatched **automatically** along
+   the fixed lanes: several large supply vessels, each carrying an **even share** of the cargo.
+   Supply ships are provided by the government — the player does not buy or manage them. The
+   position along the route where the convoy will be attacked is **chosen at random at launch**.
+   A destroyed or captured vessel's share never arrives; the surviving vessels deliver theirs.
 5. **Research.** Research stations unlock tech branches that ordinary bases cannot research, only
    in systems meeting their site criteria. Resources are needed **only to begin** a project;
    research then continues without further supply.
@@ -210,13 +219,13 @@ logistics:
   source: nearest_by_lane                    # which facility fills an order
   dispatch: "order_filled"                   # a supply ship leaves when the order's cargo is ready
   supply_ship:
-    object: objects.supply_ship              # implemented: the cargo clipper
+    object: objects.supply_ship              # implemented: the cargo clipper; a larger convoy vessel is planned
     provided_by: government                  # automatic; not bought or managed by the player
-    capacity: tbd                            # TBD: set with the tech-tree balance
+    convoy: {vessels: tbd, cargo: even_share}   # several vessels; each carries an even share
+    capacity: tbd                            # TBD: per vessel, set with the tech-tree balance
     escort: {from_facility_pool: true, max: 3}
   ambush:
-    chance: 25%                              # rolled once, when the ship launches
-    position: random_on_route                # where along its route, also chosen at launch
+    position: random_on_route                # where along its route the convoy is attacked, chosen at launch
     attackers: "strategist_force(lane_threat)"
   losses:
     destroyed: lose_cargo
@@ -229,12 +238,17 @@ logistics:
   facility; when its cargo is ready, a supply ship leaves.
 - **Supply ships** are automatic and provided by the government: the player never buys or
   manages them, but may escort them with the facility's assigned fighters.
-- **Ambush roll at launch.** With `ambush.chance` (25 %) the ship is marked for attack, and a
-  point along its route is chosen at random; when the ship reaches it, a `convoy_ambush` mission
-  is generated (the player may fly it; otherwise it is auto-resolved). *Note: the user wrote
-  "survey ship launch"; this is read as the supply ship's launch — an interpretation
-  awaiting the user's confirmation.*
-- **Losses.** A destroyed ship's cargo is lost. A **captured** ship's cargo goes to the enemy,
+- **Supply convoys.** A shipment travels as a convoy of several vessels, each carrying an even
+  share of the cargo, so a partly destroyed convoy delivers the surviving share. Single ships
+  would be destroyed quickly; convoys keep escort missions interesting and playable. A supply
+  vessel is reasonably large: a core vessel with several attached cargo containers (a new
+  default-campaign model, planned).
+- **Attack position at launch.** When a convoy launches, the point along its route where it will
+  be attacked is chosen at random; when the convoy reaches it, a `convoy_ambush` mission is
+  generated (the player may fly it; otherwise it is auto-resolved). *Open: whether every supply
+  convoy is attacked, or only some and at what chance — the user's answer gives the 25 % roll
+  for survey ships only.*
+- **Losses.** A destroyed vessel's cargo is lost. A **captured** ship's cargo goes to the enemy,
   who stores it at a **supply depot**; destroying an enemy supply depot lets the player
   **seize** the resources stored there.
 
@@ -288,19 +302,22 @@ missions:
 - The default campaign's **Escort** and **Convoy raid** mission types become these generated
   missions on the strategy map; the testbed already has both arenas.
 
-### Survey probes
+### Survey ships
+
+Surveys are flown by **survey ships**: a mission profile and a craft distinct from supply ships.
 
 ```yaml
-probes:
-  survey_probe:
-    object: objects.sky_eye_probe            # the battle object (implemented)
+survey_ships:
+  survey_ship:
+    object: objects.sky_eye_probe            # the battle object used so far (implemented); see Open questions
     launch_from: base
     range: radar                             # systems within the launching station's current radar range
     survey_time: 24h
+    attack: {chance: 25%}                    # rolled once, when the survey ship launches
     reveals: [deposits, features, research_sites, suitability]
 ```
 
-A survey records, per system: deposits and reserves, features, the research sites it qualifies
+When a survey ship launches, a 25 % roll decides whether it will be attacked. A survey records, per system: deposits and reserves, features, the research sites it qualifies
 for, and for each facility type whether `placement` holds — the **suitability** shown on the
 star map.
 
@@ -336,9 +353,9 @@ modelsets:
       build_90: {model: models/mining_facility_build3.obj, debris: mining_facility_build3}
 ```
 
-The strategy layer shows `build_25` from the start of construction, `build_60` from 60 % and
-`build_90` from 90 %, and the intact model on completion (the thresholds are the state names'
-numbers by convention; the stage list in `build.stages` is the data). The same state is used on
+The strategy layer shows `build_25` from the start of construction (0 %), `build_60` from 60 %
+and `build_90` from 90 %, and the intact model on completion. These thresholds — **0 / 60 / 90 %**
+— are confirmed by the user (2026-11-11); the stage list in `build.stages` is the data. The same state is used on
 the strategy map's 3D view and in battle. The generator (`tools/default_assets/`) builds the
 stage models — scaffold, frame, cladding — for the three facilities and the Guard station.
 
@@ -349,15 +366,15 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 | Campaign context for conditions | 3–4 | System and facility queries (`deposit`, `feature`, `research_site`, `survey_known`, `owned`, `lane_distance`, `facility_progress`, `construction_attacks`) for `placement`, `criteria`, `generated`. |
 | **Economy tick** (`campaign::economy`) | 4 | On the campaign clock: extraction, recipe progress, research, construction progress and stage changes; storage limits stop production when full. Deterministic; unit-tested on synthetic campaigns. |
 | **Order book** (`campaign::logistics`) | 4 | Demand → orders → sources along the chain (main base ← manufacturing ← mining; research ← mining once per project); the logistics graph over the fixed lanes for nearest sources and paths. |
-| **Supply ships** (`campaign::convoys`) | 4 | Spawned automatically when an order is filled; move along lanes; the ambush roll and point at launch; delivery or loss; captured cargo to the captor's depot. Shared with the rival's plan shipments and third-party convoys. |
+| **Supply convoys** (`campaign::convoys`) | 4 | Spawned automatically when an order is filled, as several vessels sharing the cargo evenly; move along lanes; the attack point chosen at launch; delivery of the surviving share or loss; captured cargo to the captor's depot. Shared with the rival's plan shipments and third-party convoys. |
 | **Mission generation hooks** | 3–4 | `convoy_ambush` at the ambush point; `construction_defence` from 50 % (at most three per location); auto-resolve when the player does not fly. |
-| Surveys | 4 | Probe launch within radar range, survey timer, results per system. |
+| Surveys | 4 | Survey-ship launch within radar range, the 25 % attack roll, survey timer, results per system. |
 | Research labs, sites and start costs | 4 | `lab:`, `site:`, `start_cost` in the research model. |
 | Facility fighter pools | 4 | Fighters built at main bases, transferred to facilities, moved between them. |
 | Supply depots | 5 | The rival stores captured and mined cargo; the player seizes a destroyed depot's stock. |
 | Construction states | 2 (done) → 4 | Mesh-swapping states with their own debris (implemented); the strategy layer selects the stage. |
 | Screens | 4 (functional) → 6 (skinned) | Facility screen (orders, store, queue, assigned fighters), survey overlay, supply traffic on the star map. |
-| Saves | 4 | Stores, orders, build progress, ships in flight with their ambush rolls, survey results. |
+| Saves | 4 | Stores, orders, build progress, convoys and survey ships in flight with their attack rolls and points, survey results. |
 
 ## Decisions (2026-11-11)
 
@@ -367,15 +384,28 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 | Travel and routing | Fixed lanes. Destinations follow each facility's requirements: demand creates orders that pull materials along the chain (main base ← manufacturing ← mining). |
 | Resources | Campaign data, set by what the tech tree and core construction need (e.g. iron, gold, dilithium); manufacturing produces components for fighters and other technology. |
 | Research stations | Resources are needed only to **begin** a project. |
-| Survey probe range | Systems within the launching station's current radar range. |
-| Ambushes | 25 % chance rolled at a supply ship's launch; the attack point along its route chosen at random at launch. |
+| Survey and supply | Different mission profiles and different craft (revised 2026-11-11; the earlier reading "survey ship = supply ship" is withdrawn). |
+| Survey range | Systems within the launching station's current radar range. |
+| Attacks | The 25 % attack roll is made when a **survey ship** launches; a **supply ship's** attack position along its route is chosen at random at launch. User's words: "25% probability, determined at survey ship launch. attack position on supply ship along route randomly determined at launch as well". |
+| Supply convoys | Several vessels, each with an even share of the cargo; a partly destroyed convoy delivers the surviving share. Reason: escort missions stay interesting and playable, since single ships would be destroyed quickly. A supply vessel is a core vessel with several attached cargo containers (new default-campaign model, planned). |
 | Captured cargo | Feeds the enemy, stored at supply depots; destroying a depot lets the player seize its stock. |
 | Construction attacks | Possible from 50 % construction; at most three per location. |
 | Facility fighters | A separate pool from base hangars; built at main bases, then transferred; movable between facilities. |
 | Third parties | Prospector convoys: base → system under investigation → pause → base. Cartel convoys: random destinations, including empty or uncharted stars. |
 | `interceptor` | No logistics: it stays a faithful match of the original; an optional addon could add it. |
-| Construction stages | Three, each with its own mesh and debris (implemented). |
+| Construction stages | Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed). |
 
 ## Open questions
 
-1. **Cargo capacity** of a supply ship — to be set with the tech-tree balance (`capacity: tbd`).
+1. **Cargo capacity** of a supply vessel — still TBD, set by the tech-tree balance (`capacity: tbd`).
+2. **Supply-convoy attacks** — whether every convoy is attacked at its chosen point, or only some
+   and at what chance.
+3. **Survey ship** — its craft (the Sky-Eye probe object or a new model), and where, when and in
+   which mission an attacked survey ship meets its attackers.
+4. **Convoy size** — the number of vessels per supply convoy.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0. Decisions revised: survey and supply ships are different profiles and craft (the "survey ship = supply ship" interpretation removed); the 25 % attack roll at survey-ship launch; supply-ship attack position chosen at launch; supply convoys with even cargo shares and a larger convoy vessel; construction thresholds 0 / 60 / 90 % confirmed; cargo capacity still TBD |

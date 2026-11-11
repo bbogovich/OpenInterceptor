@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Format: campaign and game flow
 
 **Status: design, except the difficulty levels (`campaign: {difficulty, default_difficulty}`), implemented in Stage 2; `campaign:` and `starts:` in [Stage 4](../../implementation/plan/stage-4-strategy.md), arcs, plans, score and endings in [Stage 5](../../implementation/plan/stage-5-campaign.md).**
@@ -149,3 +155,9 @@ reports: a period, the evaluation they run (strategy rules), and a text template
 `endings: {<id>: …}`: text, image or video, music, and whether the game can continue
 (`continue: false` for defeats). Victory conditions name endings; the original has total and partial victory
 and three defeats.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

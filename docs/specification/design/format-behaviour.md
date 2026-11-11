@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Format: behaviours and scripting
 
 **Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2**; actions,
@@ -196,3 +202,9 @@ events:
 
 Because both shipped campaigns need only Tier 1, the choice can be made on its merits without
 blocking any campaign work.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

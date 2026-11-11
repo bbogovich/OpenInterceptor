@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Formats
 
 How each file type on the CD is stored, as worked out for OpenInterceptor. Every field is marked
@@ -17,3 +23,9 @@ little-endian. Offsets are hexadecimal.
 | Object and ship table | strings in `Interceptor.exe` | [Object table](object-table.md) | derived |
 
 Format pages describe structure only. No original data is reproduced on this site.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

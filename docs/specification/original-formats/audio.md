@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Audio
 
 | Files | Format | Confidence |
@@ -11,3 +17,9 @@ per channel, two seed samples, then 4-bit nibbles using the seven standard coeff
 from the `fmt ` chunk. The decoded PCM is handed to macroquad's audio.
 
 `soundfx.ini` maps game events to sound files (Stage 2).
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

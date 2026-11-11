@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Object and ship table
 
 The original program names the mesh for each object class in string tables inside
@@ -50,3 +56,9 @@ The table lists 21 meshes in this order: `xfre98-5`, `al-freig6`, `aliensh3`, `a
 | `sensprob`, `ecmprob`, `commjam4/9`, `al-senpr5`, `al_injam`, `x-hunt1` | Probes | derived |
 | `roid12` … `roid100`, `chunk*` | Asteroids, rocks | derived |
 | `*neb*`, `planetn`, `nova` | Nebulae, planets, star backdrop | derived |
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

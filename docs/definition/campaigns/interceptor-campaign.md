@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # The Interceptor campaign mod
 
 **Status: design; authored across Stages 2–6, playable start to finish at the end of
@@ -86,3 +92,9 @@ silently wrong.
    (first message, first Firestar, Doomsday progress) against the guide's expectations.
 4. The [open items](../../specification/design/coverage.md#open-items-data-the-original-keeps-in-code) are closed or
    documented as *derived* estimates in the mod.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Definition 1.0.0 as background for the campaign features |

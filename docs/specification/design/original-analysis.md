@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # The original game, system by system
 
 **Status: analysis, 2026-11-10.** What *X-COM: Interceptor* does, how it decides it, and
@@ -178,3 +184,9 @@ money, exchange rate, alien ship counts and tiers, alien shields, armour, weapon
 skill and aggression, cloak-breaks-lock chance (50→30%), alien tech speed, Doomsday size, salvage
 survival, message chance, convoy visibility, rank thresholds, final-mission repair, auto-granted
 components (G; CD tables V where noted above).
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

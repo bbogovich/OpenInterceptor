@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # XTXR textures
 
 Palettised textures with 16 shade tables and mipmaps. **verified** for every size present.
@@ -22,3 +28,9 @@ Total size = 8,248 + w·h·85/64 bytes.
   surfaces have been confirmed on hulls.
 - A few 32×32 textures are 15,416 bytes rather than 9,608: 7 KiB more than expected, perhaps
   animation frames. **unknown**
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Format: interface, text and media
 
 **Status: design; implemented in [Stage 6](../../implementation/plan/stage-6-presentation.md)
@@ -133,3 +139,9 @@ an audio file. Missions trigger lines by event (`chatter` keys); pilots are assi
 
 `videos: {<id>: …}`: intro, endings, cut-scenes. Smacker (the original; in-crate decoder, Stage 5)
 or an image sequence with audio for mods. An ending, briefing or chapter card may name a video.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

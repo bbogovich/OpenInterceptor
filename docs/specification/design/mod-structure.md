@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Mod structure
 
 **Status: partly implemented (Stage 2).** `kind`, `parent`, `targets`, `format`, the active
@@ -166,3 +172,9 @@ colour variants), `composite` (layer images: decals, damage overlays).
 definition, reference and condition, reporting each problem with its file, line and key
 path (YAML syntax and schema errors: `rules/ships.yaml:12: ships.comet.max_sped: unknown key
 (did you mean 'max_speed'?)`; conditions are type-checked at load). A campaign must pass with **no** addons, and each addon must pass with its targets.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # XSPT sprites
 
 Ten animated sprites in `xobjects2.dll`: `blam`, `blamo_`, `boom`, `flak`, `kaplo_`, `laser`,
@@ -17,3 +23,9 @@ Ten animated sprites in `xobjects2.dll`: `blam`, `blamo_`, `boom`, `flak`, `kapl
 
 The pixel encoding is a run-length scheme still to be decoded (Stage 2). Until then the engine
 draws procedural explosions.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

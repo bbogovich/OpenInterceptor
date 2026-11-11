@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # PE resource container
 
 The asset DLLs are ordinary 32-bit Windows PE files whose `.rsrc` section holds the data. Their
@@ -33,3 +39,9 @@ padding to `0x20`.
 `formats::pe` parses the tree once per DLL and keeps `(type, name) → byte range`. The packs VFS
 exposes each resource as a virtual file, e.g. `xmsh/inttypea`, so the rest of the engine never
 knows the data came from a DLL. See [Formats layer](../../implementation/architecture/formats.md).
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

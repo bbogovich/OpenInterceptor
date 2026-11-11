@@ -22,7 +22,7 @@ is in the repository, ever.
 
     The same order is in the repository's `CLAUDE.md` project rules.
 
-**Site version 0.10.0** ([revision history](reference/revision-history.md)).
+**Site version 0.11.0**; Definition and Specification **1.0.0** ([revision history](reference/revision-history.md)).
 
 ## Sections
 
@@ -57,12 +57,20 @@ ship systems, power, damage and repair, tractor, cloak, ECM, hyperspace, wingman
 in-game controls menu. See [implementation status](implementation/status.md) and the
 [plan](implementation/plan/index.md).
 
-## Specification
+## How work flows: Rapid Prototyping
 
-This is a SpecItOut **implementation** project with **no specification yet**
-(`"specVersion": null` in `.specitout/sdd.json`). The intended specification project is
-`OpenInterceptor-Specification`. Until it exists, pages here cite plan stages rather than
-requirement IDs.
+The project follows the **Rapid Prototyping** workflow ([Workflows](implementation/workflows/index.md#rapid-prototyping)).
+Each user request becomes, in the same pass and before any code, a **feature** (`F-…`) on the
+[Definition](definition/index.md), then **requirements** (`R-…`) citing it on the
+[Specification](specification/index.md), then issues queued in `sio` citing those requirements.
+There are no approval gates; the definition and specification are a permanent record that moves
+ahead of the code. When the prototype is complete they seed the formal definition and
+specification of a production version, built through the SpecItOut fast track.
+
+Definition and Specification **1.0.0** (2026-11-11): 79 features and 168
+requirements, those for the code already built marked *reverse-engineered*. Until `sio` supports
+a `prototype` kind the project runs as `kind: implementation` with `spec` pointing at
+`docs/specification` (DEV-042).
 
 ## Licence
 

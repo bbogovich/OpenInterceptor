@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # Coverage matrix
 
 **Status: design check, 2026-11-10.** For every system of the original
@@ -103,3 +109,9 @@ in Stage 5 with its source recorded (verified/derived) in the mod's comments:
 
 Each is a **data** question with a reasonable fallback (the guide's legible values, or a
 documented estimate marked *derived*), so none blocks the format or the stages.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |

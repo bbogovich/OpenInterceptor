@@ -1,3 +1,9 @@
+---
+spec_version: 1.0.0
+status: current
+updated: 2026-11-11
+---
+
 # TGA images and cockpits
 
 `TARG` resources and the files in `3DObjects/` are standard Truevision TGA. **verified**
@@ -23,3 +29,9 @@ range modes) is **derived** and refined in Stage 1–2.
 
 `3DObjects/` holds reticles (five variants), lens-flare elements, sun and star sprites.
 `SpritesDLL.dll` holds ~1,700 small sprites; `WrappersDLL.dll` the full-screen menus.
+
+## Revision history
+
+| Version | Date | Change |
+|---|---|---|
+| 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
