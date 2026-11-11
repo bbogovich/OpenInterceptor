@@ -229,6 +229,7 @@ Texture names match a model's textures by file name without folder or extension,
 | `lock_angle` | angle | 10° | Missile lock cone half-angle. |
 | `radar_range` | distance | 6000 m | Mobile contacts beyond it are hidden from the radar. |
 | `hyperspace_time` | time | 10 s | Hyperdrive countdown (doubled while the hyperdrive is damaged). |
+| `radar_colors` | map | see below | Radar blip and target-marker colours by relation to the player: `friendly` (own faction, default green), `hostile` (either side hostile, red), `neutral` (yellow), `objective` (objects with `protect: true`, cyan). Each is `[r, g, b]`, 0..1. |
 
 ### `power`
 
@@ -300,5 +301,6 @@ An object:
 | `offset` | 3 numbers | −60, 0, 30 | Wingmen: formation slot relative to the leader (x right, y up, +z behind). |
 | `speed` | number | 0 | Starting speed, m/s (also sets the throttle). |
 | `destroyed_systems` | ids | none | Systems (kinds or ids) that start destroyed; `[engines, manoeuvring]` starts it disabled. |
+| `protect` | bool | false | An objective the player must keep alive: drawn in the `objective` radar colour with a ring, labelled PROTECT on the target brackets and the MFD, and never picked by "nearest enemy" (R) for the player or the player's wingmen. T can still select it. |
 | `hull` | fraction | 100 % | Starting hull. |
 | `behaviour` | id | the class's | Behaviour to fly instead of the class's. |

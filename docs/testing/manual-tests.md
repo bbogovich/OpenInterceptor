@@ -391,6 +391,8 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | MT-2-25 | Debris and damage showcase; viewer looks | `debris-showcase`, model viewer | not run | | | |
 | MT-2-26 | Original sound cues | `gunnery-range`, `systems-trial` | not run | | | Needs the CD |
 | MT-2-27 | Duels and target preferences | `duel-*`, `mixed-dogfight`, `escort`, `rocket-vs-saucer` | not run | | | |
+| MT-2-28 | Protected objectives and radar colours | `systems-trial`, `rocket-vs-saucer` | not run | | | |
+| MT-2-29 | Cockpit text legibility | `rocket-vs-saucer`, `systems-trial` (default) | not run | | | |
 
 ## Stage 2 cases
 
@@ -611,3 +613,19 @@ on the Meteor and Thunderbolt, cloak on the Thunderbolt, ECM on all three rocket
 | Scenario | Each `duel-<enemy>` arena of both campaigns; `mixed-dogfight`; `escort` (interceptor); `rocket-vs-saucer` (default) |
 | Steps | 1. Fly each duel at the lowest and highest difficulty. 2. In `mixed-dogfight`, watch who attacks whom. 3. In `escort`, defend the freighter. 4. In `rocket-vs-saucer`, hang back behind your two wingmen. |
 | Expected | 1: each enemy type flies and fights distinctly (saucers dart and dodge, the dreadnought's turrets track, the grappler/harbinger tries to tow disabled ships, robots are reckless); clearly harder at the top level. 2: several factions fight each other, not only the player. 3: the freighter is attacked and can be lost. 4: the saucers (`prefer: {player: …}`) still come for you, past wingmen up to about 1.3–1.5 times nearer; with no behaviour preference they would take the nearest ship. Station turrets (`station_turret`) shoot fighters before larger ships. |
+
+### MT-2-28 — Protected objectives and radar colours
+
+| Field | |
+|---|---|
+| Scenario | `systems-trial` (either campaign); `rocket-vs-saucer` (default) |
+| Steps | 1. In `systems-trial`, look at the radar. 2. Press R (nearest enemy) repeatedly. 3. Press T until the prize is selected; read the MFD target page and the target brackets. 4. In `rocket-vs-saucer`, compare your wingmen's and the saucers' radar blips. |
+| Expected | 1: the crippled saucer is cyan with a ring; enemies red; the asteroid yellow (neutral). 2: R never selects the prize while an enemy is detectable. 3: T reaches it; the MFD shows `OBJECTIVE: PROTECT` under its name and the bracket label starts `PROTECT`. 4: wingmen and your station green, saucers red. |
+
+### MT-2-29 — Cockpit text legibility
+
+| Field | |
+|---|---|
+| Scenario | `rocket-vs-saucer` and `systems-trial` (default), cockpit (3D) view and exterior view, at full screen and in a small window |
+| Steps | 1. Read the throttle/speed line at the top left. 2. Read the dial labels (SPD NRG SHD HUL), the power labels and the system lamps. 3. Select a target and read the MFD. |
+| Expected | All text is readable in both views; dials carry labels in the cockpit; the lamps rearrange into rows that fit their panel; long MFD lines end in `..` rather than shrinking the page. |

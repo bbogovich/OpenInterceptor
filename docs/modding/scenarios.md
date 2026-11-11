@@ -32,6 +32,7 @@ type and default: [Mod file reference › scenario files](reference.md#scenario-
 | `offset` | Formation slot relative to the leader, in the leader's frame (x right, y up, +z behind); default `[-60, 0, 30]`. |
 | `speed` | Initial speed, m/s (also sets the throttle). |
 | `destroyed_systems` | System kinds or ids that start **destroyed**. `[engines, manoeuvring]` starts the ship disabled — a capture target. |
+| `protect` | `true` marks an **objective to protect**: shown in the objective colour with a radar ring and a PROTECT label, and skipped by nearest-enemy targeting. Use it on a capture target so it is not shot by accident. |
 | `hull` | Starting hull fraction (`40%` or `0.4`). |
 | `behaviour` | A behaviour id to fly instead of the class's ([Behaviours](behaviours.md)) — an ambush, a guard that only patrols. |
 
