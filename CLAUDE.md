@@ -69,7 +69,7 @@ small things in-crate.
   only be judged by playing (rendering look, feel of controls, audio). Pure logic in
   `formats`, `model`, `packs`, `sim`, `input` mapping and HUD layout maths is always tested.
 - Anything not unit-testable gets a **manual test case** on the docs site
-  (`testing/manual-tests.md`): ID, testbed scenario, preconditions, steps, expected result.
+  (`implementation/testing/manual-tests.md`): ID, testbed scenario, preconditions, steps, expected result.
 - Every stage ends in a **playable testbed build** with scenarios that exercise its
   features, and a manual playtest pass recorded on the docs site.
 - `scripts/check.sh` is the one gate; it must pass before any commit to `main`.

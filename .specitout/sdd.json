@@ -1,19 +1,55 @@
 {
-  "forge": "none",
+  "forge": "github",
+  "owner": "bbogovich",
+  "repo": "OpenInterceptor",
   "project": "OpenInterceptor",
   "kind": "implementation",
-  "spec": null,
-  "specVersion": null,
+  "spec": "../OpenInterceptor-docs/docs",
+  "specVersion": "1.0.0",
   "labels": [
-    { "name": "formats", "description": "Readers for the original data: PE resources, XMSH meshes, XTXR textures, TGA, ADPCM WAV, INI, Smacker" },
-    { "name": "packs", "description": "Content packs, the virtual file system, rulesets and mod layering" },
-    { "name": "flight", "description": "Space simulation: flight model, physics, collisions, navigation" },
-    { "name": "combat", "description": "Weapons, damage, shields, missiles, AI pilots and enemy types" },
-    { "name": "render", "description": "3D rendering, effects, starfield, cockpit and HUD drawing" },
-    { "name": "input", "description": "Keyboard, mouse and gamepad bindings" },
-    { "name": "testbed", "description": "The scenario launcher and live test environments" },
-    { "name": "campaign", "description": "Strategy layer, missions, tech tree, scripting" },
-    { "name": "platform", "description": "macOS, Linux and Windows builds, packaging" },
-    { "name": "docs", "description": "The documentation site on the docs branch" }
+    {
+      "name": "formats",
+      "description": "Readers for the original data: PE resources, XMSH meshes, XTXR textures, TGA, ADPCM WAV, INI, Smacker"
+    },
+    {
+      "name": "packs",
+      "description": "Content packs, the virtual file system, rulesets and mod layering"
+    },
+    {
+      "name": "flight",
+      "description": "Space simulation: flight model, physics, collisions, navigation"
+    },
+    {
+      "name": "combat",
+      "description": "Weapons, damage, shields, missiles, AI pilots and enemy types"
+    },
+    {
+      "name": "render",
+      "description": "3D rendering, effects, starfield, cockpit and HUD drawing"
+    },
+    {
+      "name": "input",
+      "description": "Keyboard, mouse and gamepad bindings"
+    },
+    {
+      "name": "testbed",
+      "description": "The scenario launcher and live test environments"
+    },
+    {
+      "name": "campaign",
+      "description": "Strategy layer, missions, tech tree, scripting"
+    },
+    {
+      "name": "platform",
+      "description": "macOS, Linux and Windows builds, packaging"
+    },
+    {
+      "name": "docs",
+      "description": "The documentation site on the docs branch"
+    },
+    {
+      "name": "console",
+      "description": "The tablet control console: web server, protocol, web components, themes, Arduino transport"
+    }
   ]
 }
