@@ -183,13 +183,13 @@ impl MissionRun {
         let (mut w, player) = World::from_scenario(&scenario, rules, shapes, player_class)?;
         run.player = player;
         run.start = w.time;
+        if let Some(e) = &def.environment {
+            w.set_environment(e)?;
+        }
         for i in 0..def.roles.len() {
             if def.roles[i].arrive.is_none() {
                 run.spawn_role(&mut w, i, None, None)?;
             }
-        }
-        if let Some(e) = &def.environment {
-            w.set_environment(e)?;
         }
         // Hazards last, so the asteroids and mines keep clear of every craft placed.
         w.apply_hazards(&def.hazards)?;

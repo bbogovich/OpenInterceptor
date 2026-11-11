@@ -196,6 +196,18 @@ mod tests {
     }
 
     #[test]
+    fn ground_installations_are_set_down_on_the_terrain() {
+        let mut w = world();
+        w.env = atmosphere(240.0);
+        let outpost = w.rules.ship_id("outpost").unwrap();
+        let id =
+            w.spawn(outpost, FactionId(2), "outpost", Vec3::new(100.0, 5000.0, 0.0), Quat::IDENTITY, Pilot::External);
+        let y = w.get(id).unwrap().position.y;
+        assert!((y - 240.0).abs() < 5.0, "on the ground, not in the air: {y}");
+        assert!(w.rules.ship(outpost).kind.is_static(), "and it never moves");
+    }
+
+    #[test]
     fn ai_pilots_pull_up_near_the_ground() {
         let mut w = world();
         let f = w.rules.ship_id("fighter").unwrap();

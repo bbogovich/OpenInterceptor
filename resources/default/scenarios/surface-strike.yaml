@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.5 ground installations): a strike on Dominion flak batteries in the
+# hills. They track low fliers; come in fast and keep moving.
+id: surface-strike
+order: 103
+title: "@scenario.surface-strike.title"
+description: "@scenario.surface-strike.desc"
+player: choose
+environment: dusk_hills
+player_position: [0, 2500, 7000]
+sun: [0.7, 0.15, -0.7]
+starfield_seed: 46
+objects:
+  flak1: {class: dominion_flak, ai: enemy, position: [-600, 0, 0]}
+  flak2: {class: dominion_flak, ai: enemy, position: [600, 0, -400]}
+  flak3: {class: dominion_flak, ai: enemy, position: [0, 0, -1200]}

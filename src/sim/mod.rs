@@ -724,6 +724,14 @@ impl World {
                 self.ships.len() - 1
             }
         };
+        // A ground installation sits on the terrain, whatever height it was placed at.
+        if self.rules.ship(class).kind == crate::content::rules::ShipKind::Ground {
+            let s = &self.ships[index];
+            if let Some(h) = self.ground_height(s.position.x, s.position.z) {
+                let lift = self.shapes[class.0 as usize].radius * 0.25;
+                self.ships[index].position.y = h + lift;
+            }
+        }
         ShipId { index: index as u32, generation: self.generations[index] }
     }
 
@@ -1008,6 +1016,10 @@ impl World {
         player_class: Option<ShipClassId>,
     ) -> Result<(World, ShipId), String> {
         let mut w = World::new(rules.clone(), shapes, scenario.starfield_seed);
+        // The environment first: ground installations are set down on its terrain.
+        if let Some(e) = &scenario.environment {
+            w.set_environment(e)?;
+        }
         let pc = match (&scenario.player_class, player_class) {
             (_, Some(c)) => c,
             (Some(id), None) => rules.ship_id(id).ok_or(format!("unknown player ship '{id}'"))?,
@@ -1043,9 +1055,6 @@ impl World {
                     state.leader = Some(lid);
                 }
             }
-        }
-        if let Some(e) = &scenario.environment {
-            w.set_environment(e)?;
         }
         w.apply_hazards(&scenario.hazards)?;
         Ok((w, player))
@@ -1097,6 +1106,7 @@ ships:
   sneak: {inherit: raider, systems+: [cloak, ecm], behaviour: sneaky}
 objects:
   base: {model: m, faction: grey, hit_points: 5000}
+  outpost: {model: m, faction: grey, hit_points: 800, kind: ground}
   gun: {model: m, faction: red, hit_points: 5000, beams: [laser], turret_arc: 180, behaviour: gunner}
   mine: {model: m, faction: red, kind: mine, hit_points: 10, missiles: {dart: 1}, behaviour: mine}
   fort:

@@ -167,7 +167,7 @@ fn ship() -> Ty {
         f("description", Ty::Text, "one line for the viewer and encyclopaedia"),
         f(
             "kind",
-            Ty::Enum(&["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris"]),
+            Ty::Enum(&["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris", "ground"]),
             "what sort of object it is",
         ),
         f("faction", name(), "owning faction id"),

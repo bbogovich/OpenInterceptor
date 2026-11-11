@@ -124,6 +124,9 @@ pub enum ShipKind {
     Probe,
     Mine,
     Debris,
+    /// A ground installation: static, and set down on the terrain where it is placed
+    /// (colonies, outposts, anti-air batteries; R-MSN-008).
+    Ground,
 }
 
 impl ShipKind {
@@ -137,13 +140,14 @@ impl ShipKind {
             "probe" => ShipKind::Probe,
             "mine" => ShipKind::Mine,
             "debris" => ShipKind::Debris,
+            "ground" => ShipKind::Ground,
             _ => return None,
         })
     }
 
     /// True for objects that never move under their own power.
     pub fn is_static(self) -> bool {
-        matches!(self, ShipKind::Station | ShipKind::Mine)
+        matches!(self, ShipKind::Station | ShipKind::Mine | ShipKind::Ground)
     }
 }
 

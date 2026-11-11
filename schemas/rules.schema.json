@@ -51,7 +51,7 @@
     "ships": {"description": "craft by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "name": {"description": "display name", "type": "string"},
           "description": {"description": "one line for the viewer and encyclopaedia", "type": "string"},
-          "kind": {"description": "what sort of object it is", "enum": ["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris"]},
+          "kind": {"description": "what sort of object it is", "enum": ["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris", "ground"]},
           "faction": {"description": "owning faction id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "model_set": {"description": "the look: a model set id (instead of model and debris)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "model": {"description": "model reference: models/x.obj or original:MESH (shorthand for a model set)", "type": "string"},
@@ -107,7 +107,7 @@
     "objects": {"description": "stations and other objects by id (kind defaults to station)", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "name": {"description": "display name", "type": "string"},
           "description": {"description": "one line for the viewer and encyclopaedia", "type": "string"},
-          "kind": {"description": "what sort of object it is", "enum": ["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris"]},
+          "kind": {"description": "what sort of object it is", "enum": ["fighter", "freighter", "capital", "drone", "station", "probe", "mine", "debris", "ground"]},
           "faction": {"description": "owning faction id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "model_set": {"description": "the look: a model set id (instead of model and debris)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "model": {"description": "model reference: models/x.obj or original:MESH (shorthand for a model set)", "type": "string"},

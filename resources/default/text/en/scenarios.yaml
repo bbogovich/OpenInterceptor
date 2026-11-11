@@ -49,3 +49,7 @@ text:
   scenario.surface-moon.desc: "Low over a cratered moon: thin air, low gravity. Mind your altitude."
   scenario.surface-hills.title: "Surface: hills at dusk"
   scenario.surface-hills.desc: "Thick air and full gravity over rolling hills: keep your speed up or sink. Climb above 7 km to leave."
+  scenario.surface-colony.title: "Surface: defend the colony"
+  scenario.surface-colony.desc: "Saucers come over the horizon at a Guard mining colony on a cratered moon. Protect it."
+  scenario.surface-strike.title: "Surface: flak strike"
+  scenario.surface-strike.desc: "Knock out three Dominion flak batteries in the hills. They track low fliers: come in fast and keep moving."

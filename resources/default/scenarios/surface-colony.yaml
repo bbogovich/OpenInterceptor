@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/scenario.schema.json
+# Stage 3 testbed (3.5 ground installations): defend a Guard colony on a cratered moon
+# from saucers coming over the horizon.
+id: surface-colony
+order: 102
+title: "@scenario.surface-colony.title"
+description: "@scenario.surface-colony.desc"
+player: choose
+environment: moon_surface
+player_position: [0, 2200, 3000]
+sun: [-0.5, 0.35, -0.8]
+starfield_seed: 45
+objects:
+  colony: {class: guard_colony, ai: idle, protect: true, position: [0, 0, 0]}
+  raider1: {class: raider_saucer, ai: enemy, position: [-2500, 2500, -6000], speed: 200}
+  raider2: {class: raider_saucer, ai: enemy, position: [2500, 2500, -6200], speed: 200}

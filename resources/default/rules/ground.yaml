@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Ground installations (Stage 3.5; R-MSN-008): objects of kind ground are set down on the
+# terrain wherever they are placed. Anti-air batteries are turrets on the ground.
+objects:
+  guard_colony:
+    name: "@object.guard_colony.name"
+    description: "@object.guard_colony.desc"
+    model_set: mining_facility
+    kind: ground
+    faction: guard
+    hit_points: 6000
+    shields: 800
+    armor: 300
+  dominion_flak:
+    name: "@object.dominion_flak.name"
+    description: "@object.dominion_flak.desc"
+    model_set: dominion_turret_pod
+    kind: ground
+    faction: dominion
+    hit_points: 400
+    armor: 120
+    beams: [death_ray]
+    turret_arc: 180
+    behaviour: station_turret
