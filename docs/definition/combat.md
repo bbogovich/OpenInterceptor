@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.5.0
 status: current
 updated: 2026-11-11
 ---
@@ -93,8 +93,8 @@ Requirements for these features: [Combat requirements](../specification/requirem
 **Why.** A piloting function of the original game.
 
 - **Status:** implemented
-- **Source:** Plan items 1.8 and 2.16; DEV-018 (resolved).
-- **Specified by:** [R-CMB-015](../specification/requirements/combat.md#r-cmb-015-wingman-orders)
+- **Source:** Plan items 1.8 and 2.16; DEV-018 (resolved). User request, 2026-11-11: wingmen in formation "collide with the player and continue pushing … Formations probably need to have a bit more distance, and wingman fighters should actively try to avoid collisions."
+- **Specified by:** [R-CMB-015](../specification/requirements/combat.md#r-cmb-015-wingman-orders), [R-CMB-022](../specification/requirements/combat.md#r-cmb-022-wingmen-keep-their-distance)
 
 ### F-CMB-008 Enemies driven by data, with difficulty levels
 
@@ -142,3 +142,4 @@ Requirements for these features: [Combat requirements](../specification/requirem
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CMB-001 – F-CMB-011 (11 features) |
 | 1.1.0 | 2026-11-11 | F-CMB-011 implemented (app 0.3.1) |
+| 1.5.0 | 2026-11-11 | F-CMB-007: wingmen keep their distance (R-CMB-022) |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.5.0
 status: current
 updated: 2026-11-11
 ---
@@ -74,12 +74,12 @@ Requirements for these features: [Flight requirements](../specification/requirem
 
 ### F-FLT-006 Collisions
 
-**What.** Craft bounce off each other and off station hulls; fast shots never pass through a target.
+**What.** Craft bounce off each other and off station hulls, and a hard hit has real consequences. The impact changes direction according to the relative speed, and the angle of impact sets the craft spinning, out of control for a moment. Ships pressed together make one impact sound, not a hammering series. Fast shots never pass through a target.
 
-**Why.** Stations are large solid objects, and hits must count.
+**Why.** Stations are large solid objects, and hits must count. A collision should feel like one.
 
 - **Status:** implemented
-- **Source:** Plan item 1.7.
+- **Source:** Plan item 1.7; user request, 2026-11-11: "Formation flying - problems frequently occur where a wingman collides with the player and continues pushing, resulting in a \"hammering\" series of sounds. Formations probably need to have a bit more distance, and wingman fighters should actively try to avoid collisions. Collision should also cause more of an impact and result in directional changes and spin based on relative velocity and angle of impact. This will result in a collision causing fighter to \"spin out of control\". A collision that persists (fighter effectively pushing and staying attached to another) should only play the impact sound effect on initial impact."
 - **Specified by:** [R-FLT-009](../specification/requirements/flight.md#r-flt-009-collisions)
 
 ### F-FLT-007 Atmospheric flight over terrain
@@ -97,3 +97,4 @@ Requirements for these features: [Flight requirements](../specification/requirem
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-FLT-001 – F-FLT-007 (7 features) |
+| 1.5.0 | 2026-11-11 | F-FLT-006: impact, spin, tumble and one sound per contact |

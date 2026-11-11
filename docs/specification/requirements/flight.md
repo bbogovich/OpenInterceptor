@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.5.0
 status: current
 updated: 2026-11-11
 ---
@@ -125,13 +125,23 @@ Hyperspace MUST count down `flight.hyperspace_time` seconds (doubled while the h
 
 ### R-FLT-009 Collisions
 
-Fighters touching (spheres at 60 % of radius) MUST be pushed apart and exchange half their velocities; a fighter sweeping into a station mesh MUST be backed out and bounced; collision damage MUST be relative speed × 0.1. Bolts and missiles MUST test the segment travelled each tick so they cannot pass through a target.
+Fighters touching (spheres at 60 % of radius) MUST be separated (in proportion to their masses, taken as radius cubed) and, while approaching, MUST exchange an impulse along the contact normal with restitution `flight.collision.restitution` (default 0.5). A fighter sweeping into a station mesh MUST be backed out and bounced the same way, with the station immovable.
 
-*Rationale:* Solid stations and hits that count.
+Each impact MUST add spin to the ships involved:
+- from the glancing (tangential) speed, by friction at the contact point;
+- and from the angle between the ship's nose and the impact direction, scaled by `flight.collision.spin`.
+
+A spin above about 0.5 rad/s MUST start a **tumble** of up to `flight.collision.tumble` seconds, during which the pilot's turn authority is reduced, so the craft spins out of control and then recovers.
+
+The impact sound (`Collision` event) and the collision damage (approach speed × 0.1) MUST happen only when two ships first touch, not on every tick they stay pressed together.
+
+Bolts and missiles MUST test the segment travelled each tick so they cannot pass through a target.
+
+*Rationale:* Solid stations, hits that count, collisions that feel like collisions, and no "hammering" from a ship pushing against another.
 
 - Implements: [F-FLT-006](../../definition/flight.md#f-flt-006-collisions)
 - Status: implemented
-- Verified by: `sim::combat::fighters_bounce_off_each_other_and_stations`, `sim::collision::segment_sphere_hits_misses_and_inside`, `segment_triangle_hits_inside_only`, `shapes_use_mesh_in_model_space`; MT-1-15
+- Verified by: `sim::combat::fighters_bounce_off_each_other_and_stations`, `sim::combat::a_glancing_hit_sends_a_fighter_tumbling`, `sim::combat::pressed_together_ships_make_one_impact`, `sim::collision::segment_sphere_hits_misses_and_inside`, `segment_triangle_hits_inside_only`, `shapes_use_mesh_in_model_space`; MT-1-15
 - Reverse-engineered: yes
 - See: [Simulation](../../implementation/architecture/sim.md)
 
@@ -177,3 +187,4 @@ A surface environment MUST provide a heightfield from an image or a generator (c
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-FLT-001 – R-FLT-012 (12 requirements; 10 reverse-engineered from the code) |
+| 1.5.0 | 2026-11-11 | R-FLT-009 revised: impulse with restitution, spin from glancing speed and impact angle, tumble, one impact per contact (`flight.collision`) |

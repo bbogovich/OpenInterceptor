@@ -1,5 +1,5 @@
 ---
-spec_version: 1.1.0
+spec_version: 1.5.0
 status: current
 updated: 2026-11-11
 ---
@@ -216,6 +216,18 @@ Wingmen MUST hold formation slots and obey: formation (ignore my target), attack
 - Reverse-engineered: yes
 - See: [Simulation](../../implementation/architecture/sim.md)
 
+### R-CMB-022 Wingmen keep their distance
+
+A wingman's formation slot MUST lie at least `flight.formation_gap` (default 3) × the two ships' combined radii from the leader; a closer slot from data is pushed out along its own direction.
+
+A wingman flying in formation MUST actively avoid collisions: when another craft is inside its avoidance zone (twice the combined radii) and closing, it MUST steer away and slow down until clear.
+
+*Rationale:* The user's request (see F-CMB-007): wingmen collided with the player and kept pushing.
+
+- Implements: [F-CMB-007](../../definition/combat.md#f-cmb-007-wingmen-and-orders)
+- Status: implemented
+- Verified by: `sim::ai::formation_slots_keep_a_gap_from_the_leader`, `sim::ai::a_wingman_steers_clear_of_the_leader`
+
 ### R-CMB-016 Behaviours as data
 
 AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (`prefer`) and systems use (cloak, ECM, power). Any definition MUST accept difficulty `variants` and `{per_level: …}` values.
@@ -307,3 +319,4 @@ The option is `flight: {bolt_frame: world | ship}`. `world` (the default) is the
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CMB-001 – R-CMB-021 (21 requirements; 20 reverse-engineered from the code) |
 | 1.1.0 | 2026-11-11 | R-CMB-021 implemented (app 0.3.1): `flight.bolt_frame` (`world` default, `ship` with `bolt_carry`), open note resolved. R-CMB-002: bolts also carry the muzzle's turn velocity; streaks drawn relative to the viewer |
+| 1.5.0 | 2026-11-11 | R-CMB-022 wingmen keep their distance and avoid collisions |
