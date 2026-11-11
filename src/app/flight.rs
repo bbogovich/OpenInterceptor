@@ -247,6 +247,8 @@ pub struct FlightSession {
     instrument_targets: HashMap<String, RenderTarget>,
     /// The cockpit layout editor, while open (F12).
     editor: Option<LayoutEditor>,
+    /// The mission refereeing this battle, if it is one.
+    mission: Option<crate::mission::MissionRun>,
 }
 
 /// The cockpit layout editor's state (see `hud::layout` for the maths).
@@ -263,8 +265,47 @@ impl FlightSession {
     /// Builds the world for scenario `id`, with `ship` as the player's class if the
     /// scenario lets the player choose.
     pub fn start(ctx: &mut AppContext, id: &str, ship: Option<&str>) -> Result<FlightSession, String> {
+        Self::start_battle(ctx, id, ship, false)
+    }
+
+    /// Like [`FlightSession::start`] for mission `id` (refereed by a
+    /// [`crate::mission::MissionRun`]).
+    pub fn start_mission(ctx: &mut AppContext, id: &str, ship: Option<&str>) -> Result<FlightSession, String> {
+        Self::start_battle(ctx, id, ship, true)
+    }
+
+    fn start_battle(
+        ctx: &mut AppContext,
+        id: &str,
+        ship: Option<&str>,
+        is_mission: bool,
+    ) -> Result<FlightSession, String> {
         let content = &ctx.content;
-        let scenario = content.scenario(id).ok_or(format!("no scenario '{id}'"))?.clone();
+        let mission_def = match is_mission {
+            true => {
+                Some(content.rules.missions.iter().find(|m| m.id == id).ok_or(format!("no mission '{id}'"))?.clone())
+            }
+            false => None,
+        };
+        // A mission shows its name and briefing; its battle is built by the mission run.
+        let scenario = match &mission_def {
+            Some(m) => crate::content::scenario::Scenario {
+                id: m.id.clone(),
+                title: m.name.clone(),
+                description: m.briefing.clone(),
+                player_class: m.player_class.clone(),
+                player_position: m.player_position,
+                player_rotation: Vec3::ZERO,
+                sun_direction: m.sun,
+                starfield_seed: m.starfield_seed,
+                music: None,
+                objects: Vec::new(),
+                nav_points: Vec::new(),
+                pack: m.pack,
+                order: m.order,
+            },
+            None => content.scenario(id).ok_or(format!("no scenario '{id}'"))?.clone(),
+        };
         let rules = Arc::new(content.rules.clone());
         let choice = match ship {
             Some(s) => Some(rules.ship_id(s).ok_or(format!("no ship class '{s}'"))?),
@@ -280,7 +321,17 @@ impl FlightSession {
             };
             shapes.push(shape);
         }
-        let (world, player) = World::from_scenario(&scenario, rules.clone(), Arc::new(shapes), choice)?;
+        let (world, player, mission) = match &mission_def {
+            Some(def) => {
+                let (w, run) = crate::mission::MissionRun::start(def, rules.clone(), Arc::new(shapes), choice)?;
+                let player = run.player;
+                (w, player, Some(run))
+            }
+            None => {
+                let (w, p) = World::from_scenario(&scenario, rules.clone(), Arc::new(shapes), choice)?;
+                (w, p, None)
+            }
+        };
         let player_class = rules.ship(world.get(player).expect("just spawned").class);
         let cockpit_def = player_class.cockpit.as_deref().and_then(|c| rules.cockpit(c));
         let cockpit = cockpit_def.and_then(|c| c.image.as_ref().map(|i| (i, c.image_pack))).and_then(
@@ -344,7 +395,16 @@ impl FlightSession {
             anchors,
             instrument_targets: HashMap::new(),
             editor: None,
+            mission,
         })
+    }
+
+    /// Where "fly again" goes: the same scenario or mission with the same ship.
+    fn again(&self) -> Next {
+        match &self.mission {
+            Some(_) => Next::Mission { mission: self.scenario_id.clone(), ship: self.ship_choice.clone() },
+            None => Next::Fly { scenario: self.scenario_id.clone(), ship: self.ship_choice.clone() },
+        }
     }
 
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
@@ -413,12 +473,22 @@ impl FlightSession {
             }
         }
 
+        // --- Debrief: the mission is over ---------------------------------------------
+        if self.mission.as_ref().is_some_and(|m| m.debrief.is_some()) {
+            if raw.pressed.contains("enter") || raw.pad.is_some_and(|p| p.button(crate::input::gamepad::Button::A)) {
+                return self.again();
+            }
+            if raw.pressed.contains("escape") || raw.pressed.contains("l") {
+                return Next::Launcher;
+            }
+        }
+
         // --- Pause menu -------------------------------------------------------------
         if self.menu_open {
             if raw.pressed.contains("escape") {
                 self.menu_open = false;
             } else if raw.pressed.contains("r") {
-                return Next::Fly { scenario: self.scenario_id.clone(), ship: self.ship_choice.clone() };
+                return self.again();
             } else if raw.pressed.contains("l") || raw.pressed.contains("q") {
                 return Next::Launcher;
             } else if raw.pressed.contains("k") {
@@ -465,13 +535,14 @@ impl FlightSession {
                 && (raw.pressed.contains("enter")
                     || raw.pad.is_some_and(|p| p.button(crate::input::gamepad::Button::A)))
             {
-                return Next::Fly { scenario: self.scenario_id.clone(), ship: self.ship_choice.clone() };
+                return self.again();
             }
         }
         self.chase.apply(&chase_input, dt);
 
         // --- Simulation -------------------------------------------------------------
-        if !self.paused && !self.menu_open && self.editor.is_none() {
+        let over = self.mission.as_ref().is_some_and(|m| m.debrief.is_some());
+        if !self.paused && !self.menu_open && self.editor.is_none() && !over {
             if let Some(s) = self.world.get_mut(self.player) {
                 // Whatever is still set in `s.controls` was not consumed by a tick yet.
                 s.controls = controls.carry_unconsumed(&s.controls);
@@ -484,6 +555,11 @@ impl FlightSession {
                 ctx.sounds.play_events(&self.world, self.player, ear);
                 for m in event_messages(&self.world, self.player) {
                     self.messages.push(self.world.time, m);
+                }
+                if let Some(m) = &mut self.mission {
+                    for line in m.update(&mut self.world) {
+                        self.messages.push(self.world.time, line);
+                    }
                 }
                 for e in &self.world.events {
                     if let SimEvent::Captured { captor, prize } = e {
@@ -603,6 +679,9 @@ impl FlightSession {
         }
         if self.paused {
             draw_centered("PAUSED (P)", screen.y * 0.3, 36.0, YELLOW);
+        }
+        if let Some(d) = self.mission.as_ref().and_then(|m| m.debrief.as_ref()) {
+            draw_debrief(d, screen);
         }
         if let Some(ed) = &self.editor {
             let name = hud::draw::INSTRUMENTS[ed.selected];
@@ -846,6 +925,66 @@ fn draw_anchored(
         }
         draw_mesh(&macroquad::models::Mesh { vertices, indices, texture: Some(rt.texture.clone()) });
     }
+}
+
+/// The debrief panel over the frozen battle.
+fn draw_debrief(d: &crate::mission::Debrief, screen: Vec2) {
+    let (w, h) = ((screen.x * 0.6).min(760.0), (screen.y * 0.6).min(520.0));
+    let (x, y) = ((screen.x - w) * 0.5, (screen.y - h) * 0.5);
+    draw_rectangle(x, y, w, h, Color::new(0.0, 0.04, 0.0, 0.88));
+    draw_rectangle_lines(x, y, w, h, 2.0, Color::new(0.35, 1.0, 0.45, 0.8));
+    let (title, color) = match d.result.as_str() {
+        "win" => ("MISSION ACCOMPLISHED", Color::new(0.4, 1.0, 0.5, 1.0)),
+        "lose" => ("MISSION FAILED", Color::new(1.0, 0.35, 0.3, 1.0)),
+        "draw" => ("MISSION ENDED", YELLOW),
+        _ => ("LEFT THE BATTLE", YELLOW),
+    };
+    draw_centered(title, y + 48.0, 34.0, color);
+    let mut ly = y + 90.0;
+    let green = Color::new(0.7, 0.95, 0.75, 1.0);
+    for line in wrap_text(&d.text, (w / 11.0) as usize) {
+        draw_text(&line, x + 24.0, ly, 20.0, green);
+        ly += 24.0;
+    }
+    ly += 10.0;
+    let mins = (d.seconds / 60.0) as u32;
+    let stats = format!("Kills {}   Losses {}   Time {}:{:02}", d.kills, d.losses, mins, d.seconds as u32 % 60);
+    draw_text(&stats, x + 24.0, ly, 20.0, WHITE);
+    ly += 30.0;
+    for (k, met) in &d.optional {
+        let mark = if *met { "[x]" } else { "[ ]" };
+        draw_text(&format!("{mark} {}", k.replace('_', " ")), x + 24.0, ly, 20.0, if *met { green } else { GRAY });
+        ly += 24.0;
+    }
+    if !d.campaign.is_empty() {
+        ly += 6.0;
+        draw_text("Campaign effects (applied by the strategy layer):", x + 24.0, ly, 18.0, GRAY);
+        ly += 22.0;
+        for c in &d.campaign {
+            draw_text(&format!("  {c}"), x + 24.0, ly, 18.0, LIGHTGRAY);
+            ly += 20.0;
+        }
+    }
+    draw_centered("Enter: fly again     L / Esc: launcher", y + h - 20.0, 20.0, YELLOW);
+}
+
+/// Splits text into lines of at most `width` characters at spaces.
+fn wrap_text(text: &str, width: usize) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut line = String::new();
+    for word in text.split_whitespace() {
+        if !line.is_empty() && line.len() + 1 + word.len() > width.max(10) {
+            lines.push(std::mem::take(&mut line));
+        }
+        if !line.is_empty() {
+            line.push(' ');
+        }
+        line.push_str(word);
+    }
+    if !line.is_empty() {
+        lines.push(line);
+    }
+    lines
 }
 
 fn draw_centered(s: &str, y: f32, size: f32, color: Color) {

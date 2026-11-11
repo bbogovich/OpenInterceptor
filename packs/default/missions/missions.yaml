@@ -1,0 +1,104 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Default-campaign mission types (Stage 3). Counts vary by difficulty with per_level.
+# Construction defence and convoy ambush are the logistics missions: the strategy layer
+# (Stage 4) generates them; here they are flown from the launcher.
+
+missions:
+  defend_station:
+    name: "@mission.defend_station.name"
+    briefing: "@mission.defend_station.brief"
+    order: 1
+    starfield_seed: 101
+    player: {class: choose}
+    roles:
+      station: {class: guard_station, ai: idle, protect: true, at: {distance: 1.2km, bearing: [0, -8]}}
+      wing: {class: comet, ai: wingman, count: 2, at: {distance: 0m, spread: 80m}}
+      raiders:
+        class: [scout_saucer, raider_saucer]
+        count: {per_level: [[2, 3], [3, 4], [4, 5], [5, 6]]}
+        at: {distance: 6km, from: station, bearing: random}
+      robots: {class: robot_sentinel, count: 2, arrive: "time > 75s and alive(station)", at: {distance: 5km, from: station, bearing: random}}
+    waves:
+      - {role: raiders, when: "count(raiders) < 2 and time > 30s", count: [1, 2]}
+    objectives:
+      lose: destroyed(station) or not player_alive
+      win: destroyed_all(raiders) and destroyed_all(robots)
+    optional:
+      station_untouched: hull(station) > 90%
+      no_losses: count(wing) == 2
+    outcomes:
+      win: [score(station_defended), salvage, "relation(guard, +5)"]
+      lose: [lose(guard_station), score(station_lost)]
+      retreat: [score(station_abandoned)]
+    chatter:
+      - {when: "time > 3s", line: "@chat.saucers_inbound"}
+      - {when: arrived(robots), line: "@chat.robots"}
+      - {when: "hull(station) < 50%", line: "@chat.station_hurt"}
+    debrief: {win: "@debrief.defend_station.win", lose: "@debrief.defend_station.lose", retreat: "@debrief.retreat"}
+
+  convoy_ambush:
+    name: "@mission.convoy_ambush.name"
+    briefing: "@mission.convoy_ambush.brief"
+    order: 2
+    starfield_seed: 88
+    player: {class: choose, position: [0, 80, 250]}
+    roles:
+      clippers: {class: supply_ship, ai: idle, protect: true, count: 2, speed: 90, at: {distance: 0m, spread: 300m}}
+      hotrods:
+        class: hotrod
+        count: {per_level: [[2, 2], [2, 3], [3, 4], [4, 5]]}
+        at: {distance: 4km, bearing: random}
+      saucer: {class: raider_saucer, arrive: "time > 40s", at: {distance: 5km, from: clippers, bearing: random}}
+    objectives:
+      lose: destroyed_all(clippers) or not player_alive
+      win: destroyed_all(hotrods) and destroyed_all(saucer)
+    timer: {after: 4min, then: win}
+    optional: {both_clippers: count(clippers) == 2}
+    outcomes:
+      win: [score(convoy_delivered)]
+      lose: [cargo_lost, score(convoy_lost)]
+      retreat: [cargo_lost]
+    chatter:
+      - {when: "time > 2s", line: "@chat.ambush"}
+      - {when: destroyed_any(clippers), line: "@chat.clipper_lost"}
+    debrief: {win: "@debrief.convoy.win", lose: "@debrief.convoy.lose", retreat: "@debrief.retreat"}
+
+  construction_defence:
+    name: "@mission.construction_defence.name"
+    briefing: "@mission.construction_defence.brief"
+    order: 3
+    starfield_seed: 77
+    player: {class: choose, position: [0, 200, 1200]}
+    roles:
+      site: {class: research_station, ai: idle, protect: true, state: build_60, at: {distance: 1.5km, bearing: [0, -5]}}
+      raiders:
+        class: raider_saucer
+        count: {per_level: [[2, 2], [2, 3], [3, 4], [4, 4]]}
+        at: {distance: 5km, from: site, bearing: random}
+    waves:
+      - {role: raiders, when: "time > 90s and alive(site)", count: [1, 2]}
+    objectives:
+      lose: destroyed(site) or not player_alive
+      win: destroyed_all(raiders) and time > 95s
+    outcomes:
+      win: [score(construction_saved)]
+      lose: [lose(construction_site), score(construction_lost)]
+    chatter:
+      - {when: "time > 2s", line: "@chat.builders"}
+    debrief: {win: "@debrief.construction.win", lose: "@debrief.construction.lose", retreat: "@debrief.retreat"}
+
+  intercept_scouts:
+    name: "@mission.intercept_scouts.name"
+    briefing: "@mission.intercept_scouts.brief"
+    order: 4
+    starfield_seed: 9
+    player: {class: choose}
+    roles:
+      scouts: {class: scout_saucer, count: {per_level: [2, 3, 3, 4]}, at: {distance: 5km, bearing: [20, 5]}}
+    objectives:
+      lose: not player_alive
+      win: destroyed_all(scouts)
+    timer: {after: 3min, then: draw}
+    outcomes:
+      win: [score(scouts_intercepted)]
+    debrief: {win: "@debrief.scouts.win", draw: "@debrief.scouts.draw", lose: "@debrief.scouts.lose", retreat: "@debrief.retreat"}

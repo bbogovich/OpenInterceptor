@@ -466,6 +466,8 @@ pub struct Ruleset {
     pub power: PowerRules,
     pub damage: DamageRules,
     pub behaviours: Vec<BehaviourDef>,
+    /// Mission types (see [`super::mission`]).
+    pub missions: Vec<super::mission::MissionDef>,
     pub model_sets: Vec<ModelSet>,
     pub debris_sets: Vec<DebrisSet>,
     pub effects: Vec<EffectDef>,
@@ -570,7 +572,8 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 11] = [
+const DEF_SECTIONS: [&str; 12] = [
+    "missions",
     "factions",
     "beams",
     "missiles",
@@ -1012,9 +1015,20 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 .collect()
         })
         .unwrap_or_default();
+    // Missions: roles name classes, conditions use the battle context.
+    let class_ids: Vec<String> = ships.iter().map(|c| c.id.clone()).collect();
+    let mut missions = Vec::new();
+    for (_, id, e) in of(&resolved, "missions") {
+        match super::mission::MissionDef::parse(id, Get(&e.node), e.pack, &class_ids, &difficulty_levels) {
+            Ok(m) => missions.push(m),
+            Err(msg) => errors.push(format!("{}: missions.{id}: {msg}", e.origin)),
+        }
+    }
+    missions.sort_by(|a, b| a.order.cmp(&b.order).then(a.id.cmp(&b.id)));
     errors.extend(cue_errors.into_inner());
     (
         Ruleset {
+            missions,
             ships,
             beams,
             missiles,

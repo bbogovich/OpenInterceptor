@@ -599,6 +599,13 @@ impl World {
         rotation: Quat,
         pilot: Pilot,
     ) -> ShipId {
+        // Every AI pilot gets its own random sequence (from the world generator and how many
+        // ships came before), so pilots of one flight do not all decide alike.
+        let mut pilot = pilot;
+        if let Pilot::Ai(state) = &mut pilot {
+            let salt = (self.ships.len() as u64 + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15);
+            state.rng = (state.rng ^ salt ^ self.rng.wrapping_mul(0xBF58_476D_1CE4_E5B9)) | 1;
+        }
         let c = self.rules.ship(class);
         let systems = c
             .systems
@@ -758,6 +765,12 @@ impl World {
     }
 
     /// Resolves a handle to a live ship.
+    /// Whether `id`'s slot still holds the ship it was issued for (alive or not): the
+    /// slot has not been reused for a newer ship.
+    pub fn same_slot(&self, id: ShipId) -> bool {
+        self.generations.get(id.index as usize) == Some(&id.generation)
+    }
+
     pub fn get(&self, id: ShipId) -> Option<&Ship> {
         let i = id.index as usize;
         (self.generations.get(i) == Some(&id.generation)).then(|| &self.ships[i]).filter(|s| s.alive)
@@ -869,6 +882,66 @@ impl World {
         self.time += TICK as f64;
     }
 
+    /// Spawns one placed object (a scenario object, or a mission role member): its
+    /// class, faction, pilot, modules, starting damage and speed. `player` is the
+    /// player's ship (whose faction a protected object belongs to). Leaders are resolved
+    /// by the caller.
+    pub fn spawn_placement(
+        &mut self,
+        p: &crate::content::scenario::Placement,
+        player: ShipId,
+    ) -> Result<ShipId, String> {
+        let rules = self.rules.clone();
+        let class = rules.ship_id(&p.class).ok_or(format!("object {}: unknown class '{}'", p.name, p.class))?;
+        let faction = match &p.faction {
+            Some(f) => rules.faction_id(f).ok_or(format!("object {}: unknown faction '{f}'", p.name))?,
+            None => rules.ship(class).faction,
+        };
+        let rot = euler(p.rotation);
+        let pilot = match p.ai {
+            AiRole::Player | AiRole::Idle => Pilot::Ai(ai::AiState::new(ai::Behaviour::Idle, None, Vec3::ZERO)),
+            AiRole::Wingman => Pilot::Ai(ai::AiState::new(ai::Behaviour::Wingman, None, p.offset)),
+            AiRole::Enemy => Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, Vec3::ZERO)),
+            AiRole::Target => Pilot::Ai(ai::AiState::new(ai::Behaviour::Target, None, Vec3::ZERO)),
+        };
+        let mut pilot = pilot;
+        if let (Some(b), Pilot::Ai(state)) = (&p.behaviour, &mut pilot) {
+            state.def = Some(rules.behaviour_id(b).ok_or(format!("object {}: unknown behaviour '{b}'", p.name))?);
+        }
+        let id = self.spawn(class, faction, &p.name, p.position, rot, pilot);
+        // A station shown in a state (under construction) has no modules yet.
+        if p.state.is_none() {
+            self.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
+        }
+        if p.protect {
+            let mine = self.get(player).map(|s| s.faction);
+            self.get_mut(id).expect("just spawned").protected_by = mine;
+        }
+        self.get_mut(id).expect("just spawned").look_state = p.state.clone();
+        for name in &p.destroyed_systems {
+            let kind = crate::content::equipment::SystemKind::parse(name);
+            let sid = rules.system_id(name);
+            let s = self.get_mut(id).expect("just spawned");
+            let found =
+                s.systems.iter_mut().filter(|x| Some(x.kind) == kind || Some(x.id) == sid).fold(false, |_, x| {
+                    x.set_hp(0.0);
+                    x.destroyed = true;
+                    true
+                });
+            if !found {
+                return Err(format!("object {}: has no system '{name}'", p.name));
+            }
+        }
+        if let Some(s) = self.get_mut(id) {
+            s.velocity = s.forward() * p.speed;
+            let max = rules.ship(class).max_speed;
+            s.throttle = if max > 0.0 { (p.speed / max).clamp(0.0, 1.0) } else { 0.0 };
+            s.hull *= p.hull;
+            s.disabled = s.efficiency(SystemKind::Engines) <= 0.0 && s.efficiency(SystemKind::Manoeuvring) <= 0.0;
+        }
+        Ok(id)
+    }
+
     /// Builds a world from a scenario. `player_class` is the launcher's choice when the
     /// scenario says `player = choose`. Returns the world and the player's handle.
     pub fn from_scenario(
@@ -893,53 +966,7 @@ impl World {
         );
         let mut named: Vec<(String, ShipId)> = vec![("player".into(), player)];
         for p in &scenario.objects {
-            let class = rules.ship_id(&p.class).ok_or(format!("object {}: unknown class '{}'", p.name, p.class))?;
-            let faction = match &p.faction {
-                Some(f) => rules.faction_id(f).ok_or(format!("object {}: unknown faction '{f}'", p.name))?,
-                None => rules.ship(class).faction,
-            };
-            let rot = euler(p.rotation);
-            let pilot = match p.ai {
-                AiRole::Player | AiRole::Idle => Pilot::Ai(ai::AiState::new(ai::Behaviour::Idle, None, Vec3::ZERO)),
-                AiRole::Wingman => Pilot::Ai(ai::AiState::new(ai::Behaviour::Wingman, None, p.offset)),
-                AiRole::Enemy => Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, Vec3::ZERO)),
-                AiRole::Target => Pilot::Ai(ai::AiState::new(ai::Behaviour::Target, None, Vec3::ZERO)),
-            };
-            let mut pilot = pilot;
-            if let (Some(b), Pilot::Ai(state)) = (&p.behaviour, &mut pilot) {
-                state.def = Some(rules.behaviour_id(b).ok_or(format!("object {}: unknown behaviour '{b}'", p.name))?);
-            }
-            let id = w.spawn(class, faction, &p.name, p.position, rot, pilot);
-            // A station shown in a state (under construction) has no modules yet.
-            if p.state.is_none() {
-                w.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
-            }
-            if p.protect {
-                let mine = w.get(player).map(|s| s.faction);
-                w.get_mut(id).expect("just spawned").protected_by = mine;
-            }
-            w.get_mut(id).expect("just spawned").look_state = p.state.clone();
-            for name in &p.destroyed_systems {
-                let kind = crate::content::equipment::SystemKind::parse(name);
-                let sid = rules.system_id(name);
-                let s = w.get_mut(id).expect("just spawned");
-                let found =
-                    s.systems.iter_mut().filter(|x| Some(x.kind) == kind || Some(x.id) == sid).fold(false, |_, x| {
-                        x.set_hp(0.0);
-                        x.destroyed = true;
-                        true
-                    });
-                if !found {
-                    return Err(format!("object {}: has no system '{name}'", p.name));
-                }
-            }
-            if let Some(s) = w.get_mut(id) {
-                s.velocity = s.forward() * p.speed;
-                let max = rules.ship(class).max_speed;
-                s.throttle = if max > 0.0 { (p.speed / max).clamp(0.0, 1.0) } else { 0.0 };
-                s.hull *= p.hull;
-                s.disabled = s.efficiency(SystemKind::Engines) <= 0.0 && s.efficiency(SystemKind::Manoeuvring) <= 0.0;
-            }
+            let id = w.spawn_placement(p, player)?;
             named.push((p.name.clone(), id));
         }
         // Second pass: resolve leaders now that every object has a handle.

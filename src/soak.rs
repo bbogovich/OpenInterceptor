@@ -62,6 +62,66 @@ pub fn collision_shapes(content: &Content) -> Vec<collision::Shape> {
         .collect()
 }
 
+/// Plays mission `id` for up to `seconds` with `pilot` in the player's seat, and returns
+/// the report and the mission's result (`None` if it was still running).
+pub fn run_mission(
+    content: &Content,
+    id: &str,
+    ship: Option<&str>,
+    seconds: f32,
+    pilot: SoakPilot,
+) -> Result<(SoakReport, Option<String>), String> {
+    let def = content.rules.missions.iter().find(|m| m.id == id).ok_or(format!("no mission '{id}'"))?;
+    let rules = Arc::new(content.rules.clone());
+    let choice = match ship {
+        Some(s) => Some(rules.ship_id(s).ok_or(format!("no ship class '{s}'"))?),
+        None => None,
+    };
+    let (mut w, mut run) =
+        crate::mission::MissionRun::start(def, rules.clone(), Arc::new(collision_shapes(content)), choice)?;
+    let player = run.player;
+    if pilot == SoakPilot::Ai {
+        if let Some(s) = w.get_mut(player) {
+            s.pilot = Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, glam::Vec3::ZERO));
+        }
+    }
+    let ticks = (seconds / TICK) as usize;
+    for _ in 0..ticks {
+        if pilot == SoakPilot::Passive {
+            passive_controls(&mut w, player);
+        }
+        w.step();
+        run.update(&mut w);
+        if run.debrief.is_some() {
+            break;
+        }
+    }
+    let d = run.debrief.clone();
+    let s = &w.ships[player.index as usize];
+    let report = SoakReport {
+        destroyed_at: (!s.alive && !s.departed).then_some((w.time - 0.0) as f32),
+        seconds: d.as_ref().map(|d| d.seconds).unwrap_or(seconds),
+        hits_taken: 0,
+        kills: d.as_ref().map(|d| d.kills as usize).unwrap_or(0),
+        enemies: 0,
+        hull: (s.hull / rules.ship(s.class).hull.max(1.0)).clamp(0.0, 1.0),
+    };
+    Ok((report, d.map(|d| d.result)))
+}
+
+/// The passive pilot: 60 % throttle, nose on the nearest enemy, never shooting.
+fn passive_controls(w: &mut World, player: crate::sim::ShipId) {
+    let aim = crate::sim::targeting::nearest_hostile(w, player).map(|t| w.ships[t.index as usize].position);
+    if let Some(s) = w.get_mut(player) {
+        let mut c = crate::sim::Controls { throttle_set: Some(0.6), ..Default::default() };
+        if let Some(p) = aim {
+            let (pitch, yaw, roll, _) = ai::steer_towards(s, p);
+            (c.pitch, c.yaw, c.roll) = (pitch, yaw, roll);
+        }
+        s.controls = c;
+    }
+}
+
 /// Plays `scenario` for up to `seconds` with `pilot` in the player's seat.
 pub fn run(
     content: &Content,
@@ -88,15 +148,7 @@ pub fn run(
     let ticks = (seconds / TICK) as usize;
     for k in 0..ticks {
         if pilot == SoakPilot::Passive {
-            let aim = crate::sim::targeting::nearest_hostile(&w, player).map(|t| w.ships[t.index as usize].position);
-            if let Some(s) = w.get_mut(player) {
-                let mut c = crate::sim::Controls { throttle_set: Some(0.6), ..Default::default() };
-                if let Some(p) = aim {
-                    let (pitch, yaw, roll, _) = ai::steer_towards(s, p);
-                    (c.pitch, c.yaw, c.roll) = (pitch, yaw, roll);
-                }
-                s.controls = c;
-            }
+            passive_controls(&mut w, player);
         }
         w.step();
         for e in &w.events {

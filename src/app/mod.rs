@@ -71,6 +71,11 @@ pub enum Next {
         scenario: String,
         ship: Option<String>,
     },
+    /// Start a mission: its id and the chosen player ship class id.
+    Mission {
+        mission: String,
+        ship: Option<String>,
+    },
     Quit,
 }
 
@@ -178,8 +183,17 @@ pub async fn run(options: Options) {
         eprintln!("sound: {e}");
     }
     let mut ctx = AppContext { content, renderer, sounds, bindings: load_bindings(), devices: devices::Devices::new() };
-    let mut screen = match &options.scenario {
-        Some(id) => match flight::FlightSession::start(&mut ctx, id, options.ship.as_deref()) {
+    let direct = match (&options.mission, &options.scenario) {
+        (Some(m), _) => Some((m, true)),
+        (None, Some(s)) => Some((s, false)),
+        _ => None,
+    };
+    let mut screen = match direct {
+        Some((id, is_mission)) => match if is_mission {
+            flight::FlightSession::start_mission(&mut ctx, id, options.ship.as_deref())
+        } else {
+            flight::FlightSession::start(&mut ctx, id, options.ship.as_deref())
+        } {
             Ok(mut s) => {
                 if let Some(v) = options.view {
                     s.view = v;
@@ -246,15 +260,24 @@ pub async fn run(options: Options) {
                     }
                 }
             }
-            Next::Fly { scenario, ship } => match flight::FlightSession::start(&mut ctx, &scenario, ship.as_deref()) {
-                Ok(s) => screen = Screen::Flight(Box::new(s)),
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    let mut l = launcher::Launcher::new(&ctx);
-                    l.error = Some(e);
-                    screen = Screen::Launcher(l);
+            Next::Fly { .. } | Next::Mission { .. } => {
+                let started = match &next {
+                    Next::Mission { mission, ship } => {
+                        flight::FlightSession::start_mission(&mut ctx, mission, ship.as_deref())
+                    }
+                    Next::Fly { scenario, ship } => flight::FlightSession::start(&mut ctx, scenario, ship.as_deref()),
+                    _ => unreachable!("matched above"),
+                };
+                match started {
+                    Ok(s) => screen = Screen::Flight(Box::new(s)),
+                    Err(e) => {
+                        eprintln!("error: {e}");
+                        let mut l = launcher::Launcher::new(&ctx);
+                        l.error = Some(e);
+                        screen = Screen::Launcher(l);
+                    }
                 }
-            },
+            }
         }
         frame_count += 1;
         if let Some(path) = &options.screenshot {

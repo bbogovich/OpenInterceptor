@@ -65,6 +65,8 @@ pub enum Ty {
     Struct(Vec<Field>),
     /// A definition: a struct that may also use inherit, delete, variants and list edits.
     Def(Vec<Field>),
+    /// Either of two types (`count: 3` or `count: [2, 4]`).
+    Either(Box<Ty>, Box<Ty>),
 }
 
 /// One field of a struct.
@@ -97,8 +99,9 @@ pub fn validate(node: &Node, ty: &Ty, path: &str, out: &mut Vec<Problem>) {
     if node.is_null() {
         return; // an empty value: "use the default" (or removes an inherited key)
     }
-    // Any number may be given per difficulty level.
-    if matches!(ty, Ty::Num | Ty::Qty(_)) {
+    // Any number (or either-type value, such as a count range) may be given per
+    // difficulty level.
+    if matches!(ty, Ty::Num | Ty::Qty(_) | Ty::Either(..)) {
         if let Some(list) = node.get("per_level") {
             match list.as_seq() {
                 Some(items) if !items.is_empty() => {
@@ -146,6 +149,19 @@ pub fn validate(node: &Node, ty: &Ty, path: &str, out: &mut Vec<Problem>) {
             Some(s) => bad(format!("'{s}' is not one of: {}", words.join(", "))),
             None => bad(format!("expected one of: {}", words.join(", "))),
         },
+        Ty::Either(a, b) => {
+            // Valid if it is valid as either type; otherwise report the first type's
+            // problems (the more usual form).
+            let mut first = Vec::new();
+            validate(node, a, path, &mut first);
+            if !first.is_empty() {
+                let mut second = Vec::new();
+                validate(node, b, path, &mut second);
+                if !second.is_empty() {
+                    out.extend(first);
+                }
+            }
+        }
         Ty::Numbers(n) => match node.as_seq() {
             Some(items) if items.len() == *n => {
                 for (i, item) in items.iter().enumerate() {
@@ -404,6 +420,7 @@ fn json_ty(ty: &Ty, depth: usize) -> String {
         Ty::Numbers(n) => format!(
             "{{\"type\": \"array\", \"items\": {{\"type\": \"number\"}}, \"minItems\": {n}, \"maxItems\": {n}}}"
         ),
+        Ty::Either(a, b) => format!("{{\"anyOf\": [{}, {}]}}", json_ty(a, depth + 1), json_ty(b, depth + 1)),
         Ty::List(inner) => format!("{{\"type\": \"array\", \"items\": {}}}", json_ty(inner, depth + 1)),
         Ty::Dict(inner) => format!("{{\"type\": \"object\", \"additionalProperties\": {}}}", json_ty(inner, depth + 1)),
         Ty::Struct(fields) | Ty::Def(fields) => {

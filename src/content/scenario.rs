@@ -48,7 +48,8 @@ pub enum AiRole {
 }
 
 impl AiRole {
-    fn parse(s: &str) -> Option<AiRole> {
+    /// `enemy`, `wingman`, `target`, `idle` (or `player`).
+    pub fn parse(s: &str) -> Option<AiRole> {
         Some(match s.to_ascii_lowercase().as_str() {
             "player" => AiRole::Player,
             "wingman" => AiRole::Wingman,

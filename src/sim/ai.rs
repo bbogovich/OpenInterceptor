@@ -128,7 +128,7 @@ impl AiState {
             state_time: 0.0,
             check_clock: 0.0,
             break_timer: 0.0,
-            missile_timer: 5.0,
+            missile_timer: f32::NAN, // set on the first attack tick (see `attack`)
             burst_clock: 0.0,
             reaction_clock: 0.0,
             seen: None,
@@ -541,6 +541,11 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     let dist = ship.position.distance(t.position);
     let mut c = Controls::default();
     st.break_timer = (st.break_timer - TICK).max(0.0);
+    // The first launch comes 3 s plus a random part of one interval into the attack, so
+    // pilots that start together do not fire together.
+    if st.missile_timer.is_nan() {
+        st.missile_timer = 3.0 + p.missile_interval.max(1.0) * next_random(&mut st.rng);
+    }
     st.missile_timer -= TICK;
     if st.break_timer > 0.0 {
         // Breaking off: turn away and accelerate, then come round again.
@@ -557,9 +562,13 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     c.hold_speed = Some(class.max_speed * p.speed * if dist > 1500.0 { 1.0 } else { 0.7 });
     let firing = in_burst(st, p);
     c.fire_beams = firing && ahead >= p.fire_cone.to_radians().cos() && dist < p.range.min(reach * 0.95);
-    if p.missile_interval > 0.0 && ship.lock.locked && st.missile_timer <= 0.0 {
+    // Missiles: only once closing in (2.5× the attack range, at least 2 km) — a pilot
+    // does not empty its racks from the edge of radar — and each interval varies by
+    // ±25 %, so a flight's launches do not arrive together.
+    let missile_reach = (p.range * 2.5).max(2000.0);
+    if p.missile_interval > 0.0 && ship.lock.locked && st.missile_timer <= 0.0 && dist <= missile_reach {
         c.fire_missile = true;
-        st.missile_timer = p.missile_interval;
+        st.missile_timer = p.missile_interval * (0.75 + 0.5 * next_random(&mut st.rng));
     }
     if dist < 120.0 + class.max_speed * 0.15 && ahead > 0.5 {
         st.break_timer = 2.0;

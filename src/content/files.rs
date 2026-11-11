@@ -280,6 +280,98 @@ fn system() -> Ty {
     ])
 }
 
+fn mission() -> Ty {
+    let at = || {
+        Ty::Struct(vec![
+            f("distance", dist(), "from the reference point"),
+            f(
+                "bearing",
+                Ty::Either(Box::new(Ty::Numbers(2)), Box::new(Ty::Enum(&["random"]))),
+                "[yaw, pitch] in degrees from straight ahead, or random",
+            ),
+            f("from", name(), "a role to place it relative to (default: the player's start)"),
+            f("spread", dist(), "how far apart the members are (default 120m)"),
+        ])
+    };
+    let count = || Ty::Either(Box::new(Ty::Num), Box::new(Ty::Numbers(2)));
+    let role = Ty::Struct(vec![
+        f(
+            "class",
+            Ty::Either(Box::new(name()), Box::new(names())),
+            "a class id, or a list: each member picks one at random",
+        ),
+        f("count", count(), "how many: 3, or [min, max]"),
+        f("faction", name(), "faction id (default: the class's)"),
+        f("ai", Ty::Enum(&["enemy", "wingman", "target", "idle"]), "how it is flown (default enemy)"),
+        f("behaviour", name(), "behaviour id instead of the class's"),
+        f("protect", Ty::Bool, "an objective the player must keep alive"),
+        f("state", name(), "model-set state (a construction stage)"),
+        f("hull", Ty::Qty(Unit::Fraction), "starting hull"),
+        f("destroyed_systems", names(), "systems that start destroyed"),
+        f("speed", Ty::Num, "starting speed, m/s"),
+        f("at", at(), "where it enters"),
+        f("arrive", Ty::Condition, "when it enters (default: at the start)"),
+    ]);
+    Ty::Def(vec![
+        f("name", Ty::Text, "shown in the launcher (a @key)"),
+        f("briefing", Ty::Text, "the briefing text (a @key)"),
+        f("order", Ty::Num, "sort key in the launcher"),
+        f("starfield_seed", Ty::Num, "the star field"),
+        f("sun", Ty::Numbers(3), "direction of the sun"),
+        f(
+            "player",
+            Ty::Struct(vec![
+                f("class", name(), "the player's ship class, or choose"),
+                f("position", Ty::Numbers(3), "the player's start"),
+            ]),
+            "the player's craft",
+        ),
+        f("roles", Ty::Dict(Box::new(role)), "role name: a group of craft"),
+        f(
+            "waves",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("role", name(), "the role that gets more craft"),
+                f("when", Ty::Condition, "when (once)"),
+                f("count", count(), "how many (default: the role's count)"),
+                f("at", at(), "where (default: the role's arrival)"),
+            ]))),
+            "reinforcements",
+        ),
+        f(
+            "objectives",
+            Ty::Struct(vec![
+                f("win", Ty::Condition, "the player wins when this holds"),
+                f("lose", Ty::Condition, "the player loses when this holds (checked first)"),
+                f("draw", Ty::Condition, "a draw"),
+            ]),
+            "how the battle ends",
+        ),
+        f("optional", Ty::Dict(Box::new(Ty::Condition)), "optional objectives, reported on the debrief"),
+        f(
+            "timer",
+            Ty::Struct(vec![
+                f("after", time(), "battle time"),
+                f("then", Ty::Enum(&["win", "lose", "draw", "retreat"]), "the result when it runs out"),
+            ]),
+            "a time limit",
+        ),
+        f(
+            "outcomes",
+            Ty::Dict(Box::new(Ty::List(Box::new(Ty::Text)))),
+            "result: actions (score(x), salvage, relation(f, +n) …)",
+        ),
+        f(
+            "chatter",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("when", Ty::Condition, "said once when this first holds"),
+                f("line", Ty::Text, "the line (a @key)"),
+            ]))),
+            "radio lines",
+        ),
+        f("debrief", Ty::Dict(Box::new(Ty::Text)), "result: debrief text (a @key)"),
+    ])
+}
+
 fn behaviour() -> Ty {
     let state = Ty::Struct(vec![
         f(
@@ -395,6 +487,7 @@ pub fn rules_sections() -> Vec<Field> {
         f("systems", dict(system()), "ship systems by id"),
         f("cockpits", dict(cockpit()), "cockpits by id"),
         f("behaviours", dict(behaviour()), "AI behaviours by id"),
+        f("missions", dict(mission()), "mission types by id"),
         f("modelsets", dict(modelset()), "looks: models, damage textures, states, debris"),
         f("debris", dict(debris()), "debris sets by id"),
         f("effects", dict(effect()), "explosions and other effects by id"),

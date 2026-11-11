@@ -213,6 +213,66 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "missions": {"description": "mission types by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "name": {"description": "shown in the launcher (a @key)", "type": "string"},
+          "briefing": {"description": "the briefing text (a @key)", "type": "string"},
+          "order": {"description": "sort key in the launcher", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "starfield_seed": {"description": "the star field", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "sun": {"description": "direction of the sun", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+          "player": {"description": "the player's craft", "type": "object", "additionalProperties": false, "properties": {
+              "class": {"description": "the player's ship class, or choose", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "position": {"description": "the player's start", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+            }},
+          "roles": {"description": "role name: a group of craft", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+                "class": {"description": "a class id, or a list: each member picks one at random", "anyOf": [{"type": "string", "pattern": "^[a-z0-9_.-]+$"}, {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}}]},
+                "count": {"description": "how many: 3, or [min, max]", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}, {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}]},
+                "faction": {"description": "faction id (default: the class's)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "ai": {"description": "how it is flown (default enemy)", "enum": ["enemy", "wingman", "target", "idle"]},
+                "behaviour": {"description": "behaviour id instead of the class's", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "protect": {"description": "an objective the player must keep alive", "type": "boolean"},
+                "state": {"description": "model-set state (a construction stage)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "hull": {"description": "starting hull", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "destroyed_systems": {"description": "systems that start destroyed", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+                "speed": {"description": "starting speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "at": {"description": "where it enters", "type": "object", "additionalProperties": false, "properties": {
+                    "distance": {"description": "from the reference point", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                    "bearing": {"description": "[yaw, pitch] in degrees from straight ahead, or random", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"enum": ["random"]}]},
+                    "from": {"description": "a role to place it relative to (default: the player's start)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                    "spread": {"description": "how far apart the members are (default 120m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+                  }},
+                "arrive": {"description": "when it enters (default: at the start)", "type": "string"}
+              }}},
+          "waves": {"description": "reinforcements", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "role": {"description": "the role that gets more craft", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "when": {"description": "when (once)", "type": "string"},
+                "count": {"description": "how many (default: the role's count)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}, {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}]},
+                "at": {"description": "where (default: the role's arrival)", "type": "object", "additionalProperties": false, "properties": {
+                    "distance": {"description": "from the reference point", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                    "bearing": {"description": "[yaw, pitch] in degrees from straight ahead, or random", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"enum": ["random"]}]},
+                    "from": {"description": "a role to place it relative to (default: the player's start)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                    "spread": {"description": "how far apart the members are (default 120m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+                  }}
+              }}},
+          "objectives": {"description": "how the battle ends", "type": "object", "additionalProperties": false, "properties": {
+              "win": {"description": "the player wins when this holds", "type": "string"},
+              "lose": {"description": "the player loses when this holds (checked first)", "type": "string"},
+              "draw": {"description": "a draw", "type": "string"}
+            }},
+          "optional": {"description": "optional objectives, reported on the debrief", "type": "object", "additionalProperties": {"type": "string"}},
+          "timer": {"description": "a time limit", "type": "object", "additionalProperties": false, "properties": {
+              "after": {"description": "battle time", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "then": {"description": "the result when it runs out", "enum": ["win", "lose", "draw", "retreat"]}
+            }},
+          "outcomes": {"description": "result: actions (score(x), salvage, relation(f, +n) …)", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}},
+          "chatter": {"description": "radio lines", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "when": {"description": "said once when this first holds", "type": "string"},
+                "line": {"description": "the line (a @key)", "type": "string"}
+              }}},
+          "debrief": {"description": "result: debrief text (a @key)", "type": "object", "additionalProperties": {"type": "string"}},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
     "modelsets": {"description": "looks: models, damage textures, states, debris", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "intact": {"description": "the normal model (all its LODs)", "type": "string"},
           "scale": {"description": "model units to metres", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},

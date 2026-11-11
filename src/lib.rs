@@ -26,6 +26,7 @@ pub mod extract;
 pub mod formats;
 pub mod hud;
 pub mod input;
+pub mod mission;
 pub mod model;
 pub mod platform;
 pub mod render;

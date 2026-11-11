@@ -27,6 +27,7 @@ OPTIONS:
     --campaign <ID>     Load this campaign (default: the last one chosen, else
                         interceptor when the data is available, else default)
     --scenario <ID>     Start this scenario directly, skipping the launcher
+    --mission <ID>      Start this mission directly, skipping the launcher
     --ship <ID>         Player ship for --scenario when the scenario lets you choose
     --view <VIEW>       Start view for --scenario: cockpit, forward, left, right,
                         rear-left, rear-right, chase, chase-manual
@@ -62,6 +63,7 @@ pub struct Options {
     pub difficulty: Option<String>,
     pub language: Option<String>,
     pub scenario: Option<String>,
+    pub mission: Option<String>,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
     pub model: Option<String>,
@@ -92,6 +94,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--mods" => o.mods = Some(PathBuf::from(value("--mods")?)),
             "--packs" => o.packs = Some(PathBuf::from(value("--packs")?)),
             "--scenario" => o.scenario = Some(value("--scenario")?),
+            "--mission" => o.mission = Some(value("--mission")?),
             "--campaign" => o.campaign = Some(value("--campaign")?),
             "--difficulty" => o.difficulty = Some(value("--difficulty")?),
             "--language" => o.language = Some(value("--language")?),

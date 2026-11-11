@@ -29,6 +29,8 @@ pub struct Report {
     pub scenarios: usize,
     /// Text strings (pack text files plus imported original text).
     pub texts: usize,
+    /// Mission types.
+    pub missions: usize,
     /// Original meshes/textures parsed in the exhaustive pass.
     pub original_resources: usize,
     pub warnings: Vec<String>,
@@ -39,7 +41,7 @@ impl Report {
     /// One-line summary.
     pub fn summary(&self) -> String {
         format!(
-            "{} packs, {} ship classes, {} models, {} textures, {} images, {} sounds, {} scenarios, {} texts, {} original resources; {} warnings, {} errors",
+            "{} packs, {} ship classes, {} models, {} textures, {} images, {} sounds, {} scenarios, {} missions, {} texts, {} original resources; {} warnings, {} errors",
             self.packs,
             self.ships,
             self.models,
@@ -47,6 +49,7 @@ impl Report {
             self.images,
             self.sounds,
             self.scenarios,
+            self.missions,
             self.texts,
             self.original_resources,
             self.warnings.len(),
@@ -61,6 +64,7 @@ pub fn run(content: &Content) -> Report {
     let mut r = Report {
         packs: content.packs.len(),
         texts: content.text.len(),
+        missions: content.rules.missions.len(),
         warnings: content.warnings.clone(),
         ..Default::default()
     };

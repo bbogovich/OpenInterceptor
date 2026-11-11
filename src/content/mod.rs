@@ -26,6 +26,7 @@ pub mod behaviour;
 pub mod equipment;
 pub mod files;
 pub mod looks;
+pub mod mission;
 pub mod pack;
 pub mod rules;
 pub mod scenario;
@@ -167,7 +168,7 @@ impl Content {
         for (i, p) in packs.iter().enumerate() {
             // `campaign/` holds the campaign ruleset (difficulty levels now; game flow
             // from Stage 4); it merges with the rules like any rules file.
-            for folder in ["campaign", "rules"] {
+            for folder in ["campaign", "rules", "missions"] {
                 for path in yaml_files(&p.dir.join(folder)) {
                     let file = format!("{}/{folder}/{}", p.id, path.file_name().unwrap_or_default().to_string_lossy());
                     match read_yaml(&path) {
@@ -443,6 +444,22 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
     }
     for s in &mut rules.systems {
         fix(&mut s.name, &format!("systems.{}.name", s.id));
+    }
+    for m in &mut rules.missions {
+        let id = m.id.clone();
+        fix(&mut m.name, &format!("missions.{id}.name"));
+        fix(&mut m.briefing, &format!("missions.{id}.briefing"));
+        for (r, t) in &mut m.debrief {
+            fix(t, &format!("missions.{id}.debrief.{r}"));
+        }
+        for (k, c) in m.chatter.iter_mut().enumerate() {
+            fix(&mut c.line, &format!("missions.{id}.chatter[{k}]"));
+        }
+        for (r, list) in &mut m.outcomes {
+            for a in list.iter_mut().filter(|a| a.name == "message") {
+                fix(&mut a.args[0], &format!("missions.{id}.outcomes.{r}"));
+            }
+        }
     }
     for s in scenarios {
         fix(&mut s.title, &format!("scenario {}.title", s.id));

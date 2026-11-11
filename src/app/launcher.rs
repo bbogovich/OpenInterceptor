@@ -20,6 +20,8 @@ pub enum Entry {
     Controls,
     /// Index into `content.scenarios`.
     Scenario(usize),
+    /// Index into `content.rules.missions`.
+    Mission(usize),
 }
 
 /// Menu state and navigation (pure).
@@ -37,6 +39,7 @@ impl Menu {
     pub fn new(content: &Content) -> Menu {
         let mut entries = vec![Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls];
         entries.extend((0..content.scenarios.len()).map(Entry::Scenario));
+        entries.extend((0..content.rules.missions.len()).map(Entry::Mission));
         let playable = content.rules.playable_ships().into_iter().map(|id| content.rules.ship(id).id.clone()).collect();
         // Start on the first scenario rather than the viewer.
         Menu { selected: if entries.len() > 3 { 3 } else { 0 }, entries, ship: 0, playable }
@@ -54,9 +57,20 @@ impl Menu {
         self.ship = if right { (self.ship + 1) % n } else { (self.ship + n - 1) % n };
     }
 
-    /// Whether the selected scenario lets the player choose a ship.
+    /// Whether the selected scenario or mission lets the player choose a ship.
     pub fn choosing(&self, content: &Content) -> bool {
-        matches!(self.entries[self.selected], Entry::Scenario(i) if content.scenarios[i].player_class.is_none())
+        match self.entries[self.selected] {
+            Entry::Scenario(i) => content.scenarios[i].player_class.is_none(),
+            Entry::Mission(i) => content.rules.missions[i].player_class.is_none(),
+            _ => false,
+        }
+    }
+
+    /// The first entry shown when `rows` fit: the list scrolls to keep the selection
+    /// near the middle.
+    pub fn first_visible(&self, rows: usize) -> usize {
+        let rows = rows.max(1);
+        self.selected.saturating_sub(rows / 2).min(self.entries.len().saturating_sub(rows))
     }
 
     /// What starting the selected entry means.
@@ -70,8 +84,18 @@ impl Menu {
                 let ship = if s.player_class.is_none() { self.playable.get(self.ship).cloned() } else { None };
                 Next::Fly { scenario: s.id.clone(), ship }
             }
+            Entry::Mission(i) => {
+                let m = &content.rules.missions[*i];
+                let ship = if m.player_class.is_none() { self.playable.get(self.ship).cloned() } else { None };
+                Next::Mission { mission: m.id.clone(), ship }
+            }
         }
     }
+}
+
+/// How many menu lines fit above the description and ship panel.
+fn visible_rows(top: f32, line_h: f32) -> usize {
+    (((screen_height() * 0.68 - top) / line_h).floor() as usize).max(4)
 }
 
 /// The launcher screen.
@@ -119,10 +143,11 @@ impl Launcher {
         // Mouse: click a line to select it; click again to start.
         let line_h = 30.0;
         let top = 150.0;
+        let first = self.menu.first_visible(visible_rows(top, line_h));
         if is_mouse_button_pressed(MouseButton::Left) {
             let (_, y) = mouse_position();
-            let i = ((y - top) / line_h).floor();
-            if i >= 0.0 && (i as usize) < self.menu.entries.len() {
+            let i = ((y - top) / line_h).floor() + first as f32;
+            if i >= first as f32 && (i as usize) < self.menu.entries.len() {
                 if self.menu.selected == i as usize {
                     return self.menu.activate(&ctx.content);
                 }
@@ -188,13 +213,16 @@ impl Launcher {
         draw_text(&format!("Campaign: {campaign}{switch}{level}"), 40.0, 92.0, 22.0, Color::new(1.0, 0.8, 0.4, 1.0));
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
         draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, GRAY);
-        for (i, e) in self.menu.entries.iter().enumerate() {
-            let y = top + i as f32 * line_h;
+        let rows = visible_rows(top, line_h);
+        let first = self.menu.first_visible(rows);
+        for (i, e) in self.menu.entries.iter().enumerate().skip(first).take(rows) {
+            let y = top + (i - first) as f32 * line_h;
             let label = match e {
                 Entry::ModelViewer => "Model viewer".to_string(),
                 Entry::AssetBrowser => "Asset browser (textures, images, sounds)".to_string(),
                 Entry::Controls => "Controls (keyboard, gamepad, mouse)".to_string(),
                 Entry::Scenario(k) => content.scenarios[*k].title.clone(),
+                Entry::Mission(k) => format!("Mission: {}", content.rules.missions[*k].name),
             };
             let selected = i == self.menu.selected;
             if selected {
@@ -214,8 +242,15 @@ impl Launcher {
                 "Rebind every action to keys or gamepad buttons (hold LB for the second layer), and set stick and mouse options.".to_string()
             }
             Entry::Scenario(k) => content.scenarios[*k].description.clone(),
+            Entry::Mission(k) => content.rules.missions[*k].briefing.clone(),
         };
-        let y = top + self.menu.entries.len() as f32 * line_h + 20.0;
+        if first > 0 {
+            draw_text("^ more", 44.0, top - 6.0, 16.0, GRAY);
+        }
+        if first + rows < self.menu.entries.len() {
+            draw_text("v more", 44.0, top + rows as f32 * line_h + 4.0, 16.0, GRAY);
+        }
+        let y = top + rows.min(self.menu.entries.len()) as f32 * line_h + 24.0;
         for (i, line) in wrap(&desc, 60).iter().enumerate() {
             draw_text(line, 44.0, y + i as f32 * 22.0, 20.0, Color::new(0.7, 0.9, 0.7, 1.0));
         }
@@ -286,7 +321,7 @@ mod tests {
         let c = sample();
         let mut m = Menu::new(&c);
         assert_eq!(m.entries[..3], [Entry::ModelViewer, Entry::AssetBrowser, Entry::Controls]);
-        assert_eq!(m.entries.len(), 3 + c.scenarios.len());
+        assert_eq!(m.entries.len(), 3 + c.scenarios.len() + c.rules.missions.len());
         assert_eq!(m.selected, 3, "starts on the first scenario");
         for _ in 0..4 {
             m.move_selection(false);

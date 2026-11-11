@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# Original mission types (Stage 3, item 3.11 - first five). Names, briefings and
+# debriefs are the original's own text, read from the CD by key (@orig.*). The original
+# composes battles in code; these compositions are DERIVED estimates (see deviations).
+# %s in briefings is filled by the strategy layer (Stage 4); here it shows as written.
+# The original grows compositions with campaign progress (Stage 4); these testbed counts
+# are early-war sized so every level is winnable and losable (soaked with --soak).
+
+missions:
+  xcom_base_defense:
+    name: "@orig.BRIEFING_TYPE_1"
+    briefing: "@orig.BRIEFING_TEXT_1"
+    order: 1
+    starfield_seed: 31
+    player: {class: choose}
+    roles:
+      base: {class: xcom_base, ai: idle, protect: true, at: {distance: 2km, bearing: [0, -10]}}
+      attackers:
+        class: [wraith, wraith, spectre]
+        count: {per_level: [[2, 2], [2, 3], [3, 3], [3, 4], [4, 5]]}
+        at: {distance: 7km, from: base, bearing: random}
+    waves:
+      - {role: attackers, when: "time > 2min and alive(base)", count: [1, 3]}
+    objectives:
+      lose: destroyed(base) or not player_alive
+      win: destroyed_all(attackers)
+    outcomes:
+      win: [score(base_defended), salvage]
+      lose: [lose(xcom_base)]
+    debrief: {win: "@orig.DEBRIEF_XBASE_WIN", lose: "@orig.DEBRIEF_XBASE_LOSE", draw: "@orig.DEBRIEF_XBASE_DRAW"}
+
+  defend_freighter_convoy:
+    name: "@orig.BRIEFING_TYPE_11"
+    briefing: "@orig.BRIEFING_TEXT_11"
+    order: 2
+    starfield_seed: 44
+    player: {class: choose, position: [0, 60, 300]}
+    roles:
+      freighters: {class: xcom_freighter, ai: idle, protect: true, count: 2, speed: 80, at: {distance: 0m, spread: 300m}}
+      attackers:
+        class: wraith
+        count: {per_level: [[1, 2], [2, 2], [2, 3], [3, 3], [3, 4]]}
+        at: {distance: 5km, bearing: random}
+    objectives:
+      lose: destroyed_all(freighters) or not player_alive
+      win: destroyed_all(attackers)
+    timer: {after: 4min, then: win}
+    outcomes:
+      win: [score(convoy_defended)]
+      lose: [cargo_lost]
+    debrief: {win: "@orig.DEBRIEF_XFREIGHT_WIN", lose: "@orig.DEBRIEF_XFREIGHT_LOSE"}
+
+  deep_space_encounter:
+    name: "@orig.BRIEFING_TYPE_15"
+    briefing: "@orig.BRIEFING_TEXT_15"
+    order: 3
+    starfield_seed: 7
+    player: {class: choose}
+    roles:
+      aliens:
+        class: [wraith, wraith, spectre]
+        count: {per_level: [[1, 2], [2, 2], [2, 3], [3, 3], [3, 4]]}
+        at: {distance: 6km, bearing: [0, 0], spread: 300m}
+    objectives:
+      lose: not player_alive
+      win: destroyed_all(aliens)
+    outcomes:
+      win: [score(aliens_destroyed), salvage]
+    debrief: {win: "@orig.DEBRIEF_ALIENS_WIN", lose: "@orig.DEBRIEF_ALIENS_LOSE"}
+
+  attack_alien_outpost:
+    name: "@orig.BRIEFING_TYPE_24"
+    briefing: "@orig.BRIEFING_TEXT_24"
+    order: 4
+    starfield_seed: 58
+    player: {class: choose, position: [0, 300, 0]}
+    roles:
+      outpost: {class: alien_outpost, ai: idle, at: {distance: 4km, bearing: [0, -5]}}
+      guards:
+        class: [wraith, spectre]
+        count: {per_level: [[1, 2], [2, 3], [3, 4], [4, 4], [4, 5]]}
+        at: {distance: 1.5km, from: outpost, bearing: random}
+    objectives:
+      lose: not player_alive
+      win: destroyed(outpost)
+    outcomes:
+      win: [score(alien_outpost_destroyed), salvage]
+    debrief: {win: "@orig.DEBRIEF_AOUTPOST_WIN", lose: "@orig.DEBRIEF_AOUTPOST_LOSE"}
+
+  destroy_alien_probe:
+    name: "@orig.BRIEFING_TYPE_28"
+    briefing: "@orig.BRIEFING_TEXT_28"
+    order: 5
+    starfield_seed: 12
+    player: {class: choose}
+    roles:
+      probe: {class: drone, ai: idle, speed: 120, at: {distance: 5km, bearing: random}}
+      escort: {class: wraith, count: {per_level: [0, 1, 1, 2, 2]}, at: {distance: 300m, from: probe}}
+    objectives:
+      lose: not player_alive
+      win: destroyed(probe)
+      draw: retreated_all(probe)
+    timer: {after: 3min, then: draw}
+    outcomes:
+      win: [score(probe_destroyed)]
+    debrief: {win: "@orig.DEBRIEF_APROBE_WIN", draw: "@orig.DEBRIEF_APROBE_DRAW", lose: "@orig.DEBRIEF_APROBE_LOSE"}
