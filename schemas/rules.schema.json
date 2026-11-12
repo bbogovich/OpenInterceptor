@@ -377,6 +377,17 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "skins": {"description": "skins for the menus and strategy screens", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "colours": {"description": "background, panel, border, text, dim, accent, highlight", "type": "object", "additionalProperties": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}},
+          "panel": {"description": "panel frame", "type": "object", "additionalProperties": false, "properties": {
+              "image": {"description": "the nine-slice frame image", "type": "string"},
+              "slice": {"description": "corner size, pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
+          "font": {"description": "a TrueType font for the screens", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
     "terrains": {"description": "terrains (heightfields) by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "generate": {"description": "generate the heights", "type": "object", "additionalProperties": false, "properties": {
               "kind": {"description": "rolling hills or a cratered plain", "enum": ["hills", "craters"]},
@@ -538,6 +549,7 @@
         "name": {"description": "campaign title", "type": "string"},
         "difficulty": {"description": "difficulty level ids, easiest first", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
         "default_difficulty": {"description": "the level a new game starts at", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "skin": {"description": "the skin of the menus and strategy screens (skins.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

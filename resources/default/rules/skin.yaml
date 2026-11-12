@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The default campaign's art-deco skin (Stage 6.1/6.8): navy panels framed in gold with
+# stepped corners (textures/deco_panel.png, from tools/default_assets/textures.py),
+# cream text, a red accent.
+
+skins:
+  deco:
+    colours:
+      background: [0.03, 0.03, 0.08]
+      panel: [0.07, 0.08, 0.17, 0.95]
+      border: [0.86, 0.70, 0.34]
+      text: [0.96, 0.91, 0.78]
+      dim: [0.62, 0.58, 0.48]
+      accent: [0.85, 0.20, 0.15]
+      highlight: [0.32, 0.22, 0.10]
+    panel: {image: textures/deco_panel.png, slice: 24}

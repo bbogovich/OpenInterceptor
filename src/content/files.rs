@@ -573,6 +573,7 @@ fn campaign() -> Ty {
         f("name", Ty::Text, "campaign title"),
         f("difficulty", names(), "difficulty level ids, easiest first"),
         f("default_difficulty", name(), "the level a new game starts at"),
+        f("skin", name(), "the skin of the menus and strategy screens (skins.<id>)"),
     ])
 }
 
@@ -597,6 +598,7 @@ pub fn rules_sections() -> Vec<Field> {
         f("environments", dict(super::environment::environment_schema()), "battle environments by id"),
         f("formations", dict(super::formation::formation_schema()), "formations wingmen (and cutscenes) fly in"),
         f("music", dict(super::music::schema()), "interactive music sets"),
+        f("skins", dict(super::skin::schema()), "skins for the menus and strategy screens"),
         f("terrains", dict(super::environment::terrain_schema()), "terrains (heightfields) by id"),
         f("modelsets", dict(modelset()), "looks: models, damage textures, states, debris"),
         f("debris", dict(debris()), "debris sets by id"),

@@ -5,3 +5,4 @@ campaign:
   name: Perils of the Void
   difficulty: [cadet, ranger, captain, space_ace]
   default_difficulty: ranger
+  skin: deco

@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The X-COM: Interceptor skin (Stage 6.1): the original's steel-grey and green palette.
+# Its wrapper art (screens at 640 x 480) comes with Stage 6.7.
+
+skins:
+  xcom:
+    colours:
+      background: [0.02, 0.03, 0.03]
+      panel: [0.10, 0.13, 0.12, 0.95]
+      border: [0.35, 0.62, 0.42]
+      text: [0.72, 0.95, 0.75]
+      dim: [0.42, 0.55, 0.45]
+      accent: [0.95, 0.80, 0.30]
+      highlight: [0.14, 0.28, 0.18]

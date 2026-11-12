@@ -36,6 +36,7 @@ pub mod pack;
 pub mod rules;
 pub mod scenario;
 pub mod schema;
+pub mod skin;
 pub mod story;
 pub mod strategy;
 pub mod text;

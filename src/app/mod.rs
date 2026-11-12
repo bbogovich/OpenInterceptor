@@ -35,6 +35,7 @@ pub mod flight;
 pub mod launcher;
 pub mod simulator;
 pub mod strategy;
+pub mod ui;
 pub mod viewer;
 
 use crate::audio::SoundBank;
@@ -69,6 +70,8 @@ pub struct AppContext {
     pub campaign: Option<Box<strategy::StrategyScreen>>,
     /// A campaign battle's result, left by the flight screen for the strategy screen.
     pub battle_report: Option<strategy::BattleReport>,
+    /// The campaign's skin for the menu and strategy screens (Stage 6.1).
+    pub ui: ui::Ui,
     /// The music playing (Stage 6.4): screens say which set and state they want.
     pub music: crate::audio::MusicPlayer,
 }
@@ -289,6 +292,8 @@ pub async fn run(options: Options) {
         eprintln!("warning: {problem}");
         notices.push(problem);
     }
+    // (Loaded before `content` moves into the context.)
+    let skin = ui::Ui::load(&content);
     let mut ctx = AppContext {
         content,
         renderer,
@@ -306,6 +311,7 @@ pub async fn run(options: Options) {
         campaign: None,
         battle_report: None,
         music: crate::audio::MusicPlayer::new(0.7),
+        ui: skin,
     };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),
@@ -383,6 +389,7 @@ pub async fn run(options: Options) {
                         ctx.renderer.models = Default::default();
                         ctx.sounds = SoundBank::load(&content).await;
                         ctx.content = content;
+                        ctx.ui = ui::Ui::load(&ctx.content);
                         let level = ctx.content.rules.difficulty_levels.get(ctx.content.rules.difficulty).cloned();
                         remember_choice(&id, level.as_deref());
                         screen = Screen::Launcher(launcher::Launcher::new(&ctx));

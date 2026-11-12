@@ -632,6 +632,9 @@ pub struct Ruleset {
     pub missions: Vec<super::mission::MissionDef>,
     /// Battle environments and terrains (Stage 3.3–3.5; see [`super::environment`]).
     pub environments: Vec<super::environment::EnvironmentDef>,
+    /// Skins for the menus and strategy screens (Stage 6.1; see [`super::skin`]): the
+    /// campaign's (`campaign.skin`, else the first) is `skins[0]` after loading.
+    pub skins: Vec<super::skin::Skin>,
     /// Interactive music sets (Stage 6.4; see [`super::music`]).
     pub music: Vec<super::music::MusicSet>,
     /// Formations (MD1; see [`super::formation`]).
@@ -773,7 +776,8 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 17] = [
+const DEF_SECTIONS: [&str; 18] = [
+    "skins",
     "music",
     "formations",
     "voices",
@@ -1410,6 +1414,20 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             Err(msg) => errors.push(format!("{}: environments.{id}: {msg}", e.origin)),
         }
     }
+    let mut skins = Vec::new();
+    for (_, id, e) in of(&resolved, "skins") {
+        match super::skin::Skin::parse(id, Get(&e.node), e.pack) {
+            Ok(s) => skins.push(s),
+            Err(msg) => errors.push(format!("{}: skins.{id}: {msg}", e.origin)),
+        }
+    }
+    // The campaign's own skin goes first.
+    if let Some(want) = campaign.as_ref().and_then(|c| Get(c).str("skin")) {
+        match skins.iter().position(|s: &super::skin::Skin| s.id == want) {
+            Some(k) => skins.swap(0, k),
+            None => errors.push(format!("campaign.skin: unknown skin '{want}'")),
+        }
+    }
     let mut music = Vec::new();
     for (_, id, e) in of(&resolved, "music") {
         match super::music::MusicSet::parse(id, Get(&e.node), e.pack) {
@@ -1485,6 +1503,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     (
         Ruleset {
             strategy,
+            skins,
             music,
             formations,
             voices,

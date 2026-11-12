@@ -188,7 +188,7 @@ impl Launcher {
     }
 
     fn draw(&self, ctx: &mut AppContext, top: f32, line_h: f32) {
-        clear_background(Color::new(0.01, 0.01, 0.03, 1.0));
+        clear_background(ctx.ui.colour("background"));
         let content = &ctx.content;
         // Ship preview on the right when a ship can be chosen.
         if self.menu.choosing(content) {
@@ -222,7 +222,9 @@ impl Launcher {
             }
         }
         set_default_camera();
-        draw_text("OpenInterceptor - testbed", 40.0, 60.0, 40.0, WHITE);
+        // From here on, in the campaign's skin (app::ui).
+        let ui = &ctx.ui;
+        ui.text_in("OpenInterceptor - testbed", 40.0, 60.0, 40.0, ui.colour("text"));
         let campaign = content
             .campaigns
             .iter()
@@ -240,7 +242,7 @@ impl Launcher {
             (true, false) => "   Physics: Realistic   (P: change)",
             (false, _) => "   Physics: Realistic (always, at this level)",
         };
-        draw_text(
+        ui.text_in(
             &format!("Campaign: {campaign}{switch}{level}{physics}"),
             40.0,
             92.0,
@@ -248,7 +250,7 @@ impl Launcher {
             Color::new(1.0, 0.8, 0.4, 1.0),
         );
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
-        draw_text(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, GRAY);
+        ui.text_in(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, ui.colour("dim"));
 
         let rows = visible_rows(top, line_h);
         let first = self.menu.first_visible(rows);
@@ -266,9 +268,15 @@ impl Launcher {
             };
             let selected = i == self.menu.selected;
             if selected {
-                draw_rectangle(30.0, y, screen_width() * 0.5 - 40.0, line_h - 4.0, Color::new(0.2, 0.4, 0.2, 0.6));
+                draw_rectangle(30.0, y, screen_width() * 0.5 - 40.0, line_h - 4.0, ui.colour("highlight"));
             }
-            draw_text(&label, 44.0, y + line_h * 0.7, 24.0, if selected { WHITE } else { LIGHTGRAY });
+            ui.text_in(
+                &label,
+                44.0,
+                y + line_h * 0.7,
+                24.0,
+                if selected { ui.colour("text") } else { ui.colour("dim") },
+            );
         }
         let desc = match &self.menu.entries[self.menu.selected] {
             Entry::ModelViewer => {
@@ -288,14 +296,14 @@ impl Launcher {
             Entry::Mission(k) => content.rules.missions[*k].briefing.clone(),
         };
         if first > 0 {
-            draw_text("^ more", 44.0, top - 6.0, 16.0, GRAY);
+            ui.text_in("^ more", 44.0, top - 6.0, 16.0, ui.colour("dim"));
         }
         if first + rows < self.menu.entries.len() {
-            draw_text("v more", 44.0, top + rows as f32 * line_h + 4.0, 16.0, GRAY);
+            ui.text_in("v more", 44.0, top + rows as f32 * line_h + 4.0, 16.0, ui.colour("dim"));
         }
         let y = top + rows.min(self.menu.entries.len()) as f32 * line_h + 24.0;
         for (i, line) in wrap(&desc, 60).iter().enumerate() {
-            draw_text(line, 44.0, y + i as f32 * 22.0, 20.0, Color::new(0.7, 0.9, 0.7, 1.0));
+            ui.text_in(line, 44.0, y + i as f32 * 22.0, 20.0, Color::new(0.7, 0.9, 0.7, 1.0));
         }
         let mut notes: Vec<String> = content.warnings.iter().filter(|w| w.contains("skipped")).cloned().collect();
         if let Some(e) = &self.error {
@@ -306,23 +314,23 @@ impl Launcher {
             notes.insert(k, n.clone());
         }
         for (i, n) in notes.iter().take(3).enumerate() {
-            draw_text(n, 40.0, screen_height() - 150.0 + i as f32 * 22.0, 18.0, ORANGE);
+            ui.text_in(n, 40.0, screen_height() - 150.0 + i as f32 * 22.0, 18.0, ORANGE);
         }
         // Whether the tablet console is on, and where to point the tablet.
         let on = ctx.console.is_some();
-        draw_text(
+        ui.text_in(
             &ctx.console_status,
             40.0,
             screen_height() - 56.0,
             18.0,
-            if on { Color::new(0.5, 1.0, 0.6, 1.0) } else { GRAY },
+            if on { Color::new(0.5, 1.0, 0.6, 1.0) } else { ui.colour("dim") },
         );
-        draw_text(
+        ui.text_in(
             "Up/Down choose   Left/Right ship   Enter start   Tab campaign   D difficulty   P physics   Esc quit",
             40.0,
             screen_height() - 24.0,
             18.0,
-            GRAY,
+            ui.colour("dim"),
         );
     }
 }

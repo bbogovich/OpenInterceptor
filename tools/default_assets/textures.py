@@ -554,6 +554,29 @@ TEXTURES = [
 ]
 
 
+def deco_panel():
+    """The default skin's nine-slice panel (96 x 96, corners 24): deep navy, a gold
+    frame with an inner pinstripe, and stepped art-deco corner ornaments in the corner
+    squares, so they stay crisp when the panel stretches."""
+    gold, dark_gold, navy, red = (0.86, 0.70, 0.34), (0.55, 0.42, 0.18), (0.07, 0.08, 0.17), (0.75, 0.16, 0.12)
+    c = Canvas(96, 96, navy)
+    c.rect(0, 0, 96, 3, gold)
+    c.rect(0, 93, 96, 96, gold)
+    c.rect(0, 0, 3, 96, gold)
+    c.rect(93, 0, 96, 96, gold)
+    for k in (7,):  # the pinstripe
+        c.rect(k, k, 96 - k, k + 1, dark_gold)
+        c.rect(k, 95 - k, 96 - k, 96 - k, dark_gold)
+        c.rect(k, k, k + 1, 96 - k, dark_gold)
+        c.rect(95 - k, k, 96 - k, 96 - k, dark_gold)
+    # Stepped corner ornaments: three nested squares and a red jewel, in each corner.
+    for cx, cy in ((3, 3), (77, 3), (3, 77), (77, 77)):
+        for s, col in ((16, gold), (11, navy), (7, gold), (3, red)):
+            o = (16 - s) // 2
+            c.rect(cx + o, cy + o, cx + o + s, cy + o + s, col)
+    return c
+
+
 def build_all():
     """Paints and writes every texture and its damage variants. Returns the list of
     written file names."""
@@ -568,6 +591,10 @@ def build_all():
         for suffix, img in variants:
             img.save(os.path.join(OUT, f"{name}{suffix}.png"))
             written.append((f"{name}{suffix}.png", img.w, img.h))
+    # The default skin's panel frame (no damage variants).
+    panel = deco_panel()
+    panel.save(os.path.join(OUT, "deco_panel.png"))
+    written.append(("deco_panel.png", panel.w, panel.h))
     return written
 
 

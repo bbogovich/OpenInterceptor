@@ -890,13 +890,15 @@ impl StrategyScreen {
         }
 
         // --- Drawing ----------------------------------------------------------------
-        clear_background(Color::new(0.02, 0.02, 0.05, 1.0));
+        // In the campaign's skin (app::ui).
+        let ui = &ctx.ui;
+        clear_background(ui.colour("background"));
         let c = &self.campaign;
-        let text_c = Color::new(0.85, 0.9, 0.85, 1.0);
-        let dim = Color::new(0.5, 0.55, 0.6, 1.0);
+        let text_c = ui.colour("text");
+        let dim = ui.colour("dim");
         // Top bar.
         let date = c.date(def);
-        draw_text(
+        ui.text_in(
             &format!(
                 "{date}   {}   Funds {}   Score {:.0}   [Space pause, 1-4 speed, Tab panels, F5 save, Esc leave]",
                 SPEED_NAMES[self.speed],
@@ -909,7 +911,7 @@ impl StrategyScreen {
             text_c,
         );
         // Map: lanes, sensor ranges, systems, bases, contacts, craft.
-        draw_rectangle_lines(map[0], map[1], map[2], map[3], 1.0, dim);
+        ui.panel(map[0], map[1], map[2], map[3]);
         for (a, b) in &def.map.lanes {
             let (Some(i), Some(j)) =
                 (c.systems.iter().position(|s| &s.id == a), c.systems.iter().position(|s| &s.id == b))
@@ -936,7 +938,7 @@ impl StrategyScreen {
             if self.system == Some(i) {
                 draw_circle_lines(p.x, p.y, 11.0, 2.0, YELLOW);
             }
-            draw_text(&s.name, p.x + 10.0, p.y - 8.0, 18.0, text_c);
+            ui.text_in(&s.name, p.x + 10.0, p.y - 8.0, 18.0, text_c);
         }
         for (i, b) in c.bases.iter().enumerate() {
             let p = to_screen(c.systems[b.system].pos);
@@ -953,7 +955,7 @@ impl StrategyScreen {
             }
             let p = to_screen(k.pos);
             draw_triangle(vec2(p.x, p.y - 7.0), vec2(p.x - 6.0, p.y + 5.0), vec2(p.x + 6.0, p.y + 5.0), RED);
-            draw_text(&def.raids[k.raid].name, p.x + 8.0, p.y + 14.0, 16.0, Color::new(1.0, 0.5, 0.5, 1.0));
+            ui.text_in(&def.raids[k.raid].name, p.x + 8.0, p.y + 14.0, 16.0, Color::new(1.0, 0.5, 0.5, 1.0));
         }
         // Supply: facilities (diamonds), convoys (amber), survey ships (cyan).
         for fac in &c.logistics.facilities {
@@ -975,7 +977,8 @@ impl StrategyScreen {
                 draw_circle(p.x, p.y, 3.0, SKYBLUE);
             }
         }
-        // Panel: tabs, then rows.
+        // Panel: a framed area under the tabs, then the tabs and rows.
+        ui.panel(panel[0] - 6.0, panel[1] + 26.0, panel[2] + 12.0, panel[3] - 20.0);
         let tab_w = panel[2] / Tab::ALL.len() as f32;
         for (i, t) in Tab::ALL.iter().enumerate() {
             let x = panel[0] + i as f32 * tab_w;
@@ -985,9 +988,9 @@ impl StrategyScreen {
                 panel[1],
                 tab_w - 2.0,
                 22.0,
-                if on { Color::new(0.25, 0.3, 0.45, 1.0) } else { Color::new(0.1, 0.12, 0.18, 1.0) },
+                if on { ui.colour("highlight") } else { ui.colour("panel") },
             );
-            draw_text(t.name(), x + 4.0, panel[1] + 16.0, 16.0, if on { WHITE } else { dim });
+            ui.text_in(t.name(), x + 3.0, panel[1] + 16.0, 13.0, if on { text_c } else { dim });
         }
         let rows = self.rows(def);
         for (i, (text, act)) in rows.iter().enumerate() {
@@ -997,7 +1000,7 @@ impl StrategyScreen {
             }
             let on = i == self.row;
             if on {
-                draw_rectangle(panel[0], y - 15.0, panel[2], 20.0, Color::new(0.2, 0.25, 0.35, 1.0));
+                draw_rectangle(panel[0], y - 15.0, panel[2], 20.0, ui.colour("highlight"));
             }
             let col = if matches!(act, Act::None) {
                 dim
@@ -1008,11 +1011,11 @@ impl StrategyScreen {
             };
             // The default font is about 0.5 × its size wide per character at 15 px.
             let shown: String = text.chars().take((panel[2] / 7.6) as usize).collect();
-            draw_text(&shown, panel[0] + 6.0, y, 15.0, col);
+            ui.text_in(&shown, panel[0] + 6.0, y, 15.0, col);
         }
         if let Some((t, until)) = &self.flash {
             if get_time() < *until {
-                draw_text(t, panel[0], panel[1] + panel[3] - 6.0, 18.0, YELLOW);
+                ui.text_in(t, panel[0], panel[1] + panel[3] - 6.0, 18.0, YELLOW);
             }
         }
         let banner = match (self.battle, &self.banner) {
@@ -1036,9 +1039,8 @@ impl StrategyScreen {
         };
         if let Some(b) = banner {
             let bw = (b.len() as f32 * 10.0).min(w - 40.0);
-            draw_rectangle(w * 0.5 - bw * 0.5 - 10.0, h * 0.4 - 30.0, bw + 20.0, 46.0, Color::new(0.1, 0.1, 0.2, 0.95));
-            draw_rectangle_lines(w * 0.5 - bw * 0.5 - 10.0, h * 0.4 - 30.0, bw + 20.0, 46.0, 2.0, YELLOW);
-            draw_text(&b, w * 0.5 - bw * 0.5, h * 0.4, 22.0, WHITE);
+            ui.panel(w * 0.5 - bw * 0.5 - 18.0, h * 0.4 - 38.0, bw + 36.0, 62.0);
+            ui.text_in(&b, w * 0.5 - bw * 0.5, h * 0.4, 22.0, WHITE);
         }
         Next::Stay
     }

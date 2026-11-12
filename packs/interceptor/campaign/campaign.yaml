@@ -5,3 +5,4 @@ campaign:
   name: "X-COM: Interceptor"
   difficulty: [beginner, experienced, veteran, genius, superhuman]
   default_difficulty: veteran
+  skin: xcom
