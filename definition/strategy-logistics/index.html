@@ -6373,15 +6373,15 @@
 </tr>
 <tr>
 <td><a href="#f-str-005-supply-chain-logistics">F-STR-005 Supply-chain logistics</a></td>
-<td>Planned</td>
+<td>In progress</td>
 </tr>
 <tr>
 <td><a href="#f-str-006-surveys">F-STR-006 Surveys</a></td>
-<td>Planned</td>
+<td>In progress</td>
 </tr>
 <tr>
 <td><a href="#f-str-007-supply-convoys-worth-escorting">F-STR-007 Supply convoys worth escorting</a></td>
-<td>Planned</td>
+<td>In progress</td>
 </tr>
 <tr>
 <td><a href="#f-str-008-facilities-under-construction">F-STR-008 Facilities under construction</a></td>
@@ -6389,7 +6389,7 @@
 </tr>
 <tr>
 <td><a href="#f-str-009-research-stations-and-fighter-pools">F-STR-009 Research stations and fighter pools</a></td>
-<td>Planned</td>
+<td>In progress</td>
 </tr>
 </tbody>
 </table>
@@ -6422,7 +6422,7 @@
 <p><strong>What.</strong> The whole campaign can be saved and loaded, together with the list of mods it needs.</p>
 <p><strong>Why.</strong> Long campaigns; mods change between sessions.</p>
 <ul>
-<li><strong>Status:</strong> implemented. Built (app 0.7.0): the whole campaign saved as YAML with its pack list; saves needing missing packs are refused.</li>
+<li><strong>Status:</strong> implemented. Built (app 0.7.0): the whole campaign saved as YAML with its pack list; saves needing missing packs are refused. The logistics state joined in app 0.9.0.</li>
 <li><strong>Source:</strong> Plan item 4.11.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/strategy-logistics/#r-str-011-saves">R-STR-011</a></li>
 </ul>
@@ -6430,7 +6430,7 @@
 <p><strong>What.</strong> In the default campaign, mining facilities, research stations and manufacturing centers are built in star systems, and demand pulls materials and components along a supply chain carried by government supply ships.</p>
 <p><strong>Why.</strong> User request for the default campaign: both sides race to mine the belts, and escort and raid missions get a strategic cause.</p>
 <ul>
-<li><strong>Status:</strong> planned</li>
+<li><strong>Status:</strong> in-progress. Built (app 0.9.0): resources, components and recipes as data; mining facilities, manufacturing centers and research stations; demand-driven orders from base hull jobs through manufacturing to mining; automatic government supply convoys along the lanes; saves. Remaining: flown convoy ambushes and construction strikes (auto-resolved today), captured cargo and depots, third-party convoys, facility upgrades.</li>
 <li><strong>Source:</strong> User request (logistics design, decisions 2026-11-11); plan items 4.14–4.17.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/strategy-logistics/#r-str-012-logistics-is-optional-data">R-STR-012</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-013-demand-driven-orders">R-STR-013</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-014-extraction-and-recipes">R-STR-014</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-015-government-supply-ships">R-STR-015</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-019-logistics-mission-generation">R-STR-019</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-020-cargo-losses-and-depots">R-STR-020</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-027-third-party-convoys">R-STR-027</a>, <a href="../../specification/requirements/modding/#r-mod-014-campaign-context">R-MOD-014</a></li>
 </ul>
@@ -6438,7 +6438,7 @@
 <p><strong>What.</strong> Survey ships visit systems within a base's radar range and report deposits, features, research sites and which facilities a system suits. A survey ship can be attacked.</p>
 <p><strong>Why.</strong> The player chooses where to build from what is known.</p>
 <ul>
-<li><strong>Status:</strong> planned</li>
+<li><strong>Status:</strong> in-progress. Built (app 0.9.0): survey ships from a base within its radar range, the attack roll at launch, a report of deposits and research sites; suitability shown on the Supply tab. Remaining: a survey craft and a battle when one is attacked (auto-resolved today).</li>
 <li><strong>Source:</strong> Logistics decisions (2026-11-11, revised); plan item 4.16.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/strategy-logistics/#r-str-021-survey-ships">R-STR-021</a></li>
 </ul>
@@ -6446,7 +6446,7 @@
 <p><strong>What.</strong> Supply ships travel as convoys of several large vessels, each carrying a share of the cargo, so a convoy that loses some ships still delivers what survives; enemies attack them along the route.</p>
 <p><strong>Why.</strong> Escort missions stay interesting and playable: single ships would be destroyed quickly.</p>
 <ul>
-<li><strong>Status:</strong> planned</li>
+<li><strong>Status:</strong> in-progress. Built (app 0.9.0): convoys of several vessels (data) with even shares, the ambush point chosen at launch, surviving shares delivered. Remaining: the large supply-vessel model, flying the ambush and escorting, cargo capacity.</li>
 <li><strong>Source:</strong> User decision (2026-11-11).</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/strategy-logistics/#r-str-016-supply-convoys">R-STR-016</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-017-supply-vessel-model">R-STR-017</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-018-supply-convoy-attack-position">R-STR-018</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-026-supply-cargo-capacity">R-STR-026</a></li>
 </ul>
@@ -6454,7 +6454,7 @@
 <p><strong>What.</strong> A facility takes time to build and is seen in three construction stages, on the map and in battle; the enemy may strike it before it is finished.</p>
 <p><strong>Why.</strong> Construction is a vulnerable period worth defending.</p>
 <ul>
-<li><strong>Status:</strong> in-progress</li>
+<li><strong>Status:</strong> in-progress. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Remaining: stages shown on the map and in battle, strikes on facilities under construction.</li>
 <li><strong>Source:</strong> Logistics design; construction-stage looks built in Stage 2; plan items 4.14 and 3.13.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/combat/#r-cmb-019-model-sets-and-damage-looks">R-CMB-019</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-022-construction-stages">R-STR-022</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-023-construction-attacks">R-STR-023</a></li>
 </ul>
@@ -6462,7 +6462,7 @@
 <p><strong>What.</strong> Research stations unlock tech branches ordinary bases cannot, at sites that meet their criteria; fighters built at main bases can be assigned to facilities to defend them and escort their convoys.</p>
 <p><strong>Why.</strong> Gives facilities a purpose and a defence.</p>
 <ul>
-<li><strong>Status:</strong> planned</li>
+<li><strong>Status:</strong> in-progress. Built (app 0.9.0): research stations on research sites with station-only topics and one-off start costs. Remaining: facility fighter pools.</li>
 <li><strong>Source:</strong> Logistics decisions (2026-11-11); plan item 4.16.</li>
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/strategy-logistics/#r-str-024-research-stations-and-sites">R-STR-024</a>, <a href="../../specification/requirements/strategy-logistics/#r-str-025-facility-fighter-pools">R-STR-025</a></li>
 </ul>
@@ -6485,6 +6485,11 @@
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>F-STR-001 – F-STR-003 in progress and F-STR-004 implemented (app 0.7.0 – 0.7.3)</td>
+</tr>
+<tr>
+<td>1.14.0</td>
+<td>2026-11-11</td>
+<td>F-STR-005, F-STR-006, F-STR-007 and F-STR-009 in progress; F-STR-008 progress (app 0.9.0, logistics)</td>
 </tr>
 </tbody>
 </table>

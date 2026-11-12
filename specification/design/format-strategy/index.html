@@ -6448,6 +6448,17 @@ tables, capture, <code>designs</code>, fitting rules, training, bravery, injurie
 Several keys are simpler than designed (a number where an expression is shown, <code>upkeep</code> as a
 plain monthly number); see <a href="../../../implementation/deviations/">Deviations</a> DEV-046.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.8.0 – 0.9.0)</p>
+<p>For the original's own data (app 0.8.0): <code>tech_ids: {&lt;number&gt;: &lt;topic&gt;}</code> translates the
+numeric <code>Prereq1..3</code> and <code>TechRequired</code>/<code>TechRequired2</code> read by inheritance into <code>research(x)</code>
+prerequisites; <code>economy.cost_scale</code> (the original's money is in thousands) and
+<code>economy.module_time: days</code>; <code>start.money_from: original:&lt;file&gt;/&lt;key&gt;</code> reads the starting money
+from the difficulty level's section. Resources and the <a href="../logistics/">logistics</a> sections
+(app 0.9.0): <code>resources</code>, <code>components</code>, <code>recipes</code>, <code>facility_types</code>, <code>research_sites</code>,
+<code>logistics</code>, and <code>deposits</code>, <code>features</code>, hull <code>components</code>, topic <code>lab</code>, <code>site</code>,
+<code>start_cost</code>.</p>
+</div>
 <h2 id="star-map">Star map<a class="headerlink" href="#star-map" title="Permanent link">&para;</a></h2>
 <h3 id="mapid"><code>maps: {&lt;id&gt;: …}</code><a class="headerlink" href="#mapid" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">maps</span><span class="p">:</span>
@@ -6864,6 +6875,11 @@ meet, a <a href="../format-missions/">mission</a> is generated.</p>
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>As-built note: the strategy sections built in app 0.7.0 – 0.7.3 and what remains; the format itself unchanged</td>
+</tr>
+<tr>
+<td>1.14.0</td>
+<td>2026-11-11</td>
+<td>As-built note: <code>tech_ids</code>, <code>cost_scale</code>, <code>module_time</code>, <code>money_from</code> (app 0.8.0) and the logistics sections (app 0.9.0); the format itself unchanged</td>
 </tr>
 </tbody>
 </table>

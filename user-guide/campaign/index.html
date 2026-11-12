@@ -4092,6 +4092,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supply
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#money-and-the-monthly-report" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4114,10 +4125,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-074" class="md-nav__link">
+  <a href="#testbed-cheats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.7.4
+        Testbed cheats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-in-app-090" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits in app 0.9.0
       
     </span>
   </a>
@@ -6210,6 +6232,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supply
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#money-and-the-monthly-report" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6232,10 +6265,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-074" class="md-nav__link">
+  <a href="#testbed-cheats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.7.4
+        Testbed cheats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-in-app-090" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits in app 0.9.0
       
     </span>
   </a>
@@ -6262,9 +6306,11 @@
 <h1 id="campaign">Campaign<a class="headerlink" href="#campaign" title="Permanent link">&para;</a></h1>
 <p>A campaign with a strategy layer is played on the <strong>strategy screen</strong>: a star map with your
 bases and the enemy's raids, a clock, and panels for research, building, buying, making,
-craft and pilots (app 0.7.1 – 0.7.4). When your craft meet a raid you fly the battle; the debrief brings
-you back to the map. The default campaign, <em>Perils of the Void</em>, has one; the <code>interceptor</code>
-campaign does not yet.</p>
+craft and pilots (app 0.7.1 – 0.9.0), and — in the default campaign — a <strong>supply chain</strong> of
+mines, factories and research stations (app 0.9.0). When your craft meet a raid you fly the
+battle; the debrief brings you back to the map. The default campaign, <em>Perils of the Void</em>, has
+one; so does the <code>interceptor</code> campaign since app 0.8.0, built from your own copy's data (not
+yet play-tested, and without the supply chain, which the original does not have).</p>
 <p>The screen is <strong>functional and plain</strong> in this version: every rule is playable, but it is not
 yet dressed in the campaign's look (that is Stage 6).</p>
 <h2 id="starting">Starting<a class="headerlink" href="#starting" title="Permanent link">&para;</a></h2>
@@ -6287,8 +6333,11 @@ yet dressed in the campaign's look (that is Stage 6).</p>
 <ul>
 <li><strong>Top line</strong>: the date, the clock speed, your funds and the campaign score.</li>
 <li><strong>Map</strong> (left): star systems (hidden ones appear when your sensors reach them), lanes, your
-  bases with their sensor ranges, enemy contacts once detected, and your craft in flight.</li>
-<li><strong>Panel</strong> (right): eight tabs, each a list of rows. The current base is marked <code>*</code> on the
+  bases with their sensor ranges, enemy contacts once detected, and your craft in flight. With a
+  supply chain also: your <strong>facilities</strong> (a small diamond beside the system, grey while it is
+  being built, orange when working), <strong>supply convoys</strong> (gold dots) and <strong>survey ships</strong> (sky-blue
+  rings).</li>
+<li><strong>Panel</strong> (right): nine tabs, each a list of rows. The current base is marked <code>*</code> on the
   Bases tab; orders apply to it.</li>
 </ul>
 <h2 id="keys">Keys<a class="headerlink" href="#keys" title="Permanent link">&para;</a></h2>
@@ -6337,6 +6386,10 @@ yet dressed in the campaign's look (that is Stage 6).</p>
 <td>Save</td>
 </tr>
 <tr>
+<td>Ctrl+M, Ctrl+K, Ctrl+B, Ctrl+J</td>
+<td>Testbed cheats (<a href="#testbed-cheats">below</a>)</td>
+</tr>
+<tr>
 <td>Esc</td>
 <td>Save and leave to the launcher</td>
 </tr>
@@ -6347,8 +6400,9 @@ yet dressed in the campaign's look (that is Stage 6).</p>
 </tbody>
 </table>
 <p>The clock <strong>stops by itself</strong> whenever something needs you: a building or base is finished,
-research is complete, a contact is detected, a raid strikes, the monthly report, or an
-interception reaching its contact. The message is shown in a banner; Enter, Esc or a click
+research is complete, a contact is detected, a raid strikes, the monthly report, an
+interception reaching its contact, or — with a supply chain — a facility completed, a survey's
+report or a convoy ambushed. The message is shown in a banner; Enter, Esc or a click
 dismisses it.</p>
 <h2 id="the-tabs">The tabs<a class="headerlink" href="#the-tabs" title="Permanent link">&para;</a></h2>
 <table>
@@ -6396,6 +6450,11 @@ dismisses it.</p>
 <td>Send the current base's craft that are at home and have a ready pilot to intercept</td>
 </tr>
 <tr>
+<td><strong>Supply</strong></td>
+<td>With a system chosen on the map: <em>Survey</em> it, and <em>Build</em> each kind of facility there (with the cost, and why not when it is not allowed). Then your facilities and what they hold or how long they take to build; on a working research station, the topics it can research; the current base's store of components; how many orders, convoys and survey ships are under way (<a href="#supply">Supply</a>)</td>
+<td>Send the survey ship; order the facility; start the research</td>
+</tr>
+<tr>
 <td><strong>Messages</strong></td>
 <td>The log, newest first, with dates</td>
 <td>—</td>
@@ -6423,6 +6482,35 @@ for that kind of module, too far from your other bases, no free pilot, …).</p>
 </ol>
 <p>A raid you do not stop strikes its target: a base loses its newest finished module, and the
 score drops.</p>
+<h2 id="supply">Supply<a class="headerlink" href="#supply" title="Permanent link">&para;</a></h2>
+<p><em>Default campaign, app 0.9.0.</em> The Guard builds its craft from <strong>components</strong> — hull plating,
+rocket motors, ray emitters — made from mined <strong>resources</strong>. When you order a hull on the
+Factory tab, the base orders the components it lacks; a <strong>manufacturing center</strong> makes them
+from resources it orders in turn from your <strong>mining facilities</strong>; everything is carried by
+automatic government <strong>supply convoys</strong> along the lanes. You do not move the convoys; you
+decide where to survey and what to build.</p>
+<ol>
+<li><strong>Survey.</strong> Click a system on the map, open the Supply tab and choose <em>Survey <system> from
+   <base></em>. The system must be within the current base's radar range. The survey ship flies
+   there (a sky-blue ring); when it arrives a message lists the deposits it found, with their
+   rates a day, and any research site. A survey ship may be attacked on the way: it fights off
+   the attack or is lost (then survey again).</li>
+<li><strong>Build.</strong> With a system chosen, the Supply tab offers each kind of facility with its cost:</li>
+<li>a <strong>mining facility</strong> needs a surveyed system with deposits;</li>
+<li>a <strong>manufacturing center</strong> must be within two lanes of one of your bases;</li>
+<li>a <strong>research station</strong> needs a surveyed system that is a research site.</li>
+</ol>
+<p>The row says why when it cannot be built. A facility takes days to build (a grey diamond on
+   the map) and a message says when it is complete.
+3. <strong>Make.</strong> Queue a hull on the Factory tab as usual. Its row waits until the components have
+   arrived; the Supply tab shows the base's store and the orders and convoys under way.
+4. <strong>Research at a station.</strong> A finished research station lists the station-only topics of
+   its kind (<em>Research Theremin shielding here</em>); a topic is refused when the station is not on
+   its research site or its prerequisites are not known. The station first orders the topic's
+   start materials; once they arrive it researches on its own.</p>
+<p><strong>Convoys can be ambushed</strong> on the way. In this version you do not fly those battles: each
+vessel may be lost, a message says how many, and the survivors deliver their share; what is
+missing is simply ordered again.</p>
 <h2 id="money-and-the-monthly-report">Money and the monthly report<a class="headerlink" href="#money-and-the-monthly-report" title="Permanent link">&para;</a></h2>
 <p>Incomes (the default campaign's Senate stipend grows with your bases and your month's score)
 and expenses are paid on their own schedules and logged. Every 30 days the <strong>monthly report</strong>
@@ -6436,12 +6524,50 @@ and your funds, and a new set of recruits is offered.</p>
 <li>A save records the packs it was played with. Continuing refuses a save that needs a pack that
   is not active, or one whose rules no longer fit it (a mod was changed), with a message.</li>
 </ul>
-<h2 id="limits-in-app-074">Limits in app 0.7.4<a class="headerlink" href="#limits-in-app-074" title="Permanent link">&para;</a></h2>
+<h2 id="testbed-cheats">Testbed cheats<a class="headerlink" href="#testbed-cheats" title="Permanent link">&para;</a></h2>
+<p>The testbed keeps the original game's own cheat list as debug keys on the strategy screen (app
+0.8.1). Each says so in the banner and the message log.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Cheat</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ctrl+M</td>
+<td><em>payday</em></td>
+<td>A million more in funds.</td>
+</tr>
+<tr>
+<td>Ctrl+K</td>
+<td><em>knowitall</em></td>
+<td>Every research topic known; bases stop researching.</td>
+</tr>
+<tr>
+<td>Ctrl+B</td>
+<td><em>quickbase</em></td>
+<td>Every base and module under construction finished now (not supply facilities).</td>
+</tr>
+<tr>
+<td>Ctrl+J</td>
+<td><em>jump to battle</em></td>
+<td>With a contact chosen on the Contacts tab: a ready craft with a pilot is put at it at once, and the fly-or-break-off banner appears. Otherwise it says <em>Choose a contact on the Contacts tab first</em>, or <em>no ready craft with a pilot</em>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="limits-in-app-090">Limits in app 0.9.0<a class="headerlink" href="#limits-in-app-090" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Fitting takes the best items in store; you cannot choose them one by one yet.</li>
-<li>Only the default campaign has a strategy layer.</li>
-<li>Two research topics of the default campaign that need salvage (<em>Saucer hull analysis</em>, <em>Robot
-  brains</em>) cannot be started yet (a known issue).</li>
+<li>Supply-convoy ambushes are decided automatically; you cannot fly them or escort convoys yet,
+  and facilities have no fighters of their own. The Supply tab is plain text.</li>
+<li>The <code>interceptor</code> campaign's strategy layer has not been play-tested; its research is slow
+  with one downlink.</li>
+<li>Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default
+  campaign's salvage topics (<em>Saucer hull analysis</em>, <em>Robot brains</em>) can be started after
+  salvaging the right raid.</li>
 </ul>
 
 

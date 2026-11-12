@@ -5572,6 +5572,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Built in-crate instead">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#png-encoding-the-image-crate-already-in-the-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PNG encoding: the image crate already in the tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6216,6 +6233,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Built in-crate instead">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#png-encoding-the-image-crate-already-in-the-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PNG encoding: the image crate already in the tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6323,7 +6357,7 @@ build silently; <code>Cargo.lock</code> is committed.</p>
 <tr>
 <td><code>image =0.24.9</code></td>
 <td><code>png</code> only</td>
-<td>Decoding PNG textures in mod packs.</td>
+<td>Decoding PNG textures in mod packs; encoding PNG for the extractor, <code>--screenshot</code> and (since main <code>2ed1149</code>) the console's target textures.</td>
 </tr>
 </tbody>
 </table>
@@ -6396,17 +6430,18 @@ keep-alive, no chunking, no request bodies, no fragmented messages. Written in-c
 and RFC vectors), <code>remote::json</code> (~360) and threads from <code>std</code>. Decision: build in-crate; no
 dependency added. The console page itself (<code>web/console/</code>) is plain custom elements and CSS
 with no framework or build step.</p>
-<p><strong>PNG writer (app 0.6.7) — written in-crate, no crate added.</strong> The console's textured target
-model sends each texture as a PNG <code>data:</code> URL, so the game must <em>write</em> PNG. No new dependency was
-added: <code>formats::png</code> writes it in about 140 lines with its tests. A valid PNG needs no compressor
-when its zlib stream uses <strong>stored</strong> blocks, so the writer is a signature, three chunks, a CRC-32
-and an Adler-32 (<code>checksums_match_known_values</code> checks both against published values); the
-images are at most 128 × 128 pixels sent once per class over a local network, so the lost
-compression costs little. Note for review: the <code>image</code> crate above, already a direct dependency
-(<code>png</code> feature), can also <em>encode</em> PNG — the extractor (<code>extract::png</code>) and <code>--screenshot</code> use it
-— so the in-crate writer duplicates a capability already in the tree. It keeps the <code>formats</code> layer
-free of crates and is small; whether to keep it or call <code>image</code> instead is a choice for the next
-review of this page.</p>
+<h3 id="png-encoding-the-image-crate-already-in-the-tree">PNG encoding: the <code>image</code> crate already in the tree<a class="headerlink" href="#png-encoding-the-image-crate-already-in-the-tree" title="Permanent link">&para;</a></h3>
+<p><strong>Resolved (main <code>2ed1149</code>, after app 0.9.0).</strong> The console's textured target model sends each
+texture as a PNG <code>data:</code> URL, so the game must <em>write</em> PNG. App 0.6.7 wrote it in-crate
+(<code>formats::png</code>, about 140 lines: stored deflate blocks, a bit-by-bit CRC-32 and an Adler-32), and
+the last review of this page noted that this duplicated a capability already in the tree: the
+<code>image</code> crate above is a direct dependency with its <code>png</code> feature, which <strong>encodes</strong> as well as
+decodes, and the extractor and <code>--screenshot</code> already used it. The duplicate is gone:
+<code>formats::png::encode_rgba</code> now calls <code>image::codecs::png::PngEncoder</code>, and the module keeps only
+the downscaling the console needs. <strong>No dependency was added or removed</strong> — <code>Cargo.toml</code> is
+unchanged — and the images are now compressed. The policy point it illustrates: before writing
+something in-crate, check whether a crate already in the tree does it; keeping a second copy is
+a cost without the benefit of avoiding a dependency.</p>
 <h2 id="external-tools">External tools<a class="headerlink" href="#external-tools" title="Permanent link">&para;</a></h2>
 <p>Programs the user may have installed, which the project calls but never links, bundles or
 requires, are <strong>not dependencies</strong>.</p>

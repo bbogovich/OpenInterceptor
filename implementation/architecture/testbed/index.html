@@ -6458,8 +6458,10 @@ launcher:</p>
   without a window; the drawing is a manual test (MT-3-51 – MT-3-54).</li>
 </ul>
 <h3 id="the-strategy-screen-app-071">The strategy screen (app 0.7.1)<a class="headerlink" href="#the-strategy-screen-app-071" title="Permanent link">&para;</a></h3>
-<p><code>app::strategy::StrategyScreen</code> (Stage 4.10) shows a <code>campaign::Campaign</code>: the star map, eight
-tabs, the clock (<code>SPEEDS</code>: paused, 1, 6, 24 and 120 campaign hours per real second), banners
+<p><code>app::strategy::StrategyScreen</code> (Stage 4.10) shows a <code>campaign::Campaign</code>: the star map, nine
+tabs (the <strong>Supply</strong> tab, <code>Tab::Logistics</code>, since app 0.9.0, with the <code>Act::Survey</code>,
+<code>Act::BuildFacility</code> and <code>Act::StationResearch</code> rows, and facilities, convoys and survey ships
+drawn on the map), the clock (<code>SPEEDS</code>: paused, 1, 6, 24 and 120 campaign hours per real second), banners
 for notices and the fly-or-break-off choice. It turns rows into orders on the campaign and
 draws; the rules live in <code>campaign</code> (<a href="../campaign/">Campaign</a>). The launcher leads with
 <code>Entry::ContinueCampaign</code> and <code>Entry::NewCampaign</code> when <code>rules.strategy</code> is set and starts
@@ -6467,7 +6469,12 @@ selected on them; <code>--strategy</code> opens a new campaign. A campaign battl
 <code>FlightSession::campaign_battle</code>: its debrief returns <code>Next::Strategy</code> (Enter or Esc) with
 <code>AppContext::battle_report</code>, the pause menu's L/Q is a retreat and R (restart) is disabled.
 <code>Next::CampaignBattle</code> carries the first craft's fitted loadout, applied with
-<code>flight::apply_loadout</code> (app 0.7.2). Player's guide: <a href="../../../user-guide/campaign/">Campaign</a>.</p>
+<code>flight::apply_loadout</code> (app 0.7.2). <strong>Testbed cheats</strong> (app 0.8.1, plan <em>Testbed adds</em> of
+Stage 4): Ctrl+M payday, Ctrl+K knowitall, Ctrl+B quickbase — the original's own cheat list —
+and Ctrl+J jump to battle from the contact chosen on the Contacts tab, each a
+<code>Campaign::cheat_*</code> method (<a href="../campaign/#testbed-cheats-app-081">Campaign › Testbed cheats</a>).
+Headless, <code>--strategy-soak &lt;days&gt;</code> plays a campaign's strategy layer with <code>campaign::autoplay</code>
+(app 0.8.0). Player's guide: <a href="../../../user-guide/campaign/">Campaign</a>.</p>
 <h3 id="scenarios-shipped">Scenarios shipped<a class="headerlink" href="#scenarios-shipped" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

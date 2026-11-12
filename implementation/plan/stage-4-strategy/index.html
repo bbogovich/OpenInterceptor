@@ -6130,7 +6130,7 @@
 
 
 <h1 id="stage-4-strategy-layer">Stage 4 — Strategy layer<a class="headerlink" href="#stage-4-strategy-layer" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>). The real-time strategy game around the battles: the
+<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>). The real-time strategy game around the battles: the
 interactive star map, bases, research, the economy, ships and loadouts, pilots — with
 functional screens and saves. Story and the rival's planning come in Stage 5.</p>
 <p>Design: <a href="../../../specification/design/format-strategy/">strategy layer</a>, <a href="../../../specification/design/format-interface/">interface</a>.</p>
@@ -6167,13 +6167,13 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.4</td>
 <td>Economy: resources, income and expense expressions, markets (buy/sell), factories and queues with priorities, deliveries and losses, storage</td>
 <td><code>campaign::economy</code></td>
-<td><strong>Partial</strong> (0.7.0): income and expense expressions, market buy/sell, factory queues (first job first), deliveries. Open: resources, priorities, losses, storage limits; <strong>manufacture charges no money</strong> (defect). #24.</td>
+<td><strong>Partial</strong> (0.7.0, 0.9.0): income and expense expressions, market buy/sell, factory queues (first job first), deliveries; manufacture <strong>paid per unit as it starts</strong> (0.9.0 fix); resources and components with logistics (0.9.0). Open: priorities, purchase losses, storage limits at bases. #24.</td>
 </tr>
 <tr>
 <td>4.5</td>
 <td>Research: download and labs models, discovery by prerequisites, salvage and capture, unlocks</td>
 <td><code>campaign::research</code></td>
-<td><strong>Partial</strong> (0.7.0): download and labs, prerequisites, unlocks, salvage by raid. Open: capture, events; <strong><code>salvaged(x)</code> compares names with ids</strong> (defect). #25.</td>
+<td><strong>Partial</strong> (0.7.0, 0.8.0, 0.9.0): download and labs, prerequisites, unlocks, salvage by raid <strong>id</strong> (0.9.0 fix); the original's numeric prerequisites through <code>tech_ids</code> (0.8.0); station-only topics (0.9.0). Open: capture, events. #25.</td>
 </tr>
 <tr>
 <td>4.6</td>
@@ -6203,55 +6203,57 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.10</td>
 <td>Screens (functional, plain skin): star map, bases with the 3D base view, research, hangar, market, pilots, reports, messages, briefing/debriefing; battle hand-off and return</td>
 <td><code>app::strategy</code> (new)</td>
-<td><strong>Partial</strong> (0.7.1): one functional screen — map, eight tabs, clock, banners, battle hand-off and return; launcher entries and <code>--strategy</code>. Open: the 3D base view, reports, briefing, encyclopaedia; themed look (Stage 6). #30.</td>
+<td><strong>Partial</strong> (0.7.1, 0.9.0): one functional screen — map, nine tabs (the <strong>Supply</strong> tab and facility, convoy and survey markers in 0.9.0), clock, banners, battle hand-off and return; launcher entries and <code>--strategy</code>. Open: the 3D base view, reports, briefing, encyclopaedia; themed look (Stage 6). #30.</td>
 </tr>
 <tr>
 <td>4.11</td>
 <td><strong>Saves</strong>: the full campaign state plus the mod list and versions; load refuses missing mods</td>
 <td><code>campaign::save</code></td>
-<td><strong>Done</strong> (0.7.0): the whole state as YAML with packs and versions; refuses missing packs and mismatched rules. Versions are recorded, not compared; logistics state joins when built. #31.</td>
+<td><strong>Done</strong> (0.7.0, 0.9.0): the whole state as YAML with packs and versions; refuses missing packs and mismatched rules; the logistics state (0.9.0). Versions are recorded, not compared. #31.</td>
 </tr>
 <tr>
 <td>4.12</td>
 <td><code>interceptor</code>: map generation tables, economy, the 71 research topics with authored unlocks, 68 modules with effects, items, pilots, salvage, funding evaluation, score names</td>
 <td><code>packs/interceptor</code></td>
-<td><strong>Open</strong>: not started. The original's research prerequisites are numeric tech ids that do not map to its research sections in file order; a tech-id table must be worked out first. #32.</td>
+<td><strong>Done as derived</strong> (0.8.0, <code>c64d178</code>; not play-tested): <code>tools/interceptor_strategy.py</code> generates <code>references.yaml</code> (the executable's tech-id table, <em>derived</em>, and <code>inherit:</code> references for 71 topics, 55 items, 34 X-COM modules); <code>campaign.yaml</code> authors the Frontier map, downlink research, hulls, module groups and effects, the X-COM base, funding, raids, pilots, scores, every estimate <code>DERIVED</code> (DEV-050). Engine keys <code>tech_ids</code>, <code>economy.cost_scale</code>, <code>economy.module_time</code>, <code>start.money_from</code>. Six-month soak: 4 of 71 topics. Open: play-testing and balance; unlocks are not authored (TechRequired gates instead); evaluations with Stage 5. #32.</td>
 </tr>
 <tr>
 <td>4.13</td>
 <td><code>default</code>: the fixed six-system map, economy, both research trees, Guard modules and Dominion pods, items, pilots</td>
 <td><code>resources/default</code></td>
-<td><strong>Partial</strong> (0.7.1): the Reach map, a 12-topic tree, items, hulls, nine module kinds, the Guard base, the Senate stipend, five raids, pilots, scores. Open: the Dominion's own tree and pods, logistics data; texts as text keys (DEV-047). #33.</td>
+<td><strong>Partial</strong> (0.7.1, 0.9.0): the Reach map, a 12-topic tree plus two station-only topics, items, hulls, nine module kinds, the Guard base, the Senate stipend, five raids, pilots, scores; the logistics data (0.9.0). Open: the Dominion's own tree and pods; texts as text keys (DEV-047). #33.</td>
 </tr>
 <tr>
 <td>4.14</td>
 <td><strong>Logistics</strong> (default campaign, <a href="../../../specification/design/logistics/">design</a>): resources, components and deposits (campaign data); <code>facility_types</code> mining facility, research station, manufacturing center with placement conditions, build cost, time and three construction stages; the economy tick (extraction, recipes that start only when their inputs are in store, research, construction progress)</td>
 <td><code>campaign::economy</code></td>
-<td><strong>Open</strong> (#34).</td>
+<td><strong>Partial</strong> (0.9.0, <code>ff9d8fc</code>): resources, components, deposits and features (data); the three facility types with fixed placement rules per role (DEV-049), cost and build time; hourly extraction, recipes that start only on inputs in store, station research, construction time. Open: the three construction stages shown (<code>hub</code> read, not used), facility upgrades, the <code>placement:</code> expressions, storage limits at manufacturing centers. #34.</td>
 </tr>
 <tr>
 <td>4.15</td>
 <td><strong>Supply and demand</strong>: the order book (main base ← manufacturing ← mining; research ← mining once per project), automatic government supply convoys on fixed lanes (several vessels, even cargo shares), the attack point chosen at random at launch, delivery and loss/capture rules; mission-generation hooks for ambushes and construction strikes</td>
 <td><code>campaign::logistics</code>, <code>campaign::convoys</code></td>
-<td><strong>Open</strong> (#35).</td>
+<td><strong>Partial</strong> (0.9.0): the order book (base hull jobs → manufacturing → mining; station start costs → mining), nearest supplier by straight-line distance (DEV-049); automatic convoys along the lanes, <code>logistics.vessels</code> each with an even share; the ambush roll and point at launch; auto-resolved vessel losses with the surviving share delivered. Open: flying <code>convoy_ambush</code> (the mission exists; #19), capture and depots, construction strikes from 50 %. #35.</td>
 </tr>
 <tr>
 <td>4.16</td>
 <td><strong>Survey ships</strong> (a separate mission profile and craft; within the launching station's radar range; 25 % attack roll at launch; suitability per facility type), <strong>research sites</strong> and station-only tech branches (<code>lab:</code>, <code>site:</code>, <code>start_cost</code> — materials only to begin), <strong>facility fighter pools</strong> (built at main bases, transferred, movable)</td>
 <td><code>campaign</code></td>
-<td><strong>Open</strong> (#36).</td>
+<td><strong>Partial</strong> (0.9.0): survey ships within the base's radar range, the attack roll at launch (<code>survey_attack_chance</code>), reports of deposits and sites; research sites and station-only topics (<code>lab</code>, <code>site</code>, <code>start_cost</code> once). Open: a survey craft and a battle when attacked (auto-resolved), <strong>facility fighter pools</strong>. #36.</td>
 </tr>
 <tr>
 <td>4.17</td>
 <td>Facility, survey and supply-traffic screens (functional); <code>default</code>: resources, components, deposits, facility types, recipes, research sites and branches (the stage models, facility objects and supply craft exist since Stage 2)</td>
 <td><code>app::strategy</code>, <code>resources/default</code></td>
-<td><strong>Open</strong> (#37).</td>
+<td><strong>Partial</strong> (0.9.0): the Supply tab (survey, build, station research, stores, counts) and map markers; the default campaign's <code>strategy/logistics.yaml</code> (four resources, three components and recipes, the three facility types, two research sites, deposits in all six systems, hull components, two station-only topics). Open: a supply-traffic view (the tab is plain), the large supply-vessel model, cargo capacity. #37.</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Testbed adds</strong> (not built yet): a strategy sandbox for each campaign with a debug clock, money and research
-cheats (the original's own cheat list — <code>payday</code>, <code>knowitall</code>, <code>quickbase</code> — as debug actions),
-and "jump to battle" from any contact.</p>
+<p><strong>Testbed adds</strong> — <strong>Done</strong> (0.8.0 – 0.8.1, <code>c64d178</code>, <code>8e96338</code>): every campaign's strategy screen is
+its sandbox; the original's own cheats as debug keys — Ctrl+M <code>payday</code>, Ctrl+K <code>knowitall</code>,
+Ctrl+B <code>quickbase</code> — and Ctrl+J "jump to battle" from the chosen (detected) contact
+(<code>Campaign::cheat_*</code>); <code>--strategy-soak &lt;days&gt;</code> plays a strategy layer headless
+(<code>campaign::autoplay</code>). MT-4-20, MT-4-21; GitHub #47 (R-TST-010, R-TST-011, partly met).</p>
 <p>Requested logistics for the default campaign (4.14–4.17) are an engine capability that the
 <code>interceptor</code> campaign deliberately does not use (it stays faithful to the original; an addon
 could add it). It is all YAML data and a campaign may leave it out. Decisions and the one open
@@ -6278,7 +6280,9 @@ comes first because it <strong>also serves wingmen</strong>: battles use it befo
 </tr>
 </tbody>
 </table>
-<p><strong>Exit</strong>: both campaigns' strategy layers run for 6 game months without errors, with economy,
+<p><strong>Exit</strong> (status at app 0.9.0: both strategy layers run six months headless — <code>default</code> 12 of 14
+topics, <code>interceptor</code> 4 of 71 — and save/load round-trips in the six-month unit test; the manual
+long run and the <code>interceptor</code> play-test are outstanding): both campaigns' strategy layers run for 6 game months without errors, with economy,
 research and bases behaving as specified; save/load round-trips (unit tests on synthetic
 campaigns; manual long-run test).</p>
 

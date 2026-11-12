@@ -6799,23 +6799,23 @@
 </tr>
 <tr>
 <td><a href="#r-str-012-logistics-is-optional-data">R-STR-012 Logistics is optional data</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-013-demand-driven-orders">R-STR-013 Demand-driven orders</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-014-extraction-and-recipes">R-STR-014 Extraction and recipes</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-015-government-supply-ships">R-STR-015 Government supply ships</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-016-supply-convoys">R-STR-016 Supply convoys</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-017-supply-vessel-model">R-STR-017 Supply vessel model</a></td>
@@ -6823,19 +6823,19 @@
 </tr>
 <tr>
 <td><a href="#r-str-018-supply-convoy-attack-position">R-STR-018 Supply convoy attack position</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-019-logistics-mission-generation">R-STR-019 Logistics mission generation</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-020-cargo-losses-and-depots">R-STR-020 Cargo losses and depots</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-021-survey-ships">R-STR-021 Survey ships</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-str-022-construction-stages">R-STR-022 Construction stages</a></td>
@@ -6847,7 +6847,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-024-research-stations-and-sites">R-STR-024 Research stations and sites</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-025-facility-fighter-pools">R-STR-025 Facility fighter pools</a></td>
@@ -6922,34 +6922,42 @@
 <p><em>Rationale:</em> The original's economy, as data.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
-<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>the_default_campaign_runs_six_months</code>; <code>script::campaign::tests::ids_match_and_names_are_checked</code>; MT-4-06</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.9.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>; MT-4-06, MT-4-15, MT-4-19</li>
 <li>See: <a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items and hulls</a>, <a href="../../../modding/strategy/#incomes-and-expenses">incomes and expenses</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
 <p><code>incomes</code> and <code>expenses</code> are amounts written as expressions in the campaign context (<code>script::campaign</code>, 16 queries), paid every <code>every</code>; module maintenance, hull upkeep and pilot salaries are charged at each 30-day month. The <strong>market</strong> buys items and hulls at <code>cost</code> (delivered to the base after <code>economy.delivery</code>) and sells items at <code>sell_price</code>. <strong>Factories</strong> are a base's <code>production_rate</code> (module effects) working through its queue, first job first; a finished hull becomes a craft at the base.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.8.0 – 0.9.0)</p>
+<p><strong>Manufacture is paid per unit as it starts</strong> (app 0.9.0, <code>ff9d8fc</code>; it was free until then): the job waits while the money is short. <strong>Resources</strong> exist with logistics (R-STR-012 – R-STR-014): mined resources and manufactured components, and hulls built from components instead of money. <code>economy.cost_scale</code> multiplies every cost, price, upkeep and maintenance (app 0.8.0, for the original's thousands).</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: resources; prioritised queues; delivery losses; storage limits (<code>size</code> and the <code>storage</code> effect are read but not enforced); markets per seller. <strong>Manufacture charges no money</strong> in app 0.7.1: <code>Campaign::manufacture</code> and the hour step never take the product's <code>cost</code>, although the code's own comment says the cost is paid as each unit starts — a defect to fix.</p>
+<p>Not built: prioritised queues; delivery losses of purchases; storage limits at bases (<code>size</code> and the <code>storage</code> effect are read but not enforced); markets per seller.</p>
 </div>
 <h3 id="r-str-005-research">R-STR-005 Research<a class="headerlink" href="#r-str-005-research" title="Permanent link">&para;</a></h3>
 <p>Research MUST support the download and labs models, discovery by prerequisites, salvage and capture, and unlocks.</p>
 <p><em>Rationale:</em> Tech tree.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
-<li>Verified by: <code>campaign::tests::research_follows_prerequisites_and_unlocks</code>, <code>the_default_campaign_runs_six_months</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>; MT-4-07</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.9.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::tests::research_follows_prerequisites_and_unlocks</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>, <code>original_tech_ids_become_research_prerequisites</code>; <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>; MT-4-07, MT-4-17, MT-4-19, MT-4-23</li>
 <li>See: <a href="../../../modding/strategy/#research-and-research_model">Strategy layer › research</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
 <p><code>research: {&lt;id&gt;: {name, size, requires, unlocks, description}}</code> and <code>research_model: {mode: download | labs, rate, switching: keep_progress | lose_progress}</code>. Each base works on one topic at <code>rate</code> work units an hour (an expression evaluated for that base). A topic is available while its <code>requires</code> holds; <code>unlocks</code> (<code>items.x</code>, <code>hulls.x</code>, <code>modules.x</code>, <code>base_types.x</code>) stay unavailable until it is known. Every name in an expression and every unlock is checked when the rules load. <code>salvage</code> outcomes mark the raid salvaged for <code>salvaged(x)</code>.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.8.0 – 0.9.0)</p>
+<p><strong>Salvage records the raid's id</strong> (app 0.9.0, <code>ff9d8fc</code>), so <code>salvaged(&lt;raid id&gt;)</code> holds after a salvage and the default campaign's <code>saucer_hulls</code> and <code>robot_brains</code> can be started (until then the display name was recorded). <strong>The original's numeric prerequisites</strong> (app 0.8.0): with a <code>tech_ids: {&lt;number&gt;: &lt;topic&gt;}</code> table, a topic's <code>prereq1</code> – <code>prereq3</code> and an item's, hull's or module's <code>tech_required</code>, <code>tech_required2</code> become <code>research(x) and …</code> when no <code>requires:</code> is written; numbers not in the table are left out. <strong>Station-only topics</strong> (<code>lab</code>, <code>site</code>, <code>start_cost</code>; R-STR-024) are researched at research stations and never offered to bases.</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: capture; discovery by events; <code>requires_any</code>; the original's per-item salvage tables. <strong>Known issue:</strong> <code>salvage</code> records the raid's display <code>name</code> while <code>salvaged(x)</code> compares the raid's id, so <code>salvaged(&lt;raid id&gt;)</code> never holds and the default campaign's <code>saucer_hulls</code> and <code>robot_brains</code> cannot be started.</p>
+<p>Not built: capture; discovery by events; <code>requires_any</code>; the original's per-item salvage tables.</p>
 </div>
 <h3 id="r-str-006-bases">R-STR-006 Bases<a class="headerlink" href="#r-str-006-bases" title="Permanent link">&para;</a></h3>
 <p>Bases MUST have types, placement rules, templates, module construction with build times and construction states, limits, effects, destruction consequences and dismantling.</p>
@@ -6980,6 +6988,10 @@
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
 <p><code>hulls: {&lt;ship class id&gt;: {cost, prod_time, upkeep, speed, slots, requires}}</code> (a hull must have a ship class of the same id) and <code>items: {&lt;id&gt;: {name, kind, cost, sell_price, prod_time, size, requires}}</code>. Craft are bought (delivered) or manufactured at a base. <strong>Fitting</strong> (app 0.7.2): <code>Campaign::fit_best</code> fills each hull slot with the costliest item of that <code>kind</code> in the base's store (a missile slot takes the item's <code>rounds</code>, a new item key), returning the old fit to the store first; the Hangar tab's <strong>F</strong> fits the chosen craft. A campaign battle carries <code>Campaign::loadout</code> (<code>Next::CampaignBattle</code>), and <code>flight::apply_loadout</code> refits the player's class with the fitted beams and missile racks — items matched to beams and missiles of the same id — in that battle's own copy of the rules (<code>Arc::make_mut</code>), leaving the shared content untouched.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>With logistics, a hull's <code>components</code> make a main base build it from components delivered by the supply chain instead of paying its <code>cost</code> (R-STR-013).</p>
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
@@ -7024,83 +7036,107 @@
 <p><em>Rationale:</em> Playable strategy layer before skins (Stage 6).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
-<li>Status: planned — partly met (app 0.7.1, main <code>10f7fce</code>)</li>
-<li>Verified by: <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>, <code>money_has_thousands_separators</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-4-02 – MT-4-10</li>
+<li>Status: planned — partly met (app 0.7.1 – 0.9.0, main <code>10f7fce</code>, <code>8e96338</code>, <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>, <code>money_has_thousands_separators</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18</li>
 <li>See: <a href="../../../user-guide/campaign/">User guide › Campaign</a>, <a href="../../../implementation/architecture/campaign/#the-battle-hand-off">Campaign (architecture)</a>, <a href="../../design/format-interface/">Format: interface, text and media</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.7.1)</p>
 <p>One functional, plain-skinned screen (<code>app::strategy</code>): the star map (systems, lanes, bases with sensor ranges, detected contacts, craft in flight; click a system to choose it) and eight tabs — Bases (and new bases), Research, Build, Market, Factory, Hangar (craft, pilots, recruits), Contacts (intercept) and Messages — with a clock line (date, speed, funds, score). Keys: Space, 1 – 4, Tab / Shift+Tab, Up/Down, Enter, Left/Right (current base), S (sell), F (fit, app 0.7.2), F5 (save), Esc (save and leave). An interception that meets its contact stops the clock with a fly-or-break-off banner; flying it hands the screen to the app (<code>Next::CampaignBattle</code>, <code>AppContext::campaign</code>), and the debrief returns to the map (<code>Next::Strategy</code>, <code>AppContext::battle_report</code>). The launcher leads with <em>Campaign: continue</em> and <em>Campaign: new game</em> when the campaign has a strategy layer; <code>--strategy</code> opens a new campaign.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>A ninth tab, <strong>Supply</strong> (<code>Tab::Logistics</code>): survey the chosen system, build each facility type there (the row gives the cost and why it is not allowed), the facilities with their stores or build time and research projects, <em>Research <topic> here</em> on a free research station, the current base's store, and a count of open orders, convoys and survey ships. The map draws facilities (diamonds: grey while building, orange when working), convoys (gold dots) and survey ships (sky-blue rings). Testbed cheats on this screen: R-TST-010.</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia. Texts are plain English in the default campaign's strategy files, not text keys. The look is Stage 6.</p>
+<p>Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia; the Supply tab is plain text, without a supply-traffic view. Texts are plain English in the default campaign's strategy files, not text keys. The look is Stage 6.</p>
 </div>
 <h3 id="r-str-011-saves">R-STR-011 Saves<a class="headerlink" href="#r-str-011-saves" title="Permanent link">&para;</a></h3>
 <p>A save MUST hold the full campaign state plus the mod list and versions; loading MUST refuse a save whose mods are missing. Logistics state (stores, orders, build progress, ships in flight with their attack rolls, survey results) MUST be saved.</p>
 <p><em>Rationale:</em> Long campaigns; changing mods.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-004-saved-games">F-STR-004</a></li>
-<li>Status: implemented (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>) for the state that exists; logistics state joins when logistics is built (R-STR-012 – R-STR-027)</li>
-<li>Verified by: <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code>; <code>campaign::tests::the_default_campaign_runs_six_months</code> (a six-month game round-trips); MT-4-10</li>
+<li>Status: implemented (app 0.7.0 – 0.9.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code>; <code>campaign::tests::the_default_campaign_runs_six_months</code> (a six-month game round-trips, with the default campaign's logistics block); MT-4-10, MT-4-18</li>
 <li>See: <a href="../../../implementation/architecture/campaign/#saves">Campaign (architecture) › Saves</a>, <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a></li>
 </ul>
 <div class="admonition note">
-<p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
-<p><code>campaign::save</code> writes the whole <code>Campaign</code> as YAML (format version 1): the campaign id, the packs with their versions, then every field — stores, queues, build progress, contacts, deliveries, craft in flight, pilots, flags, messages — and reads it back equal (the test also continues both games 300 hours and compares). Loading refuses a save whose packs are not all loaded, naming them, and a save whose indices do not fit the loaded rules ("was a mod changed?"). One save slot per campaign, <code>&lt;user data&gt;/saves/&lt;campaign&gt;.yaml</code>, written on F5 and on leaving the map.</p>
+<p class="admonition-title">As built (app 0.7.0 – 0.9.0)</p>
+<p><code>campaign::save</code> writes the whole <code>Campaign</code> as YAML (format version 1): the campaign id, the packs with their versions, then every field — stores, queues, build progress, contacts, deliveries, craft in flight, pilots, flags, messages — and reads it back equal (the test also continues both games 300 hours and compares). Loading refuses a save whose packs are not all loaded, naming them, and a save whose indices do not fit the loaded rules ("was a mod changed?"). One save slot per campaign, <code>&lt;user data&gt;/saves/&lt;campaign&gt;.yaml</code>, written on F5 and on leaving the map. <strong>Logistics</strong> (app 0.9.0): a <code>logistics:</code> block with the facilities (type, system, ready time, store, running lines, research project), open orders, convoys (cargo, destination, position, route, vessels, distance to a pending ambush), survey ships (with their attack roll), the surveyed systems, the deposits' reserves and the bases' stores, indices checked; a save with facilities is refused by a campaign without logistics.</p>
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Pack <strong>versions</strong> are recorded but not compared: a save from an older version of a loaded mod is accepted if its indices still fit.</p>
+<p>Pack <strong>versions</strong> are recorded but not compared: a save from an older version of a loaded mod is accepted if its indices still fit. No unit test round-trips a save with logistics <strong>in flight</strong> (the six-month test's automatic player builds no facilities); MT-4-18 covers it by hand.</p>
 </div>
 <h3 id="r-str-012-logistics-is-optional-data">R-STR-012 Logistics is optional data<a class="headerlink" href="#r-str-012-logistics-is-optional-data" title="Permanent link">&para;</a></h3>
 <p>Logistics MUST be entirely campaign data; a campaign without <code>facility_types</code>, <code>recipes</code> and <code>logistics</code> sections MUST behave as without logistics. The <code>interceptor</code> campaign MUST NOT use logistics.</p>
 <p><em>Rationale:</em> Modding first; <code>interceptor</code> stays faithful to the original.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>, <code>station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code> (synthetic campaigns); <code>campaign::tests</code> (campaigns without logistics play as before); <code>check::tests::the_default_campaign_passes</code></li>
+<li>See: <a href="../../../modding/strategy/#logistics">Strategy layer › Logistics</a>, <a href="../../design/logistics/">Logistics</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p><code>content::logistics::LogisticsDef</code> is built only when at least one <code>facility_types</code> entry exists; <code>StrategyDef::logistics</code> is then <code>Some</code>, else <code>None</code> and every logistics key is ignored. The sections: <code>resources</code>, <code>components</code>, <code>recipes</code>, <code>facility_types</code>, <code>research_sites</code>, <code>logistics</code>; on map systems <code>deposits</code> and <code>features</code>; on hulls <code>components</code>; on topics <code>lab</code>, <code>site</code>, <code>start_cost</code> — all in the rules schema. The default campaign's data is <code>resources/default/strategy/logistics.yaml</code>; the <code>interceptor</code> campaign defines no facility type.</p>
+</div>
 <h3 id="r-str-013-demand-driven-orders">R-STR-013 Demand-driven orders<a class="headerlink" href="#r-str-013-demand-driven-orders" title="Permanent link">&para;</a></h3>
 <p>A main base's build queue MUST create orders for components to manufacturing centers; a manufacturing center's recipes MUST create orders for materials to mining facilities; a research station's start cost MUST create a one-off order. Each order MUST be filled by the nearest suitable facility by lane. Nothing MUST be shipped speculatively.</p>
 <p><em>Rationale:</em> A basic supply-and-demand simulation.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>), with the nearest facility measured in a straight line (DEV-049)</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>, <code>station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>; MT-4-15, MT-4-17</li>
+<li>See: <a href="../../../modding/strategy/#how-the-chain-runs">Strategy layer › How the chain runs</a>, <a href="../../../implementation/architecture/campaign/#logistics">Campaign › Logistics</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>Each hour, a base's unstarted hull jobs want their hull's <code>components</code>; what the base's store and the convoys already heading there do not cover is ordered (<code>Campaign::want</code>, which tops up rather than duplicates). A manufacturing center that must fill an order and lacks a recipe's inputs orders them from a mining facility with a deposit of each; a research station orders its project's <code>start_cost</code> until it arrives. The supplier is the <strong>nearest ready facility of the right role by straight-line distance</strong> between systems (<code>Campaign::supplier</code>), not by lane distance (DEV-049). With no suitable facility no order is placed, and the demand is asked again next hour. Goods move only to fill an order.</p>
+</div>
 <h3 id="r-str-014-extraction-and-recipes">R-STR-014 Extraction and recipes<a class="headerlink" href="#r-str-014-extraction-and-recipes" title="Permanent link">&para;</a></h3>
 <p>Mining facilities MUST extract from deposits at their rate until reserves run out; a recipe MUST start only when its inputs are in that center's store, take its time, and leave its output in the store; storage limits MUST stop production when full.</p>
 <p><em>Rationale:</em> Production follows supply.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code> (a reserve drawn down; a recipe run on delivered inputs); MT-4-15</li>
+<li>See: <a href="../../../modding/strategy/#recipes">Strategy layer › recipes</a>, <a href="../../../modding/strategy/#facility_types">facility_types</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>A mining facility adds <code>rate</code> / 24 of each deposit of its system every hour, limited by the room left in its store (<code>storage</code>) and by the deposit's reserve (<code>unlimited</code> by default). A manufacturing center starts a recipe on a free line (<code>lines</code>) only when all inputs are in its store, uses them at the start, and adds <code>output</code> to the store after <code>time</code>; it starts runs only for orders it must fill.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p><code>storage</code> is enforced for <strong>mining facilities only</strong>: a manufacturing center's and a research station's store has no limit yet.</p>
+</div>
 <h3 id="r-str-015-government-supply-ships">R-STR-015 Government supply ships<a class="headerlink" href="#r-str-015-government-supply-ships" title="Permanent link">&para;</a></h3>
 <p>When an order's cargo is ready, supply ships MUST be dispatched automatically along the fixed lanes; they are provided by the government and the player MUST NOT buy or manage them.</p>
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>; MT-4-15</li>
 <li>See: <a href="../../design/logistics/">Logistics</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>When a source facility's store holds an order's amount, the amount is taken out and a convoy leaves for the order's base or facility along the shortest lane route (<code>Campaign::lane_route</code>; a system no lane reaches is one straight hop) at <code>logistics.convoy_speed</code>. The player has no order for convoys; the map shows them.</p>
+</div>
 <h3 id="r-str-016-supply-convoys">R-STR-016 Supply convoys<a class="headerlink" href="#r-str-016-supply-convoys" title="Permanent link">&para;</a></h3>
 <p>A shipment MUST travel as a convoy of several supply vessels, each carrying an even share of the cargo; a convoy that is partly destroyed MUST deliver the surviving vessels' share.</p>
 <p><em>Rationale:</em> Escort missions stay interesting and playable; single ships would be destroyed quickly (decision 2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-007-supply-convoys-worth-escorting">F-STR-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code> (every convoy ambushed at 50 % loss; deliveries shrink and orders follow until the cost is met); MT-4-16</li>
+<li>See: <a href="../../../modding/strategy/#logistics">Strategy layer › logistics</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>The number of vessels per convoy.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>The number of vessels is campaign data, <code>logistics.vessels</code> (default 3; the default campaign 3) — answering the former Open question. On arrival a convoy delivers its cargo × surviving vessels ÷ <code>vessels</code>; what is missing is ordered again by the next hour's demand.</p>
 </div>
 <h3 id="r-str-017-supply-vessel-model">R-STR-017 Supply vessel model<a class="headerlink" href="#r-str-017-supply-vessel-model" title="Permanent link">&para;</a></h3>
 <p>The default campaign MUST provide a supply vessel model that is reasonably large: a core vessel with several attached cargo containers.</p>
@@ -7113,51 +7149,67 @@
 </ul>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Whether the existing cargo clipper and cargo pod become the core vessel and containers, or a new model replaces them.</p>
+<p>Whether the existing cargo clipper and cargo pod become the core vessel and containers, or a new model replaces them. Convoys are dots on the strategy map until their battles are flown (R-STR-019).</p>
 </div>
 <h3 id="r-str-018-supply-convoy-attack-position">R-STR-018 Supply convoy attack position<a class="headerlink" href="#r-str-018-supply-convoy-attack-position" title="Permanent link">&para;</a></h3>
 <p>A supply convoy's attack position along its route MUST be chosen at random when it launches.</p>
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-007-supply-convoys-worth-escorting">F-STR-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>; MT-4-16</li>
+<li>See: <a href="../../../implementation/architecture/campaign/#logistics">Campaign › Logistics</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>Whether every supply convoy is attacked or only some, and at what chance: the user's answer gives the 25 % roll for survey ships only (R-STR-021).</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>At launch one roll against <code>logistics.ambush_chance</code> decides whether the convoy will be attacked (default 30 %; the default campaign 30 %), and a second roll picks the point as a fraction of the route's length (<code>Convoy::ambush_in</code>, saved). This answers the former Open question: only some convoys are attacked, at a campaign-defined chance.</p>
 </div>
 <h3 id="r-str-019-logistics-mission-generation">R-STR-019 Logistics mission generation<a class="headerlink" href="#r-str-019-logistics-mission-generation" title="Permanent link">&para;</a></h3>
 <p>A <code>convoy_ambush</code> mission MUST be generated when an attacked convoy reaches its attack position, and a <code>construction_defence</code> mission when a strike on a facility under construction is due; when the player does not fly, the mission MUST be auto-resolved.</p>
 <p><em>Rationale:</em> Logistics in battle.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a>, <a href="../../../definition/missions/#f-msn-007-logistics-missions">F-MSN-007</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
+<li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>): the auto-resolve of a convoy ambush</li>
+<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code> (auto-resolved losses); MT-4-16</li>
 <li>See: <a href="../../design/logistics/">Logistics</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p>At the attack position the ambush is <strong>always auto-resolved</strong>: each vessel is lost with <code>logistics.ambush_loss</code> (default 35 %; the convoy has no escort), and a notice names the cargo and the losses.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: generating and flying <code>convoy_ambush</code> (the mission exists in the default campaign; the hookup from the map does not), construction strikes and <code>construction_defence</code> (R-STR-023).</p>
+</div>
 <h3 id="r-str-020-cargo-losses-and-depots">R-STR-020 Cargo losses and depots<a class="headerlink" href="#r-str-020-cargo-losses-and-depots" title="Permanent link">&para;</a></h3>
 <p>A destroyed vessel's cargo MUST be lost; a captured vessel's cargo MUST go to the captor and be stored at a supply depot; destroying an enemy supply depot MUST let the player seize its stock.</p>
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (depots in Stage 5).</li>
+<li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>): destroyed vessels' cargo is lost</li>
+<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>; MT-4-16</li>
 <li>See: <a href="../../design/logistics/">Logistics</a></li>
 </ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Not built: capture, captured cargo, enemy supply depots and seizing their stock (Stage 5 with the rival's logistics).</p>
+</div>
 <h3 id="r-str-021-survey-ships">R-STR-021 Survey ships<a class="headerlink" href="#r-str-021-survey-ships" title="Permanent link">&para;</a></h3>
 <p>Surveys MUST be flown by survey ships, a mission profile and craft distinct from supply ships, launched from a base to a system within the base's current radar range. A survey MUST reveal the system's deposits and reserves, features, the research sites it qualifies for and its suitability for each facility type. When a survey ship launches, a 25 % roll MUST decide whether it will be attacked.</p>
 <p><em>Rationale:</em> Logistics decisions (2026-11-11, revised): survey and supply are different.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-006-surveys">F-STR-006</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code> (survey first; the report names the deposit); MT-4-13</li>
+<li>See: <a href="../../../modding/strategy/#the-players-orders">Strategy layer › The player's orders</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p><code>Campaign::survey(def, base, system)</code> launches a survey ship (separate from convoys) from a base to a system within that base's sensor range, not yet surveyed. At launch a roll against <code>logistics.survey_attack_chance</code> (default 25 %) marks it attacked. It flies straight at <code>logistics.survey_speed</code>; on arrival an attacked ship is lost half the time, else the system is surveyed and a notice lists its deposits with their daily rates and the research sites it meets. Suitability per facility type is the Supply tab's reason on each <em>Build</em> row (R-STR-010).</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>What the survey-ship craft is (the design has used the Sky-Eye probe object), where and when an attacked survey ship meets its attackers, and which mission is generated.</p>
+<p>The report does not give reserves or features by name; the survey ship has no craft or battle model, and an attack is auto-resolved (lost on a fixed 50 % roll, not campaign data) instead of generating a mission.</p>
 </div>
 <h3 id="r-str-022-construction-stages">R-STR-022 Construction stages<a class="headerlink" href="#r-str-022-construction-stages" title="Permanent link">&para;</a></h3>
 <p>A facility under construction MUST be shown in its <code>build_25</code> state from 0 %, <code>build_60</code> from 60 % and <code>build_90</code> from 90 %, and intact on completion, on the strategy map and in battle.</p>
@@ -7168,6 +7220,10 @@
 <li>Verified by: Planned (the stage looks themselves are R-CMB-019, implemented).</li>
 <li>See: <a href="../../design/logistics/">Logistics</a></li>
 </ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>App 0.9.0 builds facilities over their <code>time</code> (grey on the map until finished) and reads <code>facility_types.&lt;id&gt;.hub</code>, but shows no construction stages and no battle at a facility.</p>
+</div>
 <h3 id="r-str-023-construction-attacks">R-STR-023 Construction attacks<a class="headerlink" href="#r-str-023-construction-attacks" title="Permanent link">&para;</a></h3>
 <p>The enemy MAY strike a facility under construction from 50 % progress, at most three times per location; both numbers MUST be campaign data.</p>
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
@@ -7182,10 +7238,14 @@
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-009-research-stations-and-fighter-pools">F-STR-009</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>, <code>survey_build_mine_make_and_deliver_on_demand</code> (a research station refused off a site); MT-4-17</li>
+<li>See: <a href="../../../modding/strategy/#research-stations-and-station-only-topics">Strategy layer › Research stations</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.0)</p>
+<p><code>research_sites: {&lt;id&gt;: {features: […]}}</code> match systems whose <code>features</code> include all the tags. A topic with <code>lab:</code> is researched only by a facility of that type, with <code>site:</code> only in a system meeting that site, and is not offered to bases; <code>Campaign::start_station_research</code> checks both and the topic's <code>requires</code>. The station orders the <code>start_cost</code>, uses it once on arrival, then adds <code>research_rate</code> an hour with no further supply. Research stations themselves may be built only on a surveyed research site.</p>
+</div>
 <h3 id="r-str-025-facility-fighter-pools">R-STR-025 Facility fighter pools<a class="headerlink" href="#r-str-025-facility-fighter-pools" title="Permanent link">&para;</a></h3>
 <p>Fighters MUST be built at main bases and MAY be transferred to a facility's pool, separate from base hangars; pool fighters MUST defend the facility's system and escort its convoys, and MAY be moved between facilities.</p>
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
@@ -7206,7 +7266,7 @@
 </ul>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>The value is TBD, set by tech-tree balance.</p>
+<p>The value is TBD, set by tech-tree balance. In app 0.9.0 a convoy carries a whole order, whatever its size.</p>
 </div>
 <h3 id="r-str-027-third-party-convoys">R-STR-027 Third-party convoys<a class="headerlink" href="#r-str-027-third-party-convoys" title="Permanent link">&para;</a></h3>
 <p>Prospector convoys MUST fly expeditions (base → system under investigation → pause → base); Cartel convoys MUST fly to random destinations, including empty or uncharted stars; escorting or attacking them MUST change relations.</p>
@@ -7236,6 +7296,11 @@
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>R-STR-001 – R-STR-011 as built (app 0.7.0 – 0.7.3, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>94d66c1</code>, <code>076203e</code>): R-STR-001 (<code>start:</code> replaces <code>starts</code>) and R-STR-011 implemented; R-STR-002 – R-STR-010 partly met (status stays planned), each with an As-built note, Verified-by lines and an Open note of what remains (endurance, choosing a fit, logistics, evaluations, the 3D base view; known issues: manufacture charges no money, <code>salvaged</code> compares names with ids). R-STR-012 – R-STR-027 stay planned</td>
+</tr>
+<tr>
+<td>1.14.0</td>
+<td>2026-11-11</td>
+<td>Logistics, the X-COM data and fixes as built (app 0.8.0 – 0.9.0, main <code>c64d178</code>, <code>8e96338</code>, <code>ff9d8fc</code>): R-STR-011 (logistics state saved), R-STR-012, R-STR-013 (nearest supplier in a straight line, DEV-049), R-STR-015, R-STR-016 (vessels: <code>logistics.vessels</code>), R-STR-018 (attack chance: <code>logistics.ambush_chance</code>) and R-STR-024 implemented; R-STR-014 (storage only at mines), R-STR-019 (ambushes auto-resolved, not flown), R-STR-020 (losses, no capture or depots) and R-STR-021 (no survey craft; attacks auto-resolved) partly met; R-STR-004, R-STR-005 (<code>tech_ids</code>, station-only topics), R-STR-007 (hull components) and R-STR-010 (the Supply tab) As-built notes; the two known issues (manufacture free, <code>salvaged</code> by name) fixed. R-STR-017, R-STR-022, R-STR-023, R-STR-025 – R-STR-027 stay planned with Open notes</td>
 </tr>
 </tbody>
 </table>

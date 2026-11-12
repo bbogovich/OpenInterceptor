@@ -3296,6 +3296,67 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#logistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logistics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-flow-demand-pulls-convoys-carry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow: demand pulls, convoys carry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logic-flow-logisticsstep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic flow: logistics::step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-x-com-data-app-080" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The X-COM data (app 0.8.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testbed-cheats-app-081" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testbed cheats (app 0.8.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#saves" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6274,6 +6335,67 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#logistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logistics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logistics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-flow-demand-pulls-convoys-carry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow: demand pulls, convoys carry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logic-flow-logisticsstep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic flow: logistics::step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-x-com-data-app-080" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The X-COM data (app 0.8.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testbed-cheats-app-081" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testbed cheats (app 0.8.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#saves" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6340,11 +6462,12 @@
 
 
 <h1 id="campaign-strategy-layer">Campaign (strategy layer)<a class="headerlink" href="#campaign-strategy-layer" title="Permanent link">&para;</a></h1>
-<p><code>src/campaign/</code> (<code>mod.rs</code>, <code>save.rs</code>) with its data in <code>src/content/strategy.rs</code>, its expression
-context in <code>src/script/campaign.rs</code> and its screen in <code>src/app/strategy.rs</code>: the real-time
-strategy game around the battles (Stage 4, app 0.7.0 – 0.7.3). The modder's view is
+<p><code>src/campaign/</code> (<code>mod.rs</code>, <code>logistics.rs</code>, <code>save.rs</code>) with its data in <code>src/content/strategy.rs</code>
+and <code>src/content/logistics.rs</code>, its expression context in <code>src/script/campaign.rs</code> and its screen
+in <code>src/app/strategy.rs</code>: the real-time strategy game around the battles (Stage 4, app 0.7.0 –
+0.9.0). The modder's view is
 <a href="../../../modding/strategy/">Strategy layer</a>; the player's is
-<a href="../../../user-guide/campaign/">User guide › Campaign</a>. Requirements: R-STR-001 – R-STR-011 on
+<a href="../../../user-guide/campaign/">User guide › Campaign</a>. Requirements: R-STR-001 – R-STR-027 on
 <a href="../../../specification/requirements/strategy-logistics/">Strategy &amp; logistics</a>.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <h3 id="where-it-sits">Where it sits<a class="headerlink" href="#where-it-sits" title="Permanent link">&para;</a></h3>
@@ -6359,19 +6482,22 @@ rendering, no input. It reads the content layer (<code>StrategyDef</code>) and t
     end
     subgraph SIM["4 · Simulation"]
         CA["campaign::Campaign&lt;br/&gt;advance, orders, battle_result"]
+        LG["campaign::logistics&lt;br/&gt;step, Logistics"]
         SV["campaign::save&lt;br/&gt;write / read"]
         W["sim::World"]
     end
     subgraph CON["3 · Content"]
         SD["content::strategy::StrategyDef"]
+        LD["content::logistics::LogisticsDef&lt;br/&gt;(StrategyDef::logistics)"]
         SC["script::campaign&lt;br/&gt;QUERIES, schema"]
     end
     ST --&gt; CA &amp; SV
     AM --&gt; ST &amp; FL
     FL --&gt; W
-    CA --&gt; SD &amp; SC
+    CA --&gt; SD &amp; SC &amp; LG
+    LG --&gt; LD
     SV --&gt; CA &amp; SD
-    SD --&gt; SC</code></pre>
+    SD --&gt; SC &amp; LD</code></pre>
 <p><code>campaign</code> never calls <code>sim</code>: a battle is handed to the app, which flies it in an ordinary
 <code>FlightSession</code> and hands the debrief back. The two simulations meet only through strings (the
 mission id, the result, the outcome's action texts) and a kill count.</p>
@@ -6389,18 +6515,37 @@ mission id, the result, the outcome's action texts) and a kill count.</p>
 <li><strong>Rules.</strong> The strategy sections are ordinary rules sections: definition sections (<code>maps</code>,
    <code>star_classes</code>, <code>research</code>, <code>items</code>, <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>,
    <code>expenses</code>: <code>content::strategy::DEF_SECTIONS</code>) layer across packs like ships do; globals
-   (<code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>economy</code>, <code>flags</code>) are read once. Their
+   (<code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>economy</code>, <code>flags</code>, <code>tech_ids</code>, <code>logistics</code>)
+   are read once; the logistics definitions (<code>content::logistics::DEF_SECTIONS</code>: <code>resources</code>,
+   <code>components</code>, <code>recipes</code>, <code>facility_types</code>, <code>research_sites</code>) layer like the others (app
+   0.9.0). <code>start.money_from: original:&lt;file&gt;/&lt;key&gt;</code> is resolved here, while the original's files
+   are at hand: <code>content::rules::build_at</code> reads the key from the section named after the
+   difficulty level and merges it into <code>start</code> as <code>money</code> (app 0.8.0). Their
    schema (<code>content::strategy::sections</code>) joins the rules file schema, so <code>--check</code> and the
    editor JSON Schema know every key.</li>
 <li><strong>Names.</strong> <code>StrategyDef::build</code> first collects every id it defines, plus factions, ship
    classes, missions and the flags missions set, into one sorted table (<code>names</code>). That table
    becomes the constants of <code>script::campaign::schema</code>, so <code>research(heat_rays)</code> compiles to
    <em>query 0 with argument 7</em> and a misspelling is a load error.</li>
+<li><strong>The original's numbers</strong> (app 0.8.0). Data inherited from the original names prerequisites
+   by number (<code>prereq1</code> – <code>prereq3</code> on topics, <code>tech_required</code>, <code>tech_required2</code> on items, hulls
+   and modules). When a definition has no <code>requires:</code> and the campaign has a <code>tech_ids</code> table,
+   <code>StrategyDef::build</code> turns the numbers it lists into <code>research(&lt;id&gt;) and …</code> text before
+   parsing it like any written condition, so the result is checked the same way. Costs, prices,
+   upkeep and maintenance are multiplied by <code>economy.cost_scale</code>; with <code>economy.module_time:
+   days</code>, a module's <code>prod_time</code> becomes its build time in days.</li>
+<li><strong>Logistics</strong> (app 0.9.0). <code>LogisticsDef::build</code> reads the logistics definitions, the start
+   map's systems (their <code>deposits</code> and <code>features</code>), each hull's <code>components</code> and each topic's
+   <code>lab</code>, <code>site</code> and <code>start_cost</code> — into vectors <strong>in the same order</strong> as the map's systems, the
+   hulls and the topics, so a hull index or topic index finds its logistics data directly. It
+   returns <code>None</code> when no facility type is defined: <code>StrategyDef::logistics</code> is an <code>Option</code>, and
+   everything downstream starts with <code>let Some(l) = def.logistics.as_ref() else { return }</code>.</li>
 <li><strong>Check.</strong> Cross-references (start bases, systems, craft, templates, unlocks) are checked;
    <code>content::rules</code> adds the outside ones (a raid's mission and faction, a hull's ship class).</li>
 <li><strong>Play.</strong> <code>Campaign::new</code> builds the starting state: the map's systems (generated now for a
    generated map), the starting bases with finished modules, craft, pilots who take the craft in
-   order, recruits, the first times for every income, expense and raid roll.</li>
+   order, recruits, the first times for every income, expense and raid roll; with logistics, an
+   empty <code>Logistics</code> with every system unsurveyed and each deposit's full reserve.</li>
 </ol>
 <h3 id="logic-flow-the-hour-step">Logic flow: the hour step<a class="headerlink" href="#logic-flow-the-hour-step" title="Permanent link">&para;</a></h3>
 <p><code>Campaign::advance(def, hours)</code> loops <code>step</code> in slices of <strong>at most one hour</strong>, and returns as
@@ -6409,7 +6554,7 @@ fixed, which is what makes a campaign replay exactly from a save:</p>
 <pre class="mermaid"><code>flowchart TD
     A["hours += dt"] --&gt; B["construction finished → Notice"]
     B --&gt; C["research: each base, rate = eval(research_model.rate, base)&lt;br/&gt;topic done → known, Notice"]
-    C --&gt; D["manufacture: production_rate × dt, first job first&lt;br/&gt;finished unit → receive (item or craft)"]
+    C --&gt; D["manufacture: first job first; a unit not yet started is paid (cost)&lt;br/&gt;or, a hull with components, waits for logistics;&lt;br/&gt;production_rate × dt; finished unit → receive (item or craft)"]
     D --&gt; E["deliveries due → receive"]
     E --&gt; F["incomes and expenses due → money ± eval(amount)"]
     F --&gt; G{"month boundary&lt;br/&gt;(720 h)?"}
@@ -6419,7 +6564,8 @@ fixed, which is what makes a campaign replay exactly from a save:</p>
     I --&gt; J["raids: roll each due raid (requires, chance) → launch contact"]
     J --&gt; K["contacts move; within a base's sensor range → detected, Notice;&lt;br/&gt;hidden systems in range revealed"]
     K --&gt; L["interceptions fly to their contacts → Event::Battle"]
-    L --&gt; M["contacts that arrived unopposed → module lost, score(undefended), Notice"]</code></pre>
+    L --&gt; M["contacts that arrived unopposed → module lost, score(undefended), Notice"]
+    M --&gt; N["logistics::step (app 0.9.0; campaigns with logistics):&lt;br/&gt;demand, mining, recipes, stations, convoys, surveys"]</code></pre>
 <p>Every roll (raids, launch points, pilots, recruits, generated maps, <code>random(p)</code>) draws from one
 <strong>xorshift</strong> generator stored in the campaign (<code>Campaign::rng</code>), so <code>same_seed_same_campaign</code>
 can assert that two campaigns from one seed are equal after the same time.</p>
@@ -6465,13 +6611,14 @@ base being evaluated) and the generator in a <code>Cell&lt;u64&gt;</code> — <c
   <code>killed</code> leader's craft (re-indexing pilots' craft handles), sends the rest home, and removes
   the contact on <code>win</code> or <code>draw</code>.</li>
 </ul>
-<div class="admonition bug">
-<p class="admonition-title">Known issue: <code>salvaged(x)</code> never matches a raid id (app 0.7.1)</p>
-<p><code>salvage</code> records the raid's display <strong><code>name</code></strong> in <code>Campaign::salvaged</code> ("Saucer raid"), but
-the <code>salvaged(x)</code> query compares against the <strong>id</strong> in the expression (<code>saucer_raid</code>). With the
-default data the two differ, so <code>saucer_hulls</code> and <code>robot_brains</code> (and everything after them)
-can never become researchable. The fix is to record the raid's id; the six-month test does not
-notice because four topics are reachable without salvage.</p>
+<div class="admonition note">
+<p class="admonition-title">Fixed in app 0.9.0: <code>salvaged(x)</code> and manufacture costs</p>
+<p>Until app 0.9.0 <code>salvage</code> recorded the raid's display <strong>name</strong> while <code>salvaged(x)</code> compared
+the <strong>id</strong>, so the default campaign's <code>saucer_hulls</code> and <code>robot_brains</code> could never start;
+<code>battle_result</code> now records <code>def.raids[contact.raid].id</code>. Manufacture was free; each <code>Job</code> now
+has a <code>started</code> flag, and the hour step takes the unit's <code>cost</code> when it starts (or waits for
+the money). <code>campaign::tests::manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>
+covers both.</p>
 </div>
 <h3 id="travel-on-the-map">Travel on the map<a class="headerlink" href="#travel-on-the-map" title="Permanent link">&para;</a></h3>
 <p>Positions are map units and everything moves in straight hops at its speed per hour
@@ -6483,6 +6630,106 @@ settle the unsettled system with the shortest known distance and relax its lanes
 fast enough. A raid enters at the free system farthest from its target; an interception flies
 the lanes to the system nearest the contact (<code>nearest_system</code>), then straight to it, and home
 along the lanes. Routes are part of the saved state.</p>
+<h3 id="logistics">Logistics<a class="headerlink" href="#logistics" title="Permanent link">&para;</a></h3>
+<p><code>campaign::logistics</code> (app 0.9.0, plan items 4.14 – 4.17) is the runtime of
+<code>content::logistics::LogisticsDef</code>. Its state is one more plain struct inside the campaign,
+<code>Campaign::logistics: Logistics</code> — facilities, open orders, convoys and survey ships in flight,
+which systems are surveyed, what each deposit has left, and each base's store of components —
+and <code>logistics::step(campaign, def, dt, events)</code> runs one slice of it at the end of the hour step.
+The modder's view is <a href="../../../modding/strategy/#logistics">Strategy layer › Logistics</a>.</p>
+<h4 id="data-flow-demand-pulls-convoys-carry">Data flow: demand pulls, convoys carry<a class="headerlink" href="#data-flow-demand-pulls-convoys-carry" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart RL
+    subgraph BASE["Main base"]
+        J["hull job (not started)&lt;br/&gt;needs hulls.x.components"]
+        BS[("base_goods[b]")]
+    end
+    subgraph MC["Manufacturing center"]
+        MO["orders it must fill"]
+        LN["lines: recipe runs&lt;br/&gt;(≤ lines at once)"]
+        MS[("store")]
+    end
+    subgraph MF["Mining facility"]
+        DP["system deposits&lt;br/&gt;rate / 24 per hour, reserve"]
+        FS[("store ≤ storage")]
+    end
+    subgraph RS["Research station"]
+        PR["project: station-only topic&lt;br/&gt;start_cost once, then research_rate"]
+        RSS[("store")]
+    end
+    J -- "want(component, short)&lt;br/&gt;Order → nearest ready center" --&gt; MO
+    MO -- "inputs short:&lt;br/&gt;want(resource) → nearest mine with a deposit" --&gt; FS
+    PR -- "want(start_cost)" --&gt; FS
+    DP --&gt; FS
+    MO --&gt; LN
+    LN -- "output" --&gt; MS
+    MS -- "filled order → Convoy&lt;br/&gt;(vessels, lane route, ambush roll)" --&gt; BS
+    FS -- "filled order → Convoy" --&gt; MS
+    FS -- "filled order → Convoy" --&gt; RSS
+    BS -- "all components in store →&lt;br/&gt;job.started = true" --&gt; J
+    RSS --&gt; PR</code></pre>
+<p>An <strong>order</strong> is <code>{goods, amount, to: Dest, source}</code>: <code>amount</code> of <code>goods</code> wanted at <code>to</code> (a base
+or a facility, the <code>Dest</code> enum of two index variants), to be filled by facility <code>source</code>.
+<code>Campaign::want(l, goods, amount, to)</code> tops up the open orders for that destination and goods
+to <code>amount</code>; the shortfall is computed by the caller as <em>needed − in store − already in convoys</em>
+(<code>inbound</code>), so the same demand never produces two orders. A resource goes to the nearest
+ready mining facility whose system has a deposit of it, a component to the nearest ready
+manufacturing center (<code>Campaign::supplier</code>, by straight-line distance between systems). No
+supplier means no order: the demand waits and is asked again next hour.</p>
+<h4 id="logic-flow-logisticsstep">Logic flow: <code>logistics::step</code><a class="headerlink" href="#logic-flow-logisticsstep" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart TD
+    A["facilities whose ready_at fell in this slice → Notice"] --&gt; B["1 · demand: each base's unstarted hull jobs&lt;br/&gt;→ want(component, need − store − inbound)"]
+    B --&gt; C{"2 · each ready facility, by role"}
+    C --&gt;|mining| M["each deposit: min(rate/24 × dt, room, reserve) → store; reserve −="]
+    C --&gt;|manufacturing| P["finished lines → output to store;&lt;br/&gt;per order it fills: store + running ≥ amount? else&lt;br/&gt;free line and inputs in store → start recipe (inputs used)&lt;br/&gt;inputs short → want(inputs)"]
+    C --&gt;|research| R["project not started: start_cost in store? use it : want(start_cost)&lt;br/&gt;started: progress[topic] += research_rate × dt → known, Notice"]
+    M &amp; P &amp; R --&gt; D["3 · orders whose source store holds the amount →&lt;br/&gt;Convoy {cargo, to, route = lane_route, vessels, ambush_in = roll &lt; ambush_chance ? roll × length}"]
+    D --&gt; E["4 · convoys travel convoy_speed × dt along the route;&lt;br/&gt;ambush_in reaches 0 → each vessel lost with ambush_loss, Notice;&lt;br/&gt;at the end → deliver cargo × surviving / vessels"]
+    E --&gt; F["5 · hull jobs whose components are in base_goods → use them, started = true"]
+    F --&gt; G["6 · survey ships travel survey_speed × dt;&lt;br/&gt;arrived: attacked and roll &lt; 0.5 → lost, else surveyed; Notice with deposits and sites"]</code></pre>
+<p>Design points worth noticing:</p>
+<ul>
+<li><strong>Everything is an index.</strong> Facilities refer to their type and system by index, orders to
+  their source facility, <code>Dest</code> to a base or facility, <code>Line</code> to a recipe; stores are short
+  <code>Vec&lt;(String, f32)&gt;</code> lists of goods and amounts (<code>logistics::amount</code>, <code>add</code>). A save is then a
+  direct walk, and the borrow checker never sees two live references into the campaign.</li>
+<li><strong>Copy out, then mutate.</strong> <code>step</code> takes <code>&amp;mut Campaign</code> and often needs to read one part while
+  changing another (an order's amount while changing the source facility's store). It clones
+  the small thing it reads first — <code>let o = c.logistics.orders[k].clone();</code>, the list of
+  <code>(goods, amount)</code> a center must fill — and then mutates freely. With a few dozen orders the
+  clones cost nothing, and the code stays free of <code>RefCell</code> and of index juggling.</li>
+<li><strong>Rolls are made when something launches</strong>, not when it arrives: the ambush and its point
+  along the route, and a survey ship's attack. The outcome is then part of the saved state
+  (<code>Convoy::ambush_in</code>, <code>Survey::attacked</code>), so a save loaded before the ambush replays it the
+  same way. Ambushes are auto-resolved per vessel here; flying them as <code>convoy_ambush</code> is the
+  hookup still to come (R-STR-019).</li>
+<li><strong>Fixed placement rules</strong> (<code>Campaign::facility_allowed</code>): mining needs a surveyed system with
+  deposits, research a surveyed research site, manufacturing at most two lanes
+  (<code>lane_route(...).len() &lt;= 2</code>) from a base; one facility of each type per system. The design's
+  <code>placement:</code> expressions are not built (DEV-049).</li>
+<li><strong>Hulls with components</strong> are not paid in money: the manufacture step in <code>Campaign::advance</code>
+  sees <code>hull_components</code> and leaves the job for <code>logistics::step</code> to start once its components
+  are in the base's store.</li>
+<li><strong>Station-only topics</strong> (<code>station_topics[t]</code> is <code>Some</code>) are filtered out of
+  <code>Campaign::researchable</code>, so bases never offer them; <code>start_station_research</code> starts one at a
+  research station of the right <code>lab</code> type on the right <code>site</code>.</li>
+</ul>
+<h3 id="the-x-com-data-app-080">The X-COM data (app 0.8.0)<a class="headerlink" href="#the-x-com-data-app-080" title="Permanent link">&para;</a></h3>
+<p><code>tools/interceptor_strategy.py</code> (Python, standard library) is a build-time helper, not part of
+the engine: it reads the player's <code>GameSettings.ini</code> and <code>Interceptor.exe</code> and writes
+<code>packs/interceptor/strategy/references.yaml</code> — the <code>tech_ids:</code> table and <code>inherit:</code> references
+to the original's sections, with no values. The engine then treats the X-COM campaign like any
+other: inheritance reads the values from the player's file at load, <code>tech_ids</code> turns the numeric
+prerequisites into conditions (above), and <code>cost_scale</code>, <code>module_time</code> and <code>money_from</code> adapt the
+original's units. The executable's table layout (12-byte entries: a pointer to the <code>R_</code> section
+name, a string id, the tech id) is <em>derived</em>; see <a href="../../../modding/strategy/#the-interceptor-campaign-from-the-players-data">Strategy layer › the <code>interceptor</code>
+campaign</a>.</p>
+<h3 id="testbed-cheats-app-081">Testbed cheats (app 0.8.1)<a class="headerlink" href="#testbed-cheats-app-081" title="Permanent link">&para;</a></h3>
+<p><code>Campaign::cheat_payday</code>, <code>cheat_knowitall</code>, <code>cheat_quickbase</code> and <code>cheat_jump(contact)</code> are the
+original's own cheat list as plain methods on the campaign (so they are unit-tested like any
+order); <code>app::strategy</code> binds them to Ctrl+M, Ctrl+K, Ctrl+B and Ctrl+J. <code>cheat_jump</code> puts the
+first ready craft with a ready pilot at the contact (<code>away = Some((contact, pos))</code>, route
+cleared), so the next step's interception check reports <code>Event::Battle</code> at once. Each cheat is
+logged in the message list.</p>
 <h3 id="saves">Saves<a class="headerlink" href="#saves" title="Permanent link">&para;</a></h3>
 <p><code>campaign::save</code> writes the whole <code>Campaign</code> as a YAML document (<code>write</code>) and reads it back
 (<code>read</code>), using the engine's own YAML reader and writer (<code>formats::yaml</code>). Because the state
@@ -6498,7 +6745,12 @@ holds only numbers, text and <strong>indices</strong> into the rules, the save i
 <p>Reading checks the format version, then that <strong>every pack listed is loaded</strong> (else "this save
 needs packs that are not loaded: …"), then every index against the loaded rules (module, item,
 topic, income/expense/raid counts; else "save: … does not match the loaded rules (was a mod
-changed?)"). A changed mod is refused with a message instead of crashing or silently changing
+changed?)"). Since app 0.9.0 a <code>logistics:</code> block follows (<code>write_logistics</code> / <code>read_logistics</code>):
+facilities with their stores, lines and projects, orders, convoys with their routes, vessels and
+pending ambush, survey ships, the surveyed flags, the reserves and the bases' stores;
+destinations are written <code>base:&lt;i&gt;</code> / <code>facility:&lt;i&gt;</code>. Its indices are checked like the rest, a
+campaign without logistics saves an empty block, and a save with facilities is refused by a
+campaign that has no logistics. A changed mod is refused with a message instead of crashing or silently changing
 the game. The screen saves to <code>&lt;user data&gt;/saves/&lt;campaign id&gt;.yaml</code> (<code>strategy::save_path</code>) on
 F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
@@ -6514,7 +6766,7 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <tr>
 <td><code>StrategyDef</code></td>
 <td><code>content/strategy.rs</code></td>
-<td>The strategy layer's rules: <code>start</code>, <code>map</code>, <code>star_classes</code>, <code>research</code>, <code>research_model</code>, <code>items</code>, <code>hulls</code>, <code>modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code>, <code>pilots</code>, <code>scores</code>, <code>delivery</code>, <code>salvage</code>, and the <code>names</code> table.</td>
+<td>The strategy layer's rules: <code>start</code>, <code>map</code>, <code>star_classes</code>, <code>research</code>, <code>research_model</code>, <code>items</code>, <code>hulls</code>, <code>modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code>, <code>pilots</code>, <code>scores</code>, <code>delivery</code>, <code>salvage</code>, the <code>names</code> table and <code>logistics: Option&lt;LogisticsDef&gt;</code> (app 0.9.0).</td>
 </tr>
 <tr>
 <td><code>Date</code></td>
@@ -6540,6 +6792,31 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <td><code>Event</code></td>
 <td><code>campaign/mod.rs</code></td>
 <td><code>Notice(String)</code> (stop the clock, show it) or <code>Battle { contact }</code>.</td>
+</tr>
+<tr>
+<td><code>LogisticsDef</code>, <code>FacilityType</code>, <code>Role</code>, <code>Recipe</code>, <code>Deposit</code>, <code>SystemGoods</code>, <code>StationTopic</code></td>
+<td><code>content/logistics.rs</code></td>
+<td>The logistics rules (app 0.9.0): resources, components, recipes, facility types, sites, per-system goods, per-hull components, per-topic station restrictions, supply settings.</td>
+</tr>
+<tr>
+<td><code>Logistics</code>, <code>Facility</code>, <code>Line</code>, <code>Order</code>, <code>Convoy</code>, <code>Survey</code>, <code>Dest</code></td>
+<td><code>campaign/logistics.rs</code></td>
+<td>The logistics state inside <code>Campaign::logistics</code>.</td>
+</tr>
+<tr>
+<td><code>logistics::step</code>, <code>amount</code></td>
+<td><code>campaign/logistics.rs</code></td>
+<td>One slice of logistics time; goods in a store.</td>
+</tr>
+<tr>
+<td><code>Campaign::cheat_payday</code>, <code>cheat_knowitall</code>, <code>cheat_quickbase</code>, <code>cheat_jump</code></td>
+<td><code>campaign/mod.rs</code></td>
+<td>Testbed cheats (app 0.8.1).</td>
+</tr>
+<tr>
+<td><code>campaign::autoplay</code></td>
+<td><code>campaign/mod.rs</code></td>
+<td>The automatic player of <code>--strategy-soak</code> and the six-month test (public since app 0.8.0).</td>
 </tr>
 <tr>
 <td><code>Campaign::fit_best</code>, <code>loadout</code>, <code>lane_route</code>, <code>nearest_system</code></td>
@@ -6587,6 +6864,12 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
   <code>buy(def, base, Product, count)</code>, <code>sell(def, base, item, count)</code>, <code>manufacture(def, base,
   Product, count)</code>, <code>hire(def, recruit)</code>, <code>intercept(def, contact, &amp;[craft])</code>, <code>fit_best(def, craft) -&gt; Result&lt;String, String&gt;</code>; <code>assign(pilot,
   Option&lt;craft&gt;)</code>.</li>
+<li>Logistics orders (app 0.9.0), each <code>-&gt; Result&lt;(), String&gt;</code>: <code>survey(def, base, system)</code>,
+  <code>build_facility(def, facility_type, system)</code>, <code>start_station_research(def, facility, topic)</code>;
+  the check alone: <code>facility_allowed(def, facility_type, system)</code>.</li>
+<li>Cheats (app 0.8.1): <code>cheat_payday()</code>, <code>cheat_knowitall()</code>, <code>cheat_quickbase()</code>,
+  <code>cheat_jump(contact) -&gt; Result&lt;usize, String&gt;</code> (the craft sent).</li>
+<li><code>campaign::autoplay(&amp;def, seed, days) -&gt; Campaign</code> — plays with the automatic player.</li>
 <li>Queries: <code>date(def)</code>, <code>eval(def, &amp;Expr, base)</code>, <code>holds(def, Option&lt;&amp;Expr&gt;)</code>, <code>stock_of(item)</code>,
   <code>effect(def, base, name)</code>, <code>sensor_range(def, base)</code>, <code>hangar(def, base)</code>, <code>available(def,
   "items.x")</code>, <code>researchable(def)</code>, <code>Campaign::rank(def, &amp;pilot)</code>, <code>battle_party(contact)</code>.</li>
@@ -6602,7 +6885,15 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <li>A save is readable YAML: open <code>&lt;user data&gt;/saves/default.yaml</code> to see the whole state.</li>
 <li>The message log (Messages tab) records every payment, arrival, research result, battle and
   report with its date.</li>
-<li>The campaign is unit-testable without a window: <code>campaign::tests::autoplay</code> plays any
+<li><code>openinterceptor --campaign &lt;id&gt; --strategy-soak 180</code> plays six months headless with
+  <code>campaign::autoplay</code> and prints a one-line summary (app 0.8.0): the quickest check that a
+  modded strategy layer runs — six-month results at app 0.8.0: <code>interceptor</code> 4 of 71 topics on
+  one downlink, <code>default</code> 12 of 14.</li>
+<li>Logistics: the Supply tab's last row counts open orders, convoys and survey ships; the message
+  log records every survey, completed facility and ambush. An order that never appears usually
+  means no ready facility can fill it (a resource no mined system has, or no manufacturing
+  center); a hull job that never starts is waiting for its <code>components</code>.</li>
+<li>The campaign is unit-testable without a window: <code>campaign::autoplay</code> plays any
   <code>StrategyDef</code> with a simple automatic player (keeps every base researching, builds a lab and a
   workshop when it can, intercepts every contact it sees, alternates battle results). The tests
   build small synthetic strategy layers from one YAML document (<code>content::strategy::tests::build</code>) and also play the real default campaign for six months.</li>

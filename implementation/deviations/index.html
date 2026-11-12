@@ -6340,6 +6340,18 @@ one looks like a bug.</p>
 <td>User request (playtest, app 0.7.4): to watch the final explosion. An engine choice: the original's own timing is not measured here (<em>unknown</em>); the delay is rules data, so a campaign can set <code>0s</code>.</td>
 <td>3</td>
 </tr>
+<tr>
+<td>DEV-049</td>
+<td><strong>Logistics as built simplifies its design</strong>: facility placement is a <strong>fixed rule per role</strong> (mining: a surveyed system with deposits; research: a surveyed research site; manufacturing: at most two lanes from a base; one facility of each type per system) instead of the design's <code>placement:</code> expressions; the nearest supplier is measured in a <strong>straight line</strong> between systems, not by lane (R-STR-013); convoy ambushes are <strong>auto-resolved</strong> as per-vessel losses, and an attacked survey ship is lost on a fixed 50 % roll, instead of generating battles; <code>storage</code> limits only mining facilities.</td>
+<td>App 0.9.0 (<code>ff9d8fc</code>): the smallest version of the design that plays the whole chain. Expressions over the campaign context and flown ambushes (<code>convoy_ambush</code> exists) are the next steps; the survey loss chance should become data. Default campaign only; the <code>interceptor</code> campaign has no logistics.</td>
+<td>4</td>
+</tr>
+<tr>
+<td>DEV-050</td>
+<td><strong>The <code>interceptor</code> strategy layer's estimates are derived</strong>: the start (date, pilots, craft, stock), the generated map's number of systems, delivery and salvage, hull speeds, missile <code>rounds</code>, module groups and effects, the X-COM base type's cost and hub sensor range, corporate funding and the raid rolls and targets are authored in <code>packs/interceptor/strategy/campaign.yaml</code>, each marked <code>DERIVED</code>; the pilot rules and mission score points are authored there too, from the design analysis, without the mark. The <strong>tech-id table</strong> in <code>references.yaml</code> is read from the player's executable by a layout that is itself <em>derived</em> (12-byte entries: <code>R_</code> name pointer, string id, tech id); ids 75 and up are not in it and are left out of conditions; research <code>unlocks</code> are not authored (items, hulls and modules are gated by their own <code>TechRequired</code>).</td>
+<td>App 0.8.0 (<code>c64d178</code>, plan item 4.12): research sizes and prerequisites, costs, production times and maintenance are inherited from the player's <code>GameSettings.ini</code> (<em>verified</em> as data, no values in the pack); what the original keeps in code or its manual describes only loosely is estimated, from the design analysis. <strong>Not play-tested</strong>: a six-month automatic run researches 4 of 71 topics on one downlink. The original's monthly evaluation per outpost and the strategist replace the funding and raid estimates in Stage 5.</td>
+<td>4</td>
+</tr>
 </tbody>
 </table>
 

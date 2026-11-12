@@ -6158,6 +6158,18 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>2ed1149</code> (after app 0.9.0)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
+build) gives <strong>355</strong> run on macOS (357 less the Linux-only test and the ignored helper). Added
+since <code>9295707</code>: app <strong>0.8.0</strong> (<code>c64d178</code>)
+<code>content::strategy::tests::original_tech_ids_become_research_prerequisites</code>; app <strong>0.8.1</strong>
+(<code>8e96338</code>) <code>campaign::tests::testbed_cheats_do_what_they_say</code>; app <strong>0.9.0</strong> (<code>ff9d8fc</code>)
+<code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>,
+<code>station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>,
+<code>campaign::tests::manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>; main <code>2ed1149</code>
+replaced <code>formats::png::tests::checksums_match_known_values</code> and
+<code>a_png_has_the_signature_chunks_and_stored_pixels</code> with <code>a_png_has_the_signature_and_decodes_back</code>
+(the in-crate checksums are gone). <code>campaign::autoplay</code>, the automatic player the six-month test
+uses, moved out of the test module (app 0.8.0) to serve <code>--strategy-soak</code>.</p>
 <p><strong>At main <code>9295707</code> (app 0.7.4)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
 build) gives <strong>351</strong> run on macOS (353 less the Linux-only test and the ignored helper). The 26
 added since app 0.6.4 are: app <strong>0.6.6</strong> (<code>6d390d7</code>) <code>content::formation::tests::shapes_place_followers_behind_and_beside_the_leader</code>,
@@ -6329,8 +6341,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::strategy</code></td>
-<td>2</td>
-<td>Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors)</td>
+<td>3</td>
+<td>Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors); <strong>the original's numeric tech ids become research prerequisites</strong> through <code>tech_ids</code> (an unlisted id is left out; <code>tech_required</code> gates an item)</td>
 </tr>
 <tr>
 <td><code>script::campaign</code></td>
@@ -6339,8 +6351,13 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>campaign</code></td>
-<td>9</td>
-<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra)</td>
+<td>11</td>
+<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong></td>
+</tr>
+<tr>
+<td><code>campaign::logistics</code></td>
+<td>2</td>
+<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met)</td>
 </tr>
 <tr>
 <td><code>campaign::save</code></td>
@@ -6349,8 +6366,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>formats::png</code></td>
-<td>3</td>
-<td>CRC-32 and Adler-32 match known values; a PNG has the signature, chunks and stored pixels; downscaling averages blocks</td>
+<td>2</td>
+<td>A PNG (encoded by the <code>image</code> crate since <code>2ed1149</code>) has the signature and chunks and <strong>decodes back to the same pixels</strong>; downscaling averages blocks</td>
 </tr>
 <tr>
 <td><code>app::strategy</code></td>

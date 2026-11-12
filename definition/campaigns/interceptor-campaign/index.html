@@ -6288,6 +6288,17 @@ source:</p>
 <p>Numeric tech ids in prerequisite keys (<code>Prereq1=12</code> in the original file) are translated by a mapping table in the
 mod (<code>tech_ids:</code>), checked by <code>--check</code> against the original file so a mistake is reported, not
 silently wrong.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.8.0)</p>
+<p>The table is generated from the player's executable by <code>tools/interceptor_strategy.py</code> into
+<code>packs/interceptor/strategy/references.yaml</code> (<em>derived</em>: the executable's 12-byte entries of
+<code>R_</code> name pointer, string id and tech id). <code>--check</code> checks that every research id the table
+gives is a defined topic once a condition uses it, but it does <strong>not</strong> compare the table with
+the original file again: a number the table does not list is left out of the condition
+silently (by design for the alien ids 75 and up). Research <code>unlocks</code> are not authored; items,
+hulls and modules are gated by their own <code>TechRequired</code>. See
+<a href="../../../modding/strategy/#the-interceptor-campaign-from-the-players-data">Strategy layer › the <code>interceptor</code> campaign</a>.</p>
+</div>
 <h2 id="fidelity-process">Fidelity process<a class="headerlink" href="#fidelity-process" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Stage 2</strong> — combat behaviours: each alien class's behaviour tuned against recorded play of
@@ -6315,6 +6326,11 @@ silently wrong.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Definition 1.0.0 as background for the campaign features</td>
+</tr>
+<tr>
+<td>1.14.0</td>
+<td>2026-11-11</td>
+<td>As-built note on <code>tech_ids</code> (app 0.8.0): generated from the player's executable; unlisted numbers are left out, not reported</td>
 </tr>
 </tbody>
 </table>

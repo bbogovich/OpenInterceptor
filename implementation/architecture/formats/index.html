@@ -6188,7 +6188,7 @@ test itself — never with original game files. Plan: Stage 1 (formats needed fo
     TXT["&amp;str"] --&gt; INI["ini::Ini::parse&lt;br/&gt;(original INI; legacy settings)"]
     TXT --&gt; YML["yaml::parse → Node&lt;br/&gt;(mod files, settings, bindings)"]
     TXT --&gt; OBJ["obj::parse → ObjMesh&lt;br/&gt;obj::parse_mtl"]
-    RGBA["RGBA pixels"] --&gt; PNG["png::encode_rgba → PNG bytes&lt;br/&gt;(writer, app 0.6.7)"]</code></pre>
+    RGBA["RGBA pixels"] --&gt; PNG["png::downscale, png::encode_rgba → PNG bytes&lt;br/&gt;(encoding by the image crate since 2ed1149)"]</code></pre>
 <p>Logic flow of a typical reader: check the signature (<code>BadMagic</code> if wrong) → read the header
 with <code>Reader</code> (every read returns <code>FResult</code>, so <code>?</code> propagates a <code>Truncated</code> error) → read the
 tables the header points to → validate cross-references (edge and vertex indices, palette
@@ -6240,7 +6240,7 @@ indices) → return owned data.</p>
 <tr>
 <td><code>formats::png</code></td>
 <td><em>(writes)</em> RGBA → PNG</td>
-<td>App 0.6.7, for the console's textured target model. <code>encode_rgba(w, h, rgba)</code> writes the signature and <code>IHDR</code> (8-bit RGBA), one <code>IDAT</code> holding a zlib stream of <strong>stored</strong> (uncompressed) deflate blocks of at most 65 535 bytes — each row led by filter byte 0 — and <code>IEND</code>; every chunk ends with a CRC-32 (bit-by-bit, polynomial <code>0xEDB88320</code>) and the zlib stream with an Adler-32. No compressor is needed, so no crate (see <a href="../../../learning/best-practices/dependencies/">Dependency policy</a>). <code>downscale(w, h, rgba, max)</code> averages blocks to at most <code>max</code> pixels a side. PNG files are read by <code>content</code>, not here.</td>
+<td>App 0.6.7, for the console's textured target model. Since main <code>2ed1149</code> <code>encode_rgba(w, h, rgba)</code> calls the <code>image</code> crate's <code>PngEncoder</code> — <code>image</code> is already a direct dependency for decoding (its <code>png</code> feature encodes too), so the in-crate writer of app 0.6.7 (stored deflate blocks, its own CRC-32 and Adler-32) was removed as a duplicate; a length mismatch gives an empty result rather than a panic. The module keeps what the console needs first: shrinking a texture by averaging blocks. Test: the encoded PNG decodes back to the same pixels (<a href="../../../learning/best-practices/dependencies/#png-encoding-the-image-crate-already-in-the-tree">Dependency policy</a>).</td>
 </tr>
 <tr>
 <td><code>formats::obj</code></td>

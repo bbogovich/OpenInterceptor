@@ -6827,9 +6827,16 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <code>missions</code> (definitions by id), and <code>flight</code>, <code>power</code>, <code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>console</code>,
 <code>campaign</code> (global). The <strong>strategy layer</strong> adds the definitions <code>maps</code>, <code>star_classes</code>, <code>research</code>,
 <code>items</code>, <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code> and the globals
-<code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>flags</code>, <code>economy</code>, by convention in
-<code>strategy/*.yaml</code> — every key is on <a href="../strategy/">Strategy layer</a>. All of them are in the editor
-schema <code>schemas/rules.schema.json</code>.</p>
+<code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>flags</code>, <code>economy</code>, <code>tech_ids</code> (app 0.8.0), by
+convention in <code>strategy/*.yaml</code> — every key is on <a href="../strategy/">Strategy layer</a>. Its optional
+<strong>logistics</strong> (app 0.9.0) adds the definitions <code>resources</code>, <code>components</code>, <code>recipes</code>,
+<code>facility_types</code>, <code>research_sites</code>, the global <code>logistics</code>, and keys on existing entries: map
+systems' <code>deposits</code> and <code>features</code>, hulls' <code>components</code>, topics' <code>lab</code>, <code>site</code> and <code>start_cost</code>
+(<a href="../strategy/#logistics">Strategy layer › Logistics</a>). New strategy keys in app 0.8.0:
+<code>start.money_from</code>, <code>economy.cost_scale</code>, <code>economy.module_time</code>, and the original's numeric
+<code>prereq1</code> – <code>prereq3</code>, <code>tech_required</code>, <code>tech_required2</code> read through <code>tech_ids</code>
+(<a href="../strategy/#tech_ids"><code>tech_ids</code></a>). All of them are in the editor schema
+<code>schemas/rules.schema.json</code>.</p>
 <p>Times take <code>s</code>, <code>min</code>, <code>h</code> and, since app 0.6.7, <code>d</code> (days): <code>10d</code>.</p>
 <h3 id="factions"><code>factions</code><a class="headerlink" href="#factions" title="Permanent link">&para;</a></h3>
 <table>
