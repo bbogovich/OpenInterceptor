@@ -28,9 +28,13 @@ pub struct VideoPlayer {
 }
 
 impl VideoPlayer {
-    /// Opens a video asset. Its whole soundtrack is decoded now.
+    /// Opens a video asset. Its whole soundtrack is decoded now. A pack path not found in
+    /// `pack` is looked for in the other packs, latest first (a story event's film lives
+    /// in whichever pack defines the event).
     pub async fn open(content: &Content, reference: &str, pack: usize) -> Result<VideoPlayer, String> {
-        let data = content.read_asset(reference, pack)?;
+        let data = content.read_asset(reference, pack).or_else(|first| {
+            (0..content.packs.len()).rev().find_map(|p| content.read_asset(reference, p).ok()).ok_or(first)
+        })?;
         let mut s = Smacker::new(&data).map_err(|e| e.to_string())?;
         let (width, height, frames, frame_time) = (s.width, s.out_height(), s.frames, s.frame_time);
         let track = s.tracks[0];
@@ -57,11 +61,12 @@ impl VideoPlayer {
 
     /// One frame: advances to the frame the clock has reached, draws it, and returns
     /// `true` when the video is over (ended, or skipped).
-    pub fn frame(&mut self) -> bool {
+    /// One frame; `volume` is the soundtrack's (the effects volume). `true` when over.
+    pub fn frame(&mut self, volume: f32) -> bool {
         if self.shown == 0 && self.started == 0.0 {
             self.started = get_time();
             if let Some(s) = &self.sound {
-                play_sound(s, PlaySoundParams { looped: false, volume: 0.9 });
+                play_sound(s, PlaySoundParams { looped: false, volume: 0.9 * volume });
             }
         }
         let skip = is_key_pressed(KeyCode::Enter)

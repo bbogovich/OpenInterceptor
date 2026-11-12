@@ -316,7 +316,11 @@ fn move_bolts(w: &mut World, dt: f32) {
         }
         let next = b.position + b.velocity * dt;
         match first_hit(w, b.position, next, b.owner) {
-            Some((j, t)) => hits.push((j, b.position.lerp(next, t), b.damage)),
+            // A harmless owner's bolt still hits (for the effect) but does no damage.
+            Some((j, t)) => {
+                let dmg = if w.harmless.contains(&b.owner) { 0.0 } else { b.damage };
+                hits.push((j, b.position.lerp(next, t), dmg))
+            }
             None if b.life > dt => keep.push(Bolt { position: next, life: b.life - dt, age: b.age + dt, ..b }),
             None => {}
         }
@@ -577,6 +581,22 @@ mod tests {
         let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
         let foe = w.spawn(r, FactionId(1), "foe", Vec3::new(0.0, 0.0, -300.0), Quat::IDENTITY, Pilot::External);
         (w, me, foe)
+    }
+
+    #[test]
+    fn a_harmless_ships_bolts_hit_but_do_no_damage() {
+        let (mut w, me, foe) = duel();
+        w.harmless.push(me);
+        let before = w.get(foe).unwrap().clone();
+        w.get_mut(me).unwrap().controls.fire_beams = true;
+        step(&mut w, TICK);
+        w.get_mut(me).unwrap().controls.fire_beams = false;
+        for _ in 0..30 {
+            step(&mut w, TICK);
+        }
+        let after = w.get(foe).unwrap();
+        assert!(w.bolts.is_empty(), "the bolts landed");
+        assert_eq!((after.shield_aft, after.armor, after.hull), (before.shield_aft, before.armor, before.hull));
     }
 
     #[test]

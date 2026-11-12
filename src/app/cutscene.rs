@@ -81,6 +81,9 @@ impl CutscenePlayer {
                     let pos = catmull_rom(&e.path, t);
                     let id = self.world.spawn(class, faction, &e.id, pos, path_rotation(&e.path, t), Pilot::External);
                     self.ships[k] = Some(id);
+                    if e.harmless {
+                        self.world.harmless.push(id);
+                    }
                 }
                 (Some(id), false) => {
                     if let Some(s) = self.world.get_mut(id) {
@@ -99,9 +102,6 @@ impl CutscenePlayer {
                 s.angular_velocity = Vec3::ZERO;
                 s.controls = Default::default();
                 s.controls.fire_beams = t < self.firing_until[k];
-                if e.harmless {
-                    s.hull = s.hull.max(1.0);
-                }
             }
             // Timed actions.
             while let Some((at, action)) = e.actions.get(self.next_action[k]) {

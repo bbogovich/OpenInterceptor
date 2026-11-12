@@ -441,7 +441,7 @@ pub async fn run(options: Options) {
                 }
             }
             Screen::Video(v) => {
-                if v.frame() {
+                if v.frame(ctx.sounds.effects_volume) {
                     if ctx.campaign.is_some() {
                         Next::Strategy
                     } else {

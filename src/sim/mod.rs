@@ -614,6 +614,9 @@ pub struct World {
     pub env: env::Env,
     /// Deterministic random-number state (xorshift), for AI variety.
     rng: u64,
+    /// Ships whose bolts and missiles do no damage (a cutscene's `harmless` entities: a
+    /// show of fire). Hits still land, so the effects and sounds play.
+    pub harmless: Vec<ShipId>,
 }
 
 impl World {
@@ -622,6 +625,7 @@ impl World {
         World {
             rules,
             shapes,
+            harmless: Vec::new(),
             ships: Vec::new(),
             generations: Vec::new(),
             bolts: Vec::new(),

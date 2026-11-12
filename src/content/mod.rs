@@ -243,6 +243,9 @@ impl Content {
                 }
             }
         }
+        if let Some(intro) = rules.intro.as_ref().filter(|i| !cutscenes.iter().any(|c| &c.id == *i)) {
+            errors.push(format!("campaign.intro: no cutscene '{intro}' (cutscenes/<id>.yaml)"));
+        }
         // 5. Text: every pack's text files in load order, then `@key` values resolved.
         let language = cfg.language.clone().unwrap_or_else(|| "en".into());
         let mut text = text::TextTable::default();

@@ -211,8 +211,16 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         let speed = (m.velocity.length() + class.speed * dt).min(class.speed);
         m.velocity = new_dir * speed;
         let next = m.position + m.velocity * dt;
+        // A harmless owner's missile explodes but does no damage.
+        let scale = if w.harmless.contains(&m.owner) { 0.0 } else { 1.0 };
         if let Some((j, t)) = first_hit(w, m.position, next, m.owner) {
-            blasts.push((Some(j), m.position.lerp(next, t), class.impact_damage, class.damage_mode, class.explosion));
+            blasts.push((
+                Some(j),
+                m.position.lerp(next, t),
+                class.impact_damage * scale,
+                class.damage_mode,
+                class.explosion,
+            ));
             continue;
         }
         // Proximity fuse: detonate on a near *miss* — inside the fuse radius and starting
@@ -223,7 +231,7 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
                 blasts.push((
                     Some(tid.index as usize),
                     m.position,
-                    class.proximity_damage,
+                    class.proximity_damage * scale,
                     class.damage_mode,
                     class.explosion,
                 ));
