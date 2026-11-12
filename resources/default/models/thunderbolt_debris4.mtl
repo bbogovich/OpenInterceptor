@@ -3,8 +3,6 @@ newmtl chrome
 Kd 0.860 0.880 0.920
 newmtl dark
 Kd 0.100 0.100 0.120
-newmtl exhaust
-Kd 1.000 0.620 0.180
 newmtl hull
 Kd 1.000 1.000 1.000
 map_Kd ../textures/guard_hull.png

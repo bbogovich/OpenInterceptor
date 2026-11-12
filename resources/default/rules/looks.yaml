@@ -329,6 +329,7 @@ modelsets:
     destroyed_effect: explosion_station
   dreadnought:
     intact: models/dreadnought.obj
+    scale: 1.25                # playtest: a bigger, more imposing dreadnought
     damage:
       - {below: 66%, textures: {dominion_hull: textures/dominion_hull_scorched.png}}
       - {below: 33%, textures: {dominion_hull: textures/dominion_hull_burnt.png}}

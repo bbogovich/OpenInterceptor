@@ -848,6 +848,7 @@ impl FlightSession {
         let env = self.world.env.id.as_ref().and_then(|id| self.world.rules.environments.iter().find(|e| &e.id == id));
         ctx.renderer.env_sky = env.and_then(|e| e.sky);
         ctx.renderer.planet = env.and_then(|e| e.planet);
+        ctx.renderer.nebula = env.and_then(|e| e.nebula);
         clear_background(match ctx.renderer.env_sky {
             Some(s) => Color::new(s.horizon[0], s.horizon[1], s.horizon[2], 1.0),
             None => BLACK,
@@ -1014,6 +1015,7 @@ impl FlightSession {
         // Other screens draw plain space: the sky belongs to this battle only.
         ctx.renderer.env_sky = None;
         ctx.renderer.planet = None;
+        ctx.renderer.nebula = None;
         Next::Stay
     }
 }

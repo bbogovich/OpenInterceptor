@@ -191,79 +191,98 @@ def accordion(name, a, b, r, mat, bumps=3, segments=6):
 # Interplanetary Guard rockets
 # ---------------------------------------------------------------------------------------
 
+def teardrop(z_nose, z_tail, r_max, nose_mat="chrome", band_at=0.42, tail_r=None):
+    """Profile of a retro-rocket body: a rounded chrome nose swelling quickly to a fat
+    belly (widest about 40 % back), then tapering to the tail - the bulbous "bullet with
+    fins" of the 1930s serials. A chrome band rings the widest point."""
+    length = z_tail - z_nose
+    tail_r = r_max * 0.55 if tail_r is None else tail_r
+    z_base = z_nose + length * 0.16
+    prof = ogive(z_nose, z_base, r_max * 0.62, 4, nose_mat)
+    z_w = z_nose + length * band_at
+    pts = []
+    for k in range(1, 5):  # nose base to the belly: a smooth swell
+        f = k / 4
+        z = z_base + (z_w - z_base) * f
+        pts.append((z, r_max * (0.62 + 0.38 * math.sin(f * math.pi / 2)), "hull"))
+    pts += [(z_w + 0.08, r_max * 1.04, "chrome"), (z_w + 0.4, r_max * 1.04, "chrome"), (z_w + 0.48, r_max, "hull")]
+    for k in range(1, 5):  # belly to the tail: an even taper
+        f = k / 4
+        z = z_w + 0.48 + (z_tail - z_w - 0.48) * f
+        r = r_max + (tail_r - r_max) * (f ** 1.6)
+        pts.append((z, r, "chrome" if k == 4 else "hull"))
+    return prof + pts
+
+
 def comet():
-    """Light fighter, ~11 m: a needle hull with a chrome nose, bubble canopy, three swept
-    tail fins and two wing-stub ray guns."""
+    """Light fighter, ~11 m: a bulbous teardrop hull with a chrome nose and band, bubble
+    canopy, three swept tail fins and two wing-stub ray guns."""
     m = Model("comet", GUARD, FIGHTER)
-    prof = ogive(-5.6, -4.5, 0.47, 4, "chrome") + [
-        (-4.5, 0.5, "hull"), (-3.6, 0.66, "hull"), (-2.4, 0.82, "hull"), (-1.0, 0.9, "hull"),
-        (-0.15, 0.92, "chrome"), (0.0, 0.98, "chrome"), (0.3, 0.98, "hull"), (0.45, 0.92, "hull"),
-        (2.0, 0.9, "hull"), (3.5, 0.8, "hull"), (4.2, 0.66, "chrome"), (4.5, 0.58, "chrome")]
-    m.add(lathe("hull", prof, "hull", 16, uv=(0, 1, 0, 1)))
-    m.add(bell("bell", 4.4, 1.2, 0.46, 0.74))
-    m.add(ellipsoid("canopy", (0, 0.6, -2.4), (0.42, 0.42, 1.0), "glass"))
-    outline = [(0.55, 1.4), (0.55, 4.2), (2.15, 5.75), (2.15, 5.15)]
+    R = 1.5
+    m.add(lathe("hull", teardrop(-5.6, 4.5, R), "hull", 18, uv=(0, 1, 0, 1)))
+    m.add(bell("bell", 4.4, 1.2, 0.6, 0.95))
+    m.add(ellipsoid("canopy", (0, R * 0.78, -2.0), (0.55, 0.5, 1.15), "glass"))
+    outline = [(R * 0.7, 0.8), (R * 0.7, 4.2), (R + 1.9, 5.9), (R + 1.9, 5.1)]
     for a in (0, 120, 240):
-        m.add(fin(f"fin{a}", a, outline, "red"))
-    m.add(sphere("fin_tip", 0.16, "teal", 8, 4).transformed(IDENTITY, (0, 2.2, 5.45)))
-    stub = prism("stub", [(0.3, -2.4), (0.3, -0.6), (0.95, -0.9), (0.95, -2.1)], 0.1, "red",
-                 origin=(0, -0.25, 0), s_axis=(1, 0, 0), t_axis=(0, 0, 1))
+        m.add(fin(f"fin{a}", a, outline, "red", th_root=0.26, th_tip=0.08))
+    m.add(sphere("fin_tip", 0.2, "teal", 8, 4).transformed(IDENTITY, (0, R + 1.95, 5.5)))
+    stub = prism("stub", [(R * 0.85, -2.4), (R * 0.85, -0.4), (R + 0.75, -0.8), (R + 0.75, -2.1)], [0.3, 0.3, 0.12, 0.12],
+                 "red", origin=(0, -0.3, 0), s_axis=(1, 0, 0), t_axis=(0, 0, 1))
     m.add_mirrored_x(stub)
-    for p in gun("gun", (0.95, -0.25, -0.6), (0.95, -0.25, -3.3), 0.09):
+    for p in gun("gun", (R + 0.75, -0.3, -0.6), (R + 0.75, -0.3, -3.4), 0.1):
         m.add_mirrored_x(p)
     return m
 
 
 def meteor():
-    """Medium fighter, ~14 m: a cigar hull flanked by twin booster pods on pylons."""
+    """Medium fighter, ~14 m: a bulbous teardrop hull flanked by twin booster pods on
+    pylons that are broad and thick at the body and taper towards the boosters."""
     m = Model("meteor", GUARD, FIGHTER)
-    prof = ogive(-7.0, -5.4, 0.72, 4, "chrome") + [
-        (-5.4, 0.76, "hull"), (-3.5, 1.0, "hull"), (-1.0, 1.08, "hull"), (-0.2, 1.08, "chrome"),
-        (0.0, 1.14, "chrome"), (0.4, 1.14, "hull"), (0.6, 1.08, "hull"), (3.4, 1.0, "hull"),
-        (5.0, 0.78, "chrome"), (5.3, 0.66, "chrome")]
-    m.add(lathe("hull", prof, "hull", 16, uv=(0, 1, 0, 1)))
-    m.add(bell("bell", 5.2, 1.4, 0.55, 0.85))
-    m.add(ellipsoid("canopy", (0, 0.78, -3.4), (0.48, 0.46, 1.15), "glass"))
-    m.add(fin("fin_top", 0, [(0.7, 2.2), (0.7, 5.0), (2.4, 6.5), (2.4, 5.8)], "red"))
+    R = 1.8
+    m.add(lathe("hull", teardrop(-7.0, 5.3, R), "hull", 16, uv=(0, 1, 0, 1)))
+    m.add(bell("bell", 5.2, 1.4, 0.7, 1.1))
+    m.add(ellipsoid("canopy", (0, R * 0.8, -3.0), (0.62, 0.56, 1.3), "glass"))
+    m.add(fin("fin_top", 0, [(R * 0.75, 1.8), (R * 0.75, 5.0), (R + 1.8, 6.6), (R + 1.8, 5.8)], "red",
+              th_root=0.3, th_tip=0.1))
     # One booster, built at the origin then moved out to the right; mirrored for the left.
-    bprof = ogive(-2.2, -0.9, 0.42, 3, "teal") + [(-0.9, 0.45, "hull"), (3.6, 0.45, "hull"), (4.0, 0.36, "chrome")]
+    bprof = ogive(-2.2, -0.9, 0.5, 3, "teal") + [(-0.9, 0.54, "hull"), (3.6, 0.54, "hull"), (4.0, 0.42, "chrome")]
     pod = [lathe("booster", bprof, "hull", 12, uv=(0.1, 0.9, 0, 1)),
-           bell("booster_bell", 3.9, 0.8, 0.3, 0.46, 12),
-           fin("booster_fin", 90, [(0.3, 1.8), (0.3, 3.8), (1.3, 4.6), (1.3, 4.1)], "red"),
-           fin("booster_fin_lo", 180, [(0.3, 1.8), (0.3, 3.8), (1.1, 4.5), (1.1, 4.0)], "red")]
-    off = (1.95, -0.35, 0.6)
+           bell("booster_bell", 3.9, 0.8, 0.34, 0.52, 12),
+           fin("booster_fin", 90, [(0.36, 1.8), (0.36, 3.8), (1.4, 4.6), (1.4, 4.1)], "red"),
+           fin("booster_fin_lo", 180, [(0.36, 1.8), (0.36, 3.8), (1.2, 4.5), (1.2, 4.0)], "red")]
+    bx = R + 1.35
+    off = (bx, -0.45, 0.6)
     for p in pod:
         m.add_mirrored_x(p.transformed(IDENTITY, off))
-    pylon = prism("pylon", [(0.6, -1.0), (0.6, 2.4), (1.7, 2.0), (1.7, -0.4)], 0.16, "chrome",
-                  origin=(0, -0.3, 0), s_axis=(1, 0, 0), t_axis=(0, 0, 1))
+    # Pylon: a long, thick root along the hull narrowing to a short, thin joint at the pod.
+    root, tip = R * 0.8, bx - 0.45
+    pylon = prism("pylon", [(root, -2.2), (root, 3.0), (tip, 2.0), (tip, 0.2)], [0.62, 0.62, 0.2, 0.2], "chrome",
+                  origin=(0, -0.4, 0), s_axis=(1, 0, 0), t_axis=(0, 0, 1))
     m.add_mirrored_x(pylon)
-    for p in gun("gun", (0.0, -0.95, -2.0), (0.0, -0.95, -4.6), 0.11):
+    for p in gun("gun", (0.0, -R * 0.92, -2.0), (0.0, -R * 0.92, -4.8), 0.12):
         m.add(p)
     return m
 
 
 def thunderbolt():
-    """Heavy fighter, ~18 m: a fat cigar with four big swept fins in an X, each ending in
-    a gun pod, a twin-seat canopy and a chin turret."""
+    """Heavy fighter, ~18 m: a big bulbous teardrop with four swept fins in an X, each
+    ending in a gun pod, a twin-seat canopy and a chin turret."""
     m = Model("thunderbolt", GUARD, FIGHTER)
-    prof = ogive(-9.0, -6.6, 1.1, 5, "chrome") + [
-        (-6.6, 1.16, "hull"), (-4.0, 1.5, "hull"), (-1.0, 1.62, "hull"), (-0.3, 1.62, "chrome"),
-        (-0.1, 1.7, "chrome"), (0.4, 1.7, "hull"), (0.6, 1.62, "hull"), (4.0, 1.5, "hull"),
-        (5.6, 1.2, "chrome"), (6.0, 1.0, "chrome")]
-    m.add(lathe("hull", prof, "hull", 16, uv=(0, 1, 0, 1)))
-    m.add(bell("bell", 5.9, 2.0, 0.85, 1.25, 16))
-    m.add(ellipsoid("canopy", (0, 1.15, -4.2), (0.62, 0.62, 1.9), "glass"))
-    outline = [(1.2, 1.0), (1.2, 5.6), (3.9, 8.6), (3.9, 7.0)]
+    R = 2.4
+    m.add(lathe("hull", teardrop(-9.0, 6.0, R), "hull", 16, uv=(0, 1, 0, 1)))
+    m.add(bell("bell", 5.9, 2.0, 1.05, 1.5, 16))
+    m.add(ellipsoid("canopy", (0, R * 0.8, -3.8), (0.8, 0.72, 2.0), "glass"))
+    outline = [(R * 0.7, 0.6), (R * 0.7, 5.6), (R + 2.6, 8.6), (R + 2.6, 7.0)]
     for a in (45, 135, 225, 315):
-        m.add(fin(f"fin{a}", a, outline, "red", th_root=0.26, th_tip=0.12))
+        m.add(fin(f"fin{a}", a, outline, "red", th_root=0.4, th_tip=0.14))
         r = math.radians(a)
-        c = (3.9 * math.sin(r), 3.9 * math.cos(r), 0)
-        pod = lathe("finpod", ogive(-2.3, -1.5, 0.28, 2, "teal") + [(-1.5, 0.3, "chrome"), (2.0, 0.3, "chrome"),
+        c = ((R + 2.6) * math.sin(r), (R + 2.6) * math.cos(r), 0)
+        pod = lathe("finpod", ogive(-2.3, -1.5, 0.3, 2, "teal") + [(-1.5, 0.32, "chrome"), (2.0, 0.32, "chrome"),
                                                                      (2.3, 0.2, "teal")], "chrome", 8)
         m.add(pod.transformed(IDENTITY, (c[0], c[1], 7.4)))
-    m.add(sphere("turret", 0.6, "chrome", 10, 5).transformed(IDENTITY, (0, -1.35, -4.5)))
-    for x in (-0.25, 0.25):
-        for p in gun("chin", (x, -1.5, -4.6), (x, -1.5, -7.0), 0.1):
+    m.add(sphere("turret", 0.7, "chrome", 10, 5).transformed(IDENTITY, (0, -R * 0.88, -4.3)))
+    for x in (-0.28, 0.28):
+        for p in gun("chin", (x, -R * 0.95, -4.4), (x, -R * 0.95, -7.0), 0.11):
             m.add(p)
     return m
 

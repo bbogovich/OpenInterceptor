@@ -193,6 +193,34 @@ fn draw_sky_dome(sky: &crate::content::environment::Sky) {
     draw_mesh(&Mesh { vertices, indices, texture: None });
 }
 
+/// A nebula's sky sphere: a fine latitude/longitude grid around the eye, each vertex
+/// coloured (and made more or less see-through) by the nebula's clouds in its direction.
+/// Built once per nebula; the GPU blends the colours between vertices.
+fn nebula_sphere(n: &crate::content::environment::Nebula) -> (Vec<Vertex>, Vec<u16>) {
+    let r = SKY_DISTANCE * 0.85;
+    let (rings, segs) = (24usize, 48usize);
+    let mut vertices = Vec::with_capacity((rings + 1) * (segs + 1));
+    let mut indices = Vec::with_capacity(rings * segs * 6);
+    for i in 0..=rings {
+        let e = (-90.0 + 180.0 * i as f32 / rings as f32).to_radians();
+        for j in 0..=segs {
+            let a = j as f32 / segs as f32 * std::f32::consts::TAU;
+            let d = Vec3::new(e.cos() * a.cos(), e.sin(), e.cos() * a.sin());
+            let c = n.color(d);
+            let p = d * r;
+            vertices.push(Vertex::new(p.x, p.y, p.z, 0.0, 0.0, Color::new(c[0], c[1], c[2], c[3])));
+        }
+    }
+    for i in 0..rings {
+        for j in 0..segs {
+            let a = (i * (segs + 1) + j) as u16;
+            let b = a + (segs + 1) as u16;
+            indices.extend([a, b, a + 1, a + 1, b, b + 1]);
+        }
+    }
+    (vertices, indices)
+}
+
 /// A planet hanging in the sky (orbit): a disc lit from the sun's side, with a soft limb.
 fn draw_planet(p: &crate::content::environment::Planet, sun: Vec3) {
     let d = SKY_DISTANCE * 0.8;
@@ -259,6 +287,10 @@ pub struct Renderer {
     /// flight screen before drawing and cleared after, so other screens draw space.
     pub env_sky: Option<crate::content::environment::Sky>,
     pub planet: Option<crate::content::environment::Planet>,
+    /// The battle environment's nebula, if any (set per frame by the flight screen).
+    pub nebula: Option<crate::content::environment::Nebula>,
+    /// Its sky sphere, built once per nebula: (the nebula it was built for, vertices, indices).
+    nebula_mesh: Option<(crate::content::environment::Nebula, Vec<Vertex>, Vec<u16>)>,
     /// The terrain mesh of the current battle, by terrain id (built once).
     /// (Normal and X-mirrored meshes, for the mirror-image tiles to the horizon.)
     terrain: Option<(String, [Rc<GpuModel>; 2])>,
@@ -411,6 +443,8 @@ impl Renderer {
             brightness: 1.0,
             env_sky: None,
             planet: None,
+            nebula: None,
+            nebula_mesh: None,
             terrain: None,
             stars: Vec::new(),
             star_seed: u64::MAX,
@@ -501,7 +535,9 @@ impl Renderer {
         if let Some(sky) = self.env_sky {
             draw_sky_dome(&sky);
         }
-        let star_light = self.env_sky.map(|s| s.stars).unwrap_or(1.0);
+        // Stars dim behind a nebula's clouds.
+        let star_light =
+            self.env_sky.map(|s| s.stars).unwrap_or(1.0) * (1.0 - 0.6 * self.nebula.map_or(0.0, |n| n.density));
         self.sky_vertices.clear();
         self.sky_indices.clear();
         let right = cam.rotation * Vec3::X;
@@ -556,6 +592,18 @@ impl Renderer {
         gl_use_default_material();
         if let Some(p) = self.planet {
             draw_planet(&p, sun_dir);
+        }
+        if let Some(n) = self.nebula {
+            if self.nebula_mesh.as_ref().is_none_or(|(built, ..)| *built != n) {
+                let (v, i) = nebula_sphere(&n);
+                self.nebula_mesh = Some((n, v, i));
+            }
+            if let Some((_, v, i)) = self.nebula_mesh.take() {
+                // Moved into a Mesh for drawing and back, as with the stars above.
+                let mesh = Mesh { vertices: v, indices: i, texture: None };
+                draw_mesh(&mesh);
+                self.nebula_mesh = Some((n, mesh.vertices, mesh.indices));
+            }
         }
     }
 

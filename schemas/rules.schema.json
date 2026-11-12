@@ -339,6 +339,12 @@
                   "color": {"description": "the planet's colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
                   "size": {"description": "angular size, degrees", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "direction": {"description": "the direction it lies in", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}
+                }},
+              "nebula": {"description": "nebula clouds all around (a pocket)", "type": "object", "additionalProperties": false, "properties": {
+                  "color": {"description": "the clouds' main colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "second_color": {"description": "the colour they shade into", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "density": {"description": "how thick, 0..1 (also dims the stars)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "seed": {"description": "a different cloud pattern", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
                 }}
             }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},

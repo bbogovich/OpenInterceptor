@@ -9,7 +9,7 @@ environments:
   pocket:
     # A small, enclosed arena (a nebula pocket): tight, close-quarters fights.
     arena: 12km
-    backdrop: {planet: {color: [0.55, 0.25, 0.60], size: 90, direction: [-0.3, 0.2, 1]}}
+    backdrop: {nebula: {color: [0.60, 0.22, 0.62], second_color: [0.20, 0.40, 0.85], density: 0.85, seed: 7}}
   moon_surface:
     # A cratered moon: thin air, low gravity, a dark violet sky with stars showing.
     physics: atmosphere

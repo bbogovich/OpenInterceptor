@@ -62,6 +62,69 @@ pub struct Planet {
     pub direction: Vec3,
 }
 
+/// A nebula around the battle (`backdrop: {nebula: …}`): soft clouds of two colours
+/// on the sky, with the stars dimmed behind them.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Nebula {
+    pub colors: [[f32; 3]; 2],
+    /// How thick the clouds are, 0..1 (also how much they hide the stars).
+    pub density: f32,
+    pub seed: u64,
+}
+
+impl Nebula {
+    /// The cloud colour and opacity in direction `dir` (a unit vector): two octaves of
+    /// smooth 3D value noise, one for how much cloud there is, one for its colour.
+    /// Deterministic for the seed.
+    pub fn color(&self, dir: Vec3) -> [f32; 4] {
+        // Summed octaves crowd around 0.5: stretch them back out to 0..1 first.
+        let stretch = |v: f32| ((v - 0.5) * 2.8 + 0.5).clamp(0.0, 1.0);
+        let amount = stretch(fbm(dir * 2.5, self.seed));
+        let tint = stretch(fbm(dir * 1.7 + Vec3::splat(31.0), self.seed ^ 0x9E37));
+        // Clouds rather than haze: thin areas fall to nothing.
+        let a = ((amount - 0.3) / 0.7).clamp(0.0, 1.0).powf(1.2) * self.density;
+        let [c0, c1] = self.colors;
+        let mix = |i: usize| c0[i] + (c1[i] - c0[i]) * tint;
+        [mix(0), mix(1), mix(2), a]
+    }
+}
+
+/// Smooth value noise in 3D, 0..1, summed over 4 octaves.
+fn fbm(p: Vec3, seed: u64) -> f32 {
+    // A lattice value from a hash of its integer coordinates and the seed.
+    let hash = |x: i32, y: i32, z: i32| {
+        let mut h = (x as u64).wrapping_mul(0x8DA6_B343)
+            ^ (y as u64).wrapping_mul(0xD816_3841)
+            ^ (z as u64).wrapping_mul(0xCB1A_B31F)
+            ^ seed.wrapping_mul(0x9E37_79B9);
+        h ^= h >> 13;
+        h = h.wrapping_mul(0x5bd1_e995);
+        h ^= h >> 15;
+        (h & 0xFFFF) as f32 / 65535.0
+    };
+    let noise = |p: Vec3| {
+        let f = p.floor();
+        let t = p - f;
+        let s = t * t * (Vec3::splat(3.0) - 2.0 * t); // smoothstep: no creases
+        let (x, y, z) = (f.x as i32, f.y as i32, f.z as i32);
+        let lerp = |a: f32, b: f32, t: f32| a + (b - a) * t;
+        let face = |dz: i32| {
+            let a = lerp(hash(x, y, z + dz), hash(x + 1, y, z + dz), s.x);
+            let b = lerp(hash(x, y + 1, z + dz), hash(x + 1, y + 1, z + dz), s.x);
+            lerp(a, b, s.y)
+        };
+        lerp(face(0), face(1), s.z)
+    };
+    let (mut sum, mut amp, mut freq, mut norm) = (0.0, 1.0, 1.0, 0.0);
+    for _ in 0..4 {
+        sum += noise(p * freq) * amp;
+        norm += amp;
+        amp *= 0.5;
+        freq *= 2.0;
+    }
+    sum / norm
+}
+
 /// One battle environment.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct EnvironmentDef {
@@ -77,6 +140,7 @@ pub struct EnvironmentDef {
     pub terrain: Option<String>,
     pub sky: Option<Sky>,
     pub planet: Option<Planet>,
+    pub nebula: Option<Nebula>,
 }
 
 /// How a terrain's heights are made.
@@ -137,7 +201,13 @@ impl EnvironmentDef {
                 direction: d.and_then(|d| d.try_normalize()).unwrap_or(Vec3::new(0.0, -0.5, -1.0).normalize()),
             }
         });
+        let nebula = g.node("backdrop").and_then(|b| Get(b).node("nebula")).map(Get).map(|n| Nebula {
+            colors: [rgb(n, "color", [0.55, 0.2, 0.6]), rgb(n, "second_color", [0.2, 0.35, 0.75])],
+            density: n.num("density").unwrap_or(0.8).clamp(0.0, 1.0),
+            seed: n.num("seed").unwrap_or(1.0) as u64,
+        });
         let env = EnvironmentDef {
+            nebula,
             id: id.to_string(),
             physics,
             arena: g.qty("arena", Unit::Distance),
@@ -368,15 +438,27 @@ pub fn environment_schema() -> Ty {
         ),
         f(
             "backdrop",
-            Ty::Struct(vec![f(
-                "planet",
-                Ty::Struct(vec![
-                    f("color", Ty::Numbers(3), "the planet's colour"),
-                    f("size", Ty::Num, "angular size, degrees"),
-                    f("direction", Ty::Numbers(3), "the direction it lies in"),
-                ]),
-                "a planet in the sky (orbit)",
-            )]),
+            Ty::Struct(vec![
+                f(
+                    "planet",
+                    Ty::Struct(vec![
+                        f("color", Ty::Numbers(3), "the planet's colour"),
+                        f("size", Ty::Num, "angular size, degrees"),
+                        f("direction", Ty::Numbers(3), "the direction it lies in"),
+                    ]),
+                    "a planet in the sky (orbit)",
+                ),
+                f(
+                    "nebula",
+                    Ty::Struct(vec![
+                        f("color", Ty::Numbers(3), "the clouds' main colour"),
+                        f("second_color", Ty::Numbers(3), "the colour they shade into"),
+                        f("density", Ty::Num, "how thick, 0..1 (also dims the stars)"),
+                        f("seed", Ty::Num, "a different cloud pattern"),
+                    ]),
+                    "nebula clouds all around (a pocket)",
+                ),
+            ]),
             "what hangs in the sky",
         ),
     ])
@@ -407,6 +489,28 @@ pub fn terrain_schema() -> Ty {
         ),
         f("resolution", Ty::Num, "grid points per side (17..257, default 129)"),
     ])
+}
+
+#[cfg(test)]
+mod nebula_tests {
+    use super::*;
+
+    #[test]
+    fn nebula_clouds_vary_stay_in_range_and_repeat_for_a_seed() {
+        let n = Nebula { colors: [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]], density: 0.8, seed: 3 };
+        let mut alphas = Vec::new();
+        for k in 0..200 {
+            let a = k as f32 * 0.37;
+            let d = Vec3::new(a.cos() * (a * 0.5).cos(), (a * 0.5).sin(), a.sin() * (a * 0.5).cos()).normalize();
+            let c = n.color(d);
+            assert!(c.iter().all(|x| (0.0..=1.0).contains(x)), "{c:?}");
+            assert!(c[3] <= 0.8 + 1e-6, "no thicker than the density");
+            assert_eq!(c, n.color(d), "deterministic");
+            alphas.push(c[3]);
+        }
+        assert!(alphas.iter().any(|a| *a < 0.05) && alphas.iter().any(|a| *a > 0.3), "clouds and gaps");
+        assert_ne!(n.color(Vec3::X), Nebula { seed: 4, ..n }.color(Vec3::X));
+    }
 }
 
 #[cfg(test)]
