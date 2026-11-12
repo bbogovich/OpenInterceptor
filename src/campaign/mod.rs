@@ -317,6 +317,21 @@ impl Context for Cx<'_> {
             q::RELATION => Value::Num(c.story.standing(name())),
             q::FIRED => Value::Num(self.def.story.event(name()).map_or(0.0, |e| c.story.fired[e] as f32)),
             q::BATTLES_WON => Value::Num(c.story.battles_won as f32),
+            // Logistics: the first argument is a system (by map id).
+            q::DEPOSIT
+            | q::FEATURE
+            | q::RESEARCH_SITE
+            | q::SURVEY_KNOWN
+            | q::OWNED
+            | q::LANE_DISTANCE
+            | q::FACILITY_PROGRESS
+            | q::CONSTRUCTION_ATTACKS => {
+                let arg = |k: usize| {
+                    args.get(k).and_then(|i| self.def.names.get(*i as usize)).map(String::as_str).unwrap_or("")
+                };
+                let Some(s) = c.systems.iter().position(|x| x.id == arg(0)) else { return Value::Num(0.0) };
+                c.logistics_query(self.def, id, s, arg(1))
+            }
             _ => Value::Num(0.0),
         }
     }
@@ -1189,6 +1204,9 @@ impl Campaign {
         // `salvaged(x)` names raids by id.
         let raid_id =
             self.contacts.iter().find(|c| c.id == contact).map(|c| def.raids[c.raid].id.clone()).unwrap_or_default();
+        // `capture`: the prizes the player brought home (`captured(<class>)`, added by the
+        // battle) become salvage — research that needs them can start.
+        let keep_prizes = actions.iter().any(|a| a.trim() == "capture");
         for a in actions {
             let (name, arg) = match a.split_once('(') {
                 Some((n, rest)) => (n.trim(), rest.trim_end_matches(')').trim()),
@@ -1210,7 +1228,34 @@ impl Campaign {
                     }
                     self.log(format!("Salvage recovered: {value:.0}"));
                 }
-                "lose" => self.log(format!("Lost: {arg}")),
+                "captured" if keep_prizes => {
+                    if !self.salvaged.iter().any(|s| s == arg) {
+                        self.salvaged.push(arg.to_string());
+                    }
+                    self.log(format!("Captured: {arg}"));
+                }
+                // `lose(<facility type>)`: the player's most recent facility of that type
+                // is lost (a base type or anything else is only recorded).
+                "lose" => {
+                    let ft = def.logistics.as_ref().and_then(|l| l.facility_types.iter().position(|t| t.id == arg));
+                    match ft.and_then(|t| self.logistics.facilities.iter().rposition(|f| f.ftype == t)) {
+                        Some(f) => {
+                            let name = def
+                                .logistics
+                                .as_ref()
+                                .map(|l| l.facility_types[self.logistics.facilities[f].ftype].name.clone())
+                                .unwrap_or_default();
+                            let at = self.systems[self.logistics.facilities[f].system].name.clone();
+                            self.remove_facility(f);
+                            self.notices.push(format!("{name} at {at} lost"));
+                            self.log(format!("Lost: {name} at {at}"));
+                        }
+                        None => self.log(format!("Lost: {arg}")),
+                    }
+                }
+                // The convoy's share settles the cargo (`convoy_result`); recorded here.
+                "cargo_lost" => self.log("Convoy cargo lost".into()),
+                "cargo_captured" => self.log("Convoy cargo taken by the enemy".into()),
                 // `relation(owner, +8)`: a mission outcome moves a faction's standing.
                 "relation" => {
                     if let Some((f, n)) = arg.split_once(',') {

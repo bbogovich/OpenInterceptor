@@ -356,8 +356,10 @@ pub struct FlightSession {
     wing_menu: Option<usize>,
     /// The controls menu, while open over the battle (from the pause menu).
     controls: Option<super::controls::ControlsMenu>,
-    /// Prizes captured by the player's tractor beam when jumping out.
+    /// Prizes captured by the player's tractor beam when jumping out (names, shown).
     captured: Vec<String>,
+    /// Their class ids, reported to the campaign as `captured(<class>)`.
+    captured_ids: Vec<String>,
     /// The cockpit's id (for saving its layout).
     cockpit_id: Option<String>,
     /// A 3D cockpit's instruments placed on its surface (drawn in perspective).
@@ -600,6 +602,7 @@ impl FlightSession {
             wing_menu: None,
             controls: None,
             captured: Vec::new(),
+            captured_ids: Vec::new(),
             cockpit_id,
             anchors,
             instrument_targets: HashMap::new(),
@@ -721,9 +724,13 @@ impl FlightSession {
             // A campaign battle: any key returns to the campaign with the result.
             if raw.pressed.contains("enter") || raw.pressed.contains("escape") {
                 if let Some(d) = self.mission.as_ref().and_then(|m| m.debrief.as_ref()) {
+                    // The outcome's actions, and each prize the tractor beam brought home
+                    // (kept only if the outcome says `capture`).
+                    let mut actions = d.campaign.clone();
+                    actions.extend(self.captured_ids.iter().map(|id| format!("captured({id})")));
                     ctx.battle_report = Some(super::strategy::BattleReport {
                         result: d.result.clone(),
-                        actions: d.campaign.clone(),
+                        actions,
                         kills: d.kills,
                         cargo: d.cargo,
                     });
@@ -898,6 +905,7 @@ impl FlightSession {
                         if *captor == self.player {
                             let class = self.world.ships[prize.index as usize].class;
                             self.captured.push(self.world.rules.ship(class).name.clone());
+                            self.captured_ids.push(self.world.rules.ship(class).id.clone());
                         }
                     }
                 }

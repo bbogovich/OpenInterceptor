@@ -42,6 +42,14 @@ pub mod id {
     pub const RELATION: u16 = 18;
     pub const FIRED: u16 = 19;
     pub const BATTLES_WON: u16 = 20;
+    pub const DEPOSIT: u16 = 21;
+    pub const FEATURE: u16 = 22;
+    pub const RESEARCH_SITE: u16 = 23;
+    pub const SURVEY_KNOWN: u16 = 24;
+    pub const OWNED: u16 = 25;
+    pub const LANE_DISTANCE: u16 = 26;
+    pub const FACILITY_PROGRESS: u16 = 27;
+    pub const CONSTRUCTION_ATTACKS: u16 = 28;
 }
 
 /// The campaign context's queries (index = id above).
@@ -87,6 +95,50 @@ pub const QUERIES: &[QueryDef] = &[
     },
     QueryDef { name: "fired", args: &[Arg::Num], result: Type::Num, doc: "times an event has fired" },
     QueryDef { name: "battles_won", args: &[], result: Type::Num, doc: "battles the player has won" },
+    // Logistics (R-MOD-014): systems are named by their map id.
+    QueryDef {
+        name: "deposit",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Num,
+        doc: "deposit(system, resource): its daily rate there, once surveyed (else 0)",
+    },
+    QueryDef {
+        name: "feature",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Bool,
+        doc: "feature(system, tag): the system has it",
+    },
+    QueryDef {
+        name: "research_site",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Bool,
+        doc: "research_site(system, site): the system meets the site's features",
+    },
+    QueryDef { name: "survey_known", args: &[Arg::Num], result: Type::Bool, doc: "the system has been surveyed" },
+    QueryDef {
+        name: "owned",
+        args: &[Arg::Num],
+        result: Type::Bool,
+        doc: "the player has a base or a facility in the system",
+    },
+    QueryDef {
+        name: "lane_distance",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Num,
+        doc: "lane_distance(a, b): jumps along lanes between two systems (-1: no route)",
+    },
+    QueryDef {
+        name: "facility_progress",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "the construction progress (0..1) of the system's least finished facility; 1 when none is building",
+    },
+    QueryDef {
+        name: "construction_attacks",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "strikes against facilities built in the system while under construction",
+    },
 ];
 
 /// The campaign schema: every id in `names` is a constant (its index), then the
@@ -130,6 +182,14 @@ mod tests {
             (id::RELATION, "relation"),
             (id::FIRED, "fired"),
             (id::BATTLES_WON, "battles_won"),
+            (id::DEPOSIT, "deposit"),
+            (id::FEATURE, "feature"),
+            (id::RESEARCH_SITE, "research_site"),
+            (id::SURVEY_KNOWN, "survey_known"),
+            (id::OWNED, "owned"),
+            (id::LANE_DISTANCE, "lane_distance"),
+            (id::FACILITY_PROGRESS, "facility_progress"),
+            (id::CONSTRUCTION_ATTACKS, "construction_attacks"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

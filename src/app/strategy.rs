@@ -341,6 +341,11 @@ impl StrategyScreen {
                     _ => Some(report.cargo.unwrap_or(1.0)),
                 };
                 self.campaign.convoy_result(def, v, share);
+                // A flown escort is a battle like any other: its outcome's actions
+                // (score, relations, captures) apply too.
+                if share.is_some() {
+                    self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
+                }
                 self.banner = Some(format!(
                     "Convoy escort: {}{}",
                     report.result.to_uppercase(),

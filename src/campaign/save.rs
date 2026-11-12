@@ -82,6 +82,7 @@ fn write_logistics(l: &logistics::Logistics) -> Node {
                         ("store", store(&f.store)),
                         ("lines", seq(f.lines.iter().map(|x| nums(&[x.recipe as f64, x.hours_left as f64])).collect())),
                         ("project", f.project.map_or(Node::null(0), |(t, st)| nums(&[t as f64, st as u8 as f64]))),
+                        ("attacks", n(f.attacks as f64)),
                     ])
                 })
                 .collect()),
@@ -289,6 +290,8 @@ fn read_logistics(
             store: store_of(f.node("store")),
             lines,
             project,
+            // Saves from before 0.16.3 have no count: none.
+            attacks: f.num("attacks").unwrap_or(0.0) as u32,
         });
     }
     for o in list("orders") {

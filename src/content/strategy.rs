@@ -450,6 +450,19 @@ impl StrategyDef {
                 names.push(id.to_string());
             }
         }
+        // Logistics ids, and the map's systems and their feature tags (for `deposit`,
+        // `feature`, `survey_known`, `owned`, `lane_distance`, … ).
+        for s in super::logistics::DEF_SECTIONS {
+            for (id, _) in of(defs, s) {
+                names.push(id.to_string());
+            }
+        }
+        for (_, g) in of(defs, "maps") {
+            for (sid, n) in g.map("systems") {
+                names.push(sid.clone());
+                names.extend(Get(n).list("features"));
+            }
+        }
         // Campaign flags (`flags: [..]`) are names too, for flag(x).
         if let Some(fl) = global("flags") {
             names.extend(fl.as_seq().unwrap_or(&[]).iter().filter_map(|x| x.as_str().map(str::to_string)));

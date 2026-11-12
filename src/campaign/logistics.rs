@@ -50,6 +50,8 @@ pub struct Facility {
     pub lines: Vec<Line>,
     /// Research: the station-only topic, and whether its start materials have been used.
     pub project: Option<(usize, bool)>,
+    /// Strikes against it while under construction (`construction_attacks(system)`).
+    pub attacks: u32,
 }
 
 /// An order: `amount` of `goods` wanted at `to`, to be filled by facility `source`.
@@ -222,6 +224,7 @@ impl Campaign {
             store: Vec::new(),
             lines: Vec::new(),
             project: None,
+            attacks: 0,
         });
         Ok(())
     }
@@ -552,6 +555,122 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
 }
 
 impl Campaign {
+    /// The logistics queries of the condition language for system `s` (`other`: the
+    /// second argument's name — a resource, feature tag, site or system).
+    pub(crate) fn logistics_query(&self, def: &StrategyDef, id: u16, s: usize, other: &str) -> crate::script::Value {
+        use crate::script::campaign::id as q;
+        use crate::script::Value;
+        let goods = def.logistics.as_ref().and_then(|l| l.systems.get(s));
+        let surveyed = self.logistics.surveyed.get(s) == Some(&true);
+        match id {
+            // A deposit is known only once surveyed.
+            q::DEPOSIT => Value::Num(
+                goods
+                    .filter(|_| surveyed)
+                    .and_then(|g| g.deposits.iter().find(|d| d.resource == other))
+                    .map_or(0.0, |d| d.rate),
+            ),
+            q::FEATURE => Value::Bool(goods.is_some_and(|g| g.features.iter().any(|f| f == other))),
+            q::RESEARCH_SITE => Value::Bool(def.logistics.as_ref().is_some_and(|l| l.site_ok(other, s))),
+            q::SURVEY_KNOWN => Value::Bool(surveyed),
+            q::OWNED => Value::Bool(
+                self.bases.iter().any(|b| b.system == s) || self.logistics.facilities.iter().any(|f| f.system == s),
+            ),
+            q::LANE_DISTANCE => Value::Num(
+                self.systems
+                    .iter()
+                    .position(|x| x.id == other)
+                    .and_then(|t| self.lane_hops(def, s, t))
+                    .map_or(-1.0, |h| h as f32),
+            ),
+            q::FACILITY_PROGRESS => {
+                let l = def.logistics.as_ref();
+                let progress = self
+                    .logistics
+                    .facilities
+                    .iter()
+                    .filter(|f| f.system == s)
+                    .map(|f| {
+                        let time = l.map_or(1.0, |l| l.facility_types[f.ftype].time as f64).max(1e-6);
+                        (1.0 - (f.ready_at - self.hours) / time).clamp(0.0, 1.0) as f32
+                    })
+                    .fold(1.0f32, f32::min);
+                Value::Num(progress)
+            }
+            q::CONSTRUCTION_ATTACKS => Value::Num(
+                self.logistics.facilities.iter().filter(|f| f.system == s).map(|f| f.attacks).sum::<u32>() as f32,
+            ),
+            _ => Value::Num(0.0),
+        }
+    }
+
+    /// Removes facility `f` (lost to the enemy): its orders and the convoys bound for it
+    /// go too, and every other reference to a facility index after it moves down by one
+    /// (orders' sources and convoys' and orders' destinations hold indices, not names).
+    pub fn remove_facility(&mut self, f: usize) {
+        if f >= self.logistics.facilities.len() {
+            return;
+        }
+        self.logistics.facilities.remove(f);
+        let shift = |d: &mut Dest| {
+            if let Dest::Facility(x) = d {
+                if *x > f {
+                    *x -= 1;
+                }
+            }
+        };
+        self.logistics.orders.retain(|o| o.source != f && o.to != Dest::Facility(f));
+        for o in &mut self.logistics.orders {
+            if o.source > f {
+                o.source -= 1;
+            }
+            shift(&mut o.to);
+        }
+        self.logistics.convoys.retain(|c| c.to != Dest::Facility(f));
+        for c in &mut self.logistics.convoys {
+            shift(&mut c.to);
+        }
+    }
+
+    /// Jumps along the map's lanes from system `a` to `b` (a breadth-first search: each
+    /// lane is one jump), `None` when no route exists. A map without lanes counts
+    /// every pair of systems as one jump apart.
+    pub fn lane_hops(&self, def: &StrategyDef, a: usize, b: usize) -> Option<u32> {
+        if a == b {
+            return Some(0);
+        }
+        if def.map.lanes.is_empty() {
+            return Some(1);
+        }
+        let index = |id: &str| self.systems.iter().position(|s| s.id == id);
+        let lanes: Vec<(usize, usize)> =
+            def.map.lanes.iter().filter_map(|(x, y)| Some((index(x)?, index(y)?))).collect();
+        let mut hops = vec![u32::MAX; self.systems.len()];
+        hops[a] = 0;
+        let mut queue = std::collections::VecDeque::from([a]);
+        while let Some(s) = queue.pop_front() {
+            for &(x, y) in &lanes {
+                let next = if x == s {
+                    y
+                } else if y == s {
+                    x
+                } else {
+                    continue;
+                };
+                if hops[next] == u32::MAX {
+                    hops[next] = hops[s] + 1;
+                    if next == b {
+                        return Some(hops[next]);
+                    }
+                    queue.push_back(next);
+                }
+            }
+        }
+        None
+    }
+}
+
+impl Campaign {
     /// Settles an ambushed convoy: `Some(share)` after the player flew its escort (the
     /// share of the cargo that got away), `None` to let it fight through on its own
     /// (each vessel may be lost, as for convoys with no ambush mission).
@@ -655,6 +774,67 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         run(&mut c, &d, 60.0);
         assert_eq!(c.craft.len(), 1, "built once the plating arrived: {:?}", c.logistics);
         assert!(c.logistics.reserves[1][0].unwrap() < 100000.0, "mined");
+    }
+
+    #[test]
+    fn logistics_queries_answer_about_systems() {
+        let (d, errors) = build(SAMPLE);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        let q = |c: &mut Campaign, text: &str| {
+            let schema = crate::script::campaign::schema(&d.names, &[]);
+            let e = crate::script::parse(text, &schema).unwrap_or_else(|e| panic!("{text}: {e}"));
+            c.eval(&d, &e.0, None)
+        };
+        assert_eq!(q(&mut c, "deposit(b, iron)"), 0.0, "unknown until surveyed");
+        assert_eq!(q(&mut c, "survey_known(b)"), 0.0);
+        assert_eq!(q(&mut c, "feature(c, nebula)"), 1.0);
+        assert_eq!(q(&mut c, "research_site(c, nebula_lab)"), 1.0);
+        assert_eq!(q(&mut c, "research_site(b, nebula_lab)"), 0.0);
+        assert_eq!(q(&mut c, "owned(a)"), 1.0, "the starting base");
+        assert_eq!(q(&mut c, "owned(b)"), 0.0);
+        assert_eq!(q(&mut c, "lane_distance(b, c)"), 2.0, "b - a - c");
+        assert_eq!(q(&mut c, "lane_distance(a, a)"), 0.0);
+        run(&mut c, &d, 2.0);
+        c.survey(&d, 0, 1).unwrap();
+        run(&mut c, &d, 2.0);
+        assert_eq!(q(&mut c, "deposit(b, iron)"), 240.0, "known once surveyed");
+        assert_eq!(q(&mut c, "survey_known(b)"), 1.0);
+        assert_eq!(q(&mut c, "facility_progress(b)"), 1.0, "nothing building");
+        c.build_facility(&d, 0, 1).unwrap();
+        let p = q(&mut c, "facility_progress(b)");
+        assert!(p < 0.1, "just started: {p}");
+        assert_eq!(q(&mut c, "owned(b)"), 1.0, "a facility owns it");
+        c.logistics.facilities[0].attacks = 2;
+        assert_eq!(q(&mut c, "construction_attacks(b)"), 2.0);
+    }
+
+    #[test]
+    fn outcomes_capture_prizes_and_lose_facilities_safely() {
+        let (d, errors) = build(SAMPLE);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        // A prize is kept only when the outcome says capture.
+        c.mission_result(&d, "win", &["captured(saucer)".into()], 1);
+        assert!(!c.salvaged.contains(&"saucer".to_string()));
+        c.mission_result(&d, "win", &["capture".into(), "captured(saucer)".into()], 1);
+        assert!(c.salvaged.contains(&"saucer".to_string()), "captured: salvage for research");
+        // Two facilities; losing the first renumbers what pointed at the second.
+        run(&mut c, &d, 2.0);
+        c.survey(&d, 0, 1).unwrap();
+        run(&mut c, &d, 2.0);
+        c.build_facility(&d, 0, 1).unwrap();
+        c.build_facility(&d, 1, 0).unwrap();
+        c.logistics.orders.push(Order { goods: "iron".into(), amount: 5.0, to: Dest::Facility(1), source: 0 });
+        c.logistics.orders.push(Order { goods: "iron".into(), amount: 5.0, to: Dest::Base(0), source: 1 });
+        let lost = d.logistics.as_ref().unwrap().facility_types[0].id.clone();
+        c.mission_result(&d, "lose", &[format!("lose({lost})")], 0);
+        assert_eq!(c.logistics.facilities.len(), 1);
+        assert_eq!(c.logistics.orders.len(), 1, "the lost facility's own orders went with it");
+        assert_eq!(c.logistics.orders[0].source, 0, "the other facility's index moved down");
+        assert!(c.notices.iter().any(|n| n.contains("lost")), "{:?}", c.notices);
     }
 
     #[test]
