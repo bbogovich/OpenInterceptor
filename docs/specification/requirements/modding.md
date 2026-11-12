@@ -1,5 +1,5 @@
 ---
-spec_version: 1.16.0
+spec_version: 1.18.0
 status: current
 updated: 2026-11-11
 ---
@@ -25,7 +25,7 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-011 Paths stay inside the pack](#r-mod-011-paths-stay-inside-the-pack) | Implemented |
 | [R-MOD-012 Text keys](#r-mod-012-text-keys) | Implemented |
 | [R-MOD-013 Condition language](#r-mod-013-condition-language) | Implemented |
-| [R-MOD-014 Campaign context](#r-mod-014-campaign-context) | Planned |
+| [R-MOD-014 Campaign context](#r-mod-014-campaign-context) | Implemented |
 | [R-MOD-015 Tier 2 scripting decision](#r-mod-015-tier-2-scripting-decision) | Planned (evaluation recorded; awaiting the user's decision) |
 | [R-MOD-016 Headless validation](#r-mod-016-headless-validation) | Implemented |
 | [R-MOD-017 Full validator](#r-mod-017-full-validator) | Planned |
@@ -52,7 +52,7 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-038 Autopilot entities](#r-mod-038-autopilot-entities) | Planned |
 | [R-MOD-039 Formations in cutscenes](#r-mod-039-formations-in-cutscenes) | Planned |
 | [R-MOD-040 Timed sounds](#r-mod-040-timed-sounds) | Planned (partly met) |
-| [R-MOD-041 Captions](#r-mod-041-captions) | Planned (partly met) |
+| [R-MOD-041 Captions](#r-mod-041-captions) | Implemented |
 | [R-MOD-042 Cameras, fixed or attached](#r-mod-042-cameras-fixed-or-attached) | Planned (partly met) |
 | [R-MOD-043 Camera cuts](#r-mod-043-camera-cuts) | Planned (partly met) |
 | [R-MOD-044 Where cutscenes play](#r-mod-044-where-cutscenes-play) | Planned (partly met) |
@@ -233,9 +233,12 @@ Conditions MUST gain a campaign context with system and facility queries (`depos
 *Rationale:* Strategy-layer rules and logistics.
 
 - Implements: [F-MOD-005](../../definition/modding-toolkit.md#f-mod-005-conditions-actions-and-scripting), [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned — partly met: the campaign context exists (`script::campaign`, app 0.6.7, main `65141dc`) with 16 strategy queries (`research`, `researching`, `has`, `module_count`, `bases`, `money`, `day`, `month`, `difficulty`, `pilots`, `score`, `month_score`, `random`, `flag`, `salvaged`, `craft`), every campaign id a checked constant; the system and facility queries listed here wait for logistics
-- Verified by: `script::campaign::tests::ids_match_and_names_are_checked`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`
+- Status: implemented (app 0.6.7, main `65141dc`; the system and facility queries app 0.16.3, main `a45331a`, #8)
+- Verified by: `script::campaign::tests::ids_match_and_names_are_checked`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`; `campaign::logistics::tests::logistics_queries_answer_about_systems`; MT-4-49
 - See: [Logistics](../design/logistics.md), [Strategy layer › expressions](../../modding/strategy.md#expressions-the-campaign-context)
+
+!!! note "As built (app 0.6.7 – 0.16.3)"
+    The campaign context (`script::campaign`) has 16 strategy queries (`research`, `researching`, `has`, `module_count`, `bases`, `money`, `day`, `month`, `difficulty`, `pilots`, `score`, `month_score`, `random`, `flag`, `salvaged`, `craft`; app 0.6.7), the story's five (`arc`, `plan`, `relation`, `fired`, `battles_won`; app 0.10.0) and since app 0.16.3 the eight required here: `deposit(system, resource)` (its daily rate, 0 until surveyed), `feature(system, tag)`, `research_site(system, site)`, `survey_known(system)`, `owned(system)` (a base or a facility), `lane_distance(a, b)` (jumps along lanes, breadth-first; −1 without a route; 1 on a map without lanes), `facility_progress(system)` (the least finished facility's 0..1; 1 when none is building) and `construction_attacks(system)`. Every campaign id — systems, feature tags, resources, sites included — is a checked constant.
 
 ### R-MOD-015 Tier 2 scripting decision
 
@@ -581,12 +584,15 @@ A cutscene MUST be able to show caption text, given as text keys so that it can 
 *Rationale:* Accessible narration (decision D3, 2026-11-11: yes).
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned — partly met (MD2, app 0.13.0): captions over time ranges, as plain text
-- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09
+- Status: implemented (MD2, app 0.13.0; text keys app 0.16.2, main `6b45fcb`, #65)
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09, MT-6-23
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains), [R-MOD-012](#r-mod-012-text-keys)
 
 !!! note "As built (app 0.13.0)"
     `captions: [[from, to, text]]`, centred in the bottom letterbox bar in the skin's font. The text is plain, not a text key, so it is not translated.
+
+!!! note "As built (app 0.16.2)"
+    A caption's text — and the cutscene's `title` — may be a text key (`"@cutscene.intro.line1"`), resolved from the packs' `text/<language>/` files when the content loads; a missing key is a load error naming the cutscene. The default intro's lines are in `text/en/cutscenes.yaml`.
 
 ### R-MOD-042 Cameras, fixed or attached
 
@@ -637,12 +643,15 @@ The player MUST always be able to skip a cutscene, engine-played or video, with 
 *Rationale:* A film never holds the player.
 
 - Implements: [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game), [F-MOD-012](../../definition/modding-toolkit.md#f-mod-012-video-cutscenes)
-- Status: planned — partly met (MD2, app 0.12.0 – 0.13.0): Esc (and Enter) skips a cutscene; Enter, Esc or a click skips a video
-- Verified by: MT-6-07, MT-6-09
+- Status: planned — partly met (MD2, app 0.12.0 – 0.16.2): Esc, Enter, a click or the gamepad's Start (also A and B) skips a cutscene or a video; the tablet console cannot yet
+- Verified by: MT-6-07, MT-6-09, MT-6-23
 - See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file)
 
 !!! note "As built (app 0.13.0)"
     `CutscenePlayer::frame` ends on Esc or Enter; `VideoPlayer::frame` on Enter, Esc or a left click; the app then returns to the parked campaign or the launcher. Not built: skipping from the tablet console and with the gamepad's Start button.
+
+!!! note "As built (app 0.16.2, main `6b45fcb`)"
+    `app::skip_pressed` decides for both players: Esc, Enter, a left click, or the gamepad's Start, A or B newly pressed this frame. Not built: skipping from the tablet console.
 
 ### R-MOD-046 Video cutscenes
 
@@ -786,3 +795,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.12.0 | 2026-11-11 | R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) `mlua`, (b) `rhai`, (c) grow `script::*`; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed |
 | 1.13.0 | 2026-11-11 | R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7) |
 | 1.16.0 | 2026-11-11 | MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; R-MOD-037 `harmless` (an Open note in app 0.13.0, fixed in app 0.14.1: bolts and missiles hit but do no damage); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed |
+| 1.18.0 | 2026-11-11 | R-MOD-014 implemented: the logistics queries (`deposit`, `feature`, `research_site`, `survey_known`, `owned`, `lane_distance`, `facility_progress`, `construction_attacks`; app 0.16.3, #8), with an As-built note; R-MOD-041 implemented: captions and titles as text keys (app 0.16.2, #65); R-MOD-045 As-built note: the gamepad skips (app 0.16.2), the tablet console does not yet |

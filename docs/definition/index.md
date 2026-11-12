@@ -1,5 +1,5 @@
 ---
-spec_version: 1.17.0
+spec_version: 1.18.0
 status: current
 updated: 2026-11-11
 ---
@@ -64,3 +64,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.15.0 | 2026-11-11 | 90 features: Stage 5 and the convoy battles (app 0.9.1 – 0.10.3): F-CPN-006 in progress (the story layer); F-CPN-003 (the serial, convoy battles) and F-CPN-004 (the Doomsday arc) progress; F-STR-007 and F-MSN-007 progress (the supply vessel, flown convoy escorts) |
 | 1.16.0 | 2026-11-11 | 90 features: Stage 6 (app 0.11.0 – 0.14.0): F-CPN-007 in progress (music, skins, title cards, films, the comms panel, the main menu); F-MOD-011 in progress (engine cutscenes, MD2); F-CMP-002 progress (Smacker video and MPSRC packs read) |
 | 1.17.0 | 2026-11-11 | 90 features: F-HUD-003 gains the ship status display (user request; app 0.15.1) |
+| 1.18.0 | 2026-11-11 | 90 features: F-STR-001 – F-STR-003, F-STR-005, F-STR-006, F-STR-008 and F-TST-004 progress (app 0.16.1 – 0.16.14) |

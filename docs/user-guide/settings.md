@@ -31,6 +31,7 @@ game:
   physics: simple       # or realistic
 graphics:
   brightness: 1.2
+  fullscreen: false
 console:
   enabled: true
   port: 8765
@@ -49,6 +50,7 @@ audio:
 | `game.language` | `en` | The text language: the packs' `text/<language>/` folders (`--language` overrides it). |
 | `game.physics` | `realistic` | `simple`: the player's craft always flies where its nose points, with no drift, like a traditional space fighter game. Used only on a campaign's first three difficulty levels; higher levels always fly `realistic`. The launcher's **P** key switches it ([R-FLT-013](../specification/requirements/flight.md#r-flt-013-simple-physics-mode)). |
 | `graphics.brightness` | 1 | The picture's brightness: 1 is as authored, from 0.5 (darker) to 2 (brighter); values outside are clamped. It lifts dark tones more than bright ones (a gamma), so ships in shadow become easier to see without washing out lit faces. The HUD and cockpit art are not changed. Read when the game starts. |
+| `graphics.fullscreen` | `false` | Start full screen (app 0.16.14). The main menu's *Options › Full screen* switches it at once and writes it here; `--fullscreen` starts full screen for one run whatever it says, and `--windowed` starts in a window. |
 | `console.enabled` | `false` | Serve the [tablet control console](console.md) (`--console` turns it on for one run). |
 | `console.port` | 8765 | The console's port; change it if another program uses 8765 (`--console-port` overrides it). |
 | `audio.music` | 70% | The music volume, 0% to 100% (app 0.12.1): battle and strategy-screen [music](../modding/music.md) and its stingers. The launcher's **M** key steps it. |
@@ -56,8 +58,8 @@ audio:
 
 ## Other ways to set them
 
-- The command line overrides `paths`, `game.campaign`, `game.difficulty`, `game.language`
-  and `console` for one run ([Getting started](getting-started.md#command-line-options)).
+- The command line overrides `paths`, `game.campaign`, `game.difficulty`, `game.language`,
+  `graphics.fullscreen` (`--windowed`, `--fullscreen`) and `console` for one run ([Getting started](getting-started.md#command-line-options)).
 - How bright ships are in a campaign is also the campaign's choice: a modder sets the lighting
   with `flight: {lighting: …}` ([Mod file reference](../modding/reference.md#flight)).
   `graphics.brightness` adjusts the result for your screen.
@@ -67,6 +69,9 @@ audio:
 Since app 0.14.0 the main menu's **Options** page sets the campaign, difficulty, physics and the
 music and effects volumes with Left/Right (volumes by a quarter, stopping at 0 % and 100 %) and
 saves them here at once ([Getting started › The main menu](getting-started.md#the-main-menu)).
+Since app 0.16.14 it also has **Full screen** (On/Off with Left, Right or Enter: the window
+changes at once and `graphics.fullscreen` is saved) and **Controls...**, which opens the controls
+screen ([Controls › Rebinding](controls.md#rebinding)) and returns to the main menu.
 
 ## Volumes in the launcher
 
@@ -75,5 +80,5 @@ volume and **V** the effects volume up by a quarter — 0, 25, 50, 75, 100 % —
 to 0 (a value in between, such as the default 70 %, goes up past the nearest quarter: 70 % → 100 %).
 Each press is saved in `settings.yaml` at once and takes effect immediately.
 
-Graphics (brightness) and the console are still set in this file; the controls have their own
-menu in flight.
+Brightness and the console are still set in this file; the controls have their own menu in
+flight, in the launcher and (since app 0.16.14) in the main menu's options.

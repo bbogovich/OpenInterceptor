@@ -82,11 +82,24 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `salvaged(x)` | true/false | Something named `x` has been salvaged (see [Battles](#raids-and-battles)). |
 | `craft` | number | The player's craft, all bases. |
 | `arc(x)`, `plan(x)`, `relation(x)`, `fired(x)`, `battles_won` | number | The story's queries (app 0.10.0): see [Story layer › Conditions](story.md#conditions). |
+| `deposit(s, r)` | number | The daily rate of resource `r` in system `s` — **0 until the system is surveyed** ([logistics](#logistics), app 0.16.3). |
+| `feature(s, tag)` | true/false | System `s` has the feature `tag` (known without a survey). |
+| `research_site(s, site)` | true/false | System `s` meets research site `site`'s features. |
+| `survey_known(s)` | true/false | System `s` has been surveyed. |
+| `owned(s)` | true/false | The player has a base or a facility (finished or not) in system `s`. |
+| `lane_distance(a, b)` | number | Jumps along the map's lanes from `a` to `b` (breadth-first; each lane one jump); 0 for the same system, −1 when no route exists; on a map without lanes every pair is 1 apart. |
+| `facility_progress(s)` | number | The construction progress (0..1) of the least finished facility in system `s`; 1 when none is building (also when there is none). |
+| `construction_attacks(s)` | number | [Construction strikes](#construction-strikes) suffered by the facilities built in system `s`. |
+
+Systems are named by their map id (`ajax`, `nebula_haven`) and are checked names like everything
+else, as are resource ids, feature tags and research-site ids (app 0.16.3).
 
 ```text
 research(ion_rays) and research(saucer_hulls)
 6 + module_count(laboratory) * 12
 400000 + 60000 * bases + month_score * 200
+survey_known(nebula_haven) and deposit(nebula_haven, dilithium) > 10
+owned(ajax) and lane_distance(mercury_gate, tycho_drift) <= 3
 ```
 
 ## Sections
@@ -140,6 +153,8 @@ name from `names`.
 | `name` | text | the id | Display name. |
 | `size` | number | 1000 | Work units to finish (also read from the original's `file_size`, in thousands, through inheritance). |
 | `requires` | condition | none | Available to research only while this holds: `research(x)`, `salvaged(x)`, any campaign query. |
+| `requires_any` | list of topic ids | none | Available once **any one** of these topics is known — shorthand for `research(a) or research(b)`, joined to `requires` with `and` (app 0.16.6). |
+| `hidden` | bool | `false` | Not offered at all until a story event's [`discover(<topic>)`](story.md#actions) action has run (then its `requires` must still hold; a notice says *New research possible: <name>*). The discovery is kept as the campaign flag `discovered.<topic>` (app 0.16.6). |
 | `unlocks` | list | none | What finishing it makes available: `items.<id>`, `hulls.<id>`, `modules.<id>` (or `base_modules.<id>`), `base_types.<id>`. Something a topic unlocks cannot be bought, made or built until the topic is known. |
 | `description` | text | empty | Encyclopaedia text (Stage 5 shows it). |
 | `prereq1`, `prereq2`, `prereq3` | numbers | none | The original's numeric prerequisites, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become `research(a) and research(b)` (app 0.8.0). |
@@ -167,7 +182,7 @@ says so.
 | `cost` | number | 0 | Purchase price; 0 = cannot be bought. |
 | `sell_price` | number | 0 | What one fetches on the market. |
 | `prod_time` | number | 0 | Work units to manufacture one; 0 = bought only. |
-| `size` | number | 1 | Storage space (kept for the storage rules to come). |
+| `size` | number | 1 | Storage space: what one takes of a base's store when the campaign has [`storage` modules](#base_modules-and-base_types) (app 0.16.10). |
 | `rounds` | number | 1 | Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2). |
 | `protection` | number | 0 | A `shield`: shield points per facing; an `armor`: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's `Special` (shields) or `HitPoints` (armour) — *derived*. In battle a craft flies with the **strongest** fitted shield and the **sum** of its fitted armour, in place of its class's `shields` / `armor`; with none fitted it keeps the class's own (which `fitted:` on the [ship class](reference.md#ships-and-objects) may supply). |
 | `requires` | condition | none | Available only while this holds (as well as any topic that unlocks it). |
@@ -197,13 +212,27 @@ says so.
 | `cost` | number | 0 | Build price, paid when ordered. |
 | `build_time` | time | 72 h | Time to build; the module works from then on. With `economy.module_time: days`, a module without `build_time` takes its `prod_time` (the original's key) in days (app 0.8.0). |
 | `maintenance` | number | 0 | Per month. |
-| `effects` | mapping name: number | none | Campaign quantities it adds while working: `research_rate`, `production_rate`, `sensor_range`, `hangar` (craft housed), `quarters` (pilots housed), `storage`, `defence`, `income`. |
+| `effects` | mapping name: number | none | Campaign quantities it adds while working: `research_rate`, `production_rate`, `sensor_range`, `hangar` (craft housed), `quarters` (pilots housed), `storage` (store capacity, in item `size`s), `defence` (points), `income`. |
 | `requires` | condition | none | Available only while this holds. |
 
 As built, the engine reads `production_rate` (manufacturing), `sensor_range` (detection and
 revealing hidden systems) and `hangar` (craft a base houses). `research_rate` is a number the
-`research_model.rate` expression may use through `module_count`; `quarters`, `storage`,
-`defence` and `income` are accepted and summed but not yet acted on.
+`research_model.rate` expression may use through `module_count`. Since app 0.16.10:
+
+- **`quarters`**: the pilots the player can keep — every base type's `quarters` plus every
+  working `quarters` module, all bases together. Hiring is refused at the limit (*no quarters:
+  room for n pilots*). A campaign that gives no quarters anywhere has no limit.
+- **`storage`**: a base's store capacity from its working `storage` modules, counted in item
+  `size`s; buying more than fits is refused (*no room in store: …*). If **no** module in the
+  campaign has `storage`, there is no limit — but once one does, a base without one has room for
+  nothing (deliveries, manufacture and salvage are not checked).
+- **`defence`**: each point of a base's working modules' defence turns away 15 % of unopposed
+  raids on that base on its own — 1 − 0.85^points in all (two points: 28 %, four: 48 %). A raid
+  turned away is reported and destroys nothing.
+- **`income`** stays a tag: an `incomes:` formula counts the modules with `module_count`.
+
+**Dismantling** (app 0.16.10): any module of a base can be dismantled from the Bases list; it is
+removed at once and `economy.dismantle` of its `cost` (50 %) is refunded.
 
 `base_types: {<id>: …}` — kinds of base.
 
@@ -259,10 +288,37 @@ Module `maintenance`, hull `upkeep` and pilot `salary` are charged monthly on th
 | `names` | list of text | none | Names to draw from. |
 | `heal_days` | number | 14 | Days an injured pilot is out. |
 | `survive` | fraction | 60 % | Chance that a pilot shot down ejects (injured) rather than dies. |
+| `training` | `{gain, cost}` | none | Pilot training (app 0.16.7): a ready pilot put into training gains `gain` points in **every** stat a day, up to the top of that stat's `stats` range, and costs `cost` money a day. Without it (or with `gain: 0`) the Hangar offers no *Train* button. Training continues until stopped; it is saved. |
 
 `scores: {<name>: points}` — mission score names. A mission outcome's `score(<name>)` adds the
 points to the campaign score and the month's score; the name `undefended` is used when a raid
 reaches its target unopposed.
+
+### `evaluations`
+
+`evaluations: [{rating, when, do}]` (app 0.16.8; a global section like `scores`) — the patron's
+monthly evaluation. At each monthly report the ratings are tried **in order** and the **first**
+whose `when` holds rates the month: its `do` actions run (the [event actions](story.md#actions):
+`money(-50000)`, `news(…)`, `relation(…)`, `set_flag(…)`, …) and the report ends *rated
+<rating>*. A rating without `when` always applies, so put a catch-all last. No rating holds: the
+report has none.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `rating` | text | The month's rating, shown in the report and the Reports list. |
+| `when` | condition | When it applies (the campaign context; `month_score` is the month being rated). None: always. |
+| `do` | list of actions | Run when it rates the month. Checked when the rules load. |
+
+```yaml
+evaluations:
+  - {rating: Outstanding, when: month_score >= 400, do: ["money(150000)", "news(The Senate commends the Guard's month)"]}
+  - {rating: Satisfactory, when: month_score >= 0}
+  - {rating: Poor, when: month_score >= -300, do: ["money(-50000)"]}
+  - {rating: Unacceptable, do: ["money(-150000)", "news(The Senate cuts the Guard's funding)"]}
+```
+
+Before app 0.16.9 the section was dropped when the rules were built (it was missing from the list
+of strategy globals), so a pack's ratings never reached the campaign.
 
 ### `flags` and `economy`
 
@@ -274,6 +330,8 @@ sets them (`set_flag(x)` names in mission outcomes are added automatically).
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `delivery` | time | 48 h | Time for a purchase to arrive. |
+| `delivery_loss` | fraction | 0 % | Chance that a purchase is lost on the way (app 0.16.11): it is paid for all the same, and a notice says so. |
+| `dismantle` | fraction | 50 % | The share of a module's `cost` refunded when it is dismantled (app 0.16.10). |
 | `salvage_per_kill` | number | 0 | Money per enemy destroyed when an outcome says `salvage`. |
 | `cost_scale` | number | 1 | Multiplies every item and hull `cost`, `sell_price`, hull `upkeep` and module `cost` and `maintenance` (app 0.8.0). The `interceptor` campaign sets 1000: the original's money is in thousands. |
 | `module_time` | `days` | — | Modules without `build_time` take their `prod_time` in days (app 0.8.0; the original's module times are days). |
@@ -298,15 +356,22 @@ prerequisites by **number**. A topic's `prereq1` – `prereq3`, and an item's, h
   finishes, each base researches its topic at `research_model.rate`, each base manufactures its
   queue (first job first) at its `production_rate`, deliveries arrive, incomes and expenses pay,
   pilots heal, raids roll and move, sensors detect, interceptions fly.
-- **The month** (every 720 hours): maintenance, upkeep and salaries are charged; the **monthly
-  report** gives the month's score, the total, the costs and the funds; a new pool of recruits is
-  offered.
+- **The month** (every 720 hours): maintenance, upkeep and salaries are charged; the first
+  [evaluation](#evaluations) that holds rates the month and runs its actions (app 0.16.8); the
+  **monthly report** gives the month's score, the total, the costs, the funds and the rating; a
+  new pool of recruits is offered.
+- **Training** (app 0.16.7): every hour each ready pilot in training gains `training.gain` / 24
+  in every stat and the campaign pays `training.cost` / 24.
 - **Bases.** A new base is built in a system that has none, at most `max_bases` of a type,
   within `max_distance` of one of yours; it comes with its `template` modules and is finished
   after `build_time`. A module is refused beyond its group's limit or while not available.
-- **Buying** pays now and delivers to the current base after `economy.delivery`. **Selling**
-  takes one item from the current base's store at `sell_price`. **Manufacture** queues at the
-  base; finished units go into its store (hulls become craft there). Each unit is **paid for as
+- **Buying** pays now and delivers to the current base after `economy.delivery` — unless the
+  base's store is full ([`storage`](#base_modules-and-base_types)), and with the chance
+  `economy.delivery_loss` the delivery is lost. **Selling** takes one item from the current
+  base's store at `sell_price`. **Manufacture** queues at the base; finished units go into its
+  store (hulls become craft there). The player can move a queued job up one place and cancel a
+  job: a job not yet started goes without cost, a job at work keeps only the unit already paid
+  for (app 0.16.11). Each unit is **paid for as
   it starts** (its `cost`); a job waits while the money is short (app 0.9.0; until then
   manufacture was free). With logistics, a hull that has `components` is paid in components
   instead: it starts when they are in the base's store.
@@ -340,18 +405,37 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
    **detected** — the clock stops with a message — and shows on the map.
 3. The player sends the current base's ready craft to **intercept** it. They fly at their hull's
    `speed`; when they reach it the clock stops and the player chooses: **fly** the raid's
-   `mission`, with the first craft's hull as the player's ship, or **break off** (the contact
-   flies on).
+   `mission`, with the first craft's hull as the player's ship, **auto-resolve** it (app
+   0.16.12), or **break off** (the contact flies on). Auto-resolve rolls the result from both
+   sides' strength: each craft's power is √(effective hit points × sustained damage per second)
+   of its class (the [`--balance`](#trying-a-campaign-out) numbers), a side's power the sum —
+   the player's craft at the contact against the mission's hostile roles at their average
+   counts — and the player wins with p = P² / (P² + E²). The mission's own outcome actions for
+   the rolled `win` or `lose` apply as for a flown battle (DEV-057).
 4. The battle's debrief comes back to the campaign: the outcome's actions apply —
-   `score(<name>)`, `money(<n>)`, `set_flag(<id>)`, `salvage` (money: `salvage_per_kill` × kills,
-   and the raid's **id** is recorded, so `salvaged(<raid id>)` holds from then on — fixed in app
-   0.9.0; before, the display name was recorded and never matched), `lose(<what>)` (logged).
+   `score(<name>)`, `money(<n>)`, `set_flag(<id>)`, `relation(<faction>, <n>)`, `salvage` (money:
+   `salvage_per_kill` × kills, and the raid's **id** is recorded, so `salvaged(<raid id>)` holds
+   from then on — fixed in app 0.9.0; before, the display name was recorded and never matched),
+   and since app 0.16.3:
+   - `capture` — every prize the player's tractor beam brought home (the battle reports each as
+     `captured(<class>)`) is kept as **salvage**, so `salvaged(<class id>)` holds and research
+     can start from a capture; without `capture` in the outcome nothing is kept;
+   - `lose(<facility type>)` — the player's most recently built facility of that type is lost
+     (its orders and the convoys bound for it go too; a notice says so); any other argument is
+     only logged;
+   - `cargo_lost`, `cargo_captured` — recorded in the log (a convoy escort's own `cargo:` share
+     settles the cargo).
+
+   A stance change that a `relation(…)` outcome causes is announced as soon as the map is back,
+   and stops the clock (app 0.16.2). A flown convoy escort or construction defence applies its
+   outcome's actions too (app 0.16.3, 0.16.4).
    The leader is credited the kills and experience (kills + 1); every pilot in the party a
    mission. A `killed` result loses the craft, and its pilot ejects injured (`survive`) or dies.
    `win` and `draw` remove the contact; `lose` and `retreat` leave it flying. Leaving a campaign
    battle early from the pause menu is a `retreat`.
 5. A contact that reaches its target **unopposed**: a base target loses its newest finished
-   module, and the `undefended` score applies.
+   module, and the `undefended` score applies — unless the base's [`defence`](#base_modules-and-base_types)
+   turns it away (app 0.16.10).
 
 ## Logistics
 
@@ -445,6 +529,7 @@ The supply settings (a global section).
 | `survey_attack_chance` | fraction | 25 % | Chance, rolled when a survey ship launches, that it is attacked on the way. |
 | `survey_speed` | number | 900 | Survey ship speed, map units an hour. |
 | `convoy_speed` | number | 500 | Convoy speed, map units an hour. |
+| `construction_strikes` | `{from, max, chance, mission, setback}` | none | Enemy strikes on facilities under construction ([below](#construction-strikes), app 0.16.4). Without it there are none. |
 | `ambush_mission` | mission id | none | The battle flown when the player escorts an ambushed convoy (app 0.9.2). With it, an ambushed convoy **waits** where it is and the clock stops: the player flies its escort, and the share of the mission's [`cargo:`](missions.md#the-mission) role still aboard at the end is delivered — or lets it fight through (auto-resolved as below). Without it every ambush is auto-resolved. An unknown mission is a load error. The default campaign sets `convoy_ambush`. |
 
 ### How the chain runs
@@ -471,10 +556,42 @@ Every hour, after the rest of the hour step ([Architecture › Campaign](../impl
 7. **Hull jobs** whose components are in the base's store start, using them up; the factory
    then works on them as usual.
 8. **Survey ships** arrive. One that was attacked is lost half the time; otherwise the system is
-   **surveyed** and a message lists its deposits (with rates) and the research sites it meets.
+   **surveyed** and a message lists its deposits (with rates a day and the reserve, or
+   *unlimited*), its features and the research sites it meets (reserves and features since app
+   0.16.2).
+9. **Construction strikes** (app 0.16.4, with `construction_strikes`): see below.
 
 An order is placed only when a facility exists that can fill it: a base without a reachable
 manufacturing center simply waits. Facilities report when they are complete.
+
+### Construction strikes
+
+`logistics.construction_strikes` (app 0.16.4, R-STR-023) lets the enemy strike a facility while
+it is being built:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `from` | fraction | 50 % | Construction progress from which a site can be struck. |
+| `max` | number | 3 | Strikes at most per **location** (all facilities in one system together). |
+| `chance` | fraction | 10 % | Chance per day for each eligible site. |
+| `mission` | mission id | none | The defence the player flies (`construction_defence`). None: every strike is let be. |
+| `setback` | fraction | 25 % | A strike not flown sets construction back this share of the facility type's `time`. |
+
+```yaml
+logistics:
+  construction_strikes: {from: 50%, max: 3, chance: 12%, mission: construction_defence, setback: 25%}
+```
+
+Each hour every site past `from` whose system has had fewer than `max` strikes rolls
+`chance` (per day); one strike at a time stops the clock with a prompt:
+
+- **Fly the defence** — the `mission` with the first ready craft: a **win** beats the strike
+  off; a **loss** destroys the site (removed with its orders); a retreat or draw counts as not
+  flown. The mission's own outcome actions apply too.
+- **Let it be** — or no ready craft, or no `mission` — the strike sets the site back by
+  `setback` × its build time.
+
+Every strike counts towards `construction_attacks(<system>)` (saved).
 
 ### The player's orders
 
@@ -516,9 +633,10 @@ a Guard player who wants more craft must survey, mine and manufacture first.
 ### Not built yet
 
 Convoy ambushes can be **flown** since app 0.9.2 (`ambush_mission`; the battle is described in
-[Missions › The convoy ambush](missions.md#the-convoy-ambush-app-092)). Not built: facility fighter pools and escorts
-(R-STR-025), strikes on facilities under construction from 50 % (R-STR-023), construction-stage
-looks on the map and in battle (R-STR-022), captured cargo and enemy supply depots (R-STR-020),
+[Missions › The convoy ambush](missions.md#the-convoy-ambush-app-092)), and construction sites are
+struck since app 0.16.4 ([above](#construction-strikes)). Not built: facility fighter pools and escorts
+(R-STR-025), construction-stage looks on the map and in battle (R-STR-022: the
+`construction_defence` mission shows its own research station at 60 %, whatever was struck), captured cargo and enemy supply depots (R-STR-020),
 third-party convoys (R-STR-027), supply-vessel cargo capacity (R-STR-026), facility upgrades,
 and the design's `placement:` expressions (fixed rules per role instead). The manufacturing
 center's and research station's `storage` is not enforced.
@@ -572,14 +690,22 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
 - On the strategy screen the testbed has the original's own **cheats** (app 0.8.1): Ctrl+M
   *payday* (a million), Ctrl+K *knowitall* (every topic known), Ctrl+B *quickbase* (every base
   and module under construction finished — not facilities) and Ctrl+J *jump to battle* from
-  the contact chosen on the Contacts tab ([User guide › Campaign](../user-guide/campaign.md#testbed-cheats)).
+  the contact chosen on the Contacts tab ([User guide › Campaign](../user-guide/campaign.md#testbed-cheats-and-tools)).
+- **Ctrl+D** shows the **Debug** list (app 0.16.13): each arc's step and every story event with
+  how often it has fired and whether its condition holds now — the quickest way to check a
+  condition you have written (the [logistics queries](#expressions-the-campaign-context)
+  included); *Fire now* fires one ([Story layer › Trying a story out](story.md#trying-a-story-out)).
+- `openinterceptor --campaign <id> --strategy --chapter <n>` (app 0.16.13) plays a new campaign
+  forward headless with the automatic player until its first arc reaches step *n* (at most 1500
+  days), then opens the strategy screen there.
 
 ## The default campaign as the example
 
 *Perils of the Void* (`resources/default/strategy/`) uses every section:
 
 - **Start**: 1 March 2084, 2 500 000 in funds, the Gatehouse base (`guard_base`) at Mercury
-  Gate, three Comets, four pilots, `rocketry` known, six blasters and twelve seeker rockets.
+  Gate, three Comets, four pilots, `rocketry` known, six blasters, twelve seeker rockets, three
+  deflector screens and three steel platings (app 0.16.1).
 - **Map** `reach`: fixed, lane travel, 1 unit = 0.001 ly; six systems — Mercury Gate, Ajax,
   Cinder, Vesta Reach, Tycho Drift, Nebula Haven — joined by seven lanes, and **The Dark Moon**,
   a hidden black hole far to the east, found only when a base's sensors reach it.
@@ -587,14 +713,18 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   topics from `rocketry` through `heat_rays`, `ion_rays`, `saucer_hulls` (requires
   `salvaged(saucer_raid) or salvaged(scout_probe)`), `saucer_propulsion`, `disintegrators`,
   `deep_radar`, `shipyards`, `thunderbolt_design`, `robot_brains` (`salvaged(robot_raid)`),
-  `victory_design` and `regents_engine`, unlocking beams, missiles, the Meteor, Thunderbolt and
-  Victory hulls and the deep-radar and shipyard modules; and two station-only topics,
+  `victory_design` and `regents_engine`, plus `force_fields` (after `heat_rays`) and
+  `saucer_alloys` (after `saucer_hulls`) since app 0.16.1 — fourteen in all — unlocking beams,
+  missiles, the force field and saucer-alloy plating, the Meteor, Thunderbolt and Victory hulls and
+  the deep-radar and shipyard modules; and two station-only topics,
   `theremin_shielding` and `pulsar_navigation` (app 0.9.0, [Logistics](#the-default-campaigns-logistics)).
 - **Economy**: delivery 48 h, salvage 15 000 a kill; the **Senate stipend** every 30 days,
   `400000 + 60000 * bases + month_score * 200 + relation(senate) * 3000` (the standing term since
   app 0.10.1); cosmium sales every 7 days,
-  `12000 * module_count(cosmium_refinery)`; fuel and stores `4000 * craft` a week. Eight items
-  (four beams, three missiles, cosmium), four hulls, nine module kinds (hangar, quarters, radar,
+  `12000 * module_count(cosmium_refinery)`; fuel and stores `4000 * craft` a week. Twelve items
+  (four beams, three missiles, cosmium, and since app 0.16.1 two shields — deflector screen 300,
+  force field 480 — and two armours — steel plating 180, saucer-alloy plating 380), four hulls
+  (each with a `shield` and an `armor` slot since 0.16.1), nine module kinds (hangar, quarters, radar,
   deep radar, laboratory, workshop, shipyard, cosmium refinery, ray battery) and the `guard_base`
   type (template hangar, radar, laboratory; at most 6 bases, 3500 units apart).
 - **Raids**: Dominion scouts (`intercept_scouts`), saucer raids (`defend_station`, from day
@@ -604,8 +734,14 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   Engine's shipments (`eclipse_shipment`, `chance: 0%`: launched only by the
   [plan](story.md#plans)).
 - **Pilots**: flying, gunnery and nerve; five ranks from cadet to commander; salary 6000,
-  recruit fee 40 000, five recruits a month, 12 days to heal, 70 % survive; twelve mission
-  scores.
+  recruit fee 40 000, five recruits a month, 12 days to heal, 70 % survive; training 0.4 points
+  and 400 a day (app 0.16.7); twelve mission scores. The Gatehouse's `guard_base` houses four
+  pilots — the four you start with — so hiring needs a Crew quarters module first (app 0.16.10).
+- **Evaluations** (app 0.16.8): the Senate rates each month *Outstanding* (a month's score of 400
+  or more: +150 000 and praise), *Satisfactory* (0 or more), *Poor* (−300 or more: −50 000) or
+  *Unacceptable* (−150 000 and a funding-cut notice).
+- **Logistics**: construction strikes at 12 % a day from half-built, three at most per system,
+  flown as `construction_defence`, a quarter of the build time set back when let be (app 0.16.4).
 
 The unit test `campaign::tests::the_default_campaign_runs_six_months` plays it for six months
 with an automatic player: it stays solvent, researches at least four topics, fights raids and
@@ -633,27 +769,31 @@ unknown.
 | `maps: system x: unknown resource 'y'` | A deposit of an undefined resource. |
 | `hulls.x.components: unknown component 'y'` | A hull built from an undefined component. |
 | `research.x.lab: unknown facility type 'y'` / `research.x.site: unknown research site 'y'` | A station-only topic naming something not defined. |
+| `evaluations[0].when: …` / `evaluations[0].do: …` | A rating's condition or action that does not parse or names something not defined (app 0.16.8). |
+| `research.x.requires: unknown name 'y'` | Also for a misspelt topic in `requires_any` (it becomes part of `requires`). |
 | `this save needs packs that are not loaded: …` | Loading a save made with a mod that is not active. |
 | `save: this save has logistics but the loaded campaign has none` | Loading a save with facilities into a campaign whose logistics was removed. |
 | `save: … does not match the loaded rules (was a mod changed?)` | Loading a save whose research, modules, items, incomes or raids no longer fit the rules. |
 
-## Limits in app 0.16.0
+## Limits in app 0.16.14
 
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
   fitting is *best available* only, and slots of kinds other than `beam`, `missile` and (since app
   0.15.0) `shield` and `armor` are filled but have no effect in battle.
-- Mission outcome actions `capture`, `cargo_lost` and `cargo_captured` are still **ignored** by
-  the campaign. A mission's `relation(faction, n)` moves the player's standing since app 0.12.1,
-  like a story event's ([Story layer](story.md#actions)); a stance change it causes is logged
-  but, unlike a story event's, does not stop the clock. A flown convoy escort delivers its
-  surviving share through `cargo:` instead.
-- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
+- `cargo_lost` and `cargo_captured` are only recorded: captured cargo goes to no enemy depot.
+  `lose(<x>)` acts only on a facility type; a base type or anything else is logged.
+- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction stages, depots, third-party convoys, cargo capacity, facility
   upgrades and `placement:` expressions are not built.
-- No designs, training, bravery, dismantling, funding evaluations or the 3D base view yet.
+- No designs, bravery, stat effects in battle, `on_destroyed` or repair, or the 3D base view
+  yet. Auto-resolve counts hull classes only (not fitted items or pilots) and does not damage
+  the player's craft (DEV-057).
+- `storage` limits purchases only, and as soon as any module in the campaign has it, a base
+  without a storage module can buy nothing (an `interceptor` base needs its `cargo` module).
 - Names and descriptions in the default campaign's strategy files are plain English, not text
   keys, so they are not yet translatable.
 - The `interceptor` strategy layer is built but not play-tested, and its estimates are
   `DERIVED` ([above](#the-interceptor-campaign-from-the-players-data)).
-- Save files record pack versions but do not compare them.
+- A save made with another version of a loaded pack loads with a notice naming the versions
+  (app 0.16.2); its rules may differ.
 - Fixed in app 0.9.0: manufacture is paid per unit as each starts (it was free), and
   `salvaged(<raid id>)` now holds after a salvage (it compared the display name).

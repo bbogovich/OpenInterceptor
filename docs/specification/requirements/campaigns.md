@@ -1,5 +1,5 @@
 ---
-spec_version: 1.17.0
+spec_version: 1.18.0
 status: current
 updated: 2026-11-11
 ---
@@ -152,15 +152,15 @@ Factions MUST have relations governed by relation rules, drift and stances, with
 *Rationale:* A living setting.
 
 - Implements: [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned — partly met (app 0.10.0 – 0.12.1, main `485d01e`, `76bda5c`, `563c93f`): drift, stances, raids and battle hostility follow them; mission outcomes move standings
-- Verified by: `campaign::story::tests::relations_drift_and_the_strategist_answers_the_player`, `mission_outcomes_move_standings`; `app::flight::tests::campaign_stances_decide_who_fights_whom`; MT-5-02, MT-5-05, MT-6-12
+- Status: planned — partly met (app 0.10.0 – 0.16.2, main `485d01e`, `76bda5c`, `563c93f`, `6b45fcb`): drift, stances, raids and battle hostility follow them; mission outcomes move standings, and a stance change they cause is announced
+- Verified by: `campaign::story::tests::relations_drift_and_the_strategist_answers_the_player`, `mission_outcomes_move_standings` (the notice since app 0.16.2); `app::flight::tests::campaign_stances_decide_who_fights_whom`; MT-5-02, MT-5-05, MT-5-11, MT-6-12
 - See: [Story layer](../../modding/story.md#relations), [Format: strategy layer](../design/format-strategy.md#dynamic-relations-optional-per-campaign)
 
 !!! note "As built (app 0.10.0 – 0.10.3)"
     `relations`: `dynamic`, `start` (standings −100..100), `drift` (monthly, towards 0), `stances` (upper bounds; above the last, `allied`). Story actions move standings (`relation(f, n)`); a stance change is announced. **Strategy effect:** a faction that is not `hostile` stops raiding. **Battle effect** (0.10.3): each campaign battle makes every faction with a standing hostile to the player, or not, by its stance (`flight::apply_stances`, `Ruleset::set_hostile`, in the battle's own rules). An income may read `relation(f)` (the default campaign's Senate stipend).
 
 !!! question "Open"
-    **Fixed in app 0.12.1** (main `563c93f`): a mission outcome's `relation(f, n)` now moves the standing (`Campaign::battle_result` → `change_standing`); a stance change it causes is logged but does not stop the clock, unlike a story event's. Not built: relation rules (standings moved by other things that happen in battle), standings between factions other than the player, allied factions fighting at the player's side, effects on prices and trade, stance-change **events** a campaign can react to (DEV-051).
+    **Fixed in app 0.12.1** (main `563c93f`): a mission outcome's `relation(f, n)` now moves the standing (`Campaign::battle_result` → `change_standing`). **Fixed in app 0.16.2** (main `6b45fcb`, #40): a stance change it causes is announced as soon as the strategy screen is back (`Campaign::notices`) and stops the clock, like a story event's. Not built: relation rules (standings moved by other things that happen in battle), standings between factions other than the player, allied factions fighting at the player's side, effects on prices and trade, stance-change **events** a campaign can react to (DEV-051).
 
 ### R-CPN-010 Victory, defeat and endings
 
@@ -169,18 +169,21 @@ A campaign MUST define victory and defeat and its endings, including partial vic
 *Rationale:* A beginning, middle and end.
 
 - Implements: [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned — partly met (app 0.10.0 – 0.12.1, main `485d01e`, `87b04f3`): endings and their conditions; an ending's video; a finished campaign shows its ending again
-- Verified by: `campaign::story::tests::plans_grow_from_shipments_that_get_through_and_can_end_the_campaign`; MT-5-07, MT-6-11
+- Status: planned — partly met (app 0.10.0 – 0.16.14, main `485d01e`, `87b04f3`, `de30c2a`): endings and their conditions; an ending's video; a finished campaign shows its ending again; an ending screen
+- Verified by: `campaign::story::tests::plans_grow_from_shipments_that_get_through_and_can_end_the_campaign`; MT-5-07, MT-6-11, MT-6-26
 - See: [Story layer](../../modding/story.md#endings-and-campaign_end), [Format: campaign and game flow](../design/format-campaign.md#endings)
 
 !!! note "As built (app 0.10.0)"
     `endings.<id>` (`text`, `victory`) and `campaign_end` (`victory` and `defeat` lists of `{when, ending}`), checked daily and after every battle, defeats first; the actions `victory(x)` and `defeat(x)`. The ending stops the campaign and is saved. The default campaign has one victory and three defeats, `interceptor` one victory and two defeats.
 
 !!! question "Open"
-    A partial victory is expressible (another ending with `victory: true`), but neither campaign defines one yet; the ending is a banner line, not a screen with image or music (Stage 6).
+    A partial victory is expressible (another ending with `victory: true`), but neither campaign defines one yet. The ending screen (app 0.16.14) has no image of its own; its music is the strategy screen's, with the `good` or `bad` stinger.
 
 !!! note "As built (app 0.12.1, main `87b04f3`)"
     `endings.<id>.video` (an asset) plays full screen when the campaign ends that way, before the banner; the `interceptor` victory plays the original's credits film (`original:credits_sm2a.smk`). Loading a save whose story has ended sets the screen's ending again, so *Campaign: continue* shows the ending rather than a stopped map (the question left by MT-5-07).
+
+!!! note "As built (app 0.16.14, main `de30c2a`): the ending screen"
+    The ending fills the window over the darkened map: *VICTORY* or *DEFEAT*, the ending's text, and the campaign's record (date, final score, battles won, bases and craft), with *Credits* and *Main menu* (Enter and Esc: the menu); both save first (#48).
 
 ### R-CPN-011 Screens and skins
 
@@ -189,8 +192,8 @@ Screens MUST be laid out in design spaces with skins (nine-slice panels, buttons
 *Rationale:* Finished presentation.
 
 - Implements: [F-CPN-007](../../definition/campaigns/features.md#f-cpn-007-presentation)
-- Status: planned — partly met (app 0.11.1 – 0.16.0, main `2dd85dd`, `a7ea7b6`, `563c93f`, `a18a7b4`, `dcf9563`, `ac7ae62`): skins on the menu, launcher and strategy screen; title cards; a main menu with options and credits; the strategy screen's layout as data (`screens.starmap`) with buttons, lists and modal prompts
-- Verified by: `content::screens::tests::a_layout_moves_only_what_it_names`; `app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words`, `lists_keep_the_selection_in_view`, `grids_and_hits`; `content::skin::tests::skins_parse_colours_with_fallbacks`; `app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest`; `settings::tests::parses_and_round_trips` (the default volumes only); `app::menu::tests::the_menu_offers_continue_only_with_a_save`, `options_show_only_what_can_change`, `volumes_step_in_quarters_and_stop_at_the_ends`; `app::credits::tests::the_roll_rises_from_below_and_ends_off_the_top`; `content::front::tests::menu_and_credits_parse_with_defaults`; MT-6-04 – MT-6-06, MT-6-14 – MT-6-16, MT-6-19, MT-6-20; MT-4-29 – MT-4-33 (the strategy screen)
+- Status: planned — partly met (app 0.11.1 – 0.16.14, main `2dd85dd`, `a7ea7b6`, `563c93f`, `a18a7b4`, `dcf9563`, `ac7ae62`, `6b45fcb`, `de30c2a`): skins on the menu, launcher and strategy screen; title cards; a main menu with options (graphics: full screen; controls), load/save with slots, credits and an ending screen; the strategy screen's layout as data (`screens.starmap`, its background drawn) with buttons, lists and modal prompts
+- Verified by: `content::screens::tests::a_layout_moves_only_what_it_names`; `app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words`, `lists_keep_the_selection_in_view`, `grids_and_hits`; `content::skin::tests::skins_parse_colours_with_fallbacks`; `app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest`; `settings::tests::parses_and_round_trips` (the default volumes only); `app::menu::tests::the_menu_offers_continue_only_with_a_save` (Load game and `age_text` since app 0.16.14), `options_show_only_what_can_change` (Full screen, Controls), `volumes_step_in_quarters_and_stop_at_the_ends`; `app::credits::tests::the_roll_rises_from_below_and_ends_off_the_top`; `content::front::tests::menu_and_credits_parse_with_defaults`; MT-6-04 – MT-6-06, MT-6-14 – MT-6-16, MT-6-19, MT-6-20, MT-6-22, MT-6-25 – MT-6-27; MT-4-29 – MT-4-33 (the strategy screen)
 - See: [Skins](../../modding/skins.md), [Screen layouts](../../modding/screens.md), [Format: interface, text and media](../design/format-interface.md), [Architecture › Presentation](../../implementation/architecture/presentation.md)
 
 !!! note "As built (app 0.11.1 – 0.12.1)"
@@ -200,7 +203,10 @@ Screens MUST be laid out in design spaces with skins (nine-slice panels, buttons
     **Screen layouts** (app 0.16.0, main `ac7ae62`, `content::screens`): `screens.<id>: {design: [w, h], background, widgets: {<name>: [x, y, w, h]}}`. The engine owns each screen's logic and widgets and gives each widget a default place; a pack moves only the widgets it names (a widget name the screen does not have is a load error). Only `starmap` (the strategy screen) is laid out so far, with the widgets `top`, `map`, `nav`, `info` and `panel` in a 1280 × 720 default design space. Unlike a cockpit, a screen **stretches** its design space to fill the window (x and y scaled separately; text by the smaller factor). **Buttons, lists and modal prompts** (`app::widgets`): immediate-mode buttons, button rows and grids, a scrolling `ListView`, word wrapping and modal prompts with buttons, drawn in the skin; the strategy screen uses them for every action (R-STR-010). **Menu option values** (app 0.14.2, main `dcf9563`): a value too long for the room beside its label is drawn smaller (`menu::fit_size`, never below half size) — the `interceptor` pack is now named *X-COM: Interceptor*.
 
 !!! question "Open"
-    Not built: layouts for screens other than the strategy screen (the main menu, launcher and credits are placed in code); `background` is parsed but not yet drawn; custom panels bound to queries, skin sounds; graphics options in the menu (brightness is in `settings.yaml`), a load/save screen (one save per campaign, through *Continue*); an ending screen; the `interceptor` screens with the original's wrapper art at 640 × 480 — the `WrappersDLL` layouts are not mapped (6.7); custom cockpit instruments bound to queries (the rest of 6.6).
+    Not built: layouts for screens other than the strategy screen (the main menu, launcher, credits and ending screen are placed in code); custom panels bound to queries, skin sounds; brightness in the menu (it is in `settings.yaml`); the `interceptor` screens with the original's wrapper art at 640 × 480 — the `WrappersDLL` layouts are not mapped (6.7); custom cockpit instruments bound to queries (the rest of 6.6).
+
+!!! note "As built (app 0.16.2 – 0.16.14, main `6b45fcb`, `de30c2a`)"
+    `screens.<id>.background` is **drawn** (0.16.2): stretched over the window behind the strategy screen's widgets, reported once on standard error when it cannot be loaded. The main menu (0.16.14, #48) gains **Load game** — the automatic save and three slots with how long ago each was written (`menu::age_text`), the slots written from the strategy screen's *Save* — and two options: **Full screen** (switched at once, remembered as `graphics.fullscreen`; `--windowed` overrides) and **Controls** (the controls screen, back to the menu). The campaign's end is an **ending screen** (R-CPN-010).
 
 ### R-CPN-012 Video and music
 
@@ -209,15 +215,18 @@ The engine MUST play the original's Smacker cut-scenes and talking heads and ima
 *Rationale:* Finished presentation.
 
 - Implements: [F-CPN-007](../../definition/campaigns/features.md#f-cpn-007-presentation), [F-CMP-002](../../definition/compatibility.md#f-cmp-002-original-formats-read-faithfully)
-- Status: planned — partly met (app 0.11.0 – 0.13.1, main `1f183d1`, `5163a57`, `87b04f3`, `76d64d5`, `747d1e9`): interactive music with states, segments and stingers; the original's Smacker films (transmissions, credits, the opening); the comms panel with faces
-- Verified by: `content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy`; `audio::music_tests::segments_cycle_within_the_wanted_state`; `app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves`; the `formats::smacker` tests ([R-CMP-010](compatibility.md#r-cmp-010-smacker-video)); MT-6-01 – MT-6-03, MT-6-07 – MT-6-11, MT-6-13
+- Status: planned — partly met (app 0.11.0 – 0.16.2, main `1f183d1`, `5163a57`, `87b04f3`, `76d64d5`, `747d1e9`, `6b45fcb`): interactive music with states, segments and stingers (`good` and `bad` too since 0.16.2); the original's Smacker films (transmissions, credits, the opening); the comms panel with faces
+- Verified by: `content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy`; `audio::music_tests::segments_cycle_within_the_wanted_state`; `app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves`; the `formats::smacker` tests ([R-CMP-010](compatibility.md#r-cmp-010-smacker-video)); MT-6-01 – MT-6-03, MT-6-07 – MT-6-11, MT-6-13, MT-6-21, MT-6-23, MT-6-24
 - See: [Music](../../modding/music.md), [Cutscenes › Videos](../../modding/cutscenes.md#videos), [Format: interface, text and media](../design/format-interface.md)
 
 !!! note "As built (app 0.11.0 – 0.13.0)"
     **Music** (`music.<id>`: `states` — `cruise`, `threat`, `battle`, `strategy`, each a list of segments — `stingers`, `threat_range`, `battle_range`, `volume`): `audio::MusicPlayer` plays one segment at a time and changes state only at a segment's end. In a battle the set is chosen by the battle's seed and the state by the nearest hostile (`battle`, `threat` or `cruise`); a decided result plays `victory` or `death`; the strategy screen plays the first set's `strategy` state; other screens are silent. `interceptor` maps the original's three loop sets from `Loops/*.wav` by name; the default campaign's music is synthesised (`tools/default_assets/music.py`). **Video**: an in-crate Smacker decoder and `app::video::VideoPlayer` (letterboxed, clock-timed, skip with Enter, Esc or a click), played by the story action `video(<ref>)`, an ending's `video`, `campaign.intro_video` and `--video`; `interceptor` plays the five alien transmissions (`alientrans1` – `5`), the credits on victory and `animation1` as the opening (*derived*: which film is the opening). **Comms panel** (app 0.13.1, main `747d1e9`): voice sets gain `name` and `face` (a picture, or a Smacker clip — possibly `original:<pack>.mps#<member>` — looping while the voice speaks) and chatter gains `speaker`; `app::comms::Comms` shows the face and name top left for the clip's length plus 0.6 s (at least 2.5 s), animated signal bars when there is no face, and *COMMS* when there is no speaker. The default campaign has generated CRT portraits for Guard Wing and Colony Control.
 
 !!! question "Open"
-    Not built: **switches** as data (the states follow a fixed nearest-hostile rule) and the original's `.wtl` transition tables (DEV-053); the `good` and `bad` stingers; CD audio tracks; `interceptor`'s **talking heads** on the comms panel — the clips are read from `mfdanim.mps` (app 0.13.1) but which clip prefix (`at_`, `as_`, `e_`, `w_`) is which speaker is *unknown*, so no faces are mapped; **image-sequence** video and other video files for mods (MD3, R-MOD-046). **Fixed in app 0.14.1** (main `16a9954`): a film's soundtrack follows the effects volume, and the default campaign's music WAVs are committed.
+    Not built: **switches** as data (the states follow a fixed nearest-hostile rule) and the original's `.wtl` transition tables (DEV-053); `good` and `bad` stingers in the default campaign's music (the engine plays them since app 0.16.2); CD audio tracks; `interceptor`'s **talking heads** on the comms panel — the clips are read from `mfdanim.mps` (app 0.13.1) but which clip prefix (`at_`, `as_`, `e_`, `w_`) is which speaker is *unknown*, so no faces are mapped; **image-sequence** video and other video files for mods (MD3, R-MOD-046). **Fixed in app 0.14.1** (main `16a9954`): a film's soundtrack follows the effects volume, and the default campaign's music WAVs are committed.
+
+!!! note "As built (app 0.16.2, main `6b45fcb`)"
+    The **`good` and `bad` stingers** play on the strategy screen (#49): good for a battle won (as the map returns), research complete and a victory; bad for any other battle result and a defeat (DEV-059). Films and cutscenes **skip** on a click or a gamepad's Start, A or B as well as Esc and Enter (`app::skip_pressed`, #65). `--check` loads every voice and chatter clip, music segment and stinger, and the voice sets' faces (#50).
 
 ## Revision history
 
@@ -230,3 +239,4 @@ The engine MUST play the original's Smacker cut-scenes and talking heads and ima
 | 1.15.0 | 2026-11-11 | Stage 5 as built (app 0.10.0 – 0.10.3): R-CPN-007 implemented; R-CPN-008, R-CPN-009, R-CPN-010 partly met, each with an As-built and an Open note; R-CPN-004 progress (playtest changes, convoy battles, the 12-chapter serial with reused missions); R-CPN-005 progress (the Doomsday arc, derived gates, two of seven side missions). No requirement text changed |
 | 1.16.0 | 2026-11-11 | Stage 6 as built (app 0.11.0 – 0.14.0, including the comms panel and the main menu): R-CPN-011 and R-CPN-012 partly met, each with an As-built and an Open note; R-CPN-009 Open note — mission outcomes' `relation(…)` fixed (app 0.12.1); R-CPN-010 As-built note — an ending's `video`, the ending shown again on continuing. No requirement text changed |
 | 1.17.0 | 2026-11-11 | R-CPN-011 As-built note: screen layouts as data (`screens.<id>`, the strategy screen's five widgets, stretched to the window), immediate-mode buttons, lists and modal prompts (app 0.16.0); long menu option values shrink to fit (app 0.14.2). The Open note no longer lists layouts and buttons. Stays partly met. No requirement text changed |
+| 1.18.0 | 2026-11-11 | App 0.16.2 – 0.16.14 (main `6b45fcb`, `de30c2a`): R-CPN-009 Open note — a stance change from a mission outcome is announced (#40); R-CPN-010 As-built note — the ending screen; R-CPN-011 As-built note — layout backgrounds drawn, save slots and the Load game page, Full screen and Controls options (#48), Open note narrowed; R-CPN-012 As-built note — `good` and `bad` stingers, skipping by click or gamepad, `--check` loading voices, music and faces |

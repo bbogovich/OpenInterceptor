@@ -4,6 +4,7 @@
 |---|---|---|
 | `Vec<T>` | An ordered, growable array. The default choice. | Vertices, polygons, ships, bolts, stars, rules definitions, INI entries |
 | `HashMap<K, V>` | Lookup by key | Resources by `(type, id)` (`pe::ResourceFile`), original files by name (`OriginalData`), bindings by `Action`, the model and texture caches (`ModelCache`), cockpit instruments by name |
+| `VecDeque<T>` | A queue: push at the back, pop at the front, both O(1) | The breadth-first search of `Campaign::lane_hops` (app 0.16.3) |
 | `HashSet<T>` | "Is this in the set?" | Keys held / pressed this frame (`RawInput`), textures already checked (`check::run`) |
 | `[T; N]` | Fixed-size array | A colour `[f32; 3]`, a rectangle `[f32; 4]`, a palette `[u16; 256]`, the four gauge values |
 | `&[T]` | A borrowed view into any of the above | Function parameters such as `&[u8]` |
@@ -21,6 +22,35 @@
   allocated memory. `Renderer` does this for its glow and sky buffers.
 - A bounded log: `hud::MessageLog` keeps at most 32 entries in a `Vec`, removing the oldest.
   (`VecDeque` would make that removal O(1); at 32 entries a `Vec` is simpler and fast enough.)
+
+## A queue for a breadth-first search — `src/campaign/logistics.rs`
+
+`lane_distance(a, b)` counts the **jumps** between two systems along the map's lanes. Counting
+jumps (not distance) is a breadth-first search: visit every system one jump away, then every
+system two jumps away, and so on. The systems waiting to be visited form a queue — first in,
+first out — which is what `std::collections::VecDeque` is for: `push_back` and `pop_front` are
+both O(1), where `Vec::remove(0)` would shift every element.
+
+```rust
+let mut hops = vec![u32::MAX; self.systems.len()];   // u32::MAX = "not reached yet"
+hops[a] = 0;
+let mut queue = std::collections::VecDeque::from([a]);
+while let Some(s) = queue.pop_front() {              // `while let`: loop until None
+    for &(x, y) in &lanes {
+        let next = if x == s { y } else if y == s { x } else { continue };
+        if hops[next] == u32::MAX {                  // first visit = fewest jumps
+            hops[next] = hops[s] + 1;
+            if next == b { return Some(hops[next]); }
+            queue.push_back(next);
+        }
+    }
+}
+None                                                 // no route
+```
+
+Because the queue hands systems out in the order they were reached, the first time `b` is
+reached is by the fewest jumps. Compare `Campaign::lane_route`, which wants the shortest
+**distance** and so uses Dijkstra's algorithm instead.
 
 ## Order matters for determinism
 

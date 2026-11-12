@@ -16,7 +16,9 @@ openinterceptor --list  --mods ~/my-mods            # what loaded: packs, playab
   faction or kind, missing `model`, cockpit without `image` or `model`, a behaviour whose
   condition does not check, an unknown difficulty level in `variants`);
 - every ship model, debris model and texture that does not load, and unknown cockpit ids;
-- every cockpit image and every referenced sound that does not load;
+- every cockpit image and every referenced sound that does not load — since app 0.16.2 also the
+  radio voice and chatter clips, the music's segments and stingers, and the voice sets' faces
+  (`voices.<id>.face <file>: …`);
 - every scenario that cannot spawn (with each playable ship for `player: choose`), including unknown object behaviours;
 - with original data, every original mesh and texture that does not decode.
 

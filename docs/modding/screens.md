@@ -84,9 +84,11 @@ nine-slice frame's corners, the title, a few lines and a row of buttons.
 
 ## Background
 
-`background: images/ui/starmap_frame.png` names an image for the whole design space. It is read
-and checked, but in app 0.16.0 **not yet drawn**; the screen's background is the skin's
-`background` colour.
+`background: images/ui/starmap_frame.png` names an image drawn over the whole window, stretched
+to fit, behind every widget (app 0.16.2; in 0.16.0 it was read but not drawn). It is loaded the
+first time the screen draws; an image that cannot be loaded is reported once on standard error
+(`screens.starmap.background <file>: …`) and the screen falls back to the skin's `background`
+colour. Leave room in the picture where the map and panels sit, since they draw over it.
 
 ## Not built yet
 

@@ -224,6 +224,28 @@ let (instruments, design) = match cockpit_def.filter(|_| has_cockpit) {
 `?` works on `Option` inside a closure or function that returns `Option`, just as it does on
 `Result` — the first `None` ends the chain.
 
+### `Option<Option<T>>`: "not tried yet" versus "tried, nothing there" — `src/app/strategy.rs`
+
+A screen layout's background picture is loaded the first time the strategy screen draws. If
+the file is missing, the error is printed **once** — so the screen must remember that it already
+tried. One `Option` cannot say three things; two nested ones can:
+
+```rust
+/// `None`: not loaded yet. `Some(None)`: tried, and there is none (or it failed).
+/// `Some(Some(texture))`: loaded.
+background: Option<Option<Texture2D>>,
+
+if self.background.is_none() {                       // first frame: try once
+    self.background = Some(layout.background.as_ref().and_then(|img| load(img).ok()));
+}
+if let Some(Some(tex)) = &self.background {          // a pattern two levels deep
+    draw_texture_ex(tex, 0.0, 0.0, WHITE, params);
+}
+```
+
+A `bool` beside an `Option<Texture2D>` would work too, but the nested `Option` makes the
+impossible state ("not tried, yet a texture") impossible to write.
+
 ## Newtypes
 
 A struct with one field gives a plain number a distinct type:

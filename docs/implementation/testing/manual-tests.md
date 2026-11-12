@@ -751,6 +751,7 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-63 | AI avoidance: enemies do not ram, firing passes go on | `mixed-dogfight` (default); `defend_station` | not run | | | App 0.6.7; user feedback |
 | MT-3-64 | The battle runs on before the debrief | any mission (default) | not run | | | App 0.7.4; user request |
 | MT-3-65 | Action descriptions: keys overlay and tablet | any mission (default); the tablet console | not run | | | Main `bb04952` (app 0.15.1), #6 |
+| MT-3-66 | Condition console in battle | `colony_defence` (default); any scenario | not run | | | App 0.16.5; #20, R-TST-009 |
 
 ### The debrief (every mission case)
 
@@ -1259,6 +1260,14 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | Steps | 1. In a wide window start any mission and press `?`. 2. Make the window small (or the display narrow) and press `?` again. 3. On the paired tablet, open the Cockpit layout and a tile's strip; read the buttons. 4. Hover (or long-press) a button. 5. Leave the battle to the launcher and look at the tablet again. |
 | Expected | 1: under each action's name and keys a dimmer one-sentence description (for example what the afterburner does); groups and columns as before. 2: one line per action, no descriptions, every action still listed (more columns if needed). 3: each button has its label and, beneath it, a small caption of at most two lines. 4: the full sentence as the button's tooltip. 5: the idle catalogue (every action available) shows the same captions. No caption overlaps the next button. |
 
+### MT-3-66 — Condition console in battle
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.5 or later. Default campaign. |
+| Steps | 1. `openinterceptor --no-original --mission colony_defence --ship comet`. 2. After a few seconds press the backquote key (`` ` ``). 3. Type `count(raiders)`. 4. Change it to `alive(colony) and time > 10s`, then to `hull(colony)`. 5. Type `count(friends)`. 6. Clear the line with Backspace. 7. Type `random(0.5)` and watch it for a few seconds. 8. Press Esc (or `` ` `` again). 9. Start any scenario (`--scenario rocket-vs-saucer`) and press `` ` ``. |
+| Expected | 2: a dark panel along the bottom with a sky-blue frame: *CONDITION CONSOLE (` or Esc to close; the battle is paused)*, a prompt `> _` with a blinking caret and the hint *(type a condition, e.g. alive(player) and time > 30s)*; the battle stops (ships, missiles and the clock). The backquote itself is not typed. 3: `= 2` (or the level's count of raiders) in green. 4: `= true` or `= false`, changing as you type; then a number. 5: an orange error naming the unknown role. 6: the hint again. 7: a steady `true` or `false` — it does not flicker, because the console evaluates on a copy of the battle's random generator. 8: the console closes and the battle carries on from where it stopped. 9: *no mission: conditions belong to missions* in orange. |
+
 ## Stage 4 results
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -1300,6 +1309,18 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-35 | Fitted shields and armour in battle | Strategy screen and a battle (`interceptor`; default with a test addon) | not run | | | App 0.15.0; #27 |
 | MT-4-36 | `--balance` report | Command line | not run | | | App 0.15.0 |
 | MT-4-37 | Durability: ships and stations last longer | `defend_station`, `mixed-dogfight` (default); an `interceptor` mission | not run | | | App 0.15.0; playtest: things died too easily |
+| MT-4-38 | Default shields and armour: buy, research, fit and fly | Strategy screen and a battle (default) | not run | | | App 0.16.1; from the docs review |
+| MT-4-39 | Survey report names reserves and features | Strategy screen, Supply (default) | not run | | | App 0.16.2; #36 |
+| MT-4-40 | A save from another pack version loads with a notice | Main menu › Continue (default + a test addon) | not run | | | App 0.16.2; #31 |
+| MT-4-41 | Construction strikes: fly the defence or let it be | Strategy screen, Supply; `construction_defence` (default) | not run | | | App 0.16.4; #19, R-STR-023 |
+| MT-4-42 | Mission outcomes: capture, losing a facility, the escort's outcome | Strategy screen; a test addon; `convoy_ambush` (default) | not run | | | App 0.16.3; #8 |
+| MT-4-43 | Research: `requires_any`, hidden topics and `discover` | Strategy screen (default + a test addon) | not run | | | App 0.16.6; #25 |
+| MT-4-44 | Pilot training and dismissal | Strategy screen, Hangar (default) | not run | | | App 0.16.7; #28 |
+| MT-4-45 | The monthly evaluation and the Reports list | Strategy screen (default); command line | not run | | | App 0.16.8 – 0.16.9; #29 |
+| MT-4-46 | Base effects: quarters and defence; dismantling | Strategy screen, Bases, Build, Hangar (default) | not run | | | App 0.16.10; #26 |
+| MT-4-47 | Factory queue: Move up and Cancel; delivery losses | Strategy screen, Factory and Market (default + a test addon) | not run | | | App 0.16.11; #24 |
+| MT-4-48 | Auto-resolve an interception | Strategy screen (default) | not run | | | App 0.16.12; #23 |
+| MT-4-49 | Logistics conditions in the Debug list | Strategy screen (default + a test addon) | not run | | | App 0.16.3; #8, R-MOD-014 |
 
 ## Stage 4 cases
 
@@ -1594,6 +1615,102 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Steps | 1. Fly `mixed-dogfight` (default) at the middle level and count the bursts needed to kill a saucer; note how long your own craft survives. 2. Fly `defend_station` idle (do not fight) and time the station. 3. Fly an `interceptor` raid mission with the Lightning; attack an alien base or outpost in a later mission. 4. Compare with `--balance`. |
 | Expected | 1: fighters take noticeably longer to destroy than before 0.15.0 (about four times the punishment), on both sides. 2: the station holds well beyond its old time (at least R-MSN-011's 150 s). 3: the Lightning survives a sustained exchange; stations take minutes of fire, not seconds. 4: the order of toughness matches the report. **Judge the feel**: is anything now too hard to kill? Record findings for a balance pass. |
 
+### MT-4-38 — Default shields and armour: buy, research, fit and fly
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.1 or later. A new default campaign (`--no-original --strategy`). |
+| Steps | 1. Bases or Market: look at the opening store and the Market list. 2. Hangar › a Comet › *Fit best*. 3. Fly a battle with it (select a contact, Ctrl+J, *Fly the battle*) and open the MFD Status page. 4. Research list: look for *Force fields* and *Saucer alloys*; then Ctrl+K and the Market again. 5. Buy a force field and saucer-alloy plating, wait for the delivery, *Fit best* again and fly another battle. |
+| Expected | 1: the store holds 3 deflector screens and 3 steel platings besides the blasters and seeker rockets; the Market offers *Deflector screen* (60,000) and *Steel plating* (30,000) but not yet the better two. 2: the Hangar row lists a deflector screen and steel plating. 3: shields 300 per facing and armour 180, full at the start. 4: *Force fields* opens after *Heat rays*, *Saucer alloys* after *Saucer hull analysis*; after Ctrl+K the Market adds *Force field* (140,000) and *Saucer-alloy plating* (110,000). 5: the better items are fitted (the old ones go back to the store); in battle shields 480 per facing, armour 380. |
+
+### MT-4-39 — Survey report names reserves and features
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later. A new default campaign. |
+| Steps | 1. Survey Ajax from the Gatehouse (select Ajax, *Survey*). 2. Run the clock until the report. 3. Survey Cinder the same way. |
+| Expected | 2: *Survey of Ajax: cosmium 6/day (1800 in reserve), iron 20/day (unlimited); features: none; research site: none* (resource names as the data spells them; *(after fighting off an attack)* after the name when the ship was attacked). 3: iron 30/day (unlimited) and gold 3/day (600 in reserve); features none. A system with features (Nebula Haven, Tycho Drift) names them, e.g. *features: nebula; research site: nebula_lab*. |
+
+### MT-4-40 — A save from another pack version loads with a notice
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later. A test addon `mods/default-ver/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `version: 1.0.0` and no other files. |
+| Steps | 1. With the addon active, start a default campaign, play a day and leave with *Menu* (it saves). 2. Change the addon's `version:` to `1.1.0`. 3. Main menu › *Continue*. 4. Remove the addon and *Continue* again. |
+| Expected | 3: the campaign loads and a Report says *Pack default-ver is now version 1.1.0 (this save was made with 1.0.0)*, with the clock stopped; after OK play goes on. 4: refused, with *this save needs packs that are not loaded: default-ver* in the menu. |
+
+### MT-4-41 — Construction strikes: fly the defence or let it be
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.4 or later. A new default campaign; Ctrl+M for money. Strikes are a 12 % daily roll in the second half of a build, so build several facilities (mining 10 days, manufacturing center 15) to see every branch. |
+| Steps | 1. Survey Ajax and Cinder; build a mining facility at each and a manufacturing center. 2. Run at *1d*; watch for the first *Construction under attack* prompt. 3. *Let it be*. 4. At the next strike, *Fly the defence* and win. 5. At another, fly and lose (let the site be destroyed). 6. Keep the facilities building to completion and count the strikes per system. 7. With no ready craft (all away, or no pilot), press *Fly the defence*. |
+| Expected | 2: no strike before a site is half built; the prompt *Enemy craft are striking the <facility> at <system> under construction. Fly its defence, or let the strike set the work back.* with *Fly the defence* and *Let it be*; the clock stopped. 3: a report *<facility> at <system> was struck: construction set back N days* (a quarter of its build time) and the site finishes that much later. 4: the *Construction defence* battle (a research station at 60 % and raiders); back on the map *Construction defence: WIN* and *…: the strike was beaten off*. 5: *… was destroyed under construction*; its diamond is gone from the map. 6: at most three strikes per system. 7: *No ready craft: the strike goes unopposed.* and the set-back report. |
+
+### MT-4-42 — Mission outcomes: capture, losing a facility, the escort's outcome
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.3 or later (and 0.16.13 for the Debug list). A test addon `mods/default-outcomes/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `missions/outcome_test.yaml`: `missions: {outcome_test: {name: Outcome test, player: {class: choose}, roles: {prize: {class: scout_saucer, count: 1, ai: idle, at: {distance: 2km, bearing: [0, 0]}}}, objectives: {win: destroyed_all(prize)}, outcomes: {win: ["lose(mining_facility)"], retreat: [capture]}}}` and `strategy/story.yaml`: `events: {outcome_test: {when: day >= 99999, do: ["mission(outcome_test)"]}}`. A Meteor or Thunderbolt (tractor beam) as the first ready craft: Ctrl+K, buy one, give it a pilot. |
+| Steps | 1. Order a mining facility at a surveyed system. 2. Ctrl+D › *outcome_test* › *Fire now*; fly it and destroy the scout. 3. Fire it again; disable the scout, tow it with Shift+T and jump out with H (as in MT-2-04). 4. Research list. 5. Fly an ambushed convoy's escort (MT-4-28) once to a win and once to a loss; read the score and Messages. |
+| Expected | 2: back on the map a report *Mining facility at <system> lost*; the facility is gone and its orders with it; *Lost: Mining facility at <system>* in the log. 3: *Captured: scout_saucer* in the log; the prize counts as salvage, so a topic with `requires: salvaged(scout_saucer)` could start. Without `capture` in the outcome nothing is kept. 4: nothing new: the default topics name raids in `salvaged(…)`, not classes. 5: the win adds the mission's `convoy_delivered` score; the loss records *Convoy cargo lost* and the `convoy_lost` score, as well as delivering nothing. |
+
+### MT-4-43 — Research: `requires_any`, hidden topics and `discover`
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.6 or later (0.16.13 for the Debug list). A test addon `mods/default-research/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `strategy/research.yaml`: `research: {either_way: {name: Either way, size: 500, requires_any: [heat_rays, rocketry]}, both_ways: {name: Both ways, size: 500, requires: research(rocketry), requires_any: [heat_rays, ion_rays]}, secret_lab: {name: Secret lab, size: 500, hidden: true}}` and `strategy/story.yaml`: `events: {find_secret: {when: day >= 99999, do: ["discover(secret_lab)"]}}`. |
+| Steps | 1. A new default campaign (rocketry known): Research list. 2. Ctrl+D › *find_secret* › *Fire now*. 3. Research list. 4. Research *Heat rays* (or Ctrl+K) and look again. 5. Misspell `heat_rays` in `requires_any` and run `--check`. |
+| Expected | 1: *Either way* is offered (one of the two is enough); *Both ways* is not; *Secret lab* is not listed. 2: a report *New research possible: Secret lab*. 3: *Secret lab* offered. 4: *Both ways* offered. 5: an error at `research.either_way.requires` naming the unknown topic. |
+
+### MT-4-44 — Pilot training and dismissal
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.7 or later. A new default campaign. |
+| Steps | 1. Hangar: select a pilot row. 2. Press *Train*; note the funds; run five days at *1d*; save (*Save* › a slot) and open the save in a text editor. 3. Select the pilot again: *Stop training*. 4. Press Enter, then double-click a pilot row. 5. *Dismiss* a pilot without a craft, then one assigned to a craft. 6. Save, leave and load the slot: is training kept? |
+| Expected | 2: the row ends *, training* and the button reads *Stop training*; funds fall by 400 a day for the pilot (beyond other costs); in the save the pilot's stats are about 2 points higher (0.4 a day), never above a stat's maximum (the pilots list shows no stats). 3: training stops. 4: Enter and a double click toggle training (the row's first action); they never dismiss. 5: the pilot leaves the roster; *Dismissed: <name>* in the log; the craft is without a pilot. 6: a pilot in training is still training. |
+
+### MT-4-45 — The monthly evaluation and the Reports list
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.9 or later. A new default campaign. |
+| Steps | 1. Open the *Reports* list at once. 2. Run to the first monthly report, breaking off every interception. 3. Reports again. 4. Play a month winning battles (Ctrl+J), so the month scores 400 or more. 5. `openinterceptor --no-original --strategy-soak 90`. |
+| Expected | 1: *Funds 2,500,000 - score 0 (+0 this month) - 1 bases, 3 craft, 4 pilots* and *No monthly report yet*. 2: the report ends *; rated <rating>*: *Satisfactory* for a score of 0 or more, *Poor* (−50,000) from −300, else *Unacceptable* (−150,000 and the news *The Senate cuts the Guard's funding*). 3: each report dated, newest first, without its *Monthly report:* prefix. 4: *rated Outstanding*, +150,000 and the news *The Senate commends the Guard's month*. 5: the last monthly report printed ends *rated …*. |
+
+### MT-4-46 — Base effects: quarters and defence; dismantling
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.10 or later. A new default campaign; Ctrl+M. |
+| Steps | 1. Bases list: read the rows under the Gatehouse. 2. Hangar: hire a recruit. 3. Build › *Crew quarters*; Ctrl+B; hire again until refused. 4. Bases list: select a module row; press Enter and double-click it; then press *Dismantle*. 5. Build two *Ray batteries* (Ctrl+B) and let several raids reach the Gatehouse unopposed (*Break off*). 6. Market: buy many items. |
+| Expected | 1: each module row has *Dismantle*; a line *Quarters: room for 4 pilots*. 2: refused with *no quarters: room for 4 pilots* (the four starting pilots fill it). 3: *room for 10 pilots*; hiring works until ten living pilots. 4: Enter and the double click do nothing; *Dismantle* removes the module and logs *Gatehouse: <module> dismantled (<half its cost> back)*. 5: about one raid in four on the Gatehouse is driven off — *<place>'s defences drove the raid off* — and loses nothing; the others destroy the newest finished module as before. 6: no store limit (the default campaign has no storage modules). |
+
+### MT-4-47 — Factory queue: Move up and Cancel; delivery losses
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.11 or later. A new default campaign; Ctrl+M, Ctrl+K. For step 5 a test addon `mods/default-losses/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `strategy/economy.yaml`: `economy: {delivery_loss: 50%}`. |
+| Steps | 1. Factory: *Make 5* of one item, then *Make 1* of two others. 2. Select the third queued row: *Move up*. 3. Select the first row (being worked on): *Cancel*; again *Cancel*; then cancel a job not yet started. 4. Press Enter, then double-click a queued row. 5. With the addon: *Buy 1* five times and wait for the deliveries. |
+| Expected | 1: rows *queued: 5 x <item> (… units left on this one)* with *Cancel*; every row but the first also has *Move up*. 2: it swaps with the row above. 3: the job at work drops to one unit (the paid one) and finishes; the second *Cancel* says *the last unit is already under way*; a job not yet started disappears, costing nothing. 4: Enter and the double click move a row up, never cancel. 5: about half arrive; each lost one gives a report *A delivery of 1 x <item> to Gatehouse was lost*, paid all the same. |
+
+### MT-4-48 — Auto-resolve an interception
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.12 or later. A new default campaign. |
+| Steps | 1. Intercept a contact with three Comets; at the *Interception* prompt press *Auto-resolve*. 2. Repeat with one craft against a larger raid (Ctrl+J with a single ready craft). 3. After a win and after a loss read the map, the score and Messages. 4. At another prompt press Enter, then at another Esc. |
+| Expected | 1: the prompt has *Fly the battle*, *Auto-resolve* and *Break off*; *Auto-resolve* flies nothing and reports *Auto-resolved (NN% odds): WIN* or *LOSE*. 2: lower odds. 3: a win removes the contact and applies the mission's win outcome (score, money, salvage); a loss leaves it flying and applies the lose outcome. 4: Enter flies the battle, Esc breaks off. |
+
+### MT-4-49 — Logistics conditions in the Debug list
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.13 or later. A test addon `mods/default-queries/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `strategy/story.yaml`: `events:` `q_survey: {when: survey_known(ajax), chance: 0%, do: ["news(q)"]}`, `q_deposit: {when: deposit(ajax, cosmium) > 5, …}`, `q_feature: {when: feature(nebula_haven, nebula) and research_site(nebula_haven, nebula_lab), …}`, `q_owned: {when: owned(ajax), …}`, `q_lanes: {when: lane_distance(mercury_gate, vesta_reach) == 2, …}`, `q_building: {when: facility_progress(ajax) < 1, …}`, `q_strikes: {when: construction_attacks(ajax) >= 1, …}` (each with `chance: 0%` and the same `do`). |
+| Steps | 1. A new default campaign; Ctrl+D; read the `q_` rows. 2. Survey Ajax; read again. 3. Build a mining facility at Ajax; read. 4. After a strike on it (MT-4-41); read. 5. When it is finished; read. 6. Change `ajax` to `atlantis` in one condition and run `--check`. |
+| Expected | 1: `q_feature` and `q_lanes` *condition holds*, the others *false*; all *fired 0*. 2: `q_survey` and `q_deposit` hold. 3: `q_owned` and `q_building` hold. 4: `q_strikes` holds. 5: `q_building` false again. 6: an error naming the unknown name `atlantis`. |
+
 ## Stage 5 results
 
 No case has been run yet; **no play-through of either campaign has been done**.
@@ -1610,6 +1727,9 @@ No case has been run yet; **no play-through of either campaign has been done**.
 | MT-5-08 | The default campaign played through | Strategy screen (default), middle difficulty | not run | | | Stage 5 exit; log milestone dates |
 | MT-5-09 | `interceptor`: the Doomsday arc | Strategy screen (`interceptor`) | not run | | | App 0.10.2; needs the player's data; derived gates |
 | MT-5-10 | `--strategy-soak` reports the story | Command line | not run | | | App 0.10.1 – 0.10.2 |
+| MT-5-11 | A stance changed by a mission is announced | Strategy screen (default + a test addon) | not run | | | App 0.16.2; #40 |
+| MT-5-12 | Event debugger: Ctrl+D and Fire now | Strategy screen (default) | not run | | | App 0.16.13; #47, R-TST-010 |
+| MT-5-13 | Start at a chapter: `--strategy --chapter N` | Command line (default) | not run | | | App 0.16.13; #47, R-TST-010 |
 
 ## Stage 5 cases
 
@@ -1697,6 +1817,30 @@ How to start: as for Stage 4 (*Campaign: new game*, or `--no-original --strategy
 | Steps | 1. `openinterceptor --no-original --strategy-soak 365`. 2. With the player's data: `openinterceptor --campaign interceptor --strategy-soak 365`. |
 | Expected | 1: the summary line, the last monthly report, and `story: arcs [serial N/12], plans [eclipse_engine NN%], aggression X.XX, ending …` with the serial well advanced. 2: the same form with `doomsday` and the Doomsday plan. |
 
+### MT-5-11 — A stance changed by a mission is announced
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later (0.16.13 for the Debug list). A test addon `mods/default-stance/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `missions/stance_test.yaml`: `missions: {stance_test: {name: Stance test, player: {class: choose}, roles: {foes: {class: scout_saucer, count: 1, at: {distance: 3km}}}, objectives: {win: destroyed_all(foes)}, outcomes: {win: ["relation(prospectors, +60)"]}}}` and `strategy/story.yaml`: `events: {stance_offer: {when: day >= 99999, do: ["mission(stance_test)"]}}`. |
+| Steps | 1. A new default campaign; Archive: the prospectors' standing and stance. 2. Ctrl+D › *stance_offer* › *Fire now*; *Fly it*; destroy the scout. 3. Back on the map: OK the mission report. |
+| Expected | 1: 15, neutral. 3: at once a second report *Relations: prospectors are now allied (were neutral)*, with the clock stopped; the Archive shows 75, allied. (Until 0.16.2 the change was only logged.) |
+
+### MT-5-12 — Event debugger: Ctrl+D and Fire now
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.13 or later. A new default campaign, past chapter 1's title card and mission offer. |
+| Steps | 1. Press Ctrl+D. 2. Read the Debug list. 3. *Fire now* on `ch03` (not the arc's next step). 4. *Fire now* on `ch02` (the next step). 5. *Fire now* on `raider_bribe`. 6. Press Tab through the lists; press Ctrl+D again. |
+| Expected | 1: a *Debug* button joins the list buttons and its list opens. 2: *Arc serial: step 1 of 12*, then every event as *<id> - fired n, condition holds* (or *false*). 3: ch03's actions run — its title card, the mission offer, the flag `regent_revealed` — and *Debug: fired event ch03* is logged, but the arc stays at step 1. 4: the arc moves to step 2, with ch02's card and offer. 5: the truce choice with both options. 6: Tab passes through Debug while it is shown; Ctrl+D hides the button and opens Bases. |
+
+### MT-5-13 — Start at a chapter: `--strategy --chapter N`
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.13 or later. |
+| Steps | 1. `openinterceptor --no-original --strategy --chapter 6`. 2. Ctrl+D; Archive; Messages. 3. `--strategy --chapter 99`. 4. `--strategy --chapter six`. 5. `--chapter 3` without `--strategy`. |
+| Expected | 1: after a pause (the campaign is played forward headless) the strategy screen opens months into the campaign, with no intro cutscene. 2: *Arc serial: step 6 of 12* or later; the log shows the earlier chapters and auto-played battles. 3: it stops after at most 1500 days or at an ending and opens there (record how long it takes). 4: *--chapter: expected a number*. 5: ignored: the main menu opens as usual. |
+
 ## Stage 6 results
 
 No case has been run yet.
@@ -1723,6 +1867,13 @@ No case has been run yet.
 | MT-6-18 | Ship status display: X-COM cockpits A, B and C | An `interceptor` scenario with the Lightning, Firestar and Avenger | not run | | | App 0.15.1; placed by eye (derived) |
 | MT-6-19 | Main menu: long option values fit | Main menu › Options (`interceptor` available) | not run | | | App 0.14.2 |
 | MT-6-20 | Screen layouts: moving the strategy screen's widgets | Strategy screen (default) with a test addon | not run | | | App 0.16.0 |
+| MT-6-21 | Good and bad stingers | Strategy screen (`interceptor`); default for comparison | not run | | | App 0.16.2; #49, R-CPN-012 |
+| MT-6-22 | A screen layout's background picture | Strategy screen (default + a test addon) | not run | | | App 0.16.2 |
+| MT-6-23 | Cutscene text keys; skipping with a click or the gamepad | `--cutscene intro` (default); `--video` (`interceptor`) | not run | | | App 0.16.2; #65 |
+| MT-6-24 | `--check` loads voices, music and faces | Command line (default + a test addon; `interceptor`) | not run | | | App 0.16.2; #50 |
+| MT-6-25 | Save slots and the Load game page | Strategy screen; main menu (default) | not run | | | App 0.16.14; #48 |
+| MT-6-26 | The ending screen | Strategy screen (default + a test addon) | not run | | | App 0.16.14; #48 |
+| MT-6-27 | Options: Full screen and Controls | Main menu › Options | not run | | | App 0.16.14; #48 |
 
 ## Stage 6 cases
 
@@ -1887,3 +2038,59 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App 0.16.0 or later. A test addon `mods/default-layout/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `rules/screens.yaml`: `screens: {starmap: {widgets: {map: [482, 52, 790, 660], nav: [8, 52, 466, 72], info: [8, 132, 466, 212], panel: [8, 352, 466, 360]}}}`. |
 | Steps | 1. Open the default campaign's strategy screen. 2. Use the map, the lists and a prompt. 3. Change the addon to name a widget `radar`; run `--check`. 4. Change `map` to three numbers; run `--check`. 5. Remove the addon. |
 | Expected | 1: the map on the right and the list buttons, info and list panels on the left; the top bar unchanged. 2: everything works as in MT-4-29 – MT-4-34 in the new places (clicks land on what is drawn). 3: an error naming the file and *widgets.radar: not one of top, map, nav, info, panel*. 4: *widgets.map: expected [x, y, w, h]*. 5: the engine's layout again. |
+
+### MT-6-21 — Good and bad stingers
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later. The `interceptor` campaign with the player's data: only its music sets have `good` and `bad` stingers (`goodre1.wav`, `badre1.wav`, …); the default campaign's music has only `victory` and `death`. |
+| Steps | 1. On the strategy screen, let a research topic finish. 2. Fly a battle and win; return to the map. 3. Fly one and lose or retreat. 4. Reach an ending (MT-6-26). 5. The same in the default campaign. |
+| Expected | 1: with the *Research complete* report a short upbeat sting plays over the strategy music. 2: the good sting as the map returns (after the battle's own victory sting). 3: the bad sting (any result but a win). 4: a victory plays the good sting, a defeat the bad. 5: no sting on the map (record it: the default music defines none). |
+
+### MT-6-22 — A screen layout's background picture
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later. A test addon `mods/default-backdrop/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `rules/screens.yaml`: `screens: {starmap: {background: textures/backdrop.png}}` and a picture of your own at `textures/backdrop.png`. |
+| Steps | 1. Open the strategy screen. 2. Resize the window. 3. Point `background` at a file that does not exist; start from a terminal. |
+| Expected | 1: the picture fills the window behind the map and the panels (they draw over it). 2: it stretches to the new size. 3: the screen draws without a picture, and standard error has *screens.starmap.background textures/<file>: …* once. |
+
+### MT-6-23 — Cutscene text keys; skipping with a click or the gamepad
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later. A gamepad for steps 4 – 5; the player's data for step 5. |
+| Steps | 1. `openinterceptor --no-original --cutscene intro`; watch it to the end. 2. Again; click the left mouse button. 3. A test addon `mods/default-de/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `text/de/cutscenes.yaml` giving `cutscene.intro.line1` – `line3` your own words; run step 1 with `--language de`. 4. Again; press the pad's A (then B, then Start in later runs). 5. `--campaign interceptor --video original:alientrans1.smk`; press the pad's Start. 6. In a copy of `intro.yaml` in an addon, change a caption to `@cutscene.intro.nothing`; run `--check`. |
+| Expected | 1: the captions *The frontier, 2084.*, *Regent Vexor's saucers prowl the cosmium belts...*, *Only the Interplanetary Guard stands in their way.* as before. 2: skipped at once. 3: your words. 4: skipped by each button. 5: the film is skipped. 6: an error *text: missing key …* naming the key and `cutscenes/intro`. |
+
+### MT-6-24 — `--check` loads voices, music and faces
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.2 or later. A test addon `mods/default-media/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `rules/media.yaml`: `music: {serial: {stingers: {good: music/missing.wav}}}` and `voices: {colony_control: {face: faces/nobody.png}}`. |
+| Steps | 1. `openinterceptor --no-original --check` without the addon. 2. With the addon. 3. With the player's data: `--check --campaign interceptor`. |
+| Expected | 1: passes. 2: errors naming `music/missing.wav` and *voices.colony_control.face faces/nobody.png: …*; exit status 1. 3: passes when the data is complete (every loop, stinger and voice clip found). |
+
+### MT-6-25 — Save slots and the Load game page
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.14 or later. No `saves/default-*.yaml` in the user data folder. |
+| Steps | 1. A new default campaign; play a day; press *Save* in the top bar. 2. *Slot 2*. 3. *Save* again; *Cancel* (or Esc). 4. Play on a few days; *Menu*. 5. Main menu › *Load game*. 6. Enter on an empty slot; on *Slot 2*; then (from the menu again) on *Automatic save*. 7. Delete `saves/default-2.yaml` and restart. |
+| Expected | 1: a *Save game* prompt — *Choose a slot. (F5 and leaving the map save automatically.)* — with *Slot 1*, *Slot 2*, *Slot 3*, *Cancel*; the clock stopped. 2: *Saved to slot 2*; the file `saves/default-2.yaml`. 3: nothing saved. 4: the menu lists *Continue*, *New campaign*, **Load game**, … 5: *Automatic save* and *Slot 1* – *Slot 3*, each *empty* or how long ago it was written (*just now*, *5 minutes ago*, *2 hours ago*, *3 days ago*), then *Back*; hint *Enter: load    Esc: back*. 6: an empty slot does nothing; *Slot 2* opens on the day it was saved; *Automatic save* on the later day. 7: no *Load game* item. |
+
+### MT-6-26 — The ending screen
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.14 or later. A test addon `mods/default-end/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `strategy/story.yaml`: `events: {end_win: {when: day >= 99999, do: ["victory(engine_destroyed)"]}, end_lose: {when: day >= 99999, do: ["defeat(last_base)"]}}`. (Or reach an ending as in MT-5-07.) |
+| Steps | 1. A new default campaign; Ctrl+D › *end_win* › *Fire now*. 2. Read the screen. 3. *Credits*. 4. Main menu › *Continue*. 5. A new campaign; fire *end_lose*; press Enter (another time Esc, another *Main menu*). |
+| Expected | 2: the map darkened; a large panel with *VICTORY* in the skin's border colour, the ending's text wrapped beneath, the record *<date> - final score N - n battles won - n bases, n craft*, and the buttons *Credits* and *Main menu*. 3: the credits, then the main menu; the campaign was saved. 4: the ending screen again. 5: *DEFEAT* in the accent colour; Enter, Esc and *Main menu* all save and go to the menu. |
+
+### MT-6-27 — Options: Full screen and Controls
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.14 or later. |
+| Steps | 1. Options › *Full screen*: Left, Right or Enter. 2. Quit and start again. 3. Start with `--windowed`. 4. Set *Full screen* Off; restart. 5. Options › *Controls...*; Esc. 6. Battles & tools › the launcher's controls entry; Esc. |
+| Expected | 1: the window goes full screen at once; the row reads *On*; `settings.yaml` has `graphics: fullscreen: true`. 2: starts full screen. 3: starts in a window (the setting stays on). 4: *Off*; starts in a window. 5: the controls screen; leaving it returns to the main menu. 6: since 0.16.14 leaving it also returns to the main menu, not the launcher (record whether that is wanted). |

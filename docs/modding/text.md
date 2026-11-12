@@ -26,7 +26,9 @@ text:
 - A value that starts with `@` is a key; anything else is used as written, so a small mod can
   skip text files entirely.
 - Keys work in the **names** of ships, objects, beams, missiles, factions and systems, ship and
-  object **descriptions**, and scenario **titles and descriptions**. They are resolved when the
+  object **descriptions**, and scenario **titles and descriptions**; also mission, story and
+  strategy texts, and since app 0.16.2 [cutscene](cutscenes.md#sounds-and-captions) titles and
+  captions (the default intro's are in `text/en/cutscenes.yaml`). They are resolved when the
   content loads.
 - Packs load in order and a **later pack's key replaces an earlier one's**.
 - The game reads each pack's `text/<language>/` folder for the chosen language, **falling back

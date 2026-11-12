@@ -157,7 +157,7 @@ once the lines are known.
 |---|---|
 | `ships.x: unknown voice 'y'` | `voice:` names a set that no `voices:` entry defines. |
 | `missions.x.chatter: no voice set 'y' (speaker)` | A chatter `speaker:` names no voice set. |
-| `sound: …` on start-up | A clip that could not be loaded (a wrong path, or original data missing). `--check` does not load voice clips yet. |
+| `sound: …` on start-up | A clip that could not be loaded (a wrong path, or original data missing). Since app 0.16.2 `--check` loads every voice and chatter clip, and every voice set's `face` (a picture, or a Smacker clip checked as an asset that exists): `voices.<id>.face <file>: …`. |
 
 !!! note "Fixed in app 0.6.7"
     `cue:<Name>` references now resolve inside `voices:` and chatter `voice:` too, through the

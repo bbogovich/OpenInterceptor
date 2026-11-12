@@ -216,9 +216,10 @@ condition holds are listed on the strategy screen's **Archive** tab.
 
 ## Actions
 
-Every action list in the story — `do`, `choices[].do`, `warnings[].do`, `complete` — is checked
-when the rules load against the event actions (`script::action::EVENT_ACTIONS`): an unknown
-action or a wrong argument is an error with its place.
+Every action list in the story — `do`, `choices[].do`, `warnings[].do`, `complete` — and the
+strategy layer's [`evaluations`](strategy.md#evaluations) `do` lists are checked when the rules
+load against the eighteen event actions (`script::action::EVENT_ACTIONS`): an unknown action or a
+wrong argument is an error with its place.
 
 | Action | Arguments | Does |
 |---|---|---|
@@ -232,7 +233,8 @@ action or a wrong argument is an error with its place.
 | `score(x)` | score id | Add a score entry ([`scores`](strategy.md#pilots-and-scores)). |
 | `relation(faction, n)` | faction, number | Change a standing (dynamic relations only). |
 | `research(x)` | topic | The topic becomes known. |
-| `mission(x)` | mission | **Offer** a mission to fly now: the player accepts with Enter (the first ready craft with a pilot flies it) or declines with Esc. The outcome's campaign actions (`score`, `money`, `set_flag`, `salvage`) apply as for a raid's battle, and a win counts towards `battles_won`. |
+| `discover(x)` | topic | A [`hidden`](strategy.md#research-and-research_model) topic is discovered: from now on it is offered once its prerequisites hold. A notice says *New research possible: <name>*; kept as the flag `discovered.<x>` (app 0.16.6). |
+| `mission(x)` | mission | **Offer** a mission to fly now: the player accepts with Enter (the first ready craft with a pilot flies it) or declines with Esc. The outcome's campaign actions (`score`, `money`, `set_flag`, `salvage`, `relation`, and since app 0.16.3 `capture`, `lose`, `cargo_lost`, `cargo_captured`) apply as for a raid's battle ([Raids and battles](strategy.md#raids-and-battles)), and a win counts towards `battles_won`. |
 | `raid(x)` | raid | Launch that raid's contact now. |
 | `plan(x, n)` | plan, number | Add `n` components to a plan (warnings and completion follow). |
 | `aggression(n)` | number | Change the rival's aggression, within its limits. |
@@ -255,7 +257,9 @@ pack's `text/`, or `@orig.KEY` from the player's original language files.
 ## Conditions
 
 Story conditions — `when`, `start_when`, `campaign_end` and `unlock` — use the
-[campaign context](strategy.md#expressions-the-campaign-context) with five more queries:
+[campaign context](strategy.md#expressions-the-campaign-context), including its logistics
+queries (`deposit`, `feature`, `research_site`, `survey_known`, `owned`, `lane_distance`,
+`facility_progress`, `construction_attacks`; app 0.16.3), with five more queries:
 
 | Query | Result | Meaning |
 |---|---|---|
@@ -348,9 +352,18 @@ guide describes. Every estimate is marked `DERIVED` in the file.
 - `--check --campaign <id>` reports every story error below.
 - On the strategy screen the **Archive** tab shows the plans under way, every standing and
   stance, the aggression, battles won and the unlocked encyclopaedia.
+- **The event debugger** (app 0.16.13): **Ctrl+D** on the strategy screen adds a *Debug* list —
+  *Arc <id>: step n of m* for each arc, then every event as *<id> - fired n, condition holds*
+  (or *false*), evaluated now. *Fire now* on an event fires it whatever its condition
+  (`Campaign::fire_event`): it counts as fired, its arc advances **only if it is the arc's next
+  step**, its actions run and its choice is offered; the log records *Debug: fired event <id>*.
+  A test event with `when: day >= 99999` is a handy way to run any action list by hand.
+- **Start at a chapter** (app 0.16.13): `openinterceptor --campaign <id> --strategy --chapter
+  <n>` plays a new campaign forward headless with the automatic player (`--strategy-soak`'s)
+  until its **first** arc reaches step *n*, or for at most 1500 days, then opens the strategy
+  screen there.
 
-Not built yet: a testbed event debugger (fire an event, set flags and plan progress) and
-starting the default campaign at a chosen chapter.
+Not built yet: setting flags and plan progress directly (fire an event that does it).
 
 ## Errors
 

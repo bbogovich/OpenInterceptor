@@ -34,7 +34,7 @@ fires and the saucer explodes; the camera ends on the station.
 ```yaml
 # resources/default/cutscenes/intro.yaml
 id: intro
-title: Perils of the Void
+title: "@cutscene.intro.title"     # text keys since app 0.16.2: text/en/cutscenes.yaml
 length: 20s
 environment: {starfield_seed: 31, sun: [-0.4, 0.45, -0.8], environment: orbit}
 entities:
@@ -55,9 +55,9 @@ cameras:
   station: {position: [[11s, [-500, 260, -1200]], [20s, [-700, 320, -900]]], look_at: gatehouse, fov: 45}
 cuts: [[0s, wide], [6.5s, chase], [11.2s, station]]
 captions:
-  - [1s, 5s, "The frontier, 2084."]
-  - [5.5s, 9.5s, "Regent Vexor's saucers prowl the cosmium belts..."]
-  - [14s, 19.5s, "Only the Interplanetary Guard stands in their way."]
+  - [1s, 5s, "@cutscene.intro.line1"]       # "The frontier, 2084."
+  - [5.5s, 9.5s, "@cutscene.intro.line2"]   # "Regent Vexor's saucers prowl the cosmium belts..."
+  - [14s, 19.5s, "@cutscene.intro.line3"]   # "Only the Interplanetary Guard stands in their way."
 ```
 
 ```yaml
@@ -81,7 +81,7 @@ Play it on its own with `openinterceptor --no-original --cutscene intro`.
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `id` | id | *required* | The cutscene's id (named by `campaign.intro`, `play_cutscene`, `--cutscene`). A later pack's file with the same id replaces it. |
-| `title` | text | the id | Its title (for the designer and listings; not shown during play). |
+| `title` | text | the id | Its title (for the designer and listings; not shown during play). May be a text key, `"@cutscene.intro.title"` (app 0.16.2). |
 | `length` | time | `10s` | When it ends. |
 | `environment.starfield_seed` | number | 1 | The stars, and the seed of the scene's simulation. |
 | `environment.sun` | three numbers | `[-0.4, 0.45, -0.8]` | The direction of the sun. |
@@ -90,7 +90,7 @@ Play it on its own with `openinterceptor --no-original --cutscene intro`.
 | `cameras` | map | none | The cameras, by id (below). |
 | `cuts` | `[[time, camera], …]` | *required with cameras* | Which camera is in use from each time on. |
 | `sounds` | `[[time, sound, volume], …]` | none | Named event sounds (below). |
-| `captions` | `[[from, to, text], …]` | none | Caption lines and when they show. |
+| `captions` | `[[from, to, text], …]` | none | Caption lines and when they show. The text may be a text key (app 0.16.2). |
 
 ### Entities
 
@@ -158,11 +158,32 @@ cameras at all, a fixed view from `[0, 50, 300]` looking ahead.
 - `captions: [[from, to, text]]` shows a line at the bottom of the screen, centred in the
   letterbox bar, in the skin's font, from `from` until `to`. Quote a caption that contains a
   colon or a comma.
+- **Text keys** (app 0.16.2): a caption — and the `title` — may be `"@<key>"`, resolved from
+  the packs' `text/<language>/` files like any other text ([Text and translation](text.md)),
+  so a translation addon can give a cutscene its own words. The default intro's are in
+  `resources/default/text/en/cutscenes.yaml`:
+
+  ```yaml
+  # text/en/cutscenes.yaml
+  text:
+    cutscene.intro.title: "Perils of the Void"
+    cutscene.intro.line1: "The frontier, 2084."
+  ```
+
+  ```yaml
+  # cutscenes/intro.yaml
+  title: "@cutscene.intro.title"
+  captions:
+    - [1s, 5s, "@cutscene.intro.line1"]
+  ```
+
+  A missing key is a load error (`text: missing key … (cutscenes/<id>)`) and shows as the key.
 
 ### What the player sees
 
 Black letterbox bars cover the top and bottom tenth of the screen; captions sit in the bottom
-bar. When the cutscene ends (or is skipped) the next screen draws its own sky again.
+bar. Esc, Enter, a mouse click or a gamepad's Start, A or B skips it (the click and the pad
+since app 0.16.2). When the cutscene ends (or is skipped) the next screen draws its own sky again.
 
 ## Videos
 
@@ -176,8 +197,9 @@ The original's films are Smacker videos, played full screen and letterboxed (app
 | From the command line | `openinterceptor --video <ref>` |
 
 A video reference may also be a pack path (`video/<file>.smk`); only Smacker files play. A pack
-path is looked for in every active pack, latest first (app 0.14.1). Enter, Esc or a click skips a
-video; its soundtrack follows the effects volume (app 0.14.1).
+path is looked for in every active pack, latest first (app 0.14.1). Enter, Esc, a click or a
+gamepad's Start, A or B (app 0.16.2) skips a video; its soundtrack follows the effects volume
+(app 0.14.1).
 
 ## Validating
 
@@ -191,17 +213,17 @@ no cutscene is a load error (`campaign.intro: no cutscene 'x' (cutscenes/<id>.ya
 
 ## Not built yet
 
-From the [design](../specification/design/designer.md#32-what-a-scene-contains), not in app 0.13.0:
+From the [design](../specification/design/designer.md#32-what-a-scene-contains), not in app 0.16.14:
 
 - **Rotation keys** (slerp) and **speed keys**; entities only face along their paths.
 - **Autopilot entities** flown by the AI (`aggressive`), switching between scripted and
   autopilot, and **formations** of a group following a leader.
 - The actions **chase**, **capture** (tractor) and **jump** (hyperspace); `harmless` on a single action (it is per entity).
-- **Sound files** at times with fades, positions and music ducking; captions as **text keys**
-  (they are plain text, not translated).
+- **Sound files** at times with fades, positions and music ducking. (Captions take **text
+  keys** since app 0.16.2.)
 - Camera **height and look-offset keys**, keyframed field of view, **blended** cuts.
-- Cutscenes as a **mission's intro and outro**; skipping from the tablet console or the pad's
-  Start button.
+- Cutscenes as a **mission's intro and outro**; skipping from the tablet console (the pad
+  skips since app 0.16.2).
 - A `video:` file in place of a cutscene, and video files other than Smacker (MD3).
 - Scrubbing and snapshots (the designer's seeking, MD6).
 
@@ -219,3 +241,4 @@ From the [design](../specification/design/designer.md#32-what-a-scene-contains),
 | `cuts: no camera 'y'` / `cuts: needs at least one [time, camera]` | A cut naming no camera, or cameras without cuts. |
 | `sounds: expected [time, sound, volume]`, `captions: expected [from, to, text]` | Malformed lists. |
 | `campaign.intro: no cutscene 'x' (cutscenes/<id>.yaml)` | `campaign.intro` names no cutscene (app 0.14.1). |
+| `text: missing key '…' (cutscenes/<id>)` | A cutscene's title or caption names a text key no pack defines (app 0.16.2). |

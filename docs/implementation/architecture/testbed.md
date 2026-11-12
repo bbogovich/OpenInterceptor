@@ -168,10 +168,11 @@ launcher:
 (main `ac7ae62`) it is five widgets placed by the `screens.starmap` layout: the top bar (date,
 funds, score, base switcher, the clock's buttons — `SPEEDS`: paused, 1, 6, 24 and 120 campaign
 hours per real second — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
-panel for the selection (`Sel`) with its actions, the ten list buttons (`Tab`; the **Supply**
-list, `Tab::Logistics`, since app 0.9.0) and the list panel whose rows carry their actions as
-buttons; notices, interceptions, convoy ambushes, choices, offers, endings and title cards are
-modal prompts. How a frame runs: [Presentation › Widgets and screen layouts](presentation.md#widgets-and-screen-layouts-appwidgets-contentscreens). It turns rows into orders on the campaign and
+panel for the selection (`Sel`) with its actions (up to six since app 0.16.1), the list buttons (`Tab`: eleven since app
+0.16.8 with **Reports**, twelve with the testbed's **Debug**; the **Supply** list, `Tab::Logistics`, since app 0.9.0) and the list panel whose rows carry their actions as
+buttons; notices, interceptions (with *Auto-resolve* since app 0.16.12), convoy ambushes,
+construction strikes (app 0.16.4), choices, offers, title cards and the save-slot choice (app
+0.16.14) are modal prompts, and the ending has a screen of its own (app 0.16.14). How a frame runs: [Presentation › Widgets and screen layouts](presentation.md#widgets-and-screen-layouts-appwidgets-contentscreens). It turns rows into orders on the campaign and
 draws; the rules live in `campaign` ([Campaign](campaign.md)). The launcher leads with
 `Entry::ContinueCampaign` and `Entry::NewCampaign` when `rules.strategy` is set and starts
 selected on them; `--strategy` opens a new campaign. A campaign battle sets
@@ -187,6 +188,24 @@ Headless, `--strategy-soak <days>` plays a campaign's strategy layer with `campa
 sustained beam damage and the seconds of perfect fire each playable ship needs to destroy it —
 `effective_hp`, `sustained_dps` and `time_to_kill` are pure and tested
 (`balance::tests::energy_limits_sustained_fire_and_kill_times_follow`). Player's guide: [Campaign](../../user-guide/campaign.md).
+
+**Stage 5 testbed tools** (app 0.16.13, #47, R-TST-010): **Ctrl+D** toggles `StrategyScreen::debug`,
+which adds `Tab::Debug` to the list buttons and to Tab's cycle (it is filtered out otherwise).
+Its rows are each arc's step and every story event with `story.fired[e]` and `Campaign::holds`
+on its `when`, each with the action `Act::FireEvent(e)`; `Campaign::fire_event` returns the
+events it raised and the screen turns them into its usual prompts (a notice, a choice, an offer,
+a card, the ending). **Start at a chapter**: `--strategy --chapter N` (`Options::chapter`) makes
+`app::run` play the new campaign forward with `campaign::autoplay_to_chapter(def, c, N, 1500.0)`
+— repeated five-day `autoplay_from` steps until the first arc's `arc_step` reaches N or 1500
+days pass — and open `StrategyScreen::from_campaign`.
+
+**The condition console** (app 0.16.5, #20, R-TST-009) lives in `FlightSession`: `cond:
+Option<String>` is the text typed so far; backquote (`KeyCode::GraveAccent`, hard-wired, not a
+binding) opens and closes it, Esc closes it. While it is open the pause-menu and help handling is
+skipped, characters from `get_char_pressed` are appended (the backquote and control characters
+dropped), and the simulation does not tick. Each frame the text is evaluated with
+`MissionRun::evaluate` ([Conditions](script.md#the-condition-console-app-0165)) and drawn in a
+panel at the bottom: `= value` in green, an error in orange.
 
 ### Scenarios shipped
 
@@ -228,9 +247,11 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 | Symbol | What it is |
 |---|---|
 | `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`; since app 0.7.1 `campaign` (the strategy screen kept while one of its battles is flown) and `battle_report`. |
-| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, and since app 0.6.3 `Simulator` (the setup screen) and `Simulate { mission: Box<MissionDef>, ship }` (fly a modified mission), since app 0.7.1 `NewCampaign`, `LoadCampaign`, `Strategy` and `CampaignBattle { mission, ship, loadout }`, `Quit`. |
+| `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, and since app 0.6.3 `Simulator` (the setup screen) and `Simulate { mission: Box<MissionDef>, ship }` (fly a modified mission), since app 0.7.1 `NewCampaign`, `LoadCampaign`, `Strategy` and `CampaignBattle { mission, ship, loadout }`, since app 0.16.14 `LoadSlot { slot }`, `Quit`. `Controls` returns to `Next::Menu` since app 0.16.14. |
 | `launcher::Entry` | `ContinueCampaign`, `NewCampaign` (app 0.7.1), `ModelViewer`, `AssetBrowser`, `Controls`, `Simulator`, `Scenario(i)`, `Mission(i)`. |
-| `strategy::StrategyScreen`, `Tab`, `SPEEDS`, `BattleReport`, `save_path` | The strategy screen ([Campaign](campaign.md)). |
+| `strategy::StrategyScreen`, `Tab`, `SPEEDS`, `BattleReport`, `save_path`, `slot_path`, `SLOTS` | The strategy screen ([Campaign](campaign.md)); `from_campaign` (app 0.16.13) wraps a campaign made elsewhere. |
+| `FlightSession::cond` | The condition console's text (app 0.16.5). |
+| `cli::Options::chapter` | `--chapter <N>` (app 0.16.13). |
 | `flight::debrief_due(ended_at, now, delay)` | Whether the debrief is due after the result (pure, tested; app 0.7.4). |
 | `flight::apply_loadout(&mut World, player, beams, missiles)` | A campaign craft's fit on its battle's own copy of the rules (app 0.7.2). |
 | `simulator::Simulator`, `SimSetup`, `FORCES` | The setup screen (`new`, `frame`); the choices (indices and switches); the force multipliers `[0.5, 1, 1.5, 2]`. |
@@ -281,3 +302,7 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
   nothing: read the orange line under the rows (a ship that cannot enter an atmosphere).
 - `openinterceptor --mission defend_station --ship comet` starts a mission directly;
   `--soak defend_station --soak-pilot ai --seconds 400` plays it headless and prints the result.
+- In any mission battle press `` ` `` to type a condition and see its value (app 0.16.5); the
+  battle waits.
+- `openinterceptor --no-original --strategy --chapter 6` opens the default campaign at chapter 6;
+  Ctrl+D on the strategy screen shows the story's state and fires events (app 0.16.13).

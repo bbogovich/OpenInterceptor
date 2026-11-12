@@ -75,6 +75,7 @@ game:
   language: en              # text/<language>/ folders (--language overrides)
 graphics:
   brightness: 1.2           # 1 = as authored; 0.5 (darker) to 2 (brighter)
+  fullscreen: false         # start full screen (app 0.16.14; --windowed overrides)
 console:
   enabled: true             # serve the tablet control console (default false)
   port: 8765                # 1–65535; anything else is ignored
@@ -87,6 +88,13 @@ for one run ([Remote console](remote.md)).
 applied as a gamma of 1 / brightness in the lit shader ([Rendering](rendering.md)); values
 outside 0.5–2 are clamped, and an empty value means 1. The player's guide is
 [Settings](../../user-guide/settings.md).
+
+`graphics.fullscreen` (app 0.16.14; `true`, `yes` or `on`) is read in `main` before the window
+exists: the window opens full screen when `--fullscreen` is given, or when the setting is on and
+`--windowed` is not (`Options::windowed` records that `--windowed` was given, since
+`Options::fullscreen` alone cannot tell "not asked" from "asked for a window"). The main menu's
+*Full screen* option switches the open window with macroquad's `set_fullscreen` and saves the
+choice (`app::remember_fullscreen`).
 
 **Migration.** Builds before the YAML formats wrote `settings.ini` and `bindings.ini`. When
 `settings.yaml` does not exist, `Settings::load` reads `settings.ini` instead
@@ -101,7 +109,7 @@ and ignored from then on.
 
 | Symbol | What it is |
 |---|---|
-| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`, `difficulty: Option<String>`, `language: Option<String>`, `brightness: Option<f32>` (`graphics.brightness`, clamped 0.5–2), `console: bool` and `console_port: Option<u16>` (`console.enabled`, `console.port`). |
+| `Settings` | `original: Option<PathBuf>`, `mods: Option<PathBuf>`, `disabled_packs: Vec<String>`, `campaign: Option<String>`, `difficulty: Option<String>`, `language: Option<String>`, `brightness: Option<f32>` (`graphics.brightness`, clamped 0.5–2), `fullscreen: bool` (`graphics.fullscreen`, app 0.16.14), `console: bool` and `console_port: Option<u16>` (`console.enabled`, `console.port`). |
 | `settings::Source` | Which rule found the data: `CommandLine`, `Environment`, `SettingsFile`, `UserDataFolder`, `DevelopmentTree` (`resources/xcom` or `resources/xcom-cd`). |
 | `cli::user_data_dir()` | The per-user folder for this platform. |
 | `cli::find_packs_dir(exe)`, `cli::find_resources_dir(exe)` | The `packs/` and `resources/` folders: in the working directory, next to the program, in `../Resources/` inside an app bundle, then the source tree (`find_dir`). |

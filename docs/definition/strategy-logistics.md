@@ -1,5 +1,5 @@
 ---
-spec_version: 1.15.0
+spec_version: 1.18.0
 status: current
 updated: 2026-11-11
 ---
@@ -30,7 +30,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The game is a space-combat *strategy* game; battles need a cause.
 
-- **Status:** in-progress. Built (app 0.7.0 – 0.7.3): the campaign clock, fixed and generated maps with lane travel, raids detected by sensors and intercepted into battles, and the strategy screen; remaining: convoys and probes on flight plans, generated missions, endurance, the 3D base view.
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.3): the campaign clock, fixed and generated maps with lane travel, raids detected by sensors and intercepted into battles, and the strategy screen; auto-resolve (app 0.16.12); remaining: convoys and probes on flight plans, generated missions, endurance, the 3D base view.
 - **Source:** Plan items 4.1–4.3.
 - **Specified by:** [R-STR-001](../specification/requirements/strategy-logistics.md#r-str-001-campaign-clock), [R-STR-002](../specification/requirements/strategy-logistics.md#r-str-002-star-map-and-travel), [R-STR-003](../specification/requirements/strategy-logistics.md#r-str-003-contacts-and-mission-generation), [R-STR-010](../specification/requirements/strategy-logistics.md#r-str-010-strategy-screens)
 
@@ -40,7 +40,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The original's strategy systems, as data.
 
-- **Status:** in-progress. Built (app 0.7.0 – 0.7.1): income and expense expressions, market, factory queues, deliveries, research (download and labs, prerequisites, unlocks, salvage), base types, modules with limits and effects, the monthly report and score; remaining: resources, storage, evaluations, capture, dismantling.
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.1): income and expense expressions, market, factory queues, deliveries, research (download and labs, prerequisites, unlocks, salvage), base types, modules with limits and effects, the monthly report and score; resources (app 0.9.0); since app 0.16.3 – 0.16.11 capture, `requires_any` and research discovered by events, the `quarters`, `storage` and `defence` effects, dismantling, evaluations and the Reports list, queue priorities and delivery losses; remaining: markets per seller, the 3D base view.
 - **Source:** Plan items 4.4–4.6 and 4.9.
 - **Specified by:** [R-STR-004](../specification/requirements/strategy-logistics.md#r-str-004-economy), [R-STR-005](../specification/requirements/strategy-logistics.md#r-str-005-research), [R-STR-006](../specification/requirements/strategy-logistics.md#r-str-006-bases), [R-STR-009](../specification/requirements/strategy-logistics.md#r-str-009-funding-score-and-reports)
 
@@ -50,7 +50,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The original's hangar and roster.
 
-- **Status:** in-progress. Built (app 0.7.0 – 0.7.2): hulls and items as data, craft bought or manufactured, fitting from the store flown in campaign battles, pilots with stats, ranks, experience, injury, recruiting and salaries; remaining: fitting rules, designs, training, bravery.
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.2): hulls and items as data, craft bought or manufactured, fitting from the store flown in campaign battles, pilots with stats, ranks, experience, injury, recruiting and salaries; shields and armour (app 0.15.0 – 0.16.1); pilot training and dismissal (app 0.16.7); remaining: fitting rules, designs, bravery.
 - **Source:** Plan items 4.7 and 4.8.
 - **Specified by:** [R-STR-007](../specification/requirements/strategy-logistics.md#r-str-007-ships-and-equipment), [R-STR-008](../specification/requirements/strategy-logistics.md#r-str-008-pilots)
 
@@ -70,7 +70,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** User request for the default campaign: both sides race to mine the belts, and escort and raid missions get a strategic cause.
 
-- **Status:** in-progress. Built (app 0.9.0): resources, components and recipes as data; mining facilities, manufacturing centers and research stations; demand-driven orders from base hull jobs through manufacturing to mining; automatic government supply convoys along the lanes; saves. Remaining: flown convoy ambushes and construction strikes (auto-resolved today), captured cargo and depots, third-party convoys, facility upgrades.
+- **Status:** in-progress. Built (app 0.9.0): resources, components and recipes as data; mining facilities, manufacturing centers and research stations; demand-driven orders from base hull jobs through manufacturing to mining; automatic government supply convoys along the lanes; saves. Flown convoy ambushes (app 0.9.2) and construction strikes (app 0.16.4). Remaining: captured cargo and depots, third-party convoys, facility upgrades.
 - **Source:** User request (logistics design, decisions 2026-11-11); plan items 4.14–4.17.
 - **Specified by:** [R-STR-012](../specification/requirements/strategy-logistics.md#r-str-012-logistics-is-optional-data), [R-STR-013](../specification/requirements/strategy-logistics.md#r-str-013-demand-driven-orders), [R-STR-014](../specification/requirements/strategy-logistics.md#r-str-014-extraction-and-recipes), [R-STR-015](../specification/requirements/strategy-logistics.md#r-str-015-government-supply-ships), [R-STR-019](../specification/requirements/strategy-logistics.md#r-str-019-logistics-mission-generation), [R-STR-020](../specification/requirements/strategy-logistics.md#r-str-020-cargo-losses-and-depots), [R-STR-027](../specification/requirements/strategy-logistics.md#r-str-027-third-party-convoys), [R-MOD-014](../specification/requirements/modding.md#r-mod-014-campaign-context)
 
@@ -80,7 +80,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The player chooses where to build from what is known.
 
-- **Status:** in-progress. Built (app 0.9.0): survey ships from a base within its radar range, the attack roll at launch, a report of deposits and research sites; suitability shown on the Supply tab. Remaining: a survey craft and a battle when one is attacked (auto-resolved today).
+- **Status:** in-progress. Built (app 0.9.0): survey ships from a base within its radar range, the attack roll at launch, a report of deposits (with reserves since app 0.16.2), features and research sites; suitability shown on the Supply tab. Remaining: a survey craft and a battle when one is attacked (auto-resolved today).
 - **Source:** Logistics decisions (2026-11-11, revised); plan item 4.16.
 - **Specified by:** [R-STR-021](../specification/requirements/strategy-logistics.md#r-str-021-survey-ships)
 
@@ -100,7 +100,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Construction is a vulnerable period worth defending.
 
-- **Status:** in-progress. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Remaining: stages shown on the map and in battle, strikes on facilities under construction.
+- **Status:** in-progress. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Strikes on facilities under construction, flown or let be (app 0.16.4). Remaining: stages shown on the map and in battle.
 - **Source:** Logistics design; construction-stage looks built in Stage 2; plan items 4.14 and 3.13.
 - **Specified by:** [R-CMB-019](../specification/requirements/combat.md#r-cmb-019-model-sets-and-damage-looks), [R-STR-022](../specification/requirements/strategy-logistics.md#r-str-022-construction-stages), [R-STR-023](../specification/requirements/strategy-logistics.md#r-str-023-construction-attacks)
 
@@ -122,3 +122,4 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | 1.13.0 | 2026-11-11 | F-STR-001 – F-STR-003 in progress and F-STR-004 implemented (app 0.7.0 – 0.7.3) |
 | 1.14.0 | 2026-11-11 | F-STR-005, F-STR-006, F-STR-007 and F-STR-009 in progress; F-STR-008 progress (app 0.9.0, logistics) |
 | 1.15.0 | 2026-11-11 | F-STR-007 progress: the supply vessel and flown convoy escorts (app 0.9.2) |
+| 1.18.0 | 2026-11-11 | F-STR-001, F-STR-002, F-STR-003, F-STR-005, F-STR-006 and F-STR-008 progress (app 0.16.1 – 0.16.12: auto-resolve, the economy and research gaps, training, construction strikes) |

@@ -379,7 +379,7 @@ Screen layouts (app 0.16.0; guide: [Screen layouts](screens.md)). A definition s
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `design` | 2 numbers | 1280, 720 | The design space the rectangles are written in. It is stretched to the window. |
-| `background` | asset | none | An image over the whole design space. Parsed and checked, **not yet drawn**. |
+| `background` | asset | none | An image stretched over the whole window behind the screen's widgets (drawn since app 0.16.2; a file that cannot be loaded is reported on standard error once and left out). |
 | `widgets` | mapping name: `[x, y, w, h]` | the engine's places | Where each widget goes, in the design space. `starmap`: `top`, `map`, `nav`, `info`, `panel`; another name is a load error. A widget left out keeps the engine's place. |
 
 ### `console`
@@ -488,7 +488,7 @@ The schema type **either** (`Ty::Either`) lets a key take one of two forms: `cou
 
 ## Cutscene files (`cutscenes/*.yaml`)
 
-One cutscene per file (app 0.13.0; editor schema `schemas/cutscene.schema.json`). Every key —
+One cutscene per file (app 0.13.0; editor schema `schemas/cutscene.schema.json`). The `title` and the captions may be text keys (app 0.16.2). Every key —
 `id`, `title`, `length`, `environment`, `entities`, `cameras`, `cuts`, `sounds`, `captions` — with
 its type and default is on [Cutscenes › The file](cutscenes.md#the-file).
 

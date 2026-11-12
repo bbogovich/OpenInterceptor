@@ -154,7 +154,8 @@ The strategy screen clips each list row to its width by measuring it in the skin
   skin. Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
 - Main menu option values too long for their room are drawn smaller (down to half size, app
   0.14.2), not wrapped.
-- A load/save screen (one save per campaign, through *Continue*); a graphics options page.
+- A full graphics options page (the menu has *Full screen* since app 0.16.14; brightness is in
+  `settings.yaml`). The load page and the ending screen (app 0.16.14) are placed in code, in the skin.
 - The `interceptor` wrapper screens at 640 × 480 (6.7).
 
 ## Errors

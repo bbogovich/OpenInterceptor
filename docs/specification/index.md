@@ -1,5 +1,5 @@
 ---
-spec_version: 1.17.0
+spec_version: 1.18.0
 status: current
 updated: 2026-11-11
 ---
@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's original data (an
   installed copy or the CD).
 
-Specification version **1.17.0** (217 requirements). Changes are listed in the
+Specification version **1.18.0** (217 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -91,3 +91,4 @@ Facts carry verified / derived / unknown marks.
 | 1.15.0 | 2026-11-11 | 217 requirements: Stage 5 as built (app 0.10.0 – 0.10.3): R-CPN-007 events and arcs implemented; R-CPN-008, R-CPN-009, R-CPN-010 partly met; R-CPN-004 and R-CPN-005 progress (the serial, the Doomsday arc); R-TST-011 the year-long soak. Supply-convoy battles (app 0.9.2, the user's design): R-STR-017 implemented, R-STR-019 and R-STR-020 As-built notes. Playtest-driven revisions: R-MSN-002 (repeating waves, escorts), R-MSN-008 (the nebula backdrop), R-MSN-012 (the convoy battle is about cargo), R-CMB-009 (towable), R-CMB-016 (`escort`, `travel`), R-CMB-018 (modules on moving hubs), R-FLT-008 and R-FLT-009 (modules jump with, and do not collide with, their hub); notes on R-MSN-003 (`cargo`) and R-CMB-019 (size). Design pages: As-built notes on Format: campaign, Format: missions, Format: strategy layer and Logistics |
 | 1.16.0 | 2026-11-11 | 217 requirements: Stage 6 and MD2 as built (app 0.11.0 – 0.14.0): R-CPN-011 (skins, title cards, volumes, the main menu and credits) and R-CPN-012 (interactive music, the original's Smacker films, the comms panel) partly met; R-CMP-010 Smacker implemented, with the MPSRC pack of talking heads read; cutscenes: R-MOD-034 implemented, R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, R-MOD-038, R-MOD-039, R-MOD-046 not built; R-CPN-009 mission-outcome relations fixed; R-CPN-010 an ending's film and the ending shown again. New format page *MPSRC packs*; *Smacker video* rewritten as decoded. Design pages: As-built notes on Format: interface, Format: missions and the Mod designer §3.4 |
 | 1.17.0 | 2026-11-11 | 217 requirements: durability, the ship status display and the strategy screen rebuilt (app 0.14.2 – 0.16.0): R-HUD-005 extended with the ship status display (user request); R-CON-007 descriptions built (#6), with `description` in the console protocol's `catalogue`; As-built notes on R-STR-007 (fitted shields and armour), R-STR-010 (the screen rebuilt for the mouse), R-CPN-011 (screen layouts as data, buttons, prompts) and R-TST-006 (`--balance`) |
+| 1.18.0 | 2026-11-11 | 217 requirements: the issue-audit gaps as built (app 0.16.1 – 0.16.14): R-STR-009, R-STR-019 and R-STR-023 implemented (evaluations and the Reports list; construction strikes, #19); R-MOD-014 implemented (the eight logistics queries, #8); R-MOD-041 implemented (captions as text keys); R-TST-009 implemented (the condition console, #20); As-built notes on R-STR-003 – R-STR-008, R-STR-010, R-STR-011, R-STR-019 (auto-resolve, queue priorities, delivery losses, storage, capture, `requires_any` and hidden topics, base effects and dismantling, default shields and armour, training, new prompts, pack versions compared, save slots), R-CPN-010 – R-CPN-012 (the ending screen, layout backgrounds, Load game, Full screen and Controls, the `good` and `bad` stingers, skipping by gamepad), R-MOD-045 and R-TST-010 (the event debugger, start-at-chapter); R-CPN-009 (a stance change from a mission announced), R-STR-002, R-STR-020, R-STR-021 Open notes narrowed |

@@ -59,6 +59,24 @@ Difficulty level ids are constants too, unless an id already has that name. The 
 answered by `campaign::Campaign` ([Campaign](campaign.md#expressions-the-campaign-as-a-scriptcontext)).
 Time quantities accept `d` (days) since app 0.6.7, for `every: 30d`.
 
+The story added five queries in app 0.10.0 (`arc`, `plan`, `relation`, `fired`, `battles_won`)
+and logistics eight in app 0.16.3 (`deposit`, `feature`, `research_site`, `survey_known`,
+`owned`, `lane_distance`, `facility_progress`, `construction_attacks`; ids 21 – 28, R-MOD-014):
+**29** in all. A logistics query's arguments are names like any other — the map's system ids and
+their feature tags, resource, component, facility-type and research-site ids were added to
+`StrategyDef::names` for them — and its first argument is always a system. `Arg::Num` carries
+the constant's index; the campaign looks the name up again (`Campaign::logistics_query`), so a
+name that is not a system answers 0 instead of failing.
+
+### The condition console (app 0.16.5)
+
+The testbed's backquote console evaluates typed text in the **battle** context:
+`MissionRun::evaluate(&World, text, levels)` builds `battle::schema` from the mission's own role
+names and the difficulty levels, parses, and evaluates against a `BattleCx` whose generator is a
+`Cell` **copy** of the mission's (`Cell::new(self.rng)`), so `random(p)` reads the dice without
+moving them — looking never changes the battle (unit-tested). The value comes back as text; a
+parse error as the `Err` string the flight screen shows in orange.
+
 ## Key Symbols
 
 | Symbol | What it is |
@@ -71,7 +89,8 @@ Time quantities accept `d` (days) since app 0.6.7, for `every: 30d`.
 | `Schema` | The queries and named constants available in one context. |
 | `Context` | The trait a game context implements: `query(id, &[f32]) -> Value`. |
 | `object::QUERIES`, `object::id`, `object::SYSTEM_NAMES`, `object::schema` | The object context (21 queries). |
-| `campaign::QUERIES`, `campaign::id`, `campaign::schema` | The campaign context (16 queries; app 0.6.7). |
+| `campaign::QUERIES`, `campaign::id`, `campaign::schema` | The campaign context (16 queries in app 0.6.7; 29 since app 0.16.3). |
+| `mission::MissionRun::evaluate` | The condition console's evaluation (app 0.16.5). |
 | `sim::ai::ObjectContext` | The simulation's answer to object queries. |
 
 ## API Reference
@@ -91,5 +110,9 @@ Time quantities accept `d` (days) since app 0.6.7, for `every: 30d`.
   number, not a condition (compare it: 'hull > 0')".
 - To test a condition, write it in a behaviour and run `--check`; to see it fire, use a
   transition into an obviously different manoeuvre (`do: circle`) in a testbed scenario.
+- A **battle** condition can be typed live: start the mission and press `` ` `` (app 0.16.5) —
+  [Getting started › The condition console](../../user-guide/getting-started.md#the-condition-console).
+  A **campaign** condition can be watched in the strategy screen's Debug list (Ctrl+D, app
+  0.16.13) by giving a test story event that `when` and `chance: 0%`.
 - The language is pure, so new queries are unit-tested with a stub `Context` (see the tests in
   `script/mod.rs`) before the simulation answers them.

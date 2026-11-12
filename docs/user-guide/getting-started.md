@@ -130,6 +130,7 @@ scripts/check.sh
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--mission <ID>` | Start this mission, skipping the launcher ([Missions](../modding/missions.md)). |
 | `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. The campaign's intro cutscene or film is not played this way. |
+| `--chapter <N>` | With `--strategy`: play the new campaign forward by itself until its story reaches chapter *N* (its first arc's step *N*; at most 1500 days), then open the strategy screen there (app 0.16.13; [Campaign › Testbed cheats and tools](campaign.md#testbed-cheats-and-tools)). Ignored without `--strategy`. |
 | `--credits` | Open on the campaign's credits roll (or its credits film), then the main menu (app 0.14.0). |
 | `--cutscene <ID>` | Play this cutscene of the campaign, then open the main menu (or the launcher, for a campaign without a strategy layer) (app 0.13.0; [Cutscenes](../modding/cutscenes.md)). |
 | `--video <REF>` | Play this video, then open the main menu (or the launcher) (app 0.12.0): `original:<file>.smk` from your data (for example `original:alientrans1.smk`) or a pack path; Smacker files only. |
@@ -146,7 +147,7 @@ scripts/check.sh
 | `--write-schemas <DIR>` | Write the JSON Schema files of the mod file types (`pack.schema.json`, `rules.schema.json`, `scenario.schema.json`) for editor completion and checking, then exit. |
 | `--extract <DIR>` | Convert the original data to OBJ/PNG/WAV at the paths where mod files override it ([Overrides and extraction](../modding/overrides.md)), then exit. |
 | `--list` | List campaigns (`*` = loaded), packs, playable ships and scenarios, then exit. |
-| `--windowed` / `--fullscreen` | Window mode (windowed is the default). |
+| `--windowed` / `--fullscreen` | Window mode for this run. Without either, the game starts as `settings.yaml` `graphics.fullscreen` says (windowed by default; app 0.16.14); `--windowed` overrides the setting. |
 | `--help` | Usage. |
 
 Environment: `OPENINTERCEPTOR_DATA` (default for `--data`), `OI_DEBUG_KEYS=1` (print key
@@ -165,15 +166,17 @@ A or Start) selects, Esc (pad B or Back) goes back or, on the main page, quits.
 
 | Item | Does |
 |---|---|
-| **Continue** | Loads the campaign's save (shown only when there is one). |
+| **Continue** | Loads the campaign's automatic save (shown only when there is one). |
 | **New campaign** | Starts a new campaign at the chosen difficulty, after its introduction ([Campaign](campaign.md#starting)). |
+| **Load game** | Shown when one of the three save slots holds a game (app 0.16.14): a page listing the automatic save and *Slot 1* – *Slot 3*, each with how long ago it was written or *empty*, then *Back*. Enter loads the chosen one; Esc goes back ([Campaign › Saves](campaign.md#saves)). |
 | **Battles & tools** | The testbed launcher (below): scenarios, missions, the simulator, the viewers. Esc there returns to the menu. |
-| **Options** | Campaign, difficulty, physics (on the levels that allow Simple), music and effects volume; Left/Right changes the row, Esc or *Back* returns. Changing the campaign or the difficulty reloads and comes back to the options. Everything is saved in `settings.yaml` ([Settings](settings.md)). |
+| **Options** | Campaign, difficulty, physics (on the levels that allow Simple), music and effects volume, **Full screen** and **Controls...** (app 0.16.14); Left/Right changes the row (Enter too for Full screen; Enter opens Controls), Esc or *Back* returns. Changing the campaign or the difficulty reloads and comes back to the options. Everything is saved in `settings.yaml` ([Settings](settings.md)). |
 | **Credits** | The campaign's credits roll, then the engine's (Esc or Enter ends it); `interceptor` plays the CD's credits film instead. |
 | **Quit** | Leaves the game. |
 
-Leaving the strategy map (Esc), the end of a film or cutscene, and Esc in the launcher all come
-back to the menu.
+Leaving the strategy map (Esc), the end of a film or cutscene, the ending screen's *Main menu*,
+leaving the controls screen (since app 0.16.14, also when it was opened from the launcher) and Esc
+in the launcher all come back to the menu.
 
 ### The testbed launcher
 
@@ -186,6 +189,18 @@ Flight is newtonian by default: throttle is thrust and the ship coasts; `Z` reve
 hold `B` to brake, `M` holds the target's speed.
 New to space sims? Press **P** in the launcher for **Simple** physics: the craft always flies
 where its nose points, with no drift ([Controls › Simple physics](controls.md#simple-physics)).
+
+#### The condition console
+
+In any mission battle — from the launcher, the simulator, `--mission` or a campaign — the
+backquote key (`` ` ``) opens the **condition console** along the bottom of the screen (app
+0.16.5): type a [condition or expression](../modding/behaviours.md#the-condition-language) in the
+battle context — `count(raiders)`, `alive(colony) and time > 30s`, `hull(colony)` — and its value
+shows beneath as you type (`= 3`, `= true`), or the error in orange (an unknown role, a typo). The
+battle is **paused** while the console is open; Esc or `` ` `` closes it and the battle carries on.
+Looking never changes the battle: even `random(p)` is evaluated on a copy of the battle's dice.
+Role names are the mission's own; difficulty level names work as in mission files. A scenario
+(not a mission) has no conditions: the console says *no mission: conditions belong to missions*.
 
 ## After a battle: the debrief
 

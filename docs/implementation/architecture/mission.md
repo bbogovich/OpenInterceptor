@@ -127,7 +127,7 @@ so pilots that start together do not act together.
 |---|---|
 | `content::mission::MissionDef` | A parsed mission: `id`, `name`, `briefing`, `order`, `player_class`, `player_position`, `roles`, `waves`, `win`/`lose`/`draw`, `optional`, `timer`, `outcomes`, `chatter`, `debrief`, `starfield_seed`. |
 | `RoleDef`, `Arrival`, `WaveDef`, `ChatterDef` | A role (classes, count range, faction, AI, behaviour, protect, state, hull, destroyed systems, speed, `at`, `arrive`); an arrival (`distance`, `bearing`, `from`, `spread`); a wave; a radio line (`when`, `line`, and since app 0.6.2 `voice` with its `voice_clip` index, filled in by the rules). |
-| `mission::MissionRun` | The running mission: its definition, the player's id, per-role `RoleRun`s, wave/chatter/optional latches, its generator, kills, losses, `debrief`, and `voices` (chatter clips said and not yet played). `kills()` reads the kills so far, also while the battle runs. |
+| `mission::MissionRun` | The running mission: its definition, the player's id, per-role `RoleRun`s, wave/chatter/optional latches, its generator, kills, losses, `debrief`, and `voices` (chatter clips said and not yet played). `kills()` reads the kills so far, also while the battle runs; `evaluate` answers the condition console (app 0.16.5). |
 | `mission::RoleRun` | `members`, `arrived`, `destroyed`, `retreated`, `captured`. |
 | `mission::Debrief` | `result` (`win`, `lose`, `draw`, `retreat`, `killed`), `text`, `optional: Vec<(name, met)>`, `campaign` actions (as text), `kills`, `losses`, `seconds`. |
 | `mission::BattleCx` | The battle `Context` for conditions. |
@@ -148,6 +148,8 @@ so pilots that start together do not act together.
   `run.voices` (drained by the flight screen).
 - `script::battle::schema(&[String], &[String]) -> Schema`;
   `script::action::parse(text, MISSION_ACTIONS) -> Result<Action, String>`; `action.display()`.
+- `run.evaluate(&World, text, &levels) -> Result<String, String>` — a condition or expression
+  evaluated now, on a copy of the mission's generator (the condition console, app 0.16.5).
 - `soak::run_mission(&Content, id, ship, seconds, pilot)`.
 
 ## Debugging
@@ -162,3 +164,5 @@ so pilots that start together do not act together.
   arrivals visible in play.
 - A "MISSION ERROR: …" message line means a role could not be spawned (an unknown slot in a
   station's modules, for example).
+- Press `` ` `` in the battle to type any condition and see its value now — `arrived(raiders)`,
+  `count(foes)`, the `win:` expression itself (app 0.16.5). The battle pauses meanwhile.

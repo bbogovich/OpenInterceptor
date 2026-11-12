@@ -36,7 +36,7 @@ segment.
 |---|---|
 | `victory` | A mission's result is decided as a win (with the computer voice, before the debrief). |
 | `death` | Any other result (lose, draw, retreat, killed). |
-| `good`, `bad` | Accepted and loaded; not played by the engine yet (reserved for good and bad strategy news). |
+| `good`, `bad` | On the strategy screen (app 0.16.2): `good` when a battle flown from the map was won (as the map returns), when research completes and when the campaign ends in a victory; `bad` after any other battle result and on a defeat (DEV-059). The `interceptor` sets map them to the CD's loops; the default campaign's music has none, so nothing plays there. |
 
 A stinger plays once, over the segment that is playing.
 
@@ -111,8 +111,9 @@ weapons, explosions, voices, the computer voice — but not the music or its sti
 
 - Switching rules as data (the design's `switch:` list with conditions); the states are chosen
   by the fixed nearest-hostile rule above.
-- The original's `.wtl` transition tables; CD audio tracks; the `good` and `bad` stingers on
-  strategy news.
+- The original's `.wtl` transition tables; CD audio tracks; `good` and `bad` stingers for the
+  default campaign (the strategy screen plays them since app 0.16.2, but the default music has
+  none).
 - Music in cutscenes (a cutscene's `sounds` are named event sounds) and over videos (a video's
   own soundtrack plays).
 
@@ -122,4 +123,4 @@ weapons, explosions, voices, the computer voice — but not the music or its sti
 |---|---|
 | `music.x: a music set needs states (cruise, threat, battle, strategy)` | No `states`. |
 | `music.x: states.y: no segments` | A state with an empty list. |
-| `sound: <file>: …` (at start-up) | A segment or stinger file that is missing or does not decode. |
+| `sound: <file>: …` (at start-up; since app 0.16.2 also from `--check`) | A segment or stinger file that is missing or does not decode. |
