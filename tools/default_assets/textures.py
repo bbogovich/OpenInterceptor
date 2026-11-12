@@ -577,6 +577,46 @@ def deco_panel():
     return c
 
 
+def portrait(kind):
+    """A comms-panel face (128 x 96) for the default campaign's voices (Stage 6.6): a
+    head-and-shoulders silhouette on a green CRT screen with scanlines. `guard` wears
+    the Guard's finned silver helmet and dark visor; `colony` a controller's headset."""
+    w, h = 128, 96
+    c = Canvas(w, h, (0.02, 0.07, 0.05))
+    c.shade(lambda x, y, p: [p[0], p[1] + 0.05 * (1 - y / h), p[2] + 0.02])
+    suit = (0.16, 0.20, 0.30) if kind == "guard" else (0.30, 0.22, 0.16)
+    skin = (0.80, 0.62, 0.48)
+    # Shoulders and collar.
+    c.disc(64, 118, 52, suit)
+    c.rect(56, 62, 72, 76, skin)
+    c.rect(50, 72, 78, 78, (0.85, 0.70, 0.34) if kind == "guard" else (0.55, 0.55, 0.55))
+    # The head.
+    c.disc(64, 44, 20, skin)
+    if kind == "guard":
+        c.disc(64, 40, 25, (0.78, 0.80, 0.84))            # the dome
+        c.rect(61, 10, 67, 30, (0.80, 0.16, 0.12))         # the fin
+        c.disc(64, 13, 3, (0.80, 0.16, 0.12))
+        c.rect(44, 38, 84, 52, (0.05, 0.08, 0.14))         # the visor
+        c.rect(48, 40, 66, 42, (0.55, 0.75, 0.85), a=0.6)  # its glint
+        c.disc(40, 46, 5, (0.62, 0.64, 0.70))              # ear studs
+        c.disc(88, 46, 5, (0.62, 0.64, 0.70))
+    else:
+        c.disc(64, 34, 20, (0.25, 0.15, 0.08))             # hair
+        c.disc(64, 46, 18, skin)
+        c.disc(56, 44, 2, (0.1, 0.1, 0.1))                 # eyes
+        c.disc(72, 44, 2, (0.1, 0.1, 0.1))
+        c.rect(58, 54, 70, 56, (0.5, 0.25, 0.2))           # mouth
+        c.rect(43, 26, 85, 29, (0.2, 0.2, 0.2))            # headset band
+        c.disc(44, 44, 6, (0.2, 0.2, 0.2))
+        c.disc(84, 44, 6, (0.2, 0.2, 0.2))
+        c.rect(44, 50, 47, 58, (0.2, 0.2, 0.2))            # microphone boom
+        c.rect(44, 57, 58, 60, (0.2, 0.2, 0.2))
+    # Green phosphor tint and scanlines.
+    c.shade(lambda x, y, p: [v * (0.55 if y % 3 == 0 else 1.0) for v in
+                             (p[0] * 0.45, 0.15 + p[1] * 0.85 + p[0] * 0.25, p[2] * 0.5)])
+    return c
+
+
 def build_all():
     """Paints and writes every texture and its damage variants. Returns the list of
     written file names."""
@@ -595,6 +635,11 @@ def build_all():
     panel = deco_panel()
     panel.save(os.path.join(OUT, "deco_panel.png"))
     written.append(("deco_panel.png", panel.w, panel.h))
+    # Comms-panel faces.
+    for kind in ("guard", "colony"):
+        face = portrait(kind)
+        face.save(os.path.join(OUT, f"portrait_{kind}.png"))
+        written.append((f"portrait_{kind}.png", face.w, face.h))
     return written
 
 

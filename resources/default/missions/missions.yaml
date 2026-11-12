@@ -161,7 +161,7 @@ missions:
       win: [score(colony_defended), "relation(guard, +5)"]
       lose: [lose(guard_colony), score(colony_lost)]
     chatter:
-      - {when: "time > 3s", line: "@chat.colony_inbound", voice: sounds/radio_status.wav}
+      - {when: "time > 3s", line: "@chat.colony_inbound", voice: sounds/radio_status.wav, speaker: colony_control}
       - {when: "hull(colony) < 50%", line: "@chat.colony_hurt"}
     debrief: {win: "@debrief.colony.win", lose: "@debrief.colony.lose", killed: "@debrief.killed", retreat: "@debrief.retreat"}
 

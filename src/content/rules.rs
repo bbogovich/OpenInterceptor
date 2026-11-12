@@ -495,10 +495,15 @@ impl ConsoleTheme {
 /// The radio lines a pilot's voice can say, with their clips (indices into
 /// [`Ruleset::voice_clips`]). Lines: `acknowledge` (an order), `status` (a status
 /// report), `down` (a wingman lost), `engaging`, `kill` (any others a mod adds are kept).
+/// Two keys are not lines: `name`, the speaker shown on the comms panel, and `face`, a
+/// picture or a looping Smacker clip shown there while the voice speaks (Stage 6.6).
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct VoiceSet {
     pub id: String,
     pub lines: Vec<(String, Vec<u32>)>,
+    pub name: Option<String>,
+    pub face: Option<String>,
+    pub pack: usize,
 }
 
 impl VoiceSet {
@@ -666,6 +671,12 @@ pub struct Ruleset {
 }
 
 impl Ruleset {
+    /// The voice set a clip belongs to (who is speaking), if any — mission chatter that
+    /// names a set's clip is that set's speaker too.
+    pub fn voice_of_clip(&self, clip: u32) -> Option<usize> {
+        self.voices.iter().position(|v| v.lines.iter().any(|(_, c)| c.contains(&clip)))
+    }
+
     /// Finds a ship class by id.
     pub fn ship_id(&self, id: &str) -> Option<ShipClassId> {
         self.ships.iter().position(|s| s.id.eq_ignore_ascii_case(id)).map(|i| ShipClassId(i as u16))
@@ -1357,11 +1368,13 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let mut voice_clips: Vec<(String, usize)> = Vec::new();
     let mut voices = Vec::new();
     for (_, id, e) in of(&resolved, "voices") {
+        let g = Get(&e.node);
         let lines = e
             .node
             .as_map()
             .unwrap_or(&[])
             .iter()
+            .filter(|(line, _)| line != "name" && line != "face")
             .map(|(line, v)| {
                 let refs: Vec<String> = match (v.as_seq(), v.as_str()) {
                     (Some(s), _) => s.iter().filter_map(|x| x.as_str().map(str::to_string)).collect(),
@@ -1380,13 +1393,25 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 (line.to_ascii_lowercase(), idx)
             })
             .collect();
-        voices.push(VoiceSet { id: id.clone(), lines });
+        voices.push(VoiceSet {
+            id: id.clone(),
+            lines,
+            name: g.str("name").map(str::to_string),
+            face: g.str("face").map(str::to_string),
+            pack: e.pack,
+        });
     }
     for m in &mut missions {
         for c in &mut m.chatter {
             if let Some(v) = &c.voice {
                 voice_clips.push((sound_ref(v, &format!("missions.{}.chatter", m.id)), m.pack));
                 c.voice_clip = Some((voice_clips.len() - 1) as u32);
+            }
+            if let Some(s) = &c.speaker {
+                match voices.iter().position(|v: &VoiceSet| &v.id == s) {
+                    Some(k) => c.speaker_set = Some(k),
+                    None => errors.push(format!("missions.{}.chatter: no voice set '{s}' (speaker)", m.id)),
+                }
             }
         }
     }
@@ -2037,7 +2062,7 @@ cockpits:
     design: [1920, 1080]
     anchors: {mfd: {at: [0, -0.3, -0.8], normal: [0, 0.4, 0.9], size: [0.2, 0.15]}}
 voices:
-  radio: {acknowledge: [models/a.wav, models/b.wav], down: models/down.wav}
+  radio: {acknowledge: [models/a.wav, models/b.wav], down: models/down.wav, name: Red Two, face: models/face.png}
 flight: {boost: 120, bolt_frame: ship, bolt_carry: 0.2s, lighting: {rim: 0.4}}
 sounds: {lock: 'original:target lock.wav'}
 ";
@@ -2070,6 +2095,12 @@ sounds: {lock: 'original:target lock.wav'}
         let v = &rules.voices[0];
         assert_eq!((v.id.as_str(), v.clips("acknowledge"), v.clips("down")), ("radio", &[0u32, 1][..], &[2u32][..]));
         assert_eq!(rules.voice_clips[2], ("models/down.wav".to_string(), 0));
+        // name and face are not lines; a clip finds its speaker.
+        assert_eq!(
+            (v.name.as_deref(), v.face.as_deref(), v.lines.len()),
+            (Some("Red Two"), Some("models/face.png"), 2)
+        );
+        assert_eq!((rules.voice_of_clip(1), rules.voice_of_clip(99)), (Some(0), None));
         assert_eq!(rules.flight.lighting, Lighting { rim: 0.4, ..Lighting::default() }, "unset keys keep defaults");
         assert_eq!(
             (a.design, a.model.as_deref(), a.image.as_deref()),

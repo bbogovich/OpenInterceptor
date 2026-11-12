@@ -394,6 +394,7 @@ fn mission() -> Ty {
                 f("when", Ty::Condition, "said once when this first holds"),
                 f("line", Ty::Text, "the line (a @key)"),
                 f("voice", Ty::Asset, "a radio clip spoken with the line"),
+                f("speaker", name(), "who says it (voices.<id>): its name and face on the comms panel"),
             ]))),
             "radio lines",
         ),
@@ -595,7 +596,7 @@ pub fn rules_sections() -> Vec<Field> {
         f(
             "voices",
             dict(Ty::Dict(Box::new(Ty::Either(Box::new(Ty::List(Box::new(Ty::Asset))), Box::new(Ty::Asset))))),
-            "radio voice sets: line (acknowledge, status, down, engaging, kill): clip or clips",
+            "radio voice sets: line (acknowledge, status, down, engaging, kill): clip or clips; name: the speaker; face: a picture or Smacker clip for the comms panel",
         ),
         f("environments", dict(super::environment::environment_schema()), "battle environments by id"),
         f("formations", dict(super::formation::formation_schema()), "formations wingmen (and cutscenes) fly in"),

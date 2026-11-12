@@ -320,14 +320,15 @@
           "chatter": {"description": "radio lines", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                 "when": {"description": "said once when this first holds", "type": "string"},
                 "line": {"description": "the line (a @key)", "type": "string"},
-                "voice": {"description": "a radio clip spoken with the line", "type": "string"}
+                "voice": {"description": "a radio clip spoken with the line", "type": "string"},
+                "speaker": {"description": "who says it (voices.<id>): its name and face on the comms panel", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
               }}},
           "debrief": {"description": "result: debrief text (a @key)", "type": "object", "additionalProperties": {"type": "string"}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
-    "voices": {"description": "radio voice sets: line (acknowledge, status, down, engaging, kill): clip or clips", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}]}}},
+    "voices": {"description": "radio voice sets: line (acknowledge, status, down, engaging, kill): clip or clips; name: the speaker; face: a picture or Smacker clip for the comms panel", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}]}}},
     "environments": {"description": "battle environments by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "physics": {"description": "space (the flight model unchanged) or atmosphere", "enum": ["space", "atmosphere"]},
           "arena": {"description": "arena radius for battles here (a pocket is small)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},

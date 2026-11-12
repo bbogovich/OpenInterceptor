@@ -113,6 +113,10 @@ pub struct ChatterDef {
     pub voice: Option<String>,
     /// Its index in [`super::rules::Ruleset::voice_clips`], filled in by the rules.
     pub voice_clip: Option<u32>,
+    /// Who says it: a voice set (`speaker:`), whose name and face the comms panel shows.
+    pub speaker: Option<String>,
+    /// That set's index in [`super::rules::Ruleset::voices`], filled in by the rules.
+    pub speaker_set: Option<usize>,
 }
 
 /// A mission type.
@@ -318,6 +322,8 @@ impl MissionDef {
                 line: c.str("line").ok_or(format!("{at}: needs line:"))?.to_string(),
                 voice: c.str("voice").map(str::to_string),
                 voice_clip: None,
+                speaker: c.str("speaker").map(str::to_string),
+                speaker_set: None,
             });
         }
         let player = g.node("player").map(Get);

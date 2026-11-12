@@ -77,8 +77,9 @@ pub struct MissionRun {
     /// Set when the battle ends.
     pub debrief: Option<Debrief>,
     /// Voice clips of chatter lines said since the screen last took them (indices into
-    /// `Ruleset::voice_clips`); the app plays and clears them.
-    pub voices: Vec<u32>,
+    /// `Ruleset::voice_clips`), each with its speaker's voice set if it names one; the
+    /// app plays and clears them.
+    pub voices: Vec<(u32, Option<usize>)>,
 }
 
 /// xorshift64: the mission's own deterministic random numbers (counts, bearings).
@@ -430,7 +431,7 @@ impl MissionRun {
             if !self.chatter_done[k] && check(self, w, &c.when) {
                 self.chatter_done[k] = true;
                 lines.push(c.line);
-                self.voices.extend(c.voice_clip);
+                self.voices.extend(c.voice_clip.map(|clip| (clip, c.speaker_set)));
             }
         }
         for k in 0..self.def.optional.len() {

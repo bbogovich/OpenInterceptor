@@ -284,6 +284,8 @@ pub struct FlightSession {
     sun: Vec3,
     seed: u64,
     effects: Effects,
+    /// The comms panel: who is speaking on the radio (Stage 6.6).
+    comms: super::comms::Comms,
     messages: MessageLog,
     /// The current camera view (public so `--view` can set the starting view).
     pub view: View,
@@ -548,6 +550,7 @@ impl FlightSession {
             sun: scenario.sun_direction,
             seed: scenario.starfield_seed,
             effects: Effects::default(),
+            comms: Default::default(),
             messages,
             view: if has_cockpit { View::Cockpit } else { View::Forward },
             mfd: MfdPage::Target,
@@ -790,6 +793,14 @@ impl FlightSession {
                         let pick = (self.world.time * 7.0) as usize;
                         if let Some(clip) = line.and_then(|l| wingman_voice(&self.world, self.player, None, l, pick)) {
                             ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                            let length = ctx.sounds.length(&crate::audio::SoundKey::Voice(clip));
+                            self.comms.speak(
+                                &ctx.content,
+                                &self.world.rules,
+                                self.world.rules.voice_of_clip(clip),
+                                length,
+                                self.world.time,
+                            );
                         }
                         for text in lines {
                             self.messages.push(self.world.time, text);
@@ -828,8 +839,11 @@ impl FlightSession {
                         self.messages.push(self.world.time, line);
                     }
                     // Chatter spoken on the radio, and the computer's verdict at the end.
-                    for clip in m.voices.drain(..) {
+                    for (clip, speaker) in m.voices.drain(..) {
                         ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                        let length = ctx.sounds.length(&crate::audio::SoundKey::Voice(clip));
+                        let speaker = speaker.or(self.world.rules.voice_of_clip(clip));
+                        self.comms.speak(&ctx.content, &self.world.rules, speaker, length, self.world.time);
                     }
                     if let (false, Some(d)) = (ended, &m.debrief) {
                         self.ended_at = Some(self.world.time);
@@ -854,6 +868,14 @@ impl FlightSession {
                             let pick = (self.world.time * 11.0) as usize;
                             if let Some(clip) = wingman_voice(&self.world, self.player, Some(*ship), "down", pick) {
                                 ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                                let length = ctx.sounds.length(&crate::audio::SoundKey::Voice(clip));
+                                self.comms.speak(
+                                    &ctx.content,
+                                    &self.world.rules,
+                                    self.world.rules.voice_of_clip(clip),
+                                    length,
+                                    self.world.time,
+                                );
                             }
                         }
                     }
@@ -948,6 +970,7 @@ impl FlightSession {
         if alive {
             hud::draw::draw_instruments(&frame);
         }
+        self.comms.draw(&self.world.rules, self.world.time);
         // Nav point marker.
         if let Some((name, p)) = nav {
             if let Some(s) = cam.project(p, screen) {
@@ -1536,6 +1559,9 @@ mod tests {
         let mut w = crate::sim::test_support::world();
         let mut rules = (*w.rules).clone();
         rules.voices = vec![VoiceSet {
+            name: None,
+            face: None,
+            pack: 0,
             id: "v".into(),
             lines: vec![("acknowledge".into(), vec![4, 5]), ("down".into(), vec![9])],
         }];

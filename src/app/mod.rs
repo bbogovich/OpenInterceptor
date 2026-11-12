@@ -29,6 +29,7 @@
 //! the loop starts.
 
 pub mod assets;
+pub mod comms;
 pub mod controls;
 pub mod cutscene;
 pub mod devices;

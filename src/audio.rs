@@ -185,7 +185,7 @@ impl SoundBank {
             match content.load_sound(&reference, pack) {
                 Ok(pcm) => match load_sound_from_bytes(&pcm.to_wav_bytes()).await {
                     Ok(s) => {
-                        if matches!(key, SoundKey::Music(..) | SoundKey::Stinger(..)) {
+                        if matches!(key, SoundKey::Music(..) | SoundKey::Stinger(..) | SoundKey::Voice(..)) {
                             bank.lengths.insert(key.clone(), pcm.duration());
                         }
                         bank.sounds.insert(key, s);
@@ -205,7 +205,7 @@ impl SoundBank {
         }
     }
 
-    /// The length of a loaded music segment or stinger, seconds.
+    /// The length of a loaded music segment, stinger or voice clip, seconds.
     pub fn length(&self, key: &SoundKey) -> Option<f32> {
         self.lengths.get(key).copied()
     }
