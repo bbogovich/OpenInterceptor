@@ -21,8 +21,10 @@ screen layouts are still to come (Stage 6).
 
 ## Starting
 
-- In the launcher, a campaign with a strategy layer lists **Campaign: continue** and
-  **Campaign: new game** first, and the selection starts on *continue*.
+- Since app 0.14.0 the game opens on the campaign's **main menu**: **Continue** (when there is a
+  save) and **New campaign** ([Getting started › The main menu](getting-started.md#the-main-menu)).
+  The testbed launcher (*Battles & tools*) still lists **Campaign: continue** and
+  **Campaign: new game** first.
 - *New game* starts at the launcher's difficulty level. If the campaign has an introduction it
   plays first: the default campaign's opening cutscene, or `interceptor`'s opening film from your
   data (app 0.13.0). Esc skips it. *Continue* loads the campaign's save
@@ -66,7 +68,7 @@ screen layouts are still to come (Stage 6).
 | Enter / Esc | While a mission is offered or a convoy is ambushed: fly it / decline (let the convoy fight through). At the end of the campaign: leave |
 | F5 | Save |
 | Ctrl+M, Ctrl+K, Ctrl+B, Ctrl+J | Testbed cheats ([below](#testbed-cheats)) |
-| Esc | Save and leave to the launcher |
+| Esc | Save and leave to the main menu (the launcher before app 0.14.0) |
 | Mouse | Click a tab or a row to choose it; click a system on the map to choose it (and its base, if it has one) |
 
 The clock **stops by itself** whenever something needs you: a building or base is finished,

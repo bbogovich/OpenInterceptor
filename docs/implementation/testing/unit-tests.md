@@ -8,6 +8,12 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**At main `a18a7b4` (app 0.14.0)** the count is **384** run on macOS (387 less the Linux-only
+test and two ignored helpers): the 5 added are `app::menu::tests::the_menu_offers_continue_only_with_a_save`,
+`options_show_only_what_can_change`, `volumes_step_in_quarters_and_stop_at_the_ends`,
+`app::credits::tests::the_roll_rises_from_below_and_ends_off_the_top` and
+`content::front::tests::menu_and_credits_parse_with_defaults`.
+
 **At main `747d1e9` (app 0.13.1)** a count of the `#[test]` functions in `src/` (grep, not a
 build) gives **379** run on macOS (382 less the Linux-only test and two ignored helpers). The 13
 added since `76bda5c`: app **0.11.0** (`1f183d1`)
@@ -160,6 +166,9 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `content::skin` | 1 | Colours (RGB and RGBA) with fallbacks for unset roles; the panel; an unknown role is an error (app 0.11.1) |
 | `content::cutscene` | 2 | **Centripetal Catmull-Rom passes through its keys without overshoot**, holds at the ends; facing along the path; linear scalar keys; a cutscene parses (actions sorted, `destroy_at`, cuts, captions) and **bad entity or camera references are errors** (app 0.13.0) |
 | `app::ui` | 1 | Nine-slice pieces keep the corners and stretch the rest (app 0.11.1) |
+| `app::menu` | 3 | Continue only with a save; options rows only for what can change (campaign with more than one, physics where Simple is allowed); volumes step in quarters and stop at the ends (app 0.14.0) |
+| `app::credits` | 1 | The roll rises from below the screen and ends when its last line leaves the top (app 0.14.0) |
+| `content::front` | 1 | `campaign.menu` and `campaign.credits` parse, with defaults; the roll ends with the engine's credits (app 0.14.0) |
 | `app::comms` | 1 | The panel lasts the clip plus 0.6 s, at least 2.5 s; the signal bars move and stay in range (app 0.13.1) |
 | `formats::png` | 2 | A PNG (encoded by the `image` crate since `2ed1149`) has the signature and chunks and **decodes back to the same pixels**; downscaling averages blocks |
 | `app::strategy` | 2 | The map fits its rectangle, centred; money has thousands separators |

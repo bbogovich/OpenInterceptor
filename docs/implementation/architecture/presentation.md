@@ -3,7 +3,8 @@
 `src/app/ui.rs`, `src/app/video.rs`, `src/app/cutscene.rs`, `src/app/comms.rs`, with their data
 in `src/content/skin.rs`, `src/content/cutscene.rs` and the voice sets of `src/content/rules.rs`.
 Plan: Stage 6.1 (skins, app 0.11.1), 6.8 (title cards), 6.3 (videos, app 0.12.0), MD2
-(cutscenes, app 0.13.0) and 6.6 (the comms panel, app 0.13.1). Music is on
+(cutscenes, app 0.13.0), 6.6 (the comms panel, app 0.13.1) and 6.2 (the main menu and credits,
+`src/app/menu.rs`, `src/app/credits.rs`, `src/content/front.rs`, app 0.14.0). Music is on
 [Audio](audio.md#music-app-0110); the Smacker decoder on [Formats](formats.md#smacker-formatssmacker).
 
 These are application-layer screens and helpers: they read `Content` and draw with macroquad,
@@ -163,6 +164,32 @@ still picture; no face, or a failure (printed once), is the signal graphic. `sig
 `app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves`. The name is the set's `name`
 (else its id) in capitals, or *COMMS* for a clip with no speaker.
 
+### The main menu and credits (`app::menu`, `app::credits`)
+
+Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
+campaign has a strategy layer (`rules.strategy.is_some()`); `Next::Menu` — from the launcher's
+Esc, from leaving the strategy screen, from the end of a film or cutscene with no campaign parked,
+and from the credits — goes there too, or to the launcher for a campaign without one.
+
+- **Data:** `content::front::MenuDef` (`campaign.menu`: `title`, `subtitle`, `showcase`,
+  `starfield_seed`, default 7) and `CreditsDef` (`campaign.credits`: `lines`, `video`), on
+  `Ruleset::menu` and `Ruleset::credits`. `CreditsDef::roll()` is the campaign's lines, two blank
+  lines, then `ENGINE_CREDITS`.
+- **Menu:** two pages. The pure functions `items(has_save)` (Continue only with a save; then New
+  campaign, Battles & tools, Options, Credits, Quit) and `settings(campaigns, simple_allowed)`
+  (Campaign only with more than one, Difficulty, Physics only where Simple is allowed, Music,
+  Effects, Back) build the rows; `step_volume(v, up)` moves a volume a quarter and clamps.
+  Items return `Next::LoadCampaign`, `NewCampaign`, `Launcher`, `Credits` or `Quit`; a campaign
+  or difficulty change returns `Next::Reload`, after which `app::run` reopens the menu on its
+  options page (`MainMenu::on_options`). Volumes and physics are saved at once
+  (`remember_audio`, `remember_physics`). The screen draws the starfield, the showcase ship
+  turning off to the right, the title, and the rows in a skin panel; it keeps the music playing
+  (the first set's `menu` state, else `strategy`).
+- **Credits:** `Next::Credits` plays `credits.video` through the video player when there is one,
+  else `Screen::Credits`: the roll rises from below the screen at a fixed speed (`line_y`), headings
+  in the skin's `accent`, and ends when its last line passes the top (`finished`) or on Esc or
+  Enter. `--credits` opens on it.
+
 ### Who plays what: the app's routing
 
 | Trigger | Path |
@@ -171,7 +198,7 @@ still picture; no face, or a failure (printed once), is the signal graphic. `sig
 | A new campaign (`Next::NewCampaign`) | The strategy screen is built and parked in `AppContext::campaign`; `rules.intro` plays as a cutscene, else `rules.intro_video` as a video; otherwise the strategy screen opens at once. |
 | A story event's `card` | `Event::Card` → `StrategyScreen::card` (drawn by the strategy screen itself). |
 | A story event's `video` / `play_cutscene`, an ending's `video` | `Event::Video` / `Event::Cutscene` / the ending → the strategy screen returns `Next::Video` / `Next::Cutscene`; `app::run` parks the screen in `AppContext::campaign` and opens the player. An ending reached after a battle is held in `StrategyScreen::pending_video` and handed over on the next frame. |
-| The end of a video or cutscene | Back to `Next::Strategy` when a campaign is parked, else `Next::Launcher`. A player that fails to open prints the error and returns to the parked campaign. |
+| The end of a video or cutscene | Back to `Next::Strategy` when a campaign is parked, else `Next::Menu` (the launcher before app 0.14.0). A player that fails to open prints the error and returns to the parked campaign. |
 
 Music is stopped on every screen except flights and the strategy screen, so videos and cutscenes
 play without it.
@@ -190,6 +217,9 @@ play without it.
 | `Event::Card`, `Event::Video`, `Event::Cutscene` | `campaign` | Story events for the screen to present. |
 | `Next::Video`, `Next::Cutscene`, `Screen::Video`, `Screen::Cutscene` | `app` | The routing above. |
 | `AppContext::ui`, `AppContext::music` | `app` | The skin and the music player, shared by every screen. |
+| `MainMenu`, `menu::Item`, `menu::Setting`, `menu::items`, `menu::settings`, `menu::step_volume` | `app::menu` | The main menu (app 0.14.0) and its pure row logic. |
+| `Credits`, `credits::line_y`, `credits::finished` | `app::credits` | The credits roll and its pure scrolling maths. |
+| `MenuDef`, `CreditsDef`, `CreditsDef::roll`, `ENGINE_CREDITS` | `content::front` | `campaign.menu` and `campaign.credits`. |
 | `Comms`, `showing_for`, `signal_bars` | `app::comms` | The comms panel's state (faces per voice set, who is speaking until when); its timing and signal graphic (pure). |
 | `VoiceSet::name`, `VoiceSet::face`, `Ruleset::voice_of_clip`, `ChatterDef::speaker` / `speaker_set` | `content::rules`, `content::mission` | A speaker's name and face; the set a clip belongs to; a chatter line's speaker. |
 

@@ -1624,6 +1624,9 @@ No case has been run yet.
 | MT-6-11 | Endings: a film, and the ending shown again | Strategy screen (`interceptor`; default) | not run | | | |
 | MT-6-12 | A mission outcome moves a standing | Strategy screen; `pocket_ambush` (default) | not run | | | |
 | MT-6-13 | The comms panel | `colony_defence` (default); any mission with wingmen | not run | | | |
+| MT-6-14 | Main menu: navigation | Start-up (default; `interceptor`) | not run | | | |
+| MT-6-15 | Main menu: options round trip | Main menu › Options | not run | | | |
+| MT-6-16 | Credits | Main menu › Credits; `--credits` | not run | | | |
 
 ## Stage 6 cases
 
@@ -1732,3 +1735,27 @@ How to start: the launcher, or `--no-original` for the default campaign. The def
 | Preconditions | App 0.13.1 or later. Default campaign. |
 | Steps | 1. `--no-original --mission colony_defence`; wait. 2. Give a wing order (`]`, then 1 – 6) in a mission with wingmen.  |
 | Expected | 1: about 3 s in, with the radio clip, a green-framed panel at the top left shows the generated CRT portrait of Colony Control and *COLONY CONTROL* beneath, for about 2.5 s. 2: the Guard Wing portrait and *GUARD WING* while the wingman answers. With a voice set that has no `face`, animated signal bars instead; with a chatter clip of no speaker, *COMMS*. |
+
+### MT-6-14 — Main menu: navigation
+
+| Field | |
+|---|---|
+| Preconditions | App 0.14.0 or later. Default campaign; first with no save, then with one. |
+| Steps | 1. Start `openinterceptor --no-original` with no save. 2. Move through the items with Up/Down (and the pad's D-pad); press Enter on *Battles & tools*, then Esc. 3. *New campaign*; skip the intro; Esc on the map. 4. Look at the items again. 5. *Continue*; Esc. 6. Esc on the main page. |
+| Expected | 1: the menu, not the launcher: *Perils of the Void* and its subtitle over a starfield, a Comet turning to the right, the items in the gold-framed panel, the strategy music (the default set has no `menu` state); no *Continue*. 2: the selection wraps; the launcher opens; Esc returns to the menu. 3: the intro, then the map; Esc saves and returns to the menu. 4: *Continue* now first. 5: the map as saved; Esc back to the menu. 6: the game quits. |
+
+### MT-6-15 — Main menu: options round trip
+
+| Field | |
+|---|---|
+| Preconditions | App 0.14.0 or later. Default campaign; the player's data for the campaign row. |
+| Steps | 1. Options; Left/Right on Music and Effects; listen in a battle. 2. Change Physics (on a level that allows Simple). 3. Change Difficulty. 4. Change Campaign (with `interceptor` available). 5. Quit and restart; open Options; look at `settings.yaml`. |
+| Expected | 1: each press moves a quarter and stops at 0 % and 100 %; the volumes apply at once. 2: Simple / Realistic toggles. 3: the campaign reloads and the menu reopens on Options with the new level. 4: the other campaign's menu, on Options, in its skin. 5: every choice kept; `settings.yaml` has `audio`, `game.physics`, `game.difficulty` and `game.campaign` to match. Physics is not listed on levels that do not allow Simple; Campaign only with more than one campaign. |
+
+### MT-6-16 — Credits
+
+| Field | |
+|---|---|
+| Preconditions | App 0.14.0 or later; the player's data for step 3. |
+| Steps | 1. Default campaign: Credits; watch to the end. 2. Again, press Esc part-way. 3. `interceptor`: Credits. 4. `openinterceptor --no-original --credits`. |
+| Expected | 1: the lines rise from below over the stars, headings (*Perils of the Void*, *Music*, …) in the skin's accent colour, then *Engine*, *OpenInterceptor* and the rest; back to the menu when the last line leaves the top. 2: the menu at once. 3: the CD's credits film plays, then the menu. 4: the roll at start-up, then the menu. |

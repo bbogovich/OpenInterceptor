@@ -88,7 +88,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** The campaigns look and sound finished.
 
-- **Status:** in-progress — radio voices and the computer voice (R-MSN-007, app 0.6.2); interactive music, skins on the launcher and strategy screen, title cards, the original's Smacker films and the comms panel with speakers' faces (app 0.11.0 – 0.13.1). Remaining: screen layouts, menus, the X-COM wrapper screens and talking-head mapping, video for mods
+- **Status:** in-progress — radio voices and the computer voice (R-MSN-007, app 0.6.2); interactive music, skins on the launcher and strategy screen, title cards, the original's Smacker films, the comms panel with speakers' faces, and a main menu with options and credits (app 0.11.0 – 0.14.0). Remaining: screen layouts, the X-COM wrapper screens and talking-head mapping, video for mods
 - **Source:** Plan items 6.1–6.6.
 - **Specified by:** [R-MSN-007](../../specification/requirements/missions.md#r-msn-007-voices), [R-CPN-011](../../specification/requirements/campaigns.md#r-cpn-011-screens-and-skins), [R-CPN-012](../../specification/requirements/campaigns.md#r-cpn-012-video-and-music)
 
@@ -100,4 +100,4 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 | 1.12.0 | 2026-11-11 | F-CPN-003: nine default missions and radio voices noted. F-CPN-007: radio and computer voices built (R-MSN-007); the rest planned |
 | 1.14.0 | 2026-11-11 | F-CPN-004: the strategy layer from the player's data (app 0.8.0) noted |
 | 1.15.0 | 2026-11-11 | F-CPN-006 in progress (app 0.10.0 – 0.10.3: events, arcs, plans, relations, the strategist's aggression, endings, the encyclopaedia). F-CPN-003: convoy battles and the serial noted. F-CPN-004: the Doomsday arc noted |
-| 1.16.0 | 2026-11-11 | F-CPN-007 in progress (app 0.11.0 – 0.13.1: music, skins, title cards, Smacker films, endings' films, the comms panel) |
+| 1.16.0 | 2026-11-11 | F-CPN-007 in progress (app 0.11.0 – 0.14.0: music, skins, title cards, Smacker films, endings' films, the comms panel, the main menu and credits) |

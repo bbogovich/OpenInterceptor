@@ -426,6 +426,12 @@ Terrains (heightfields) by id (app 0.6.0; guide: [Environments and terrain](envi
 | `default_difficulty` | id | the middle level | The level a new game starts at. |
 | `skin` | id | the first skin defined | The [skin](skins.md) of the menu and strategy screens (app 0.11.1). An unknown id is an error. |
 | `intro` | id | none | A [cutscene](cutscenes.md) played before a new campaign's strategy screen (app 0.13.0). |
+| `menu.title` | text | the campaign's `name` | The main menu's title (app 0.14.0). |
+| `menu.subtitle` | text | none | A line under the title. |
+| `menu.showcase` | id | the first playable ship | A ship class turning behind the menu. |
+| `menu.starfield_seed` | number | 7 | The menu's stars. |
+| `credits.lines` | list of text | none | The credits roll (app 0.14.0): one line each, `""` for a gap; a line starting `# ` is a heading (drawn in the skin's `accent` colour). The engine's own credits follow. |
+| `credits.video` | asset | none | A credits film played instead of the roll (`interceptor`: `original:credits_sm2a.smk`). |
 | `intro_video` | asset | none | A video played before a new campaign (app 0.13.0), when there is no `intro`; Smacker only ([Cutscenes › Videos](cutscenes.md#videos)). |
 
 ### `missions`

@@ -62,6 +62,12 @@ audio:
   with `flight: {lighting: …}` ([Mod file reference](../modding/reference.md#flight)).
   `graphics.brightness` adjusts the result for your screen.
 
+## Options in the main menu
+
+Since app 0.14.0 the main menu's **Options** page sets the campaign, difficulty, physics and the
+music and effects volumes with Left/Right (volumes by a quarter, stopping at 0 % and 100 %) and
+saves them here at once ([Getting started › The main menu](getting-started.md#the-main-menu)).
+
 ## Volumes in the launcher
 
 The launcher's line of packs ends with *Music 70% (M)   Effects 100% (V)*. **M** steps the music
@@ -69,5 +75,5 @@ volume and **V** the effects volume up by a quarter — 0, 25, 50, 75, 100 % —
 to 0 (a value in between, such as the default 70 %, goes up past the nearest quarter: 70 % → 100 %).
 Each press is saved in `settings.yaml` at once and takes effect immediately.
 
-An in-game options screen is planned with the presentation stage (plan item 6.2); until then,
-use the launcher keys or edit the file.
+Graphics (brightness) and the console are still set in this file; the controls have their own
+menu in flight.

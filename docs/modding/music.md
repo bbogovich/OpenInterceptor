@@ -18,10 +18,11 @@ The player sets the music volume in the launcher ([User guide › Settings](../u
 | `cruise` | In a battle with no hostile craft within `threat_range` of the player. Also the fallback for any state a set does not define. |
 | `threat` | A hostile craft is within `threat_range` (default 12 km), but none within `battle_range`. |
 | `battle` | A hostile craft is within `battle_range` (default 4 km). |
-| `strategy` | On the strategy screen. |
+| `strategy` | On the strategy screen; also on the main menu when the set has no `menu` state. |
+| `menu` | On the main menu (app 0.14.0), when the first set defines it. |
 
 "Hostile" means a live ship of a faction hostile to the player's; stations and other static
-objects do not count. Only these four state names are used by the engine; a set may define
+objects do not count. Only these state names are used by the engine; a set may define
 others, but nothing will ask for them.
 
 Each state's segments play **in turn** (the first, the second, … then the first again). When a
@@ -45,7 +46,8 @@ A stinger plays once, over the segment that is playing.
   `seed mod number of sets`), so the same battle always has the same music and different
   battles vary.
 - **On the strategy screen** the first set plays its `strategy` state (or its `cruise`).
-- Every other screen — the launcher, the viewer, the asset browser, videos and cutscenes — is
+- **On the main menu** the first set plays its `menu` state, else its `strategy` state.
+- Every other screen — the launcher, the credits roll, the viewer, the asset browser, videos and cutscenes — is
   silent.
 
 ## A worked example: the default campaign

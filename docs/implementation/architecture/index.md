@@ -20,7 +20,7 @@ The order is the one written at the top of `src/lib.rs`:
 ```mermaid
 flowchart TB
     subgraph L7["7 · Application"]
-        APP["app<br/>launcher, viewer, asset browser, flight session,<br/>simulator, strategy screen,<br/>ui (skins), video, cutscene"]
+        APP["app<br/>launcher, viewer, asset browser, flight session,<br/>simulator, strategy screen,<br/>ui (skins), video, cutscene,<br/>comms, menu, credits"]
         CK["check<br/>headless validation"]
         EX["extract<br/>original data → OBJ/PNG/WAV"]
         CLI["cli + settings<br/>options, user data folder"]

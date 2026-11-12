@@ -13,6 +13,7 @@ through it: [Architecture › Presentation › Skins](../implementation/architec
 
 | Screen | Skinned parts |
 |---|---|
+| Main menu (app 0.14.0) | Title, subtitle, the item list in a panel, the selection bar; the credits roll's headings. |
 | Launcher | Background, title and every line of text, the selection bar, hints. |
 | Strategy screen | Background, the map frame and the tab panel (nine-slice panels), tabs, rows and the selection bar, the top line, the banner, **title cards**. |
 
@@ -101,6 +102,36 @@ mapped yet.
   the whole entry), or by adding a skin and setting `campaign.skin`.
 - The skin is loaded when the game starts and again when the launcher switches campaign (Tab).
 
+## The main menu and credits
+
+Since app 0.14.0 a campaign with a strategy layer opens on a **main menu** drawn in its skin (the
+item list sits in a skin panel), and its **Credits** item rolls the campaign's credit lines.
+Both are set under `campaign:`:
+
+```yaml
+# resources/default/campaign/campaign.yaml
+campaign:
+  menu: {subtitle: "A serial of the space frontier, in twelve chapters", showcase: comet, starfield_seed: 31}
+  credits:
+    lines:
+      - "# Perils of the Void"
+      - the default campaign of OpenInterceptor
+      - ""
+      - "# Music"
+      - synthesised by tools/default_assets/music.py
+```
+
+- `menu`: `title` (default: the campaign's name), `subtitle`, `showcase` (a ship class turning
+  behind the menu; default the first playable ship) and `starfield_seed`.
+- `credits`: `lines` — a line starting `# ` is a heading in the skin's `accent` colour, `""`
+  leaves a gap — rolled up over the stars, followed by the engine's own credits; or `video`, a
+  film played instead (`interceptor` uses the CD's credits film).
+- The menu plays the first music set's `menu` state, or its `strategy` state
+  ([Music](music.md#the-states)).
+
+Every key: [Mod file reference › `campaign`](reference.md#campaign). Try the roll with
+`openinterceptor --no-original --credits`.
+
 ## Fonts
 
 `font: fonts/<name>.ttf` loads a TrueType font from the pack for every skinned text. Choose a
@@ -115,7 +146,7 @@ a much wider font may cut long rows short.
 
 - Screen layouts as data (`screens:` with design spaces, widgets, backgrounds and custom panels
   bound to queries), buttons with hover images, skin sounds, several fonts per skin.
-- A main menu, an options screen, load/save and credits screens beyond the launcher (6.2).
+- A load/save screen (one save per campaign, through *Continue*); a graphics options page.
 - The `interceptor` wrapper screens at 640 × 480 (6.7).
 
 ## Errors

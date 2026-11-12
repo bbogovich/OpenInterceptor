@@ -59,7 +59,7 @@ simply silent.
 flowchart LR
     MD["rules: music.&lt;set&gt;<br/>content::music::MusicSet"] --> BL["SoundBank::load<br/>SoundKey::Music(set, state, seg),<br/>Stinger(set, k) + their lengths"]
     FL["app::flight each frame:<br/>set = seed mod sets;<br/>battle_state(nearest hostile)"] --> MP
-    SG["app::strategy each frame:<br/>set 0, state strategy"] --> MP
+    SG["app::strategy each frame:<br/>set 0, state strategy;<br/>app::menu: menu, else strategy"] --> MP
     MP["MusicPlayer::frame(bank, rules, set, state, now)"] -->|"segment ended?<br/>next_segment(set, state, count)"| PL["SoundBank::play(key, set.volume × music volume)"]
     RES["flight: result decided"] --> STG["MusicPlayer::stinger(victory | death)"] --> PL
     APP["app::run: any other screen"] --> STOP["MusicPlayer::stop"]
@@ -85,8 +85,8 @@ transition tables are not read ([DEV-053](../deviations/index.md)).
   has the same music; the strategy screen uses set 0 with the `strategy` state.
 - **Stingers:** when a mission's result is decided, `victory` for a win and `death` otherwise,
   with the computer voice. `good` and `bad` are loaded but not played.
-- **Silence:** `app::run` stops the music on every screen other than `Screen::Flight` and
-  `Screen::Strategy`, and before a video.
+- **Silence:** `app::run` stops the music on every screen other than `Screen::Flight`,
+  `Screen::Strategy` and (app 0.14.0) `Screen::Menu`, and before a video.
 
 **Volumes (app 0.12.1).** `settings.yaml` `audio: {music, effects}` (0 – 100 %, default 70 % and
 100 %) is read at start-up: `MusicPlayer::volume` multiplies each set's own `volume`, and

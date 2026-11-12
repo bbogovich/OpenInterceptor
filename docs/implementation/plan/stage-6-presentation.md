@@ -1,6 +1,6 @@
 # Stage 6 — Presentation
 
-**Version 0.7.0. Status: in progress** — app 0.11.0 – 0.13.1 (main `1f183d1` … `747d1e9`): 6.1, 6.3, 6.4, 6.6, 6.8 and MD2 partly or wholly built; 6.2, 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
+**Version 0.7.0. Status: in progress** — app 0.11.0 – 0.14.0 (main `1f183d1` … `a18a7b4`): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
 Progress: [Implementation status › Stage 6](../status.md#stage-6-progress).
 
 Design: [interface, text and media](../../specification/design/format-interface.md).
@@ -10,7 +10,7 @@ Design: [interface, text and media](../../specification/design/format-interface.
 | # | Item | Module | Status |
 |---|---|---|---|
 | 6.1 | Screen layouts and skins: design spaces, nine-slice panels, buttons, fonts, custom panels bound to queries | `app::ui` | **Partial** (0.11.1): skins (colours, nine-slice panel, font) on the launcher and strategy screen; no layouts, buttons, custom panels. #48 |
-| 6.2 | Main menu, options (graphics, audio, controls), difficulty, load/save, credits, ending screens; campaign and mod selection (pack switches in the launcher) | `app` | **Not started** beyond the launcher's M/V volume keys (0.12.1) and endings' films. #48 |
+| 6.2 | Main menu, options (graphics, audio, controls), difficulty, load/save, credits, ending screens; campaign and mod selection (pack switches in the launcher) | `app` | **Done** (0.14.0, main `a18a7b4`): the main menu (Continue, New campaign, Battles & tools, Options, Credits, Quit), options with Left/Right (campaign, difficulty, physics, music, effects), the credits roll or film, `campaign.menu` / `campaign.credits`, `--credits`; endings' films (0.12.1). No load/save screen beyond Continue. #48 |
 | 6.3 | Smacker video decoder (in-crate) for the original's cut-scenes and MFD talking heads; image-sequence video for mods | `formats::smacker`, `app` | **Done** for the original's films (0.12.0; verified on all 11 CD videos); image sequences are MD3. #49 |
 | 6.4 | Interactive music: states, segments, switches, stingers; the original's loop sets; CD audio tracks from ripped files | `audio` | **Partial** (0.11.0): states, segments, stingers, the loop sets, synthesised default music; no `switch:` data, `.wtl` tables or CD audio. #49 |
 | 6.5 | Voices and chatter playback; computer voice | `audio` | Built in 3.7 (app 0.6.2); speakers on the comms panel in 6.6. #50 |

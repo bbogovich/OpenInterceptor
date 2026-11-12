@@ -63,7 +63,8 @@ folder instead, as a real install would. Open the app from Finder. See
 ## Run
 
 ```sh
-# The testbed launcher (the original data is found automatically):
+# The main menu of the chosen campaign (the original data is found automatically); a
+# campaign without a strategy layer opens on the testbed launcher instead:
 target/release/openinterceptor
 
 # Only original-free packs (the default campaign, your own mods):
@@ -126,8 +127,9 @@ scripts/check.sh
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--mission <ID>` | Start this mission, skipping the launcher ([Missions](../modding/missions.md)). |
 | `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. The campaign's intro cutscene or film is not played this way. |
-| `--cutscene <ID>` | Play this cutscene of the campaign, then open the launcher (app 0.13.0; [Cutscenes](../modding/cutscenes.md)). |
-| `--video <REF>` | Play this video, then open the launcher (app 0.12.0): `original:<file>.smk` from your data (for example `original:alientrans1.smk`) or a pack path; Smacker files only. |
+| `--credits` | Open on the campaign's credits roll (or its credits film), then the main menu (app 0.14.0). |
+| `--cutscene <ID>` | Play this cutscene of the campaign, then open the main menu (or the launcher, for a campaign without a strategy layer) (app 0.13.0; [Cutscenes](../modding/cutscenes.md)). |
+| `--video <REF>` | Play this video, then open the main menu (or the launcher) (app 0.12.0): `original:<file>.smk` from your data (for example `original:alientrans1.smk`) or a pack path; Smacker files only. |
 | `--strategy-soak <DAYS>` | Play the campaign's strategy layer without a window for that many days with a simple automatic player, print one line (date, funds, score, bases, craft, topics, battles, messages) and exit (app 0.8.0; [Strategy layer](../modding/strategy.md#trying-a-campaign-out)). Use with `--campaign`. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
@@ -150,9 +152,31 @@ The user data folder (`settings.yaml`, `bindings.yaml`, `original/`, `mods/`) is
 on macOS and `$XDG_DATA_HOME/openinterceptor/` (default `~/.local/share/openinterceptor/`) on
 Linux.
 
-The launcher lists the model viewer, the asset browser and the test scenarios from every
-loaded pack: Up/Down to
-choose, Left/Right to pick a ship, Enter to start, Esc to quit. In flight, Esc opens the menu
+### The main menu
+
+Since app 0.14.0 a campaign with a strategy layer — the default campaign and `interceptor` —
+opens on its **main menu**: the campaign's title and subtitle over a starfield, a ship turning
+behind, the campaign's skin and its menu music. Up/Down (or the pad's D-pad) choose, Enter (pad
+A or Start) selects, Esc (pad B or Back) goes back or, on the main page, quits.
+
+| Item | Does |
+|---|---|
+| **Continue** | Loads the campaign's save (shown only when there is one). |
+| **New campaign** | Starts a new campaign at the chosen difficulty, after its introduction ([Campaign](campaign.md#starting)). |
+| **Battles & tools** | The testbed launcher (below): scenarios, missions, the simulator, the viewers. Esc there returns to the menu. |
+| **Options** | Campaign, difficulty, physics (on the levels that allow Simple), music and effects volume; Left/Right changes the row, Esc or *Back* returns. Changing the campaign or the difficulty reloads and comes back to the options. Everything is saved in `settings.yaml` ([Settings](settings.md)). |
+| **Credits** | The campaign's credits roll, then the engine's (Esc or Enter ends it); `interceptor` plays the CD's credits film instead. |
+| **Quit** | Leaves the game. |
+
+Leaving the strategy map (Esc), the end of a film or cutscene, and Esc in the launcher all come
+back to the menu.
+
+### The testbed launcher
+
+The launcher (*Battles & tools*, or the first screen of a campaign without a strategy layer)
+lists the model viewer, the asset browser and the test scenarios from every loaded pack: Up/Down
+to choose, Left/Right to pick a ship, Enter to start, Esc to return to the main menu (or to quit,
+for a campaign without one). In flight, Esc opens the menu
 (R restart, L back to the launcher) and `?` lists every key ([Controls](controls.md)). Default controls follow the original game; see the [controls reference](../reference/original-game/controls.md).
 Flight is newtonian by default: throttle is thrust and the ship coasts; `Z` reverses thrust,
 hold `B` to brake, `M` holds the target's speed.

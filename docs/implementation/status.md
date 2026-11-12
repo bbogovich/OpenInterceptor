@@ -10,7 +10,7 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later); hazards in **0.5.1**; environments, atmospheric flight, terrain and the atmosphere HUD in **0.6.0**; ground installations in **0.6.1**; radio voices in **0.6.2**; the simulator in **0.6.3**; five default missions in **0.6.4**; all 26 `interceptor` mission types in **0.6.5**; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in **0.6.7**; the battle runs on after its result in **0.7.4**. Tier 2 scripting evaluated, awaiting the user's decision | See [Stage 3 progress](#stage-3-progress) below |
 | [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**; playtest changes (nebula, bulbous fighters, dreadnought) in **0.9.1**; flown supply-convoy battles in **0.9.2**. 4.1 and 4.11 done; 4.12 done as derived (not play-tested); 4.2 – 4.10, 4.13 – 4.17 partial | See [Stage 4 progress](#stage-4-progress) below |
 | [5 Campaigns](plan/stage-5-campaign.md) | **In progress** — the story core in **0.10.0**; the default campaign's serial in **0.10.1**; the X-COM Doomsday arc in **0.10.2**; relations in battle and the year soak in **0.10.3**. 5.1, 5.2, 5.6 (engine), 5.7 done; 5.3 – 5.5, 5.8, 5.9 partial; 5.10, 5.11 and the testbed tools not started; no play-through yet | See [Stage 5 progress](#stage-5-progress) below |
-| [6 Presentation](plan/stage-6-presentation.md) | **In progress** — interactive music in **0.11.0**; skins in **0.11.1** and title cards; the Smacker decoder and player in **0.12.0**; volumes and the relation fix in **0.12.1**; endings' films; MD2 cutscenes in **0.13.0** and the X-COM opening film; MPSRC packs and the comms panel in **0.13.1**. 6.1, 6.3, 6.4, 6.6 (comms), 6.8 partial; MD2 partial; 6.2, 6.5, 6.7, MD3 not started; no manual pass yet | See [Stage 6 progress](#stage-6-progress) below |
+| [6 Presentation](plan/stage-6-presentation.md) | **In progress** — interactive music in **0.11.0**; skins in **0.11.1** and title cards; the Smacker decoder and player in **0.12.0**; volumes and the relation fix in **0.12.1**; endings' films; MD2 cutscenes in **0.13.0** and the X-COM opening film; MPSRC packs and the comms panel in **0.13.1**; the main menu and credits in **0.14.0**. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms), 6.8 and MD2 partial; 6.5, 6.7, MD3 not started; no manual pass yet | See [Stage 6 progress](#stage-6-progress) below |
 | [7 Modding toolkit and Remastered](plan/stage-7-modding.md) | Not started | |
 | [8 Platforms and release](plan/stage-8-release.md) | Not started | |
 
@@ -247,8 +247,8 @@ examinations — unconfirmed. **No play-through of either campaign has been done
 App **0.11.0** (`1f183d1`, music), **0.11.1** (`2dd85dd` skins; `a7ea7b6` title cards), **0.12.0**
 (`5163a57`, `644b218`, Smacker), **0.12.1** (`563c93f` volumes and the relation fix; `87b04f3`
 endings' films), **0.13.0** (`a59ffce` MD2 cutscenes; `76d64d5` the X-COM opening film) and
-**0.13.1** (`319a31b` MPSRC packs; `747d1e9` the comms panel). **379 unit tests** on macOS at
-`747d1e9` by a count of the sources.
+**0.13.1** (`319a31b` MPSRC packs; `747d1e9` the comms panel) and **0.14.0** (`a18a7b4`, the main
+menu and credits). **384 unit tests** on macOS at `a18a7b4` by a count of the sources.
 
 | Item | Status | Where |
 |---|---|---|
@@ -259,9 +259,10 @@ endings' films), **0.13.0** (`a59ffce` MD2 cutscenes; `76d64d5` the X-COM openin
 | Options: `audio: {music, effects}`, launcher M / V | **Done** (0.12.1); the options screen is 6.2 | `src/settings.rs`, `src/app/launcher.rs` |
 | Endings' `video`; a finished campaign shows its ending on continuing | **Done** (0.12.1) | `src/content/story.rs`, `src/app/strategy.rs` |
 | MD2 cutscenes: format, schema, `CutscenePlayer`, `campaign.intro`, `play_cutscene`, `--cutscene`; the default intro; `campaign.intro_video` (X-COM `animation1`, derived) | **Partial** (0.13.0): see [R-MOD-033 – R-MOD-046](../specification/requirements/modding.md#r-mod-033-cutscene-files); `harmless` does not do what it says | `src/content/cutscene.rs`, `src/app/cutscene.rs`, `resources/default/cutscenes/intro.yaml` |
+| 6.2 Main menu (`app::menu`: Continue, New campaign, Battles & tools, Options, Credits, Quit), options (campaign, difficulty, physics, volumes), credits roll (`app::credits`) or film; `campaign.menu`, `campaign.credits`; `--credits`; the menu's music state | **Done** (0.14.0); no load/save screen beyond Continue, no graphics options | `src/app/menu.rs`, `src/app/credits.rs`, `src/content/front.rs` |
 | 6.6 MPSRC packs (`original:<pack>.mps#<member>`); the comms panel: voices' `name` and `face`, chatter `speaker`, signal bars; default portraits and `colony_control` | **Partial** (0.13.1): no X-COM faces (clip prefixes unmapped); custom instruments not built | `src/formats/mpsrc.rs`, `src/app/comms.rs`, `resources/default/rules/voices.yaml` |
 
-**Gaps** (at main `747d1e9`): 6.2 (main menu, options, load/save, credits screens), 6.5, 6.7 (the X-COM
+**Gaps** (at main `a18a7b4`): 6.5, 6.7 (the X-COM
 wrapper screens — the `WrappersDLL` layouts are not mapped), MD3 (OS video frameworks; needs the
 dependency/FFI evaluation first); the rest of the cutscene format; the `harmless` flag; X-COM
 talking-head mapping; video sound ignores the volume settings; a video's pack path is read from
