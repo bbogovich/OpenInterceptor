@@ -84,6 +84,8 @@ pub struct RoleDef {
     pub at: Arrival,
     /// Wingmen: the formation they fly in (`formations.<id>`; default `flight.formation`).
     pub formation: Option<String>,
+    /// Escorts: the role whose newest member they fly in formation on (`escort: tugs`).
+    pub escort: Option<String>,
     /// When it arrives: `None` = at the start.
     pub arrive: Option<Expr>,
 }
@@ -97,6 +99,9 @@ pub struct WaveDef {
     pub count: Option<(u32, u32)>,
     /// Overrides the role's arrival.
     pub at: Option<Arrival>,
+    /// Comes again this many seconds after it last came, while `when` still holds
+    /// (`every: 90s`; `None` = once).
+    pub every: Option<f32>,
 }
 
 /// A radio line, said once when its condition first holds.
@@ -142,6 +147,9 @@ pub struct MissionDef {
     /// Sort key in the launcher.
     pub order: i64,
     pub pack: usize,
+    /// The role whose cargo containers count for the campaign (`cargo: clippers`): the
+    /// debrief reports the share still aboard.
+    pub cargo: Option<usize>,
 }
 
 /// The results a mission can end with.
@@ -237,6 +245,7 @@ impl MissionDef {
                     None => Arrival::default(),
                 },
                 formation: r.str("formation").map(str::to_string),
+                escort: r.str("escort").map(str::to_ascii_lowercase),
                 arrive: match r.str("arrive") {
                     Some(t) => Some(cond(t, &at("arrive".into()))?),
                     None => None,
@@ -257,6 +266,7 @@ impl MissionDef {
                     Some(n) => Some(arrival(Get(n), &role_names).map_err(|e| format!("{at}: {e}"))?),
                     None => None,
                 },
+                every: w.qty("every", Unit::Time).filter(|s| *s > 0.0),
             });
         }
         let obj = g.node("objectives").map(Get);
@@ -311,6 +321,17 @@ impl MissionDef {
             });
         }
         let player = g.node("player").map(Get);
+        let cargo = match g.str("cargo") {
+            Some(r) => Some(
+                roles.iter().position(|x| x.name == r.to_ascii_lowercase()).ok_or(format!("cargo: no role '{r}'"))?,
+            ),
+            None => None,
+        };
+        for r in &roles {
+            if let Some(e) = r.escort.as_ref().filter(|e| !roles.iter().any(|x| &x.name == *e)) {
+                return Err(format!("roles.{}.escort: no role '{e}'", r.name));
+            }
+        }
         Ok(MissionDef {
             id: id.to_string(),
             name: g.str("name").unwrap_or(id).to_string(),
@@ -336,6 +357,7 @@ impl MissionDef {
             sun: vec3(g, "sun", Vec3::new(-0.4, 0.45, -0.8)),
             order: g.num("order").unwrap_or(100.0) as i64,
             pack,
+            cargo,
         })
     }
 

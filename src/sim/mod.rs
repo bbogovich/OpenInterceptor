@@ -1383,6 +1383,75 @@ mod tests {
         assert!(!s.is_on(SystemKind::Cloak) && !s.is_on(SystemKind::Ecm));
     }
 
+    /// A fort whose two modules are towable cargo containers, on a moving hub.
+    fn cargo_fort() -> (World, ShipId) {
+        let mut r = (*rules()).clone();
+        for id in ["gun", "generator"] {
+            let k = r.ship_id(id).unwrap().0 as usize;
+            (r.ships[k].cargo, r.ships[k].towable, r.ships[k].behaviour) = (true, true, None);
+        }
+        let r = Arc::new(r);
+        let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape::sphere(5.0)).collect();
+        let fort = r.ship_id("fort").unwrap();
+        shapes[fort.0 as usize].mounts =
+            vec![(None, Vec3::new(0.0, 50.0, 0.0), Vec3::Y), (Some("gen".into()), Vec3::new(30.0, 0.0, 0.0), Vec3::X)];
+        let mut w = World::new(r, Arc::new(shapes), 1);
+        let hub = w.spawn(fort, FactionId(1), "fort", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        w.spawn_modules(hub, 0).unwrap();
+        (w, hub)
+    }
+
+    #[test]
+    fn cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub() {
+        let (mut w, hub) = cargo_fort();
+        let role =
+            crate::mission::RoleRun { members: vec![hub], arrived: true, destroyed: 0, retreated: 0, captured: 0 };
+        assert_eq!(crate::mission::cargo_share(&w, &role), 1.0);
+        // The hub moving does not drag on its own modules (no hub-module collisions).
+        w.get_mut(hub).unwrap().velocity = Vec3::new(0.0, 0.0, -40.0);
+        for _ in 0..60 {
+            w.step();
+        }
+        assert!((w.get(hub).unwrap().velocity.length() - 40.0).abs() < 1.0, "still at 40 m/s");
+        // One container torn off (by a tractor): half the cargo left.
+        let pod = w.ships.iter().position(|s| s.name == "fort.0").unwrap();
+        w.ships[pod].mount = None;
+        assert_eq!(crate::mission::cargo_share(&w, &role), 0.5);
+        // The hub jumps out: the container still aboard goes with it and still counts.
+        super::systems::depart_for_test(&mut w, hub);
+        let gen = w.ships.iter().find(|s| s.name == "fort.1").unwrap();
+        assert!(gen.departed && !gen.alive);
+        assert_eq!(crate::mission::cargo_share(&w, &role), 0.5);
+    }
+
+    #[test]
+    fn a_tug_tears_a_container_off_and_prefers_a_disabled_ship() {
+        let (mut w, hub) = cargo_fort();
+        let tug_class = w.rules.ship_id("tug").unwrap();
+        // Any faction hostile to the fort's.
+        let enemy = (0..w.rules.factions.len() as u16)
+            .map(FactionId)
+            .find(|f| w.rules.hostile(*f, FactionId(1)))
+            .expect("the test rules have a faction hostile to red");
+        let tug = w.spawn(tug_class, enemy, "tug", Vec3::new(0.0, 80.0, 0.0), Quat::IDENTITY, Pilot::External);
+        let pod = w.ships.iter().position(|s| s.name == "fort.0").map(|i| w.id_of(i)).unwrap();
+        // The nearest prize is a container (the hub is not disabled).
+        assert_eq!(ai::nearest_prize(&w, tug, 5000.0), Some(pod));
+        // A disabled hub is the bigger prize, even if farther.
+        w.get_mut(hub).unwrap().disabled = true;
+        // (the fort is not capturable in these rules: make it so)
+        std::sync::Arc::make_mut(&mut w.rules).ships[w.ships[hub.index as usize].class.0 as usize].capturable = true;
+        assert_eq!(ai::nearest_prize(&w, tug, 5000.0), Some(hub));
+        // Tractoring a mounted container tears it off its hub.
+        let s = w.get_mut(tug).unwrap();
+        s.towing = Some(pod);
+        let k = s.system(crate::content::equipment::SystemKind::Tractor).unwrap().0;
+        s.systems[k].on = true;
+        w.step();
+        assert!(w.get(pod).unwrap().mount.is_none(), "torn off");
+        assert!(w.events.iter().any(|e| matches!(e, SimEvent::Message { text, .. } if text.contains("TORN AWAY"))));
+    }
+
     #[test]
     fn station_modules_mount_follow_and_fall_with_their_hub() {
         let r = rules();

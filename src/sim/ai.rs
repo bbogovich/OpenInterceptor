@@ -113,6 +113,8 @@ pub struct AiState {
     pub rng: u64,
     /// System switches decided at the last check, handed over on the next tick.
     pub pending: super::Requests,
+    /// Tow: where the prize was grabbed (the tug jumps once it has hauled it far enough).
+    pub anchor: Option<Vec3>,
 }
 
 impl AiState {
@@ -136,6 +138,7 @@ impl AiState {
             home: None,
             rng: 0x9E37_79B9_7F4A_7C15,
             pending: super::Requests::default(),
+            anchor: None,
         }
     }
 }
@@ -266,11 +269,17 @@ pub fn nearest_prize(w: &World, me: ShipId, within: f32) -> Option<ShipId> {
         .into_iter()
         .filter(|&o| o != me)
         .map(|o| (o, &w.ships[o.index as usize]))
-        .filter(|(_, o)| o.disabled && w.rules.ship(o.class).capturable && w.rules.hostile(s.faction, o.faction))
-        .map(|(o, x)| (o, x.position.distance(s.position)))
-        .filter(|(_, d)| *d <= within)
-        .min_by(|a, b| a.1.total_cmp(&b.1))
-        .map(|(o, _)| o)
+        .filter(|(_, o)| {
+            let c = w.rules.ship(o.class);
+            ((o.disabled && c.capturable) || c.towable) && w.rules.hostile(s.faction, o.faction)
+        })
+        // Not something another ship is already towing.
+        .filter(|(o, _)| !w.ships.iter().any(|x| x.alive && x.towing == Some(*o)))
+        .map(|(o, x)| (o, x.position.distance(s.position), !x.disabled))
+        .filter(|(_, d, _)| *d <= within)
+        // A disabled ship first (the big prize), else the nearest towable thing.
+        .min_by(|a, b| a.2.cmp(&b.2).then(a.1.total_cmp(&b.1)))
+        .map(|(o, _, _)| o)
 }
 
 /// Decides controls for every AI ship. See the module docs for the two-phase update.
@@ -419,6 +428,8 @@ fn fly(
             None => (Controls::default(), None),
         },
         Manoeuvre::Tow => tow(w, me, st, p),
+        Manoeuvre::Escort => escort(w, me, st, p, skill),
+        Manoeuvre::Travel => (travel(w, me, st, p), None),
         Manoeuvre::Mine => {
             // Detonate when a hostile is inside the trigger distance.
             let close = targeting::nearest_hostile(w, me)
@@ -478,12 +489,19 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
     if let Some(t) = engage {
         return (attack(w, me, t, state, &params, &skill), Some(t));
     }
-    let class = w.rules.ship(ship.class);
     let slot = formation_slot(w, ship, leader, state.offset);
     // Something about to hit us (often the leader itself): get clear first.
     if let Some(c) = avoid_collision(w, me) {
         return (c, None);
     }
+    (fly_to_slot(w, ship, leader, slot), None)
+}
+
+/// Controls that bring `ship` to `slot` in `leader`'s formation and hold it there:
+/// straight for it when far, then flying parallel to the leader and trimming speed to
+/// close the gap. Shared by wingmen and escorts.
+pub fn fly_to_slot(w: &World, ship: &Ship, leader: &Ship, slot: Vec3) -> Controls {
+    let class = w.rules.ship(ship.class);
     let to_slot = slot - ship.position;
     let dist = to_slot.length();
     let mut c = Controls::default();
@@ -508,7 +526,7 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
         c.hold_speed = Some(wanted.clamp(0.0, max));
         c.afterburner = wanted > max + 50.0 && leader.afterburning;
     }
-    (c, None)
+    c
 }
 
 /// The world position of a wingman's formation slot: `offset` in the leader's frame, but
@@ -594,6 +612,10 @@ pub fn avoid_collision(w: &World, me: ShipId) -> Option<Controls> {
     let mut worst: Option<(f32, Vec3, Vec3, Vec3)> = None;
     for (i, o) in w.ships.iter().enumerate() {
         if !o.alive || w.id_of(i) == me {
+            continue;
+        }
+        // My own modules (a supply ship's cargo pods) are part of me.
+        if o.mount.is_some_and(|(hub, _, _)| hub == me) {
             continue;
         }
         // My own wingmen keep clear of me (they avoid their leader); a leader swerving
@@ -751,13 +773,17 @@ fn turret(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
 fn tow(w: &World, me: ShipId, st: &mut AiState, p: &Params) -> (Controls, Option<ShipId>) {
     let ship = w.get(me).expect("think only visits live ships");
     if ship.towing.is_some() {
-        // Haul gently: the tractor can only drag the prize so fast, and outrunning the
-        // beam would drop it.
-        let mut c = retreat(w, me, true);
+        // Haul the prize away from the fight to a point `escape` from where it was
+        // grabbed, then jump out with it. Haul gently: the tractor can only drag the
+        // prize so fast, and outrunning the beam would drop it.
+        let from = *st.anchor.get_or_insert(ship.position);
+        let far = ship.position.distance(from) >= p.escape;
+        let mut c = retreat(w, me, far);
         c.afterburner = false;
         c.hold_speed = Some(w.rules.ship(ship.class).max_speed * 0.2);
         return (c, ship.towing);
     }
+    st.anchor = None;
     let Some(prize) = nearest_prize(w, me, p.range.max(5000.0)) else {
         return (Controls::default(), None);
     };
@@ -771,6 +797,45 @@ fn tow(w: &World, me: ShipId, st: &mut AiState, p: &Params) -> (Controls, Option
     c.requests.tractor = dist <= reach * 0.9 && ship.target == Some(prize);
     let _ = st;
     (c, Some(prize))
+}
+
+/// Escort: formation on the leader (a tug) at `st.offset`; any hostile within `range`
+/// of the leader or of us is attacked instead, and the escort returns to its slot when
+/// the threat is gone. Without a leader (it was destroyed) the escort just fights.
+fn escort(w: &World, me: ShipId, st: &mut AiState, p: &Params, skill: &Skill) -> (Controls, Option<ShipId>) {
+    let ship = w.get(me).expect("think only visits live ships");
+    let leader = st.leader.and_then(|l| w.get(l));
+    let threat = targeting::nearest_hostile(w, me).filter(|t| {
+        let at = w.ships[t.index as usize].position;
+        match leader {
+            Some(l) => at.distance(l.position) < p.range || at.distance(ship.position) < p.range,
+            None => true,
+        }
+    });
+    match (threat, leader) {
+        (Some(t), _) => (attack(w, me, t, st, p, skill), Some(t)),
+        (None, Some(l)) => {
+            if let Some(c) = avoid_collision(w, me) {
+                return (c, None);
+            }
+            let slot = formation_slot(w, ship, l, st.offset);
+            (fly_to_slot(w, ship, l, slot), None)
+        }
+        (None, None) => (Controls::default(), None),
+    }
+}
+
+/// Travel: straight on (at `speed` of top speed) from where the state began; after
+/// `range`, jump out. A supply ship making for its hyperspace point.
+fn travel(w: &World, me: ShipId, st: &mut AiState, p: &Params) -> Controls {
+    let ship = w.get(me).expect("think only visits live ships");
+    let from = *st.anchor.get_or_insert(ship.position);
+    let class = w.rules.ship(ship.class);
+    let mut c = Controls { hold_speed: Some(class.max_speed * p.speed), ..Default::default() };
+    c.requests.hyperspace = ship.position.distance(from) >= p.range
+        && ship.hyperspace.is_none()
+        && ship.efficiency(SystemKind::Hyperdrive) > 0.0;
+    c
 }
 
 /// Weaving flight around `centre`: hard, changing turns at full speed, so a pursuer's
@@ -963,6 +1028,32 @@ mod tests {
         let roomy = formation_slot(&w, m, l, Vec3::new(-60.0, 0.0, 30.0));
         assert_eq!(roomy, Vec3::new(-60.0, 0.0, 30.0), "a wide slot is kept");
         assert!(formation_slot(&w, m, l, Vec3::ZERO).length() >= 30.0);
+    }
+
+    #[test]
+    fn escorts_hold_formation_until_a_hostile_comes_close() {
+        let mut w = world();
+        let tug = spawn_ai(&mut w, "raider", 1, Vec3::ZERO, Behaviour::Idle, None);
+        w.get_mut(tug).unwrap().velocity = Vec3::NEG_Z * 100.0;
+        let me = spawn_ai(&mut w, "raider", 1, Vec3::new(-60.0, 0.0, 300.0), Behaviour::Enemy, Some(tug));
+        let p = Params { range: 1500.0, ..Default::default() };
+        let mut st = AiState::new(Behaviour::Enemy, Some(tug), Vec3::new(-60.0, 0.0, 60.0));
+        let (_, target) = escort(&w, me, &mut st, &p, &Skill::default());
+        assert_eq!(target, None, "no threat: formation");
+        // A hostile 1 km from the tug: break off and attack it.
+        let foe = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "foe",
+            Vec3::new(0.0, 0.0, -1000.0),
+            Quat::IDENTITY,
+            Pilot::External,
+        );
+        let (_, target) = escort(&w, me, &mut st, &p, &Skill::default());
+        assert_eq!(target, Some(foe));
+        // Far away again: back to the tug.
+        w.get_mut(foe).unwrap().position = Vec3::new(0.0, 0.0, -9000.0);
+        assert_eq!(escort(&w, me, &mut st, &p, &Skill::default()).1, None);
     }
 
     #[test]
@@ -1255,7 +1346,8 @@ mod tests {
         tug_ship.power.beam = 1;
         tug_ship.power.shield = 1;
         let mut captured = false;
-        for _ in 0..(60.0 / TICK) as usize {
+        // (It hauls the prize `escape` (2.5 km) clear at 20 % speed before jumping.)
+        for _ in 0..(240.0 / TICK) as usize {
             w.step();
             captured |=
                 w.events.iter().any(|e| matches!(e, crate::sim::SimEvent::Captured { prize: p, .. } if *p == prize));

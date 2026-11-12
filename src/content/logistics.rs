@@ -118,6 +118,9 @@ pub struct LogisticsDef {
     pub survey_attack_chance: f32,
     pub survey_speed: f32,
     pub convoy_speed: f32,
+    /// The battle flown when the player escorts an ambushed convoy (`ambush_mission:`);
+    /// `None` = ambushes are always auto-resolved.
+    pub ambush_mission: Option<String>,
 }
 
 impl LogisticsDef {
@@ -283,6 +286,7 @@ impl LogisticsDef {
             survey_attack_chance: frac("survey_attack_chance", 0.25),
             survey_speed: num("survey_speed", 900.0).max(1.0),
             convoy_speed: num("convoy_speed", 500.0).max(1.0),
+            ambush_mission: lg.and_then(|g| g.str("ambush_mission")).map(str::to_string),
         })
     }
 }
@@ -339,6 +343,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("survey_attack_chance", Ty::Qty(Unit::Fraction), "chance a survey ship is attacked (25 %)"),
                 f("survey_speed", Ty::Num, "survey ship speed, map units an hour"),
                 f("convoy_speed", Ty::Num, "convoy speed, map units an hour"),
+                f("ambush_mission", Ty::Name, "the mission flown when the player escorts an ambushed convoy (its cargo: role's surviving share arrives)"),
             ]),
             "supply settings",
         ),

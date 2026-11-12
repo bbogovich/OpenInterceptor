@@ -1071,19 +1071,25 @@ def supply_pod():
 
 
 def supply_ship():
-    """Guard cargo clipper, ~85 m: a rocket-nosed cab with portholes, a spine carrying
-    twelve cargo pods, and a chunky four-bell engine block."""
-    m = Model("supply_ship", POD_MATS, 3000)
+    """Guard cargo clipper, ~85 m: a rocket-nosed cab with portholes, a spine with mounts
+    for twelve cargo pods (separate objects), a point-defence turret mount, and a chunky
+    four-bell engine block."""
+    m = Model("supply_ship", {**POD_MATS, **SLOT}, 3000)
     cab = ogive(-42, -30, 7.0, 5, "chrome") + [(-30, 7.3, "hull"), (-21, 8.0, "hull"), (-19, 8.6, "chrome"),
                                                (-17, 8.6, "hull"), (-15, 7.6, "hull"), (-14, 7.0, "chrome")]
     m.add(lathe("cab", cab, "hull", 16, uv=(0, 1, 0, 1)))
     m.add(ellipsoid("canopy", (0, 6.2, -26), (3.0, 2.4, 5.0), "glass"))
     m.add(box("spine", -3, 3, -3, 3, -16, 33, "red"))
+    # The twelve cargo pods are separate objects (supply_pod), mounted at these points so
+    # they can be shot off or towed away one by one; a point-defence turret rides on the
+    # cab. Each pod's front (-Z) faces forward, like the ship.
+    k = 0
     for z in (-8, 7.5, 23):
         for sx in (-1, 1):
             for sy in (-1, 1):
-                for p in pod_parts((sx * 6.4, sy * 3.4, z)):
-                    m.add(p)
+                k += 1
+                m.add(slot(f"slot_pod{k}", (sx * 6.4, sy * 3.4, z), (0, 0, -1)))
+    m.add(slot("slot_pd", (0, 8.4, -21), (0, 1, 0)))
     m.add(box("engine_block", -11, 11, -9, 9, 31, 40, "cream"))
     m.add(box("engine_trim", -11.4, 11.4, -9.4, 9.4, 33, 34.5, "chrome"))
     for sx in (-5.5, 5.5):

@@ -465,7 +465,12 @@ fn tractors(w: &mut World, dt: f32) {
         match tow {
             Tow::Pull(t, wanted, pull) => {
                 if let Some(o) = w.get_mut(t) {
+                    // A towable module (a cargo container) is torn off its hub.
+                    let torn = o.mount.take().is_some();
                     o.velocity = approach_vec(o.velocity, wanted, pull * dt);
+                    if torn {
+                        w.events.push(SimEvent::Message { ship: t, text: "CARGO CONTAINER TORN AWAY".into() });
+                    }
                 }
             }
             Tow::Release(captor) => {
@@ -585,14 +590,26 @@ fn hyperdrives(w: &mut World, dt: f32) {
             s.hyperspace = Some(left);
             continue;
         }
-        // Jump: a disabled, capturable ship in the tractor beam comes along as a prize.
-        let prize = s.towing.filter(|t| w.get(*t).is_some_and(|p| p.disabled && w.rules.ship(p.class).capturable));
+        // Jump: a disabled, capturable ship in the tractor beam - or anything towable (a
+        // cargo container) - comes along as a prize.
+        let prize = s.towing.filter(|t| {
+            w.get(*t).is_some_and(|p| {
+                let c = w.rules.ship(p.class);
+                (p.disabled && c.capturable) || c.towable
+            })
+        });
         depart(w, id);
         if let Some(p) = prize {
             depart(w, p);
             w.events.push(SimEvent::Captured { captor: id, prize: p });
         }
     }
+}
+
+/// [`depart`], for tests elsewhere in the crate.
+#[cfg(test)]
+pub(crate) fn depart_for_test(w: &mut World, id: ShipId) {
+    depart(w, id);
 }
 
 /// Takes a ship out of the battle by hyperspace.
@@ -604,6 +621,14 @@ fn depart(w: &mut World, id: ShipId) {
     let position = s.position;
     w.events.push(SimEvent::Departed { ship: id, position });
     super::combat::forget_ship(w, id);
+    // Its modules (a supply ship's cargo pods, a station's turrets) go with it.
+    let modules: Vec<ShipId> = (0..w.ships.len())
+        .filter(|&i| w.ships[i].alive && w.ships[i].mount.is_some_and(|(h, _, _)| h == id))
+        .map(|i| w.id_of(i))
+        .collect();
+    for m in modules {
+        depart(w, m);
+    }
 }
 
 #[cfg(test)]

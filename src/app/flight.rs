@@ -671,6 +671,7 @@ impl FlightSession {
                         result: d.result.clone(),
                         actions: d.campaign.clone(),
                         kills: d.kills,
+                        cargo: d.cargo,
                     });
                 }
                 return Next::Strategy;
@@ -696,8 +697,12 @@ impl FlightSession {
                 return self.again();
             } else if (raw.pressed.contains("l") || raw.pressed.contains("q")) && self.campaign_battle {
                 // Leaving a campaign battle early is a retreat.
-                ctx.battle_report =
-                    Some(super::strategy::BattleReport { result: "retreat".into(), actions: Vec::new(), kills: 0 });
+                ctx.battle_report = Some(super::strategy::BattleReport {
+                    result: "retreat".into(),
+                    actions: Vec::new(),
+                    kills: 0,
+                    cargo: None,
+                });
                 return Next::Strategy;
             } else if raw.pressed.contains("l") || raw.pressed.contains("q") {
                 return Next::Launcher;

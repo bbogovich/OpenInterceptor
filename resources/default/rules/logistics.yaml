@@ -60,8 +60,25 @@ objects:
     model_set: supply_pod
     faction: guard
     kind: freighter
-    hit_points: 150
-    armor: 50
+    hit_points: 400
+    armor: 150
+    # A container can be shot off (its cargo is lost) or torn away and towed off by a
+    # grappler (captured): either way its share of the cargo never arrives.
+    cargo: true
+    towable: true
+    capturable: true
+  supply_pd:
+    # The clipper's single point-defence laser on top of the cab: it shoots down
+    # missiles and fires on close fighters, but recharges slowly.
+    name: "@object.supply_pd.name"
+    model_set: guard_turret
+    faction: guard
+    hit_points: 450
+    armor: 150
+    beams: [blaster]
+    turret_arc: 180
+    behaviour: supply_pd
+    point_defence: {range: 900m, rate: 0.5, chance: 60%, energy: 3}
 
 ships:
   supply_ship:
@@ -71,15 +88,31 @@ ships:
     faction: guard
     kind: freighter
     playable: false
-    hit_points: 1400
-    shields: 400
-    armor: 200
-    max_speed: 220
-    acceleration: 35
+    # Built to take punishment: disabling or destroying one is a long job.
+    hit_points: 7000
+    shields: 1600
+    armor: 1500
+    # ~47 m/s: ten minutes to its hyperspace point 28 km away (behaviour supply_run).
+    max_speed: 47
+    acceleration: 12
+    behaviour: supply_run
+    modules:
+      - {slot: pod1, class: supply_pod}
+      - {slot: pod2, class: supply_pod}
+      - {slot: pod3, class: supply_pod}
+      - {slot: pod4, class: supply_pod}
+      - {slot: pod5, class: supply_pod}
+      - {slot: pod6, class: supply_pod}
+      - {slot: pod7, class: supply_pod}
+      - {slot: pod8, class: supply_pod}
+      - {slot: pod9, class: supply_pod}
+      - {slot: pod10, class: supply_pod}
+      - {slot: pod11, class: supply_pod}
+      - {slot: pod12, class: supply_pod}
+      - {slot: pd, class: supply_pd}
     roll_rate: 20
     pitch_rate: 12
     yaw_rate: 12
     angular_damp: 5
     lock_speed: 400
-    point_defence: {range: 700m, rate: 2, chance: 30%, energy: 4}
     engine_color: [1.0, 0.7, 0.3]

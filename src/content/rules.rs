@@ -216,6 +216,11 @@ pub struct ShipClass {
     pub repair_rate: f32,
     /// A disabled ship of this class can be captured with a tractor beam.
     pub capturable: bool,
+    /// Can be towed away even when not disabled (a cargo container); a mounted one is
+    /// torn off its hub (`towable: true`).
+    pub towable: bool,
+    /// A cargo container, counted by the `cargo(role)` mission query (`cargo: true`).
+    pub cargo: bool,
     /// The class's look: model, damage textures, states, debris, explosion.
     pub model_set: ModelSetId,
     /// The AI behaviour flown by AI pilots of this class (`behaviour: <id>`).
@@ -1427,6 +1432,11 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                     errors.push(format!("raids.{}: unknown faction '{}'", r.id, r.faction));
                 }
             }
+            if let Some(m) = s.logistics.as_ref().and_then(|l| l.ambush_mission.as_ref()) {
+                if !missions.iter().any(|x| &x.id == m) {
+                    errors.push(format!("logistics.ambush_mission: unknown mission '{m}'"));
+                }
+            }
             for h in &s.hulls {
                 if !ships.iter().any(|c| c.id == h.id) {
                     errors.push(format!("hulls.{}: no ship class with this id", h.id));
@@ -1906,6 +1916,8 @@ fn ship_class(
             .unwrap_or(matches!(kind, ShipKind::Fighter | ShipKind::Drone | ShipKind::Probe | ShipKind::Debris)),
         debris: g.list("debris"),
         engine_color: rgb(g, "engine_color", [0.5, 0.7, 1.0]),
+        towable: g.bool("towable").unwrap_or(false),
+        cargo: g.bool("cargo").unwrap_or(false),
     })
 }
 

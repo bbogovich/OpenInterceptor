@@ -460,6 +460,13 @@ pub fn ship_collisions(w: &mut World) {
             if si && sj {
                 continue;
             }
+            // A module and its hub, or two modules on the same hub, are one craft: their
+            // overlapping hulls do not collide (a supply ship's cargo pods).
+            let (mi, mj) = (w.ships[i].mount.map(|m| m.0), w.ships[j].mount.map(|m| m.0));
+            let (idi, idj) = (w.id_of(i), w.id_of(j));
+            if mi == Some(idj) || mj == Some(idi) || (mi.is_some() && mi == mj) {
+                continue;
+            }
             // Order the pair so `m` is mobile; `o` may be mobile or static.
             let (m, o) = if si { (j, i) } else { (i, j) };
             let shape_o = &w.shapes[w.ships[o].class.0 as usize];

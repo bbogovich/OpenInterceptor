@@ -51,6 +51,9 @@ pub struct Debrief {
     pub optional: Vec<(String, bool)>,
     /// Campaign actions of the outcome, for the strategy layer (Stage 4).
     pub campaign: Vec<String>,
+    /// The share (0..1) of the mission's `cargo:` role's containers still aboard at the
+    /// end, for the campaign (`None` when the mission names no cargo role).
+    pub cargo: Option<f32>,
     /// Enemy craft destroyed, the player's side's craft lost, seconds.
     pub kills: u32,
     pub losses: u32,
@@ -63,6 +66,8 @@ pub struct MissionRun {
     pub player: ShipId,
     pub roles: Vec<RoleRun>,
     waves_done: Vec<bool>,
+    /// Per wave with `every:`: the battle time it may come again.
+    waves_again: Vec<f64>,
     chatter_done: Vec<bool>,
     optional_met: Vec<bool>,
     start: f64,
@@ -111,6 +116,7 @@ impl Context for BattleCx<'_> {
             id::RETREATED_ALL => b(role(args[0])
                 .is_some_and(|r| r.arrived && !r.members.is_empty() && r.retreated as usize == r.members.len())),
             id::CAPTURED_ANY => b(role(args[0]).is_some_and(|r| r.captured > 0)),
+            id::CARGO => n(role(args[0]).map(|r| cargo_share(w, r)).unwrap_or(0.0)),
             id::PLAYER_ALIVE => b(player.is_some()),
             id::PLAYER_HULL => n(player.map(|p| p.hull / w.rules.ship(p.class).hull.max(1.0)).unwrap_or(0.0)),
             id::PLAYER_RETREATED => b(w.ships[self.run.player.index as usize].departed),
@@ -142,6 +148,40 @@ impl Context for BattleCx<'_> {
     }
 }
 
+/// The share (0..1) of a role's cargo containers still aboard its craft: modules of a
+/// `cargo: true` class, alive and still mounted on a live member, over every cargo slot
+/// the members' classes have. 0 when the role has no cargo (or no members left).
+pub fn cargo_share(w: &World, r: &RoleRun) -> f32 {
+    let slots: usize = r
+        .members
+        .iter()
+        .filter(|m| w.same_slot(**m))
+        .map(|m| {
+            let class = w.ships[m.index as usize].class;
+            w.rules.ship(class).modules.iter().filter(|(_, c)| w.rules.ship(*c).cargo).count()
+        })
+        .sum();
+    if slots == 0 {
+        return 0.0;
+    }
+    // Aboard: alive and mounted on a live member, or gone into hyperspace with it (its
+    // hub departed and it departed while still mounted). Containers torn off keep no
+    // mount; destroyed ones are neither alive nor departed.
+    let aboard = w
+        .ships
+        .iter()
+        .filter(|s| w.rules.ship(s.class).cargo)
+        .filter(|s| {
+            s.mount.is_some_and(|(hub, _, _)| {
+                r.members.contains(&hub)
+                    && ((s.alive && w.get(hub).is_some())
+                        || (s.departed && w.same_slot(hub) && w.ships[hub.index as usize].departed))
+            })
+        })
+        .count();
+    aboard as f32 / slots as f32
+}
+
 impl MissionRun {
     /// Enemy craft destroyed so far (also while the battle is still running).
     pub fn kills(&self) -> u32 {
@@ -161,6 +201,7 @@ impl MissionRun {
             player: ShipId { index: 0, generation: 0 },
             roles: vec![RoleRun::default(); def.roles.len()],
             waves_done: vec![false; def.waves.len()],
+            waves_again: vec![0.0; def.waves.len()],
             chatter_done: vec![false; def.chatter.len()],
             optional_met: vec![false; def.optional.len()],
             start: 0.0,
@@ -287,6 +328,14 @@ impl MissionRun {
                 behaviour: role.behaviour.clone(),
             };
             let id = w.spawn_placement(&p, self.player)?;
+            // Escorts fly in formation on the newest live member of the role they guard.
+            if let Some(target) = role.escort.as_ref().and_then(|e| self.def.roles.iter().position(|r| &r.name == e)) {
+                let leader = self.roles[target].members.iter().rev().copied().find(|m| w.get(*m).is_some());
+                if let (Some(l), Some(crate::sim::Ship { pilot: Pilot::Ai(state), .. })) = (leader, w.get_mut(id)) {
+                    state.leader = Some(l);
+                    state.offset = formation.slot(k as usize);
+                }
+            }
             // Wingmen fly with the player.
             if role.ai == crate::content::scenario::AiRole::Wingman {
                 if let Some(crate::sim::Ship { pilot: Pilot::Ai(state), .. }) = w.get_mut(id) {
@@ -360,12 +409,17 @@ impl MissionRun {
             }
         }
         for k in 0..self.def.waves.len() {
-            if self.waves_done[k] {
+            let wave = self.def.waves[k].clone();
+            // A repeating wave may come again once its interval has passed.
+            let again = wave.every.is_some() && w.time >= self.waves_again[k];
+            if self.waves_done[k] && !again {
                 continue;
             }
-            let wave = self.def.waves[k].clone();
             if check(self, w, &wave.when) {
                 self.waves_done[k] = true;
+                if let Some(e) = wave.every {
+                    self.waves_again[k] = w.time + e as f64;
+                }
                 if let Err(e) = self.spawn_role(w, wave.role, wave.count, wave.at.as_ref()) {
                     lines.push(format!("MISSION ERROR: {e}"));
                 }
@@ -428,7 +482,9 @@ impl MissionRun {
                 "killed" => "YOUR CRAFT WAS DESTROYED".into(),
                 _ => "LEFT THE BATTLE".into(),
             });
+            let cargo = self.def.cargo.and_then(|r| self.roles.get(r)).map(|r| cargo_share(w, r));
             self.debrief = Some(Debrief {
+                cargo,
                 result,
                 text,
                 optional: self.def.optional.iter().zip(&self.optional_met).map(|((k, _), m)| (k.clone(), *m)).collect(),

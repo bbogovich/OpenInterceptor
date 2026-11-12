@@ -51,6 +51,49 @@ behaviours:
       aim: {per_level: [0.2, 0.35, 0.5, 0.65]}
       reaction: {per_level: [1.2s, 0.9s, 0.7s, 0.5s]}
 
+  # Saucers escorting a grappler: in formation on it, breaking off to attack anything
+  # hostile that comes within 1.5 km of the tug or of themselves.
+  tug_escort:
+    start: escort
+    states:
+      escort:
+        do: escort
+        range: 1.5km
+        fire_cone: 3
+        burst: {per_level: [0.8s, 1s, 1.2s, 1.5s]}
+        pause: {per_level: [1.8s, 1.4s, 1.1s, 0.8s]}
+    skill:
+      aim: {per_level: [0.2, 0.35, 0.5, 0.65]}
+      reaction: {per_level: [1.2s, 0.9s, 0.7s, 0.5s]}
+
+  # Saucers sent to cripple a supply ship for the grapplers: they go for freighters
+  # first and turn on fighters only when attacked.
+  freighter_raider:
+    prefer: {freighter: 4, player: 1.2}
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: 1.6km
+        fire_cone: 4
+        burst: {per_level: [1s, 1.2s, 1.5s, 1.8s]}
+        pause: {per_level: [1.5s, 1.2s, 1s, 0.8s]}
+    skill:
+      aim: {per_level: [0.3, 0.45, 0.6, 0.7]}
+      reaction: {per_level: [1.2s, 0.9s, 0.7s, 0.5s]}
+
+  # A supply ship making for its hyperspace point: 24 km straight on, about ten minutes
+  # at its 47 m/s once the dodging under fire is counted.
+  supply_run:
+    states:
+      run: {do: travel, range: 24km, speed: 100%}
+
+  # The supply ship's point-defence laser: slow to recharge between shots.
+  supply_pd:
+    states:
+      guns: {do: turret, range: 1.4km, burst: 0.5s, pause: 4s}
+    skill: {aim: 0.5, reaction: 0.8s}
+
   # Tin-can robots: reckless and inaccurate.
   robot:
     states:
@@ -79,11 +122,14 @@ behaviours:
       reaction: {per_level: [1.2s, 1s, 0.8s, 0.6s]}
 
   # Grappler tugs: drag off disabled rockets; fight back when shot at.
+  # Grappler tugs: make for a disabled supply ship, else for its cargo containers (torn
+  # off with the tractor), haul the prize 3 km clear and jump out with it; fight back
+  # only when nothing is left to take.
   tug:
     prefer: {freighter: 3}
     start: work
     states:
-      work: {do: tow, range: 6km}
+      work: {do: tow, range: 8km, escape: 3km}
       fight: {do: attack, range: 1.2km, burst: 0.8s, pause: 2s, missiles: 0}
     transitions:
       - {from: work, to: fight, when: "not prize_near(6km) and threats(1.5km) > 0"}

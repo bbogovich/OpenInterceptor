@@ -200,6 +200,12 @@ fn ship() -> Ty {
         f("systems", names(), "fitted systems (replaces the default list)"),
         f("repair_rate", Ty::Num, "hit points per second the crew repairs"),
         f("capturable", Ty::Bool, "can be captured with a tractor beam when disabled"),
+        f(
+            "towable",
+            Ty::Bool,
+            "can be towed away even when not disabled (cargo containers); a mounted one is torn off",
+        ),
+        f("cargo", Ty::Bool, "a cargo container: counted by the cargo(role) mission query"),
         f("behaviour", name(), "AI behaviour id"),
         f("turret_arc", Ty::Qty(Unit::Angle), "beams can aim this far off the nose (turrets)"),
         f("debris", Ty::List(Box::new(Ty::Asset)), "wreckage models"),
@@ -324,7 +330,8 @@ fn mission() -> Ty {
         f("state", name(), "model-set state (a construction stage)"),
         f("hull", Ty::Qty(Unit::Fraction), "starting hull"),
         f("destroyed_systems", names(), "systems that start destroyed"),
-        f("formation", name(), "wingmen: the formation they fly in (formations.<id>)"),
+        f("formation", name(), "wingmen and escorts: the formation they fly in (formations.<id>)"),
+        f("escort", name(), "escorts: the role whose newest member they fly in formation on (a tug)"),
         f("speed", Ty::Num, "starting speed, m/s"),
         f("at", at(), "where it enters"),
         f("arrive", Ty::Condition, "when it enters (default: at the start)"),
@@ -333,6 +340,7 @@ fn mission() -> Ty {
         f("name", Ty::Text, "shown in the launcher (a @key)"),
         f("briefing", Ty::Text, "the briefing text (a @key)"),
         f("order", Ty::Num, "sort key in the launcher"),
+        f("cargo", name(), "the role whose cargo containers count: the debrief reports the share still aboard"),
         f("starfield_seed", Ty::Num, "the star field"),
         f("environment", Ty::Name, "the battle environment (environments.<id>; default open space)"),
         f("hazards", super::hazards::schema(), "asteroids, a minefield, a black hole, an ion storm"),
@@ -350,9 +358,10 @@ fn mission() -> Ty {
             "waves",
             Ty::List(Box::new(Ty::Struct(vec![
                 f("role", name(), "the role that gets more craft"),
-                f("when", Ty::Condition, "when (once)"),
+                f("when", Ty::Condition, "when (once, unless every:)"),
                 f("count", count(), "how many (default: the role's count)"),
                 f("at", at(), "where (default: the role's arrival)"),
+                f("every", time(), "comes again this long after it last came, while when holds"),
             ]))),
             "reinforcements",
         ),
@@ -396,7 +405,9 @@ fn behaviour() -> Ty {
     let state = Ty::Struct(vec![
         f(
             "do",
-            Ty::Enum(&["idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "mine"]),
+            Ty::Enum(&[
+                "idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "escort", "travel", "mine",
+            ]),
             "the manoeuvre",
         ),
         f("range", dist(), "attack: open fire inside; patrol: radius; turret: reach; mine: trigger distance"),
@@ -407,6 +418,7 @@ fn behaviour() -> Ty {
         f("speed", Ty::Qty(Unit::Fraction), "fraction of top speed"),
         f("missiles", time(), "seconds between missile launches (0 = none)"),
         f("jump", Ty::Bool, "retreat: start the hyperdrive"),
+        f("escape", dist(), "tow: haul the prize this far before jumping out (2.5 km)"),
     ]);
     Ty::Def(vec![
         f("start", name(), "the first state"),

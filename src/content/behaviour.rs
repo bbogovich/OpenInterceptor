@@ -52,6 +52,12 @@ pub enum Manoeuvre {
     Turret,
     /// Find a disabled enemy, tractor it and jump out with it (tugs).
     Tow,
+    /// Fly in formation on the leader the mission gives (a tug), and attack any hostile
+    /// that comes within `range` of it or of us; back into formation when it is gone.
+    Escort,
+    /// Fly straight on for `range` from where the state began, then jump out (a supply
+    /// ship making for its hyperspace point).
+    Travel,
     /// Wait; when a hostile comes within `range`, detonate (the first missile rack is
     /// the warhead: its proximity damage, falling off over four times its proximity
     /// radius, at least 100 m).
@@ -69,6 +75,8 @@ impl Manoeuvre {
             "retreat" => Manoeuvre::Retreat,
             "turret" => Manoeuvre::Turret,
             "tow" => Manoeuvre::Tow,
+            "escort" => Manoeuvre::Escort,
+            "travel" => Manoeuvre::Travel,
             "mine" => Manoeuvre::Mine,
             _ => return None,
         })
@@ -93,6 +101,8 @@ pub struct Params {
     pub missile_interval: f32,
     /// Retreat: start the hyperdrive.
     pub jump: bool,
+    /// Tow: how far to haul the prize from where it was grabbed before jumping out.
+    pub escape: f32,
 }
 
 impl Default for Params {
@@ -106,6 +116,7 @@ impl Default for Params {
             speed: 1.0,
             missile_interval: 10.0,
             jump: false,
+            escape: 2500.0,
         }
     }
 }
@@ -249,6 +260,7 @@ impl BehaviourDef {
                 speed: sg.qty("speed", Unit::Fraction).unwrap_or(d.speed).clamp(0.0, 1.0),
                 missile_interval: sg.qty("missiles", Unit::Time).unwrap_or(d.missile_interval).max(0.0),
                 jump: sg.bool("jump").unwrap_or(d.jump),
+                escape: sg.qty("escape", Unit::Distance).unwrap_or(d.escape).max(0.0),
             };
             states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params });
         }

@@ -165,6 +165,10 @@ pub enum Event {
     Notice(String),
     /// An interception has reached its contact: fly the battle.
     Battle { contact: u32 },
+    /// A supply convoy (index into `logistics.convoys`) has been ambushed: fly its escort
+    /// (the campaign's ambush mission) or let it fight through
+    /// ([`Campaign::convoy_result`]). It waits where it is until then.
+    Convoy { convoy: usize },
 }
 
 /// One campaign in progress.
@@ -1348,6 +1352,7 @@ pub fn autoplay(def: &StrategyDef, seed: u64, days: f64) -> Campaign {
                         let _ = c.intercept(def, id, &free[..free.len().min(1)]);
                     }
                 }
+                Event::Convoy { convoy } => c.convoy_result(def, convoy, None),
                 Event::Battle { contact } => {
                     battles += 1;
                     let result = if battles % 3 == 0 { "retreat" } else { "win" };

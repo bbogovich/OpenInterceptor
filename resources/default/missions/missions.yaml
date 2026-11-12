@@ -37,31 +37,60 @@ missions:
     debrief: {win: "@debrief.defend_station.win", lose: "@debrief.defend_station.lose", retreat: "@debrief.retreat"}
 
   convoy_ambush:
+    # A supply convoy makes for its hyperspace point, ten minutes away. The Dominion
+    # wants its cargo: grapplers come every couple of minutes, each with a squadron of
+    # saucers in formation, to tear off cargo containers (or haul away a disabled
+    # clipper); raiders try to cripple the clippers; hot-rods go for the escort.
     name: "@mission.convoy_ambush.name"
     briefing: "@mission.convoy_ambush.brief"
     order: 2
     starfield_seed: 88
     player: {class: choose, position: [0, 80, 250]}
+    cargo: clippers
     roles:
-      clippers: {class: supply_ship, ai: idle, protect: true, count: 2, speed: 90, at: {distance: 0m, spread: 300m}}
+      clippers: {class: supply_ship, ai: enemy, protect: true, count: 2, speed: 47, at: {distance: 0m, spread: 400m}}
       hotrods:
         class: hotrod
-        count: {per_level: [[2, 2], [2, 3], [3, 4], [4, 5]]}
+        count: {per_level: [[1, 2], [2, 2], [2, 3], [3, 4]]}
         at: {distance: 4km, bearing: random}
-      saucer: {class: raider_saucer, arrive: "time > 40s", at: {distance: 5km, from: clippers, bearing: random}}
+      raiders:
+        class: raider_saucer
+        behaviour: freighter_raider
+        count: {per_level: [[1, 1], [1, 2], [2, 2], [2, 3]]}
+        arrive: "time > 30s"
+        at: {distance: 5km, from: clippers, bearing: random}
+      tugs: {class: grappler, arrive: "time > 45s", at: {distance: 5km, from: clippers, bearing: random}}
+      escorts:
+        class: scout_saucer
+        behaviour: tug_escort
+        escort: tugs
+        formation: vee
+        count: {per_level: [[2, 2], [2, 3], [3, 3], [3, 4]]}
+        arrive: "time > 45s"
+        at: {distance: 150m, from: tugs, spread: 80m}
+    waves:
+      - {role: tugs, when: "time > 140s and alive(clippers)", every: 120s, count: 1, at: {distance: 5km, from: clippers, bearing: random}}
+      - {role: escorts, when: "time > 140s and alive(clippers)", every: 120s, at: {distance: 150m, from: tugs, spread: 80m}}
+      - {role: raiders, when: "time > 200s and count(raiders) == 0 and alive(clippers)", every: 150s}
     objectives:
-      lose: destroyed_all(clippers) or not player_alive
-      win: destroyed_all(hotrods) and destroyed_all(saucer)
-    timer: {after: 4min, then: win}
-    optional: {both_clippers: count(clippers) == 2}
+      # The Dominion wins by taking a clipper or every container.
+      lose: captured_any(clippers) or destroyed_all(clippers) or cargo(clippers) == 0
+      # Every clipper has left the battle (jumped, or lost) with some cargo still aboard.
+      win: count(clippers) == 0 and cargo(clippers) > 0
+    optional:
+      all_cargo: cargo(clippers) == 1
+      both_clippers: count(clippers) == 2
     outcomes:
       win: [score(convoy_delivered)]
       lose: [cargo_lost, score(convoy_lost)]
       retreat: [cargo_lost]
     chatter:
       - {when: "time > 2s", line: "@chat.ambush"}
+      - {when: arrived(tugs), line: "@chat.grapplers"}
+      - {when: "cargo(clippers) < 0.75", line: "@chat.cargo_taken"}
       - {when: destroyed_any(clippers), line: "@chat.clipper_lost"}
-    debrief: {win: "@debrief.convoy.win", lose: "@debrief.convoy.lose", retreat: "@debrief.retreat"}
+      - {when: "time > 540s", line: "@chat.jump_soon"}
+    debrief: {win: "@debrief.convoy.win", lose: "@debrief.convoy.lose", killed: "@debrief.killed", retreat: "@debrief.retreat"}
 
   construction_defence:
     name: "@mission.construction_defence.name"

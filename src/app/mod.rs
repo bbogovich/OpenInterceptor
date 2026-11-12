@@ -430,8 +430,12 @@ pub async fn run(options: Options) {
                     Err(e) => {
                         // The battle cannot be flown: count it as broken off.
                         eprintln!("error: {e}");
-                        ctx.battle_report =
-                            Some(strategy::BattleReport { result: "retreat".into(), actions: Vec::new(), kills: 0 });
+                        ctx.battle_report = Some(strategy::BattleReport {
+                            result: "retreat".into(),
+                            actions: Vec::new(),
+                            kills: 0,
+                            cargo: None,
+                        });
                         if let Some(mut s) = ctx.campaign.take() {
                             if let Some(r) = ctx.battle_report.take() {
                                 s.battle_done(&ctx, r);

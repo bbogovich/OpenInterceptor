@@ -114,6 +114,7 @@ fn write_logistics(l: &logistics::Logistics) -> Node {
                         ("route", route(&v.route)),
                         ("vessels", n(v.vessels as f64)),
                         ("ambush_in", v.ambush_in.map_or(Node::null(0), |a| n(a as f64))),
+                        ("held", s(v.held)),
                     ])
                 })
                 .collect()),
@@ -247,6 +248,7 @@ fn read_logistics(
                 .collect(),
             vessels: num(v, "vessels") as u32,
             ambush_in: v.str("ambush_in").and_then(|a| a.parse().ok()),
+            held: v.bool("held").unwrap_or(false),
         });
     }
     for v in list("surveys") {

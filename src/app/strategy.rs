@@ -93,8 +93,11 @@ enum Act {
 
 /// A battle being flown: the contact, so the debrief can be applied on return.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PendingBattle {
-    pub contact: u32,
+pub enum PendingBattle {
+    /// An interception of a contact.
+    Contact(u32),
+    /// The escort of an ambushed supply convoy (index into `logistics.convoys`).
+    Convoy(usize),
 }
 
 /// What a campaign battle hands back (filled in by the flight screen).
@@ -103,6 +106,8 @@ pub struct BattleReport {
     pub result: String,
     pub actions: Vec<String>,
     pub kills: u32,
+    /// The share of the mission's cargo that got through (convoy escorts).
+    pub cargo: Option<f32>,
 }
 
 /// The strategy screen and the campaign it shows.
@@ -118,6 +123,8 @@ pub struct StrategyScreen {
     banner: Option<String>,
     /// An interception waiting for the player's choice.
     battle: Option<u32>,
+    /// An ambushed convoy waiting for the player's choice.
+    convoy: Option<usize>,
     /// The battle being flown.
     pub flying: Option<PendingBattle>,
     /// A short feedback line (an order's error, a save).
@@ -199,6 +206,7 @@ impl StrategyScreen {
             system: None,
             banner: None,
             battle: None,
+            convoy: None,
             flying: None,
             flash: None,
         }
@@ -218,9 +226,28 @@ impl StrategyScreen {
     /// Applies a finished battle's debrief (called when the app returns here).
     pub fn battle_done(&mut self, ctx: &AppContext, report: BattleReport) {
         let Some(def) = ctx.content.rules.strategy.as_ref() else { return };
-        if let Some(b) = self.flying.take() {
-            self.campaign.battle_result(def, b.contact, &report.result, &report.actions, report.kills);
-            self.banner = Some(format!("Battle result: {} ({} destroyed)", report.result.to_uppercase(), report.kills));
+        match self.flying.take() {
+            Some(PendingBattle::Contact(id)) => {
+                self.campaign.battle_result(def, id, &report.result, &report.actions, report.kills);
+                self.banner =
+                    Some(format!("Battle result: {} ({} destroyed)", report.result.to_uppercase(), report.kills));
+            }
+            Some(PendingBattle::Convoy(v)) => {
+                // Won: the cargo still aboard got through; lost: none of it; left early:
+                // the convoy fights on alone.
+                let share = match report.result.as_str() {
+                    "lose" => Some(0.0),
+                    "retreat" => None,
+                    _ => Some(report.cargo.unwrap_or(1.0)),
+                };
+                self.campaign.convoy_result(def, v, share);
+                self.banner = Some(format!(
+                    "Convoy escort: {}{}",
+                    report.result.to_uppercase(),
+                    share.map(|s| format!(" - {:.0}% of the cargo got through", s * 100.0)).unwrap_or_default()
+                ));
+            }
+            None => {}
         }
         self.speed = 0;
     }
@@ -558,7 +585,7 @@ impl StrategyScreen {
                 let party = self.campaign.battle_party(id);
                 let raid = self.campaign.contacts.iter().find(|c| c.id == id).map(|c| c.raid);
                 if let (Some(&k), Some(r)) = (party.first(), raid) {
-                    self.flying = Some(PendingBattle { contact: id });
+                    self.flying = Some(PendingBattle::Contact(id));
                     let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
                     let loadout = self.campaign.loadout(def, k);
                     return Next::CampaignBattle { mission: def.raids[r].mission.clone(), ship: Some(ship), loadout };
@@ -567,6 +594,31 @@ impl StrategyScreen {
                 self.battle = None;
                 self.campaign.battle_result(def, id, "retreat", &[], 0);
                 self.say("Broke off the interception.");
+            }
+        } else if let Some(v) = self.convoy {
+            if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
+                self.convoy = None;
+                // The escort: the first ready craft with a pilot, wherever it is based.
+                let craft = (0..self.campaign.craft.len()).find(|&k| {
+                    self.campaign.craft[k].away.is_none()
+                        && self.campaign.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready)
+                });
+                let mission = def.logistics.as_ref().and_then(|l| l.ambush_mission.clone());
+                match (craft, mission) {
+                    (Some(k), Some(mission)) => {
+                        self.flying = Some(PendingBattle::Convoy(v));
+                        let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
+                        let loadout = self.campaign.loadout(def, k);
+                        return Next::CampaignBattle { mission, ship: Some(ship), loadout };
+                    }
+                    _ => {
+                        self.campaign.convoy_result(def, v, None);
+                        self.say("No ready craft: the convoy fights through alone.");
+                    }
+                }
+            } else if is_key_pressed(KeyCode::Escape) {
+                self.convoy = None;
+                self.campaign.convoy_result(def, v, None);
             }
         } else if self.banner.is_some() {
             if is_key_pressed(KeyCode::Enter)
@@ -708,6 +760,10 @@ impl StrategyScreen {
                             self.battle = Some(contact);
                             self.say(format!("Interception: {name}"));
                         }
+                        Event::Convoy { convoy } => {
+                            self.banner = None;
+                            self.convoy = Some(convoy);
+                        }
                     }
                 }
             }
@@ -841,6 +897,9 @@ impl StrategyScreen {
         }
         let banner = match (self.battle, &self.banner) {
             (Some(_), _) => Some("Interception! Enter: fly the battle   Esc: break off".to_string()),
+            _ if self.convoy.is_some() => {
+                Some("Supply convoy ambushed! Enter: fly its escort   Esc: let it fight through".to_string())
+            }
             (None, Some(b)) => Some(format!("{b}   (Enter)")),
             _ => None,
         };

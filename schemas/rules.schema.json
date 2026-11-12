@@ -82,6 +82,8 @@
           "systems": {"description": "fitted systems (replaces the default list)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
           "repair_rate": {"description": "hit points per second the crew repairs", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "capturable": {"description": "can be captured with a tractor beam when disabled", "type": "boolean"},
+          "towable": {"description": "can be towed away even when not disabled (cargo containers); a mounted one is torn off", "type": "boolean"},
+          "cargo": {"description": "a cargo container: counted by the cargo(role) mission query", "type": "boolean"},
           "behaviour": {"description": "AI behaviour id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
@@ -139,6 +141,8 @@
           "systems": {"description": "fitted systems (replaces the default list)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
           "repair_rate": {"description": "hit points per second the crew repairs", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "capturable": {"description": "can be captured with a tractor beam when disabled", "type": "boolean"},
+          "towable": {"description": "can be towed away even when not disabled (cargo containers); a mounted one is torn off", "type": "boolean"},
+          "cargo": {"description": "a cargo container: counted by the cargo(role) mission query", "type": "boolean"},
           "behaviour": {"description": "AI behaviour id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
@@ -200,7 +204,7 @@
     "behaviours": {"description": "AI behaviours by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "start": {"description": "the first state", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "states": {"description": "state name: manoeuvre and parameters", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
-                "do": {"description": "the manoeuvre", "enum": ["idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "mine"]},
+                "do": {"description": "the manoeuvre", "enum": ["idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "escort", "travel", "mine"]},
                 "range": {"description": "attack: open fire inside; patrol: radius; turret: reach; mine: trigger distance", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "fire_cone": {"description": "fire when the aim point is within this angle of the nose", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "burst": {"description": "seconds of firing", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -208,7 +212,8 @@
                 "duration": {"description": "evade: how long", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "speed": {"description": "fraction of top speed", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "missiles": {"description": "seconds between missile launches (0 = none)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
-                "jump": {"description": "retreat: start the hyperdrive", "type": "boolean"}
+                "jump": {"description": "retreat: start the hyperdrive", "type": "boolean"},
+                "escape": {"description": "tow: haul the prize this far before jumping out (2.5 km)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
               }}},
           "transitions": {"description": "tried in order; the first whose condition holds wins", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                 "from": {"description": "state name, or * for any", "type": "string"},
@@ -234,6 +239,7 @@
           "name": {"description": "shown in the launcher (a @key)", "type": "string"},
           "briefing": {"description": "the briefing text (a @key)", "type": "string"},
           "order": {"description": "sort key in the launcher", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "cargo": {"description": "the role whose cargo containers count: the debrief reports the share still aboard", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "starfield_seed": {"description": "the star field", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "environment": {"description": "the battle environment (environments.<id>; default open space)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "hazards": {"description": "asteroids, a minefield, a black hole, an ion storm", "type": "object", "additionalProperties": false, "properties": {
@@ -277,7 +283,8 @@
                 "state": {"description": "model-set state (a construction stage)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                 "hull": {"description": "starting hull", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "destroyed_systems": {"description": "systems that start destroyed", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
-                "formation": {"description": "wingmen: the formation they fly in (formations.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "formation": {"description": "wingmen and escorts: the formation they fly in (formations.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "escort": {"description": "escorts: the role whose newest member they fly in formation on (a tug)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                 "speed": {"description": "starting speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "at": {"description": "where it enters", "type": "object", "additionalProperties": false, "properties": {
                     "distance": {"description": "from the reference point", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -289,14 +296,15 @@
               }}},
           "waves": {"description": "reinforcements", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                 "role": {"description": "the role that gets more craft", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
-                "when": {"description": "when (once)", "type": "string"},
+                "when": {"description": "when (once, unless every:)", "type": "string"},
                 "count": {"description": "how many (default: the role's count)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}, {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}]},
                 "at": {"description": "where (default: the role's arrival)", "type": "object", "additionalProperties": false, "properties": {
                     "distance": {"description": "from the reference point", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                     "bearing": {"description": "[yaw, pitch] in degrees from straight ahead, or random", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"enum": ["random"]}]},
                     "from": {"description": "a role to place it relative to (default: the player's start)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                     "spread": {"description": "how far apart the members are (default 120m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
-                  }}
+                  }},
+                "every": {"description": "comes again this long after it last came, while when holds", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
               }}},
           "objectives": {"description": "how the battle ends", "type": "object", "additionalProperties": false, "properties": {
               "win": {"description": "the player wins when this holds", "type": "string"},
@@ -744,7 +752,8 @@
         "ambush_loss": {"description": "chance each vessel of an ambushed convoy is lost", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
         "survey_attack_chance": {"description": "chance a survey ship is attacked (25 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
         "survey_speed": {"description": "survey ship speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-        "convoy_speed": {"description": "convoy speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+        "convoy_speed": {"description": "convoy speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "ambush_mission": {"description": "the mission flown when the player escorts an ambushed convoy (its cargo: role's surviving share arrives)", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
       }}
   }
 }

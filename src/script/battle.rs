@@ -36,6 +36,7 @@ pub mod id {
     pub const NEAR: u16 = 13;
     pub const DESTROYED: u16 = 14;
     pub const ARRIVED: u16 = 15;
+    pub const CARGO: u16 = 16;
 }
 
 /// The battle context's queries (index = id above).
@@ -111,6 +112,12 @@ pub static QUERIES: &[QueryDef] = &[
         doc: "the same as destroyed_all (reads better for one object)",
     },
     QueryDef { name: "arrived", args: &[Arg::Num], result: Type::Bool, doc: "the role has entered the battle" },
+    QueryDef {
+        name: "cargo",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "the share (0..1) of the role's cargo containers still aboard: not destroyed, torn off or captured",
+    },
 ];
 
 /// The battle schema for a mission: its role names and the campaign's difficulty level
@@ -146,6 +153,7 @@ mod tests {
             (id::NEAR, "near"),
             (id::DESTROYED, "destroyed"),
             (id::ARRIVED, "arrived"),
+            (id::CARGO, "cargo"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

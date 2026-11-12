@@ -71,6 +71,8 @@ pub struct Convoy {
     pub vessels: u32,
     /// Distance still to travel before the ambush (None: not ambushed).
     pub ambush_in: Option<f32>,
+    /// Ambushed and waiting for the player's choice (fly the escort, or not).
+    pub held: bool,
 }
 
 /// A survey ship on its way.
@@ -415,6 +417,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                 route,
                 vessels: l.vessels,
                 ambush_in,
+                held: false,
             });
             c.logistics.orders.remove(k);
         } else {
@@ -426,6 +429,9 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
     for v in 0..c.logistics.convoys.len() {
         let step = l.convoy_speed * dtf;
         let cv = &mut c.logistics.convoys[v];
+        if cv.held {
+            continue;
+        }
         let before = cv.pos;
         let at_end = match cv.route.first().copied() {
             Some(next) => {
@@ -441,6 +447,19 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             *left -= moved;
             if *left <= 0.0 {
                 cv.ambush_in = None;
+                // With an ambush mission the player may fly the escort: the convoy waits.
+                if l.ambush_mission.is_some() {
+                    cv.held = true;
+                    let what = cv
+                        .cargo
+                        .iter()
+                        .map(|(g, a)| format!("{a:.0} {}", l.goods_name(g)))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    c.messages.push(Message { hour: now, text: format!("Supply convoy ({what}) under attack") });
+                    events.push(Event::Convoy { convoy: v });
+                    continue;
+                }
                 // Auto-resolved: each vessel may be lost.
                 let n = cv.vessels;
                 let mut lost = 0;
@@ -527,6 +546,39 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
     }
 }
 
+impl Campaign {
+    /// Settles an ambushed convoy: `Some(share)` after the player flew its escort (the
+    /// share of the cargo that got away), `None` to let it fight through on its own
+    /// (each vessel may be lost, as for convoys with no ambush mission).
+    pub fn convoy_result(&mut self, def: &StrategyDef, convoy: usize, share: Option<f32>) {
+        let Some(l) = def.logistics.as_ref() else { return };
+        let Some(cv) = self.logistics.convoys.get_mut(convoy) else { return };
+        cv.held = false;
+        let text = match share {
+            Some(s) => {
+                let s = s.clamp(0.0, 1.0);
+                for (_, a) in &mut cv.cargo {
+                    *a *= s;
+                }
+                format!("Convoy escort: {:.0}% of the cargo got through", s * 100.0)
+            }
+            None => {
+                let n = cv.vessels;
+                let mut lost = 0;
+                for _ in 0..n {
+                    if super::next_random(&mut self.rng) < l.ambush_loss {
+                        lost += 1;
+                    }
+                }
+                let cv = &mut self.logistics.convoys[convoy];
+                cv.vessels -= lost;
+                format!("The convoy fought through alone: {lost} of {n} vessels lost")
+            }
+        };
+        self.messages.push(Message { hour: self.hours, text });
+    }
+}
+
 /// Goods already on their way to `to` (in convoys and open orders).
 fn inbound(c: &Campaign, to: Dest, goods: &str) -> f32 {
     c.logistics.convoys.iter().filter(|v| v.to == to).map(|v| amount(&v.cargo, goods)).sum()
@@ -598,6 +650,44 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         run(&mut c, &d, 60.0);
         assert_eq!(c.craft.len(), 1, "built once the plating arrived: {:?}", c.logistics);
         assert!(c.logistics.reserves[1][0].unwrap() < 100000.0, "mined");
+    }
+
+    #[test]
+    fn an_ambushed_convoy_waits_for_its_escort_and_delivers_the_share_that_got_through() {
+        let text = SAMPLE
+            .replace("ambush_chance: 0%", "ambush_chance: 100%, ambush_mission: m1")
+            .replace("research_model: {rate: 0}", "research_model: {rate: 0}\nmissions_note: {}");
+        let text = text.replace("missions_note: {}\n", "");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        run(&mut c, &d, 2.0);
+        c.survey(&d, 0, 1).unwrap();
+        run(&mut c, &d, 2.0);
+        c.build_facility(&d, 0, 1).unwrap();
+        c.build_facility(&d, 1, 0).unwrap();
+        run(&mut c, &d, 11.0);
+        c.manufacture(&d, 0, crate::campaign::Product::Hull(0), 1).unwrap();
+        // Run until a convoy is ambushed: it stops and waits.
+        let mut held = None;
+        for _ in 0..200 {
+            for e in c.advance(&d, 1.0) {
+                if let Event::Convoy { convoy } = e {
+                    held = Some(convoy);
+                }
+            }
+            if held.is_some() {
+                break;
+            }
+        }
+        let v = held.expect("every convoy is ambushed here");
+        let (pos, cargo) = (c.logistics.convoys[v].pos, c.logistics.convoys[v].cargo[0].1);
+        c.advance(&d, 5.0);
+        assert_eq!(c.logistics.convoys[v].pos, pos, "waits for the player's choice");
+        c.convoy_result(&d, v, Some(0.5));
+        assert!(!c.logistics.convoys[v].held);
+        assert!((c.logistics.convoys[v].cargo[0].1 - cargo * 0.5).abs() < 1e-3, "half got through");
     }
 
     #[test]

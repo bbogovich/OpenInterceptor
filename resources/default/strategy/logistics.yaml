@@ -35,6 +35,7 @@ logistics:
   survey_attack_chance: 25%
   survey_speed: 900
   convoy_speed: 450
+  ambush_mission: convoy_ambush    # fly the escort when a convoy is ambushed
 
 # What each system holds (revealed by a survey).
 maps:
