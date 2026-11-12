@@ -56,6 +56,19 @@ pub struct Date {
 }
 
 impl Date {
+    /// The day of the week, 0 = Monday (Zeller's congruence, Gregorian calendar).
+    pub fn weekday(&self) -> u32 {
+        let (mut y, mut m) = (self.year, self.month as i32);
+        if m < 3 {
+            m += 12;
+            y -= 1;
+        }
+        let (k, j) = (y.rem_euclid(100), y.div_euclid(100));
+        // h: 0 = Saturday … 6 = Friday.
+        let h = (self.day as i32 + 13 * (m + 1) / 5 + k + k / 4 + j / 4 + 5 * j).rem_euclid(7);
+        ((h + 5) % 7) as u32
+    }
+
     /// Parses `YYYY-MM-DD`.
     pub fn parse(s: &str) -> Option<Date> {
         let mut it = s.trim().split('-');
@@ -1278,6 +1291,14 @@ fn sections_core() -> Vec<super::schema::Field> {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn weekdays_follow_the_calendar() {
+        let d = |year, month, day| Date { year, month, day }.weekday();
+        assert_eq!(d(2067, 1, 1), 5, "1 January 2067 is a Saturday (the original opens on one)");
+        assert_eq!(d(2084, 3, 1), 2, "1 March 2084 is a Wednesday");
+        assert_eq!(d(2000, 2, 29), 1, "a leap day: Tuesday");
+    }
 
     #[test]
     fn protection_comes_from_the_item_or_the_originals_keys() {

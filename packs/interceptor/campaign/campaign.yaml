@@ -6,5 +6,6 @@ campaign:
   difficulty: [beginner, experienced, veteran, genius, superhuman]
   default_difficulty: veteran
   skin: xcom
+  strategy_screen: csd   # the original's strategy screens (rules/screens.yaml); Ctrl+T: the testbed layout
   intro_video: original:animation1.smk   # DERIVED: which of the CD's films opens the game
   credits: {video: 'original:credits_sm2a.smk'}   # the menu's Credits plays the CD's credits film

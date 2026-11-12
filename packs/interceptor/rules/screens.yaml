@@ -1,0 +1,115 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The original's strategy screens (Stage 6.9, R-UI-020/023-037), laid out over its own
+# art: every background is a reference into the player's WrappersDLL.dll (nothing is
+# copied). Positions are in the original's 640x480 space, read from Interceptor.exe
+# (each screen's setup code) - VERIFIED unless marked DERIVED (measured from the art or
+# inferred). The buttons are drawn by the art itself here; their own state images live
+# in the original's sprite table (SpritesDLL), not yet read - until then they are hot
+# spots that highlight under the mouse.
+#
+# Screen numbers in comments are the original's own (its current-screen global).
+
+screens:
+  # 17: the Command and Strategic Display - the round star map.
+  csd:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#5030
+    widgets:
+      map: {kind: map, shape: round, rect: [66, 61, 333, 333]}
+      minimap: {kind: map, source: minimap, shape: round, rect: [502, 43, 94, 94]}
+      # The four green readouts (DERIVED: measured from the art; their order from the
+      # original running: time, weekday, date, funds).
+      time: {kind: value, value: time, rect: [495, 365, 133, 15], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
+      weekday: {kind: value, value: weekday, rect: [495, 385, 133, 16], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
+      date: {kind: value, value: date_long, rect: [495, 406, 133, 15], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
+      funds: {kind: value, value: money, rect: [495, 426, 133, 15], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
+      # The six screen buttons (centres verified; their 40x28 size DERIVED from the art).
+      bases: {kind: button, rect: [496, 180, 40, 28], action: open(bases)}
+      equip_ships: {kind: button, rect: [543, 180, 40, 28], action: open(equip_ships)}
+      reports: {kind: button, rect: [589, 180, 40, 28], action: open(reports)}
+      research: {kind: button, rect: [496, 212, 40, 28], action: open(research)}
+      purchase: {kind: button, rect: [543, 212, 40, 28], action: open(purchase)}
+      ufopedia: {kind: button, rect: [589, 212, 40, 28], action: open(ufopedia)}
+      # The time dial's six holes (centres verified): pause and the speeds (the
+      # original's six speeds onto the engine's five - DERIVED).
+      speed0: {kind: button, rect: [516, 315, 14, 14], action: speed(0)}
+      speed1: {kind: button, rect: [529, 329, 14, 14], action: speed(1)}
+      speed2: {kind: button, rect: [547, 337, 14, 14], action: speed(2)}
+      speed3: {kind: button, rect: [567, 337, 14, 14], action: speed(3)}
+      speed4: {kind: button, rect: [585, 328, 14, 14], action: speed(4)}
+      speed5: {kind: button, rect: [598, 315, 14, 14], action: speed(4)}
+      # The help line along the bottom bar: what is selected.
+      status: {kind: value, value: selection, rect: [344, 457, 276, 15], size: 10, colour: [0.6, 1.0, 0.6]}
+
+  # 6: Bases - the base, its modules and the module list.
+  bases:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#6105
+    widgets:
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], size: 11, colour: [0.6, 1.0, 0.6]}
+      modules: {kind: list, source: build, rect: [347, 39, 292, 227]}
+      purchase: {kind: button, rect: [492, 349, 24, 24], action: open(purchase)}
+      equip_ships: {kind: button, rect: [492, 386, 24, 24], action: open(equip_ships)}
+      stats: {kind: button, rect: [492, 423, 24, 24], action: open(base_stats)}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 7/8: Equip Ships - the ship ring, its pilot and fit; the docked ships below.
+  equip_ships:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#6100
+    widgets:
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], size: 11, colour: [0.6, 1.0, 0.6]}
+      ships: {kind: list, source: hangar, rect: [17, 397, 500, 60]}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 18: Equipment & Personnel - purchase, sell, transfer, manufacture.
+  purchase:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#6110
+    widgets:
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], size: 11, colour: [0.6, 1.0, 0.6]}
+      funds: {kind: value, value: money, rect: [290, 210, 140, 18], size: 12, colour: [1.0, 1.0, 0.6], align: centre}
+      items: {kind: list, source: market, rect: [18, 272, 538, 188]}
+      manufacture: {kind: button, rect: [575, 314, 24, 24], action: open(manufacture)}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 18 in its manufacture mode: the same art, the production list.
+  manufacture:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#6110
+    widgets:
+      funds: {kind: value, value: money, rect: [290, 210, 140, 18], size: 12, colour: [1.0, 1.0, 0.6], align: centre}
+      jobs: {kind: list, source: factory, rect: [18, 272, 538, 188]}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 9: Research.
+  research:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#5101
+    widgets:
+      topics: {kind: list, source: research, rect: [330, 49, 250, 262]}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 22: Base Stats (the Stat-O-Matic).
+  base_stats:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#6330
+    widgets:
+      stats: {kind: list, source: bases, rect: [26, 60, 345, 330]}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 23: the UFOpedia (databank).
+  ufopedia:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#5107
+    widgets:
+      topics: {kind: list, source: archive, rect: [346, 105, 250, 170]}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+
+  # 32-37: the status reports.
+  reports:
+    design: [640, 480]
+    background: original:WrappersDLL.dll#7700
+    widgets:
+      report: {kind: list, source: reports, rect: [24, 58, 544, 389]}
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED

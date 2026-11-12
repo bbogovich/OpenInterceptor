@@ -31,6 +31,7 @@ OPTIONS:
     --mission <ID>      Start this mission directly, skipping the launcher
     --strategy          Start a new campaign's strategy layer directly
     --chapter <N>       With --strategy: play the new campaign forward to story chapter N
+    --screen <ID>       With --strategy: open this strategy screen (screens.<id>)
     --credits           Show the campaign's credits roll
     --cutscene <ID>     Play a cutscene of the campaign
     --video <REF>       Play a video (original:<file>.smk or a pack path) and quit to the launcher
@@ -83,6 +84,8 @@ pub struct Options {
     pub credits: bool,
     /// `--chapter <n>`: with `--strategy`, start at this story chapter.
     pub chapter: Option<usize>,
+    /// `--screen <id>`: with `--strategy`, open this screen of the campaign's set.
+    pub screen: Option<String>,
     /// `--video <ref>`: play a video first.
     pub video: Option<String>,
     /// `--cutscene <id>`: play a cutscene first.
@@ -126,6 +129,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--mission" => o.mission = Some(value("--mission")?),
             "--strategy" => o.strategy = true,
             "--credits" => o.credits = true,
+            "--screen" => o.screen = Some(value("--screen")?),
             "--chapter" => {
                 o.chapter = Some(value("--chapter")?.parse().map_err(|_| "--chapter: expected a number".to_string())?)
             }

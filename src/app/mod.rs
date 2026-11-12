@@ -429,7 +429,12 @@ pub async fn run(options: Options) {
                 let c = crate::campaign::autoplay_to_chapter(def, s.campaign, options.chapter.unwrap_or(0), 1500.0);
                 Screen::Strategy(Box::new(strategy::StrategyScreen::from_campaign(c)))
             }
-            Some(s) => Screen::Strategy(Box::new(s)),
+            Some(mut s) => {
+                if let Some(id) = &options.screen {
+                    s.open_screen(&ctx, id);
+                }
+                Screen::Strategy(Box::new(s))
+            }
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),
         },
         None => match &options.model {

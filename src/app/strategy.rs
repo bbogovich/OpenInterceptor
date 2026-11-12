@@ -244,6 +244,8 @@ pub struct StrategyScreen {
     art: bool,
     /// The map is clipped to a circle.
     map_round: bool,
+    /// The map is the small overview (no names, no legend).
+    minimap: bool,
     /// The base orders apply to.
     base: usize,
     system: Option<usize>,
@@ -345,6 +347,16 @@ impl StrategyScreen {
         Self::with(c)
     }
 
+    /// Opens one of the campaign's screens over the first (the testbed's `--screen`).
+    pub fn open_screen(&mut self, ctx: &AppContext, id: &str) {
+        if let Some(first) = ctx.content.rules.strategy_screen.clone() {
+            self.stack = vec![first];
+            if self.stack[0] != id {
+                self.stack.push(id.to_string());
+            }
+        }
+    }
+
     /// The saved campaign of the current campaign, if there is one.
     pub fn load(ctx: &AppContext) -> Result<StrategyScreen, String> {
         Self::load_slot(ctx, 0)
@@ -380,6 +392,7 @@ impl StrategyScreen {
             images: Default::default(),
             art: false,
             map_round: false,
+            minimap: false,
             base: 0,
             system: None,
             banner: None,
@@ -1736,6 +1749,18 @@ impl StrategyScreen {
                             ui.text_in(l, r[0], r[1] + size * (1.0 + i as f32 * 1.3), size, colour);
                         }
                     }
+                    WidgetKind::Map if wd.source.as_deref() == Some("minimap") => {
+                        // The whole map, small, in its own (round) window: the view's
+                        // zoom and pan are set aside while it draws.
+                        let (zoom, pan) = (self.zoom, self.pan);
+                        (self.zoom, self.pan) = (1.0, Vec2::ZERO);
+                        self.map_round = wd.round;
+                        self.minimap = true;
+                        let (s, origin) = self.map_view(r);
+                        self.draw_map(&ctx.ui, def, r, s, origin, layout.scale * 0.6);
+                        self.minimap = false;
+                        (self.zoom, self.pan) = (zoom, pan);
+                    }
                     WidgetKind::Map => {
                         self.map_round = wd.round;
                         map_rect = r;
@@ -1798,6 +1823,15 @@ impl StrategyScreen {
         let date = c.date(def);
         match name {
             "date" => date.to_string(),
+            // The original's readouts: SATURDAY, and JAN 01, 2067.
+            "weekday" => ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+                [date.weekday() as usize % 7]
+                .to_string(),
+            "date_long" => {
+                const M: [&str; 12] =
+                    ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                format!("{} {:02}, {}", M[(date.month as usize + 11) % 12], date.day, date.year)
+            }
             "time" => {
                 let h = c.hours.rem_euclid(24.0);
                 format!("{:02}:{:02}:{:02}", h as u32, (h.fract() * 60.0) as u32, ((h * 3600.0) % 60.0) as u32)
@@ -2029,7 +2063,9 @@ impl StrategyScreen {
             if self.sel == Some(Sel::System(i)) {
                 draw_circle_lines(p.x, p.y, star + 6.0, 2.0, YELLOW);
             }
-            ui.text_in(&sys.name, p.x + star + 4.0, p.y - 6.0, 16.0 * k, text_c);
+            if !self.minimap {
+                ui.text_in(&sys.name, p.x + star + 4.0, p.y - 6.0, 16.0 * k, text_c);
+            }
         }
         for (i, b) in c.bases.iter().enumerate() {
             let p = at(c.systems[b.system].pos);
