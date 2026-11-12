@@ -234,6 +234,8 @@ fn main() {
     if let Some(code) = headless(&options) {
         std::process::exit(code);
     }
-    let conf = window_conf(options.fullscreen);
+    // Full screen: asked for, or remembered in the settings unless --windowed.
+    let remembered = cli::user_data_dir().is_some_and(|d| openinterceptor::settings::Settings::load(&d).fullscreen);
+    let conf = window_conf(options.fullscreen || (remembered && !options.windowed));
     macroquad::Window::from_config(conf, app::run(options));
 }

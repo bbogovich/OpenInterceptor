@@ -124,6 +124,10 @@ pub enum Next {
     },
     /// The main menu (a campaign with a strategy layer; otherwise the launcher).
     Menu,
+    /// Load a saved campaign from a slot (0: the automatic save).
+    LoadSlot {
+        slot: usize,
+    },
     /// The credits (or the campaign's credits film).
     Credits,
     /// Fly a campaign battle: a mission id and the player's hull.
@@ -225,6 +229,16 @@ pub fn remember_audio(music: f32, effects: f32) {
     let Some(dir) = crate::cli::user_data_dir() else { return };
     let mut s = crate::settings::Settings::load(&dir);
     (s.music_volume, s.effects_volume) = (music, effects);
+    if let Err(e) = s.save(&dir) {
+        eprintln!("settings not saved: {e}");
+    }
+}
+
+/// Remembers the full-screen choice in the settings.
+pub fn remember_fullscreen(on: bool) {
+    let Some(dir) = crate::cli::user_data_dir() else { return };
+    let mut s = crate::settings::Settings::load(&dir);
+    s.fullscreen = on;
     if let Err(e) = s.save(&dir) {
         eprintln!("settings not saved: {e}");
     }
@@ -441,7 +455,8 @@ pub async fn run(options: Options) {
             Screen::Assets(a) => a.frame(&mut ctx).await,
             Screen::Controls(c) => {
                 if c.frame(&mut ctx) {
-                    Next::Launcher
+                    // Back to the menu (a campaign with one), else the launcher.
+                    Next::Menu
                 } else {
                     Next::Stay
                 }
@@ -535,12 +550,12 @@ pub async fn run(options: Options) {
                 }
             }
             Next::Simulator => screen = Screen::Simulator(simulator::Simulator::new()),
-            Next::NewCampaign | Next::LoadCampaign => {
-                let made = if matches!(next, Next::NewCampaign) {
-                    strategy::StrategyScreen::new_campaign(&ctx)
-                        .ok_or("this campaign has no strategy layer".to_string())
-                } else {
-                    strategy::StrategyScreen::load(&ctx)
+            Next::NewCampaign | Next::LoadCampaign | Next::LoadSlot { .. } => {
+                let made = match next {
+                    Next::NewCampaign => strategy::StrategyScreen::new_campaign(&ctx)
+                        .ok_or("this campaign has no strategy layer".to_string()),
+                    Next::LoadSlot { slot } => strategy::StrategyScreen::load_slot(&ctx, slot),
+                    _ => strategy::StrategyScreen::load(&ctx),
                 };
                 // A new campaign opens with its intro cutscene, if it has one.
                 let intro = matches!(next, Next::NewCampaign).then(|| ctx.content.rules.intro.clone()).flatten();

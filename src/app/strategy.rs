@@ -224,6 +224,8 @@ pub struct StrategyScreen {
     last_click: (usize, f64),
     /// The testbed's Debug panel is shown (Ctrl+D).
     debug: bool,
+    /// The save-slot prompt is up.
+    saving: bool,
     /// The layout's background image, loaded on first use (`None` inside: none, or it
     /// failed to load and was reported).
     background: Option<Option<Texture2D>>,
@@ -254,7 +256,20 @@ pub struct StrategyScreen {
     flash: Option<(String, f64)>,
 }
 
-/// Where saves go: `<user data>/saves/<campaign>.yaml` (one slot per campaign).
+/// Save slots a player can choose (besides slot 0, the automatic save).
+pub const SLOTS: usize = 3;
+
+/// Where slot `slot` of a campaign is saved: slot 0 (the automatic save, written on
+/// leaving the map and by F5) is `<user data>/saves/<campaign>.yaml`, slot n is
+/// `<campaign>-<n>.yaml` beside it.
+pub fn slot_path(campaign: &str, slot: usize) -> Option<std::path::PathBuf> {
+    match slot {
+        0 => save_path(campaign),
+        n => crate::cli::user_data_dir().map(|d| d.join("saves").join(format!("{campaign}-{n}.yaml"))),
+    }
+}
+
+/// Where the automatic save goes: `<user data>/saves/<campaign>.yaml`.
 pub fn save_path(campaign: &str) -> Option<std::path::PathBuf> {
     crate::cli::user_data_dir().map(|d| d.join("saves").join(format!("{campaign}.yaml")))
 }
@@ -317,9 +332,14 @@ impl StrategyScreen {
 
     /// The saved campaign of the current campaign, if there is one.
     pub fn load(ctx: &AppContext) -> Result<StrategyScreen, String> {
+        Self::load_slot(ctx, 0)
+    }
+
+    /// The campaign saved in slot `slot` (0: the automatic save).
+    pub fn load_slot(ctx: &AppContext, slot: usize) -> Result<StrategyScreen, String> {
         let def = ctx.content.rules.strategy.as_ref().ok_or("this campaign has no strategy layer")?;
         let id = ctx.content.campaign.clone().unwrap_or_default();
-        let path = save_path(&id).ok_or("no user data folder")?;
+        let path = slot_path(&id, slot).ok_or("no user data folder")?;
         let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
         let mut s = Self::with(save::read(&text, def, &pack_refs(ctx))?);
         // A campaign that has ended shows its ending again.
@@ -340,6 +360,7 @@ impl StrategyScreen {
             last_click: (usize::MAX, 0.0),
             background: None,
             debug: false,
+            saving: false,
             base: 0,
             system: None,
             banner: None,
@@ -358,8 +379,13 @@ impl StrategyScreen {
 
     /// Saves to the campaign's slot.
     pub fn save(&self, ctx: &AppContext) -> Result<std::path::PathBuf, String> {
+        self.save_slot(ctx, 0)
+    }
+
+    /// Saves to slot `slot` (0: the automatic save).
+    pub fn save_slot(&self, ctx: &AppContext, slot: usize) -> Result<std::path::PathBuf, String> {
         let id = ctx.content.campaign.clone().unwrap_or_default();
-        let path = save_path(&id).ok_or("no user data folder")?;
+        let path = slot_path(&id, slot).ok_or("no user data folder")?;
         if let Some(dir) = path.parent() {
             std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
         }
@@ -950,11 +976,56 @@ impl StrategyScreen {
             return Some(Next::Stay);
         }
         if let Some(e) = self.ending {
+            // The ending screen: the ending's title and text over the whole window, the
+            // campaign's record, then the credits or the menu.
             let end = &def.story.endings[e];
-            let title = if end.victory { "Victory" } else { "Defeat" };
-            if widgets::modal(ui, input, title, &end.text, &["Leave"]).is_some() {
-                let _ = self.save(ctx);
-                return Some(Next::Menu);
+            let (w, h) = (screen_width(), screen_height());
+            draw_rectangle(0.0, 0.0, w, h, Color::new(0.0, 0.0, 0.0, 0.85));
+            let (pw, ph) = (w * 0.7, h * 0.7);
+            let (px, py) = ((w - pw) * 0.5, (h - ph) * 0.5);
+            ui.panel(px, py, pw, ph);
+            let k = (h / 720.0).max(0.6);
+            let title = if end.victory { "VICTORY" } else { "DEFEAT" };
+            let ts = 56.0 * k;
+            ui.text_in(
+                title,
+                px + (pw - ui.measure(title, ts)) * 0.5,
+                py + 80.0 * k,
+                ts,
+                if end.victory { ui.colour("border") } else { ui.colour("accent") },
+            );
+            let size = 20.0 * k;
+            let lines = widgets::wrap(&end.text, pw - 80.0 * k, &|s| ui.measure(s, size));
+            for (i, l) in lines.iter().enumerate() {
+                ui.text_in(l, px + 40.0 * k, py + 130.0 * k + i as f32 * size * 1.35, size, ui.colour("text"));
+            }
+            let c = &self.campaign;
+            let won = c.story.battles_won;
+            let record = format!(
+                "{}  -  final score {:.0}  -  {won} battles won  -  {} bases, {} craft",
+                c.date(def),
+                c.score,
+                c.bases.len(),
+                c.craft.len()
+            );
+            ui.text_in(&record, px + 40.0 * k, py + ph - 90.0 * k, 16.0 * k, ui.colour("dim"));
+            let bh = 34.0 * k;
+            let row =
+                [px + pw - 40.0 * k - 2.0 * 200.0 * k - 12.0, py + ph - bh - 30.0 * k, 2.0 * 200.0 * k + 12.0, bh];
+            match widgets::button_row(ui, input, row, &[("Credits", true), ("Main menu", true)], 200.0 * k, 12.0) {
+                Some(0) => {
+                    let _ = self.save(ctx);
+                    return Some(Next::Credits);
+                }
+                Some(_) => {
+                    let _ = self.save(ctx);
+                    return Some(Next::Menu);
+                }
+                None if input.enter || input.escape => {
+                    let _ = self.save(ctx);
+                    return Some(Next::Menu);
+                }
+                None => {}
             }
             return Some(Next::Stay);
         }
@@ -1041,6 +1112,26 @@ impl StrategyScreen {
                     self.strike = None;
                     self.campaign.strike_result(def, f, None);
                 }
+                None => {}
+            }
+            return Some(Next::Stay);
+        }
+        if self.saving {
+            match widgets::modal(
+                ui,
+                input,
+                "Save game",
+                "Choose a slot. (F5 and leaving the map save automatically.)",
+                &["Slot 1", "Slot 2", "Slot 3", "Cancel"],
+            ) {
+                Some(n) if n < SLOTS => {
+                    self.saving = false;
+                    match self.save_slot(ctx, n + 1) {
+                        Ok(_) => self.say(format!("Saved to slot {}", n + 1)),
+                        Err(e) => self.say(format!("Save failed: {e}")),
+                    }
+                }
+                Some(_) => self.saving = false,
                 None => {}
             }
             return Some(Next::Stay);
@@ -1258,6 +1349,7 @@ impl StrategyScreen {
             || self.offer.is_some()
             || self.convoy.is_some()
             || self.strike.is_some()
+            || self.saving
             || self.banner.is_some();
         // While a prompt is up, the screen underneath takes no input.
         let live = if prompting { Input::default() } else { input };
@@ -1514,10 +1606,7 @@ impl StrategyScreen {
             if widgets::button(ui, input, rect, l, true) {
                 match i {
                     0..=4 => self.speed = i,
-                    5 => match self.save(ctx) {
-                        Ok(p) => self.say(format!("Saved to {}", p.display())),
-                        Err(e) => self.say(format!("Save failed: {e}")),
-                    },
+                    5 => self.saving = true,
                     _ => {
                         let _ = self.save(ctx);
                         return Some(Next::Menu);

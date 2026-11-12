@@ -21,6 +21,8 @@ use macroquad::prelude::*;
 pub enum Item {
     Continue,
     NewCampaign,
+    /// The save slots (when any slot has a save).
+    Load,
     /// The testbed launcher: scenarios, missions, the simulator, the viewers.
     Battles,
     Options,
@@ -36,17 +38,46 @@ pub enum Setting {
     Physics,
     Music,
     Effects,
+    Fullscreen,
+    Controls,
     Back,
 }
 
-/// The main page's items: Continue only when a saved game exists.
-pub fn items(has_save: bool) -> Vec<Item> {
-    let mut v = Vec::with_capacity(6);
+/// The main page's items: Continue only when the automatic save exists, Load game
+/// only when a chosen slot holds a save.
+pub fn items(has_save: bool, has_slots: bool) -> Vec<Item> {
+    let mut v = Vec::with_capacity(7);
     if has_save {
         v.push(Item::Continue);
     }
-    v.extend([Item::NewCampaign, Item::Battles, Item::Options, Item::Credits, Item::Quit]);
+    v.push(Item::NewCampaign);
+    if has_slots {
+        v.push(Item::Load);
+    }
+    v.extend([Item::Battles, Item::Options, Item::Credits, Item::Quit]);
     v
+}
+
+/// How long ago a save was written, for the load page: "just now", "5 minutes ago",
+/// "3 hours ago", "2 days ago".
+pub fn age_text(secs: u64) -> String {
+    match secs {
+        0..=59 => "just now".into(),
+        60..=3599 => format!("{} minutes ago", secs / 60),
+        3600..=86399 => format!("{} hours ago", secs / 3600),
+        _ => format!("{} days ago", secs / 86400),
+    }
+}
+
+/// Each slot's age in seconds (`None`: empty), slot 0 the automatic save.
+fn slot_ages(campaign: &str) -> Vec<Option<u64>> {
+    (0..=super::strategy::SLOTS)
+        .map(|s| {
+            let path = super::strategy::slot_path(campaign, s)?;
+            let modified = std::fs::metadata(path).ok()?.modified().ok()?;
+            Some(modified.elapsed().map_or(0, |d| d.as_secs()))
+        })
+        .collect()
 }
 
 /// The options rows: campaign only when there is more than one, physics only when the
@@ -60,7 +91,7 @@ pub fn settings(campaigns: usize, simple_allowed: bool) -> Vec<Setting> {
     if simple_allowed {
         v.push(Setting::Physics);
     }
-    v.extend([Setting::Music, Setting::Effects, Setting::Back]);
+    v.extend([Setting::Music, Setting::Effects, Setting::Fullscreen, Setting::Controls, Setting::Back]);
     v
 }
 
@@ -98,13 +129,31 @@ pub struct MainMenu {
     options: Option<usize>,
     spin: f32,
     pub error: Option<String>,
+    /// Full screen now (the settings' choice; toggled from the options).
+    fullscreen: bool,
+    /// `Some(row)` on the load page.
+    load: Option<usize>,
+    /// The campaign id (for its save slots).
+    campaign: String,
 }
 
 impl MainMenu {
     pub fn new(ctx: &AppContext) -> MainMenu {
         let id = ctx.content.campaign.clone().unwrap_or_default();
-        let has_save = super::strategy::save_path(&id).is_some_and(|p| p.exists());
-        MainMenu { items: items(has_save), selected: 0, options: None, spin: 0.0, error: None }
+        let ages = slot_ages(&id);
+        let has_save = ages.first().is_some_and(Option::is_some);
+        let has_slots = ages.iter().skip(1).any(Option::is_some);
+        let fullscreen = crate::cli::user_data_dir().is_some_and(|d| crate::settings::Settings::load(&d).fullscreen);
+        MainMenu {
+            items: items(has_save, has_slots),
+            selected: 0,
+            options: None,
+            spin: 0.0,
+            error: None,
+            fullscreen,
+            load: None,
+            campaign: id,
+        }
     }
 
     /// Opens straight on the options page (after a reload made from it).
@@ -136,6 +185,24 @@ impl MainMenu {
         }
         let r = &ctx.content.rules;
         let rows = settings(ctx.content.campaigns.len(), r.simple_physics_allowed());
+        if let Some(row) = self.load {
+            // The load page: the automatic save and the slots; Enter loads one.
+            let n = super::strategy::SLOTS + 2; // slots 0..=SLOTS, then Back
+            if up || down {
+                self.load = Some(wrap_step(row, n, down));
+            }
+            if back || (enter && row == n - 1) {
+                self.load = None;
+            } else if enter {
+                let ages = slot_ages(&self.campaign);
+                if ages.get(row).is_some_and(Option::is_some) {
+                    return Next::LoadSlot { slot: row };
+                }
+            }
+            self.spin += get_frame_time() * 0.25;
+            self.draw(ctx, &rows);
+            return Next::Stay;
+        }
         match self.options {
             None => {
                 if up || down {
@@ -148,6 +215,7 @@ impl MainMenu {
                     match self.items[self.selected] {
                         Item::Continue => return Next::LoadCampaign,
                         Item::NewCampaign => return Next::NewCampaign,
+                        Item::Load => self.load = Some(0),
                         Item::Battles => return Next::Launcher,
                         Item::Options => self.options = Some(0),
                         Item::Credits => return Next::Credits,
@@ -186,6 +254,12 @@ impl MainMenu {
                             ctx.sounds.effects_volume = step_volume(ctx.sounds.effects_volume, !left);
                             super::remember_audio(ctx.music.volume, ctx.sounds.effects_volume);
                         }
+                        Setting::Fullscreen => {
+                            self.fullscreen = !self.fullscreen;
+                            set_fullscreen(self.fullscreen);
+                            super::remember_fullscreen(self.fullscreen);
+                        }
+                        Setting::Controls => return Next::Controls,
                         Setting::Back => {}
                     }
                 }
@@ -246,39 +320,60 @@ impl MainMenu {
         }
         // The list, in a skin panel.
         let line = (sh * 0.055).clamp(28.0, 52.0);
-        let labels: Vec<(String, Option<String>)> = match self.options {
-            None => self
-                .items
+        let labels: Vec<(String, Option<String>)> = if self.load.is_some() {
+            let ages = slot_ages(&self.campaign);
+            let mut v: Vec<(String, Option<String>)> = ages
                 .iter()
-                .map(|i| {
-                    let s = match i {
-                        Item::Continue => "Continue",
-                        Item::NewCampaign => "New campaign",
-                        Item::Battles => "Battles & tools",
-                        Item::Options => "Options",
-                        Item::Credits => "Credits",
-                        Item::Quit => "Quit",
-                    };
-                    (s.to_string(), None)
+                .enumerate()
+                .map(|(s, a)| {
+                    let name = if s == 0 { "Automatic save".to_string() } else { format!("Slot {s}") };
+                    (name, Some(a.map_or("empty".to_string(), age_text)))
                 })
-                .collect(),
-            Some(_) => rows
-                .iter()
-                .map(|s| match s {
-                    Setting::Campaign => ("Campaign".into(), Some(name.to_string())),
-                    Setting::Difficulty => {
-                        ("Difficulty".into(), r.difficulty_levels.get(r.difficulty).map(|l| l.replace('_', " ")))
-                    }
-                    Setting::Physics => {
-                        ("Physics".into(), Some(if ctx.simple_physics { "Simple" } else { "Realistic" }.into()))
-                    }
-                    Setting::Music => ("Music".into(), Some(format!("{:.0} %", ctx.music.volume * 100.0))),
-                    Setting::Effects => ("Effects".into(), Some(format!("{:.0} %", ctx.sounds.effects_volume * 100.0))),
-                    Setting::Back => ("Back".into(), None),
-                })
-                .collect(),
+                .collect();
+            v.push(("Back".into(), None));
+            v
+        } else {
+            match self.options {
+                None => self
+                    .items
+                    .iter()
+                    .map(|i| {
+                        let s = match i {
+                            Item::Continue => "Continue",
+                            Item::NewCampaign => "New campaign",
+                            Item::Load => "Load game",
+                            Item::Battles => "Battles & tools",
+                            Item::Options => "Options",
+                            Item::Credits => "Credits",
+                            Item::Quit => "Quit",
+                        };
+                        (s.to_string(), None)
+                    })
+                    .collect(),
+                Some(_) => rows
+                    .iter()
+                    .map(|s| match s {
+                        Setting::Campaign => ("Campaign".into(), Some(name.to_string())),
+                        Setting::Difficulty => {
+                            ("Difficulty".into(), r.difficulty_levels.get(r.difficulty).map(|l| l.replace('_', " ")))
+                        }
+                        Setting::Physics => {
+                            ("Physics".into(), Some(if ctx.simple_physics { "Simple" } else { "Realistic" }.into()))
+                        }
+                        Setting::Music => ("Music".into(), Some(format!("{:.0} %", ctx.music.volume * 100.0))),
+                        Setting::Effects => {
+                            ("Effects".into(), Some(format!("{:.0} %", ctx.sounds.effects_volume * 100.0)))
+                        }
+                        Setting::Fullscreen => {
+                            ("Full screen".into(), Some(if self.fullscreen { "On" } else { "Off" }.into()))
+                        }
+                        Setting::Controls => ("Controls...".into(), None),
+                        Setting::Back => ("Back".into(), None),
+                    })
+                    .collect(),
+            }
         };
-        let selected = self.options.map_or(self.selected, |r| r.min(labels.len() - 1));
+        let selected = self.load.or(self.options).map_or(self.selected, |r| r.min(labels.len() - 1));
         let (px, py, pw) = (sw * 0.06, sh * 0.34, (sw * 0.36).max(320.0));
         let ph = line * labels.len() as f32 + line * 0.6;
         ui.panel(px - 16.0, py - line * 0.3, pw, ph);
@@ -300,8 +395,13 @@ impl MainMenu {
                 ui.text_in(&v, px + pw - 40.0 - w, y + line * 0.64, size, ui.colour("accent"));
             }
         }
-        let hint =
-            if self.options.is_some() { "Left/Right: change    Esc: back" } else { "Enter: choose    Esc: quit" };
+        let hint = if self.load.is_some() {
+            "Enter: load    Esc: back"
+        } else if self.options.is_some() {
+            "Left/Right: change    Esc: back"
+        } else {
+            "Enter: choose    Esc: quit"
+        };
         ui.text_in(hint, px, py + ph + 10.0, 18.0, ui.colour("dim"));
         if let Some(e) = &self.error {
             ui.text_in(e, px, sh - 30.0, 18.0, RED);
@@ -315,15 +415,31 @@ mod tests {
 
     #[test]
     fn the_menu_offers_continue_only_with_a_save() {
-        assert_eq!(items(false)[0], Item::NewCampaign);
-        assert_eq!(items(true)[0], Item::Continue);
-        assert_eq!(items(true).len(), 6);
-        assert_eq!(*items(false).last().unwrap(), Item::Quit);
+        assert_eq!(items(false, false)[0], Item::NewCampaign);
+        assert_eq!(items(true, false)[0], Item::Continue);
+        assert_eq!(items(true, false).len(), 6);
+        assert!(items(false, true).contains(&Item::Load), "Load game when a slot holds a save");
+        assert!(!items(true, false).contains(&Item::Load));
+        assert_eq!(*items(false, false).last().unwrap(), Item::Quit);
+        assert_eq!(age_text(30), "just now");
+        assert_eq!(age_text(300), "5 minutes ago");
+        assert_eq!(age_text(7300), "2 hours ago");
+        assert_eq!(age_text(200000), "2 days ago");
     }
 
     #[test]
     fn options_show_only_what_can_change() {
-        assert_eq!(settings(1, false), vec![Setting::Difficulty, Setting::Music, Setting::Effects, Setting::Back]);
+        assert_eq!(
+            settings(1, false),
+            vec![
+                Setting::Difficulty,
+                Setting::Music,
+                Setting::Effects,
+                Setting::Fullscreen,
+                Setting::Controls,
+                Setting::Back
+            ]
+        );
         assert_eq!(settings(2, true)[..3], [Setting::Campaign, Setting::Difficulty, Setting::Physics]);
     }
 

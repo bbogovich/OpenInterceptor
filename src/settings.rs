@@ -61,6 +61,8 @@ pub struct Settings {
     pub simple_physics: bool,
     /// Display brightness (`graphics.brightness`, 1 = as authored, 0.5–2).
     pub brightness: Option<f32>,
+    /// Start full screen (`graphics.fullscreen`; `--windowed` overrides).
+    pub fullscreen: bool,
     /// Serve the tablet control console (`console.enabled`, default off).
     pub console: bool,
     /// The console's port (`console.port`, default 8765).
@@ -82,6 +84,7 @@ impl Default for Settings {
             language: None,
             simple_physics: false,
             brightness: None,
+            fullscreen: false,
             console: false,
             console_port: None,
             music_volume: 0.7,
@@ -113,6 +116,7 @@ impl Settings {
             language: text(&game, "language"),
             simple_physics: text(&game, "physics").is_some_and(|p| p.eq_ignore_ascii_case("simple")),
             brightness: Get(&graphics).num("brightness").map(|b| b.clamp(0.5, 2.0)),
+            fullscreen: Get(&graphics).str("fullscreen").is_some_and(|v| v == "true" || v == "yes" || v == "on"),
             console: Get(&console).str("enabled").is_some_and(|v| v == "true" || v == "yes" || v == "on"),
             console_port: Get(&console).num("port").filter(|p| (1.0..=65535.0).contains(p)).map(|p| p as u16),
             music_volume: vol("music", 0.7),
@@ -143,6 +147,7 @@ impl Settings {
             language: None,
             simple_physics: false,
             brightness: None,
+            fullscreen: false,
             console: false,
             console_port: None,
             music_volume: 0.7,
@@ -190,7 +195,7 @@ impl Settings {
              # mods: folder of mods (empty = the mods folder next to this file).\n\
              paths:\n{}\n# Pack ids switched off.\npacks:\n{}\n\
              # The launcher's campaign and difficulty choices, and the text language.\ngame:\n{}\n\
-             # Display brightness: 1 = as authored; 0.5 (darker) to 2 (brighter).\ngraphics:\n{}\n\
+             # Display brightness: 1 = as authored; 0.5 (darker) to 2 (brighter). Full screen at start.\ngraphics:\n{}\n\
              # The tablet control console: open http://<this computer>:<port> on the tablet.\nconsole:\n{}\n\
              # Volumes: music and sound effects, 0% to 100%.\naudio:\n{}\n",
             body(map(vec![("original", path(&self.original)), ("mods", path(&self.mods))])),
@@ -201,13 +206,16 @@ impl Settings {
                 ("language", text(self.language.clone())),
                 ("physics", Node::text(if self.simple_physics { "simple" } else { "realistic" }, 0)),
             ])),
-            body(map(vec![(
-                "brightness",
-                match self.brightness {
-                    Some(b) => Node::text(format!("{b}"), 0),
-                    None => Node::null(0),
-                },
-            )])),
+            body(map(vec![
+                (
+                    "brightness",
+                    match self.brightness {
+                        Some(b) => Node::text(format!("{b}"), 0),
+                        None => Node::null(0),
+                    },
+                ),
+                ("fullscreen", Node::text(if self.fullscreen { "true" } else { "false" }, 0)),
+            ])),
             body(map(vec![
                 ("enabled", Node::text(if self.console { "true" } else { "false" }, 0)),
                 (
@@ -316,6 +324,7 @@ mod tests {
                 language: None,
                 simple_physics: false,
                 brightness: None,
+                fullscreen: false,
                 console: false,
                 console_port: None,
                 music_volume: 0.7,

@@ -104,6 +104,8 @@ pub struct Options {
     pub extract: Option<PathBuf>,
     pub list: bool,
     pub fullscreen: bool,
+    /// `--windowed` given: overrides the settings' full screen.
+    pub windowed: bool,
     pub help: bool,
 }
 
@@ -172,7 +174,10 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--extract" => o.extract = Some(PathBuf::from(value("--extract")?)),
             "--list" => o.list = true,
             "--fullscreen" => o.fullscreen = true,
-            "--windowed" => o.fullscreen = false,
+            "--windowed" => {
+                o.fullscreen = false;
+                o.windowed = true;
+            }
             "--help" | "-h" => o.help = true,
             other => return Err(format!("unknown option '{other}' (try --help)")),
         }
