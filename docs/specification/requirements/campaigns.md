@@ -1,7 +1,7 @@
 ---
-spec_version: 1.18.0
+spec_version: 1.19.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-12
 ---
 
 # Campaigns requirements
@@ -203,7 +203,7 @@ Screens MUST be laid out in design spaces with skins (nine-slice panels, buttons
     **Screen layouts** (app 0.16.0, main `ac7ae62`, `content::screens`): `screens.<id>: {design: [w, h], background, widgets: {<name>: [x, y, w, h]}}`. The engine owns each screen's logic and widgets and gives each widget a default place; a pack moves only the widgets it names (a widget name the screen does not have is a load error). Only `starmap` (the strategy screen) is laid out so far, with the widgets `top`, `map`, `nav`, `info` and `panel` in a 1280 × 720 default design space. Unlike a cockpit, a screen **stretches** its design space to fill the window (x and y scaled separately; text by the smaller factor). **Buttons, lists and modal prompts** (`app::widgets`): immediate-mode buttons, button rows and grids, a scrolling `ListView`, word wrapping and modal prompts with buttons, drawn in the skin; the strategy screen uses them for every action (R-STR-010). **Menu option values** (app 0.14.2, main `dcf9563`): a value too long for the room beside its label is drawn smaller (`menu::fit_size`, never below half size) — the `interceptor` pack is now named *X-COM: Interceptor*.
 
 !!! question "Open"
-    Not built: layouts for screens other than the strategy screen (the main menu, launcher, credits and ending screen are placed in code); custom panels bound to queries, skin sounds; brightness in the menu (it is in `settings.yaml`); the `interceptor` screens with the original's wrapper art at 640 × 480 — the `WrappersDLL` layouts are not mapped (6.7); custom cockpit instruments bound to queries (the rest of 6.6).
+    Not built: layouts for screens other than the strategy screen (the main menu, launcher, credits and ending screen are placed in code); custom panels bound to queries, skin sounds; brightness in the menu (it is in `settings.yaml`); the `interceptor` screens with the original's wrapper art at 640 × 480 — the `WrappersDLL` layouts are not mapped (6.7) — now specified, with the original-style multi-screen interface, as [Strategy interface](interface.md) R-UI-001 – R-UI-040 (plan item 6.9); custom cockpit instruments bound to queries (the rest of 6.6).
 
 !!! note "As built (app 0.16.2 – 0.16.14, main `6b45fcb`, `de30c2a`)"
     `screens.<id>.background` is **drawn** (0.16.2): stretched over the window behind the strategy screen's widgets, reported once on standard error when it cannot be loaded. The main menu (0.16.14, #48) gains **Load game** — the automatic save and three slots with how long ago each was written (`menu::age_text`), the slots written from the strategy screen's *Save* — and two options: **Full screen** (switched at once, remembered as `graphics.fullscreen`; `--windowed` overrides) and **Controls** (the controls screen, back to the menu). The campaign's end is an **ending screen** (R-CPN-010).
@@ -240,3 +240,4 @@ The engine MUST play the original's Smacker cut-scenes and talking heads and ima
 | 1.16.0 | 2026-11-11 | Stage 6 as built (app 0.11.0 – 0.14.0, including the comms panel and the main menu): R-CPN-011 and R-CPN-012 partly met, each with an As-built and an Open note; R-CPN-009 Open note — mission outcomes' `relation(…)` fixed (app 0.12.1); R-CPN-010 As-built note — an ending's `video`, the ending shown again on continuing. No requirement text changed |
 | 1.17.0 | 2026-11-11 | R-CPN-011 As-built note: screen layouts as data (`screens.<id>`, the strategy screen's five widgets, stretched to the window), immediate-mode buttons, lists and modal prompts (app 0.16.0); long menu option values shrink to fit (app 0.14.2). The Open note no longer lists layouts and buttons. Stays partly met. No requirement text changed |
 | 1.18.0 | 2026-11-11 | App 0.16.2 – 0.16.14 (main `6b45fcb`, `de30c2a`): R-CPN-009 Open note — a stance change from a mission outcome is announced (#40); R-CPN-010 As-built note — the ending screen; R-CPN-011 As-built note — layout backgrounds drawn, save slots and the Load game page, Full screen and Controls options (#48), Open note narrowed; R-CPN-012 As-built note — `good` and `bad` stingers, skipping by click or gamepad, `--check` loading voices, music and faces |
+| 1.19.0 | 2026-11-12 | R-CPN-011 Open note: the `interceptor` wrapper screens and screen layouts beyond the strategy screen are now specified by the new [Strategy interface](interface.md) area (R-UI-001 – R-UI-040). No requirement text changed |

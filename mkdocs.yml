@@ -43,6 +43,7 @@ nav:
       - "Controls & control console": definition/control-console.md
       - "Missions": definition/missions.md
       - "Strategy & logistics": definition/strategy-logistics.md
+      - "Strategy interface": definition/interface.md
       - "Campaigns":
           - definition/campaigns/index.md
           - "Campaign features": definition/campaigns/features.md
@@ -62,6 +63,7 @@ nav:
           - "Controls & control console": specification/requirements/control-console.md
           - "Missions": specification/requirements/missions.md
           - "Strategy & logistics": specification/requirements/strategy-logistics.md
+          - "Strategy interface": specification/requirements/interface.md
           - "Campaigns": specification/requirements/campaigns.md
           - "Modding": specification/requirements/modding.md
           - "Compatibility": specification/requirements/compatibility.md

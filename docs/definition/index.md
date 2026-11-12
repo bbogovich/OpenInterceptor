@@ -1,7 +1,7 @@
 ---
-spec_version: 1.18.0
+spec_version: 1.19.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-12
 ---
 
 # Definition
@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.16.0** (90 features). Changes are listed in the
+Definition version **1.19.0** (96 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -24,6 +24,7 @@ Definition version **1.16.0** (90 features). Changes are listed in the
 | [Controls & control console](control-console.md) | `CON` | 9 | How the pilot commands the craft: keyboard, mouse and gamepad bindings, finding the controls, and the tablet control console. |
 | [Missions](missions.md) | `MSN` | 7 | Battles with a purpose: roles, waves, objectives, outcomes, the debrief, environments and balance. |
 | [Strategy & logistics](strategy-logistics.md) | `STR` | 9 | The real-time strategy game around the battles, and the default campaign's supply-chain logistics. |
+| [Strategy interface](interface.md) | `UI` | 6 | How the player works the strategy game: the original's separate full screens and dialogs, laid out by each campaign as data, with the single-grid testbed screen as an option. |
 | [Campaigns](campaigns/features.md) | `CPN` | 7 | The campaigns that ship with the engine, how one is chosen and played, and what turns battles into a story. Background on each campaign is in the pages beside this one. |
 | [Modding toolkit](modding-toolkit.md) | `MOD` | 15 | What a modder gets: packs, readable rule files, asset replacement, translation, conditions, the tools that check and generate content and, planned, the Mod Designer (with 3D cockpit instrument placement), single-file models, the Cutscene Designer and cutscenes. |
 | [Compatibility (original data)](compatibility.md) | `CMP` | 5 | Playing *X-COM: Interceptor* from the player's own CD, read as data, without the project ever holding original content. |
@@ -65,3 +66,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.16.0 | 2026-11-11 | 90 features: Stage 6 (app 0.11.0 – 0.14.0): F-CPN-007 in progress (music, skins, title cards, films, the comms panel, the main menu); F-MOD-011 in progress (engine cutscenes, MD2); F-CMP-002 progress (Smacker video and MPSRC packs read) |
 | 1.17.0 | 2026-11-11 | 90 features: F-HUD-003 gains the ship status display (user request; app 0.15.1) |
 | 1.18.0 | 2026-11-11 | 90 features: F-STR-001 – F-STR-003, F-STR-005, F-STR-006, F-STR-008 and F-TST-004 progress (app 0.16.1 – 0.16.14) |
+| 1.19.0 | 2026-11-12 | 96 features: new area *Strategy interface* (user request) — F-UI-001 – F-UI-006 (original-style strategy screens, screens and widgets as mod data, keyboard and gamepad on every screen, the testbed layout as an option, the default campaign's own screens, crisp and readable at any window size), all planned |

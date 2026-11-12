@@ -1,7 +1,7 @@
 ---
-spec_version: 1.18.0
+spec_version: 1.19.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-12
 ---
 
 # Strategy & logistics requirements
@@ -251,7 +251,7 @@ Functional screens MUST cover the star map, bases (with the 3D base view), resea
     The info panel shows up to six actions (0.16.1). New prompts: *Construction under attack* (0.16.4), *Auto-resolve* on the Interception prompt (0.16.12), *Save game* with three slots (0.16.14); notices raised in a debrief are shown as soon as the map is back (0.16.2). New list rows and buttons: modules' *Dismantle* and the store and quarters lines (Bases, 0.16.10), *Move up* and *Cancel* (Factory, 0.16.11), *Train* / *Stop training* and *Dismiss* (Hangar, 0.16.7); destructive buttons never run on Enter or a double click. A **Reports** list (0.16.8) and the testbed's **Debug** list (0.16.13, R-TST-010). The ending is a screen of its own (0.16.14, R-CPN-010).
 
 !!! question "Open"
-    Not built: the 3D base view, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with eleven lists). Texts are plain English in the default campaign's strategy files, not text keys. The `interceptor` wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested `app::widgets`).
+    Not built: the 3D base view, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with eleven lists) — the original-style multi-screen interface is now specified as [Strategy interface](interface.md) (R-UI-001 – R-UI-040, plan item 6.9), with this screen kept as its testbed layout (R-UI-018). Texts are plain English in the default campaign's strategy files, not text keys. The `interceptor` wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested `app::widgets`).
 
 ### R-STR-011 Saves
 
@@ -516,3 +516,4 @@ Prospector convoys MUST fly expeditions (base → system under investigation →
 | 1.15.0 | 2026-11-11 | Supply-convoy battles as built (app 0.9.2, main `0d1c522`, `146195b`; the user's design): R-STR-017 implemented (the clipper with twelve cargo pods and a point-defence laser as modules); R-STR-019 As-built note (an ambushed convoy waits for the player's escort, `logistics.ambush_mission`, the surviving share delivered); R-STR-020 As-built note (captured in battle, lost to the campaign; depots still open). No requirement text changed |
 | 1.17.0 | 2026-11-11 | R-STR-007 As-built note: fitted shields and armour carried into battle, `fitted:` on ship classes, item `protection` (app 0.15.0, main `1ff754b`); R-STR-010 As-built note: the strategy screen rebuilt for the mouse — top bar, zoomable map with picking, info panel, scrolling lists with action buttons, modal prompts (app 0.16.0, main `ac7ae62`). Both stay partly met. No requirement text changed |
 | 1.18.0 | 2026-11-11 | The issue-audit gaps as built (app 0.16.1 – 0.16.14, main `f82a6ab` … `de30c2a`): R-STR-009 implemented (evaluations and the Reports list); R-STR-019 implemented and R-STR-023 implemented (construction strikes, #19); As-built notes on R-STR-003 (auto-resolve), R-STR-004 (queue priorities, delivery losses, storage), R-STR-005 (capture, `requires_any`, hidden topics), R-STR-006 (`quarters`, `storage`, `defence`, dismantling), R-STR-007 (the default campaign's shields and armour), R-STR-008 (training, dismissal), R-STR-010 (new prompts, lists and buttons), R-STR-011 (pack versions compared, save slots), R-STR-019; R-STR-002, R-STR-020 and R-STR-021 Open notes narrowed |
+| 1.19.0 | 2026-11-12 | R-STR-010 Open note: separate screens are now specified by the new [Strategy interface](interface.md) area (R-UI-001 – R-UI-040); this screen becomes the testbed layout (R-UI-018). No requirement text changed |
