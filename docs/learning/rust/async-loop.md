@@ -53,7 +53,7 @@ explains `thread::spawn`, channels, `Arc<Mutex<…>>` and `AtomicBool` with that
 ## Consequences
 
 - Anything that waits for a frame must be `async` and `.await`ed. In this codebase that is
-  `app::run`, `SoundBank::load`, and the asset browser's `AssetBrowser::frame`, which loads a
+  `app::run`, `SoundBank::load`, `VideoPlayer::open` (below), and the asset browser's `AssetBrowser::frame`, which loads a
   sound for playback with macroquad's `async fn load_sound_from_bytes`. Making that one screen
   method `async` costs nothing: the app loop is already async and simply writes
   `Screen::Assets(a) => a.frame(&mut ctx).await`.
@@ -63,6 +63,42 @@ explains `thread::spawn`, channels, `Arc<Mutex<…>>` and `AtomicBool` with that
   simpler.
 - Screen `frame` functions and `World::step` are **ordinary** functions called from the loop,
   which keeps them testable without a window.
+
+## An async open and a sync play — `src/app/video.rs`
+
+A video player has one slow, once-only step and one cheap, every-frame step, and the code puts
+the `async` boundary between them:
+
+```rust
+impl VideoPlayer {
+    /// Opens a video asset. Its whole soundtrack is decoded now.
+    pub async fn open(content: &Content, reference: &str, pack: usize) -> Result<VideoPlayer, String> {
+        let data = content.read_asset(reference, pack)?;
+        // … decode every frame's audio into one Pcm …
+        let sound = load_sound_from_bytes(&pcm.to_wav_bytes()).await.ok();
+        // …
+    }
+
+    /// One frame: … returns `true` when the video is over.
+    pub fn frame(&mut self) -> bool { /* decode the due frame, draw it */ }
+}
+```
+
+Only `open` needs `.await`, because macroquad's `load_sound_from_bytes` is an `async fn`. So
+only `open` is `async`; the app loop awaits it once, when it switches screens
+(`match VideoPlayer::open(…).await { Ok(v) => screen = Screen::Video(Box::new(v)), … }`), and from then on calls the ordinary
+`frame` every frame like any other screen. Doing the expensive work — reading the file and
+decoding its whole soundtrack — up front also means the frame step does only what a frame
+needs, and picture and sound start together on the first `frame`.
+
+The same player shows a **borrowing** constraint. `Smacker<'a>` borrows the file's bytes
+(`data: &'a [u8]`), so it cannot be stored in the same struct as the `Vec<u8>` it borrows from:
+a struct that points into itself is not expressible with plain references (moving the struct
+would move the bytes out from under the borrow). Rather than reach for `unsafe` or a
+self-referencing crate, the player keeps only the owned bytes and the decoder's *state* — the
+last frame's pixels and palette — and builds a fresh `Smacker` from `&self.data` when it needs
+the next frame, restoring that state and skipping ahead with `skip_to`. The borrow lives only
+inside `frame`, where the compiler can see it ends.
 
 ## Fixed timestep inside a variable frame rate — `src/app/flight.rs`
 

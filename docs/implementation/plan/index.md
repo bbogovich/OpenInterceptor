@@ -37,7 +37,7 @@ Every stage's features must work in both `interceptor` and `default` before the 
 **Confident.** Every asset type stages 1–2 need was decoded and checked against the data: all
 297 meshes parse; hulls and a saucer rendered correctly with their own textures; textures,
 cockpit images, sound effects and music loops are understood; all balance data is plain INI.
-The remaining unknowns (XSPT pixel runs, a few mesh fields, `mfdanim.mps`, the CD audio codec)
+The remaining unknowns (XSPT pixel runs, a few mesh fields, the CD audio codec; `mfdanim.mps` was read in Stage 6)
 have fallbacks and do not block any stage. The original simulator is far simpler than an id
 Tech 3 game: no levels, no skeletal animation, no scripting VM to reproduce.
 

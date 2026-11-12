@@ -1579,7 +1579,7 @@ How to start: as for Stage 4 (*Campaign: new game*, or `--no-original --strategy
 |---|---|
 | Preconditions | App 0.10.1 or later. Default campaigns. |
 | Steps | 1. Let the Eclipse Engine be completed: let its shipments through (Ctrl+M keeps you solvent). 2. Press Enter; then choose *Campaign: continue*. 3. Reach chapter 12 (research *victory_design* — Ctrl+K — after chapter 10) and fly `eclipse_assault` to a win; return to the map. |
-| Expected | 1: *DEFEAT.* with the ending's text; the clock stops. 2: Enter saves and leaves to the launcher; note what *continue* shows (the ending is saved; whether the screen shows it again on loading is not checked by a unit test). 3: the nebula battle with the Engine, a guard fleet that keeps coming and a dreadnought after 90 s; on return *VICTORY.* with the Engine's ending. |
+| Expected | 1: *DEFEAT.* with the ending's text; the clock stops. 2: Enter saves and leaves to the launcher; *continue* shows the ending again (since app 0.12.1; see MT-6-11). 3: the nebula battle with the Engine, a guard fleet that keeps coming and a dreadnought after 90 s; on return *VICTORY.* with the Engine's ending. |
 
 ### MT-5-08 — The default campaign played through
 
@@ -1604,3 +1604,131 @@ How to start: as for Stage 4 (*Campaign: new game*, or `--no-original --strategy
 | Preconditions | App 0.10.1 or later. |
 | Steps | 1. `openinterceptor --no-original --strategy-soak 365`. 2. With the player's data: `openinterceptor --campaign interceptor --strategy-soak 365`. |
 | Expected | 1: the summary line, the last monthly report, and `story: arcs [serial N/12], plans [eclipse_engine NN%], aggression X.XX, ending …` with the serial well advanced. 2: the same form with `doomsday` and the Doomsday plan. |
+
+## Stage 6 results
+
+No case has been run yet.
+
+| ID | Case | Scenario | Result | Date | Tester / platform | Notes |
+|---|---|---|---|---|---|---|
+| MT-6-01 | Music in a battle: states and stingers | `colony_defence` or any default mission | not run | | | |
+| MT-6-02 | Music on the strategy screen, silence elsewhere | Launcher; strategy screen (default) | not run | | | |
+| MT-6-03 | `interceptor` music from the player's data | Any `interceptor` mission | not run | | | |
+| MT-6-04 | Volumes: the launcher's M and V keys | Launcher, then any mission | not run | | | |
+| MT-6-05 | Skins: art deco and X-COM | Launcher; strategy screen (both campaigns) | not run | | | |
+| MT-6-06 | Title cards | Strategy screen (default) | not run | | | |
+| MT-6-07 | A Smacker video from the command line | `--video` | not run | | | |
+| MT-6-08 | `interceptor`: the alien transmissions | Strategy screen (`interceptor`) | not run | | | |
+| MT-6-09 | The default campaign's intro cutscene | Launcher › *Campaign: new game* (default); `--cutscene intro` | not run | | | |
+| MT-6-10 | `interceptor`: the opening film | Launcher › *Campaign: new game* (`interceptor`) | not run | | | |
+| MT-6-11 | Endings: a film, and the ending shown again | Strategy screen (`interceptor`; default) | not run | | | |
+| MT-6-12 | A mission outcome moves a standing | Strategy screen; `pocket_ambush` (default) | not run | | | |
+| MT-6-13 | The comms panel | `colony_defence` (default); any mission with wingmen | not run | | | |
+
+## Stage 6 cases
+
+How to start: the launcher, or `--no-original` for the default campaign. The default music must be generated after cloning (`python3 tools/default_assets/make_all.py`). References: [Music](../../modding/music.md), [Skins](../../modding/skins.md), [Cutscenes](../../modding/cutscenes.md), [Radio voices › Faces](../../modding/voices.md#faces-on-the-comms-panel).
+
+### MT-6-01 — Music in a battle: states and stingers
+
+| Field | |
+|---|---|
+| Preconditions | App 0.11.0 or later. Default campaign (`--no-original`). The default music generated (`python3 tools/default_assets/make_all.py`). Music volume above 0. |
+| Steps | 1. Start a mission and hold position away from the enemy. 2. Fly towards the enemy until it is on radar within 10 km. 3. Close to under 3.5 km. 4. Win the mission; in another run lose or retreat. |
+| Expected | 1: calm cruise music, two segments alternating. 2: at the end of the segment playing, the threat music (pulsing bass, theremin). 3: at the next segment end, the battle music (snare, brass stabs). Changes never cut a phrase. 4: a rising fanfare with the computer voice on a win; a falling figure on any other result. |
+
+### MT-6-02 — Music on the strategy screen, silence elsewhere
+
+| Field | |
+|---|---|
+| Preconditions | App 0.11.0 or later. Default campaign. |
+| Steps | 1. Sit in the launcher. 2. *Campaign: new game* (skip the intro). 3. Fly an offered mission and return. 4. Open the model viewer. |
+| Expected | 1: silence. 2: slow strategy music (pads, glockenspiel). 3: battle music during the battle, strategy music again on the map. 4: silence. |
+
+### MT-6-03 — `interceptor` music from the player's data
+
+| Field | |
+|---|---|
+| Preconditions | App 0.11.0 or later with the player's data. |
+| Steps | 1. Fly several different missions; note the music in each. 2. Fly the same mission twice. 3. Open the strategy screen. |
+| Expected | 1: the original's loop sets; different battles may use different sets. 2: the same set both times (chosen by the battle's seed). 3: cruise loops. No `sound: …` lines for `cruise*`, `threat*`, `battle*` or the stingers at start-up. |
+
+### MT-6-04 — Volumes: the launcher's M and V keys
+
+| Field | |
+|---|---|
+| Preconditions | App 0.12.1 or later. |
+| Steps | 1. Read the packs line. 2. Press M repeatedly; then V. 3. Quit and look in `settings.yaml`. 4. With music 0 % and effects 100 % fly a mission; then music 100 % and effects 25 %. |
+| Expected | 1: *Music 70% (M)   Effects 100% (V)*. 2: M goes 100, 0, 25, 50, 75, 100 %; V likewise from 100 to 0, 25 … Each change shows at once. 3: `audio: {music: …%, effects: …%}` with the last values. 4: silent music with full effects; then loud music and quiet weapons, explosions and voices. |
+
+### MT-6-05 — Skins: art deco and X-COM
+
+| Field | |
+|---|---|
+| Preconditions | App 0.11.1 or later; the player's data for step 3. |
+| Steps | 1. Open the launcher with the default campaign. 2. *Campaign: new game*; look at the map and the tab panel. 3. Press Tab in the launcher to switch to `interceptor`; open its strategy screen. |
+| Expected | 1: dark navy background, cream text, a dark-gold selection bar. 2: the map and the tab panel framed in gold with stepped corner ornaments that do not stretch; the active tab highlighted. 3: green-on-steel colours and plain bordered panels (no frame art). |
+
+### MT-6-06 — Title cards
+
+| Field | |
+|---|---|
+| Preconditions | App 0.11.1 or later. A new default campaign. |
+| Steps | 1. Start the clock. 2. Press Enter on the card. 3. Run to about day 15. 4. Open Messages. |
+| Expected | 1: within the first day a card fills the middle of the screen in the gold frame: *Chapter 1 - The Shadow Falls* large, its hook beneath, *(Enter)* bottom right; the clock stopped. 2: the card goes; the chapter's mission is offered. 3: the chapter 2 card. 4: each chapter title in the log. |
+
+### MT-6-07 — A Smacker video from the command line
+
+| Field | |
+|---|---|
+| Preconditions | App 0.12.0 or later with the player's data. |
+| Steps | 1. `openinterceptor --video original:alientrans1.smk`. 2. Resize the window during playback. 3. Again, and press Esc half-way. 4. `--video original:mfdanim.mps#<member>` with a member name from the pack. |
+| Expected | 1: the film plays centred and letterboxed, its sound in step with the picture; at the end the launcher. 2: the picture stays fitted. 3: picture and sound stop at once; the launcher. 4: a short talking-head clip plays (main `319a31b`). |
+
+### MT-6-08 — `interceptor`: the alien transmissions
+
+| Field | |
+|---|---|
+| Preconditions | App 0.12.0 or later with the player's data. An `interceptor` campaign about to receive the first alien message (fly battles after 1 February). |
+| Steps | 1. Fly battles until the first message. 2. Let the film run to its end. 3. Look at the map. |
+| Expected | 1: the message, then the transmission film fills the screen. 2: back to the strategy screen where it was, clock stopped, the message in the log. 3: no music during the film; strategy music again after it. |
+
+### MT-6-09 — The default campaign's intro cutscene
+
+| Field | |
+|---|---|
+| Preconditions | App 0.13.0 or later. Default campaign. |
+| Steps | 1. *Campaign: new game*; watch to the end. 2. Again, press Esc after a few seconds. 3. `openinterceptor --no-original --cutscene intro`. |
+| Expected | 1: black bars top and bottom; three Comets fly past the camera in the `orbit` environment; the camera cuts to a chase view behind the leader, which fires; the saucer explodes with debris and sound; a cut to the Gatehouse station; three captions in the bottom bar in the skin's font; then the strategy screen. 2: the strategy screen at once. 3: the same scene; then the launcher. |
+
+### MT-6-10 — `interceptor`: the opening film
+
+| Field | |
+|---|---|
+| Preconditions | App 0.13.0 or later with the player's data. |
+| Steps | 1. *Campaign: new game*. 2. Skip with Enter. |
+| Expected | 1: the original's opening film (`animation1`; *derived* that it is the opening) before the strategy screen. 2: the strategy screen. Note whether the film matches what the original shows first. |
+
+### MT-6-11 — Endings: a film, and the ending shown again
+
+| Field | |
+|---|---|
+| Preconditions | App 0.12.1 or later. An `interceptor` campaign at the final mission (Ctrl+K helps), and any campaign that has ended. |
+| Steps | 1. Win the final mission. 2. Press Enter on the ending. 3. *Campaign: continue*. |
+| Expected | 1: the credits film, then *VICTORY.* with the ending's text. 2: saved; the launcher. 3: the ending's banner again, not a stopped map. |
+
+### MT-6-12 — A mission outcome moves a standing
+
+| Field | |
+|---|---|
+| Preconditions | App 0.12.1 or later. A default campaign where `pocket_ambush` is offered (chapter 4, or the Cartel raid choice). |
+| Steps | 1. Archive tab: note the raiders' standing. 2. Fly `pocket_ambush` and win. 3. Archive again; Messages. |
+| Expected | 3: the raiders' standing 5 lower than before (beyond any monthly drift). A stance change, if one happens, is in the log; it does not stop the clock. |
+
+### MT-6-13 — The comms panel
+
+| Field | |
+|---|---|
+| Preconditions | App 0.13.1 or later. Default campaign. |
+| Steps | 1. `--no-original --mission colony_defence`; wait. 2. Give a wing order (`]`, then 1 – 6) in a mission with wingmen.  |
+| Expected | 1: about 3 s in, with the radio clip, a green-framed panel at the top left shows the generated CRT portrait of Colony Control and *COLONY CONTROL* beneath, for about 2.5 s. 2: the Guard Wing portrait and *GUARD WING* while the wingman answers. With a voice set that has no `face`, animated signal bars instead; with a chatter clip of no speaker, *COMMS*. |

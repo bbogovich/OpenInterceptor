@@ -641,9 +641,10 @@ unknown.
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
   fitting is *best available* only, and slots of kinds other than `beam` and `missile` are filled
   but have no effect in battle.
-- Mission outcome actions `relation(…)`, `capture`, `cargo_lost` and `cargo_captured` are still
-  **ignored** by the campaign (app 0.10.3): a story event's `relation(…)` moves a standing
-  ([Story layer](story.md#actions)), a mission's does not yet. A flown convoy escort delivers its
+- Mission outcome actions `capture`, `cargo_lost` and `cargo_captured` are still **ignored** by
+  the campaign. A mission's `relation(faction, n)` moves the player's standing since app 0.12.1,
+  like a story event's ([Story layer](story.md#actions)); a stance change it causes is logged
+  but, unlike a story event's, does not stop the clock. A flown convoy escort delivers its
   surviving share through `cargo:` instead.
 - **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
   upgrades and `placement:` expressions are not built.

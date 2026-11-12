@@ -33,6 +33,10 @@ or `delete: true` an ending ([Rulesets](rulesets.md#layering-inherit-delete-and-
 wins. Every id these sections define is a named constant in the campaign's conditions, so a
 misspelt event, arc, plan or ending id is a load error that names it.
 
+The campaign's **presentation** keys sit beside the story: `campaign.skin` ([Skins](skins.md)),
+`campaign.intro` and `campaign.intro_video` ([Cutscenes](cutscenes.md)), and the `music` sets
+([Music](music.md)).
+
 ## A worked example
 
 A three-step arc with a choice, a rival plan and two endings:
@@ -190,12 +194,15 @@ campaign_end:
   victory: [{when: "flag(engine_destroyed)", ending: engine_destroyed}]
 ```
 
-An ending has a `text` (a `@key` or words) and `victory` (default `false`). `campaign_end`
+An ending has a `text` (a `@key` or words), `victory` (default `false`) and, since app 0.12.1,
+an optional `video` — an asset played full screen when the campaign ends this way, before its
+text (the X-COM victory plays the original's closing credits, `original:credits_sm2a.smk`). `campaign_end`
 lists conditions for each: they are checked every day and after every battle, **defeats
 first**, and the first that holds ends the campaign. The `victory(<ending>)` and
 `defeat(<ending>)` actions end it at once. Once ended, the campaign stops; the screen shows
-*VICTORY.* or *DEFEAT.* with the text, and Enter saves and leaves. A partial victory is simply
-another ending with `victory: true` and its own condition.
+*VICTORY.* or *DEFEAT.* with the text, and Enter saves and leaves. Continuing a finished campaign
+shows its ending again (app 0.12.1). A partial victory is simply another ending with
+`victory: true` and its own condition.
 
 ## `encyclopaedia`
 
@@ -217,6 +224,9 @@ action or a wrong argument is an error with its place.
 |---|---|---|
 | `message(text)` | text | A message that stops the clock (and goes in the log). |
 | `news(text)` | text | A *News:* line in the log; the clock runs on. |
+| `card(Title \| text)` | text | A full-screen **title card** in the campaign's [skin](skins.md) (app 0.11.1): the title large in the skin's `border` colour, the text after `\|` wrapped beneath. The clock stops; Enter, Esc or a click dismisses it. The title goes in the log. Made for chapter openings. |
+| `video(ref)` | asset | Play a **video** full screen (app 0.12.0): `original:<file>.smk` from the player's data, or a pack path; Smacker only. The strategy screen waits and comes back afterwards ([Cutscenes › Videos](cutscenes.md#videos)). |
+| `play_cutscene(id)` | cutscene | Play the engine **cutscene** `cutscenes/<id>.yaml` (app 0.13.0, [Cutscenes](cutscenes.md)); back to the strategy screen afterwards. |
 | `set_flag(x)`, `clear_flag(x)` | flag | Set or clear a campaign flag. |
 | `money(n)` | number | Add (or, negative, take) money. |
 | `score(x)` | score id | Add a score entry ([`scores`](strategy.md#pilots-and-scores)). |
@@ -228,11 +238,16 @@ action or a wrong argument is an error with its place.
 | `aggression(n)` | number | Change the rival's aggression, within its limits. |
 | `victory(x)`, `defeat(x)` | ending | End the campaign in that ending. |
 
+When one day's events ask for several videos or cutscenes, the last video asked for plays, and
+a cutscene only when no video was asked for; a video and a cutscene in the same event's list do
+not both play. An unknown video or cutscene is reported on standard error when it would play
+(`video …: …`, `cutscene x: no cutscene 'x'`), not when the rules load.
+
 An action with a single text argument takes everything between the brackets, commas included:
 `message(Hold on, Guardsman!)` (app 0.10.1). In a YAML flow list, quote an action that contains
 a comma, a colon or a `+`.
 
-**Text keys.** Message and news texts, choice texts, ending texts and encyclopaedia titles and
+**Text keys.** Message, news and card texts, choice texts, ending texts and encyclopaedia titles and
 texts may be `@keys` (app 0.10.2), resolved like any other text: `@msg.chapter_1` from the
 pack's `text/`, or `@orig.KEY` from the player's original language files.
 
@@ -254,8 +269,8 @@ Story conditions — `when`, `start_when`, `campaign_end` and `unlock` — use t
 `resources/default/strategy/story.yaml` (app 0.10.1) is *Perils of the Void*'s serial, as in
 the [campaign definition](../definition/campaigns/default-campaign.md):
 
-- **Arc `serial`**, twelve chapters `ch01` – `ch12`, each a `message` (the chapter title and
-  its hook) and a `mission` offer. Chapters are triggered by the Guard's progress (days,
+- **Arc `serial`**, twelve chapters `ch01` – `ch12`, each a title card (`card(Chapter N -
+  Title | hook)`, app 0.11.1; a `message` before that) and a `mission` offer. Chapters are triggered by the Guard's progress (days,
   research, bases), its relations and the Eclipse Engine's progress (`plan(eclipse_engine)`).
   Chapter 3 sets `regent_revealed`, which starts the plan; chapter 7 is **the Cartel's choice** —
   escort the Cartel's shipment (the Cartel becomes an ally, money) or raid it (the Cartel turns
@@ -309,6 +324,11 @@ guide describes. Every estimate is marked `DERIVED` in the file.
   both flying `ambush_pirate_squadron` on *derived* triggers.
 - **Strategist**: aggression with *derived* values (the original's `Think.ini` rules are not
   read yet).
+- **Videos** (app 0.12.0): each alien message also plays the original's transmission film,
+  `video(original:alientrans1.smk)` – `alientrans5.smk`; the victory ending plays the credits
+  film (`video: original:credits_sm2a.smk`, app 0.12.1); and a new campaign opens with
+  `campaign.intro_video: original:animation1.smk` (app 0.13.0) — which of the CD's films is the
+  original's opening is *derived*.
 - **Endings**: `doomsday_destroyed` (victory), `doomsday_complete` and `last_base`.
 - **Texts from the original**: the warnings, MacArthur's prompt and two endings use the
   original's own text keys — `@orig.DD_WARNING1` – `DD_WARNING3`, `@orig.MAC_PROMPT1`,

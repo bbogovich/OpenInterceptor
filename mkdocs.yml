@@ -89,6 +89,7 @@ nav:
           - "XSPT sprites": specification/original-formats/xspt.md
           - "Audio": specification/original-formats/audio.md
           - "Smacker video": specification/original-formats/smacker.md
+          - "MPSRC packs": specification/original-formats/mpsrc.md
           - "INI rule files": specification/original-formats/ini.md
           - "Object and ship table": specification/original-formats/object-table.md
   - "Implementation":
@@ -119,6 +120,7 @@ nav:
           - "Cockpit and HUD": implementation/architecture/hud.md
           - "Input and gamepads": implementation/architecture/input.md
           - "Audio": implementation/architecture/audio.md
+          - "Presentation: skins, videos, cutscenes": implementation/architecture/presentation.md
           - "Platform layer": implementation/architecture/platform.md
           - "Remote console": implementation/architecture/remote.md
           - "Testbed": implementation/architecture/testbed.md
@@ -154,6 +156,9 @@ nav:
       - "Text and translation": modding/text.md
       - "Missions": modding/missions.md
       - "Radio voices": modding/voices.md
+      - "Music": modding/music.md
+      - "Skins": modding/skins.md
+      - "Cutscenes": modding/cutscenes.md
       - "Strategy layer": modding/strategy.md
       - "Story layer": modding/story.md
       - "Mod file reference": modding/reference.md

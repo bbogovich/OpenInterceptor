@@ -17,6 +17,9 @@ with its type: [Mod file reference › `voices`](reference.md#voices), the ship 
 | A **spoken chatter line** | `voice: <clip>` on a mission's chatter entry | With the line, when its condition first holds. |
 | The **computer voice** | `sounds: {mission_accomplished, mission_failed}` | When the debrief appears: `mission_accomplished` for a win, `mission_failed` for any other result (lose, draw, retreat, killed). |
 
+Since app 0.13.1 whoever speaks also appears on the cockpit's **comms panel**
+([below](#faces-on-the-comms-panel)).
+
 ## A worked example
 
 The `default` campaign has no recorded speech yet. Its Guard pilots answer with short synthesised
@@ -69,6 +72,54 @@ chatter:
 - Line names are lower-cased; a line the engine does not know is kept and ignored, so a mod can
   prepare lines for later.
 
+## Faces on the comms panel
+
+*App 0.13.1, plan item 6.6.* While a voice clip plays, a small panel at the top left of the
+screen shows **who is speaking**: the voice set's face and name, framed in green, for the clip's
+length plus 0.6 s (at least 2.5 s, so a short chirp still leaves time to read the name).
+
+| Key | On | Meaning |
+|---|---|---|
+| `name` | a voice set | The speaker's name, shown in capitals under the face (default: the set's id). Not a line. |
+| `face` | a voice set | A picture (PNG/TGA, any asset reference), or a **Smacker clip** (`.smk`) that loops while the voice speaks — also a member of an MPSRC pack, `original:mfdanim.mps#<member>`. Not a line. |
+| `speaker` | a mission chatter entry | The voice set that says the line (an unknown set is a load error). Without it, a chatter clip that belongs to a set's lines is that set's; otherwise the panel reads *COMMS*. |
+
+- A voice set with no `face` (or one that fails to load) shows animated **signal bars** instead,
+  so a campaign without portrait art still shows that someone is on the air. A failed face is
+  reported once on standard error (`voices.<id>: face …: …`).
+- Faces load the first time their voice speaks, not with the battle: a talking-head clip is a few
+  megabytes once decoded, and most voices never speak in a given battle.
+- A voice set may have only `name` and `face` and no lines — a speaker for chatter, such as the
+  default campaign's Colony Control.
+
+```yaml
+# resources/default/rules/voices.yaml
+voices:
+  guard_pilot:
+    name: Guard Wing
+    face: textures/portrait_guard.png
+    acknowledge: [sounds/radio_ack.wav]
+    status: [sounds/radio_status.wav]
+    down: [sounds/radio_down.wav]
+  colony_control:
+    name: Colony Control
+    face: textures/portrait_colony.png
+```
+
+```yaml
+# resources/default/missions/missions.yaml, colony_defence
+chatter:
+  - {when: "time > 3s", line: "@chat.colony_inbound", voice: sounds/radio_status.wav, speaker: colony_control}
+```
+
+The two portraits are generated CRT-style images, painted by `tools/default_assets/textures.py`.
+
+The `interceptor` campaign has **no faces yet**: the original's 113 talking-head clips are read
+from `mfdanim.mps` ([MPSRC packs](../specification/original-formats/mpsrc.md)), but which clip
+prefix (`at_`, `as_`, `e_`, `w_`) belongs to which speaker is unknown. Play a member with
+`--video original:mfdanim.mps#<member>` to look at it; once identified, a voice set's
+`face: original:mfdanim.mps#<member>` shows it.
+
 ## Writing your own
 
 1. Record or generate short clips (WAV; the engine reads PCM and ADPCM
@@ -105,6 +156,7 @@ once the lines are known.
 | Message | Cause |
 |---|---|
 | `ships.x: unknown voice 'y'` | `voice:` names a set that no `voices:` entry defines. |
+| `missions.x.chatter: no voice set 'y' (speaker)` | A chatter `speaker:` names no voice set. |
 | `sound: …` on start-up | A clip that could not be loaded (a wrong path, or original data missing). `--check` does not load voice clips yet. |
 
 !!! note "Fixed in app 0.6.7"

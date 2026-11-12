@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -18,7 +18,8 @@ little-endian. Offsets are hexadecimal.
 | `TARG` / `.tga` image | cockpit, sprite and wrapper DLLs; `3DObjects/` | [TGA](tga.md) | verified |
 | `XSPT` sprite animation | `xobjects2.dll` | [XSPT](xspt.md) | partly derived |
 | WAV (MS-ADPCM, PCM), AIFF-C | `SoundFX/`, `Loops/`, `CD Audio/` | [Audio](audio.md) | verified (WAV) |
-| Smacker video | `Animations/*.smk` | [Smacker](smacker.md) | public format |
+| Smacker video | `Animations/*.smk` | [Smacker](smacker.md) | public format; decoder verified on all 11 films |
+| MPSRC pack | `Animations/mfdanim.mps` | [MPSRC packs](mpsrc.md) | verified |
 | INI | `ProgramFiles/*.ini` | [INI rule files](ini.md) | verified |
 | Object and ship table | strings in `Interceptor.exe` | [Object table](object-table.md) | derived |
 
@@ -29,3 +30,4 @@ Format pages describe structure only. No original data is reproduced on this sit
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
+| 1.16.0 | 2026-11-11 | MPSRC packs (`mfdanim.mps`) added; Smacker decoder state |

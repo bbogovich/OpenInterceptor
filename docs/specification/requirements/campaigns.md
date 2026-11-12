@@ -1,5 +1,5 @@
 ---
-spec_version: 1.15.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -22,8 +22,8 @@ Features: [Campaigns](../../definition/campaigns/features.md). How to read a req
 | [R-CPN-008 Rival plans and strategist](#r-cpn-008-rival-plans-and-strategist) | Planned (partly met) |
 | [R-CPN-009 Dynamic relations](#r-cpn-009-dynamic-relations) | Planned (partly met) |
 | [R-CPN-010 Victory, defeat and endings](#r-cpn-010-victory-defeat-and-endings) | Planned (partly met) |
-| [R-CPN-011 Screens and skins](#r-cpn-011-screens-and-skins) | Planned |
-| [R-CPN-012 Video and music](#r-cpn-012-video-and-music) | Planned |
+| [R-CPN-011 Screens and skins](#r-cpn-011-screens-and-skins) | Planned (partly met) |
+| [R-CPN-012 Video and music](#r-cpn-012-video-and-music) | Planned (partly met) |
 
 ## Requirements
 
@@ -152,15 +152,15 @@ Factions MUST have relations governed by relation rules, drift and stances, with
 *Rationale:* A living setting.
 
 - Implements: [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned — partly met (app 0.10.0 – 0.10.3, main `485d01e`, `76bda5c`): drift, stances, raids and battle hostility follow them
-- Verified by: `campaign::story::tests::relations_drift_and_the_strategist_answers_the_player`; `app::flight::tests::campaign_stances_decide_who_fights_whom`; MT-5-02, MT-5-05
+- Status: planned — partly met (app 0.10.0 – 0.12.1, main `485d01e`, `76bda5c`, `563c93f`): drift, stances, raids and battle hostility follow them; mission outcomes move standings
+- Verified by: `campaign::story::tests::relations_drift_and_the_strategist_answers_the_player`, `mission_outcomes_move_standings`; `app::flight::tests::campaign_stances_decide_who_fights_whom`; MT-5-02, MT-5-05, MT-6-12
 - See: [Story layer](../../modding/story.md#relations), [Format: strategy layer](../design/format-strategy.md#dynamic-relations-optional-per-campaign)
 
 !!! note "As built (app 0.10.0 – 0.10.3)"
     `relations`: `dynamic`, `start` (standings −100..100), `drift` (monthly, towards 0), `stances` (upper bounds; above the last, `allied`). Story actions move standings (`relation(f, n)`); a stance change is announced. **Strategy effect:** a faction that is not `hostile` stops raiding. **Battle effect** (0.10.3): each campaign battle makes every faction with a standing hostile to the player, or not, by its stance (`flight::apply_stances`, `Ruleset::set_hostile`, in the battle's own rules). An income may read `relation(f)` (the default campaign's Senate stipend).
 
 !!! question "Open"
-    Not built: relation rules (standings moved by what happens in battle — mission outcomes' `relation(…)` is still ignored), standings between factions other than the player, allied factions fighting at the player's side, effects on prices and trade, stance-change **events** a campaign can react to (DEV-051).
+    **Fixed in app 0.12.1** (main `563c93f`): a mission outcome's `relation(f, n)` now moves the standing (`Campaign::battle_result` → `change_standing`); a stance change it causes is logged but does not stop the clock, unlike a story event's. Not built: relation rules (standings moved by other things that happen in battle), standings between factions other than the player, allied factions fighting at the player's side, effects on prices and trade, stance-change **events** a campaign can react to (DEV-051).
 
 ### R-CPN-010 Victory, defeat and endings
 
@@ -169,15 +169,18 @@ A campaign MUST define victory and defeat and its endings, including partial vic
 *Rationale:* A beginning, middle and end.
 
 - Implements: [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned — partly met (app 0.10.0, main `485d01e`): endings and their conditions
-- Verified by: `campaign::story::tests::plans_grow_from_shipments_that_get_through_and_can_end_the_campaign`; MT-5-07
+- Status: planned — partly met (app 0.10.0 – 0.12.1, main `485d01e`, `87b04f3`): endings and their conditions; an ending's video; a finished campaign shows its ending again
+- Verified by: `campaign::story::tests::plans_grow_from_shipments_that_get_through_and_can_end_the_campaign`; MT-5-07, MT-6-11
 - See: [Story layer](../../modding/story.md#endings-and-campaign_end), [Format: campaign and game flow](../design/format-campaign.md#endings)
 
 !!! note "As built (app 0.10.0)"
     `endings.<id>` (`text`, `victory`) and `campaign_end` (`victory` and `defeat` lists of `{when, ending}`), checked daily and after every battle, defeats first; the actions `victory(x)` and `defeat(x)`. The ending stops the campaign and is saved. The default campaign has one victory and three defeats, `interceptor` one victory and two defeats.
 
 !!! question "Open"
-    A partial victory is expressible (another ending with `victory: true`), but neither campaign defines one yet; the ending is a banner line, not a screen with image, video or music (Stage 6).
+    A partial victory is expressible (another ending with `victory: true`), but neither campaign defines one yet; the ending is a banner line, not a screen with image or music (Stage 6).
+
+!!! note "As built (app 0.12.1, main `87b04f3`)"
+    `endings.<id>.video` (an asset) plays full screen when the campaign ends that way, before the banner; the `interceptor` victory plays the original's credits film (`original:credits_sm2a.smk`). Loading a save whose story has ended sets the screen's ending again, so *Campaign: continue* shows the ending rather than a stopped map (the question left by MT-5-07).
 
 ### R-CPN-011 Screens and skins
 
@@ -186,9 +189,15 @@ Screens MUST be laid out in design spaces with skins (nine-slice panels, buttons
 *Rationale:* Finished presentation.
 
 - Implements: [F-CPN-007](../../definition/campaigns/features.md#f-cpn-007-presentation)
-- Status: planned
-- Verified by: Planned.
-- See: [Format: interface, text and media](../design/format-interface.md)
+- Status: planned — partly met (app 0.11.1 – 0.12.1, main `2dd85dd`, `a7ea7b6`, `563c93f`): skins on the launcher and the strategy screen; title cards; music and effects volumes in the launcher
+- Verified by: `content::skin::tests::skins_parse_colours_with_fallbacks`; `app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest`; `settings::tests::parses_and_round_trips` (the default volumes only); MT-6-04 – MT-6-06
+- See: [Skins](../../modding/skins.md), [Format: interface, text and media](../design/format-interface.md), [Architecture › Presentation](../../implementation/architecture/presentation.md)
+
+!!! note "As built (app 0.11.1 – 0.12.1)"
+    `skins.<id>`: `colours` (seven roles: `background`, `panel`, `border`, `text`, `dim`, `accent`, `highlight`), `panel: {image, slice}` (a nine-slice frame) and `font` (a TrueType file); `campaign.skin` chooses one (else the first). `app::ui::Ui` gives the screens `colour`, `panel` and `text`; the launcher and the strategy screen draw through it. The default campaign has an art-deco skin with a generated gold-framed navy panel; `interceptor` a palette only. Title cards: the story action `card(Title | text)`, drawn in the skin over the strategy screen; the default serial's twelve chapters open with them (app 0.11.1, main `a7ea7b6`). Options: `settings.yaml` `audio: {music, effects}`, stepped by the launcher's M and V keys (app 0.12.1).
+
+!!! question "Open"
+    Not built: design spaces and screen layouts as data (`screens:`), buttons, custom panels bound to queries, skin sounds; a main menu, an options screen (graphics, controls), difficulty, load/save and credits screens beyond the launcher (plan item 6.2); an ending screen; the `interceptor` screens with the original's wrapper art at 640 × 480 — the `WrappersDLL` layouts are not mapped (6.7); custom cockpit instruments bound to queries (the rest of 6.6).
 
 ### R-CPN-012 Video and music
 
@@ -197,9 +206,15 @@ The engine MUST play the original's Smacker cut-scenes and talking heads and ima
 *Rationale:* Finished presentation.
 
 - Implements: [F-CPN-007](../../definition/campaigns/features.md#f-cpn-007-presentation), [F-CMP-002](../../definition/compatibility.md#f-cmp-002-original-formats-read-faithfully)
-- Status: planned
-- Verified by: Planned.
-- See: [Format: interface, text and media](../design/format-interface.md)
+- Status: planned — partly met (app 0.11.0 – 0.13.1, main `1f183d1`, `5163a57`, `87b04f3`, `76d64d5`, `747d1e9`): interactive music with states, segments and stingers; the original's Smacker films (transmissions, credits, the opening); the comms panel with faces
+- Verified by: `content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy`; `audio::music_tests::segments_cycle_within_the_wanted_state`; `app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves`; the `formats::smacker` tests ([R-CMP-010](compatibility.md#r-cmp-010-smacker-video)); MT-6-01 – MT-6-03, MT-6-07 – MT-6-11, MT-6-13
+- See: [Music](../../modding/music.md), [Cutscenes › Videos](../../modding/cutscenes.md#videos), [Format: interface, text and media](../design/format-interface.md)
+
+!!! note "As built (app 0.11.0 – 0.13.0)"
+    **Music** (`music.<id>`: `states` — `cruise`, `threat`, `battle`, `strategy`, each a list of segments — `stingers`, `threat_range`, `battle_range`, `volume`): `audio::MusicPlayer` plays one segment at a time and changes state only at a segment's end. In a battle the set is chosen by the battle's seed and the state by the nearest hostile (`battle`, `threat` or `cruise`); a decided result plays `victory` or `death`; the strategy screen plays the first set's `strategy` state; other screens are silent. `interceptor` maps the original's three loop sets from `Loops/*.wav` by name; the default campaign's music is synthesised (`tools/default_assets/music.py`). **Video**: an in-crate Smacker decoder and `app::video::VideoPlayer` (letterboxed, clock-timed, skip with Enter, Esc or a click), played by the story action `video(<ref>)`, an ending's `video`, `campaign.intro_video` and `--video`; `interceptor` plays the five alien transmissions (`alientrans1` – `5`), the credits on victory and `animation1` as the opening (*derived*: which film is the opening). **Comms panel** (app 0.13.1, main `747d1e9`): voice sets gain `name` and `face` (a picture, or a Smacker clip — possibly `original:<pack>.mps#<member>` — looping while the voice speaks) and chatter gains `speaker`; `app::comms::Comms` shows the face and name top left for the clip's length plus 0.6 s (at least 2.5 s), animated signal bars when there is no face, and *COMMS* when there is no speaker. The default campaign has generated CRT portraits for Guard Wing and Colony Control.
+
+!!! question "Open"
+    Not built: **switches** as data (the states follow a fixed nearest-hostile rule) and the original's `.wtl` transition tables (DEV-053); the `good` and `bad` stingers; CD audio tracks; `interceptor`'s **talking heads** on the comms panel — the clips are read from `mfdanim.mps` (app 0.13.1) but which clip prefix (`at_`, `as_`, `e_`, `w_`) is which speaker is *unknown*, so no faces are mapped; **image-sequence** video and other video files for mods (MD3, R-MOD-046). A video's soundtrack is not scaled by the volume settings. The default campaign's music WAVs are not committed (the repository ignores `*.wav`; run `tools/default_assets/make_all.py`).
 
 ## Revision history
 
@@ -210,3 +225,4 @@ The engine MUST play the original's Smacker cut-scenes and talking heads and ima
 | 1.13.0 | 2026-11-11 | R-CPN-005: progress note — 26 mission types defined (app 0.6.5), with an Open note on types 2, 6, 10 and 17 and the 27 count; R-CPN-004: the default campaign's strategy data (app 0.7.1). No requirement wording changed |
 | 1.14.0 | 2026-11-11 | R-CPN-005: progress note — the `interceptor` strategy layer from the player's data (app 0.8.0, plan item 4.12, derived; not play-tested). No requirement text changed |
 | 1.15.0 | 2026-11-11 | Stage 5 as built (app 0.10.0 – 0.10.3): R-CPN-007 implemented; R-CPN-008, R-CPN-009, R-CPN-010 partly met, each with an As-built and an Open note; R-CPN-004 progress (playtest changes, convoy battles, the 12-chapter serial with reused missions); R-CPN-005 progress (the Doomsday arc, derived gates, two of seven side missions). No requirement text changed |
+| 1.16.0 | 2026-11-11 | Stage 6 as built (app 0.11.0 – 0.13.1, including the comms panel): R-CPN-011 and R-CPN-012 partly met, each with an As-built and an Open note; R-CPN-009 Open note — mission outcomes' `relation(…)` fixed (app 0.12.1); R-CPN-010 As-built note — an ending's `video`, the ending shown again on continuing. No requirement text changed |

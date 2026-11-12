@@ -1,5 +1,5 @@
 ---
-spec_version: 1.3.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -37,7 +37,7 @@ Requirements for these features: [Compatibility (original data) requirements](..
 **Why.** Compatibility objective.
 
 - **Status:** in-progress
-- **Source:** Plan item 1.1; Stage 0 analysis; XSPT and Smacker outstanding (2.4, 6.3).
+- **Source:** Plan item 1.1; Stage 0 analysis; Smacker video and the MPSRC pack of talking heads read since app 0.12.0 – 0.13.1 (6.3, 6.6); XSPT outstanding (2.4).
 - **Specified by:** [R-CPN-012](../specification/requirements/campaigns.md#r-cpn-012-video-and-music), [R-MOD-019](../specification/requirements/modding.md#r-mod-019-sound-cue-table), [R-CMP-003](../specification/requirements/compatibility.md#r-cmp-003-pe-resources), [R-CMP-004](../specification/requirements/compatibility.md#r-cmp-004-xmsh-meshes), [R-CMP-005](../specification/requirements/compatibility.md#r-cmp-005-xtxr-textures), [R-CMP-006](../specification/requirements/compatibility.md#r-cmp-006-tga-images-and-colour-key), [R-CMP-007](../specification/requirements/compatibility.md#r-cmp-007-audio), [R-CMP-008](../specification/requirements/compatibility.md#r-cmp-008-ini-rules-and-language-files), [R-CMP-009](../specification/requirements/compatibility.md#r-cmp-009-xspt-sprites), [R-CMP-010](../specification/requirements/compatibility.md#r-cmp-010-smacker-video), [R-CMP-011](../specification/requirements/compatibility.md#r-cmp-011-bad-data-never-panics)
 
 ### F-CMP-003 No original content in the project
@@ -81,3 +81,4 @@ Mods (`packs/`, and the user's mods folder) override resources as before. The in
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CMP-001 – F-CMP-004 (4 features) |
 | 1.2.0 | 2026-11-11 | F-CMP-005 resources folder |
 | 1.3.0 | 2026-11-11 | F-CMP-005 listed in the status table; implemented in app 0.4.2 |
+| 1.16.0 | 2026-11-11 | F-CMP-002: Smacker video (R-CMP-010) and the MPSRC pack `mfdanim.mps` read (app 0.12.0 – 0.13.1); XSPT outstanding |

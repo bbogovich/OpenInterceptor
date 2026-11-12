@@ -17,7 +17,7 @@ copy. Sizes are approximate.
 | `ProgramFiles/soundfx.ini` | Sound-effect table | Stage 2 |
 | `ProgramFiles/MPSettings.INI`, `NetSettings.ini` | Multiplayer arenas and network settings | Deferred |
 | `ProgramFiles/3DObjects/*.tga` | Lens flares, reticles, sun and star sprites | Yes (Stage 1) |
-| `ProgramFiles/Animations/mfdanim.mps` | MFD animation (format unknown) | Stage 2+ |
+| `ProgramFiles/Animations/mfdanim.mps` | MFD talking heads: an MPSRC pack of 113 Smacker clips ([MPSRC packs](../../specification/original-formats/mpsrc.md)) | Read since main `319a31b`; shown on the comms panel (app 0.13.1) once mapped to speakers |
 | `ProgramFiles/SoundFX/{SpaceFlight,Chatter,Gadgets,Wrappers}/` | Sound effects and radio chatter, MS-ADPCM WAV | Stage 1–3 |
 | `ProgramFiles/Loops/*.wav` | Music loops (cruise, battle, …) as PCM WAV | Stage 5 |
 | `ProgramFiles/Text/*.txt` | UI strings, encyclopedia, names, news, credits | Stage 3–5 |

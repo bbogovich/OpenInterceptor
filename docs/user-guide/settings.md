@@ -34,6 +34,9 @@ graphics:
 console:
   enabled: true
   port: 8765
+audio:
+  music: 70%
+  effects: 100%
 ```
 
 | Key | Default | Meaning |
@@ -48,6 +51,8 @@ console:
 | `graphics.brightness` | 1 | The picture's brightness: 1 is as authored, from 0.5 (darker) to 2 (brighter); values outside are clamped. It lifts dark tones more than bright ones (a gamma), so ships in shadow become easier to see without washing out lit faces. The HUD and cockpit art are not changed. Read when the game starts. |
 | `console.enabled` | `false` | Serve the [tablet control console](console.md) (`--console` turns it on for one run). |
 | `console.port` | 8765 | The console's port; change it if another program uses 8765 (`--console-port` overrides it). |
+| `audio.music` | 70% | The music volume, 0% to 100% (app 0.12.1): battle and strategy-screen [music](../modding/music.md) and its stingers. The launcher's **M** key steps it. |
+| `audio.effects` | 100% | The volume of every other sound, 0% to 100%: weapons, explosions, voices, the computer voice and cutscene sounds (app 0.12.1). The launcher's **V** key steps it. A video's soundtrack is not scaled by either volume yet. |
 
 ## Other ways to set them
 
@@ -57,4 +62,12 @@ console:
   with `flight: {lighting: …}` ([Mod file reference](../modding/reference.md#flight)).
   `graphics.brightness` adjusts the result for your screen.
 
-An in-game options screen is planned with the presentation stage; until then, edit the file.
+## Volumes in the launcher
+
+The launcher's line of packs ends with *Music 70% (M)   Effects 100% (V)*. **M** steps the music
+volume and **V** the effects volume up by a quarter — 0, 25, 50, 75, 100 % — and from 100 % back
+to 0 (a value in between, such as the default 70 %, goes up past the nearest quarter: 70 % → 100 %).
+Each press is saved in `settings.yaml` at once and takes effect immediately.
+
+An in-game options screen is planned with the presentation stage (plan item 6.2); until then,
+use the launcher keys or edit the file.

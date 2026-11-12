@@ -3,8 +3,8 @@
 OpenInterceptor is an open-source, moddable **space-combat simulator engine**, written in Rust,
 for macOS and Linux first (Windows kept buildable).
 
-Its reference content is *X-COM: Interceptor* (MicroProse, 1998), the third game in the X-COM
-series after *UFO Defense* and *Apocalypse*. In the same way that
+Its reference content is *X-COM: Interceptor* (MicroProse, 1998), the fourth game in the X-COM
+series, after *UFO Defense* (*Enemy Unknown*), *Terror from the Deep* and *Apocalypse*. In the same way that
 [OpenXcom](https://openxcom.org) and [OpenApoc](https://www.openapoc.org) play their games, the
 engine reads the data from **the player's own copy** (installed or the CD) and plays it. No original content
 is in the repository, ever.
@@ -22,7 +22,7 @@ is in the repository, ever.
 
     The same order is in the repository's `CLAUDE.md` project rules.
 
-**Site version 0.21.0**; Definition and Specification **1.15.0** ([revision history](reference/revision-history.md)).
+**Site version 0.22.0**; Definition and Specification **1.16.0** ([revision history](reference/revision-history.md)).
 
 ## Sections
 

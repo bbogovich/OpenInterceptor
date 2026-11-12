@@ -1,5 +1,5 @@
 ---
-spec_version: 1.3.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -21,7 +21,7 @@ Features: [Compatibility (original data)](../../definition/compatibility.md). Ho
 | [R-CMP-007 Audio](#r-cmp-007-audio) | Implemented |
 | [R-CMP-008 INI rules and language files](#r-cmp-008-ini-rules-and-language-files) | Implemented |
 | [R-CMP-009 XSPT sprites](#r-cmp-009-xspt-sprites) | Planned |
-| [R-CMP-010 Smacker video](#r-cmp-010-smacker-video) | Planned |
+| [R-CMP-010 Smacker video](#r-cmp-010-smacker-video) | Implemented |
 | [R-CMP-011 Bad data never panics](#r-cmp-011-bad-data-never-panics) | Implemented |
 | [R-CMP-012 No original content](#r-cmp-012-no-original-content) | Implemented |
 | [R-CMP-013 Facts and deviations marked](#r-cmp-013-facts-and-deviations-marked) | Implemented |
@@ -147,9 +147,15 @@ Smacker video MUST be decoded in-crate for the original cut-scenes and MFD talki
 *Rationale:* Faithful presentation.
 
 - Implements: [F-CMP-002](../../definition/compatibility.md#f-cmp-002-original-formats-read-faithfully)
-- Status: planned
-- Verified by: Planned.
-- See: [Smacker video](../original-formats/smacker.md)
+- Status: implemented (app 0.12.0 – 0.13.1, main `5163a57`, `644b218`, `319a31b`, `747d1e9`) — the decoder, the cut-scenes, and the talking-head clips inside `mfdanim.mps`
+- Verified by: `formats::smacker::tests::small_and_big_trees_decode_with_the_cache`, `palettes_decode_explicit_kept_and_copied_entries`, `a_tiny_file_decodes_a_solid_frame`, `audio_dpcm_8_bit_mono`; `formats::mpsrc::tests::a_pack_lists_and_returns_its_members`; by hand against all 11 of the reference CD's videos with the ignored `real_smacker_file_decodes` (`OI_SMK`); MT-6-07, MT-6-08
+- See: [Smacker video](../original-formats/smacker.md), [Architecture › Formats](../../implementation/architecture/formats.md#smacker-formatssmacker)
+
+!!! note "As built (app 0.12.0)"
+    `formats::smacker` decodes `SMK2` and `SMK4`: the four big Huffman trees (built from two small trees each, with the three-slot escape cache reset every frame), mono, full (with version 4's two half-resolution modes), skip and solid 4 × 4 blocks, delta palettes, and DPCM or raw audio, 8- or 16-bit, mono or stereo, on up to seven tracks. Written from the format's public description; `SMACKW32.DLL` is never used. Bad data returns an error.
+
+!!! note "Talking heads (main `319a31b`, app 0.13.1)"
+    The MFD talking heads are 113 Smacker clips bundled in `mfdanim.mps`, an **MPSRC pack** ([format](../original-formats/mpsrc.md)), now read by `formats::mpsrc`; a member is addressed as `original:mfdanim.mps#<member>` and decodes like any Smacker file. The comms panel (app 0.13.1) can show one as a voice's `face`. Still open: which clip belongs to which speaker (the `at_`, `as_`, `e_`, `w_` prefixes) is *unknown*, so the `interceptor` voices have no faces yet.
 
 ### R-CMP-011 Bad data never panics
 
@@ -221,3 +227,4 @@ Rationale: an installed copy is the more likely thing a player still has.
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CMP-001 – R-CMP-013 (13 requirements; 11 reverse-engineered from the code) |
 | 1.2.0 | 2026-11-11 | R-CMP-014 resources folder; R-CMP-015 installed copy or CD copy |
 | 1.3.0 | 2026-11-11 | R-CMP-014 and R-CMP-015 listed in the status table (implemented, app 0.4.2); R-CMP-001 Verified by: `settings::resolution_order_prefers_explicit_and_existing` renamed `original_data_is_found_in_order` |
+| 1.16.0 | 2026-11-11 | R-CMP-010 implemented (app 0.12.0): the in-crate decoder, verified against the reference CD's eleven videos; the MPSRC container of the talking heads (`mfdanim.mps`) read (main `319a31b`). No requirement text changed |

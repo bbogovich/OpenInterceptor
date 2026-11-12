@@ -1,5 +1,5 @@
 ---
-spec_version: 1.15.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -191,7 +191,8 @@ an action list, checked by the campaign clock.
     step is the event's place in the arc's `steps`). The actions are the fourteen of
     `script::action::EVENT_ACTIONS` — `message`, `news`, `set_flag`, `clear_flag`, `money`,
     `score`, `relation`, `research`, `mission` (offer now, accept or decline), `raid`, `plan`,
-    `aggression`, `victory`, `defeat`. Not built: `start_mission` with a place and an expiry,
+    `aggression`, `victory`, `defeat` — and since app 0.11.1 – 0.13.0 three for presentation,
+    `card` (a title card), `video` and `play_cutscene`. Not built: `start_mission` with a place and an expiry,
     `offer_mission`, `reward:`, `unlock_research`, map changes, a priority on `message`, a
     chance per difficulty. Keys: [Story layer › events](../../modding/story.md#events); DEV-051.
 
@@ -251,3 +252,4 @@ tugs and escorts.
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch) |
 | 1.11.0 | 2026-11-11 | Marked as built: `hazards` (app 0.5.1) with their explicit keys; `environment`, `environments`, `terrains` and atmospheric flight (0.6.0) with the simplified forces; ground installations (0.6.1). Not built: `location`/`backdrop` from the map, `speed_of_sound`, `weather`, terrain textures and scattered objects, shield domes, landing-pad arrivals |
 | 1.15.0 | 2026-11-11 | As-built notes: campaign events (app 0.10.0) — what is built and what is not; the nebula backdrop and convoy-battle keys (app 0.9.1 – 0.9.2); the format itself unchanged |
+| 1.16.0 | 2026-11-11 | As-built note on campaign events: the presentation actions `card`, `video`, `play_cutscene` (app 0.11.1 – 0.13.0); the format itself unchanged |

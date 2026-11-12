@@ -1,5 +1,5 @@
 ---
-spec_version: 1.9.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -338,6 +338,23 @@ button.
 *The key names above are the proposal's; they are fixed, with their schema and the Modding
 pages, when MD2 is built.*
 
+!!! note "As built (MD2, app 0.13.0)"
+    The format as built is a subset, documented key by key on [Modding › Cutscenes](../../modding/cutscenes.md):
+    `id`, `title`, `length`, `environment {starfield_seed, sun, environment}`; entities with
+    `class`, `faction`, `enter`, `leave`, `keys.position`, `actions` (`[time, fire_beams, secs]`,
+    `[time, missile, target]`, `[time, destroy]`), `destroy_at` and `harmless`; cameras **fixed**
+    (`position` keys and `look_at` — an entity or a point — directly on the camera, not under
+    `fixed: {keys: …}`) or **attached** (`attach`, `distance` and `orbit` keys directly on the
+    camera, not under `keys:`), each with `fov`; `cuts` (instant); `sounds` naming the
+    campaign's event sounds (`[time, name, volume]`); `captions` as plain text. It plays as the
+    campaign intro (`campaign.intro`), from events (`play_cutscene`) and with `--cutscene`; Esc
+    or Enter skips. Not built: formations, autopilot entities and `aggressive`, rotation and
+    speed keys, chase/capture/jump actions, `harmless` as designed (R-MOD-037 Open note), sound
+    files with fades and ducking, text-key captions, blended cuts, mission intros and outros,
+    `video:` in a cutscene, skipping from the console or pad, scrubbing and snapshots. The
+    original's Smacker films play through `campaign.intro_video`, `video(…)` and an ending's
+    `video` (app 0.12.0 – 0.13.0). [DEV-054](../../implementation/deviations/index.md).
+
 ### 3.5 Video instead of animation
 
 A pack can provide a video file for any cutscene. The engine has no video decoder for modern
@@ -451,3 +468,4 @@ Proposed with recommendations; **answered by the user on 2026-11-11**.
 |---|---|---|
 | 1.7.0 | 2026-11-11 | New page, with the user's decisions D1–D5 (D2's Linux path via `dlopen` still to be evaluated; D4 adds the `harmless` flag; D5 two build artifacts): the Mod Designer, the Cutscene Designer, video cutscenes, shared formations and game bundling, from the user's request of 2026-11-11; plan items MD1–MD7 |
 | 1.9.0 | 2026-11-11 | From the user's message of 2026-11-11 (quoted): new sections 2.3 instruments on a 3D cockpit (drag, ray-cast to the face, preview), 2.4 the first test case (an `interceptor` extension with a 3D X-COM cockpit; the generic base cockpit; the example mod) and 2.5 single-file models (`.glb` beside OBJ/MTL, which stays fully supported, `.blend` as source only; confirmed by the user); the wizard's kind renamed **extension**; packs versus mods; plan items MD8–MD10 |
+| 1.16.0 | 2026-11-11 | §3.4 As-built note: the cutscene format as built in MD2 (app 0.13.0) and what is not built |

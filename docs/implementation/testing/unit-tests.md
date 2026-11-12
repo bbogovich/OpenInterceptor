@@ -8,6 +8,26 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**At main `747d1e9` (app 0.13.1)** a count of the `#[test]` functions in `src/` (grep, not a
+build) gives **379** run on macOS (382 less the Linux-only test and two ignored helpers). The 13
+added since `76bda5c`: app **0.11.0** (`1f183d1`)
+`content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy`,
+`audio::music_tests::segments_cycle_within_the_wanted_state`; app **0.11.1** (`2dd85dd`)
+`content::skin::tests::skins_parse_colours_with_fallbacks`,
+`app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest`; app **0.12.0** (`5163a57`)
+`formats::smacker::tests::small_and_big_trees_decode_with_the_cache`,
+`palettes_decode_explicit_kept_and_copied_entries`, `a_tiny_file_decodes_a_solid_frame`,
+`audio_dpcm_8_bit_mono`, and the **ignored** helper `real_smacker_file_decodes` (not counted:
+`OI_SMK=<file> OI_SMK_OUT=/tmp/f.png cargo test --lib real_smacker -- --ignored --nocapture`,
+run by hand against the player's own videos); app **0.12.1** (`563c93f`)
+`campaign::story::tests::mission_outcomes_move_standings`; app **0.13.0** (`a59ffce`)
+`content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot`,
+`cutscenes_parse_and_check_their_references`; main `319a31b`
+`formats::mpsrc::tests::a_pack_lists_and_returns_its_members`; app **0.13.1** (`747d1e9`)
+`app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves` (and the voice-set test in
+`content::rules` now checks `name`, `face` and `voice_of_clip`). Not unit-tested: drawing, video
+timing and cutscene playback (manual tests MT-6-01 – MT-6-13).
+
 **At main `76bda5c` (app 0.10.3)** a count of the `#[test]` functions in `src/` (grep, not a
 build) gives **366** run on macOS (368 less the Linux-only test and the ignored helper). The 11
 added since `2ed1149`: app **0.9.1** (`3b19dea`)
@@ -132,8 +152,15 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `script::campaign` | 1 | Query ids match the table; campaign ids and level names are constants; a misspelt name is an error |
 | `campaign` | 12 | A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; **the default campaign runs six months** (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); **the testbed cheats** (payday, quickbase, knowitall, jump to battle); **manufacture paid per unit as it starts, and salvage recorded by raid id**; **the default campaign runs a year with its story and stays consistent** (app 0.10.3) |
 | `campaign::logistics` | 3 | **Survey, build, mine, make and deliver on demand** (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); **station research waits for its start materials, and convoys lose vessels** (every convoy ambushed at 50 % loss; orders follow until the start cost is met); **an ambushed convoy waits for its escort and delivers the share that got through** (app 0.9.2) |
-| `campaign::story` | 3 | **Arcs fire in order** with choices, offered missions and cooldowns; **plans grow from shipments that get through** (not from intercepted ones) and can end the campaign; **relations drift and the strategist answers the player** (app 0.10.0) |
+| `campaign::story` | 4 | **Arcs fire in order** with choices, offered missions and cooldowns; **plans grow from shipments that get through** (not from intercepted ones) and can end the campaign; **relations drift and the strategist answers the player** (app 0.10.0); **mission outcomes move standings** (app 0.12.1) |
 | `campaign::save` | 1 | A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused |
+| `formats::smacker` | 4 | **Small and big Huffman trees with the escape cache**; palettes (kept, copied, explicit entries); a hand-built one-frame file with a solid block; 8-bit mono DPCM audio (app 0.12.0). Plus one ignored helper, `real_smacker_file_decodes` (not counted) |
+| `formats::mpsrc` | 1 | An MPSRC pack's table and members (case-insensitive), a missing member, a foreign file (main `319a31b`) |
+| `content::music` | 1 | Sets parse; a missing state falls back to cruise; the state follows the nearest enemy (cruise, threat, battle); a set without states is an error (app 0.11.0) |
+| `content::skin` | 1 | Colours (RGB and RGBA) with fallbacks for unset roles; the panel; an unknown role is an error (app 0.11.1) |
+| `content::cutscene` | 2 | **Centripetal Catmull-Rom passes through its keys without overshoot**, holds at the ends; facing along the path; linear scalar keys; a cutscene parses (actions sorted, `destroy_at`, cuts, captions) and **bad entity or camera references are errors** (app 0.13.0) |
+| `app::ui` | 1 | Nine-slice pieces keep the corners and stretch the rest (app 0.11.1) |
+| `app::comms` | 1 | The panel lasts the clip plus 0.6 s, at least 2.5 s; the signal bars move and stay in range (app 0.13.1) |
 | `formats::png` | 2 | A PNG (encoded by the `image` crate since `2ed1149`) has the signature and chunks and **decodes back to the same pixels**; downscaling averages blocks |
 | `app::strategy` | 2 | The map fits its rectangle, centred; money has thousands separators |
 | `content::mission` | 2 | A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action) |
@@ -172,7 +199,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `hud::layout` | 4 | Anchor corners lie on the surface with world up; rays pick the nearest surface; 2D dragging and anchor scaling; saved layouts are valid rules |
 | `hud::draw` | 4 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second**; **the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch** |
 | `hud::glyphs` | 1 | Text sizes snap down onto the glyph ladder |
-| `audio` | 2 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`) |
+| `audio` | 3 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`); **music segments cycle within the wanted state** and a missing state plays cruise (app 0.11.0) |
 | `app::assets` | 2 | Tab cycling; empty lists without original data |
 | `app::devices` | 2 | Key names match the bindings vocabulary |
 | `app::flight` | 9 | Camera pose for every view, **3D cockpit field of view widens only on narrow screens**, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), **a wingman answers in its own voice** (only the player's wingmen, only with the line, never the lost one); **a campaign loadout refits the player's class in this battle only**; **the debrief waits for the delay after the result**; **campaign stances decide who fights whom** (app 0.10.3) |

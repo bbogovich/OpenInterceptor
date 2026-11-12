@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -44,19 +44,19 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-030 Package a pack](#r-mod-030-package-a-pack) | Planned |
 | [R-MOD-031 Cutscene Designer workspace](#r-mod-031-cutscene-designer-workspace) | Planned |
 | [R-MOD-032 Seeking with snapshots](#r-mod-032-seeking-with-snapshots) | Planned |
-| [R-MOD-033 Cutscene files](#r-mod-033-cutscene-files) | Planned |
-| [R-MOD-034 Deterministic playback with Simple physics](#r-mod-034-deterministic-playback-with-simple-physics) | Planned |
-| [R-MOD-035 Scripted entities and keyframes](#r-mod-035-scripted-entities-and-keyframes) | Planned |
-| [R-MOD-036 Paths and rotations](#r-mod-036-paths-and-rotations) | Planned |
-| [R-MOD-037 Timed actions](#r-mod-037-timed-actions) | Planned |
+| [R-MOD-033 Cutscene files](#r-mod-033-cutscene-files) | Planned (partly met) |
+| [R-MOD-034 Deterministic playback with Simple physics](#r-mod-034-deterministic-playback-with-simple-physics) | Implemented |
+| [R-MOD-035 Scripted entities and keyframes](#r-mod-035-scripted-entities-and-keyframes) | Planned (partly met) |
+| [R-MOD-036 Paths and rotations](#r-mod-036-paths-and-rotations) | Planned (partly met) |
+| [R-MOD-037 Timed actions](#r-mod-037-timed-actions) | Planned (partly met) |
 | [R-MOD-038 Autopilot entities](#r-mod-038-autopilot-entities) | Planned |
 | [R-MOD-039 Formations in cutscenes](#r-mod-039-formations-in-cutscenes) | Planned |
-| [R-MOD-040 Timed sounds](#r-mod-040-timed-sounds) | Planned |
-| [R-MOD-041 Captions](#r-mod-041-captions) | Planned |
-| [R-MOD-042 Cameras, fixed or attached](#r-mod-042-cameras-fixed-or-attached) | Planned |
-| [R-MOD-043 Camera cuts](#r-mod-043-camera-cuts) | Planned |
-| [R-MOD-044 Where cutscenes play](#r-mod-044-where-cutscenes-play) | Planned |
-| [R-MOD-045 Skipping a cutscene](#r-mod-045-skipping-a-cutscene) | Planned |
+| [R-MOD-040 Timed sounds](#r-mod-040-timed-sounds) | Planned (partly met) |
+| [R-MOD-041 Captions](#r-mod-041-captions) | Planned (partly met) |
+| [R-MOD-042 Cameras, fixed or attached](#r-mod-042-cameras-fixed-or-attached) | Planned (partly met) |
+| [R-MOD-043 Camera cuts](#r-mod-043-camera-cuts) | Planned (partly met) |
+| [R-MOD-044 Where cutscenes play](#r-mod-044-where-cutscenes-play) | Planned (partly met) |
+| [R-MOD-045 Skipping a cutscene](#r-mod-045-skipping-a-cutscene) | Planned (partly met) |
 | [R-MOD-046 Video cutscenes](#r-mod-046-video-cutscenes) | Planned |
 | [R-MOD-047 Shared formations](#r-mod-047-shared-formations) | Implemented (wingmen; cutscenes with MD2) |
 | [R-MOD-048 Drag instruments onto a 3D cockpit](#r-mod-048-drag-instruments-onto-a-3d-cockpit) | Planned |
@@ -461,9 +461,12 @@ A cutscene MUST be a pack file `cutscenes/<id>.yaml` with an id, a title (a text
 *Rationale:* Cutscenes are open pack data like everything else a modder writes.
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.13.0, main `a59ffce`): engine-played cutscene files are read and validated; `video:` in their place is MD3
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09
 - See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file)
+
+!!! note "As built (app 0.13.0)"
+    `cutscenes/<id>.yaml` with `id`, `title`, `length`, `environment` (`starfield_seed`, `sun`, `environment`), `entities`, `cameras`, `cuts`, `sounds`, `captions`, and the editor schema `schemas/cutscene.schema.json`. Read with every pack file when the content loads (`--check` included); a later pack replaces an id; mistakes are reported with the file and the key path (`cameras.chase: no entity 'x'`, `unknown class 'y'`) but without a line number. The `title` is plain text, not a text key. Every key: [Cutscenes](../../modding/cutscenes.md#the-file).
 
 ### R-MOD-034 Deterministic playback with Simple physics
 
@@ -472,9 +475,12 @@ A cutscene MUST run on the normal 60 Hz simulation with a fixed random seed, and
 *Rationale:* The user's request: "Cutscenes always use basic physics so that the animation behavior is predictable."
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: implemented (MD2, app 0.13.0, main `a59ffce`) — scripted entities are placed on their paths each tick, so no flight model steers them
+- Verified by: `content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot`; MT-6-09
 - See: [Mod designer: how it plays](../design/designer.md#33-how-it-plays-deterministic-with-simple-physics), [R-FLT-013](flight.md#r-flt-013-simple-physics-mode)
+
+!!! note "As built (app 0.13.0)"
+    `app::cutscene::CutscenePlayer` runs its own `World` at the 60 Hz `TICK` with the scene's `starfield_seed` as the world seed. Scripted entities are **placed** every tick (position, rotation and velocity from the path), so the requirement's Simple-physics clause is met by construction rather than by switching physics; bolts, missiles, hits and effects are simulated normally. Autopilot entities, which would need Simple physics, are not built (R-MOD-038).
 
 ### R-MOD-035 Scripted entities and keyframes
 
@@ -483,9 +489,12 @@ A scripted entity MUST be any ship, object or debris from the loaded packs, with
 *Rationale:* The user's request: "speed overridden when keyframe positions are set to guarantee that the positioning is correct".
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2: keyframe evaluation and speed-override unit tests).
+- Status: planned — partly met (MD2, app 0.13.0): position keys; any ship or object class
+- Verified by: `content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot`, `content::cutscene::tests::cutscenes_parse_and_check_their_references`
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+!!! note "As built (app 0.13.0)"
+    `keys.position` (`[[time, [x, y, z]], …]`), `enter` (default: the first key's time), `leave`; any ship or object class of the loaded packs. The speed always follows the path (the entity is placed on it), so the position-keys-override-speed rule holds trivially. Not built: rotation and speed keys; debris as an entity.
 
 ### R-MOD-036 Paths and rotations
 
@@ -494,9 +503,12 @@ Position keyframes MUST be joined by a centripetal Catmull-Rom spline that passe
 *Rationale:* Smooth paths without overshoot at sharp corners.
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2: spline and slerp sampling unit tests).
+- Status: planned — partly met (MD2, app 0.13.0): centripetal Catmull-Rom paths; facing along the path with banking
+- Verified by: `content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot`
 - See: [Mod designer: how it plays](../design/designer.md#33-how-it-plays-deterministic-with-simple-physics)
+
+!!! note "As built (app 0.13.0)"
+    `catmull_rom` (centripetal, α = ½, Barry–Goldman evaluation, held at the ends) passes through every key without overshoot; `path_rotation` faces the nose along the path and banks into turns by the sideways acceleration, up to 60°. Not built: rotation keyframes and their slerp.
 
 ### R-MOD-037 Timed actions
 
@@ -507,9 +519,15 @@ A `harmless` flag, on an entity (scripted or autopilot) or on a single action, M
 *Rationale:* The user's request: "assign targets for them to chase, capture, or shoot at" and "time triggered destruction"; with decision D4: "Also a flag for the animations for their weapons to cause no damage."
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2: action timing unit tests).
+- Status: planned — partly met (MD2, app 0.13.0): fire beams, fire a missile at a target, destroy
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+!!! note "As built (app 0.13.0)"
+    `actions: [[time, fire_beams, seconds] | [time, missile, target] | [time, destroy]]` and `destroy_at`, each through the battle's own code (the beam trigger, the missile trigger with a target, `combat::apply_damage`). Not built: chase, capture with the tractor, jump to hyperspace.
+
+!!! question "Open"
+    The `harmless` flag is parsed, but as built it tops up the entity's **own** hull to at least 1 each tick instead of making its weapons do no damage: its beams and missiles still hurt what they hit. To be corrected; until then scenes rely on paths that miss and on `destroy`.
 
 ### R-MOD-038 Autopilot entities
 
@@ -525,6 +543,9 @@ An autopilot entity MUST be flown by the engine's AI with the campaign's beginne
 !!! note "Decided (2026-11-11)"
     D4: beginner AI rules, with an optional per-entity `aggressive` flag; the `harmless` flag is R-MOD-037. What `aggressive` changes in the AI is fixed when MD2 is built.
 
+!!! note "Not built (app 0.13.0)"
+    MD2 shipped scripted entities only; autopilot entities, the `aggressive` flag and switching between scripted and autopilot are still to come.
+
 ### R-MOD-039 Formations in cutscenes
 
 A group of fighters or ships in a cutscene MUST be placeable by a named formation from the pack's `formations` (R-MOD-047), following a leader that is scripted or autopilot.
@@ -536,6 +557,9 @@ A group of fighters or ships in a cutscene MUST be placeable by a named formatio
 - Verified by: Planned (MD2).
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
 
+!!! note "Not built (app 0.13.0)"
+    Cutscene formations are not built; formations serve wingmen only (R-MOD-047).
+
 ### R-MOD-040 Timed sounds
 
 A cutscene MUST play sound clips (narration, music, effects) at given times, each with a volume and a fade in and out, either positioned on an entity or flat; music MUST be able to duck under narration.
@@ -543,9 +567,12 @@ A cutscene MUST play sound clips (narration, music, effects) at given times, eac
 *Rationale:* The user's request: "Sounds must be included at timed positions so that narration, music, and other audio can be played."
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.13.0): named event sounds at given times with a volume
+- Verified by: MT-6-09
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+!!! note "As built (app 0.13.0)"
+    `sounds: [[time, name, volume]]` plays one of the campaign's named event sounds (`SoundBank::play_named`); entities' own weapons and explosions make their sounds as in battle. Not built: sound files, fades, positioned sounds, music and its ducking.
 
 ### R-MOD-041 Captions
 
@@ -554,9 +581,12 @@ A cutscene MUST be able to show caption text, given as text keys so that it can 
 *Rationale:* Accessible narration (decision D3, 2026-11-11: yes).
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.13.0): captions over time ranges, as plain text
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains), [R-MOD-012](#r-mod-012-text-keys)
+
+!!! note "As built (app 0.13.0)"
+    `captions: [[from, to, text]]`, centred in the bottom letterbox bar in the skin's font. The text is plain, not a text key, so it is not translated.
 
 ### R-MOD-042 Cameras, fixed or attached
 
@@ -565,9 +595,12 @@ A cutscene MUST support **fixed** cameras, with keyframed world position, a keyf
 *Rationale:* The user's request: "Cameras can be defined at explicit positions or attached to an object … positioning is keyframed for distance and orbit."
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.13.0): fixed cameras (position keys, look-at, field of view) and attached cameras (distance and orbit keys)
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+!!! note "As built (app 0.13.0)"
+    Fixed: `position` keys on the Catmull-Rom spline, `look_at` an entity or a point (the horizon kept level), `fov`. Attached: `attach`, `distance` and `orbit` (`[yaw, pitch]`) keys, linear, in the entity's frame. Not built: rotation keys for fixed cameras, keyframed field of view, height and look-offset keys.
 
 ### R-MOD-043 Camera cuts
 
@@ -576,9 +609,12 @@ The active camera MUST be chosen by a track of keyframes, each cut instant or a 
 *Rationale:* The user's request: "Switching between cameras in the cutscene is set through keyframes."
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.13.0): instant cuts
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
+
+!!! note "As built (app 0.13.0)"
+    `cuts: [[time, camera]]`; `Cutscene::camera_at` gives the cut in force (the first before it). Not built: blended cuts.
 
 ### R-MOD-044 Where cutscenes play
 
@@ -587,9 +623,12 @@ The game MUST play a cutscene as a campaign's introduction, from a campaign even
 *Rationale:* The user's request: animations "that play for key campaign events or at the start of specific mission definitions".
 
 - Implements: [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game), [F-MOD-012](../../definition/modding-toolkit.md#f-mod-012-video-cutscenes)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.13.0, main `a59ffce`, `76d64d5`): as the campaign's introduction and from a campaign event
+- Verified by: MT-6-08 – MT-6-10
 - See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file), [Format: campaign and game flow](../design/format-campaign.md), [Format: missions, environments, events](../design/format-missions.md)
+
+!!! note "As built (app 0.13.0)"
+    `campaign.intro: <id>` plays before a new campaign's strategy screen; the story action `play_cutscene(<id>)` plays one from an event; `--cutscene <id>` plays one from the command line. The original's films play in the same places as videos (`campaign.intro_video`, the `video(…)` action, an ending's `video`). Not built: a mission's intro and outro.
 
 ### R-MOD-045 Skipping a cutscene
 
@@ -598,9 +637,12 @@ The player MUST always be able to skip a cutscene, engine-played or video, with 
 *Rationale:* A film never holds the player.
 
 - Implements: [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game), [F-MOD-012](../../definition/modding-toolkit.md#f-mod-012-video-cutscenes)
-- Status: planned
-- Verified by: Planned (MD2).
+- Status: planned — partly met (MD2, app 0.12.0 – 0.13.0): Esc (and Enter) skips a cutscene; Enter, Esc or a click skips a video
+- Verified by: MT-6-07, MT-6-09
 - See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file)
+
+!!! note "As built (app 0.13.0)"
+    `CutscenePlayer::frame` ends on Esc or Enter; `VideoPlayer::frame` on Enter, Esc or a left click; the app then returns to the parked campaign or the launcher. Not built: skipping from the tablet console and with the gamepad's Start button.
 
 ### R-MOD-046 Video cutscenes
 
@@ -615,6 +657,9 @@ A pack MUST be able to provide a video file in place of any engine-played cutsce
 
 !!! note "Open"
     The Linux path (GStreamer through `dlopen`) MUST be evaluated on the [dependency page](../../learning/best-practices/dependencies.md) before it is built (MD3).
+
+!!! note "Progress (app 0.12.0 – 0.13.0)"
+    Not built: MD3 is not started and no evaluation is recorded yet. Meanwhile the in-crate Smacker player (R-CMP-010) plays `.smk` files wherever a video is named — `campaign.intro_video`, the `video(<ref>)` action, `endings.<id>.video`, `--video` — from the player's data or a pack path (read, as built, from the first pack of the active set). A cutscene file cannot yet name a `video:` in its place.
 
 ### R-MOD-047 Shared formations
 
@@ -740,3 +785,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.9.1 | 2026-11-11 | R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note |
 | 1.12.0 | 2026-11-11 | R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) `mlua`, (b) `rhai`, (c) grow `script::*`; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed |
 | 1.13.0 | 2026-11-11 | R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7) |
+| 1.16.0 | 2026-11-11 | MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; Open note on R-MOD-037 (`harmless` as built protects the entity instead of disarming its weapons); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed |

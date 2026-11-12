@@ -99,6 +99,39 @@ pub const ACTIONS: &[ActionInfo] = &[
 `&'static str` fields fit because string literals live for the whole program. One table feeds
 parsing, defaults, the controls menu and the docs, so they cannot disagree.
 
+### A table computed at compile time: a `const` block — `src/formats/smacker.rs`
+
+Sometimes a table is easier to *compute* than to write out. Smacker's block run lengths are 1 to
+59 and then 128, 256, 512, 1024 and 2048. Instead of 64 literals, the decoder fills the array in
+a **`const` block**: a `{ … }` expression after `const NAME: Type =`, which the compiler runs
+while compiling.
+
+```rust
+/// Block run lengths, indexed by bits 2..7 of a `type` code.
+const SIZES: [u32; 64] = {
+    let mut t = [0u32; 64];
+    let mut i = 0;
+    while i < 59 {
+        t[i] = i as u32 + 1;
+        i += 1;
+    }
+    t[59] = 128;
+    t[60] = 256;
+    t[61] = 512;
+    t[62] = 1024;
+    t[63] = 2048;
+    t
+};
+```
+
+Code in a `const` context may only do what the compiler can evaluate: local `let mut`
+variables, arithmetic, array indexing, `if` and `while` loops are fine; **`for` loops are not**
+(they go through the `Iterator` trait, whose methods are not `const`), which is why this one is
+a `while`. Allocation, I/O and ordinary function calls are not allowed either — only `const fn`s.
+The block's last expression, `t`, is the value. The result is the same as typing the 64 numbers:
+a constant baked into the program, with no start-up code and nothing to initialise at run time,
+and the rule that made it stays readable in the source.
+
 ### Recursive enums and recursive descent — `src/script/mod.rs`
 
 A parsed condition such as `hull < 25% and not disabled` is a **tree**. An enum can describe a

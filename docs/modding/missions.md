@@ -74,7 +74,7 @@ missions:
 | `optional` | mapping name: condition | none | Optional objectives, latched when first met and reported on the debrief. |
 | `timer` | `{after, then}` | none | A time limit: after `after` (a time) the result is `then` (`win`, `lose`, `draw`, `retreat` or `killed`; default `draw`). |
 | `outcomes` | mapping result: list of actions | none | What each result does (below). Results: `win`, `lose`, `draw`, `retreat`, `killed`. A mission without `killed` outcomes uses its `lose` outcomes for it. |
-| `chatter` | list of `{when, line, voice}` | none | Radio lines, each said once when its condition first holds. `voice` (optional, app 0.6.2) is a sound asset spoken on the radio with the line: `voice: sounds/colony_control.wav`, or a `cue:<Name>` (app 0.6.7) ([Radio voices](voices.md)). |
+| `chatter` | list of `{when, line, voice, speaker}` | none | Radio lines, each said once when its condition first holds. `voice` (optional, app 0.6.2) is a sound asset spoken on the radio with the line: `voice: sounds/colony_control.wav`, or a `cue:<Name>` (app 0.6.7). `speaker` (optional, app 0.13.1) is the voice set whose name and face the comms panel shows while the clip plays ([Radio voices › Faces](voices.md#faces-on-the-comms-panel)). |
 | `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. The debrief appears `flight.debrief_delay` (30 s) after the result; the battle runs on meanwhile (app 0.7.4, [reference](reference.md#flight)). |
 | `environment` | id | open space | Where the battle happens: an [environment](environments.md) such as `orbit` or `moon_surface`. |
 | `hazards` | mapping | none | Asteroid field, minefield, black hole, ion storm ([below](#hazards)). |
@@ -222,7 +222,7 @@ the debrief now and will be applied by the strategy layer (Stage 4).
 | `message(text)` | text (a `@key` or words) | battle | Show a line on the message display. |
 | `score(name)` | id | campaign | Add a mission score entry. |
 | `money(n)` | number | campaign | Add (or take) money. |
-| `relation(faction, n)` | id, number | campaign | Change a faction's relation. |
+| `relation(faction, n)` | id, number | campaign | Change the player's standing with a faction (applied by the strategy layer since app 0.12.1, campaigns with dynamic relations only; a faction not in `relations.start` starts from 0 — the default campaign's `relation(guard, +5)` gives the player's own faction a standing nothing reads). |
 | `salvage` | — | campaign | Collect salvage from destroyed enemies. |
 | `capture` | — | campaign | Keep the craft captured by tractor beam. |
 | `lose(asset)` | id | campaign | The player loses an asset (an outpost, a facility). |

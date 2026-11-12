@@ -1,5 +1,5 @@
 ---
-spec_version: 1.7.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -65,6 +65,15 @@ The `interceptor` campaign's skin uses the original's wrapper art (`WrappersDLL.
 by `original:` reference, laid out like the original screens at 640×480; the remastered mod
 can supply a widescreen layout.
 
+!!! note "As built (app 0.11.1)"
+    Skins only, simpler than above: `skins.<id>` with `colours` (seven roles: `background`,
+    `panel`, `border`, `text`, `dim`, `accent`, `highlight`), one `panel: {image, slice}` and one
+    `font` (a TrueType file, not a bitmap sheet); `campaign.skin` chooses it. The launcher and the
+    strategy screen draw through it, and the `chapter` title card exists as the `card(…)` story
+    action. Not built: `screens:` layouts and design spaces, widgets, `button`, skin `sounds`,
+    several fonts, custom panels, the other screens; `interceptor` has a palette-only skin, its
+    wrapper layouts not mapped. [Modding › Skins](../../modding/skins.md).
+
 ## Cockpits and HUD
 
 Cockpits stay as implemented ([cockpits](../../modding/cockpits.md)): 2D art at any resolution,
@@ -72,7 +81,11 @@ its own design space, or a 3D model; instrument rectangles, or instruments ancho
 model's surface. Additions:
 
 - `instruments: {comms: …}`: the MFD talking-head panel (the original's 113 Smacker clips; any image
-  sequence or video for mods).
+  sequence or video for mods). *As built (app 0.13.1):* not a cockpit instrument but a fixed
+  panel at the top left, driven by the voice sets — `name` and `face` (a picture or a looping
+  Smacker clip, also `original:mfdanim.mps#<member>`) — and chatter's `speaker`
+  ([Radio voices › Faces](../../modding/voices.md#faces-on-the-comms-panel)). Custom instruments
+  are not built.
 - custom instruments (`instruments: {<custom>: …}`) bound to a query (`hull`, `plan(eclipse)`) with a gauge style — for
   campaign-specific instruments.
 - Per-environment HUD elements (altitude and vertical speed, horizon line) shown only in
@@ -129,6 +142,14 @@ music:
 Strategy-screen music, CD audio tracks (the original's Red Book audio, played from the
 player's ripped files) and the default campaign's synthesised loops use the same section.
 
+!!! note "As built (app 0.11.0)"
+    `states` (`cruise`, `threat`, `battle`, `strategy`), `stingers`, and in place of `switch:` and
+    `transition:` two ranges, `threat_range` and `battle_range`, with the transition always at a
+    segment's end; plus `volume`. The `interceptor` files are named without the `Loops/` folder
+    (`original:cruise1-1.wav`; the original-data index finds them by name). Not built: `switch:`
+    conditions, the `.wtl` tables, CD audio. [Modding › Music](../../modding/music.md),
+    [DEV-053](../../implementation/deviations/index.md).
+
 ## Voices and chatter
 
 `voices: {<id>: …}`: a set of lines for wingman and pilot chatter (the original's 5 male and 5
@@ -139,6 +160,11 @@ an audio file. Missions trigger lines by event (`chatter` keys); pilots are assi
 
 `videos: {<id>: …}`: intro, endings, cut-scenes. Smacker (the original; in-crate decoder, Stage 5)
 or an image sequence with audio for mods. An ending, briefing or chapter card may name a video.
+
+!!! note "As built (app 0.12.0 – 0.13.0)"
+    No `videos:` section: a video is named directly by its asset reference — the story action
+    `video(<ref>)`, `endings.<id>.video` and `campaign.intro_video` — and only Smacker plays.
+    Image sequences are not built (MD3).
 
 **Cutscenes** played by the engine, and video files in place of them (through the operating
 system's media framework, with image sequences as the fallback), are designed on
@@ -151,3 +177,4 @@ system's media framework, with image sequences as the fallback), are designed on
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
 | 1.7.0 | 2026-11-11 | Video: link to the cutscene and video-cutscene design |
+| 1.16.0 | 2026-11-11 | As-built notes (app 0.11.0 – 0.13.1): skins, the comms panel, music, video |

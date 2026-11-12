@@ -199,8 +199,10 @@ last base lost) can end the campaign.
   `money(n)`, `salvage`, `set_flag(x)`, …), the kill count and — when the mission names a
   `cargo:` role — the share of its cargo still aboard (`mission::cargo_share`). Leaving from the pause menu
   is `retreat`; a mission that cannot start is counted as `retreat` too, with the error printed.
-- `Campaign::battle_result` applies the actions it knows (`score`, `money`, `set_flag`, `salvage`;
-  `lose` is logged; `relation`, `capture` and the cargo actions are still ignored at app 0.10.3),
+- `Campaign::battle_result` applies the actions it knows (`score`, `money`, `set_flag`, `salvage`,
+  and since app 0.12.1 `relation(f, n)` through `change_standing` — a stance change it causes is
+  logged, but its notice is dropped, so it does not stop the clock; `lose` is logged; `capture`
+  and the cargo actions are still ignored),
   marks a battle for `after_battle` events, counts a win for the story, credits the party's pilots, removes a
   `killed` leader's craft (re-indexing pilots' craft handles), sends the rest home, and removes
   the contact on `win` or `draw`.
@@ -368,7 +370,8 @@ flowchart TD
 - **One place changes the campaign.** `Campaign::apply_actions(def, actions, events)` is the only
   code that turns story actions into changes — money, flags, standings, research, raids, plan
   progress, aggression, endings — and into events for the screen (`Notice`, `Mission`,
-  `Ending`). Events, choices (`Campaign::choose`), plan warnings and completion all call it.
+  `Ending`, and since app 0.11.1 – 0.13.0 `Card { title, text }`, `Video { reference }` and
+  `Cutscene { id }`, which change nothing in the campaign: `card` only logs its title). Events, choices (`Campaign::choose`), plan warnings and completion all call it.
 - **Shipments reuse raids.** A plan's shipment is an ordinary `Contact` with `plan: Some(p)`, so
   detection, interception and the battle need nothing new. Only the arrival differs:
   `Campaign::unopposed` sees `plan` and calls `shipment_arrived` (one more component) instead of
@@ -382,7 +385,12 @@ flowchart TD
 The screen (`app::strategy`) holds what is waiting for the player — `convoy`, `choice`, `offer`,
 `ending` — as `Option`s on `StrategyScreen`, checked in that order before normal input: an
 ending takes Enter/Esc to leave, a choice takes the number keys, an offer and a convoy take
-Enter (fly) or Esc (decline). The **Archive** tab (`Tab::Archive`) lists the started plans, the
+Enter (fly) or Esc (decline); a title card (`card`, app 0.11.1) waits for Enter, Esc or a click.
+A video or cutscene event makes the screen return `Next::Video` / `Next::Cutscene` and the app
+parks it until the film is over ([Presentation](presentation.md#who-plays-what-the-apps-routing)).
+An ending's `video` plays before its banner; loading a save whose story has ended sets
+`StrategyScreen::ending` again, so a finished campaign shows its ending (app 0.12.1). The
+automatic player (`autoplay_from`) ignores the three presentation events. The **Archive** tab (`Tab::Archive`) lists the started plans, the
 standings with their stances, the aggression and battles won, and `Campaign::encyclopaedia`'s
 unlocked entries.
 

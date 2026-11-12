@@ -125,7 +125,9 @@ scripts/check.sh
 | `--difficulty <ID>` | Play at this difficulty level, a level id of the campaign (default: the last one chosen, else the campaign's `default_difficulty`). |
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--mission <ID>` | Start this mission, skipping the launcher ([Missions](../modding/missions.md)). |
-| `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. |
+| `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. The campaign's intro cutscene or film is not played this way. |
+| `--cutscene <ID>` | Play this cutscene of the campaign, then open the launcher (app 0.13.0; [Cutscenes](../modding/cutscenes.md)). |
+| `--video <REF>` | Play this video, then open the launcher (app 0.12.0): `original:<file>.smk` from your data (for example `original:alientrans1.smk`) or a pack path; Smacker files only. |
 | `--strategy-soak <DAYS>` | Play the campaign's strategy layer without a window for that many days with a simple automatic player, print one line (date, funds, score, bases, craft, topics, battles, messages) and exit (app 0.8.0; [Strategy layer](../modding/strategy.md#trying-a-campaign-out)). Use with `--campaign`. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |

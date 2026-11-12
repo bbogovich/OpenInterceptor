@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.16.0
 status: current
 updated: 2026-11-11
 ---
@@ -160,7 +160,7 @@ Everything it saves is the same open pack data a modder could write by hand.
 
 **Why.** Story moments in a campaign, the same way every time.
 
-- **Status:** planned
+- **Status:** in-progress — MD2 (app 0.13.0): `cutscenes/<id>.yaml` with keyframed scripted craft, timed fire and destruction, fixed and attached cameras, cuts and captions, played as a campaign's introduction and from events, skipped with Esc; the X-COM campaign's films play the same way as Smacker videos. Remaining: autopilot entities, formations, mission intros and outros, skipping from the console or pad
 - **Source:** The user's request, 2026-11-11, quoted in full on the [design page](../specification/design/designer.md): "introduction film and custom animations that play for key campaign events or at the start of specific mission definitions". Plan item MD2.
 - **Specified by:** [R-MOD-033](../specification/requirements/modding.md#r-mod-033-cutscene-files), [R-MOD-034](../specification/requirements/modding.md#r-mod-034-deterministic-playback-with-simple-physics), [R-MOD-035](../specification/requirements/modding.md#r-mod-035-scripted-entities-and-keyframes), [R-MOD-036](../specification/requirements/modding.md#r-mod-036-paths-and-rotations), [R-MOD-037](../specification/requirements/modding.md#r-mod-037-timed-actions), [R-MOD-038](../specification/requirements/modding.md#r-mod-038-autopilot-entities), [R-MOD-039](../specification/requirements/modding.md#r-mod-039-formations-in-cutscenes), [R-MOD-040](../specification/requirements/modding.md#r-mod-040-timed-sounds), [R-MOD-041](../specification/requirements/modding.md#r-mod-041-captions), [R-MOD-042](../specification/requirements/modding.md#r-mod-042-cameras-fixed-or-attached), [R-MOD-043](../specification/requirements/modding.md#r-mod-043-camera-cuts), [R-MOD-044](../specification/requirements/modding.md#r-mod-044-where-cutscenes-play), [R-MOD-045](../specification/requirements/modding.md#r-mod-045-skipping-a-cutscene)
 
@@ -215,3 +215,4 @@ The first test case for the mod tools is exactly this: a mod extending `intercep
 | 1.9.0 | 2026-11-11 | F-MOD-014 3D cockpit instrument placement and F-MOD-015 single-file models and Blender sources (planned), from the user's message of 2026-11-11. F-MOD-001: packs (built into the game) versus mods (added from the user's mods folder), the term *extension*, Open note on where the line falls. F-MOD-009: the wizard's kind is *extension*, not *override* |
 | 1.12.0 | 2026-11-11 | F-MOD-005: the Tier 2 evaluation is recorded on the dependency page (R-MOD-015); awaiting the user's decision |
 | 1.13.0 | 2026-11-11 | F-MOD-013 in progress: formations built for wingmen (MD1, app 0.6.6) |
+| 1.16.0 | 2026-11-11 | F-MOD-011 in progress: engine-played cutscenes (MD2, app 0.13.0) |

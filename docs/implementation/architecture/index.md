@@ -20,7 +20,7 @@ The order is the one written at the top of `src/lib.rs`:
 ```mermaid
 flowchart TB
     subgraph L7["7 · Application"]
-        APP["app<br/>launcher, viewer, asset browser, flight session,<br/>simulator, strategy screen"]
+        APP["app<br/>launcher, viewer, asset browser, flight session,<br/>simulator, strategy screen,<br/>ui (skins), video, cutscene"]
         CK["check<br/>headless validation"]
         EX["extract<br/>original data → OBJ/PNG/WAV"]
         CLI["cli + settings<br/>options, user data folder"]
@@ -32,7 +32,7 @@ flowchart TB
     subgraph L6["6 · Presentation"]
         R["render<br/>camera, gpu, effects, starfield"]
         H["hud<br/>layout, radar, MFD, draw"]
-        AU["audio<br/>SoundBank"]
+        AU["audio<br/>SoundBank, MusicPlayer"]
     end
     subgraph L5["5 · Devices"]
         IN["input<br/>Bindings, gamepad::PadState"]
@@ -43,14 +43,14 @@ flowchart TB
         CA["campaign<br/>Campaign: the strategy layer, hour step, saves"]
     end
     subgraph L3["3 · Content"]
-        C["content<br/>Content, vfs, pack, rules, schema, files,<br/>equipment, behaviour, scenario, formation, strategy"]
+        C["content<br/>Content, vfs, pack, rules, schema, files,<br/>equipment, behaviour, scenario, formation, strategy,<br/>story, music, skin, cutscene"]
         SC["script<br/>conditions, actions, campaign context"]
     end
     subgraph L2["2 · Model"]
         M["model<br/>Model, ModelLod, MaterialGroup"]
     end
     subgraph L1["1 · Formats"]
-        F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj, png (writer)"]
+        F["formats<br/>pe, xmsh, xtxr, tga, wav, ini, yaml, obj, png (writer),<br/>smacker"]
     end
     APP --> R & H & AU & IN & S & C & MI & RM & CA
     CA --> C & SC
@@ -144,6 +144,7 @@ flowchart LR
 Each layer's public API is on its own page: [Formats](formats.md), [Packs, VFS and
 rules](packs.md), [Assets and GPU cache](assets.md), [Simulation](sim.md), [Conditions](script.md), [Missions](mission.md), [Campaign](campaign.md),
 [Rendering](rendering.md), [HUD](hud.md), [Input](input.md), [Audio](audio.md),
+[Presentation](presentation.md),
 [Platform](platform.md), [Remote console](remote.md), [Testbed](testbed.md). `cargo doc --open` renders the `///` comments
 of every item.
 

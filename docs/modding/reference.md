@@ -40,7 +40,7 @@ may also use `inherit`, `delete: true`, `variants: {<level>: {…}}` and list ed
 
 Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `systems`, `cockpits`,
 `behaviours`, `modelsets`, `debris`, `effects`, `voices`, `environments`, `terrains`, `formations`,
-`missions` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `audio`, `console`,
+`missions`, and since app 0.11.0 – 0.11.1 `music` and `skins` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `audio`, `console`,
 `campaign` (global). The **strategy layer** adds the definitions `maps`, `star_classes`, `research`,
 `items`, `hulls`, `base_modules`, `base_types`, `raids`, `incomes`, `expenses` and the globals
 `start`, `research_model`, `pilots`, `scores`, `flags`, `economy`, `tech_ids` (app 0.8.0), by
@@ -323,7 +323,10 @@ each weapon. Any sound reference may be `cue:<Name>`, a cue of the [audio](#audi
 ### `voices`
 
 Radio voice sets (app 0.6.2; guide: [Radio voices](voices.md)). A definition section:
-`voices: {<set id>: {<line>: clip or [clips]}}`. Ships choose one with `voice: <set id>`.
+`voices: {<set id>: {<line>: clip or [clips]}}`. Ships choose one with `voice: <set id>`. Since
+app 0.13.1 two more keys, which are not lines: `name` (text, the speaker shown on the comms
+panel; default the id) and `face` (asset: a picture or a `.smk` clip, also
+`original:<pack>.mps#<member>`) ([Faces on the comms panel](voices.md#faces-on-the-comms-panel)).
 
 | Line | When it is said |
 |---|---|
@@ -341,6 +344,31 @@ each time. Like the `sounds:` section, a clip may be `cue:<Name>` (app 0.6.7), a
 | Key | Type | Meaning |
 |---|---|---|
 | `cue_table` | asset | A table of named sound cues: `original:<file>/<section>` — the original's `soundfx.ini` (`original:soundfx.ini/InterceptorSounds`). Each entry `Name = "path\file.wav"` makes `cue:Name` mean `original:file.wav`. Cue names ignore case; an unknown cue, or a missing table, is a load error. |
+
+### `music`
+
+Interactive music sets (app 0.11.0; guide: [Music](music.md)). A definition section:
+`music: {<set id>: {…}}`.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `states` | map of state → asset or [assets] | *required* | Segments per state, played in turn: `cruise`, `threat`, `battle` (battles) and `strategy` (the strategy screen). A missing state falls back to `cruise`, then to the first. |
+| `stingers` | map of name → asset | none | Played once: `victory` (a mission won), `death` (any other result); `good` and `bad` are loaded but not yet played. |
+| `threat_range` | distance | `12km` | A hostile craft this close to the player: `threat`. |
+| `battle_range` | distance | `4km` | This close: `battle`. |
+| `volume` | fraction | `60%` | The set's level (× the player's music volume). |
+
+### `skins`
+
+Skins for the menu and strategy screens (app 0.11.1; guide: [Skins](skins.md)). A definition
+section: `skins: {<skin id>: {…}}`; `campaign.skin` chooses one.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `colours` | map of role → `[r, g, b]` or `[r, g, b, a]` | the plain look | Roles `background`, `panel`, `border`, `text`, `dim`, `accent`, `highlight`; an unknown role is an error. |
+| `panel.image` | asset | none | A nine-slice frame image for panels and title cards. |
+| `panel.slice` | number | 16 | Its corner size, pixels. |
+| `font` | asset | the built-in font | A TrueType font for every skinned text. |
 
 ### `console`
 
@@ -396,6 +424,9 @@ Terrains (heightfields) by id (app 0.6.0; guide: [Environments and terrain](envi
 | `name` | text | — | Campaign title. |
 | `difficulty` | ids | none | Difficulty level ids, easiest first. |
 | `default_difficulty` | id | the middle level | The level a new game starts at. |
+| `skin` | id | the first skin defined | The [skin](skins.md) of the menu and strategy screens (app 0.11.1). An unknown id is an error. |
+| `intro` | id | none | A [cutscene](cutscenes.md) played before a new campaign's strategy screen (app 0.13.0). |
+| `intro_video` | asset | none | A video played before a new campaign (app 0.13.0), when there is no `intro`; Smacker only ([Cutscenes › Videos](cutscenes.md#videos)). |
 
 ### `missions`
 
@@ -436,6 +467,12 @@ part is optional.
 
 The schema type **either** (`Ty::Either`) lets a key take one of two forms: `count: 3` or
 `count: [2, 4]`; `bearing: [10, 5]` or `bearing: random`; `class: comet` or `class: [a, b]`.
+
+## Cutscene files (`cutscenes/*.yaml`)
+
+One cutscene per file (app 0.13.0; editor schema `schemas/cutscene.schema.json`). Every key —
+`id`, `title`, `length`, `environment`, `entities`, `cameras`, `cuts`, `sounds`, `captions` — with
+its type and default is on [Cutscenes › The file](cutscenes.md#the-file).
 
 ## Text files (`text/<language>/*.yaml`)
 

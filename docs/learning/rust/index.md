@@ -10,7 +10,7 @@ Read in order; each page builds on the previous one.
 |---|---|
 | [Ownership and borrowing](ownership.md) | Who owns the World, the meshes, the textures; why `&` and `&mut` matter; interior mutability with `Cell` (`ObjectContext`) |
 | [Lifetimes and borrowed bytes](lifetimes.md) | The format readers, which parse a DLL without copying it; naming lifetimes on a returned iterator (`rules::of`) |
-| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`); recursive enums and a recursive-descent parser (`script::Expr`) |
+| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`) and a `const` block computing one (`SIZES`, Smacker); recursive enums and a recursive-descent parser (`script::Expr`) |
 | [Traits and generics](traits.md) | `Default`, `Debug`, `From`, `Iterator`, macroquad's `Camera` |
 | [Error handling](errors.md) | `Result`, `?`, per-layer error enums; why bad data never panics |
 | [Modules and visibility](modules.md) | The `src/` tree, `mod`, `pub`, `pub(crate)` |
@@ -20,7 +20,7 @@ Read in order; each page builds on the previous one.
 | [Platforms with `cfg`](cfg.md) | macOS / Linux / other code paths |
 | [Testing in Rust](testing.md) | `#[test]`, `#[cfg(test)]`, unit vs integration tests |
 | [Cargo](cargo.md) | `Cargo.toml`, profiles, `Cargo.lock`, pinned versions, `build.rs` |
-| [Async and the macroquad loop](async-loop.md) | `macroquad::Window::from_config`, `next_frame().await`, the fixed-timestep accumulator |
+| [Async and the macroquad loop](async-loop.md) | `macroquad::Window::from_config`, `next_frame().await`, the fixed-timestep accumulator; an async open and a sync play (`VideoPlayer`), and a decoder rebuilt rather than stored beside the bytes it borrows |
 
 Further reading: *The Rust Programming Language* (the "Book", free at doc.rust-lang.org/book)
 covers each topic in depth; *Rust by Example* has runnable snippets.

@@ -13,14 +13,19 @@ messages that arrive as you play, choices to make, missions offered to you, a ri
 something you must stop, factions whose standing with you changes, and endings — victory or
 defeat.
 
-The screen is **functional and plain** in this version: every rule is playable, but it is not
-yet dressed in the campaign's look (that is Stage 6).
+The screen is **functional**: every rule is playable. Since app 0.11.1 it is drawn in the
+campaign's **skin** — the default campaign's art-deco navy and gold, `interceptor`'s green on
+steel — and since app 0.11.0 – 0.13.0 the campaign has **music**, chapter **title cards**,
+**films** and **cutscenes** ([Films, cutscenes and music](#films-cutscenes-and-music)). Its full
+screen layouts are still to come (Stage 6).
 
 ## Starting
 
 - In the launcher, a campaign with a strategy layer lists **Campaign: continue** and
   **Campaign: new game** first, and the selection starts on *continue*.
-- *New game* starts at the launcher's difficulty level. *Continue* loads the campaign's save
+- *New game* starts at the launcher's difficulty level. If the campaign has an introduction it
+  plays first: the default campaign's opening cutscene, or `interceptor`'s opening film from your
+  data (app 0.13.0). Esc skips it. *Continue* loads the campaign's save
   (there is one save per campaign); with no save, the launcher shows the error.
 - From the command line: `openinterceptor --no-original --strategy` opens a new default campaign
   directly ([Getting started](getting-started.md#run)).
@@ -175,8 +180,10 @@ stop the clock, choices, offered missions and, finally, an ending.
   grows. Messages warn you as it nears completion, and the Archive tab shows how far it is.
   If it is completed, you lose.
 - **Relations** (default campaign). Every faction has a standing with you from −100 to 100 and
-  a stance — hostile, wary, neutral, friendly or allied. What happens moves them, and they drift
-  back towards neutral each month. A change of stance stops the clock. A faction that is no
+  a stance — hostile, wary, neutral, friendly or allied. Story events and, since app 0.12.1, the
+  missions you fly move them (winning the nebula-pocket ambush lowers the raiders' standing), and
+  they drift back towards neutral each month. A change of stance from a story event stops the
+  clock; one from a mission is only logged. A faction that is no
   longer **hostile** stops raiding you and does not attack you in battle; one that turns hostile
   does. The Senate's stipend grows with its standing.
 - **The rival's mood.** Sit back and the rival grows bolder — its raids come more often; win
@@ -186,6 +193,34 @@ stop the clock, choices, offered missions and, finally, an ending.
   lose if it is lit, if you lose your last base, or if the Senate turns against you; in
   `interceptor` you win by destroying the Doomsday weapon and lose if it is completed or your
   last base falls.
+
+## Films, cutscenes and music
+
+*App 0.11.0 – 0.13.0.*
+
+- **Title cards.** Each chapter of the default campaign's serial opens with a full-screen card —
+  the chapter's title and its hook — and the clock stops. **Enter**, **Esc** or a click
+  dismisses it; then the chapter's mission is offered as before.
+- **Films.** In `interceptor`, each of the five alien transmissions plays the original's
+  transmission film from your data, the victory plays the closing credits, and a new campaign
+  opens with the original's opening film. The film fills the screen (letterboxed); **Enter**,
+  **Esc** or a click skips it, and the map comes back where you left it.
+- **Cutscenes.** The default campaign opens with a short scene played by the engine itself —
+  a Guard patrol meets a saucer over the Gatehouse — with captions and black bars. **Esc** or
+  **Enter** skips it.
+- **Music.** Battles play the campaign's music: calm while no enemy is near, tense when one
+  is within radar range, driving when one is close, changing at the end of a musical phrase.
+  A win plays a victory sting, any other result a darker one. The strategy screen has its own
+  music; the launcher and the other testbed screens are silent. Set the music and effects
+  volumes in the launcher with **M** and **V** ([Settings](settings.md#volumes-in-the-launcher)).
+- **Who is speaking.** In any battle, when someone speaks on the radio a small panel at the top
+  left shows their portrait and name for a moment (app 0.13.1) — in the default campaign the
+  Guard Wing and Colony Control; voices without a portrait show moving signal bars.
+- **The end.** An ending with a film plays it first, then shows *VICTORY.* or *DEFEAT.* and its
+  text. Continuing a finished campaign shows its ending again (app 0.12.1).
+
+The default campaign's music files are generated: after a fresh clone of the repository run
+`python3 tools/default_assets/make_all.py`, or the campaign plays without music.
 
 ## Money and the monthly report
 
@@ -215,14 +250,16 @@ The testbed keeps the original game's own cheat list as debug keys on the strate
 | Ctrl+B | *quickbase* | Every base and module under construction finished now (not supply facilities). |
 | Ctrl+J | *jump to battle* | With a contact chosen on the Contacts tab: a ready craft with a pilot is put at it at once, and the fly-or-break-off banner appears. Otherwise it says *Choose a contact on the Contacts tab first*, or *no ready craft with a pilot*. |
 
-## Limits in app 0.10.3
+## Limits in app 0.13.0
 
 - Fitting takes the best items in store; you cannot choose them one by one yet.
 - Facilities have no fighters of their own, and the Supply tab is plain text.
 - Several chapters of the default campaign's serial fly an existing mission rather than their
   own; allied factions do not yet fly at your side; two of the original's seven side missions
   are in `interceptor`. Neither campaign has been played through from start to finish yet.
-- The ending is a banner line, not a screen of its own (Stage 6).
+- The ending is a banner line with an optional film, not a screen of its own (Stage 6).
+- Films and cutscenes cannot be skipped from the tablet console or the gamepad yet; a film's
+  sound ignores the volume settings.
 - The `interceptor` campaign's strategy layer has not been play-tested; its research is slow
   with one downlink.
 - Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default
