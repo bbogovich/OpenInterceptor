@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The X-COM: Interceptor story (Stage 5.8): the Doomsday arc - five alien messages, the
+# summoning of the MacArthur and the final mission - and the aliens' Doomsday plan,
+# built from component shipments the player can intercept. The gate chain follows the
+# guide (docs: Design > Original analysis, "Story gate chain"); thresholds and chances
+# marked DERIVED are estimates. Texts use the original's own keys where it has them.
+
+flags: [alien_message_1, alien_message_2, alien_message_3, alien_message_4, alien_message_5, macarthur, doomsday_destroyed]
+
+arcs:
+  doomsday:
+    steps: [alien_message_1, alien_message_2, alien_message_3, alien_message_4, alien_message_5, summon_macarthur, final_mission]
+
+events:
+  alien_message_1:
+    # Not before 1 February; a chance after each battle (7/7/5/5/4 %), or later regardless (DERIVED: day 120).
+    when: >-
+      day >= 31 and (day >= 120 or (difficulty <= experienced and random(0.07))
+      or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
+    check: after_battle
+    do: ["message(An alien transmission has been intercepted. Our scientists are decoding it.)", set_flag(alien_message_1)]
+  alien_message_2:
+    # From 1 March, with a Structural Component shipment seen and a saucer examined (DERIVED topic).
+    when: "day >= 59 and plan(doomsday) > 0 and research(type_1_saucer_examination)"
+    do: ["message(A second alien transmission: the aliens are building something.)", set_flag(alien_message_2)]
+  alien_message_3:
+    when: "day >= 120 and research(type_2_saucer_examination)"
+    do: ["message(A third transmission speaks of a weapon beyond a gateway.)", set_flag(alien_message_3)]
+  alien_message_4:
+    when: "day >= 181 and research(type_3_saucer_examination) and plan(doomsday) >= 0.33"
+    do: ["message(A fourth transmission: the weapon's drive is being assembled.)", set_flag(alien_message_4)]
+  alien_message_5:
+    when: "day >= 273 and plan(doomsday) >= 0.66"
+    do: ["message(The fifth transmission reveals the gateway: a black hole at the edge of the frontier.)", set_flag(alien_message_5)]
+  summon_macarthur:
+    when: "research(alien_hull_alloys) and research(dimension_jump_drive) and research(nova_bomb)"
+    do: ["message(@orig.MAC_PROMPT1)", set_flag(macarthur)]
+  final_mission:
+    # The MacArthur arrives in about a week.
+    when: "fired(summon_macarthur) >= 1"
+    check: weekly
+    do: ["mission(destroy_doomsday_weapon)"]
+
+  # Side missions (DERIVED triggers; the original's are discrete events).
+  rogue_freighter:
+    when: "month >= 1 and month <= 6"
+    check: monthly
+    chance: 15%
+    do: ["message(A rogue freighter has been sighted. Intercept it for the corporations.)", "mission(ambush_pirate_squadron)", "money(250000)"]
+  kabron_pirates:
+    when: "month >= 3"
+    check: monthly
+    chance: 10%
+    do: ["message(Kabron pirates are raiding the shipping lanes.)", "mission(ambush_pirate_squadron)"]
+
+plans:
+  doomsday:
+    owner: alien
+    # Totals 25/25/25/20/18 by difficulty, split Structural/Weapon/Drive (Beginner 8/8/9,
+    # Superhuman 7/6/5; the middle levels DERIVED).
+    stages:
+      - {name: Structural, count: {per_level: [8, 8, 8, 7, 7]}}
+      - {name: Weapon, count: {per_level: [8, 8, 8, 7, 6]}}
+      - {name: Drive, count: {per_level: [9, 9, 9, 6, 5]}}
+    start_when: flag(alien_message_1)
+    every: 9d                         # DERIVED
+    # Convoys pass near X-COM space with probability 65 -> 45 % by difficulty.
+    chance: {per_level: [65%, 60%, 55%, 50%, 45%]}
+    raid: doomsday_convoy
+    warnings:
+      - {at: 33%, do: ["message(@orig.DD_WARNING1)"]}
+      - {at: 66%, do: ["message(@orig.DD_WARNING2)"]}
+      - {at: 90%, do: ["message(@orig.DD_WARNING3)"]}
+    complete: ["defeat(doomsday_complete)"]
+
+strategist:
+  aggression: {start: 1.0, min: 0.7, max: 1.6, up: 0.1, down: 0.1}   # DERIVED (Think.ini's aggression rules come later)
+  calm_after_wins: 3
+
+endings:
+  doomsday_destroyed: {victory: true, text: "The Doomsday weapon is destroyed. The frontier is safe."}
+  doomsday_complete: {text: "@orig.DD_TOOLATE"}
+  last_base: {text: "@orig.S_LASTBASEDEAD"}
+
+campaign_end:
+  defeat: [{when: "bases == 0", ending: last_base}]
+  victory: [{when: "flag(doomsday_destroyed)", ending: doomsday_destroyed}]

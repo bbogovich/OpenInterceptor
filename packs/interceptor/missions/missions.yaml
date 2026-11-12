@@ -477,5 +477,7 @@ missions:
         at: {distance: 1500m, from: target, bearing: random}
     objectives:
       win: destroyed(target)
+    outcomes:
+      win: [set_flag(doomsday_destroyed)]
     debrief: {win: "@orig.DEBRIEF_DOOMFREIGHT_WIN1", lose: "@orig.DEBRIEF_DOOMFREIGHT_LOSE"}
     timer: {after: 8min, then: draw}

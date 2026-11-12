@@ -113,7 +113,7 @@ base_types:
 # The corporations' funding (DERIVED: the original's monthly evaluation per outpost
 # system arrives with relations in Stage 5).
 incomes:
-  corporate_funding: {name: Corporate funding, every: 30d, amount: 600000 + month_score * 1000}
+  corporate_funding: {name: Corporate funding, every: 30d, amount: 600000 + month_score * 100}
 
 # Alien and pirate activity (DERIVED: the alien strategist replaces these rolls in Stage 5).
 raids:
@@ -122,6 +122,8 @@ raids:
   base_attack: {name: Alien strike on a base, mission: xcom_base_defense, faction: alien, every: 7d, chance: 40%, target: base, speed: 1600, requires: day >= 14}
   heavy_base_attack: {name: Alien assault on a base, mission: xcom_base_defense_heavy, faction: alien, every: 10d, chance: 30%, target: base, speed: 1600, requires: day >= 60}
   alien_freighters: {name: Alien freighter convoy, mission: ambush_alien_freighters, faction: alien, every: 6d, chance: 40%, target: system, speed: 1200, requires: day >= 20}
+  # The Doomsday component convoys: launched by the plan (plans.doomsday), not by the roll.
+  doomsday_convoy: {name: Alien Doomsday convoy, mission: ambush_alien_freighters_escorted, faction: alien, every: 30d, chance: 0%, target: system, speed: 1200}
   pirates: {name: Pirate squadron, mission: ambush_pirate_squadron, faction: pirate, every: 8d, chance: 35%, target: system, speed: 2000, requires: day >= 10}
 
 pilots:

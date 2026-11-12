@@ -496,6 +496,48 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
     for f in &mut rules.factions {
         fix(&mut f.name, &format!("factions.{}.name", f.id));
     }
+    // The strategy layer and the story: names, messages, choices, endings, entries.
+    if let Some(s) = &mut rules.strategy {
+        for x in &mut s.research {
+            fix(&mut x.name, &format!("research.{}.name", x.id));
+        }
+        for x in &mut s.items {
+            fix(&mut x.name, &format!("items.{}.name", x.id));
+        }
+        for x in &mut s.modules {
+            fix(&mut x.name, &format!("base_modules.{}.name", x.id));
+        }
+        for x in &mut s.raids {
+            fix(&mut x.name, &format!("raids.{}.name", x.id));
+        }
+        let story = &mut s.story;
+        let texty = |a: &crate::script::action::Action| matches!(a.name, "message" | "news");
+        for e in &mut story.events {
+            for a in e.actions.iter_mut().filter(|a| texty(a)) {
+                fix(&mut a.args[0], &format!("events.{}", e.id));
+            }
+            for c in &mut e.choices {
+                fix(&mut c.text, &format!("events.{}.choices", e.id));
+                for a in c.actions.iter_mut().filter(|a| texty(a)) {
+                    fix(&mut a.args[0], &format!("events.{}.choices", e.id));
+                }
+            }
+        }
+        for p in &mut story.plans {
+            for (_, list) in &mut p.warnings {
+                for a in list.iter_mut().filter(|a| texty(a)) {
+                    fix(&mut a.args[0], &format!("plans.{}.warnings", p.id));
+                }
+            }
+        }
+        for e in &mut story.endings {
+            fix(&mut e.text, &format!("endings.{}", e.id));
+        }
+        for e in &mut story.encyclopaedia {
+            fix(&mut e.title, &format!("encyclopaedia.{}.title", e.id));
+            fix(&mut e.text, &format!("encyclopaedia.{}.text", e.id));
+        }
+    }
     for s in &mut rules.systems {
         fix(&mut s.name, &format!("systems.{}.name", s.id));
     }

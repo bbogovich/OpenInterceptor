@@ -106,6 +106,9 @@ fn headless(options: &cli::Options) -> Option<i32> {
             .map(|p| format!("{} {:.0}%", def.story.plans[p].id, c.story.plan_progress(def, p) * 100.0))
             .collect();
         let ending = c.story.ending.map(|e| def.story.endings[e].id.clone()).unwrap_or("none".into());
+        if let Some(m) = c.messages.iter().rev().find(|m| m.text.starts_with("Monthly report")) {
+            println!("  last {}", m.text);
+        }
         println!(
             "  story: arcs [{}], plans [{}], aggression {:.2}, ending {ending}",
             arcs.join(", "),
