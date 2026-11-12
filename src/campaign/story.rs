@@ -155,7 +155,7 @@ impl Campaign {
     }
 
     /// Changes a faction's standing; announces a change of stance.
-    fn change_standing(&mut self, def: &StrategyDef, faction: &str, by: f32, events: &mut Vec<Event>) {
+    pub(crate) fn change_standing(&mut self, def: &StrategyDef, faction: &str, by: f32, events: &mut Vec<Event>) {
         let Some(r) = def.story.relations.as_ref().filter(|r| r.dynamic) else { return };
         let before = self.story.standing(faction);
         let after = (before + by).clamp(-100.0, 100.0);
@@ -415,6 +415,15 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t == "Half built")), "{events:?}");
         assert_eq!(c.story.ending, d.story.ending("lit"), "two shipments got through: the engine is lit");
         assert!(events.iter().any(|e| matches!(e, Event::Ending { .. })));
+    }
+
+    #[test]
+    fn mission_outcomes_move_standings() {
+        let (d, _) = build(&story_sample());
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 4);
+        c.mission_result(&d, "win", &["relation(enemy, +15)".into()], 1);
+        assert_eq!(c.story.standing("enemy"), -45.0);
     }
 
     #[test]

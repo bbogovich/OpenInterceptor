@@ -160,6 +160,16 @@ impl Launcher {
             ctx.simple_physics = !ctx.simple_physics;
             super::remember_physics(ctx.simple_physics);
         }
+        // M and V: music and effects volume, in quarters (100 % wraps to 0).
+        if pressed("m") || pressed("v") {
+            let step = |v: f32| if v >= 0.99 { 0.0 } else { ((v * 4.0).round() + 1.0) / 4.0 };
+            if pressed("m") {
+                ctx.music.volume = step(ctx.music.volume);
+            } else {
+                ctx.sounds.effects_volume = step(ctx.sounds.effects_volume);
+            }
+            super::remember_audio(ctx.music.volume, ctx.sounds.effects_volume);
+        }
         if pressed("d") || pad_pressed(Button::X) {
             if let Some(level) = next_difficulty(&ctx.content) {
                 return Next::Reload { campaign: None, difficulty: Some(level) };
@@ -250,7 +260,18 @@ impl Launcher {
             Color::new(1.0, 0.8, 0.4, 1.0),
         );
         let packs: Vec<&str> = content.packs.iter().map(|p| p.name.as_str()).collect();
-        ui.text_in(&format!("Packs: {}", packs.join(", ")), 40.0, 118.0, 18.0, ui.colour("dim"));
+        ui.text_in(
+            &format!(
+                "Packs: {}     Music {:.0}% (M)   Effects {:.0}% (V)",
+                packs.join(", "),
+                ctx.music.volume * 100.0,
+                ctx.sounds.effects_volume * 100.0
+            ),
+            40.0,
+            118.0,
+            18.0,
+            ui.colour("dim"),
+        );
 
         let rows = visible_rows(top, line_h);
         let first = self.menu.first_visible(rows);

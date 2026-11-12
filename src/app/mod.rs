@@ -204,6 +204,16 @@ pub fn console_idle(ctx: &mut AppContext, screen: &str) {
 }
 
 /// Records the player's physics choice in `settings.yaml`.
+/// Saves the music and effects volumes to `settings.yaml`.
+pub fn remember_audio(music: f32, effects: f32) {
+    let Some(dir) = crate::cli::user_data_dir() else { return };
+    let mut s = crate::settings::Settings::load(&dir);
+    (s.music_volume, s.effects_volume) = (music, effects);
+    if let Err(e) = s.save(&dir) {
+        eprintln!("settings not saved: {e}");
+    }
+}
+
 pub fn remember_physics(simple: bool) {
     let Some(dir) = crate::cli::user_data_dir() else { return };
     let mut s = crate::settings::Settings::load(&dir);
@@ -288,7 +298,7 @@ pub async fn run(options: Options) {
     if let Some(dir) = crate::cli::user_data_dir() {
         renderer.brightness = crate::settings::Settings::load(&dir).brightness.unwrap_or(1.0);
     }
-    let sounds = SoundBank::load(&content).await;
+    let mut sounds = SoundBank::load(&content).await;
     for e in &sounds.errors {
         eprintln!("sound: {e}");
     }
@@ -298,6 +308,8 @@ pub async fn run(options: Options) {
         eprintln!("warning: {problem}");
         notices.push(problem);
     }
+    let settings_now = crate::cli::user_data_dir().map(|d| crate::settings::Settings::load(&d)).unwrap_or_default();
+    sounds.effects_volume = settings_now.effects_volume;
     // (Loaded before `content` moves into the context.)
     let skin = ui::Ui::load(&content);
     let mut ctx = AppContext {
@@ -316,7 +328,7 @@ pub async fn run(options: Options) {
         console_idle_tick: 0,
         campaign: None,
         battle_report: None,
-        music: crate::audio::MusicPlayer::new(0.7),
+        music: crate::audio::MusicPlayer::new(settings_now.music_volume),
         ui: skin,
     };
     let direct = match (&options.mission, &options.scenario) {
@@ -415,6 +427,9 @@ pub async fn run(options: Options) {
                         // the active set: start the cache afresh.
                         ctx.renderer.models = Default::default();
                         ctx.sounds = SoundBank::load(&content).await;
+                        ctx.sounds.effects_volume = crate::cli::user_data_dir()
+                            .map(|d| crate::settings::Settings::load(&d).effects_volume)
+                            .unwrap_or(1.0);
                         ctx.content = content;
                         ctx.ui = ui::Ui::load(&ctx.content);
                         let level = ctx.content.rules.difficulty_levels.get(ctx.content.rules.difficulty).cloned();

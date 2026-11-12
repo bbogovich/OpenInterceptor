@@ -135,13 +135,15 @@ pub struct SoundBank {
     sounds: HashMap<SoundKey, Sound>,
     /// Lengths of music segments and stingers, seconds (to know when one ends).
     lengths: HashMap<SoundKey, f32>,
+    /// The effects volume from the settings (music has its own, on the player).
+    pub effects_volume: f32,
     pub errors: Vec<String>,
 }
 
 impl SoundBank {
     /// Loads every sound the rules mention. Missing sounds are recorded, not fatal.
     pub async fn load(content: &Content) -> SoundBank {
-        let mut bank = SoundBank::default();
+        let mut bank = SoundBank { effects_volume: 1.0, ..Default::default() };
         let rules = &content.rules;
         let mut wanted: Vec<(SoundKey, String, usize)> = Vec::new();
         for name in NAMED {
@@ -210,6 +212,12 @@ impl SoundBank {
 
     /// Plays one sound at `volume` (0..1).
     pub fn play(&self, key: &SoundKey, volume: f32) {
+        // Music and stingers carry the music volume already; everything else the effects'.
+        let volume = if matches!(key, SoundKey::Music(..) | SoundKey::Stinger(..)) {
+            volume
+        } else {
+            volume * self.effects_volume
+        };
         if volume < 0.02 {
             return;
         }

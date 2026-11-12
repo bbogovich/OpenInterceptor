@@ -1192,6 +1192,14 @@ impl Campaign {
                     self.log(format!("Salvage recovered: {value:.0}"));
                 }
                 "lose" => self.log(format!("Lost: {arg}")),
+                // `relation(owner, +8)`: a mission outcome moves a faction's standing.
+                "relation" => {
+                    if let Some((f, n)) = arg.split_once(',') {
+                        let by = n.trim().trim_start_matches('+').parse::<f32>().unwrap_or(0.0);
+                        let mut ignored = Vec::new();
+                        self.change_standing(def, f.trim(), by, &mut ignored);
+                    }
+                }
                 _ => {} // relation, cargo and the rest belong to Stage 5's systems
             }
         }

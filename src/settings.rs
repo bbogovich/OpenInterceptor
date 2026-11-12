@@ -44,7 +44,7 @@ use crate::formats::yaml::{self, Node, Value};
 use std::path::{Path, PathBuf};
 
 /// The contents of `settings.yaml`.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
     pub original: Option<PathBuf>,
     pub mods: Option<PathBuf>,
@@ -65,6 +65,29 @@ pub struct Settings {
     pub console: bool,
     /// The console's port (`console.port`, default 8765).
     pub console_port: Option<u16>,
+    /// Music and sound-effect volumes, 0..1 (`audio: {music: 70%, effects: 100%}`).
+    pub music_volume: f32,
+    pub effects_volume: f32,
+}
+
+impl Default for Settings {
+    /// No paths, nothing switched off, the console off, music at 70 % and effects full.
+    fn default() -> Self {
+        Settings {
+            original: None,
+            mods: None,
+            disabled_packs: Vec::new(),
+            campaign: None,
+            difficulty: None,
+            language: None,
+            simple_physics: false,
+            brightness: None,
+            console: false,
+            console_port: None,
+            music_volume: 0.7,
+            effects_volume: 1.0,
+        }
+    }
 }
 
 impl Settings {
@@ -76,6 +99,10 @@ impl Settings {
         let (paths, packs, game) = (section("paths"), section("packs"), section("game"));
         let graphics = section("graphics");
         let console = section("console");
+        let audio = section("audio");
+        let vol = |k: &str, d: f32| {
+            Get(&audio).qty(k, crate::content::schema::Unit::Fraction).map(|v| v.clamp(0.0, 1.0)).unwrap_or(d)
+        };
         let text = |n: &Node, k: &str| Get(n).str(k).map(str::to_string);
         Settings {
             original: text(&paths, "original").map(PathBuf::from),
@@ -88,6 +115,8 @@ impl Settings {
             brightness: Get(&graphics).num("brightness").map(|b| b.clamp(0.5, 2.0)),
             console: Get(&console).str("enabled").is_some_and(|v| v == "true" || v == "yes" || v == "on"),
             console_port: Get(&console).num("port").filter(|p| (1.0..=65535.0).contains(p)).map(|p| p as u16),
+            music_volume: vol("music", 0.7),
+            effects_volume: vol("effects", 1.0),
         }
     }
 
@@ -116,6 +145,8 @@ impl Settings {
             brightness: None,
             console: false,
             console_port: None,
+            music_volume: 0.7,
+            effects_volume: 1.0,
         }
     }
 
@@ -160,7 +191,8 @@ impl Settings {
              paths:\n{}\n# Pack ids switched off.\npacks:\n{}\n\
              # The launcher's campaign and difficulty choices, and the text language.\ngame:\n{}\n\
              # Display brightness: 1 = as authored; 0.5 (darker) to 2 (brighter).\ngraphics:\n{}\n\
-             # The tablet control console: open http://<this computer>:<port> on the tablet.\nconsole:\n{}\n",
+             # The tablet control console: open http://<this computer>:<port> on the tablet.\nconsole:\n{}\n\
+             # Volumes: music and sound effects, 0% to 100%.\naudio:\n{}\n",
             body(map(vec![("original", path(&self.original)), ("mods", path(&self.mods))])),
             body(map(vec![("disabled", disabled)])),
             body(map(vec![
@@ -185,6 +217,10 @@ impl Settings {
                         None => Node::null(0),
                     },
                 ),
+            ])),
+            body(map(vec![
+                ("music", Node::text(format!("{:.0}%", self.music_volume * 100.0), 0)),
+                ("effects", Node::text(format!("{:.0}%", self.effects_volume * 100.0), 0)),
             ])),
         )
     }
@@ -282,6 +318,8 @@ mod tests {
                 brightness: None,
                 console: false,
                 console_port: None,
+                music_volume: 0.7,
+                effects_volume: 1.0,
             }
         );
         let simple = Settings { simple_physics: true, ..s.clone() };
