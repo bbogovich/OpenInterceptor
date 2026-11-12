@@ -48,3 +48,4 @@ text:
   chat.grapplers: "Grapplers inbound with escorts - they're after the cargo pods!"
   chat.cargo_taken: "Convoy: we've lost a quarter of the cargo!"
   chat.jump_soon: "Convoy: one minute to the jump point. Hold them off!"
+  debrief.convoy.draw: "A crippled clipper limps on, and the tugs' crews will be back - but what is still aboard is yours."

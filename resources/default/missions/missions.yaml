@@ -77,11 +77,15 @@ missions:
       lose: captured_any(clippers) or destroyed_all(clippers) or cargo(clippers) == 0
       # Every clipper has left the battle (jumped, or lost) with some cargo still aboard.
       win: count(clippers) == 0 and cargo(clippers) > 0
+    # A crippled clipper that never makes its jump: after 15 minutes the battle ends
+    # and what is still aboard is delivered.
+    timer: {after: 15min, then: draw}
     optional:
       all_cargo: cargo(clippers) == 1
       both_clippers: count(clippers) == 2
     outcomes:
       win: [score(convoy_delivered)]
+      draw: [score(convoy_delivered)]
       lose: [cargo_lost, score(convoy_lost)]
       retreat: [cargo_lost]
     chatter:
@@ -90,7 +94,7 @@ missions:
       - {when: "cargo(clippers) < 0.75", line: "@chat.cargo_taken"}
       - {when: destroyed_any(clippers), line: "@chat.clipper_lost"}
       - {when: "time > 540s", line: "@chat.jump_soon"}
-    debrief: {win: "@debrief.convoy.win", lose: "@debrief.convoy.lose", killed: "@debrief.killed", retreat: "@debrief.retreat"}
+    debrief: {win: "@debrief.convoy.win", draw: "@debrief.convoy.draw", lose: "@debrief.convoy.lose", killed: "@debrief.killed", retreat: "@debrief.retreat"}
 
   construction_defence:
     name: "@mission.construction_defence.name"
