@@ -572,6 +572,32 @@ impl Campaign {
             .sum()
     }
 
+    /// Moves job `j` of a base's manufacturing queue one place up (the first job is the
+    /// one being worked on).
+    pub fn raise_job(&mut self, base: usize, j: usize) -> Result<(), String> {
+        let jobs = &mut self.bases.get_mut(base).ok_or("no such base")?.jobs;
+        if j == 0 || j >= jobs.len() {
+            return Err("already first".into());
+        }
+        jobs.swap(j - 1, j);
+        Ok(())
+    }
+
+    /// Cancels job `j`: the units not yet started are not made (and not paid for); the
+    /// one being worked on is finished first if it has been paid.
+    pub fn cancel_job(&mut self, base: usize, j: usize) -> Result<(), String> {
+        let jobs = &mut self.bases.get_mut(base).ok_or("no such base")?.jobs;
+        let job = jobs.get_mut(j).ok_or("no such job")?;
+        if job.started && job.count > 1 {
+            job.count = 1; // keep the paid unit
+        } else if !job.started {
+            jobs.remove(j);
+        } else {
+            return Err("the last unit is already under way".into());
+        }
+        Ok(())
+    }
+
     /// Pilots the bases can house: each base type's `quarters` plus `quarters` modules.
     pub fn quarters(&self, def: &StrategyDef) -> u32 {
         (0..self.bases.len())
@@ -941,6 +967,20 @@ impl Campaign {
             std::mem::take(&mut self.deliveries).into_iter().partition(|d| d.arrive_at <= now);
         self.deliveries = waiting;
         for d in arrived {
+            // A delivery may be lost on the way (`economy.delivery_loss`), paid for all
+            // the same.
+            if def.delivery_loss > 0.0 && self.roll() < def.delivery_loss {
+                let what = match d.product {
+                    Product::Item(i) => def.items[i].name.clone(),
+                    Product::Hull(h) => def.hulls[h].id.clone(),
+                };
+                notice(
+                    self,
+                    format!("A delivery of {} x {what} to {} was lost", d.count, self.bases[d.base].name),
+                    events,
+                );
+                continue;
+            }
             self.receive(def, d.base, d.product, d.count);
         }
         // Incomes and expenses.
@@ -1823,6 +1863,34 @@ mod tests {
         assert_eq!(c.bases[0].modules.len(), n - 1);
         assert!(c.money > money, "half the cost back");
         assert!(c.dismantle_module(&d, 0, 99).is_err());
+    }
+
+    #[test]
+    fn queues_reorder_and_cancel_and_deliveries_can_be_lost() {
+        let (d, mut c) = sample();
+        c.money = 1e9;
+        let plasma = d.item("plasma").unwrap();
+        let laser = d.item("laser").unwrap();
+        c.known.iter_mut().for_each(|k| *k = true);
+        c.manufacture(&d, 0, Product::Item(plasma), 3).unwrap();
+        c.manufacture(&d, 0, Product::Hull(0), 1).unwrap();
+        assert_eq!(c.bases[0].jobs.len(), 2);
+        c.raise_job(0, 1).unwrap();
+        assert!(matches!(c.bases[0].jobs[0].product, Product::Hull(0)), "moved up");
+        assert!(c.raise_job(0, 0).is_err(), "the first cannot move up");
+        c.cancel_job(0, 1).unwrap();
+        assert_eq!(c.bases[0].jobs.len(), 1, "an unstarted job is cancelled outright");
+        // Every delivery lost.
+        let text = format!("{}\neconomy: {{delivery_loss: 100%}}\n", crate::content::strategy::tests::SAMPLE);
+        let (d2, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d2 = d2.unwrap();
+        let mut c2 = Campaign::new(&d2, 0, 42);
+        let before = c2.stock_of(laser);
+        c2.buy(&d2, 0, Product::Item(laser), 2).unwrap();
+        let events = c2.advance(&d2, 24.0 * 30.0);
+        assert_eq!(c2.stock_of(laser), before, "lost on the way");
+        assert!(c2.messages.iter().any(|m| m.text.contains("was lost")), "{events:?}");
     }
 
     #[test]

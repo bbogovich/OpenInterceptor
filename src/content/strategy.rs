@@ -391,6 +391,8 @@ pub struct StrategyDef {
     pub evaluations: Vec<Evaluation>,
     /// The share of a module's cost refunded when it is dismantled (`economy.dismantle`).
     pub dismantle_refund: f32,
+    /// The chance a delivery is lost on the way (`economy.delivery_loss`).
+    pub delivery_loss: f32,
     /// Hours for a purchase to arrive.
     pub delivery: f32,
     /// Money per enemy destroyed when an outcome says `salvage`.
@@ -896,6 +898,11 @@ impl StrategyDef {
             pilots,
             scores,
             evaluations,
+            delivery_loss: economy
+                .as_ref()
+                .and_then(|n| Get(n).qty("delivery_loss", Unit::Fraction))
+                .unwrap_or(0.0)
+                .clamp(0.0, 1.0),
             dismantle_refund: economy
                 .as_ref()
                 .and_then(|n| Get(n).qty("dismantle", Unit::Fraction))
@@ -1250,6 +1257,7 @@ fn sections_core() -> Vec<super::schema::Field> {
             Ty::Struct(vec![
                 f("delivery", Ty::Qty(Unit::Time), "time for a purchase to arrive"),
                 f("dismantle", Ty::Qty(Unit::Fraction), "share of a module's cost refunded when dismantled (50 %)"),
+                f("delivery_loss", Ty::Qty(Unit::Fraction), "chance a purchase is lost on the way (0 %)"),
                 f("salvage_per_kill", Ty::Num, "money per enemy destroyed when an outcome says salvage"),
                 f(
                     "cost_scale",

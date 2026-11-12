@@ -114,6 +114,9 @@ enum Act {
     Dismiss(usize),
     /// Dismantle module `m` of the current base.
     Dismantle(usize),
+    /// Move job `j` of the current base's queue up, or cancel it.
+    RaiseJob(usize),
+    CancelJob(usize),
     Hire(usize),
     AssignPilot(usize), // craft: give it the next free pilot
     Intercept(u32),
@@ -148,6 +151,8 @@ impl Row {
             Act::Train(_, false) => "Stop training",
             Act::Dismiss(_) => "Dismiss",
             Act::Dismantle(_) => "Dismantle",
+            Act::RaiseJob(_) => "Move up",
+            Act::CancelJob(_) => "Cancel",
             Act::Intercept(_) => "Intercept",
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
@@ -158,7 +163,10 @@ impl Row {
     /// What Enter or a double click does: the first action, unless it is destructive
     /// (dismantling, dismissing), which only its own button does.
     fn default_act(&self) -> Option<Act> {
-        self.acts.first().map(|(_, a)| *a).filter(|a| !matches!(a, Act::Dismantle(_) | Act::Dismiss(_)))
+        self.acts
+            .first()
+            .map(|(_, a)| *a)
+            .filter(|a| !matches!(a, Act::Dismantle(_) | Act::Dismiss(_) | Act::CancelJob(_)))
     }
 
     /// Adds another action.
@@ -544,15 +552,16 @@ impl StrategyScreen {
                     }
                 }
                 if let Some(b) = c.bases.get(base) {
-                    for j in &b.jobs {
+                    for (ji, j) in b.jobs.iter().enumerate() {
                         let what = match j.product {
                             Product::Item(i) => def.items[i].name.clone(),
                             Product::Hull(h) => def.hulls[h].id.clone(),
                         };
-                        rows.push(Row::new(
+                        let row = Row::new(
                             format!("   queued: {} x {what} ({:.0} units left on this one)", j.count, j.left),
-                            Act::None,
-                        ));
+                            if ji > 0 { Act::RaiseJob(ji) } else { Act::None },
+                        );
+                        rows.push(row.with("Cancel", Act::CancelJob(ji)));
                     }
                 }
             }
@@ -775,6 +784,8 @@ impl StrategyScreen {
             Act::Train(p, on) => c.set_training(def, p, on),
             Act::Dismiss(p) => c.dismiss(p),
             Act::Dismantle(m) => c.dismantle_module(def, base, m),
+            Act::RaiseJob(j) => c.raise_job(base, j),
+            Act::CancelJob(j) => c.cancel_job(base, j),
             Act::Hire(i) => c.hire(def, i),
             Act::AssignPilot(k) => {
                 match c.pilots.iter().position(|p| p.craft.is_none() && p.state == PilotState::Ready) {
