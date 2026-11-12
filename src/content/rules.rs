@@ -816,6 +816,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             if DEF_SECTIONS.contains(&section.as_str())
                 || super::strategy::DEF_SECTIONS.contains(&section.as_str())
                 || super::logistics::DEF_SECTIONS.contains(&section.as_str())
+                || super::story::DEF_SECTIONS.contains(&section.as_str())
             {
                 for (id, def) in body.as_map().unwrap_or(&[]) {
                     let id = id.to_ascii_lowercase();
@@ -943,11 +944,22 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let sounds_node = global("sounds");
     // The strategy layer's global sections (read now, while `global` may still borrow
     // `errors`; the strategy layer itself is built at the end).
-    let mut strategy_globals: Vec<(&str, Node)> =
-        ["start", "research_model", "pilots", "scores", "economy", "flags", "tech_ids", "logistics"]
-            .into_iter()
-            .filter_map(|s| global(s).map(|(n, _)| (s, n)))
-            .collect();
+    let mut strategy_globals: Vec<(&str, Node)> = [
+        "start",
+        "research_model",
+        "pilots",
+        "scores",
+        "economy",
+        "flags",
+        "tech_ids",
+        "logistics",
+        "relations",
+        "strategist",
+        "campaign_end",
+    ]
+    .into_iter()
+    .filter_map(|s| global(s).map(|(n, _)| (s, n)))
+    .collect();
     // `start.money_from: original:<file>/<key>`: the starting money from the section of the
     // original's file named after the difficulty level (Veteran, Genius, …).
     for (s, node) in strategy_globals.iter_mut() {
@@ -1409,6 +1421,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             .filter(|(s, _, _)| {
                 super::strategy::DEF_SECTIONS.contains(&s.as_str())
                     || super::logistics::DEF_SECTIONS.contains(&s.as_str())
+                    || super::story::DEF_SECTIONS.contains(&s.as_str())
             })
             .map(|(s, id, e)| (s.as_str(), id.as_str(), &e.node))
             .collect();

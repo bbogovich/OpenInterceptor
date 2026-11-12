@@ -77,6 +77,55 @@ pub static MISSION_ACTIONS: &[ActionDef] = &[
     },
 ];
 
+/// The actions a campaign event (and a plan, an ending condition) may use. All of them
+/// act on the campaign.
+pub static EVENT_ACTIONS: &[ActionDef] = &[
+    ActionDef {
+        name: "message",
+        args: &[ArgKind::Text],
+        scope: Scope::Campaign,
+        doc: "a message that stops the clock",
+    },
+    ActionDef { name: "news", args: &[ArgKind::Text], scope: Scope::Campaign, doc: "a news line in the log" },
+    ActionDef { name: "set_flag", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "set a campaign flag" },
+    ActionDef { name: "clear_flag", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "clear a campaign flag" },
+    ActionDef { name: "money", args: &[ArgKind::Num], scope: Scope::Campaign, doc: "add (or take) money" },
+    ActionDef { name: "score", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "add a score entry" },
+    ActionDef {
+        name: "relation",
+        args: &[ArgKind::Name, ArgKind::Num],
+        scope: Scope::Campaign,
+        doc: "change a faction's standing with the player",
+    },
+    ActionDef { name: "research", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "a topic becomes known" },
+    ActionDef { name: "mission", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "offer a mission to fly now" },
+    ActionDef { name: "raid", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "launch a raid's contact now" },
+    ActionDef {
+        name: "plan",
+        args: &[ArgKind::Name, ArgKind::Num],
+        scope: Scope::Campaign,
+        doc: "add components to a rival plan",
+    },
+    ActionDef {
+        name: "aggression",
+        args: &[ArgKind::Num],
+        scope: Scope::Campaign,
+        doc: "change the rival's aggression",
+    },
+    ActionDef {
+        name: "victory",
+        args: &[ArgKind::Name],
+        scope: Scope::Campaign,
+        doc: "end the campaign in this victory",
+    },
+    ActionDef {
+        name: "defeat",
+        args: &[ArgKind::Name],
+        scope: Scope::Campaign,
+        doc: "end the campaign in this defeat",
+    },
+];
+
 /// A checked action call.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Action {

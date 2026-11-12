@@ -43,11 +43,12 @@ pub enum Tab {
     Hangar,
     Contacts,
     Logistics,
+    Archive,
     Messages,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 9] = [
+    pub const ALL: [Tab; 10] = [
         Tab::Bases,
         Tab::Research,
         Tab::Build,
@@ -56,6 +57,7 @@ impl Tab {
         Tab::Hangar,
         Tab::Contacts,
         Tab::Logistics,
+        Tab::Archive,
         Tab::Messages,
     ];
     fn name(self) -> &'static str {
@@ -68,6 +70,7 @@ impl Tab {
             Tab::Hangar => "Hangar",
             Tab::Contacts => "Contacts",
             Tab::Logistics => "Supply",
+            Tab::Archive => "Archive",
             Tab::Messages => "Messages",
         }
     }
@@ -98,6 +101,8 @@ pub enum PendingBattle {
     Contact(u32),
     /// The escort of an ambushed supply convoy (index into `logistics.convoys`).
     Convoy(usize),
+    /// A mission a story event offered.
+    Story,
 }
 
 /// What a campaign battle hands back (filled in by the flight screen).
@@ -125,6 +130,12 @@ pub struct StrategyScreen {
     battle: Option<u32>,
     /// An ambushed convoy waiting for the player's choice.
     convoy: Option<usize>,
+    /// A story event's choice waiting (index into `story.events`).
+    choice: Option<usize>,
+    /// A story mission offered.
+    offer: Option<String>,
+    /// The campaign's ending, once reached (index into `story.endings`).
+    ending: Option<usize>,
     /// The battle being flown.
     pub flying: Option<PendingBattle>,
     /// A short feedback line (an order's error, a save).
@@ -207,6 +218,9 @@ impl StrategyScreen {
             banner: None,
             battle: None,
             convoy: None,
+            choice: None,
+            offer: None,
+            ending: None,
             flying: None,
             flash: None,
         }
@@ -247,7 +261,17 @@ impl StrategyScreen {
                     share.map(|s| format!(" - {:.0}% of the cargo got through", s * 100.0)).unwrap_or_default()
                 ));
             }
+            Some(PendingBattle::Story) => {
+                self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
+                self.banner = Some(format!("Mission: {} ({} destroyed)", report.result.to_uppercase(), report.kills));
+            }
             None => {}
+        }
+        // A battle can end the campaign.
+        let mut events = Vec::new();
+        crate::campaign::story::check_end(&mut self.campaign, def, &mut events);
+        if let Some(crate::campaign::Event::Ending { ending }) = events.first() {
+            self.ending = Some(*ending);
         }
         self.speed = 0;
     }
@@ -515,6 +539,27 @@ impl StrategyScreen {
                     ));
                 }
             },
+            Tab::Archive => {
+                // The rival's plans as far as intelligence knows, relations, then entries.
+                for (p, plan) in def.story.plans.iter().enumerate() {
+                    if c.story.plan_started[p] {
+                        let pct = c.story.plan_progress(def, p) * 100.0;
+                        rows.push((format!("Rival plan '{}': {pct:.0}% built", plan.id), Act::None));
+                    }
+                }
+                if let Some(r) = &def.story.relations {
+                    for (f, v) in &c.story.standing {
+                        rows.push((format!("{f}: {} ({v:+.0})", r.stance(*v)), Act::None));
+                    }
+                }
+                rows.push((
+                    format!("Rival aggression x{:.2}; battles won {}", c.story.aggression, c.story.battles_won),
+                    Act::None,
+                ));
+                for (title, text) in c.encyclopaedia(def) {
+                    rows.push((format!("{title}: {text}"), Act::None));
+                }
+            }
             Tab::Messages => {
                 for m in c.messages.iter().rev().take(30) {
                     let d = def.start.date.plus_days((m.hour / 24.0) as u32);
@@ -594,6 +639,44 @@ impl StrategyScreen {
                 self.battle = None;
                 self.campaign.battle_result(def, id, "retreat", &[], 0);
                 self.say("Broke off the interception.");
+            }
+        } else if let Some(e) = self.ending {
+            // The end: the ending's text; Enter leaves (the campaign stays saved).
+            if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::Escape) {
+                let _ = self.save(ctx);
+                return Next::Launcher;
+            }
+            let _ = e;
+        } else if let Some(ev) = self.choice {
+            let n = def.story.events[ev].choices.len();
+            let keys = [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4, KeyCode::Key5];
+            if let Some(k) = keys.iter().take(n).position(|k| is_key_pressed(*k)) {
+                self.choice = None;
+                for e in self.campaign.choose(def, ev, k) {
+                    if let crate::campaign::Event::Ending { ending } = e {
+                        self.ending = Some(ending);
+                    }
+                }
+            }
+        } else if let Some(m) = self.offer.clone() {
+            if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
+                self.offer = None;
+                let craft = (0..self.campaign.craft.len()).find(|&k| {
+                    self.campaign.craft[k].away.is_none()
+                        && self.campaign.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready)
+                });
+                match craft {
+                    Some(k) => {
+                        self.flying = Some(PendingBattle::Story);
+                        let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
+                        let loadout = self.campaign.loadout(def, k);
+                        return Next::CampaignBattle { mission: m, ship: Some(ship), loadout };
+                    }
+                    None => self.say("No ready craft to fly it."),
+                }
+            } else if is_key_pressed(KeyCode::Escape) {
+                self.offer = None;
+                self.say("Declined.");
             }
         } else if let Some(v) = self.convoy {
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
@@ -764,6 +847,18 @@ impl StrategyScreen {
                             self.banner = None;
                             self.convoy = Some(convoy);
                         }
+                        Event::Choice { event } => {
+                            self.banner = None;
+                            self.choice = Some(event);
+                        }
+                        Event::Mission { mission } => {
+                            self.banner = None;
+                            self.offer = Some(mission);
+                        }
+                        Event::Ending { ending } => {
+                            self.banner = None;
+                            self.ending = Some(ending);
+                        }
                     }
                 }
             }
@@ -897,6 +992,17 @@ impl StrategyScreen {
         }
         let banner = match (self.battle, &self.banner) {
             (Some(_), _) => Some("Interception! Enter: fly the battle   Esc: break off".to_string()),
+            _ if self.ending.is_some() => {
+                let e = &def.story.endings[self.ending.expect("checked")];
+                Some(format!("{} {}   (Enter: leave)", if e.victory { "VICTORY." } else { "DEFEAT." }, e.text))
+            }
+            _ if self.choice.is_some() => {
+                let ev = &def.story.events[self.choice.expect("checked")];
+                let opts: Vec<String> =
+                    ev.choices.iter().enumerate().map(|(i, c)| format!("{}: {}", i + 1, c.text)).collect();
+                Some(format!("Your choice - {}", opts.join("   ")))
+            }
+            _ if self.offer.is_some() => Some("A mission is offered. Enter: fly it   Esc: decline".to_string()),
             _ if self.convoy.is_some() => {
                 Some("Supply convoy ambushed! Enter: fly its escort   Esc: let it fight through".to_string())
             }

@@ -754,6 +754,88 @@
         "survey_speed": {"description": "survey ship speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "convoy_speed": {"description": "convoy speed, map units an hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "ambush_mission": {"description": "the mission flown when the player escorts an ambushed convoy (its cargo: role's surviving share arrives)", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+      }},
+    "events": {"description": "story events", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "arc": {"description": "the arc it is a step of", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "when": {"description": "when it may fire", "type": "string"},
+          "check": {"description": "how often it is checked", "enum": ["daily", "weekly", "monthly", "after_battle", "on_research"]},
+          "chance": {"description": "chance per check once when holds", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "do": {"description": "actions", "type": "array", "items": {"type": "string"}},
+          "choices": {"description": "a choice for the player", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "text": {"description": "button text", "type": "string"},
+                "do": {"description": "actions", "type": "array", "items": {"type": "string"}}
+              }}},
+          "once": {"description": "fires only once (default true)", "type": "boolean"},
+          "cooldown": {"description": "repeating events: time between firings", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "arcs": {"description": "story arcs", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "steps": {"description": "events in order", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "plans": {"description": "rival plans", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "owner": {"description": "the faction", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "stages": {"description": "stages", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "name": {"description": "stage name", "type": "string"},
+                "count": {"description": "components", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+              }}},
+          "start_when": {"description": "when work begins", "type": "string"},
+          "every": {"description": "time between shipment rolls", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "chance": {"description": "chance per roll", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "raid": {"description": "the raid a shipment flies as", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "warnings": {"description": "warnings", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "at": {"description": "progress", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "do": {"description": "actions", "type": "array", "items": {"type": "string"}}
+              }}},
+          "complete": {"description": "actions when complete", "type": "array", "items": {"type": "string"}},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "endings": {"description": "endings", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "text": {"description": "ending text", "type": "string"},
+          "victory": {"description": "a victory", "type": "boolean"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "encyclopaedia": {"description": "encyclopaedia entries", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "title": {"description": "title", "type": "string"},
+          "text": {"description": "text", "type": "string"},
+          "unlock": {"description": "shown once this holds", "type": "string"},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
+    "relations": {"description": "relations with the other factions", "type": "object", "additionalProperties": false, "properties": {
+        "dynamic": {"description": "standings change with what happens", "type": "boolean"},
+        "start": {"description": "faction: starting standing (-100..100)", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+        "drift": {"description": "monthly drift towards 0", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "stances": {"description": "stance: upper bound", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
+      }},
+    "strategist": {"description": "the rival's mood", "type": "object", "additionalProperties": false, "properties": {
+        "aggression": {"description": "aggression", "type": "object", "additionalProperties": false, "properties": {
+            "start": {"description": "starting aggression (raid chance multiplier)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "min": {"description": "lowest", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "max": {"description": "highest", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "up": {"description": "monthly rise while the player is passive", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "down": {"description": "monthly fall while the player is winning", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
+        "calm_after_wins": {"description": "battles won in a month that count as winning", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+      }},
+    "campaign_end": {"description": "how the campaign ends", "type": "object", "additionalProperties": false, "properties": {
+        "victory": {"description": "victories", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+              "when": {"description": "condition", "type": "string"},
+              "ending": {"description": "ending", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+            }}},
+        "defeat": {"description": "defeats", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+              "when": {"description": "condition", "type": "string"},
+              "ending": {"description": "ending", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+            }}}
       }}
   }
 }

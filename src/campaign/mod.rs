@@ -24,6 +24,7 @@
 
 pub mod logistics;
 pub mod save;
+pub mod story;
 
 use crate::content::strategy::{MapKind, RaidTarget, StrategyDef, Travel};
 use crate::script::{self, Context, Expr, Value};
@@ -140,6 +141,8 @@ pub struct Contact {
     pub detected: bool,
     /// On a lane map: the systems still to pass through before `dest`.
     pub route: Vec<[f32; 2]>,
+    /// A shipment for a rival plan (index into `story.plans`): arriving adds a component.
+    pub plan: Option<usize>,
 }
 
 /// A delivery on its way.
@@ -169,6 +172,12 @@ pub enum Event {
     /// (the campaign's ambush mission) or let it fight through
     /// ([`Campaign::convoy_result`]). It waits where it is until then.
     Convoy { convoy: usize },
+    /// A story event offers a choice (index into `story.events`): see [`Campaign::choose`].
+    Choice { event: usize },
+    /// A story event offers a mission to fly now (or decline).
+    Mission { mission: String },
+    /// The campaign has ended (index into `story.endings`).
+    Ending { ending: usize },
 }
 
 /// One campaign in progress.
@@ -204,6 +213,8 @@ pub struct Campaign {
     pub next_contact: u32,
     /// Facilities, orders, convoys and surveys (campaigns with logistics).
     pub logistics: logistics::Logistics,
+    /// Events, arcs, plans, relations, the rival's mood and the ending (Stage 5).
+    pub story: story::StoryState,
 }
 
 /// Hours in a campaign month (reports, salaries, maintenance).
@@ -279,6 +290,11 @@ impl Context for Cx<'_> {
             q::FLAG => Value::Bool(c.flags.iter().any(|f| f == name())),
             q::SALVAGED => Value::Bool(c.salvaged.iter().any(|f| f == name())),
             q::CRAFT => Value::Num(c.craft.len() as f32),
+            q::ARC => Value::Num(self.def.story.arc(name()).map_or(0.0, |a| c.story.arc_step[a] as f32)),
+            q::PLAN => Value::Num(self.def.story.plan(name()).map_or(0.0, |p| c.story.plan_progress(self.def, p))),
+            q::RELATION => Value::Num(c.story.standing(name())),
+            q::FIRED => Value::Num(self.def.story.event(name()).map_or(0.0, |e| c.story.fired[e] as f32)),
+            q::BATTLES_WON => Value::Num(c.story.battles_won as f32),
             _ => Value::Num(0.0),
         }
     }
@@ -331,6 +347,7 @@ impl Campaign {
             messages: Vec::new(),
             next_contact: 1,
             logistics: Default::default(),
+            story: story::StoryState::new(def),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -759,6 +776,7 @@ impl Campaign {
             self.progress[t] += rate * dt as f32;
             if self.progress[t] >= def.research[t].size && !self.known[t] {
                 self.known[t] = true;
+                self.story.research_pending = true;
                 for base in &mut self.bases {
                     if base.research == Some(t) {
                         base.research = None;
@@ -868,7 +886,13 @@ impl Campaign {
             }
             self.next_raid[r] += def.raids[r].every as f64;
             let raid = &def.raids[r];
-            if self.bases.is_empty() || !self.holds(def, raid.requires.as_ref()) || self.roll() >= raid.chance {
+            // The rival's aggression scales every raid; a faction no longer hostile stops.
+            let chance = raid.chance * self.story.aggression;
+            if self.bases.is_empty()
+                || !self.raids_allowed(def, &raid.faction)
+                || !self.holds(def, raid.requires.as_ref())
+                || self.roll() >= chance
+            {
                 continue;
             }
             self.launch(def, r);
@@ -952,6 +976,7 @@ impl Campaign {
             self.unopposed(def, id, events);
         }
         logistics::step(self, def, dt, events);
+        story::step(self, def, dt, events);
     }
 
     /// The system nearest a map point.
@@ -1071,13 +1096,18 @@ impl Campaign {
             }
             Travel::Free => (pos, Vec::new()),
         };
-        self.contacts.push(Contact { id, raid: r, pos, dest, target_base, detected: false, route });
+        self.contacts.push(Contact { id, raid: r, pos, dest, target_base, detected: false, route, plan: None });
     }
 
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
     fn unopposed(&mut self, def: &StrategyDef, contact: u32, events: &mut Vec<Event>) {
         let Some(k) = self.contacts.iter().position(|c| c.id == contact) else { return };
         let c = self.contacts.remove(k);
+        // A plan's shipment that gets through builds the plan rather than striking.
+        if c.plan.is_some() {
+            self.shipment_arrived(def, &c, events);
+            return;
+        }
         let raid = &def.raids[c.raid];
         let place = c.target_base.map(|b| self.bases[b].name.clone()).unwrap_or_else(|| "a system".into());
         let text = format!("{} struck {place} unopposed", raid.name);
@@ -1191,6 +1221,10 @@ impl Campaign {
         for k in self.battle_party(contact) {
             let pos = self.craft[k].away.map(|(_, p)| p).unwrap_or([0.0, 0.0]);
             self.craft[k].away = Some((u32::MAX, pos));
+        }
+        self.story.battle_pending = true;
+        if result == "win" {
+            self.battle_won();
         }
         if matches!(result, "win" | "draw") {
             self.contacts.retain(|c| c.id != contact);
@@ -1353,6 +1387,14 @@ pub fn autoplay(def: &StrategyDef, seed: u64, days: f64) -> Campaign {
                     }
                 }
                 Event::Convoy { convoy } => c.convoy_result(def, convoy, None),
+                Event::Choice { event } => {
+                    c.choose(def, event, 0);
+                }
+                Event::Mission { .. } => {
+                    battles += 1;
+                    c.mission_result(def, if battles % 3 == 0 { "lose" } else { "win" }, &[], 2);
+                }
+                Event::Ending { .. } => return c,
                 Event::Battle { contact } => {
                     battles += 1;
                     let result = if battles % 3 == 0 { "retreat" } else { "win" };
@@ -1553,6 +1595,7 @@ mod tests {
             target_base: None,
             detected: true,
             route: Vec::new(),
+            plan: None,
         });
         c.craft[1].away = Some((99, [0.0, 0.0]));
         c.battle_result(&d, 99, "killed", &[], 0);
@@ -1601,6 +1644,7 @@ mod tests {
             target_base: None,
             detected: true,
             route: Vec::new(),
+            plan: None,
         });
         let k = c.cheat_jump(5).unwrap();
         assert_eq!(c.battle_party(5), vec![k]);
@@ -1627,6 +1671,7 @@ mod tests {
             target_base: None,
             detected: true,
             route: Vec::new(),
+            plan: None,
         });
         c.battle_result(&d, 7, "win", &["salvage".into()], 1);
         assert_eq!(c.salvaged, vec!["raid".to_string()]);

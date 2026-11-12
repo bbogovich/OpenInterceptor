@@ -146,6 +146,74 @@ fn write_logistics(l: &logistics::Logistics) -> Node {
     ])
 }
 
+/// The story state: event counts, arcs, plans, standings, the rival's mood, the ending.
+fn write_story(st: &story::StoryState) -> Node {
+    let f = |v: &[f64]| nums(v);
+    map(vec![
+        ("fired", f(&st.fired.iter().map(|x| *x as f64).collect::<Vec<_>>())),
+        // (Never-fired events keep -inf, written as a very old hour.)
+        ("last_fired", f(&st.last_fired.iter().map(|x| x.max(-1e12)).collect::<Vec<_>>())),
+        ("arc_step", f(&st.arc_step.iter().map(|x| *x as f64).collect::<Vec<_>>())),
+        ("plan_started", seq(st.plan_started.iter().map(s).collect())),
+        ("plan_done", f(&st.plan_done.iter().map(|x| *x as f64).collect::<Vec<_>>())),
+        ("plan_next", f(&st.plan_next)),
+        ("plan_warned", f(&st.plan_warned.iter().map(|x| *x as f64).collect::<Vec<_>>())),
+        ("standing", store(&st.standing)),
+        ("aggression", n(st.aggression as f64)),
+        ("battles_won", n(st.battles_won as f64)),
+        ("month_wins", n(st.month_wins as f64)),
+        ("battle_pending", s(st.battle_pending)),
+        ("research_pending", s(st.research_pending)),
+        ("ending", st.ending.map_or(Node::null(0), |e| n(e as f64))),
+    ])
+}
+
+fn read_story(node: Option<&Node>, def: &StrategyDef) -> Result<story::StoryState, String> {
+    let mut st = story::StoryState::new(def);
+    let Some(node) = node.filter(|n| !n.is_null()) else { return Ok(st) };
+    let g = Get(node);
+    let nums_of = |k: &str| -> Vec<f64> {
+        g.node(k).and_then(|n| n.as_seq()).unwrap_or(&[]).iter().filter_map(|x| x.as_str()?.parse().ok()).collect()
+    };
+    let bad = |what: &str| format!("save: the story's {what} do not match the loaded rules (was a mod changed?)");
+    let (fired, last, arcs) = (nums_of("fired"), nums_of("last_fired"), nums_of("arc_step"));
+    if fired.len() != st.fired.len() || arcs.len() != st.arc_step.len() {
+        return Err(bad("events or arcs"));
+    }
+    st.fired = fired.iter().map(|x| *x as u32).collect();
+    st.last_fired = last.iter().map(|x| if *x <= -1e12 { f64::NEG_INFINITY } else { *x }).collect();
+    st.arc_step = arcs.iter().map(|x| *x as usize).collect();
+    let (done, next, warned) = (nums_of("plan_done"), nums_of("plan_next"), nums_of("plan_warned"));
+    if done.len() != st.plan_done.len() {
+        return Err(bad("plans"));
+    }
+    st.plan_started = g
+        .node("plan_started")
+        .and_then(|n| n.as_seq())
+        .unwrap_or(&[])
+        .iter()
+        .map(|x| x.as_str() == Some("true"))
+        .collect();
+    st.plan_done = done.iter().map(|x| *x as u32).collect();
+    st.plan_next = next;
+    st.plan_warned = warned.iter().map(|x| *x as usize).collect();
+    st.standing = g
+        .node("standing")
+        .and_then(|n| n.as_map())
+        .unwrap_or(&[])
+        .iter()
+        .filter_map(|(k, v)| Some((k.clone(), v.as_str()?.parse().ok()?)))
+        .collect();
+    let num = |k: &str| g.str(k).and_then(|t| t.parse::<f64>().ok()).unwrap_or(0.0);
+    st.aggression = num("aggression") as f32;
+    st.battles_won = num("battles_won") as u32;
+    st.month_wins = num("month_wins") as u32;
+    st.battle_pending = g.bool("battle_pending").unwrap_or(false);
+    st.research_pending = g.bool("research_pending").unwrap_or(false);
+    st.ending = g.str("ending").and_then(|e| e.parse().ok()).filter(|e| *e < def.story.endings.len());
+    Ok(st)
+}
+
 /// Reads the logistics state back (indices checked against the loaded rules).
 fn read_logistics(
     node: Option<&Node>,
@@ -393,6 +461,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("target_base", k.target_base.map_or(Node::null(0), |b| n(b as f64))),
                         ("detected", s(k.detected)),
                         ("route", route(&k.route)),
+                        ("plan", k.plan.map_or(Node::null(0), |p| n(p as f64))),
                     ])
                 })
                 .collect()),
@@ -422,6 +491,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ("messages", seq(c.messages.iter().map(|m| map(vec![("hour", n(m.hour)), ("text", s(&m.text))])).collect())),
         ("next_contact", n(c.next_contact as f64)),
         ("logistics", write_logistics(&c.logistics)),
+        ("story", write_story(&c.story)),
     ]);
     format!("# OpenInterceptor campaign save\n{}", doc.to_yaml())
 }
@@ -606,6 +676,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             target_base: opt(k, "target_base"),
             detected: k.bool("detected").unwrap_or(false),
             route: k.node("route").map(waypoints).unwrap_or_default(),
+            plan: opt(k, "plan").filter(|p| *p < def.story.plans.len()),
         });
     }
     let mut deliveries = Vec::new();
@@ -628,6 +699,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
     let logistics = read_logistics(g.node("logistics"), def, bases.len(), systems.len())?;
     Ok(Campaign {
         logistics,
+        story: read_story(g.node("story"), def)?,
         hours: f(g, "hours"),
         money: f(g, "money"),
         difficulty: f(g, "difficulty") as usize,

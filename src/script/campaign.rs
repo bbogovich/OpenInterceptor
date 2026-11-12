@@ -37,6 +37,11 @@ pub mod id {
     pub const FLAG: u16 = 13;
     pub const SALVAGED: u16 = 14;
     pub const CRAFT: u16 = 15;
+    pub const ARC: u16 = 16;
+    pub const PLAN: u16 = 17;
+    pub const RELATION: u16 = 18;
+    pub const FIRED: u16 = 19;
+    pub const BATTLES_WON: u16 = 20;
 }
 
 /// The campaign context's queries (index = id above).
@@ -72,6 +77,16 @@ pub const QUERIES: &[QueryDef] = &[
         doc: "this item or craft class has been salvaged or captured",
     },
     QueryDef { name: "craft", args: &[], result: Type::Num, doc: "the player's craft, all bases" },
+    QueryDef { name: "arc", args: &[Arg::Num], result: Type::Num, doc: "steps of the arc done so far" },
+    QueryDef { name: "plan", args: &[Arg::Num], result: Type::Num, doc: "a rival plan's progress, 0..1" },
+    QueryDef {
+        name: "relation",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "a faction's standing with the player (-100..100)",
+    },
+    QueryDef { name: "fired", args: &[Arg::Num], result: Type::Num, doc: "times an event has fired" },
+    QueryDef { name: "battles_won", args: &[], result: Type::Num, doc: "battles the player has won" },
 ];
 
 /// The campaign schema: every id in `names` is a constant (its index), then the
@@ -110,6 +125,11 @@ mod tests {
             (id::FLAG, "flag"),
             (id::SALVAGED, "salvaged"),
             (id::CRAFT, "craft"),
+            (id::ARC, "arc"),
+            (id::PLAN, "plan"),
+            (id::RELATION, "relation"),
+            (id::FIRED, "fired"),
+            (id::BATTLES_WON, "battles_won"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

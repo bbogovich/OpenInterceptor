@@ -363,6 +363,8 @@ pub struct StrategyDef {
     pub salvage: f32,
     /// Resources, facilities and supply (Stages 4.14–4.17), if the campaign has them.
     pub logistics: Option<super::logistics::LogisticsDef>,
+    /// Events, arcs, rival plans, relations and endings (Stage 5).
+    pub story: super::story::StoryDef,
 }
 
 /// The dictionary sections of the strategy layer.
@@ -429,7 +431,7 @@ impl StrategyDef {
         }
         // 1. The name table, before any expression is parsed.
         let mut names: Vec<String> = Vec::new();
-        for s in DEF_SECTIONS {
+        for s in DEF_SECTIONS.iter().chain(&super::story::DEF_SECTIONS) {
             for (id, _) in of(defs, s) {
                 names.push(id.to_string());
             }
@@ -790,6 +792,7 @@ impl StrategyDef {
             research: s.list("research"),
             stock: pairs(s, "stock").into_iter().map(|(k, v)| (k, v as u32)).collect(),
         };
+        let raids_for_story: Vec<String> = raids.iter().map(|r| r.id.clone()).collect();
         let start_map_id = start.map.clone();
         let start_map_id = start_map_id.as_str();
         let Some(map) = maps.iter().find(|m| m.id == start.map).cloned() else {
@@ -814,6 +817,10 @@ impl StrategyDef {
             scores,
             delivery,
             salvage,
+            story: {
+                let raid_ids: Vec<String> = raids_for_story.clone();
+                super::story::StoryDef::build(defs, global, &schema, &raid_ids, errors)
+            },
             logistics: {
                 // The chosen map's systems (their deposits and features), the hulls' and
                 // topics' nodes in the same order as the lists above.
@@ -896,6 +903,7 @@ impl StrategyDef {
 pub fn sections() -> Vec<super::schema::Field> {
     let mut all = sections_core();
     all.extend(super::logistics::sections());
+    all.extend(super::story::sections());
     all
 }
 
@@ -1163,7 +1171,10 @@ pub(crate) mod tests {
         let doc = yaml::parse(text).unwrap();
         let mut defs = Vec::new();
         for (sec, body) in doc.as_map().unwrap() {
-            if DEF_SECTIONS.contains(&sec.as_str()) || super::super::logistics::DEF_SECTIONS.contains(&sec.as_str()) {
+            if DEF_SECTIONS.contains(&sec.as_str())
+                || super::super::logistics::DEF_SECTIONS.contains(&sec.as_str())
+                || super::super::story::DEF_SECTIONS.contains(&sec.as_str())
+            {
                 for (id, n) in body.as_map().unwrap() {
                     defs.push((sec.as_str(), id.as_str(), n));
                 }
