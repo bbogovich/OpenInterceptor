@@ -639,6 +639,13 @@ impl StrategyScreen {
                         PilotState::Dead => "killed".into(),
                     };
                     let training = if p.training { ", training" } else { "" };
+                    // Their stats, by the campaign's stat names: flying 52, gunnery 40 …
+                    let stats: Vec<String> = def
+                        .pilots
+                        .as_ref()
+                        .map(|r| r.stats.iter().zip(&p.stats).map(|((n, _), v)| format!("{n} {v:.0}")).collect())
+                        .unwrap_or_default();
+                    let training = format!("{training} ({})", stats.join(", "));
                     let mut row = Row::new(
                         format!("   {rank} {} - {} kills, {} missions, {state}{training}", p.name, p.kills, p.missions),
                         if can_train && p.state != PilotState::Dead { Act::Train(pi, !p.training) } else { Act::None },
@@ -947,7 +954,11 @@ impl StrategyScreen {
                                 .find(|(r, _)| r == result)
                                 .map(|(_, a)| a.iter().map(|x| x.display()).collect())
                                 .unwrap_or_default();
-                            let kills = if result == "win" { m.roles.iter().map(|r| r.count.0).sum() } else { 0 };
+                            let kills = if result == "win" {
+                                crate::balance::hostile_count(&ctx.content.rules, m, &ours)
+                            } else {
+                                0
+                            };
                             self.campaign.battle_result(def, id, result, &actions, kills);
                             self.banner =
                                 Some(format!("Auto-resolved ({:.0}% odds): {}", p * 100.0, result.to_uppercase()));
@@ -1102,7 +1113,11 @@ impl StrategyScreen {
                     self.strike = None;
                     match (self.ready_craft(), mission) {
                         (Some(k), Some(m)) => return Some(self.fly(def, k, m, PendingBattle::Strike(f))),
-                        _ => {
+                        (_, None) => {
+                            self.campaign.strike_result(def, f, None);
+                            self.say("This campaign has no defence mission: the strike is settled without you.");
+                        }
+                        (None, Some(_)) => {
                             self.campaign.strike_result(def, f, None);
                             self.say("No ready craft: the strike goes unopposed.");
                         }

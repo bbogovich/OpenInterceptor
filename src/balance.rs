@@ -80,6 +80,23 @@ pub fn win_chance(rules: &Ruleset, mission: &crate::content::mission::MissionDef
     }
 }
 
+/// How many hostile craft `mission` sends against the player's side (each hostile
+/// role at its smallest count) — an auto-resolved win's kills.
+pub fn hostile_count(rules: &Ruleset, mission: &crate::content::mission::MissionDef, ours: &[&str]) -> u32 {
+    let my_faction = ours.first().and_then(|id| rules.ship_id(id)).map(|id| rules.ship(id).faction);
+    mission
+        .roles
+        .iter()
+        .filter(|role| {
+            let Some(first) = role.classes.iter().find_map(|c| rules.ship_id(c)) else { return false };
+            let faction =
+                role.faction.as_deref().and_then(|f| rules.faction_id(f)).unwrap_or(rules.ship(first).faction);
+            my_faction.is_none_or(|me| rules.hostile(me, faction))
+        })
+        .map(|r| r.count.0)
+        .sum()
+}
+
 /// The report, as text.
 pub fn report(rules: &Ruleset) -> String {
     let players: Vec<&ShipClass> = rules.playable_ships().into_iter().map(|id| rules.ship(id)).collect();

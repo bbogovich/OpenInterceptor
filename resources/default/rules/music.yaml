@@ -9,7 +9,8 @@ music:
       threat: [music/threat1.wav, music/threat2.wav]
       battle: [music/battle1.wav, music/battle2.wav]
       strategy: [music/strategy1.wav, music/strategy2.wav]
-    stingers: {victory: music/victory.wav, death: music/death.wav}
+    # good and bad news on the strategy map reuse the battle's two stingers.
+    stingers: {victory: music/victory.wav, death: music/death.wav, good: music/victory.wav, bad: music/death.wav}
     threat_range: 10km
     battle_range: 3500m
     volume: 55%

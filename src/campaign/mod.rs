@@ -605,13 +605,14 @@ impl Campaign {
             .sum::<f32>() as u32
     }
 
-    /// A base's store capacity from `storage` modules (`None`: no limit — the campaign
-    /// gives none), and what its store holds now (item `size`s).
+    /// A base's store capacity — its base type's hub `storage` plus its `storage`
+    /// modules — and what its store holds now (item `size`s). `None`: no limit (a base
+    /// type without hub storage has none; its modules then only add room elsewhere).
     pub fn storage(&self, def: &StrategyDef, base: usize) -> (Option<f32>, f32) {
-        let cap = self.effect(def, base, "storage");
+        let hub = def.base_types[self.bases[base].base_type].storage;
         let used = self.bases[base].stock.iter().map(|(i, n)| def.items[*i].size * *n as f32).sum();
-        let any = def.modules.iter().any(|m| m.effects.iter().any(|(k, _)| k == "storage"));
-        (any.then_some(cap), used)
+        let cap = (hub > 0.0).then(|| hub + self.effect(def, base, "storage"));
+        (cap, used)
     }
 
     /// Dismantles module `m` of base `base`: half its cost back (`economy.dismantle`
@@ -621,6 +622,21 @@ impl Campaign {
         if m >= b.modules.len() {
             return Err("no such module".into());
         }
+        // Not below what the module houses: craft in the hangar, pilots in quarters.
+        let md = &def.modules[b.modules[m].module];
+        let effect = |k: &str| md.effects.iter().filter(|(e, _)| e == k).map(|(_, v)| *v).sum::<f32>();
+        let craft_here = self.craft.iter().filter(|c| c.base == base).count() as f32;
+        if effect("hangar") > 0.0 && (self.hangar(def, base) as f32 - effect("hangar")) < craft_here {
+            return Err(format!("{} houses craft that would have nowhere to go", md.name));
+        }
+        let living = self.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as f32;
+        if effect("quarters") > 0.0
+            && self.quarters(def) as f32 > 0.0
+            && (self.quarters(def) as f32 - effect("quarters")) < living
+        {
+            return Err(format!("{} houses pilots who would have nowhere to sleep", md.name));
+        }
+        let b = &mut self.bases[base];
         let gone = b.modules.remove(m);
         let md = &def.modules[gone.module];
         let refund = md.cost as f64 * def.dismantle_refund as f64;
@@ -1377,7 +1393,22 @@ impl Campaign {
                 // is lost (a base type or anything else is only recorded).
                 "lose" => {
                     let ft = def.logistics.as_ref().and_then(|l| l.facility_types.iter().position(|t| t.id == arg));
-                    match ft.and_then(|t| self.logistics.facilities.iter().rposition(|f| f.ftype == t)) {
+                    // The one at the battle's system (the contact's target base), else the
+                    // most recent of that type.
+                    let at_system = self
+                        .contacts
+                        .iter()
+                        .find(|c| c.id == contact)
+                        .and_then(|c| c.target_base)
+                        .map(|b| self.bases[b].system);
+                    let pick = ft.and_then(|t| {
+                        self.logistics
+                            .facilities
+                            .iter()
+                            .rposition(|f| f.ftype == t && Some(f.system) == at_system)
+                            .or_else(|| self.logistics.facilities.iter().rposition(|f| f.ftype == t))
+                    });
+                    match pick {
                         Some(f) => {
                             let name = def
                                 .logistics
@@ -2022,6 +2053,8 @@ mod tests {
         })
         .unwrap();
         let def = content.rules.strategy.as_ref().expect("the default campaign has a strategy layer");
+        // Loaded through the rules builder: its evaluations reach the strategy layer.
+        assert!(!def.evaluations.is_empty(), "evaluations must pass through the rules");
         let c = super::autoplay(def, 3, 180.0);
         assert!(c.hours >= 180.0 * 24.0);
         assert!(c.known.iter().filter(|k| **k).count() >= 4, "research progressed: {:?}", c.known);

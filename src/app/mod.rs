@@ -418,6 +418,10 @@ pub async fn run(options: Options) {
                 }
             }
         }
+        None if options.chapter.is_some() && !options.strategy => {
+            eprintln!("--chapter only works with --strategy");
+            Screen::Launcher(launcher::Launcher::new(&ctx))
+        }
         None if options.strategy => match strategy::StrategyScreen::new_campaign(&ctx) {
             // `--chapter n`: played forward to the story's chapter n (testbed).
             Some(s) if options.chapter.is_some() => {
@@ -436,6 +440,8 @@ pub async fn run(options: Options) {
         },
     };
     let mut frame_count: u32 = 0;
+    // Where the controls screen returns: the main menu, or the launcher it was opened from.
+    let mut controls_from_menu = false;
     loop {
         // Screens without music of their own are silent.
         if !matches!(screen, Screen::Flight(_) | Screen::Strategy(_) | Screen::Menu(_)) {
@@ -455,8 +461,12 @@ pub async fn run(options: Options) {
             Screen::Assets(a) => a.frame(&mut ctx).await,
             Screen::Controls(c) => {
                 if c.frame(&mut ctx) {
-                    // Back to the menu (a campaign with one), else the launcher.
-                    Next::Menu
+                    // Back where it was opened from.
+                    if controls_from_menu {
+                        Next::Menu
+                    } else {
+                        Next::Launcher
+                    }
                 } else {
                     Next::Stay
                 }
@@ -514,7 +524,10 @@ pub async fn run(options: Options) {
             },
             Next::Viewer => screen = Screen::Viewer(viewer::ModelViewer::new(&ctx)),
             Next::Assets => screen = Screen::Assets(assets::AssetBrowser::new(&ctx)),
-            Next::Controls => screen = Screen::Controls(controls::ControlsMenu::new(&ctx)),
+            Next::Controls => {
+                controls_from_menu = matches!(screen, Screen::Menu(_));
+                screen = Screen::Controls(controls::ControlsMenu::new(&ctx));
+            }
             Next::Reload { campaign, difficulty } => {
                 let from_menu = matches!(screen, Screen::Menu(_));
                 let mut cfg = options.content_config();

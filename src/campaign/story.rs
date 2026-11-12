@@ -128,6 +128,10 @@ impl Campaign {
                 }
                 // A hidden topic is discovered (kept as the flag `discovered.<topic>`).
                 "discover" => {
+                    if def.topic(arg(0)).is_none() {
+                        self.log(format!("discover: no research topic '{}'", arg(0)));
+                        continue;
+                    }
                     let flag = format!("discovered.{}", arg(0));
                     if !self.flags.contains(&flag) {
                         self.flags.push(flag);

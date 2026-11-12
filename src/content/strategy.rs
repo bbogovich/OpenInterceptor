@@ -308,6 +308,8 @@ pub struct BaseType {
     pub sensor_range: f32,
     pub hangar: f32,
     pub quarters: f32,
+    /// Store capacity of the hub (item sizes); 0 = a base type without a store limit.
+    pub storage: f32,
     /// A new base must be within this many map units of an existing one (0 = anywhere).
     pub max_distance: f32,
 }
@@ -731,6 +733,7 @@ impl StrategyDef {
                 sensor_range: g.num("sensor_range").unwrap_or(0.0),
                 hangar: g.num("hangar").unwrap_or(0.0),
                 quarters: g.num("quarters").unwrap_or(0.0),
+                storage: g.num("storage").unwrap_or(0.0),
                 max_distance: g.num("max_distance").unwrap_or(0.0),
             })
             .collect();
@@ -1173,6 +1176,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("template", Ty::List(Box::new(Ty::Name)), "modules a new base comes with"),
                 f("sensor_range", Ty::Num, "the hub's sensor range, map units"),
                 f("hangar", Ty::Num, "craft the hub houses"),
+                f("storage", Ty::Num, "store capacity of the hub (item sizes; 0 = no limit at this base type)"),
                 f("quarters", Ty::Num, "pilots the hub houses"),
                 f("max_distance", Ty::Num, "a new base must be this close to one of yours (0: anywhere)"),
             ])),

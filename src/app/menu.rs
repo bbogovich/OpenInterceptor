@@ -133,6 +133,8 @@ pub struct MainMenu {
     fullscreen: bool,
     /// `Some(row)` on the load page.
     load: Option<usize>,
+    /// The slots' ages, read when the load page opens (not every frame).
+    ages: Vec<Option<u64>>,
     /// The campaign id (for its save slots).
     campaign: String,
 }
@@ -152,6 +154,7 @@ impl MainMenu {
             error: None,
             fullscreen,
             load: None,
+            ages,
             campaign: id,
         }
     }
@@ -193,11 +196,8 @@ impl MainMenu {
             }
             if back || (enter && row == n - 1) {
                 self.load = None;
-            } else if enter {
-                let ages = slot_ages(&self.campaign);
-                if ages.get(row).is_some_and(Option::is_some) {
-                    return Next::LoadSlot { slot: row };
-                }
+            } else if enter && self.ages.get(row).is_some_and(Option::is_some) {
+                return Next::LoadSlot { slot: row };
             }
             self.spin += get_frame_time() * 0.25;
             self.draw(ctx, &rows);
@@ -215,7 +215,10 @@ impl MainMenu {
                     match self.items[self.selected] {
                         Item::Continue => return Next::LoadCampaign,
                         Item::NewCampaign => return Next::NewCampaign,
-                        Item::Load => self.load = Some(0),
+                        Item::Load => {
+                            self.ages = slot_ages(&self.campaign);
+                            self.load = Some(0);
+                        }
                         Item::Battles => return Next::Launcher,
                         Item::Options => self.options = Some(0),
                         Item::Credits => return Next::Credits,
@@ -321,8 +324,8 @@ impl MainMenu {
         // The list, in a skin panel.
         let line = (sh * 0.055).clamp(28.0, 52.0);
         let labels: Vec<(String, Option<String>)> = if self.load.is_some() {
-            let ages = slot_ages(&self.campaign);
-            let mut v: Vec<(String, Option<String>)> = ages
+            let mut v: Vec<(String, Option<String>)> = self
+                .ages
                 .iter()
                 .enumerate()
                 .map(|(s, a)| {
