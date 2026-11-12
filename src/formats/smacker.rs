@@ -230,6 +230,9 @@ fn pal6(v: u8) -> u8 {
     (((v & 0x3F) as u32 * 255 + 31) / 63) as u8
 }
 
+/// A frame's audio: `(track, 16-bit PCM samples)` per track present in it.
+pub type FrameAudio = Vec<(usize, Vec<i16>)>;
+
 /// One audio track's description.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AudioTrack {
@@ -354,7 +357,7 @@ impl<'a> Smacker<'a> {
 
     /// Decodes the next frame into `pixels` and `palette`, returning the audio of each
     /// track in it (PCM: 16-bit samples, interleaved when stereo). `None` after the last.
-    pub fn next_frame(&mut self) -> Result<Option<Vec<(usize, Vec<i16>)>>> {
+    pub fn next_frame(&mut self) -> Result<Option<FrameAudio>> {
         if self.next >= self.frames {
             return Ok(None);
         }
