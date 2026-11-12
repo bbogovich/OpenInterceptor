@@ -6625,7 +6625,7 @@ segment.</p>
 </tr>
 <tr>
 <td><code>good</code>, <code>bad</code></td>
-<td>Accepted and loaded; not played by the engine yet (reserved for good and bad strategy news).</td>
+<td>On the strategy screen (app 0.16.2): <code>good</code> when a battle flown from the map was won (as the map returns), when research completes and when the campaign ends in a victory; <code>bad</code> after any other battle result and on a defeat (DEV-059). The <code>interceptor</code> sets map them to the CD's loops; the default campaign's music has none, so nothing plays there.</td>
 </tr>
 </tbody>
 </table>
@@ -6690,8 +6690,9 @@ weapons, explosions, voices, the computer voice — but not the music or its sti
 <ul>
 <li>Switching rules as data (the design's <code>switch:</code> list with conditions); the states are chosen
   by the fixed nearest-hostile rule above.</li>
-<li>The original's <code>.wtl</code> transition tables; CD audio tracks; the <code>good</code> and <code>bad</code> stingers on
-  strategy news.</li>
+<li>The original's <code>.wtl</code> transition tables; CD audio tracks; <code>good</code> and <code>bad</code> stingers for the
+  default campaign (the strategy screen plays them since app 0.16.2, but the default music has
+  none).</li>
 <li>Music in cutscenes (a cutscene's <code>sounds</code> are named event sounds) and over videos (a video's
   own soundtrack plays).</li>
 </ul>
@@ -6713,7 +6714,7 @@ weapons, explosions, voices, the computer voice — but not the music or its sti
 <td>A state with an empty list.</td>
 </tr>
 <tr>
-<td><code>sound: &lt;file&gt;: …</code> (at start-up)</td>
+<td><code>sound: &lt;file&gt;: …</code> (at start-up; since app 0.16.2 also from <code>--check</code>)</td>
 <td>A segment or stinger file that is missing or does not decode.</td>
 </tr>
 </tbody>

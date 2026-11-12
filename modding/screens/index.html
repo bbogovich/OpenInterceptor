@@ -6579,9 +6579,11 @@ engine's 1280 × 720 numbers, which are then read in your space.</p>
 <p>Keep the <code>info</code> and <code>panel</code> widgets at least about 300 × 200 design units: they leave room for a
 nine-slice frame's corners, the title, a few lines and a row of buttons.</p>
 <h2 id="background">Background<a class="headerlink" href="#background" title="Permanent link">&para;</a></h2>
-<p><code>background: images/ui/starmap_frame.png</code> names an image for the whole design space. It is read
-and checked, but in app 0.16.0 <strong>not yet drawn</strong>; the screen's background is the skin's
-<code>background</code> colour.</p>
+<p><code>background: images/ui/starmap_frame.png</code> names an image drawn over the whole window, stretched
+to fit, behind every widget (app 0.16.2; in 0.16.0 it was read but not drawn). It is loaded the
+first time the screen draws; an image that cannot be loaded is reported once on standard error
+(<code>screens.starmap.background &lt;file&gt;: …</code>) and the screen falls back to the skin's <code>background</code>
+colour. Leave room in the picture where the map and panels sit, since they draw over it.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Layouts for the other screens: the main menu, the launcher, the credits and the prompts are

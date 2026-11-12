@@ -7044,9 +7044,10 @@ shows its ending again (app 0.12.1). A partial victory is simply another ending 
 <p>Each entry has a <code>title</code> (default the id), a <code>text</code> and an <code>unlock</code> condition; entries whose
 condition holds are listed on the strategy screen's <strong>Archive</strong> tab.</p>
 <h2 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h2>
-<p>Every action list in the story — <code>do</code>, <code>choices[].do</code>, <code>warnings[].do</code>, <code>complete</code> — is checked
-when the rules load against the event actions (<code>script::action::EVENT_ACTIONS</code>): an unknown
-action or a wrong argument is an error with its place.</p>
+<p>Every action list in the story — <code>do</code>, <code>choices[].do</code>, <code>warnings[].do</code>, <code>complete</code> — and the
+strategy layer's <a href="../strategy/#evaluations"><code>evaluations</code></a> <code>do</code> lists are checked when the rules
+load against the eighteen event actions (<code>script::action::EVENT_ACTIONS</code>): an unknown action or a
+wrong argument is an error with its place.</p>
 <table>
 <thead>
 <tr>
@@ -7107,9 +7108,14 @@ action or a wrong argument is an error with its place.</p>
 <td>The topic becomes known.</td>
 </tr>
 <tr>
+<td><code>discover(x)</code></td>
+<td>topic</td>
+<td>A <a href="../strategy/#research-and-research_model"><code>hidden</code></a> topic is discovered: from now on it is offered once its prerequisites hold. A notice says <em>New research possible: <name></em>; kept as the flag <code>discovered.&lt;x&gt;</code> (app 0.16.6).</td>
+</tr>
+<tr>
 <td><code>mission(x)</code></td>
 <td>mission</td>
-<td><strong>Offer</strong> a mission to fly now: the player accepts with Enter (the first ready craft with a pilot flies it) or declines with Esc. The outcome's campaign actions (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>) apply as for a raid's battle, and a win counts towards <code>battles_won</code>.</td>
+<td><strong>Offer</strong> a mission to fly now: the player accepts with Enter (the first ready craft with a pilot flies it) or declines with Esc. The outcome's campaign actions (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>, <code>relation</code>, and since app 0.16.3 <code>capture</code>, <code>lose</code>, <code>cargo_lost</code>, <code>cargo_captured</code>) apply as for a raid's battle (<a href="../strategy/#raids-and-battles">Raids and battles</a>), and a win counts towards <code>battles_won</code>.</td>
 </tr>
 <tr>
 <td><code>raid(x)</code></td>
@@ -7146,7 +7152,9 @@ texts may be <code>@keys</code> (app 0.10.2), resolved like any other text: <cod
 pack's <code>text/</code>, or <code>@orig.KEY</code> from the player's original language files.</p>
 <h2 id="conditions">Conditions<a class="headerlink" href="#conditions" title="Permanent link">&para;</a></h2>
 <p>Story conditions — <code>when</code>, <code>start_when</code>, <code>campaign_end</code> and <code>unlock</code> — use the
-<a href="../strategy/#expressions-the-campaign-context">campaign context</a> with five more queries:</p>
+<a href="../strategy/#expressions-the-campaign-context">campaign context</a>, including its logistics
+queries (<code>deposit</code>, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code>,
+<code>facility_progress</code>, <code>construction_attacks</code>; app 0.16.3), with five more queries:</p>
 <table>
 <thead>
 <tr>
@@ -7263,9 +7271,18 @@ and Phantasm examinations. That mapping is <strong>derived and unconfirmed</stro
 <li><code>--check --campaign &lt;id&gt;</code> reports every story error below.</li>
 <li>On the strategy screen the <strong>Archive</strong> tab shows the plans under way, every standing and
   stance, the aggression, battles won and the unlocked encyclopaedia.</li>
+<li><strong>The event debugger</strong> (app 0.16.13): <strong>Ctrl+D</strong> on the strategy screen adds a <em>Debug</em> list —
+  <em>Arc <id>: step n of m</em> for each arc, then every event as <em><id> - fired n, condition holds</em>
+  (or <em>false</em>), evaluated now. <em>Fire now</em> on an event fires it whatever its condition
+  (<code>Campaign::fire_event</code>): it counts as fired, its arc advances <strong>only if it is the arc's next
+  step</strong>, its actions run and its choice is offered; the log records <em>Debug: fired event <id></em>.
+  A test event with <code>when: day &gt;= 99999</code> is a handy way to run any action list by hand.</li>
+<li><strong>Start at a chapter</strong> (app 0.16.13): <code>openinterceptor --campaign &lt;id&gt; --strategy --chapter
+  &lt;n&gt;</code> plays a new campaign forward headless with the automatic player (<code>--strategy-soak</code>'s)
+  until its <strong>first</strong> arc reaches step <em>n</em>, or for at most 1500 days, then opens the strategy
+  screen there.</li>
 </ul>
-<p>Not built yet: a testbed event debugger (fire an event, set flags and plan progress) and
-starting the default campaign at a chosen chapter.</p>
+<p>Not built yet: setting flags and plan progress directly (fire an event that does it).</p>
 <h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

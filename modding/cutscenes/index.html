@@ -6705,7 +6705,7 @@ action and <code>campaign.intro_video</code> (<a href="#videos">below</a>); othe
 fires and the saucer explodes; the camera ends on the station.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># resources/default/cutscenes/intro.yaml</span>
 <span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">intro</span>
-<span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Perils of the Void</span>
+<span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="s">"@cutscene.intro.title"</span><span class="w">     </span><span class="c1"># text keys since app 0.16.2: text/en/cutscenes.yaml</span>
 <span class="nt">length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20s</span>
 <span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">starfield_seed</span><span class="p">:</span><span class="w"> </span><span class="nv">31</span><span class="p p-Indicator">,</span><span class="nt"> sun</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-0.4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.45</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-0.8</span><span class="p p-Indicator">],</span><span class="nt"> environment</span><span class="p">:</span><span class="w"> </span><span class="nv">orbit</span><span class="p p-Indicator">}</span>
 <span class="nt">entities</span><span class="p">:</span>
@@ -6726,9 +6726,9 @@ fires and the saucer explodes; the camera ends on the station.</p>
 <span class="w">  </span><span class="nt">station</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">position</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">11s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-500</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">260</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-1200</span><span class="p p-Indicator">]],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-700</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">320</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-900</span><span class="p p-Indicator">]]],</span><span class="nt"> look_at</span><span class="p">:</span><span class="w"> </span><span class="nv">gatehouse</span><span class="p p-Indicator">,</span><span class="nt"> fov</span><span class="p">:</span><span class="w"> </span><span class="nv">45</span><span class="p p-Indicator">}</span>
 <span class="nt">cuts</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">wide</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">6.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">chase</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">11.2s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">station</span><span class="p p-Indicator">]]</span>
 <span class="nt">captions</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">frontier,</span><span class="nv"> </span><span class="s">2084."</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"Regent</span><span class="nv"> </span><span class="s">Vexor's</span><span class="nv"> </span><span class="s">saucers</span><span class="nv"> </span><span class="s">prowl</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">cosmium</span><span class="nv"> </span><span class="s">belts..."</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">14s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">19.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"Only</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">Interplanetary</span><span class="nv"> </span><span class="s">Guard</span><span class="nv"> </span><span class="s">stands</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">their</span><span class="nv"> </span><span class="s">way."</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@cutscene.intro.line1"</span><span class="p p-Indicator">]</span><span class="w">       </span><span class="c1"># "The frontier, 2084."</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@cutscene.intro.line2"</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># "Regent Vexor's saucers prowl the cosmium belts..."</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">14s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">19.5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@cutscene.intro.line3"</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># "Only the Interplanetary Guard stands in their way."</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="c1"># resources/default/campaign/campaign.yaml</span>
 <span class="nt">campaign</span><span class="p">:</span>
@@ -6764,7 +6764,7 @@ fires and the saucer explodes; the camera ends on the station.</p>
 <td><code>title</code></td>
 <td>text</td>
 <td>the id</td>
-<td>Its title (for the designer and listings; not shown during play).</td>
+<td>Its title (for the designer and listings; not shown during play). May be a text key, <code>"@cutscene.intro.title"</code> (app 0.16.2).</td>
 </tr>
 <tr>
 <td><code>length</code></td>
@@ -6818,7 +6818,7 @@ fires and the saucer explodes; the camera ends on the station.</p>
 <td><code>captions</code></td>
 <td><code>[[from, to, text], …]</code></td>
 <td>none</td>
-<td>Caption lines and when they show.</td>
+<td>Caption lines and when they show. The text may be a text key (app 0.16.2).</td>
 </tr>
 </tbody>
 </table>
@@ -6987,10 +6987,26 @@ cameras at all, a fixed view from <code>[0, 50, 300]</code> looking ahead.</p>
 <li><code>captions: [[from, to, text]]</code> shows a line at the bottom of the screen, centred in the
   letterbox bar, in the skin's font, from <code>from</code> until <code>to</code>. Quote a caption that contains a
   colon or a comma.</li>
+<li><strong>Text keys</strong> (app 0.16.2): a caption — and the <code>title</code> — may be <code>"@&lt;key&gt;"</code>, resolved from
+  the packs' <code>text/&lt;language&gt;/</code> files like any other text (<a href="../text/">Text and translation</a>),
+  so a translation addon can give a cutscene its own words. The default intro's are in
+  <code>resources/default/text/en/cutscenes.yaml</code>:</li>
 </ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># text/en/cutscenes.yaml</span>
+<span class="nt">text</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cutscene.intro.title</span><span class="p">:</span><span class="w"> </span><span class="s">"Perils</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">Void"</span>
+<span class="w">  </span><span class="nt">cutscene.intro.line1</span><span class="p">:</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">frontier,</span><span class="nv"> </span><span class="s">2084."</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># cutscenes/intro.yaml</span>
+<span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="s">"@cutscene.intro.title"</span>
+<span class="nt">captions</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@cutscene.intro.line1"</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>A missing key is a load error (<code>text: missing key … (cutscenes/&lt;id&gt;)</code>) and shows as the key.</p>
 <h3 id="what-the-player-sees">What the player sees<a class="headerlink" href="#what-the-player-sees" title="Permanent link">&para;</a></h3>
 <p>Black letterbox bars cover the top and bottom tenth of the screen; captions sit in the bottom
-bar. When the cutscene ends (or is skipped) the next screen draws its own sky again.</p>
+bar. Esc, Enter, a mouse click or a gamepad's Start, A or B skips it (the click and the pad
+since app 0.16.2). When the cutscene ends (or is skipped) the next screen draws its own sky again.</p>
 <h2 id="videos">Videos<a class="headerlink" href="#videos" title="Permanent link">&para;</a></h2>
 <p>The original's films are Smacker videos, played full screen and letterboxed (app 0.12.0):</p>
 <table>
@@ -7020,8 +7036,9 @@ bar. When the cutscene ends (or is skipped) the next screen draws its own sky ag
 </tbody>
 </table>
 <p>A video reference may also be a pack path (<code>video/&lt;file&gt;.smk</code>); only Smacker files play. A pack
-path is looked for in every active pack, latest first (app 0.14.1). Enter, Esc or a click skips a
-video; its soundtrack follows the effects volume (app 0.14.1).</p>
+path is looked for in every active pack, latest first (app 0.14.1). Enter, Esc, a click or a
+gamepad's Start, A or B (app 0.16.2) skips a video; its soundtrack follows the effects volume
+(app 0.14.1).</p>
 <h2 id="validating">Validating<a class="headerlink" href="#validating" title="Permanent link">&para;</a></h2>
 <p>Cutscene files are read with every other pack file when the game or <code>--check</code> loads: a mistake
 is reported with the file and the key, for example
@@ -7031,17 +7048,17 @@ no cutscene is a load error (<code>campaign.intro: no cutscene 'x' (cutscenes/&l
 0.14.1). A <code>play_cutscene</code> id that does not exist is still reported only when it would play
 (<code>cutscene x: no cutscene 'x'</code> on standard error), and the game carries on without it.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
-<p>From the <a href="../../specification/design/designer/#32-what-a-scene-contains">design</a>, not in app 0.13.0:</p>
+<p>From the <a href="../../specification/design/designer/#32-what-a-scene-contains">design</a>, not in app 0.16.14:</p>
 <ul>
 <li><strong>Rotation keys</strong> (slerp) and <strong>speed keys</strong>; entities only face along their paths.</li>
 <li><strong>Autopilot entities</strong> flown by the AI (<code>aggressive</code>), switching between scripted and
   autopilot, and <strong>formations</strong> of a group following a leader.</li>
 <li>The actions <strong>chase</strong>, <strong>capture</strong> (tractor) and <strong>jump</strong> (hyperspace); <code>harmless</code> on a single action (it is per entity).</li>
-<li><strong>Sound files</strong> at times with fades, positions and music ducking; captions as <strong>text keys</strong>
-  (they are plain text, not translated).</li>
+<li><strong>Sound files</strong> at times with fades, positions and music ducking. (Captions take <strong>text
+  keys</strong> since app 0.16.2.)</li>
 <li>Camera <strong>height and look-offset keys</strong>, keyframed field of view, <strong>blended</strong> cuts.</li>
-<li>Cutscenes as a <strong>mission's intro and outro</strong>; skipping from the tablet console or the pad's
-  Start button.</li>
+<li>Cutscenes as a <strong>mission's intro and outro</strong>; skipping from the tablet console (the pad
+  skips since app 0.16.2).</li>
 <li>A <code>video:</code> file in place of a cutscene, and video files other than Smacker (MD3).</li>
 <li>Scrubbing and snapshots (the designer's seeking, MD6).</li>
 </ul>
@@ -7093,6 +7110,10 @@ no cutscene is a load error (<code>campaign.intro: no cutscene 'x' (cutscenes/&l
 <tr>
 <td><code>campaign.intro: no cutscene 'x' (cutscenes/&lt;id&gt;.yaml)</code></td>
 <td><code>campaign.intro</code> names no cutscene (app 0.14.1).</td>
+</tr>
+<tr>
+<td><code>text: missing key '…' (cutscenes/&lt;id&gt;)</code></td>
+<td>A cutscene's title or caption names a text key no pack defines (app 0.16.2).</td>
 </tr>
 </tbody>
 </table>

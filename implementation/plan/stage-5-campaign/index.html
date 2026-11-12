@@ -6388,7 +6388,7 @@
 <p><strong>Version 0.6.0. Status: in progress</strong> — the core (events, arcs, rival plans, relations, the
 strategist, endings, the encyclopaedia) in app <strong>0.10.0</strong> (main <code>485d01e</code>); the default
 campaign's serial in <strong>0.10.1</strong> (<code>66d0b5a</code>); the X-COM Doomsday arc in <strong>0.10.2</strong> (<code>8926d11</code>);
-relations in battle and the year-long soak in <strong>0.10.3</strong> (<code>76bda5c</code>). Story, rivals and
+relations in battle and the year-long soak in <strong>0.10.3</strong> (<code>76bda5c</code>); stance changes from missions announced in <strong>0.16.2</strong> (<code>6b45fcb</code>); the event debugger and start-at-chapter in <strong>0.16.13</strong> (<code>52e9e7f</code>). Story, rivals and
 relations: what turns the strategy layer into a campaign with a beginning, middle and end. At
 the end of this stage <strong>both campaigns are playable from start to finish</strong>.</p>
 <p>Design: <a href="../../../specification/design/format-campaign/">campaign and game flow</a>,
@@ -6434,13 +6434,13 @@ the end of this stage <strong>both campaigns are playable from start to finish</
 <td>5.5</td>
 <td>Factions: patrons, independents, hostiles; <strong>dynamic relations</strong> with relation rules, drift, stances and their battle and strategy effects; stance-change events; relations screen</td>
 <td><code>campaign::relations</code>, <code>app</code></td>
-<td><strong>Partial</strong> (0.10.0, 0.10.3): the player's standings, <code>relation(f, n)</code>, monthly drift, stances; a faction no longer hostile stops raiding (0.10.0) and campaign battles carry the stances (0.10.3, <code>flight::apply_stances</code>); a stance change is a notice; the Archive tab lists standings. Not built: relation rules, standings between other factions, allied factions fighting at the player's side, effects on prices and trade, stance-change events a campaign can react to. Mission outcomes' <code>relation(…)</code> moves standings since app 0.12.1 (main <code>563c93f</code>). #40.</td>
+<td><strong>Partial</strong> (0.10.0, 0.10.3): the player's standings, <code>relation(f, n)</code>, monthly drift, stances; a faction no longer hostile stops raiding (0.10.0) and campaign battles carry the stances (0.10.3, <code>flight::apply_stances</code>); a stance change is a notice — since 0.16.2 also one caused by a mission outcome, shown when the map returns (<code>Campaign::notices</code>, #40); the Archive tab lists standings. Not built: relation rules, standings between other factions, allied factions fighting at the player's side, effects on prices and trade, stance-change events a campaign can react to. Mission outcomes' <code>relation(…)</code> moves standings since app 0.12.1 (main <code>563c93f</code>). #40.</td>
 </tr>
 <tr>
 <td>5.6</td>
 <td>Victory, defeat and endings (total/partial victories)</td>
 <td><code>campaign</code></td>
-<td><strong>Done for the engine</strong> (0.10.0): <code>endings</code>, <code>campaign_end</code> victory and defeat conditions (defeats first), <code>victory(x)</code>/<code>defeat(x)</code> actions; the ending shown as a banner, saved. Neither campaign defines a partial victory yet; the ending screen is Stage 6. Since app 0.12.1 (main <code>87b04f3</code>) an ending may play a <code>video</code> (the X-COM victory plays the credits), and continuing a finished campaign shows its ending again. #41.</td>
+<td><strong>Done for the engine</strong> (0.10.0): <code>endings</code>, <code>campaign_end</code> victory and defeat conditions (defeats first), <code>victory(x)</code>/<code>defeat(x)</code> actions; the ending shown as a banner, saved — since 0.16.14 an <strong>ending screen</strong> (Stage 6.2). Neither campaign defines a partial victory yet. Since app 0.12.1 (main <code>87b04f3</code>) an ending may play a <code>video</code> (the X-COM victory plays the credits), and continuing a finished campaign shows its ending again. #41.</td>
 </tr>
 <tr>
 <td>5.7</td>
@@ -6474,10 +6474,15 @@ the end of this stage <strong>both campaigns are playable from start to finish</
 </tr>
 </tbody>
 </table>
-<p><strong>Testbed adds</strong>: an event and arc debugger (fire events, set flags and plan progress, view
-relations), and campaign start-at-chapter for the default campaign — <strong>not built</strong>. Built
-instead: <code>--strategy-soak</code> reports the story (arcs, plans, aggression, ending; 0.10.1) and the
-Archive tab shows plans, standings and aggression. #47.</p>
+<p><strong>Testbed adds</strong> — <strong>Done</strong> (app 0.16.13, main <code>52e9e7f</code>, #47): the <strong>event and arc debugger</strong> —
+Ctrl+D on the strategy screen shows a <em>Debug</em> list with each arc's step and every story event
+with its fired count and whether its condition holds now; <em>Fire now</em> fires one
+(<code>Campaign::fire_event</code>: its arc advances only if it is the next step, its actions run, its
+choice is offered) — and <strong>start-at-chapter</strong>: <code>--strategy --chapter N</code> plays a new campaign
+forward headless (<code>campaign::autoplay_to_chapter</code>, up to 1500 days) until its first arc reaches
+step N. Not built: setting flags and plan progress directly (fire an event that does it).
+<code>--strategy-soak</code> reports the story (arcs, plans, aggression, ending; 0.10.1) and the Archive tab
+shows plans, standings and aggression. MT-5-12, MT-5-13.</p>
 <p><strong>Exit</strong>: a full play-through of each campaign at a middle difficulty (manual tests, with a log
 of milestone dates); automated soak test running each campaign for a simulated year with the
 player's battles auto-resolved, checking invariants (money accounting, no orphan references,

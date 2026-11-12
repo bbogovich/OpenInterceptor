@@ -4255,10 +4255,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testbed-cheats" class="md-nav__link">
+  <a href="#testbed-cheats-and-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testbed cheats
+        Testbed cheats and tools
       
     </span>
   </a>
@@ -4266,10 +4266,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-0160" class="md-nav__link">
+  <a href="#limits-in-app-01614" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.16.0
+        Limits in app 0.16.14
       
     </span>
   </a>
@@ -6608,10 +6608,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testbed-cheats" class="md-nav__link">
+  <a href="#testbed-cheats-and-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testbed cheats
+        Testbed cheats and tools
       
     </span>
   </a>
@@ -6619,10 +6619,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-0160" class="md-nav__link">
+  <a href="#limits-in-app-01614" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.16.0
+        Limits in app 0.16.14
       
     </span>
   </a>
@@ -6667,15 +6667,17 @@ fills the window. Since app 0.11.0 – 0.13.0 the campaign has <strong>music</st
 <h2 id="starting">Starting<a class="headerlink" href="#starting" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Since app 0.14.0 the game opens on the campaign's <strong>main menu</strong>: <strong>Continue</strong> (when there is a
-  save) and <strong>New campaign</strong> (<a href="../getting-started/#the-main-menu">Getting started › The main menu</a>).
+  save), <strong>New campaign</strong> and, since app 0.16.14, <strong>Load game</strong> when one of your save slots holds
+  a game (<a href="../getting-started/#the-main-menu">Getting started › The main menu</a>, <a href="#saves">Saves</a>).
   The testbed launcher (<em>Battles &amp; tools</em>) still lists <strong>Campaign: continue</strong> and
   <strong>Campaign: new game</strong> first.</li>
 <li><em>New game</em> starts at the launcher's difficulty level. If the campaign has an introduction it
   plays first: the default campaign's opening cutscene, or <code>interceptor</code>'s opening film from your
-  data (app 0.13.0). Esc skips it. <em>Continue</em> loads the campaign's save
-  (there is one save per campaign); with no save, the launcher shows the error.</li>
+  data (app 0.13.0). Esc, Enter, a click or the gamepad's Start, A or B skips it. <em>Continue</em>
+  loads the campaign's automatic save; with no save, the launcher shows the error.</li>
 <li>From the command line: <code>openinterceptor --no-original --strategy</code> opens a new default campaign
-  directly (<a href="../getting-started/#run">Getting started</a>).</li>
+  directly (<a href="../getting-started/#run">Getting started</a>); add <code>--chapter 6</code> to start at chapter 6
+  (<a href="#testbed-cheats-and-tools">Testbed tools</a>).</li>
 </ul>
 <h2 id="the-screen">The screen<a class="headerlink" href="#the-screen" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>┌ 2084-03-14   Funds 2,140,000   Score 310     [&lt;] Gatehouse [&gt;]     [||][1h][6h][1d][5d][Save][Menu] ┐
@@ -6717,14 +6719,18 @@ fills the window. Since app 0.11.0 – 0.13.0 the campaign has <strong>music</st
 <li>a system with a base that is not current: <em>Make <base> current</em>;</li>
 <li>a contact: where it is heading, how many craft are ready at the current base, and
     <strong>Intercept</strong>;</li>
+<li>up to six buttons (app 0.16.1); a system where more could be built shows the first six;</li>
 <li>a convoy, a survey ship or a craft: what it is doing.</li>
 </ul>
 <p>With nothing selected it says how to use the map.
-- <strong>List buttons</strong>: ten buttons that open a list in the panel below; the open one is outlined.
+- <strong>List buttons</strong>: eleven buttons that open a list in the panel below (twelve with the testbed's
+  <em>Debug</em> list); the open one is outlined.
 - <strong>Panel</strong> (right, bottom). The open list (<a href="#the-lists">The lists</a>). Rows that are too long end
   in <code>...</code>; the <strong>selected row is shown in full</strong> under the list, with <strong>its actions as
   buttons</strong>. Click a row to select it; <strong>double-click</strong> to do its first action. The wheel, the
-  scroll bar or Up/Down scroll the list. Grey rows are information only.</p>
+  scroll bar or Up/Down scroll the list. Grey rows are information only. Buttons that cannot be
+  undone — <strong>Dismantle</strong>, <strong>Dismiss</strong> and <strong>Cancel</strong> — work only as buttons: Enter and a double
+  click never do them (app 0.16.10 – 0.16.11).</p>
 <p>Every order answers in a short yellow line at the bottom of the map: <em>Done.</em>, or why not (not
 enough money, not yet researched, the limit for that kind of module, too far from your other
 bases, no free pilot, …).</p>
@@ -6740,16 +6746,24 @@ the screen with buttons; nothing else can be clicked until you answer.</p>
 </thead>
 <tbody>
 <tr>
-<td><strong>Report</strong> — a building or base finished, research complete, a contact detected, a raid struck, the monthly report, a facility completed, a survey's findings, a story message, a stance changed</td>
+<td><strong>Report</strong> — a building or base finished, research complete, a contact detected, a raid struck or driven off by your defences, the monthly report and its rating, a facility completed or lost, a survey's findings, a story message, a stance changed (also by a mission you flew, as soon as the map is back — app 0.16.2), new research possible, a delivery lost, a game loaded from another version of a pack</td>
 <td><strong>OK</strong> (or Enter / Esc)</td>
 </tr>
 <tr>
 <td><strong>Interception</strong> — your craft reached a contact</td>
-<td><strong>Fly the battle</strong>, <strong>Break off</strong> (Enter / Esc)</td>
+<td><strong>Fly the battle</strong>, <strong>Auto-resolve</strong> (app 0.16.12), <strong>Break off</strong> (Enter / Esc)</td>
 </tr>
 <tr>
 <td><strong>Convoy ambushed</strong></td>
 <td><strong>Fly the escort</strong>, <strong>Let it fight</strong> (Enter / Esc)</td>
+</tr>
+<tr>
+<td><strong>Construction under attack</strong> — a facility being built is struck (app 0.16.4)</td>
+<td><strong>Fly the defence</strong>, <strong>Let it be</strong> (Enter / Esc)</td>
+</tr>
+<tr>
+<td><strong>Save game</strong> — the top bar's <em>Save</em> (app 0.16.14)</td>
+<td><strong>Slot 1</strong>, <strong>Slot 2</strong>, <strong>Slot 3</strong>, <strong>Cancel</strong></td>
 </tr>
 <tr>
 <td><strong>A decision</strong> — a story choice</td>
@@ -6764,8 +6778,8 @@ the screen with buttons; nothing else can be clicked until you answer.</p>
 <td><strong>Continue</strong> (or a click anywhere)</td>
 </tr>
 <tr>
-<td><strong>Victory</strong> / <strong>Defeat</strong> — the end</td>
-<td><strong>Leave</strong> (saves and goes to the main menu)</td>
+<td>The <strong>ending screen</strong> — the end (app 0.16.14; <a href="#the-story">The story</a>)</td>
+<td><strong>Credits</strong>, <strong>Main menu</strong> (Enter / Esc: the main menu; both save first)</td>
 </tr>
 </tbody>
 </table>
@@ -6813,11 +6827,15 @@ the screen with buttons; nothing else can be clicked until you answer.</p>
 </tr>
 <tr>
 <td>F5</td>
-<td>Save</td>
+<td>Save (the automatic save)</td>
 </tr>
 <tr>
 <td>Ctrl+M, Ctrl+K, Ctrl+B, Ctrl+J</td>
-<td>Testbed cheats (<a href="#testbed-cheats">below</a>)</td>
+<td>Testbed cheats (<a href="#testbed-cheats-and-tools">below</a>)</td>
+</tr>
+<tr>
+<td>Ctrl+D</td>
+<td>Show or hide the testbed's <em>Debug</em> list (app 0.16.13)</td>
 </tr>
 <tr>
 <td>Esc</td>
@@ -6839,8 +6857,8 @@ are the <em>Sell 1</em> and <em>Fit best</em> buttons.</p>
 <tbody>
 <tr>
 <td><strong>Bases</strong></td>
-<td>Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: <em>Build a <type> at <system></em> with its cost</td>
-<td><em>Select</em> (make it current); <em>Build</em></td>
+<td>Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: <em>Build a <type> at <system></em> with its cost. Under the current base, each module with its state; <em>Store: n of m used</em> (a campaign with storage modules) and <em>Quarters: room for n pilots</em> (app 0.16.10)</td>
+<td><em>Select</em> (make it current); <em>Build</em>; on a module <strong>Dismantle</strong> (half its cost back)</td>
 </tr>
 <tr>
 <td><strong>Research</strong></td>
@@ -6860,12 +6878,12 @@ are the <em>Sell 1</em> and <em>Fit best</em> buttons.</p>
 <tr>
 <td><strong>Factory</strong></td>
 <td>The current base's production rate; what it can make, with the work it takes; its queue</td>
-<td><em>Make 1</em>, <em>Make 5</em></td>
+<td><em>Make 1</em>, <em>Make 5</em>; on a queued job <strong>Move up</strong> (not the first) and <strong>Cancel</strong> (app 0.16.11)</td>
 </tr>
 <tr>
 <td><strong>Hangar</strong></td>
-<td>Every craft with its base, pilot (and <em>away</em> when out) and fit (<em>standard fit</em> or the items fitted); then your pilots with rank, kills, missions and state; then recruits with their stats and the fee</td>
-<td>On a craft: <em>Assign pilot</em> (the next free, ready pilot), <em>Fit best</em> (the best equipment in its base's store). On a recruit: <em>Hire</em></td>
+<td>Every craft with its base, pilot (and <em>away</em> when out) and fit (<em>standard fit</em> or the items fitted); then your pilots with rank, kills, missions, state and <em>training</em>; then recruits with their stats and the fee</td>
+<td>On a craft: <em>Assign pilot</em> (the next free, ready pilot), <em>Fit best</em> (the best equipment in its base's store). On a pilot (app 0.16.7): <strong>Train</strong> / <strong>Stop training</strong>, <strong>Dismiss</strong>. On a recruit: <em>Hire</em> (refused when your quarters are full)</td>
 </tr>
 <tr>
 <td><strong>Contacts</strong></td>
@@ -6883,16 +6901,34 @@ are the <em>Sell 1</em> and <em>Fit best</em> buttons.</p>
 <td>—</td>
 </tr>
 <tr>
+<td><strong>Reports</strong></td>
+<td>Your funds, score (and this month's), bases, craft and living pilots; then every monthly report, newest first, with its rating (app 0.16.8)</td>
+<td>—</td>
+</tr>
+<tr>
 <td><strong>Messages</strong></td>
 <td>The log, newest first, with dates</td>
 <td>—</td>
+</tr>
+<tr>
+<td><strong>Debug</strong> (testbed, Ctrl+D)</td>
+<td>Each story arc's step; every story event, how often it has fired and whether its condition holds now (app 0.16.13)</td>
+<td><strong>Fire now</strong></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Fit best</strong> fills every slot of the craft's hull with the best item of that kind in its base's
 store — beams, missile racks and, since app 0.15.0, <strong>shields and armour</strong>. In battle the craft
 flies with the strongest shield fitted and all its armour plates added up, in place of its hull's
-standard protection (<em>standard fit</em> means the hull's own).</p>
+standard protection (<em>standard fit</em> means the hull's own). In the default campaign every hull has
+a shield and an armour slot, and you start with three deflector screens and three steel platings
+in store; research <em>Force fields</em> and <em>Saucer alloys</em> for better ones (app 0.16.1).</p>
+<p><strong>Training</strong> (app 0.16.7): a pilot in training improves every stat a little each day (in the
+default campaign 0.4 points, up to the stat's best) and costs money each day (400) until you
+press <em>Stop training</em>. <strong>Dismiss</strong> removes a pilot from the roster for good. <strong>Quarters</strong>: you
+can keep only as many pilots as your bases house — the Gatehouse houses four, the four you start
+with, so build <em>Crew quarters</em> (six more) before hiring (app 0.16.10). <strong>Defence</strong>: each <em>Ray
+battery</em> gives a base a 15 % chance of driving off a raid that reaches it unopposed (two: 28 %).</p>
 <h2 id="interceptions-and-battles">Interceptions and battles<a class="headerlink" href="#interceptions-and-battles" title="Permanent link">&para;</a></h2>
 <ol>
 <li>A raid is detected: the clock stops with <em>Contact: <raid>, heading for <base></em>.</li>
@@ -6901,7 +6937,11 @@ standard protection (<em>standard fit</em> means the hull's own).</p>
    to the system nearest it, then straight to it (app 0.7.3). Raiders, too, come in along the
    lanes, and the map draws each one's way ahead.</li>
 <li>When they reach it, the clock stops and the <strong>Interception</strong> prompt asks: <strong>Fly the battle</strong>,
-   or <strong>Break off</strong> (the contact flies on).</li>
+   <strong>Auto-resolve</strong> (app 0.16.12), or <strong>Break off</strong> (the contact flies on). <em>Auto-resolve</em> rolls
+   the result at once from the strength of your craft there against the raid's — more and
+   better hulls give better odds — and reports <em>Auto-resolved (NN% odds): WIN</em> or <em>LOSE</em>; the
+   result counts like a flown battle's (a win credits the leader with the raid's kills), but your
+   craft and pilots come back unharmed even from a loss.</li>
 <li>The battle is the raid's mission, with the first craft's hull as your ship and its fitted
    weapons, shields and armour (app 0.7.2, 0.15.0). Fly it as usual. When the result is decided the battle runs on until the
    debrief (<a href="../getting-started/#after-a-battle-the-debrief">Debrief</a>); at the debrief, <strong>Enter</strong> or
@@ -6909,7 +6949,10 @@ standard protection (<em>standard fit</em> means the hull's own).</p>
    counts as a retreat.</li>
 <li>Back on the map, a report gives the result and the kills. The outcome's score and money
    apply; the leader gains the kills and experience; if you were shot down, the craft is lost and
-   its pilot ejected injured — or was killed.</li>
+   its pilot ejected injured — or was killed. A prize you towed home with the tractor beam is
+   kept when the mission's outcome says so, and can then be researched (app 0.16.3). With the
+   <code>interceptor</code> campaign's music a short sting plays as the map returns — upbeat after a win,
+   darker otherwise (app 0.16.2).</li>
 </ol>
 <p>A raid you do not stop strikes its target: a base loses its newest finished module, and the
 score drops.</p>
@@ -6924,7 +6967,8 @@ decide where to survey and what to build.</p>
 <li><strong>Survey.</strong> Click a system on the map and press <strong>Survey</strong> in the info panel (or open the
    Supply list and choose <em>Survey <system> from <base></em>). The system must be within the current base's radar range. The survey ship flies
    there (a sky-blue ring); when it arrives a message lists the deposits it found, with their
-   rates a day, and any research site. A survey ship may be attacked on the way: it fights off
+   rates a day and how much is in reserve (or <em>unlimited</em>), the system's features and any
+   research site (reserves and features since app 0.16.2). A survey ship may be attacked on the way: it fights off
    the attack or is lost (then survey again).</li>
 <li><strong>Build.</strong> With a system selected, the info panel offers each kind of facility that may be
    built there as a button with its cost, and the Supply list offers every kind:</li>
@@ -6957,6 +7001,15 @@ ambushed</strong> prompt, and the convoy waits:</p>
   the survivors deliver their share. This is also what happens when no craft is ready.</li>
 </ul>
 <p>What is missing is simply ordered again.</p>
+<p><strong>Construction can be struck</strong> (app 0.16.4). From the time a facility is half built, the Dominion
+may strike it — in the default campaign a 12 % chance a day, at most three strikes per system.
+The clock stops with <strong>Construction under attack</strong>:</p>
+<ul>
+<li><strong>Fly the defence</strong> — fly <em>Construction defence</em> with the first ready craft: win, and the
+  strike is beaten off; lose, and the site is destroyed.</li>
+<li><strong>Let it be</strong> — the strike sets the work back by a quarter of its build time. This is also what
+  happens when no craft is ready.</li>
+</ul>
 <h2 id="the-story">The story<a class="headerlink" href="#the-story" title="Permanent link">&para;</a></h2>
 <p><em>App 0.10.0 – 0.10.3.</em> The story runs by itself as the days pass; you meet it as messages that
 stop the clock, choices, offered missions and, finally, an ending.</p>
@@ -6978,14 +7031,16 @@ stop the clock, choices, offered missions and, finally, an ending.</p>
 <li><strong>Relations</strong> (default campaign). Every faction has a standing with you from −100 to 100 and
   a stance — hostile, wary, neutral, friendly or allied. Story events and, since app 0.12.1, the
   missions you fly move them (winning the nebula-pocket ambush lowers the raiders' standing), and
-  they drift back towards neutral each month. A change of stance from a story event stops the
-  clock; one from a mission is only logged. A faction that is no
+  they drift back towards neutral each month. A change of stance stops the clock with a report —
+  one caused by a mission as soon as you are back on the map (app 0.16.2). A faction that is no
   longer <strong>hostile</strong> stops raiding you and does not attack you in battle; one that turns hostile
   does. The Senate's stipend grows with its standing.</li>
 <li><strong>The rival's mood.</strong> Sit back and the rival grows bolder — its raids come more often; win
   battles every month and it grows more careful.</li>
-<li><strong>The end.</strong> When an ending is reached a <strong>Victory</strong> or <strong>Defeat</strong> prompt shows its text;
-  <strong>Leave</strong> saves and goes to the main menu. In the default campaign you win by destroying the Eclipse Engine and
+<li><strong>The end.</strong> When an ending is reached the <strong>ending screen</strong> fills the window (app 0.16.14):
+  <em>VICTORY</em> or <em>DEFEAT</em>, the ending's text, and your record — the date, the final score, the
+  battles won, your bases and craft — with <strong>Credits</strong> (the credits roll, then the main menu) and
+  <strong>Main menu</strong>; both save first. In the default campaign you win by destroying the Eclipse Engine and
   lose if it is lit, if you lose your last base, or if the Senate turns against you; in
   <code>interceptor</code> you win by destroying the Doomsday weapon and lose if it is completed or your
   last base falls.</li>
@@ -6999,36 +7054,50 @@ stop the clock, choices, offered missions and, finally, an ending.</p>
 <li><strong>Films.</strong> In <code>interceptor</code>, each of the five alien transmissions plays the original's
   transmission film from your data, the victory plays the closing credits, and a new campaign
   opens with the original's opening film. The film fills the screen (letterboxed); <strong>Enter</strong>,
-  <strong>Esc</strong> or a click skips it, and the map comes back where you left it.</li>
+  <strong>Esc</strong>, a click or the gamepad's <strong>Start</strong>, <strong>A</strong> or <strong>B</strong> skips it, and the map comes back
+  where you left it.</li>
 <li><strong>Cutscenes.</strong> The default campaign opens with a short scene played by the engine itself —
-  a Guard patrol meets a saucer over the Gatehouse — with captions and black bars. <strong>Esc</strong> or
-  <strong>Enter</strong> skips it.</li>
+  a Guard patrol meets a saucer over the Gatehouse — with captions and black bars. <strong>Esc</strong>,
+  <strong>Enter</strong>, a click or the gamepad's <strong>Start</strong>, <strong>A</strong> or <strong>B</strong> skips it.</li>
 <li><strong>Music.</strong> Battles play the campaign's music: calm while no enemy is near, tense when one
   is within radar range, driving when one is close, changing at the end of a musical phrase.
   A win plays a victory sting, any other result a darker one. The strategy screen has its own
-  music; the launcher and the other testbed screens are silent. Set the music and effects
+  music; in <code>interceptor</code> it also plays a short good-news sting for a battle won and finished
+  research, and a bad-news one for a battle lost (app 0.16.2). The launcher and the other testbed
+  screens are silent. Set the music and effects
   volumes in the launcher with <strong>M</strong> and <strong>V</strong> (<a href="../settings/#volumes-in-the-launcher">Settings</a>).</li>
 <li><strong>Who is speaking.</strong> In any battle, when someone speaks on the radio a small panel at the top
   left shows their portrait and name for a moment (app 0.13.1) — in the default campaign the
   Guard Wing and Colony Control; voices without a portrait show moving signal bars.</li>
-<li><strong>The end.</strong> An ending with a film plays it first, then the <strong>Victory</strong> or <strong>Defeat</strong> prompt
-  with its text. Continuing a finished campaign shows its ending again (app 0.12.1).</li>
+<li><strong>The end.</strong> An ending with a film plays it first, then the ending screen. Continuing a
+  finished campaign shows its ending again (app 0.12.1).</li>
 </ul>
 <h2 id="money-and-the-monthly-report">Money and the monthly report<a class="headerlink" href="#money-and-the-monthly-report" title="Permanent link">&para;</a></h2>
 <p>Incomes (the default campaign's Senate stipend grows with your bases, your month's score and,
 since app 0.10.1, the Senate's standing with you)
 and expenses are paid on their own schedules and logged. Every 30 days the <strong>monthly report</strong>
 charges module maintenance, craft upkeep and pilot salaries, shows the month's score, the total
-and your funds, and a new set of recruits is offered.</p>
+and your funds, and a new set of recruits is offered. Since app 0.16.8 the patron also <strong>rates
+the month</strong>: in the default campaign the Senate rates it <em>Outstanding</em> (a month's score of 400 or
+more: a 150 000 bonus), <em>Satisfactory</em> (0 or more), <em>Poor</em> (−300 or more: 50 000 cut) or
+<em>Unacceptable</em> (150 000 cut). The <strong>Reports</strong> list keeps every monthly report with its rating.
+Pilots in training cost money every day. A purchase can be lost on its way when the campaign
+says so (not in the default campaign) — paid for all the same.</p>
 <h2 id="saves">Saves<a class="headerlink" href="#saves" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Save</strong> (top bar) or <strong>F5</strong> saves; <strong>Menu</strong> or <strong>Esc</strong> saves and leaves to the main menu. The save is <code>&lt;user data folder&gt;/saves/&lt;campaign&gt;.yaml</code>
-  (for example <code>saves/default.yaml</code>); the user data folder is described on
-  <a href="../settings/">Settings</a>.</li>
-<li>A save records the packs it was played with. Continuing refuses a save that needs a pack that
-  is not active, or one whose rules no longer fit it (a mod was changed), with a message.</li>
+<li><strong>F5</strong>, leaving with <strong>Menu</strong> or <strong>Esc</strong>, and the end of a campaign write the <strong>automatic
+  save</strong>, <code>&lt;user data folder&gt;/saves/&lt;campaign&gt;.yaml</code> (for example <code>saves/default.yaml</code>);
+  <em>Continue</em> loads it. The user data folder is described on <a href="../settings/">Settings</a>.</li>
+<li><strong>Save</strong> in the top bar asks for a <strong>slot</strong> — <em>Slot 1</em>, <em>Slot 2</em> or <em>Slot 3</em> (app 0.16.14) —
+  and writes <code>saves/&lt;campaign&gt;-&lt;n&gt;.yaml</code>. The main menu's <strong>Load game</strong> page lists the
+  automatic save and the three slots with how long ago each was written (<em>just now</em>,
+  <em>5 minutes ago</em>, <em>2 hours ago</em>, <em>3 days ago</em>) or <em>empty</em>; Enter loads one, Esc goes back.</li>
+<li>A save records the packs it was played with. Loading refuses a save that needs a pack that
+  is not active, or one whose rules no longer fit it (a mod was changed), with a message. A save
+  made with another <strong>version</strong> of a pack that is active loads, with a report naming the two
+  versions (app 0.16.2).</li>
 </ul>
-<h2 id="testbed-cheats">Testbed cheats<a class="headerlink" href="#testbed-cheats" title="Permanent link">&para;</a></h2>
+<h2 id="testbed-cheats-and-tools">Testbed cheats and tools<a class="headerlink" href="#testbed-cheats-and-tools" title="Permanent link">&para;</a></h2>
 <p>The testbed keeps the original game's own cheat list as debug keys on the strategy screen (app
 0.8.1). Each says so in the yellow feedback line.</p>
 <table>
@@ -7060,23 +7129,35 @@ and your funds, and a new set of recruits is offered.</p>
 <td><em>jump to battle</em></td>
 <td>With a contact selected on the map (or its row selected in the Contacts list): a ready craft with a pilot is put at it at once, and the <strong>Interception</strong> prompt appears. Otherwise it says <em>Select a contact first</em>, or <em>no ready craft with a pilot</em>.</td>
 </tr>
+<tr>
+<td>Ctrl+D</td>
+<td><em>debug</em></td>
+<td>Shows (or hides) the <strong>Debug</strong> list (app 0.16.13): <em>Arc serial: step n of 12</em> and every story event with how often it has fired and whether its condition holds now. <strong>Fire now</strong> fires the selected event at once — its title card, message, choice or offered mission appear as in play; the story moves on only if it is the next chapter.</td>
+</tr>
 </tbody>
 </table>
-<h2 id="limits-in-app-0160">Limits in app 0.16.0<a class="headerlink" href="#limits-in-app-0160" title="Permanent link">&para;</a></h2>
+<p><strong>Start at a chapter</strong> (app 0.16.13): <code>openinterceptor --no-original --strategy --chapter 6</code>
+plays a new default campaign forward by itself — researching, intercepting, flying the offered
+missions automatically — until the serial reaches chapter 6, then opens the map there. It takes
+a moment; it stops after at most 1500 days or at an ending.</p>
+<h2 id="limits-in-app-01614">Limits in app 0.16.14<a class="headerlink" href="#limits-in-app-01614" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Fitting takes the best items in store; you cannot choose them one by one yet.</li>
 <li>Facilities have no fighters of their own, and the Supply list is plain text.</li>
-<li>The info panel shows at most four action buttons; a system where more could be built shows
-  the first four (the Bases and Supply lists offer them all).</li>
-<li>There is no separate screen per list, no 3D base view and no report screen yet.</li>
+<li>The info panel shows at most six action buttons; a system where more could be built shows
+  the first six (the Bases and Supply lists offer them all).</li>
+<li>There is no separate screen per list and no 3D base view yet. The pilots list does not show a
+  pilot's stats, so training is seen only in a save file.</li>
+<li>Auto-resolve counts your hulls, not their fitted equipment or pilots.</li>
 <li>Several chapters of the default campaign's serial fly an existing mission rather than their
   own; allied factions do not yet fly at your side; two of the original's seven side missions
   are in <code>interceptor</code>. Neither campaign has been played through from start to finish yet.</li>
-<li>The ending is a prompt with an optional film, not a screen of its own (Stage 6).</li>
-<li>Films and cutscenes cannot be skipped from the tablet console or the gamepad yet. (A film's
-  sound follows the effects volume since app 0.14.1.)</li>
+<li>Films and cutscenes cannot be skipped from the tablet console yet (the gamepad skips them
+  since app 0.16.2).</li>
+<li>The default campaign's music has no good-news or bad-news sting.</li>
 <li>The <code>interceptor</code> campaign's strategy layer has not been play-tested; its research is slow
-  with one downlink.</li>
+  with one downlink. Reading the code suggests a base without a finished <em>cargo</em> module cannot
+  buy anything (<em>no room in store</em>) — please report it if you see it.</li>
 <li>Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default
   campaign's salvage topics (<em>Saucer hull analysis</em>, <em>Robot brains</em>) can be started after
   salvaging the right raid.</li>

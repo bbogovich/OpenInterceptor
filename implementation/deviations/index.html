@@ -6665,6 +6665,24 @@ one looks like a bug.</p>
 <td>Playtest: ships and stations were destroyed too easily — the X-COM craft flew placeholder Stage 2 values. Naming the original's equipment reads the player's own numbers instead of copying them into the pack. Which section each class carries, and what the keys mean, are not documented by the original; <code>--balance</code> shows the result. The default campaign (original-free) was toughened in its own data at the same time: fighters ×4, capital ships, stations and ground installations ×3.</td>
 <td>4</td>
 </tr>
+<tr>
+<td>DEV-057</td>
+<td><strong>Auto-resolved interceptions use an engine strength model</strong> (app 0.16.12): each craft's power is √(effective hit points × sustained beam damage per second) from its class (<code>balance::power</code>), a side's power the sum, and the player wins with p = P² / (P² + E²) against the mission's hostile roles at their average counts; the mission's own outcome actions for the rolled result apply. Fitted items, pilots and wingmen are not counted, and a lost auto-resolve does not damage craft or pilots.</td>
+<td>The original's auto-resolution is code, not data (<em>unknown</em>). The square makes a clear superiority nearly certain, like Lanchester's square law; it reuses the <code>--balance</code> numbers so a modder can predict it.</td>
+<td>4</td>
+</tr>
+<tr>
+<td>DEV-058</td>
+<td><strong>Base effects as built</strong> (app 0.16.10): <code>quarters</code> is a campaign-wide pilot limit (every base's type and modules added up; none anywhere = no limit), <code>storage</code> limits only purchases at a base (item <code>size</code>s; no storage module anywhere in the campaign = no limit), and each point of a base's <code>defence</code> turns away 15 % of unopposed raids on that base on its own (1 − 0.85^points in all); <code>income</code> stays a tag that <code>incomes:</code> formulas count. Dismantling refunds <code>economy.dismantle</code> (50 %) of a module's cost.</td>
+<td>The original's numbers are not data (<em>unknown</em>). These are the simplest readings of the design's effect names that a modder can reason about; the refund and the module values are data.</td>
+<td>4</td>
+</tr>
+<tr>
+<td>DEV-059</td>
+<td><strong>The <code>good</code> and <code>bad</code> stingers' occasions are derived</strong> (app 0.16.2): good on a won battle (as the map returns), a finished research topic and a victory; bad on any other battle result and a defeat. The <code>interceptor</code> sets map them to the CD's loops by name (<code>goodre1.wav</code> / <code>badre1.wav</code>, <code>gudrein2.wav</code> / <code>badrein2.wav</code>, …).</td>
+<td>When the original played these loops is not recorded (<em>derived</em> from their names); the occasions are engine code, the clips are <code>music:</code> data.</td>
+<td>6</td>
+</tr>
 </tbody>
 </table>
 

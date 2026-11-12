@@ -6510,6 +6510,7 @@ checkout, and an empty <code>resources/xcom/</code> must not hide a filled <code
 <span class="w">  </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">en</span><span class="w">              </span><span class="c1"># text/&lt;language&gt;/ folders (--language overrides)</span>
 <span class="nt">graphics</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">brightness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2</span><span class="w">           </span><span class="c1"># 1 = as authored; 0.5 (darker) to 2 (brighter)</span>
+<span class="w">  </span><span class="nt">fullscreen</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">         </span><span class="c1"># start full screen (app 0.16.14; --windowed overrides)</span>
 <span class="nt">console</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">             </span><span class="c1"># serve the tablet control console (default false)</span>
 <span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8765</span><span class="w">                </span><span class="c1"># 1–65535; anything else is ignored</span>
@@ -6520,6 +6521,12 @@ for one run (<a href="../remote/">Remote console</a>).</p>
 applied as a gamma of 1 / brightness in the lit shader (<a href="../rendering/">Rendering</a>); values
 outside 0.5–2 are clamped, and an empty value means 1. The player's guide is
 <a href="../../../user-guide/settings/">Settings</a>.</p>
+<p><code>graphics.fullscreen</code> (app 0.16.14; <code>true</code>, <code>yes</code> or <code>on</code>) is read in <code>main</code> before the window
+exists: the window opens full screen when <code>--fullscreen</code> is given, or when the setting is on and
+<code>--windowed</code> is not (<code>Options::windowed</code> records that <code>--windowed</code> was given, since
+<code>Options::fullscreen</code> alone cannot tell "not asked" from "asked for a window"). The main menu's
+<em>Full screen</em> option switches the open window with macroquad's <code>set_fullscreen</code> and saves the
+choice (<code>app::remember_fullscreen</code>).</p>
 <p><strong>Migration.</strong> Builds before the YAML formats wrote <code>settings.ini</code> and <code>bindings.ini</code>. When
 <code>settings.yaml</code> does not exist, <code>Settings::load</code> reads <code>settings.ini</code> instead
 (<code>parse_legacy_ini</code>), and the next save writes <code>settings.yaml</code>. <code>bindings.ini</code> is read once and
@@ -6538,7 +6545,7 @@ and ignored from then on.</p>
 <tbody>
 <tr>
 <td><code>Settings</code></td>
-<td><code>original: Option&lt;PathBuf&gt;</code>, <code>mods: Option&lt;PathBuf&gt;</code>, <code>disabled_packs: Vec&lt;String&gt;</code>, <code>campaign: Option&lt;String&gt;</code>, <code>difficulty: Option&lt;String&gt;</code>, <code>language: Option&lt;String&gt;</code>, <code>brightness: Option&lt;f32&gt;</code> (<code>graphics.brightness</code>, clamped 0.5–2), <code>console: bool</code> and <code>console_port: Option&lt;u16&gt;</code> (<code>console.enabled</code>, <code>console.port</code>).</td>
+<td><code>original: Option&lt;PathBuf&gt;</code>, <code>mods: Option&lt;PathBuf&gt;</code>, <code>disabled_packs: Vec&lt;String&gt;</code>, <code>campaign: Option&lt;String&gt;</code>, <code>difficulty: Option&lt;String&gt;</code>, <code>language: Option&lt;String&gt;</code>, <code>brightness: Option&lt;f32&gt;</code> (<code>graphics.brightness</code>, clamped 0.5–2), <code>fullscreen: bool</code> (<code>graphics.fullscreen</code>, app 0.16.14), <code>console: bool</code> and <code>console_port: Option&lt;u16&gt;</code> (<code>console.enabled</code>, <code>console.port</code>).</td>
 </tr>
 <tr>
 <td><code>settings::Source</code></td>

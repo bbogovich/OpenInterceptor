@@ -6448,7 +6448,9 @@ campaign is then an addon with only the keys it changes. Stage 2 item 2.1
 <li>A value that starts with <code>@</code> is a key; anything else is used as written, so a small mod can
   skip text files entirely.</li>
 <li>Keys work in the <strong>names</strong> of ships, objects, beams, missiles, factions and systems, ship and
-  object <strong>descriptions</strong>, and scenario <strong>titles and descriptions</strong>. They are resolved when the
+  object <strong>descriptions</strong>, and scenario <strong>titles and descriptions</strong>; also mission, story and
+  strategy texts, and since app 0.16.2 <a href="../cutscenes/#sounds-and-captions">cutscene</a> titles and
+  captions (the default intro's are in <code>text/en/cutscenes.yaml</code>). They are resolved when the
   content loads.</li>
 <li>Packs load in order and a <strong>later pack's key replaces an earlier one's</strong>.</li>
 <li>The game reads each pack's <code>text/&lt;language&gt;/</code> folder for the chosen language, <strong>falling back

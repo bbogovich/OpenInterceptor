@@ -4063,6 +4063,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The testbed launcher">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-condition-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The condition console
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -6579,6 +6596,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The testbed launcher">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-condition-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The condition console
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -6819,6 +6853,10 @@ scripts/check.sh
 <td>Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; <a href="../campaign/">Campaign</a>). Without a strategy layer the launcher opens. The campaign's intro cutscene or film is not played this way.</td>
 </tr>
 <tr>
+<td><code>--chapter &lt;N&gt;</code></td>
+<td>With <code>--strategy</code>: play the new campaign forward by itself until its story reaches chapter <em>N</em> (its first arc's step <em>N</em>; at most 1500 days), then open the strategy screen there (app 0.16.13; <a href="../campaign/#testbed-cheats-and-tools">Campaign › Testbed cheats and tools</a>). Ignored without <code>--strategy</code>.</td>
+</tr>
+<tr>
 <td><code>--credits</code></td>
 <td>Open on the campaign's credits roll (or its credits film), then the main menu (app 0.14.0).</td>
 </tr>
@@ -6884,7 +6922,7 @@ scripts/check.sh
 </tr>
 <tr>
 <td><code>--windowed</code> / <code>--fullscreen</code></td>
-<td>Window mode (windowed is the default).</td>
+<td>Window mode for this run. Without either, the game starts as <code>settings.yaml</code> <code>graphics.fullscreen</code> says (windowed by default; app 0.16.14); <code>--windowed</code> overrides the setting.</td>
 </tr>
 <tr>
 <td><code>--help</code></td>
@@ -6912,11 +6950,15 @@ A or Start) selects, Esc (pad B or Back) goes back or, on the main page, quits.<
 <tbody>
 <tr>
 <td><strong>Continue</strong></td>
-<td>Loads the campaign's save (shown only when there is one).</td>
+<td>Loads the campaign's automatic save (shown only when there is one).</td>
 </tr>
 <tr>
 <td><strong>New campaign</strong></td>
 <td>Starts a new campaign at the chosen difficulty, after its introduction (<a href="../campaign/#starting">Campaign</a>).</td>
+</tr>
+<tr>
+<td><strong>Load game</strong></td>
+<td>Shown when one of the three save slots holds a game (app 0.16.14): a page listing the automatic save and <em>Slot 1</em> – <em>Slot 3</em>, each with how long ago it was written or <em>empty</em>, then <em>Back</em>. Enter loads the chosen one; Esc goes back (<a href="../campaign/#saves">Campaign › Saves</a>).</td>
 </tr>
 <tr>
 <td><strong>Battles &amp; tools</strong></td>
@@ -6924,7 +6966,7 @@ A or Start) selects, Esc (pad B or Back) goes back or, on the main page, quits.<
 </tr>
 <tr>
 <td><strong>Options</strong></td>
-<td>Campaign, difficulty, physics (on the levels that allow Simple), music and effects volume; Left/Right changes the row, Esc or <em>Back</em> returns. Changing the campaign or the difficulty reloads and comes back to the options. Everything is saved in <code>settings.yaml</code> (<a href="../settings/">Settings</a>).</td>
+<td>Campaign, difficulty, physics (on the levels that allow Simple), music and effects volume, <strong>Full screen</strong> and <strong>Controls...</strong> (app 0.16.14); Left/Right changes the row (Enter too for Full screen; Enter opens Controls), Esc or <em>Back</em> returns. Changing the campaign or the difficulty reloads and comes back to the options. Everything is saved in <code>settings.yaml</code> (<a href="../settings/">Settings</a>).</td>
 </tr>
 <tr>
 <td><strong>Credits</strong></td>
@@ -6936,8 +6978,9 @@ A or Start) selects, Esc (pad B or Back) goes back or, on the main page, quits.<
 </tr>
 </tbody>
 </table>
-<p>Leaving the strategy map (Esc), the end of a film or cutscene, and Esc in the launcher all come
-back to the menu.</p>
+<p>Leaving the strategy map (Esc), the end of a film or cutscene, the ending screen's <em>Main menu</em>,
+leaving the controls screen (since app 0.16.14, also when it was opened from the launcher) and Esc
+in the launcher all come back to the menu.</p>
 <h3 id="the-testbed-launcher">The testbed launcher<a class="headerlink" href="#the-testbed-launcher" title="Permanent link">&para;</a></h3>
 <p>The launcher (<em>Battles &amp; tools</em>, or the first screen of a campaign without a strategy layer)
 lists the model viewer, the asset browser and the test scenarios from every loaded pack: Up/Down
@@ -6948,6 +6991,16 @@ Flight is newtonian by default: throttle is thrust and the ship coasts; <code>Z<
 hold <code>B</code> to brake, <code>M</code> holds the target's speed.
 New to space sims? Press <strong>P</strong> in the launcher for <strong>Simple</strong> physics: the craft always flies
 where its nose points, with no drift (<a href="../controls/#simple-physics">Controls › Simple physics</a>).</p>
+<h4 id="the-condition-console">The condition console<a class="headerlink" href="#the-condition-console" title="Permanent link">&para;</a></h4>
+<p>In any mission battle — from the launcher, the simulator, <code>--mission</code> or a campaign — the
+backquote key (<code>`</code>) opens the <strong>condition console</strong> along the bottom of the screen (app
+0.16.5): type a <a href="../../modding/behaviours/#the-condition-language">condition or expression</a> in the
+battle context — <code>count(raiders)</code>, <code>alive(colony) and time &gt; 30s</code>, <code>hull(colony)</code> — and its value
+shows beneath as you type (<code>= 3</code>, <code>= true</code>), or the error in orange (an unknown role, a typo). The
+battle is <strong>paused</strong> while the console is open; Esc or <code>`</code> closes it and the battle carries on.
+Looking never changes the battle: even <code>random(p)</code> is evaluated on a copy of the battle's dice.
+Role names are the mission's own; difficulty level names work as in mission files. A scenario
+(not a mission) has no conditions: the console says <em>no mission: conditions belong to missions</em>.</p>
 <h2 id="after-a-battle-the-debrief">After a battle: the debrief<a class="headerlink" href="#after-a-battle-the-debrief" title="Permanent link">&para;</a></h2>
 <p>When a mission's result is decided, the verdict appears at once — <em>MISSION ACCOMPLISHED</em>,
 <em>MISSION FAILED</em>, <em>YOUR CRAFT WAS DESTROYED</em> or <em>MISSION ENDED</em> — and the computer voice speaks,

@@ -5389,6 +5389,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Option: maybe a value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optionoptiont-not-tried-yet-versus-tried-nothing-there-srcappstrategyrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option&lt;Option&lt;T&gt;&gt;: "not tried yet" versus "tried, nothing there" — src/app/strategy.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6553,6 +6570,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Option: maybe a value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optionoptiont-not-tried-yet-versus-tried-nothing-there-srcappstrategyrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option&lt;Option&lt;T&gt;&gt;: "not tried yet" versus "tried, nothing there" — src/app/strategy.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6774,6 +6808,23 @@ cockpit, that cockpit <em>has</em> a <code>Model</code>, and the model <em>loads
 </code></pre></div>
 <p><code>?</code> works on <code>Option</code> inside a closure or function that returns <code>Option</code>, just as it does on
 <code>Result</code> — the first <code>None</code> ends the chain.</p>
+<h3 id="optionoptiont-not-tried-yet-versus-tried-nothing-there-srcappstrategyrs"><code>Option&lt;Option&lt;T&gt;&gt;</code>: "not tried yet" versus "tried, nothing there" — <code>src/app/strategy.rs</code><a class="headerlink" href="#optionoptiont-not-tried-yet-versus-tried-nothing-there-srcappstrategyrs" title="Permanent link">&para;</a></h3>
+<p>A screen layout's background picture is loaded the first time the strategy screen draws. If
+the file is missing, the error is printed <strong>once</strong> — so the screen must remember that it already
+tried. One <code>Option</code> cannot say three things; two nested ones can:</p>
+<div class="highlight"><pre><span></span><code><span class="sd">/// `None`: not loaded yet. `Some(None)`: tried, and there is none (or it failed).</span>
+<span class="sd">/// `Some(Some(texture))`: loaded.</span>
+<span class="n">background</span><span class="p">:</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Texture2D</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+
+<span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">background</span><span class="p">.</span><span class="n">is_none</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">                       </span><span class="c1">// first frame: try once</span>
+<span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">background</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">layout</span><span class="p">.</span><span class="n">background</span><span class="p">.</span><span class="n">as_ref</span><span class="p">().</span><span class="n">and_then</span><span class="p">(</span><span class="o">|</span><span class="n">img</span><span class="o">|</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="n">img</span><span class="p">).</span><span class="n">ok</span><span class="p">()));</span>
+<span class="p">}</span>
+<span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="nb">Some</span><span class="p">(</span><span class="n">tex</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">background</span><span class="w"> </span><span class="p">{</span><span class="w">          </span><span class="c1">// a pattern two levels deep</span>
+<span class="w">    </span><span class="n">draw_texture_ex</span><span class="p">(</span><span class="n">tex</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">WHITE</span><span class="p">,</span><span class="w"> </span><span class="n">params</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>A <code>bool</code> beside an <code>Option&lt;Texture2D&gt;</code> would work too, but the nested <code>Option</code> makes the
+impossible state ("not tried, yet a texture") impossible to write.</p>
 <h2 id="newtypes">Newtypes<a class="headerlink" href="#newtypes" title="Permanent link">&para;</a></h2>
 <p>A struct with one field gives a plain number a distinct type:</p>
 <div class="highlight"><pre><span></span><code><span class="c1">// src/content/rules.rs</span>

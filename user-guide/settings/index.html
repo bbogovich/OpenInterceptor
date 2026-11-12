@@ -6510,6 +6510,7 @@ the CD).</p>
 <span class="w">  </span><span class="nt">physics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simple</span><span class="w">       </span><span class="c1"># or realistic</span>
 <span class="nt">graphics</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">brightness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2</span>
+<span class="w">  </span><span class="nt">fullscreen</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="nt">console</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8765</span>
@@ -6567,6 +6568,11 @@ the CD).</p>
 <td>The picture's brightness: 1 is as authored, from 0.5 (darker) to 2 (brighter); values outside are clamped. It lifts dark tones more than bright ones (a gamma), so ships in shadow become easier to see without washing out lit faces. The HUD and cockpit art are not changed. Read when the game starts.</td>
 </tr>
 <tr>
+<td><code>graphics.fullscreen</code></td>
+<td><code>false</code></td>
+<td>Start full screen (app 0.16.14). The main menu's <em>Options › Full screen</em> switches it at once and writes it here; <code>--fullscreen</code> starts full screen for one run whatever it says, and <code>--windowed</code> starts in a window.</td>
+</tr>
+<tr>
 <td><code>console.enabled</code></td>
 <td><code>false</code></td>
 <td>Serve the <a href="../console/">tablet control console</a> (<code>--console</code> turns it on for one run).</td>
@@ -6590,8 +6596,8 @@ the CD).</p>
 </table>
 <h2 id="other-ways-to-set-them">Other ways to set them<a class="headerlink" href="#other-ways-to-set-them" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The command line overrides <code>paths</code>, <code>game.campaign</code>, <code>game.difficulty</code>, <code>game.language</code>
-  and <code>console</code> for one run (<a href="../getting-started/#command-line-options">Getting started</a>).</li>
+<li>The command line overrides <code>paths</code>, <code>game.campaign</code>, <code>game.difficulty</code>, <code>game.language</code>,
+  <code>graphics.fullscreen</code> (<code>--windowed</code>, <code>--fullscreen</code>) and <code>console</code> for one run (<a href="../getting-started/#command-line-options">Getting started</a>).</li>
 <li>How bright ships are in a campaign is also the campaign's choice: a modder sets the lighting
   with <code>flight: {lighting: …}</code> (<a href="../../modding/reference/#flight">Mod file reference</a>).
   <code>graphics.brightness</code> adjusts the result for your screen.</li>
@@ -6599,14 +6605,17 @@ the CD).</p>
 <h2 id="options-in-the-main-menu">Options in the main menu<a class="headerlink" href="#options-in-the-main-menu" title="Permanent link">&para;</a></h2>
 <p>Since app 0.14.0 the main menu's <strong>Options</strong> page sets the campaign, difficulty, physics and the
 music and effects volumes with Left/Right (volumes by a quarter, stopping at 0 % and 100 %) and
-saves them here at once (<a href="../getting-started/#the-main-menu">Getting started › The main menu</a>).</p>
+saves them here at once (<a href="../getting-started/#the-main-menu">Getting started › The main menu</a>).
+Since app 0.16.14 it also has <strong>Full screen</strong> (On/Off with Left, Right or Enter: the window
+changes at once and <code>graphics.fullscreen</code> is saved) and <strong>Controls...</strong>, which opens the controls
+screen (<a href="../controls/#rebinding">Controls › Rebinding</a>) and returns to the main menu.</p>
 <h2 id="volumes-in-the-launcher">Volumes in the launcher<a class="headerlink" href="#volumes-in-the-launcher" title="Permanent link">&para;</a></h2>
 <p>The launcher's line of packs ends with <em>Music 70% (M)   Effects 100% (V)</em>. <strong>M</strong> steps the music
 volume and <strong>V</strong> the effects volume up by a quarter — 0, 25, 50, 75, 100 % — and from 100 % back
 to 0 (a value in between, such as the default 70 %, goes up past the nearest quarter: 70 % → 100 %).
 Each press is saved in <code>settings.yaml</code> at once and takes effect immediately.</p>
-<p>Graphics (brightness) and the console are still set in this file; the controls have their own
-menu in flight.</p>
+<p>Brightness and the console are still set in this file; the controls have their own menu in
+flight, in the launcher and (since app 0.16.14) in the main menu's options.</p>
 
 
 

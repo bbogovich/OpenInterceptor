@@ -6734,7 +6734,7 @@
 </tr>
 <tr>
 <td><a href="#r-tst-009-mission-and-condition-tools">R-TST-009 Mission and condition tools</a></td>
-<td>Planned (partly met)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-tst-010-strategy-and-campaign-tools">R-TST-010 Strategy and campaign tools</a></td>
@@ -6840,22 +6840,26 @@
 <p><em>Rationale:</em> Stage 3 testbed adds.</p>
 <ul>
 <li>Implements: <a href="../../../definition/testbed-tools/#f-tst-004-debugging-tools-for-missions-and-campaigns">F-TST-004</a></li>
-<li>Status: planned — partly met: the mission browser and the terrain sandbox exist (app 0.6.3); the condition console is not built</li>
-<li>Verified by: <code>app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only</code>; MT-3-51 – MT-3-54 (mission browser); MT-3-39 – MT-3-43 (terrain)</li>
-<li>See: <a href="../../../implementation/plan/stage-3-missions/">Stage 3</a>, <a href="../../../user-guide/simulator/">User guide › Simulator</a></li>
+<li>Status: implemented (app 0.6.3: the mission browser and the terrain sandbox; app 0.16.5, main <code>f227494</code>, #20: the condition console)</li>
+<li>Verified by: <code>app::simulator::tests::a_setup_changes_environment_hazards_and_enemy_force_only</code>; <code>mission::tests::the_condition_console_evaluates_against_the_battle_without_changing_it</code>; MT-3-51 – MT-3-54 (mission browser); MT-3-39 – MT-3-43 (terrain); MT-3-66 (condition console)</li>
+<li>See: <a href="../../../implementation/plan/stage-3-missions/">Stage 3</a>, <a href="../../../user-guide/simulator/">User guide › Simulator</a>, <a href="../../../user-guide/getting-started/#the-condition-console">Getting started › The condition console</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Progress (app 0.6.3)</p>
 <p><strong>Mission browser:</strong> met by the <a href="../../../user-guide/simulator/">Simulator</a> (R-MSN-010) — every mission of the loaded campaign, with the force choice (×0.5 – ×2) on the screen and the difficulty from the launcher (D); switch campaigns with Tab to browse the other campaign's missions. <strong>Terrain flight sandbox:</strong> the simulator flies any mission in any environment, and the <code>surface-moon</code>, <code>surface-hills</code>, <code>surface-colony</code> and <code>surface-strike</code> scenarios fly the surfaces directly. <strong>Condition console:</strong> not built — typing a condition and seeing its value live in a battle remains to do.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.5, main <code>f227494</code>): the condition console</p>
+<p>Backquote opens a console over any mission battle: the player types a battle condition or expression (<code>count(foes)</code>, <code>alive(player) and time &gt; 30s</code>) and sees its value now, or the parse error; the battle waits while it is open. <code>MissionRun::evaluate</code> parses with the mission's own role names and difficulty levels and evaluates on a copy of the mission's random generator, so looking never changes the battle. A scenario (no mission) answers that conditions belong to missions.</p>
 </div>
 <h3 id="r-tst-010-strategy-and-campaign-tools">R-TST-010 Strategy and campaign tools<a class="headerlink" href="#r-tst-010-strategy-and-campaign-tools" title="Permanent link">&para;</a></h3>
 <p>The testbed MUST add a strategy sandbox per campaign with a debug clock and the original's cheats as debug actions, jump-to-battle from any contact, an event and arc debugger, and start-at-chapter for the default campaign.</p>
 <p><em>Rationale:</em> Stage 4 and 5 testbed adds.</p>
 <ul>
 <li>Implements: <a href="../../../definition/testbed-tools/#f-tst-004-debugging-tools-for-missions-and-campaigns">F-TST-004</a></li>
-<li>Status: planned — partly met (app 0.8.1, main <code>8e96338</code>): the cheats and jump to battle</li>
-<li>Verified by: <code>campaign::tests::testbed_cheats_do_what_they_say</code>; MT-4-20, MT-4-21</li>
-<li>See: <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a>, <a href="../../../user-guide/campaign/#testbed-cheats">User guide › Campaign › Testbed cheats</a></li>
+<li>Status: planned — partly met (app 0.8.1, main <code>8e96338</code>: the cheats and jump to battle; app 0.16.13, main <code>52e9e7f</code>, #47: the event and arc debugger and start-at-chapter)</li>
+<li>Verified by: <code>campaign::tests::testbed_cheats_do_what_they_say</code>; <code>campaign::story::tests::the_debugger_fires_events_and_the_testbed_plays_to_a_chapter</code>; MT-4-20, MT-4-21, MT-5-12, MT-5-13</li>
+<li>See: <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a>, <a href="../../../user-guide/campaign/#testbed-cheats-and-tools">User guide › Campaign › Testbed cheats</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.8.1)</p>
@@ -6863,7 +6867,11 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected, the event and arc debugger and start-at-chapter (Stage 5; still not built at app 0.10.3 — the Archive tab shows plans, standings and aggression read-only).</p>
+<p>Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected; in the debugger, setting flags and plan progress directly (an event that does it can be fired).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.13, main <code>52e9e7f</code>): the event debugger and start-at-chapter</p>
+<p><strong>Ctrl+D</strong> on the strategy screen shows a <em>Debug</em> list: each arc's step, and every story event with how often it has fired and whether its condition holds now. <em>Fire now</em> fires one (<code>Campaign::fire_event</code>): its arc advances only if it is the next step, its actions run, its choice is offered. <strong><code>--strategy --chapter N</code></strong> plays a new campaign forward headless (<code>campaign::autoplay_to_chapter</code>, the automatic player, at most 1500 days) until its first arc reaches step N, then opens the strategy screen there — for the default campaign, chapter N of the serial.</p>
 </div>
 <h3 id="r-tst-011-campaign-soak">R-TST-011 Campaign soak<a class="headerlink" href="#r-tst-011-campaign-soak" title="Permanent link">&para;</a></h3>
 <p>An automated soak MUST run each campaign for a simulated year with battles auto-resolved, checking invariants (money accounting, no orphan references, monotonic arc progress).</p>
@@ -6939,6 +6947,11 @@
 <td>1.17.0</td>
 <td>2026-11-11</td>
 <td>R-TST-006 As-built note: <code>--balance</code>, a static report of protection, sustained beam damage and kill times (app 0.15.0)</td>
+</tr>
+<tr>
+<td>1.18.0</td>
+<td>2026-11-11</td>
+<td>R-TST-009 implemented: the condition console (app 0.16.5, #20); R-TST-010 As-built note: the event and arc debugger (Ctrl+D, <em>Fire now</em>) and <code>--strategy --chapter N</code> (app 0.16.13, #47), the Open note narrowed (status stays partly met: no debug clock beyond the speeds, no jump from an undetected contact)</td>
 </tr>
 </tbody>
 </table>

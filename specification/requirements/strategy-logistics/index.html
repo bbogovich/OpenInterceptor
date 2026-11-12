@@ -7064,7 +7064,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-009-funding-score-and-reports">R-STR-009 Funding, score and reports</a></td>
-<td>Planned (partly met)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-010-strategy-screens">R-STR-010 Strategy screens</a></td>
@@ -7104,7 +7104,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-019-logistics-mission-generation">R-STR-019 Logistics mission generation</a></td>
-<td>Planned (partly met)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-020-cargo-losses-and-depots">R-STR-020 Cargo losses and depots</a></td>
@@ -7120,7 +7120,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-023-construction-attacks">R-STR-023 Construction attacks</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-024-research-stations-and-sites">R-STR-024 Research stations and sites</a></td>
@@ -7166,7 +7166,7 @@
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
 <li>Status: planned — partly met (app 0.7.0 – 0.7.3, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>076203e</code>)</li>
-<li>Verified by: <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>; <code>campaign::tests::a_new_campaign_has_its_start</code> (a hidden system beyond sensor range), <code>lane_maps_route_along_lanes</code>; <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>; MT-4-02, MT-4-11</li>
+<li>Verified by: <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>; <code>campaign::tests::a_new_campaign_has_its_start</code> (a hidden system beyond sensor range), <code>lane_maps_route_along_lanes</code>, <code>generated_maps_are_spaced_named_seeded_and_hide_black_holes</code> (app 0.16.2); <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>; MT-4-02, MT-4-11</li>
 <li>See: <a href="../../../modding/strategy/#maps-and-star_classes">Strategy layer › maps</a></li>
 </ul>
 <div class="admonition note">
@@ -7175,7 +7175,7 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: <strong>bodies</strong> (planets per system); <strong>endurance and stranding</strong>. Generated maps have no unit test yet.</p>
+<p>Not built: <strong>bodies</strong> (planets per system); <strong>endurance and stranding</strong>. (Generated maps are unit-tested since app 0.16.2, main <code>6b45fcb</code>: count, spacing, names, seed, the hidden black hole.)</p>
 </div>
 <h3 id="r-str-003-contacts-and-mission-generation">R-STR-003 Contacts and mission generation<a class="headerlink" href="#r-str-003-contacts-and-mission-generation" title="Permanent link">&para;</a></h3>
 <p>Squadrons, convoys and probes MUST move on flight plans; sensor coverage MUST decide detection; a mission MUST be generated when hostile forces meet.</p>
@@ -7183,7 +7183,7 @@
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
 <li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
-<li>Verified by: <code>campaign::tests::raids_are_detected_intercepted_and_fought</code>, <code>the_default_campaign_runs_six_months</code>; MT-4-04, MT-4-05</li>
+<li>Verified by: <code>campaign::tests::raids_are_detected_intercepted_and_fought</code>, <code>the_default_campaign_runs_six_months</code>; <code>balance::tests::auto_resolve_odds_favour_the_stronger_side</code>; MT-4-04, MT-4-05, MT-4-48</li>
 <li>See: <a href="../../../modding/strategy/#raids">Strategy layer › raids</a>, <a href="../../../modding/strategy/#raids-and-battles">Raids and battles</a></li>
 </ul>
 <div class="admonition note">
@@ -7192,15 +7192,19 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: convoys, probes and the player's own squadrons on flight plans; missions generated from the forces that meet (the battle is the raid's fixed mission); the rival's planning (Stage 5); auto-resolve when the player does not fly (a break-off leaves the contact flying).</p>
+<p>Not built: convoys, probes and the player's own squadrons on flight plans; missions generated from the forces that meet (the battle is the raid's fixed mission). The rival's planning is R-CPN-008 (app 0.10.0).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.12, main <code>01e2f2b</code>): auto-resolve</p>
+<p>The Interception prompt offers <strong>Auto-resolve</strong> beside flying and breaking off (#23). <code>balance::win_chance</code> rates each side: a craft's power is √(effective hit points × sustained beam damage per second) of its class, a side's the sum — the player's craft at the contact against the mission's hostile roles at their average counts — and p = P² / (P² + E²). The result is rolled with the campaign's generator and the mission's own outcome actions for it apply (DEV-057). Fitted items and pilots are not counted, and a lost auto-resolve does not damage the player's craft or pilots.</p>
 </div>
 <h3 id="r-str-004-economy">R-STR-004 Economy<a class="headerlink" href="#r-str-004-economy" title="Permanent link">&para;</a></h3>
 <p>The economy MUST model resources, income and expense expressions, markets, factories with prioritised queues, deliveries and losses, and storage.</p>
 <p><em>Rationale:</em> The original's economy, as data.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.9.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>)</li>
-<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>; MT-4-06, MT-4-15, MT-4-19</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.9.0, 0.16.10 – 0.16.11, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>, <code>1bc200e</code>, <code>6821147</code>)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>queues_reorder_and_cancel_and_deliveries_can_be_lost</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>; MT-4-06, MT-4-15, MT-4-19, MT-4-46, MT-4-47</li>
 <li>See: <a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items and hulls</a>, <a href="../../../modding/strategy/#incomes-and-expenses">incomes and expenses</a></li>
 </ul>
 <div class="admonition note">
@@ -7213,15 +7217,19 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: prioritised queues; delivery losses of purchases; storage limits at bases (<code>size</code> and the <code>storage</code> effect are read but not enforced); markets per seller.</p>
+<p>Not built: markets per seller; storage enforced on deliveries, manufacture and salvage (only purchases are checked).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.10 – 0.16.11, main <code>1bc200e</code>, <code>6821147</code>)</p>
+<p><strong>Prioritised queues</strong>: a queued job moves up one place (<code>Campaign::raise_job</code>; the Factory list's <em>Move up</em>) and is cancelled (<code>cancel_job</code>: a job not yet started goes without cost, a started one keeps only its paid unit). <strong>Delivery losses</strong>: <code>economy.delivery_loss</code> (default 0 %) rolls each arriving purchase; a lost one is paid all the same and reported. <strong>Storage</strong>: a base's working <code>storage</code> modules give its store a capacity in item <code>size</code>s, and a purchase that does not fit is refused — when no module in the campaign has <code>storage</code> there is no limit (DEV-058).</p>
 </div>
 <h3 id="r-str-005-research">R-STR-005 Research<a class="headerlink" href="#r-str-005-research" title="Permanent link">&para;</a></h3>
 <p>Research MUST support the download and labs models, discovery by prerequisites, salvage and capture, and unlocks.</p>
 <p><em>Rationale:</em> Tech tree.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.9.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>)</li>
-<li>Verified by: <code>campaign::tests::research_follows_prerequisites_and_unlocks</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>, <code>original_tech_ids_become_research_prerequisites</code>; <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>; MT-4-07, MT-4-17, MT-4-19, MT-4-23</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.9.0, 0.16.3, 0.16.6, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>, <code>a45331a</code>, <code>1093f0a</code>)</li>
+<li>Verified by: <code>campaign::tests::research_follows_prerequisites_and_unlocks</code>, <code>requires_any_and_hidden_topics_wait_for_one_prerequisite_and_their_discovery</code>; <code>campaign::logistics::tests::outcomes_capture_prizes_and_lose_facilities_safely</code>; <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>, <code>original_tech_ids_become_research_prerequisites</code>; <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code>; MT-4-07, MT-4-17, MT-4-19, MT-4-23, MT-4-42, MT-4-43</li>
 <li>See: <a href="../../../modding/strategy/#research-and-research_model">Strategy layer › research</a></li>
 </ul>
 <div class="admonition note">
@@ -7234,15 +7242,19 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: capture; discovery by events; <code>requires_any</code>; the original's per-item salvage tables.</p>
+<p>Not built: the original's per-item salvage tables.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.3 – 0.16.6, main <code>a45331a</code>, <code>1093f0a</code>)</p>
+<p><strong>Capture</strong> (0.16.3): a mission outcome's <code>capture</code> keeps the prizes the player's tractor beam brought home — the battle reports each as <code>captured(&lt;class&gt;)</code> — as salvage, so <code>salvaged(&lt;class id&gt;)</code> holds and research can start from it. <strong><code>requires_any: [a, b]</code></strong> (0.16.6): any one of these topics, joined to <code>requires:</code> with <em>and</em>. <strong>Discovery by events</strong> (0.16.6): <code>hidden: true</code> keeps a topic off the list until a story event's <code>discover(&lt;topic&gt;)</code> (kept as the flag <code>discovered.&lt;topic&gt;</code>; a notice says new research is possible).</p>
 </div>
 <h3 id="r-str-006-bases">R-STR-006 Bases<a class="headerlink" href="#r-str-006-bases" title="Permanent link">&para;</a></h3>
 <p>Bases MUST have types, placement rules, templates, module construction with build times and construction states, limits, effects, destruction consequences and dismantling.</p>
 <p><em>Rationale:</em> The original's bases.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
-<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>a_new_campaign_has_its_start</code>; MT-4-06</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, 0.16.10, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>1bc200e</code>)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>a_new_campaign_has_its_start</code>, <code>quarters_limit_the_roster_and_modules_can_be_dismantled</code>; MT-4-06, MT-4-46</li>
 <li>See: <a href="../../../modding/strategy/#base_modules-and-base_types">Strategy layer › base_modules and base_types</a></li>
 </ul>
 <div class="admonition note">
@@ -7251,7 +7263,11 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: dismantling; <code>on_destroyed</code> consequences (losing craft, pilots or stock); repair; the <code>quarters</code>, <code>storage</code>, <code>defence</code> and <code>income</code> effects (read, not acted on); placement expressions; base-type templates of "best available" modules; the 3D base view.</p>
+<p>Not built: <code>on_destroyed</code> consequences (losing craft, pilots or stock); repair; placement expressions; base-type templates of "best available" modules; the 3D base view. Dismantling does not check what the module housed (craft over a hangar's room, pilots over the quarters).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.10, main <code>1bc200e</code>): effects and dismantling</p>
+<p><strong><code>quarters</code></strong> limits the pilots the player keeps (every base type's and <code>quarters</code> module's room together; none anywhere: no limit); <strong><code>storage</code></strong> limits a base's purchases (R-STR-004); <strong><code>defence</code></strong>: each point turns away 15 % of unopposed raids on its base on its own, 1 − 0.85^points (DEV-058); <strong><code>income</code></strong> stays a tag that <code>incomes:</code> formulas count with <code>module_count</code>. <strong>Dismantling</strong>: <code>Campaign::dismantle_module</code> removes a module and refunds <code>economy.dismantle</code> (50 %) of its cost; on the screen it — like dismissing a pilot — runs only from its own button, never on Enter or a double click (#26).</p>
 </div>
 <h3 id="r-str-007-ships-and-equipment">R-STR-007 Ships and equipment<a class="headerlink" href="#r-str-007-ships-and-equipment" title="Permanent link">&para;</a></h3>
 <p>Hulls, items, slots and fitting rules, power draw and stock designs MUST be data; craft MUST be bought or manufactured.</p>
@@ -7259,7 +7275,7 @@
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-003-ships-equipment-and-pilots">F-STR-003</a></li>
 <li>Status: planned — partly met (app 0.7.0 – 0.7.2, 0.15.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>94d66c1</code>, <code>1ff754b</code>)</li>
-<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>craft_are_fitted_from_the_store_and_fly_their_loadout</code>; <code>app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only</code> (fitted shields and armour since app 0.15.0); MT-4-06, MT-4-12, MT-4-35, MT-4-36</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>craft_are_fitted_from_the_store_and_fly_their_loadout</code>; <code>app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only</code> (fitted shields and armour since app 0.15.0); MT-4-06, MT-4-12, MT-4-35, MT-4-36, MT-4-38</li>
 <li>See: <a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items and hulls</a></li>
 </ul>
 <div class="admonition note">
@@ -7276,15 +7292,19 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: choosing items slot by slot (fitting is <em>best available</em> only); fitting rules (<code>fits</code>); power draw; stock designs; effects of slot kinds other than <code>beam</code>, <code>missile</code>, <code>shield</code> and <code>armor</code> in battle. No unit test covers <code>fitted:</code> or <code>protection_of</code> directly.</p>
+<p>Not built: choosing items slot by slot (fitting is <em>best available</em> only); fitting rules (<code>fits</code>); power draw; stock designs; effects of slot kinds other than <code>beam</code>, <code>missile</code>, <code>shield</code> and <code>armor</code> in battle.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.1, main <code>f82a6ab</code>)</p>
+<p>The default campaign carries shields and armour too — the deflector screen (300) and force field (480), steel plating (180) and saucer-alloy plating (380), with the topics <code>force_fields</code> and <code>saucer_alloys</code> unlocking the better ones, a <code>shield</code> and an <code>armor</code> slot on every hull and three of each starter in the opening store — so fitted protection works without original data. <code>fitted:</code>, <code>protection_of</code> and the <code>HP1</code> – <code>HP4</code> sum are unit-tested (<code>content::rules::tests::fitted_equipment_and_hit_point_charts_set_protection</code>, <code>content::strategy::tests::protection_comes_from_the_item_or_the_originals_keys</code>).</p>
 </div>
 <h3 id="r-str-008-pilots">R-STR-008 Pilots<a class="headerlink" href="#r-str-008-pilots" title="Permanent link">&para;</a></h3>
 <p>Pilots MUST be generated with ranks, experience, training, injury and healing, bravery, recruiting, salaries and voices.</p>
 <p><em>Rationale:</em> Roster.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-003-ships-equipment-and-pilots">F-STR-003</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
-<li>Verified by: <code>campaign::tests::a_new_campaign_has_its_start</code>, <code>raids_are_detected_intercepted_and_fought</code>, <code>money_flows_monthly_with_costs</code>; MT-4-08</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.7.1, 0.16.7, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>2c152a8</code>)</li>
+<li>Verified by: <code>campaign::tests::a_new_campaign_has_its_start</code>, <code>raids_are_detected_intercepted_and_fought</code>, <code>money_flows_monthly_with_costs</code>, <code>pilots_train_up_to_their_maximum_and_can_be_dismissed</code>; MT-4-08, MT-4-44</li>
 <li>See: <a href="../../../modding/strategy/#pilots-and-scores">Strategy layer › pilots</a></li>
 </ul>
 <div class="admonition note">
@@ -7293,32 +7313,36 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: training, bravery (fleeing), stat effects in battle, pilot voices by pilot, injuries by health levels.</p>
+<p>Not built: bravery (fleeing), stat effects in battle, pilot voices by pilot, injuries by health levels. The pilots list does not show stats.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.7, main <code>2c152a8</code>): training and dismissal</p>
+<p><code>pilots.training: {gain, cost}</code>: a ready pilot in training gains <code>gain</code> points a day in every stat, up to the top of that stat's range, for <code>cost</code> a day (<code>Campaign::set_training</code>; saved). <code>Campaign::dismiss</code> removes a pilot — the original's <em>sack</em>. The Hangar's pilot rows carry <em>Train</em> / <em>Stop training</em> and <em>Dismiss</em> (#28). The default campaign: 0.4 points and 400 a day.</p>
 </div>
 <h3 id="r-str-009-funding-score-and-reports">R-STR-009 Funding, score and reports<a class="headerlink" href="#r-str-009-funding-score-and-reports" title="Permanent link">&para;</a></h3>
 <p>Patron funding and evaluations, score and ratings and periodic reports MUST be campaign data.</p>
 <p><em>Rationale:</em> The original's funding model.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.7.1, main <code>77d6c9f</code>, <code>10f7fce</code>)</li>
-<li>Verified by: <code>campaign::tests::money_flows_monthly_with_costs</code>, <code>raids_are_detected_intercepted_and_fought</code>, <code>the_default_campaign_runs_six_months</code>; MT-4-09</li>
-<li>See: <a href="../../../modding/strategy/#pilots-and-scores">Strategy layer › pilots and scores</a></li>
+<li>Status: implemented (app 0.7.0 – 0.7.1, 0.16.8 – 0.16.9, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>26f6c2a</code>, <code>d0c64e3</code>)</li>
+<li>Verified by: <code>campaign::tests::money_flows_monthly_with_costs</code>, <code>raids_are_detected_intercepted_and_fought</code>, <code>the_default_campaign_runs_six_months</code>, <code>the_monthly_evaluation_rates_the_month_and_runs_its_actions</code>; MT-4-09, MT-4-45</li>
+<li>See: <a href="../../../modding/strategy/#pilots-and-scores">Strategy layer › pilots and scores</a>, <a href="../../../modding/strategy/#evaluations">evaluations</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.7.0 – 0.7.1)</p>
 <p><code>scores: {&lt;name&gt;: points}</code> give mission outcomes' <code>score(&lt;name&gt;)</code> their points; the campaign keeps the total and the month's score (<code>score</code>, <code>month_score</code> queries). Funding is an ordinary income whose amount may use them — the default campaign's Senate stipend is <code>400000 + 60000 * bases + month_score * 200</code> every 30 days. Every 30 days a <strong>monthly report</strong> (a notice that stops the clock) gives the month's score, the total, the month's costs by kind and the funds.</p>
 </div>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>Not built: evaluations (<code>evaluations:</code>) and ratings; funding withdrawn by patrons; a report screen (the report is a banner and a log line).</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.8 – 0.16.9, main <code>26f6c2a</code>, <code>d0c64e3</code>): evaluations and the Reports list</p>
+<p><code>evaluations: [{rating, when, do}]</code> (a strategy global): at each monthly report the first rating whose condition holds names the month and runs its actions — a funding cut (<code>money(-n)</code>), a bonus, news, a relation change — and the report ends <em>rated <rating></em>; a rating without <code>when</code> is the catch-all. Funding withdrawn is an evaluation's negative <code>money</code> (or an income whose formula reads the standing, as before). The strategy screen's <strong>Reports</strong> list shows funds, score, holdings and every monthly report, newest first (#29). The default campaign's Senate rates the Guard <em>Outstanding</em> (+150 000) to <em>Unacceptable</em> (−150 000). In 0.16.8 the section was dropped by the rules builder (missing from the strategy globals); fixed in 0.16.9.</p>
 </div>
 <h3 id="r-str-010-strategy-screens">R-STR-010 Strategy screens<a class="headerlink" href="#r-str-010-strategy-screens" title="Permanent link">&para;</a></h3>
 <p>Functional screens MUST cover the star map, bases (with the 3D base view), research, hangar, market, pilots, reports, messages and briefing/debriefing, with hand-off to battle and return.</p>
 <p><em>Rationale:</em> Playable strategy layer before skins (Stage 6).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-001-strategy-layer">F-STR-001</a></li>
-<li>Status: planned — partly met (app 0.7.1 – 0.9.0, 0.16.0, main <code>10f7fce</code>, <code>8e96338</code>, <code>ff9d8fc</code>, <code>ac7ae62</code>)</li>
-<li>Verified by: <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>, <code>money_has_thousands_separators</code>; <code>app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words</code>, <code>lists_keep_the_selection_in_view</code>, <code>grids_and_hits</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18, MT-4-29 – MT-4-33</li>
+<li>Status: planned — partly met (app 0.7.1 – 0.9.0, 0.16.0 – 0.16.14, main <code>10f7fce</code>, <code>8e96338</code>, <code>ff9d8fc</code>, <code>ac7ae62</code>, <code>de30c2a</code>)</li>
+<li>Verified by: <code>app::strategy::tests::the_map_fits_its_rectangle_centred</code>, <code>money_has_thousands_separators</code>; <code>app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words</code>, <code>lists_keep_the_selection_in_view</code>, <code>grids_and_hits</code>; <code>app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps</code>; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18, MT-4-29 – MT-4-33, MT-4-41, MT-4-44 – MT-4-48, MT-6-25, MT-6-26</li>
 <li>See: <a href="../../../user-guide/campaign/">User guide › Campaign</a>, <a href="../../../implementation/architecture/campaign/#the-battle-hand-off">Campaign (architecture)</a>, <a href="../../design/format-interface/">Format: interface, text and media</a></li>
 </ul>
 <div class="admonition note">
@@ -7333,9 +7357,13 @@
 <p class="admonition-title">As built (app 0.16.0, main <code>ac7ae62</code>): the screen rebuilt for the mouse</p>
 <p>A playtest found the screen displayed but was not usable. It is now five widgets placed by the pack's <code>screens.starmap</code> layout (R-CPN-011) and stretched to fill the window: a <strong>top bar</strong> (date, funds, score; a base switcher <code>&lt;</code> name <code>&gt;</code>; pause and four speed buttons <code>||</code> <code>1h</code> <code>6h</code> <code>1d</code> <code>5d</code>; <em>Save</em>; <em>Menu</em>); the <strong>map</strong>, which zooms about the cursor with the wheel (×0.5 – ×12) and pans with a right or middle drag, picks the nearest system, contact, convoy, survey ship or craft in flight under a click (moving things win a near tie), names what is under the cursor and has a legend; an <strong>info panel</strong> for the selection with its actions as buttons (<em>Build <base type></em> or <em>Build <facility></em> with the cost, <em>Survey</em>, <em>Make <base> current</em>, <em>Intercept</em>); <strong>nav</strong> buttons to the ten lists; and the <strong>panel</strong>, a scrolling list (wheel, Up/Down, a scroll bar) whose rows are clipped with <code>...</code>, with the selected row in full beneath and its actions as buttons — <em>Buy 1</em>, <em>Buy 5</em>, <em>Sell 1</em> (Market), <em>Make 1</em>, <em>Make 5</em> (Factory), <em>Assign pilot</em>, <em>Fit best</em> (Hangar), and the one action of other rows; a double click acts with the first. Interceptions, convoy ambushes, choices, offered missions, the ending, notices and title cards are <strong>modal prompts</strong> with buttons; the screen beneath takes no input while one is up. The keys still work (Space, 1 – 4, Tab, Up/Down, Enter, Left/Right, F5, Esc, the cheats); the hidden S and F keys are gone, replaced by the buttons. The widgets are immediate-mode (<code>app::widgets</code>).</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.1 – 0.16.14)</p>
+<p>The info panel shows up to six actions (0.16.1). New prompts: <em>Construction under attack</em> (0.16.4), <em>Auto-resolve</em> on the Interception prompt (0.16.12), <em>Save game</em> with three slots (0.16.14); notices raised in a debrief are shown as soon as the map is back (0.16.2). New list rows and buttons: modules' <em>Dismantle</em> and the store and quarters lines (Bases, 0.16.10), <em>Move up</em> and <em>Cancel</em> (Factory, 0.16.11), <em>Train</em> / <em>Stop training</em> and <em>Dismiss</em> (Hangar, 0.16.7); destructive buttons never run on Enter or a double click. A <strong>Reports</strong> list (0.16.8) and the testbed's <strong>Debug</strong> list (0.16.13, R-TST-010). The ending is a screen of its own (0.16.14, R-CPN-010).</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with ten lists). Texts are plain English in the default campaign's strategy files, not text keys. The <code>interceptor</code> wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested <code>app::widgets</code>).</p>
+<p>Not built: the 3D base view, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with eleven lists). Texts are plain English in the default campaign's strategy files, not text keys. The <code>interceptor</code> wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested <code>app::widgets</code>).</p>
 </div>
 <h3 id="r-str-011-saves">R-STR-011 Saves<a class="headerlink" href="#r-str-011-saves" title="Permanent link">&para;</a></h3>
 <p>A save MUST hold the full campaign state plus the mod list and versions; loading MUST refuse a save whose mods are missing. Logistics state (stores, orders, build progress, ships in flight with their attack rolls, survey results) MUST be saved.</p>
@@ -7343,7 +7371,7 @@
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-004-saved-games">F-STR-004</a></li>
 <li>Status: implemented (app 0.7.0 – 0.9.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>ff9d8fc</code>)</li>
-<li>Verified by: <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code>; <code>campaign::tests::the_default_campaign_runs_six_months</code> (a six-month game round-trips, with the default campaign's logistics block); MT-4-10, MT-4-18</li>
+<li>Verified by: <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code> (since app 0.16.2 also a changed pack version's notice); <code>campaign::tests::the_default_campaign_runs_six_months</code> (a six-month game round-trips, with the default campaign's logistics block); MT-4-10, MT-4-18, MT-4-40, MT-6-25</li>
 <li>See: <a href="../../../implementation/architecture/campaign/#saves">Campaign (architecture) › Saves</a>, <a href="../../../implementation/plan/stage-4-strategy/">Stage 4</a></li>
 </ul>
 <div class="admonition note">
@@ -7352,7 +7380,11 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Pack <strong>versions</strong> are recorded but not compared: a save from an older version of a loaded mod is accepted if its indices still fit. No unit test round-trips a save with logistics <strong>in flight</strong> (the six-month test's automatic player builds no facilities); MT-4-18 covers it by hand.</p>
+<p>No unit test round-trips a save with logistics <strong>in flight</strong> (the six-month test's automatic player builds no facilities); MT-4-18 covers it by hand.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.2 – 0.16.14)</p>
+<p>Pack <strong>versions are compared</strong> (0.16.2, #31): a save made with another version of a pack that is loaded still loads, with a notice per pack naming both versions (its rules may differ); a missing pack is refused as before. The save gains each facility's strike count (0.16.3) and each pilot's training (0.16.7); older saves read them as none. <strong>Save slots</strong> (0.16.14, #48): slot 0 is the automatic save (F5, leaving the map, the ending), slots 1 – 3 are <code>&lt;campaign&gt;-&lt;n&gt;.yaml</code>, chosen from the top bar's <em>Save</em> and loaded from the main menu's <em>Load game</em> page (R-CPN-011).</p>
 </div>
 <h3 id="r-str-012-logistics-is-optional-data">R-STR-012 Logistics is optional data<a class="headerlink" href="#r-str-012-logistics-is-optional-data" title="Permanent link">&para;</a></h3>
 <p>Logistics MUST be entirely campaign data; a campaign without <code>facility_types</code>, <code>recipes</code> and <code>logistics</code> sections MUST behave as without logistics. The <code>interceptor</code> campaign MUST NOT use logistics.</p>
@@ -7454,8 +7486,8 @@
 <p><em>Rationale:</em> Logistics in battle.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a>, <a href="../../../definition/missions/#f-msn-007-logistics-missions">F-MSN-007</a></li>
-<li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>; app 0.9.2, main <code>0d1c522</code>, <code>146195b</code>): convoy ambushes generated, flown or auto-resolved; construction strikes not built</li>
-<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code> (auto-resolved losses), <code>an_ambushed_convoy_waits_for_its_escort_and_delivers_the_share_that_got_through</code>; MT-4-16, MT-4-28</li>
+<li>Status: implemented (app 0.9.0, main <code>ff9d8fc</code>; app 0.9.2, main <code>0d1c522</code>, <code>146195b</code>; app 0.16.4, main <code>d300642</code>): convoy ambushes and construction strikes generated, flown or auto-resolved</li>
+<li>Verified by: <code>campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels</code> (auto-resolved losses), <code>an_ambushed_convoy_waits_for_its_escort_and_delivers_the_share_that_got_through</code>, <code>construction_sites_are_struck_from_halfway_at_most_max_times</code>; MT-4-16, MT-4-28, MT-4-41</li>
 <li>See: <a href="../../design/logistics/">Logistics</a></li>
 </ul>
 <div class="admonition note">
@@ -7466,9 +7498,9 @@
 <p class="admonition-title">As built (app 0.9.2): the flown ambush</p>
 <p>With <code>logistics.ambush_mission</code> (the default campaign: <code>convoy_ambush</code>) an attacked convoy that reaches its attack position <strong>waits</strong> and the clock stops: the player flies its escort — the first ready craft with a pilot, from any base — or lets it fight through (Esc, or no ready craft: auto-resolved as above). After the battle <code>Campaign::convoy_result</code> delivers the share of the mission's <code>cargo:</code> role still aboard: a win or draw delivers that share, a loss nothing, a retreat falls back to the auto-resolve. Without <code>ambush_mission</code> every ambush is auto-resolved, as in app 0.9.0.</p>
 </div>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>Not built: construction strikes and <code>construction_defence</code> (R-STR-023).</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.3 – 0.16.4)</p>
+<p>A construction strike (R-STR-023) stops the clock with a prompt: fly <code>construction_defence</code> (<code>logistics.construction_strikes.mission</code>) or let it be; with no ready craft or no mission it is auto-resolved as a setback. A flown convoy escort applies its outcome's actions too (0.16.3). The struck facility is represented by the mission's own site (a research station at 60 %), not by its own type and stage (R-STR-022).</p>
 </div>
 <h3 id="r-str-020-cargo-losses-and-depots">R-STR-020 Cargo losses and depots<a class="headerlink" href="#r-str-020-cargo-losses-and-depots" title="Permanent link">&para;</a></h3>
 <p>A destroyed vessel's cargo MUST be lost; a captured vessel's cargo MUST go to the captor and be stored at a supply depot; destroying an enemy supply depot MUST let the player seize its stock.</p>
@@ -7485,7 +7517,7 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: captured cargo going to the captor and stored at a supply depot, enemy supply depots and seizing their stock (plan item 5.11, with the rival's logistics).</p>
+<p>Not built: captured cargo going to the captor and stored at a supply depot, enemy supply depots and seizing their stock (plan item 5.11, with the rival's logistics). Since app 0.16.3 the outcome actions <code>cargo_lost</code> and <code>cargo_captured</code> are recorded in the log (the escort's <code>cargo:</code> share settles the amount).</p>
 </div>
 <h3 id="r-str-021-survey-ships">R-STR-021 Survey ships<a class="headerlink" href="#r-str-021-survey-ships" title="Permanent link">&para;</a></h3>
 <p>Surveys MUST be flown by survey ships, a mission profile and craft distinct from supply ships, launched from a base to a system within the base's current radar range. A survey MUST reveal the system's deposits and reserves, features, the research sites it qualifies for and its suitability for each facility type. When a survey ship launches, a 25 % roll MUST decide whether it will be attacked.</p>
@@ -7493,7 +7525,7 @@
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-006-surveys">F-STR-006</a></li>
 <li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>)</li>
-<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code> (survey first; the report names the deposit); MT-4-13</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code> (survey first; the report names the deposit); MT-4-13, MT-4-39</li>
 <li>See: <a href="../../../modding/strategy/#the-players-orders">Strategy layer › The player's orders</a></li>
 </ul>
 <div class="admonition note">
@@ -7502,7 +7534,7 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>The report does not give reserves or features by name; the survey ship has no craft or battle model, and an attack is auto-resolved (lost on a fixed 50 % roll, not campaign data) instead of generating a mission.</p>
+<p>Since app 0.16.2 (#36) the report gives each deposit's reserve (or <em>unlimited</em>) and the system's features by name. The survey ship has no craft or battle model, and an attack is auto-resolved (lost on a fixed 50 % roll, not campaign data) instead of generating a mission.</p>
 </div>
 <h3 id="r-str-022-construction-stages">R-STR-022 Construction stages<a class="headerlink" href="#r-str-022-construction-stages" title="Permanent link">&para;</a></h3>
 <p>A facility under construction MUST be shown in its <code>build_25</code> state from 0 %, <code>build_60</code> from 60 % and <code>build_90</code> from 90 %, and intact on completion, on the strategy map and in battle.</p>
@@ -7522,10 +7554,14 @@
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-008-facilities-under-construction">F-STR-008</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>Status: implemented (app 0.16.4, main <code>d300642</code>, #19)</li>
+<li>Verified by: <code>campaign::logistics::tests::construction_sites_are_struck_from_halfway_at_most_max_times</code>; <code>campaign::logistics::tests::logistics_queries_answer_about_systems</code> (<code>construction_attacks</code>); MT-4-41, MT-4-49</li>
+<li>See: <a href="../../design/logistics/">Logistics</a>, <a href="../../../modding/strategy/#construction-strikes">Strategy layer › Construction strikes</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.4)</p>
+<p><code>logistics.construction_strikes: {from, max, chance, mission, setback}</code> — defaults 50 %, 3, 10 % a day, none, 25 %. Each hour every facility under construction past <code>from</code> whose system has had fewer than <code>max</code> strikes rolls <code>chance</code> (per day); one strike at a time raises <code>Event::Strike</code> and stops the clock. Flown (<code>mission</code>): a win beats it off, a loss destroys the site, a retreat or draw counts as not flown; not flown, the build is set back <code>setback</code> of its time. Facilities count their strikes (saved; the <code>construction_attacks(system)</code> query). The default campaign: 12 % a day, <code>construction_defence</code>.</p>
+</div>
 <h3 id="r-str-024-research-stations-and-sites">R-STR-024 Research stations and sites<a class="headerlink" href="#r-str-024-research-stations-and-sites" title="Permanent link">&para;</a></h3>
 <p>A research topic or branch MAY be restricted to a facility type (<code>lab:</code>) and to systems meeting a research site's criteria (<code>site:</code>); its <code>start_cost</code> MUST be delivered once to begin the project, after which research MUST run without further supply.</p>
 <p><em>Rationale:</em> Logistics decision (2026-11-11).</p>
@@ -7604,6 +7640,11 @@
 <td>1.17.0</td>
 <td>2026-11-11</td>
 <td>R-STR-007 As-built note: fitted shields and armour carried into battle, <code>fitted:</code> on ship classes, item <code>protection</code> (app 0.15.0, main <code>1ff754b</code>); R-STR-010 As-built note: the strategy screen rebuilt for the mouse — top bar, zoomable map with picking, info panel, scrolling lists with action buttons, modal prompts (app 0.16.0, main <code>ac7ae62</code>). Both stay partly met. No requirement text changed</td>
+</tr>
+<tr>
+<td>1.18.0</td>
+<td>2026-11-11</td>
+<td>The issue-audit gaps as built (app 0.16.1 – 0.16.14, main <code>f82a6ab</code> … <code>de30c2a</code>): R-STR-009 implemented (evaluations and the Reports list); R-STR-019 implemented and R-STR-023 implemented (construction strikes, #19); As-built notes on R-STR-003 (auto-resolve), R-STR-004 (queue priorities, delivery losses, storage), R-STR-005 (capture, <code>requires_any</code>, hidden topics), R-STR-006 (<code>quarters</code>, <code>storage</code>, <code>defence</code>, dismantling), R-STR-007 (the default campaign's shields and armour), R-STR-008 (training, dismissal), R-STR-010 (new prompts, lists and buttons), R-STR-011 (pack versions compared, save slots), R-STR-019; R-STR-002, R-STR-020 and R-STR-021 Open notes narrowed</td>
 </tr>
 </tbody>
 </table>

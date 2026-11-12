@@ -3234,6 +3234,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-condition-console-app-0165" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The condition console (app 0.16.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6451,6 +6462,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-condition-console-app-0165" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The condition console (app 0.16.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6557,6 +6579,21 @@ its index in <code>StrategyDef::names</code> — so a topic, item or module is p
 Difficulty level ids are constants too, unless an id already has that name. The context is
 answered by <code>campaign::Campaign</code> (<a href="../campaign/#expressions-the-campaign-as-a-scriptcontext">Campaign</a>).
 Time quantities accept <code>d</code> (days) since app 0.6.7, for <code>every: 30d</code>.</p>
+<p>The story added five queries in app 0.10.0 (<code>arc</code>, <code>plan</code>, <code>relation</code>, <code>fired</code>, <code>battles_won</code>)
+and logistics eight in app 0.16.3 (<code>deposit</code>, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>,
+<code>owned</code>, <code>lane_distance</code>, <code>facility_progress</code>, <code>construction_attacks</code>; ids 21 – 28, R-MOD-014):
+<strong>29</strong> in all. A logistics query's arguments are names like any other — the map's system ids and
+their feature tags, resource, component, facility-type and research-site ids were added to
+<code>StrategyDef::names</code> for them — and its first argument is always a system. <code>Arg::Num</code> carries
+the constant's index; the campaign looks the name up again (<code>Campaign::logistics_query</code>), so a
+name that is not a system answers 0 instead of failing.</p>
+<h3 id="the-condition-console-app-0165">The condition console (app 0.16.5)<a class="headerlink" href="#the-condition-console-app-0165" title="Permanent link">&para;</a></h3>
+<p>The testbed's backquote console evaluates typed text in the <strong>battle</strong> context:
+<code>MissionRun::evaluate(&amp;World, text, levels)</code> builds <code>battle::schema</code> from the mission's own role
+names and the difficulty levels, parses, and evaluates against a <code>BattleCx</code> whose generator is a
+<code>Cell</code> <strong>copy</strong> of the mission's (<code>Cell::new(self.rng)</code>), so <code>random(p)</code> reads the dice without
+moving them — looking never changes the battle (unit-tested). The value comes back as text; a
+parse error as the <code>Err</code> string the flight screen shows in orange.</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6600,7 +6637,11 @@ Time quantities accept <code>d</code> (days) since app 0.6.7, for <code>every: 3
 </tr>
 <tr>
 <td><code>campaign::QUERIES</code>, <code>campaign::id</code>, <code>campaign::schema</code></td>
-<td>The campaign context (16 queries; app 0.6.7).</td>
+<td>The campaign context (16 queries in app 0.6.7; 29 since app 0.16.3).</td>
+</tr>
+<tr>
+<td><code>mission::MissionRun::evaluate</code></td>
+<td>The condition console's evaluation (app 0.16.5).</td>
 </tr>
 <tr>
 <td><code>sim::ai::ObjectContext</code></td>
@@ -6625,6 +6666,10 @@ Time quantities accept <code>d</code> (days) since app 0.6.7, for <code>every: 3
   number, not a condition (compare it: 'hull &gt; 0')".</li>
 <li>To test a condition, write it in a behaviour and run <code>--check</code>; to see it fire, use a
   transition into an obviously different manoeuvre (<code>do: circle</code>) in a testbed scenario.</li>
+<li>A <strong>battle</strong> condition can be typed live: start the mission and press <code>`</code> (app 0.16.5) —
+  <a href="../../../user-guide/getting-started/#the-condition-console">Getting started › The condition console</a>.
+  A <strong>campaign</strong> condition can be watched in the strategy screen's Debug list (Ctrl+D, app
+  0.16.13) by giving a test story event that <code>when</code> and <code>chance: 0%</code>.</li>
 <li>The language is pure, so new queries are unit-tested with a stub <code>Context</code> (see the tests in
   <code>script/mod.rs</code>) before the simulation answers them.</li>
 </ul>

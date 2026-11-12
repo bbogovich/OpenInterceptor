@@ -7700,7 +7700,7 @@
 </tr>
 <tr>
 <td><a href="#r-mod-014-campaign-context">R-MOD-014 Campaign context</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-mod-015-tier-2-scripting-decision">R-MOD-015 Tier 2 scripting decision</a></td>
@@ -7808,7 +7808,7 @@
 </tr>
 <tr>
 <td><a href="#r-mod-041-captions">R-MOD-041 Captions</a></td>
-<td>Planned (partly met)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-mod-042-cameras-fixed-or-attached">R-MOD-042 Cameras, fixed or attached</a></td>
@@ -8004,10 +8004,14 @@
 <p><em>Rationale:</em> Strategy-layer rules and logistics.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-005-conditions-actions-and-scripting">F-MOD-005</a>, <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned — partly met: the campaign context exists (<code>script::campaign</code>, app 0.6.7, main <code>65141dc</code>) with 16 strategy queries (<code>research</code>, <code>researching</code>, <code>has</code>, <code>module_count</code>, <code>bases</code>, <code>money</code>, <code>day</code>, <code>month</code>, <code>difficulty</code>, <code>pilots</code>, <code>score</code>, <code>month_score</code>, <code>random</code>, <code>flag</code>, <code>salvaged</code>, <code>craft</code>), every campaign id a checked constant; the system and facility queries listed here wait for logistics</li>
-<li>Verified by: <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code></li>
+<li>Status: implemented (app 0.6.7, main <code>65141dc</code>; the system and facility queries app 0.16.3, main <code>a45331a</code>, #8)</li>
+<li>Verified by: <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>content::strategy::tests::a_strategy_layer_builds_with_checked_names</code>; <code>campaign::logistics::tests::logistics_queries_answer_about_systems</code>; MT-4-49</li>
 <li>See: <a href="../../design/logistics/">Logistics</a>, <a href="../../../modding/strategy/#expressions-the-campaign-context">Strategy layer › expressions</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.6.7 – 0.16.3)</p>
+<p>The campaign context (<code>script::campaign</code>) has 16 strategy queries (<code>research</code>, <code>researching</code>, <code>has</code>, <code>module_count</code>, <code>bases</code>, <code>money</code>, <code>day</code>, <code>month</code>, <code>difficulty</code>, <code>pilots</code>, <code>score</code>, <code>month_score</code>, <code>random</code>, <code>flag</code>, <code>salvaged</code>, <code>craft</code>; app 0.6.7), the story's five (<code>arc</code>, <code>plan</code>, <code>relation</code>, <code>fired</code>, <code>battles_won</code>; app 0.10.0) and since app 0.16.3 the eight required here: <code>deposit(system, resource)</code> (its daily rate, 0 until surveyed), <code>feature(system, tag)</code>, <code>research_site(system, site)</code>, <code>survey_known(system)</code>, <code>owned(system)</code> (a base or a facility), <code>lane_distance(a, b)</code> (jumps along lanes, breadth-first; −1 without a route; 1 on a map without lanes), <code>facility_progress(system)</code> (the least finished facility's 0..1; 1 when none is building) and <code>construction_attacks(system)</code>. Every campaign id — systems, feature tags, resources, sites included — is a checked constant.</p>
+</div>
 <h3 id="r-mod-015-tier-2-scripting-decision">R-MOD-015 Tier 2 scripting decision<a class="headerlink" href="#r-mod-015-tier-2-scripting-decision" title="Permanent link">&para;</a></h3>
 <p>Before a second-tier script language is added, its dependency evaluation MUST be recorded on the dependency page; hooks and a sandboxed API follow.</p>
 <p><em>Rationale:</em> Dependency policy.</p>
@@ -8311,13 +8315,17 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <p><em>Rationale:</em> Accessible narration (decision D3, 2026-11-11: yes).</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned — partly met (MD2, app 0.13.0): captions over time ranges, as plain text</li>
-<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09</li>
+<li>Status: implemented (MD2, app 0.13.0; text keys app 0.16.2, main <code>6b45fcb</code>, #65)</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09, MT-6-23</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a>, <a href="#r-mod-012-text-keys">R-MOD-012</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.13.0)</p>
 <p><code>captions: [[from, to, text]]</code>, centred in the bottom letterbox bar in the skin's font. The text is plain, not a text key, so it is not translated.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.2)</p>
+<p>A caption's text — and the cutscene's <code>title</code> — may be a text key (<code>"@cutscene.intro.line1"</code>), resolved from the packs' <code>text/&lt;language&gt;/</code> files when the content loads; a missing key is a load error naming the cutscene. The default intro's lines are in <code>text/en/cutscenes.yaml</code>.</p>
 </div>
 <h3 id="r-mod-042-cameras-fixed-or-attached">R-MOD-042 Cameras, fixed or attached<a class="headerlink" href="#r-mod-042-cameras-fixed-or-attached" title="Permanent link">&para;</a></h3>
 <p>A cutscene MUST support <strong>fixed</strong> cameras, with keyframed world position, a keyframed look target or rotation and a field of view, and <strong>attached</strong> cameras, parented to an entity, whose coordinates are relative to the parent and whose distance, orbit (yaw and pitch around the parent), height and look offset are keyframed.</p>
@@ -8363,13 +8371,17 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <p><em>Rationale:</em> A film never holds the player.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a>, <a href="../../../definition/modding-toolkit/#f-mod-012-video-cutscenes">F-MOD-012</a></li>
-<li>Status: planned — partly met (MD2, app 0.12.0 – 0.13.0): Esc (and Enter) skips a cutscene; Enter, Esc or a click skips a video</li>
-<li>Verified by: MT-6-07, MT-6-09</li>
+<li>Status: planned — partly met (MD2, app 0.12.0 – 0.16.2): Esc, Enter, a click or the gamepad's Start (also A and B) skips a cutscene or a video; the tablet console cannot yet</li>
+<li>Verified by: MT-6-07, MT-6-09, MT-6-23</li>
 <li>See: <a href="../../design/designer/#34-the-cutscene-file">Mod designer: the cutscene file</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.13.0)</p>
 <p><code>CutscenePlayer::frame</code> ends on Esc or Enter; <code>VideoPlayer::frame</code> on Enter, Esc or a left click; the app then returns to the parked campaign or the launcher. Not built: skipping from the tablet console and with the gamepad's Start button.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.2, main <code>6b45fcb</code>)</p>
+<p><code>app::skip_pressed</code> decides for both players: Esc, Enter, a left click, or the gamepad's Start, A or B newly pressed this frame. Not built: skipping from the tablet console.</p>
 </div>
 <h3 id="r-mod-046-video-cutscenes">R-MOD-046 Video cutscenes<a class="headerlink" href="#r-mod-046-video-cutscenes" title="Permanent link">&para;</a></h3>
 <p>A pack MUST be able to provide a video file in place of any engine-played cutscene (<code>video:</code>), with optional captions. Video files MUST play through the operating system's media framework behind the platform shim: AVFoundation on macOS, Media Foundation on Windows, and on Linux GStreamer, when installed, loaded at run time with <code>dlopen</code> (no crate dependency and no link-time dependency; GStreamer MUST NOT be bundled). Image sequences with a WAV track MUST play on every platform, and MUST be the fallback where no media framework is available. An in-crate MP4/H.264 decoder is out of scope.</p>
@@ -8538,6 +8550,11 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <td>1.16.0</td>
 <td>2026-11-11</td>
 <td>MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; R-MOD-037 <code>harmless</code> (an Open note in app 0.13.0, fixed in app 0.14.1: bolts and missiles hit but do no damage); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed</td>
+</tr>
+<tr>
+<td>1.18.0</td>
+<td>2026-11-11</td>
+<td>R-MOD-014 implemented: the logistics queries (<code>deposit</code>, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code>, <code>facility_progress</code>, <code>construction_attacks</code>; app 0.16.3, #8), with an As-built note; R-MOD-041 implemented: captions and titles as text keys (app 0.16.2, #65); R-MOD-045 As-built note: the gamepad skips (app 0.16.2), the tablet console does not yet</td>
 </tr>
 </tbody>
 </table>

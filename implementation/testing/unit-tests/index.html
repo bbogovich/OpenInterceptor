@@ -6435,6 +6435,38 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>de30c2a</code> (app 0.16.14)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
+build) gives <strong>408</strong> run on macOS (411 less the Linux-only test and two ignored helpers). The 14
+added since <code>ac7ae62</code>: app <strong>0.16.1</strong> (<code>f82a6ab</code>)
+<code>content::rules::tests::fitted_equipment_and_hit_point_charts_set_protection</code>,
+<code>content::strategy::tests::protection_comes_from_the_item_or_the_originals_keys</code>; app <strong>0.16.2</strong>
+(<code>6b45fcb</code>) <code>campaign::tests::generated_maps_are_spaced_named_seeded_and_hide_black_holes</code>; app
+<strong>0.16.3</strong> (<code>a45331a</code>) <code>campaign::logistics::tests::logistics_queries_answer_about_systems</code>,
+<code>outcomes_capture_prizes_and_lose_facilities_safely</code>; app <strong>0.16.4</strong> (<code>d300642</code>)
+<code>campaign::logistics::tests::construction_sites_are_struck_from_halfway_at_most_max_times</code>; app
+<strong>0.16.5</strong> (<code>f227494</code>)
+<code>mission::tests::the_condition_console_evaluates_against_the_battle_without_changing_it</code>; app
+<strong>0.16.6</strong> (<code>1093f0a</code>)
+<code>campaign::tests::requires_any_and_hidden_topics_wait_for_one_prerequisite_and_their_discovery</code>;
+app <strong>0.16.7</strong> (<code>2c152a8</code>) <code>campaign::tests::pilots_train_up_to_their_maximum_and_can_be_dismissed</code>;
+app <strong>0.16.8</strong> (<code>26f6c2a</code>) <code>campaign::tests::the_monthly_evaluation_rates_the_month_and_runs_its_actions</code>;
+app <strong>0.16.10</strong> (<code>1bc200e</code>) <code>campaign::tests::quarters_limit_the_roster_and_modules_can_be_dismantled</code>;
+app <strong>0.16.11</strong> (<code>6821147</code>) <code>campaign::tests::queues_reorder_and_cancel_and_deliveries_can_be_lost</code>;
+app <strong>0.16.12</strong> (<code>01e2f2b</code>) <code>balance::tests::auto_resolve_odds_favour_the_stronger_side</code>; app
+<strong>0.16.13</strong> (<code>52e9e7f</code>)
+<code>campaign::story::tests::the_debugger_fires_events_and_the_testbed_plays_to_a_chapter</code>. App
+0.16.9 and 0.16.14 added none. <strong>Extended:</strong> <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code>
+(a newer pack version loads with a notice, 0.16.2), <code>campaign::story::tests::mission_outcomes_move_standings</code>
+(a change of stance becomes a notice, 0.16.2), <code>script::campaign::tests::ids_match_and_names_are_checked</code>
+(the eight logistics queries, 0.16.3), <code>app::menu::tests::the_menu_offers_continue_only_with_a_save</code>
+(Load game, <code>age_text</code>) and <code>options_show_only_what_can_change</code> (Full screen, Controls; 0.16.14).
+<strong>Not unit-tested:</strong> the 0.16.9 fix (the rules' list of strategy globals lacked <code>evaluations</code>, so a
+pack's ratings never reached the campaign — the unit test built the strategy layer directly);
+<code>app::skip_pressed</code>, the stingers, <code>screens.&lt;id&gt;.background</code>, the <code>--check</code> voice, music and face
+checks, the survey report's text, the cutscene text keys; the strike, auto-resolve, save-slot,
+Debug and ending prompts and screens; <code>strategy::slot_path</code>; <code>graphics.fullscreen</code> in the settings
+round trip; the storage limit on purchases and the <code>defence</code> effect — covered by manual tests
+MT-3-66, MT-4-38 – MT-4-49, MT-5-11 – MT-5-13 and MT-6-21 – MT-6-27.</p>
 <p><strong>At main <code>ac7ae62</code> (app 0.16.0)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
 build) gives <strong>394</strong> run on macOS (397 less the Linux-only test and two ignored helpers). The 9
 added since <code>16a9954</code>: app <strong>0.15.0</strong> (<code>1ff754b</code>)
@@ -6647,8 +6679,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::rules</code></td>
-<td>6</td>
-<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, <strong>voice sets and their clips</strong>, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong></td>
+<td>7</td>
+<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, <strong>voice sets and their clips</strong>, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong>; <strong><code>fitted:</code> equipment and hit-point charts set protection</strong> (a shield's <code>Special</code>, armour's <code>HitPoints</code>, a class's own value winning, inherited; <code>HP1</code> – <code>HP4</code> summed; an unknown <code>fitted</code> slot is an error — app 0.16.1)</td>
 </tr>
 <tr>
 <td><code>content::equipment</code></td>
@@ -6677,33 +6709,33 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::strategy</code></td>
-<td>3</td>
-<td>Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors); <strong>the original's numeric tech ids become research prerequisites</strong> through <code>tech_ids</code> (an unlisted id is left out; <code>tech_required</code> gates an item)</td>
+<td>4</td>
+<td>Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors); <strong>the original's numeric tech ids become research prerequisites</strong> through <code>tech_ids</code> (an unlisted id is left out; <code>tech_required</code> gates an item); <strong>protection comes from the item or the original's keys</strong> (<code>protection</code> first, then <code>special</code> for shields and <code>hit_points</code> for armour; other kinds none — app 0.16.1)</td>
 </tr>
 <tr>
 <td><code>script::campaign</code></td>
 <td>1</td>
-<td>Query ids match the table; campaign ids and level names are constants; a misspelt name is an error</td>
+<td>Query ids match the table (29 queries since app 0.16.3); campaign ids and level names are constants; a misspelt name is an error</td>
 </tr>
 <tr>
 <td><code>campaign</code></td>
-<td>12</td>
-<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong>; <strong>the default campaign runs a year with its story and stays consistent</strong> (app 0.10.3)</td>
+<td>18</td>
+<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong>; <strong>the default campaign runs a year with its story and stays consistent</strong> (app 0.10.3); <strong>generated maps</strong> are spaced, named in order then numbered, seeded and end in a hidden black hole (0.16.2); <strong><code>requires_any</code> and hidden topics</strong> wait for one prerequisite and for <code>discover</code> (0.16.6); <strong>pilots train</strong> up to their stats' maximum at a daily cost, <strong>and can be dismissed</strong> (0.16.7); <strong>the monthly evaluation</strong> rates the month with the first rating that holds and runs its actions (0.16.8); <strong>quarters limit the roster</strong> and modules can be <strong>dismantled</strong> for a refund (0.16.10); <strong>queues reorder and cancel</strong>, and <strong>deliveries can be lost</strong> (0.16.11)</td>
 </tr>
 <tr>
 <td><code>campaign::logistics</code></td>
-<td>3</td>
-<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met); <strong>an ambushed convoy waits for its escort and delivers the share that got through</strong> (app 0.9.2)</td>
+<td>6</td>
+<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met); <strong>an ambushed convoy waits for its escort and delivers the share that got through</strong> (app 0.9.2); <strong>the logistics queries</strong> (<code>deposit</code> known only once surveyed, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code> along lanes, <code>facility_progress</code>, <code>construction_attacks</code> — 0.16.3); <strong>outcomes capture prizes and lose facilities safely</strong> (<code>captured(&lt;class&gt;)</code> kept only with <code>capture</code>; <code>lose(&lt;facility type&gt;)</code> renumbers the other facility's orders — 0.16.3); <strong>construction sites are struck from halfway, at most <code>max</code> times</strong>, a strike not flown sets the build back and a lost defence destroys the site (0.16.4)</td>
 </tr>
 <tr>
 <td><code>campaign::story</code></td>
-<td>4</td>
-<td><strong>Arcs fire in order</strong> with choices, offered missions and cooldowns; <strong>plans grow from shipments that get through</strong> (not from intercepted ones) and can end the campaign; <strong>relations drift and the strategist answers the player</strong> (app 0.10.0); <strong>mission outcomes move standings</strong> (app 0.12.1)</td>
+<td>5</td>
+<td><strong>Arcs fire in order</strong> with choices, offered missions and cooldowns; <strong>plans grow from shipments that get through</strong> (not from intercepted ones) and can end the campaign; <strong>relations drift and the strategist answers the player</strong> (app 0.10.0); <strong>mission outcomes move standings</strong> (app 0.12.1), and a change of stance becomes a notice (0.16.2); <strong>the debugger fires events</strong> (fired count, the choice offered) <strong>and the testbed plays to a chapter</strong> (0.16.13)</td>
 </tr>
 <tr>
 <td><code>campaign::save</code></td>
 <td>1</td>
-<td>A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused</td>
+<td>A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused; a save from another version of a loaded pack loads with a notice (app 0.16.2)</td>
 </tr>
 <tr>
 <td><code>formats::smacker</code></td>
@@ -6738,7 +6770,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <tr>
 <td><code>app::menu</code></td>
 <td>3</td>
-<td>Continue only with a save; options rows only for what can change (campaign with more than one, physics where Simple is allowed); volumes step in quarters and stop at the ends (app 0.14.0)</td>
+<td>Continue only with a save; options rows only for what can change (campaign with more than one, physics where Simple is allowed); volumes step in quarters and stop at the ends (app 0.14.0); <strong>Load game only when a slot holds a save</strong>, <code>age_text</code> (just now, minutes, hours, days), and the Full screen and Controls rows (app 0.16.14)</td>
 </tr>
 <tr>
 <td><code>app::credits</code></td>
@@ -6847,8 +6879,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>mission</code></td>
-<td>5</td>
-<td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; <strong>the player's death is its own result (<code>killed</code>) with the lose outcomes</strong>; <strong>wingmen take successive slots of their formation</strong> across roles</td>
+<td>6</td>
+<td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; <strong>the player's death is its own result (<code>killed</code>) with the lose outcomes</strong>; <strong>wingmen take successive slots of their formation</strong> across roles; <strong>the condition console evaluates against the battle without changing it</strong> (a role count, an unknown role is an error, the mission's generator untouched — app 0.16.5)</td>
 </tr>
 <tr>
 <td><code>sim::targeting</code></td>
@@ -7042,8 +7074,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>balance</code></td>
-<td>1</td>
-<td><strong>Energy limits sustained fire</strong>, and kill times follow effective hit points — app 0.15.0</td>
+<td>2</td>
+<td><strong>Energy limits sustained fire</strong>, and kill times follow effective hit points — app 0.15.0; <strong>auto-resolve odds favour the stronger side</strong> (more foes worse, more craft better, always 0..1 — app 0.16.12)</td>
 </tr>
 </tbody>
 </table>

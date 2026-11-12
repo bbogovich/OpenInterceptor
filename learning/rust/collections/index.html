@@ -5449,6 +5449,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-queue-for-a-breadth-first-search-srccampaignlogisticsrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A queue for a breadth-first search — src/campaign/logistics.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#order-matters-for-determinism" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6379,6 +6390,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-queue-for-a-breadth-first-search-srccampaignlogisticsrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A queue for a breadth-first search — src/campaign/logistics.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#order-matters-for-determinism" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6427,6 +6449,11 @@
 <td>Resources by <code>(type, id)</code> (<code>pe::ResourceFile</code>), original files by name (<code>OriginalData</code>), bindings by <code>Action</code>, the model and texture caches (<code>ModelCache</code>), cockpit instruments by name</td>
 </tr>
 <tr>
+<td><code>VecDeque&lt;T&gt;</code></td>
+<td>A queue: push at the back, pop at the front, both O(1)</td>
+<td>The breadth-first search of <code>Campaign::lane_hops</code> (app 0.16.3)</td>
+</tr>
+<tr>
 <td><code>HashSet&lt;T&gt;</code></td>
 <td>"Is this in the set?"</td>
 <td>Keys held / pressed this frame (<code>RawInput</code>), textures already checked (<code>check::run</code>)</td>
@@ -6457,6 +6484,30 @@
 <li>A bounded log: <code>hud::MessageLog</code> keeps at most 32 entries in a <code>Vec</code>, removing the oldest.
   (<code>VecDeque</code> would make that removal O(1); at 32 entries a <code>Vec</code> is simpler and fast enough.)</li>
 </ul>
+<h2 id="a-queue-for-a-breadth-first-search-srccampaignlogisticsrs">A queue for a breadth-first search — <code>src/campaign/logistics.rs</code><a class="headerlink" href="#a-queue-for-a-breadth-first-search-srccampaignlogisticsrs" title="Permanent link">&para;</a></h2>
+<p><code>lane_distance(a, b)</code> counts the <strong>jumps</strong> between two systems along the map's lanes. Counting
+jumps (not distance) is a breadth-first search: visit every system one jump away, then every
+system two jumps away, and so on. The systems waiting to be visited form a queue — first in,
+first out — which is what <code>std::collections::VecDeque</code> is for: <code>push_back</code> and <code>pop_front</code> are
+both O(1), where <code>Vec::remove(0)</code> would shift every element.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">hops</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="kt">u32</span><span class="p">::</span><span class="n">MAX</span><span class="p">;</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">systems</span><span class="p">.</span><span class="n">len</span><span class="p">()];</span><span class="w">   </span><span class="c1">// u32::MAX = "not reached yet"</span>
+<span class="n">hops</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">collections</span><span class="p">::</span><span class="n">VecDeque</span><span class="p">::</span><span class="n">from</span><span class="p">([</span><span class="n">a</span><span class="p">]);</span>
+<span class="k">while</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">queue</span><span class="p">.</span><span class="n">pop_front</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">              </span><span class="c1">// `while let`: loop until None</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="o">&amp;</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">&amp;</span><span class="n">lanes</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">next</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">continue</span><span class="w"> </span><span class="p">};</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">hops</span><span class="p">[</span><span class="n">next</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kt">u32</span><span class="p">::</span><span class="n">MAX</span><span class="w"> </span><span class="p">{</span><span class="w">                  </span><span class="c1">// first visit = fewest jumps</span>
+<span class="w">            </span><span class="n">hops</span><span class="p">[</span><span class="n">next</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hops</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">next</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">hops</span><span class="p">[</span><span class="n">next</span><span class="p">]);</span><span class="w"> </span><span class="p">}</span>
+<span class="w">            </span><span class="n">queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">next</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="nb">None</span><span class="w">                                                 </span><span class="c1">// no route</span>
+</code></pre></div>
+<p>Because the queue hands systems out in the order they were reached, the first time <code>b</code> is
+reached is by the fewest jumps. Compare <code>Campaign::lane_route</code>, which wants the shortest
+<strong>distance</strong> and so uses Dijkstra's algorithm instead.</p>
 <h2 id="order-matters-for-determinism">Order matters for determinism<a class="headerlink" href="#order-matters-for-determinism" title="Permanent link">&para;</a></h2>
 <p><code>HashMap</code> iteration order is random per run. Anything that affects the simulation or what is
 shown (pack order, rules, scenarios, the launcher list) iterates a <code>Vec</code> that is sorted

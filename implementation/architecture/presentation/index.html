@@ -6733,14 +6733,18 @@ film never slows — so picture and sound stay together. The decoder borrows the
 so it cannot be stored beside them in the same struct; instead each step rebuilds a <code>Smacker</code>
 from <code>data</code>, restores the previous frame's pixels and palette, skips to the next frame and
 decodes forward (<a href="../../../learning/rust/async-loop/#an-async-open-and-a-sync-play-srcappvideors">Learn Rust › Async</a>).</p>
-<p>The picture is scaled to fit the window, centred, on black. Enter, Esc or a left click skips; at
-the end (or on a skip) the sound is stopped. The soundtrack plays at 0.9 × the effects volume
-(<code>VideoPlayer::frame(volume)</code>, app 0.14.1). <code>open</code> tries the given pack first, then every pack,
+<p>The picture is scaled to fit the window, centred, on black. Enter, Esc, a left click or a
+gamepad's Start, A or B skips; at the end (or on a skip) the sound is stopped. The soundtrack
+plays at 0.9 × the effects volume (<code>VideoPlayer::frame(volume, skip)</code>, app 0.14.1). Since app
+0.16.2 the player no longer reads the keys itself: <code>app::skip_pressed(ctx)</code> decides for both
+players — Esc, Enter, a left click, or a pad button newly pressed this frame (<code>raw.pad</code> against
+<code>raw.pad_previous</code>, so a button held from the menu does not skip at once) — and <code>app::run</code>
+passes the answer in as <code>skip</code>. <code>open</code> tries the given pack first, then every pack,
 latest first, for a pack path.</p>
 <h3 id="cutscenes-appcutscene">Cutscenes (<code>app::cutscene</code>)<a class="headerlink" href="#cutscenes-appcutscene" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart TB
     N["CutscenePlayer::new(ctx, id)&lt;br/&gt;World::new(rules, shapes, starfield_seed)&lt;br/&gt;set_environment"] --&gt; F
-    F["frame(): Esc/Enter → done&lt;br/&gt;accumulator += frame time"] --&gt; T
+    F["frame(): skip_pressed → done&lt;br/&gt;accumulator += frame time"] --&gt; T
     T["tick() at 60 Hz"] --&gt; E1["each entity: spawn at enter (Pilot::External),&lt;br/&gt;remove at leave"]
     E1 --&gt; E2["place on catmull_rom(path, t),&lt;br/&gt;velocity from the path, path_rotation;&lt;br/&gt;fire_beams while firing_until"]
     E2 --&gt; E3["timed actions: FireBeams, Missile (target + fire),&lt;br/&gt;Destroy (combat::apply_damage)"]
@@ -6835,7 +6839,11 @@ explains the pattern and why it suits Rust's borrowing rules.)</p>
 <code>screens.&lt;id&gt;</code> from the rules. <code>rules::build_at</code> starts from the engine's <code>default_starmap()</code>
 (1280 × 720: <code>top</code>, <code>map</code>, <code>nav</code>, <code>info</code>, <code>panel</code>) and lets each pack's entry override only the
 widgets it names (<code>ScreenLayout::parse</code>, which rejects names outside <code>STARMAP_WIDGETS</code>;
-tested by <code>a_layout_moves_only_what_it_names</code>). <code>Ruleset::screens</code> always holds a <code>starmap</code>.</p>
+tested by <code>a_layout_moves_only_what_it_names</code>). <code>Ruleset::screens</code> always holds a <code>starmap</code>.
+Since app 0.16.2 the strategy screen draws the layout's <code>background</code> over the whole window
+before the map: the image is loaded on the first frame into <code>StrategyScreen::background:
+Option&lt;Option&lt;Texture2D&gt;&gt;</code> — the outer <code>Option</code> says "tried yet", the inner "found" — so a
+missing file is reported once and never retried.</p>
 <p><strong>One frame of the strategy screen</strong> (<code>StrategyScreen::frame</code>):</p>
 <pre class="mermaid"><code>flowchart TD
     A["Input::read()"] --&gt; B["layout = rules.screens['starmap']&lt;br/&gt;sx = window w / design w, sy = window h / design h&lt;br/&gt;k = min(sx, sy), at least 0.5"]
@@ -6878,10 +6886,18 @@ and from the credits — goes there too, or to the launcher for a campaign witho
   <code>starfield_seed</code>, default 7) and <code>CreditsDef</code> (<code>campaign.credits</code>: <code>lines</code>, <code>video</code>), on
   <code>Ruleset::menu</code> and <code>Ruleset::credits</code>. <code>CreditsDef::roll()</code> is the campaign's lines, two blank
   lines, then <code>ENGINE_CREDITS</code>.</li>
-<li><strong>Menu:</strong> two pages. The pure functions <code>items(has_save)</code> (Continue only with a save; then New
-  campaign, Battles &amp; tools, Options, Credits, Quit) and <code>settings(campaigns, simple_allowed)</code>
-  (Campaign only with more than one, Difficulty, Physics only where Simple is allowed, Music,
-  Effects, Back) build the rows; <code>step_volume(v, up)</code> moves a volume a quarter and clamps.
+<li><strong>Menu:</strong> three pages. The pure functions <code>items(has_save, has_slots)</code> (Continue only with the
+  automatic save; New campaign; <strong>Load game</strong> only when a numbered slot holds a save, app
+  0.16.14; then Battles &amp; tools, Options, Credits, Quit) and <code>settings(campaigns,
+  simple_allowed)</code> (Campaign only with more than one, Difficulty, Physics only where Simple is
+  allowed, Music, Effects, <strong>Full screen</strong> and <strong>Controls</strong> since app 0.16.14, Back) build the
+  rows. The <strong>load page</strong> (<code>MainMenu::load: Option&lt;usize&gt;</code>) lists slot 0 (<em>Automatic save</em>) and
+  slots 1 – <code>strategy::SLOTS</code> with <code>menu::age_text(seconds)</code> of each file's modification time
+  (<em>just now</em>, <em>n minutes/hours/days ago</em>) or <em>empty</em>, then <em>Back</em>; Enter on a slot that exists
+  returns <code>Next::LoadSlot { slot }</code>. The slot ages are read from the file system each frame the
+  page is shown (<code>slot_ages</code>). <em>Full screen</em> calls macroquad's <code>set_fullscreen</code> and
+  <code>remember_fullscreen</code> (<code>graphics.fullscreen</code> in <code>settings.yaml</code>); <em>Controls</em> returns
+  <code>Next::Controls</code>, and the controls screen now always returns <code>Next::Menu</code>; <code>step_volume(v, up)</code> moves a volume a quarter and clamps.
   Items return <code>Next::LoadCampaign</code>, <code>NewCampaign</code>, <code>Launcher</code>, <code>Credits</code> or <code>Quit</code>; a campaign
   or difficulty change returns <code>Next::Reload</code>, after which <code>app::run</code> reopens the menu on its
   options page (<code>MainMenu::on_options</code>). Volumes and physics are saved at once
@@ -6892,6 +6908,16 @@ and from the credits — goes there too, or to the launcher for a campaign witho
   else <code>Screen::Credits</code>: the roll rises from below the screen at a fixed speed (<code>line_y</code>), headings
   in the skin's <code>accent</code>, and ends when its last line passes the top (<code>finished</code>) or on Esc or
   Enter. <code>--credits</code> opens on it.</li>
+<li><strong>Save slots</strong> (app 0.16.14): <code>strategy::slot_path(campaign, slot)</code> — slot 0 is the automatic
+  save <code>&lt;user data&gt;/saves/&lt;campaign&gt;.yaml</code> (F5, leaving the map, the ending), slot <em>n</em> is
+  <code>&lt;campaign&gt;-&lt;n&gt;.yaml</code> beside it. The strategy screen's <em>Save</em> button sets
+  <code>StrategyScreen::saving</code>, a modal with <em>Slot 1</em> – <em>Slot 3</em> and <em>Cancel</em>; <code>save_slot</code> /
+  <code>load_slot</code> read and write through <code>campaign::save</code> as before, so a slot is an ordinary save.</li>
+<li><strong>The ending screen</strong> (app 0.16.14): while <code>StrategyScreen::ending</code> is set the screen draws,
+  over the darkened map, a panel 70 % of the window with <em>VICTORY</em> (the skin's <code>border</code> colour) or
+  <em>DEFEAT</em> (<code>accent</code>), the ending's text wrapped, and the record — <code>Campaign::date</code>, the score,
+  <code>story.battles_won</code>, bases and craft — with a <code>button_row</code> of <em>Credits</em> (<code>Next::Credits</code>) and
+  <em>Main menu</em> (<code>Next::Menu</code>); Enter and Esc take <em>Main menu</em>. Each saves to slot 0 first.</li>
 </ul>
 <h3 id="who-plays-what-the-apps-routing">Who plays what: the app's routing<a class="headerlink" href="#who-plays-what-the-apps-routing" title="Permanent link">&para;</a></h3>
 <table>
@@ -7002,9 +7028,19 @@ play without it.</p>
 <td>The text size that fits a menu option value beside its label, never below half (app 0.14.2).</td>
 </tr>
 <tr>
-<td><code>MainMenu</code>, <code>menu::Item</code>, <code>menu::Setting</code>, <code>menu::items</code>, <code>menu::settings</code>, <code>menu::step_volume</code></td>
+<td><code>MainMenu</code>, <code>menu::Item</code>, <code>menu::Setting</code>, <code>menu::items</code>, <code>menu::settings</code>, <code>menu::step_volume</code>, <code>menu::age_text</code></td>
 <td><code>app::menu</code></td>
-<td>The main menu (app 0.14.0) and its pure row logic.</td>
+<td>The main menu (app 0.14.0) and its pure row logic; the load page's ages (app 0.16.14).</td>
+</tr>
+<tr>
+<td><code>app::skip_pressed</code></td>
+<td><code>app</code></td>
+<td>Whether a film or cutscene is skipped this frame: Esc, Enter, a click, a pad's Start, A or B (app 0.16.2).</td>
+</tr>
+<tr>
+<td><code>strategy::slot_path</code>, <code>SLOTS</code>, <code>StrategyScreen::save_slot</code>, <code>load_slot</code>, <code>Next::LoadSlot</code>, <code>app::remember_fullscreen</code></td>
+<td><code>app::strategy</code>, <code>app</code></td>
+<td>Save slots and the full-screen choice (app 0.16.14).</td>
 </tr>
 <tr>
 <td><code>Credits</code>, <code>credits::line_y</code>, <code>credits::finished</code></td>
@@ -7032,7 +7068,7 @@ play without it.</p>
 <ul>
 <li><code>Ui::load(&amp;Content) -&gt; Ui</code>; <code>ui.colour(role)</code>, <code>ui.panel(x, y, w, h)</code>, <code>ui.text(s, x, y, size, role)</code>,
   <code>ui.text_in(s, x, y, size, Color)</code>, <code>ui.measure(s, size)</code>; <code>nine_slice(iw, ih, s, scale, [x, y, w, h])</code>.</li>
-<li><code>VideoPlayer::open(&amp;Content, reference, pack).await -&gt; Result&lt;VideoPlayer, String&gt;</code>; <code>player.frame() -&gt; bool</code> (over).</li>
+<li><code>VideoPlayer::open(&amp;Content, reference, pack).await -&gt; Result&lt;VideoPlayer, String&gt;</code>; <code>player.frame(volume, skip) -&gt; bool</code> (over).</li>
 <li><code>CutscenePlayer::new(&amp;mut AppContext, id) -&gt; Result&lt;CutscenePlayer, String&gt;</code>; <code>player.frame(&amp;mut AppContext) -&gt; bool</code>;
   <code>player.finish(&amp;mut AppContext)</code>.</li>
 <li><code>Cutscene::parse(Get, pack) -&gt; Result&lt;Cutscene, String&gt;</code>, <code>cutscene.camera_at(t)</code>;
@@ -7067,6 +7103,10 @@ play without it.</p>
   the new space). <code>--check</code> lists the layout errors; there is no on-screen layout editor yet.</li>
 <li>A button that does not respond: a prompt is up (the screen beneath gets an empty <code>Input</code>), or
   the button is outside its widget's rectangle on a very small window.</li>
+<li>A layout <code>background</code> that does not show: standard error has <code>screens.starmap.background
+  &lt;file&gt;: …</code> once (it is loaded on the screen's first frame and not retried).</li>
+<li>A cutscene caption that shows a key: the key is missing for the language (<code>--check</code> reports
+  <code>text: missing key … (cutscenes/&lt;id&gt;)</code>).</li>
 </ul>
 
 

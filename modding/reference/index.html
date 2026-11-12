@@ -8481,7 +8481,7 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 <td><code>background</code></td>
 <td>asset</td>
 <td>none</td>
-<td>An image over the whole design space. Parsed and checked, <strong>not yet drawn</strong>.</td>
+<td>An image stretched over the whole window behind the screen's widgets (drawn since app 0.16.2; a file that cannot be loaded is reported on standard error once and left out).</td>
 </tr>
 <tr>
 <td><code>widgets</code></td>
@@ -8901,7 +8901,7 @@ part is optional.</p>
 <p>The schema type <strong>either</strong> (<code>Ty::Either</code>) lets a key take one of two forms: <code>count: 3</code> or
 <code>count: [2, 4]</code>; <code>bearing: [10, 5]</code> or <code>bearing: random</code>; <code>class: comet</code> or <code>class: [a, b]</code>.</p>
 <h2 id="cutscene-files-cutscenesyaml">Cutscene files (<code>cutscenes/*.yaml</code>)<a class="headerlink" href="#cutscene-files-cutscenesyaml" title="Permanent link">&para;</a></h2>
-<p>One cutscene per file (app 0.13.0; editor schema <code>schemas/cutscene.schema.json</code>). Every key —
+<p>One cutscene per file (app 0.13.0; editor schema <code>schemas/cutscene.schema.json</code>). The <code>title</code> and the captions may be text keys (app 0.16.2). Every key —
 <code>id</code>, <code>title</code>, <code>length</code>, <code>environment</code>, <code>entities</code>, <code>cameras</code>, <code>cuts</code>, <code>sounds</code>, <code>captions</code> — with
 its type and default is on <a href="../cutscenes/#the-file">Cutscenes › The file</a>.</p>
 <h2 id="text-files-textlanguageyaml">Text files (<code>text/&lt;language&gt;/*.yaml</code>)<a class="headerlink" href="#text-files-textlanguageyaml" title="Permanent link">&para;</a></h2>

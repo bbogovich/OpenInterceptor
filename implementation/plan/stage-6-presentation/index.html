@@ -6407,7 +6407,7 @@
 
 
 <h1 id="stage-6-presentation">Stage 6 — Presentation<a class="headerlink" href="#stage-6-presentation" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.7.0. Status: in progress</strong> — app 0.11.0 – 0.16.0 (main <code>1f183d1</code> … <code>ac7ae62</code>): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
+<p><strong>Version 0.7.0. Status: in progress</strong> — app 0.11.0 – 0.16.14 (main <code>1f183d1</code> … <code>de30c2a</code>): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
 Progress: <a href="../../status/#stage-6-progress">Implementation status › Stage 6</a>.</p>
 <p>Design: <a href="../../../specification/design/format-interface/">interface, text and media</a>.</p>
 <h2 id="work-items">Work items<a class="headerlink" href="#work-items" title="Permanent link">&para;</a></h2>
@@ -6425,13 +6425,13 @@ Progress: <a href="../../status/#stage-6-progress">Implementation status › Sta
 <td>6.1</td>
 <td>Screen layouts and skins: design spaces, nine-slice panels, buttons, fonts, custom panels bound to queries</td>
 <td><code>app::ui</code></td>
-<td><strong>Partial</strong> (0.11.1, 0.14.2, 0.16.0): skins (colours, nine-slice panel, font) on the launcher and strategy screen; long menu option values shrink to fit (<code>menu::fit_size</code>, 0.14.2); <strong>screen layouts</strong> as data for the strategy screen (<code>screens.starmap</code>: design space, five widgets, stretched to the window) and immediate-mode <strong>buttons, lists and modal prompts</strong> (<code>app::widgets</code>) (0.16.0, <code>ac7ae62</code>). Open: layouts for the other screens, drawing <code>background</code>, custom panels bound to queries, skin sounds. #48</td>
+<td><strong>Partial</strong> (0.11.1, 0.14.2, 0.16.0): skins (colours, nine-slice panel, font) on the launcher and strategy screen; long menu option values shrink to fit (<code>menu::fit_size</code>, 0.14.2); <strong>screen layouts</strong> as data for the strategy screen (<code>screens.starmap</code>: design space, five widgets, stretched to the window) and immediate-mode <strong>buttons, lists and modal prompts</strong> (<code>app::widgets</code>) (0.16.0, <code>ac7ae62</code>). The layout's <code>background</code> is drawn since 0.16.2 (<code>6b45fcb</code>). Open: layouts for the other screens, custom panels bound to queries, skin sounds. #48</td>
 </tr>
 <tr>
 <td>6.2</td>
 <td>Main menu, options (graphics, audio, controls), difficulty, load/save, credits, ending screens; campaign and mod selection (pack switches in the launcher)</td>
 <td><code>app</code></td>
-<td><strong>Done</strong> (0.14.0, main <code>a18a7b4</code>): the main menu (Continue, New campaign, Battles &amp; tools, Options, Credits, Quit), options with Left/Right (campaign, difficulty, physics, music, effects), the credits roll or film, <code>campaign.menu</code> / <code>campaign.credits</code>, <code>--credits</code>; endings' films (0.12.1). No load/save screen beyond Continue. #48</td>
+<td><strong>Done</strong> (0.14.0, main <code>a18a7b4</code>): the main menu (Continue, New campaign, Battles &amp; tools, Options, Credits, Quit), options with Left/Right (campaign, difficulty, physics, music, effects), the credits roll or film, <code>campaign.menu</code> / <code>campaign.credits</code>, <code>--credits</code>; endings' films (0.12.1). Since 0.16.14 (<code>de30c2a</code>): <strong>save slots</strong> 1 – 3 from the strategy screen's <em>Save</em> and a <strong>Load game</strong> page (the automatic save and the slots with their age), the <strong>ending screen</strong> (title, text, the campaign's record; Credits or Main menu), options <strong>Full screen</strong> (<code>graphics.fullscreen</code>, <code>--windowed</code> overrides) and <strong>Controls</strong>. #48</td>
 </tr>
 <tr>
 <td>6.3</td>
@@ -6443,7 +6443,7 @@ Progress: <a href="../../status/#stage-6-progress">Implementation status › Sta
 <td>6.4</td>
 <td>Interactive music: states, segments, switches, stingers; the original's loop sets; CD audio tracks from ripped files</td>
 <td><code>audio</code></td>
-<td><strong>Partial</strong> (0.11.0): states, segments, stingers, the loop sets, synthesised default music; no <code>switch:</code> data, <code>.wtl</code> tables or CD audio. #49</td>
+<td><strong>Partial</strong> (0.11.0, 0.16.2): states, segments, stingers, the loop sets, synthesised default music; the <code>good</code> and <code>bad</code> stingers play since 0.16.2 (a battle won or lost, research complete, the ending — <code>interceptor</code> only: the default music has none); no <code>switch:</code> data, <code>.wtl</code> tables or CD audio. #49</td>
 </tr>
 <tr>
 <td>6.5</td>
@@ -6467,7 +6467,7 @@ Progress: <a href="../../status/#stage-6-progress">Implementation status › Sta
 <td>6.8</td>
 <td><code>default</code>: the art-deco skin, chapter title cards and recaps, synthesised music and stings (generator tools for UI art)</td>
 <td><code>resources/default</code>, <code>tools</code></td>
-<td><strong>Partial</strong> (0.11.0 – 0.13.1): art-deco skin and panel, title cards, synthesised music and stingers, the intro cutscene, CRT portraits; no recaps. #52</td>
+<td><strong>Partial</strong> (0.11.0 – 0.13.1): art-deco skin and panel, title cards, synthesised music and stingers, the intro cutscene (captions as text keys since 0.16.2), CRT portraits; no recaps, no <code>good</code>/<code>bad</code> stingers. #52</td>
 </tr>
 </tbody>
 </table>
@@ -6489,7 +6489,7 @@ made 2026-11-11): the engine side of cutscenes, which the Cutscene Designer (MD6
 <td>MD2</td>
 <td><strong>Cutscenes</strong>: the <code>cutscenes/&lt;id&gt;.yaml</code> format and its validation; the in-game player (timeline, centripetal Catmull-Rom paths and slerp, keyframes with the speed override, scripted and autopilot entities with the <code>aggressive</code> and <code>harmless</code> flags, formations, timed actions, cameras fixed and attached, cuts, sounds, captions), deterministic on the 60 Hz sim with Simple physics; played as the campaign intro, from events (<code>play_cutscene</code>) and as mission intro and outro; skip with Esc, the console or pad Start</td>
 <td><code>cutscene</code> (new), <code>app</code></td>
-<td><strong>Partial</strong> (0.13.0, <code>content::cutscene</code>, <code>app::cutscene</code>): scripted entities, fire/missile/destroy, cameras, instant cuts, named sounds, captions; intro and events; Esc. Not built: autopilot, formations, rotation keys, chase/capture/jump, sound files, mission intros/outros, console/pad skip. #65</td>
+<td><strong>Partial</strong> (0.13.0, <code>content::cutscene</code>, <code>app::cutscene</code>): scripted entities, fire/missile/destroy, cameras, instant cuts, named sounds, captions (text keys since 0.16.2); intro and events; skip with Esc, Enter, a click or the pad's Start, A or B (0.16.2, <code>app::skip_pressed</code>). Not built: autopilot, formations, rotation keys, chase/capture/jump, sound files, mission intros/outros, console skip. #65</td>
 <td><a href="../../../specification/requirements/modding/#r-mod-033-cutscene-files">R-MOD-033 – R-MOD-045</a></td>
 </tr>
 <tr>

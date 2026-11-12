@@ -3424,6 +3424,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-economys-later-rules-app-0166-01611" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The economy's later rules (app 0.16.6 – 0.16.11)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#testbed-cheats-app-081" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6740,6 +6751,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-economys-later-rules-app-0166-01611" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The economy's later rules (app 0.16.6 – 0.16.11)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#testbed-cheats-app-081" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6821,7 +6843,8 @@
 <code>src/content/strategy.rs</code>, <code>src/content/logistics.rs</code> and <code>src/content/story.rs</code>, its expression
 context in <code>src/script/campaign.rs</code>, its story actions in <code>src/script/action.rs</code> and its screen
 in <code>src/app/strategy.rs</code>: the real-time strategy game around the battles (Stage 4, app 0.7.0 –
-0.9.2) and the story on top of it (Stage 5, app 0.10.0 – 0.10.3). The modder's view is
+0.9.2, filled in by app 0.16.1 – 0.16.14) and the story on top of it (Stage 5, app 0.10.0 – 0.10.3; its
+testbed tools in 0.16.13). The modder's view is
 <a href="../../../modding/strategy/">Strategy layer</a> and <a href="../../../modding/story/">Story layer</a>; the
 player's is <a href="../../../user-guide/campaign/">User guide › Campaign</a>. Requirements: R-STR-001 –
 R-STR-027 on <a href="../../../specification/requirements/strategy-logistics/">Strategy &amp; logistics</a>,
@@ -6918,26 +6941,36 @@ fixed, which is what makes a campaign replay exactly from a save:</p>
     A["hours += dt"] --&gt; B["construction finished → Notice"]
     B --&gt; C["research: each base, rate = eval(research_model.rate, base)&lt;br/&gt;topic done → known, Notice"]
     C --&gt; D["manufacture: first job first; a unit not yet started is paid (cost)&lt;br/&gt;or, a hull with components, waits for logistics;&lt;br/&gt;production_rate × dt; finished unit → receive (item or craft)"]
-    D --&gt; E["deliveries due → receive"]
-    E --&gt; F["incomes and expenses due → money ± eval(amount)"]
+    D --&gt; E["deliveries due → receive&lt;br/&gt;(or lost: roll &lt; economy.delivery_loss → Notice)"]
+    E --&gt; F["incomes and expenses due → money ± eval(amount);&lt;br/&gt;pilots in training: stats += gain × dt/24, money −= cost × dt/24"]
     F --&gt; G{"month boundary&lt;br/&gt;(720 h)?"}
-    G --&gt;|yes| H["maintenance + upkeep + salaries;&lt;br/&gt;monthly report → Notice; recruits refreshed"]
+    G --&gt;|yes| H["maintenance + upkeep + salaries;&lt;br/&gt;evaluations: first that holds → its actions, rating;&lt;br/&gt;monthly report → Notice; recruits refreshed"]
     G --&gt;|no| I
     H --&gt; I["injured pilots heal"]
     I --&gt; J["raids: roll each due raid (requires, chance) → launch contact"]
     J --&gt; K["contacts move; within a base's sensor range → detected, Notice;&lt;br/&gt;hidden systems in range revealed"]
     K --&gt; L["interceptions fly to their contacts → Event::Battle"]
-    L --&gt; M["contacts that arrived unopposed → module lost, score(undefended), Notice"]
-    M --&gt; N["logistics::step (app 0.9.0; campaigns with logistics):&lt;br/&gt;demand, mining, recipes, stations, convoys, surveys"]
+    L --&gt; M["contacts that arrived unopposed → score(undefended), Notice;&lt;br/&gt;roll &lt; 1 − 0.85^defence → driven off, else module lost"]
+    M --&gt; N["logistics::step (app 0.9.0; campaigns with logistics):&lt;br/&gt;construction strikes → Event::Strike (0.16.4);&lt;br/&gt;demand, mining, recipes, stations, convoys, surveys"]
     N --&gt; O["story::step (app 0.10.0): events, plans,&lt;br/&gt;monthly drift and aggression, the end conditions"]</code></pre>
 <p>Since app 0.10.0 a raid's roll uses <code>chance × story.aggression</code>, and is skipped while
-<code>raids_allowed</code> says its faction is no longer hostile.</p>
+<code>raids_allowed</code> says its faction is no longer hostile. The evaluation (app 0.16.8), training
+(0.16.7), delivery losses (0.16.11) and the <code>defence</code> roll (0.16.10) joined the step later; each
+is skipped when its data is absent, so an older pack plays as before.</p>
+<p><strong>Notices outside the clock</strong> (app 0.16.2). <code>advance</code> returns its events, but some changes
+happen in a debrief, outside <code>advance</code> — a <code>relation(…)</code> outcome that changes a stance, a
+<code>lose(&lt;facility&gt;)</code>, a construction strike's result — and a save loaded with a changed pack
+version. These push their text onto <code>Campaign::notices: Vec&lt;String&gt;</code> (not saved: the screen
+shows them before the next save is possible); the strategy screen pops one into its Report
+prompt whenever no other prompt is up, and stops the clock.</p>
 <p>Every roll (raids, launch points, pilots, recruits, generated maps, <code>random(p)</code>) draws from one
 <strong>xorshift</strong> generator stored in the campaign (<code>Campaign::rng</code>), so <code>same_seed_same_campaign</code>
 can assert that two campaigns from one seed are equal after the same time.</p>
 <h3 id="expressions-the-campaign-as-a-scriptcontext">Expressions: the campaign as a <code>script::Context</code><a class="headerlink" href="#expressions-the-campaign-as-a-scriptcontext" title="Permanent link">&para;</a></h3>
-<p><code>Campaign</code> answers the 21 queries of <code>script::campaign::QUERIES</code> (16 until app 0.9.2; <code>arc</code>,
-<code>plan</code>, <code>relation</code>, <code>fired</code> and <code>battles_won</code> came with the story) through a small context struct
+<p><code>Campaign</code> answers the 29 queries of <code>script::campaign::QUERIES</code> (16 until app 0.9.2; <code>arc</code>,
+<code>plan</code>, <code>relation</code>, <code>fired</code> and <code>battles_won</code> came with the story; the eight logistics queries
+with app 0.16.3, answered by <code>Campaign::logistics_query</code> — <code>lane_distance</code> by <code>Campaign::lane_hops</code>,
+a breadth-first search counting lanes, not distance) through a small context struct
 (<code>Cx</code>) that holds <code>&amp;Campaign</code>, an optional base (so <code>module_count</code> in a research rate counts the
 base being evaluated) and the generator in a <code>Cell&lt;u64&gt;</code> — <code>Context::query</code> takes <code>&amp;self</code>, but
 <code>random(p)</code> must advance the generator, the same interior-mutability trick as
@@ -6957,7 +6990,7 @@ base being evaluated) and the generator in a <code>Cell&lt;u64&gt;</code> — <c
     F--&gt;&gt;A: Next::Strategy
     A-&gt;&gt;C: ctx.campaign.take(), ctx.battle_report.take()
     A-&gt;&gt;S: battle_done(report) → battle_result | convoy_result | mission_result;&lt;br/&gt;story::check_end</code></pre>
-<p><strong>Three kinds of campaign battle</strong> (app 0.9.2 – 0.10.0). <code>StrategyScreen::flying</code> is an enum,
+<p><strong>Four kinds of campaign battle</strong> (app 0.9.2 – 0.16.4). <code>StrategyScreen::flying</code> is an enum,
 <code>PendingBattle</code>, saying what the battle was <em>for</em>, so that the one report coming back is routed
 to the right place:</p>
 <table>
@@ -6984,8 +7017,21 @@ to the right place:</p>
 <td><code>Event::Mission</code> — a story event's <code>mission(x)</code> offer</td>
 <td><code>Campaign::mission_result(def, …)</code>: <code>battle_result</code> with an id no contact has, so the outcome's actions and the win apply</td>
 </tr>
+<tr>
+<td><code>Strike(f)</code> (app 0.16.4)</td>
+<td><code>Event::Strike { facility }</code> — a construction strike, flown with <code>logistics.construction_strikes.mission</code></td>
+<td><code>Campaign::strike_result(def, f, won)</code>: <code>win</code> → <code>Some(true)</code> (beaten off), <code>lose</code> → <code>Some(false)</code> (the site removed), anything else → <code>None</code> (set back); then <code>mission_result</code> for the outcome's actions</td>
+</tr>
 </tbody>
 </table>
+<p>A flown <strong>convoy</strong> escort also runs <code>mission_result</code> since app 0.16.3, so its outcome's score and
+actions apply like any battle's. <strong>Auto-resolve</strong> (app 0.16.12) never leaves the screen: the
+Interception prompt's second button calls <code>balance::win_chance(rules, mission, hull ids)</code>, rolls
+<code>Campaign::roll</code> against it and hands <code>battle_result</code> the mission's own outcome actions for the
+rolled <code>win</code> or <code>lose</code> (rendered back to text with <code>Action::display</code>), with the hostile roles'
+minimum counts as kills on a win. <strong>Prizes</strong> (app 0.16.3): the flight screen adds
+<code>captured(&lt;class id&gt;)</code> to the report's actions for each prize the player's tractor brought home;
+<code>battle_result</code> keeps them as salvage only when the outcome also says <code>capture</code>.</p>
 <p>After any of them <code>story::check_end</code> runs, because a battle (a flag set by a finale's win, a
 last base lost) can end the campaign.</p>
 <ul>
@@ -7022,9 +7068,11 @@ last base lost) can end the campaign.</p>
   <code>cargo:</code> role — the share of its cargo still aboard (<code>mission::cargo_share</code>). Leaving from the pause menu
   is <code>retreat</code>; a mission that cannot start is counted as <code>retreat</code> too, with the error printed.</li>
 <li><code>Campaign::battle_result</code> applies the actions it knows (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>,
-  and since app 0.12.1 <code>relation(f, n)</code> through <code>change_standing</code> — a stance change it causes is
-  logged, but its notice is dropped, so it does not stop the clock; <code>lose</code> is logged; <code>capture</code>
-  and the cargo actions are still ignored),
+  since app 0.12.1 <code>relation(f, n)</code> through <code>change_standing</code> — since 0.16.2 a stance change it
+  causes becomes a notice; since 0.16.3 <code>capture</code> / <code>captured(&lt;class&gt;)</code>, <code>lose(&lt;facility type&gt;)</code>
+  through <code>Campaign::remove_facility</code> — which removes the facility's orders and inbound convoys
+  and moves every later facility index down by one — and <code>cargo_lost</code> / <code>cargo_captured</code>,
+  logged),
   marks a battle for <code>after_battle</code> events, counts a win for the story, credits the party's pilots, removes a
   <code>killed</code> leader's craft (re-indexing pilots' craft handles), sends the rest home, and removes
   the contact on <code>win</code> or <code>draw</code>.</li>
@@ -7095,7 +7143,7 @@ manufacturing center (<code>Campaign::supplier</code>, by straight-line distance
 supplier means no order: the demand waits and is asked again next hour.</p>
 <h4 id="logic-flow-logisticsstep">Logic flow: <code>logistics::step</code><a class="headerlink" href="#logic-flow-logisticsstep" title="Permanent link">&para;</a></h4>
 <pre class="mermaid"><code>flowchart TD
-    A["facilities whose ready_at fell in this slice → Notice"] --&gt; B["1 · demand: each base's unstarted hull jobs&lt;br/&gt;→ want(component, need − store − inbound)"]
+    A["facilities whose ready_at fell in this slice → Notice;&lt;br/&gt;construction_strikes: first site past from, its system under max,&lt;br/&gt;roll &lt; chance × dt/24 → attacks += 1, Event::Strike (one at a time)"] --&gt; B["1 · demand: each base's unstarted hull jobs&lt;br/&gt;→ want(component, need − store − inbound)"]
     B --&gt; C{"2 · each ready facility, by role"}
     C --&gt;|mining| M["each deposit: min(rate/24 × dt, room, reserve) → store; reserve −="]
     C --&gt;|manufacturing| P["finished lines → output to store;&lt;br/&gt;per order it fills: store + running ≥ amount? else&lt;br/&gt;free line and inputs in store → start recipe (inputs used)&lt;br/&gt;inputs short → want(inputs)"]
@@ -7103,7 +7151,7 @@ supplier means no order: the demand waits and is asked again next hour.</p>
     M &amp; P &amp; R --&gt; D["3 · orders whose source store holds the amount →&lt;br/&gt;Convoy {cargo, to, route = lane_route, vessels, ambush_in = roll &lt; ambush_chance ? roll × length}"]
     D --&gt; E["4 · convoys travel convoy_speed × dt along the route;&lt;br/&gt;ambush_in reaches 0 → each vessel lost with ambush_loss, Notice;&lt;br/&gt;at the end → deliver cargo × surviving / vessels"]
     E --&gt; F["5 · hull jobs whose components are in base_goods → use them, started = true"]
-    F --&gt; G["6 · survey ships travel survey_speed × dt;&lt;br/&gt;arrived: attacked and roll &lt; 0.5 → lost, else surveyed; Notice with deposits and sites"]</code></pre>
+    F --&gt; G["6 · survey ships travel survey_speed × dt;&lt;br/&gt;arrived: attacked and roll &lt; 0.5 → lost, else surveyed;&lt;br/&gt;Notice with deposits (rate, reserve), features and sites"]</code></pre>
 <p>Design points worth noticing:</p>
 <ul>
 <li><strong>Everything is an index.</strong> Facilities refer to their type and system by index, orders to
@@ -7133,6 +7181,13 @@ supplier means no order: the demand waits and is asked again next hour.</p>
 <li><strong>Hulls with components</strong> are not paid in money: the manufacture step in <code>Campaign::advance</code>
   sees <code>hull_components</code> and leaves the job for <code>logistics::step</code> to start once its components
   are in the base's store.</li>
+<li><strong>Construction strikes</strong> (app 0.16.4, R-STR-023): <code>LogisticsDef::strikes: Option&lt;Strikes&gt;</code>
+  (<code>from</code>, <code>max</code>, <code>chance</code>, <code>mission</code>, <code>setback</code>). The roll is per hour for each site whose
+  progress <code>1 − (ready_at − now) / time</code> has passed <code>from</code> and whose system's facilities have
+  suffered fewer than <code>max</code> strikes in all (<code>Facility::attacks</code>, saved); the first hit raises
+  <code>Event::Strike</code> and stops the loop, so strikes come one at a time. <code>strike_result</code> settles it:
+  beaten off, destroyed (<code>remove_facility</code>), or set back (<code>ready_at += time × setback</code>), with a
+  message and a notice. The automatic player lets every strike be.</li>
 <li><strong>Station-only topics</strong> (<code>station_topics[t]</code> is <code>Some</code>) are filtered out of
   <code>Campaign::researchable</code>, so bases never offer them; <code>start_station_research</code> starts one at a
   research station of the right <code>lab</code> type on the right <code>site</code>.</li>
@@ -7203,6 +7258,33 @@ prerequisites into conditions (above), and <code>cost_scale</code>, <code>module
 original's units. The executable's table layout (12-byte entries: a pointer to the <code>R_</code> section
 name, a string id, the tech id) is <em>derived</em>; see <a href="../../../modding/strategy/#the-interceptor-campaign-from-the-players-data">Strategy layer › the <code>interceptor</code>
 campaign</a>.</p>
+<h3 id="the-economys-later-rules-app-0166-01611">The economy's later rules (app 0.16.6 – 0.16.11)<a class="headerlink" href="#the-economys-later-rules-app-0166-01611" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Hidden and either-or research</strong> (0.16.6): <code>Topic::hidden</code> filters a topic out of
+  <code>researchable</code> until the flag <code>discovered.&lt;topic&gt;</code> exists, which the story action <code>discover</code>
+  sets (with a notice). <code>requires_any: [a, b]</code> is not a new mechanism: while the rules are built
+  it becomes the text <code>research(a) or research(b)</code>, joined to <code>requires:</code> as <code>(…) and (…)</code>, and
+  is parsed like any condition — so a misspelt topic is reported at <code>research.&lt;id&gt;.requires</code>.</li>
+<li><strong>Training and dismissal</strong> (0.16.7): <code>Pilot::training</code> (saved as <code>yes</code>/<code>no</code>; older saves read
+  as not training); <code>PilotRules::train_gain</code> / <code>train_cost</code> from <code>pilots.training</code>.
+  <code>Campaign::dismiss(p)</code> removes the pilot; no other structure holds a pilot index (a craft's
+  pilot is the <code>Pilot::craft</code> back-reference), so nothing needs renumbering.</li>
+<li><strong>Evaluations</strong> (0.16.8): <code>StrategyDef::evaluations: Vec&lt;Evaluation {rating, when, actions}&gt;</code>;
+  at the month the first whose <code>when</code> holds runs its actions through <code>apply_actions</code> (the story's
+  action runner) and names the rating in the report. <code>evaluations</code> must be in the rules' list of
+  strategy globals (<code>rules::build_at</code>) to reach <code>StrategyDef</code> at all — it was missing until
+  0.16.9, which the unit test did not catch because it builds the strategy layer directly.</li>
+<li><strong>Base effects</strong> (0.16.10): <code>Campaign::quarters(def)</code> (all bases' type <code>quarters</code> plus
+  <code>quarters</code> effects; 0 = no limit) checked by <code>hire</code>; <code>Campaign::storage(def, base) -&gt;
+  (Option&lt;capacity&gt;, used)</code> — <code>None</code> when no module in the campaign has <code>storage</code> — checked by
+  <code>buy</code> for items; the raid's <code>defence</code> roll in the unopposed-strike code;
+  <code>Campaign::dismantle_module(def, base, m)</code> refunding <code>StrategyDef::dismantle_refund</code>. On the
+  screen <code>Row::default_act</code> keeps <code>Dismantle</code>, <code>Dismiss</code> and (0.16.11) <code>CancelJob</code> off Enter
+  and the double click.</li>
+<li><strong>Queues and deliveries</strong> (0.16.11): <code>Campaign::raise_job(base, j)</code> swaps a job with the one
+  above; <code>cancel_job(base, j)</code> removes an unstarted job, or cuts a started one to its paid unit;
+  <code>StrategyDef::delivery_loss</code> rolls each arriving delivery.</li>
+</ul>
 <h3 id="testbed-cheats-app-081">Testbed cheats (app 0.8.1)<a class="headerlink" href="#testbed-cheats-app-081" title="Permanent link">&para;</a></h3>
 <p><code>Campaign::cheat_payday</code>, <code>cheat_knowitall</code>, <code>cheat_quickbase</code> and <code>cheat_jump(contact)</code> are the
 original's own cheat list as plain methods on the campaign (so they are unit-tested like any
@@ -7210,6 +7292,11 @@ order); <code>app::strategy</code> binds them to Ctrl+M, Ctrl+K, Ctrl+B and Ctrl
 first ready craft with a ready pilot at the contact (<code>away = Some((contact, pos))</code>, route
 cleared), so the next step's interception check reports <code>Event::Battle</code> at once. Each cheat is
 logged in the message list.</p>
+<p><strong>The event debugger and start-at-chapter</strong> (app 0.16.13): <code>Campaign::fire_event(def, e) -&gt;
+Vec&lt;Event&gt;</code> counts the event as fired, advances its arc only when it is the arc's next step,
+runs its actions and offers its choice — the same steps as <code>story::step</code>, minus the checks;
+<code>campaign::autoplay_to_chapter(def, c, step, max_days)</code> repeats <code>autoplay_from</code> five days at a
+time until <code>story.arc_step[0] &gt;= step</code> or <code>max_days</code> pass (<a href="../testbed/">Testbed</a>).</p>
 <h3 id="saves">Saves<a class="headerlink" href="#saves" title="Permanent link">&para;</a></h3>
 <p><code>campaign::save</code> writes the whole <code>Campaign</code> as a YAML document (<code>write</code>) and reads it back
 (<code>read</code>), using the engine's own YAML reader and writer (<code>formats::yaml</code>). Because the state
@@ -7236,8 +7323,14 @@ campaign that has no logistics. Since app 0.10.0 a <code>story:</code> block fol
 the two latches and the ending; a contact's <code>plan</code>. Never-fired events hold <code>-inf</code> for their last
 firing, which YAML numbers cannot carry, so it is written as a very old hour (−10¹²) and read
 back as <code>-inf</code>. A save whose events, arcs or plans no longer match the rules is refused. A changed mod is refused with a message instead of crashing or silently changing
-the game. The screen saves to <code>&lt;user data&gt;/saves/&lt;campaign id&gt;.yaml</code> (<code>strategy::save_path</code>) on
-F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
+the game. Since app 0.16.2 the pack <strong>versions</strong> are compared too: a pack still loaded at another
+version loads, with a notice per pack (<em>Pack x is now version a (this save was made with b)</em>) in
+<code>Campaign::notices</code>. Since 0.16.3 each facility saves its <code>attacks</code>, since 0.16.7 each pilot
+<code>training</code>; older saves read them as 0 and not training. The screen saves to
+<code>&lt;user data&gt;/saves/&lt;campaign id&gt;.yaml</code> (<code>strategy::save_path</code>, slot 0) on F5, when leaving with
+Esc and at the ending; <em>Campaign: continue</em> loads it. Since app 0.16.14 the top bar's <em>Save</em>
+writes slot 1 – 3, <code>&lt;campaign id&gt;-&lt;n&gt;.yaml</code> (<code>strategy::slot_path</code>), loaded from the main
+menu's <em>Load game</em> page (<a href="../presentation/#the-main-menu-and-credits-appmenu-appcredits">Presentation</a>).</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -7251,7 +7344,17 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <tr>
 <td><code>StrategyDef</code></td>
 <td><code>content/strategy.rs</code></td>
-<td>The strategy layer's rules: <code>start</code>, <code>map</code>, <code>star_classes</code>, <code>research</code>, <code>research_model</code>, <code>items</code>, <code>hulls</code>, <code>modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code>, <code>pilots</code>, <code>scores</code>, <code>delivery</code>, <code>salvage</code>, the <code>names</code> table and <code>logistics: Option&lt;LogisticsDef&gt;</code> (app 0.9.0).</td>
+<td>The strategy layer's rules: <code>start</code>, <code>map</code>, <code>star_classes</code>, <code>research</code>, <code>research_model</code>, <code>items</code>, <code>hulls</code>, <code>modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code>, <code>pilots</code>, <code>scores</code>, <code>evaluations</code> (0.16.8), <code>dismantle_refund</code> (0.16.10), <code>delivery_loss</code> (0.16.11), <code>delivery</code>, <code>salvage</code>, the <code>names</code> table and <code>logistics: Option&lt;LogisticsDef&gt;</code> (app 0.9.0).</td>
+</tr>
+<tr>
+<td><code>Evaluation</code>, <code>Topic::hidden</code>, <code>PilotRules::train_gain</code>, <code>train_cost</code></td>
+<td><code>content/strategy.rs</code></td>
+<td>A monthly rating; a hidden topic; training (app 0.16.6 – 0.16.8).</td>
+</tr>
+<tr>
+<td><code>Strikes</code>, <code>LogisticsDef::strikes</code></td>
+<td><code>content/logistics.rs</code></td>
+<td><code>logistics.construction_strikes</code> (app 0.16.4).</td>
 </tr>
 <tr>
 <td><code>Date</code></td>
@@ -7266,7 +7369,7 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <tr>
 <td><code>Campaign</code></td>
 <td><code>campaign/mod.rs</code></td>
-<td>One game in progress: <code>hours</code>, <code>money</code>, <code>systems</code>, <code>bases</code>, <code>known</code>, <code>progress</code>, <code>craft</code>, <code>pilots</code>, <code>recruits</code>, <code>contacts</code>, <code>deliveries</code>, flow and raid timers, score, flags, salvaged, messages.</td>
+<td>One game in progress: <code>hours</code>, <code>money</code>, <code>systems</code>, <code>bases</code>, <code>known</code>, <code>progress</code>, <code>craft</code>, <code>pilots</code>, <code>recruits</code>, <code>contacts</code>, <code>deliveries</code>, flow and raid timers, score, flags, salvaged, messages, and <code>notices</code> (app 0.16.2, not saved).</td>
 </tr>
 <tr>
 <td><code>Base</code>, <code>ModuleInst</code>, <code>Job</code>, <code>Craft</code>, <code>Pilot</code>, <code>Contact</code>, <code>Delivery</code></td>
@@ -7276,7 +7379,7 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <tr>
 <td><code>Event</code></td>
 <td><code>campaign/mod.rs</code></td>
-<td><code>Notice(String)</code> (stop the clock, show it), <code>Battle { contact }</code>, and since app 0.9.2 – 0.10.0 <code>Convoy { convoy }</code> (an ambush waiting for the player), <code>Choice { event }</code>, <code>Mission { mission }</code> (an offer) and <code>Ending { ending }</code>.</td>
+<td><code>Notice(String)</code> (stop the clock, show it), <code>Battle { contact }</code>, and since app 0.9.2 – 0.10.0 <code>Convoy { convoy }</code> (an ambush waiting for the player), <code>Choice { event }</code>, <code>Mission { mission }</code> (an offer) and <code>Ending { ending }</code>; since 0.16.4 <code>Strike { facility }</code>.</td>
 </tr>
 <tr>
 <td><code>StoryDef</code>, <code>EventDef</code>, <code>Check</code>, <code>Choice</code>, <code>ArcDef</code>, <code>PlanDef</code>, <code>Stage</code>, <code>Relations</code>, <code>Strategist</code>, <code>Ending</code>, <code>Entry</code></td>
@@ -7304,14 +7407,34 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <td>Settling an ambushed convoy (app 0.9.2).</td>
 </tr>
 <tr>
+<td><code>Campaign::strike_result</code>, <code>remove_facility</code>, <code>lane_hops</code>, <code>logistics_query</code>, <code>Facility::attacks</code></td>
+<td><code>campaign/logistics.rs</code></td>
+<td>Settling a construction strike; losing a facility safely; lane jumps; the logistics queries (app 0.16.3 – 0.16.4).</td>
+</tr>
+<tr>
+<td><code>Campaign::fire_event</code>, <code>campaign::autoplay_to_chapter</code></td>
+<td><code>campaign/story.rs</code>, <code>campaign/mod.rs</code></td>
+<td>The event debugger; start-at-chapter (app 0.16.13).</td>
+</tr>
+<tr>
+<td><code>Campaign::set_training</code>, <code>dismiss</code>, <code>quarters</code>, <code>storage</code>, <code>dismantle_module</code>, <code>raise_job</code>, <code>cancel_job</code></td>
+<td><code>campaign/mod.rs</code></td>
+<td>Pilots, base effects and queues (app 0.16.7 – 0.16.11).</td>
+</tr>
+<tr>
+<td><code>balance::power</code>, <code>balance::win_chance</code></td>
+<td><code>balance.rs</code></td>
+<td>Auto-resolve odds (app 0.16.12).</td>
+</tr>
+<tr>
 <td><code>script::action::EVENT_ACTIONS</code></td>
 <td><code>script/action.rs</code></td>
-<td>The 14 story actions.</td>
+<td>The story actions: 14 in app 0.10.0, 17 with <code>card</code>, <code>video</code>, <code>play_cutscene</code>, 18 with <code>discover</code> (0.16.6).</td>
 </tr>
 <tr>
 <td><code>PendingBattle</code></td>
 <td><code>app/strategy.rs</code></td>
-<td><code>Contact</code>, <code>Convoy</code> or <code>Story</code>: what the battle being flown is for.</td>
+<td><code>Contact</code>, <code>Convoy</code>, <code>Story</code> or (0.16.4) <code>Strike</code>: what the battle being flown is for.</td>
 </tr>
 <tr>
 <td><code>flight::apply_stances</code>, <code>Ruleset::set_hostile</code></td>
@@ -7374,12 +7497,12 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <td>The campaign context.</td>
 </tr>
 <tr>
-<td><code>StrategyScreen</code>, <code>Tab</code> (ten, with <code>Archive</code>), <code>SPEEDS</code>, <code>BattleReport</code> (with <code>cargo</code>), <code>save_path</code>, <code>map_transform</code></td>
+<td><code>StrategyScreen</code>, <code>Tab</code> (eleven with <code>Reports</code> since 0.16.8, and the testbed's <code>Debug</code>), <code>SPEEDS</code>, <code>BattleReport</code> (with <code>cargo</code>), <code>save_path</code>, <code>slot_path</code>, <code>map_transform</code></td>
 <td><code>app/strategy.rs</code></td>
 <td>The screen.</td>
 </tr>
 <tr>
-<td><code>Next::NewCampaign</code>, <code>LoadCampaign</code>, <code>CampaignBattle</code> (with <code>stances</code>), <code>Strategy</code>; <code>AppContext::campaign</code>, <code>battle_report</code></td>
+<td><code>Next::NewCampaign</code>, <code>LoadCampaign</code>, <code>LoadSlot</code> (0.16.14), <code>CampaignBattle</code> (with <code>stances</code>), <code>Strategy</code>; <code>AppContext::campaign</code>, <code>battle_report</code></td>
 <td><code>app/mod.rs</code></td>
 <td>The screen changes around a campaign battle.</td>
 </tr>
@@ -7406,6 +7529,15 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
   <code>encyclopaedia(def) -&gt; Vec&lt;(title, text)&gt;</code>; <code>story::step(c, def, dt, &amp;mut events)</code>,
   <code>story::check_end(c, def, &amp;mut events)</code>.</li>
 <li>Convoys (app 0.9.2): <code>convoy_result(def, convoy, Option&lt;share&gt;)</code>.</li>
+<li>Strikes (app 0.16.4): <code>strike_result(def, facility, Option&lt;won&gt;)</code>; <code>remove_facility(f)</code>;
+  <code>lane_hops(def, a, b) -&gt; Option&lt;u32&gt;</code>.</li>
+<li>Pilots, bases and queues (app 0.16.7 – 0.16.11), each <code>-&gt; Result&lt;(), String&gt;</code>:
+  <code>set_training(def, pilot, on)</code>, <code>dismiss(pilot)</code>, <code>dismantle_module(def, base, module)</code>,
+  <code>raise_job(base, job)</code>, <code>cancel_job(base, job)</code>; queries <code>quarters(def) -&gt; u32</code>,
+  <code>storage(def, base) -&gt; (Option&lt;f32&gt;, f32)</code>.</li>
+<li>Testbed (app 0.16.13): <code>fire_event(def, event) -&gt; Vec&lt;Event&gt;</code>;
+  <code>campaign::autoplay_to_chapter(&amp;def, campaign, step, max_days) -&gt; Campaign</code>.</li>
+<li>Auto-resolve (app 0.16.12): <code>balance::win_chance(&amp;Ruleset, &amp;MissionDef, &amp;[&amp;str]) -&gt; f32</code>.</li>
 <li>Queries: <code>date(def)</code>, <code>eval(def, &amp;Expr, base)</code>, <code>holds(def, Option&lt;&amp;Expr&gt;)</code>, <code>stock_of(item)</code>,
   <code>effect(def, base, name)</code>, <code>sensor_range(def, base)</code>, <code>hangar(def, base)</code>, <code>available(def,
   "items.x")</code>, <code>researchable(def)</code>, <code>Campaign::rank(def, &amp;pilot)</code>, <code>battle_party(contact)</code>.</li>
@@ -7420,7 +7552,11 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <li><code>openinterceptor --no-original --strategy</code> opens a new default campaign straight away.</li>
 <li>A save is readable YAML: open <code>&lt;user data&gt;/saves/default.yaml</code> to see the whole state.</li>
 <li>The message log (Messages tab) records every payment, arrival, research result, battle and
-  report with its date.</li>
+  report with its date; the Reports list (app 0.16.8) keeps the monthly reports with their
+  ratings.</li>
+<li><strong>Ctrl+D</strong> on the strategy screen (app 0.16.13) lists every arc's step and every event's fired
+  count and whether its condition holds now; <em>Fire now</em> fires one. <code>--strategy --chapter N</code>
+  starts a new campaign played forward to chapter N.</li>
 <li><code>openinterceptor --campaign &lt;id&gt; --strategy-soak 180</code> plays six months headless with
   <code>campaign::autoplay</code> and prints a one-line summary (app 0.8.0): the quickest check that a
   modded strategy layer runs — six-month results at app 0.8.0: <code>interceptor</code> 4 of 71 topics on

@@ -6716,7 +6716,7 @@ so pilots that start together do not act together.</p>
 </tr>
 <tr>
 <td><code>mission::MissionRun</code></td>
-<td>The running mission: its definition, the player's id, per-role <code>RoleRun</code>s, wave/chatter/optional latches, its generator, kills, losses, <code>debrief</code>, and <code>voices</code> (chatter clips said and not yet played). <code>kills()</code> reads the kills so far, also while the battle runs.</td>
+<td>The running mission: its definition, the player's id, per-role <code>RoleRun</code>s, wave/chatter/optional latches, its generator, kills, losses, <code>debrief</code>, and <code>voices</code> (chatter clips said and not yet played). <code>kills()</code> reads the kills so far, also while the battle runs; <code>evaluate</code> answers the condition console (app 0.16.5).</td>
 </tr>
 <tr>
 <td><code>mission::RoleRun</code></td>
@@ -6766,6 +6766,8 @@ so pilots that start together do not act together.</p>
   <code>run.voices</code> (drained by the flight screen).</li>
 <li><code>script::battle::schema(&amp;[String], &amp;[String]) -&gt; Schema</code>;
   <code>script::action::parse(text, MISSION_ACTIONS) -&gt; Result&lt;Action, String&gt;</code>; <code>action.display()</code>.</li>
+<li><code>run.evaluate(&amp;World, text, &amp;levels) -&gt; Result&lt;String, String&gt;</code> — a condition or expression
+  evaluated now, on a copy of the mission's generator (the condition console, app 0.16.5).</li>
 <li><code>soak::run_mission(&amp;Content, id, ship, seconds, pilot)</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -6780,6 +6782,8 @@ so pilots that start together do not act together.</p>
   arrivals visible in play.</li>
 <li>A "MISSION ERROR: …" message line means a role could not be spawned (an unknown slot in a
   station's modules, for example).</li>
+<li>Press <code>`</code> in the battle to type any condition and see its value now — <code>arrived(raiders)</code>,
+  <code>count(foes)</code>, the <code>win:</code> expression itself (app 0.16.5). The battle pauses meanwhile.</li>
 </ul>
 
 

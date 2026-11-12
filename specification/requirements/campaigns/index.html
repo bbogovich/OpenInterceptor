@@ -6867,8 +6867,8 @@
 <p><em>Rationale:</em> A living setting.</p>
 <ul>
 <li>Implements: <a href="../../../definition/campaigns/features/#f-cpn-006-story-rivals-and-relations">F-CPN-006</a></li>
-<li>Status: planned — partly met (app 0.10.0 – 0.12.1, main <code>485d01e</code>, <code>76bda5c</code>, <code>563c93f</code>): drift, stances, raids and battle hostility follow them; mission outcomes move standings</li>
-<li>Verified by: <code>campaign::story::tests::relations_drift_and_the_strategist_answers_the_player</code>, <code>mission_outcomes_move_standings</code>; <code>app::flight::tests::campaign_stances_decide_who_fights_whom</code>; MT-5-02, MT-5-05, MT-6-12</li>
+<li>Status: planned — partly met (app 0.10.0 – 0.16.2, main <code>485d01e</code>, <code>76bda5c</code>, <code>563c93f</code>, <code>6b45fcb</code>): drift, stances, raids and battle hostility follow them; mission outcomes move standings, and a stance change they cause is announced</li>
+<li>Verified by: <code>campaign::story::tests::relations_drift_and_the_strategist_answers_the_player</code>, <code>mission_outcomes_move_standings</code> (the notice since app 0.16.2); <code>app::flight::tests::campaign_stances_decide_who_fights_whom</code>; MT-5-02, MT-5-05, MT-5-11, MT-6-12</li>
 <li>See: <a href="../../../modding/story/#relations">Story layer</a>, <a href="../../design/format-strategy/#dynamic-relations-optional-per-campaign">Format: strategy layer</a></li>
 </ul>
 <div class="admonition note">
@@ -6877,15 +6877,15 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p><strong>Fixed in app 0.12.1</strong> (main <code>563c93f</code>): a mission outcome's <code>relation(f, n)</code> now moves the standing (<code>Campaign::battle_result</code> → <code>change_standing</code>); a stance change it causes is logged but does not stop the clock, unlike a story event's. Not built: relation rules (standings moved by other things that happen in battle), standings between factions other than the player, allied factions fighting at the player's side, effects on prices and trade, stance-change <strong>events</strong> a campaign can react to (DEV-051).</p>
+<p><strong>Fixed in app 0.12.1</strong> (main <code>563c93f</code>): a mission outcome's <code>relation(f, n)</code> now moves the standing (<code>Campaign::battle_result</code> → <code>change_standing</code>). <strong>Fixed in app 0.16.2</strong> (main <code>6b45fcb</code>, #40): a stance change it causes is announced as soon as the strategy screen is back (<code>Campaign::notices</code>) and stops the clock, like a story event's. Not built: relation rules (standings moved by other things that happen in battle), standings between factions other than the player, allied factions fighting at the player's side, effects on prices and trade, stance-change <strong>events</strong> a campaign can react to (DEV-051).</p>
 </div>
 <h3 id="r-cpn-010-victory-defeat-and-endings">R-CPN-010 Victory, defeat and endings<a class="headerlink" href="#r-cpn-010-victory-defeat-and-endings" title="Permanent link">&para;</a></h3>
 <p>A campaign MUST define victory and defeat and its endings, including partial victories.</p>
 <p><em>Rationale:</em> A beginning, middle and end.</p>
 <ul>
 <li>Implements: <a href="../../../definition/campaigns/features/#f-cpn-006-story-rivals-and-relations">F-CPN-006</a></li>
-<li>Status: planned — partly met (app 0.10.0 – 0.12.1, main <code>485d01e</code>, <code>87b04f3</code>): endings and their conditions; an ending's video; a finished campaign shows its ending again</li>
-<li>Verified by: <code>campaign::story::tests::plans_grow_from_shipments_that_get_through_and_can_end_the_campaign</code>; MT-5-07, MT-6-11</li>
+<li>Status: planned — partly met (app 0.10.0 – 0.16.14, main <code>485d01e</code>, <code>87b04f3</code>, <code>de30c2a</code>): endings and their conditions; an ending's video; a finished campaign shows its ending again; an ending screen</li>
+<li>Verified by: <code>campaign::story::tests::plans_grow_from_shipments_that_get_through_and_can_end_the_campaign</code>; MT-5-07, MT-6-11, MT-6-26</li>
 <li>See: <a href="../../../modding/story/#endings-and-campaign_end">Story layer</a>, <a href="../../design/format-campaign/#endings">Format: campaign and game flow</a></li>
 </ul>
 <div class="admonition note">
@@ -6894,19 +6894,23 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>A partial victory is expressible (another ending with <code>victory: true</code>), but neither campaign defines one yet; the ending is a banner line, not a screen with image or music (Stage 6).</p>
+<p>A partial victory is expressible (another ending with <code>victory: true</code>), but neither campaign defines one yet. The ending screen (app 0.16.14) has no image of its own; its music is the strategy screen's, with the <code>good</code> or <code>bad</code> stinger.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.12.1, main <code>87b04f3</code>)</p>
 <p><code>endings.&lt;id&gt;.video</code> (an asset) plays full screen when the campaign ends that way, before the banner; the <code>interceptor</code> victory plays the original's credits film (<code>original:credits_sm2a.smk</code>). Loading a save whose story has ended sets the screen's ending again, so <em>Campaign: continue</em> shows the ending rather than a stopped map (the question left by MT-5-07).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.14, main <code>de30c2a</code>): the ending screen</p>
+<p>The ending fills the window over the darkened map: <em>VICTORY</em> or <em>DEFEAT</em>, the ending's text, and the campaign's record (date, final score, battles won, bases and craft), with <em>Credits</em> and <em>Main menu</em> (Enter and Esc: the menu); both save first (#48).</p>
 </div>
 <h3 id="r-cpn-011-screens-and-skins">R-CPN-011 Screens and skins<a class="headerlink" href="#r-cpn-011-screens-and-skins" title="Permanent link">&para;</a></h3>
 <p>Screens MUST be laid out in design spaces with skins (nine-slice panels, buttons, fonts, custom panels bound to queries); menus MUST cover options, difficulty, load/save, credits, endings and campaign and mod selection.</p>
 <p><em>Rationale:</em> Finished presentation.</p>
 <ul>
 <li>Implements: <a href="../../../definition/campaigns/features/#f-cpn-007-presentation">F-CPN-007</a></li>
-<li>Status: planned — partly met (app 0.11.1 – 0.16.0, main <code>2dd85dd</code>, <code>a7ea7b6</code>, <code>563c93f</code>, <code>a18a7b4</code>, <code>dcf9563</code>, <code>ac7ae62</code>): skins on the menu, launcher and strategy screen; title cards; a main menu with options and credits; the strategy screen's layout as data (<code>screens.starmap</code>) with buttons, lists and modal prompts</li>
-<li>Verified by: <code>content::screens::tests::a_layout_moves_only_what_it_names</code>; <code>app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words</code>, <code>lists_keep_the_selection_in_view</code>, <code>grids_and_hits</code>; <code>content::skin::tests::skins_parse_colours_with_fallbacks</code>; <code>app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest</code>; <code>settings::tests::parses_and_round_trips</code> (the default volumes only); <code>app::menu::tests::the_menu_offers_continue_only_with_a_save</code>, <code>options_show_only_what_can_change</code>, <code>volumes_step_in_quarters_and_stop_at_the_ends</code>; <code>app::credits::tests::the_roll_rises_from_below_and_ends_off_the_top</code>; <code>content::front::tests::menu_and_credits_parse_with_defaults</code>; MT-6-04 – MT-6-06, MT-6-14 – MT-6-16, MT-6-19, MT-6-20; MT-4-29 – MT-4-33 (the strategy screen)</li>
+<li>Status: planned — partly met (app 0.11.1 – 0.16.14, main <code>2dd85dd</code>, <code>a7ea7b6</code>, <code>563c93f</code>, <code>a18a7b4</code>, <code>dcf9563</code>, <code>ac7ae62</code>, <code>6b45fcb</code>, <code>de30c2a</code>): skins on the menu, launcher and strategy screen; title cards; a main menu with options (graphics: full screen; controls), load/save with slots, credits and an ending screen; the strategy screen's layout as data (<code>screens.starmap</code>, its background drawn) with buttons, lists and modal prompts</li>
+<li>Verified by: <code>content::screens::tests::a_layout_moves_only_what_it_names</code>; <code>app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words</code>, <code>lists_keep_the_selection_in_view</code>, <code>grids_and_hits</code>; <code>content::skin::tests::skins_parse_colours_with_fallbacks</code>; <code>app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest</code>; <code>settings::tests::parses_and_round_trips</code> (the default volumes only); <code>app::menu::tests::the_menu_offers_continue_only_with_a_save</code> (Load game and <code>age_text</code> since app 0.16.14), <code>options_show_only_what_can_change</code> (Full screen, Controls), <code>volumes_step_in_quarters_and_stop_at_the_ends</code>; <code>app::credits::tests::the_roll_rises_from_below_and_ends_off_the_top</code>; <code>content::front::tests::menu_and_credits_parse_with_defaults</code>; MT-6-04 – MT-6-06, MT-6-14 – MT-6-16, MT-6-19, MT-6-20, MT-6-22, MT-6-25 – MT-6-27; MT-4-29 – MT-4-33 (the strategy screen)</li>
 <li>See: <a href="../../../modding/skins/">Skins</a>, <a href="../../../modding/screens/">Screen layouts</a>, <a href="../../design/format-interface/">Format: interface, text and media</a>, <a href="../../../implementation/architecture/presentation/">Architecture › Presentation</a></li>
 </ul>
 <div class="admonition note">
@@ -6919,15 +6923,19 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: layouts for screens other than the strategy screen (the main menu, launcher and credits are placed in code); <code>background</code> is parsed but not yet drawn; custom panels bound to queries, skin sounds; graphics options in the menu (brightness is in <code>settings.yaml</code>), a load/save screen (one save per campaign, through <em>Continue</em>); an ending screen; the <code>interceptor</code> screens with the original's wrapper art at 640 × 480 — the <code>WrappersDLL</code> layouts are not mapped (6.7); custom cockpit instruments bound to queries (the rest of 6.6).</p>
+<p>Not built: layouts for screens other than the strategy screen (the main menu, launcher, credits and ending screen are placed in code); custom panels bound to queries, skin sounds; brightness in the menu (it is in <code>settings.yaml</code>); the <code>interceptor</code> screens with the original's wrapper art at 640 × 480 — the <code>WrappersDLL</code> layouts are not mapped (6.7); custom cockpit instruments bound to queries (the rest of 6.6).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.2 – 0.16.14, main <code>6b45fcb</code>, <code>de30c2a</code>)</p>
+<p><code>screens.&lt;id&gt;.background</code> is <strong>drawn</strong> (0.16.2): stretched over the window behind the strategy screen's widgets, reported once on standard error when it cannot be loaded. The main menu (0.16.14, #48) gains <strong>Load game</strong> — the automatic save and three slots with how long ago each was written (<code>menu::age_text</code>), the slots written from the strategy screen's <em>Save</em> — and two options: <strong>Full screen</strong> (switched at once, remembered as <code>graphics.fullscreen</code>; <code>--windowed</code> overrides) and <strong>Controls</strong> (the controls screen, back to the menu). The campaign's end is an <strong>ending screen</strong> (R-CPN-010).</p>
 </div>
 <h3 id="r-cpn-012-video-and-music">R-CPN-012 Video and music<a class="headerlink" href="#r-cpn-012-video-and-music" title="Permanent link">&para;</a></h3>
 <p>The engine MUST play the original's Smacker cut-scenes and talking heads and image-sequence video for mods, and interactive music with states, segments, switches and stingers.</p>
 <p><em>Rationale:</em> Finished presentation.</p>
 <ul>
 <li>Implements: <a href="../../../definition/campaigns/features/#f-cpn-007-presentation">F-CPN-007</a>, <a href="../../../definition/compatibility/#f-cmp-002-original-formats-read-faithfully">F-CMP-002</a></li>
-<li>Status: planned — partly met (app 0.11.0 – 0.13.1, main <code>1f183d1</code>, <code>5163a57</code>, <code>87b04f3</code>, <code>76d64d5</code>, <code>747d1e9</code>): interactive music with states, segments and stingers; the original's Smacker films (transmissions, credits, the opening); the comms panel with faces</li>
-<li>Verified by: <code>content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy</code>; <code>audio::music_tests::segments_cycle_within_the_wanted_state</code>; <code>app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves</code>; the <code>formats::smacker</code> tests (<a href="../compatibility/#r-cmp-010-smacker-video">R-CMP-010</a>); MT-6-01 – MT-6-03, MT-6-07 – MT-6-11, MT-6-13</li>
+<li>Status: planned — partly met (app 0.11.0 – 0.16.2, main <code>1f183d1</code>, <code>5163a57</code>, <code>87b04f3</code>, <code>76d64d5</code>, <code>747d1e9</code>, <code>6b45fcb</code>): interactive music with states, segments and stingers (<code>good</code> and <code>bad</code> too since 0.16.2); the original's Smacker films (transmissions, credits, the opening); the comms panel with faces</li>
+<li>Verified by: <code>content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy</code>; <code>audio::music_tests::segments_cycle_within_the_wanted_state</code>; <code>app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves</code>; the <code>formats::smacker</code> tests (<a href="../compatibility/#r-cmp-010-smacker-video">R-CMP-010</a>); MT-6-01 – MT-6-03, MT-6-07 – MT-6-11, MT-6-13, MT-6-21, MT-6-23, MT-6-24</li>
 <li>See: <a href="../../../modding/music/">Music</a>, <a href="../../../modding/cutscenes/#videos">Cutscenes › Videos</a>, <a href="../../design/format-interface/">Format: interface, text and media</a></li>
 </ul>
 <div class="admonition note">
@@ -6936,7 +6944,11 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: <strong>switches</strong> as data (the states follow a fixed nearest-hostile rule) and the original's <code>.wtl</code> transition tables (DEV-053); the <code>good</code> and <code>bad</code> stingers; CD audio tracks; <code>interceptor</code>'s <strong>talking heads</strong> on the comms panel — the clips are read from <code>mfdanim.mps</code> (app 0.13.1) but which clip prefix (<code>at_</code>, <code>as_</code>, <code>e_</code>, <code>w_</code>) is which speaker is <em>unknown</em>, so no faces are mapped; <strong>image-sequence</strong> video and other video files for mods (MD3, R-MOD-046). <strong>Fixed in app 0.14.1</strong> (main <code>16a9954</code>): a film's soundtrack follows the effects volume, and the default campaign's music WAVs are committed.</p>
+<p>Not built: <strong>switches</strong> as data (the states follow a fixed nearest-hostile rule) and the original's <code>.wtl</code> transition tables (DEV-053); <code>good</code> and <code>bad</code> stingers in the default campaign's music (the engine plays them since app 0.16.2); CD audio tracks; <code>interceptor</code>'s <strong>talking heads</strong> on the comms panel — the clips are read from <code>mfdanim.mps</code> (app 0.13.1) but which clip prefix (<code>at_</code>, <code>as_</code>, <code>e_</code>, <code>w_</code>) is which speaker is <em>unknown</em>, so no faces are mapped; <strong>image-sequence</strong> video and other video files for mods (MD3, R-MOD-046). <strong>Fixed in app 0.14.1</strong> (main <code>16a9954</code>): a film's soundtrack follows the effects volume, and the default campaign's music WAVs are committed.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.16.2, main <code>6b45fcb</code>)</p>
+<p>The <strong><code>good</code> and <code>bad</code> stingers</strong> play on the strategy screen (#49): good for a battle won (as the map returns), research complete and a victory; bad for any other battle result and a defeat (DEV-059). Films and cutscenes <strong>skip</strong> on a click or a gamepad's Start, A or B as well as Esc and Enter (<code>app::skip_pressed</code>, #65). <code>--check</code> loads every voice and chatter clip, music segment and stinger, and the voice sets' faces (#50).</p>
 </div>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
@@ -6982,6 +6994,11 @@
 <td>1.17.0</td>
 <td>2026-11-11</td>
 <td>R-CPN-011 As-built note: screen layouts as data (<code>screens.&lt;id&gt;</code>, the strategy screen's five widgets, stretched to the window), immediate-mode buttons, lists and modal prompts (app 0.16.0); long menu option values shrink to fit (app 0.14.2). The Open note no longer lists layouts and buttons. Stays partly met. No requirement text changed</td>
+</tr>
+<tr>
+<td>1.18.0</td>
+<td>2026-11-11</td>
+<td>App 0.16.2 – 0.16.14 (main <code>6b45fcb</code>, <code>de30c2a</code>): R-CPN-009 Open note — a stance change from a mission outcome is announced (#40); R-CPN-010 As-built note — the ending screen; R-CPN-011 As-built note — layout backgrounds drawn, save slots and the Load game page, Full screen and Controls options (#48), Open note narrowed; R-CPN-012 As-built note — <code>good</code> and <code>bad</code> stingers, skipping by click or gamepad, <code>--check</code> loading voices, music and faces</td>
 </tr>
 </tbody>
 </table>
