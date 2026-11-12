@@ -684,7 +684,7 @@ impl StrategyScreen {
             // The end: the ending's text; Enter leaves (the campaign stays saved).
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::Escape) {
                 let _ = self.save(ctx);
-                return Next::Launcher;
+                return Next::Menu;
             }
             let _ = e;
         } else if let Some(ev) = self.choice {
@@ -759,7 +759,7 @@ impl StrategyScreen {
             // --- Keys ---------------------------------------------------------------
             if is_key_pressed(KeyCode::Escape) {
                 let _ = self.save(ctx);
-                return Next::Launcher;
+                return Next::Menu;
             }
             if is_key_pressed(KeyCode::Space) {
                 self.speed = if self.speed == 0 { 3 } else { 0 };

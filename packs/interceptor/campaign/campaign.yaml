@@ -7,3 +7,4 @@ campaign:
   default_difficulty: veteran
   skin: xcom
   intro_video: original:animation1.smk   # DERIVED: which of the CD's films opens the game
+  credits: {video: 'original:credits_sm2a.smk'}   # the menu's Credits plays the CD's credits film

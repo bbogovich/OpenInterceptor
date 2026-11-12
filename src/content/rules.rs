@@ -641,6 +641,9 @@ pub struct Ruleset {
     pub intro: Option<String>,
     /// A video played before a new campaign (`campaign.intro_video`).
     pub intro_video: Option<String>,
+    /// The main menu and credits (`campaign.menu`, `campaign.credits`; Stage 6.2).
+    pub menu: super::front::MenuDef,
+    pub credits: super::front::CreditsDef,
     /// Skins for the menus and strategy screens (Stage 6.1; see [`super::skin`]): the
     /// campaign's (`campaign.skin`, else the first) is `skins[0]` after loading.
     pub skins: Vec<super::skin::Skin>,
@@ -1534,6 +1537,8 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             strategy,
             intro: campaign.as_ref().and_then(|c| Get(c).str("intro")).map(str::to_string),
             intro_video: campaign.as_ref().and_then(|c| Get(c).str("intro_video")).map(str::to_string),
+            menu: super::front::MenuDef::parse(campaign.as_ref().and_then(|c| Get(c).node("menu")).map(Get)),
+            credits: super::front::CreditsDef::parse(campaign.as_ref().and_then(|c| Get(c).node("credits")).map(Get)),
             skins,
             music,
             formations,

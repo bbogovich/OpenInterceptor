@@ -553,6 +553,16 @@
         "skin": {"description": "the skin of the menus and strategy screens (skins.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "intro": {"description": "the cutscene played before a new campaign (cutscenes/<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "intro_video": {"description": "a video played before a new campaign", "type": "string"},
+        "menu": {"description": "the main menu (Stage 6.2)", "type": "object", "additionalProperties": false, "properties": {
+            "title": {"description": "the title (default: the campaign's name)", "type": "string"},
+            "subtitle": {"description": "a line under it", "type": "string"},
+            "showcase": {"description": "a ship class turning behind the menu", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+            "starfield_seed": {"description": "the stars behind it", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
+        "credits": {"description": "the credits", "type": "object", "additionalProperties": false, "properties": {
+            "video": {"description": "a credits film, played instead of the scroll", "type": "string"},
+            "lines": {"description": "lines to scroll; '# ' starts a heading", "type": "array", "items": {"type": "string"}}
+          }},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

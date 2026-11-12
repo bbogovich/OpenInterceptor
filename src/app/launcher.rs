@@ -147,8 +147,9 @@ impl Launcher {
         if pressed("right") || pad_pressed(Button::DpadRight) {
             self.menu.move_ship(true);
         }
+        // Esc: back to the main menu (a campaign with one), else quit.
         if pressed("escape") || pad_pressed(Button::Back) {
-            return Next::Quit;
+            return if ctx.content.rules.strategy.is_some() { Next::Menu } else { Next::Quit };
         }
         if pressed("tab") || pad_pressed(Button::Y) {
             if let Some(next) = next_campaign(&ctx.content) {

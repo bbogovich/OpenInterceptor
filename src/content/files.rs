@@ -570,14 +570,19 @@ fn damage() -> Ty {
 }
 
 fn campaign() -> Ty {
-    Ty::Def(vec![
-        f("name", Ty::Text, "campaign title"),
-        f("difficulty", names(), "difficulty level ids, easiest first"),
-        f("default_difficulty", name(), "the level a new game starts at"),
-        f("skin", name(), "the skin of the menus and strategy screens (skins.<id>)"),
-        f("intro", name(), "the cutscene played before a new campaign (cutscenes/<id>)"),
-        f("intro_video", Ty::Asset, "a video played before a new campaign"),
-    ])
+    Ty::Def(
+        vec![
+            f("name", Ty::Text, "campaign title"),
+            f("difficulty", names(), "difficulty level ids, easiest first"),
+            f("default_difficulty", name(), "the level a new game starts at"),
+            f("skin", name(), "the skin of the menus and strategy screens (skins.<id>)"),
+            f("intro", name(), "the cutscene played before a new campaign (cutscenes/<id>)"),
+            f("intro_video", Ty::Asset, "a video played before a new campaign"),
+        ]
+        .into_iter()
+        .chain(super::front::fields())
+        .collect(),
+    )
 }
 
 /// The top-level sections of a rules file.

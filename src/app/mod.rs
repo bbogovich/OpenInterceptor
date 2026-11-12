@@ -31,10 +31,12 @@
 pub mod assets;
 pub mod comms;
 pub mod controls;
+pub mod credits;
 pub mod cutscene;
 pub mod devices;
 pub mod flight;
 pub mod launcher;
+pub mod menu;
 pub mod simulator;
 pub mod strategy;
 pub mod ui;
@@ -119,6 +121,10 @@ pub enum Next {
     Cutscene {
         id: String,
     },
+    /// The main menu (a campaign with a strategy layer; otherwise the launcher).
+    Menu,
+    /// The credits (or the campaign's credits film).
+    Credits,
     /// Fly a campaign battle: a mission id and the player's hull.
     CampaignBattle {
         mission: String,
@@ -147,6 +153,8 @@ enum Screen {
     Strategy(Box<strategy::StrategyScreen>),
     Video(Box<video::VideoPlayer>),
     Cutscene(Box<cutscene::CutscenePlayer>),
+    Menu(Box<menu::MainMenu>),
+    Credits(Box<credits::Credits>),
     Flight(Box<flight::FlightSession>),
 }
 
@@ -360,6 +368,7 @@ pub async fn run(options: Options) {
                 Screen::Launcher(launcher::Launcher::new(&ctx))
             }
         },
+        None if options.credits => Screen::Credits(Box::new(credits::Credits::new(&ctx))),
         None if options.cutscene.is_some() => {
             let id = options.cutscene.clone().unwrap_or_default();
             match cutscene::CutscenePlayer::new(&mut ctx, &id) {
@@ -386,17 +395,27 @@ pub async fn run(options: Options) {
         },
         None => match &options.model {
             Some(name) => Screen::Viewer(viewer::ModelViewer::open_at(&ctx, name)),
+            // A campaign with a strategy layer opens on its main menu.
+            None if ctx.content.rules.strategy.is_some() => Screen::Menu(Box::new(menu::MainMenu::new(&ctx))),
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),
         },
     };
     let mut frame_count: u32 = 0;
     loop {
         // Screens without music of their own are silent.
-        if !matches!(screen, Screen::Flight(_) | Screen::Strategy(_)) {
+        if !matches!(screen, Screen::Flight(_) | Screen::Strategy(_) | Screen::Menu(_)) {
             ctx.music.stop(&ctx.sounds);
         }
         let next = match &mut screen {
             Screen::Launcher(l) => l.frame(&mut ctx),
+            Screen::Menu(m) => m.frame(&mut ctx),
+            Screen::Credits(c) => {
+                if c.frame(&mut ctx) {
+                    Next::Menu
+                } else {
+                    Next::Stay
+                }
+            }
             Screen::Viewer(v) => v.frame(&mut ctx),
             Screen::Assets(a) => a.frame(&mut ctx).await,
             Screen::Controls(c) => {
@@ -415,7 +434,7 @@ pub async fn run(options: Options) {
                     if ctx.campaign.is_some() {
                         Next::Strategy
                     } else {
-                        Next::Launcher
+                        Next::Menu
                     }
                 } else {
                     Next::Stay
@@ -426,7 +445,7 @@ pub async fn run(options: Options) {
                     if ctx.campaign.is_some() {
                         Next::Strategy
                     } else {
-                        Next::Launcher
+                        Next::Menu
                     }
                 } else {
                     Next::Stay
@@ -441,10 +460,27 @@ pub async fn run(options: Options) {
                 set_cursor_grab(false);
                 screen = Screen::Launcher(launcher::Launcher::new(&ctx));
             }
+            Next::Menu => {
+                show_mouse(true);
+                set_cursor_grab(false);
+                screen = if ctx.content.rules.strategy.is_some() {
+                    Screen::Menu(Box::new(menu::MainMenu::new(&ctx)))
+                } else {
+                    Screen::Launcher(launcher::Launcher::new(&ctx))
+                };
+            }
+            Next::Credits => match ctx.content.rules.credits.video.clone() {
+                Some(r) => match video::VideoPlayer::open(&ctx.content, &r, 0).await {
+                    Ok(v) => screen = Screen::Video(Box::new(v)),
+                    Err(e) => eprintln!("credits video {r}: {e}"),
+                },
+                None => screen = Screen::Credits(Box::new(credits::Credits::new(&ctx))),
+            },
             Next::Viewer => screen = Screen::Viewer(viewer::ModelViewer::new(&ctx)),
             Next::Assets => screen = Screen::Assets(assets::AssetBrowser::new(&ctx)),
             Next::Controls => screen = Screen::Controls(controls::ControlsMenu::new(&ctx)),
             Next::Reload { campaign, difficulty } => {
+                let from_menu = matches!(screen, Screen::Menu(_));
                 let mut cfg = options.content_config();
                 // A campaign switch starts at that campaign's default difficulty.
                 cfg.campaign = campaign.clone().or(ctx.content.campaign.clone());
@@ -463,7 +499,12 @@ pub async fn run(options: Options) {
                         ctx.ui = ui::Ui::load(&ctx.content);
                         let level = ctx.content.rules.difficulty_levels.get(ctx.content.rules.difficulty).cloned();
                         remember_choice(&id, level.as_deref());
-                        screen = Screen::Launcher(launcher::Launcher::new(&ctx));
+                        // Back where the change was made: the menu's options, or the launcher.
+                        screen = if from_menu && ctx.content.rules.strategy.is_some() {
+                            Screen::Menu(Box::new(menu::MainMenu::new(&ctx).on_options()))
+                        } else {
+                            Screen::Launcher(launcher::Launcher::new(&ctx))
+                        };
                     }
                     Err(e) => {
                         let mut l = launcher::Launcher::new(&ctx);

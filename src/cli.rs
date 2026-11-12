@@ -30,6 +30,7 @@ OPTIONS:
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --mission <ID>      Start this mission directly, skipping the launcher
     --strategy          Start a new campaign's strategy layer directly
+    --credits           Show the campaign's credits roll
     --cutscene <ID>     Play a cutscene of the campaign
     --video <REF>       Play a video (original:<file>.smk or a pack path) and quit to the launcher
     --strategy-soak <D> Play the strategy layer automatically for D days and report
@@ -76,6 +77,8 @@ pub struct Options {
     pub mission: Option<String>,
     /// `--strategy`: open a new campaign's strategy screen directly.
     pub strategy: bool,
+    /// `--credits`: open on the credits roll.
+    pub credits: bool,
     /// `--video <ref>`: play a video first.
     pub video: Option<String>,
     /// `--cutscene <id>`: play a cutscene first.
@@ -114,6 +117,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--mission" => o.mission = Some(value("--mission")?),
             "--strategy" => o.strategy = true,
+            "--credits" => o.credits = true,
             "--video" => o.video = Some(value("--video")?),
             "--cutscene" => o.cutscene = Some(value("--cutscene")?),
             "--campaign" => o.campaign = Some(value("--campaign")?),
