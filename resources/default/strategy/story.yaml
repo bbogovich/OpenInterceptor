@@ -1,0 +1,117 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The serial of Perils of the Void (Stage 5.9): twelve chapters, each triggered by the
+# Guard's progress and the Regent's Eclipse Engine, as in the campaign definition (docs:
+# Definition > Campaigns > Default campaign). Chapters whose special mission is not built
+# yet fly the nearest existing mission; the finale has its own (eclipse_assault).
+
+arcs:
+  serial:
+    steps: [ch01, ch02, ch03, ch04, ch05, ch06, ch07, ch08, ch09, ch10, ch11, ch12]
+
+events:
+  ch01:
+    when: day >= 0
+    do: ["message(Chapter 1 - The Shadow Falls. Saucers are striking a mining colony: take off at once!)", "mission(colony_defence)"]
+  ch02:
+    when: day >= 15
+    do: ["message(Chapter 2 - Raiders of the Belt. A cosmium convoy must get through raider space.)", "mission(convoy_ambush)", "relation(prospectors, 10)"]
+  ch03:
+    when: day >= 30 or (research(heat_rays) and research(deep_radar))
+    do: ["message(Chapter 3 - The Regent's Ultimatum. A saucer carries the Regent's message: catch it!)", "mission(intercept_scouts)", "set_flag(regent_revealed)"]
+  ch04:
+    when: plan(eclipse_engine) >= 0.15
+    do: ["message(Chapter 4 - Trapped in the Ion Storm! A Guard patrol is caught in a nebula pocket.)", "mission(pocket_ambush)"]
+  ch05:
+    when: day >= 0
+    do: ["message(Chapter 5 - The Secret of the Derelict. A crashed saucer lies in the hills: take it.)", "mission(ground_strike)", "research(saucer_hulls)"]
+  ch06:
+    when: relation(senate) < 20 or plan(eclipse_engine) >= 0.33
+    do: ["message(Chapter 6 - Senate in Peril. Robots are closing on the Senate station!)", "mission(defend_station)", "relation(senate, 10)"]
+  ch07:
+    when: relation(cartel) >= 20 or relation(cartel) <= -10 or day >= 120
+    do: ["message(Chapter 7 - The Cartel's Price. A Cartel shipment is bound for the Dominion. Escort it as allies, or raid it?)"]
+    choices:
+      - {text: "Escort it (the Cartel becomes an ally)", do: ["relation(cartel, 50)", "money(300000)", "set_flag(cartel_ally)"]}
+      - {text: "Raid it (cut the Regent's supply)", do: ["relation(cartel, -50)", "aggression(-0.2)", "mission(pocket_ambush)"]}
+  ch08:
+    when: plan(eclipse_engine) >= 0.33
+    do: ["message(Chapter 8 - Lens of Doom. The lens is built; strike its assembly yard!)", "mission(outpost_raid)"]
+  ch09:
+    when: research(saucer_propulsion)
+    do: ["message(Chapter 9 - The Traitor in the Guard. A defector has stolen a rocket: stop him before he reaches the Regent!)", "mission(intercept_scouts)"]
+  ch10:
+    when: plan(eclipse_engine) >= 0.66 or bases >= 4
+    do: ["message(Chapter 10 - Into the Dark Moon's Shadow. Fly low under the fortress guns and photograph the Engine site.)", "mission(ground_strike)", "set_flag(engine_site_found)"]
+  ch11:
+    when: plan(eclipse_engine) >= 0.67
+    do: ["message(Chapter 11 - The Eclipse Begins! The Engine's test beam is aimed at a colony.)", "mission(colony_defence)", "relation(senate, 5)"]
+  ch12:
+    when: flag(engine_site_found) and research(victory_design)
+    do: ["message(Chapter 12 - Duel at the Eclipse Engine. The fleet is ready. Strike at the heart!)", "mission(eclipse_assault)"]
+
+  # Side events.
+  cartel_offer:
+    when: month >= 1 and relation(cartel) > -30
+    check: monthly
+    chance: 40%
+    once: false
+    cooldown: 60d
+    do: ["news(The Cartel offers rare parts - for a price)", "money(-50000)", "relation(cartel, 5)"]
+  prospector_tithe:
+    when: relation(prospectors) >= 20
+    check: monthly
+    once: false
+    cooldown: 30d
+    do: ["news(The Belt Prospectors share their cosmium with their protectors)", "money(120000)"]
+  raider_bribe:
+    when: month >= 2 and relation(raiders) < -40
+    check: monthly
+    chance: 30%
+    choices:
+      - {text: "Pay the Black Comet 400000 to leave the lanes alone", do: ["money(-400000)", "relation(raiders, 70)"]}
+      - {text: "Refuse", do: ["relation(raiders, -10)"]}
+    do: ["message(The Black Comet gang offers a truce - for a price.)"]
+
+plans:
+  eclipse_engine:
+    owner: dominion
+    stages: [{name: Lens, count: 6}, {name: Coils, count: 6}, {name: Heart, count: 6}]
+    start_when: flag(regent_revealed)
+    every: 9d
+    chance: 70%
+    raid: eclipse_shipment
+    warnings:
+      - {at: 33%, do: ["message(Intelligence: the Eclipse Engine's lens is complete.)"]}
+      - {at: 66%, do: ["message(Intelligence: the Engine's coils are charged. Two-thirds done!)"]}
+      - {at: 90%, do: ["message(Intelligence: the Engine's heart is nearly whole. Strike now or never!)"]}
+    complete: ["defeat(engine_lit)"]
+
+relations:
+  dynamic: true
+  start: {senate: 40, cartel: -5, prospectors: 15, raiders: -70, dominion: -100}
+  drift: 2
+  stances: {hostile: -40, wary: -10, neutral: 20, friendly: 60}
+
+strategist:
+  aggression: {start: 1.0, min: 0.6, max: 1.8, up: 0.1, down: 0.1}
+  calm_after_wins: 3
+
+endings:
+  engine_destroyed: {victory: true, text: "The Eclipse Engine is a cloud of glittering wreckage, the Regent flees into the dark, and the inner worlds keep their sun."}
+  engine_lit: {text: "The Eclipse Engine blazes into life and night falls on the inner worlds. The Regent's ultimatum is answered."}
+  last_base: {text: "The Guard's last base has fallen. The frontier belongs to the Dominion."}
+  senate_recognises: {text: "The Senate has recognised the Regent and cut the Guard loose. Without funds, the Guard stands down."}
+
+campaign_end:
+  defeat:
+    - {when: "bases == 0", ending: last_base}
+    - {when: "relation(senate) <= -60", ending: senate_recognises}
+  victory:
+    - {when: "flag(engine_destroyed)", ending: engine_destroyed}
+
+encyclopaedia:
+  guard: {title: The Interplanetary Guard, text: "Rocket-borne defenders of the frontier colonies, funded by the Solar Senate.", unlock: day >= 0}
+  dominion: {title: The Umbral Dominion, text: "Regent Vexor's saucer legions, ruled from a dark moon at the edge of the map.", unlock: day >= 0}
+  cosmium: {title: Cosmium, text: "A glowing crystal found only in the frontier belts: the power of the inner worlds, and the fuel of the Regent's ambitions.", unlock: day >= 0}
+  eclipse_engine: {title: The Eclipse Engine, text: "A colossal lens that, fed with enough cosmium, will cast the inner worlds into night. Its shipments can be intercepted.", unlock: flag(regent_revealed)}
+  cartel: {title: The Nebula Cartel, text: "Smugglers who sell to whoever pays - the Regent included, unless the Guard makes them friends.", unlock: fired(ch07) >= 1}

@@ -249,3 +249,30 @@ missions:
     outcomes:
       win: [score(raiders_destroyed), "relation(raiders, -5)"]
     debrief: {win: "@debrief.pocket.win", killed: "@debrief.killed", retreat: "@debrief.retreat"}
+
+  # The finale (chapter 12): break the Regent's fleet at the Eclipse Engine and destroy it.
+  eclipse_assault:
+    name: "@mission.eclipse_assault.name"
+    briefing: "@mission.eclipse_assault.brief"
+    order: 20
+    environment: pocket
+    starfield_seed: 112
+    player: {class: choose}
+    roles:
+      engine: {class: dominion_outpost, ai: enemy, at: {distance: 6km, bearing: [0, 0]}}
+      wing: {class: thunderbolt, ai: wingman, count: 3, at: {distance: 0m, spread: 90m}}
+      guard_fleet:
+        class: [raider_saucer, robot_sentinel, scout_saucer]
+        count: {per_level: [[4, 4], [5, 6], [6, 7], [7, 8]]}
+        at: {distance: 2km, from: engine, bearing: random, spread: 600m}
+      dreadnought: {class: dreadnought, arrive: "time > 90s", at: {distance: 3km, from: engine, bearing: random}}
+    waves:
+      - {role: guard_fleet, when: "time > 150s and alive(engine)", every: 120s, count: [2, 3]}
+    objectives:
+      win: destroyed(engine)
+    outcomes:
+      win: [score(engine_destroyed), set_flag(engine_destroyed)]
+    chatter:
+      - {when: "time > 3s", line: "@chat.eclipse_assault"}
+      - {when: arrived(dreadnought), line: "@chat.dreadnought"}
+    debrief: {win: "@debrief.eclipse.win", killed: "@debrief.killed", retreat: "@debrief.retreat"}

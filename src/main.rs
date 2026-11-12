@@ -95,6 +95,23 @@ fn headless(options: &cli::Options) -> Option<i32> {
             def.research.len(),
             c.messages.len()
         );
+        let arcs: Vec<String> = def
+            .story
+            .arcs
+            .iter()
+            .enumerate()
+            .map(|(a, arc)| format!("{} {}/{}", arc.id, c.story.arc_step[a], arc.steps.len()))
+            .collect();
+        let plans: Vec<String> = (0..def.story.plans.len())
+            .map(|p| format!("{} {:.0}%", def.story.plans[p].id, c.story.plan_progress(def, p) * 100.0))
+            .collect();
+        let ending = c.story.ending.map(|e| def.story.endings[e].id.clone()).unwrap_or("none".into());
+        println!(
+            "  story: arcs [{}], plans [{}], aggression {:.2}, ending {ending}",
+            arcs.join(", "),
+            plans.join(", "),
+            c.story.aggression
+        );
         return Some(0);
     }
     if let Some(sc) = &options.soak {

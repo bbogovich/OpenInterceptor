@@ -161,6 +161,8 @@ pub fn parse(text: &str, table: &'static [ActionDef]) -> Result<Action, String> 
         format!("unknown action '{name}' (known: {})", known.join(", "))
     })?;
     let args: Vec<String> = match inner {
+        // A single text argument is the whole text, commas and all: message(Hold on, Guardsman!).
+        Some(i) if def.args == [ArgKind::Text] && !i.trim().is_empty() => vec![i.trim().to_string()],
         Some(i) if !i.trim().is_empty() => i.split(',').map(|a| a.trim().to_string()).collect(),
         _ => Vec::new(),
     };
@@ -183,6 +185,13 @@ pub fn parse(text: &str, table: &'static [ActionDef]) -> Result<Action, String> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_text_argument_keeps_its_commas() {
+        let a = parse("message(Hold on, Guardsman, they are coming!)", EVENT_ACTIONS).unwrap();
+        assert_eq!(a.args, vec!["Hold on, Guardsman, they are coming!"]);
+        assert_eq!(parse("relation(cartel, -50)", EVENT_ACTIONS).unwrap().args.len(), 2);
+    }
 
     #[test]
     fn actions_parse_and_check() {

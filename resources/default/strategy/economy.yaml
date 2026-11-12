@@ -6,7 +6,7 @@ economy:
   salvage_per_kill: 15000
 
 incomes:
-  senate_stipend: {name: Senate stipend, every: 30d, amount: 400000 + 60000 * bases + month_score * 200}
+  senate_stipend: {name: Senate stipend, every: 30d, amount: 400000 + 60000 * bases + month_score * 200 + relation(senate) * 3000}
   cosmium_sales: {name: Cosmium sales, every: 7d, amount: 12000 * module_count(cosmium_refinery)}
 
 expenses:

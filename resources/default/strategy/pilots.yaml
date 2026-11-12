@@ -25,3 +25,4 @@ scores:
   outpost_destroyed: 200
   raiders_destroyed: 70
   undefended: -100
+  engine_destroyed: 5000

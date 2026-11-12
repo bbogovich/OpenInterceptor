@@ -9,3 +9,6 @@ raids:
   colony_raid: {name: Colony raid, mission: colony_defence, faction: dominion, every: 7d, chance: 35%, target: system, speed: 220, requires: day >= 20}
   robot_raid: {name: Robot assault, mission: outpost_raid, faction: dominion, every: 9d, chance: 30%, target: base, speed: 200, requires: day >= 45}
   comet_ambush: {name: Black Comet ambush, mission: pocket_ambush, faction: raiders, every: 6d, chance: 30%, target: system, speed: 300, requires: day >= 15}
+  # The Eclipse Engine's cosmium shipments: launched by the plan (plans.eclipse_engine),
+  # never by the raid roll itself.
+  eclipse_shipment: {name: Eclipse Engine shipment, mission: intercept_scouts, faction: dominion, every: 30d, chance: 0%, target: system, speed: 180}

@@ -49,3 +49,8 @@ text:
   chat.cargo_taken: "Convoy: we've lost a quarter of the cargo!"
   chat.jump_soon: "Convoy: one minute to the jump point. Hold them off!"
   debrief.convoy.draw: "A crippled clipper limps on, and the tugs' crews will be back - but what is still aboard is yours."
+  mission.eclipse_assault.name: "Duel at the Eclipse Engine"
+  mission.eclipse_assault.brief: "This is it, Guardsman. The Eclipse Engine hangs in the nebula ahead, ringed by the Regent's fleet. Break through and destroy it - the inner worlds are counting on you."
+  chat.eclipse_assault: "All wings, this is the flagship. Target the Engine. Nothing else matters!"
+  chat.dreadnought: "A Dominion dreadnought - the Regent himself is here!"
+  debrief.eclipse.win: "The Eclipse Engine is gone. Somewhere in the dark, Regent Vexor screams his rage at the stars."

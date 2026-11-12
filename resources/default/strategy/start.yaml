@@ -11,4 +11,4 @@ start:
   research: [rocketry]
   stock: {blaster: 6, seeker: 12}
 
-flags: [regent_revealed]
+flags: [regent_revealed, engine_site_found, engine_destroyed, cartel_ally]
