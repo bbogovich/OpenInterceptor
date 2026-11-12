@@ -276,6 +276,17 @@ impl StrategyScreen {
         self.speed = 0;
     }
 
+    /// The relations a battle uses: each faction with a standing, hostile or not
+    /// (dynamic relations only; otherwise the factions' own hostility stands).
+    fn stances(&self, def: &StrategyDef) -> Vec<(String, bool)> {
+        match &def.story.relations {
+            Some(r) if r.dynamic => {
+                self.campaign.story.standing.iter().map(|(f, v)| (f.clone(), r.stance(*v) == "hostile")).collect()
+            }
+            _ => Vec::new(),
+        }
+    }
+
     fn say(&mut self, text: impl Into<String>) {
         self.flash = Some((text.into(), get_time() + 4.0));
     }
@@ -633,7 +644,12 @@ impl StrategyScreen {
                     self.flying = Some(PendingBattle::Contact(id));
                     let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
                     let loadout = self.campaign.loadout(def, k);
-                    return Next::CampaignBattle { mission: def.raids[r].mission.clone(), ship: Some(ship), loadout };
+                    return Next::CampaignBattle {
+                        mission: def.raids[r].mission.clone(),
+                        ship: Some(ship),
+                        loadout,
+                        stances: self.stances(def),
+                    };
                 }
             } else if is_key_pressed(KeyCode::Escape) {
                 self.battle = None;
@@ -670,7 +686,12 @@ impl StrategyScreen {
                         self.flying = Some(PendingBattle::Story);
                         let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
                         let loadout = self.campaign.loadout(def, k);
-                        return Next::CampaignBattle { mission: m, ship: Some(ship), loadout };
+                        return Next::CampaignBattle {
+                            mission: m,
+                            ship: Some(ship),
+                            loadout,
+                            stances: self.stances(def),
+                        };
                     }
                     None => self.say("No ready craft to fly it."),
                 }
@@ -692,7 +713,7 @@ impl StrategyScreen {
                         self.flying = Some(PendingBattle::Convoy(v));
                         let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
                         let loadout = self.campaign.loadout(def, k);
-                        return Next::CampaignBattle { mission, ship: Some(ship), loadout };
+                        return Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def) };
                     }
                     _ => {
                         self.campaign.convoy_result(def, v, None);

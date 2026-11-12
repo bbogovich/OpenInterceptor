@@ -109,6 +109,8 @@ pub enum Next {
         ship: Option<String>,
         /// The craft's fitted beams and missiles (empty: the class's own).
         loadout: (Vec<String>, Vec<(String, u32)>),
+        /// The campaign's relations: `(faction, hostile to the player)`.
+        stances: Vec<(String, bool)>,
     },
     /// Fly a simulator mission: a modified copy of a mission (see `simulator::apply`).
     Simulate {
@@ -415,7 +417,7 @@ pub async fn run(options: Options) {
                     None => screen = Screen::Launcher(launcher::Launcher::new(&ctx)),
                 }
             }
-            Next::CampaignBattle { mission, ship, loadout } => {
+            Next::CampaignBattle { mission, ship, loadout, stances } => {
                 // Keep the strategy screen (and its campaign) while the battle is flown.
                 let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
                 if let Screen::Strategy(s) = old {
@@ -425,6 +427,7 @@ pub async fn run(options: Options) {
                     Ok(mut f) => {
                         f.campaign_battle = true;
                         f.apply_loadout(&loadout.0, &loadout.1);
+                        flight::apply_stances(&mut f.world, f.player, &stances);
                         screen = Screen::Flight(Box::new(f));
                     }
                     Err(e) => {

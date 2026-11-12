@@ -732,6 +732,19 @@ impl Ruleset {
         fa.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fb.id))
             || fb.hostile.iter().any(|h| h.eq_ignore_ascii_case(&fa.id))
     }
+    /// Makes factions `a` and `b` hostile to each other, or not (in either list).
+    /// Campaign battles use it to apply the player's relations (Stage 5.5).
+    pub fn set_hostile(&mut self, a: &str, b: &str, hostile: bool) {
+        for (x, y) in [(a, b), (b, a)] {
+            if let Some(f) = self.factions.iter_mut().find(|f| f.id == x) {
+                f.hostile.retain(|h| !h.eq_ignore_ascii_case(y));
+                if hostile {
+                    f.hostile.push(y.to_string());
+                }
+            }
+        }
+    }
+
     /// Classes a player can choose to fly, in definition order.
     /// A formation by id; an unknown id (or a campaign with none) gets the built-in vee.
     pub fn formation(&self, id: Option<&str>) -> super::formation::FormationDef {

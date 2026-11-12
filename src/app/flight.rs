@@ -119,6 +119,20 @@ pub fn debrief_due(ended_at: Option<f64>, now: f64, delay: f32) -> bool {
     ended_at.is_none_or(|t| now >= t + delay as f64)
 }
 
+/// Applies the campaign's relations to a battle (Stage 5.5): each `(faction, hostile)`
+/// makes that faction hostile to the player's faction, or not. In the battle's own copy
+/// of the rules, like the loadout.
+pub fn apply_stances(world: &mut World, player: ShipId, stances: &[(String, bool)]) {
+    let Some(me) = world.get(player).map(|s| s.faction) else { return };
+    let mine = world.rules.faction(me).id.clone();
+    let rules = std::sync::Arc::make_mut(&mut world.rules);
+    for (f, hostile) in stances {
+        if *f != mine {
+            rules.set_hostile(&mine, f, *hostile);
+        }
+    }
+}
+
 /// The campaign loadout on a battle's world (see [`FlightSession::apply_loadout`]).
 pub fn apply_loadout(world: &mut World, player: ShipId, beams: &[String], missiles: &[(String, u32)]) {
     let Some(class) = world.get(player).map(|s| s.class) else { return };
@@ -1457,6 +1471,19 @@ mod tests {
         assert!(debrief_due(Some(100.0), 130.0, 30.0));
         assert!(debrief_due(Some(100.0), 100.0, 0.0), "no delay: at once");
         assert!(debrief_due(None, 0.0, 30.0));
+    }
+
+    #[test]
+    fn campaign_stances_decide_who_fights_whom() {
+        let mut w = crate::sim::test_support::world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, glam::Quat::IDENTITY, crate::sim::Pilot::External);
+        let (a, b) = (w.rules.factions[0].id.clone(), w.rules.factions[1].id.clone());
+        assert!(w.rules.hostile(FactionId(0), FactionId(1)), "the test rules start hostile");
+        apply_stances(&mut w, me, &[(b.clone(), false)]);
+        assert!(!w.rules.hostile(FactionId(0), FactionId(1)), "made friends");
+        apply_stances(&mut w, me, &[(b, true), (a, false)]);
+        assert!(w.rules.hostile(FactionId(0), FactionId(1)), "hostile again; its own faction is left alone");
     }
 
     #[test]

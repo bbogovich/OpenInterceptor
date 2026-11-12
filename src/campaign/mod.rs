@@ -1361,8 +1361,12 @@ impl StrategyDef {
 /// researching, builds a lab and a workshop when it can, intercepts every contact it
 /// sees, and alternates battle results. Returns the campaign.
 pub fn autoplay(def: &StrategyDef, seed: u64, days: f64) -> Campaign {
-    let mut c = Campaign::new(def, 1, seed);
-    let mut battles = 0u32;
+    autoplay_from(def, Campaign::new(def, 1, seed), days)
+}
+
+/// [`autoplay`] continuing an existing campaign until it is `days` old.
+pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign {
+    let mut battles = c.story.battles_won;
     while c.hours < days * 24.0 {
         for b in 0..c.bases.len() {
             if c.bases[b].research.is_none() {
@@ -1686,6 +1690,63 @@ mod tests {
         assert_eq!(c.lane_route(&d, a, b), vec![c.systems[b].pos]);
         assert!(c.lane_route(&d, a, a).is_empty());
         assert_eq!(c.nearest_system([2900.0, 100.0]), b);
+    }
+
+    /// Checks that nothing in a campaign points at something that is not there.
+    fn assert_consistent(def: &StrategyDef, c: &Campaign) {
+        for k in &c.craft {
+            assert!(k.base < c.bases.len() && k.hull < def.hulls.len(), "craft {k:?}");
+        }
+        for p in &c.pilots {
+            assert!(p.craft.is_none_or(|k| k < c.craft.len()), "pilot {}", p.name);
+        }
+        for b in &c.bases {
+            assert!(b.system < c.systems.len() && b.base_type < def.base_types.len());
+            assert!(b.modules.iter().all(|m| m.module < def.modules.len()));
+            assert!(b.research.is_none_or(|t| t < def.research.len()));
+        }
+        for k in &c.contacts {
+            assert!(k.raid < def.raids.len() && k.target_base.is_none_or(|b| b < c.bases.len()));
+            assert!(k.plan.is_none_or(|p| p < def.story.plans.len()));
+        }
+        for f in &c.logistics.facilities {
+            assert!(f.system < c.systems.len());
+        }
+        assert!(c.money.is_finite() && c.score.is_finite());
+    }
+
+    #[test]
+    fn the_default_campaign_runs_a_year_with_its_story_and_stays_consistent() {
+        let content = crate::content::Content::load(&crate::content::ContentConfig {
+            pack_dirs: crate::content::checkout_dirs(),
+            no_original: true,
+            campaign: Some("default".into()),
+            ..Default::default()
+        })
+        .unwrap();
+        let def = content.rules.strategy.as_ref().unwrap();
+        // A month at a time, checking as it goes: arcs only move forward.
+        let mut c = Campaign::new(def, 1, 11);
+        let mut last_arc = c.story.arc_step.clone();
+        for month in 1..=12 {
+            let next = super::autoplay_from(def, c, month as f64 * 30.0);
+            c = next;
+            assert_consistent(def, &c);
+            for (a, b) in c.story.arc_step.iter().zip(&last_arc) {
+                assert!(a >= b, "arc progress went backwards");
+            }
+            last_arc = c.story.arc_step.clone();
+            if c.story.ending.is_some() {
+                break;
+            }
+        }
+        assert!(c.story.arc_step[0] >= 6, "the serial has moved on: {:?}", c.story.arc_step);
+        assert!(c.story.plan_started[0], "the Eclipse Engine is under way");
+        // Every condition the story names evaluates without trouble along the way.
+        let mut c2 = c.clone();
+        for (cond, _) in def.story.defeat.iter().chain(&def.story.victory) {
+            let _ = c2.holds(def, Some(cond));
+        }
     }
 
     #[test]
