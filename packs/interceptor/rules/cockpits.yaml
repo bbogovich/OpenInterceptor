@@ -28,6 +28,7 @@ cockpits:
       gauge2: [288, 299, 26, 26]
       gauge3: [333, 299, 26, 26]
       gauge4: [378, 299, 26, 26]
+      ship_status: [111, 407, 58, 58]   # the art's round ship display (placed by eye, DERIVED)
   b:
     image: original:CockpitB.dll#12200
     # Wide screens: black out the sides of the dashboard (from y=382, where this art's
@@ -45,6 +46,7 @@ cockpits:
       gauge2: [285, 431, 30, 28]
       gauge3: [328, 431, 30, 28]
       gauge4: [370, 431, 30, 28]
+      ship_status: [67, 372, 56, 56]   # the art's round ship display (placed by eye, DERIVED)
   c:
     image: original:CockpitC.dll#12400
     # Wide screens: black out the sides of the dashboard (from y=352, where this art's
@@ -62,3 +64,4 @@ cockpits:
       gauge2: [288, 325, 26, 24]
       gauge3: [331, 325, 26, 24]
       gauge4: [372, 325, 26, 24]
+      ship_status: [166, 403, 44, 44]   # the art's round ship display (placed by eye, DERIVED)

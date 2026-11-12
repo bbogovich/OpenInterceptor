@@ -1423,7 +1423,7 @@ def guard_cockpit():
     rect_instrument("mfd", 548, 514, 732, 700, 20, 10)
     round_instrument("gauge1", 334, 562, 40, 12)
     round_instrument("gauge2", 444, 562, 40, 12)
-    round_instrument("gauge3", 836, 562, 40, 12)
+    round_instrument("ship_status", 836, 562, 40, 12)   # the X-Wing-style shield display (was gauge 3)
     round_instrument("gauge4", 946, 562, 40, 12)
     rect_instrument("power", 292, 628, 488, 692, 6, 10)
     rect_instrument("systems", 792, 632, 988, 664, 6, 10)
@@ -1505,7 +1505,7 @@ def write_instruments(rects, anchors):
     old = os.path.join(folder, "guard_cockpit.instruments.ini")
     if os.path.exists(old):
         os.remove(old)
-    order = ["message", "radar_front", "radar_rear", "mfd", "gauge1", "gauge2", "gauge3", "gauge4", "power", "systems"]
+    order = ["message", "radar_front", "radar_rear", "mfd", "gauge1", "gauge2", "ship_status", "gauge4", "power", "systems"]
 
     def num(x):
         return f"{round(x, 4) + 0.0:g}"  # 4 decimals, no trailing zeros, never "-0"

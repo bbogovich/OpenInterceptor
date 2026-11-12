@@ -143,7 +143,7 @@ pub fn draw_instruments(f: &HudFrame) {
 }
 
 /// Every instrument the HUD knows how to draw.
-pub const INSTRUMENTS: [&str; 11] = [
+pub const INSTRUMENTS: [&str; 12] = [
     "radar_front",
     "radar_rear",
     "gauge1",
@@ -155,6 +155,7 @@ pub const INSTRUMENTS: [&str; 11] = [
     "power",
     "systems",
     "status",
+    "ship_status",
 ];
 
 /// A strip (much wider than tall) gets the one-line form of an instrument.
@@ -320,6 +321,7 @@ pub fn draw_instrument(f: &HudFrame, me: &crate::sim::Ship, name: &str, r: [f32;
         "power" => draw_power(f, me, r),
         "systems" => draw_systems(f, me, r),
         "status" => strip_text(f, r, &status_line(f.world, me), HUD_GREEN),
+        "ship_status" => draw_ship_status(f, me, r),
         _ => {}
     }
 }
@@ -426,6 +428,65 @@ fn draw_systems(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
 /// The shield ring's colour for a facing at `frac` of its capacity: green when strong,
 /// amber when weakened, red when low, and blinking red (`None` on the off beat) when the
 /// shield is down.
+/// How many of the three bands of a shield arc are lit for a shield at `frac` (0..1) of
+/// full: X-Wing's display, where each band is a third of the shield.
+pub fn shield_bands(frac: f32) -> usize {
+    if frac <= 0.02 {
+        0
+    } else {
+        ((frac * 3.0).ceil() as usize).min(3)
+    }
+}
+
+/// The hull colour of the ship picture: green when whole, through amber, to red.
+pub fn hull_color(frac: f32) -> Color {
+    let f = frac.clamp(0.0, 1.0);
+    if f > 0.5 {
+        Color::new(0.2 + (1.0 - f) * 1.6, 0.9, 0.35, 0.9)
+    } else {
+        Color::new(1.0, 0.2 + f * 1.4, 0.1, 0.9)
+    }
+}
+
+/// The ship status display (`ship_status`): your craft seen from above, tinted by its
+/// hull, inside a fore arc (the top half) and an aft arc (the bottom half) of up to three
+/// bands each, one per third of that shield — the way X-Wing shows shields. A shield
+/// that is down blinks its innermost band.
+fn draw_ship_status(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
+    let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
+    let radius = r[2].min(r[3]) * 0.5;
+    let p = power_readout(&f.world.rules, me);
+    let blink = (f.now * 4.0) as i64 % 2 == 0;
+    let band = (radius * 0.11).max(1.5);
+    // Arcs: macroquad's `draw_arc` takes degrees clockwise from +x on screen, so the top
+    // half (fore) is 200°..340° and the bottom half (aft) 20°..160°.
+    for (frac, start) in [(p.fore, 200.0), (p.aft, 20.0)] {
+        let lit = shield_bands(frac);
+        let colour = shield_ring_color(frac, blink);
+        for k in 0..3 {
+            let rad = radius - band * (0.6 + k as f32 * 1.35);
+            let on = k < lit || (lit == 0 && k == 0);
+            let col = match (on, colour) {
+                (true, Some(c)) => c,
+                _ => Color::new(0.2, 0.35, 0.25, 0.35),
+            };
+            draw_arc(c.x, c.y, 24, rad, start, band, 140.0, col);
+        }
+    }
+    // The craft from above: a simple fuselage, wings and tail, nose up.
+    let class = f.world.rules.ship(me.class);
+    let hull = if class.hull > 0.0 { me.hull / class.hull } else { 1.0 };
+    let s = radius * 0.42;
+    let col = hull_color(hull);
+    let pt = |x: f32, y: f32| Vec2::new(c.x + x * s, c.y + y * s);
+    draw_triangle(pt(0.0, -1.0), pt(-0.22, 0.5), pt(0.22, 0.5), col); // fuselage
+    draw_triangle(pt(0.0, -0.1), pt(-0.95, 0.45), pt(0.95, 0.45), col); // wings
+    draw_triangle(pt(0.0, 0.35), pt(-0.4, 0.85), pt(0.4, 0.85), col); // tail
+    if f.glass {
+        draw_circle_lines(c.x, c.y, radius, f.text_scale, HUD_DIM);
+    }
+}
+
 fn shield_ring_color(frac: f32, blink: bool) -> Option<Color> {
     let a = 0.85;
     match frac {
@@ -618,6 +679,17 @@ pub fn draw_caption(s: &str, corner_right: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ship_status_bands_follow_thirds_of_the_shield() {
+        assert_eq!(shield_bands(1.0), 3);
+        assert_eq!(shield_bands(0.67), 3);
+        assert_eq!(shield_bands(0.5), 2);
+        assert_eq!(shield_bands(0.2), 1);
+        assert_eq!(shield_bands(0.0), 0);
+        assert!(hull_color(1.0).g > 0.8 && hull_color(1.0).r < 0.3, "whole: green");
+        assert!(hull_color(0.1).r > 0.9 && hull_color(0.1).g < 0.5, "nearly gone: red");
+    }
 
     #[test]
     fn shield_rings_go_green_amber_red_then_blink() {
