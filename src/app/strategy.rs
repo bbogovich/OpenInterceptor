@@ -51,10 +51,12 @@ pub enum Tab {
     Archive,
     Reports,
     Messages,
+    /// The testbed's event debugger (Ctrl+D shows it).
+    Debug,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 11] = [
+    pub const ALL: [Tab; 12] = [
         Tab::Bases,
         Tab::Research,
         Tab::Build,
@@ -66,6 +68,7 @@ impl Tab {
         Tab::Archive,
         Tab::Reports,
         Tab::Messages,
+        Tab::Debug,
     ];
     fn name(self) -> &'static str {
         match self {
@@ -79,6 +82,7 @@ impl Tab {
             Tab::Logistics => "Supply",
             Tab::Archive => "Archive",
             Tab::Reports => "Reports",
+            Tab::Debug => "Debug",
             Tab::Messages => "Messages",
         }
     }
@@ -114,6 +118,8 @@ enum Act {
     Dismiss(usize),
     /// Dismantle module `m` of the current base.
     Dismantle(usize),
+    /// Fire a story event now (debugger).
+    FireEvent(usize),
     /// Move job `j` of the current base's queue up, or cancel it.
     RaiseJob(usize),
     CancelJob(usize),
@@ -152,6 +158,7 @@ impl Row {
             Act::Dismiss(_) => "Dismiss",
             Act::Dismantle(_) => "Dismantle",
             Act::RaiseJob(_) => "Move up",
+            Act::FireEvent(_) => "Fire now",
             Act::CancelJob(_) => "Cancel",
             Act::Intercept(_) => "Intercept",
             Act::Survey(_) => "Survey",
@@ -215,6 +222,8 @@ pub struct StrategyScreen {
     sel: Option<Sel>,
     /// The last row clicked and when (a second click soon after acts on it).
     last_click: (usize, f64),
+    /// The testbed's Debug panel is shown (Ctrl+D).
+    debug: bool,
     /// The layout's background image, loaded on first use (`None` inside: none, or it
     /// failed to load and was reported).
     background: Option<Option<Texture2D>>,
@@ -301,6 +310,11 @@ impl StrategyScreen {
         Some(Self::with(Campaign::new(def, ctx.content.rules.difficulty, seed)))
     }
 
+    /// A screen over a campaign made elsewhere (the testbed's start-at-chapter).
+    pub fn from_campaign(c: Campaign) -> StrategyScreen {
+        Self::with(c)
+    }
+
     /// The saved campaign of the current campaign, if there is one.
     pub fn load(ctx: &AppContext) -> Result<StrategyScreen, String> {
         let def = ctx.content.rules.strategy.as_ref().ok_or("this campaign has no strategy layer")?;
@@ -325,6 +339,7 @@ impl StrategyScreen {
             sel: None,
             last_click: (usize::MAX, 0.0),
             background: None,
+            debug: false,
             base: 0,
             system: None,
             banner: None,
@@ -755,6 +770,28 @@ impl StrategyScreen {
                     rows.push(Row::new(format!("{d}  {}", m.text.trim_start_matches("Monthly report: ")), Act::None));
                 }
             }
+            Tab::Debug => {
+                // Every story event: has it fired, does its condition hold now.
+                let s = &def.story;
+                for (a, arc) in s.arcs.iter().enumerate() {
+                    rows.push(Row::new(
+                        format!("Arc {}: step {} of {}", arc.id, c.story.arc_step[a], arc.steps.len()),
+                        Act::None,
+                    ));
+                }
+                for (e, ev) in s.events.iter().enumerate() {
+                    let holds = c.holds(def, ev.when.as_ref());
+                    rows.push(Row::new(
+                        format!(
+                            "{} - fired {}, condition {}",
+                            ev.id,
+                            c.story.fired[e],
+                            if holds { "holds" } else { "false" }
+                        ),
+                        Act::FireEvent(e),
+                    ));
+                }
+            }
             Tab::Messages => {
                 for m in c.messages.iter().rev().take(30) {
                     let d = def.start.date.plus_days((m.hour / 24.0) as u32);
@@ -786,6 +823,19 @@ impl StrategyScreen {
             Act::Dismantle(m) => c.dismantle_module(def, base, m),
             Act::RaiseJob(j) => c.raise_job(base, j),
             Act::CancelJob(j) => c.cancel_job(base, j),
+            Act::FireEvent(e) => {
+                for ev in c.fire_event(def, e) {
+                    match ev {
+                        Event::Notice(t) => self.banner = Some(t),
+                        Event::Choice { event } => self.choice = Some(event),
+                        Event::Mission { mission } => self.offer = Some(mission),
+                        Event::Card { title, text } => self.card = Some((title, text)),
+                        Event::Ending { ending } => self.ending = Some(ending),
+                        _ => {}
+                    }
+                }
+                Ok(())
+            }
             Act::Hire(i) => c.hire(def, i),
             Act::AssignPilot(k) => {
                 match c.pilots.iter().position(|p| p.craft.is_none() && p.state == PilotState::Ready) {
@@ -1351,9 +1401,10 @@ impl StrategyScreen {
         }
         let shift = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
         if is_key_pressed(KeyCode::Tab) {
-            let i = Tab::ALL.iter().position(|t| *t == self.tab).unwrap_or(0);
-            let n = Tab::ALL.len();
-            self.open(Tab::ALL[if shift { (i + n - 1) % n } else { (i + 1) % n }]);
+            let tabs: Vec<Tab> = Tab::ALL.iter().copied().filter(|t| *t != Tab::Debug || self.debug).collect();
+            let i = tabs.iter().position(|t| *t == self.tab).unwrap_or(0);
+            let n = tabs.len();
+            self.open(tabs[if shift { (i + n - 1) % n } else { (i + 1) % n }]);
         }
         let nb = self.campaign.bases.len().max(1);
         if is_key_pressed(KeyCode::Right) {
@@ -1378,6 +1429,14 @@ impl StrategyScreen {
         // Testbed cheats (Ctrl+…): the original's payday, knowitall and quickbase, and
         // jump to battle with the selected contact.
         let ctrl = is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl);
+        if ctrl && is_key_pressed(KeyCode::D) {
+            self.debug = !self.debug;
+            if self.debug {
+                self.open(Tab::Debug);
+            } else if self.tab == Tab::Debug {
+                self.open(Tab::Bases);
+            }
+        }
         if ctrl && is_key_pressed(KeyCode::M) {
             self.campaign.cheat_payday();
             self.say("Cheat: payday");
@@ -1471,8 +1530,9 @@ impl StrategyScreen {
 
     /// The buttons to the panels.
     fn draw_nav(&mut self, ui: &Ui, r: [f32; 4], input: &Input, k: f32) {
-        let cells = widgets::grid(r, Tab::ALL.len(), 6, 4.0 * k);
-        for (t, cell) in Tab::ALL.iter().zip(cells) {
+        let tabs: Vec<Tab> = Tab::ALL.iter().copied().filter(|t| *t != Tab::Debug || self.debug).collect();
+        let cells = widgets::grid(r, tabs.len(), 6, 4.0 * k);
+        for (t, cell) in tabs.iter().zip(cells) {
             if *t == self.tab {
                 draw_rectangle(cell[0] - 2.0, cell[1] - 2.0, cell[2] + 4.0, cell[3] + 4.0, ui.colour("accent"));
             }

@@ -228,6 +228,28 @@ impl Campaign {
         self.battle_result(def, u32::MAX - 1, result, actions, kills);
     }
 
+    /// Fires event `e` now, whatever its condition (the testbed's event debugger): its
+    /// arc advances if this is the arc's next step, its actions run, its choice is
+    /// offered.
+    pub fn fire_event(&mut self, def: &StrategyDef, e: usize) -> Vec<Event> {
+        let mut events = Vec::new();
+        let Some(ev) = def.story.events.get(e) else { return events };
+        self.story.fired[e] += 1;
+        self.story.last_fired[e] = self.hours;
+        if let Some(a) = ev.arc {
+            if def.story.arcs[a].steps.get(self.story.arc_step[a]) == Some(&e) {
+                self.story.arc_step[a] += 1;
+            }
+        }
+        self.log(format!("Debug: fired event {}", ev.id));
+        let actions = ev.actions.clone();
+        self.apply_actions(def, &actions, &mut events);
+        if !ev.choices.is_empty() {
+            events.push(Event::Choice { event: e });
+        }
+        events
+    }
+
     /// The player chose option `choice` of event `event`.
     pub fn choose(&mut self, def: &StrategyDef, event: usize, choice: usize) -> Vec<Event> {
         let mut events = Vec::new();
@@ -428,6 +450,19 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t == "Half built")), "{events:?}");
         assert_eq!(c.story.ending, d.story.ending("lit"), "two shipments got through: the engine is lit");
         assert!(events.iter().any(|e| matches!(e, Event::Ending { .. })));
+    }
+
+    #[test]
+    fn the_debugger_fires_events_and_the_testbed_plays_to_a_chapter() {
+        let (d, _) = build(&story_sample());
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 4);
+        let e = d.story.event("bribe").unwrap();
+        let events = c.fire_event(&d, e);
+        assert_eq!(c.story.fired[e], 1);
+        assert!(events.iter().any(|x| matches!(x, Event::Choice { .. })), "its choice is offered: {events:?}");
+        let c = crate::campaign::autoplay_to_chapter(&d, Campaign::new(&d, 0, 4), 2, 400.0);
+        assert!(c.story.arc_step[0] >= 2 || c.hours >= 400.0 * 24.0, "played to chapter 2: {:?}", c.story.arc_step);
     }
 
     #[test]

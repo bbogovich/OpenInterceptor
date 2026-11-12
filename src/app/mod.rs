@@ -405,6 +405,12 @@ pub async fn run(options: Options) {
             }
         }
         None if options.strategy => match strategy::StrategyScreen::new_campaign(&ctx) {
+            // `--chapter n`: played forward to the story's chapter n (testbed).
+            Some(s) if options.chapter.is_some() => {
+                let def = ctx.content.rules.strategy.as_ref().expect("new_campaign found the strategy layer");
+                let c = crate::campaign::autoplay_to_chapter(def, s.campaign, options.chapter.unwrap_or(0), 1500.0);
+                Screen::Strategy(Box::new(strategy::StrategyScreen::from_campaign(c)))
+            }
             Some(s) => Screen::Strategy(Box::new(s)),
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),
         },

@@ -1611,6 +1611,16 @@ pub fn autoplay(def: &StrategyDef, seed: u64, days: f64) -> Campaign {
     autoplay_from(def, Campaign::new(def, 1, seed), days)
 }
 
+/// Plays a campaign automatically until its first arc reaches `step` (a chapter of the
+/// story) or it is `max_days` old — the testbed's start-at-chapter.
+pub fn autoplay_to_chapter(def: &StrategyDef, mut c: Campaign, step: usize, max_days: f64) -> Campaign {
+    while def.story.arcs.first().is_some_and(|_| c.story.arc_step[0] < step) && c.hours < max_days * 24.0 {
+        let days = c.hours / 24.0 + 5.0;
+        c = autoplay_from(def, c, days);
+    }
+    c
+}
+
 /// [`autoplay`] continuing an existing campaign until it is `days` old.
 pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign {
     let mut battles = c.story.battles_won;
