@@ -136,6 +136,8 @@ pub struct StrategyScreen {
     offer: Option<String>,
     /// The campaign's ending, once reached (index into `story.endings`).
     ending: Option<usize>,
+    /// A title card on screen: (title, text).
+    card: Option<(String, String)>,
     /// The battle being flown.
     pub flying: Option<PendingBattle>,
     /// A short feedback line (an order's error, a save).
@@ -221,6 +223,7 @@ impl StrategyScreen {
             choice: None,
             offer: None,
             ending: None,
+            card: None,
             flying: None,
             flash: None,
         }
@@ -660,6 +663,13 @@ impl StrategyScreen {
                 self.campaign.battle_result(def, id, "retreat", &[], 0);
                 self.say("Broke off the interception.");
             }
+        } else if self.card.is_some() {
+            if is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::Escape)
+                || is_mouse_button_pressed(MouseButton::Left)
+            {
+                self.card = None;
+            }
         } else if let Some(e) = self.ending {
             // The end: the ending's text; Enter leaves (the campaign stays saved).
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::Escape) {
@@ -884,6 +894,7 @@ impl StrategyScreen {
                             self.banner = None;
                             self.ending = Some(ending);
                         }
+                        Event::Card { title, text } => self.card = Some((title, text)),
                     }
                 }
             }
@@ -1041,6 +1052,34 @@ impl StrategyScreen {
             let bw = (b.len() as f32 * 10.0).min(w - 40.0);
             ui.panel(w * 0.5 - bw * 0.5 - 18.0, h * 0.4 - 38.0, bw + 36.0, 62.0);
             ui.text_in(&b, w * 0.5 - bw * 0.5, h * 0.4, 22.0, WHITE);
+        }
+        // A title card over everything: the skin's panel filling most of the screen, the
+        // title large and centred, the text wrapped beneath.
+        if let Some((title, text)) = &self.card {
+            let ui = &ctx.ui;
+            draw_rectangle(0.0, 0.0, w, h, Color::new(0.0, 0.0, 0.0, 0.75));
+            let (pw, ph) = (w * 0.7, h * 0.5);
+            let (px, py) = ((w - pw) * 0.5, (h - ph) * 0.5);
+            ui.panel(px, py, pw, ph);
+            let size = (h * 0.055).max(28.0);
+            let tw = ui.measure(title, size);
+            ui.text(title, px + (pw - tw) * 0.5, py + ph * 0.32, size, "border");
+            let width = ((pw - 80.0) / (size * 0.3)) as usize;
+            let mut line = String::new();
+            let mut y = py + ph * 0.5;
+            for word in text.split_whitespace() {
+                if line.len() + word.len() + 1 > width {
+                    ui.text(&line, px + 40.0, y, size * 0.5, "text");
+                    y += size * 0.65;
+                    line.clear();
+                }
+                if !line.is_empty() {
+                    line.push(' ');
+                }
+                line.push_str(word);
+            }
+            ui.text(&line, px + 40.0, y, size * 0.5, "text");
+            ui.text("(Enter)", px + pw - 120.0, py + ph - 30.0, 18.0, "dim");
         }
         Next::Stay
     }

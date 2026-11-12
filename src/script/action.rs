@@ -87,6 +87,12 @@ pub static EVENT_ACTIONS: &[ActionDef] = &[
         doc: "a message that stops the clock",
     },
     ActionDef { name: "news", args: &[ArgKind::Text], scope: Scope::Campaign, doc: "a news line in the log" },
+    ActionDef {
+        name: "card",
+        args: &[ArgKind::Text],
+        scope: Scope::Campaign,
+        doc: "a full-screen title card (a chapter title): 'Title | text'",
+    },
     ActionDef { name: "set_flag", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "set a campaign flag" },
     ActionDef { name: "clear_flag", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "clear a campaign flag" },
     ActionDef { name: "money", args: &[ArgKind::Num], scope: Scope::Campaign, doc: "add (or take) money" },

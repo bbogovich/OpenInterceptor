@@ -178,6 +178,8 @@ pub enum Event {
     Mission { mission: String },
     /// The campaign has ended (index into `story.endings`).
     Ending { ending: usize },
+    /// A full-screen title card: a title and, after `|`, its text.
+    Card { title: String, text: String },
 }
 
 /// One campaign in progress.
@@ -1399,6 +1401,7 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
                     c.mission_result(def, if battles % 3 == 0 { "lose" } else { "win" }, &[], 2);
                 }
                 Event::Ending { .. } => return c,
+                Event::Card { .. } => {}
                 Event::Battle { contact } => {
                     battles += 1;
                     let result = if battles % 3 == 0 { "retreat" } else { "win" };

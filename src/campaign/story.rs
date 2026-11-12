@@ -101,6 +101,11 @@ impl Campaign {
                     events.push(Event::Notice(t));
                 }
                 "news" => self.log(format!("News: {}", arg(0))),
+                "card" => {
+                    let (title, text) = arg(0).split_once('|').unwrap_or((arg(0), ""));
+                    self.log(title.trim().to_string());
+                    events.push(Event::Card { title: title.trim().to_string(), text: text.trim().to_string() });
+                }
                 "set_flag" => {
                     if !self.flags.iter().any(|f| f == arg(0)) {
                         self.flags.push(arg(0).to_string());

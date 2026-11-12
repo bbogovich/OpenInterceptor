@@ -513,7 +513,7 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
             fix(&mut x.name, &format!("raids.{}.name", x.id));
         }
         let story = &mut s.story;
-        let texty = |a: &crate::script::action::Action| matches!(a.name, "message" | "news");
+        let texty = |a: &crate::script::action::Action| matches!(a.name, "message" | "news" | "card");
         for e in &mut story.events {
             for a in e.actions.iter_mut().filter(|a| texty(a)) {
                 fix(&mut a.args[0], &format!("events.{}", e.id));
