@@ -101,6 +101,7 @@ impl Campaign {
                     events.push(Event::Notice(t));
                 }
                 "news" => self.log(format!("News: {}", arg(0))),
+                "video" => events.push(Event::Video { reference: arg(0).to_string() }),
                 "card" => {
                     let (title, text) = arg(0).split_once('|').unwrap_or((arg(0), ""));
                     self.log(title.trim().to_string());

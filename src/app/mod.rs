@@ -36,6 +36,7 @@ pub mod launcher;
 pub mod simulator;
 pub mod strategy;
 pub mod ui;
+pub mod video;
 pub mod viewer;
 
 use crate::audio::SoundBank;
@@ -108,6 +109,10 @@ pub enum Next {
     LoadCampaign,
     /// Back to the campaign kept in `AppContext::campaign` (after one of its battles).
     Strategy,
+    /// Play a video, then come back (to the campaign if one is kept, else the launcher).
+    Video {
+        reference: String,
+    },
     /// Fly a campaign battle: a mission id and the player's hull.
     CampaignBattle {
         mission: String,
@@ -134,6 +139,7 @@ enum Screen {
     Controls(controls::ControlsMenu),
     Simulator(simulator::Simulator),
     Strategy(Box<strategy::StrategyScreen>),
+    Video(Box<video::VideoPlayer>),
     Flight(Box<flight::FlightSession>),
 }
 
@@ -335,6 +341,16 @@ pub async fn run(options: Options) {
                 Screen::Launcher(launcher::Launcher::new(&ctx))
             }
         },
+        None if options.video.is_some() => {
+            let r = options.video.clone().unwrap_or_default();
+            match video::VideoPlayer::open(&ctx.content, &r, 0).await {
+                Ok(v) => Screen::Video(Box::new(v)),
+                Err(e) => {
+                    eprintln!("video {r}: {e}");
+                    Screen::Launcher(launcher::Launcher::new(&ctx))
+                }
+            }
+        }
         None if options.strategy => match strategy::StrategyScreen::new_campaign(&ctx) {
             Some(s) => Screen::Strategy(Box::new(s)),
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),
@@ -364,6 +380,17 @@ pub async fn run(options: Options) {
             Screen::Flight(f) => f.frame(&mut ctx),
             Screen::Simulator(s) => s.frame(&mut ctx),
             Screen::Strategy(s) => s.frame(&mut ctx),
+            Screen::Video(v) => {
+                if v.frame() {
+                    if ctx.campaign.is_some() {
+                        Next::Strategy
+                    } else {
+                        Next::Launcher
+                    }
+                } else {
+                    Next::Stay
+                }
+            }
         };
         match next {
             Next::Stay => {}
@@ -429,6 +456,23 @@ pub async fn run(options: Options) {
                         screen = Screen::Strategy(s);
                     }
                     None => screen = Screen::Launcher(launcher::Launcher::new(&ctx)),
+                }
+            }
+            Next::Video { reference } => {
+                // Keep the strategy screen while the video plays.
+                let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
+                if let Screen::Strategy(s) = old {
+                    ctx.campaign = Some(s);
+                }
+                ctx.music.stop(&ctx.sounds);
+                match video::VideoPlayer::open(&ctx.content, &reference, 0).await {
+                    Ok(v) => screen = Screen::Video(Box::new(v)),
+                    Err(e) => {
+                        eprintln!("video {reference}: {e}");
+                        if let Some(s) = ctx.campaign.take() {
+                            screen = Screen::Strategy(s);
+                        }
+                    }
                 }
             }
             Next::CampaignBattle { mission, ship, loadout, stances } => {

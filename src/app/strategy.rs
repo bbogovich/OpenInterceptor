@@ -862,6 +862,7 @@ impl StrategyScreen {
             // --- Time ---------------------------------------------------------------
             let dt = SPEEDS[self.speed] * get_frame_time().min(0.1) as f64;
             if dt > 0.0 {
+                let mut video: Option<String> = None;
                 for e in self.campaign.advance(def, dt) {
                     self.speed = 0;
                     match e {
@@ -895,7 +896,12 @@ impl StrategyScreen {
                             self.ending = Some(ending);
                         }
                         Event::Card { title, text } => self.card = Some((title, text)),
+                        Event::Video { reference } => video = Some(reference),
                     }
+                }
+                // A video takes the whole screen; the campaign waits here.
+                if let Some(reference) = video {
+                    return Next::Video { reference };
                 }
             }
         }

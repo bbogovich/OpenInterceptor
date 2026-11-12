@@ -407,6 +407,15 @@ impl Content {
         }
     }
 
+    /// The bytes of a file asset (a video): `original:<file>` from the player's data, or
+    /// a path in the pack.
+    pub fn read_asset(&self, reference: &str, pack: usize) -> Result<Vec<u8>, String> {
+        match AssetRef::parse(reference)? {
+            AssetRef::Original { file, .. } => self.original()?.read_file(&file.ok_or("needs a file name")?),
+            AssetRef::PackFile(path) => self.read_pack_file(pack, &path),
+        }
+    }
+
     /// Loads a sound as PCM samples.
     pub fn load_sound(&self, reference: &str, pack: usize) -> Result<wav::Pcm, String> {
         let bytes = match AssetRef::parse(reference)? {

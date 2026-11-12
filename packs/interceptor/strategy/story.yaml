@@ -18,20 +18,20 @@ events:
       day >= 31 and (day >= 120 or (difficulty <= experienced and random(0.07))
       or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
     check: after_battle
-    do: ["message(An alien transmission has been intercepted. Our scientists are decoding it.)", set_flag(alien_message_1)]
+    do: ["message(An alien transmission has been intercepted. Our scientists are decoding it.)", set_flag(alien_message_1), "video(original:alientrans1.smk)"]
   alien_message_2:
     # From 1 March, with a Structural Component shipment seen and a saucer examined (DERIVED topic).
     when: "day >= 59 and plan(doomsday) > 0 and research(type_1_saucer_examination)"
-    do: ["message(A second alien transmission: the aliens are building something.)", set_flag(alien_message_2)]
+    do: ["message(A second alien transmission: the aliens are building something.)", set_flag(alien_message_2), "video(original:alientrans2.smk)"]
   alien_message_3:
     when: "day >= 120 and research(type_2_saucer_examination)"
-    do: ["message(A third transmission speaks of a weapon beyond a gateway.)", set_flag(alien_message_3)]
+    do: ["message(A third transmission speaks of a weapon beyond a gateway.)", set_flag(alien_message_3), "video(original:alientrans3.smk)"]
   alien_message_4:
     when: "day >= 181 and research(type_3_saucer_examination) and plan(doomsday) >= 0.33"
-    do: ["message(A fourth transmission: the weapon's drive is being assembled.)", set_flag(alien_message_4)]
+    do: ["message(A fourth transmission: the weapon's drive is being assembled.)", set_flag(alien_message_4), "video(original:alientrans4.smk)"]
   alien_message_5:
     when: "day >= 273 and plan(doomsday) >= 0.66"
-    do: ["message(The fifth transmission reveals the gateway: a black hole at the edge of the frontier.)", set_flag(alien_message_5)]
+    do: ["message(The fifth transmission reveals the gateway: a black hole at the edge of the frontier.)", set_flag(alien_message_5), "video(original:alientrans5.smk)"]
   summon_macarthur:
     when: "research(alien_hull_alloys) and research(dimension_jump_drive) and research(nova_bomb)"
     do: ["message(@orig.MAC_PROMPT1)", set_flag(macarthur)]

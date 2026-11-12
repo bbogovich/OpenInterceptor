@@ -30,6 +30,7 @@ OPTIONS:
     --scenario <ID>     Start this scenario directly, skipping the launcher
     --mission <ID>      Start this mission directly, skipping the launcher
     --strategy          Start a new campaign's strategy layer directly
+    --video <REF>       Play a video (original:<file>.smk or a pack path) and quit to the launcher
     --strategy-soak <D> Play the strategy layer automatically for D days and report
     --console           Serve the tablet control console (settings: console.enabled)
     --console-port <N>  Its port (default 8765; settings: console.port)
@@ -74,6 +75,8 @@ pub struct Options {
     pub mission: Option<String>,
     /// `--strategy`: open a new campaign's strategy screen directly.
     pub strategy: bool,
+    /// `--video <ref>`: play a video first.
+    pub video: Option<String>,
     pub ship: Option<String>,
     pub view: Option<crate::input::View>,
     pub model: Option<String>,
@@ -108,6 +111,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--scenario" => o.scenario = Some(value("--scenario")?),
             "--mission" => o.mission = Some(value("--mission")?),
             "--strategy" => o.strategy = true,
+            "--video" => o.video = Some(value("--video")?),
             "--campaign" => o.campaign = Some(value("--campaign")?),
             "--difficulty" => o.difficulty = Some(value("--difficulty")?),
             "--language" => o.language = Some(value("--language")?),
