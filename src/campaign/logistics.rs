@@ -530,14 +530,19 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             let deposits: Vec<String> = l.systems[sv.system]
                 .deposits
                 .iter()
-                .map(|d| format!("{} {:.0}/day", l.goods_name(&d.resource), d.rate))
+                .map(|d| {
+                    let reserve = d.reserve.map_or("unlimited".to_string(), |r| format!("{r:.0} in reserve"));
+                    format!("{} {:.0}/day ({reserve})", l.goods_name(&d.resource), d.rate)
+                })
                 .collect();
+            let features = &l.systems[sv.system].features;
             let sites: Vec<&str> =
                 l.sites.iter().filter(|(x, _)| l.site_ok(x, sv.system)).map(|(x, _)| x.as_str()).collect();
             let attacked = if sv.attacked { " (after fighting off an attack)" } else { "" };
             format!(
-                "Survey of {name}{attacked}: {}; research site: {}",
+                "Survey of {name}{attacked}: {}; features: {}; research site: {}",
                 if deposits.is_empty() { "no deposits".into() } else { deposits.join(", ") },
+                if features.is_empty() { "none".into() } else { features.join(", ") },
                 if sites.is_empty() { "none".into() } else { sites.join(", ") }
             )
         };

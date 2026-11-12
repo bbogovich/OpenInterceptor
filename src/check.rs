@@ -172,6 +172,27 @@ pub fn run(content: &Content) -> Report {
     let mut sounds: Vec<(String, usize)> = rules.sounds.values().cloned().collect();
     sounds.extend(rules.beams.iter().filter_map(|b| b.sound.clone().map(|s| (s, b.pack))));
     sounds.extend(rules.missiles.iter().filter_map(|m| m.sound.clone().map(|s| (s, m.pack))));
+    // Radio voices and mission chatter, music segments and stingers, and the voice
+    // sets' faces (pictures; a Smacker face is checked as an asset that exists).
+    sounds.extend(rules.voice_clips.iter().cloned());
+    for m in &rules.music {
+        for (_, segs) in &m.states {
+            sounds.extend(segs.iter().map(|s| (s.clone(), m.pack)));
+        }
+        sounds.extend(m.stingers.iter().map(|(_, s)| (s.clone(), m.pack)));
+    }
+    for v in &rules.voices {
+        if let Some(face) = &v.face {
+            let found = if face.to_ascii_lowercase().ends_with(".smk") {
+                content.read_asset(face, v.pack).map(|_| ())
+            } else {
+                content.load_image(face, v.pack, false).map(|_| ())
+            };
+            if let Err(e) = found {
+                r.errors.push(format!("voices.{}.face {face}: {e}", v.id));
+            }
+        }
+    }
     sounds.sort();
     sounds.dedup();
     for (s, pack) in sounds {

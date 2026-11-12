@@ -230,6 +230,20 @@ pub fn remember_audio(music: f32, effects: f32) {
     }
 }
 
+/// Whether the player asked to skip a film or cutscene this frame: Esc, Enter, a
+/// click, or a gamepad's Start, A or B.
+pub fn skip_pressed(ctx: &mut AppContext) -> bool {
+    use crate::input::gamepad::Button;
+    let raw = ctx.devices.read();
+    let pad = |b| raw.pad.is_some_and(|p| p.button(b) && !raw.pad_previous.unwrap_or_default().button(b));
+    is_key_pressed(KeyCode::Escape)
+        || is_key_pressed(KeyCode::Enter)
+        || is_mouse_button_pressed(MouseButton::Left)
+        || pad(Button::Start)
+        || pad(Button::A)
+        || pad(Button::B)
+}
+
 pub fn remember_physics(simple: bool) {
     let Some(dir) = crate::cli::user_data_dir() else { return };
     let mut s = crate::settings::Settings::load(&dir);
@@ -442,7 +456,7 @@ pub async fn run(options: Options) {
                 }
             }
             Screen::Video(v) => {
-                if v.frame(ctx.sounds.effects_volume) {
+                if v.frame(ctx.sounds.effects_volume, skip_pressed(&mut ctx)) {
                     if ctx.campaign.is_some() {
                         Next::Strategy
                     } else {

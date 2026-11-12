@@ -283,6 +283,16 @@ impl Content {
         }
         let mut rules = rules;
         errors.extend(resolve_text(&text, &mut rules, &mut scenarios));
+        // Cutscene titles and captions may be text keys too (`@cutscene.intro.line1`).
+        for c in &mut cutscenes {
+            let at = format!("cutscenes/{}", c.id);
+            for s in std::iter::once(&mut c.title).chain(c.captions.iter_mut().map(|(_, _, s)| s)) {
+                if let Err(key) = text.resolve(s).map(|v| *s = v) {
+                    errors.push(format!("text: missing key '@{key}' ({at})"));
+                    *s = key;
+                }
+            }
+        }
         let mut content = Content {
             packs,
             campaign: wanted,

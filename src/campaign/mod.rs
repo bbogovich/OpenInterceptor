@@ -202,6 +202,9 @@ pub struct Loadout {
 /// One campaign in progress.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Campaign {
+    /// Notices raised outside the clock (a debrief moving a faction's stance): the
+    /// screen shows them at once. Not saved: they are shown before the next save.
+    pub notices: Vec<String>,
     /// Hours since the campaign began.
     pub hours: f64,
     pub money: f64,
@@ -343,6 +346,7 @@ impl Campaign {
             }
         };
         let mut c = Campaign {
+            notices: Vec::new(),
             hours: 0.0,
             money: def.start.money as f64,
             difficulty,
@@ -1211,11 +1215,17 @@ impl Campaign {
                 "relation" => {
                     if let Some((f, n)) = arg.split_once(',') {
                         let by = n.trim().trim_start_matches('+').parse::<f32>().unwrap_or(0.0);
-                        let mut ignored = Vec::new();
-                        self.change_standing(def, f.trim(), by, &mut ignored);
+                        // A stance that changes is announced as soon as the screen is back.
+                        let mut events = Vec::new();
+                        self.change_standing(def, f.trim(), by, &mut events);
+                        for e in events {
+                            if let Event::Notice(t) = e {
+                                self.notices.push(t);
+                            }
+                        }
                     }
                 }
-                _ => {} // relation, cargo and the rest belong to Stage 5's systems
+                _ => {} // capture and cargo outcomes: see the logistics and capture systems
             }
         }
         // Pilots: missions and kills to the leader; a killed leader may survive injured.
@@ -1491,6 +1501,29 @@ fn generate_map(
 mod tests {
     use super::*;
     use crate::content::strategy::tests::{build, SAMPLE};
+
+    #[test]
+    fn generated_maps_are_spaced_named_seeded_and_hide_black_holes() {
+        let (d, _) = sample();
+        let make = |seed: u64| {
+            let mut rng = seed;
+            generate_map(&d, [10000.0, 10000.0], (8, 12), &["Alpha".into(), "Beta".into()], 1, &mut rng)
+        };
+        let m = make(7);
+        assert!((8..=12).contains(&m.len()), "{} systems", m.len());
+        assert_eq!((m[0].name.as_str(), m[1].name.as_str()), ("Alpha", "Beta"), "names in order, then numbered");
+        assert!(m[2].name.starts_with("System"));
+        let spacing = (10000.0f32 * 10000.0 / m.len() as f32).sqrt() * 0.4 * 0.99;
+        for (i, a) in m.iter().enumerate() {
+            for b in &m[i + 1..] {
+                assert!(distance(a.pos, b.pos) >= spacing * 0.9, "systems too close");
+            }
+        }
+        let last = m.last().unwrap();
+        assert!(last.hidden && last.class == "black_hole", "the last is a hidden black hole");
+        assert_eq!(make(7), m, "the same seed makes the same map");
+        assert_ne!(make(8), m, "another seed, another map");
+    }
 
     fn sample() -> (StrategyDef, Campaign) {
         let (d, errors) = build(SAMPLE);

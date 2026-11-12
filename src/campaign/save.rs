@@ -526,6 +526,16 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
     if !missing.is_empty() {
         return Err(format!("this save needs packs that are not loaded: {}", missing.join(", ")));
     }
+    // A pack updated since the save still loads, with a notice: its rules may differ.
+    let changed: Vec<String> = packs
+        .iter()
+        .filter_map(|p| {
+            let now = loaded.iter().find(|l| l.id == p.id)?;
+            (now.version != p.version).then(|| {
+                format!("Pack {} is now version {} (this save was made with {})", p.id, now.version, p.version)
+            })
+        })
+        .collect();
     let doc = yaml::parse(text).map_err(|e| format!("save: {e}"))?;
     let g = Get(&doc);
     // Field readers with bounds checks against the rules now loaded.
@@ -698,6 +708,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
     }
     let logistics = read_logistics(g.node("logistics"), def, bases.len(), systems.len())?;
     Ok(Campaign {
+        notices: changed,
         logistics,
         story: read_story(g.node("story"), def)?,
         hours: f(g, "hours"),
@@ -761,6 +772,11 @@ mod tests {
         assert_eq!(a, b);
         let err = read(&text, &d, &packs[..1]).unwrap_err();
         assert!(err.contains("mymod"), "{err}");
+        // A pack updated since: loads, with a notice.
+        let mut newer = packs.to_vec();
+        newer[0].version = "9.9.9".into();
+        let updated = read(&text, &d, &newer).unwrap();
+        assert!(updated.notices.iter().any(|n| n.contains("9.9.9")), "{:?}", updated.notices);
         // A save from other rules (an index out of range) is refused, not a crash.
         let broken = text.replacen("type: 0", "type: 9", 1);
         assert!(read(&broken, &d, &packs).unwrap_err().contains("loaded rules"));

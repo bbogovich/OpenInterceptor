@@ -187,7 +187,7 @@ impl CutscenePlayer {
 
     /// One frame: advance by the frame's time, draw. `true` when over (or skipped).
     pub fn frame(&mut self, ctx: &mut AppContext) -> bool {
-        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Enter) {
+        if super::skip_pressed(ctx) {
             return true;
         }
         self.accumulator += get_frame_time().min(0.1);

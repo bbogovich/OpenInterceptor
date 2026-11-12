@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Cutscene titles and captions for the default campaign (English).
+text:
+  cutscene.intro.title: "Perils of the Void"
+  cutscene.intro.line1: "The frontier, 2084."
+  cutscene.intro.line2: "Regent Vexor's saucers prowl the cosmium belts..."
+  cutscene.intro.line3: "Only the Interplanetary Guard stands in their way."

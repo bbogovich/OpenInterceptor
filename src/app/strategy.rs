@@ -186,6 +186,9 @@ pub struct StrategyScreen {
     sel: Option<Sel>,
     /// The last row clicked and when (a second click soon after acts on it).
     last_click: (usize, f64),
+    /// The layout's background image, loaded on first use (`None` inside: none, or it
+    /// failed to load and was reported).
+    background: Option<Option<Texture2D>>,
     /// The base orders apply to.
     base: usize,
     system: Option<usize>,
@@ -290,6 +293,7 @@ impl StrategyScreen {
             drag: None,
             sel: None,
             last_click: (usize::MAX, 0.0),
+            background: None,
             base: 0,
             system: None,
             banner: None,
@@ -319,6 +323,9 @@ impl StrategyScreen {
     /// Applies a finished battle's debrief (called when the app returns here).
     pub fn battle_done(&mut self, ctx: &AppContext, report: BattleReport) {
         let Some(def) = ctx.content.rules.strategy.as_ref() else { return };
+        // The music's good-news or bad-news stinger for the result (R-CPN-012).
+        let mood = if report.result == "win" { "good" } else { "bad" };
+        ctx.music.stinger(&ctx.sounds, &ctx.content.rules, mood);
         match self.flying.take() {
             Some(PendingBattle::Contact(id)) => {
                 self.campaign.battle_result(def, id, &report.result, &report.actions, report.kills);
@@ -1017,8 +1024,34 @@ impl StrategyScreen {
         // --- Drawing the base layer (prompts draw over it) ----------------------------
         let ui = &ctx.ui;
         clear_background(ui.colour("background"));
+        // The layout's background image over the whole window.
+        if self.background.is_none() {
+            self.background = Some(layout_def.background.as_ref().and_then(|img| {
+                match ctx.content.load_image(img, layout_def.pack, false) {
+                    Ok(i) => Some(Texture2D::from_rgba8(i.width as u16, i.height as u16, &i.rgba)),
+                    Err(e) => {
+                        eprintln!("screens.starmap.background {img}: {e}");
+                        None
+                    }
+                }
+            }));
+        }
+        if let Some(Some(tex)) = &self.background {
+            draw_texture_ex(
+                tex,
+                0.0,
+                0.0,
+                WHITE,
+                DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() },
+            );
+        }
         let (s, origin) = self.map_view(map);
         self.draw_map(ui, def, map, s, origin, k);
+        // Notices raised outside the clock (a debrief's change of stance), one at a time.
+        if self.banner.is_none() && !self.campaign.notices.is_empty() {
+            self.banner = Some(self.campaign.notices.remove(0));
+            self.speed = 0;
+        }
         let prompting = self.card.is_some()
             || self.battle.is_some()
             || self.ending.is_some()
@@ -1095,7 +1128,12 @@ impl StrategyScreen {
             for e in self.campaign.advance(def, dt) {
                 self.speed = 0;
                 match e {
-                    Event::Notice(t) => self.banner = Some(t),
+                    Event::Notice(t) => {
+                        if t.starts_with("Research complete") {
+                            ctx.music.stinger(&ctx.sounds, &ctx.content.rules, "good");
+                        }
+                        self.banner = Some(t);
+                    }
                     Event::Battle { contact } => {
                         self.banner = None;
                         self.battle = Some(contact);
@@ -1116,6 +1154,8 @@ impl StrategyScreen {
                     Event::Ending { ending } => {
                         self.banner = None;
                         self.ending = Some(ending);
+                        let mood = if def.story.endings[ending].victory { "good" } else { "bad" };
+                        ctx.music.stinger(&ctx.sounds, &ctx.content.rules, mood);
                         // The ending's own film first, then its text.
                         video = video.or_else(|| def.story.endings[ending].video.clone());
                     }

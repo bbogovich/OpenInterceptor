@@ -2,7 +2,7 @@
 # The default campaign's opening (MD2): a Guard patrol meets a Dominion saucer over the
 # Gatehouse. Played before a new campaign (campaign.intro); Esc skips.
 id: intro
-title: Perils of the Void
+title: "@cutscene.intro.title"
 length: 20s
 environment: {starfield_seed: 31, sun: [-0.4, 0.45, -0.8], environment: orbit}
 entities:
@@ -28,6 +28,6 @@ cameras:
   station: {position: [[11s, [-500, 260, -1200]], [20s, [-700, 320, -900]]], look_at: gatehouse, fov: 45}
 cuts: [[0s, wide], [6.5s, chase], [11.2s, station]]
 captions:
-  - [1s, 5s, "The frontier, 2084."]
-  - [5.5s, 9.5s, "Regent Vexor's saucers prowl the cosmium belts..."]
-  - [14s, 19.5s, "Only the Interplanetary Guard stands in their way."]
+  - [1s, 5s, "@cutscene.intro.line1"]
+  - [5.5s, 9.5s, "@cutscene.intro.line2"]
+  - [14s, 19.5s, "@cutscene.intro.line3"]

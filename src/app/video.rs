@@ -60,18 +60,16 @@ impl VideoPlayer {
     }
 
     /// One frame: advances to the frame the clock has reached, draws it, and returns
-    /// `true` when the video is over (ended, or skipped).
-    /// One frame; `volume` is the soundtrack's (the effects volume). `true` when over.
-    pub fn frame(&mut self, volume: f32) -> bool {
+    /// `true` when the video is over (ended, or skipped). `volume` is the soundtrack's
+    /// (the effects volume); `skip` is whether the player asked to skip.
+    pub fn frame(&mut self, volume: f32, skip: bool) -> bool {
         if self.shown == 0 && self.started == 0.0 {
             self.started = get_time();
             if let Some(s) = &self.sound {
                 play_sound(s, PlaySoundParams { looped: false, volume: 0.9 * volume });
             }
         }
-        let skip = is_key_pressed(KeyCode::Enter)
-            || is_key_pressed(KeyCode::Escape)
-            || is_mouse_button_pressed(MouseButton::Left);
+        // `skip`: Esc, Enter, a click or a gamepad button (see `app::skip_pressed`).
         let due = (((get_time() - self.started) as f32 / self.frame_time) as u32 + 1).min(self.frames);
         if due > self.shown {
             // Decode up to the due frame. (A decoder borrows the bytes, so it is rebuilt

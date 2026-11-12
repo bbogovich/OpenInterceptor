@@ -425,6 +425,9 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         let mut c = Campaign::new(&d, 0, 4);
         c.mission_result(&d, "win", &["relation(enemy, +15)".into()], 1);
         assert_eq!(c.story.standing("enemy"), -45.0);
+        assert!(c.notices.is_empty(), "still the same stance: nothing to announce");
+        c.mission_result(&d, "win", &["relation(enemy, +90)".into()], 1);
+        assert!(c.notices.iter().any(|n| n.contains("enemy")), "a change of stance is announced: {:?}", c.notices);
     }
 
     #[test]
