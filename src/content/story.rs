@@ -163,6 +163,8 @@ pub struct Ending {
     pub id: String,
     pub text: String,
     pub victory: bool,
+    /// A video played when the campaign ends this way (credits, a cut-scene).
+    pub video: Option<String>,
 }
 
 /// An encyclopaedia entry.
@@ -404,6 +406,7 @@ impl StoryDef {
                 id: id.to_string(),
                 text: g.str("text").unwrap_or("").to_string(),
                 victory: g.bool("victory").unwrap_or(false),
+                video: g.str("video").map(str::to_string),
             })
             .collect();
         let mut victory = Vec::new();
@@ -495,7 +498,11 @@ pub fn sections() -> Vec<super::schema::Field> {
         ),
         f(
             "endings",
-            dict(Ty::Def(vec![f("text", Ty::Text, "ending text"), f("victory", Ty::Bool, "a victory")])),
+            dict(Ty::Def(vec![
+                f("text", Ty::Text, "ending text"),
+                f("victory", Ty::Bool, "a victory"),
+                f("video", Ty::Asset, "a video played at the end (credits)"),
+            ])),
             "endings",
         ),
         f(

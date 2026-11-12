@@ -138,6 +138,8 @@ pub struct StrategyScreen {
     ending: Option<usize>,
     /// A title card on screen: (title, text).
     card: Option<(String, String)>,
+    /// A video to hand to the app on the next frame (an ending reached after a battle).
+    pending_video: Option<String>,
     /// The battle being flown.
     pub flying: Option<PendingBattle>,
     /// A short feedback line (an order's error, a save).
@@ -206,7 +208,10 @@ impl StrategyScreen {
         let id = ctx.content.campaign.clone().unwrap_or_default();
         let path = save_path(&id).ok_or("no user data folder")?;
         let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-        Ok(Self::with(save::read(&text, def, &pack_refs(ctx))?))
+        let mut s = Self::with(save::read(&text, def, &pack_refs(ctx))?);
+        // A campaign that has ended shows its ending again.
+        s.ending = s.campaign.story.ending;
+        Ok(s)
     }
 
     fn with(campaign: Campaign) -> StrategyScreen {
@@ -224,6 +229,7 @@ impl StrategyScreen {
             offer: None,
             ending: None,
             card: None,
+            pending_video: None,
             flying: None,
             flash: None,
         }
@@ -275,6 +281,7 @@ impl StrategyScreen {
         crate::campaign::story::check_end(&mut self.campaign, def, &mut events);
         if let Some(crate::campaign::Event::Ending { ending }) = events.first() {
             self.ending = Some(*ending);
+            self.pending_video = def.story.endings[*ending].video.clone();
         }
         self.speed = 0;
     }
@@ -626,6 +633,9 @@ impl StrategyScreen {
 
     /// One frame: input, time, drawing.
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
+        if let Some(reference) = self.pending_video.take() {
+            return Next::Video { reference };
+        }
         {
             let set = (!ctx.content.rules.music.is_empty()).then_some(0);
             ctx.music.frame(&ctx.sounds, &ctx.content.rules, set, "strategy", get_time());
@@ -894,6 +904,8 @@ impl StrategyScreen {
                         Event::Ending { ending } => {
                             self.banner = None;
                             self.ending = Some(ending);
+                            // The ending's own film first, then its text.
+                            video = video.or_else(|| def.story.endings[ending].video.clone());
                         }
                         Event::Card { title, text } => self.card = Some((title, text)),
                         Event::Video { reference } => video = Some(reference),

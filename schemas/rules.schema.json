@@ -821,6 +821,7 @@
     "endings": {"description": "endings", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "text": {"description": "ending text", "type": "string"},
           "victory": {"description": "a victory", "type": "boolean"},
+          "video": {"description": "a video played at the end (credits)", "type": "string"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

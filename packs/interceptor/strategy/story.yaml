@@ -78,7 +78,7 @@ strategist:
   calm_after_wins: 3
 
 endings:
-  doomsday_destroyed: {victory: true, text: "The Doomsday weapon is destroyed. The frontier is safe."}
+  doomsday_destroyed: {victory: true, text: "The Doomsday weapon is destroyed. The frontier is safe.", video: "original:credits_sm2a.smk"}
   doomsday_complete: {text: "@orig.DD_TOOLATE"}
   last_base: {text: "@orig.S_LASTBASEDEAD"}
 
