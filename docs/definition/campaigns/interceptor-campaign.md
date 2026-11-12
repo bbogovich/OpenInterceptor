@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -80,6 +80,16 @@ Numeric tech ids in prerequisite keys (`Prereq1=12` in the original file) are tr
 mod (`tech_ids:`), checked by `--check` against the original file so a mistake is reported, not
 silently wrong.
 
+!!! note "As built (app 0.8.0)"
+    The table is generated from the player's executable by `tools/interceptor_strategy.py` into
+    `packs/interceptor/strategy/references.yaml` (*derived*: the executable's 12-byte entries of
+    `R_` name pointer, string id and tech id). `--check` checks that every research id the table
+    gives is a defined topic once a condition uses it, but it does **not** compare the table with
+    the original file again: a number the table does not list is left out of the condition
+    silently (by design for the alien ids 75 and up). Research `unlocks` are not authored; items,
+    hulls and modules are gated by their own `TechRequired`. See
+    [Strategy layer › the `interceptor` campaign](../../modding/strategy.md#the-interceptor-campaign-from-the-players-data).
+
 ## Fidelity process
 
 1. **Stage 2** — combat behaviours: each alien class's behaviour tuned against recorded play of
@@ -98,3 +108,4 @@ silently wrong.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Definition 1.0.0 as background for the campaign features |
+| 1.14.0 | 2026-11-11 | As-built note on `tech_ids` (app 0.8.0): generated from the player's executable; unlisted numbers are left out, not reported |

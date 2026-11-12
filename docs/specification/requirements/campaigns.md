@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -85,14 +85,17 @@ The `interceptor` campaign MUST express every system of the original from the pl
 
 - Implements: [F-CPN-004](../../definition/campaigns/features.md#f-cpn-004-the-interceptor-campaign)
 - Status: planned
-- Verified by: Planned (in progress: 26 mission types defined, DEV-041).
+- Verified by: Planned (in progress: 26 mission types defined, DEV-041; the strategy layer, DEV-050). `content::strategy::tests::original_tech_ids_become_research_prerequisites` (synthetic); MT-4-22, MT-4-23
 - See: [The Interceptor campaign mod](../../definition/campaigns/interceptor-campaign.md), [Coverage matrix](../design/coverage.md)
 
 !!! note "Progress (app 0.6.5, main `b1f57ab`)"
     `packs/interceptor/missions/missions.yaml` defines **26 mission types**: the first five and 21 more (original types 3 – 5, 7 – 9, 12 – 14, 16, 18 – 23, 25 – 27, 29 and 30): base, corporate outpost, OPP and science-station defence; freighter convoys against aliens and pirates; deep-space ambush and encounter; the pirate squadron ambush; alien freighter ambushes; attacks on alien mining platforms, outposts and bases; the doomsday weapon. Names, briefings and debriefs are the original's own, by text key; compositions are derived estimates growing with the level (DEV-041). Soaked with the AI pilot at beginner, and at veteran for the hardest.
 
 !!! question "Open"
-    The original's briefing keys run to 30; types 2, 6, 10 and 17 have no definition. Whether they are real mission types is *unknown* — the earlier count of 27 (issue #17's "remaining 22") is one more than the 26 now defined. Also not yet defined as their own entries: the simulator types and the final mission's two parts. The `interceptor` strategy data (plan item 4.12) is not started: the original's research prerequisites are numeric tech ids that do not map to its research sections in file order, so a tech-id table must be worked out first.
+    The original's briefing keys run to 30; types 2, 6, 10 and 17 have no definition. Whether they are real mission types is *unknown* — the earlier count of 27 (issue #17's "remaining 22") is one more than the 26 now defined. Also not yet defined as their own entries: the simulator types and the final mission's two parts. The strategy layer (below) has **not been play-tested**: a six-month automatic run researches 4 of 71 topics on one downlink, so the research pace and every `DERIVED` value need the developer's judgement; the original's per-outpost evaluation, the Doomsday arc and the alien strategist are Stage 5.
+
+!!! note "Progress (app 0.8.0, main `c64d178`): the strategy layer"
+    Plan item 4.12 is done as **derived**. `tools/interceptor_strategy.py` reads the player's `GameSettings.ini` and `Interceptor.exe` and writes `packs/interceptor/strategy/references.yaml`: the executable's **tech-id table** (12-byte entries {pointer to the `R_` section name, string id, tech id}; *derived* — 67 of 69 `TechRequired` values resolve through it, eight `Prereq` links point to a topic of a higher `Level`, ids 75 and up are not in it) and `inherit:` references for **71 research topics, 55 items and 34 X-COM modules** (section names and ids only; the values are read from the player's file at load). `packs/interceptor/strategy/campaign.yaml` authors the rest — a generated Frontier map, downlink research, hulls inherited from `Ship_IntType1` – `3`, module groups and effects, the X-COM base type, funding, raids flying the original mission types, pilots and scores — with every estimate marked `DERIVED` (DEV-050). New engine keys for it: `tech_ids`, `economy.cost_scale`, `economy.module_time: days`, `start.money_from`. Research unlocks are not authored: items, hulls and modules are gated by their own `TechRequired`. Of the original's 68 modules, the 34 X-COM ones are the player's; the alien ones belong to the strategist (Stage 5).
 
 ### R-CPN-006 Interceptor Remastered
 
@@ -178,3 +181,4 @@ The engine MUST play the original's Smacker cut-scenes and talking heads and ima
 | 1.0.0 | 2026-11-11 | Bootstrap: R-CPN-001 – R-CPN-012 (12 requirements; 3 reverse-engineered from the code) |
 | 1.12.0 | 2026-11-11 | R-CPN-004: progress note — nine default missions (five new in app 0.6.4 using environments, hazards and ground installations); generated types and chapter missions still to come. No requirement wording changed |
 | 1.13.0 | 2026-11-11 | R-CPN-005: progress note — 26 mission types defined (app 0.6.5), with an Open note on types 2, 6, 10 and 17 and the 27 count; R-CPN-004: the default campaign's strategy data (app 0.7.1). No requirement wording changed |
+| 1.14.0 | 2026-11-11 | R-CPN-005: progress note — the `interceptor` strategy layer from the player's data (app 0.8.0, plan item 4.12, derived; not play-tested). No requirement text changed |

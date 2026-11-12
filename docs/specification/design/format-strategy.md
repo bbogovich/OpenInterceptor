@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -28,6 +28,16 @@ formulas are data too.
     tables, capture, `designs`, fitting rules, training, bravery, injuries by health, strategists.
     Several keys are simpler than designed (a number where an expression is shown, `upkeep` as a
     plain monthly number); see [Deviations](../../implementation/deviations/index.md) DEV-046.
+
+!!! note "As built (app 0.8.0 – 0.9.0)"
+    For the original's own data (app 0.8.0): `tech_ids: {<number>: <topic>}` translates the
+    numeric `Prereq1..3` and `TechRequired`/`TechRequired2` read by inheritance into `research(x)`
+    prerequisites; `economy.cost_scale` (the original's money is in thousands) and
+    `economy.module_time: days`; `start.money_from: original:<file>/<key>` reads the starting money
+    from the difficulty level's section. Resources and the [logistics](logistics.md) sections
+    (app 0.9.0): `resources`, `components`, `recipes`, `facility_types`, `research_sites`,
+    `logistics`, and `deposits`, `features`, hull `components`, topic `lab`, `site`,
+    `start_cost`.
 
 ## Star map
 
@@ -351,3 +361,4 @@ meet, a [mission](format-missions.md) is generated.
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch) |
 | 1.13.0 | 2026-11-11 | As-built note: the strategy sections built in app 0.7.0 – 0.7.3 and what remains; the format itself unchanged |
+| 1.14.0 | 2026-11-11 | As-built note: `tech_ids`, `cost_scale`, `module_time`, `money_from` (app 0.8.0) and the logistics sections (app 0.9.0); the format itself unchanged |

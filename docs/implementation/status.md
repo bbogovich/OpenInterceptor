@@ -8,7 +8,7 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [1 Flight simulator](plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
 | [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later); hazards in **0.5.1**; environments, atmospheric flight, terrain and the atmosphere HUD in **0.6.0**; ground installations in **0.6.1**; radio voices in **0.6.2**; the simulator in **0.6.3**; five default missions in **0.6.4**; all 26 `interceptor` mission types in **0.6.5**; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in **0.6.7**; the battle runs on after its result in **0.7.4**. Tier 2 scripting evaluated, awaiting the user's decision | See [Stage 3 progress](#stage-3-progress) below |
-| [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**. 4.1 and 4.11 done; 4.2 – 4.10 and 4.13 partial; 4.12, 4.14 – 4.17 open | See [Stage 4 progress](#stage-4-progress) below |
+| [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**. 4.1 and 4.11 done; 4.12 done as derived (not play-tested); 4.2 – 4.10, 4.13 – 4.17 partial | See [Stage 4 progress](#stage-4-progress) below |
 | [5 Campaigns](plan/stage-5-campaign.md) | Not started | |
 | [6 Presentation](plan/stage-6-presentation.md) | Not started | |
 | [7 Modding toolkit and Remastered](plan/stage-7-modding.md) | Not started | |
@@ -174,30 +174,41 @@ ground installations); at 0.6.1, **321 unit tests** on macOS by a count of the s
 App **0.6.6** (`6d390d7`, MD1 formations), **0.6.7** (`65141dc` the campaign context; `c0e2516`
 playtest fixes), **0.7.0** (`77d6c9f`, the core), **0.7.1** (`10f7fce`, the default campaign's
 strategy layer and the strategy screen), **0.7.2** (`94d66c1`, fitting), **0.7.3** (`076203e`,
-`1e600db`, lane travel) and **0.7.4** (`9295707`, the debrief delay, a Stage 3 item). At 0.7.4,
-**351 unit tests** on macOS by a count of the sources ([Unit tests](testing/unit-tests.md)).
+`1e600db`, lane travel), **0.7.4** (`9295707`, the debrief delay, a Stage 3 item), **0.8.0**
+(`c64d178`, the `interceptor` strategy layer from the player's data), **0.8.1** (`8e96338`, testbed
+cheats), **0.9.0** (`ff9d8fc`, logistics and two fixes) and main `2ed1149` (PNG encoding through
+the `image` crate). At `2ed1149`, **355 unit tests** on macOS by a count of the sources
+([Unit tests](testing/unit-tests.md)).
 
 | Item | Status | Where |
 |---|---|---|
 | MD1 shared formations: `formations:` (five shapes or custom slots, `spacing`) in both campaigns, role `formation:`, `flight.formation`, successive slots across wingman roles, unknown = load error, Shift+O *Wingmen: next formation* | **Done** (0.6.6; MT-4-01 not yet run) | `src/content/formation.rs`, `src/mission/mod.rs`, `src/sim/ai.rs`, `rules/formations.yaml` |
 | Campaign context (`script::campaign`, 16 queries, every id a checked constant) | **Done** (0.6.7) | `src/script/campaign.rs` |
-| Strategy data (`content::strategy`): `start`, `maps`, `star_classes`, `research`, `research_model`, `items`, `hulls`, `base_modules`, `base_types`, `raids`, `incomes`, `expenses`, `pilots`, `scores`, `flags`, `economy`; names checked at load | **Done** (0.7.0; `rounds` 0.7.2) | `src/content/strategy.rs`, `schemas/rules.schema.json` |
-| Campaign runtime: the hour step, construction, research, manufacture, deliveries, flows, the monthly report, recruits, raids, detection, interception, the battle hand-off, unopposed strikes | **Done** for 4.1, partial for 4.2 – 4.9 (see the [plan](plan/stage-4-strategy.md)) | `src/campaign/mod.rs` |
-| Saves (4.11) | **Done** (0.7.0) | `src/campaign/save.rs` |
-| Default campaign strategy data (4.13) | **Partial** (0.7.1) | `resources/default/strategy/` |
-| Strategy screen (4.10), launcher entries, `--strategy`, `Next::CampaignBattle` / `Next::Strategy` | **Partial** (0.7.1; MT-4-02 – MT-4-10 not yet run) | `src/app/strategy.rs`, `src/app/mod.rs`, `src/app/launcher.rs`, `src/app/flight.rs`, `src/cli.rs` |
+| Strategy data (`content::strategy`): `start`, `maps`, `star_classes`, `research`, `research_model`, `items`, `hulls`, `base_modules`, `base_types`, `raids`, `incomes`, `expenses`, `pilots`, `scores`, `flags`, `economy`; names checked at load | **Done** (0.7.0; `rounds` 0.7.2; `tech_ids`, `cost_scale`, `module_time`, `money_from` 0.8.0) | `src/content/strategy.rs`, `src/content/rules.rs`, `schemas/rules.schema.json` |
+| Campaign runtime: the hour step, construction, research, manufacture (paid per unit since 0.9.0), deliveries, flows, the monthly report, recruits, raids, detection, interception, the battle hand-off, unopposed strikes | **Done** for 4.1, partial for 4.2 – 4.9 (see the [plan](plan/stage-4-strategy.md)) | `src/campaign/mod.rs` |
+| Saves (4.11) | **Done** (0.7.0; logistics state 0.9.0) | `src/campaign/save.rs` |
+| Default campaign strategy data (4.13) | **Partial** (0.7.1; logistics data 0.9.0) | `resources/default/strategy/` |
+| Strategy screen (4.10), launcher entries, `--strategy`, `Next::CampaignBattle` / `Next::Strategy`; the Supply tab and map markers (0.9.0) | **Partial** (0.7.1, 0.9.0; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18 not yet run) | `src/app/strategy.rs`, `src/app/mod.rs`, `src/app/launcher.rs`, `src/app/flight.rs`, `src/cli.rs` |
 | Fitting (4.7) | **Done** for best-available fitting (0.7.2; MT-4-12 not yet run) | `src/campaign/mod.rs`, `src/app/flight.rs` |
 | Lane travel (4.2) | **Done** (0.7.3; MT-4-11 not yet run) | `src/campaign/mod.rs`, `src/app/strategy.rs` |
-| `interceptor` strategy data (4.12) | **Not started**: the original's research prerequisites are numeric tech ids that do not map to its research sections in file order; a tech-id table must be worked out first | |
-| Logistics (4.14 – 4.17); the testbed strategy sandbox | **Not started** | |
+| `interceptor` strategy data (4.12): the tech-id table and inherit references generated from the player's files; the authored campaign with every estimate `DERIVED` | **Done as derived** (0.8.0; **not play-tested**; MT-4-22, MT-4-23 not yet run). Six-month soak: 4 of 71 topics on one downlink | `tools/interceptor_strategy.py`, `packs/interceptor/strategy/` |
+| Logistics data (4.14, 4.17): resources, components, recipes, facility types, research sites, deposits, features, hull components, station-only topics, supply settings | **Done** (0.9.0) | `src/content/logistics.rs`, `resources/default/strategy/logistics.yaml` |
+| Logistics runtime (4.14 – 4.16): surveys, placement rules, construction, mining, recipes, demand-driven orders, convoys with ambush rolls (auto-resolved), station research | **Partial** (0.9.0; MT-4-13 – MT-4-18 not yet run): fighter pools, flown ambushes, construction stages and strikes, depots, cargo capacity, upgrades open | `src/campaign/logistics.rs` |
+| Testbed: cheats (payday, knowitall, quickbase, jump to battle), `--strategy-soak` | **Done** (0.8.0 – 0.8.1; MT-4-20, MT-4-21 not yet run) | `src/campaign/mod.rs`, `src/app/strategy.rs`, `src/main.rs`, `src/cli.rs` |
+| Fixes: manufacture paid per unit; salvage recorded by raid id; station-only topics not offered to bases | **Done** (0.9.0; MT-4-19 not yet run) | `src/campaign/mod.rs` |
 
-**Known issues** (found while documenting, in the code at main `9295707`): manufacture charges
-no money (`Campaign::manufacture` and the hour step never take the cost); `salvage` records the
-raid's display name while `salvaged(x)` compares the raid's id, so the default campaign's
-`saucer_hulls` and `robot_brains` cannot be started. **Also open**: `relation` and cargo outcome
-actions are logged only (Stage 5); texts in the strategy files are plain English (DEV-047); the
-screen is functional and plain (Stage 6); save pack versions are recorded, not compared.
+**Gaps** (recorded honestly, at main `2ed1149`): convoy ambushes cannot be flown yet — they are
+auto-resolved, and the `convoy_ambush` mission waits for the hookup (#19); not built: facility
+fighter pools and escorts, construction-defence strikes from 50 %, enemy supply depots and
+captured cargo, third-party convoys, facility upgrades, the design's `placement:` expressions
+(fixed rules per role instead, DEV-049); the Supply tab is plain; save pack versions are still
+not compared; generated maps still have no unit test; no unit test round-trips a save with
+logistics in flight. **Also open**: `relation` and cargo outcome actions are logged only (Stage
+5); texts in the strategy files are plain English (DEV-047); the screen is functional and plain
+(Stage 6). The two known issues of the last pass (manufacture free; `salvaged` by name) are fixed.
 
-**Exit** of Stage 4 (both campaigns run 6 months; save/load round trips; a manual long run): the
-default campaign's six-month run is a unit test (`the_default_campaign_runs_six_months`); the
-`interceptor` half waits for 4.12.
+**Exit** of Stage 4 (both campaigns run 6 months; save/load round trips; a manual long run): both
+strategy layers run six months headless (`--strategy-soak 180`: `default` 12 of 14 topics,
+`interceptor` 4 of 71), and the default campaign's run is a unit test with a save round trip
+(`the_default_campaign_runs_six_months`). Outstanding: the manual long run, the `interceptor`
+play-test and balance, and the open items above.

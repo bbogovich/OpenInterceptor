@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -16,11 +16,11 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | [F-STR-002 Economy, research and bases](#f-str-002-economy-research-and-bases) | In progress |
 | [F-STR-003 Ships, equipment and pilots](#f-str-003-ships-equipment-and-pilots) | In progress |
 | [F-STR-004 Saved games](#f-str-004-saved-games) | Implemented |
-| [F-STR-005 Supply-chain logistics](#f-str-005-supply-chain-logistics) | Planned |
-| [F-STR-006 Surveys](#f-str-006-surveys) | Planned |
-| [F-STR-007 Supply convoys worth escorting](#f-str-007-supply-convoys-worth-escorting) | Planned |
+| [F-STR-005 Supply-chain logistics](#f-str-005-supply-chain-logistics) | In progress |
+| [F-STR-006 Surveys](#f-str-006-surveys) | In progress |
+| [F-STR-007 Supply convoys worth escorting](#f-str-007-supply-convoys-worth-escorting) | In progress |
 | [F-STR-008 Facilities under construction](#f-str-008-facilities-under-construction) | In progress |
-| [F-STR-009 Research stations and fighter pools](#f-str-009-research-stations-and-fighter-pools) | Planned |
+| [F-STR-009 Research stations and fighter pools](#f-str-009-research-stations-and-fighter-pools) | In progress |
 
 ## Features
 
@@ -60,7 +60,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Long campaigns; mods change between sessions.
 
-- **Status:** implemented. Built (app 0.7.0): the whole campaign saved as YAML with its pack list; saves needing missing packs are refused.
+- **Status:** implemented. Built (app 0.7.0): the whole campaign saved as YAML with its pack list; saves needing missing packs are refused. The logistics state joined in app 0.9.0.
 - **Source:** Plan item 4.11.
 - **Specified by:** [R-STR-011](../specification/requirements/strategy-logistics.md#r-str-011-saves)
 
@@ -70,7 +70,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** User request for the default campaign: both sides race to mine the belts, and escort and raid missions get a strategic cause.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.9.0): resources, components and recipes as data; mining facilities, manufacturing centers and research stations; demand-driven orders from base hull jobs through manufacturing to mining; automatic government supply convoys along the lanes; saves. Remaining: flown convoy ambushes and construction strikes (auto-resolved today), captured cargo and depots, third-party convoys, facility upgrades.
 - **Source:** User request (logistics design, decisions 2026-11-11); plan items 4.14–4.17.
 - **Specified by:** [R-STR-012](../specification/requirements/strategy-logistics.md#r-str-012-logistics-is-optional-data), [R-STR-013](../specification/requirements/strategy-logistics.md#r-str-013-demand-driven-orders), [R-STR-014](../specification/requirements/strategy-logistics.md#r-str-014-extraction-and-recipes), [R-STR-015](../specification/requirements/strategy-logistics.md#r-str-015-government-supply-ships), [R-STR-019](../specification/requirements/strategy-logistics.md#r-str-019-logistics-mission-generation), [R-STR-020](../specification/requirements/strategy-logistics.md#r-str-020-cargo-losses-and-depots), [R-STR-027](../specification/requirements/strategy-logistics.md#r-str-027-third-party-convoys), [R-MOD-014](../specification/requirements/modding.md#r-mod-014-campaign-context)
 
@@ -80,7 +80,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The player chooses where to build from what is known.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.9.0): survey ships from a base within its radar range, the attack roll at launch, a report of deposits and research sites; suitability shown on the Supply tab. Remaining: a survey craft and a battle when one is attacked (auto-resolved today).
 - **Source:** Logistics decisions (2026-11-11, revised); plan item 4.16.
 - **Specified by:** [R-STR-021](../specification/requirements/strategy-logistics.md#r-str-021-survey-ships)
 
@@ -90,7 +90,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Escort missions stay interesting and playable: single ships would be destroyed quickly.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.9.0): convoys of several vessels (data) with even shares, the ambush point chosen at launch, surviving shares delivered. Remaining: the large supply-vessel model, flying the ambush and escorting, cargo capacity.
 - **Source:** User decision (2026-11-11).
 - **Specified by:** [R-STR-016](../specification/requirements/strategy-logistics.md#r-str-016-supply-convoys), [R-STR-017](../specification/requirements/strategy-logistics.md#r-str-017-supply-vessel-model), [R-STR-018](../specification/requirements/strategy-logistics.md#r-str-018-supply-convoy-attack-position), [R-STR-026](../specification/requirements/strategy-logistics.md#r-str-026-supply-cargo-capacity)
 
@@ -100,7 +100,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Construction is a vulnerable period worth defending.
 
-- **Status:** in-progress
+- **Status:** in-progress. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Remaining: stages shown on the map and in battle, strikes on facilities under construction.
 - **Source:** Logistics design; construction-stage looks built in Stage 2; plan items 4.14 and 3.13.
 - **Specified by:** [R-CMB-019](../specification/requirements/combat.md#r-cmb-019-model-sets-and-damage-looks), [R-STR-022](../specification/requirements/strategy-logistics.md#r-str-022-construction-stages), [R-STR-023](../specification/requirements/strategy-logistics.md#r-str-023-construction-attacks)
 
@@ -110,7 +110,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Gives facilities a purpose and a defence.
 
-- **Status:** planned
+- **Status:** in-progress. Built (app 0.9.0): research stations on research sites with station-only topics and one-off start costs. Remaining: facility fighter pools.
 - **Source:** Logistics decisions (2026-11-11); plan item 4.16.
 - **Specified by:** [R-STR-024](../specification/requirements/strategy-logistics.md#r-str-024-research-stations-and-sites), [R-STR-025](../specification/requirements/strategy-logistics.md#r-str-025-facility-fighter-pools)
 
@@ -120,3 +120,4 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-STR-001 – F-STR-009 (9 features) |
 | 1.13.0 | 2026-11-11 | F-STR-001 – F-STR-003 in progress and F-STR-004 implemented (app 0.7.0 – 0.7.3) |
+| 1.14.0 | 2026-11-11 | F-STR-005, F-STR-006, F-STR-007 and F-STR-009 in progress; F-STR-008 progress (app 0.9.0, logistics) |

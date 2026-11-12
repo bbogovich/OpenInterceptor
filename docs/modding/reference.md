@@ -43,9 +43,16 @@ Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `system
 `missions` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `audio`, `console`,
 `campaign` (global). The **strategy layer** adds the definitions `maps`, `star_classes`, `research`,
 `items`, `hulls`, `base_modules`, `base_types`, `raids`, `incomes`, `expenses` and the globals
-`start`, `research_model`, `pilots`, `scores`, `flags`, `economy`, by convention in
-`strategy/*.yaml` — every key is on [Strategy layer](strategy.md). All of them are in the editor
-schema `schemas/rules.schema.json`.
+`start`, `research_model`, `pilots`, `scores`, `flags`, `economy`, `tech_ids` (app 0.8.0), by
+convention in `strategy/*.yaml` — every key is on [Strategy layer](strategy.md). Its optional
+**logistics** (app 0.9.0) adds the definitions `resources`, `components`, `recipes`,
+`facility_types`, `research_sites`, the global `logistics`, and keys on existing entries: map
+systems' `deposits` and `features`, hulls' `components`, topics' `lab`, `site` and `start_cost`
+([Strategy layer › Logistics](strategy.md#logistics)). New strategy keys in app 0.8.0:
+`start.money_from`, `economy.cost_scale`, `economy.module_time`, and the original's numeric
+`prereq1` – `prereq3`, `tech_required`, `tech_required2` read through `tech_ids`
+([`tech_ids`](strategy.md#tech_ids)). All of them are in the editor schema
+`schemas/rules.schema.json`.
 
 Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 

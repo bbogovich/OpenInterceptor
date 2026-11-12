@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -56,7 +56,7 @@ Requirements for these features: [Testbed & tools requirements](../specification
 
 **Why.** Later stages need their own playtest tools.
 
-- **Status:** in-progress — the mission browser is the simulator (app 0.6.3), and the simulator's environments with the surface scenarios serve as the terrain sandbox; the condition console (Stage 3) and the strategy and campaign tools (Stages 4 – 5) remain.
+- **Status:** in-progress — the mission browser is the simulator (app 0.6.3), and the simulator's environments with the surface scenarios serve as the terrain sandbox; the strategy screen has the original's cheats and jump to battle (app 0.8.1) and `--strategy-soak` plays a strategy layer headless (app 0.8.0); the condition console (Stage 3) and the event and arc tools (Stage 5) remain.
 - **Source:** Testbed adds of Stages 3–5.
 - **Specified by:** [R-TST-009](../specification/requirements/testbed-tools.md#r-tst-009-mission-and-condition-tools), [R-MSN-010](../specification/requirements/missions.md#r-msn-010-simulator-missions), [R-TST-010](../specification/requirements/testbed-tools.md#r-tst-010-strategy-and-campaign-tools)
 
@@ -76,3 +76,4 @@ Requirements for these features: [Testbed & tools requirements](../specification
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-TST-001 – F-TST-005 (5 features) |
 | 1.12.0 | 2026-11-11 | F-TST-004 in progress: the mission browser (the simulator, app 0.6.3) and the terrain sandbox; condition console and strategy tools remain |
+| 1.14.0 | 2026-11-11 | F-TST-004 progress: strategy cheats and jump to battle (app 0.8.1); `--strategy-soak` (app 0.8.0) |

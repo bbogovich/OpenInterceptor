@@ -164,8 +164,10 @@ launcher:
 
 ### The strategy screen (app 0.7.1)
 
-`app::strategy::StrategyScreen` (Stage 4.10) shows a `campaign::Campaign`: the star map, eight
-tabs, the clock (`SPEEDS`: paused, 1, 6, 24 and 120 campaign hours per real second), banners
+`app::strategy::StrategyScreen` (Stage 4.10) shows a `campaign::Campaign`: the star map, nine
+tabs (the **Supply** tab, `Tab::Logistics`, since app 0.9.0, with the `Act::Survey`,
+`Act::BuildFacility` and `Act::StationResearch` rows, and facilities, convoys and survey ships
+drawn on the map), the clock (`SPEEDS`: paused, 1, 6, 24 and 120 campaign hours per real second), banners
 for notices and the fly-or-break-off choice. It turns rows into orders on the campaign and
 draws; the rules live in `campaign` ([Campaign](campaign.md)). The launcher leads with
 `Entry::ContinueCampaign` and `Entry::NewCampaign` when `rules.strategy` is set and starts
@@ -173,7 +175,12 @@ selected on them; `--strategy` opens a new campaign. A campaign battle sets
 `FlightSession::campaign_battle`: its debrief returns `Next::Strategy` (Enter or Esc) with
 `AppContext::battle_report`, the pause menu's L/Q is a retreat and R (restart) is disabled.
 `Next::CampaignBattle` carries the first craft's fitted loadout, applied with
-`flight::apply_loadout` (app 0.7.2). Player's guide: [Campaign](../../user-guide/campaign.md).
+`flight::apply_loadout` (app 0.7.2). **Testbed cheats** (app 0.8.1, plan *Testbed adds* of
+Stage 4): Ctrl+M payday, Ctrl+K knowitall, Ctrl+B quickbase — the original's own cheat list —
+and Ctrl+J jump to battle from the contact chosen on the Contacts tab, each a
+`Campaign::cheat_*` method ([Campaign › Testbed cheats](campaign.md#testbed-cheats-app-081)).
+Headless, `--strategy-soak <days>` plays a campaign's strategy layer with `campaign::autoplay`
+(app 0.8.0). Player's guide: [Campaign](../../user-guide/campaign.md).
 
 ### Scenarios shipped
 

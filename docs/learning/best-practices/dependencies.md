@@ -22,7 +22,7 @@ build silently; `Cargo.lock` is committed.
 |---|---|---|
 | `macroquad =0.4.14` | default + `audio` | Window, OpenGL context, input, textures, 2D/3D drawing, sound playback. |
 | `glam =0.27.0` | default | Vectors, matrices, quaternions for `model`, `sim` and `render`. |
-| `image =0.24.9` | `png` only | Decoding PNG textures in mod packs. |
+| `image =0.24.9` | `png` only | Decoding PNG textures in mod packs; encoding PNG for the extractor, `--screenshot` and (since main `2ed1149`) the console's target textures. |
 
 ### Evaluation
 
@@ -65,17 +65,19 @@ and RFC vectors), `remote::json` (~360) and threads from `std`. Decision: build 
 dependency added. The console page itself (`web/console/`) is plain custom elements and CSS
 with no framework or build step.
 
-**PNG writer (app 0.6.7) — written in-crate, no crate added.** The console's textured target
-model sends each texture as a PNG `data:` URL, so the game must *write* PNG. No new dependency was
-added: `formats::png` writes it in about 140 lines with its tests. A valid PNG needs no compressor
-when its zlib stream uses **stored** blocks, so the writer is a signature, three chunks, a CRC-32
-and an Adler-32 (`checksums_match_known_values` checks both against published values); the
-images are at most 128 × 128 pixels sent once per class over a local network, so the lost
-compression costs little. Note for review: the `image` crate above, already a direct dependency
-(`png` feature), can also *encode* PNG — the extractor (`extract::png`) and `--screenshot` use it
-— so the in-crate writer duplicates a capability already in the tree. It keeps the `formats` layer
-free of crates and is small; whether to keep it or call `image` instead is a choice for the next
-review of this page.
+### PNG encoding: the `image` crate already in the tree
+
+**Resolved (main `2ed1149`, after app 0.9.0).** The console's textured target model sends each
+texture as a PNG `data:` URL, so the game must *write* PNG. App 0.6.7 wrote it in-crate
+(`formats::png`, about 140 lines: stored deflate blocks, a bit-by-bit CRC-32 and an Adler-32), and
+the last review of this page noted that this duplicated a capability already in the tree: the
+`image` crate above is a direct dependency with its `png` feature, which **encodes** as well as
+decodes, and the extractor and `--screenshot` already used it. The duplicate is gone:
+`formats::png::encode_rgba` now calls `image::codecs::png::PngEncoder`, and the module keeps only
+the downscaling the console needs. **No dependency was added or removed** — `Cargo.toml` is
+unchanged — and the images are now compressed. The policy point it illustrates: before writing
+something in-crate, check whether a crate already in the tree does it; keeping a second copy is
+a cost without the benefit of avoiding a dependency.
 
 ## External tools
 

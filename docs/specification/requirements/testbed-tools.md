@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -21,8 +21,8 @@ Features: [Testbed & tools](../../definition/testbed-tools.md). How to read a re
 | [R-TST-007 Screenshots](#r-tst-007-screenshots) | Implemented |
 | [R-TST-008 Scenarios per stage](#r-tst-008-scenarios-per-stage) | Implemented |
 | [R-TST-009 Mission and condition tools](#r-tst-009-mission-and-condition-tools) | Planned (partly met) |
-| [R-TST-010 Strategy and campaign tools](#r-tst-010-strategy-and-campaign-tools) | Planned |
-| [R-TST-011 Campaign soak](#r-tst-011-campaign-soak) | Planned |
+| [R-TST-010 Strategy and campaign tools](#r-tst-010-strategy-and-campaign-tools) | Planned (partly met) |
+| [R-TST-011 Campaign soak](#r-tst-011-campaign-soak) | Planned (partly met) |
 | [R-TST-012 Asset generators](#r-tst-012-asset-generators) | Implemented |
 
 ## Requirements
@@ -144,9 +144,15 @@ The testbed MUST add a strategy sandbox per campaign with a debug clock and the 
 *Rationale:* Stage 4 and 5 testbed adds.
 
 - Implements: [F-TST-004](../../definition/testbed-tools.md#f-tst-004-debugging-tools-for-missions-and-campaigns)
-- Status: planned
-- Verified by: Planned.
-- See: [Stage 4](../../implementation/plan/stage-4-strategy.md)
+- Status: planned — partly met (app 0.8.1, main `8e96338`): the cheats and jump to battle
+- Verified by: `campaign::tests::testbed_cheats_do_what_they_say`; MT-4-20, MT-4-21
+- See: [Stage 4](../../implementation/plan/stage-4-strategy.md), [User guide › Campaign › Testbed cheats](../../user-guide/campaign.md#testbed-cheats)
+
+!!! note "As built (app 0.8.1)"
+    The strategy screen of every campaign with a strategy layer is the sandbox, with its own clock (pause and four speeds). The original's cheats are debug keys there: **Ctrl+M** *payday* (a million), **Ctrl+K** *knowitall* (every topic known), **Ctrl+B** *quickbase* (every base and module under construction finished; not logistics facilities); **Ctrl+J** jumps to battle from the contact chosen on the Contacts tab (a ready craft with a pilot is put at it, and the fly-or-break-off banner follows). Each is a `Campaign::cheat_*` method and is logged.
+
+!!! question "Open"
+    Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected, the event and arc debugger and start-at-chapter (Stage 5).
 
 ### R-TST-011 Campaign soak
 
@@ -155,9 +161,15 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 *Rationale:* Stage 5 exit.
 
 - Implements: [F-TST-003](../../definition/testbed-tools.md#f-tst-003-headless-runs), [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned
-- Verified by: Planned.
-- See: [Stage 5](../../implementation/plan/stage-5-campaign.md)
+- Status: planned — partly met (app 0.8.0, main `c64d178`): `--strategy-soak <days>`
+- Verified by: `campaign::tests::the_default_campaign_runs_six_months`; MT-4-23
+- See: [Stage 5](../../implementation/plan/stage-5-campaign.md), [Strategy layer › Trying a campaign out](../../modding/strategy.md#trying-a-campaign-out)
+
+!!! note "As built (app 0.8.0)"
+    `--strategy-soak <days>` plays a campaign's strategy layer headless with `campaign::autoplay` (every base researches, a lab and a workshop when affordable, every detected contact intercepted, battle results alternated win, win, retreat) and prints a one-line summary. Six-month results: `default` 12 of 14 topics, `interceptor` 4 of 71 topics on one downlink.
+
+!!! question "Open"
+    Not built: invariant checks (money accounting, orphan references, arc progress), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).
 
 ### R-TST-012 Asset generators
 
@@ -181,3 +193,4 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 | 1.0.0 | 2026-11-11 | Bootstrap: R-TST-001 – R-TST-012 (12 requirements; 9 reverse-engineered from the code) |
 | 1.3.0 | 2026-11-11 | R-TST-002 Verified by: `cli::finds_the_source_tree_packs` renamed `content_dirs_are_resources_then_packs` (app 0.4.2) |
 | 1.12.0 | 2026-11-11 | R-TST-009 partly met (status stays planned): the mission browser is the simulator (app 0.6.3), the terrain sandbox is the simulator's environments and the surface scenarios; the condition console is not built |
+| 1.14.0 | 2026-11-11 | R-TST-010 partly met: the original's cheats and jump to battle on the strategy screen (app 0.8.1); R-TST-011 partly met: `--strategy-soak` (app 0.8.0) |

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -58,7 +58,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** Compatibility, and the primary test that the formats can express every system of the original.
 
-- **Status:** in-progress
+- **Status:** in-progress — 26 mission types (app 0.6.5) and the strategy layer from the player's data, derived and not yet play-tested (app 0.8.0); the story and strategist remain (Stage 5).
 - **Source:** Design page *The Interceptor campaign mod*; plan items 2.13, 3.11, 4.12, 5.8, 6.7.
 - **Specified by:** [R-CPN-005](../../specification/requirements/campaigns.md#r-cpn-005-interceptor-campaign-content)
 
@@ -98,3 +98,4 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CPN-001 – F-CPN-007 (7 features) |
 | 1.12.0 | 2026-11-11 | F-CPN-003: nine default missions and radio voices noted. F-CPN-007: radio and computer voices built (R-MSN-007); the rest planned |
+| 1.14.0 | 2026-11-11 | F-CPN-004: the strategy layer from the player's data (app 0.8.0) noted |

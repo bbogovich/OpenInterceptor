@@ -126,6 +126,7 @@ scripts/check.sh
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--mission <ID>` | Start this mission, skipping the launcher ([Missions](../modding/missions.md)). |
 | `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. |
+| `--strategy-soak <DAYS>` | Play the campaign's strategy layer without a window for that many days with a simple automatic player, print one line (date, funds, score, bases, craft, topics, battles, messages) and exit (app 0.8.0; [Strategy layer](../modding/strategy.md#trying-a-campaign-out)). Use with `--campaign`. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
 | `--model <NAME>` | Open the model viewer on this model: a ship class id (`comet`) or an original mesh name (`XBASE7`). |

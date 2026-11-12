@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.13.0** (90 features). Changes are listed in the
+Definition version **1.14.0** (90 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -60,3 +60,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.11.0 | 2026-11-11 | 90 features: Stage 3.2 – 3.6 (app 0.5.1 – 0.6.1): F-MSN-004 and F-HUD-008 implemented; F-FLT-007 in progress (scattered objects and detail textures remain) |
 | 1.12.0 | 2026-11-11 | 90 features: Stage 3.7, 3.9 and 3.12 (app 0.6.2 – 0.6.4): F-MSN-003 (radio voices) and F-MSN-005 (simulator) implemented; F-TST-004 in progress; F-CPN-003 and F-CPN-007 progress; F-MOD-005 Tier 2 evaluation recorded, awaiting the user |
 | 1.13.0 | 2026-11-11 | 90 features: Stage 4 (app 0.6.6 – 0.7.3): F-STR-001 – F-STR-003 in progress, F-STR-004 implemented; F-MOD-013 in progress (formations for wingmen) |
+| 1.14.0 | 2026-11-11 | 90 features: Stage 4 logistics, the X-COM strategy data and cheats (app 0.8.0 – 0.9.0): F-STR-005, F-STR-006, F-STR-007 and F-STR-009 in progress; F-STR-008 and F-TST-004 progress; F-CPN-004 notes the `interceptor` strategy layer |

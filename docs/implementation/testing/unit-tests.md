@@ -8,6 +8,19 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**At main `2ed1149` (after app 0.9.0)** a count of the `#[test]` functions in `src/` (grep, not a
+build) gives **355** run on macOS (357 less the Linux-only test and the ignored helper). Added
+since `9295707`: app **0.8.0** (`c64d178`)
+`content::strategy::tests::original_tech_ids_become_research_prerequisites`; app **0.8.1**
+(`8e96338`) `campaign::tests::testbed_cheats_do_what_they_say`; app **0.9.0** (`ff9d8fc`)
+`campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand`,
+`station_research_waits_for_its_start_materials_and_convoys_lose_vessels`,
+`campaign::tests::manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id`; main `2ed1149`
+replaced `formats::png::tests::checksums_match_known_values` and
+`a_png_has_the_signature_chunks_and_stored_pixels` with `a_png_has_the_signature_and_decodes_back`
+(the in-crate checksums are gone). `campaign::autoplay`, the automatic player the six-month test
+uses, moved out of the test module (app 0.8.0) to serve `--strategy-soak`.
+
 **At main `9295707` (app 0.7.4)** a count of the `#[test]` functions in `src/` (grep, not a
 build) gives **351** run on macOS (353 less the Linux-only test and the ignored helper). The 26
 added since app 0.6.4 are: app **0.6.6** (`6d390d7`) `content::formation::tests::shapes_place_followers_behind_and_beside_the_leader`,
@@ -98,11 +111,12 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `content::environment` | 2 | Environments and terrains parse with defaults; mistakes reported (unknown `physics`, an atmosphere without a terrain, both or neither of `generate` / `heightmap`, an unknown generator); generated heightfields span their `height` range, are the same for the same seed and interpolate between grid points |
 | `content::looks` | 3 | Debris sets and effects parse with defaults; texture swaps accumulate with damage levels and state; texture keys ignore folders, case and extensions |
 | `content::formation` | 2 | Every shape places followers behind and beside the leader in the leader's frame, scaled by `spacing`; custom slots then a vee behind them; `shape` with `slots`, or an unknown shape, is an error |
-| `content::strategy` | 2 | Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors) |
+| `content::strategy` | 3 | Dates count days across months and leap years; a strategy layer builds from YAML with every name checked (a misspelt expression name, an unknown base type and an unknown unlock are errors); **the original's numeric tech ids become research prerequisites** through `tech_ids` (an unlisted id is left out; `tech_required` gates an item) |
 | `script::campaign` | 1 | Query ids match the table; campaign ids and level names are constants; a misspelt name is an error |
-| `campaign` | 9 | A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; **the default campaign runs six months** (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra) |
+| `campaign` | 11 | A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; **the default campaign runs six months** (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); **the testbed cheats** (payday, quickbase, knowitall, jump to battle); **manufacture paid per unit as it starts, and salvage recorded by raid id** |
+| `campaign::logistics` | 2 | **Survey, build, mine, make and deliver on demand** (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); **station research waits for its start materials, and convoys lose vessels** (every convoy ambushed at 50 % loss; orders follow until the start cost is met) |
 | `campaign::save` | 1 | A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused |
-| `formats::png` | 3 | CRC-32 and Adler-32 match known values; a PNG has the signature, chunks and stored pixels; downscaling averages blocks |
+| `formats::png` | 2 | A PNG (encoded by the `image` crate since `2ed1149`) has the signature and chunks and **decodes back to the same pixels**; downscaling averages blocks |
 | `app::strategy` | 2 | The map fits its rectangle, centred; money has thousands separators |
 | `content::mission` | 2 | A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action) |
 | `content::text` | 1 | Keys resolve, plain values pass through, imports are listed |

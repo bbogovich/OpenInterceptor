@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -23,19 +23,19 @@ Features: [Strategy & logistics](../../definition/strategy-logistics.md). How to
 | [R-STR-009 Funding, score and reports](#r-str-009-funding-score-and-reports) | Planned (partly met) |
 | [R-STR-010 Strategy screens](#r-str-010-strategy-screens) | Planned (partly met) |
 | [R-STR-011 Saves](#r-str-011-saves) | Implemented |
-| [R-STR-012 Logistics is optional data](#r-str-012-logistics-is-optional-data) | Planned |
-| [R-STR-013 Demand-driven orders](#r-str-013-demand-driven-orders) | Planned |
-| [R-STR-014 Extraction and recipes](#r-str-014-extraction-and-recipes) | Planned |
-| [R-STR-015 Government supply ships](#r-str-015-government-supply-ships) | Planned |
-| [R-STR-016 Supply convoys](#r-str-016-supply-convoys) | Planned |
+| [R-STR-012 Logistics is optional data](#r-str-012-logistics-is-optional-data) | Implemented |
+| [R-STR-013 Demand-driven orders](#r-str-013-demand-driven-orders) | Implemented |
+| [R-STR-014 Extraction and recipes](#r-str-014-extraction-and-recipes) | Planned (partly met) |
+| [R-STR-015 Government supply ships](#r-str-015-government-supply-ships) | Implemented |
+| [R-STR-016 Supply convoys](#r-str-016-supply-convoys) | Implemented |
 | [R-STR-017 Supply vessel model](#r-str-017-supply-vessel-model) | Planned |
-| [R-STR-018 Supply convoy attack position](#r-str-018-supply-convoy-attack-position) | Planned |
-| [R-STR-019 Logistics mission generation](#r-str-019-logistics-mission-generation) | Planned |
-| [R-STR-020 Cargo losses and depots](#r-str-020-cargo-losses-and-depots) | Planned |
-| [R-STR-021 Survey ships](#r-str-021-survey-ships) | Planned |
+| [R-STR-018 Supply convoy attack position](#r-str-018-supply-convoy-attack-position) | Implemented |
+| [R-STR-019 Logistics mission generation](#r-str-019-logistics-mission-generation) | Planned (partly met) |
+| [R-STR-020 Cargo losses and depots](#r-str-020-cargo-losses-and-depots) | Planned (partly met) |
+| [R-STR-021 Survey ships](#r-str-021-survey-ships) | Planned (partly met) |
 | [R-STR-022 Construction stages](#r-str-022-construction-stages) | Planned |
 | [R-STR-023 Construction attacks](#r-str-023-construction-attacks) | Planned |
-| [R-STR-024 Research stations and sites](#r-str-024-research-stations-and-sites) | Planned |
+| [R-STR-024 Research stations and sites](#r-str-024-research-stations-and-sites) | Implemented |
 | [R-STR-025 Facility fighter pools](#r-str-025-facility-fighter-pools) | Planned |
 | [R-STR-026 Supply cargo capacity](#r-str-026-supply-cargo-capacity) | Planned |
 | [R-STR-027 Third-party convoys](#r-str-027-third-party-convoys) | Planned |
@@ -102,15 +102,18 @@ The economy MUST model resources, income and expense expressions, markets, facto
 *Rationale:* The original's economy, as data.
 
 - Implements: [F-STR-002](../../definition/strategy-logistics.md#f-str-002-economy-research-and-bases)
-- Status: planned — partly met (app 0.7.0 – 0.7.1, main `77d6c9f`, `10f7fce`)
-- Verified by: `campaign::tests::modules_bases_purchases_and_manufacture`, `money_flows_monthly_with_costs`, `the_default_campaign_runs_six_months`; `script::campaign::tests::ids_match_and_names_are_checked`; MT-4-06
+- Status: planned — partly met (app 0.7.0 – 0.9.0, main `77d6c9f`, `10f7fce`, `c64d178`, `ff9d8fc`)
+- Verified by: `campaign::tests::modules_bases_purchases_and_manufacture`, `money_flows_monthly_with_costs`, `manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id`, `the_default_campaign_runs_six_months`; `script::campaign::tests::ids_match_and_names_are_checked`; `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand`; MT-4-06, MT-4-15, MT-4-19
 - See: [Strategy layer › items and hulls](../../modding/strategy.md#items-and-hulls), [incomes and expenses](../../modding/strategy.md#incomes-and-expenses)
 
 !!! note "As built (app 0.7.0 – 0.7.1)"
     `incomes` and `expenses` are amounts written as expressions in the campaign context (`script::campaign`, 16 queries), paid every `every`; module maintenance, hull upkeep and pilot salaries are charged at each 30-day month. The **market** buys items and hulls at `cost` (delivered to the base after `economy.delivery`) and sells items at `sell_price`. **Factories** are a base's `production_rate` (module effects) working through its queue, first job first; a finished hull becomes a craft at the base.
 
+!!! note "As built (app 0.8.0 – 0.9.0)"
+    **Manufacture is paid per unit as it starts** (app 0.9.0, `ff9d8fc`; it was free until then): the job waits while the money is short. **Resources** exist with logistics (R-STR-012 – R-STR-014): mined resources and manufactured components, and hulls built from components instead of money. `economy.cost_scale` multiplies every cost, price, upkeep and maintenance (app 0.8.0, for the original's thousands).
+
 !!! question "Open"
-    Not built: resources; prioritised queues; delivery losses; storage limits (`size` and the `storage` effect are read but not enforced); markets per seller. **Manufacture charges no money** in app 0.7.1: `Campaign::manufacture` and the hour step never take the product's `cost`, although the code's own comment says the cost is paid as each unit starts — a defect to fix.
+    Not built: prioritised queues; delivery losses of purchases; storage limits at bases (`size` and the `storage` effect are read but not enforced); markets per seller.
 
 ### R-STR-005 Research
 
@@ -119,15 +122,18 @@ Research MUST support the download and labs models, discovery by prerequisites, 
 *Rationale:* Tech tree.
 
 - Implements: [F-STR-002](../../definition/strategy-logistics.md#f-str-002-economy-research-and-bases)
-- Status: planned — partly met (app 0.7.0 – 0.7.1, main `77d6c9f`, `10f7fce`)
-- Verified by: `campaign::tests::research_follows_prerequisites_and_unlocks`, `the_default_campaign_runs_six_months`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`; MT-4-07
+- Status: planned — partly met (app 0.7.0 – 0.9.0, main `77d6c9f`, `10f7fce`, `c64d178`, `ff9d8fc`)
+- Verified by: `campaign::tests::research_follows_prerequisites_and_unlocks`, `manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id`, `the_default_campaign_runs_six_months`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`, `original_tech_ids_become_research_prerequisites`; `campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels`; MT-4-07, MT-4-17, MT-4-19, MT-4-23
 - See: [Strategy layer › research](../../modding/strategy.md#research-and-research_model)
 
 !!! note "As built (app 0.7.0 – 0.7.1)"
     `research: {<id>: {name, size, requires, unlocks, description}}` and `research_model: {mode: download | labs, rate, switching: keep_progress | lose_progress}`. Each base works on one topic at `rate` work units an hour (an expression evaluated for that base). A topic is available while its `requires` holds; `unlocks` (`items.x`, `hulls.x`, `modules.x`, `base_types.x`) stay unavailable until it is known. Every name in an expression and every unlock is checked when the rules load. `salvage` outcomes mark the raid salvaged for `salvaged(x)`.
 
+!!! note "As built (app 0.8.0 – 0.9.0)"
+    **Salvage records the raid's id** (app 0.9.0, `ff9d8fc`), so `salvaged(<raid id>)` holds after a salvage and the default campaign's `saucer_hulls` and `robot_brains` can be started (until then the display name was recorded). **The original's numeric prerequisites** (app 0.8.0): with a `tech_ids: {<number>: <topic>}` table, a topic's `prereq1` – `prereq3` and an item's, hull's or module's `tech_required`, `tech_required2` become `research(x) and …` when no `requires:` is written; numbers not in the table are left out. **Station-only topics** (`lab`, `site`, `start_cost`; R-STR-024) are researched at research stations and never offered to bases.
+
 !!! question "Open"
-    Not built: capture; discovery by events; `requires_any`; the original's per-item salvage tables. **Known issue:** `salvage` records the raid's display `name` while `salvaged(x)` compares the raid's id, so `salvaged(<raid id>)` never holds and the default campaign's `saucer_hulls` and `robot_brains` cannot be started.
+    Not built: capture; discovery by events; `requires_any`; the original's per-item salvage tables.
 
 ### R-STR-006 Bases
 
@@ -159,6 +165,9 @@ Hulls, items, slots and fitting rules, power draw and stock designs MUST be data
 
 !!! note "As built (app 0.7.0 – 0.7.1)"
     `hulls: {<ship class id>: {cost, prod_time, upkeep, speed, slots, requires}}` (a hull must have a ship class of the same id) and `items: {<id>: {name, kind, cost, sell_price, prod_time, size, requires}}`. Craft are bought (delivered) or manufactured at a base. **Fitting** (app 0.7.2): `Campaign::fit_best` fills each hull slot with the costliest item of that `kind` in the base's store (a missile slot takes the item's `rounds`, a new item key), returning the old fit to the store first; the Hangar tab's **F** fits the chosen craft. A campaign battle carries `Campaign::loadout` (`Next::CampaignBattle`), and `flight::apply_loadout` refits the player's class with the fitted beams and missile racks — items matched to beams and missiles of the same id — in that battle's own copy of the rules (`Arc::make_mut`), leaving the shared content untouched.
+
+!!! note "As built (app 0.9.0)"
+    With logistics, a hull's `components` make a main base build it from components delivered by the supply chain instead of paying its `cost` (R-STR-013).
 
 !!! question "Open"
     Not built: choosing items slot by slot (fitting is *best available* only); fitting rules (`fits`); power draw; stock designs; effects of slot kinds other than `beam` and `missile` in battle.
@@ -204,15 +213,18 @@ Functional screens MUST cover the star map, bases (with the 3D base view), resea
 *Rationale:* Playable strategy layer before skins (Stage 6).
 
 - Implements: [F-STR-001](../../definition/strategy-logistics.md#f-str-001-strategy-layer)
-- Status: planned — partly met (app 0.7.1, main `10f7fce`)
-- Verified by: `app::strategy::tests::the_map_fits_its_rectangle_centred`, `money_has_thousands_separators`; `app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps`; MT-4-02 – MT-4-10
+- Status: planned — partly met (app 0.7.1 – 0.9.0, main `10f7fce`, `8e96338`, `ff9d8fc`)
+- Verified by: `app::strategy::tests::the_map_fits_its_rectangle_centred`, `money_has_thousands_separators`; `app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps`; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18
 - See: [User guide › Campaign](../../user-guide/campaign.md), [Campaign (architecture)](../../implementation/architecture/campaign.md#the-battle-hand-off), [Format: interface, text and media](../design/format-interface.md)
 
 !!! note "As built (app 0.7.1)"
     One functional, plain-skinned screen (`app::strategy`): the star map (systems, lanes, bases with sensor ranges, detected contacts, craft in flight; click a system to choose it) and eight tabs — Bases (and new bases), Research, Build, Market, Factory, Hangar (craft, pilots, recruits), Contacts (intercept) and Messages — with a clock line (date, speed, funds, score). Keys: Space, 1 – 4, Tab / Shift+Tab, Up/Down, Enter, Left/Right (current base), S (sell), F (fit, app 0.7.2), F5 (save), Esc (save and leave). An interception that meets its contact stops the clock with a fly-or-break-off banner; flying it hands the screen to the app (`Next::CampaignBattle`, `AppContext::campaign`), and the debrief returns to the map (`Next::Strategy`, `AppContext::battle_report`). The launcher leads with *Campaign: continue* and *Campaign: new game* when the campaign has a strategy layer; `--strategy` opens a new campaign.
 
+!!! note "As built (app 0.9.0)"
+    A ninth tab, **Supply** (`Tab::Logistics`): survey the chosen system, build each facility type there (the row gives the cost and why it is not allowed), the facilities with their stores or build time and research projects, *Research <topic> here* on a free research station, the current base's store, and a count of open orders, convoys and survey ships. The map draws facilities (diamonds: grey while building, orange when working), convoys (gold dots) and survey ships (sky-blue rings). Testbed cheats on this screen: R-TST-010.
+
 !!! question "Open"
-    Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia. Texts are plain English in the default campaign's strategy files, not text keys. The look is Stage 6.
+    Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia; the Supply tab is plain text, without a supply-traffic view. Texts are plain English in the default campaign's strategy files, not text keys. The look is Stage 6.
 
 ### R-STR-011 Saves
 
@@ -221,15 +233,15 @@ A save MUST hold the full campaign state plus the mod list and versions; loading
 *Rationale:* Long campaigns; changing mods.
 
 - Implements: [F-STR-004](../../definition/strategy-logistics.md#f-str-004-saved-games)
-- Status: implemented (app 0.7.0 – 0.7.1, main `77d6c9f`, `10f7fce`) for the state that exists; logistics state joins when logistics is built (R-STR-012 – R-STR-027)
-- Verified by: `campaign::save::tests::a_save_round_trips_and_refuses_missing_packs`; `campaign::tests::the_default_campaign_runs_six_months` (a six-month game round-trips); MT-4-10
+- Status: implemented (app 0.7.0 – 0.9.0, main `77d6c9f`, `10f7fce`, `ff9d8fc`)
+- Verified by: `campaign::save::tests::a_save_round_trips_and_refuses_missing_packs`; `campaign::tests::the_default_campaign_runs_six_months` (a six-month game round-trips, with the default campaign's logistics block); MT-4-10, MT-4-18
 - See: [Campaign (architecture) › Saves](../../implementation/architecture/campaign.md#saves), [Stage 4](../../implementation/plan/stage-4-strategy.md)
 
-!!! note "As built (app 0.7.0 – 0.7.1)"
-    `campaign::save` writes the whole `Campaign` as YAML (format version 1): the campaign id, the packs with their versions, then every field — stores, queues, build progress, contacts, deliveries, craft in flight, pilots, flags, messages — and reads it back equal (the test also continues both games 300 hours and compares). Loading refuses a save whose packs are not all loaded, naming them, and a save whose indices do not fit the loaded rules ("was a mod changed?"). One save slot per campaign, `<user data>/saves/<campaign>.yaml`, written on F5 and on leaving the map.
+!!! note "As built (app 0.7.0 – 0.9.0)"
+    `campaign::save` writes the whole `Campaign` as YAML (format version 1): the campaign id, the packs with their versions, then every field — stores, queues, build progress, contacts, deliveries, craft in flight, pilots, flags, messages — and reads it back equal (the test also continues both games 300 hours and compares). Loading refuses a save whose packs are not all loaded, naming them, and a save whose indices do not fit the loaded rules ("was a mod changed?"). One save slot per campaign, `<user data>/saves/<campaign>.yaml`, written on F5 and on leaving the map. **Logistics** (app 0.9.0): a `logistics:` block with the facilities (type, system, ready time, store, running lines, research project), open orders, convoys (cargo, destination, position, route, vessels, distance to a pending ambush), survey ships (with their attack roll), the surveyed systems, the deposits' reserves and the bases' stores, indices checked; a save with facilities is refused by a campaign without logistics.
 
 !!! question "Open"
-    Pack **versions** are recorded but not compared: a save from an older version of a loaded mod is accepted if its indices still fit.
+    Pack **versions** are recorded but not compared: a save from an older version of a loaded mod is accepted if its indices still fit. No unit test round-trips a save with logistics **in flight** (the six-month test's automatic player builds no facilities); MT-4-18 covers it by hand.
 
 ### R-STR-012 Logistics is optional data
 
@@ -238,9 +250,12 @@ Logistics MUST be entirely campaign data; a campaign without `facility_types`, `
 *Rationale:* Modding first; `interceptor` stays faithful to the original.
 
 - Implements: [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand`, `station_research_waits_for_its_start_materials_and_convoys_lose_vessels` (synthetic campaigns); `campaign::tests` (campaigns without logistics play as before); `check::tests::the_default_campaign_passes`
+- See: [Strategy layer › Logistics](../../modding/strategy.md#logistics), [Logistics](../design/logistics.md)
+
+!!! note "As built (app 0.9.0)"
+    `content::logistics::LogisticsDef` is built only when at least one `facility_types` entry exists; `StrategyDef::logistics` is then `Some`, else `None` and every logistics key is ignored. The sections: `resources`, `components`, `recipes`, `facility_types`, `research_sites`, `logistics`; on map systems `deposits` and `features`; on hulls `components`; on topics `lab`, `site`, `start_cost` — all in the rules schema. The default campaign's data is `resources/default/strategy/logistics.yaml`; the `interceptor` campaign defines no facility type.
 
 ### R-STR-013 Demand-driven orders
 
@@ -249,9 +264,12 @@ A main base's build queue MUST create orders for components to manufacturing cen
 *Rationale:* A basic supply-and-demand simulation.
 
 - Implements: [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.9.0, main `ff9d8fc`), with the nearest facility measured in a straight line (DEV-049)
+- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand`, `station_research_waits_for_its_start_materials_and_convoys_lose_vessels`; MT-4-15, MT-4-17
+- See: [Strategy layer › How the chain runs](../../modding/strategy.md#how-the-chain-runs), [Campaign › Logistics](../../implementation/architecture/campaign.md#logistics)
+
+!!! note "As built (app 0.9.0)"
+    Each hour, a base's unstarted hull jobs want their hull's `components`; what the base's store and the convoys already heading there do not cover is ordered (`Campaign::want`, which tops up rather than duplicates). A manufacturing center that must fill an order and lacks a recipe's inputs orders them from a mining facility with a deposit of each; a research station orders its project's `start_cost` until it arrives. The supplier is the **nearest ready facility of the right role by straight-line distance** between systems (`Campaign::supplier`), not by lane distance (DEV-049). With no suitable facility no order is placed, and the demand is asked again next hour. Goods move only to fill an order.
 
 ### R-STR-014 Extraction and recipes
 
@@ -260,9 +278,15 @@ Mining facilities MUST extract from deposits at their rate until reserves run ou
 *Rationale:* Production follows supply.
 
 - Implements: [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: planned — partly met (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand` (a reserve drawn down; a recipe run on delivered inputs); MT-4-15
+- See: [Strategy layer › recipes](../../modding/strategy.md#recipes), [facility_types](../../modding/strategy.md#facility_types)
+
+!!! note "As built (app 0.9.0)"
+    A mining facility adds `rate` / 24 of each deposit of its system every hour, limited by the room left in its store (`storage`) and by the deposit's reserve (`unlimited` by default). A manufacturing center starts a recipe on a free line (`lines`) only when all inputs are in its store, uses them at the start, and adds `output` to the store after `time`; it starts runs only for orders it must fill.
+
+!!! question "Open"
+    `storage` is enforced for **mining facilities only**: a manufacturing center's and a research station's store has no limit yet.
 
 ### R-STR-015 Government supply ships
 
@@ -271,9 +295,12 @@ When an order's cargo is ready, supply ships MUST be dispatched automatically al
 *Rationale:* Logistics decision (2026-11-11).
 
 - Implements: [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned
-- Verified by: Planned.
+- Status: implemented (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand`; MT-4-15
 - See: [Logistics](../design/logistics.md)
+
+!!! note "As built (app 0.9.0)"
+    When a source facility's store holds an order's amount, the amount is taken out and a convoy leaves for the order's base or facility along the shortest lane route (`Campaign::lane_route`; a system no lane reaches is one straight hop) at `logistics.convoy_speed`. The player has no order for convoys; the map shows them.
 
 ### R-STR-016 Supply convoys
 
@@ -282,12 +309,12 @@ A shipment MUST travel as a convoy of several supply vessels, each carrying an e
 *Rationale:* Escort missions stay interesting and playable; single ships would be destroyed quickly (decision 2026-11-11).
 
 - Implements: [F-STR-007](../../definition/strategy-logistics.md#f-str-007-supply-convoys-worth-escorting)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels` (every convoy ambushed at 50 % loss; deliveries shrink and orders follow until the cost is met); MT-4-16
+- See: [Strategy layer › logistics](../../modding/strategy.md#logistics)
 
-!!! question "Open"
-    The number of vessels per convoy.
+!!! note "As built (app 0.9.0)"
+    The number of vessels is campaign data, `logistics.vessels` (default 3; the default campaign 3) — answering the former Open question. On arrival a convoy delivers its cargo × surviving vessels ÷ `vessels`; what is missing is ordered again by the next hour's demand.
 
 ### R-STR-017 Supply vessel model
 
@@ -301,7 +328,7 @@ The default campaign MUST provide a supply vessel model that is reasonably large
 - See: [The default campaign](../../definition/campaigns/default-campaign.md)
 
 !!! question "Open"
-    Whether the existing cargo clipper and cargo pod become the core vessel and containers, or a new model replaces them.
+    Whether the existing cargo clipper and cargo pod become the core vessel and containers, or a new model replaces them. Convoys are dots on the strategy map until their battles are flown (R-STR-019).
 
 ### R-STR-018 Supply convoy attack position
 
@@ -310,12 +337,12 @@ A supply convoy's attack position along its route MUST be chosen at random when 
 *Rationale:* Logistics decision (2026-11-11).
 
 - Implements: [F-STR-007](../../definition/strategy-logistics.md#f-str-007-supply-convoys-worth-escorting)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels`; MT-4-16
+- See: [Campaign › Logistics](../../implementation/architecture/campaign.md#logistics)
 
-!!! question "Open"
-    Whether every supply convoy is attacked or only some, and at what chance: the user's answer gives the 25 % roll for survey ships only (R-STR-021).
+!!! note "As built (app 0.9.0)"
+    At launch one roll against `logistics.ambush_chance` decides whether the convoy will be attacked (default 30 %; the default campaign 30 %), and a second roll picks the point as a fraction of the route's length (`Convoy::ambush_in`, saved). This answers the former Open question: only some convoys are attacked, at a campaign-defined chance.
 
 ### R-STR-019 Logistics mission generation
 
@@ -324,9 +351,15 @@ A `convoy_ambush` mission MUST be generated when an attacked convoy reaches its 
 *Rationale:* Logistics in battle.
 
 - Implements: [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics), [F-MSN-007](../../definition/missions.md#f-msn-007-logistics-missions)
-- Status: planned
-- Verified by: Planned.
+- Status: planned — partly met (app 0.9.0, main `ff9d8fc`): the auto-resolve of a convoy ambush
+- Verified by: `campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels` (auto-resolved losses); MT-4-16
 - See: [Logistics](../design/logistics.md)
+
+!!! note "As built (app 0.9.0)"
+    At the attack position the ambush is **always auto-resolved**: each vessel is lost with `logistics.ambush_loss` (default 35 %; the convoy has no escort), and a notice names the cargo and the losses.
+
+!!! question "Open"
+    Not built: generating and flying `convoy_ambush` (the mission exists in the default campaign; the hookup from the map does not), construction strikes and `construction_defence` (R-STR-023).
 
 ### R-STR-020 Cargo losses and depots
 
@@ -335,9 +368,12 @@ A destroyed vessel's cargo MUST be lost; a captured vessel's cargo MUST go to th
 *Rationale:* Logistics decision (2026-11-11).
 
 - Implements: [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
-- Status: planned
-- Verified by: Planned (depots in Stage 5).
+- Status: planned — partly met (app 0.9.0, main `ff9d8fc`): destroyed vessels' cargo is lost
+- Verified by: `campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels`; MT-4-16
 - See: [Logistics](../design/logistics.md)
+
+!!! question "Open"
+    Not built: capture, captured cargo, enemy supply depots and seizing their stock (Stage 5 with the rival's logistics).
 
 ### R-STR-021 Survey ships
 
@@ -346,12 +382,15 @@ Surveys MUST be flown by survey ships, a mission profile and craft distinct from
 *Rationale:* Logistics decisions (2026-11-11, revised): survey and supply are different.
 
 - Implements: [F-STR-006](../../definition/strategy-logistics.md#f-str-006-surveys)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: planned — partly met (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand` (survey first; the report names the deposit); MT-4-13
+- See: [Strategy layer › The player's orders](../../modding/strategy.md#the-players-orders)
+
+!!! note "As built (app 0.9.0)"
+    `Campaign::survey(def, base, system)` launches a survey ship (separate from convoys) from a base to a system within that base's sensor range, not yet surveyed. At launch a roll against `logistics.survey_attack_chance` (default 25 %) marks it attacked. It flies straight at `logistics.survey_speed`; on arrival an attacked ship is lost half the time, else the system is surveyed and a notice lists its deposits with their daily rates and the research sites it meets. Suitability per facility type is the Supply tab's reason on each *Build* row (R-STR-010).
 
 !!! question "Open"
-    What the survey-ship craft is (the design has used the Sky-Eye probe object), where and when an attacked survey ship meets its attackers, and which mission is generated.
+    The report does not give reserves or features by name; the survey ship has no craft or battle model, and an attack is auto-resolved (lost on a fixed 50 % roll, not campaign data) instead of generating a mission.
 
 ### R-STR-022 Construction stages
 
@@ -363,6 +402,9 @@ A facility under construction MUST be shown in its `build_25` state from 0 %, `b
 - Status: planned
 - Verified by: Planned (the stage looks themselves are R-CMB-019, implemented).
 - See: [Logistics](../design/logistics.md)
+
+!!! question "Open"
+    App 0.9.0 builds facilities over their `time` (grey on the map until finished) and reads `facility_types.<id>.hub`, but shows no construction stages and no battle at a facility.
 
 ### R-STR-023 Construction attacks
 
@@ -382,9 +424,12 @@ A research topic or branch MAY be restricted to a facility type (`lab:`) and to 
 *Rationale:* Logistics decision (2026-11-11).
 
 - Implements: [F-STR-009](../../definition/strategy-logistics.md#f-str-009-research-stations-and-fighter-pools)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.9.0, main `ff9d8fc`)
+- Verified by: `campaign::logistics::tests::station_research_waits_for_its_start_materials_and_convoys_lose_vessels`, `survey_build_mine_make_and_deliver_on_demand` (a research station refused off a site); MT-4-17
+- See: [Strategy layer › Research stations](../../modding/strategy.md#research-stations-and-station-only-topics)
+
+!!! note "As built (app 0.9.0)"
+    `research_sites: {<id>: {features: […]}}` match systems whose `features` include all the tags. A topic with `lab:` is researched only by a facility of that type, with `site:` only in a system meeting that site, and is not offered to bases; `Campaign::start_station_research` checks both and the topic's `requires`. The station orders the `start_cost`, uses it once on arrival, then adds `research_rate` an hour with no further supply. Research stations themselves may be built only on a surveyed research site.
 
 ### R-STR-025 Facility fighter pools
 
@@ -409,7 +454,7 @@ A supply vessel's cargo capacity MUST be campaign data.
 - See: [Logistics](../design/logistics.md)
 
 !!! question "Open"
-    The value is TBD, set by tech-tree balance.
+    The value is TBD, set by tech-tree balance. In app 0.9.0 a convoy carries a whole order, whatever its size.
 
 ### R-STR-027 Third-party convoys
 
@@ -428,3 +473,4 @@ Prospector convoys MUST fly expeditions (base → system under investigation →
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Bootstrap: R-STR-001 – R-STR-027 (27 requirements; 0 reverse-engineered from the code) |
 | 1.13.0 | 2026-11-11 | R-STR-001 – R-STR-011 as built (app 0.7.0 – 0.7.3, main `77d6c9f`, `10f7fce`, `94d66c1`, `076203e`): R-STR-001 (`start:` replaces `starts`) and R-STR-011 implemented; R-STR-002 – R-STR-010 partly met (status stays planned), each with an As-built note, Verified-by lines and an Open note of what remains (endurance, choosing a fit, logistics, evaluations, the 3D base view; known issues: manufacture charges no money, `salvaged` compares names with ids). R-STR-012 – R-STR-027 stay planned |
+| 1.14.0 | 2026-11-11 | Logistics, the X-COM data and fixes as built (app 0.8.0 – 0.9.0, main `c64d178`, `8e96338`, `ff9d8fc`): R-STR-011 (logistics state saved), R-STR-012, R-STR-013 (nearest supplier in a straight line, DEV-049), R-STR-015, R-STR-016 (vessels: `logistics.vessels`), R-STR-018 (attack chance: `logistics.ambush_chance`) and R-STR-024 implemented; R-STR-014 (storage only at mines), R-STR-019 (ambushes auto-resolved, not flown), R-STR-020 (losses, no capture or depots) and R-STR-021 (no survey craft; attacks auto-resolved) partly met; R-STR-004, R-STR-005 (`tech_ids`, station-only topics), R-STR-007 (hull components) and R-STR-010 (the Supply tab) As-built notes; the two known issues (manufacture free, `salvaged` by name) fixed. R-STR-017, R-STR-022, R-STR-023, R-STR-025 – R-STR-027 stay planned with Open notes |

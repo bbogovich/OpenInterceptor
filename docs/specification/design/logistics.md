@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.14.0
 status: current
 updated: 2026-11-11
 ---
@@ -22,6 +22,20 @@ campaign (`rules/logistics.yaml`: mining facility, research station, manufacturi
 turret and shield slots; the cargo clipper and cargo pod), their three construction stages with
 their own meshes and debris, and the `construction-defence` and `convoy-ambush` testbed arenas
 ([Testbed](../../implementation/architecture/testbed.md)). The strategy-layer simulation below is Stage 4.
+
+!!! note "As built (app 0.9.0, main `ff9d8fc`)"
+    The core of this design is built — resources, components, recipes, the three facility types,
+    research sites and station-only topics, deposits and features on the map, surveys within
+    radar range with the attack roll at launch, demand-driven orders, automatic convoys of several
+    vessels along the lanes with the ambush point rolled at launch, and saves — with the keys on
+    [Strategy layer › Logistics](../../modding/strategy.md#logistics) and the runtime on
+    [Campaign › Logistics](../../implementation/architecture/campaign.md#logistics). Differences
+    from this design: placement is **fixed rules per role** instead of `placement:` expressions,
+    and the nearest supplier is measured in a straight line (DEV-049); ambushes and attacks on
+    survey ships are **auto-resolved**. Not built yet: flying `convoy_ambush`, construction stages
+    on the map and construction strikes, facility fighter pools and escorts, captured cargo and
+    enemy depots, third-party convoys, cargo capacity and facility upgrades. Requirement statuses:
+    R-STR-012 – R-STR-027.
 
 ## What the player does
 
@@ -409,3 +423,4 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0. Decisions revised: survey and supply ships are different profiles and craft (the "survey ship = supply ship" interpretation removed); the 25 % attack roll at survey-ship launch; supply-ship attack position chosen at launch; supply convoys with even cargo shares and a larger convoy vessel; construction thresholds 0 / 60 / 90 % confirmed; cargo capacity still TBD |
+| 1.14.0 | 2026-11-11 | As-built note (app 0.9.0): what is built, the two differences (fixed placement rules, straight-line nearest supplier; DEV-049), auto-resolved ambushes and survey attacks, and what is not built yet |

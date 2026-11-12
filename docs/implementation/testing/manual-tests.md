@@ -1266,6 +1266,17 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-10 | Campaign: save and continue | Strategy screen, launcher | not run | | | App 0.7.1 |
 | MT-4-11 | Campaign: lane travel | Strategy screen | not run | | | App 0.7.3 |
 | MT-4-12 | Campaign: fitting a craft and flying its fit | Strategy screen, a battle | not run | | | App 0.7.2 |
+| MT-4-13 | Supply: surveying a system | Strategy screen, Supply tab (default) | not run | | | App 0.9.0 |
+| MT-4-14 | Supply: building facilities and the placement rules | Supply tab (default) | not run | | | App 0.9.0 |
+| MT-4-15 | Supply: a hull built from components (the whole chain) | Supply and Factory tabs (default) | not run | | | App 0.9.0; long — use Ctrl+M and speed 4 |
+| MT-4-16 | Supply: convoys, ambushes and short deliveries | Strategy screen, an addon | not run | | | App 0.9.0 |
+| MT-4-17 | Supply: a research station and a station-only topic | Supply and Research tabs (default) | not run | | | App 0.9.0 |
+| MT-4-18 | Supply: save and continue with logistics under way | Strategy screen, launcher | not run | | | App 0.9.0 |
+| MT-4-19 | Fixes: manufacture is paid; salvage topics open | Factory and Research tabs, a battle | not run | | | App 0.9.0 |
+| MT-4-20 | Testbed cheats: payday, knowitall, quickbase | Strategy screen | not run | | | App 0.8.1 |
+| MT-4-21 | Testbed cheat: jump to battle | Strategy screen, a battle | not run | | | App 0.8.1 |
+| MT-4-22 | `interceptor`: a new campaign from the player's data | Launcher › Campaign: new game (`interceptor`) | not run | | | App 0.8.0; needs the player's data |
+| MT-4-23 | `interceptor`: research, prerequisites and a six-month soak | Strategy screen; command line | not run | | | App 0.8.0; needs the player's data |
 
 ## Stage 4 cases
 
@@ -1357,3 +1368,91 @@ Keys: [User guide › Campaign](../../user-guide/campaign.md).
 |---|---|
 | Steps | 1. Hangar tab: on a Comet press F. 2. Press F on a second Comet. 3. Research *Heat rays*, buy two, press F on the first Comet again. 4. Intercept with that Comet and fly the battle; look at the weapons. |
 | Expected | 1: *… fitted: Blaster, Blaster, Seeker rocket, …*; the row shows the fit; the store has fewer blasters and seekers. 2: what is left is fitted, or *nothing in store fits this craft*. 3: the better beams replace the blasters, which go back into the store. 4: the battle's craft fires the fitted beams and carries the fitted missiles with their rounds; other battles (launcher missions) keep the class's own weapons. |
+
+### MT-4-13 — Supply: surveying a system
+
+| Field | |
+|---|---|
+| Preconditions | App 0.9.0 or later. A new default campaign. |
+| Steps | 1. Open the Supply tab with no system chosen. 2. Click a system inside the Gatehouse's radar circle (or Mercury Gate itself); on the Supply tab choose *Survey <system> from Gatehouse*. 3. Run the clock until the survey reports. 4. Choose the same row again. 5. Click a system outside every radar circle and try to survey it. |
+| Expected | 1: *(choose a system on the map to survey it or build there)* and *0 orders open, 0 convoys under way, 0 survey ships out*. 2: *Done.*; a sky-blue ring leaves the base on the map; the count says *1 survey ships out*. 3: the clock stops with *Survey of <system>: <deposits with rates per day>; research site: …* (or, after an attack roll, *(after fighting off an attack)*, or *Survey ship attacked and lost on the way to <system>* — then survey again). 4: the Survey row is gone. 5: *<system> is outside Gatehouse's radar range*. |
+
+### MT-4-14 — Supply: building facilities and the placement rules
+
+| Field | |
+|---|---|
+| Preconditions | MT-4-13 done for a system with deposits; Ctrl+M once or twice for funds. |
+| Steps | 1. Choose an unsurveyed system: read the three *Build* rows. 2. Choose the surveyed system: build a Mining facility. 3. Build a second Mining facility there. 4. Choose Mercury Gate: build a Manufacturing center. 5. Choose a system that is not a research site: read the Research station row. 6. Run the clock until the facilities are complete. |
+| Expected | 1: Mining and Research station rows end *(… has not been surveyed)*. 2: *Done.*; funds drop by its cost (400,000); a grey diamond beside the system; the Supply tab lists *Mining facility at <system>: building, 10.0 days*. 3: *there is already one in this system*. 4: allowed (a base's system); a system more than two lanes away says *is more than two lanes from your bases*. 5: *(… is not a research site)*. 6: *Mining facility at <system> is complete* stops the clock; the diamond turns orange; the facility's row lists its store filling (*… Iron*). |
+
+### MT-4-15 — Supply: a hull built from components (the whole chain)
+
+| Field | |
+|---|---|
+| Preconditions | A Workshop at the Gatehouse (Build tab; Ctrl+B finishes it) for a production rate. A Manufacturing center within two lanes of the Gatehouse and Mining facilities on systems with iron, cosmium, gold and dilithium (the Comet needs hull plating, rocket motors and ray emitters). Ctrl+M for funds. |
+| Steps | 1. Factory tab: queue one Comet. 2. Watch the Supply tab and the map at speed 3 – 4. 3. Wait until the Comet is built. |
+| Expected | 1: the job is queued; no money is taken for it. 2: *n orders open* rises; gold dots (convoys) travel along the lanes from the mines to the center and from the center to the Gatehouse; the center's store shows iron, cosmium, … and then hull plating, rocket motors, ray emitters; the base's store row appears (*Gatehouse store: …*). 3: once the base holds 8 hull plating, 2 rocket motors and 2 ray emitters they disappear from its store, the job runs, and a Comet joins the Hangar. No goods move without an order. |
+
+### MT-4-16 — Supply: convoys, ambushes and short deliveries
+
+| Field | |
+|---|---|
+| Preconditions | An addon for the default campaign with `logistics: {ambush_chance: 100%, ambush_loss: 50%}`; the chain of MT-4-15 set up. |
+| Steps | 1. Queue a Comet and watch the messages while convoys travel. 2. Look at the store the convoy was heading for when it arrives. 3. Wait for the Comet. |
+| Expected | 1: every convoy stops the clock somewhere along its route with *Supply convoy (<amount> <goods>) ambushed: k of 3 vessels lost*. 2: the delivery is the surviving share (for 1 of 3 lost, two thirds). 3: further orders make up the difference; the Comet is still built, later. With 3 of 3 lost nothing arrives and the goods are ordered again. |
+
+### MT-4-17 — Supply: a research station and a station-only topic
+
+| Field | |
+|---|---|
+| Preconditions | Default campaign. *Deep radar* researched (Research tab; or wait). Tycho Drift surveyed (it has gold and the `pulsar_near` feature) — build a base nearer if it is out of radar range. Ctrl+M for funds. |
+| Steps | 1. Research tab: look for *Pulsar navigation* and *Theremin shielding*. 2. Supply tab at Tycho Drift: build a Mining facility and a Research station; wait until both are complete. 3. Choose *Research Theremin shielding here*. 4. Choose *Research Pulsar navigation here*. 5. Run the clock. |
+| Expected | 1: neither station-only topic is offered at a base. 2: under the station's row, *Research Theremin shielding here* and *Research Pulsar navigation here* (every station-only topic of this facility type not yet known). 3: *this station is not on a nebula_lab site*. 4: *Research station at Tycho Drift: …; researching Pulsar navigation (awaiting materials)*; an order for gold is opened. 5: a convoy delivers the gold; *(awaiting materials)* disappears; later *Research complete: Pulsar navigation*. |
+
+### MT-4-18 — Supply: save and continue with logistics under way
+
+| Field | |
+|---|---|
+| Preconditions | A default campaign with facilities, at least one convoy and one survey ship in flight. |
+| Steps | 1. Note the Supply tab and the map. 2. F5; Esc to the launcher. 3. *Campaign: continue*. 4. Run the clock. |
+| Expected | 3: the same facilities, stores, orders, convoys and survey ships, in the same places. 4: they carry on: convoys arrive (or are ambushed where they were going to be) and surveys report as before saving. |
+
+### MT-4-19 — Fixes: manufacture is paid; salvage topics open
+
+| Field | |
+|---|---|
+| Preconditions | App 0.9.0 or later. Default campaign with a Workshop at the Gatehouse (Build tab; Ctrl+B finishes it). |
+| Steps | 1. Factory tab: queue two of an item (not a hull: hulls are paid in components); note the funds before and after the clock runs one hour, and when the second unit starts. 2. Set funds below an item's cost (spend them) and queue one. 3. Intercept and win a saucer raid whose outcome salvages; then open the Research tab. |
+| Expected | 1: nothing is taken when queued; the first unit's cost is taken when it starts, the second's when it starts. 2: the job waits until money comes in. 3: *Saucer hull analysis* is offered (and, after a robot raid is salvaged, *Robot brains*). |
+
+### MT-4-20 — Testbed cheats: payday, knowitall, quickbase
+
+| Field | |
+|---|---|
+| Preconditions | App 0.8.1 or later. A new default campaign. |
+| Steps | 1. Ctrl+M. 2. Build tab: order a module; Bases tab: order a new base. 3. Ctrl+B. 4. Ctrl+K; open the Research tab and the Market tab. 5. Build a facility (Supply tab) and press Ctrl+B. |
+| Expected | 1: banner *Cheat: payday*; funds up by 1,000,000; a line in Messages. 2: both building. 3: *Cheat: quickbase*; the module and the base are finished at once. 4: *Cheat: knowitall*; nothing left to research; every item and hull on sale. 5: the facility keeps building (quickbase finishes bases and modules only). |
+
+### MT-4-21 — Testbed cheat: jump to battle
+
+| Field | |
+|---|---|
+| Preconditions | App 0.8.1 or later. A default campaign with a detected contact (wait at speed 4). |
+| Steps | 1. Press Ctrl+J on the Bases tab. 2. Contacts tab: choose the contact; Ctrl+J. 3. Enter; fly or leave the battle. 4. Send every craft away (or lose them), choose a contact and press Ctrl+J. |
+| Expected | 1: *Choose a contact on the Contacts tab first*. 2: the fly-or-break-off banner at once, without the craft flying there. 3: the raid's mission starts with that craft's hull; the debrief returns to the map as usual. 4: *no ready craft with a pilot*. |
+
+### MT-4-22 — `interceptor`: a new campaign from the player's data
+
+| Field | |
+|---|---|
+| Preconditions | App 0.8.0 or later with the player's data (`resources/xcom` or `resources/xcom-cd`). |
+| Steps | 1. Launcher: Tab to `interceptor`; note the first entries. 2. *Campaign: new game* at two difficulty levels in turn (D in the launcher). 3. Look at the map, the Bases, Research, Build and Hangar tabs. 4. `openinterceptor --check --campaign interceptor`. |
+| Expected | 1: *Campaign: continue*, *Campaign: new game*. 2: the starting funds differ by level (read from the level's section of `GameSettings.ini`). 3: a generated map of 30 – 45 systems; Frontier Base One with its template modules and a hangar; three craft; research offered only where its prerequisites are known; module costs and build times in the original's scale (thousands, days). 4: no errors. Compare against the original game where you can; note anything that feels wrong — every estimate is `DERIVED`. |
+
+### MT-4-23 — `interceptor`: research, prerequisites and a six-month soak
+
+| Field | |
+|---|---|
+| Preconditions | As MT-4-22. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy-soak 180`. 2. The same with `--campaign default`. 3. In a new `interceptor` campaign research a topic; see which topics and items appear once it is done. 4. Build a second downlink; compare the research speed. |
+| Expected | 1: one line after 180 days — about 4 of 71 topics on one downlink at app 0.8.0, funds, score, battles. 2: about 12 of 14 topics. 3: the topics whose `Prereq` ids name it, and the items whose `TechRequired` names it, become available. 4: faster research (the rate counts every downlink type). Whether the pace matches the original is the play-test's question. |
