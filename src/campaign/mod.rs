@@ -184,6 +184,9 @@ pub enum Event {
     Video { reference: String },
     /// A cutscene to play (its id).
     Cutscene { id: String },
+    /// A facility under construction (index into `logistics.facilities`) is struck: fly
+    /// its defence or let it be ([`Campaign::strike_result`]).
+    Strike { facility: usize },
 }
 
 /// What a campaign craft flies into battle with (from [`Campaign::loadout`]).
@@ -1484,6 +1487,7 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
                 }
                 Event::Ending { .. } => return c,
                 Event::Card { .. } | Event::Video { .. } | Event::Cutscene { .. } => {}
+                Event::Strike { facility } => c.strike_result(def, facility, None),
                 Event::Battle { contact } => {
                     battles += 1;
                     let result = if battles % 3 == 0 { "retreat" } else { "win" };

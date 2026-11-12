@@ -36,6 +36,8 @@ logistics:
   survey_speed: 900
   convoy_speed: 450
   ambush_mission: convoy_ambush    # fly the escort when a convoy is ambushed
+  # The Dominion strikes construction sites from half-built, three times at most each.
+  construction_strikes: {from: 50%, max: 3, chance: 12%, mission: construction_defence, setback: 25%}
 
 # What each system holds (revealed by a survey).
 maps:

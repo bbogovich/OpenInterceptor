@@ -121,6 +121,23 @@ pub struct LogisticsDef {
     /// The battle flown when the player escorts an ambushed convoy (`ambush_mission:`);
     /// `None` = ambushes are always auto-resolved.
     pub ambush_mission: Option<String>,
+    /// Strikes on facilities under construction (R-STR-023): `None` = none.
+    pub strikes: Option<Strikes>,
+}
+
+/// `logistics.construction_strikes`: when the enemy strikes a construction site.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Strikes {
+    /// Construction progress (0..1) from which a site can be struck.
+    pub from: f32,
+    /// At most this many strikes per location.
+    pub max: u32,
+    /// Chance per day of a strike on each eligible site.
+    pub chance: f32,
+    /// The battle flown in its defence (`construction_defence`); `None`: auto-resolved.
+    pub mission: Option<String>,
+    /// A strike not flown sets construction back by this share of the build time.
+    pub setback: f32,
 }
 
 impl LogisticsDef {
@@ -287,6 +304,17 @@ impl LogisticsDef {
             survey_speed: num("survey_speed", 900.0).max(1.0),
             convoy_speed: num("convoy_speed", 500.0).max(1.0),
             ambush_mission: lg.and_then(|g| g.str("ambush_mission")).map(str::to_string),
+            strikes: lg.and_then(|g| g.node("construction_strikes")).map(|n| {
+                let s = Get(n);
+                let fr = |k: &str, d: f32| s.qty(k, Unit::Fraction).unwrap_or(d).clamp(0.0, 1.0);
+                Strikes {
+                    from: fr("from", 0.5),
+                    max: s.num("max").unwrap_or(3.0).max(0.0) as u32,
+                    chance: fr("chance", 0.1),
+                    mission: s.str("mission").map(str::to_string),
+                    setback: fr("setback", 0.25),
+                }
+            }),
         })
     }
 }
@@ -344,6 +372,17 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("survey_speed", Ty::Num, "survey ship speed, map units an hour"),
                 f("convoy_speed", Ty::Num, "convoy speed, map units an hour"),
                 f("ambush_mission", Ty::Name, "the mission flown when the player escorts an ambushed convoy (its cargo: role's surviving share arrives)"),
+                f(
+                    "construction_strikes",
+                    Ty::Struct(vec![
+                        f("from", Ty::Qty(Unit::Fraction), "construction progress from which a site can be struck (50 %)"),
+                        f("max", Ty::Num, "strikes at most per location (3)"),
+                        f("chance", Ty::Qty(Unit::Fraction), "chance per day per eligible site (10 %)"),
+                        f("mission", Ty::Name, "the defence flown (construction_defence); none: auto-resolved"),
+                        f("setback", Ty::Qty(Unit::Fraction), "a strike not flown sets construction back this share (25 %)"),
+                    ]),
+                    "enemy strikes on facilities under construction (R-STR-023)",
+                ),
             ]),
             "supply settings",
         ),

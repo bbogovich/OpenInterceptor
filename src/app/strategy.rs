@@ -158,6 +158,8 @@ pub enum PendingBattle {
     Convoy(usize),
     /// A mission a story event offered.
     Story,
+    /// The defence of a struck construction site (index into `logistics.facilities`).
+    Strike(usize),
 }
 
 /// What a campaign battle hands back (filled in by the flight screen).
@@ -198,6 +200,8 @@ pub struct StrategyScreen {
     battle: Option<u32>,
     /// An ambushed convoy waiting for the player's choice.
     convoy: Option<usize>,
+    /// A construction site struck, waiting for the player's choice.
+    strike: Option<usize>,
     /// A story event's choice waiting (index into `story.events`).
     choice: Option<usize>,
     /// A story mission offered.
@@ -299,6 +303,7 @@ impl StrategyScreen {
             banner: None,
             battle: None,
             convoy: None,
+            strike: None,
             choice: None,
             offer: None,
             ending: None,
@@ -351,6 +356,16 @@ impl StrategyScreen {
                     report.result.to_uppercase(),
                     share.map(|s| format!(" - {:.0}% of the cargo got through", s * 100.0)).unwrap_or_default()
                 ));
+            }
+            Some(PendingBattle::Strike(f)) => {
+                let won = match report.result.as_str() {
+                    "win" => Some(true),
+                    "lose" => Some(false),
+                    _ => None,
+                };
+                self.campaign.strike_result(def, f, won);
+                self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
+                self.banner = Some(format!("Construction defence: {}", report.result.to_uppercase()));
             }
             Some(PendingBattle::Story) => {
                 self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
@@ -851,6 +866,36 @@ impl StrategyScreen {
             }
             return Some(Next::Stay);
         }
+        if let Some(f) = self.strike {
+            let what = def
+                .logistics
+                .as_ref()
+                .zip(self.campaign.logistics.facilities.get(f))
+                .map(|(l, fac)| {
+                    format!("{} at {}", l.facility_types[fac.ftype].name, self.campaign.systems[fac.system].name)
+                })
+                .unwrap_or_default();
+            let mission = def.logistics.as_ref().and_then(|l| l.strikes.as_ref()).and_then(|s| s.mission.clone());
+            let body = format!("Enemy craft are striking the {what} under construction. Fly its defence, or let the strike set the work back.");
+            match widgets::modal(ui, input, "Construction under attack", &body, &["Fly the defence", "Let it be"]) {
+                Some(0) => {
+                    self.strike = None;
+                    match (self.ready_craft(), mission) {
+                        (Some(k), Some(m)) => return Some(self.fly(def, k, m, PendingBattle::Strike(f))),
+                        _ => {
+                            self.campaign.strike_result(def, f, None);
+                            self.say("No ready craft: the strike goes unopposed.");
+                        }
+                    }
+                }
+                Some(_) => {
+                    self.strike = None;
+                    self.campaign.strike_result(def, f, None);
+                }
+                None => {}
+            }
+            return Some(Next::Stay);
+        }
         if let Some(b) = self.banner.clone() {
             if widgets::modal(ui, input, "Report", &b, &["OK"]).is_some() {
                 self.banner = None;
@@ -1063,6 +1108,7 @@ impl StrategyScreen {
             || self.choice.is_some()
             || self.offer.is_some()
             || self.convoy.is_some()
+            || self.strike.is_some()
             || self.banner.is_some();
         // While a prompt is up, the screen underneath takes no input.
         let live = if prompting { Input::default() } else { input };
@@ -1167,6 +1213,10 @@ impl StrategyScreen {
                     Event::Card { title, text } => self.card = Some((title, text)),
                     Event::Video { reference } => video = Some(reference),
                     Event::Cutscene { id } => cutscene = Some(id),
+                    Event::Strike { facility } => {
+                        self.banner = None;
+                        self.strike = Some(facility);
+                    }
                 }
             }
             // A video takes the whole screen; the campaign waits here.

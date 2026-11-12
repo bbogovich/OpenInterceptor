@@ -282,6 +282,21 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             events.push(Event::Notice(t));
         }
     }
+    // Strikes on construction sites (R-STR-023): from `from` progress, at most `max`
+    // per location, `chance` a day.
+    if let Some(s) = &l.strikes {
+        for f in 0..c.logistics.facilities.len() {
+            let fac = &c.logistics.facilities[f];
+            let time = l.facility_types[fac.ftype].time as f64;
+            let progress = 1.0 - (fac.ready_at - now) / time.max(1e-6);
+            let here: u32 = c.logistics.facilities.iter().filter(|x| x.system == fac.system).map(|x| x.attacks).sum();
+            if fac.ready_at > now && progress >= s.from as f64 && here < s.max && c.roll() < s.chance * dtf / 24.0 {
+                c.logistics.facilities[f].attacks += 1;
+                events.push(Event::Strike { facility: f });
+                break; // one at a time
+            }
+        }
+    }
     // 1. Demand at bases: hull jobs waiting for components.
     for b in 0..c.bases.len() {
         let needs: Vec<(String, f32)> = c.bases[b]
@@ -604,6 +619,30 @@ impl Campaign {
         }
     }
 
+    /// Settles a strike on facility `f`: `Some(true)` the player flew its defence and
+    /// won, `Some(false)` flew and lost (the site is destroyed), `None` not flown (the
+    /// strike sets construction back by `setback` of the build time).
+    pub fn strike_result(&mut self, def: &StrategyDef, f: usize, won: Option<bool>) {
+        let Some(l) = def.logistics.as_ref() else { return };
+        let Some(fac) = self.logistics.facilities.get(f) else { return };
+        let name = format!("{} at {}", l.facility_types[fac.ftype].name, self.systems[fac.system].name);
+        let text = match won {
+            Some(true) => format!("{name}: the strike was beaten off"),
+            Some(false) => {
+                self.remove_facility(f);
+                format!("{name} was destroyed under construction")
+            }
+            None => {
+                let setback = l.strikes.as_ref().map_or(0.25, |s| s.setback) as f64;
+                let time = l.facility_types[fac.ftype].time as f64;
+                self.logistics.facilities[f].ready_at += time * setback;
+                format!("{name} was struck: construction set back {:.0} days", time * setback / 24.0)
+            }
+        };
+        self.messages.push(Message { hour: self.hours, text: text.clone() });
+        self.notices.push(text);
+    }
+
     /// Removes facility `f` (lost to the enemy): its orders and the convoys bound for it
     /// go too, and every other reference to a facility index after it moves down by one
     /// (orders' sources and convoys' and orders' destinations hold indices, not names).
@@ -835,6 +874,52 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         assert_eq!(c.logistics.orders.len(), 1, "the lost facility's own orders went with it");
         assert_eq!(c.logistics.orders[0].source, 0, "the other facility's index moved down");
         assert!(c.notices.iter().any(|n| n.contains("lost")), "{:?}", c.notices);
+    }
+
+    #[test]
+    fn construction_sites_are_struck_from_halfway_at_most_max_times() {
+        let text = SAMPLE
+            .replace(
+                "ambush_chance: 0%",
+                "ambush_chance: 0%, construction_strikes: {from: 50%, max: 2, chance: 100%, setback: 50%}",
+            )
+            // A long build, so the window from halfway is wide enough for daily rolls.
+            .replace("mine: {role: mining, cost: 1000, time: 10h", "mine: {role: mining, cost: 1000, time: 400h");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        run(&mut c, &d, 2.0);
+        c.survey(&d, 0, 1).unwrap();
+        run(&mut c, &d, 2.0);
+        c.build_facility(&d, 0, 1).unwrap();
+        let time = d.logistics.as_ref().unwrap().facility_types[0].time as f64;
+        // Until halfway: no strike. Then strikes, each settled as not flown (a setback).
+        let mut strikes = Vec::new();
+        let mut early = 0;
+        let start = c.hours;
+        for _ in 0..(time as usize * 4) {
+            for e in c.advance(&d, 1.0) {
+                if let Event::Strike { facility } = e {
+                    if c.hours - start < time * 0.5 - 1.0 {
+                        early += 1;
+                    }
+                    strikes.push(c.hours);
+                    let before = c.logistics.facilities[facility].ready_at;
+                    c.strike_result(&d, facility, None);
+                    assert!(
+                        (c.logistics.facilities[facility].ready_at - before - time * 0.5).abs() < 1e-6,
+                        "set back half the build time"
+                    );
+                }
+            }
+        }
+        assert_eq!(early, 0, "no strikes before halfway");
+        assert_eq!(strikes.len(), 2, "at most max per location: {strikes:?}");
+        assert_eq!(c.logistics.facilities[0].attacks, 2);
+        // A lost defence destroys the site.
+        c.strike_result(&d, 0, Some(false));
+        assert!(c.logistics.facilities.is_empty());
     }
 
     #[test]
