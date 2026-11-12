@@ -9,6 +9,7 @@ pilots:
   pool: 5
   heal_days: 12
   survive: 70%
+  training: {gain: 0.4, cost: 400}   # stat points and money a day per pilot in training
   names: [Ace Halloran, Dixie Moreau, Buck Kowalski, Vera Strand, Sal Navarro, Penny Ito, Rex Calloway,
           Lulu Bianchi, Hank Osei, Mae Delacroix, Jet Ramirez, Nora Lindqvist, Clancy Obi, Ruby Fairweather]
 

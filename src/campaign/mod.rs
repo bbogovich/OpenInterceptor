@@ -108,6 +108,8 @@ pub struct Pilot {
     pub state: PilotState,
     /// The craft they fly (index into `Campaign::craft`).
     pub craft: Option<usize>,
+    /// In training: stats grow each day (`pilots.training`), at a cost.
+    pub training: bool,
 }
 
 /// A craft.
@@ -531,7 +533,16 @@ impl Campaign {
             .unwrap_or_else(|| format!("Pilot {}", self.pilots.len() + self.recruits.len() + 1));
         let ranges: Vec<[f32; 2]> = rules.map(|p| p.stats.iter().map(|(_, r)| *r).collect()).unwrap_or_default();
         let stats = ranges.iter().map(|[lo, hi]| (lo + (hi - lo) * self.roll()).round()).collect();
-        Pilot { name, stats, experience: 0.0, kills: 0, missions: 0, state: PilotState::Ready, craft: None }
+        Pilot {
+            name,
+            stats,
+            experience: 0.0,
+            kills: 0,
+            missions: 0,
+            state: PilotState::Ready,
+            craft: None,
+            training: false,
+        }
     }
 
     fn refresh_recruits(&mut self, def: &StrategyDef) {
@@ -901,6 +912,19 @@ impl Campaign {
                 self.money += amount;
                 self.log(format!("{}: {:+.0}", flow.name, amount));
             }
+        }
+        // Training: each ready pilot in training gains a little each hour, and pays.
+        if let Some(r) = def.pilots.as_ref().filter(|r| r.train_gain > 0.0) {
+            let day = (dt / 24.0) as f32;
+            let mut paid = 0.0;
+            for p in self.pilots.iter_mut().filter(|p| p.training && p.state == PilotState::Ready) {
+                for (k, v) in p.stats.iter_mut().enumerate() {
+                    let max = r.stats.get(k).map_or(f32::MAX, |(_, mm)| mm[1]);
+                    *v = (*v + r.train_gain * day).min(max);
+                }
+                paid += r.train_cost * day;
+            }
+            self.money -= paid as f64;
         }
         // The month: maintenance, upkeep and salaries; the report; new recruits.
         if now >= self.next_month {
@@ -1389,6 +1413,30 @@ impl Campaign {
         l
     }
 
+    /// Puts pilot `p` into training, or takes them out.
+    pub fn set_training(&mut self, def: &StrategyDef, p: usize, on: bool) -> Result<(), String> {
+        if def.pilots.as_ref().is_none_or(|r| r.train_gain <= 0.0) {
+            return Err("this campaign has no pilot training".into());
+        }
+        let pilot = self.pilots.get_mut(p).ok_or("no such pilot")?;
+        if pilot.state == PilotState::Dead {
+            return Err(format!("{} is dead", pilot.name));
+        }
+        pilot.training = on;
+        Ok(())
+    }
+
+    /// Dismisses pilot `p` (the original's *sack*): off the roster and out of their
+    /// craft. Later pilots move up one place.
+    pub fn dismiss(&mut self, p: usize) -> Result<(), String> {
+        if p >= self.pilots.len() {
+            return Err("no such pilot".into());
+        }
+        let gone = self.pilots.remove(p);
+        self.log(format!("Dismissed: {}", gone.name));
+        Ok(())
+    }
+
     // --- Testbed cheats (the original's own: payday, knowitall, quickbase) ----------
 
     /// `payday`: a million more.
@@ -1638,6 +1686,31 @@ mod tests {
         c.apply_actions(&d, &[discover], &mut events);
         assert!(open(&mut c, "secret"), "discovered");
         assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("New research"))));
+    }
+
+    #[test]
+    fn pilots_train_up_to_their_maximum_and_can_be_dismissed() {
+        let text = crate::content::strategy::tests::SAMPLE
+            .replace("pool: 3, names: [Ann, Bo]}", "pool: 3, names: [Ann, Bo], training: {gain: 10, cost: 100}}");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 42);
+        let before = c.pilots[0].stats[0];
+        c.set_training(&d, 0, true).unwrap();
+        let money = c.money;
+        c.advance(&d, 24.0);
+        let gained = c.pilots[0].stats[0] - before;
+        assert!((gained - 10.0).abs() < 0.01 || c.pilots[0].stats[0] == 100.0, "a day's training: {gained}");
+        assert!(c.money <= money - 99.0, "training costs");
+        for _ in 0..20 {
+            c.advance(&d, 24.0);
+        }
+        assert_eq!(c.pilots[0].stats[0], 100.0, "no further than the stat's maximum");
+        let n = c.pilots.len();
+        c.dismiss(0).unwrap();
+        assert_eq!(c.pilots.len(), n - 1);
+        assert!(c.dismiss(99).is_err());
     }
 
     #[test]

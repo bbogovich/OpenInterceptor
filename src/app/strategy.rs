@@ -105,6 +105,10 @@ enum Act {
     Sell(usize),
     /// Fit a craft with the best items in store.
     FitBest(usize),
+    /// Start (true) or stop training a pilot.
+    Train(usize, bool),
+    /// Dismiss a pilot.
+    Dismiss(usize),
     Hire(usize),
     AssignPilot(usize), // craft: give it the next free pilot
     Intercept(u32),
@@ -135,6 +139,9 @@ impl Row {
             Act::Hire(_) => "Hire",
             Act::AssignPilot(_) => "Assign pilot",
             Act::FitBest(_) => "Fit best",
+            Act::Train(_, true) => "Train",
+            Act::Train(_, false) => "Stop training",
+            Act::Dismiss(_) => "Dismiss",
             Act::Intercept(_) => "Intercept",
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
@@ -549,7 +556,8 @@ impl StrategyScreen {
                         .with("Fit best", Act::FitBest(k)),
                     );
                 }
-                for p in &c.pilots {
+                let can_train = def.pilots.as_ref().is_some_and(|r| r.train_gain > 0.0);
+                for (pi, p) in c.pilots.iter().enumerate() {
                     let rank = def
                         .pilots
                         .as_ref()
@@ -561,10 +569,15 @@ impl StrategyScreen {
                         PilotState::Injured(h) => format!("injured, {:.0} days", (h - c.hours) / 24.0),
                         PilotState::Dead => "killed".into(),
                     };
-                    rows.push(Row::new(
-                        format!("   {rank} {} - {} kills, {} missions, {state}", p.name, p.kills, p.missions),
-                        Act::None,
-                    ));
+                    let training = if p.training { ", training" } else { "" };
+                    let mut row = Row::new(
+                        format!("   {rank} {} - {} kills, {} missions, {state}{training}", p.name, p.kills, p.missions),
+                        if can_train && p.state != PilotState::Dead { Act::Train(pi, !p.training) } else { Act::None },
+                    );
+                    if p.state != PilotState::Dead {
+                        row = row.with("Dismiss", Act::Dismiss(pi));
+                    }
+                    rows.push(row);
                 }
                 let fee = def.pilots.as_ref().map_or(0.0, |p| p.recruit_fee);
                 for (i, p) in c.recruits.iter().enumerate() {
@@ -717,6 +730,8 @@ impl StrategyScreen {
             Act::Make(p, n) => c.manufacture(def, base, p, n),
             Act::Sell(i) => c.sell(def, base, i, 1),
             Act::FitBest(k) => c.fit_best(def, k).map(|_| ()),
+            Act::Train(p, on) => c.set_training(def, p, on),
+            Act::Dismiss(p) => c.dismiss(p),
             Act::Hire(i) => c.hire(def, i),
             Act::AssignPilot(k) => {
                 match c.pilots.iter().position(|p| p.craft.is_none() && p.state == PilotState::Ready) {

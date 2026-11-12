@@ -352,6 +352,10 @@ pub struct PilotRules {
     pub heal_days: f32,
     /// Chance that a pilot shot down survives (injured).
     pub survive: f32,
+    /// Training (R-STR-008): stat points gained a day by a pilot in training (up to the
+    /// stat's maximum) and its cost a day; 0 gain = no training.
+    pub train_gain: f32,
+    pub train_cost: f32,
 }
 
 /// The whole strategy layer of a campaign.
@@ -767,6 +771,8 @@ impl StrategyDef {
                 names: g.list("names"),
                 heal_days: g.num("heal_days").unwrap_or(14.0),
                 survive: g.qty("survive", Unit::Fraction).unwrap_or(0.6).clamp(0.0, 1.0),
+                train_gain: g.node("training").map(Get).and_then(|t| t.num("gain")).unwrap_or(0.0).max(0.0),
+                train_cost: g.node("training").map(Get).and_then(|t| t.num("cost")).unwrap_or(0.0).max(0.0),
             }
         });
         let scores = global("scores").map(|n| pairs(Get(&n), "")).unwrap_or_default();
@@ -1166,6 +1172,14 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("pool", Ty::Num, "candidates offered"),
                 f("names", Ty::List(Box::new(Ty::Text)), "names to draw from"),
                 f("heal_days", Ty::Num, "days to heal an injury"),
+                f(
+                    "training",
+                    Ty::Struct(vec![
+                        f("gain", Ty::Num, "stat points a day while training (up to each stat's maximum)"),
+                        f("cost", Ty::Num, "money a day per pilot training"),
+                    ]),
+                    "pilot training",
+                ),
                 f("survive", Ty::Qty(Unit::Fraction), "chance a pilot shot down survives"),
             ]),
             "pilot rules",

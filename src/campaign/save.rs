@@ -363,6 +363,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
             ("missions", n(p.missions as f64)),
             ("state", state),
             ("craft", p.craft.map_or(Node::null(0), |k| n(k as f64))),
+            ("training", s(if p.training { "yes" } else { "no" })),
         ])
     };
     let doc = map(vec![
@@ -583,6 +584,8 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
                 },
             },
             craft: opt(p, "craft"),
+            // Saves from before 0.16.7 have no flag: not training.
+            training: p.str("training") == Some("yes"),
         }
     };
     let systems: Vec<StarSystem> = list("systems")

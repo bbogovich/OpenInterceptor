@@ -748,6 +748,10 @@
         "pool": {"description": "candidates offered", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "names": {"description": "names to draw from", "type": "array", "items": {"type": "string"}},
         "heal_days": {"description": "days to heal an injury", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "training": {"description": "pilot training", "type": "object", "additionalProperties": false, "properties": {
+            "gain": {"description": "stat points a day while training (up to each stat's maximum)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "cost": {"description": "money a day per pilot training", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
         "survive": {"description": "chance a pilot shot down survives", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
       }},
     "scores": {"description": "mission score names (score(x) in outcomes): points", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
