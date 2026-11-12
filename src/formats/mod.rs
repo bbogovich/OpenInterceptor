@@ -24,6 +24,7 @@
 
 pub mod ini;
 pub mod langfile;
+pub mod mpsrc;
 pub mod obj;
 pub mod pe;
 pub mod png;

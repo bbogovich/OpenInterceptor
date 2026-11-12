@@ -445,6 +445,11 @@ impl Content {
     /// a path in the pack.
     pub fn read_asset(&self, reference: &str, pack: usize) -> Result<Vec<u8>, String> {
         match AssetRef::parse(reference)? {
+            // `original:<pack>.mps#<member>`: one file out of an MPSRC pack.
+            AssetRef::Original { file, resource: Some(member) } => {
+                let bytes = self.original()?.read_file(&file.ok_or("needs a file name")?)?;
+                crate::formats::mpsrc::member(&bytes, &member).map(<[u8]>::to_vec)
+            }
             AssetRef::Original { file, .. } => self.original()?.read_file(&file.ok_or("needs a file name")?),
             AssetRef::PackFile(path) => self.read_pack_file(pack, &path),
         }
