@@ -1,5 +1,5 @@
 ---
-spec_version: 1.0.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -74,6 +74,15 @@ A base template (`base_templates: {xcom_start: …}`) lists its modules by slot.
 on a generated map; a fixed map names systems instead.
 
 ## Arcs: story progression
+
+!!! note "As built (app 0.10.0 – 0.10.3)"
+    Arcs, plans and endings are built as a simpler subset of this page: `arcs.<id>.steps`;
+    `plans.<id>` with `owner`, `stages` (`{name, count}`), `start_when`, `every`, `chance`, `raid`,
+    `warnings` (a list of `{at, do}`) and `complete`; `endings.<id>` with `text` and `victory`,
+    and `campaign_end` lists of `{when, ending}`. Not built: plan `budget`, `ship_visibility`
+    (the shipment `chance` stands in), `grant_if_missed`, `plan_stage(x)`; endings' image, video,
+    music and `continue`; `reports`. Keys: [Story layer](../../modding/story.md); differences:
+    DEV-051.
 
 The original's story is a **gated chain**: each step needs a date, earlier steps and campaign
 state, and opens the next activity. An arc expresses exactly that, and its steps are events:
@@ -161,3 +170,4 @@ and three defeats.
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
+| 1.15.0 | 2026-11-11 | As-built note (app 0.10.0 – 0.10.3): arcs, plans and endings as built, and what of this design is not; the format itself unchanged |

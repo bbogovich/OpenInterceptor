@@ -1,5 +1,5 @@
 ---
-spec_version: 1.14.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -36,6 +36,13 @@ their own meshes and debris, and the `construction-defence` and `convoy-ambush` 
     on the map and construction strikes, facility fighter pools and escorts, captured cargo and
     enemy depots, third-party convoys, cargo capacity and facility upgrades. Requirement statuses:
     R-STR-012 – R-STR-027.
+
+!!! note "As built (app 0.9.2, main `0d1c522`, `146195b`): flown ambushes and the supply vessel"
+    With `logistics.ambush_mission` an ambushed convoy waits for the player, who flies its escort
+    (`convoy_ambush`) or lets it fight through; a flown escort delivers the share of cargo still
+    aboard. The supply vessel is the cargo clipper with twelve cargo pods and a point-defence
+    laser as modules; grappler tugs with saucer escorts tear pods off and capture them. Captured
+    cargo is lost to the player but not yet stored at an enemy depot (5.11).
 
 ## What the player does
 
@@ -424,3 +431,4 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0. Decisions revised: survey and supply ships are different profiles and craft (the "survey ship = supply ship" interpretation removed); the 25 % attack roll at survey-ship launch; supply-ship attack position chosen at launch; supply convoys with even cargo shares and a larger convoy vessel; construction thresholds 0 / 60 / 90 % confirmed; cargo capacity still TBD |
 | 1.14.0 | 2026-11-11 | As-built note (app 0.9.0): what is built, the two differences (fixed placement rules, straight-line nearest supplier; DEV-049), auto-resolved ambushes and survey attacks, and what is not built yet |
+| 1.15.0 | 2026-11-11 | As-built note (app 0.9.2): flown convoy ambushes (`ambush_mission`), the supply vessel with cargo pods and a point-defence laser, tugs and escorts; depots still not built |

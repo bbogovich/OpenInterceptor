@@ -1,5 +1,5 @@
 ---
-spec_version: 1.14.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -156,6 +156,15 @@ stances), so a campaign can react with messages, new missions or story steps. Ba
 is taken from the stances at the moment the battle starts. The `interceptor` campaign sets
 `dynamic: false` to match the original, with corporate funding as its only moving relation; the
 default campaign sets `dynamic: true`.
+
+!!! note "As built (app 0.10.0 – 0.10.3)"
+    `relations` is built for the **player's standing with each faction**: `dynamic`, `start`
+    (by faction, not by pair), `drift` (monthly, towards 0) and `stances` (upper bounds; above the
+    last, `allied`). Of the stance effects only *hostile or not* acts: a non-hostile faction's
+    raids stop, and campaign battles make each faction hostile to the player or not by its stance.
+    Not built: pairs between other factions, `scale`, `relation_rules`, `on_stance_change`
+    events, allies in battle, trade and price effects. Keys: [Story layer › relations](../../modding/story.md#relations);
+    DEV-051.
 
 ### Evaluations: `evaluations: {<id>: …}` { #evaluations-evaluationid }
 
@@ -355,6 +364,14 @@ strategists:
 The strategist launches **squadrons** on **flight plans**; when squadrons and player assets
 meet, a [mission](format-missions.md) is generated.
 
+!!! note "As built (app 0.10.0)"
+    Only the **aggression** is built, as a global `strategist:` section (`aggression: {start,
+    min, max, up, down}`, `calm_after_wins`) rather than `strategists.<id>`: it multiplies every
+    raid's chance, rising each month the player wins fewer than `calm_after_wins` battles and
+    falling otherwise. Budgets, exploration, expansion, outposts, the offence ladder, defence,
+    tech levels, cheats, build priorities and the `Think.ini` values are not built.
+    [Story layer › strategist](../../modding/story.md#strategist); DEV-051.
+
 ## Revision history
 
 | Version | Date | Change |
@@ -362,3 +379,4 @@ meet, a [mission](format-missions.md) is generated.
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here. Logistics wording aligned with the revised decisions (survey ships; supply-convoy attack point at launch) |
 | 1.13.0 | 2026-11-11 | As-built note: the strategy sections built in app 0.7.0 – 0.7.3 and what remains; the format itself unchanged |
 | 1.14.0 | 2026-11-11 | As-built note: `tech_ids`, `cost_scale`, `module_time`, `money_from` (app 0.8.0) and the logistics sections (app 0.9.0); the format itself unchanged |
+| 1.15.0 | 2026-11-11 | As-built notes (app 0.10.0 – 0.10.3): dynamic relations (the player's standings, raids and battle hostility) and the strategist (aggression only); the format itself unchanged |

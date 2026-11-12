@@ -51,8 +51,11 @@ systems' `deposits` and `features`, hulls' `components`, topics' `lab`, `site` a
 ([Strategy layer › Logistics](strategy.md#logistics)). New strategy keys in app 0.8.0:
 `start.money_from`, `economy.cost_scale`, `economy.module_time`, and the original's numeric
 `prereq1` – `prereq3`, `tech_required`, `tech_required2` read through `tech_ids`
-([`tech_ids`](strategy.md#tech_ids)). All of them are in the editor schema
-`schemas/rules.schema.json`.
+([`tech_ids`](strategy.md#tech_ids)); in app 0.9.2 `logistics.ambush_mission`. The **story
+layer** (app 0.10.0) adds the definitions `events`, `arcs`, `plans`, `endings`,
+`encyclopaedia` and the globals `relations`, `strategist`, `campaign_end`, by convention in
+`strategy/story.yaml` — every key is on [Story layer](story.md). All of them are in the editor
+schema `schemas/rules.schema.json`.
 
 Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 
@@ -135,10 +138,12 @@ The same keys; `objects` defaults to `kind: station`.
 | `systems` | ids | by `kind` | Fitted systems, **replacing** the default list; usually edit it instead: `systems+: [ecm]`, `systems-: [vct]`. |
 | `repair_rate` | number | `damage.repair_rate` | Hit points per second the crew repairs. |
 | `capturable` | bool | `true` for fighter, drone, probe, debris | Can be captured with a tractor beam when disabled. |
+| `towable` | bool | `false` | Can be towed away even when not disabled — a cargo container; a mounted one is torn off its hub by the tractor (app 0.9.2, [Stations and modules](stations.md#cargo-containers-and-moving-hubs)). |
+| `cargo` | bool | `false` | A cargo container, counted by the mission query `cargo(role)` and the mission key `cargo:` (app 0.9.2). |
 | `behaviour` | id | none (armed AI ships fly `builtin_attack`) | AI behaviour ([Behaviours](behaviours.md)). |
 | `turret_arc` | angle | 0 | Beams can aim this far off the nose (turrets). |
 | `debris` | list of assets | none | Shorthand (with `model`): wreckage models. With a model set, its debris set is used instead. |
-| `modules` | list of `{slot, class}` | none | Stations: modules mounted at the model's attachment points — `slot` is an OBJ `slot_<name>` group's name or an original mesh's attachment index (quoted: `'0'`) ([Stations and modules](stations.md)). |
+| `modules` | list of `{slot, class}` | none | Stations (and, since app 0.9.2, any ship — they move and jump out with it): modules mounted at the model's attachment points — `slot` is an OBJ `slot_<name>` group's name or an original mesh's attachment index (quoted: `'0'`) ([Stations and modules](stations.md)). |
 | `shield_generator` | bool | `false` | Modules: while one survives, its station's shields work. |
 | `point_defence` | `{range, rate, chance, energy}` | none | Guns that shoot down hostile missiles (and decoys): `range` (distance, default 800 m), `rate` (shots per second, default 3), `chance` (fraction a shot destroys the missile, default 35 %), `energy` (per shot, default 4). |
 | `probe` | `{sensors, jamming}` | none | Probes: `sensors` (distance) — its side's radar sees every contact this close to the probe; `jamming` (distance) — hostile ships this close have half radar range and lock missiles at half speed. |
@@ -196,8 +201,8 @@ A state:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `do` | `idle`, `circle`, `patrol`, `attack`, `evade`, `retreat`, `turret`, `tow`, `mine` | *required* | The manoeuvre. |
-| `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); mine: trigger distance. |
+| `do` | `idle`, `circle`, `patrol`, `attack`, `evade`, `retreat`, `turret`, `tow`, `escort`, `travel`, `mine` | *required* | The manoeuvre ([Manoeuvres](behaviours.md#manoeuvres); `escort` and `travel` app 0.9.2). |
+| `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance. |
 | `fire_cone` | angle | 5° | Fire when the aim point is within this angle of the nose. |
 | `burst` | time | 1.5 s | Seconds of firing. |
 | `pause` | time | 1 s | Seconds holding fire between bursts. |
@@ -205,6 +210,7 @@ A state:
 | `speed` | fraction | 100 % | Fraction of top speed. |
 | `missiles` | time | 10 s | Seconds between missile launches (0 = none). |
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
+| `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
 
 ### `modelsets`
 
@@ -368,7 +374,7 @@ mission or scenario picks one with `environment: <id>`; without it the battle is
 | `ceiling` | distance | none | Climbing above this height leaves the battle ("LEFT THE ATMOSPHERE"). |
 | `terrain` | id | — | The [terrain](#terrains) under the battle; *required* with `physics: atmosphere`. |
 | `sky` | `{top, horizon, fog, fog_distance, stars}` | none (black space) | `top`, `horizon`: RGB at the zenith and the horizon (defaults `[0.05, 0.08, 0.2]`, `[0.5, 0.6, 0.75]`); `fog`: RGB (default the horizon); `fog_distance`: distance at which things have faded fully into the fog (default 15 km, at least 100 m); `stars`: how much of the starfield shows, 0–1 (default 0). |
-| `backdrop` | `{planet: {color, size, direction}}` | none | A planet in the sky: `color` RGB (default `[0.3, 0.5, 0.9]`), `size` its angular size in degrees (default 30, 1–170), `direction` where it lies (default `[0, -0.5, -1]`). |
+| `backdrop` | `{planet: {color, size, direction}}` or `{nebula: {color, second_color, density, seed}}` | none | A planet in the sky: `color` RGB (default `[0.3, 0.5, 0.9]`), `size` its angular size in degrees (default 30, 1–170), `direction` where it lies (default `[0, -0.5, -1]`). Or nebula clouds all around (app 0.9.1): `color` and `second_color` RGB (defaults `[0.55, 0.2, 0.6]`, `[0.2, 0.35, 0.75]`), `density` 0..1 (default 0.8; also dims the stars), `seed` (default 1) ([Environments](environments.md#space-environments)). |
 
 ### `terrains`
 
@@ -404,8 +410,8 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `starfield_seed` | number | 1 | Star field and the mission's random choices. |
 | `sun` | 3 numbers | — | Direction towards the sun. |
 | `player` | `{class, position}` | `choose`, origin | The player's craft and start. |
-| `roles` | mapping name: `{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, formation, at, arrive}` | — | Groups of craft. `class`: an id or a list (random per member); `count`: `n` or `[min, max]`; `at`: `{distance, bearing, from, spread}`; `arrive`: a condition. |
-| `waves` | list of `{role, when, count, at}` | none | Reinforcements, each once. |
+| `roles` | mapping name: `{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, formation, escort, at, arrive}` | — | Groups of craft. `class`: an id or a list (random per member); `count`: `n` or `[min, max]`; `at`: `{distance, bearing, from, spread}`; `arrive`: a condition. |
+| `waves` | list of `{role, when, count, at, every}` | none | Reinforcements, each once — or, with `every` (a time, app 0.9.2), again that long after it last came while `when` holds. |
 | `objectives` | `{win, lose, draw}` | none | Conditions; `lose` is checked before `win`. |
 | `optional` | mapping name: condition | none | Latched optional objectives. |
 | `timer` | `{after, then}` | none | Time limit and its result. |
@@ -414,6 +420,7 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `debrief` | mapping result: text | none | Debrief texts, by the same results (`killed` shows no text unless given). |
 | `environment` | id | open space | The battle [environment](#environments). |
 | `hazards` | [hazards](#hazards) | none | Asteroid field, minefield, black hole, ion storm. |
+| `cargo` | role name | none | The role whose cargo containers count: the debrief reports the share still aboard (app 0.9.2). |
 
 ### `hazards`
 

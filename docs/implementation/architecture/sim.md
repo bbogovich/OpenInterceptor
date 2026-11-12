@@ -262,6 +262,26 @@ module whose model set has a `destroyed` state becomes a `Wreck { class, hub, of
 in `World::wrecks`, drawn by the renderer on its hub. Modder's view:
 [Stations and modules](../../modding/stations.md).
 
+**Modules on moving hubs** (app 0.9.2). Any ship class may carry modules — the default
+campaign's cargo clipper has twelve cargo pods and a point-defence turret — and three fixes
+make a moving hub work, each found while building the convoy ambush:
+
+- **No collisions within one craft.** `combat::ship_collisions` skips a pair when one is
+  mounted on the other or both are mounted on the same hub (`Ship::mount.0`). Before, the pods'
+  overlapping hulls collided with the clipper every tick and braked it.
+- **Modules jump with their hub.** `systems::depart` departs, recursively, every live module
+  still mounted on the ship that leaves, so a convoy that jumps takes its cargo with it
+  (`departed`, not destroyed — `mission::cargo_share` counts it as delivered).
+- **Avoidance ignores its own modules.** The AI's collision avoidance skips objects mounted on
+  itself.
+- **Torn off by a tractor.** A `towable` class (a cargo container) may be tractored even when
+  not disabled; in `systems::tractors` a pull on a mounted one takes its `mount` (`Option::take`),
+  so it is no longer placed back on the hub, and emits "CARGO CONTAINER TORN AWAY". The tug that
+  jumps holding it captures it like a disabled ship.
+
+`sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub` and
+`a_tug_tears_a_container_off_and_prefers_a_disabled_ship` cover these.
+
 ### Systems (`sim::systems`, Stage 2)
 
 Everything a pilot manages *inside* the ship. Data comes from the `systems`, `power` and
@@ -322,8 +342,9 @@ ship loses its target with chance `strength / 100 × efficiency` per active cloa
 ECM within `range` of the missile.
 
 **Hyperspace.** The countdown announces the last five seconds; at zero `depart` removes the
-ship (`alive = false`, `departed = true`, `Departed` event). If its tractor holds a disabled,
-`capturable` ship, that ship departs too and `Captured { captor, prize }` is emitted.
+ship (`alive = false`, `departed = true`, `Departed` event), and its mounted modules with it
+(app 0.9.2). If its tractor holds a disabled, `capturable` ship — or anything `towable` — that
+ship departs too and `Captured { captor, prize }` is emitted.
 
 ### AI (`sim::ai`)
 
@@ -346,7 +367,7 @@ flowchart TD
     CK -->|no| FL
     ST --> FL["fly(manoeuvre, params, skill)"]
     FL --> AT["attack / turret: aim_point<br/>(reaction lag, aim error ≤ (1 − aim) × 8°),<br/>in_burst (burst/pause), fire_cone"]
-    FL --> OT["idle, circle, patrol, evade,<br/>retreat (jump), tow (tractor + jump)"]
+    FL --> OT["idle, circle, patrol, evade,<br/>retreat (jump), tow (tractor, haul, jump),<br/>escort (formation or attack), travel (run, jump)"]
     AT --> C["Controls"]
     OT --> C
 ```
@@ -377,9 +398,19 @@ flowchart TD
 - **Turrets.** `Controls::aim` (a world direction) lets a ship with `turret_arc > 0` fire its
   beams along the aim instead of the nose, if the aim is within the arc (`combat::fire_beams`);
   the `turret` manoeuvre stays put and sets it.
-- **Tow.** The `tow` manoeuvre finds the nearest disabled, capturable hostile
-  (`nearest_prize`), closes in, requests the tractor within 90 % of its range and then the
-  hyperdrive.
+- **Tow.** The `tow` manoeuvre finds a prize (`nearest_prize`): a disabled, capturable hostile
+  first, else the nearest `towable` hostile, skipping anything another ship is already towing.
+  It closes in, requests the tractor within 90 % of its range, then hauls the prize away; it
+  remembers where it took it (`AiState::anchor`) and requests the hyperdrive once it is
+  `escape` (default 2.5 km) from there (app 0.9.2).
+- **Escort** (app 0.9.2). An escort's `AiState::leader` and `offset` are set when it spawns, from
+  the mission role's `escort:` (the newest live member of that role) and its formation slot.
+  `escort` flies to the slot with `fly_to_slot` — the formation code wingmen use, split out of
+  the wingman manoeuvre so both share it — and attacks the nearest hostile within `range` of the
+  leader or of itself; with no leader left it just fights.
+- **Travel** (app 0.9.2). Holds `speed` × top speed straight on and requests the hyperdrive
+  once it is `range` from where the state began (`AiState::anchor` again): a supply ship
+  making for its jump point.
 - Each pilot has its own seeded random stream (`AiState::rng`), so `random(p)` and aim errors
   are deterministic.
 - **Escapes (Stage 3).** Whatever its behaviour wants, every AI pilot except `Idle` objects first

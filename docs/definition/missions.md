@@ -1,5 +1,5 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -89,7 +89,7 @@ Requirements for these features: [Missions requirements](../specification/requir
 **Why.** Gives escort and raid missions a strategic cause.
 
 - **Status:** in-progress
-- **Source:** Plan item 3.13 (flown from the launcher; generation from the strategy layer is Stage 4).
+- **Source:** Plan item 3.13 (flown from the launcher; generation from the strategy layer is Stage 4). The convoy ambush is generated and flown from the strategy map since app 0.9.2, redesigned to the user's design (cargo pods, tugs, escorts); construction defence is not generated yet.
 - **Specified by:** [R-MSN-012](../specification/requirements/missions.md#r-msn-012-logistics-missions), [R-STR-019](../specification/requirements/strategy-logistics.md#r-str-019-logistics-mission-generation)
 
 ## Revision history
@@ -100,3 +100,4 @@ Requirements for these features: [Missions requirements](../specification/requir
 | 1.1.0 | 2026-11-11 | F-MSN-006 implemented (app 0.3.1); also specified by R-MSN-003 and R-MSN-005 (the `killed` result) |
 | 1.11.0 | 2026-11-11 | F-MSN-004 implemented: hazards (app 0.5.1), environments (0.6.0), ground installations (0.6.1) |
 | 1.12.0 | 2026-11-11 | F-MSN-003 implemented: radio voices (app 0.6.2); `interceptor` pilot clips not yet mapped. F-MSN-005 implemented: the simulator (app 0.6.3) |
+| 1.15.0 | 2026-11-11 | F-MSN-007 progress: the convoy ambush redesigned and flown from the strategy map (app 0.9.2) |

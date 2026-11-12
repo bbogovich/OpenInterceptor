@@ -99,6 +99,21 @@ environment and hazards and its enemy roles and waves scaled, and `FlightSession
 starts it through the same `MissionRun` as any other mission. Nothing in `mission` knows it is
 a simulation.
 
+### Cargo, escorts and repeating waves (app 0.9.2)
+
+- **`cargo(role)`** and the debrief's cargo share come from `mission::cargo_share(world, role)`:
+  the cargo containers (modules of a `cargo: true` class) still mounted on a live member — or
+  departed with a departed member — over every cargo slot of the members' classes. A container
+  torn off has no `mount`; a destroyed one is neither alive nor departed. `Debrief::cargo` is
+  `Some(share)` when the mission names a `cargo:` role, and it reaches the campaign in the
+  `BattleReport`.
+- **Escorts**: when a role with `escort:` spawns, each member's AI gets the newest live member
+  of the escorted role as its leader and a slot of its formation (`sim::ai`'s `escort`
+  manoeuvre flies it).
+- **Repeating waves**: `MissionRun::waves_again` holds, per wave with `every:`, the battle time
+  it may come again; a wave that has come is skipped unless that time has passed and its `when`
+  still holds.
+
 ### AI changes made with missions
 
 Enemies now launch missiles only when closing in (within 2.5 × their attack `range`, at least

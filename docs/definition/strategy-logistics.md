@@ -1,5 +1,5 @@
 ---
-spec_version: 1.14.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -90,7 +90,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Escort missions stay interesting and playable: single ships would be destroyed quickly.
 
-- **Status:** in-progress. Built (app 0.9.0): convoys of several vessels (data) with even shares, the ambush point chosen at launch, surviving shares delivered. Remaining: the large supply-vessel model, flying the ambush and escorting, cargo capacity.
+- **Status:** in-progress. Built (app 0.9.0): convoys of several vessels (data) with even shares, the ambush point chosen at launch, surviving shares delivered. Built (app 0.9.2, the user's design): the supply vessel with twelve cargo pods and a point-defence laser; flying an ambushed convoy's escort, the surviving share delivered. Remaining: cargo capacity, facility fighter escorts.
 - **Source:** User decision (2026-11-11).
 - **Specified by:** [R-STR-016](../specification/requirements/strategy-logistics.md#r-str-016-supply-convoys), [R-STR-017](../specification/requirements/strategy-logistics.md#r-str-017-supply-vessel-model), [R-STR-018](../specification/requirements/strategy-logistics.md#r-str-018-supply-convoy-attack-position), [R-STR-026](../specification/requirements/strategy-logistics.md#r-str-026-supply-cargo-capacity)
 
@@ -121,3 +121,4 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | 1.0.0 | 2026-11-11 | Bootstrap: F-STR-001 – F-STR-009 (9 features) |
 | 1.13.0 | 2026-11-11 | F-STR-001 – F-STR-003 in progress and F-STR-004 implemented (app 0.7.0 – 0.7.3) |
 | 1.14.0 | 2026-11-11 | F-STR-005, F-STR-006, F-STR-007 and F-STR-009 in progress; F-STR-008 progress (app 0.9.0, logistics) |
+| 1.15.0 | 2026-11-11 | F-STR-007 progress: the supply vessel and flown convoy escorts (app 0.9.2) |

@@ -80,6 +80,20 @@ the battle:
 - `backdrop: {planet: {color, size, direction}}`: a planet hanging in the sky, `size` degrees
   across, in `direction`, lit from the sun's side with a darker limb. It is drawn behind
   everything, like the stars.
+- `backdrop: {nebula: {color, second_color, density, seed}}` (app 0.9.1): soft clouds of two
+  colours all around the battle, the stars dimmed behind them — the inside of a nebula. `color`
+  is the clouds' main colour and `second_color` the colour they shade into (defaults a violet
+  and a blue); `density` (0..1, default 0.8) is how thick they are, and also how much they hide
+  the stars (by up to 60 %); `seed` (default 1) picks a different cloud pattern. The pattern is
+  smooth 3D value noise sampled on a sky sphere, built once per nebula, so it costs nothing per
+  frame. The default campaign's `pocket` uses one (it showed a large purple planet until the
+  user's playtest asked for a nebula):
+
+  ```yaml
+  pocket:
+    arena: 12km
+    backdrop: {nebula: {color: [0.60, 0.22, 0.62], second_color: [0.20, 0.40, 0.85], density: 0.85, seed: 7}}
+  ```
 
 ## Atmospheric flight
 

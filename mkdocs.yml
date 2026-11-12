@@ -155,6 +155,7 @@ nav:
       - "Missions": modding/missions.md
       - "Radio voices": modding/voices.md
       - "Strategy layer": modding/strategy.md
+      - "Story layer": modding/story.md
       - "Mod file reference": modding/reference.md
       - "Models and textures": modding/models.md
       - "Overrides and extraction": modding/overrides.md

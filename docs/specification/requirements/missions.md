@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -41,13 +41,13 @@ A mission MUST declare roles with class lists, counts per difficulty level, fact
 
 ### R-MSN-002 Arrivals and waves
 
-A role MUST be able to arrive at a position relative to another (`at: {distance, bearing, from, spread}`) and when a condition holds (`arrive:`); a role without `arrive:` MUST enter at the start; waves MUST repeat a role's arrival.
+A role MUST be able to arrive at a position relative to another (`at: {distance, bearing, from, spread}`) and when a condition holds (`arrive:`); a role without `arrive:` MUST enter at the start; waves MUST repeat a role's arrival. A wave with `every: <time>` MUST come again that long after it last came, for as long as its `when` holds. A role with `escort: <role>` MUST fly in its formation on the newest live member of that role.
 
-*Rationale:* One place per group (DEV-040).
+*Rationale:* One place per group (DEV-040). Repeating waves and escorts: the supply-convoy battle's tugs come every two minutes, each with its own squadron (the user's design, app 0.9.2).
 
 - Implements: [F-MSN-001](../../definition/missions.md#f-msn-001-missions-as-data)
-- Status: implemented
-- Verified by: `mission::arrivals_waves_chatter_and_a_win`
+- Status: implemented (`every:` and `escort:` app 0.9.2, main `0d1c522`)
+- Verified by: `mission::arrivals_waves_chatter_and_a_win`; `sim::ai::tests::escorts_hold_formation_until_a_hostile_comes_close`; MT-4-26
 - Reverse-engineered: yes
 - See: [Missions (modding)](../../modding/missions.md)
 
@@ -59,8 +59,11 @@ A mission MUST evaluate win, draw and lose conditions and optional objectives in
 
 - Implements: [F-MSN-001](../../definition/missions.md#f-msn-001-missions-as-data), [F-MSN-006](../../definition/missions.md#f-msn-006-base-defence-the-player-can-win)
 - Status: implemented
-- Verified by: `mission::lose_beats_win_and_the_timer_ends_it`, `the_players_death_is_its_own_result_with_the_lose_outcomes`; `script::action::actions_parse_and_check`; `script::battle::ids_match_and_roles_are_checked_names`
+- Verified by: `mission::lose_beats_win_and_the_timer_ends_it`, `the_players_death_is_its_own_result_with_the_lose_outcomes`; `script::action::actions_parse_and_check`; `script::battle::ids_match_and_roles_are_checked_names`; `sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub` (`cargo(role)`); MT-4-27
 - Reverse-engineered: yes
+
+!!! note "Added (app 0.9.2): cargo"
+    The battle query `cargo(role)` gives the share (0..1) of the role's cargo containers still aboard; a mission's `cargo: <role>` puts that share at the end into the debrief and the campaign's battle report, where a flown convoy escort delivers it (R-STR-019).
 - See: [Missions (architecture)](../../implementation/architecture/mission.md), [Conditions (script)](../../implementation/architecture/script.md)
 
 ### R-MSN-004 Mission mistakes found on load
@@ -136,17 +139,18 @@ A pack MUST be able to define battle environments as data, `environments: {<id>:
 - `physics: space` (the default) MUST leave the campaign's flight model unchanged; `physics: atmosphere` MUST apply atmospheric flight (R-FLT-011) over the environment's `terrain` (R-FLT-012), which it then MUST name.
 - `arena`, if given, MUST replace `flight.arena_radius` for battles in that environment (a small "pocket").
 - `backdrop: {planet: {color, size, direction}}` MUST draw a lit planet disc of that colour and angular size (degrees) in that direction (orbit).
+- `backdrop: {nebula: {color, second_color, density, seed}}` MUST surround the battle with soft clouds shading between the two colours, as thick as `density` (0..1), with the stars dimmed behind them; `seed` MUST choose the pattern, the same for the same seed (a pocket inside a nebula; app 0.9.1).
 - `sky: {top, horizon, fog, fog_distance, stars}` MUST replace black space with a sky gradient from `top` (zenith) to `horizon`, fade distant objects into `fog` (default: the horizon colour) by `fog_distance`, and dim the starfield to `stars` (0–1).
 - An object class of `kind: ground` (a ground installation: a colony, an outpost, an anti-air battery) MUST be static and MUST be set down on the terrain wherever it is placed, at the ground height plus a quarter of its collision radius. Anti-air is a turret on the ground: a `kind: ground` class with beams, a `turret_arc` and a turret behaviour. The environment MUST be set before anything is placed, so this holds for scenario objects and mission roles alike; in space a ground object stays where it is placed.
 - Unknown environment ids in a mission MUST be reported by `--check`; a scenario with one MUST fail to build with a message naming it. An atmosphere without a terrain, or naming an unknown terrain, MUST be a rules error.
 
-The `default` campaign MUST ship `orbit`, `pocket`, `moon_surface` and `dusk_hills`, and the ground installations `guard_colony` and `dominion_flak` (an anti-air battery); the `interceptor` campaign stays in space, as the original.
+The `default` campaign MUST ship `orbit`, `pocket` (with a nebula backdrop), `moon_surface` and `dusk_hills`, and the ground installations `guard_colony` and `dominion_flak` (an anti-air battery); the `interceptor` campaign stays in space, as the original.
 
 *Rationale:* Variety, and the surface missions of the default campaign. Environments are pack data so a mod can add worlds without code.
 
 - Implements: [F-MSN-004](../../definition/missions.md#f-msn-004-environments-and-hazards)
 - Status: implemented (app 0.6.0, main `af003f6`; ground installations app 0.6.1, main `de417df`)
-- Verified by: `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`, `sim::env::tests::ground_installations_are_set_down_on_the_terrain`; MT-3-37 – MT-3-40, MT-3-45, MT-3-46
+- Verified by: `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`, `content::environment::nebula_tests::nebula_clouds_vary_stay_in_range_and_repeat_for_a_seed`, `sim::env::tests::ground_installations_are_set_down_on_the_terrain`; MT-3-37 – MT-3-40, MT-3-45, MT-3-46, MT-4-24
 - See: [Format: missions, environments, events](../design/format-missions.md), [Environments and terrain](../../modding/environments.md)
 
 !!! question "Open"
@@ -211,18 +215,21 @@ In every base-defence mission, at every difficulty including the lowest, the bas
 
 ### R-MSN-012 Logistics missions
 
-The `convoy_ambush` and `construction_defence` missions MUST be playable: protect the convoy against attackers; defend a facility shown in its construction-stage state.
+The `convoy_ambush` and `construction_defence` missions MUST be playable: protect the convoy against attackers; defend a facility shown in its construction-stage state. In `convoy_ambush` the enemy MUST be after the **cargo**: it wins by capturing a supply vessel or every cargo container, the convoy wins when its vessels have left with cargo aboard, and a battle in which a vessel never reaches its jump point MUST end in a draw after a time limit, delivering what is still aboard.
 
-*Rationale:* Logistics in battle.
+*Rationale:* Logistics in battle. The convoy battle was redesigned by the user after playtesting (app 0.9.2): a battle about cargo, not about killing raiders.
 
 - Implements: [F-MSN-007](../../definition/missions.md#f-msn-007-logistics-missions)
-- Status: implemented
-- Verified by: MT-3-02, MT-3-03
+- Status: implemented (the convoy design: app 0.9.2, main `0d1c522`, `146195b`)
+- Verified by: MT-3-02, MT-3-03, MT-4-26, MT-4-27
 - Reverse-engineered: yes
-- See: [Logistics](../design/logistics.md)
+- See: [Logistics](../design/logistics.md), [Missions › The convoy ambush](../../modding/missions.md#the-convoy-ambush-app-092)
+
+!!! note "As built (app 0.9.2)"
+    Two clippers with twelve cargo pods and a point-defence laser each (R-STR-017) run about ten minutes to their jump point; grappler tugs come every two minutes from 140 s, each with a saucer squadron in formation on it (breaking off within 1.5 km), tear pods off and haul them 3 km before jumping out; raiders (`freighter_raider`) go for the clippers. Lose: `captured_any(clippers) or destroyed_all(clippers) or cargo(clippers) == 0`; win: `count(clippers) == 0 and cargo(clippers) > 0`; a 15-minute timer ends it in a draw.
 
 !!! question "Open"
-    Generation from the strategy layer is R-STR-019.
+    Generating `construction_defence` from the strategy layer is R-STR-019 / R-STR-023 (the convoy ambush is generated since app 0.9.2).
 
 ## Revision history
 
@@ -233,3 +240,4 @@ The `convoy_ambush` and `construction_defence` missions MUST be playable: protec
 | 1.11.0 | 2026-11-11 | R-MSN-009 hazards rewritten as built and implemented (app 0.5.1): asteroid fields and minefields as scattered objects (asteroids are radar scenery), the black hole's 1/d² pull capped at 20 × `pull`, its look and the AI's escape, the ion storm's radar factor, half-speed locks and start message; defaults stated. R-MSN-008 battle environments rewritten as built and implemented (app 0.6.0): `environments:` data, `environment: <id>`, `physics`, `arena`, `backdrop.planet`, `sky`; ground installations (`kind: ground`, set down on the terrain) and anti-air batteries as ground turrets (app 0.6.1); Open note keeps the map location |
 | 1.12.0 | 2026-11-11 | R-MSN-007 voices rewritten as built and implemented (app 0.6.2): `voices:` sets, ship `voice:`, the `acknowledge`, `status` and `down` lines, chatter `voice:`, `mission_accomplished` / `mission_failed`; Open note: the `interceptor` pilot clips are not mapped until their lines are identified. R-MSN-010 simulator rewritten as built and implemented (app 0.6.3): the setup rows, the modified copy, the atmospheric refusal, flying again |
 | 1.13.0 | 2026-11-11 | R-MSN-005: the verdict at once, then the battle runs on for `flight.debrief_delay` (default 30 s) before the debrief; Enter skips the wait; a retreat shows it at once (app 0.7.4, from user feedback). R-MSN-007: the computer voice plays when the result is decided; `cue:` names resolve in voices and chatter (app 0.6.7) |
+| 1.15.0 | 2026-11-11 | From the user's playtest and convoy design (app 0.9.1 – 0.9.2): R-MSN-002 revised — repeating waves (`every:`) and escorts (`escort:`); R-MSN-003 note — `cargo(role)` and the mission key `cargo:`; R-MSN-008 revised — the nebula backdrop, the `pocket` uses it; R-MSN-012 revised — the convoy ambush is about the cargo (capture by tugs, the draw after a time limit), with an As-built note |

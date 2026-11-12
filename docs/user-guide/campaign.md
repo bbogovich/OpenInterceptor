@@ -8,6 +8,11 @@ battle; the debrief brings you back to the map. The default campaign, *Perils of
 one; so does the `interceptor` campaign since app 0.8.0, built from your own copy's data (not
 yet play-tested, and without the supply chain, which the original does not have).
 
+Since app 0.10.0 each campaign also has a **story** ([below](#the-story)): chapters or
+messages that arrive as you play, choices to make, missions offered to you, a rival building
+something you must stop, factions whose standing with you changes, and endings — victory or
+defeat.
+
 The screen is **functional and plain** in this version: every rule is playable, but it is not
 yet dressed in the campaign's look (that is Stage 6).
 
@@ -37,7 +42,7 @@ yet dressed in the campaign's look (that is Stage 6).
   supply chain also: your **facilities** (a small diamond beside the system, grey while it is
   being built, orange when working), **supply convoys** (gold dots) and **survey ships** (sky-blue
   rings).
-- **Panel** (right): nine tabs, each a list of rows. The current base is marked `*` on the
+- **Panel** (right): ten tabs, each a list of rows. The current base is marked `*` on the
   Bases tab; orders apply to it.
 
 ## Keys
@@ -52,6 +57,8 @@ yet dressed in the campaign's look (that is Stage 6).
 | Left / Right | Change the current base |
 | S | On the Market tab: sell one of the item on the row from the current base |
 | F | On the Hangar tab, on a craft: fit it with the best equipment in its base's store |
+| 1 – 5 | While a choice is offered: pick that option ([The story](#the-story)) |
+| Enter / Esc | While a mission is offered or a convoy is ambushed: fly it / decline (let the convoy fight through). At the end of the campaign: leave |
 | F5 | Save |
 | Ctrl+M, Ctrl+K, Ctrl+B, Ctrl+J | Testbed cheats ([below](#testbed-cheats)) |
 | Esc | Save and leave to the launcher |
@@ -60,7 +67,8 @@ yet dressed in the campaign's look (that is Stage 6).
 The clock **stops by itself** whenever something needs you: a building or base is finished,
 research is complete, a contact is detected, a raid strikes, the monthly report, an
 interception reaching its contact, or — with a supply chain — a facility completed, a survey's
-report or a convoy ambushed. The message is shown in a banner; Enter, Esc or a click
+report or a convoy ambushed; and story messages, choices, offered missions, a change in a
+faction's stance and the end of the campaign. The message is shown in a banner; Enter, Esc or a click
 dismisses it.
 
 ## The tabs
@@ -76,6 +84,7 @@ dismisses it.
 | **Contacts** | Detected enemy flights and where they head | Send the current base's craft that are at home and have a ready pilot to intercept |
 | **Supply** | With a system chosen on the map: *Survey* it, and *Build* each kind of facility there (with the cost, and why not when it is not allowed). Then your facilities and what they hold or how long they take to build; on a working research station, the topics it can research; the current base's store of components; how many orders, convoys and survey ships are under way ([Supply](#supply)) | Send the survey ship; order the facility; start the research |
 | **Messages** | The log, newest first, with dates | — |
+| **Archive** | The rival's plans you know of, with how far each is built; every faction's stance and standing with you; the rival's aggression and the battles you have won; the encyclopaedia entries unlocked so far (app 0.10.0) | — |
 
 Each order answers *Done.* or says why not (not enough money, not yet researched, the limit
 for that kind of module, too far from your other bases, no free pilot, …).
@@ -128,13 +137,60 @@ decide where to survey and what to build.
    its research site or its prerequisites are not known. The station first orders the topic's
    start materials; once they arrive it researches on its own.
 
-**Convoys can be ambushed** on the way. In this version you do not fly those battles: each
-vessel may be lost, a message says how many, and the survivors deliver their share; what is
-missing is simply ordered again.
+**Convoys can be ambushed** on the way. Since app 0.9.2 the clock stops with *Supply convoy
+ambushed! Enter: fly its escort   Esc: let it fight through*, and the convoy waits:
+
+- **Enter** — fly its escort, *Convoy ambush*, with the first ready craft that has a pilot (from
+  any base). Two cargo clippers, each with twelve cargo pods, make for their jump point about ten
+  minutes away. Dominion grappler tugs come every couple of minutes, each with a squadron of
+  saucers flying formation on it; a tug tears a pod off with its tractor beam, hauls it clear
+  and jumps away with it, or takes a whole clipper once raiders have crippled it. Kill the tugs
+  before they get away, keep the raiders off the clippers, and the clippers' own laser helps
+  against missiles. The battle is won when the clippers have jumped with cargo aboard, lost if a
+  clipper is captured or every pod is gone, and a draw after 15 minutes if a crippled clipper
+  never makes its jump. Back on the map, the **share of the cargo still aboard** is delivered
+  (a loss delivers nothing; leaving the battle early lets the convoy fight on alone).
+- **Esc** — let it fight through alone: each vessel may be lost, a message says how many, and
+  the survivors deliver their share. This is also what happens when no craft is ready.
+
+What is missing is simply ordered again.
+
+## The story
+
+*App 0.10.0 – 0.10.3.* The story runs by itself as the days pass; you meet it as messages that
+stop the clock, choices, offered missions and, finally, an ending.
+
+- **Messages and news.** A story message stops the clock and shows in the banner (a chapter of
+  the default campaign's serial, an alien transmission in `interceptor`); news lines go into the
+  log without stopping it.
+- **Choices.** The banner reads *Your choice - 1: … 2: …*; press the number of the option. The
+  clock does not run until you choose. What you choose changes money, relations, flags and
+  sometimes offers a mission.
+- **Offered missions.** *A mission is offered. Enter: fly it   Esc: decline*. Enter flies it at
+  once with the first ready craft that has a pilot; its result counts like a raid's battle
+  (score, money, salvage, and the story flags it sets). With no ready craft it says so, and the
+  offer is gone.
+- **The rival's plan.** A rival builds something from shipments that cross the map as contacts:
+  intercept them and win, and the shipment is lost; let one reach its destination and the plan
+  grows. Messages warn you as it nears completion, and the Archive tab shows how far it is.
+  If it is completed, you lose.
+- **Relations** (default campaign). Every faction has a standing with you from −100 to 100 and
+  a stance — hostile, wary, neutral, friendly or allied. What happens moves them, and they drift
+  back towards neutral each month. A change of stance stops the clock. A faction that is no
+  longer **hostile** stops raiding you and does not attack you in battle; one that turns hostile
+  does. The Senate's stipend grows with its standing.
+- **The rival's mood.** Sit back and the rival grows bolder — its raids come more often; win
+  battles every month and it grows more careful.
+- **The end.** When an ending is reached the banner shows *VICTORY.* or *DEFEAT.* with its text;
+  Enter saves and leaves. In the default campaign you win by destroying the Eclipse Engine and
+  lose if it is lit, if you lose your last base, or if the Senate turns against you; in
+  `interceptor` you win by destroying the Doomsday weapon and lose if it is completed or your
+  last base falls.
 
 ## Money and the monthly report
 
-Incomes (the default campaign's Senate stipend grows with your bases and your month's score)
+Incomes (the default campaign's Senate stipend grows with your bases, your month's score and,
+since app 0.10.1, the Senate's standing with you)
 and expenses are paid on their own schedules and logged. Every 30 days the **monthly report**
 charges module maintenance, craft upkeep and pilot salaries, shows the month's score, the total
 and your funds, and a new set of recruits is offered.
@@ -159,11 +215,14 @@ The testbed keeps the original game's own cheat list as debug keys on the strate
 | Ctrl+B | *quickbase* | Every base and module under construction finished now (not supply facilities). |
 | Ctrl+J | *jump to battle* | With a contact chosen on the Contacts tab: a ready craft with a pilot is put at it at once, and the fly-or-break-off banner appears. Otherwise it says *Choose a contact on the Contacts tab first*, or *no ready craft with a pilot*. |
 
-## Limits in app 0.9.0
+## Limits in app 0.10.3
 
 - Fitting takes the best items in store; you cannot choose them one by one yet.
-- Supply-convoy ambushes are decided automatically; you cannot fly them or escort convoys yet,
-  and facilities have no fighters of their own. The Supply tab is plain text.
+- Facilities have no fighters of their own, and the Supply tab is plain text.
+- Several chapters of the default campaign's serial fly an existing mission rather than their
+  own; allied factions do not yet fly at your side; two of the original's seven side missions
+  are in `interceptor`. Neither campaign has been played through from start to finish yet.
+- The ending is a banner line, not a screen of its own (Stage 6).
 - The `interceptor` campaign's strategy layer has not been play-tested; its research is slow
   with one downlink.
 - Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default

@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -113,19 +113,19 @@ A ship beyond `flight.arena_radius` (default 60 km; 0 = no limit) MUST be placed
 
 ### R-FLT-008 Hyperspace out
 
-Hyperspace MUST count down `flight.hyperspace_time` seconds (doubled while the hyperdrive is damaged); pressing the key again MUST abort; on departure the ship MUST leave the battle with any ship it tows as a captured prize. The player jumping out of a mission MUST end it as `retreat`.
+Hyperspace MUST count down `flight.hyperspace_time` seconds (doubled while the hyperdrive is damaged); pressing the key again MUST abort; on departure the ship MUST leave the battle with any ship it tows as a captured prize, and with the modules still mounted on it. The player jumping out of a mission MUST end it as `retreat`.
 
 *Rationale:* Original retreat and capture.
 
 - Implements: [F-FLT-005](../../definition/flight.md#f-flt-005-hyperspace-departure)
 - Status: implemented
-- Verified by: `sim::systems::hyperspace_counts_down_aborts_and_departs`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`; MT-2-07
+- Verified by: `sim::systems::hyperspace_counts_down_aborts_and_departs`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`; `sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub`; MT-2-07, MT-4-27
 - Reverse-engineered: yes
 - See: [Simulation](../../implementation/architecture/sim.md), [Deviations (DEV-026)](../../implementation/deviations/index.md)
 
 ### R-FLT-009 Collisions
 
-Fighters touching (spheres at 60 % of radius) MUST be separated (in proportion to their masses, taken as radius cubed) and, while approaching, MUST exchange an impulse along the contact normal with restitution `flight.collision.restitution` (default 0.5). A fighter sweeping into a station mesh MUST be backed out and bounced the same way, with the station immovable.
+A module and its hub, or two modules of the same hub, MUST NOT collide (they are one craft). Fighters touching (spheres at 60 % of radius) MUST be separated (in proportion to their masses, taken as radius cubed) and, while approaching, MUST exchange an impulse along the contact normal with restitution `flight.collision.restitution` (default 0.5). A fighter sweeping into a station mesh MUST be backed out and bounced the same way, with the station immovable.
 
 Each impact MUST add spin to the ships involved:
 - from the glancing (tangential) speed, by friction at the contact point;
@@ -141,7 +141,7 @@ Bolts and missiles MUST test the segment travelled each tick so they cannot pass
 
 - Implements: [F-FLT-006](../../definition/flight.md#f-flt-006-collisions)
 - Status: implemented
-- Verified by: `sim::combat::fighters_bounce_off_each_other_and_stations`, `sim::combat::a_glancing_hit_sends_a_fighter_tumbling`, `sim::combat::pressed_together_ships_make_one_impact`, `sim::collision::segment_sphere_hits_misses_and_inside`, `segment_triangle_hits_inside_only`, `shapes_use_mesh_in_model_space`; MT-1-15
+- Verified by: `sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub` (a hub's modules do not brake it), `sim::combat::fighters_bounce_off_each_other_and_stations`, `sim::combat::a_glancing_hit_sends_a_fighter_tumbling`, `sim::combat::pressed_together_ships_make_one_impact`, `sim::collision::segment_sphere_hits_misses_and_inside`, `segment_triangle_hits_inside_only`, `shapes_use_mesh_in_model_space`; MT-1-15
 - Reverse-engineered: yes
 - See: [Simulation](../../implementation/architecture/sim.md)
 
@@ -233,3 +233,4 @@ AI craft always fly the campaign's own model (`flight.model`).
 | 1.6.0 | 2026-11-11 | R-FLT-013 simple physics mode |
 | 1.11.0 | 2026-11-11 | R-FLT-011 atmospheric flight rewritten as built and implemented (app 0.6.0): drag from `atmosphere_max_speed`, gravity, lift capped at 2g, hover, landing below 25 m/s upright, crash damage, the ceiling exit, AI ground avoidance, Simple physics kept; keys `atmosphere_max_speed`, `lift`, `hover`, `atmospheric`; the open note on equations and key names resolved (`drag_area` not adopted). R-FLT-012 terrain rewritten as built and implemented: generated (`hills`, `craters`) and heightmap heightfields, interpolation, colours by height and slope; Open note for detail textures and scattered objects |
 | 1.13.0 | 2026-11-11 | R-FLT-012 revised: the ground continues to the horizon as mirror-image tiles, collision and drawing agree (app 0.6.7, from user feedback) |
+| 1.15.0 | 2026-11-11 | Found building the convoy battle (app 0.9.2): R-FLT-008 revised — modules leave by hyperspace with their hub; R-FLT-009 revised — no collisions between a hub and its own modules (they braked a moving supply ship) |

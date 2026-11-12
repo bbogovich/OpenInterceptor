@@ -8,8 +8,8 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [1 Flight simulator](plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
 | [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later); hazards in **0.5.1**; environments, atmospheric flight, terrain and the atmosphere HUD in **0.6.0**; ground installations in **0.6.1**; radio voices in **0.6.2**; the simulator in **0.6.3**; five default missions in **0.6.4**; all 26 `interceptor` mission types in **0.6.5**; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in **0.6.7**; the battle runs on after its result in **0.7.4**. Tier 2 scripting evaluated, awaiting the user's decision | See [Stage 3 progress](#stage-3-progress) below |
-| [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**. 4.1 and 4.11 done; 4.12 done as derived (not play-tested); 4.2 – 4.10, 4.13 – 4.17 partial | See [Stage 4 progress](#stage-4-progress) below |
-| [5 Campaigns](plan/stage-5-campaign.md) | Not started | |
+| [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**; playtest changes (nebula, bulbous fighters, dreadnought) in **0.9.1**; flown supply-convoy battles in **0.9.2**. 4.1 and 4.11 done; 4.12 done as derived (not play-tested); 4.2 – 4.10, 4.13 – 4.17 partial | See [Stage 4 progress](#stage-4-progress) below |
+| [5 Campaigns](plan/stage-5-campaign.md) | **In progress** — the story core in **0.10.0**; the default campaign's serial in **0.10.1**; the X-COM Doomsday arc in **0.10.2**; relations in battle and the year soak in **0.10.3**. 5.1, 5.2, 5.6 (engine), 5.7 done; 5.3 – 5.5, 5.8, 5.9 partial; 5.10, 5.11 and the testbed tools not started; no play-through yet | See [Stage 5 progress](#stage-5-progress) below |
 | [6 Presentation](plan/stage-6-presentation.md) | Not started | |
 | [7 Modding toolkit and Remastered](plan/stage-7-modding.md) | Not started | |
 | [8 Platforms and release](plan/stage-8-release.md) | Not started | |
@@ -176,9 +176,10 @@ playtest fixes), **0.7.0** (`77d6c9f`, the core), **0.7.1** (`10f7fce`, the defa
 strategy layer and the strategy screen), **0.7.2** (`94d66c1`, fitting), **0.7.3** (`076203e`,
 `1e600db`, lane travel), **0.7.4** (`9295707`, the debrief delay, a Stage 3 item), **0.8.0**
 (`c64d178`, the `interceptor` strategy layer from the player's data), **0.8.1** (`8e96338`, testbed
-cheats), **0.9.0** (`ff9d8fc`, logistics and two fixes) and main `2ed1149` (PNG encoding through
-the `image` crate). At `2ed1149`, **355 unit tests** on macOS by a count of the sources
-([Unit tests](testing/unit-tests.md)).
+cheats), **0.9.0** (`ff9d8fc`, logistics and two fixes), main `2ed1149` (PNG encoding through
+the `image` crate), **0.9.1** (`3b19dea`, playtest changes) and **0.9.2** (`0d1c522`, `146195b`,
+flown supply-convoy battles). At `2ed1149`, **355 unit tests** on macOS by a count of the
+sources; at `76bda5c` (app 0.10.3), **366** ([Unit tests](testing/unit-tests.md)).
 
 | Item | Status | Where |
 |---|---|---|
@@ -196,15 +197,17 @@ the `image` crate). At `2ed1149`, **355 unit tests** on macOS by a count of the 
 | Logistics runtime (4.14 – 4.16): surveys, placement rules, construction, mining, recipes, demand-driven orders, convoys with ambush rolls (auto-resolved), station research | **Partial** (0.9.0; MT-4-13 – MT-4-18 not yet run): fighter pools, flown ambushes, construction stages and strikes, depots, cargo capacity, upgrades open | `src/campaign/logistics.rs` |
 | Testbed: cheats (payday, knowitall, quickbase, jump to battle), `--strategy-soak` | **Done** (0.8.0 – 0.8.1; MT-4-20, MT-4-21 not yet run) | `src/campaign/mod.rs`, `src/app/strategy.rs`, `src/main.rs`, `src/cli.rs` |
 | Fixes: manufacture paid per unit; salvage recorded by raid id; station-only topics not offered to bases | **Done** (0.9.0; MT-4-19 not yet run) | `src/campaign/mod.rs` |
+| Playtest changes from the user (0.9.1): a **nebula backdrop** (`backdrop: {nebula: …}`) for the `pocket` in place of a planet; the Comet, Meteor and Thunderbolt rebuilt as bulbous teardrop "bullets with fins" (maximum radius 0.9 / 1.1 / 1.6 m → 1.5 / 1.8 / 2.4 m) so they are fair targets; the dreadnought model set scaled 1.25 | **Done** (MT-4-24, MT-4-25 not yet run) | `src/content/environment.rs`, `src/render/mod.rs`, `tools/default_assets/models.py`, `resources/default/` |
+| **Supply-convoy battles** to the user's design (0.9.2): cargo pods and a point-defence laser as modules of the clipper (`towable`, `cargo`); grappler tugs that tear pods off and haul them away (`tow` `escape:`); escorts in formation on their tug (`escort:`, manoeuvre `escort`); repeating waves (`every:`); clippers running for their jump point (manoeuvre `travel`); `cargo(role)` and the mission key `cargo:`; a 15-minute draw; engine fixes for modules on moving hubs; the campaign hand-off (`logistics.ambush_mission`, `Event::Convoy`, `Campaign::convoy_result`, `PendingBattle::Convoy`) | **Done** (MT-4-26 – MT-4-28 not yet run) | `src/sim/`, `src/mission/mod.rs`, `src/content/`, `src/campaign/logistics.rs`, `src/app/strategy.rs`, `resources/default/` |
 
-**Gaps** (recorded honestly, at main `2ed1149`): convoy ambushes cannot be flown yet — they are
-auto-resolved, and the `convoy_ambush` mission waits for the hookup (#19); not built: facility
-fighter pools and escorts, construction-defence strikes from 50 %, enemy supply depots and
+**Gaps** (recorded honestly, at main `76bda5c`): convoy ambushes are flown since app 0.9.2, but
+captured cargo goes nowhere (no enemy depots) and construction strikes are not generated (#19);
+not built: facility fighter pools and escorts, construction-defence strikes from 50 %, enemy supply depots and
 captured cargo, third-party convoys, facility upgrades, the design's `placement:` expressions
 (fixed rules per role instead, DEV-049); the Supply tab is plain; save pack versions are still
 not compared; generated maps still have no unit test; no unit test round-trips a save with
-logistics in flight. **Also open**: `relation` and cargo outcome actions are logged only (Stage
-5); texts in the strategy files are plain English (DEV-047); the screen is functional and plain
+logistics in flight. **Also open**: mission outcomes' `relation`, `capture` and cargo actions are
+still ignored (story events' `relation` works since app 0.10.0); texts in the strategy files are plain English (DEV-047); the screen is functional and plain
 (Stage 6). The two known issues of the last pass (manufacture free; `salvaged` by name) are fixed.
 
 **Exit** of Stage 4 (both campaigns run 6 months; save/load round trips; a manual long run): both
@@ -212,3 +215,30 @@ strategy layers run six months headless (`--strategy-soak 180`: `default` 12 of 
 `interceptor` 4 of 71), and the default campaign's run is a unit test with a save round trip
 (`the_default_campaign_runs_six_months`). Outstanding: the manual long run, the `interceptor`
 play-test and balance, and the open items above.
+
+## Stage 5 progress
+
+App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),
+**0.10.2** (`8926d11`, the X-COM Doomsday arc) and **0.10.3** (`76bda5c`, relations in battle and
+the year-long soak). **366 unit tests** on macOS at `76bda5c` by a count of the sources.
+
+| Item | Status | Where |
+|---|---|---|
+| Story data (`content::story`): `events` (`when`, `check`, `chance`, `do`, `choices`, `once`, `cooldown`, `arc`), `arcs`, `plans` (owner, stages, `start_when`, `every`/`chance`, `raid`, `warnings`, `complete`), `relations` (`dynamic`, `start`, `drift`, `stances`), `strategist`, `endings`, `campaign_end`, `encyclopaedia`; actions checked against `script::action::EVENT_ACTIONS` (14); queries `arc`, `plan`, `relation`, `fired`, `battles_won` | **Done** (0.10.0) | `src/content/story.rs`, `src/script/action.rs`, `src/script/campaign.rs`, `schemas/rules.schema.json` |
+| Story runtime (`campaign::story`): events on their period and arc order, choices, offered missions, plans from shipments that get through, warnings and completion, monthly drift, a non-hostile faction stops raiding, aggression scales raids, the end conditions; all saved | **Done** (0.10.0; MT-5-01 – MT-5-06 not yet run) | `src/campaign/story.rs`, `src/campaign/mod.rs`, `src/campaign/save.rs` |
+| Strategy screen: choices (number keys), mission offers, the ending, the **Archive** tab | **Done**, plain (0.10.0) | `src/app/strategy.rs` |
+| `@keys` in strategy and story texts; a single text argument keeps its commas | **Done** (0.10.1 – 0.10.2) | `src/content/mod.rs`, `src/script/action.rs` |
+| Default serial (5.9): twelve chapters, the Cartel's choice, side events, the Eclipse Engine plan, relations, strategist, four endings, encyclopaedia, the finale `eclipse_assault` | **Partial** (0.10.1; MT-5-07, MT-5-08 not yet run): bespoke chapter missions not built (chapters fly existing ones) | `resources/default/strategy/story.yaml`, `resources/default/missions/missions.yaml` |
+| X-COM Doomsday arc (5.8): five messages, MacArthur, the final mission, the Doomsday plan, two side missions, endings with `@orig` keys | **Partial** (0.10.2; MT-5-09 not yet run): five of seven side missions and the `Think.ini` strategist missing; derived gates | `packs/interceptor/strategy/story.yaml` |
+| Relations in battle (`flight::apply_stances`, `Ruleset::set_hostile`) | **Done** (0.10.3; MT-5-05 not yet run) | `src/app/flight.rs`, `src/content/rules.rs` |
+| Year-long consistency soak (`campaign::autoplay_from`); `--strategy-soak` reports the story | **Done** for the default campaign (0.10.1, 0.10.3) | `src/campaign/mod.rs`, `src/main.rs` |
+
+**Gaps** (at main `76bda5c`): the default chapters' bespoke special missions are not built (they
+reuse existing missions); 5.11 is not built — rival logistics, enemy supply depots and seizing
+them, third-party convoys; two of the seven X-COM side missions; not built: allied factions
+fighting at the player's side, the testbed event debugger and start-at-chapter, the X-COM
+`Think.ini` strategist values, `relation` effects on prices, relation rules, budgets and the
+rest of the strategist, partial victories in either campaign's data; mission outcomes'
+`relation(…)` is still ignored. **Derived**: the X-COM gates use the
+`type_1/2/3_saucer_examination` topics for the guide's Wraith, Spectre and Phantasm
+examinations — unconfirmed. **No play-through of either campaign has been done.**

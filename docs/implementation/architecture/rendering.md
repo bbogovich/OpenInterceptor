@@ -178,6 +178,16 @@ draw plain space. With a sky, the background is cleared to the horizon colour in
 - **Planet** (`draw_planet`): a disc facing the camera at 80 % of the sky distance, its radius set
   by the angular `size`. Each vertex is shaded as if it were on a sphere (the normal is rebuilt
   from the disc position), lit by the sun with a darker limb, so one flat mesh reads as a lit globe.
+- **Nebula** (`nebula_sphere`, app 0.9.1): a latitude/longitude sphere (24 rings × 48 segments)
+  at 85 % of the sky distance, each vertex coloured and made more or less transparent by
+  `Nebula::color(direction)` — two fields of smooth 3D value noise (`fbm`: four octaves of a
+  hashed lattice, smoothstep-interpolated), one for how much cloud and one for its tint between
+  the two colours, stretched back to 0..1 and thresholded so thin areas vanish. The GPU
+  blends between vertices. The mesh is built **once per nebula** and kept in
+  `Renderer::nebula_mesh` with the `Nebula` it was built for; each frame its vectors are moved
+  into a `Mesh` for `draw_mesh` and moved back, as the star field does — no per-frame
+  allocation. Stars are dimmed by up to 60 % × `density`. `content::environment::nebula_tests`
+  checks the colours stay in range, vary, and repeat for a seed.
 - **Terrain** (`render::terrain::terrain_model`): the heightfield becomes an ordinary `Model` —
   one vertex per grid point, two triangles per square, wound counter-clockwise seen from above so
   the fronts face up for back-face culling. Vertex colours run from `low` to `high` by height,
@@ -231,7 +241,8 @@ Objects entirely behind the camera are skipped.
 | `GpuModel::lod_index(distance)` | Index of the LOD to draw; shared between `GpuModel::lods` and `model.lods`. |
 | `model::Face` | One original polygon: `first`, `count` (its corners are consecutive vertices), `group`, `flags`. |
 | `model::assign_overlay_layers`, `model::face_plane` | The overlay pass; a face's plane by Newell's method. |
-| `Renderer::env_sky`, `Renderer::planet` | The battle's `Sky` and `Planet` (set per frame by the flight screen, cleared after). |
+| `Renderer::env_sky`, `Renderer::planet`, `Renderer::nebula` | The battle's `Sky`, `Planet` and (app 0.9.1) `Nebula` (set per frame by the flight screen, cleared after). |
+| `content::environment::Nebula`, `render::nebula_sphere` | A nebula backdrop's colours, density and seed with its `color(dir)` noise; its sky-sphere mesh. |
 | `Renderer::terrain` | The current terrain's GPU model, by terrain id (built once). |
 | `terrain::terrain_model(&TerrainDef, &Heightfield) -> Model` | The terrain mesh, coloured by height and slope. |
 | `ModelCache::upload_model(content, Model, pack)` | Uploads a model built in code rather than loaded from a pack. |

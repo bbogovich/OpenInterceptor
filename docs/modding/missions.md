@@ -78,6 +78,7 @@ missions:
 | `debrief` | mapping result: text | none | The debrief text for each result (usually `@key`s). `killed` shows its own text if given, otherwise none: the `lose` text usually describes the objective failing, which is not what happened. The debrief appears `flight.debrief_delay` (30 s) after the result; the battle runs on meanwhile (app 0.7.4, [reference](reference.md#flight)). |
 | `environment` | id | open space | Where the battle happens: an [environment](environments.md) such as `orbit` or `moon_surface`. |
 | `hazards` | mapping | none | Asteroid field, minefield, black hole, ion storm ([below](#hazards)). |
+| `cargo` | role name | none | The role whose **cargo containers** count for the campaign (app 0.9.2): the debrief reports the share still aboard (`cargo(<role>)` at the end), and a flown [convoy escort](strategy.md#logistics) delivers that share. An unknown role is a load error. |
 
 ### Roles
 
@@ -93,7 +94,8 @@ missions:
 | `hull` | fraction | 100 % | Starting hull. |
 | `destroyed_systems` | ids | none | Systems that start destroyed. |
 | `speed` | number | 0 | Starting speed, m/s. |
-| `formation` | id | `flight.formation` (`vee`) | Wingmen (`ai: wingman`): the [formation](reference.md#formations) they fly in (app 0.6.6). Wingmen of every wingman role take successive slots of it, so two roles never share a slot. An unknown formation is a load error. |
+| `formation` | id | `flight.formation` (`vee`) | Wingmen (`ai: wingman`): the [formation](reference.md#formations) they fly in (app 0.6.6). Wingmen of every wingman role take successive slots of it, so two roles never share a slot. An unknown formation is a load error. Escorts (below) use it too. |
+| `escort` | role name | none | **Escorts** (app 0.9.2): each member flies in `formation` on the **newest live member** of that role (a tug), with a behaviour whose manoeuvre is [`escort`](behaviours.md#manoeuvres). A role that is not defined is a load error (`roles.x.escort: no role 'y'`). |
 | `at` | arrival | the player's start | **Where** it enters (below). |
 | `arrive` | condition | at the start | **When** it enters: the role spawns the first time this holds. |
 
@@ -114,9 +116,10 @@ no survivors) is placed relative to the player's start.
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `role` | role name | *required* | The role that gets more craft (they count as members of that role). |
-| `when` | condition | *required* | Fires **once**, the first time it holds. |
+| `when` | condition | *required* | Fires **once**, the first time it holds (unless `every`). |
 | `count` | number or `[min, max]` | the role's count | How many. |
 | `at` | arrival | the role's `at` | Where. |
+| `every` | time | none | A **repeating** wave (app 0.9.2): it comes again this long after it last came, for as long as `when` still holds (`every: 120s`). |
 
 ### Objectives and results
 
@@ -200,6 +203,7 @@ misspelled role is an error with file and line. Difficulty level names are const
 | `hull(role)` | number | The lowest hull fraction among the role's survivors (1 if none). |
 | `near(role, d)` | true/false | A member is within distance `d` of the player: `near(attackers, 2km)`. |
 | `arrived(role)` | true/false | The role has entered the battle. |
+| `cargo(role)` | number | The share (0..1) of the role's cargo containers still aboard (app 0.9.2): modules of a `cargo: true` class, alive and mounted on a live member — or gone into hyperspace with it — over every cargo slot the members' classes have. A container shot off, torn away by a tractor or captured is no longer aboard. 0 when the role has no cargo. |
 | `player_alive` | true/false | The player's ship is still in the battle. |
 | `player_hull` | number | The player's hull fraction. |
 | `player_retreated` | true/false | The player jumped out. |
@@ -233,7 +237,7 @@ Quote an action that contains a comma or a `+` sign in a YAML flow list:
 
 | Campaign | Missions |
 |---|---|
-| `default` | `defend_station`, `convoy_ambush`, `construction_defence`, `intercept_scouts`, and since app 0.6.4 `colony_defence`, `ground_strike`, `outpost_raid`, `asteroid_hunt`, `pocket_ambush` (`missions/missions.yaml`; text in `text/en/missions.yaml`). Construction defence and convoy ambush are the [logistics](../specification/design/logistics.md) missions; the strategy layer will generate them. The five newer ones are worked examples of environments, hazards and ground installations (below). |
+| `default` | `defend_station`, `convoy_ambush`, `construction_defence`, `intercept_scouts`, and since app 0.6.4 `colony_defence`, `ground_strike`, `outpost_raid`, `asteroid_hunt`, `pocket_ambush`; since app 0.10.1 the serial's finale `eclipse_assault` ([Story layer](story.md#the-default-campaigns-serial)) (`missions/missions.yaml`; text in `text/en/missions.yaml`). Construction defence and convoy ambush are the [logistics](../specification/design/logistics.md) missions; the convoy ambush is flown from the strategy map since app 0.9.2 ([below](#the-convoy-ambush-app-092)), construction defence is not generated yet. The five from app 0.6.4 are worked examples of environments, hazards and ground installations (below). |
 | `interceptor` | `xcom_base_defense`, `defend_freighter_convoy`, `deep_space_encounter`, `attack_alien_outpost`, `destroy_alien_probe` — five of the original's 27 types, with the original's own names, briefings and debriefs by key (`@orig.BRIEFING_TYPE_1`, `@orig.DEBRIEF_XBASE_WIN` …, read from the CD); the force compositions are derived (DEV-041). `%s` in an original briefing is filled by the strategy layer later and shows as written for now. |
 
 ### Examples: environments, hazards and ground installations (app 0.6.4)
@@ -271,6 +275,35 @@ larger or smaller enemy force, without editing its file ([User guide › Simulat
 own — the balance check for a defence mission: at the lowest level an undefended station or base
 should hold for at least 150 s (R-MSN-011; the default campaign's `defend_station` is held to it
 by a unit test).
+
+### The convoy ambush (app 0.9.2)
+
+`convoy_ambush` was rebuilt to the user's design for supply-convoy battles, and is the worked
+example of cargo, tugs, escorts and repeating waves:
+
+- **The convoy**: two cargo clippers (`supply_ship`, role `clippers`, `protect: true`) making for
+  their jump point at 47 m/s with the behaviour `supply_run` (manoeuvre `travel`, 24 km, then
+  the hyperdrive: about ten minutes). Each clipper is built to take punishment and carries
+  **twelve cargo pods** (`supply_pod`: `cargo`, `towable`, `capturable`) and one slow-recharging
+  **point-defence laser** (`supply_pd`, a turret that shoots missiles and close fighters) as
+  [modules](stations.md#cargo-containers-and-moving-hubs). `cargo: clippers` makes the pods count.
+- **Grappler tugs** (role `tugs`, behaviour `tug`: `tow` with `range: 8km`, `escape: 3km`) come
+  45 s in, then again every two minutes from 140 s (`waves: … every: 120s`) while a clipper lives. A tug goes
+  for a disabled clipper if there is one, else the nearest pod; a tractored pod is **torn off**
+  its clipper ("CARGO CONTAINER TORN AWAY"), hauled 3 km from where it was taken, and the tug
+  jumps out with it — captured.
+- **Escorts** (role `escorts`, `escort: tugs`, `formation: vee`, behaviour `tug_escort`) arrive
+  with each tug and fly in formation on it, breaking off to attack anything hostile within
+  1.5 km of the tug or of themselves.
+- **Raiders** (behaviour `freighter_raider`, `prefer: {freighter: 4, player: 1.2}`) go for the
+  clippers to cripple them for the tugs; hot-rods go for the escort fighters.
+- **Win and lose**: `lose: captured_any(clippers) or destroyed_all(clippers) or cargo(clippers) == 0`
+  — the Dominion wins by taking a clipper or every pod; `win: count(clippers) == 0 and
+  cargo(clippers) > 0` — every clipper has left (jumped, or lost) with cargo still aboard. A
+  crippled clipper that never makes its jump ends the battle after 15 minutes in a **draw**
+  (`timer: {after: 15min, then: draw}`), and what is still aboard is delivered. Optional
+  objectives: `all_cargo` and `both_clippers`.
+- **Chatter** marks the grapplers' arrival, a quarter of the cargo lost and a minute to the jump.
 
 ## Common errors
 

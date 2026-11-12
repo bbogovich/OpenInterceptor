@@ -1,5 +1,5 @@
 ---
-spec_version: 1.14.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -152,7 +152,7 @@ The testbed MUST add a strategy sandbox per campaign with a debug clock and the 
     The strategy screen of every campaign with a strategy layer is the sandbox, with its own clock (pause and four speeds). The original's cheats are debug keys there: **Ctrl+M** *payday* (a million), **Ctrl+K** *knowitall* (every topic known), **Ctrl+B** *quickbase* (every base and module under construction finished; not logistics facilities); **Ctrl+J** jumps to battle from the contact chosen on the Contacts tab (a ready craft with a pilot is put at it, and the fly-or-break-off banner follows). Each is a `Campaign::cheat_*` method and is logged.
 
 !!! question "Open"
-    Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected, the event and arc debugger and start-at-chapter (Stage 5).
+    Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected, the event and arc debugger and start-at-chapter (Stage 5; still not built at app 0.10.3 — the Archive tab shows plans, standings and aggression read-only).
 
 ### R-TST-011 Campaign soak
 
@@ -161,15 +161,18 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 *Rationale:* Stage 5 exit.
 
 - Implements: [F-TST-003](../../definition/testbed-tools.md#f-tst-003-headless-runs), [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned — partly met (app 0.8.0, main `c64d178`): `--strategy-soak <days>`
-- Verified by: `campaign::tests::the_default_campaign_runs_six_months`; MT-4-23
+- Status: planned — partly met (app 0.8.0, main `c64d178`: `--strategy-soak <days>`; app 0.10.3, main `76bda5c`: the default campaign's year-long consistency soak)
+- Verified by: `campaign::tests::the_default_campaign_runs_six_months`, `the_default_campaign_runs_a_year_with_its_story_and_stays_consistent`; MT-4-23, MT-5-10
 - See: [Stage 5](../../implementation/plan/stage-5-campaign.md), [Strategy layer › Trying a campaign out](../../modding/strategy.md#trying-a-campaign-out)
 
 !!! note "As built (app 0.8.0)"
     `--strategy-soak <days>` plays a campaign's strategy layer headless with `campaign::autoplay` (every base researches, a lab and a workshop when affordable, every detected contact intercepted, battle results alternated win, win, retreat) and prints a one-line summary. Six-month results: `default` 12 of 14 topics, `interceptor` 4 of 71 topics on one downlink.
 
+!!! note "As built (app 0.10.1 – 0.10.3)"
+    `the_default_campaign_runs_a_year_with_its_story_and_stays_consistent` plays the default campaign for a year a month at a time (`campaign::autoplay_from`; ambushed convoys fight through, each choice's first option is taken, offered missions alternate two wins and a loss) and after each month checks **no orphan references** (every craft, pilot, base, module, topic, contact, plan and facility index in range), finite money and score, and **monotonic arc progress**; at the end the serial has moved past its sixth chapter and the Eclipse Engine is under way, and every end condition evaluates. `--strategy-soak` also prints the last monthly report and the story (arcs, plans, aggression, ending; app 0.10.1 – 0.10.2).
+
 !!! question "Open"
-    Not built: invariant checks (money accounting, orphan references, arc progress), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).
+    Not built: a money-accounting check (money is only checked to be finite), a unit-tested soak of `interceptor` (its data is the player's, so it runs only by hand with `--strategy-soak`), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).
 
 ### R-TST-012 Asset generators
 
@@ -194,3 +197,4 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 | 1.3.0 | 2026-11-11 | R-TST-002 Verified by: `cli::finds_the_source_tree_packs` renamed `content_dirs_are_resources_then_packs` (app 0.4.2) |
 | 1.12.0 | 2026-11-11 | R-TST-009 partly met (status stays planned): the mission browser is the simulator (app 0.6.3), the terrain sandbox is the simulator's environments and the surface scenarios; the condition console is not built |
 | 1.14.0 | 2026-11-11 | R-TST-010 partly met: the original's cheats and jump to battle on the strategy screen (app 0.8.1); R-TST-011 partly met: `--strategy-soak` (app 0.8.0) |
+| 1.15.0 | 2026-11-11 | R-TST-011: As-built note — the default campaign's year-long consistency soak (orphan references, monotonic arcs; app 0.10.3) and `--strategy-soak` reporting the story; the Open note narrowed to money accounting, an `interceptor` unit soak, battles from forces and logistics. R-TST-010: the event debugger and start-at-chapter still not built. No requirement text changed |

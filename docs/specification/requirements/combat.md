@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -134,13 +134,13 @@ Beam and shield charge settings A–E and switched-on equipment MUST share `powe
 
 ### R-CMB-009 Tractor and capture
 
-The tractor MUST need power, a fitting and a disabled target in range; while it is on, beams MUST be off-line; a ship holding a disabled target when it jumps MUST capture it.
+The tractor MUST need power, a fitting and a disabled target in range; while it is on, beams MUST be off-line; a ship holding a disabled target when it jumps MUST capture it. An object of a `towable` class (a cargo container) MUST be towable even when not disabled; tractoring one mounted on a hub MUST tear it off, and a ship jumping while it holds one MUST capture it.
 
-*Rationale:* Original capture of disabled craft.
+*Rationale:* Original capture of disabled craft; grappler tugs stealing cargo (the user's convoy design, app 0.9.2).
 
 - Implements: [F-CMB-005](../../definition/combat.md#f-cmb-005-special-equipment)
-- Status: implemented
-- Verified by: `sim::systems::tractor_needs_power_a_fitting_and_a_target_in_range`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`; `sim::ai::tugs_tow_disabled_enemies_away`; MT-2-04
+- Status: implemented (`towable` app 0.9.2, main `0d1c522`)
+- Verified by: `sim::systems::tractor_needs_power_a_fitting_and_a_target_in_range`, `tractor_holds_a_disabled_target_and_captures_it_on_jump`; `sim::ai::tugs_tow_disabled_enemies_away`; `sim::tests::a_tug_tears_a_container_off_and_prefers_a_disabled_ship`; MT-2-04, MT-4-26
 - Reverse-engineered: yes
 - See: [Simulation](../../implementation/architecture/sim.md)
 
@@ -237,15 +237,18 @@ Every moving AI pilot — wingmen and enemies alike — MUST avoid collisions **
 
 ### R-CMB-016 Behaviours as data
 
-AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (`prefer`) and systems use (cloak, ECM, power). Any definition MUST accept difficulty `variants` and `{per_level: …}` values.
+AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, escort, travel, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (`prefer`) and systems use (cloak, ECM, power). Any definition MUST accept difficulty `variants` and `{per_level: …}` values.
 
 *Rationale:* Modding first; the original's AI is code, so its behaviours are derived (DEV-031, DEV-032).
 
 - Implements: [F-CMB-008](../../definition/combat.md#f-cmb-008-enemies-driven-by-data-with-difficulty-levels)
 - Status: implemented
-- Verified by: `content::behaviour::parses_states_transitions_and_skill`, `reports_mistakes`, `the_builtin_attack_is_valid`, `target_preferences_parse_and_reject_unknown_selectors`; `sim::ai::transitions_switch_states_on_conditions`, `aim_skill_decides_accuracy`, `turrets_fire_off_the_nose`; `sim::preferences_pull_the_ai_past_a_nearer_target`, `sim::ai_pilots_switch_cloak_ecm_and_power_by_condition`; MT-2-20, MT-2-27, MT-2-33
+- Verified by: `content::behaviour::parses_states_transitions_and_skill`, `reports_mistakes`, `the_builtin_attack_is_valid`, `target_preferences_parse_and_reject_unknown_selectors`; `sim::ai::transitions_switch_states_on_conditions`, `aim_skill_decides_accuracy`, `turrets_fire_off_the_nose`, `escorts_hold_formation_until_a_hostile_comes_close`; `sim::preferences_pull_the_ai_past_a_nearer_target`, `sim::ai_pilots_switch_cloak_ecm_and_power_by_condition`; MT-2-20, MT-2-27, MT-2-33
 - Reverse-engineered: yes
 - See: [Format: behaviours and scripting](../design/format-behaviour.md), [Behaviours and conditions](../../modding/behaviours.md)
+
+!!! note "Added (app 0.9.2): `escort`, `travel`, `tow` `escape`"
+    `escort` flies in formation on the leader the mission gives (`escort:` on the role) and attacks a hostile within `range` of the leader or itself; `travel` flies straight on for `range`, then jumps; `tow` takes a towable object when no disabled ship is near, skips a prize another ship is towing, and hauls it `escape` (default 2.5 km) before jumping.
 
 ### R-CMB-017 AI missile discipline
 
@@ -264,13 +267,13 @@ AI pilots SHOULD launch missiles only when closing on their target, staggered be
 
 ### R-CMB-018 Station modules
 
-Modules MUST mount at a hub's attachment points (OBJ `slot_<name>` groups, original manipulators by index), follow the hub, provide turrets and shield generators, and fall with the hub, leaving wrecks in their `destroyed` look.
+Modules MUST mount at a hub's attachment points (OBJ `slot_<name>` groups, original manipulators by index), follow the hub, provide turrets and shield generators, and fall with the hub, leaving wrecks in their `destroyed` look. Any ship class MAY be a hub: a module MUST NOT collide with its own hub or with another module of the same hub, a craft's collision avoidance MUST ignore its own modules, and the modules still mounted MUST leave by hyperspace with their hub.
 
 *Rationale:* Base assaults and defences.
 
 - Implements: [F-CMB-009](../../definition/combat.md#f-cmb-009-stations-with-modules)
 - Status: implemented
-- Verified by: `sim::station_modules_mount_follow_and_fall_with_their_hub`, `formats::obj::slot_groups_become_attachment_points`; MT-2-22, MT-2-23
+- Verified by: `sim::station_modules_mount_follow_and_fall_with_their_hub`, `sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub` (a moving hub keeps its speed; modules jump with it), `formats::obj::slot_groups_become_attachment_points`; MT-2-22, MT-2-23, MT-4-26
 - Reverse-engineered: yes
 - See: [Stations, modules and probes](../../modding/stations.md), [Deviations (DEV-035)](../../implementation/deviations/index.md)
 
@@ -288,6 +291,9 @@ A model set MUST define the intact model, texture swaps that accumulate with dam
 - Verified by: `content::looks::swaps_accumulate_with_damage_and_state`, `texture_keys_ignore_folders_case_and_extensions`; `app::viewer::looks_cover_damage_states_and_debris`; MT-2-25
 - Reverse-engineered: yes
 - See: [Format: objects and models](../design/format-objects.md), [Looks](../../modding/looks.md)
+
+!!! note "Playtest (app 0.9.1): size"
+    A model set's `scale` scales its collision shape with it: the default campaign's dreadnought is set to 1.25. The default fighters were rebuilt larger (maximum radius 1.5 / 1.8 / 2.4 m for the Comet, Meteor and Thunderbolt, from 0.9 / 1.1 / 1.6) after the user found them too hard to hit — a content change, no requirement text changed.
 
 !!! question "Open"
     Slot size classes, overlay groups and `lod<n>_*` files are not built (Stage 2 deferred list).
@@ -328,3 +334,4 @@ The option is `flight: {bolt_frame: world | ship}`. `world` (the default) is the
 | 1.1.0 | 2026-11-11 | R-CMB-021 implemented (app 0.3.1): `flight.bolt_frame` (`world` default, `ship` with `bolt_carry`), open note resolved. R-CMB-002: bolts also carry the muzzle's turn velocity; streaks drawn relative to the viewer |
 | 1.5.0 | 2026-11-11 | R-CMB-022 wingmen keep their distance and avoid collisions |
 | 1.13.0 | 2026-11-11 | R-CMB-022 revised: slots from named formations with `formation:` / `flight.formation` and the Shift+O next-formation order (MD1, app 0.6.6); predictive collision avoidance for every moving AI pilot (app 0.6.7, from user feedback) |
+| 1.15.0 | 2026-11-11 | From the user's convoy design and playtest (app 0.9.1 – 0.9.2): R-CMB-009 revised — `towable` objects, torn off their hub by a tractor, captured on the jump; R-CMB-016 — the `escort` and `travel` manoeuvres and `tow` `escape`; R-CMB-018 revised — modules on any hub, no collisions within one craft, modules jump with their hub; R-CMB-019 note — the dreadnought's scale and the larger default fighters |

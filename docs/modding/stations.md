@@ -66,6 +66,46 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 - **Wrecks.** A destroyed module whose model set has a `destroyed` state stays on the station as
   a wreck drawn in that state ([Looks](looks.md#model-sets)); the wreck goes with the station.
 
+## Cargo containers and moving hubs
+
+Since app 0.9.2 a hub need not be a station: any ship class may carry `modules`, and they ride
+with it. The default campaign's cargo clipper (`supply_ship`) carries twelve cargo pods and a
+point-defence laser:
+
+```yaml
+objects:
+  supply_pod:
+    kind: freighter
+    hit_points: 400
+    armor: 150
+    cargo: true          # counted by the mission's cargo(role) query
+    towable: true        # a tug may tow it away even when not disabled; a mounted one is torn off
+    capturable: true
+  supply_pd:
+    beams: [blaster]
+    turret_arc: 180
+    behaviour: supply_pd                       # do: turret, a long pause between bursts
+    point_defence: {range: 900m, rate: 0.5, chance: 60%, energy: 3}
+ships:
+  supply_ship:
+    behaviour: supply_run                      # do: travel, 24 km, then jump
+    modules:
+      - {slot: pod1, class: supply_pod}
+      # … pod2 – pod12
+      - {slot: pd, class: supply_pd}
+```
+
+- **One craft.** A module never collides with its own hub, nor with another module of the same
+  hub (their hulls overlap by design; before app 0.9.2 the pods dragged on a moving clipper),
+  and a craft's collision avoidance ignores its own modules.
+- **Jumping out.** When a hub leaves by hyperspace, every module still mounted goes with it.
+- **`towable`** (default `false`): a tug's tractor may take the object even when it is not
+  disabled; tractoring a mounted one **tears it off** its hub ("CARGO CONTAINER TORN AWAY"), and
+  the tug that jumps while holding it captures it.
+- **`cargo`** (default `false`): the object is a cargo container, counted by the
+  [`cargo(role)`](missions.md#the-battle-context) query of the role whose craft carry it, and by
+  a mission's [`cargo:`](missions.md#the-mission) key.
+
 ## The two campaigns
 
 | Campaign | Station | Modules |

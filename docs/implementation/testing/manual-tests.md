@@ -1269,7 +1269,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-13 | Supply: surveying a system | Strategy screen, Supply tab (default) | not run | | | App 0.9.0 |
 | MT-4-14 | Supply: building facilities and the placement rules | Supply tab (default) | not run | | | App 0.9.0 |
 | MT-4-15 | Supply: a hull built from components (the whole chain) | Supply and Factory tabs (default) | not run | | | App 0.9.0; long — use Ctrl+M and speed 4 |
-| MT-4-16 | Supply: convoys, ambushes and short deliveries | Strategy screen, an addon | not run | | | App 0.9.0 |
+| MT-4-16 | Supply: convoys, ambushes and short deliveries | Strategy screen, an addon | not run | | | App 0.9.0; since 0.9.2 the default campaign holds an ambushed convoy for the player (MT-4-28): press Esc to see the auto-resolve |
 | MT-4-17 | Supply: a research station and a station-only topic | Supply and Research tabs (default) | not run | | | App 0.9.0 |
 | MT-4-18 | Supply: save and continue with logistics under way | Strategy screen, launcher | not run | | | App 0.9.0 |
 | MT-4-19 | Fixes: manufacture is paid; salvage topics open | Factory and Research tabs, a battle | not run | | | App 0.9.0 |
@@ -1277,6 +1277,11 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-21 | Testbed cheat: jump to battle | Strategy screen, a battle | not run | | | App 0.8.1 |
 | MT-4-22 | `interceptor`: a new campaign from the player's data | Launcher › Campaign: new game (`interceptor`) | not run | | | App 0.8.0; needs the player's data |
 | MT-4-23 | `interceptor`: research, prerequisites and a six-month soak | Strategy screen; command line | not run | | | App 0.8.0; needs the player's data |
+| MT-4-24 | Playtest: the nebula pocket | `pocket_ambush` (default) | not run | | | App 0.9.1; user report: the pocket showed a planet |
+| MT-4-25 | Playtest: bulbous fighters and the bigger dreadnought | Model viewer; `rocket-vs-saucer`, `eclipse_assault` (default) | not run | | | App 0.9.1; user report: fighters too hard to hit |
+| MT-4-26 | Convoy ambush: tugs, torn-off pods and escorts | `convoy_ambush` (default) | not run | | | App 0.9.2; the user's design |
+| MT-4-27 | Convoy ambush: winning, losing and the 15-minute draw | `convoy_ambush` (default) | not run | | | App 0.9.2 |
+| MT-4-28 | Campaign: flying an ambushed convoy's escort | Strategy screen (default), `convoy_ambush` | not run | | | App 0.9.2 |
 
 ## Stage 4 cases
 
@@ -1456,3 +1461,146 @@ Keys: [User guide › Campaign](../../user-guide/campaign.md).
 | Preconditions | As MT-4-22. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy-soak 180`. 2. The same with `--campaign default`. 3. In a new `interceptor` campaign research a topic; see which topics and items appear once it is done. 4. Build a second downlink; compare the research speed. |
 | Expected | 1: one line after 180 days — about 4 of 71 topics on one downlink at app 0.8.0, funds, score, battles. 2: about 12 of 14 topics. 3: the topics whose `Prereq` ids name it, and the items whose `TechRequired` names it, become available. 4: faster research (the rate counts every downlink type). Whether the pace matches the original is the play-test's question. |
+
+### MT-4-24 — Playtest: the nebula pocket
+
+| Field | |
+|---|---|
+| Preconditions | App 0.9.1 or later. `openinterceptor --no-original --mission pocket_ambush` (or the launcher). |
+| Steps | 1. Look all round with the chase view and the cockpit view. 2. Fly a full circle at the arena's edge. 3. Compare the stars with an open-space mission (`rocket-vs-saucer`). |
+| Expected | 1: soft violet and blue clouds all around, with gaps; no planet. 2: the clouds stay put as you move (they are a backdrop) and no seams or flicker show. 3: the stars are dimmer behind the clouds. The frame rate is the same as in open space. |
+
+### MT-4-25 — Playtest: bulbous fighters and the bigger dreadnought
+
+| Field | |
+|---|---|
+| Preconditions | App 0.9.1 or later, default campaign. |
+| Steps | 1. Model viewer: the Comet, Meteor and Thunderbolt, and their debris. 2. Fly `rocket-vs-saucer` and shoot at a Guard wingman's shape from behind (or watch the AI fight). 3. Model viewer: the dreadnought; then fly `eclipse_assault` to the dreadnought's arrival (90 s). |
+| Expected | 1: each is a teardrop "bullet with fins", widest about 40 % back, in the Flash Gordon / Captain Proton style; the Meteor's booster pylons start wide and thick at the hull and taper to the boosters; debris pieces match. 2: they are visibly bigger targets and easier to hit than before. 3: the dreadnought is a quarter larger, and shots and collisions meet its hull where it is drawn (its collision shape follows the scale). |
+
+### MT-4-26 — Convoy ambush: tugs, torn-off pods and escorts
+
+| Field | |
+|---|---|
+| Preconditions | App 0.9.2 or later. `openinterceptor --no-original --mission convoy_ambush`; chase view helps. |
+| Steps | 1. Watch the clippers from the start. 2. At about 45 s, find the grappler and its saucers; do not attack yet. 3. Let the tug reach a clipper. 4. Attack the tug's escorts from 3 km, then from 1 km of the tug. 5. Destroy a tug while it hauls a pod. 6. Fire a missile at a clipper's escort fighter near the clipper (or watch enemy missiles near a clipper). |
+| Expected | 1: two clippers, each with pods along its body and a laser turret on top, flying slowly and straight; the pods stay on as they move (no juddering). 2: *Grapplers inbound with escorts* on the radio; the saucers fly a vee around the tug. 3: the tug tractors a pod: *CARGO CONTAINER TORN AWAY*; the pod leaves the clipper and is hauled away about 3 km, then the tug jumps out with it. 4: the escorts stay in formation while you are far, and break off to attack once you come within about 1.5 km of the tug or of them. 5: the pod is left drifting (not captured). 6: the clipper's laser fires slowly at missiles and close fighters. More tugs keep arriving about every two minutes. |
+
+### MT-4-27 — Convoy ambush: winning, losing and the 15-minute draw
+
+| Field | |
+|---|---|
+| Preconditions | As MT-4-26. |
+| Steps | 1. Defend well until the clippers jump (about ten minutes; *one minute to the jump point* is said near the end). 2. Fly again; do nothing and let the tugs work. 3. Fly again; help the raiders cripple one clipper (or wait until one is disabled) and keep the tugs off it for 15 minutes. |
+| Expected | 1: the clippers go into hyperspace with their remaining pods; **win**, the debrief shows the cargo share and the optional objectives `all_cargo` / `both_clippers`. 2: *Convoy: we've lost a quarter of the cargo!* as pods go; **lose** when a clipper is captured or every pod is gone. 3: after 15 minutes a **draw**, with the convoy draw debrief text. |
+
+### MT-4-28 — Campaign: flying an ambushed convoy's escort
+
+| Field | |
+|---|---|
+| Preconditions | App 0.9.2 or later. A default campaign with a supply chain under way (MT-4-15), so convoys are moving; speed 4 until one is ambushed (30 % of convoys). |
+| Steps | 1. When the clock stops with *Supply convoy ambushed! Enter: fly its escort   Esc: let it fight through*, look at the map. 2. Press Enter; fly the battle to a win with part of the cargo lost; return to the map. 3. At the next ambush press Esc. 4. At another, leave the battle early from the pause menu (L). 5. Send every craft away (or have no pilot) and wait for an ambush; press Enter. |
+| Expected | 1: the convoy's gold dot has stopped and stays put while the banner is up; the message names its cargo. 2: the battle is `convoy_ambush` with the first ready craft; back on the map *Convoy escort: WIN - NN% of the cargo got through*; the delivery is that share. 3: *The convoy fought through alone: N of M vessels lost*. 4: the same as Esc. 5: *No ready craft: the convoy fights through alone.* |
+
+## Stage 5 results
+
+No case has been run yet; **no play-through of either campaign has been done**.
+
+| ID | Case | Scenario | Result | Date | Tester / platform | Notes |
+|---|---|---|---|---|---|---|
+| MT-5-01 | Story: chapter messages and the arc's order | Strategy screen (default) | not run | | | App 0.10.1 |
+| MT-5-02 | Story: a choice | Strategy screen (default) | not run | | | App 0.10.1; chapter 7 or the Black Comet truce |
+| MT-5-03 | Story: an offered mission, flown and declined | Strategy screen (default) | not run | | | App 0.10.0 |
+| MT-5-04 | Story: the Eclipse Engine's shipments and warnings | Strategy screen (default) | not run | | | App 0.10.1 |
+| MT-5-05 | Relations: stances, raids and who fights whom | Strategy screen and a battle (default) | not run | | | App 0.10.0, 0.10.3 |
+| MT-5-06 | The Archive tab and the encyclopaedia | Strategy screen (default) | not run | | | App 0.10.0 |
+| MT-5-07 | Endings: defeat and victory | Strategy screen; `eclipse_assault` (default) | not run | | | App 0.10.1 |
+| MT-5-08 | The default campaign played through | Strategy screen (default), middle difficulty | not run | | | Stage 5 exit; log milestone dates |
+| MT-5-09 | `interceptor`: the Doomsday arc | Strategy screen (`interceptor`) | not run | | | App 0.10.2; needs the player's data; derived gates |
+| MT-5-10 | `--strategy-soak` reports the story | Command line | not run | | | App 0.10.1 – 0.10.2 |
+
+## Stage 5 cases
+
+How to start: as for Stage 4 (*Campaign: new game*, or `--no-original --strategy`). Speed 4
+(5 days a second) and the cheats (Ctrl+M, Ctrl+K, Ctrl+B) shorten the waits. Keys:
+[User guide › Campaign › The story](../../user-guide/campaign.md#the-story).
+
+### MT-5-01 — Story: chapter messages and the arc's order
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.1 or later. A new default campaign. |
+| Steps | 1. Start the clock. 2. Decline the offered mission (Esc). 3. Run to day 15; then to day 30. 4. Look at Messages. |
+| Expected | 1: within the first day the clock stops with *Chapter 1 - The Shadow Falls…* and a mission is offered. 2: *Declined.*; the clock can run on. 3: *Chapter 2* about day 15 and *Chapter 3* about day 30 (or earlier, if both heat rays and deep radar are researched), never out of order. 4: each chapter in the log with its date. |
+
+### MT-5-02 — Story: a choice
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.1 or later. A default campaign about to reach chapter 7 (the Cartel), or past month 2 with the raiders still hostile (the truce event may come with 30 % a month). |
+| Steps | 1. When *Your choice - 1: … 2: …* appears, press another key (Space, 3). 2. Press 1. 3. In a later campaign (or the next offer) press 2. 4. Open the Archive tab after each. |
+| Expected | 1: nothing happens; the clock stays stopped. 2: *Chose: …* in the log; money and the faction's standing change as the option says; a stance change, if any, is announced (*Relations: … are now … (were …)*). 3: the other option's effects. 4: the standings reflect the choice. |
+
+### MT-5-03 — Story: an offered mission, flown and declined
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.0 or later. A default campaign with a ready craft and pilot. |
+| Steps | 1. At a chapter's offer press Enter; fly and win. 2. At the next offer press Enter and lose or retreat. 3. Send every craft away and wait for an offer; press Enter. |
+| Expected | 1: the chapter's mission starts with that craft's hull and fit; back on the map *Mission: WIN (N destroyed)*; the outcome's score and money apply; Archive: battles won +1. 2: *Mission: LOSE* / *RETREAT*; no win counted. 3: *No ready craft to fly it.*, and the offer is gone. |
+
+### MT-5-04 — Story: the Eclipse Engine's shipments and warnings
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.1 or later. A default campaign past chapter 3 (*regent_revealed*). |
+| Steps | 1. Look in Messages for *Intelligence: the rival's eclipse_engine has begun*. 2. Wait for an *Eclipse Engine shipment* contact; intercept it and win. 3. Let the next one through. 4. Watch the Archive tab over several shipments. |
+| Expected | 1: present. 2: the battle is `intercept_scouts`; Archive progress unchanged. 3: *A shipment for the rival's eclipse_engine got through*; progress +1/18. 4: warnings at a third, two-thirds and 90 %; chapters 4, 8, 10 and 11 follow the progress. If it reaches 100 %, the campaign ends in defeat (*engine_lit*). |
+
+### MT-5-05 — Relations: stances, raids and who fights whom
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.3 or later. A default campaign where the Black Comet truce is offered (month 2 or later); Ctrl+M for the money. |
+| Steps | 1. Archive: note the raiders' stance (hostile). 2. Accept the truce (pay). 3. Archive again; run a month. 4. Fly any battle in which raiders' craft appear (a story mission with hot-rods, e.g. `pocket_ambush` if offered). 5. In another campaign refuse the truce and fly the same battle. |
+| Expected | 1: *raiders: hostile (−70)* or so. 2: *Relations: raiders are now neutral (were hostile)*. 3: neutral; no *Black Comet ambush* raids appear; drift moves the standing towards 0 each month. 4: the raiders' craft do not attack you (and you are not hostile to them). 5: they attack as before. |
+
+### MT-5-06 — The Archive tab and the encyclopaedia
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.0 or later. A new default campaign. |
+| Steps | 1. Open the Archive tab on day 0. 2. After chapter 3, and after chapter 7, open it again. 3. Win battles three months running; then sit three months without fighting; read the aggression each month. |
+| Expected | 1: every faction with its stance and standing; *Rival aggression x1.00; battles won 0*; entries for the Guard, the Dominion and cosmium. 2: the Engine's progress row and the Eclipse Engine entry after chapter 3; the Cartel entry after chapter 7. 3: aggression falls by 0.1 a month while you win three or more battles a month, rises by 0.1 while you do not (between 0.6 and 1.8); raids come more often as it rises. |
+
+### MT-5-07 — Endings: defeat and victory
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.1 or later. Default campaigns. |
+| Steps | 1. Let the Eclipse Engine be completed: let its shipments through (Ctrl+M keeps you solvent). 2. Press Enter; then choose *Campaign: continue*. 3. Reach chapter 12 (research *victory_design* — Ctrl+K — after chapter 10) and fly `eclipse_assault` to a win; return to the map. |
+| Expected | 1: *DEFEAT.* with the ending's text; the clock stops. 2: Enter saves and leaves to the launcher; note what *continue* shows (the ending is saved; whether the screen shows it again on loading is not checked by a unit test). 3: the nebula battle with the Engine, a guard fleet that keeps coming and a dreadnought after 90 s; on return *VICTORY.* with the Engine's ending. |
+
+### MT-5-08 — The default campaign played through
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.3 or later. A new default campaign at the second difficulty level; no cheats. |
+| Steps | Play to an ending. Record the date of each chapter, the Cartel choice, each Engine warning and the ending. Note chapters whose mission did not fit their message (they fly existing missions). |
+| Expected | All twelve chapters in order; the campaign ends in one of the four endings. The log of milestone dates is the Stage 5 exit record. |
+
+### MT-5-09 — `interceptor`: the Doomsday arc
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.2 or later with the player's data. A new `interceptor` campaign. |
+| Steps | 1. Fly battles after 1 February until the first alien message. 2. Research the saucer examinations; watch for messages 2 – 5. 3. Watch the Archive tab for the Doomsday plan and its convoys; let some through. 4. With Ctrl+K, check MacArthur's message and the final mission's offer a week later; win it. |
+| Expected | 1: the first message after a battle, not before 1 February. 2: each later message only after its date, its examination and (for 4 and 5) the plan's progress. 3: Doomsday convoys as contacts (`ambush_alien_freighters_escorted`); warnings shown with the original's own texts. 4: the original's MacArthur prompt; the final mission; on its win the victory ending. Note anything that differs from the original — the gates' topics are derived. |
+
+### MT-5-10 — `--strategy-soak` reports the story
+
+| Field | |
+|---|---|
+| Preconditions | App 0.10.1 or later. |
+| Steps | 1. `openinterceptor --no-original --strategy-soak 365`. 2. With the player's data: `openinterceptor --campaign interceptor --strategy-soak 365`. |
+| Expected | 1: the summary line, the last monthly report, and `story: arcs [serial N/12], plans [eclipse_engine NN%], aggression X.XX, ending …` with the serial well advanced. 2: the same form with `doomsday` and the Doomsday plan. |

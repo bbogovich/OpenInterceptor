@@ -3,7 +3,9 @@
 The campaign around the battles — the star map, bases, research, the economy, craft, pilots and
 the enemy raids that start battles — is **pack data** (app 0.7.0 – 0.7.3), and so is the optional
 **logistics** layer of mining, manufacturing, research stations and supply convoys (app 0.9.0,
-[Logistics](#logistics)). A campaign that has a
+[Logistics](#logistics)). The story on top of it — events, arcs, the rival's plans, relations,
+the strategist, endings and the encyclopaedia (app 0.10.0) — has its own page,
+[Story layer](story.md). A campaign that has a
 `start:` section has a strategy layer: the launcher then leads with *Campaign: continue* and
 *Campaign: new game* ([User guide › Campaign](../user-guide/campaign.md)). A campaign without
 `start:` is battles only, as before.
@@ -28,10 +30,12 @@ they go in `<pack>/strategy/*.yaml`, which the loader reads like `rules/`, `camp
 | `resources/default/strategy/raids.yaml` | `raids` |
 | `resources/default/strategy/pilots.yaml` | `pilots`, `scores` |
 | `resources/default/strategy/logistics.yaml` | `resources`, `components`, `recipes`, `facility_types`, `research_sites`, `logistics`; and, merged into the `reach` map, the hulls and the research tree: `deposits`, `features`, hull `components`, two station-only topics (app 0.9.0) |
+| `resources/default/strategy/story.yaml` | `events`, `arcs`, `plans`, `relations`, `strategist`, `endings`, `campaign_end`, `encyclopaedia` (app 0.10.1; [Story layer](story.md)) |
 
 The `interceptor` campaign has two (app 0.8.0, [below](#the-interceptor-campaign-from-the-players-data)):
 `packs/interceptor/strategy/references.yaml`, generated from the player's own files, and
-`packs/interceptor/strategy/campaign.yaml`, written by hand.
+`packs/interceptor/strategy/campaign.yaml`, written by hand; and since app 0.10.2 its story,
+`packs/interceptor/strategy/story.yaml` ([Story layer](story.md#the-interceptor-campaigns-doomsday-arc)).
 
 Each file starts with `# yaml-language-server: $schema=../../../schemas/rules.schema.json`, so
 an editor offers every key below. Definition sections (`maps`, `research`, `items`, …) layer
@@ -77,6 +81,7 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `flag(x)` | true/false | Campaign flag `x` is set (by a mission outcome's `set_flag(x)`). |
 | `salvaged(x)` | true/false | Something named `x` has been salvaged (see [Battles](#raids-and-battles)). |
 | `craft` | number | The player's craft, all bases. |
+| `arc(x)`, `plan(x)`, `relation(x)`, `fired(x)`, `battles_won` | number | The story's queries (app 0.10.0): see [Story layer › Conditions](story.md#conditions). |
 
 ```text
 research(ion_rays) and research(saucer_hulls)
@@ -435,10 +440,11 @@ The supply settings (a global section).
 |---|---|---|---|
 | `vessels` | number | 3 | Vessels in each supply convoy; each carries an even share of the cargo. |
 | `ambush_chance` | fraction | 30 % | Chance, rolled when a convoy launches, that it will be attacked on its way; the point along its route is rolled then too. |
-| `ambush_loss` | fraction | 35 % | Chance that each vessel of an ambushed convoy is lost (auto-resolved; the convoy is unescorted). |
+| `ambush_loss` | fraction | 35 % | Chance that each vessel of an ambushed convoy is lost when the ambush is auto-resolved (no `ambush_mission`, or the player lets it fight through). |
 | `survey_attack_chance` | fraction | 25 % | Chance, rolled when a survey ship launches, that it is attacked on the way. |
 | `survey_speed` | number | 900 | Survey ship speed, map units an hour. |
 | `convoy_speed` | number | 500 | Convoy speed, map units an hour. |
+| `ambush_mission` | mission id | none | The battle flown when the player escorts an ambushed convoy (app 0.9.2). With it, an ambushed convoy **waits** where it is and the clock stops: the player flies its escort, and the share of the mission's [`cargo:`](missions.md#the-mission) role still aboard at the end is delivered — or lets it fight through (auto-resolved as below). Without it every ambush is auto-resolved. An unknown mission is a load error. The default campaign sets `convoy_ambush`. |
 
 ### How the chain runs
 
@@ -508,8 +514,8 @@ a Guard player who wants more craft must survey, mine and manufacture first.
 
 ### Not built yet
 
-Convoy ambushes are **auto-resolved** — the `convoy_ambush` mission exists, but flying it from
-the map is not hooked up (R-STR-019). Also not built: facility fighter pools and escorts
+Convoy ambushes can be **flown** since app 0.9.2 (`ambush_mission`; the battle is described in
+[Missions › The convoy ambush](missions.md#the-convoy-ambush-app-092)). Not built: facility fighter pools and escorts
 (R-STR-025), strikes on facilities under construction from 50 % (R-STR-023), construction-stage
 looks on the map and in battle (R-STR-022), captured cargo and enemy supply depots (R-STR-020),
 third-party convoys (R-STR-027), supply-vessel cargo capacity (R-STR-026), facility upgrades,
@@ -584,7 +590,8 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   Victory hulls and the deep-radar and shipyard modules; and two station-only topics,
   `theremin_shielding` and `pulsar_navigation` (app 0.9.0, [Logistics](#the-default-campaigns-logistics)).
 - **Economy**: delivery 48 h, salvage 15 000 a kill; the **Senate stipend** every 30 days,
-  `400000 + 60000 * bases + month_score * 200`; cosmium sales every 7 days,
+  `400000 + 60000 * bases + month_score * 200 + relation(senate) * 3000` (the standing term since
+  app 0.10.1); cosmium sales every 7 days,
   `12000 * module_count(cosmium_refinery)`; fuel and stores `4000 * craft` a week. Eight items
   (four beams, three missiles, cosmium), four hulls, nine module kinds (hangar, quarters, radar,
   deep radar, laboratory, workshop, shipyard, cosmium refinery, ray battery) and the `guard_base`
@@ -592,7 +599,9 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
 - **Raids**: Dominion scouts (`intercept_scouts`), saucer raids (`defend_station`, from day
   10), colony raids (`colony_defence`, day 20), robot assaults (`outpost_raid`, day 45) and the
   Black Comet ambush by raiders (`pocket_ambush`, day 15) — each a mission of the default
-  campaign ([Missions](missions.md#the-missions-shipped)).
+  campaign ([Missions](missions.md#the-missions-shipped)); and since app 0.10.1 the Eclipse
+  Engine's shipments (`eclipse_shipment`, `chance: 0%`: launched only by the
+  [plan](story.md#plans)).
 - **Pilots**: flying, gunnery and nerve; five ranks from cadet to commander; salary 6000,
   recruit fee 40 000, five recruits a month, 12 days to heal, 70 % survive; twelve mission
   scores.
@@ -627,15 +636,16 @@ unknown.
 | `save: this save has logistics but the loaded campaign has none` | Loading a save with facilities into a campaign whose logistics was removed. |
 | `save: … does not match the loaded rules (was a mod changed?)` | Loading a save whose research, modules, items, incomes or raids no longer fit the rules. |
 
-## Limits in app 0.9.0
+## Limits in app 0.10.3
 
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
   fitting is *best available* only, and slots of kinds other than `beam` and `missile` are filled
   but have no effect in battle.
-- Outcome actions `relation(…)` and cargo actions are **logged only**; they belong to Stage 5's
-  relations and the logistics battles still to be hooked up.
-- **Logistics**: see [Not built yet](#not-built-yet) — convoy ambushes are auto-resolved, and
-  fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
+- Mission outcome actions `relation(…)`, `capture`, `cargo_lost` and `cargo_captured` are still
+  **ignored** by the campaign (app 0.10.3): a story event's `relation(…)` moves a standing
+  ([Story layer](story.md#actions)), a mission's does not yet. A flown convoy escort delivers its
+  surviving share through `cargo:` instead.
+- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
   upgrades and `placement:` expressions are not built.
 - No designs, training, bravery, dismantling, funding evaluations or the 3D base view yet.
 - Names and descriptions in the default campaign's strategy files are plain English, not text

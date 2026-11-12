@@ -1,5 +1,5 @@
 ---
-spec_version: 1.14.0
+spec_version: 1.15.0
 status: current
 updated: 2026-11-11
 ---
@@ -17,7 +17,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 | [F-CPN-003 The default campaign, *Perils of the Void*](#f-cpn-003-the-default-campaign-perils-of-the-void) | In progress |
 | [F-CPN-004 The *Interceptor* campaign](#f-cpn-004-the-interceptor-campaign) | In progress |
 | [F-CPN-005 *Interceptor Remastered*](#f-cpn-005-interceptor-remastered) | Planned |
-| [F-CPN-006 Story, rivals and relations](#f-cpn-006-story-rivals-and-relations) | Planned |
+| [F-CPN-006 Story, rivals and relations](#f-cpn-006-story-rivals-and-relations) | In progress |
 | [F-CPN-007 Presentation](#f-cpn-007-presentation) | Planned |
 
 ## Features
@@ -48,7 +48,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** Modding first: proves the engine stands alone and is the worked example for modders.
 
-- **Status:** in-progress — rules, scenarios, nine missions (five using environments, hazards and ground installations, app 0.6.4), radio voices (app 0.6.2).
+- **Status:** in-progress — rules, scenarios, nine missions (five using environments, hazards and ground installations, app 0.6.4), radio voices (app 0.6.2); the strategy layer and logistics (app 0.7.1 – 0.9.0); flown convoy battles (0.9.2); the 12-chapter serial with the Eclipse Engine plan, relations, endings and the finale `eclipse_assault` (0.10.1) — chapters 1 – 11 still fly existing missions; not played through.
 - **Source:** Design page *The default campaign*; plan items 2.14, 3.12, 4.13, 5.9, 6.8, 7.8.
 - **Specified by:** [R-STR-017](../../specification/requirements/strategy-logistics.md#r-str-017-supply-vessel-model), [R-CPN-003](../../specification/requirements/campaigns.md#r-cpn-003-default-campaign-plays-without-the-cd), [R-CPN-004](../../specification/requirements/campaigns.md#r-cpn-004-default-campaign-content), [R-TST-012](../../specification/requirements/testbed-tools.md#r-tst-012-asset-generators)
 
@@ -58,7 +58,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** Compatibility, and the primary test that the formats can express every system of the original.
 
-- **Status:** in-progress — 26 mission types (app 0.6.5) and the strategy layer from the player's data, derived and not yet play-tested (app 0.8.0); the story and strategist remain (Stage 5).
+- **Status:** in-progress — 26 mission types (app 0.6.5) and the strategy layer from the player's data, derived and not yet play-tested (app 0.8.0); the Doomsday arc and plan, MacArthur and the final mission, two of seven side missions (app 0.10.2, derived gates); the `Think.ini` strategist remains; not played through.
 - **Source:** Design page *The Interceptor campaign mod*; plan items 2.13, 3.11, 4.12, 5.8, 6.7.
 - **Specified by:** [R-CPN-005](../../specification/requirements/campaigns.md#r-cpn-005-interceptor-campaign-content)
 
@@ -78,7 +78,7 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 
 **Why.** What turns the strategy layer into a campaign with a beginning, middle and end.
 
-- **Status:** planned
+- **Status:** in-progress — the story layer is built (app 0.10.0 – 0.10.3): events with choices and mission offers, arcs, rival plans built from interceptable shipments, the player's dynamic relations (raids stop, battles follow the stances), the strategist's aggression, endings, the encyclopaedia; both campaigns' stories. Remaining: rival logistics and third-party convoys (5.11), allies in battle, relation rules and trade effects, the full strategist, a play-through.
 - **Source:** Plan items 5.1–5.7 and 5.11.
 - **Specified by:** [R-STR-027](../../specification/requirements/strategy-logistics.md#r-str-027-third-party-convoys), [R-CPN-007](../../specification/requirements/campaigns.md#r-cpn-007-events-and-arcs), [R-CPN-008](../../specification/requirements/campaigns.md#r-cpn-008-rival-plans-and-strategist), [R-CPN-009](../../specification/requirements/campaigns.md#r-cpn-009-dynamic-relations), [R-CPN-010](../../specification/requirements/campaigns.md#r-cpn-010-victory-defeat-and-endings), [R-TST-011](../../specification/requirements/testbed-tools.md#r-tst-011-campaign-soak)
 
@@ -99,3 +99,4 @@ Requirements for these features: [Campaigns requirements](../../specification/re
 | 1.0.0 | 2026-11-11 | Bootstrap: F-CPN-001 – F-CPN-007 (7 features) |
 | 1.12.0 | 2026-11-11 | F-CPN-003: nine default missions and radio voices noted. F-CPN-007: radio and computer voices built (R-MSN-007); the rest planned |
 | 1.14.0 | 2026-11-11 | F-CPN-004: the strategy layer from the player's data (app 0.8.0) noted |
+| 1.15.0 | 2026-11-11 | F-CPN-006 in progress (app 0.10.0 – 0.10.3: events, arcs, plans, relations, the strategist's aggression, endings, the encyclopaedia). F-CPN-003: convoy battles and the serial noted. F-CPN-004: the Doomsday arc noted |

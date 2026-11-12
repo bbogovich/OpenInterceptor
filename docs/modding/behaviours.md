@@ -70,7 +70,9 @@ All keys with types and defaults: [Mod file reference › behaviours](reference.
 | `retreat` | Runs from the nearest hostile at top speed, afterburning while energy lasts. | `jump: true` also starts the hyperdrive |
 | `turret` | Stays put; beams that can swivel (`turret_arc` on the ship class) track hostiles within `range` (and 95 % of the first beam's reach) and fire in bursts. | `range`, `burst`, `pause` |
 | `mine` | Waits; when a hostile is within `range`, detonates its first missile rack as an area blast and is gone ([Missiles and mines](weapons.md#mines)). | `range` (trigger distance) |
-| `tow` | Finds the nearest disabled, capturable hostile ship, closes in, tractors it and jumps out with it (tugs; needs a tractor beam fitted). | `range` (search radius, at least 5 km) |
+| `tow` | Finds a disabled, capturable hostile ship — or, failing one, the nearest **towable** hostile object (a cargo container, app 0.9.2) — that no one else is towing; closes in, tractors it, hauls it `escape` from where it took it and jumps out with it (tugs; needs a tractor beam fitted). A towable module is torn off its hub by the tractor. | `range` (search radius, at least 5 km), `escape` (default 2.5 km) |
+| `escort` | Flies in formation on its leader — the newest live member of the role named by the mission role's [`escort:`](missions.md#roles) — and attacks any hostile that comes within `range` of the leader or of itself, returning to its slot when the threat is gone; without a leader it just fights (app 0.9.2). | `range`, and the attack parameters |
+| `travel` | Flies straight on at `speed` × top speed for `range` from where the state began, then starts the hyperdrive (a supply ship making for its jump point; app 0.9.2). | `range`, `speed` |
 
 ## Using the ship's systems
 
