@@ -3841,6 +3841,8 @@
       
         
       
+        
+      
     
     
     
@@ -4014,6 +4016,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4083,6 +4113,8 @@
       
         
           
+        
+      
         
       
         
@@ -4562,6 +4594,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cutscenes/" class="md-nav__link">
         
   
@@ -4931,6 +4991,17 @@
     <span class="md-ellipsis">
       
         skins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        screens
       
     </span>
   </a>
@@ -5443,6 +5514,8 @@
       
         
       
+        
+      
     
     
     
@@ -5845,6 +5918,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6822,6 +6923,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#console" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7077,7 +7189,7 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <h2 id="rules-files-rulesyaml-campaignyaml">Rules files (<code>rules/*.yaml</code>, <code>campaign/*.yaml</code>)<a class="headerlink" href="#rules-files-rulesyaml-campaignyaml" title="Permanent link">&para;</a></h2>
 <p>Top-level sections: <code>factions</code>, <code>beams</code>, <code>missiles</code>, <code>ships</code>, <code>objects</code>, <code>systems</code>, <code>cockpits</code>,
 <code>behaviours</code>, <code>modelsets</code>, <code>debris</code>, <code>effects</code>, <code>voices</code>, <code>environments</code>, <code>terrains</code>, <code>formations</code>,
-<code>missions</code>, and since app 0.11.0 – 0.11.1 <code>music</code> and <code>skins</code> (definitions by id), and <code>flight</code>, <code>power</code>, <code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>console</code>,
+<code>missions</code>, and since app 0.11.0 – 0.11.1 <code>music</code> and <code>skins</code> and since app 0.16.0 <code>screens</code> (definitions by id), and <code>flight</code>, <code>power</code>, <code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>console</code>,
 <code>campaign</code> (global). The <strong>strategy layer</strong> adds the definitions <code>maps</code>, <code>star_classes</code>, <code>research</code>,
 <code>items</code>, <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code> and the globals
 <code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>flags</code>, <code>economy</code>, <code>tech_ids</code> (app 0.8.0), by
@@ -7371,7 +7483,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>hit_points</code></td>
 <td>number</td>
 <td>100</td>
-<td>Hull points.</td>
+<td>Hull points. A class inheriting an original station's hit-point chart (<code>HP1</code> – <code>HP4</code>, no <code>HitPoints</code>) gets the four summed (app 0.15.0, <em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>armor</code></td>
@@ -7384,6 +7496,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>number</td>
 <td>0</td>
 <td>Shield points per facing (fore and aft).</td>
+</tr>
+<tr>
+<td><code>fitted</code></td>
+<td><code>{shield, armor}</code></td>
+<td>none</td>
+<td>The equipment the class carries by default (app 0.15.0): each a reference to a definition with a protection value — an <code>original:</code> section such as <code>original:GameSettings.ini/ShieldType1</code>, read by its <code>Special</code> key (shields) or <code>HitPoints</code> key (armour). Its protection fills <code>shields</code> / <code>armor</code> <strong>unless the class has them already</strong> — set by itself or by what it inherits. A key other than <code>shield</code> or <code>armor</code>, or a reference with no protection value, is a load error. A campaign craft's own fit replaces both in battle (<a href="../strategy/#items-and-hulls">Strategy layer › items</a>).</td>
 </tr>
 <tr>
 <td><code>shield_recharge</code></td>
@@ -7656,7 +7774,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>instruments</code></td>
 <td>mapping name: <code>[x, y, w, h]</code></td>
 <td>—</td>
-<td>Instrument rectangles in the design space. Names: <code>message</code>, <code>radar_front</code>, <code>radar_rear</code>, <code>mfd</code>, <code>gauge1</code>–<code>gauge4</code>, <code>power</code>, <code>systems</code>.</td>
+<td>Instrument rectangles in the design space. Names: <code>message</code>, <code>radar_front</code>, <code>radar_rear</code>, <code>mfd</code>, <code>gauge1</code>–<code>gauge4</code>, <code>power</code>, <code>systems</code>, <code>status</code>, and since app 0.15.1 <code>ship_status</code> (the craft from above with its shield bands, <a href="../cockpits/#the-ship-status-display">Cockpits › The ship status display</a>).</td>
 </tr>
 <tr>
 <td><code>anchors</code></td>
@@ -8337,6 +8455,39 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 <td>asset</td>
 <td>the built-in font</td>
 <td>A TrueType font for every skinned text.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="screens"><code>screens</code><a class="headerlink" href="#screens" title="Permanent link">&para;</a></h3>
+<p>Screen layouts (app 0.16.0; guide: <a href="../screens/">Screen layouts</a>). A definition section:
+<code>screens: {&lt;screen id&gt;: {…}}</code>. Only <code>starmap</code> (the strategy screen) is laid out so far.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>design</code></td>
+<td>2 numbers</td>
+<td>1280, 720</td>
+<td>The design space the rectangles are written in. It is stretched to the window.</td>
+</tr>
+<tr>
+<td><code>background</code></td>
+<td>asset</td>
+<td>none</td>
+<td>An image over the whole design space. Parsed and checked, <strong>not yet drawn</strong>.</td>
+</tr>
+<tr>
+<td><code>widgets</code></td>
+<td>mapping name: <code>[x, y, w, h]</code></td>
+<td>the engine's places</td>
+<td>Where each widget goes, in the design space. <code>starmap</code>: <code>top</code>, <code>map</code>, <code>nav</code>, <code>info</code>, <code>panel</code>; another name is a load error. A widget left out keeps the engine's place.</td>
 </tr>
 </tbody>
 </table>

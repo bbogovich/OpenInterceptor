@@ -4059,6 +4059,8 @@
       
         
       
+        
+      
     
     
     
@@ -4232,6 +4234,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4299,6 +4329,8 @@
       
         
           
+        
+      
         
       
         
@@ -4758,6 +4790,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5276,6 +5336,8 @@
       
         
       
+        
+      
     
     
     
@@ -5678,6 +5740,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6717,10 +6807,14 @@
 <ul>
 <li>Implements: <a href="../../../definition/testbed-tools/#f-tst-003-headless-runs">F-TST-003</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>soak::default_campaign_difficulty_scales_enemy_lethality</code>; MT-3-12</li>
+<li>Verified by: <code>soak::default_campaign_difficulty_scales_enemy_lethality</code>; <code>balance::tests::energy_limits_sustained_fire_and_kill_times_follow</code>; MT-3-12, MT-4-36</li>
 <li>Reverse-engineered: yes</li>
-<li>See: <a href="../../../implementation/architecture/mission/">Missions (architecture)</a></li>
+<li>See: <a href="../../../implementation/architecture/mission/">Missions (architecture)</a>, <a href="../../../user-guide/getting-started/#command-line-options">Getting started › Command-line options</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.15.0, main <code>1ff754b</code>): <code>--balance</code></p>
+<p>A static companion to <code>--soak</code>: <code>openinterceptor --balance</code> (with <code>--campaign</code> and <code>--difficulty</code>) prints, for every class at that difficulty, its shield (per facing), armour, hull, effective hit points against beams from one side (shield + armour + hull), its sustained beam damage per second (every mount at its rate of fire, cut back to what the energy recharge pays for), and the seconds of perfect beam fire each playable ship needs to destroy it (<code>src/balance.rs</code>). It answered the playtest finding that ships and stations fell too easily.</p>
+</div>
 <h3 id="r-tst-007-screenshots">R-TST-007 Screenshots<a class="headerlink" href="#r-tst-007-screenshots" title="Permanent link">&para;</a></h3>
 <p><code>--screenshot</code> with <code>--frames</code> MUST save a picture after the given number of frames.</p>
 <p><em>Rationale:</em> Visual checks without a person at the screen.</p>
@@ -6840,6 +6934,11 @@
 <td>1.15.0</td>
 <td>2026-11-11</td>
 <td>R-TST-011: As-built note — the default campaign's year-long consistency soak (orphan references, monotonic arcs; app 0.10.3) and <code>--strategy-soak</code> reporting the story; the Open note narrowed to money accounting, an <code>interceptor</code> unit soak, battles from forces and logistics. R-TST-010: the event debugger and start-at-chapter still not built. No requirement text changed</td>
+</tr>
+<tr>
+<td>1.17.0</td>
+<td>2026-11-11</td>
+<td>R-TST-006 As-built note: <code>--balance</code>, a static report of protection, sustained beam damage and kill times (app 0.15.0)</td>
 </tr>
 </tbody>
 </table>

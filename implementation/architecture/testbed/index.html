@@ -3975,6 +3975,8 @@
       
         
       
+        
+      
     
     
     
@@ -4148,6 +4150,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4215,6 +4245,8 @@
       
         
           
+        
+      
         
       
         
@@ -4674,6 +4706,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5192,6 +5252,8 @@
       
         
       
+        
+      
     
     
     
@@ -5594,6 +5656,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6645,11 +6735,14 @@ launcher:</p>
   without a window; the drawing is a manual test (MT-3-51 – MT-3-54).</li>
 </ul>
 <h3 id="the-strategy-screen-app-071">The strategy screen (app 0.7.1)<a class="headerlink" href="#the-strategy-screen-app-071" title="Permanent link">&para;</a></h3>
-<p><code>app::strategy::StrategyScreen</code> (Stage 4.10) shows a <code>campaign::Campaign</code>: the star map, nine
-tabs (the <strong>Supply</strong> tab, <code>Tab::Logistics</code>, since app 0.9.0, with the <code>Act::Survey</code>,
-<code>Act::BuildFacility</code> and <code>Act::StationResearch</code> rows, and facilities, convoys and survey ships
-drawn on the map), the clock (<code>SPEEDS</code>: paused, 1, 6, 24 and 120 campaign hours per real second), banners
-for notices and the fly-or-break-off choice. It turns rows into orders on the campaign and
+<p><code>app::strategy::StrategyScreen</code> (Stage 4.10) shows a <code>campaign::Campaign</code>. Since app 0.16.0
+(main <code>ac7ae62</code>) it is five widgets placed by the <code>screens.starmap</code> layout: the top bar (date,
+funds, score, base switcher, the clock's buttons — <code>SPEEDS</code>: paused, 1, 6, 24 and 120 campaign
+hours per real second — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
+panel for the selection (<code>Sel</code>) with its actions, the ten list buttons (<code>Tab</code>; the <strong>Supply</strong>
+list, <code>Tab::Logistics</code>, since app 0.9.0) and the list panel whose rows carry their actions as
+buttons; notices, interceptions, convoy ambushes, choices, offers, endings and title cards are
+modal prompts. How a frame runs: <a href="../presentation/#widgets-and-screen-layouts-appwidgets-contentscreens">Presentation › Widgets and screen layouts</a>. It turns rows into orders on the campaign and
 draws; the rules live in <code>campaign</code> (<a href="../campaign/">Campaign</a>). The launcher leads with
 <code>Entry::ContinueCampaign</code> and <code>Entry::NewCampaign</code> when <code>rules.strategy</code> is set and starts
 selected on them; <code>--strategy</code> opens a new campaign. A campaign battle sets
@@ -6658,10 +6751,13 @@ selected on them; <code>--strategy</code> opens a new campaign. A campaign battl
 <code>Next::CampaignBattle</code> carries the first craft's fitted loadout, applied with
 <code>flight::apply_loadout</code> (app 0.7.2). <strong>Testbed cheats</strong> (app 0.8.1, plan <em>Testbed adds</em> of
 Stage 4): Ctrl+M payday, Ctrl+K knowitall, Ctrl+B quickbase — the original's own cheat list —
-and Ctrl+J jump to battle from the contact chosen on the Contacts tab, each a
+and Ctrl+J jump to battle from the contact selected on the map or in the Contacts list, each a
 <code>Campaign::cheat_*</code> method (<a href="../campaign/#testbed-cheats-app-081">Campaign › Testbed cheats</a>).
 Headless, <code>--strategy-soak &lt;days&gt;</code> plays a campaign's strategy layer with <code>campaign::autoplay</code>
-(app 0.8.0). Player's guide: <a href="../../../user-guide/campaign/">Campaign</a>.</p>
+(app 0.8.0), and <code>--balance</code> (app 0.15.0, <code>src/balance.rs</code>) prints every class's protection,
+sustained beam damage and the seconds of perfect fire each playable ship needs to destroy it —
+<code>effective_hp</code>, <code>sustained_dps</code> and <code>time_to_kill</code> are pure and tested
+(<code>balance::tests::energy_limits_sustained_fire_and_kill_times_follow</code>). Player's guide: <a href="../../../user-guide/campaign/">Campaign</a>.</p>
 <h3 id="scenarios-shipped">Scenarios shipped<a class="headerlink" href="#scenarios-shipped" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

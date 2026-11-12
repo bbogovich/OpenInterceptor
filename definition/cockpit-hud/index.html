@@ -4024,6 +4024,8 @@
       
         
       
+        
+      
     
     
     
@@ -4197,6 +4199,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4264,6 +4294,8 @@
       
         
           
+        
+      
         
       
         
@@ -4723,6 +4755,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5241,6 +5301,8 @@
       
         
       
+        
+      
     
     
     
@@ -5643,6 +5705,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6594,12 +6684,12 @@
 <li><strong>Specified by:</strong> <a href="../../specification/requirements/cockpit-hud/#r-hud-003-hd-and-3d-cockpits">R-HUD-003</a>, <a href="../../specification/requirements/cockpit-hud/#r-hud-004-anchored-3d-cockpit-instruments">R-HUD-004</a></li>
 </ul>
 <h3 id="f-hud-003-flight-instruments">F-HUD-003 Flight instruments<a class="headerlink" href="#f-hud-003-flight-instruments" title="Permanent link">&para;</a></h3>
-<p><strong>What.</strong> Radars with shield rings, speed, energy, shield and hull gauges, power and system readouts, multi-function display pages and a message line.</p>
+<p><strong>What.</strong> Radars with shield rings, a ship status display (the craft from above with its shields in bands fore and aft, tinted by its hull), speed, energy, shield and hull gauges, power and system readouts, multi-function display pages and a message line.</p>
 <p><strong>Why.</strong> The pilot must always know the craft's state.</p>
 <ul>
 <li><strong>Status:</strong> implemented</li>
-<li><strong>Source:</strong> Plan items 1.9, 2.17 and 2.20; DEV-037.</li>
-<li><strong>Specified by:</strong> <a href="../../specification/requirements/cockpit-hud/#r-hud-005-radar-and-shield-rings">R-HUD-005</a>, <a href="../../specification/requirements/cockpit-hud/#r-hud-006-gauges-readouts-and-messages">R-HUD-006</a></li>
+<li><strong>Source:</strong> Plan items 1.9, 2.17, 2.20 and 6.6 (the ship status display, a user request after a playtest); DEV-037.</li>
+<li><strong>Specified by:</strong> <a href="../../specification/requirements/cockpit-hud/#r-hud-005-radar-shield-rings-and-ship-status">R-HUD-005</a>, <a href="../../specification/requirements/cockpit-hud/#r-hud-006-gauges-readouts-and-messages">R-HUD-006</a></li>
 </ul>
 <h3 id="f-hud-004-targeting-display">F-HUD-004 Targeting display<a class="headerlink" href="#f-hud-004-targeting-display" title="Permanent link">&para;</a></h3>
 <p><strong>What.</strong> Brackets on the target, a lead marker, lock indication, an off-screen arrow and a nav-point marker.</p>
@@ -6681,6 +6771,11 @@
 <td>1.11.0</td>
 <td>2026-11-11</td>
 <td>F-HUD-008 implemented (app 0.6.0)</td>
+</tr>
+<tr>
+<td>1.17.0</td>
+<td>2026-11-11</td>
+<td>F-HUD-003: the ship status display (user request; app 0.15.1)</td>
 </tr>
 </tbody>
 </table>

@@ -3843,6 +3843,8 @@
       
         
       
+        
+      
     
     
     
@@ -4201,6 +4203,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../simulator/" class="md-nav__link">
         
   
@@ -4268,6 +4298,8 @@
       
         
           
+        
+      
         
       
         
@@ -4727,6 +4759,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5245,6 +5305,8 @@
       
         
       
+        
+      
     
     
     
@@ -5647,6 +5709,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6644,6 +6734,9 @@ target/release/openinterceptor<span class="w"> </span>--no-original<span class="
 <span class="c1"># Go straight to one mission (or scenario) with one ship:</span>
 target/release/openinterceptor<span class="w"> </span>--no-original<span class="w"> </span>--mission<span class="w"> </span>defend_station<span class="w"> </span>--ship<span class="w"> </span>comet
 
+<span class="c1"># How long each playable ship needs to destroy each class (shields, armour, hull, dps):</span>
+target/release/openinterceptor<span class="w"> </span>--no-original<span class="w"> </span>--balance<span class="w"> </span>--difficulty<span class="w"> </span>captain
+
 <span class="c1"># Play a mission headless with the AI pilot and print the result:</span>
 target/release/openinterceptor<span class="w"> </span>--no-original<span class="w"> </span>--soak<span class="w"> </span>defend_station<span class="w"> </span>--soak-pilot<span class="w"> </span>ai<span class="w"> </span>--seconds<span class="w"> </span><span class="m">400</span>
 
@@ -6764,6 +6857,10 @@ scripts/check.sh
 <tr>
 <td><code>--check</code></td>
 <td>Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; <code>--campaign</code> checks one.</td>
+</tr>
+<tr>
+<td><code>--balance</code></td>
+<td>Print a balance report and exit (app 0.15.0): for every class of the campaign at the difficulty level — shield per facing, armour, hull, effective hit points against beams from one side (the three added up), and sustained beam damage per second (limited by its energy recharge) — and, for each playable ship, the <strong>seconds of perfect beam fire</strong> it needs to destroy that class. Real fights take longer (bolts miss, shields recharge); compare the ratios. Use with <code>--campaign</code> and <code>--difficulty</code>.</td>
 </tr>
 <tr>
 <td><code>--soak &lt;SCENARIO or MISSION&gt;</code></td>

@@ -3841,6 +3841,8 @@
       
         
       
+        
+      
     
     
     
@@ -4014,6 +4016,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4083,6 +4113,8 @@
       
         
           
+        
+      
         
       
         
@@ -4542,6 +4574,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5025,10 +5085,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-0103" class="md-nav__link">
+  <a href="#limits-in-app-0160" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.10.3
+        Limits in app 0.16.0
       
     </span>
   </a>
@@ -5493,6 +5553,8 @@
       
         
       
+        
+      
     
     
     
@@ -5895,6 +5957,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -7015,10 +7105,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-0103" class="md-nav__link">
+  <a href="#limits-in-app-0160" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.10.3
+        Limits in app 0.16.0
       
     </span>
   </a>
@@ -7516,6 +7606,12 @@ says so.</p>
 <td>Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2).</td>
 </tr>
 <tr>
+<td><code>protection</code></td>
+<td>number</td>
+<td>0</td>
+<td>A <code>shield</code>: shield points per facing; an <code>armor</code>: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's <code>Special</code> (shields) or <code>HitPoints</code> (armour) — <em>derived</em>. In battle a craft flies with the <strong>strongest</strong> fitted shield and the <strong>sum</strong> of its fitted armour, in place of its class's <code>shields</code> / <code>armor</code>; with none fitted it keeps the class's own (which <code>fitted:</code> on the <a href="../reference/#ships-and-objects">ship class</a> may supply).</td>
+</tr>
+<tr>
 <td><code>requires</code></td>
 <td>condition</td>
 <td>none</td>
@@ -7569,7 +7665,7 @@ says so.</p>
 <td><code>slots</code></td>
 <td>mapping kind: count</td>
 <td>none</td>
-<td>Equipment slots: <code>{beam: 2, missile: 2, special: 1}</code> (also read from the original's mount counts through inheritance).</td>
+<td>Equipment slots: <code>{beam: 2, missile: 2, shield: 1, armor: 1}</code> (also read from the original's mount counts through inheritance). <code>beam</code>, <code>missile</code>, <code>shield</code> and <code>armor</code> slots change the craft in battle; other kinds are filled but have no effect yet. The <code>interceptor</code> hulls have one <code>shield</code> and one <code>armor</code> slot (app 0.15.0, <em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>requires</code></td>
@@ -8479,11 +8575,11 @@ unknown.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="limits-in-app-0103">Limits in app 0.10.3<a class="headerlink" href="#limits-in-app-0103" title="Permanent link">&para;</a></h2>
+<h2 id="limits-in-app-0160">Limits in app 0.16.0<a class="headerlink" href="#limits-in-app-0160" title="Permanent link">&para;</a></h2>
 <ul>
 <li>No endurance or stranding on the map; no fitting rules (<code>fits</code>), power draw or stock designs —
-  fitting is <em>best available</em> only, and slots of kinds other than <code>beam</code> and <code>missile</code> are filled
-  but have no effect in battle.</li>
+  fitting is <em>best available</em> only, and slots of kinds other than <code>beam</code>, <code>missile</code> and (since app
+  0.15.0) <code>shield</code> and <code>armor</code> are filled but have no effect in battle.</li>
 <li>Mission outcome actions <code>capture</code>, <code>cargo_lost</code> and <code>cargo_captured</code> are still <strong>ignored</strong> by
   the campaign. A mission's <code>relation(faction, n)</code> moves the player's standing since app 0.12.1,
   like a story event's (<a href="../story/#actions">Story layer</a>); a stance change it causes is logged

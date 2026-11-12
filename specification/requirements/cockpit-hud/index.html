@@ -1300,10 +1300,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#r-hud-005-radar-and-shield-rings" class="md-nav__link">
+  <a href="#r-hud-005-radar-shield-rings-and-ship-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        R-HUD-005 Radar and shield rings
+        R-HUD-005 Radar, shield rings and ship status
       
     </span>
   </a>
@@ -4070,6 +4070,8 @@
       
         
       
+        
+      
     
     
     
@@ -4243,6 +4245,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4310,6 +4340,8 @@
       
         
           
+        
+      
         
       
         
@@ -4769,6 +4801,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5287,6 +5347,8 @@
       
         
       
+        
+      
     
     
     
@@ -5689,6 +5751,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6490,10 +6580,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#r-hud-005-radar-and-shield-rings" class="md-nav__link">
+  <a href="#r-hud-005-radar-shield-rings-and-ship-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        R-HUD-005 Radar and shield rings
+        R-HUD-005 Radar, shield rings and ship status
       
     </span>
   </a>
@@ -6649,7 +6739,7 @@
 <td>Implemented</td>
 </tr>
 <tr>
-<td><a href="#r-hud-005-radar-and-shield-rings">R-HUD-005 Radar and shield rings</a></td>
+<td><a href="#r-hud-005-radar-shield-rings-and-ship-status">R-HUD-005 Radar, shield rings and ship status</a></td>
 <td>Implemented</td>
 </tr>
 <tr>
@@ -6678,6 +6768,10 @@
 </tr>
 <tr>
 <td><a href="#r-hud-012-atmosphere-instruments">R-HUD-012 Atmosphere instruments</a></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><a href="#r-hud-013-wide-screen-side-bands">R-HUD-013 Wide-screen side bands</a></td>
 <td>Implemented</td>
 </tr>
 </tbody>
@@ -6723,16 +6817,21 @@
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../modding/cockpits/">Cockpits (HD and 3D)</a></li>
 </ul>
-<h3 id="r-hud-005-radar-and-shield-rings">R-HUD-005 Radar and shield rings<a class="headerlink" href="#r-hud-005-radar-and-shield-rings" title="Permanent link">&para;</a></h3>
+<h3 id="r-hud-005-radar-shield-rings-and-ship-status">R-HUD-005 Radar, shield rings and ship status<a class="headerlink" href="#r-hud-005-radar-shield-rings-and-ship-status" title="Permanent link">&para;</a></h3>
 <p>Radars MUST place contacts by angle on front and rear scopes in faction colours; the front scope MUST ring the fore shield and the rear scope the aft shield, green, amber, red, blinking when down.</p>
-<p><em>Rationale:</em> Situational awareness; shield state at a glance (DEV-037).</p>
+<p>A <strong>ship status</strong> instrument (<code>ship_status</code>) MUST show the player's craft from above, tinted by the fraction of its hull left (green when whole, through amber, to red), inside a <strong>fore arc</strong> (ahead) and an <strong>aft arc</strong> (behind). Each arc MUST have up to three bands, one lit per third of that facing's shield (a facing above two thirds lights three; a facing at or below 2 % lights none), in the same green / amber / red colours as the rings and blinking when the facing is down. A cockpit MAY place it anywhere; the glass HUD MUST show it.</p>
+<p><em>Rationale:</em> Situational awareness; shield state at a glance (DEV-037). The ship status display is a user request after a playtest (app 0.15.1): the round ship display in the X-COM cockpit art showed nothing, and the single shield needle summed both facings. Its look follows the shield display of <em>X-Wing</em>.</p>
 <ul>
 <li>Implements: <a href="../../../definition/cockpit-hud/#f-hud-003-flight-instruments">F-HUD-003</a></li>
-<li>Status: implemented</li>
-<li>Verified by: <code>hud::radar_places_contacts_by_angle</code>, <code>hud::draw::shield_rings_go_green_amber_red_then_blink</code>; MT-1-35, MT-2-28, MT-2-30</li>
+<li>Status: implemented (ship status: app 0.15.1, main <code>bf963b4</code>)</li>
+<li>Verified by: <code>hud::radar_places_contacts_by_angle</code>, <code>hud::draw::shield_rings_go_green_amber_red_then_blink</code>, <code>hud::draw::tests::ship_status_bands_follow_thirds_of_the_shield</code>; MT-1-35, MT-2-28, MT-2-30, MT-6-17, MT-6-18</li>
 <li>Reverse-engineered: yes</li>
-<li>See: <a href="../../../implementation/architecture/hud/">Cockpit and HUD</a></li>
+<li>See: <a href="../../../implementation/architecture/hud/">Cockpit and HUD</a>, <a href="../../../modding/cockpits/#the-ship-status-display">Cockpits › The ship status display</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.15.1)</p>
+<p><code>hud::draw::draw_ship_status</code>: the arcs are 140° wide, centred ahead and behind; <code>shield_bands(fraction)</code> gives the lit bands and <code>hull_color(fraction)</code> the craft's tint. The <code>default</code> campaign's 3D cockpit and the glass HUD place <code>ship_status</code> where gauge 3 (the summed shield needle) was. The <code>interceptor</code> cockpits A, B and C place it in their art's round display; the rectangles were set by eye (<em>derived</em>), and the layout editor (F12) adjusts them. Gauge 3 remains an instrument a cockpit may still place.</p>
+</div>
 <h3 id="r-hud-006-gauges-readouts-and-messages">R-HUD-006 Gauges, readouts and messages<a class="headerlink" href="#r-hud-006-gauges-readouts-and-messages" title="Permanent link">&para;</a></h3>
 <p>The HUD MUST show speed, energy, shield and hull gauges, the power settings and system lamps, MFD pages (including Systems) that cycle, and a message line that expires and keeps the newest. Text MUST be fitted to its instrument. Cockpits that do not place the power or systems instruments MUST get fallback panels.</p>
 <p><em>Rationale:</em> The pilot must always know the craft's state.</p>
@@ -6858,6 +6957,11 @@
 <td>1.11.0</td>
 <td>2026-11-11</td>
 <td>R-HUD-012 atmosphere instruments rewritten as built and implemented (app 0.6.0): <code>ALT n  VS ±n</code> on the status line, the artificial horizon with a pitch ladder at ±10° and ±20°</td>
+</tr>
+<tr>
+<td>1.17.0</td>
+<td>2026-11-11</td>
+<td>R-HUD-005 extended (user request): the ship status display — the craft from above tinted by hull, fore and aft arcs of up to three shield bands (app 0.15.1); renamed <em>Radar, shield rings and ship status</em>. R-HUD-013 added to the summary table</td>
 </tr>
 </tbody>
 </table>

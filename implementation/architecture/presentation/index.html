@@ -3464,6 +3464,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#widgets-and-screen-layouts-appwidgets-contentscreens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widgets and screen layouts (app::widgets, content::screens)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4019,6 +4030,8 @@
       
         
       
+        
+      
     
     
     
@@ -4192,6 +4205,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4259,6 +4300,8 @@
       
         
           
+        
+      
         
       
         
@@ -4718,6 +4761,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5236,6 +5307,8 @@
       
         
       
+        
+      
     
     
     
@@ -5638,6 +5711,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6450,6 +6551,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#widgets-and-screen-layouts-appwidgets-contentscreens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widgets and screen layouts (app::widgets, content::screens)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6531,7 +6643,8 @@
 in <code>src/content/skin.rs</code>, <code>src/content/cutscene.rs</code> and the voice sets of <code>src/content/rules.rs</code>.
 Plan: Stage 6.1 (skins, app 0.11.1), 6.8 (title cards), 6.3 (videos, app 0.12.0), MD2
 (cutscenes, app 0.13.0), 6.6 (the comms panel, app 0.13.1) and 6.2 (the main menu and credits,
-<code>src/app/menu.rs</code>, <code>src/app/credits.rs</code>, <code>src/content/front.rs</code>, app 0.14.0). Music is on
+<code>src/app/menu.rs</code>, <code>src/app/credits.rs</code>, <code>src/content/front.rs</code>, app 0.14.0), and the widgets
+and screen layouts (<code>src/app/widgets.rs</code>, <code>src/content/screens.rs</code>, app 0.16.0). Music is on
 <a href="../audio/#music-app-0110">Audio</a>; the Smacker decoder on <a href="../formats/#smacker-formatssmacker">Formats</a>.</p>
 <p>These are application-layer screens and helpers: they read <code>Content</code> and draw with macroquad,
 and the cutscene player drives a <code>sim::World</code> the same way a flight session does. Nothing in
@@ -6676,6 +6789,85 @@ still picture; no face, or a failure (printed once), is the signal graphic. <cod
 — a pulse moving across the bars — is pure and tested with <code>showing_for</code> in
 <code>app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves</code>. The name is the set's <code>name</code>
 (else its id) in capitals, or <em>COMMS</em> for a clip with no speaker.</p>
+<h3 id="widgets-and-screen-layouts-appwidgets-contentscreens">Widgets and screen layouts (<code>app::widgets</code>, <code>content::screens</code>)<a class="headerlink" href="#widgets-and-screen-layouts-appwidgets-contentscreens" title="Permanent link">&para;</a></h3>
+<p><em>App 0.16.0, main <code>ac7ae62</code>.</em> The strategy screen is built from <strong>immediate-mode</strong> widgets: a
+screen calls <code>widgets::button(ui, input, rect, label, enabled)</code> every frame with where the
+button is and what it says, and the call draws it and returns whether it was clicked this frame.
+No widget objects live between frames, so there is nothing to keep in step with the campaign's
+own state: the rows, labels and enabled flags are recomputed from the campaign each frame. The
+little state that must persist — a list's scroll position and selected row — is a plain
+<code>ListView</code> the screen owns. (<a href="../../../learning/rust/immediate-mode-ui/">Learn Rust › Immediate-mode UI</a>
+explains the pattern and why it suits Rust's borrowing rules.)</p>
+<table>
+<thead>
+<tr>
+<th>Widget</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Input::read()</code></td>
+<td>The frame's mouse position, left click, wheel, Enter and Esc, read once and passed to every widget — so a prompt can hand the screen beneath an empty <code>Input::default()</code> and the screen takes no input.</td>
+</tr>
+<tr>
+<td><code>button</code>, <code>button_row</code>, <code>grid</code></td>
+<td>A button in the skin's colours (filled with <code>panel</code>, <code>highlight</code> under the mouse, outlined in <code>border</code>, centred text, <code>dim</code> when disabled); a row of buttons of one width; equal cells for a grid of buttons.</td>
+</tr>
+<tr>
+<td><code>ListView {first, selected}</code>, <code>fit</code>, <code>scroll</code>, <code>step</code></td>
+<td>A list's scroll and selection: <code>step</code> moves the selection and scrolls just enough to keep it in view; <code>scroll</code> moves the view and clamps it to the last screenful; <code>fit</code> pulls both in when the list shrinks.</td>
+</tr>
+<tr>
+<td><code>wrap(text, width, measure)</code></td>
+<td>Word wrapping by a measuring function (a giant word is cut; newlines kept).</td>
+</tr>
+<tr>
+<td><code>modal(ui, input, title, body, buttons)</code></td>
+<td>A prompt over a dimmed screen: title, wrapped body, a row of buttons; Enter picks the first, Esc the last.</td>
+</tr>
+</tbody>
+</table>
+<p><code>wrap</code>, <code>ListView</code>, <code>grid</code> and <code>contains</code> are pure and tested
+(<code>text_wraps_between_words_and_cuts_only_giant_words</code>, <code>lists_keep_the_selection_in_view</code>,
+<code>grids_and_hits</code>), with a fake 10-pixels-a-character measure so no font or window is needed.</p>
+<p><strong>Screen layouts.</strong> <code>content::screens::ScreenLayout {id, design, background, widgets, pack}</code> is
+<code>screens.&lt;id&gt;</code> from the rules. <code>rules::build_at</code> starts from the engine's <code>default_starmap()</code>
+(1280 × 720: <code>top</code>, <code>map</code>, <code>nav</code>, <code>info</code>, <code>panel</code>) and lets each pack's entry override only the
+widgets it names (<code>ScreenLayout::parse</code>, which rejects names outside <code>STARMAP_WIDGETS</code>;
+tested by <code>a_layout_moves_only_what_it_names</code>). <code>Ruleset::screens</code> always holds a <code>starmap</code>.</p>
+<p><strong>One frame of the strategy screen</strong> (<code>StrategyScreen::frame</code>):</p>
+<pre class="mermaid"><code>flowchart TD
+    A["Input::read()"] --&gt; B["layout = rules.screens['starmap']&lt;br/&gt;sx = window w / design w, sy = window h / design h&lt;br/&gt;k = min(sx, sy), at least 0.5"]
+    B --&gt; C["draw_map(map rect, zoom, pan)&lt;br/&gt;lanes, systems, contacts, convoys, craft,&lt;br/&gt;selection, hover label, legend"]
+    C --&gt; P{"a prompt is up?&lt;br/&gt;card, battle, ending, choice,&lt;br/&gt;offer, convoy, banner"}
+    P -- yes --&gt; Q["the widgets get Input::default()&lt;br/&gt;(no clicks reach them)"]
+    P -- no --&gt; R["the widgets get this frame's Input"]
+    Q --&gt; W["draw_top · draw_nav · draw_info · draw_panel&lt;br/&gt;each returns an Act or a Next when clicked"]
+    R --&gt; W
+    W --&gt; X["act(Act) → a Campaign order&lt;br/&gt;flash the answer"]
+    X --&gt; Y{"prompt?"}
+    Y -- yes --&gt; Z["prompts(): widgets::modal → choose,&lt;br/&gt;fly (Next::CampaignBattle), leave"]
+    Y -- no --&gt; M["map input: wheel zoom about the cursor,&lt;br/&gt;right/middle drag pan, click → pick()"]
+    M --&gt; K["keys(): Space, 1–4, Tab, Up/Down, Enter,&lt;br/&gt;Left/Right, F5, Esc, cheats"]
+    K --&gt; T["advance the clock (SPEEDS[speed]);&lt;br/&gt;events → prompts, Next::Video / Cutscene"]</code></pre>
+<ul>
+<li><strong>Stretch, not fit.</strong> A cockpit keeps its proportions and is centred (<code>hud::Layout</code>); a screen
+  scales x and y separately (<code>sx</code>, <code>sy</code>) so its panels reach the window's edges, and sizes text
+  and button heights by <code>k</code>.</li>
+<li><strong>Map transform.</strong> <code>map_transform</code> fits the systems into the map rectangle (tested by
+  <code>the_map_fits_its_rectangle_centred</code>); <code>map_view</code> applies the zoom about the rectangle's centre
+  and the pan in map units. Zooming about the cursor keeps the map point under the cursor fixed:
+  the pan is corrected by the difference between that point before and after the zoom.
+  Zoom is clamped to ×0.5 – ×12.</li>
+<li><strong>Picking.</strong> <code>pick(point, scale, origin, reach)</code> returns the nearest system, detected contact,
+  convoy, survey ship or craft in flight within <code>reach</code> pixels (22 for a click, 18 for the hover
+  label); moving things are favoured by 4 pixels because they are smaller targets.</li>
+<li><strong>Rows carry their actions.</strong> A list row is <code>Row {text, acts: Vec&lt;(&amp;'static str, Act)&gt;}</code>; the
+  first action is the default (Enter, a double click within 0.4 s), and all of them are the
+  buttons under the selected row. The info panel builds its own <code>(label, Act)</code> list for the
+  selection (<code>info()</code>), at most four buttons.</li>
+</ul>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -6795,6 +6987,21 @@ play without it.</p>
 <td>The skin and the music player, shared by every screen.</td>
 </tr>
 <tr>
+<td><code>widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}</code></td>
+<td><code>app::widgets</code></td>
+<td>Immediate-mode widgets for the strategy screen (app 0.16.0); the arithmetic pure and tested.</td>
+</tr>
+<tr>
+<td><code>ScreenLayout</code>, <code>default_starmap</code>, <code>STARMAP_WIDGETS</code>, <code>screens::schema</code></td>
+<td><code>content::screens</code></td>
+<td><code>screens.&lt;id&gt;</code>: design space, background, widget rectangles; the engine's strategy-screen layout.</td>
+</tr>
+<tr>
+<td><code>menu::fit_size(width, size, room)</code></td>
+<td><code>app::menu</code></td>
+<td>The text size that fits a menu option value beside its label, never below half (app 0.14.2).</td>
+</tr>
+<tr>
 <td><code>MainMenu</code>, <code>menu::Item</code>, <code>menu::Setting</code>, <code>menu::items</code>, <code>menu::settings</code>, <code>menu::step_volume</code></td>
 <td><code>app::menu</code></td>
 <td>The main menu (app 0.14.0) and its pure row logic.</td>
@@ -6832,6 +7039,10 @@ play without it.</p>
   <code>catmull_rom(&amp;[(f32, Vec3)], t) -&gt; Vec3</code>, <code>path_rotation(&amp;[(f32, Vec3)], t) -&gt; Quat</code>, <code>scalar(&amp;[(f32, f32)], t) -&gt; f32</code>.</li>
 <li><code>Comms::speak(&amp;Content, &amp;Ruleset, speaker, length, now)</code>, <code>comms.draw(&amp;Ruleset, now)</code>, <code>comms.clear()</code>;
   <code>showing_for(Option&lt;f32&gt;) -&gt; f32</code>, <code>signal_bars(n, t) -&gt; Vec&lt;f32&gt;</code>.</li>
+<li><code>widgets::button(&amp;Ui, &amp;Input, Rect4, label, enabled) -&gt; bool</code>, <code>widgets::button_row(&amp;Ui, &amp;Input, Rect4, &amp;[(&amp;str, bool)], w, gap) -&gt; Option&lt;usize&gt;</code>,
+  <code>widgets::grid(Rect4, n, cols, gap) -&gt; Vec&lt;Rect4&gt;</code>, <code>widgets::modal(&amp;Ui, &amp;Input, title, body, &amp;[&amp;str]) -&gt; Option&lt;usize&gt;</code>,
+  <code>widgets::wrap(text, width, &amp;dyn Fn(&amp;str) -&gt; f32) -&gt; Vec&lt;String&gt;</code>; <code>ListView::step(by, n, visible)</code>, <code>scroll(rows, n, visible)</code>, <code>fit(n, visible)</code>.</li>
+<li><code>ScreenLayout::parse(id, Get, base, known, pack) -&gt; Result&lt;ScreenLayout, String&gt;</code>, <code>layout.widget(name) -&gt; Option&lt;[f32; 4]&gt;</code>, <code>screens::default_starmap()</code>.</li>
 <li><code>Skin::parse(id, Get, pack) -&gt; Result&lt;Skin, String&gt;</code>, <code>Skin::fallback()</code>, <code>skin.colour(role) -&gt; [f32; 4]</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -6851,6 +7062,11 @@ play without it.</p>
   no <code>speaker</code> and its clip is not one of a set's lines.</li>
 <li>A video pack path not found: <code>open</code> looks in every active pack (latest first, app 0.14.1); the
   error names the first pack's path.</li>
+<li>A strategy screen whose panels overlap or leave gaps: a pack's <code>screens.starmap</code> changed
+  <code>design</code> without restating every widget (the rest keep the engine's 1280 × 720 numbers, read in
+  the new space). <code>--check</code> lists the layout errors; there is no on-screen layout editor yet.</li>
+<li>A button that does not respond: a prompt is up (the screen beneath gets an empty <code>Input</code>), or
+  the button is outside its widget's rectangle on a very small window.</li>
 </ul>
 
 

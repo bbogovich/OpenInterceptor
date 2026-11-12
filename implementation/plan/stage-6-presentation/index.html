@@ -3914,6 +3914,8 @@
       
         
       
+        
+      
     
     
     
@@ -4087,6 +4089,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4154,6 +4184,8 @@
       
         
           
+        
+      
         
       
         
@@ -4613,6 +4645,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5131,6 +5191,8 @@
       
         
       
+        
+      
     
     
     
@@ -5533,6 +5595,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6317,7 +6407,7 @@
 
 
 <h1 id="stage-6-presentation">Stage 6 — Presentation<a class="headerlink" href="#stage-6-presentation" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.7.0. Status: in progress</strong> — app 0.11.0 – 0.14.0 (main <code>1f183d1</code> … <code>a18a7b4</code>): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
+<p><strong>Version 0.7.0. Status: in progress</strong> — app 0.11.0 – 0.16.0 (main <code>1f183d1</code> … <code>ac7ae62</code>): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
 Progress: <a href="../../status/#stage-6-progress">Implementation status › Stage 6</a>.</p>
 <p>Design: <a href="../../../specification/design/format-interface/">interface, text and media</a>.</p>
 <h2 id="work-items">Work items<a class="headerlink" href="#work-items" title="Permanent link">&para;</a></h2>
@@ -6335,7 +6425,7 @@ Progress: <a href="../../status/#stage-6-progress">Implementation status › Sta
 <td>6.1</td>
 <td>Screen layouts and skins: design spaces, nine-slice panels, buttons, fonts, custom panels bound to queries</td>
 <td><code>app::ui</code></td>
-<td><strong>Partial</strong> (0.11.1): skins (colours, nine-slice panel, font) on the launcher and strategy screen; no layouts, buttons, custom panels. #48</td>
+<td><strong>Partial</strong> (0.11.1, 0.14.2, 0.16.0): skins (colours, nine-slice panel, font) on the launcher and strategy screen; long menu option values shrink to fit (<code>menu::fit_size</code>, 0.14.2); <strong>screen layouts</strong> as data for the strategy screen (<code>screens.starmap</code>: design space, five widgets, stretched to the window) and immediate-mode <strong>buttons, lists and modal prompts</strong> (<code>app::widgets</code>) (0.16.0, <code>ac7ae62</code>). Open: layouts for the other screens, drawing <code>background</code>, custom panels bound to queries, skin sounds. #48</td>
 </tr>
 <tr>
 <td>6.2</td>
@@ -6365,7 +6455,7 @@ Progress: <a href="../../status/#stage-6-progress">Implementation status › Sta
 <td>6.6</td>
 <td>Cockpit additions: comms panel, custom instruments</td>
 <td><code>hud</code></td>
-<td><strong>Partial</strong> (0.13.1): the comms panel (<code>app::comms</code>) with voices' <code>name</code>/<code>face</code> and chatter <code>speaker</code>; MPSRC packs read (<code>mfdanim.mps</code>); no custom instruments; X-COM faces unmapped. #52</td>
+<td><strong>Partial</strong> (0.13.1, 0.15.1): the comms panel (<code>app::comms</code>) with voices' <code>name</code>/<code>face</code> and chatter <code>speaker</code>; MPSRC packs read (<code>mfdanim.mps</code>); the <strong>ship status display</strong> (<code>ship_status</code>: the craft from above tinted by hull, fore and aft arcs of three shield bands — a user request, R-HUD-005; 0.15.1, <code>bf963b4</code>), in X-COM cockpits A – C (placed by eye) and in place of gauge 3 in the default cockpit and glass HUD. Open: custom instruments bound to queries; X-COM faces unmapped. #52</td>
 </tr>
 <tr>
 <td>6.7</td>

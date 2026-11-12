@@ -3936,6 +3936,8 @@
       
         
       
+        
+      
     
     
     
@@ -4109,6 +4111,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4176,6 +4206,8 @@
       
         
           
+        
+      
         
       
         
@@ -4635,6 +4667,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5153,6 +5213,8 @@
       
         
       
+        
+      
     
     
     
@@ -5555,6 +5617,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6366,10 +6456,11 @@
 <code>hud/layout.rs</code> holds the pure maths of 3D-cockpit anchors and the cockpit layout editor.
 Plan: Stage 1; Stage 2 added the <code>power</code> and <code>systems</code> instruments, status flags, the MFD
 Systems page, text fitted to each instrument, instruments <strong>anchored in perspective</strong> on a 3D
-cockpit and the <strong>layout editor</strong> (F12).</p>
+cockpit and the <strong>layout editor</strong> (F12). Stage 6.6 added the <strong>ship status display</strong>
+(<code>ship_status</code>, app 0.15.1).</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
-    W["World + player ShipId"] --&gt; L["pure logic&lt;br/&gt;radar_point, gauge_values, gauge_angle,&lt;br/&gt;mfd_lines, MessageLog::visible,&lt;br/&gt;power_readout, system_lamps, status_flags"]
+    W["World + player ShipId"] --&gt; L["pure logic&lt;br/&gt;radar_point, gauge_values, gauge_angle,&lt;br/&gt;mfd_lines, MessageLog::visible,&lt;br/&gt;power_readout, system_lamps, status_flags,&lt;br/&gt;draw::shield_bands, draw::hull_color"]
     CK["CockpitDef.instruments + design&lt;br/&gt;(or default_instruments, 640×480)"] --&gt; LY["Layout::new(screen, design)&lt;br/&gt;design space → pixels"]
     L --&gt; D["draw::draw_targeting&lt;br/&gt;draw::draw_cockpit&lt;br/&gt;draw::draw_instruments&lt;br/&gt;(skips anchored ones)"]
     LY --&gt; D
@@ -6421,6 +6512,10 @@ instrument aligned without changing a rule.</p>
 <tr>
 <td><code>gauge1</code>–<code>gauge4</code></td>
 <td>Needles for speed, energy, shields, hull (red below 25 %).</td>
+</tr>
+<tr>
+<td><code>ship_status</code></td>
+<td>The player's craft from above, tinted by <code>hull_color(hull / class hull)</code> (green → amber → red), inside a fore arc (centred ahead) and an aft arc (behind), each 140° wide with three bands; <code>shield_bands(fraction)</code> lights one band per third of that facing (none at or below 2 %), coloured by <code>shield_ring_color</code> (blinking when down), from <code>power_readout</code>'s <code>fore</code> / <code>aft</code> fractions. The silhouette is three triangles (fuselage, wings, tail) — one generic shape, not the class's model. On the glass HUD it gets a ring outline. App 0.15.1; replaces gauge 3 in the glass layout and the default cockpit.</td>
 </tr>
 <tr>
 <td><code>message</code></td>
@@ -6527,7 +6622,11 @@ diamond.</p>
 </tr>
 <tr>
 <td><code>draw::INSTRUMENTS</code></td>
-<td>The ten instrument names, in the editor's Tab order.</td>
+<td>The twelve instrument names (<code>ship_status</code> since app 0.15.1), in the editor's Tab order.</td>
+</tr>
+<tr>
+<td><code>draw::shield_bands(fraction) -&gt; usize</code>, <code>draw::hull_color(fraction) -&gt; Color</code></td>
+<td>The ship status display's pure parts: lit bands (0 – 3) for a shield fraction; the hull tint. Tested by <code>ship_status_bands_follow_thirds_of_the_shield</code>.</td>
 </tr>
 <tr>
 <td><code>layout::anchor_corners</code>, <code>anchor_point</code></td>
@@ -6576,6 +6675,10 @@ diamond.</p>
   space (640×480 unless <code>Design</code> says otherwise), not in the image's pixels.</li>
 <li>The original cockpits' cyan colour key becomes transparent black on load; a cyan halo means
   the key was not applied (<code>load_image(.., colour_key = true)</code>).</li>
+<li>The ship status display shows three dim bands and a green craft at the start of a battle in a
+  class with no shields: <code>power_readout</code> gives a zero fraction, which lights no band (by design).
+  On X-COM art it may sit beside the round display: the rectangles were placed by eye; move them
+  with F12 and save.</li>
 </ul>
 
 

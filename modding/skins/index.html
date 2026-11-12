@@ -14,7 +14,7 @@
         <link rel="prev" href="../music/">
       
       
-        <link rel="next" href="../cutscenes/">
+        <link rel="next" href="../screens/">
       
       
         
@@ -3841,6 +3841,8 @@
       
         
       
+        
+      
     
     
     
@@ -4014,6 +4016,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4083,6 +4113,8 @@
       
         
           
+        
+      
         
       
         
@@ -4708,6 +4740,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cutscenes/" class="md-nav__link">
         
   
@@ -5206,6 +5266,8 @@
       
         
       
+        
+      
     
     
     
@@ -5608,6 +5670,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6495,13 +6585,18 @@ through it: <a href="../../implementation/architecture/presentation/#skins-appui
 </tr>
 <tr>
 <td>Strategy screen</td>
-<td>Background, the map frame and the tab panel (nine-slice panels), tabs, rows and the selection bar, the top line, the banner, <strong>title cards</strong>.</td>
+<td>Background, the top bar, the map frame, the info panel and the list panel (nine-slice panels), buttons, rows and the selection bar, the legend and hover label, the modal prompts and <strong>title cards</strong>.</td>
 </tr>
 </tbody>
 </table>
+<p>Since app 0.16.0 the strategy screen's buttons, lists, info panel and prompts are drawn in the
+skin too: prompts and panels use the nine-slice frame; buttons are filled with the <code>panel</code>
+colour (<code>highlight</code> under the mouse) and outlined in <code>border</code>; the selected row is <code>highlight</code>,
+the current list and clock speed are outlined in <code>accent</code>. <strong>Where</strong> the strategy screen's parts go is a separate
+section, the screen layout (<a href="../screens/">Screen layouts</a>).</p>
 <p>Not skinned yet: the cockpit and HUD (cockpits have their own art), the viewer, the asset
-browser, the controls menu and the simulator setup. The design's screen layouts (design spaces,
-buttons, custom panels) are not built (<a href="#not-built-yet">below</a>).</p>
+browser, the controls menu and the simulator setup. Custom panels bound to queries are not built
+(<a href="#not-built-yet">below</a>).</p>
 <h2 id="the-colours">The colours<a class="headerlink" href="#the-colours" title="Permanent link">&para;</a></h2>
 <p>Each colour is <code>[r, g, b]</code> or <code>[r, g, b, a]</code>, every number 0 to 1. A colour left out keeps the
 plain look's value.</p>
@@ -6628,12 +6723,14 @@ Both are set under <code>campaign:</code>:</p>
 font whose licence allows redistribution with your pack. A font or panel image that fails to
 load is reported on standard error (<code>skin &lt;id&gt;: font: …</code>, <code>skin &lt;id&gt;: panel: …</code>) and left out:
 the screens still draw, with colours and the built-in font.</p>
-<p>Note that the strategy screen fits its rows by a character count tuned for the built-in font;
-a much wider font may cut long rows short.</p>
+<p>The strategy screen clips each list row to its width by measuring it in the skin's font (app
+0.16.0) and shows the selected row in full beneath the list, so a wide font costs only room.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Screen layouts as data (<code>screens:</code> with design spaces, widgets, backgrounds and custom panels
-  bound to queries), buttons with hover images, skin sounds, several fonts per skin.</li>
+<li>Custom panels bound to queries, buttons with hover images, skin sounds, several fonts per
+  skin. Screen layouts are built for the strategy screen only (<a href="../screens/">Screen layouts</a>).</li>
+<li>Main menu option values too long for their room are drawn smaller (down to half size, app
+  0.14.2), not wrapped.</li>
 <li>A load/save screen (one save per campaign, through <em>Continue</em>); a graphics options page.</li>
 <li>The <code>interceptor</code> wrapper screens at 640 × 480 (6.7).</li>
 </ul>

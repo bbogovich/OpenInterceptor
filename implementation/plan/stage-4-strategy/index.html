@@ -3914,6 +3914,8 @@
       
         
       
+        
+      
     
     
     
@@ -4087,6 +4089,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4154,6 +4184,8 @@
       
         
           
+        
+      
         
       
         
@@ -4613,6 +4645,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5131,6 +5191,8 @@
       
         
       
+        
+      
     
     
     
@@ -5533,6 +5595,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6317,7 +6407,7 @@
 
 
 <h1 id="stage-4-strategy-layer">Stage 4 — Strategy layer<a class="headerlink" href="#stage-4-strategy-layer" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>); playtest changes in <strong>0.9.1</strong> (<code>3b19dea</code>) and flown supply-convoy battles in <strong>0.9.2</strong> (<code>0d1c522</code>, <code>146195b</code>). The real-time strategy game around the battles: the
+<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>); playtest changes in <strong>0.9.1</strong> (<code>3b19dea</code>) and flown supply-convoy battles in <strong>0.9.2</strong> (<code>0d1c522</code>, <code>146195b</code>); fitted shields and armour and <code>--balance</code> in <strong>0.15.0</strong> (<code>1ff754b</code>); the strategy screen rebuilt for the mouse in <strong>0.16.0</strong> (<code>ac7ae62</code>). The real-time strategy game around the battles: the
 interactive star map, bases, research, the economy, ships and loadouts, pilots — with
 functional screens and saves. Story and the rival's planning come in Stage 5.</p>
 <p>Design: <a href="../../../specification/design/format-strategy/">strategy layer</a>, <a href="../../../specification/design/format-interface/">interface</a>.</p>
@@ -6372,7 +6462,7 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.7</td>
 <td>Ships and equipment: hulls, items, slots and fitting rules, power draw, stock designs, purchase and manufacture of craft</td>
 <td><code>campaign</code></td>
-<td><strong>Partial</strong> (0.7.0, 0.7.2): hulls and items as data; craft bought or manufactured; <strong>fitting</strong> best-available from the store, flown in campaign battles (<code>rounds:</code>). Open: choosing a fit, fitting rules, power draw, stock designs. #27.</td>
+<td><strong>Partial</strong> (0.7.0, 0.7.2, 0.15.0): hulls and items as data; craft bought or manufactured; <strong>fitting</strong> best-available from the store, flown in campaign battles (<code>rounds:</code>); <strong>shields and armour</strong> fitted and flown (item <code>protection</code>, the <code>Loadout</code> struct, <code>fitted:</code> on ship classes reading the original's equipment, one shield and one armour slot on the X-COM hulls — 0.15.0, <code>1ff754b</code>). Open: choosing a fit slot by slot, fitting rules (<code>fits</code>), power draw, stock designs. #27.</td>
 </tr>
 <tr>
 <td>4.8</td>
@@ -6390,7 +6480,7 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.10</td>
 <td>Screens (functional, plain skin): star map, bases with the 3D base view, research, hangar, market, pilots, reports, messages, briefing/debriefing; battle hand-off and return</td>
 <td><code>app::strategy</code> (new)</td>
-<td><strong>Partial</strong> (0.7.1, 0.9.0): one functional screen — map, nine tabs (the <strong>Supply</strong> tab and facility, convoy and survey markers in 0.9.0), clock, banners, battle hand-off and return; launcher entries and <code>--strategy</code>. Open: the 3D base view, reports, briefing, encyclopaedia; themed look (Stage 6). #30.</td>
+<td><strong>Partial</strong> (0.7.1, 0.9.0, 0.16.0): one functional screen — map, ten lists (the <strong>Supply</strong> list and facility, convoy and survey markers in 0.9.0), clock, battle hand-off and return; launcher entries and <code>--strategy</code>. <strong>Rebuilt for the mouse in 0.16.0</strong> (<code>ac7ae62</code>): a top bar with buttons, a map that zooms, pans and picks, an info panel with action buttons, scrolling lists with per-row buttons, modal prompts; layout as pack data (<code>screens.starmap</code>, 6.1). Open: the 3D base view, a report screen, briefing, the encyclopaedia as a screen, a supply-traffic view, screens per list. #30.</td>
 </tr>
 <tr>
 <td>4.11</td>

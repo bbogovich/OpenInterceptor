@@ -4119,6 +4119,8 @@
       
         
       
+        
+      
     
     
     
@@ -4292,6 +4294,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4359,6 +4389,8 @@
       
         
           
+        
+      
         
       
         
@@ -4818,6 +4850,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5336,6 +5396,8 @@
       
         
       
+        
+      
     
     
     
@@ -5738,6 +5800,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6743,7 +6833,7 @@ rendering, no input. It reads the content layer (<code>StrategyDef</code>) and t
 <code>script::Context</code>), and the application layer drives it.</p>
 <pre class="mermaid"><code>flowchart TB
     subgraph APP["7 · Application"]
-        ST["app::strategy::StrategyScreen&lt;br/&gt;map, tabs, clock, banners"]
+        ST["app::strategy::StrategyScreen&lt;br/&gt;top bar, map, info, lists, prompts"]
         FL["app::flight::FlightSession&lt;br/&gt;(campaign_battle)"]
         AM["app::run&lt;br/&gt;Screen, Next, AppContext"]
     end
@@ -6909,7 +6999,17 @@ last base lost) can end the campaign.</p>
   which every other screen also reads. The battle's <code>World</code> holds the rules as an <code>Arc&lt;Ruleset&gt;</code>,
   so <code>Arc::make_mut</code> gives the battle <strong>its own copy</strong> the first time it is changed
   (copy-on-write) and the shared content stays untouched. Ids that are not weapons of the
-  campaign are skipped; with no beams fitted the class's own are kept.</li>
+  campaign are skipped; with no beams fitted the class's own are kept. Since app 0.15.0 the
+  loadout is a <code>campaign::Loadout</code> struct — <code>beams</code>, <code>missiles</code>, and <code>shields</code> / <code>armor</code> as
+  <code>Option&lt;f32&gt;</code>: the strongest fitted <code>shield</code> item's <code>protection</code> and the sum of the fitted
+  <code>armor</code> items' (<code>None</code>: keep the class's own). <code>apply_loadout(world, player, &amp;Loadout)</code> writes
+  them into the battle's copy of the class and fills the player's facings and armour.
+  An item's protection is <code>content::strategy::protection_of(kind, Get)</code>: its <code>protection:</code> key,
+  else, for an item inheriting the original's equipment, <code>Special</code> (shield) or <code>HitPoints</code>
+  (armour) — <em>derived</em>. The same function serves <code>fitted:</code> on ship classes, applied while the
+  rules are resolved (<code>rules::apply_fitted</code>, on each definition once its <code>inherit:</code> chain is
+  merged; a <code>shields</code> / <code>armor</code> already present, own or inherited, wins), so a class names its
+  default equipment instead of copying numbers (<a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items</a>).</li>
 <li><strong>The stances</strong> (app 0.10.3). With dynamic relations, <code>StrategyScreen::stances</code> lists every
   faction with a standing as <code>(faction, hostile)</code> — hostile when its stance is <code>hostile</code>.
   <code>flight::apply_stances</code> calls <code>Ruleset::set_hostile(player_faction, faction, hostile)</code> for
@@ -7251,7 +7351,12 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <tr>
 <td><code>flight::apply_loadout</code></td>
 <td><code>app/flight.rs</code></td>
-<td>Refits the player's class in the battle's own copy of the rules.</td>
+<td>Refits the player's class in the battle's own copy of the rules (beams, missiles, and since 0.15.0 shields and armour).</td>
+</tr>
+<tr>
+<td><code>Loadout</code>, <code>content::strategy::protection_of</code></td>
+<td><code>campaign/mod.rs</code>, <code>content/strategy.rs</code></td>
+<td>A craft's battle fit (0.15.0); an item's protection.</td>
 </tr>
 <tr>
 <td><code>MONTH</code></td>

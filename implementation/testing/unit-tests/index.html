@@ -3925,6 +3925,8 @@
       
         
       
+        
+      
     
     
     
@@ -4098,6 +4100,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4165,6 +4195,8 @@
       
         
           
+        
+      
         
       
         
@@ -4624,6 +4656,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5142,6 +5202,8 @@
       
         
       
+        
+      
     
     
     
@@ -5544,6 +5606,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6345,6 +6435,22 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>ac7ae62</code> (app 0.16.0)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
+build) gives <strong>394</strong> run on macOS (397 less the Linux-only test and two ignored helpers). The 9
+added since <code>16a9954</code>: app <strong>0.15.0</strong> (<code>1ff754b</code>)
+<code>balance::tests::energy_limits_sustained_fire_and_kill_times_follow</code> (and
+<code>app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only</code> now checks
+fitted shields and armour); main <code>bb04952</code> (#6, app 0.15.1)
+<code>input::tests::every_action_has_a_one_sentence_description</code>,
+<code>remote::protocol::tests::the_idle_catalogue_lists_every_action_with_its_description_and_all_available</code>,
+<code>app::flight::tests::the_keys_help_shows_descriptions_only_when_the_columns_are_wide_enough</code>;
+app <strong>0.15.1</strong> (<code>bf963b4</code>) <code>hud::draw::tests::ship_status_bands_follow_thirds_of_the_shield</code>;
+app <strong>0.16.0</strong> (<code>ac7ae62</code>) <code>app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words</code>,
+<code>lists_keep_the_selection_in_view</code>, <code>grids_and_hits</code>,
+<code>content::screens::tests::a_layout_moves_only_what_it_names</code>. App 0.14.2 (<code>dcf9563</code>) added none.
+<strong>Not unit-tested:</strong> <code>menu::fit_size</code>, <code>fitted:</code> on ship classes, <code>strategy::protection_of</code>, the
+<code>HP1</code> – <code>HP4</code> hull sum, and the strategy screen's own logic (picking, zoom about the cursor,
+the info panel's actions) — covered by manual tests MT-4-29 – MT-4-37 and MT-6-19.</p>
 <p><strong>At main <code>16a9954</code> (app 0.14.1)</strong> the count is <strong>385</strong> run on macOS: added
 <code>sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage</code> (a cutscene's <code>harmless</code> ship's
 bolts land but change neither shields, armour nor hull).</p>
@@ -6660,6 +6766,16 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <td>The map fits its rectangle, centred; money has thousands separators</td>
 </tr>
 <tr>
+<td><code>app::widgets</code></td>
+<td>3</td>
+<td>Word wrapping between words (a giant word cut, newlines kept); <strong>lists keep the selection in view</strong> (step, scroll to the last screenful, a shrinking list pulls the selection in, an empty list does nothing); grid cells and hit tests (the far edge is outside) — app 0.16.0</td>
+</tr>
+<tr>
+<td><code>content::screens</code></td>
+<td>1</td>
+<td><strong>A layout moves only the widgets it names</strong>; an unknown widget is an error — app 0.16.0</td>
+</tr>
+<tr>
 <td><code>content::mission</code></td>
 <td>2</td>
 <td>A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action)</td>
@@ -6776,8 +6892,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>input</code></td>
-<td>14</td>
-<td><strong>The keys help lists every action with its current keys</strong>, Original default layout incl. brake, <strong>power and equipment keys</strong>, one-shot commands and Shift chords, <strong>a Shift chord does not trigger the plain held key</strong>, gamepad sticks/buttons/presses and dead zone, <strong>pad modifier layer reaches every power control</strong>, <strong>every action reachable from the keyboard and flight actions from the pad</strong>, <strong>stick layouts and mouse inversion</strong>, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing</td>
+<td>15</td>
+<td><strong>The keys help lists every action with its current keys</strong>, Original default layout incl. brake, <strong>power and equipment keys</strong>, one-shot commands and Shift chords, <strong>a Shift chord does not trigger the plain held key</strong>, gamepad sticks/buttons/presses and dead zone, <strong>pad modifier layer reaches every power control</strong>, <strong>every action reachable from the keyboard and flight actions from the pad</strong>, <strong>stick layouts and mouse inversion</strong>, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing; <strong>every action has a one-sentence description</strong> (app 0.15.1)</td>
 </tr>
 <tr>
 <td><code>input::editor</code></td>
@@ -6831,8 +6947,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>hud::draw</code></td>
-<td>4</td>
-<td>Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; <strong>drift reads signed whole metres per second</strong>; <strong>the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch</strong></td>
+<td>5</td>
+<td>Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; <strong>drift reads signed whole metres per second</strong>; <strong>the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch</strong>; <strong>the ship status display lights one band per third of a shield, and its hull tint runs green to red</strong> (app 0.15.1)</td>
 </tr>
 <tr>
 <td><code>hud::glyphs</code></td>
@@ -6856,8 +6972,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>app::flight</code></td>
-<td>9</td>
-<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one); <strong>a campaign loadout refits the player's class in this battle only</strong>; <strong>the debrief waits for the delay after the result</strong>; <strong>campaign stances decide who fights whom</strong> (app 0.10.3)</td>
+<td>10</td>
+<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one); <strong>a campaign loadout refits the player's class in this battle only</strong>; <strong>the debrief waits for the delay after the result</strong>; <strong>campaign stances decide who fights whom</strong> (app 0.10.3); <strong>the keys overlay shows descriptions only when its columns are wide enough</strong> (app 0.15.1); a campaign loadout also sets fitted shields and armour (0.15.0)</td>
 </tr>
 <tr>
 <td><code>app::simulator</code></td>
@@ -6911,8 +7027,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>remote::protocol</code></td>
-<td>6</td>
-<td>Console messages decode (incl. <code>power</code>), unknown actions and types are refused, throttle clamped; <strong>the catalogue lists every action and marks missing equipment unavailable</strong>; <strong>telemetry reports drift in body axes and the target's rotation relative to the player</strong>; <strong><code>model</code> messages are normalised to radius 1 with a colour per group</strong> (average colour ignores transparent pixels); <strong><code>contacts</code> are in the player's axes</strong> (a craft dead ahead after a 90° yaw), relation and target flag, and <code>target {id}</code> decodes (bad ids refused); <code>event</code>; <strong>themes layer per cockpit and become CSS variables</strong> (cockpit override over the base, <code>--font</code>, <code>--corner</code>, an empty theme sends none)</td>
+<td>7</td>
+<td>Console messages decode (incl. <code>power</code>), unknown actions and types are refused, throttle clamped; <strong>the catalogue lists every action and marks missing equipment unavailable</strong>; <strong>telemetry reports drift in body axes and the target's rotation relative to the player</strong>; <strong><code>model</code> messages are normalised to radius 1 with a colour per group</strong> (average colour ignores transparent pixels); <strong><code>contacts</code> are in the player's axes</strong> (a craft dead ahead after a 90° yaw), relation and target flag, and <code>target {id}</code> decodes (bad ids refused); <code>event</code>; <strong>themes layer per cockpit and become CSS variables</strong> (cockpit override over the base, <code>--font</code>, <code>--corner</code>, an empty theme sends none); <strong>the idle catalogue lists every action with its description, all available</strong> (app 0.15.1)</td>
 </tr>
 <tr>
 <td><code>remote::server</code></td>
@@ -6923,6 +7039,11 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <td><code>soak</code></td>
 <td>2</td>
 <td>The default campaign's difficulty scales enemy lethality (headless battle runs); <strong>at cadet an undefended station holds for 150 s</strong> (idle pilot)</td>
+</tr>
+<tr>
+<td><code>balance</code></td>
+<td>1</td>
+<td><strong>Energy limits sustained fire</strong>, and kill times follow effective hit points — app 0.15.0</td>
 </tr>
 </tbody>
 </table>

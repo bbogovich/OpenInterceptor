@@ -4035,6 +4035,8 @@
       
         
       
+        
+      
     
     
     
@@ -4208,6 +4210,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4275,6 +4305,8 @@
       
         
           
+        
+      
         
       
         
@@ -4734,6 +4766,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5252,6 +5312,8 @@
       
         
       
+        
+      
     
     
     
@@ -5654,6 +5716,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6694,7 +6784,7 @@ released.</p>
 <tr>
 <td><code>catalogue</code></td>
 <td>After <code>welcome</code>; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with <strong>every action marked available</strong>, since there is no craft yet; the battle sends the real one when it starts</td>
-<td><code>groups</code>: <code>[{id, title}]</code> in menu order (<code>flight</code>, <code>throttle</code>, <code>weapons</code>, <code>targeting</code>, <code>power</code>, <code>wingmen</code>, <code>views</code>, <code>camera</code>, <code>interface</code>). <code>actions</code>: <code>[{name, group, label, kind, available}]</code> for <strong>every</strong> action of the catalogue (R-CON-007): <code>name</code> as in <code>bindings.yaml</code>, <code>group</code> one of the ids above, <code>label</code> the display name, <code>kind</code> <code>"hold"</code> or <code>"tap"</code>, <code>available</code> false when the craft has no equipment for it (R-CON-019).</td>
+<td><code>groups</code>: <code>[{id, title}]</code> in menu order (<code>flight</code>, <code>throttle</code>, <code>weapons</code>, <code>targeting</code>, <code>power</code>, <code>wingmen</code>, <code>views</code>, <code>camera</code>, <code>interface</code>). <code>actions</code>: <code>[{name, group, label, description, kind, available}]</code> for <strong>every</strong> action of the catalogue (R-CON-007): <code>name</code> as in <code>bindings.yaml</code>, <code>group</code> one of the ids above, <code>label</code> the display name (the button text), <code>description</code> one player-facing sentence on what the action does (since app 0.15.1; the page shows it under the label), <code>kind</code> <code>"hold"</code> or <code>"tap"</code>, <code>available</code> false when the craft has no equipment for it (R-CON-019).</td>
 </tr>
 <tr>
 <td><code>telemetry</code></td>
@@ -6943,7 +7033,6 @@ lock)</em> or <em>tap the screen to keep it awake</em>.</p>
   run. Whether it should change after a pairing, or time out, is open.</li>
 <li>A client name and protocol version in <code>hello</code> (version 1 sends neither); how a version
   mismatch is reported.</li>
-<li>A per-action description in <code>catalogue</code> (R-CON-007): version 1 sends the label only.</li>
 <li>Line framing and the message subset for the serial transport.</li>
 <li>Theme images (frames, backgrounds): version 1 themes are colours, a font and a corner radius.</li>
 </ul>
@@ -6986,6 +7075,11 @@ lock)</em> or <em>tap the screen to keep it awake</em>.</p>
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td><code>model</code>: textured groups carry <code>texture</code> (a PNG data URL, at most 128 px) and <code>uvs</code> (app 0.6.7, from user feedback)</td>
+</tr>
+<tr>
+<td>1.17.0</td>
+<td>2026-11-11</td>
+<td><code>catalogue</code>: each action gains <code>description</code>, one sentence shown under its button (main <code>bb04952</code>, app 0.15.1, #6); the open item on descriptions removed. The version stays 1: a page that does not know the field ignores it</td>
 </tr>
 </tbody>
 </table>

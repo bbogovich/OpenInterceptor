@@ -3841,6 +3841,8 @@
       
         
       
+        
+      
     
     
     
@@ -4014,6 +4016,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4083,6 +4113,8 @@
       
         
           
+        
+      
         
       
         
@@ -4562,6 +4594,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cutscenes/" class="md-nav__link">
         
   
@@ -4794,6 +4854,17 @@
     <span class="md-ellipsis">
       
         Shield rings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-ship-status-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ship status display
       
     </span>
   </a>
@@ -5134,6 +5205,8 @@
       
         
           
+        
+      
         
       
         
@@ -5564,6 +5637,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6320,6 +6421,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-ship-status-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ship status display
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-power-and-systems-instruments-stage-2" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6401,6 +6513,7 @@ model's surface, drawn in perspective.</p>
 <span class="w">      </span><span class="nt">gauge2</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">288</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">299</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">]</span><span class="w">         </span><span class="c1"># energy</span>
 <span class="w">      </span><span class="nt">gauge3</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">299</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">]</span><span class="w">         </span><span class="c1"># shields</span>
 <span class="w">      </span><span class="nt">gauge4</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">378</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">299</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">26</span><span class="p p-Indicator">]</span><span class="w">         </span><span class="c1"># hull</span>
+<span class="w">      </span><span class="nt">ship_status</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">111</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">407</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">58</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">58</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># the craft and its shields (app 0.15.1)</span>
 </code></pre></div>
 <table>
 <thead>
@@ -6439,7 +6552,7 @@ model's surface, drawn in perspective.</p>
 <tr>
 <td><code>instruments</code></td>
 <td>—</td>
-<td><code>name: [x, y, w, h]</code> in design space. Names: <code>message</code>, <code>radar_front</code>, <code>radar_rear</code>, <code>mfd</code>, <code>gauge1</code>–<code>gauge4</code>, <code>power</code>, <code>systems</code>, <code>status</code> (the throttle/speed line; without it the line is plain screen text at the top left). A rectangle more than five times wider than tall is a <strong>strip</strong> and gets the instrument's one-line form (below).</td>
+<td><code>name: [x, y, w, h]</code> in design space. Names: <code>message</code>, <code>radar_front</code>, <code>radar_rear</code>, <code>mfd</code>, <code>gauge1</code>–<code>gauge4</code>, <code>power</code>, <code>systems</code>, <code>status</code> (the throttle/speed line; without it the line is plain screen text at the top left), <code>ship_status</code> (<a href="#the-ship-status-display">below</a>, app 0.15.1). A rectangle more than five times wider than tall is a <strong>strip</strong> and gets the instrument's one-line form (below).</td>
 </tr>
 <tr>
 <td><code>anchors</code></td>
@@ -6462,6 +6575,43 @@ text spilling out of it.</p>
 scope the fore shield, the rear scope the aft. Green above 66 %, amber above 33 %, red
 below, blinking red when the facing is down. Size the <code>radar_front</code> / <code>radar_rear</code>
 rectangles to the scope glass and the ring sits on its rim.</p>
+<h2 id="the-ship-status-display">The ship status display<a class="headerlink" href="#the-ship-status-display" title="Permanent link">&para;</a></h2>
+<p><code>ship_status</code> (app 0.15.1, <a href="../../specification/requirements/cockpit-hud/#r-hud-005-radar-shield-rings-and-ship-status">R-HUD-005</a>)
+shows your craft from above in the middle of a round instrument, in the manner of <em>X-Wing</em>:</p>
+<ul>
+<li>the <strong>craft</strong> is a small top-down silhouette tinted by the hull left — green when whole,
+  turning amber, then red as it nears destruction;</li>
+<li>an <strong>arc ahead</strong> is the fore shield and an <strong>arc behind</strong> the aft shield. Each has up to
+  <strong>three bands</strong>, one per third of that facing's shield: three lit above two thirds, two above
+  one third, one above 2 %, none below. The lit bands take the shield rings' colours (green,
+  amber, red) and blink when the facing is down; unlit bands are dim.</li>
+</ul>
+<p>Give it a square rectangle: the display is drawn in the largest circle that fits. On the glass
+HUD it gets a thin ring of its own; over cockpit art it draws only the bands and the craft, so
+put it over a round display in the art.</p>
+<table>
+<thead>
+<tr>
+<th>Cockpit</th>
+<th>Where it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Glass HUD (no cockpit)</td>
+<td>Where gauge 3 was, beside the other gauges.</td>
+</tr>
+<tr>
+<td><code>default</code> campaign's 3D cockpit</td>
+<td>The third gauge bezel (in place of gauge 3, the summed shield needle).</td>
+</tr>
+<tr>
+<td><code>interceptor</code> A, B, C</td>
+<td>The round ship display in each cockpit's art, placed <strong>by eye</strong> (<em>derived</em>). If yours sits off, adjust it with the layout editor (F12) and save the result as an addon.</td>
+</tr>
+</tbody>
+</table>
+<p>Gauge 3 is still an instrument: a cockpit that wants the needle as well can place both.</p>
 <h2 id="the-power-and-systems-instruments-stage-2">The <code>power</code> and <code>systems</code> instruments (Stage 2)<a class="headerlink" href="#the-power-and-systems-instruments-stage-2" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

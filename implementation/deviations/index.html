@@ -3853,6 +3853,8 @@
       
         
       
+        
+      
     
     
     
@@ -4026,6 +4028,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/simulator/" class="md-nav__link">
         
   
@@ -4093,6 +4123,8 @@
       
         
           
+        
+      
         
       
         
@@ -4552,6 +4584,34 @@
     
   
     Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
   
 
     
@@ -5070,6 +5130,8 @@
       
         
       
+        
+      
     
     
     
@@ -5472,6 +5534,34 @@
     
   
     Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
   
 
     
@@ -6457,9 +6547,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-037</td>
-<td><strong>Shield rings on the radar scopes</strong> (front scope = fore shield, rear = aft; green / amber / red, blinking when down) and <strong>top-bar text placement</strong> in the <code>interceptor</code> cockpits (message in the lit band, throttle line, power and systems in the two strips below).</td>
-<td>The rectangles are measured from the cockpit art (verified pixel bounds); what the original showed in each strip and the ring thresholds are derived from the player's description of the original HUD.</td>
-<td>2</td>
+<td><strong>Shield rings on the radar scopes</strong> (front scope = fore shield, rear = aft; green / amber / red, blinking when down), <strong>top-bar text placement</strong> in the <code>interceptor</code> cockpits (message in the lit band, throttle line, power and systems in the two strips below), and since app 0.15.1 the <strong>ship status display</strong> (<code>ship_status</code>): the craft from above tinted by hull, inside fore and aft arcs of up to three shield bands each, in the round ship display of cockpits A, B and C.</td>
+<td>The rectangles are measured from the cockpit art (verified pixel bounds); what the original showed in each strip and the ring thresholds are derived from the player's description of the original HUD. The ship status display is a user request after a playtest (the round display showed nothing): its look follows <em>X-Wing</em>'s shield display, not the original's (what the original drew there is <em>unknown</em>), and its rectangles in A, B and C were placed by eye (<em>derived</em>).</td>
+<td>2, 6</td>
 </tr>
 <tr>
 <td>DEV-038</td>
@@ -6568,6 +6658,12 @@ one looks like a bug.</p>
 <td><strong>The <code>interceptor</code> films as built</strong>: <code>animation1.smk</code> opens a new campaign (<em>derived</em>: which of the CD's films is the original's opening), the five alien transmissions play full screen as each message arrives (<code>alientrans1</code> – <code>5</code>), and the victory plays <code>credits_sm2a.smk</code>. Films play letterboxed in the window, skippable with Enter, Esc or a click.</td>
 <td>App 0.12.0 – 0.13.0. How and where the original showed each film has not been compared side by side (<em>unknown</em>); every choice is a line of story or campaign data.</td>
 <td>6</td>
+</tr>
+<tr>
+<td>DEV-056</td>
+<td><strong>The <code>interceptor</code> craft's protection is derived from the original's equipment</strong> (app 0.15.0): the three player craft and several alien classes name their default shield and/or armour (<code>fitted:</code> → an original <code>ShieldType*</code> / <code>ArmorType*</code> section, chosen per class — <em>derived</em>); a shield's protection is read as its <code>Special</code> key and armour's as its <code>HitPoints</code> key (<em>derived</em>); the X-COM hulls get one <code>shield</code> and one <code>armor</code> slot (<em>derived</em>); alien classes with no known fit carry three times their former engine values (<em>derived</em>); stations that inherit an original hit-point chart (<code>HP1</code> – <code>HP4</code>) take the four summed as their hull (<em>derived</em>: what each part protects in the original is unknown). In battle a craft flies the strongest fitted shield and the sum of its armour.</td>
+<td>Playtest: ships and stations were destroyed too easily — the X-COM craft flew placeholder Stage 2 values. Naming the original's equipment reads the player's own numbers instead of copying them into the pack. Which section each class carries, and what the keys mean, are not documented by the original; <code>--balance</code> shows the result. The default campaign (original-free) was toughened in its own data at the same time: fighters ×4, capital ships, stations and ground installations ×3.</td>
+<td>4</td>
 </tr>
 </tbody>
 </table>
