@@ -184,6 +184,22 @@ pub fn cargo_share(w: &World, r: &RoleRun) -> f32 {
 }
 
 impl MissionRun {
+    /// Evaluates a condition or expression typed at the testbed's condition console
+    /// against this battle now: parsed with the mission's own schema (its role names
+    /// and `levels`, the difficulty level names), evaluated on a *copy* of the mission's
+    /// random generator so looking never changes the battle. The value as text, or the
+    /// parse error.
+    pub fn evaluate(&self, w: &World, text: &str, levels: &[String]) -> Result<String, String> {
+        let roles: Vec<String> = self.def.roles.iter().map(|r| r.name.to_ascii_lowercase()).collect();
+        let schema = crate::script::battle::schema(&roles, levels);
+        let (e, _) = crate::script::parse(text, &schema)?;
+        let cx = BattleCx { world: w, run: self, rng: Cell::new(self.rng) };
+        Ok(match e.eval(&cx) {
+            Value::Bool(b) => b.to_string(),
+            Value::Num(n) => format!("{n}"),
+        })
+    }
+
     /// Enemy craft destroyed so far (also while the battle is still running).
     pub fn kills(&self) -> u32 {
         self.kills
@@ -533,6 +549,19 @@ mod tests {
             }
         }
         out
+    }
+
+    #[test]
+    fn the_condition_console_evaluates_against_the_battle_without_changing_it() {
+        let (w, m) = mission(
+            "player: {class: fighter}\nroles:\n  foes: {class: raider, count: 3, ai: idle, at: {distance: 2km, bearing: [90, 0], spread: 100m}}\nobjectives: {win: destroyed_all(foes)}\n",
+        );
+        assert_eq!(m.evaluate(&w, "count(foes)", &[]).as_deref(), Ok("3"));
+        assert_eq!(m.evaluate(&w, "destroyed_all(foes)", &[]).as_deref(), Ok("false"));
+        assert!(m.evaluate(&w, "count(friends)", &[]).is_err(), "an unknown role is an error");
+        let before = m.rng;
+        let _ = m.evaluate(&w, "random(0.5)", &[]);
+        assert_eq!(m.rng, before, "looking never changes the battle");
     }
 
     #[test]

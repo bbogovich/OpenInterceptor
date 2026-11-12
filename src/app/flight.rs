@@ -338,6 +338,9 @@ pub struct FlightSession {
     console_models: std::collections::HashMap<crate::content::rules::ShipClassId, std::rc::Rc<String>>,
     /// The keys help overlay (`?` or Shift+F1) is showing; the battle pauses under it.
     help_open: bool,
+    /// The testbed's condition console (backquote): the text typed so far. While it is
+    /// open the battle is paused and the text is evaluated every frame.
+    cond: Option<String>,
     mouse_flight: bool,
     accumulator: f32,
     /// 2D cockpit art, if the player's cockpit has an image.
@@ -577,6 +580,7 @@ impl FlightSession {
             paused: false,
             menu_open: false,
             help_open: false,
+            cond: None,
             console_clock: 0.0,
             start_guard: Default::default(),
             custom: None,
@@ -746,8 +750,26 @@ impl FlightSession {
             }
         }
 
+        // --- Condition console (testbed, R-TST-008): type a battle condition, see its
+        // value now. ` opens and closes it; Esc closes; the battle waits meanwhile.
+        if is_key_pressed(KeyCode::GraveAccent) && !self.menu_open && !self.help_open {
+            self.cond = if self.cond.is_some() { None } else { Some(String::new()) };
+            while get_char_pressed().is_some() {} // the opening key is not part of the text
+        }
         // --- Pause menu -------------------------------------------------------------
-        if self.help_open {
+        if let Some(text) = &mut self.cond {
+            while let Some(ch) = get_char_pressed() {
+                if ch != '`' && !ch.is_control() {
+                    text.push(ch);
+                }
+            }
+            if is_key_pressed(KeyCode::Backspace) {
+                text.pop();
+            }
+            if raw.pressed.contains("escape") {
+                self.cond = None;
+            }
+        } else if self.help_open {
             if raw.pressed.contains("escape") || commands.contains(&Command::Help) {
                 self.help_open = false;
             }
@@ -841,7 +863,7 @@ impl FlightSession {
 
         // --- Simulation -------------------------------------------------------------
         let over = self.debrief_shown();
-        if !self.paused && !self.menu_open && !self.help_open && self.editor.is_none() && !over {
+        if !self.paused && !self.menu_open && !self.help_open && self.cond.is_none() && self.editor.is_none() && !over {
             if let Some(s) = self.world.get_mut(self.player) {
                 // Whatever is still set in `s.controls` was not consumed by a tick yet.
                 s.controls = controls.carry_unconsumed(&s.controls);
@@ -1100,6 +1122,30 @@ impl FlightSession {
         }
         if self.help_open {
             draw_help(&ctx.bindings, screen);
+        }
+        if let Some(text) = &self.cond {
+            let levels = &self.world.rules.difficulty_levels;
+            let answer = match &self.mission {
+                Some(m) if !text.trim().is_empty() => m.evaluate(&self.world, text, levels),
+                Some(_) => Ok("(type a condition, e.g. alive(player) and time > 30s)".into()),
+                None => Err("no mission: conditions belong to missions".into()),
+            };
+            let (x, y, w) = (20.0, screen.y - 120.0, screen.x - 40.0);
+            draw_rectangle(x, y, w, 96.0, Color::new(0.0, 0.0, 0.0, 0.85));
+            draw_rectangle_lines(x, y, w, 96.0, 1.0, SKYBLUE);
+            draw_text(
+                "CONDITION CONSOLE  (`  or Esc to close; the battle is paused)",
+                x + 10.0,
+                y + 22.0,
+                18.0,
+                SKYBLUE,
+            );
+            let caret = if (get_time() * 2.0) as i64 % 2 == 0 { "_" } else { " " };
+            draw_text(&format!("> {text}{caret}"), x + 10.0, y + 52.0, 22.0, WHITE);
+            match answer {
+                Ok(v) => draw_text(&format!("= {v}"), x + 10.0, y + 82.0, 22.0, GREEN),
+                Err(e) => draw_text(&e, x + 10.0, y + 82.0, 18.0, ORANGE),
+            };
         }
         // Other screens draw plain space: the sky belongs to this battle only.
         ctx.renderer.env_sky = None;
