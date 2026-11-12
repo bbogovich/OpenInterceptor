@@ -21,6 +21,7 @@ Read in order; each page builds on the previous one.
 | [Testing in Rust](testing.md) | `#[test]`, `#[cfg(test)]`, unit vs integration tests |
 | [Cargo](cargo.md) | `Cargo.toml`, profiles, `Cargo.lock`, pinned versions, `build.rs` |
 | [Async and the macroquad loop](async-loop.md) | `macroquad::Window::from_config`, `next_frame().await`, the fixed-timestep accumulator; an async open and a sync play (`VideoPlayer`), and a decoder rebuilt rather than stored beside the bytes it borrows |
+| [Immediate-mode UI](immediate-mode-ui.md) | The strategy screen's widgets: buttons as function calls instead of objects with callbacks, actions returned as `Copy` values and applied after drawing, persistent state as plain data (`ListView`), `Input::default()` to block input under a prompt, a measuring closure passed as `&dyn Fn` for testing |
 
 Further reading: *The Rust Programming Language* (the "Book", free at doc.rust-lang.org/book)
 covers each topic in depth; *Rust by Example* has runnable snippets.

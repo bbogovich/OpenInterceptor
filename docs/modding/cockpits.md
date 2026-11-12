@@ -22,6 +22,7 @@ cockpits:
       gauge2: [288, 299, 26, 26]         # energy
       gauge3: [333, 299, 26, 26]         # shields
       gauge4: [378, 299, 26, 26]         # hull
+      ship_status: [111, 407, 58, 58]    # the craft and its shields (app 0.15.1)
 ```
 
 | Key | Default | Meaning |
@@ -31,7 +32,7 @@ cockpits:
 | `model` | none | Asset reference of a 3D cockpit model. |
 | `model_offset` | `[0, 0, 0]` | Where the model's origin sits relative to the pilot's eye, in metres. |
 | `model_scale` | `1` | Model units → metres. |
-| `instruments` | — | `name: [x, y, w, h]` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`, `status` (the throttle/speed line; without it the line is plain screen text at the top left). A rectangle more than five times wider than tall is a **strip** and gets the instrument's one-line form (below). |
+| `instruments` | — | `name: [x, y, w, h]` in design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`, `status` (the throttle/speed line; without it the line is plain screen text at the top left), `ship_status` ([below](#the-ship-status-display), app 0.15.1). A rectangle more than five times wider than tall is a **strip** and gets the instrument's one-line form (below). |
 | `anchors` | none | 3D cockpits: `name: {at, normal, size}` — the instrument drawn in perspective on the model (below). |
 | `wide` | none | Wide screens: side bands beside 4:3 art: `{blackout: true, color: [0,0,0], from: 305, left: images/left.png, right: images/right.png}`. The X-COM cockpits black out the dashboard sides from the height where each image's edges become solid (A 305, B 382, C 352) ([R-HUD-013](../specification/requirements/cockpit-hud.md#r-hud-013-wide-screen-side-bands)). |
 
@@ -47,6 +48,30 @@ Each radar scope carries a ring just inside its edge showing a shield facing: th
 scope the fore shield, the rear scope the aft. Green above 66 %, amber above 33 %, red
 below, blinking red when the facing is down. Size the `radar_front` / `radar_rear`
 rectangles to the scope glass and the ring sits on its rim.
+
+## The ship status display
+
+`ship_status` (app 0.15.1, [R-HUD-005](../specification/requirements/cockpit-hud.md#r-hud-005-radar-shield-rings-and-ship-status))
+shows your craft from above in the middle of a round instrument, in the manner of *X-Wing*:
+
+- the **craft** is a small top-down silhouette tinted by the hull left — green when whole,
+  turning amber, then red as it nears destruction;
+- an **arc ahead** is the fore shield and an **arc behind** the aft shield. Each has up to
+  **three bands**, one per third of that facing's shield: three lit above two thirds, two above
+  one third, one above 2 %, none below. The lit bands take the shield rings' colours (green,
+  amber, red) and blink when the facing is down; unlit bands are dim.
+
+Give it a square rectangle: the display is drawn in the largest circle that fits. On the glass
+HUD it gets a thin ring of its own; over cockpit art it draws only the bands and the craft, so
+put it over a round display in the art.
+
+| Cockpit | Where it is |
+|---|---|
+| Glass HUD (no cockpit) | Where gauge 3 was, beside the other gauges. |
+| `default` campaign's 3D cockpit | The third gauge bezel (in place of gauge 3, the summed shield needle). |
+| `interceptor` A, B, C | The round ship display in each cockpit's art, placed **by eye** (*derived*). If yours sits off, adjust it with the layout editor (F12) and save the result as an addon. |
+
+Gauge 3 is still an instrument: a cockpit that wants the needle as well can place both.
 
 ## The `power` and `systems` instruments (Stage 2)
 

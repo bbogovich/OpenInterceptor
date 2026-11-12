@@ -750,6 +750,7 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-62 | AI avoidance: wingmen do not ram | `rocket-vs-saucer` (default) | not run | | | App 0.6.7; user feedback |
 | MT-3-63 | AI avoidance: enemies do not ram, firing passes go on | `mixed-dogfight` (default); `defend_station` | not run | | | App 0.6.7; user feedback |
 | MT-3-64 | The battle runs on before the debrief | any mission (default) | not run | | | App 0.7.4; user request |
+| MT-3-65 | Action descriptions: keys overlay and tablet | any mission (default); the tablet console | not run | | | Main `bb04952` (app 0.15.1), #6 |
 
 ### The debrief (every mission case)
 
@@ -1250,6 +1251,14 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | Expected | 1: "MISSION ACCOMPLISHED" at once with the computer voice; the battle keeps running (the last explosion plays out, wingmen fly on); "Debrief in 30 s (Enter: now)" counts down; the debrief appears at 0. 2: the debrief appears at once. 3: "YOUR CRAFT WAS DESTROYED", the camera on the wreck, then the debrief after the countdown. 4: the debrief at once (retreat). 5: the debrief at once. |
 
 
+### MT-3-65 — Action descriptions: keys overlay and tablet
+
+| Field | |
+|---|---|
+| Preconditions | App 0.15.1 or later (main `bb04952`). Default campaign. A tablet paired for steps 3 – 4 ([Tablet console](../../user-guide/console.md)). |
+| Steps | 1. In a wide window start any mission and press `?`. 2. Make the window small (or the display narrow) and press `?` again. 3. On the paired tablet, open the Cockpit layout and a tile's strip; read the buttons. 4. Hover (or long-press) a button. 5. Leave the battle to the launcher and look at the tablet again. |
+| Expected | 1: under each action's name and keys a dimmer one-sentence description (for example what the afterburner does); groups and columns as before. 2: one line per action, no descriptions, every action still listed (more columns if needed). 3: each button has its label and, beneath it, a small caption of at most two lines. 4: the full sentence as the button's tooltip. 5: the idle catalogue (every action available) shows the same captions. No caption overlaps the next button. |
+
 ## Stage 4 results
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -1282,12 +1291,23 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-26 | Convoy ambush: tugs, torn-off pods and escorts | `convoy_ambush` (default) | not run | | | App 0.9.2; the user's design |
 | MT-4-27 | Convoy ambush: winning, losing and the 15-minute draw | `convoy_ambush` (default) | not run | | | App 0.9.2 |
 | MT-4-28 | Campaign: flying an ambushed convoy's escort | Strategy screen (default), `convoy_ambush` | not run | | | App 0.9.2 |
+| MT-4-29 | Strategy screen: top bar, clock and base switcher | Strategy screen (default) | not run | | | App 0.16.0; playtest: the screen was not usable |
+| MT-4-30 | Strategy map: zoom, pan, hover and select | Strategy screen (default) | not run | | | App 0.16.0 |
+| MT-4-31 | Strategy info panel: the selection's actions | Strategy screen (default) | not run | | | App 0.16.0 |
+| MT-4-32 | Strategy lists: scrolling, the selected row, double click, keys | Strategy screen (default) | not run | | | App 0.16.0 |
+| MT-4-33 | Strategy lists: the row buttons | Strategy screen (default) | not run | | | App 0.16.0; replaces the S and F keys |
+| MT-4-34 | Strategy prompts: modals with buttons | Strategy screen (default) | not run | | | App 0.16.0 |
+| MT-4-35 | Fitted shields and armour in battle | Strategy screen and a battle (`interceptor`; default with a test addon) | not run | | | App 0.15.0; #27 |
+| MT-4-36 | `--balance` report | Command line | not run | | | App 0.15.0 |
+| MT-4-37 | Durability: ships and stations last longer | `defend_station`, `mixed-dogfight` (default); an `interceptor` mission | not run | | | App 0.15.0; playtest: things died too easily |
 
 ## Stage 4 cases
 
 How to start: the launcher with the default campaign (`--no-original`, or Tab to it) selects
 *Campaign: continue* first; *Campaign: new game* is next. Or `--no-original --strategy`.
-Keys: [User guide › Campaign](../../user-guide/campaign.md).
+Keys: [User guide › Campaign](../../user-guide/campaign.md). Since app 0.16.0 every row action is
+also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in MT-4-12 fit with
+*Fit best* (MT-4-29 – MT-4-34 cover the new screen).
 
 ### MT-4-01 — Formations: Shift+O
 
@@ -1502,6 +1522,78 @@ Keys: [User guide › Campaign](../../user-guide/campaign.md).
 | Steps | 1. When the clock stops with *Supply convoy ambushed! Enter: fly its escort   Esc: let it fight through*, look at the map. 2. Press Enter; fly the battle to a win with part of the cargo lost; return to the map. 3. At the next ambush press Esc. 4. At another, leave the battle early from the pause menu (L). 5. Send every craft away (or have no pilot) and wait for an ambush; press Enter. |
 | Expected | 1: the convoy's gold dot has stopped and stays put while the banner is up; the message names its cargo. 2: the battle is `convoy_ambush` with the first ready craft; back on the map *Convoy escort: WIN - NN% of the cargo got through*; the delivery is that share. 3: *The convoy fought through alone: N of M vessels lost*. 4: the same as Esc. 5: *No ready craft: the convoy fights through alone.* |
 
+### MT-4-29 — Strategy screen: top bar, clock and base switcher
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A new default campaign (`--no-original --strategy`); build or cheat a second base for step 3 (Ctrl+M, then a base from a system's info panel). |
+| Steps | 1. Read the top bar. 2. Click `||`, `1h`, `6h`, `1d`, `5d` in turn; then press Space and 1 – 4. 3. Click `<` and `>` beside the base name; press Left / Right. 4. Click *Save*. 5. Click *Menu*; choose *Continue*. 6. Resize the window to a tall narrow shape, then a very wide one; then full screen. |
+| Expected | 1: date, *Funds* with thousands separators, *Score*; the current base's name between `<` and `>` (dimmed with one base); the speed buttons, *Save*, *Menu*. 2: the clock stops / runs at that speed; the running speed is outlined in the accent colour; the keys do the same. 3: the base name changes and orders (Build, Research) apply to it. 4: a yellow *Saved to …* line at the bottom of the map. 5: the main menu; *Continue* returns to the map as saved. 6: the top bar, map and panels always reach the window's edges (stretched, no black bars); text stays readable on a small window. |
+
+### MT-4-30 — Strategy map: zoom, pan, hover and select
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A default campaign with a detected contact and a convoy or craft in flight (speed 4 until one appears; Ctrl+J needs a contact). |
+| Steps | 1. Put the pointer on a system near the map's edge and roll the wheel forward several times; then back. 2. Drag with the right button; then with the middle button. 3. Hover over systems, a contact, a convoy, a survey ship, a craft in flight. 4. Click a system; a system with your base; a contact; a convoy. 5. Click empty space. 6. Read the legend. |
+| Expected | 1: the map zooms in about the pointer — the system under it stays under it — up to a limit, and out to half size. 2: the map follows the drag; release stops it; dragging that starts outside the map does nothing. 3: a dark label with the name follows the pointer (*Supply convoy*, *Survey ship*, the craft's name). 4: each is selected (the info panel changes); clicking a system with a base makes that base current in the top bar. A contact beside a system is chosen over the system when they are about as close. 5: the selection stays. 6: *square: base, red: hostile, gold: convoy, blue: survey/craft, diamond: facility, wheel: zoom, right-drag: pan*. |
+
+### MT-4-31 — Strategy info panel: the selection's actions
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A default campaign; Ctrl+M for money. |
+| Steps | 1. With nothing selected, read the info panel. 2. Select a system without a base; press a *Build <base type> (<cost>)* button. 3. Select an unsurveyed system within radar range; press *Survey*. 4. After the survey, select a system where a facility may be built; press its *Build <facility>* button. 5. Select a system with a base that is not current; press *Make <base> current*. 6. Select a detected contact; press *Intercept*. 7. Select a convoy, a survey ship and a craft in flight. |
+| Expected | 1: *Nothing selected* and a hint on clicking, the wheel and right-drag. 2: the base is ordered (funds drop) or a yellow line says why not. 3: a survey ship leaves (sky-blue ring). 4: the facility is ordered (grey diamond). 5: the top bar shows that base. 6: the contact's name, where it is heading and how many craft are ready; *Intercept* sends them (they appear on the map). 7: a one-line description and no buttons. The text wraps inside the panel and never overlaps the buttons; at most four buttons. |
+
+### MT-4-32 — Strategy lists: scrolling, the selected row, double click, keys
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A default campaign some months in (many messages and research topics); Ctrl+K optional. |
+| Steps | 1. Click each of the ten list buttons. 2. Open Messages; roll the wheel over the list; drag nothing, just watch the scroll bar. 3. Use Up / Down past the visible rows; Tab / Shift+Tab. 4. Click a long row. 5. Double-click a Research topic. 6. Press Enter on another topic. 7. Click a grey (information) row. |
+| Expected | 1: the list's title changes and the open button is outlined. 2: the list scrolls two rows per notch and stops at the ends; the bar's thumb shows the position and size of the view. 3: the selection moves and the list scrolls just enough to keep it in view; Tab moves to the next list. 4: rows too wide end in `...`; the selected row is shown in full (two lines) below the separator. 5: the base researches it (a second click within about half a second acts). 6: the same. 7: it is selected, shows in full, and has no buttons. |
+
+### MT-4-33 — Strategy lists: the row buttons
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A default campaign; Ctrl+M for money; a craft without a pilot and a free pilot for step 4 (hire a recruit). |
+| Steps | 1. Market: select an item; press *Buy 1*, *Buy 5*. 2. After delivery press *Sell 1*. 3. Factory: *Make 1*, *Make 5*. 4. Hangar: on a craft press *Assign pilot*, then *Fit best*; on a recruit press *Hire*. 5. Research: *Research*; Build: *Build*; Bases: *Select*; Contacts: *Intercept*; Supply on a station topic: *Start*. 6. Press a button you cannot afford. |
+| Expected | 1: funds drop by one and five prices; deliveries arrive at the current base. 2: the stock falls by one and funds rise by the sell price. 3: one and five jobs in the base's queue. 4: the craft gets the pilot (or *no free pilot*); its fit changes from *standard fit* to the items fitted; the recruit joins the roster. 5: each order takes effect with *Done.* in the yellow line. 6: the yellow line says why (not enough money, …). No order needs a key. |
+
+### MT-4-34 — Strategy prompts: modals with buttons
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A default campaign (a chapter's title card and offered mission come in the first weeks); a contact for step 2 (Ctrl+J). |
+| Steps | 1. Wait for a report (a module finished, the monthly report); press *OK*. 2. Ctrl+J on a selected contact: *Interception*; press *Break off*; again, *Fly the battle* and return. 3. A title card: *Continue*; another: click anywhere. 4. *Mission offered*: *Decline*; at the next, *Fly it*. 5. A story choice: click an option; at another press its number key. 6. A convoy ambush: *Let it fight*. 7. While any prompt is up, click the map, the list buttons and the top bar; roll the wheel; press Enter and Esc on a two-button prompt. |
+| Expected | 1: the clock stopped; the prompt over a dimmed screen with the text wrapped; *OK* closes it. 2: break off — *Broke off the interception.*; fly — the battle, then the map. 3: both dismiss. 4: declined — *Declined.*; fly — the mission with the first ready craft. 5: the choice applies (messages, money). 6: the convoy fights on alone. 7: nothing beneath reacts (no selection, no zoom, no speed change); Enter chooses the first button, Esc the last. |
+
+### MT-4-35 — Fitted shields and armour in battle
+
+| Field | |
+|---|---|
+| Preconditions | App 0.15.0 or later. **Either** the `interceptor` campaign with the player's data (its hulls have one shield and one armour slot; items `shield_type1` – `4`, `armor_type1` – `3`), **or** the default campaign with a test addon `mods/default-armour/` (`pack.yaml`: `kind: addon`, `targets: [default]`) whose `strategy/items.yaml` adds `items: {test_shield: {name: Test shield, kind: shield, cost: 1000, protection: 900}, test_armour: {name: Test armour, kind: armor, cost: 1000, protection: 700}}` and gives `hulls.comet` `slots: {beam: 2, missile: 2, special: 1, shield: 1, armor: 1}`. |
+| Steps | 1. Before fitting, fly a campaign battle with a craft (*standard fit*); open the MFD Status page. 2. Buy a shield and an armour item for the craft's base; Hangar › *Fit best* on the craft. 3. Fly the next campaign battle with it (Ctrl+J); read the MFD Status page and the ship status display. 4. Take hits until the shield bands drop. 5. Fly a plain `--mission` of the same class. |
+| Expected | 1: the class's own shields and armour (`interceptor`: those of its `fitted:` equipment from your data). 2: the Hangar row lists the fitted items. 3: the shields per facing and the armour are the fitted items' protection (addon: 900 per facing, 700 armour), both full at the start. 4: the bands go out one third at a time. 5: the class's own values again — the fit applies only to the campaign craft's battle. |
+
+### MT-4-36 — `--balance` report
+
+| Field | |
+|---|---|
+| Preconditions | App 0.15.0 or later; the player's data for step 3. |
+| Steps | 1. `openinterceptor --no-original --balance`. 2. Again with `--difficulty cadet` and `--difficulty space_ace`. 3. `openinterceptor --campaign interceptor --balance`. |
+| Expected | 1: *balance at difficulty <level>: …*, a header (`class`, `shield`, `armour`, `hull`, `eff.hp`, `dps`, then one column per playable ship id: `comet`, `meteor`, `thunderbolt`), then one row per class from the weakest to the toughest by effective hit points (shield + armour + hull): the seconds of perfect fire each playable ship needs to destroy it, `-` where the ship has no beams; the program exits without a window. Stations and capital ships take many times longer than fighters. 2: the numbers change with the level's variants. 3: the X-COM classes, with the craft's protection from their `fitted:` equipment and stations' hull from their HP charts — no zeros where your data has values. |
+
+### MT-4-37 — Durability: ships and stations last longer
+
+| Field | |
+|---|---|
+| Preconditions | App 0.15.0 or later. Default campaign; the player's data for step 3. |
+| Steps | 1. Fly `mixed-dogfight` (default) at the middle level and count the bursts needed to kill a saucer; note how long your own craft survives. 2. Fly `defend_station` idle (do not fight) and time the station. 3. Fly an `interceptor` raid mission with the Lightning; attack an alien base or outpost in a later mission. 4. Compare with `--balance`. |
+| Expected | 1: fighters take noticeably longer to destroy than before 0.15.0 (about four times the punishment), on both sides. 2: the station holds well beyond its old time (at least R-MSN-011's 150 s). 3: the Lightning survives a sustained exchange; stations take minutes of fire, not seconds. 4: the order of toughness matches the report. **Judge the feel**: is anything now too hard to kill? Record findings for a balance pass. |
+
 ## Stage 5 results
 
 No case has been run yet; **no play-through of either campaign has been done**.
@@ -1627,6 +1719,10 @@ No case has been run yet.
 | MT-6-14 | Main menu: navigation | Start-up (default; `interceptor`) | not run | | | |
 | MT-6-15 | Main menu: options round trip | Main menu › Options | not run | | | |
 | MT-6-16 | Credits | Main menu › Credits; `--credits` | not run | | | |
+| MT-6-17 | Ship status display: the default cockpit and the glass HUD | `mixed-dogfight` (default), cockpit and chase views | not run | | | App 0.15.1; user request (R-HUD-005) |
+| MT-6-18 | Ship status display: X-COM cockpits A, B and C | An `interceptor` scenario with the Lightning, Firestar and Avenger | not run | | | App 0.15.1; placed by eye (derived) |
+| MT-6-19 | Main menu: long option values fit | Main menu › Options (`interceptor` available) | not run | | | App 0.14.2 |
+| MT-6-20 | Screen layouts: moving the strategy screen's widgets | Strategy screen (default) with a test addon | not run | | | App 0.16.0 |
 
 ## Stage 6 cases
 
@@ -1759,3 +1855,35 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App 0.14.0 or later; the player's data for step 3. |
 | Steps | 1. Default campaign: Credits; watch to the end. 2. Again, press Esc part-way. 3. `interceptor`: Credits. 4. `openinterceptor --no-original --credits`. |
 | Expected | 1: the lines rise from below over the stars, headings (*Perils of the Void*, *Music*, …) in the skin's accent colour, then *Engine*, *OpenInterceptor* and the rest; back to the menu when the last line leaves the top. 2: the menu at once. 3: the CD's credits film plays, then the menu. 4: the roll at start-up, then the menu. |
+
+### MT-6-17 — Ship status display: the default cockpit and the glass HUD
+
+| Field | |
+|---|---|
+| Preconditions | App 0.15.1 or later. Default campaign. |
+| Steps | 1. Start `mixed-dogfight` with the Comet in the cockpit view; look at the third gauge bezel right of the MFD. 2. Let enemies hit you from ahead, then from behind; watch the arcs. 3. Shift the shield balance forward and aft. 4. Let the hull take damage. 5. Lose one facing entirely. 6. Switch to the chase view (glass HUD). 7. Open the layout editor (F12) and Tab through the instruments. |
+| Expected | 1: a round display with a small top-down craft in the middle, a three-band arc ahead and one behind, all lit green. 2: hits ahead put out fore bands one third at a time (green, then amber, then red); hits behind the aft. 3: the bands follow each facing's share. 4: the craft's colour moves from green through amber to red. 5: that arc blinks red. 6: the same display where gauge 3 (the shield needle) used to be, with a thin ring around it. 7: `ship_status` is one of the instruments and can be moved. |
+
+### MT-6-18 — Ship status display: X-COM cockpits A, B and C
+
+| Field | |
+|---|---|
+| Preconditions | App 0.15.1 or later; the player's data. |
+| Steps | 1. Fly an `interceptor` scenario in the Lightning (cockpit A), cockpit view; look at the round ship display in the art. 2. The same in the Firestar (B) and the Avenger (C). 3. Take shield and hull damage. 4. Where the display sits off-centre, press F12, move `ship_status` onto the art's display, save; restart and check. |
+| Expected | 1 – 2: the craft and its arcs sit inside the art's round display, centred, not spilling onto the panel around it (placed by eye: note any offset in pixels). 3: as MT-6-17. 4: the saved addon moves it; report the corrected rectangles so the pack's values can be updated. Gauges 1 – 4 still work. |
+
+### MT-6-19 — Main menu: long option values fit
+
+| Field | |
+|---|---|
+| Preconditions | App 0.14.2 or later; the player's data, so both campaigns are available. A small window for step 3. |
+| Steps | 1. Main menu › Options; step the Campaign row to the X-COM campaign. 2. Step through the other rows. 3. Make the window small and look again. 4. The launcher's campaign line. |
+| Expected | 1: the value reads *X-COM: Interceptor* (no *(original data)* suffix) and fits beside its label, drawn smaller if needed, never over the label. 2: short values keep the normal size. 3: a long value shrinks, but never below half size; it stays legible. 4: the campaign is named *X-COM: Interceptor*. |
+
+### MT-6-20 — Screen layouts: moving the strategy screen's widgets
+
+| Field | |
+|---|---|
+| Preconditions | App 0.16.0 or later. A test addon `mods/default-layout/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `rules/screens.yaml`: `screens: {starmap: {widgets: {map: [482, 52, 790, 660], nav: [8, 52, 466, 72], info: [8, 132, 466, 212], panel: [8, 352, 466, 360]}}}`. |
+| Steps | 1. Open the default campaign's strategy screen. 2. Use the map, the lists and a prompt. 3. Change the addon to name a widget `radar`; run `--check`. 4. Change `map` to three numbers; run `--check`. 5. Remove the addon. |
+| Expected | 1: the map on the right and the list buttons, info and list panels on the left; the top bar unchanged. 2: everything works as in MT-4-29 – MT-4-34 in the new places (clicks land on what is drawn). 3: an error naming the file and *widgets.radar: not one of top, map, nav, info, panel*. 4: *widgets.map: expected [x, y, w, h]*. 5: the engine's layout again. |

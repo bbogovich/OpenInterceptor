@@ -8,8 +8,10 @@ keys and gamepad buttons is on the [controls reference](../reference/original-ga
 
 Press **`?`** (Shift + `/`) in flight — or **Shift+F1** — to see every key. The battle pauses
 under a panel titled **KEYS** that lists every action, grouped, with **your current bindings**:
-keys first, then gamepad buttons (`pad A`), or "unbound" if the action has none. On a small
-window the list runs over several columns.
+keys first, then gamepad buttons (`pad A`), or "unbound" if the action has none. Since app
+0.15.1 each action also has a one-sentence **description** of what it does, in a dimmer line
+beneath it when the window is wide enough for it; on a smaller window the list falls back to one
+line per action, in several columns if needed.
 
 Press `?`, Shift+F1 or **Esc** to close it; the battle resumes. The pause menu (Esc) has a line
 pointing to it.

@@ -83,6 +83,9 @@ target/release/openinterceptor --no-original --strategy
 # Go straight to one mission (or scenario) with one ship:
 target/release/openinterceptor --no-original --mission defend_station --ship comet
 
+# How long each playable ship needs to destroy each class (shields, armour, hull, dps):
+target/release/openinterceptor --no-original --balance --difficulty captain
+
 # Play a mission headless with the AI pilot and print the result:
 target/release/openinterceptor --no-original --soak defend_station --soak-pilot ai --seconds 400
 
@@ -137,6 +140,7 @@ scripts/check.sh
 | `--screenshot <PNG>` | With `--scenario` or `--model`: render the starting screen for `--frames` frames, save it as a PNG and exit. |
 | `--frames <N>` | Frames to run before `--screenshot` (default 120). |
 | `--check` | Validate all content without a window, then exit (status 1 on errors). Every campaign is checked separately, with its own addons; `--campaign` checks one. |
+| `--balance` | Print a balance report and exit (app 0.15.0): for every class of the campaign at the difficulty level — shield per facing, armour, hull, effective hit points against beams from one side (the three added up), and sustained beam damage per second (limited by its energy recharge) — and, for each playable ship, the **seconds of perfect beam fire** it needs to destroy that class. Real fights take longer (bolts miss, shields recharge); compare the ratios. Use with `--campaign` and `--difficulty`. |
 | `--soak <SCENARIO or MISSION>` | Play a scenario — or a mission, which then prints its result (`soak mission <id> (<level>, <pilot>): <result> after <n> s; <k> kills`) — without a window for `--seconds` (default 60) and report what happened to the player's ship (balance testing); the player is `--soak-pilot passive` (default: flies at the nearest enemy and never shoots), `ai` (its class's behaviour) or `idle` (sits still and does nothing: how long a defended object holds on its own). Use with `--ship`, `--campaign`, `--difficulty`. |
 | `--language <CODE>` | Text language: the packs' `text/<CODE>/` folders (default `en`, or `settings.yaml` `game.language`). |
 | `--write-schemas <DIR>` | Write the JSON Schema files of the mod file types (`pack.schema.json`, `rules.schema.json`, `scenario.schema.json`) for editor completion and checking, then exit. |

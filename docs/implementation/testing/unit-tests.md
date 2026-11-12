@@ -8,6 +8,23 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**At main `ac7ae62` (app 0.16.0)** a count of the `#[test]` functions in `src/` (grep, not a
+build) gives **394** run on macOS (397 less the Linux-only test and two ignored helpers). The 9
+added since `16a9954`: app **0.15.0** (`1ff754b`)
+`balance::tests::energy_limits_sustained_fire_and_kill_times_follow` (and
+`app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only` now checks
+fitted shields and armour); main `bb04952` (#6, app 0.15.1)
+`input::tests::every_action_has_a_one_sentence_description`,
+`remote::protocol::tests::the_idle_catalogue_lists_every_action_with_its_description_and_all_available`,
+`app::flight::tests::the_keys_help_shows_descriptions_only_when_the_columns_are_wide_enough`;
+app **0.15.1** (`bf963b4`) `hud::draw::tests::ship_status_bands_follow_thirds_of_the_shield`;
+app **0.16.0** (`ac7ae62`) `app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words`,
+`lists_keep_the_selection_in_view`, `grids_and_hits`,
+`content::screens::tests::a_layout_moves_only_what_it_names`. App 0.14.2 (`dcf9563`) added none.
+**Not unit-tested:** `menu::fit_size`, `fitted:` on ship classes, `strategy::protection_of`, the
+`HP1` – `HP4` hull sum, and the strategy screen's own logic (picking, zoom about the cursor,
+the info panel's actions) — covered by manual tests MT-4-29 – MT-4-37 and MT-6-19.
+
 **At main `16a9954` (app 0.14.1)** the count is **385** run on macOS: added
 `sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage` (a cutscene's `harmless` ship's
 bolts land but change neither shields, armour nor hull).
@@ -176,6 +193,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `app::comms` | 1 | The panel lasts the clip plus 0.6 s, at least 2.5 s; the signal bars move and stay in range (app 0.13.1) |
 | `formats::png` | 2 | A PNG (encoded by the `image` crate since `2ed1149`) has the signature and chunks and **decodes back to the same pixels**; downscaling averages blocks |
 | `app::strategy` | 2 | The map fits its rectangle, centred; money has thousands separators |
+| `app::widgets` | 3 | Word wrapping between words (a giant word cut, newlines kept); **lists keep the selection in view** (step, scroll to the last screenful, a shrinking list pulls the selection in, an empty list does nothing); grid cells and hit tests (the far edge is outside) — app 0.16.0 |
+| `content::screens` | 1 | **A layout moves only the widgets it names**; an unknown widget is an error — app 0.16.0 |
 | `content::mission` | 2 | A full mission parses (roles, class lists, counts, arrivals, waves, objectives, optional, timer, outcomes, chatter, debrief); mistakes are reported with where (unknown role, bad timer result, unknown action) |
 | `content::text` | 1 | Keys resolve, plain values pass through, imports are listed |
 | `content::schema` | 4 | Good files pass; **mistakes reported with line and key path** (unknown key with suggestion, wrong type, bad unit); quantities with units and did-you-mean suggestions; JSON Schema export well formed |
@@ -199,7 +218,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `script::battle` | 1 | Query ids match the table; role names are checked names |
 | `script::action` | 2 | Actions parse and are checked (names, argument kinds, battle or campaign scope); **a text argument keeps its commas** (app 0.10.1) |
 | `sim::collision` | 3 | Segment–sphere, segment–triangle, shapes with meshes in model space and the broad phase |
-| `input` | 14 | **The keys help lists every action with its current keys**, Original default layout incl. brake, **power and equipment keys**, one-shot commands and Shift chords, **a Shift chord does not trigger the plain held key**, gamepad sticks/buttons/presses and dead zone, **pad modifier layer reaches every power control**, **every action reachable from the keyboard and flight actions from the pad**, **stick layouts and mouse inversion**, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing |
+| `input` | 15 | **The keys help lists every action with its current keys**, Original default layout incl. brake, **power and equipment keys**, one-shot commands and Shift chords, **a Shift chord does not trigger the plain held key**, gamepad sticks/buttons/presses and dead zone, **pad modifier layer reaches every power control**, **every action reachable from the keyboard and flight actions from the pad**, **stick layouts and mouse inversion**, mouse flight, chase keys, bindings.ini override and round trip, view names, chord parsing; **every action has a one-sentence description** (app 0.15.1) |
 | `input::editor` | 5 | Rows grouped with headers skipped, capturing a key rebinds and takes it from other actions, capturing plain pad presses and chords, clear / reset / settings, pretty names |
 | `input::gamepad` | 2 | Button names and bits round trip, axis normalisation |
 | `render` | 4 | Billboard and streak geometry, colour helpers, overlay depth bias pasted into the shader; **uniforms shared by both lit shaders match exactly, with an explicit precision** (the `Light` link fix, 0.4.1) |
@@ -210,12 +229,12 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `render::terrain` | 2 | Terrain meshes face up (counter-clockwise from above) and are coloured from low to high by height (the X-mirrored mesh too); **every placed horizon tile matches the folded ground height** |
 | `hud` | 7 | Layout fitting any design space (4:3 and widescreen), radar placement (front/rear, mirroring), gauges, MFD pages (incl. Systems), **power readout and system lamps**, message expiry; **the message log reports what is new since a count** (the console's events, kept-lines limit) |
 | `hud::layout` | 4 | Anchor corners lie on the surface with world up; rays pick the nearest surface; 2D dragging and anchor scaling; saved layouts are valid rules |
-| `hud::draw` | 4 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second**; **the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch** |
+| `hud::draw` | 5 | Lamp grids follow the panel shape; shield rings go green, amber, red, then blink; **drift reads signed whole metres per second**; **the pitch ladder sits ahead at its angles, the horizon level whatever the camera's pitch**; **the ship status display lights one band per third of a shield, and its hull tint runs green to red** (app 0.15.1) |
 | `hud::glyphs` | 1 | Text sizes snap down onto the glyph ladder |
 | `audio` | 3 | Distance attenuation, event → sound and volume choices (incl. `system_damage`, switch sounds, `hyperspace`); **music segments cycle within the wanted state** and a missing state plays cruise (app 0.11.0) |
 | `app::assets` | 2 | Tab cycling; empty lists without original data |
 | `app::devices` | 2 | Key names match the bindings vocabulary |
-| `app::flight` | 9 | Camera pose for every view, **3D cockpit field of view widens only on narrow screens**, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), **a wingman answers in its own voice** (only the player's wingmen, only with the line, never the lost one); **a campaign loadout refits the player's class in this battle only**; **the debrief waits for the delay after the result**; **campaign stances decide who fights whom** (app 0.10.3) |
+| `app::flight` | 10 | Camera pose for every view, **3D cockpit field of view widens only on narrow screens**, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), **a wingman answers in its own voice** (only the player's wingmen, only with the line, never the lost one); **a campaign loadout refits the player's class in this battle only**; **the debrief waits for the delay after the result**; **campaign stances decide who fights whom** (app 0.10.3); **the keys overlay shows descriptions only when its columns are wide enough** (app 0.15.1); a campaign loadout also sets fitted shields and armour (0.15.0) |
 | `app::simulator` | 2 | **A setup changes only the environment, hazards and enemy force** (the defaults change nothing; enemies ×2, friends unchanged, never below one); **ships that cannot enter an atmosphere are refused there** |
 | `app::launcher` | 3 | Menu entries (viewer, asset browser, controls, simulator, scenarios; starting on the first scenario) and wrapping, ship choice only when choosing, **next campaign**, text wrapping |
 | `app::viewer` | 9 | Orbit pose and clamping, entries for every class, wheel steps, **display-mode cycle, fitted near plane, face info line, finding a model by ship id or mesh name**; **looks cover damage levels, states and debris** |
@@ -226,9 +245,10 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `remote::ws` | 3 | **SHA-1 and base64 match the published vectors** (FIPS 180 and RFC 4648; the RFC 6455 handshake example), masked frames decode (the RFC 6455 §5.7 examples), partial frames wait for more bytes, back-to-back frames, 16-bit lengths, unmasked server frames with 16- and 64-bit lengths; **protocol violations are errors** (unmasked, unknown opcode, too large) |
 | `remote::json` | 3 | Objects, arrays, strings with escapes, numbers with exponents; **bad and hostile input is an error** (unclosed, trailing commas, trailing text, nesting deeper than 32); the writer's compact objects (numbers to 3 decimals, NaN as `null`) parse back |
 | `remote::http` | 3 | A WebSocket upgrade parses and the parser waits for the blank line; bad requests are errors (incl. an oversized head) and responses are well formed; **byte ranges are served as `206 Partial Content`** (`a-b`, `a-`, `-n`, clamped end; no range or out of range gives the whole file with `Accept-Ranges`) |
-| `remote::protocol` | 6 | Console messages decode (incl. `power`), unknown actions and types are refused, throttle clamped; **the catalogue lists every action and marks missing equipment unavailable**; **telemetry reports drift in body axes and the target's rotation relative to the player**; **`model` messages are normalised to radius 1 with a colour per group** (average colour ignores transparent pixels); **`contacts` are in the player's axes** (a craft dead ahead after a 90° yaw), relation and target flag, and `target {id}` decodes (bad ids refused); `event`; **themes layer per cockpit and become CSS variables** (cockpit override over the base, `--font`, `--corner`, an empty theme sends none) |
+| `remote::protocol` | 7 | Console messages decode (incl. `power`), unknown actions and types are refused, throttle clamped; **the catalogue lists every action and marks missing equipment unavailable**; **telemetry reports drift in body axes and the target's rotation relative to the player**; **`model` messages are normalised to radius 1 with a colour per group** (average colour ignores transparent pixels); **`contacts` are in the player's axes** (a craft dead ahead after a 90° yaw), relation and target flag, and `target {id}` decodes (bad ids refused); `event`; **themes layer per cockpit and become CSS variables** (cockpit override over the base, `--font`, `--corner`, an empty theme sends none); **the idle catalogue lists every action with its description, all available** (app 0.15.1) |
 | `remote::server` | 3 | **Only local-network peers are served** (IPv4 private, link-local, loopback; IPv6 loopback, unique-local, link-local, IPv4-mapped); pairing codes are six digits and vary with the seed; **end to end over a real localhost socket**: page served, 404, handshake accept key, unpaired action dropped, wrong code denied, pairing, action relayed, broadcast received; **`welcome` answered at once by the server** (0.4.7). Plus one ignored helper, `serve_for_a_browser` (not counted) |
 | `soak` | 2 | The default campaign's difficulty scales enemy lethality (headless battle runs); **at cadet an undefended station holds for 150 s** (idle pilot) |
+| `balance` | 1 | **Energy limits sustained fire**, and kill times follow effective hit points — app 0.15.0 |
 
 ## Test names
 

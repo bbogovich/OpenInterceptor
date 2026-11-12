@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.17.0
 status: current
 updated: 2026-11-11
 ---
@@ -109,7 +109,7 @@ released.
 |---|---|---|
 | `welcome` | Right code: from the server at once with `version` only; during a battle the flight screen sends it again with `campaign` | `version` (1), `campaign` (the active campaign's id, empty if none; flight screen only). |
 | `denied` | Wrong code | `reason` (`"wrong pairing code"`). |
-| `catalogue` | After `welcome`; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with **every action marked available**, since there is no craft yet; the battle sends the real one when it starts | `groups`: `[{id, title}]` in menu order (`flight`, `throttle`, `weapons`, `targeting`, `power`, `wingmen`, `views`, `camera`, `interface`). `actions`: `[{name, group, label, kind, available}]` for **every** action of the catalogue (R-CON-007): `name` as in `bindings.yaml`, `group` one of the ids above, `label` the display name, `kind` `"hold"` or `"tap"`, `available` false when the craft has no equipment for it (R-CON-019). |
+| `catalogue` | After `welcome`; again whenever the player's craft class changes. Outside a battle (the launcher) a catalogue with **every action marked available**, since there is no craft yet; the battle sends the real one when it starts | `groups`: `[{id, title}]` in menu order (`flight`, `throttle`, `weapons`, `targeting`, `power`, `wingmen`, `views`, `camera`, `interface`). `actions`: `[{name, group, label, description, kind, available}]` for **every** action of the catalogue (R-CON-007): `name` as in `bindings.yaml`, `group` one of the ids above, `label` the display name (the button text), `description` one player-facing sentence on what the action does (since app 0.15.1; the page shows it under the label), `kind` `"hold"` or `"tap"`, `available` false when the craft has no equipment for it (R-CON-019). |
 | `telemetry` | **20 Hz** while paired in a battle; **twice a second** outside one | See below. Outside a battle: `{alive: false, state}` only, with `state` the screen (`"launcher"`). |
 | `theme` | On pairing (the campaign's base theme, from the launcher); in a battle with each `catalogue` (the base with the craft's cockpit layered on) | `vars`: an object of CSS custom properties: `--bg`, `--panel`, `--line`, `--ink`, `--dim`, `--hot`, `--warn`, `--danger`, `--off` as `#rrggbb`; `--font` (a CSS font list); `--corner` (e.g. `"2px"`). Only what the theme sets is sent; `vars: {}` means the page's own look. See [Theme](#theme). |
 | `model` | When the target's class changes, and again when a tablet pairs | `name` (class name), `groups: [{color, positions, indices, uvs?, texture?}]`. See [Model](#model). |
@@ -252,7 +252,6 @@ lock)* or *tap the screen to keep it awake*.
   run. Whether it should change after a pairing, or time out, is open.
 - A client name and protocol version in `hello` (version 1 sends neither); how a version
   mismatch is reported.
-- A per-action description in `catalogue` (R-CON-007): version 1 sends the label only.
 - Line framing and the message subset for the serial transport.
 - Theme images (frames, backgrounds): version 1 themes are colours, a font and a corner radius.
 
@@ -266,3 +265,4 @@ lock)* or *tap the screen to keep it awake*.
 | 1.7.0 | 2026-11-11 | Pairing fix (app 0.4.7): the server sends `welcome {version}` at once; the flight screen's `welcome {version, campaign}`; the launcher's catalogue (every action available) and idle `telemetry {alive: false, state}` twice a second; `?code=` in the address; the page shows the console on `welcome`. Keeping the tablet awake (app 0.4.8): wake lock or the `keepawake.mp4` clip; files served with HTTP ranges. `telemetry` gains `hits` and `hull_hits` (app 0.4.9) |
 | 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b as built: `power {beam, shield, balance}` (app 0.4.11); `model {name, groups:[{color, positions, indices}]}` with the 3000-triangle LOD budget, radius 1, no textures (0.4.14); `contacts {range, list}` at 5 Hz in the player's axes, `event {text}` from the message log and `target {id}` (0.4.15); `theme {vars}` as CSS variables, sent on pairing and with each catalogue (0.5.0). Session diagram updated; *Messages still planned* replaced by *Still planned* (serial, nav points); open items revised |
 | 1.13.0 | 2026-11-11 | `model`: textured groups carry `texture` (a PNG data URL, at most 128 px) and `uvs` (app 0.6.7, from user feedback) |
+| 1.17.0 | 2026-11-11 | `catalogue`: each action gains `description`, one sentence shown under its button (main `bb04952`, app 0.15.1, #6); the open item on descriptions removed. The version stays 1: a page that does not know the field ignores it |

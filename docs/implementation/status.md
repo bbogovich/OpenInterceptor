@@ -8,9 +8,9 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [1 Flight simulator](plan/stage-1-flight.md) | **Done** — signed off by the developer's playtest on 2026-11-10 (build 0.2.1) | See the checklist below |
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
 | [3 Missions, environments and conditions](plan/stage-3-missions.md) | **In progress** — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later); hazards in **0.5.1**; environments, atmospheric flight, terrain and the atmosphere HUD in **0.6.0**; ground installations in **0.6.1**; radio voices in **0.6.2**; the simulator in **0.6.3**; five default missions in **0.6.4**; all 26 `interceptor` mission types in **0.6.5**; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in **0.6.7**; the battle runs on after its result in **0.7.4**. Tier 2 scripting evaluated, awaiting the user's decision | See [Stage 3 progress](#stage-3-progress) below |
-| [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**; playtest changes (nebula, bulbous fighters, dreadnought) in **0.9.1**; flown supply-convoy battles in **0.9.2**. 4.1 and 4.11 done; 4.12 done as derived (not play-tested); 4.2 – 4.10, 4.13 – 4.17 partial | See [Stage 4 progress](#stage-4-progress) below |
+| [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**; playtest changes (nebula, bulbous fighters, dreadnought) in **0.9.1**; flown supply-convoy battles in **0.9.2**; fitted shields and armour and `--balance` in **0.15.0**; the strategy screen rebuilt for the mouse in **0.16.0**. 4.1 and 4.11 done; 4.12 done as derived (not play-tested); 4.2 – 4.10, 4.13 – 4.17 partial | See [Stage 4 progress](#stage-4-progress) below |
 | [5 Campaigns](plan/stage-5-campaign.md) | **In progress** — the story core in **0.10.0**; the default campaign's serial in **0.10.1**; the X-COM Doomsday arc in **0.10.2**; relations in battle and the year soak in **0.10.3**. 5.1, 5.2, 5.6 (engine), 5.7 done; 5.3 – 5.5, 5.8, 5.9 partial; 5.10, 5.11 and the testbed tools not started; no play-through yet | See [Stage 5 progress](#stage-5-progress) below |
-| [6 Presentation](plan/stage-6-presentation.md) | **In progress** — fixes from the docs review in **0.14.1**; interactive music in **0.11.0**; skins in **0.11.1** and title cards; the Smacker decoder and player in **0.12.0**; volumes and the relation fix in **0.12.1**; endings' films; MD2 cutscenes in **0.13.0** and the X-COM opening film; MPSRC packs and the comms panel in **0.13.1**; the main menu and credits in **0.14.0**. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms), 6.8 and MD2 partial; 6.5, 6.7, MD3 not started; no manual pass yet | See [Stage 6 progress](#stage-6-progress) below |
+| [6 Presentation](plan/stage-6-presentation.md) | **In progress** — fixes from the docs review in **0.14.1**; interactive music in **0.11.0**; skins in **0.11.1** and title cards; the Smacker decoder and player in **0.12.0**; volumes and the relation fix in **0.12.1**; endings' films; MD2 cutscenes in **0.13.0** and the X-COM opening film; MPSRC packs and the comms panel in **0.13.1**; the main menu and credits in **0.14.0**; menu values that fit in **0.14.2**; the ship status display in **0.15.1**; screen layouts and widgets in **0.16.0**. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms, ship status), 6.8 and MD2 partial; 6.5, 6.7, MD3 not started; no manual pass yet | See [Stage 6 progress](#stage-6-progress) below |
 | [7 Modding toolkit and Remastered](plan/stage-7-modding.md) | Not started | |
 | [8 Platforms and release](plan/stage-8-release.md) | Not started | |
 
@@ -178,8 +178,10 @@ strategy layer and the strategy screen), **0.7.2** (`94d66c1`, fitting), **0.7.3
 (`c64d178`, the `interceptor` strategy layer from the player's data), **0.8.1** (`8e96338`, testbed
 cheats), **0.9.0** (`ff9d8fc`, logistics and two fixes), main `2ed1149` (PNG encoding through
 the `image` crate), **0.9.1** (`3b19dea`, playtest changes) and **0.9.2** (`0d1c522`, `146195b`,
-flown supply-convoy battles). At `2ed1149`, **355 unit tests** on macOS by a count of the
-sources; at `76bda5c` (app 0.10.3), **366** ([Unit tests](testing/unit-tests.md)).
+flown supply-convoy battles), **0.15.0** (`1ff754b`, durability: fitted shields and armour,
+`--balance`) and **0.16.0** (`ac7ae62`, the strategy screen rebuilt). At `2ed1149`, **355 unit
+tests** on macOS by a count of the sources; at `76bda5c` (app 0.10.3), **366**; at `ac7ae62` (app
+0.16.0), **394** ([Unit tests](testing/unit-tests.md)).
 
 | Item | Status | Where |
 |---|---|---|
@@ -191,6 +193,9 @@ sources; at `76bda5c` (app 0.10.3), **366** ([Unit tests](testing/unit-tests.md)
 | Default campaign strategy data (4.13) | **Partial** (0.7.1; logistics data 0.9.0) | `resources/default/strategy/` |
 | Strategy screen (4.10), launcher entries, `--strategy`, `Next::CampaignBattle` / `Next::Strategy`; the Supply tab and map markers (0.9.0) | **Partial** (0.7.1, 0.9.0; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18 not yet run) | `src/app/strategy.rs`, `src/app/mod.rs`, `src/app/launcher.rs`, `src/app/flight.rs`, `src/cli.rs` |
 | Fitting (4.7) | **Done** for best-available fitting (0.7.2; MT-4-12 not yet run) | `src/campaign/mod.rs`, `src/app/flight.rs` |
+| **Durability** (0.15.0, playtest: things died too easily): item `protection` and `strategy::protection_of`; the `Loadout` struct carrying a fitted shield and armour into battle; `fitted: {shield, armor}` on ship classes (`rules::apply_fitted`); X-COM hulls with one shield and one armour slot, X-COM classes' protection and stations' hulls from the player's data (DEV-056); the default campaign's fighters ×4, capital ships, stations and installations ×3 | **Done** (MT-4-35 – MT-4-37 not yet run). No unit test of `fitted:`, `protection_of` or the `HP1` – `HP4` sum | `src/content/strategy.rs`, `src/content/rules.rs`, `src/campaign/mod.rs`, `src/app/flight.rs`, `packs/interceptor/`, `resources/default/rules/` |
+| `--balance` report (0.15.0) | **Done** (MT-4-36 not yet run) | `src/balance.rs`, `src/cli.rs`, `src/main.rs` |
+| **Strategy screen rebuilt** (0.16.0, playtest: displayed but not usable): top bar with buttons, map zoom / pan / pick / hover / legend, info panel with actions, scrolling lists with per-row buttons and double click, modal prompts; layout from `screens.starmap`, stretched to the window | **Done** (MT-4-29 – MT-4-34 not yet run). The screen itself has no unit test; the widgets' arithmetic does | `src/app/strategy.rs`, `src/app/widgets.rs`, `src/content/screens.rs` |
 | Lane travel (4.2) | **Done** (0.7.3; MT-4-11 not yet run) | `src/campaign/mod.rs`, `src/app/strategy.rs` |
 | `interceptor` strategy data (4.12): the tech-id table and inherit references generated from the player's files; the authored campaign with every estimate `DERIVED` | **Done as derived** (0.8.0; **not play-tested**; MT-4-22, MT-4-23 not yet run). Six-month soak: 4 of 71 topics on one downlink | `tools/interceptor_strategy.py`, `packs/interceptor/strategy/` |
 | Logistics data (4.14, 4.17): resources, components, recipes, facility types, research sites, deposits, features, hull components, station-only topics, supply settings | **Done** (0.9.0) | `src/content/logistics.rs`, `resources/default/strategy/logistics.yaml` |
@@ -209,6 +214,9 @@ not compared; generated maps still have no unit test; no unit test round-trips a
 logistics in flight. **Also open**: mission outcomes' `relation`, `capture` and cargo actions are
 still ignored (story events' `relation` works since app 0.10.0); texts in the strategy files are plain English (DEV-047); the screen is functional and plain
 (Stage 6). The two known issues of the last pass (manufacture free; `salvaged` by name) are fixed.
+Since app 0.16.0 the screen is usable with the mouse; still open there: separate screens per
+list, the 3D base view, a report screen, the briefing; the `app::strategy` module doc still
+describes the 0.7.1 layout (a code-comment fix for the next code change).
 
 **Exit** of Stage 4 (both campaigns run 6 months; save/load round trips; a manual long run): both
 strategy layers run six months headless (`--strategy-soak 180`: `default` 12 of 14 topics,
@@ -267,8 +275,19 @@ missiles hit but do no damage, `World::harmless`); films' sound follows the effe
 pack-path video is found in any pack, latest first; `campaign.intro` naming no cutscene is a load
 error; the default music WAVs are committed. **385 unit tests** on macOS at `16a9954`.
 
-**Gaps** (at main `16a9954`): 6.5, 6.7 (the X-COM wrapper screens — the `WrappersDLL` layouts
+**App 0.14.2 – 0.16.0** (main `dcf9563`, `bf963b4`, `bb04952`, `cb4db01`, `ac7ae62`). **394 unit
+tests** on macOS at `ac7ae62` by a count of the sources.
+
+| Item | Status | Where |
+|---|---|---|
+| 6.1 Menu option values shrink to fit (`menu::fit_size`, never below half); the `interceptor` pack named *X-COM: Interceptor*; `check.sh` allows `resources/default/music/` | **Done** (0.14.2; MT-6-19 not yet run). `fit_size` has no unit test | `src/app/menu.rs`, `packs/interceptor/pack.yaml`, `scripts/check.sh` |
+| 6.6 Ship status display (`ship_status`; R-HUD-005, a user request): X-COM A – C (by eye), the default cockpit and glass HUD in place of gauge 3 | **Done** (0.15.1; MT-6-17, MT-6-18 not yet run) | `src/hud/draw.rs`, `src/hud/mod.rs`, `packs/interceptor/rules/cockpits.yaml`, `resources/default/` |
+| Console: action descriptions in the catalogue, the tablet and the keys overlay (#6, R-CON-007) | **Done** (0.15.1; MT-3-65 not yet run) | `src/input/mod.rs`, `src/remote/protocol.rs`, `src/app/flight.rs`, `web/console/` |
+| 6.1 Screen layouts (`screens.<id>`, `content::screens`) and widgets (`app::widgets`) | **Partial** (0.16.0; MT-6-20, MT-4-29 – MT-4-34 not yet run): only `starmap` is laid out; `background` is not drawn | `src/content/screens.rs`, `src/app/widgets.rs`, `src/app/strategy.rs` |
+
+**Gaps** (at main `16a9954`, updated at `ac7ae62`): 6.5, 6.7 (the X-COM wrapper screens — the `WrappersDLL` layouts
 are not mapped), MD3 (OS video frameworks; needs the dependency/FFI evaluation first); the rest
 of the cutscene format, including translatable captions and `harmless` per action;
 `play_cutscene` ids checked only when they play; X-COM talking-head mapping; a stance change
-from a mission outcome does not stop the clock. No Stage 6 manual test has been run.
+from a mission outcome does not stop the clock; screen layouts for the screens other than the
+strategy screen, and custom cockpit instruments bound to queries. No Stage 6 manual test has been run.

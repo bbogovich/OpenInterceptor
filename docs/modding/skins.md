@@ -15,11 +15,17 @@ through it: [Architecture › Presentation › Skins](../implementation/architec
 |---|---|
 | Main menu (app 0.14.0) | Title, subtitle, the item list in a panel, the selection bar; the credits roll's headings. |
 | Launcher | Background, title and every line of text, the selection bar, hints. |
-| Strategy screen | Background, the map frame and the tab panel (nine-slice panels), tabs, rows and the selection bar, the top line, the banner, **title cards**. |
+| Strategy screen | Background, the top bar, the map frame, the info panel and the list panel (nine-slice panels), buttons, rows and the selection bar, the legend and hover label, the modal prompts and **title cards**. |
+
+Since app 0.16.0 the strategy screen's buttons, lists, info panel and prompts are drawn in the
+skin too: prompts and panels use the nine-slice frame; buttons are filled with the `panel`
+colour (`highlight` under the mouse) and outlined in `border`; the selected row is `highlight`,
+the current list and clock speed are outlined in `accent`. **Where** the strategy screen's parts go is a separate
+section, the screen layout ([Screen layouts](screens.md)).
 
 Not skinned yet: the cockpit and HUD (cockpits have their own art), the viewer, the asset
-browser, the controls menu and the simulator setup. The design's screen layouts (design spaces,
-buttons, custom panels) are not built ([below](#not-built-yet)).
+browser, the controls menu and the simulator setup. Custom panels bound to queries are not built
+([below](#not-built-yet)).
 
 ## The colours
 
@@ -139,13 +145,15 @@ font whose licence allows redistribution with your pack. A font or panel image t
 load is reported on standard error (`skin <id>: font: …`, `skin <id>: panel: …`) and left out:
 the screens still draw, with colours and the built-in font.
 
-Note that the strategy screen fits its rows by a character count tuned for the built-in font;
-a much wider font may cut long rows short.
+The strategy screen clips each list row to its width by measuring it in the skin's font (app
+0.16.0) and shows the selected row in full beneath the list, so a wide font costs only room.
 
 ## Not built yet
 
-- Screen layouts as data (`screens:` with design spaces, widgets, backgrounds and custom panels
-  bound to queries), buttons with hover images, skin sounds, several fonts per skin.
+- Custom panels bound to queries, buttons with hover images, skin sounds, several fonts per
+  skin. Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
+- Main menu option values too long for their room are drawn smaller (down to half size, app
+  0.14.2), not wrapped.
 - A load/save screen (one save per campaign, through *Continue*); a graphics options page.
 - The `interceptor` wrapper screens at 640 × 480 (6.7).
 

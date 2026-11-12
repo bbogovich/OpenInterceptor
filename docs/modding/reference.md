@@ -40,7 +40,7 @@ may also use `inherit`, `delete: true`, `variants: {<level>: {…}}` and list ed
 
 Top-level sections: `factions`, `beams`, `missiles`, `ships`, `objects`, `systems`, `cockpits`,
 `behaviours`, `modelsets`, `debris`, `effects`, `voices`, `environments`, `terrains`, `formations`,
-`missions`, and since app 0.11.0 – 0.11.1 `music` and `skins` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `audio`, `console`,
+`missions`, and since app 0.11.0 – 0.11.1 `music` and `skins` and since app 0.16.0 `screens` (definitions by id), and `flight`, `power`, `damage`, `sounds`, `audio`, `console`,
 `campaign` (global). The **strategy layer** adds the definitions `maps`, `star_classes`, `research`,
 `items`, `hulls`, `base_modules`, `base_types`, `raids`, `incomes`, `expenses` and the globals
 `start`, `research_model`, `pilots`, `scores`, `flags`, `economy`, `tech_ids` (app 0.8.0), by
@@ -117,9 +117,10 @@ The same keys; `objects` defaults to `kind: station`.
 | `playable` | bool | `false` | The player may fly it (offered in the launcher). |
 | `cockpit` | id | none | Cockpit for the player's view; without one, glass instruments. |
 | `voice` | id | none | The [radio voice set](#voices) its pilot speaks with (app 0.6.2). An unknown set is an error; without one the pilot is silent. |
-| `hit_points` | number | 100 | Hull points. |
+| `hit_points` | number | 100 | Hull points. A class inheriting an original station's hit-point chart (`HP1` – `HP4`, no `HitPoints`) gets the four summed (app 0.15.0, *derived*). |
 | `armor` | number | 0 | Armour points, absorbed after shields. |
 | `shields` | number | 0 | Shield points per facing (fore and aft). |
+| `fitted` | `{shield, armor}` | none | The equipment the class carries by default (app 0.15.0): each a reference to a definition with a protection value — an `original:` section such as `original:GameSettings.ini/ShieldType1`, read by its `Special` key (shields) or `HitPoints` key (armour). Its protection fills `shields` / `armor` **unless the class has them already** — set by itself or by what it inherits. A key other than `shield` or `armor`, or a reference with no protection value, is a load error. A campaign craft's own fit replaces both in battle ([Strategy layer › items](strategy.md#items-and-hulls)). |
 | `shield_recharge` | number | 5 | Shield points per second per facing at full charge. |
 | `max_speed` | number | 400 | Top speed, m/s (0 for static kinds). |
 | `acceleration` | number | 150 | m/s². |
@@ -172,7 +173,7 @@ Built-in values per kind: [Rulesets](rulesets.md#ship-systems-and-equipment).
 | `model` | asset | none | 3D cockpit model around the pilot's eye. |
 | `model_offset` | 3 numbers | 0, 0, 0 | Metres from the eye: x right, y up, −z ahead. |
 | `model_scale` | number | 1 | Model units to metres. |
-| `instruments` | mapping name: `[x, y, w, h]` | — | Instrument rectangles in the design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`. |
+| `instruments` | mapping name: `[x, y, w, h]` | — | Instrument rectangles in the design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`, `status`, and since app 0.15.1 `ship_status` (the craft from above with its shield bands, [Cockpits › The ship status display](cockpits.md#the-ship-status-display)). |
 | `anchors` | mapping name: `{at, normal, size}` | none | 3D cockpits: instruments drawn in perspective on the model's surface (below). |
 | `wide` | `{blackout, color, from, left, right}` | none | Wide screens: the bands left and right of narrower 2D cockpit art. `blackout: true` fills them with `color` (default black), hiding the 3D view there; `from` (design-space y, default 0) starts them lower, e.g. at the dashboard's top so space still shows beside the canopy; `left`/`right` are your own images stretched over each band ([R-HUD-013](../specification/requirements/cockpit-hud.md#r-hud-013-wide-screen-side-bands)). |
 
@@ -369,6 +370,17 @@ section: `skins: {<skin id>: {…}}`; `campaign.skin` chooses one.
 | `panel.image` | asset | none | A nine-slice frame image for panels and title cards. |
 | `panel.slice` | number | 16 | Its corner size, pixels. |
 | `font` | asset | the built-in font | A TrueType font for every skinned text. |
+
+### `screens`
+
+Screen layouts (app 0.16.0; guide: [Screen layouts](screens.md)). A definition section:
+`screens: {<screen id>: {…}}`. Only `starmap` (the strategy screen) is laid out so far.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `design` | 2 numbers | 1280, 720 | The design space the rectangles are written in. It is stretched to the window. |
+| `background` | asset | none | An image over the whole design space. Parsed and checked, **not yet drawn**. |
+| `widgets` | mapping name: `[x, y, w, h]` | the engine's places | Where each widget goes, in the design space. `starmap`: `top`, `map`, `nav`, `info`, `panel`; another name is a load error. A widget left out keeps the engine's place. |
 
 ### `console`
 

@@ -141,6 +141,7 @@ nav:
       - "Controls": user-guide/controls.md
       - "Settings": user-guide/settings.md
       - "Tablet console": user-guide/console.md
+      - "Cockpit and HUD": user-guide/cockpit.md
       - "Simulator": user-guide/simulator.md
       - "Campaign": user-guide/campaign.md
   - "Modding":
@@ -158,6 +159,7 @@ nav:
       - "Radio voices": modding/voices.md
       - "Music": modding/music.md
       - "Skins": modding/skins.md
+      - "Screen layouts": modding/screens.md
       - "Cutscenes": modding/cutscenes.md
       - "Strategy layer": modding/strategy.md
       - "Story layer": modding/story.md
@@ -188,6 +190,7 @@ nav:
           - "Testing in Rust": learning/rust/testing.md
           - "Cargo": learning/rust/cargo.md
           - "Async and the macroquad loop": learning/rust/async-loop.md
+          - "Immediate-mode UI": learning/rust/immediate-mode-ui.md
       - "Best practices":
           - learning/best-practices/index.md
           - "Architectural design": learning/best-practices/architecture.md

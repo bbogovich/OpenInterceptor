@@ -1,5 +1,5 @@
 ---
-spec_version: 1.15.0
+spec_version: 1.17.0
 status: current
 updated: 2026-11-11
 ---
@@ -95,9 +95,12 @@ The asset browser MUST list original textures, images and sounds with pack overr
 
 - Implements: [F-TST-003](../../definition/testbed-tools.md#f-tst-003-headless-runs)
 - Status: implemented
-- Verified by: `soak::default_campaign_difficulty_scales_enemy_lethality`; MT-3-12
+- Verified by: `soak::default_campaign_difficulty_scales_enemy_lethality`; `balance::tests::energy_limits_sustained_fire_and_kill_times_follow`; MT-3-12, MT-4-36
 - Reverse-engineered: yes
-- See: [Missions (architecture)](../../implementation/architecture/mission.md)
+- See: [Missions (architecture)](../../implementation/architecture/mission.md), [Getting started › Command-line options](../../user-guide/getting-started.md#command-line-options)
+
+!!! note "As built (app 0.15.0, main `1ff754b`): `--balance`"
+    A static companion to `--soak`: `openinterceptor --balance` (with `--campaign` and `--difficulty`) prints, for every class at that difficulty, its shield (per facing), armour, hull, effective hit points against beams from one side (shield + armour + hull), its sustained beam damage per second (every mount at its rate of fire, cut back to what the energy recharge pays for), and the seconds of perfect beam fire each playable ship needs to destroy it (`src/balance.rs`). It answered the playtest finding that ships and stations fell too easily.
 
 ### R-TST-007 Screenshots
 
@@ -198,3 +201,4 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 | 1.12.0 | 2026-11-11 | R-TST-009 partly met (status stays planned): the mission browser is the simulator (app 0.6.3), the terrain sandbox is the simulator's environments and the surface scenarios; the condition console is not built |
 | 1.14.0 | 2026-11-11 | R-TST-010 partly met: the original's cheats and jump to battle on the strategy screen (app 0.8.1); R-TST-011 partly met: `--strategy-soak` (app 0.8.0) |
 | 1.15.0 | 2026-11-11 | R-TST-011: As-built note — the default campaign's year-long consistency soak (orphan references, monotonic arcs; app 0.10.3) and `--strategy-soak` reporting the story; the Open note narrowed to money accounting, an `interceptor` unit soak, battles from forces and logistics. R-TST-010: the event debugger and start-at-chapter still not built. No requirement text changed |
+| 1.17.0 | 2026-11-11 | R-TST-006 As-built note: `--balance`, a static report of protection, sustained beam damage and kill times (app 0.15.0) |

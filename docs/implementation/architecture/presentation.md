@@ -4,7 +4,8 @@
 in `src/content/skin.rs`, `src/content/cutscene.rs` and the voice sets of `src/content/rules.rs`.
 Plan: Stage 6.1 (skins, app 0.11.1), 6.8 (title cards), 6.3 (videos, app 0.12.0), MD2
 (cutscenes, app 0.13.0), 6.6 (the comms panel, app 0.13.1) and 6.2 (the main menu and credits,
-`src/app/menu.rs`, `src/app/credits.rs`, `src/content/front.rs`, app 0.14.0). Music is on
+`src/app/menu.rs`, `src/app/credits.rs`, `src/content/front.rs`, app 0.14.0), and the widgets
+and screen layouts (`src/app/widgets.rs`, `src/content/screens.rs`, app 0.16.0). Music is on
 [Audio](audio.md#music-app-0110); the Smacker decoder on [Formats](formats.md#smacker-formatssmacker).
 
 These are application-layer screens and helpers: they read `Content` and draw with macroquad,
@@ -165,6 +166,70 @@ still picture; no face, or a failure (printed once), is the signal graphic. `sig
 `app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves`. The name is the set's `name`
 (else its id) in capitals, or *COMMS* for a clip with no speaker.
 
+### Widgets and screen layouts (`app::widgets`, `content::screens`)
+
+*App 0.16.0, main `ac7ae62`.* The strategy screen is built from **immediate-mode** widgets: a
+screen calls `widgets::button(ui, input, rect, label, enabled)` every frame with where the
+button is and what it says, and the call draws it and returns whether it was clicked this frame.
+No widget objects live between frames, so there is nothing to keep in step with the campaign's
+own state: the rows, labels and enabled flags are recomputed from the campaign each frame. The
+little state that must persist — a list's scroll position and selected row — is a plain
+`ListView` the screen owns. ([Learn Rust › Immediate-mode UI](../../learning/rust/immediate-mode-ui.md)
+explains the pattern and why it suits Rust's borrowing rules.)
+
+| Widget | What it is |
+|---|---|
+| `Input::read()` | The frame's mouse position, left click, wheel, Enter and Esc, read once and passed to every widget — so a prompt can hand the screen beneath an empty `Input::default()` and the screen takes no input. |
+| `button`, `button_row`, `grid` | A button in the skin's colours (filled with `panel`, `highlight` under the mouse, outlined in `border`, centred text, `dim` when disabled); a row of buttons of one width; equal cells for a grid of buttons. |
+| `ListView {first, selected}`, `fit`, `scroll`, `step` | A list's scroll and selection: `step` moves the selection and scrolls just enough to keep it in view; `scroll` moves the view and clamps it to the last screenful; `fit` pulls both in when the list shrinks. |
+| `wrap(text, width, measure)` | Word wrapping by a measuring function (a giant word is cut; newlines kept). |
+| `modal(ui, input, title, body, buttons)` | A prompt over a dimmed screen: title, wrapped body, a row of buttons; Enter picks the first, Esc the last. |
+
+`wrap`, `ListView`, `grid` and `contains` are pure and tested
+(`text_wraps_between_words_and_cuts_only_giant_words`, `lists_keep_the_selection_in_view`,
+`grids_and_hits`), with a fake 10-pixels-a-character measure so no font or window is needed.
+
+**Screen layouts.** `content::screens::ScreenLayout {id, design, background, widgets, pack}` is
+`screens.<id>` from the rules. `rules::build_at` starts from the engine's `default_starmap()`
+(1280 × 720: `top`, `map`, `nav`, `info`, `panel`) and lets each pack's entry override only the
+widgets it names (`ScreenLayout::parse`, which rejects names outside `STARMAP_WIDGETS`;
+tested by `a_layout_moves_only_what_it_names`). `Ruleset::screens` always holds a `starmap`.
+
+**One frame of the strategy screen** (`StrategyScreen::frame`):
+
+```mermaid
+flowchart TD
+    A["Input::read()"] --> B["layout = rules.screens['starmap']<br/>sx = window w / design w, sy = window h / design h<br/>k = min(sx, sy), at least 0.5"]
+    B --> C["draw_map(map rect, zoom, pan)<br/>lanes, systems, contacts, convoys, craft,<br/>selection, hover label, legend"]
+    C --> P{"a prompt is up?<br/>card, battle, ending, choice,<br/>offer, convoy, banner"}
+    P -- yes --> Q["the widgets get Input::default()<br/>(no clicks reach them)"]
+    P -- no --> R["the widgets get this frame's Input"]
+    Q --> W["draw_top · draw_nav · draw_info · draw_panel<br/>each returns an Act or a Next when clicked"]
+    R --> W
+    W --> X["act(Act) → a Campaign order<br/>flash the answer"]
+    X --> Y{"prompt?"}
+    Y -- yes --> Z["prompts(): widgets::modal → choose,<br/>fly (Next::CampaignBattle), leave"]
+    Y -- no --> M["map input: wheel zoom about the cursor,<br/>right/middle drag pan, click → pick()"]
+    M --> K["keys(): Space, 1–4, Tab, Up/Down, Enter,<br/>Left/Right, F5, Esc, cheats"]
+    K --> T["advance the clock (SPEEDS[speed]);<br/>events → prompts, Next::Video / Cutscene"]
+```
+
+- **Stretch, not fit.** A cockpit keeps its proportions and is centred (`hud::Layout`); a screen
+  scales x and y separately (`sx`, `sy`) so its panels reach the window's edges, and sizes text
+  and button heights by `k`.
+- **Map transform.** `map_transform` fits the systems into the map rectangle (tested by
+  `the_map_fits_its_rectangle_centred`); `map_view` applies the zoom about the rectangle's centre
+  and the pan in map units. Zooming about the cursor keeps the map point under the cursor fixed:
+  the pan is corrected by the difference between that point before and after the zoom.
+  Zoom is clamped to ×0.5 – ×12.
+- **Picking.** `pick(point, scale, origin, reach)` returns the nearest system, detected contact,
+  convoy, survey ship or craft in flight within `reach` pixels (22 for a click, 18 for the hover
+  label); moving things are favoured by 4 pixels because they are smaller targets.
+- **Rows carry their actions.** A list row is `Row {text, acts: Vec<(&'static str, Act)>}`; the
+  first action is the default (Enter, a double click within 0.4 s), and all of them are the
+  buttons under the selected row. The info panel builds its own `(label, Act)` list for the
+  selection (`info()`), at most four buttons.
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -218,6 +283,9 @@ play without it.
 | `Event::Card`, `Event::Video`, `Event::Cutscene` | `campaign` | Story events for the screen to present. |
 | `Next::Video`, `Next::Cutscene`, `Screen::Video`, `Screen::Cutscene` | `app` | The routing above. |
 | `AppContext::ui`, `AppContext::music` | `app` | The skin and the music player, shared by every screen. |
+| `widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}` | `app::widgets` | Immediate-mode widgets for the strategy screen (app 0.16.0); the arithmetic pure and tested. |
+| `ScreenLayout`, `default_starmap`, `STARMAP_WIDGETS`, `screens::schema` | `content::screens` | `screens.<id>`: design space, background, widget rectangles; the engine's strategy-screen layout. |
+| `menu::fit_size(width, size, room)` | `app::menu` | The text size that fits a menu option value beside its label, never below half (app 0.14.2). |
 | `MainMenu`, `menu::Item`, `menu::Setting`, `menu::items`, `menu::settings`, `menu::step_volume` | `app::menu` | The main menu (app 0.14.0) and its pure row logic. |
 | `Credits`, `credits::line_y`, `credits::finished` | `app::credits` | The credits roll and its pure scrolling maths. |
 | `MenuDef`, `CreditsDef`, `CreditsDef::roll`, `ENGINE_CREDITS` | `content::front` | `campaign.menu` and `campaign.credits`. |
@@ -235,6 +303,10 @@ play without it.
   `catmull_rom(&[(f32, Vec3)], t) -> Vec3`, `path_rotation(&[(f32, Vec3)], t) -> Quat`, `scalar(&[(f32, f32)], t) -> f32`.
 - `Comms::speak(&Content, &Ruleset, speaker, length, now)`, `comms.draw(&Ruleset, now)`, `comms.clear()`;
   `showing_for(Option<f32>) -> f32`, `signal_bars(n, t) -> Vec<f32>`.
+- `widgets::button(&Ui, &Input, Rect4, label, enabled) -> bool`, `widgets::button_row(&Ui, &Input, Rect4, &[(&str, bool)], w, gap) -> Option<usize>`,
+  `widgets::grid(Rect4, n, cols, gap) -> Vec<Rect4>`, `widgets::modal(&Ui, &Input, title, body, &[&str]) -> Option<usize>`,
+  `widgets::wrap(text, width, &dyn Fn(&str) -> f32) -> Vec<String>`; `ListView::step(by, n, visible)`, `scroll(rows, n, visible)`, `fit(n, visible)`.
+- `ScreenLayout::parse(id, Get, base, known, pack) -> Result<ScreenLayout, String>`, `layout.widget(name) -> Option<[f32; 4]>`, `screens::default_starmap()`.
 - `Skin::parse(id, Get, pack) -> Result<Skin, String>`, `Skin::fallback()`, `skin.colour(role) -> [f32; 4]`.
 
 ## Debugging
@@ -254,3 +326,8 @@ play without it.
   no `speaker` and its clip is not one of a set's lines.
 - A video pack path not found: `open` looks in every active pack (latest first, app 0.14.1); the
   error names the first pack's path.
+- A strategy screen whose panels overlap or leave gaps: a pack's `screens.starmap` changed
+  `design` without restating every widget (the rest keep the engine's 1280 × 720 numbers, read in
+  the new space). `--check` lists the layout errors; there is no on-screen layout editor yet.
+- A button that does not respond: a prompt is up (the screen beneath gets an empty `Input`), or
+  the button is outside its widget's rectangle on a very small window.

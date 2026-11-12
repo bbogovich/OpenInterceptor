@@ -21,7 +21,7 @@ rendering, no input. It reads the content layer (`StrategyDef`) and the script l
 ```mermaid
 flowchart TB
     subgraph APP["7 · Application"]
-        ST["app::strategy::StrategyScreen<br/>map, tabs, clock, banners"]
+        ST["app::strategy::StrategyScreen<br/>top bar, map, info, lists, prompts"]
         FL["app::flight::FlightSession<br/>(campaign_battle)"]
         AM["app::run<br/>Screen, Next, AppContext"]
     end
@@ -187,7 +187,17 @@ last base lost) can end the campaign.
   which every other screen also reads. The battle's `World` holds the rules as an `Arc<Ruleset>`,
   so `Arc::make_mut` gives the battle **its own copy** the first time it is changed
   (copy-on-write) and the shared content stays untouched. Ids that are not weapons of the
-  campaign are skipped; with no beams fitted the class's own are kept.
+  campaign are skipped; with no beams fitted the class's own are kept. Since app 0.15.0 the
+  loadout is a `campaign::Loadout` struct — `beams`, `missiles`, and `shields` / `armor` as
+  `Option<f32>`: the strongest fitted `shield` item's `protection` and the sum of the fitted
+  `armor` items' (`None`: keep the class's own). `apply_loadout(world, player, &Loadout)` writes
+  them into the battle's copy of the class and fills the player's facings and armour.
+  An item's protection is `content::strategy::protection_of(kind, Get)`: its `protection:` key,
+  else, for an item inheriting the original's equipment, `Special` (shield) or `HitPoints`
+  (armour) — *derived*. The same function serves `fitted:` on ship classes, applied while the
+  rules are resolved (`rules::apply_fitted`, on each definition once its `inherit:` chain is
+  merged; a `shields` / `armor` already present, own or inherited, wins), so a class names its
+  default equipment instead of copying numbers ([Strategy layer › items](../../modding/strategy.md#items-and-hulls)).
 - **The stances** (app 0.10.3). With dynamic relations, `StrategyScreen::stances` lists every
   faction with a standing as `(faction, hostile)` — hostile when its stance is `hostile`.
   `flight::apply_stances` calls `Ruleset::set_hostile(player_faction, faction, hostile)` for
@@ -472,7 +482,8 @@ F5 and when leaving with Esc; *Campaign: continue* loads it.
 | `Campaign::cheat_payday`, `cheat_knowitall`, `cheat_quickbase`, `cheat_jump` | `campaign/mod.rs` | Testbed cheats (app 0.8.1). |
 | `campaign::autoplay`, `autoplay_from` | `campaign/mod.rs` | The automatic player of `--strategy-soak` and the six-month and year-long tests (public since app 0.8.0; `autoplay_from` continues an existing campaign, app 0.10.3). It lets ambushed convoys fight through, takes every choice's first option and flies offered missions as two wins and a loss in turn. |
 | `Campaign::fit_best`, `loadout`, `lane_route`, `nearest_system` | `campaign/mod.rs` | Fitting a craft from its base's store (0.7.2); its battle weapons; the shortest lane route (0.7.3). |
-| `flight::apply_loadout` | `app/flight.rs` | Refits the player's class in the battle's own copy of the rules. |
+| `flight::apply_loadout` | `app/flight.rs` | Refits the player's class in the battle's own copy of the rules (beams, missiles, and since 0.15.0 shields and armour). |
+| `Loadout`, `content::strategy::protection_of` | `campaign/mod.rs`, `content/strategy.rs` | A craft's battle fit (0.15.0); an item's protection. |
 | `MONTH` | `campaign/mod.rs` | 720 hours: reports, salaries, maintenance. |
 | `save::write`, `save::read`, `save::PackRef`, `save::FORMAT` | `campaign/save.rs` | Saves and their pack header. |
 | `script::campaign::QUERIES`, `id`, `schema` | `script/campaign.rs` | The campaign context. |

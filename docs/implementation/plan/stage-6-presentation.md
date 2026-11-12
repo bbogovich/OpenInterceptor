@@ -1,6 +1,6 @@
 # Stage 6 — Presentation
 
-**Version 0.7.0. Status: in progress** — app 0.11.0 – 0.14.0 (main `1f183d1` … `a18a7b4`): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
+**Version 0.7.0. Status: in progress** — app 0.11.0 – 0.16.0 (main `1f183d1` … `ac7ae62`): 6.2 and 6.3 done; 6.1, 6.4, 6.6, 6.8 and MD2 partly built; 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
 Progress: [Implementation status › Stage 6](../status.md#stage-6-progress).
 
 Design: [interface, text and media](../../specification/design/format-interface.md).
@@ -9,12 +9,12 @@ Design: [interface, text and media](../../specification/design/format-interface.
 
 | # | Item | Module | Status |
 |---|---|---|---|
-| 6.1 | Screen layouts and skins: design spaces, nine-slice panels, buttons, fonts, custom panels bound to queries | `app::ui` | **Partial** (0.11.1): skins (colours, nine-slice panel, font) on the launcher and strategy screen; no layouts, buttons, custom panels. #48 |
+| 6.1 | Screen layouts and skins: design spaces, nine-slice panels, buttons, fonts, custom panels bound to queries | `app::ui` | **Partial** (0.11.1, 0.14.2, 0.16.0): skins (colours, nine-slice panel, font) on the launcher and strategy screen; long menu option values shrink to fit (`menu::fit_size`, 0.14.2); **screen layouts** as data for the strategy screen (`screens.starmap`: design space, five widgets, stretched to the window) and immediate-mode **buttons, lists and modal prompts** (`app::widgets`) (0.16.0, `ac7ae62`). Open: layouts for the other screens, drawing `background`, custom panels bound to queries, skin sounds. #48 |
 | 6.2 | Main menu, options (graphics, audio, controls), difficulty, load/save, credits, ending screens; campaign and mod selection (pack switches in the launcher) | `app` | **Done** (0.14.0, main `a18a7b4`): the main menu (Continue, New campaign, Battles & tools, Options, Credits, Quit), options with Left/Right (campaign, difficulty, physics, music, effects), the credits roll or film, `campaign.menu` / `campaign.credits`, `--credits`; endings' films (0.12.1). No load/save screen beyond Continue. #48 |
 | 6.3 | Smacker video decoder (in-crate) for the original's cut-scenes and MFD talking heads; image-sequence video for mods | `formats::smacker`, `app` | **Done** for the original's films (0.12.0; verified on all 11 CD videos); image sequences are MD3. #49 |
 | 6.4 | Interactive music: states, segments, switches, stingers; the original's loop sets; CD audio tracks from ripped files | `audio` | **Partial** (0.11.0): states, segments, stingers, the loop sets, synthesised default music; no `switch:` data, `.wtl` tables or CD audio. #49 |
 | 6.5 | Voices and chatter playback; computer voice | `audio` | Built in 3.7 (app 0.6.2); speakers on the comms panel in 6.6. #50 |
-| 6.6 | Cockpit additions: comms panel, custom instruments | `hud` | **Partial** (0.13.1): the comms panel (`app::comms`) with voices' `name`/`face` and chatter `speaker`; MPSRC packs read (`mfdanim.mps`); no custom instruments; X-COM faces unmapped. #52 |
+| 6.6 | Cockpit additions: comms panel, custom instruments | `hud` | **Partial** (0.13.1, 0.15.1): the comms panel (`app::comms`) with voices' `name`/`face` and chatter `speaker`; MPSRC packs read (`mfdanim.mps`); the **ship status display** (`ship_status`: the craft from above tinted by hull, fore and aft arcs of three shield bands — a user request, R-HUD-005; 0.15.1, `bf963b4`), in X-COM cockpits A – C (placed by eye) and in place of gauge 3 in the default cockpit and glass HUD. Open: custom instruments bound to queries; X-COM faces unmapped. #52 |
 | 6.7 | `interceptor`: screens laid out with the original wrapper art at 640×480; music sets; talking heads | `packs/interceptor` | **Partial**: music sets (0.11.0), a palette skin (0.11.1), films (0.12.0 – 0.13.0); wrapper screens not mapped; talking heads not mapped to speakers. #52 |
 | 6.8 | `default`: the art-deco skin, chapter title cards and recaps, synthesised music and stings (generator tools for UI art) | `resources/default`, `tools` | **Partial** (0.11.0 – 0.13.1): art-deco skin and panel, title cards, synthesised music and stingers, the intro cutscene, CRT portraits; no recaps. #52 |
 

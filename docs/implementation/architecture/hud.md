@@ -5,13 +5,14 @@
 `hud/layout.rs` holds the pure maths of 3D-cockpit anchors and the cockpit layout editor.
 Plan: Stage 1; Stage 2 added the `power` and `systems` instruments, status flags, the MFD
 Systems page, text fitted to each instrument, instruments **anchored in perspective** on a 3D
-cockpit and the **layout editor** (F12).
+cockpit and the **layout editor** (F12). Stage 6.6 added the **ship status display**
+(`ship_status`, app 0.15.1).
 
 ## Architecture Overview
 
 ```mermaid
 flowchart LR
-    W["World + player ShipId"] --> L["pure logic<br/>radar_point, gauge_values, gauge_angle,<br/>mfd_lines, MessageLog::visible,<br/>power_readout, system_lamps, status_flags"]
+    W["World + player ShipId"] --> L["pure logic<br/>radar_point, gauge_values, gauge_angle,<br/>mfd_lines, MessageLog::visible,<br/>power_readout, system_lamps, status_flags,<br/>draw::shield_bands, draw::hull_color"]
     CK["CockpitDef.instruments + design<br/>(or default_instruments, 640×480)"] --> LY["Layout::new(screen, design)<br/>design space → pixels"]
     L --> D["draw::draw_targeting<br/>draw::draw_cockpit<br/>draw::draw_instruments<br/>(skips anchored ones)"]
     LY --> D
@@ -55,6 +56,7 @@ instrument aligned without changing a rule.
 | `radar_front`, `radar_rear` | Contacts in the front / rear hemisphere; distance from the centre = angle off the axis (rim = 90°); rear scope mirrored left/right. Faction colours; stations drawn larger; the target boxed. Mobile contacts beyond `[flight] RadarRange` are hidden. |
 | `mfd` | One of five pages (`MfdPage`): Target (name, faction, range, speed, shields, armour, hull, lock state), Weapons (beams, link mode, racks with the selected one marked `>`), Status (own shields with balance, armour/hull/energy, and the power line `BEAM x SHLD y PWR used/budget`), Systems (one line per fitted system: `OK`, `ON`, `DMG n%`, `OUT`, `DESTROYED`, `*` while being repaired), Nav. |
 | `gauge1`–`gauge4` | Needles for speed, energy, shields, hull (red below 25 %). |
+| `ship_status` | The player's craft from above, tinted by `hull_color(hull / class hull)` (green → amber → red), inside a fore arc (centred ahead) and an aft arc (behind), each 140° wide with three bands; `shield_bands(fraction)` lights one band per third of that facing (none at or below 2 %), coloured by `shield_ring_color` (blinking when down), from `power_readout`'s `fore` / `aft` fractions. The silhouette is three triangles (fuselage, wings, tail) — one generic shape, not the class's model. On the glass HUD it gets a ring outline. App 0.15.1; replaces gauge 3 in the glass layout and the default cockpit. |
 | `message` | The newest message younger than 4 s. |
 | `power` | `B-<level>` and `S-<level>` columns (charge settings), fore/aft shield bars with the favoured facing marked, `used/budget` in yellow when the budget is full (`power_readout`). |
 | `systems` | A grid of lamps, one per fitted system with a three-letter label (`system_abbrev`): green OK, cyan switched on, amber damaged, red knocked out (blinking while repaired), grey destroyed (`system_lamps`, `Lamp`). |
@@ -113,7 +115,8 @@ diamond.
 | `draw::altitude(&World, &Ship) -> Option<f32>` | Height above the ground (atmospheric battles). |
 | `draw::ladder_directions(camera_forward, &[f32]) -> Vec<(f32, Vec3)>` | The horizon's and pitch ladder's rung directions. |
 | `draw::HudFrame` | Everything a draw call needs that is not in the world, incl. `anchored` (instruments drawn on the 3D cockpit) and `text_scale`. |
-| `draw::INSTRUMENTS` | The ten instrument names, in the editor's Tab order. |
+| `draw::INSTRUMENTS` | The twelve instrument names (`ship_status` since app 0.15.1), in the editor's Tab order. |
+| `draw::shield_bands(fraction) -> usize`, `draw::hull_color(fraction) -> Color` | The ship status display's pure parts: lit bands (0 – 3) for a shield fraction; the hull tint. Tested by `ship_status_bands_follow_thirds_of_the_shield`. |
 | `layout::anchor_corners`, `anchor_point` | An anchor's corners in the camera frame; a point inside by (u, v). |
 | `layout::cursor_ray`, `ray_triangle`, `pick` | The editor's 3D placement: a ray through the cursor, Möller–Trumbore intersection, the nearest hit on the cockpit's triangles with the normal turned towards the eye. |
 | `layout::Grip`, `grip`, `drag_rect` | The editor's 2D placement: `Move` inside a rectangle, `Resize` at its bottom-right corner. |
@@ -148,3 +151,7 @@ diamond.
   space (640×480 unless `Design` says otherwise), not in the image's pixels.
 - The original cockpits' cyan colour key becomes transparent black on load; a cyan halo means
   the key was not applied (`load_image(.., colour_key = true)`).
+- The ship status display shows three dim bands and a green craft at the start of a battle in a
+  class with no shields: `power_readout` gives a zero fraction, which lights no band (by design).
+  On X-COM art it may sit beside the round display: the rectangles were placed by eye; move them
+  with F12 and save.

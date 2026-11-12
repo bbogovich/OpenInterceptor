@@ -164,11 +164,14 @@ launcher:
 
 ### The strategy screen (app 0.7.1)
 
-`app::strategy::StrategyScreen` (Stage 4.10) shows a `campaign::Campaign`: the star map, nine
-tabs (the **Supply** tab, `Tab::Logistics`, since app 0.9.0, with the `Act::Survey`,
-`Act::BuildFacility` and `Act::StationResearch` rows, and facilities, convoys and survey ships
-drawn on the map), the clock (`SPEEDS`: paused, 1, 6, 24 and 120 campaign hours per real second), banners
-for notices and the fly-or-break-off choice. It turns rows into orders on the campaign and
+`app::strategy::StrategyScreen` (Stage 4.10) shows a `campaign::Campaign`. Since app 0.16.0
+(main `ac7ae62`) it is five widgets placed by the `screens.starmap` layout: the top bar (date,
+funds, score, base switcher, the clock's buttons — `SPEEDS`: paused, 1, 6, 24 and 120 campaign
+hours per real second — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
+panel for the selection (`Sel`) with its actions, the ten list buttons (`Tab`; the **Supply**
+list, `Tab::Logistics`, since app 0.9.0) and the list panel whose rows carry their actions as
+buttons; notices, interceptions, convoy ambushes, choices, offers, endings and title cards are
+modal prompts. How a frame runs: [Presentation › Widgets and screen layouts](presentation.md#widgets-and-screen-layouts-appwidgets-contentscreens). It turns rows into orders on the campaign and
 draws; the rules live in `campaign` ([Campaign](campaign.md)). The launcher leads with
 `Entry::ContinueCampaign` and `Entry::NewCampaign` when `rules.strategy` is set and starts
 selected on them; `--strategy` opens a new campaign. A campaign battle sets
@@ -177,10 +180,13 @@ selected on them; `--strategy` opens a new campaign. A campaign battle sets
 `Next::CampaignBattle` carries the first craft's fitted loadout, applied with
 `flight::apply_loadout` (app 0.7.2). **Testbed cheats** (app 0.8.1, plan *Testbed adds* of
 Stage 4): Ctrl+M payday, Ctrl+K knowitall, Ctrl+B quickbase — the original's own cheat list —
-and Ctrl+J jump to battle from the contact chosen on the Contacts tab, each a
+and Ctrl+J jump to battle from the contact selected on the map or in the Contacts list, each a
 `Campaign::cheat_*` method ([Campaign › Testbed cheats](campaign.md#testbed-cheats-app-081)).
 Headless, `--strategy-soak <days>` plays a campaign's strategy layer with `campaign::autoplay`
-(app 0.8.0). Player's guide: [Campaign](../../user-guide/campaign.md).
+(app 0.8.0), and `--balance` (app 0.15.0, `src/balance.rs`) prints every class's protection,
+sustained beam damage and the seconds of perfect fire each playable ship needs to destroy it —
+`effective_hp`, `sustained_dps` and `time_to_kill` are pure and tested
+(`balance::tests::energy_limits_sustained_fire_and_kill_times_follow`). Player's guide: [Campaign](../../user-guide/campaign.md).
 
 ### Scenarios shipped
 

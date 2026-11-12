@@ -169,6 +169,7 @@ says so.
 | `prod_time` | number | 0 | Work units to manufacture one; 0 = bought only. |
 | `size` | number | 1 | Storage space (kept for the storage rules to come). |
 | `rounds` | number | 1 | Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2). |
+| `protection` | number | 0 | A `shield`: shield points per facing; an `armor`: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's `Special` (shields) or `HitPoints` (armour) — *derived*. In battle a craft flies with the **strongest** fitted shield and the **sum** of its fitted armour, in place of its class's `shields` / `armor`; with none fitted it keeps the class's own (which `fitted:` on the [ship class](reference.md#ships-and-objects) may supply). |
 | `requires` | condition | none | Available only while this holds (as well as any topic that unlocks it). |
 | `tech_required`, `tech_required2` | numbers | none | The original's numeric tech ids, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become the prerequisite (app 0.8.0). Also on hulls and modules. |
 
@@ -181,7 +182,7 @@ says so.
 | `prod_time` | number | 0 | Work units to manufacture one. |
 | `upkeep` | number | 0 | Per month, per craft (also read from the original's `maint_cost` through inheritance). |
 | `speed` | number | 1000 | Map units per hour on the star map. |
-| `slots` | mapping kind: count | none | Equipment slots: `{beam: 2, missile: 2, special: 1}` (also read from the original's mount counts through inheritance). |
+| `slots` | mapping kind: count | none | Equipment slots: `{beam: 2, missile: 2, shield: 1, armor: 1}` (also read from the original's mount counts through inheritance). `beam`, `missile`, `shield` and `armor` slots change the craft in battle; other kinds are filled but have no effect yet. The `interceptor` hulls have one `shield` and one `armor` slot (app 0.15.0, *derived*). |
 | `requires` | condition | none | Available only while this holds. |
 | `components` | mapping component: amount | none | With [logistics](#logistics): what a main base builds one from. A hull with components is not paid for in money when its manufacture starts; it waits until the components are in the base's store (app 0.9.0). |
 
@@ -636,11 +637,11 @@ unknown.
 | `save: this save has logistics but the loaded campaign has none` | Loading a save with facilities into a campaign whose logistics was removed. |
 | `save: … does not match the loaded rules (was a mod changed?)` | Loading a save whose research, modules, items, incomes or raids no longer fit the rules. |
 
-## Limits in app 0.10.3
+## Limits in app 0.16.0
 
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
-  fitting is *best available* only, and slots of kinds other than `beam` and `missile` are filled
-  but have no effect in battle.
+  fitting is *best available* only, and slots of kinds other than `beam`, `missile` and (since app
+  0.15.0) `shield` and `armor` are filled but have no effect in battle.
 - Mission outcome actions `capture`, `cargo_lost` and `cargo_captured` are still **ignored** by
   the campaign. A mission's `relation(faction, n)` moves the player's standing since app 0.12.1,
   like a story event's ([Story layer](story.md#actions)); a stance change it causes is logged

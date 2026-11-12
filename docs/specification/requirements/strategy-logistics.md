@@ -1,5 +1,5 @@
 ---
-spec_version: 1.15.0
+spec_version: 1.17.0
 status: current
 updated: 2026-11-11
 ---
@@ -159,8 +159,8 @@ Hulls, items, slots and fitting rules, power draw and stock designs MUST be data
 *Rationale:* Hangar.
 
 - Implements: [F-STR-003](../../definition/strategy-logistics.md#f-str-003-ships-equipment-and-pilots)
-- Status: planned — partly met (app 0.7.0 – 0.7.2, main `77d6c9f`, `10f7fce`, `94d66c1`)
-- Verified by: `campaign::tests::modules_bases_purchases_and_manufacture`, `craft_are_fitted_from_the_store_and_fly_their_loadout`; `app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only`; MT-4-06, MT-4-12
+- Status: planned — partly met (app 0.7.0 – 0.7.2, 0.15.0, main `77d6c9f`, `10f7fce`, `94d66c1`, `1ff754b`)
+- Verified by: `campaign::tests::modules_bases_purchases_and_manufacture`, `craft_are_fitted_from_the_store_and_fly_their_loadout`; `app::flight::tests::a_campaign_loadout_refits_the_players_class_in_this_battle_only` (fitted shields and armour since app 0.15.0); MT-4-06, MT-4-12, MT-4-35, MT-4-36
 - See: [Strategy layer › items and hulls](../../modding/strategy.md#items-and-hulls)
 
 !!! note "As built (app 0.7.0 – 0.7.1)"
@@ -169,8 +169,11 @@ Hulls, items, slots and fitting rules, power draw and stock designs MUST be data
 !!! note "As built (app 0.9.0)"
     With logistics, a hull's `components` make a main base build it from components delivered by the supply chain instead of paying its `cost` (R-STR-013).
 
+!!! note "As built (app 0.15.0, main `1ff754b`): fitted shields and armour"
+    Items gain `protection` (shield points per facing for a `shield`, armour points for an `armor`); an item inheriting the original's equipment has its protection from the original's `Special` key (shields) or `HitPoints` key (armour) — `content::strategy::protection_of`, *derived*. `Campaign::loadout` returns a `Loadout` struct — beams, missiles, and the protection of the strongest fitted shield and the sum of fitted armour — and `flight::apply_loadout` sets them on the player's class in the battle's own copy of the rules, the craft starting full. Ship classes gain `fitted: {shield, armor}`: references to the equipment a class carries by default (e.g. an `original:` `ShieldType*` / `ArmorType*` section), whose protection fills the class's `shields` / `armor` unless the class sets them (`rules::apply_fitted`). The `interceptor` hulls have one `shield` and one `armor` slot (*derived*), and its player craft and several alien classes name their default equipment (*derived* per class, DEV-056); its stations inherit the original's hit-point charts, the hull being `HP1` – `HP4` summed (*derived*). A static report of every class's protection and kill times: `--balance` (R-TST-006).
+
 !!! question "Open"
-    Not built: choosing items slot by slot (fitting is *best available* only); fitting rules (`fits`); power draw; stock designs; effects of slot kinds other than `beam` and `missile` in battle.
+    Not built: choosing items slot by slot (fitting is *best available* only); fitting rules (`fits`); power draw; stock designs; effects of slot kinds other than `beam`, `missile`, `shield` and `armor` in battle. No unit test covers `fitted:` or `protection_of` directly.
 
 ### R-STR-008 Pilots
 
@@ -213,8 +216,8 @@ Functional screens MUST cover the star map, bases (with the 3D base view), resea
 *Rationale:* Playable strategy layer before skins (Stage 6).
 
 - Implements: [F-STR-001](../../definition/strategy-logistics.md#f-str-001-strategy-layer)
-- Status: planned — partly met (app 0.7.1 – 0.9.0, main `10f7fce`, `8e96338`, `ff9d8fc`)
-- Verified by: `app::strategy::tests::the_map_fits_its_rectangle_centred`, `money_has_thousands_separators`; `app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps`; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18
+- Status: planned — partly met (app 0.7.1 – 0.9.0, 0.16.0, main `10f7fce`, `8e96338`, `ff9d8fc`, `ac7ae62`)
+- Verified by: `app::strategy::tests::the_map_fits_its_rectangle_centred`, `money_has_thousands_separators`; `app::widgets::tests::text_wraps_between_words_and_cuts_only_giant_words`, `lists_keep_the_selection_in_view`, `grids_and_hits`; `app::launcher::tests::menu_lists_viewer_and_scenarios_and_wraps`; MT-4-02 – MT-4-10, MT-4-13 – MT-4-18, MT-4-29 – MT-4-33
 - See: [User guide › Campaign](../../user-guide/campaign.md), [Campaign (architecture)](../../implementation/architecture/campaign.md#the-battle-hand-off), [Format: interface, text and media](../design/format-interface.md)
 
 !!! note "As built (app 0.7.1)"
@@ -223,8 +226,11 @@ Functional screens MUST cover the star map, bases (with the 3D base view), resea
 !!! note "As built (app 0.9.0)"
     A ninth tab, **Supply** (`Tab::Logistics`): survey the chosen system, build each facility type there (the row gives the cost and why it is not allowed), the facilities with their stores or build time and research projects, *Research <topic> here* on a free research station, the current base's store, and a count of open orders, convoys and survey ships. The map draws facilities (diamonds: grey while building, orange when working), convoys (gold dots) and survey ships (sky-blue rings). Testbed cheats on this screen: R-TST-010.
 
+!!! note "As built (app 0.16.0, main `ac7ae62`): the screen rebuilt for the mouse"
+    A playtest found the screen displayed but was not usable. It is now five widgets placed by the pack's `screens.starmap` layout (R-CPN-011) and stretched to fill the window: a **top bar** (date, funds, score; a base switcher `<` name `>`; pause and four speed buttons `||` `1h` `6h` `1d` `5d`; *Save*; *Menu*); the **map**, which zooms about the cursor with the wheel (×0.5 – ×12) and pans with a right or middle drag, picks the nearest system, contact, convoy, survey ship or craft in flight under a click (moving things win a near tie), names what is under the cursor and has a legend; an **info panel** for the selection with its actions as buttons (*Build <base type>* or *Build <facility>* with the cost, *Survey*, *Make <base> current*, *Intercept*); **nav** buttons to the ten lists; and the **panel**, a scrolling list (wheel, Up/Down, a scroll bar) whose rows are clipped with `...`, with the selected row in full beneath and its actions as buttons — *Buy 1*, *Buy 5*, *Sell 1* (Market), *Make 1*, *Make 5* (Factory), *Assign pilot*, *Fit best* (Hangar), and the one action of other rows; a double click acts with the first. Interceptions, convoy ambushes, choices, offered missions, the ending, notices and title cards are **modal prompts** with buttons; the screen beneath takes no input while one is up. The keys still work (Space, 1 – 4, Tab, Up/Down, Enter, Left/Right, F5, Esc, the cheats); the hidden S and F keys are gone, replaced by the buttons. The widgets are immediate-mode (`app::widgets`).
+
 !!! question "Open"
-    Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia; the Supply tab is plain text, without a supply-traffic view. Texts are plain English in the default campaign's strategy files, not text keys. The look is Stage 6.
+    Not built: the 3D base view, a report screen, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with ten lists). Texts are plain English in the default campaign's strategy files, not text keys. The `interceptor` wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested `app::widgets`).
 
 ### R-STR-011 Saves
 
@@ -481,3 +487,4 @@ Prospector convoys MUST fly expeditions (base → system under investigation →
 | 1.13.0 | 2026-11-11 | R-STR-001 – R-STR-011 as built (app 0.7.0 – 0.7.3, main `77d6c9f`, `10f7fce`, `94d66c1`, `076203e`): R-STR-001 (`start:` replaces `starts`) and R-STR-011 implemented; R-STR-002 – R-STR-010 partly met (status stays planned), each with an As-built note, Verified-by lines and an Open note of what remains (endurance, choosing a fit, logistics, evaluations, the 3D base view; known issues: manufacture charges no money, `salvaged` compares names with ids). R-STR-012 – R-STR-027 stay planned |
 | 1.14.0 | 2026-11-11 | Logistics, the X-COM data and fixes as built (app 0.8.0 – 0.9.0, main `c64d178`, `8e96338`, `ff9d8fc`): R-STR-011 (logistics state saved), R-STR-012, R-STR-013 (nearest supplier in a straight line, DEV-049), R-STR-015, R-STR-016 (vessels: `logistics.vessels`), R-STR-018 (attack chance: `logistics.ambush_chance`) and R-STR-024 implemented; R-STR-014 (storage only at mines), R-STR-019 (ambushes auto-resolved, not flown), R-STR-020 (losses, no capture or depots) and R-STR-021 (no survey craft; attacks auto-resolved) partly met; R-STR-004, R-STR-005 (`tech_ids`, station-only topics), R-STR-007 (hull components) and R-STR-010 (the Supply tab) As-built notes; the two known issues (manufacture free, `salvaged` by name) fixed. R-STR-017, R-STR-022, R-STR-023, R-STR-025 – R-STR-027 stay planned with Open notes |
 | 1.15.0 | 2026-11-11 | Supply-convoy battles as built (app 0.9.2, main `0d1c522`, `146195b`; the user's design): R-STR-017 implemented (the clipper with twelve cargo pods and a point-defence laser as modules); R-STR-019 As-built note (an ambushed convoy waits for the player's escort, `logistics.ambush_mission`, the surviving share delivered); R-STR-020 As-built note (captured in battle, lost to the campaign; depots still open). No requirement text changed |
+| 1.17.0 | 2026-11-11 | R-STR-007 As-built note: fitted shields and armour carried into battle, `fitted:` on ship classes, item `protection` (app 0.15.0, main `1ff754b`); R-STR-010 As-built note: the strategy screen rebuilt for the mouse — top bar, zoomable map with picking, info panel, scrolling lists with action buttons, modal prompts (app 0.16.0, main `ac7ae62`). Both stay partly met. No requirement text changed |

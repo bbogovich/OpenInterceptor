@@ -1,5 +1,5 @@
 ---
-spec_version: 1.11.0
+spec_version: 1.17.0
 status: current
 updated: 2026-11-11
 ---
@@ -16,7 +16,7 @@ Features: [Cockpit & HUD](../../definition/cockpit-hud.md). How to read a requir
 | [R-HUD-002 Views](#r-hud-002-views) | Implemented |
 | [R-HUD-003 HD and 3D cockpits](#r-hud-003-hd-and-3d-cockpits) | Implemented |
 | [R-HUD-004 Anchored 3D-cockpit instruments](#r-hud-004-anchored-3d-cockpit-instruments) | Implemented |
-| [R-HUD-005 Radar and shield rings](#r-hud-005-radar-and-shield-rings) | Implemented |
+| [R-HUD-005 Radar, shield rings and ship status](#r-hud-005-radar-shield-rings-and-ship-status) | Implemented |
 | [R-HUD-006 Gauges, readouts and messages](#r-hud-006-gauges-readouts-and-messages) | Implemented |
 | [R-HUD-007 Targeting display](#r-hud-007-targeting-display) | Implemented |
 | [R-HUD-008 Cockpit layout editor](#r-hud-008-cockpit-layout-editor) | Implemented |
@@ -24,6 +24,7 @@ Features: [Cockpit & HUD](../../definition/cockpit-hud.md). How to read a requir
 | [R-HUD-010 Brightness setting](#r-hud-010-brightness-setting) | Implemented |
 | [R-HUD-011 Other craft visible at combat ranges](#r-hud-011-other-craft-visible-at-combat-ranges) | Implemented |
 | [R-HUD-012 Atmosphere instruments](#r-hud-012-atmosphere-instruments) | Implemented |
+| [R-HUD-013 Wide-screen side bands](#r-hud-013-wide-screen-side-bands) | Implemented |
 
 ## Requirements
 
@@ -75,17 +76,22 @@ Instruments of a 3D cockpit MUST be drawn in perspective at anchors on the dashb
 - Reverse-engineered: yes
 - See: [Cockpits (HD and 3D)](../../modding/cockpits.md)
 
-### R-HUD-005 Radar and shield rings
+### R-HUD-005 Radar, shield rings and ship status
 
 Radars MUST place contacts by angle on front and rear scopes in faction colours; the front scope MUST ring the fore shield and the rear scope the aft shield, green, amber, red, blinking when down.
 
-*Rationale:* Situational awareness; shield state at a glance (DEV-037).
+A **ship status** instrument (`ship_status`) MUST show the player's craft from above, tinted by the fraction of its hull left (green when whole, through amber, to red), inside a **fore arc** (ahead) and an **aft arc** (behind). Each arc MUST have up to three bands, one lit per third of that facing's shield (a facing above two thirds lights three; a facing at or below 2 % lights none), in the same green / amber / red colours as the rings and blinking when the facing is down. A cockpit MAY place it anywhere; the glass HUD MUST show it.
+
+*Rationale:* Situational awareness; shield state at a glance (DEV-037). The ship status display is a user request after a playtest (app 0.15.1): the round ship display in the X-COM cockpit art showed nothing, and the single shield needle summed both facings. Its look follows the shield display of *X-Wing*.
 
 - Implements: [F-HUD-003](../../definition/cockpit-hud.md#f-hud-003-flight-instruments)
-- Status: implemented
-- Verified by: `hud::radar_places_contacts_by_angle`, `hud::draw::shield_rings_go_green_amber_red_then_blink`; MT-1-35, MT-2-28, MT-2-30
+- Status: implemented (ship status: app 0.15.1, main `bf963b4`)
+- Verified by: `hud::radar_places_contacts_by_angle`, `hud::draw::shield_rings_go_green_amber_red_then_blink`, `hud::draw::tests::ship_status_bands_follow_thirds_of_the_shield`; MT-1-35, MT-2-28, MT-2-30, MT-6-17, MT-6-18
 - Reverse-engineered: yes
-- See: [Cockpit and HUD](../../implementation/architecture/hud.md)
+- See: [Cockpit and HUD](../../implementation/architecture/hud.md), [Cockpits › The ship status display](../../modding/cockpits.md#the-ship-status-display)
+
+!!! note "As built (app 0.15.1)"
+    `hud::draw::draw_ship_status`: the arcs are 140° wide, centred ahead and behind; `shield_bands(fraction)` gives the lit bands and `hull_color(fraction)` the craft's tint. The `default` campaign's 3D cockpit and the glass HUD place `ship_status` where gauge 3 (the summed shield needle) was. The `interceptor` cockpits A, B and C place it in their art's round display; the rectangles were set by eye (*derived*), and the layout editor (F12) adjusts them. Gauge 3 remains an instrument a cockpit may still place.
 
 ### R-HUD-006 Gauges, readouts and messages
 
@@ -206,3 +212,4 @@ The bands MUST be drawn after the 3D view and the cockpit art, and before the in
 | 1.1.0 | 2026-11-11 | R-HUD-009, R-HUD-010, R-HUD-011 implemented (app 0.3.1): drift status line and flight-path marker; `graphics.brightness` 0.5–2 as a gamma; `flight.lighting` with rim light and distant dots. R-HUD-010 and R-HUD-011 open notes resolved; R-HUD-009 keeps the original-cockpit question |
 | 1.8.0 | 2026-11-11 | R-HUD-013 wide-screen side bands |
 | 1.11.0 | 2026-11-11 | R-HUD-012 atmosphere instruments rewritten as built and implemented (app 0.6.0): `ALT n  VS ±n` on the status line, the artificial horizon with a pitch ladder at ±10° and ±20° |
+| 1.17.0 | 2026-11-11 | R-HUD-005 extended (user request): the ship status display — the craft from above tinted by hull, fore and aft arcs of up to three shield bands (app 0.15.1); renamed *Radar, shield rings and ship status*. R-HUD-013 added to the summary table |

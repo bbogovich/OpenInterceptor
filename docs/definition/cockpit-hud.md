@@ -1,5 +1,5 @@
 ---
-spec_version: 1.11.0
+spec_version: 1.17.0
 status: current
 updated: 2026-11-11
 ---
@@ -45,13 +45,13 @@ Requirements for these features: [Cockpit & HUD requirements](../specification/r
 
 ### F-HUD-003 Flight instruments
 
-**What.** Radars with shield rings, speed, energy, shield and hull gauges, power and system readouts, multi-function display pages and a message line.
+**What.** Radars with shield rings, a ship status display (the craft from above with its shields in bands fore and aft, tinted by its hull), speed, energy, shield and hull gauges, power and system readouts, multi-function display pages and a message line.
 
 **Why.** The pilot must always know the craft's state.
 
 - **Status:** implemented
-- **Source:** Plan items 1.9, 2.17 and 2.20; DEV-037.
-- **Specified by:** [R-HUD-005](../specification/requirements/cockpit-hud.md#r-hud-005-radar-and-shield-rings), [R-HUD-006](../specification/requirements/cockpit-hud.md#r-hud-006-gauges-readouts-and-messages)
+- **Source:** Plan items 1.9, 2.17, 2.20 and 6.6 (the ship status display, a user request after a playtest); DEV-037.
+- **Specified by:** [R-HUD-005](../specification/requirements/cockpit-hud.md#r-hud-005-radar-shield-rings-and-ship-status), [R-HUD-006](../specification/requirements/cockpit-hud.md#r-hud-006-gauges-readouts-and-messages)
 
 ### F-HUD-004 Targeting display
 
@@ -125,3 +125,4 @@ The view through the canopy keeps the same height whatever the screen's width.
 | 1.1.0 | 2026-11-11 | F-HUD-006 and F-HUD-007 implemented (app 0.3.1) |
 | 1.8.0 | 2026-11-11 | F-HUD-009 cockpits on wide screens |
 | 1.11.0 | 2026-11-11 | F-HUD-008 implemented (app 0.6.0) |
+| 1.17.0 | 2026-11-11 | F-HUD-003: the ship status display (user request; app 0.15.1) |

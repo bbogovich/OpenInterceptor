@@ -1,5 +1,5 @@
 ---
-spec_version: 1.13.0
+spec_version: 1.17.0
 status: current
 updated: 2026-11-11
 ---
@@ -121,11 +121,11 @@ Each action MUST have, in the one action table (R-CON-001), an id, a display nam
 
 - Implements: [F-CON-003](../../definition/control-console.md#f-con-003-one-action-catalogue-with-a-controls-overlay), [F-CON-004](../../definition/control-console.md#f-con-004-tablet-control-console)
 - Status: implemented
-- Verified by: `input::the_keys_help_lists_every_action_with_its_current_keys`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`; MT-3-18
+- Verified by: `input::the_keys_help_lists_every_action_with_its_current_keys`, `every_action_is_reachable_from_keyboard_and_flight_actions_from_the_pad`, `input::tests::every_action_has_a_one_sentence_description`; `remote::protocol::tests::the_idle_catalogue_lists_every_action_with_its_description_and_all_available`; `app::flight::tests::the_keys_help_shows_descriptions_only_when_the_columns_are_wide_enough`; MT-3-18, MT-3-65
 - See: [Input and gamepads](../../implementation/architecture/input.md)
 
 !!! note "As built"
-    `input::ACTIONS` is the catalogue: each entry has its id (`name`, the `bindings.yaml` name), a display name (`label`), its default keys and pad buttons, and its `group`. It drives parsing, the defaults, the controls menu and the keys overlay (`input::help_rows`); and, since C1 (app 0.4.0), the console's `catalogue` message (`remote::protocol::catalogue`). The label serves as the short description: the catalogue sends `label`, and a separate description field is not in the table yet. That part stays open; it is not needed until the C2 layout shows more than a button label.
+    `input::ACTIONS` is the catalogue: each entry has its id (`name`, the `bindings.yaml` name), a display name (`label`), its default keys and pad buttons, and its `group`. It drives parsing, the defaults, the controls menu and the keys overlay (`input::help_rows`); and, since C1 (app 0.4.0), the console's `catalogue` message (`remote::protocol::catalogue`). Since main `bb04952` (app 0.15.1, GitHub #6) every entry also has a one-sentence, player-facing `description`: the catalogue sends it beside the label (in a battle and idle, through one builder, `catalogue_with`), the tablet shows it as a small two-line caption under each button and as the button's title, and the keys overlay prints it as a dimmer line under each action when its columns are wide enough, else one line per action (`help_layout` / `help_place`, pure and tested). `help_rows` returns `HelpRow {label, description, keys}`.
 
 ### R-CON-008 Controls overlay
 
@@ -428,3 +428,4 @@ The console page MUST offer two layouts, switchable on the page and remembered p
 | 1.9.0 | 2026-11-11 | R-CON-024: the hit-static interpretation (the player's craft, on the console) confirmed by the user: "Hit static - correct, works well now" |
 | 1.10.0 | 2026-11-11 | Console C2 – C4 and C2b complete (app 0.4.11 – 0.5.0): R-CON-015 target viewport (0.4.14), R-CON-016 3D map (0.4.15), R-CON-014 contacts and events (0.4.15), R-CON-018 tiles (0.4.11), R-CON-020 and R-CON-021 themes (0.5.0) implemented, with As-built notes and Verified-by lines; R-CON-012, R-CON-013 and R-CON-019 completed by the C2 page (0.4.11); R-CON-015 open note resolved (3000-triangle LOD budget, no textures). R-CON-017 stays planned (C5). No requirement wording changed |
 | 1.13.0 | 2026-11-11 | R-CON-015: the target model is textured — PNG data URLs and uvs per textured group (app 0.6.7, from user feedback) |
+| 1.17.0 | 2026-11-11 | R-CON-007: the description is built — every action has one, sent in `catalogue`, shown on the tablet and in the keys overlay (main `bb04952`, app 0.15.1, #6); the open part of the As-built note removed |
