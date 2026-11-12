@@ -23,6 +23,132 @@
 
 use super::schema::{f, Get, Ty};
 
+/// What a widget is (Stage 6.9: the original-style screens).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WidgetKind {
+    /// A picture (state images optional).
+    Image,
+    /// A button: state images and an action.
+    Button,
+    /// A live value as text: `date`, `time`, `money`, `score`, `base`, `day` …
+    Value,
+    /// Fixed text (a text key), wrapped.
+    Text,
+    /// A panel's list (`source`: bases, research, build, market, factory, hangar,
+    /// contacts, supply, archive, reports, messages), with its actions as buttons.
+    List,
+    /// The star map (`shape: round` clips it to the circle inside the rectangle).
+    Map,
+    /// The selected object's details and actions.
+    Info,
+}
+
+/// What a button does.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UiAction {
+    /// Opens another screen (or dialog) of the set.
+    Open(String),
+    /// Closes this screen or dialog (back to the one under it).
+    Back,
+    /// Sets the campaign clock's speed (0 = paused).
+    Speed(usize),
+    Save,
+    Menu,
+    /// Opens the testbed's single-screen layout.
+    Testbed,
+}
+
+impl UiAction {
+    /// Parses `open(bases)`, `back`, `speed(2)`, `save`, `menu`, `testbed`.
+    pub fn parse(s: &str) -> Result<UiAction, String> {
+        let s = s.trim();
+        let (name, arg) = match s.split_once('(') {
+            Some((n, rest)) => (n.trim(), rest.trim_end_matches(')').trim()),
+            None => (s, ""),
+        };
+        match name {
+            "open" if !arg.is_empty() => Ok(UiAction::Open(arg.to_string())),
+            "back" => Ok(UiAction::Back),
+            "speed" => arg.parse().map(UiAction::Speed).map_err(|_| format!("speed({arg}): expected 0-4")),
+            "save" => Ok(UiAction::Save),
+            "menu" => Ok(UiAction::Menu),
+            "testbed" => Ok(UiAction::Testbed),
+            _ => Err(format!("'{s}' is not open(<screen>), back, speed(n), save, menu or testbed")),
+        }
+    }
+}
+
+/// A widget placed on a screen of the set.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WidgetDef {
+    pub name: String,
+    pub kind: WidgetKind,
+    /// x, y, w, h in the screen's design space.
+    pub rect: [f32; 4],
+    /// State images: up (or the image), down, hover, disabled.
+    pub images: [Option<String>; 4],
+    pub action: Option<UiAction>,
+    /// A value's name, a list's source, a text's text.
+    pub source: Option<String>,
+    /// Text size in design pixels.
+    pub size: f32,
+    pub colour: Option<[f32; 4]>,
+    /// `left`, `centre` or `right`.
+    pub align: String,
+    /// A label drawn on a button without images.
+    pub label: Option<String>,
+    /// Map: clipped to a circle.
+    pub round: bool,
+}
+
+/// The widget kinds by name.
+pub const WIDGET_KINDS: [(&str, WidgetKind); 7] = [
+    ("image", WidgetKind::Image),
+    ("button", WidgetKind::Button),
+    ("value", WidgetKind::Value),
+    ("text", WidgetKind::Text),
+    ("list", WidgetKind::List),
+    ("map", WidgetKind::Map),
+    ("info", WidgetKind::Info),
+];
+
+impl WidgetDef {
+    /// Parses one `widgets.<name>: {kind, rect, …}` entry.
+    pub fn parse(name: &str, g: Get) -> Result<WidgetDef, String> {
+        let kind_name = g.str("kind").unwrap_or("image");
+        let kind = WIDGET_KINDS
+            .iter()
+            .find(|(n, _)| *n == kind_name)
+            .map(|(_, k)| *k)
+            .ok_or(format!("kind: '{kind_name}' is not one of image, button, value, text, list, map, info"))?;
+        let r = g.node("rect").and_then(numbers).filter(|v| v.len() == 4).ok_or("rect: expected [x, y, w, h]")?;
+        let img = |k: &str| g.node("images").map(Get).and_then(|i| i.str(k)).map(str::to_string);
+        let colour = g.node("colour").and_then(numbers).map(|v| match v.as_slice() {
+            [r, gg, b] => [*r, *gg, *b, 1.0],
+            [r, gg, b, a] => [*r, *gg, *b, *a],
+            _ => [1.0, 1.0, 1.0, 1.0],
+        });
+        Ok(WidgetDef {
+            name: name.to_string(),
+            kind,
+            rect: [r[0], r[1], r[2], r[3]],
+            images: [
+                img("up").or_else(|| g.str("image").map(str::to_string)),
+                img("down"),
+                img("hover"),
+                img("disabled"),
+            ],
+            action: g.str("action").map(UiAction::parse).transpose()?,
+            source: g.str("source").or_else(|| g.str("value")).or_else(|| g.str("text")).map(str::to_string),
+            size: g.num("size").unwrap_or(12.0).max(4.0),
+            colour,
+            align: g.str("align").unwrap_or("left").to_string(),
+            label: g.str("label").map(str::to_string),
+            round: g.str("shape") == Some("round"),
+        })
+    }
+}
+
 /// One screen's layout.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ScreenLayout {
@@ -33,6 +159,10 @@ pub struct ScreenLayout {
     pub background: Option<String>,
     /// Widget name → rectangle (x, y, w, h) in the design space.
     pub widgets: Vec<(String, [f32; 4])>,
+    /// The widgets given in full (`{kind, rect, …}`): the original-style screens.
+    pub items: Vec<WidgetDef>,
+    /// Drawn over the screen under it (a dialog), not on its own.
+    pub dialog: bool,
     pub pack: usize,
 }
 
@@ -52,6 +182,8 @@ pub fn default_starmap() -> ScreenLayout {
             ("info".into(), [806.0, 132.0, 466.0, 212.0]),
             ("panel".into(), [806.0, 352.0, 466.0, 360.0]),
         ],
+        items: Vec::new(),
+        dialog: false,
         pack: 0,
     }
 }
@@ -74,7 +206,17 @@ impl ScreenLayout {
             }
         }
         l.background = g.str("background").map(str::to_string).or(l.background);
+        l.dialog = g.bool("dialog").unwrap_or(l.dialog);
         for (name, n) in g.map("widgets") {
+            // A full widget definition (an original-style screen's).
+            if n.as_map().is_some() {
+                let w = WidgetDef::parse(name, Get(n)).map_err(|e| format!("widgets.{name}: {e}"))?;
+                l.widgets.retain(|(x, _)| x != name);
+                l.widgets.push((name.clone(), w.rect));
+                l.items.retain(|x| x.name != *name);
+                l.items.push(w);
+                continue;
+            }
             if !known.is_empty() && !known.contains(&name.as_str()) {
                 return Err(format!("widgets.{name}: not one of {}", known.join(", ")));
             }
@@ -98,7 +240,38 @@ pub fn schema() -> Ty {
     Ty::Def(vec![
         f("design", Ty::Numbers(2), "the design space the rectangles are written in"),
         f("background", Ty::Asset, "an image over the whole design space"),
-        f("widgets", Ty::Dict(Box::new(Ty::Numbers(4))), "widget → [x, y, w, h]; starmap: top, map, nav, info, panel"),
+        f("dialog", Ty::Bool, "drawn over the screen under it"),
+        f(
+            "widgets",
+            Ty::Dict(Box::new(Ty::Either(
+                Box::new(Ty::Numbers(4)),
+                Box::new(Ty::Struct(vec![
+                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info"]), "what it is"),
+                    f("rect", Ty::Numbers(4), "x, y, w, h in the design space"),
+                    f("image", Ty::Asset, "its picture"),
+                    f(
+                        "images",
+                        Ty::Struct(vec![
+                            f("up", Ty::Asset, "normal"),
+                            f("down", Ty::Asset, "pressed"),
+                            f("hover", Ty::Asset, "under the mouse"),
+                            f("disabled", Ty::Asset, "unavailable"),
+                        ]),
+                        "a button's states",
+                    ),
+                    f("action", Ty::Text, "open(<screen>), back, speed(0-4), save, menu, testbed"),
+                    f("value", Ty::Name, "a value: date, time, money, score, base, speed, selection"),
+                    f("source", Ty::Name, "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages"),
+                    f("text", Ty::Text, "fixed text (a text key)"),
+                    f("label", Ty::Text, "a button's caption when it has no images"),
+                    f("size", Ty::Num, "text size, design pixels"),
+                    f("colour", Ty::List(Box::new(Ty::Num)), "text colour, RGB or RGBA"),
+                    f("align", Ty::Enum(&["left", "centre", "right"]), "text alignment"),
+                    f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
+                ])),
+            ))),
+            "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)",
+        ),
     ])
 }
 
@@ -106,6 +279,50 @@ pub fn schema() -> Ty {
 mod tests {
     use super::*;
     use crate::formats::yaml;
+
+    #[test]
+    fn widgets_and_actions_parse_for_the_screen_sets() {
+        let n = yaml::parse(
+            "design: [640, 480]\nbackground: art.png\nwidgets:\n  map: {kind: map, rect: [10, 20, 300, 300], shape: round}\n  \
+             go: {kind: button, rect: [1, 2, 3, 4], images: {up: a.png, down: b.png}, action: open(bases)}\n  \
+             cash: {kind: value, value: money, rect: [0, 0, 50, 10], colour: [1, 0, 0], align: right}",
+        )
+        .unwrap();
+        let base = ScreenLayout {
+            id: "csd".into(),
+            design: [1.0, 1.0],
+            background: None,
+            widgets: vec![],
+            items: vec![],
+            dialog: false,
+            pack: 0,
+        };
+        let l = ScreenLayout::parse("csd", Get(&n), base, &[], 0).unwrap();
+        assert_eq!(l.items.len(), 3);
+        let map = &l.items[0];
+        assert_eq!((map.kind, map.round, map.rect), (WidgetKind::Map, true, [10.0, 20.0, 300.0, 300.0]));
+        let go = &l.items[1];
+        assert_eq!(go.action, Some(UiAction::Open("bases".into())));
+        assert_eq!((go.images[0].as_deref(), go.images[1].as_deref()), (Some("a.png"), Some("b.png")));
+        assert_eq!(
+            (l.items[2].source.as_deref(), l.items[2].colour, l.items[2].align.as_str()),
+            (Some("money"), Some([1.0, 0.0, 0.0, 1.0]), "right")
+        );
+        assert_eq!(UiAction::parse("speed(3)"), Ok(UiAction::Speed(3)));
+        assert_eq!(UiAction::parse("back"), Ok(UiAction::Back));
+        assert!(UiAction::parse("fly(away)").is_err());
+        let bad = yaml::parse("widgets: {x: {kind: dial, rect: [0, 0, 1, 1]}}").unwrap();
+        let base = ScreenLayout {
+            id: "csd".into(),
+            design: [1.0, 1.0],
+            background: None,
+            widgets: vec![],
+            items: vec![],
+            dialog: false,
+            pack: 0,
+        };
+        assert!(ScreenLayout::parse("csd", Get(&bad), base, &[], 0).unwrap_err().contains("dial"));
+    }
 
     #[test]
     fn a_layout_moves_only_what_it_names() {

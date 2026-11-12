@@ -639,6 +639,9 @@ pub struct Ruleset {
     pub environments: Vec<super::environment::EnvironmentDef>,
     /// The cutscene played before a new campaign (`campaign.intro`).
     pub intro: Option<String>,
+    /// The first screen of the campaign's original-style strategy screens
+    /// (`campaign.strategy_screen`); `None`: the testbed's single-screen layout.
+    pub strategy_screen: Option<String>,
     /// A video played before a new campaign (`campaign.intro_video`).
     pub intro_video: Option<String>,
     /// The main menu and credits (`campaign.menu`, `campaign.credits`; Stage 6.2).
@@ -1475,6 +1478,8 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                     design: [1280.0, 720.0],
                     background: None,
                     widgets: Vec::new(),
+                    items: Vec::new(),
+                    dialog: false,
                     pack: e.pack,
                 },
                 &[],
@@ -1486,6 +1491,16 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
                 screens.push(l);
             }
             Err(msg) => errors.push(format!("{}: screens.{id}: {msg}", e.origin)),
+        }
+    }
+    // Every open(<screen>) names a screen of the set.
+    for s in &screens {
+        for w in &s.items {
+            if let Some(super::screens::UiAction::Open(to)) = &w.action {
+                if !screens.iter().any(|x| &x.id == to) {
+                    errors.push(format!("screens.{}.widgets.{}: open({to}): no such screen", s.id, w.name));
+                }
+            }
         }
     }
     let mut music = Vec::new();
@@ -1564,6 +1579,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         Ruleset {
             strategy,
             intro: campaign.as_ref().and_then(|c| Get(c).str("intro")).map(str::to_string),
+            strategy_screen: campaign.as_ref().and_then(|c| Get(c).str("strategy_screen")).map(str::to_string),
             intro_video: campaign.as_ref().and_then(|c| Get(c).str("intro_video")).map(str::to_string),
             menu: super::front::MenuDef::parse(campaign.as_ref().and_then(|c| Get(c).node("menu")).map(Get)),
             credits: super::front::CreditsDef::parse(campaign.as_ref().and_then(|c| Get(c).node("credits")).map(Get)),

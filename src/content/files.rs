@@ -586,6 +586,11 @@ fn campaign() -> Ty {
             f("skin", name(), "the skin of the menus and strategy screens (skins.<id>)"),
             f("intro", name(), "the cutscene played before a new campaign (cutscenes/<id>)"),
             f("intro_video", Ty::Asset, "a video played before a new campaign"),
+            f(
+                "strategy_screen",
+                name(),
+                "the first of the original-style strategy screens (screens.<id>); none: the testbed layout",
+            ),
         ]
         .into_iter()
         .chain(super::front::fields())

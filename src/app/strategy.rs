@@ -183,6 +183,14 @@ impl Row {
     }
 }
 
+/// The panel a `list` widget's `source` names.
+fn tab_of(source: &str) -> Option<Tab> {
+    Tab::ALL
+        .iter()
+        .copied()
+        .find(|t| t.name().eq_ignore_ascii_case(source) || (source == "supply" && *t == Tab::Logistics))
+}
+
 /// A battle being flown: the contact, so the debrief can be applied on return.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PendingBattle {
@@ -226,9 +234,16 @@ pub struct StrategyScreen {
     debug: bool,
     /// The save-slot prompt is up.
     saving: bool,
-    /// The layout's background image, loaded on first use (`None` inside: none, or it
-    /// failed to load and was reported).
-    background: Option<Option<Texture2D>>,
+    /// The original-style screens open, bottom first (dialogs over screens).
+    stack: Vec<String>,
+    /// The testbed's single-screen layout instead (Ctrl+T, or a `testbed` button).
+    testbed: bool,
+    /// Images loaded for the screens, by reference.
+    images: std::collections::HashMap<String, Option<Texture2D>>,
+    /// Drawing over art: panels are not framed (the art frames them).
+    art: bool,
+    /// The map is clipped to a circle.
+    map_round: bool,
     /// The base orders apply to.
     base: usize,
     system: Option<usize>,
@@ -358,9 +373,13 @@ impl StrategyScreen {
             drag: None,
             sel: None,
             last_click: (usize::MAX, 0.0),
-            background: None,
             debug: false,
             saving: false,
+            stack: Vec::new(),
+            testbed: false,
+            images: Default::default(),
+            art: false,
+            map_round: false,
             base: 0,
             system: None,
             banner: None,
@@ -1306,52 +1325,6 @@ impl StrategyScreen {
         // lives in `self`, so the two borrows never overlap.)
         let Some(def) = ctx.content.rules.strategy.as_ref() else { return Next::Launcher };
         let input = Input::read();
-        // The layout: the pack's `screens.starmap`, scaled to the window like a cockpit.
-        let layout_def = ctx
-            .content
-            .rules
-            .screens
-            .iter()
-            .find(|s| s.id == "starmap")
-            .cloned()
-            .unwrap_or_else(crate::content::screens::default_starmap);
-        let (w, h) = (screen_width(), screen_height());
-        // Unlike a cockpit, a screen fills the window: the design space stretches to it,
-        // and text scales by the smaller of the two stretches.
-        let (sx, sy) = (w / layout_def.design[0], h / layout_def.design[1]);
-        let place = |name: &str| {
-            let r = layout_def.widget(name).unwrap_or_default();
-            [r[0] * sx, r[1] * sy, r[2] * sx, r[3] * sy]
-        };
-        let (top, map, nav, info_r, panel) = (place("top"), place("map"), place("nav"), place("info"), place("panel"));
-        let k = sx.min(sy).max(0.5);
-
-        // --- Drawing the base layer (prompts draw over it) ----------------------------
-        let ui = &ctx.ui;
-        clear_background(ui.colour("background"));
-        // The layout's background image over the whole window.
-        if self.background.is_none() {
-            self.background = Some(layout_def.background.as_ref().and_then(|img| {
-                match ctx.content.load_image(img, layout_def.pack, false) {
-                    Ok(i) => Some(Texture2D::from_rgba8(i.width as u16, i.height as u16, &i.rgba)),
-                    Err(e) => {
-                        eprintln!("screens.starmap.background {img}: {e}");
-                        None
-                    }
-                }
-            }));
-        }
-        if let Some(Some(tex)) = &self.background {
-            draw_texture_ex(
-                tex,
-                0.0,
-                0.0,
-                WHITE,
-                DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() },
-            );
-        }
-        let (s, origin) = self.map_view(map);
-        self.draw_map(ui, def, map, s, origin, k);
         // Notices raised outside the clock (a debrief's change of stance), one at a time.
         if self.banner.is_none() && !self.campaign.notices.is_empty() {
             self.banner = Some(self.campaign.notices.remove(0));
@@ -1368,15 +1341,13 @@ impl StrategyScreen {
             || self.banner.is_some();
         // While a prompt is up, the screen underneath takes no input.
         let live = if prompting { Input::default() } else { input };
-        let mut next = self.draw_top(ctx, def, top, &live, k);
+        clear_background(ctx.ui.colour("background"));
+        // The campaign's original-style screens (Stage 6.9), or the testbed's single
+        // screen (also the fallback, and Ctrl+T's switch).
+        let set_mode = ctx.content.rules.strategy_screen.is_some() && !self.testbed;
+        let (map, k, mut next) =
+            if set_mode { self.draw_set(ctx, def, &live) } else { self.draw_grid(ctx, def, &live) };
         let ui = &ctx.ui;
-        self.draw_nav(ui, nav, &live, k);
-        if let Some(a) = self.draw_info(ui, def, info_r, &live, k) {
-            self.act(def, a);
-        }
-        if let Some(a) = self.draw_panel(ui, def, panel, &live, k) {
-            self.act(def, a);
-        }
         if let Some((t, until)) = &self.flash {
             if get_time() < *until {
                 ui.text_in(t, map[0] + 12.0, map[1] + map[3] - 12.0, 18.0 * k, YELLOW);
@@ -1389,6 +1360,7 @@ impl StrategyScreen {
         }
 
         // --- Map input: select, zoom, pan ------------------------------------------
+        let (s, origin) = self.map_view(map);
         if !prompting {
             if widgets::contains(map, input.mouse) {
                 if input.wheel != 0.0 {
@@ -1536,6 +1508,10 @@ impl StrategyScreen {
         // Testbed cheats (Ctrl+…): the original's payday, knowitall and quickbase, and
         // jump to battle with the selected contact.
         let ctrl = is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl);
+        // Ctrl+T: the testbed's single-screen layout, and back.
+        if ctrl && is_key_pressed(KeyCode::T) {
+            self.testbed = !self.testbed;
+        }
         if ctrl && is_key_pressed(KeyCode::D) {
             self.debug = !self.debug;
             if self.debug {
@@ -1579,6 +1555,260 @@ impl StrategyScreen {
     fn open(&mut self, tab: Tab) {
         self.tab = tab;
         self.list = ListView::default();
+    }
+
+    /// The testbed's single-screen layout (`screens.starmap`, stretched to the window):
+    /// top bar, map, panel buttons, info and the panel. The map's rectangle, the text
+    /// scale and a request to leave.
+    fn draw_grid(&mut self, ctx: &AppContext, def: &StrategyDef, live: &Input) -> ([f32; 4], f32, Option<Next>) {
+        self.art = false;
+        self.map_round = false;
+        let layout_def = ctx
+            .content
+            .rules
+            .screens
+            .iter()
+            .find(|s| s.id == "starmap")
+            .cloned()
+            .unwrap_or_else(crate::content::screens::default_starmap);
+        let (w, h) = (screen_width(), screen_height());
+        // Unlike a cockpit, this screen fills the window: the design space stretches to
+        // it, and text scales by the smaller of the two stretches.
+        let (sx, sy) = (w / layout_def.design[0], h / layout_def.design[1]);
+        let place = |name: &str| {
+            let r = layout_def.widget(name).unwrap_or_default();
+            [r[0] * sx, r[1] * sy, r[2] * sx, r[3] * sy]
+        };
+        let (top, map, nav, info_r, panel) = (place("top"), place("map"), place("nav"), place("info"), place("panel"));
+        let k = sx.min(sy).max(0.5);
+        if let Some(img) = &layout_def.background {
+            if let Some(tex) = self.image(ctx, img, layout_def.pack) {
+                draw_texture_ex(
+                    &tex,
+                    0.0,
+                    0.0,
+                    WHITE,
+                    DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() },
+                );
+            }
+        }
+        let (s, origin) = self.map_view(map);
+        self.draw_map(&ctx.ui, def, map, s, origin, k);
+        let next = self.draw_top(ctx, def, top, live, k);
+        let ui = &ctx.ui;
+        self.draw_nav(ui, nav, live, k);
+        if let Some(a) = self.draw_info(ui, def, info_r, live, k) {
+            self.act(def, a);
+        }
+        if let Some(a) = self.draw_panel(ui, def, panel, live, k) {
+            self.act(def, a);
+        }
+        (map, k, next)
+    }
+
+    /// An image by asset reference, loaded once and kept (`None`: it failed to load,
+    /// reported once).
+    fn image(&mut self, ctx: &AppContext, reference: &str, pack: usize) -> Option<Texture2D> {
+        if let Some(t) = self.images.get(reference) {
+            return t.clone();
+        }
+        let t = match ctx.content.load_image(reference, pack, false) {
+            Ok(i) => {
+                let t = Texture2D::from_rgba8(i.width as u16, i.height as u16, &i.rgba);
+                t.set_filter(FilterMode::Linear);
+                Some(t)
+            }
+            Err(e) => {
+                eprintln!("strategy screen image {reference}: {e}");
+                None
+            }
+        };
+        self.images.insert(reference.to_string(), t.clone());
+        t
+    }
+
+    /// The campaign's original-style screens (Stage 6.9): the open screen and any
+    /// dialogs over it, each a background and widgets in its design space, scaled to
+    /// the window keeping its shape (as cockpits are). Only the top screen takes input.
+    /// The map's rectangle (if a screen shows one), the text scale and a request.
+    fn draw_set(&mut self, ctx: &AppContext, def: &StrategyDef, live: &Input) -> ([f32; 4], f32, Option<Next>) {
+        use crate::content::screens::{UiAction, WidgetKind};
+        let rules = &ctx.content.rules;
+        if self.stack.is_empty() {
+            self.stack.push(rules.strategy_screen.clone().unwrap_or_default());
+        }
+        self.art = true;
+        // From the last full screen up through the dialogs over it.
+        let from = self
+            .stack
+            .iter()
+            .rposition(|id| rules.screens.iter().find(|s| &s.id == id).is_none_or(|s| !s.dialog))
+            .unwrap_or(0);
+        let open: Vec<String> = self.stack[from..].to_vec();
+        let (w, h) = (screen_width(), screen_height());
+        let mut map_rect = [0.0f32; 4];
+        let mut k = 1.0;
+        let mut next = None;
+        let mut action: Option<UiAction> = None;
+        for (depth, id) in open.iter().enumerate() {
+            let Some(screen) = rules.screens.iter().find(|s| &s.id == id).cloned() else { continue };
+            let layout = crate::hud::Layout::new(vec2(w, h), vec2(screen.design[0], screen.design[1]));
+            k = layout.scale;
+            let top = depth + 1 == open.len();
+            let input = if top { *live } else { Input::default() };
+            if let Some(img) = &screen.background {
+                if let Some(tex) = self.image(ctx, img, screen.pack) {
+                    let r = layout.full();
+                    draw_texture_ex(
+                        &tex,
+                        r[0],
+                        r[1],
+                        WHITE,
+                        DrawTextureParams { dest_size: Some(vec2(r[2], r[3])), ..Default::default() },
+                    );
+                }
+            }
+            for wd in &screen.items {
+                let r = layout.rect(wd.rect);
+                let size = wd.size * layout.scale;
+                let colour = wd.colour.map_or(ctx.ui.colour("text"), |c| Color::new(c[0], c[1], c[2], c[3]));
+                let place_text = |ui: &Ui, s: &str| {
+                    let tw = ui.measure(s, size);
+                    let x = match wd.align.as_str() {
+                        "right" => r[0] + r[2] - tw,
+                        "centre" | "center" => r[0] + (r[2] - tw) * 0.5,
+                        _ => r[0],
+                    };
+                    ui.text_in(s, x, r[1] + r[3] * 0.5 + size * 0.35, size, colour);
+                };
+                match wd.kind {
+                    WidgetKind::Image => {
+                        if let Some(img) = &wd.images[0] {
+                            if let Some(tex) = self.image(ctx, img, screen.pack) {
+                                draw_texture_ex(
+                                    &tex,
+                                    r[0],
+                                    r[1],
+                                    WHITE,
+                                    DrawTextureParams { dest_size: Some(vec2(r[2], r[3])), ..Default::default() },
+                                );
+                            }
+                        }
+                    }
+                    WidgetKind::Button => {
+                        let hover = widgets::contains(r, input.mouse);
+                        let down = hover && is_mouse_button_down(MouseButton::Left);
+                        let state = if down {
+                            1
+                        } else if hover {
+                            2
+                        } else {
+                            0
+                        };
+                        let img = wd.images[state].clone().or_else(|| wd.images[0].clone());
+                        match img.and_then(|i| self.image(ctx, &i, screen.pack)) {
+                            Some(tex) => draw_texture_ex(
+                                &tex,
+                                r[0],
+                                r[1],
+                                WHITE,
+                                DrawTextureParams { dest_size: Some(vec2(r[2], r[3])), ..Default::default() },
+                            ),
+                            None if wd.label.is_some() => {
+                                widgets::button(&ctx.ui, &Input::default(), r, wd.label.as_deref().unwrap_or(""), true);
+                            }
+                            // An invisible hot spot over the art (the art draws the button).
+                            None if hover => {
+                                draw_rectangle_lines(r[0], r[1], r[2], r[3], 1.0, Color::new(1.0, 1.0, 0.6, 0.6))
+                            }
+                            None => {}
+                        }
+                        if input.clicked_in(r) {
+                            action = wd.action.clone();
+                        }
+                    }
+                    WidgetKind::Value => place_text(&ctx.ui, &self.value(def, wd.source.as_deref().unwrap_or(""))),
+                    WidgetKind::Text => {
+                        let text = wd.source.clone().unwrap_or_default();
+                        let text = ctx.content.text.resolve(&text).unwrap_or(text);
+                        let ui = &ctx.ui;
+                        for (i, l) in widgets::wrap(&text, r[2], &|s| ui.measure(s, size)).iter().enumerate() {
+                            ui.text_in(l, r[0], r[1] + size * (1.0 + i as f32 * 1.3), size, colour);
+                        }
+                    }
+                    WidgetKind::Map => {
+                        self.map_round = wd.round;
+                        map_rect = r;
+                        let (s, origin) = self.map_view(r);
+                        self.draw_map(&ctx.ui, def, r, s, origin, layout.scale);
+                    }
+                    WidgetKind::Info => {
+                        if let Some(a) = self.draw_info(&ctx.ui, def, r, &input, layout.scale) {
+                            self.act(def, a);
+                        }
+                    }
+                    WidgetKind::List => {
+                        if let Some(tab) = wd.source.as_deref().and_then(tab_of) {
+                            if self.tab != tab {
+                                self.open(tab);
+                            }
+                            if let Some(a) = self.draw_panel(&ctx.ui, def, r, &input, layout.scale) {
+                                self.act(def, a);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        match action {
+            Some(UiAction::Open(to)) => {
+                let dialog = rules.screens.iter().find(|s| s.id == to).is_some_and(|s| s.dialog);
+                if !dialog {
+                    // A full screen replaces the dialogs over the current one.
+                    while self.stack.len() > 1
+                        && rules.screens.iter().any(|s| Some(&s.id) == self.stack.last() && s.dialog)
+                    {
+                        self.stack.pop();
+                    }
+                }
+                if self.stack.last() != Some(&to) {
+                    self.stack.push(to);
+                }
+            }
+            Some(UiAction::Back) => {
+                if self.stack.len() > 1 {
+                    self.stack.pop();
+                }
+            }
+            Some(UiAction::Speed(n)) => self.speed = n.min(SPEEDS.len() - 1),
+            Some(UiAction::Save) => self.saving = true,
+            Some(UiAction::Menu) => {
+                let _ = self.save(ctx);
+                next = Some(Next::Menu);
+            }
+            Some(UiAction::Testbed) => self.testbed = true,
+            None => {}
+        }
+        (map_rect, k, next)
+    }
+
+    /// A named value for a `value` widget.
+    fn value(&self, def: &StrategyDef, name: &str) -> String {
+        let c = &self.campaign;
+        let date = c.date(def);
+        match name {
+            "date" => date.to_string(),
+            "time" => {
+                let h = c.hours.rem_euclid(24.0);
+                format!("{:02}:{:02}:{:02}", h as u32, (h.fract() * 60.0) as u32, ((h * 3600.0) % 60.0) as u32)
+            }
+            "money" | "funds" => format!("${}", money(c.money)),
+            "score" => format!("{:.0}", c.score),
+            "base" => c.bases.get(self.base).map(|b| b.name.clone()).unwrap_or_default(),
+            "speed" => ["paused", "1 hour/s", "6 hours/s", "1 day/s", "5 days/s"][self.speed.min(4)].to_string(),
+            "selection" => self.info(def).0,
+            other => format!("?{other}"),
+        }
     }
 
     /// The top bar: date, funds, score, the current base, time controls, save and leave.
@@ -1648,7 +1878,9 @@ impl StrategyScreen {
 
     /// The info panel: the selection's name, wrapped details and its actions as buttons.
     fn draw_info(&mut self, ui: &Ui, def: &StrategyDef, r: [f32; 4], input: &Input, k: f32) -> Option<Act> {
-        ui.panel(r[0], r[1], r[2], r[3]);
+        if !self.art {
+            ui.panel(r[0], r[1], r[2], r[3]);
+        }
         let (title, text, acts) = self.info(def);
         // Room for a nine-slice frame's corners.
         let pad = 22.0 * k;
@@ -1680,7 +1912,9 @@ impl StrategyScreen {
     /// The open panel: a scrolling list (one line per row, clipped), the selected row in
     /// full beneath it, and that row's actions as buttons.
     fn draw_panel(&mut self, ui: &Ui, def: &StrategyDef, r: [f32; 4], input: &Input, k: f32) -> Option<Act> {
-        ui.panel(r[0], r[1], r[2], r[3]);
+        if !self.art {
+            ui.panel(r[0], r[1], r[2], r[3]);
+        }
         let rows = self.rows(def);
         let pad = 22.0 * k; // room for a nine-slice frame's corners
         let line = 21.0 * k;
@@ -1748,10 +1982,19 @@ impl StrategyScreen {
     /// The star map: lanes, sensor ranges, systems, bases, contacts, convoys, craft,
     /// the selection, a hover label and a legend.
     fn draw_map(&self, ui: &Ui, def: &StrategyDef, r: [f32; 4], s: f32, origin: Vec2, k: f32) {
-        ui.panel(r[0], r[1], r[2], r[3]);
+        if !self.art {
+            ui.panel(r[0], r[1], r[2], r[3]);
+        }
         let c = &self.campaign;
         let at = |q: [f32; 2]| origin + vec2(q[0], q[1]) * s;
-        let inside = |p: Vec2| widgets::contains(r, p);
+        // Inside the viewport: the rectangle, or the circle within it (a round map).
+        let (centre, radius) = (vec2(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5), r[2].min(r[3]) * 0.5);
+        let round = self.map_round;
+        if round {
+            // Space behind the stars: the art's viewport is only a frame.
+            draw_circle(centre.x, centre.y, radius, Color::new(0.01, 0.02, 0.04, 1.0));
+        }
+        let inside = |p: Vec2| if round { p.distance(centre) <= radius } else { widgets::contains(r, p) };
         let clip_line = |p: Vec2, q: Vec2, w: f32, col: Color| {
             if inside(p) || inside(q) {
                 draw_line(p.x, p.y, q.x, q.y, w, col);
@@ -1865,15 +2108,17 @@ impl StrategyScreen {
                 ui.text_in(&name, mx + 20.0, my + 13.0 * k, 15.0 * k, WHITE);
             }
         }
-        // Legend.
-        let ly = r[1] + r[3] - 16.0 * k;
-        ui.text_in(
-            "square: base   red: hostile   gold: convoy   blue: survey/craft   diamond: facility   wheel: zoom   right-drag: pan",
-            r[0] + 10.0,
-            ly,
-            12.0 * k,
-            ui.colour("dim"),
-        );
+        // Legend (not over a campaign's own art).
+        if !self.art {
+            let ly = r[1] + r[3] - 16.0 * k;
+            ui.text_in(
+                "square: base   red: hostile   gold: convoy   blue: survey/craft   diamond: facility   wheel: zoom   right-drag: pan",
+                r[0] + 10.0,
+                ly,
+                12.0 * k,
+                ui.colour("dim"),
+            );
+        }
     }
 }
 

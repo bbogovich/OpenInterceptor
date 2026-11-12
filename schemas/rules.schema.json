@@ -400,7 +400,27 @@
     "screens": {"description": "screen layouts: design space and widget rectangles", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "design": {"description": "the design space the rectangles are written in", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
           "background": {"description": "an image over the whole design space", "type": "string"},
-          "widgets": {"description": "widget → [x, y, w, h]; starmap: top, map, nav, info, panel", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}},
+          "dialog": {"description": "drawn over the screen under it", "type": "boolean"},
+          "widgets": {"description": "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
+                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info"]},
+                  "rect": {"description": "x, y, w, h in the design space", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                  "image": {"description": "its picture", "type": "string"},
+                  "images": {"description": "a button's states", "type": "object", "additionalProperties": false, "properties": {
+                      "up": {"description": "normal", "type": "string"},
+                      "down": {"description": "pressed", "type": "string"},
+                      "hover": {"description": "under the mouse", "type": "string"},
+                      "disabled": {"description": "unavailable", "type": "string"}
+                    }},
+                  "action": {"description": "open(<screen>), back, speed(0-4), save, menu, testbed", "type": "string"},
+                  "value": {"description": "a value: date, time, money, score, base, speed, selection", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "source": {"description": "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "text": {"description": "fixed text (a text key)", "type": "string"},
+                  "label": {"description": "a button's caption when it has no images", "type": "string"},
+                  "size": {"description": "text size, design pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "colour": {"description": "text colour, RGB or RGBA", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+                  "align": {"description": "text alignment", "enum": ["left", "centre", "right"]},
+                  "shape": {"description": "a map's viewport", "enum": ["rect", "round"]}
+                }}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -569,6 +589,7 @@
         "skin": {"description": "the skin of the menus and strategy screens (skins.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "intro": {"description": "the cutscene played before a new campaign (cutscenes/<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "intro_video": {"description": "a video played before a new campaign", "type": "string"},
+        "strategy_screen": {"description": "the first of the original-style strategy screens (screens.<id>); none: the testbed layout", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "menu": {"description": "the main menu (Stage 6.2)", "type": "object", "additionalProperties": false, "properties": {
             "title": {"description": "the title (default: the campaign's name)", "type": "string"},
             "subtitle": {"description": "a line under it", "type": "string"},
