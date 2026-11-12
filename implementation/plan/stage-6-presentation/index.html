@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2973,6 +3010,8 @@
       
         
       
+        
+      
     
     
     
@@ -3347,6 +3386,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4135,6 +4202,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4484,6 +4557,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6160,7 +6317,8 @@
 
 
 <h1 id="stage-6-presentation">Stage 6 — Presentation<a class="headerlink" href="#stage-6-presentation" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.7.0. Status: planned.</strong> The campaigns look and sound finished.</p>
+<p><strong>Version 0.7.0. Status: in progress</strong> — app 0.11.0 – 0.13.1 (main <code>1f183d1</code> … <code>747d1e9</code>): 6.1, 6.3, 6.4, 6.6, 6.8 and MD2 partly or wholly built; 6.2, 6.5, 6.7 and MD3 not started. The campaigns look and sound finished.
+Progress: <a href="../../status/#stage-6-progress">Implementation status › Stage 6</a>.</p>
 <p>Design: <a href="../../../specification/design/format-interface/">interface, text and media</a>.</p>
 <h2 id="work-items">Work items<a class="headerlink" href="#work-items" title="Permanent link">&para;</a></h2>
 <table>
@@ -6169,6 +6327,7 @@
 <th>#</th>
 <th>Item</th>
 <th>Module</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
@@ -6176,41 +6335,49 @@
 <td>6.1</td>
 <td>Screen layouts and skins: design spaces, nine-slice panels, buttons, fonts, custom panels bound to queries</td>
 <td><code>app::ui</code></td>
+<td><strong>Partial</strong> (0.11.1): skins (colours, nine-slice panel, font) on the launcher and strategy screen; no layouts, buttons, custom panels. #48</td>
 </tr>
 <tr>
 <td>6.2</td>
 <td>Main menu, options (graphics, audio, controls), difficulty, load/save, credits, ending screens; campaign and mod selection (pack switches in the launcher)</td>
 <td><code>app</code></td>
+<td><strong>Not started</strong> beyond the launcher's M/V volume keys (0.12.1) and endings' films. #48</td>
 </tr>
 <tr>
 <td>6.3</td>
 <td>Smacker video decoder (in-crate) for the original's cut-scenes and MFD talking heads; image-sequence video for mods</td>
 <td><code>formats::smacker</code>, <code>app</code></td>
+<td><strong>Done</strong> for the original's films (0.12.0; verified on all 11 CD videos); image sequences are MD3. #49</td>
 </tr>
 <tr>
 <td>6.4</td>
 <td>Interactive music: states, segments, switches, stingers; the original's loop sets; CD audio tracks from ripped files</td>
 <td><code>audio</code></td>
+<td><strong>Partial</strong> (0.11.0): states, segments, stingers, the loop sets, synthesised default music; no <code>switch:</code> data, <code>.wtl</code> tables or CD audio. #49</td>
 </tr>
 <tr>
 <td>6.5</td>
 <td>Voices and chatter playback; computer voice</td>
 <td><code>audio</code></td>
+<td>Built in 3.7 (app 0.6.2); speakers on the comms panel in 6.6. #50</td>
 </tr>
 <tr>
 <td>6.6</td>
 <td>Cockpit additions: comms panel, custom instruments</td>
 <td><code>hud</code></td>
+<td><strong>Partial</strong> (0.13.1): the comms panel (<code>app::comms</code>) with voices' <code>name</code>/<code>face</code> and chatter <code>speaker</code>; MPSRC packs read (<code>mfdanim.mps</code>); no custom instruments; X-COM faces unmapped. #52</td>
 </tr>
 <tr>
 <td>6.7</td>
 <td><code>interceptor</code>: screens laid out with the original wrapper art at 640×480; music sets; talking heads</td>
 <td><code>packs/interceptor</code></td>
+<td><strong>Partial</strong>: music sets (0.11.0), a palette skin (0.11.1), films (0.12.0 – 0.13.0); wrapper screens not mapped; talking heads not mapped to speakers. #52</td>
 </tr>
 <tr>
 <td>6.8</td>
 <td><code>default</code>: the art-deco skin, chapter title cards and recaps, synthesised music and stings (generator tools for UI art)</td>
 <td><code>resources/default</code>, <code>tools</code></td>
+<td><strong>Partial</strong> (0.11.0 – 0.13.1): art-deco skin and panel, title cards, synthesised music and stingers, the intro cutscene, CRT portraits; no recaps. #52</td>
 </tr>
 </tbody>
 </table>
@@ -6223,6 +6390,7 @@ made 2026-11-11): the engine side of cutscenes, which the Cutscene Designer (MD6
 <th>#</th>
 <th>Item</th>
 <th>Module</th>
+<th>Status</th>
 <th>Requirements</th>
 </tr>
 </thead>
@@ -6231,12 +6399,14 @@ made 2026-11-11): the engine side of cutscenes, which the Cutscene Designer (MD6
 <td>MD2</td>
 <td><strong>Cutscenes</strong>: the <code>cutscenes/&lt;id&gt;.yaml</code> format and its validation; the in-game player (timeline, centripetal Catmull-Rom paths and slerp, keyframes with the speed override, scripted and autopilot entities with the <code>aggressive</code> and <code>harmless</code> flags, formations, timed actions, cameras fixed and attached, cuts, sounds, captions), deterministic on the 60 Hz sim with Simple physics; played as the campaign intro, from events (<code>play_cutscene</code>) and as mission intro and outro; skip with Esc, the console or pad Start</td>
 <td><code>cutscene</code> (new), <code>app</code></td>
+<td><strong>Partial</strong> (0.13.0, <code>content::cutscene</code>, <code>app::cutscene</code>): scripted entities, fire/missile/destroy, cameras, instant cuts, named sounds, captions; intro and events; Esc. Not built: autopilot, formations, rotation keys, chase/capture/jump, sound files, mission intros/outros, console/pad skip. #65</td>
 <td><a href="../../../specification/requirements/modding/#r-mod-033-cutscene-files">R-MOD-033 – R-MOD-045</a></td>
 </tr>
 <tr>
 <td>MD3</td>
 <td><strong>Video cutscenes</strong>: video files through the platform shim (AVFoundation on macOS, Media Foundation on Windows, GStreamer loaded with <code>dlopen</code> on Linux when installed), with image sequences plus WAV as the fallback everywhere. The Linux path is evaluated on the <a href="../../../learning/best-practices/dependencies/">dependency page</a> first. Complements 6.3 (Smacker, the original's films)</td>
 <td><code>platform</code>, <code>app</code></td>
+<td><strong>Not started</strong>: needs the dependency/FFI evaluation first. #66</td>
 <td><a href="../../../specification/requirements/modding/#r-mod-046-video-cutscenes">R-MOD-046</a></td>
 </tr>
 </tbody>

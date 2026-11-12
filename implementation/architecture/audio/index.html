@@ -14,7 +14,7 @@
         <link rel="prev" href="../input/">
       
       
-        <link rel="next" href="../platform/">
+        <link rel="next" href="../presentation/">
       
       
         
@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2904,6 +2941,8 @@
       
         
       
+        
+      
     
     
     
@@ -3338,6 +3377,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#music-app-0110" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Music (app 0.11.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3377,6 +3433,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -4157,6 +4241,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4506,6 +4596,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6151,6 +6325,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#music-app-0110" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Music (app 0.11.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6204,8 +6395,9 @@
 
 
 <h1 id="audio">Audio<a class="headerlink" href="#audio" title="Permanent link">&para;</a></h1>
-<p><code>src/audio.rs</code>: sound effects driven by simulation events, and radio voice clips. Plan: Stage 1
-(event sounds); radio voices Stage 3.7 (app 0.6.2); music loops and CD audio are Stage 5.</p>
+<p><code>src/audio.rs</code>: sound effects driven by simulation events, radio voice clips and interactive
+music. Plan: Stage 1 (event sounds); radio voices Stage 3.7 (app 0.6.2); interactive music Stage
+6.4 (app 0.11.0) with the volumes of app 0.12.1; CD audio tracks are not built.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
     R["Ruleset: sounds, beam sound, missile sound,&lt;br/&gt;voice_clips"] --&gt; L["SoundBank::load (async)&lt;br/&gt;Content::load_sound → wav::decode (PCM / MS ADPCM / IMA ADPCM)&lt;br/&gt;→ Pcm::to_wav_bytes → load_sound_from_bytes"]
@@ -6248,6 +6440,42 @@ speaks: the flight screen (<code>app::flight</code>) does —</p>
 <p>A ship's voice is resolved to an index when the ship spawns (<code>Ship::voice</code>); an unknown set
 named by a ship is a rules error. Voice lines without a clip, and ships without a voice, are
 simply silent.</p>
+<h3 id="music-app-0110">Music (app 0.11.0)<a class="headerlink" href="#music-app-0110" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+    MD["rules: music.&amp;lt;set&amp;gt;&lt;br/&gt;content::music::MusicSet"] --&gt; BL["SoundBank::load&lt;br/&gt;SoundKey::Music(set, state, seg),&lt;br/&gt;Stinger(set, k) + their lengths"]
+    FL["app::flight each frame:&lt;br/&gt;set = seed mod sets;&lt;br/&gt;battle_state(nearest hostile)"] --&gt; MP
+    SG["app::strategy each frame:&lt;br/&gt;set 0, state strategy"] --&gt; MP
+    MP["MusicPlayer::frame(bank, rules, set, state, now)"] --&gt;|"segment ended?&lt;br/&gt;next_segment(set, state, count)"| PL["SoundBank::play(key, set.volume × music volume)"]
+    RES["flight: result decided"] --&gt; STG["MusicPlayer::stinger(victory | death)"] --&gt; PL
+    APP["app::run: any other screen"] --&gt; STOP["MusicPlayer::stop"]</code></pre>
+<p><code>content::music</code> parses a set (<code>states</code> — each a list of asset references, or one — <code>stingers</code>,
+<code>threat_range</code> 12 km, <code>battle_range</code> 4 km and <code>volume</code> 60 % by default) and holds the pure rule
+<code>battle_state(set, distances)</code>: <code>battle</code> within <code>battle_range</code> of the nearest live hostile,
+<code>threat</code> within <code>threat_range</code>, else <code>cruise</code>. <code>MusicSet::segments(state)</code> falls back to
+<code>cruise</code>, then the first state.</p>
+<p><code>SoundBank::load</code> loads every segment and stinger beside the other sounds, and keeps each one's
+<strong>length</strong> (<code>Pcm::duration</code>) in <code>SoundBank::lengths</code>, because macroquad's audio cannot say when a
+sound has finished. <code>MusicPlayer</code> (owned by <code>AppContext::music</code>) is called every frame by the
+screens that have music with the set and state they want. It does nothing while the current
+segment has time left (to 20 ms before its end); then it plays the next segment —
+<code>next_segment(set, set_index, state, count)</code> picks the wanted state's segment <code>count mod n</code>, so
+each state walks its list in turn — and records its end time. Changing set stops the playing
+segment and restarts the count. This is the original's <code>segment_end</code> transition; its <code>.wtl</code>
+transition tables are not read (<a href="../../deviations/">DEV-053</a>).</p>
+<ul>
+<li><strong>Which set:</strong> a battle uses set <code>seed mod sets</code> (<code>FlightSession::frame</code>), so a battle always
+  has the same music; the strategy screen uses set 0 with the <code>strategy</code> state.</li>
+<li><strong>Stingers:</strong> when a mission's result is decided, <code>victory</code> for a win and <code>death</code> otherwise,
+  with the computer voice. <code>good</code> and <code>bad</code> are loaded but not played.</li>
+<li><strong>Silence:</strong> <code>app::run</code> stops the music on every screen other than <code>Screen::Flight</code> and
+  <code>Screen::Strategy</code>, and before a video.</li>
+</ul>
+<p><strong>Volumes (app 0.12.1).</strong> <code>settings.yaml</code> <code>audio: {music, effects}</code> (0 – 100 %, default 70 % and
+100 %) is read at start-up: <code>MusicPlayer::volume</code> multiplies each set's own <code>volume</code>, and
+<code>SoundBank::effects_volume</code> multiplies <strong>every other</strong> key in <code>SoundBank::play</code> (music and
+stinger keys already carry the music volume). The launcher's M and V keys step them by quarters
+and save them (<code>app::remember_audio</code>). A reload (Tab) re-reads the effects volume for the new
+bank. Video soundtracks are played by <code>app::video</code> directly, at a fixed 0.9.</p>
 <p>Playback uses macroquad's <code>audio</code> feature (quad-snd: CoreAudio on macOS, ALSA on Linux).</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
@@ -6260,7 +6488,15 @@ simply silent.</p>
 <tbody>
 <tr>
 <td><code>SoundKey</code></td>
-<td><code>Named(&amp;'static str)</code>, <code>Beam(u16)</code>, <code>Missile(u16)</code>, <code>Effect(u16)</code>, and since app 0.6.2 <code>Voice(u32)</code> (an index into <code>Ruleset::voice_clips</code>).</td>
+<td><code>Named(&amp;'static str)</code>, <code>Beam(u16)</code>, <code>Missile(u16)</code>, <code>Effect(u16)</code>, since app 0.6.2 <code>Voice(u32)</code> (an index into <code>Ruleset::voice_clips</code>), and since app 0.11.0 <code>Music(set, state, segment)</code> and <code>Stinger(set, stinger)</code> (indices into <code>Ruleset::music</code>).</td>
+</tr>
+<tr>
+<td><code>content::music::MusicSet</code>, <code>battle_state</code></td>
+<td>A music set (<code>states</code>, <code>stingers</code>, ranges, volume, pack); the battle state from the hostiles' distances (pure, tested).</td>
+</tr>
+<tr>
+<td><code>MusicPlayer</code>, <code>next_segment</code></td>
+<td>Plays one segment at a time and changes state only at a segment's end; the next segment's key (pure, tested). <code>volume</code> is the player's music volume.</td>
 </tr>
 <tr>
 <td><code>NAMED</code></td>
@@ -6284,14 +6520,19 @@ simply silent.</p>
 </tr>
 <tr>
 <td><code>SoundBank</code></td>
-<td>Decoded sounds by key, and <code>errors</code> for sounds that failed.</td>
+<td>Decoded sounds by key, music lengths, <code>effects_volume</code> (app 0.12.1), and <code>errors</code> for sounds that failed.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>SoundBank::load(&amp;Content).await</code>, <code>bank.play(&amp;SoundKey, volume)</code>,
-  <code>bank.play_events(&amp;World, listener, ear)</code>.</li>
+  <code>bank.play_events(&amp;World, listener, ear)</code>; since app 0.11.0 – 0.13.0 <code>bank.play_named(name, volume)</code>
+  (a cutscene's sounds), <code>bank.length(&amp;SoundKey)</code>, <code>bank.stop(&amp;SoundKey)</code>.</li>
+<li><code>MusicPlayer::new(volume)</code>, <code>player.frame(&amp;SoundBank, &amp;Ruleset, set, state, now)</code>,
+  <code>player.stinger(&amp;SoundBank, &amp;Ruleset, name)</code>, <code>player.stop(&amp;SoundBank)</code>;
+  <code>next_segment(&amp;MusicSet, set_index, state, count) -&gt; Option&lt;SoundKey&gt;</code>;
+  <code>content::music::battle_state(&amp;MusicSet, distances) -&gt; &amp;'static str</code>.</li>
 <li><code>event_sound(&amp;World, &amp;SimEvent, ShipId, Vec3) -&gt; Option&lt;(SoundKey, f32)&gt;</code>, <code>attenuate(distance)</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -6301,6 +6542,12 @@ simply silent.</p>
 <li>A wingman that says nothing: its ship class needs <code>voice: &lt;set&gt;</code>, the set needs the line
   (<code>acknowledge</code>, <code>status</code>, <code>down</code>), and the clip must load (a failed clip prints a <code>sound: …</code>
   line). Only the player's own wingmen (AI <code>wingman</code> led by the player) speak.</li>
+<li>No music: the campaign needs a <code>music:</code> section, the screen must be a flight or the strategy
+  screen, <code>audio.music</code> must be above 0, and the segment files must load (a failure prints a
+  <code>sound: …</code> line). The default campaign's music WAVs are generated, not committed: run
+  <code>python3 tools/default_assets/make_all.py</code> after cloning.</li>
+<li>The music does not change when an enemy closes in: it changes at the <strong>end of the segment</strong>
+  playing, by design; check <code>threat_range</code> and <code>battle_range</code> against the battle's distances.</li>
 <li>No sound at all on Linux: the build needs the ALSA development package (<code>libasound2-dev</code>).</li>
 <li>A <code>cue:</code> sound that is silent: <code>--check</code> names unknown cues (<code>sounds.x: unknown sound cue 'Y'</code>);
   if the cue resolves, the asset browser shows whether the original file (or its override)

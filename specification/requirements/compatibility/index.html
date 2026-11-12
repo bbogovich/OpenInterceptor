@@ -2265,6 +2265,8 @@
       
         
       
+        
+      
     
     
     
@@ -2548,6 +2550,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -3151,6 +3188,8 @@
       
         
       
+        
+      
     
     
     
@@ -3525,6 +3564,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4313,6 +4380,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4662,6 +4735,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6557,7 +6714,7 @@
 </tr>
 <tr>
 <td><a href="#r-cmp-010-smacker-video">R-CMP-010 Smacker video</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-cmp-011-bad-data-never-panics">R-CMP-011 Bad data never panics</a></td>
@@ -6680,10 +6837,18 @@
 <p><em>Rationale:</em> Faithful presentation.</p>
 <ul>
 <li>Implements: <a href="../../../definition/compatibility/#f-cmp-002-original-formats-read-faithfully">F-CMP-002</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../original-formats/smacker/">Smacker video</a></li>
+<li>Status: implemented (app 0.12.0 – 0.13.1, main <code>5163a57</code>, <code>644b218</code>, <code>319a31b</code>, <code>747d1e9</code>) — the decoder, the cut-scenes, and the talking-head clips inside <code>mfdanim.mps</code></li>
+<li>Verified by: <code>formats::smacker::tests::small_and_big_trees_decode_with_the_cache</code>, <code>palettes_decode_explicit_kept_and_copied_entries</code>, <code>a_tiny_file_decodes_a_solid_frame</code>, <code>audio_dpcm_8_bit_mono</code>; <code>formats::mpsrc::tests::a_pack_lists_and_returns_its_members</code>; by hand against all 11 of the reference CD's videos with the ignored <code>real_smacker_file_decodes</code> (<code>OI_SMK</code>); MT-6-07, MT-6-08</li>
+<li>See: <a href="../../original-formats/smacker/">Smacker video</a>, <a href="../../../implementation/architecture/formats/#smacker-formatssmacker">Architecture › Formats</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.12.0)</p>
+<p><code>formats::smacker</code> decodes <code>SMK2</code> and <code>SMK4</code>: the four big Huffman trees (built from two small trees each, with the three-slot escape cache reset every frame), mono, full (with version 4's two half-resolution modes), skip and solid 4 × 4 blocks, delta palettes, and DPCM or raw audio, 8- or 16-bit, mono or stereo, on up to seven tracks. Written from the format's public description; <code>SMACKW32.DLL</code> is never used. Bad data returns an error.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Talking heads (main <code>319a31b</code>, app 0.13.1)</p>
+<p>The MFD talking heads are 113 Smacker clips bundled in <code>mfdanim.mps</code>, an <strong>MPSRC pack</strong> (<a href="../../original-formats/mpsrc/">format</a>), now read by <code>formats::mpsrc</code>; a member is addressed as <code>original:mfdanim.mps#&lt;member&gt;</code> and decodes like any Smacker file. The comms panel (app 0.13.1) can show one as a voice's <code>face</code>. Still open: which clip belongs to which speaker (the <code>at_</code>, <code>as_</code>, <code>e_</code>, <code>w_</code> prefixes) is <em>unknown</em>, so the <code>interceptor</code> voices have no faces yet.</p>
+</div>
 <h3 id="r-cmp-011-bad-data-never-panics">R-CMP-011 Bad data never panics<a class="headerlink" href="#r-cmp-011-bad-data-never-panics" title="Permanent link">&para;</a></h3>
 <p>Every reader MUST return an error with a readable message on bad, truncated or out-of-bounds data, never panic.</p>
 <p><em>Rationale:</em> Modded and damaged data must not crash the game.</p>
@@ -6761,6 +6926,11 @@
 <td>1.3.0</td>
 <td>2026-11-11</td>
 <td>R-CMP-014 and R-CMP-015 listed in the status table (implemented, app 0.4.2); R-CMP-001 Verified by: <code>settings::resolution_order_prefers_explicit_and_existing</code> renamed <code>original_data_is_found_in_order</code></td>
+</tr>
+<tr>
+<td>1.16.0</td>
+<td>2026-11-11</td>
+<td>R-CMP-010 implemented (app 0.12.0): the in-crate decoder, verified against the reference CD's eleven videos; the MPSRC container of the talking heads (<code>mfdanim.mps</code>) read (main <code>319a31b</code>). No requirement text changed</td>
 </tr>
 </tbody>
 </table>

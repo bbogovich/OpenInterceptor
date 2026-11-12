@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4114,6 +4181,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#films-cutscenes-and-music" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Films, cutscenes and music
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#money-and-the-monthly-report" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4147,10 +4225,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-0103" class="md-nav__link">
+  <a href="#limits-in-app-0130" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.10.3
+        Limits in app 0.13.0
       
     </span>
   </a>
@@ -4184,6 +4262,12 @@
       
         
           
+        
+      
+        
+      
+        
+      
         
       
         
@@ -4581,6 +4665,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6295,6 +6463,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#films-cutscenes-and-music" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Films, cutscenes and music
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#money-and-the-monthly-report" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6328,10 +6507,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-0103" class="md-nav__link">
+  <a href="#limits-in-app-0130" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.10.3
+        Limits in app 0.13.0
       
     </span>
   </a>
@@ -6367,13 +6546,18 @@ yet play-tested, and without the supply chain, which the original does not have)
 messages that arrive as you play, choices to make, missions offered to you, a rival building
 something you must stop, factions whose standing with you changes, and endings — victory or
 defeat.</p>
-<p>The screen is <strong>functional and plain</strong> in this version: every rule is playable, but it is not
-yet dressed in the campaign's look (that is Stage 6).</p>
+<p>The screen is <strong>functional</strong>: every rule is playable. Since app 0.11.1 it is drawn in the
+campaign's <strong>skin</strong> — the default campaign's art-deco navy and gold, <code>interceptor</code>'s green on
+steel — and since app 0.11.0 – 0.13.0 the campaign has <strong>music</strong>, chapter <strong>title cards</strong>,
+<strong>films</strong> and <strong>cutscenes</strong> (<a href="#films-cutscenes-and-music">Films, cutscenes and music</a>). Its full
+screen layouts are still to come (Stage 6).</p>
 <h2 id="starting">Starting<a class="headerlink" href="#starting" title="Permanent link">&para;</a></h2>
 <ul>
 <li>In the launcher, a campaign with a strategy layer lists <strong>Campaign: continue</strong> and
   <strong>Campaign: new game</strong> first, and the selection starts on <em>continue</em>.</li>
-<li><em>New game</em> starts at the launcher's difficulty level. <em>Continue</em> loads the campaign's save
+<li><em>New game</em> starts at the launcher's difficulty level. If the campaign has an introduction it
+  plays first: the default campaign's opening cutscene, or <code>interceptor</code>'s opening film from your
+  data (app 0.13.0). Esc skips it. <em>Continue</em> loads the campaign's save
   (there is one save per campaign); with no save, the launcher shows the error.</li>
 <li>From the command line: <code>openinterceptor --no-original --strategy</code> opens a new default campaign
   directly (<a href="../getting-started/#run">Getting started</a>).</li>
@@ -6614,8 +6798,10 @@ stop the clock, choices, offered missions and, finally, an ending.</p>
   grows. Messages warn you as it nears completion, and the Archive tab shows how far it is.
   If it is completed, you lose.</li>
 <li><strong>Relations</strong> (default campaign). Every faction has a standing with you from −100 to 100 and
-  a stance — hostile, wary, neutral, friendly or allied. What happens moves them, and they drift
-  back towards neutral each month. A change of stance stops the clock. A faction that is no
+  a stance — hostile, wary, neutral, friendly or allied. Story events and, since app 0.12.1, the
+  missions you fly move them (winning the nebula-pocket ambush lowers the raiders' standing), and
+  they drift back towards neutral each month. A change of stance from a story event stops the
+  clock; one from a mission is only logged. A faction that is no
   longer <strong>hostile</strong> stops raiding you and does not attack you in battle; one that turns hostile
   does. The Senate's stipend grows with its standing.</li>
 <li><strong>The rival's mood.</strong> Sit back and the rival grows bolder — its raids come more often; win
@@ -6626,6 +6812,32 @@ stop the clock, choices, offered missions and, finally, an ending.</p>
   <code>interceptor</code> you win by destroying the Doomsday weapon and lose if it is completed or your
   last base falls.</li>
 </ul>
+<h2 id="films-cutscenes-and-music">Films, cutscenes and music<a class="headerlink" href="#films-cutscenes-and-music" title="Permanent link">&para;</a></h2>
+<p><em>App 0.11.0 – 0.13.0.</em></p>
+<ul>
+<li><strong>Title cards.</strong> Each chapter of the default campaign's serial opens with a full-screen card —
+  the chapter's title and its hook — and the clock stops. <strong>Enter</strong>, <strong>Esc</strong> or a click
+  dismisses it; then the chapter's mission is offered as before.</li>
+<li><strong>Films.</strong> In <code>interceptor</code>, each of the five alien transmissions plays the original's
+  transmission film from your data, the victory plays the closing credits, and a new campaign
+  opens with the original's opening film. The film fills the screen (letterboxed); <strong>Enter</strong>,
+  <strong>Esc</strong> or a click skips it, and the map comes back where you left it.</li>
+<li><strong>Cutscenes.</strong> The default campaign opens with a short scene played by the engine itself —
+  a Guard patrol meets a saucer over the Gatehouse — with captions and black bars. <strong>Esc</strong> or
+  <strong>Enter</strong> skips it.</li>
+<li><strong>Music.</strong> Battles play the campaign's music: calm while no enemy is near, tense when one
+  is within radar range, driving when one is close, changing at the end of a musical phrase.
+  A win plays a victory sting, any other result a darker one. The strategy screen has its own
+  music; the launcher and the other testbed screens are silent. Set the music and effects
+  volumes in the launcher with <strong>M</strong> and <strong>V</strong> (<a href="../settings/#volumes-in-the-launcher">Settings</a>).</li>
+<li><strong>Who is speaking.</strong> In any battle, when someone speaks on the radio a small panel at the top
+  left shows their portrait and name for a moment (app 0.13.1) — in the default campaign the
+  Guard Wing and Colony Control; voices without a portrait show moving signal bars.</li>
+<li><strong>The end.</strong> An ending with a film plays it first, then shows <em>VICTORY.</em> or <em>DEFEAT.</em> and its
+  text. Continuing a finished campaign shows its ending again (app 0.12.1).</li>
+</ul>
+<p>The default campaign's music files are generated: after a fresh clone of the repository run
+<code>python3 tools/default_assets/make_all.py</code>, or the campaign plays without music.</p>
 <h2 id="money-and-the-monthly-report">Money and the monthly report<a class="headerlink" href="#money-and-the-monthly-report" title="Permanent link">&para;</a></h2>
 <p>Incomes (the default campaign's Senate stipend grows with your bases, your month's score and,
 since app 0.10.1, the Senate's standing with you)
@@ -6674,14 +6886,16 @@ and your funds, and a new set of recruits is offered.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="limits-in-app-0103">Limits in app 0.10.3<a class="headerlink" href="#limits-in-app-0103" title="Permanent link">&para;</a></h2>
+<h2 id="limits-in-app-0130">Limits in app 0.13.0<a class="headerlink" href="#limits-in-app-0130" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Fitting takes the best items in store; you cannot choose them one by one yet.</li>
 <li>Facilities have no fighters of their own, and the Supply tab is plain text.</li>
 <li>Several chapters of the default campaign's serial fly an existing mission rather than their
   own; allied factions do not yet fly at your side; two of the original's seven side missions
   are in <code>interceptor</code>. Neither campaign has been played through from start to finish yet.</li>
-<li>The ending is a banner line, not a screen of its own (Stage 6).</li>
+<li>The ending is a banner line with an optional film, not a screen of its own (Stage 6).</li>
+<li>Films and cutscenes cannot be skipped from the tablet console or the gamepad yet; a film's
+  sound ignores the volume settings.</li>
 <li>The <code>interceptor</code> campaign's strategy layer has not been play-tested; its research is slow
   with one downlink.</li>
 <li>Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default

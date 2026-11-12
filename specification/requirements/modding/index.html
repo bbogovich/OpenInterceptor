@@ -2705,6 +2705,8 @@
       
         
       
+        
+      
     
     
     
@@ -2988,6 +2990,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -3591,6 +3628,8 @@
       
         
       
+        
+      
     
     
     
@@ -3965,6 +4004,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4753,6 +4820,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -5102,6 +5175,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -7529,23 +7686,23 @@
 </tr>
 <tr>
 <td><a href="#r-mod-033-cutscene-files">R-MOD-033 Cutscene files</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-034-deterministic-playback-with-simple-physics">R-MOD-034 Deterministic playback with Simple physics</a></td>
-<td>Planned</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-mod-035-scripted-entities-and-keyframes">R-MOD-035 Scripted entities and keyframes</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-036-paths-and-rotations">R-MOD-036 Paths and rotations</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-037-timed-actions">R-MOD-037 Timed actions</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-038-autopilot-entities">R-MOD-038 Autopilot entities</a></td>
@@ -7557,27 +7714,27 @@
 </tr>
 <tr>
 <td><a href="#r-mod-040-timed-sounds">R-MOD-040 Timed sounds</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-041-captions">R-MOD-041 Captions</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-042-cameras-fixed-or-attached">R-MOD-042 Cameras, fixed or attached</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-043-camera-cuts">R-MOD-043 Camera cuts</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-044-where-cutscenes-play">R-MOD-044 Where cutscenes play</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-045-skipping-a-cutscene">R-MOD-045 Skipping a cutscene</a></td>
-<td>Planned</td>
+<td>Planned (partly met)</td>
 </tr>
 <tr>
 <td><a href="#r-mod-046-video-cutscenes">R-MOD-046 Video cutscenes</a></td>
@@ -7951,47 +8108,71 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <p><em>Rationale:</em> Cutscenes are open pack data like everything else a modder writes.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0, main <code>a59ffce</code>): engine-played cutscene files are read and validated; <code>video:</code> in their place is MD3</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09</li>
 <li>See: <a href="../../design/designer/#34-the-cutscene-file">Mod designer: the cutscene file</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>cutscenes/&lt;id&gt;.yaml</code> with <code>id</code>, <code>title</code>, <code>length</code>, <code>environment</code> (<code>starfield_seed</code>, <code>sun</code>, <code>environment</code>), <code>entities</code>, <code>cameras</code>, <code>cuts</code>, <code>sounds</code>, <code>captions</code>, and the editor schema <code>schemas/cutscene.schema.json</code>. Read with every pack file when the content loads (<code>--check</code> included); a later pack replaces an id; mistakes are reported with the file and the key path (<code>cameras.chase: no entity 'x'</code>, <code>unknown class 'y'</code>) but without a line number. The <code>title</code> is plain text, not a text key. Every key: <a href="../../../modding/cutscenes/#the-file">Cutscenes</a>.</p>
+</div>
 <h3 id="r-mod-034-deterministic-playback-with-simple-physics">R-MOD-034 Deterministic playback with Simple physics<a class="headerlink" href="#r-mod-034-deterministic-playback-with-simple-physics" title="Permanent link">&para;</a></h3>
 <p>A cutscene MUST run on the normal 60 Hz simulation with a fixed random seed, and every ship in it MUST fly Simple physics (R-FLT-013), so that it plays the same way every time, in the designer and in the game.</p>
 <p><em>Rationale:</em> The user's request: "Cutscenes always use basic physics so that the animation behavior is predictable."</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: implemented (MD2, app 0.13.0, main <code>a59ffce</code>) — scripted entities are placed on their paths each tick, so no flight model steers them</li>
+<li>Verified by: <code>content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot</code>; MT-6-09</li>
 <li>See: <a href="../../design/designer/#33-how-it-plays-deterministic-with-simple-physics">Mod designer: how it plays</a>, <a href="../flight/#r-flt-013-simple-physics-mode">R-FLT-013</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>app::cutscene::CutscenePlayer</code> runs its own <code>World</code> at the 60 Hz <code>TICK</code> with the scene's <code>starfield_seed</code> as the world seed. Scripted entities are <strong>placed</strong> every tick (position, rotation and velocity from the path), so the requirement's Simple-physics clause is met by construction rather than by switching physics; bolts, missiles, hits and effects are simulated normally. Autopilot entities, which would need Simple physics, are not built (R-MOD-038).</p>
+</div>
 <h3 id="r-mod-035-scripted-entities-and-keyframes">R-MOD-035 Scripted entities and keyframes<a class="headerlink" href="#r-mod-035-scripted-entities-and-keyframes" title="Permanent link">&para;</a></h3>
 <p>A scripted entity MUST be any ship, object or debris from the loaded packs, with enter and leave times and keyframes for position, rotation and speed. When an entity has position keyframes, its speed MUST be derived from its path, overriding its speed keyframes, so that it is exactly at each keyframe's position at that keyframe's time.</p>
 <p><em>Rationale:</em> The user's request: "speed overridden when keyframe positions are set to guarantee that the positioning is correct".</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2: keyframe evaluation and speed-override unit tests).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): position keys; any ship or object class</li>
+<li>Verified by: <code>content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot</code>, <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code></li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>keys.position</code> (<code>[[time, [x, y, z]], …]</code>), <code>enter</code> (default: the first key's time), <code>leave</code>; any ship or object class of the loaded packs. The speed always follows the path (the entity is placed on it), so the position-keys-override-speed rule holds trivially. Not built: rotation and speed keys; debris as an entity.</p>
+</div>
 <h3 id="r-mod-036-paths-and-rotations">R-MOD-036 Paths and rotations<a class="headerlink" href="#r-mod-036-paths-and-rotations" title="Permanent link">&para;</a></h3>
 <p>Position keyframes MUST be joined by a centripetal Catmull-Rom spline that passes through every key; rotation keyframes MUST be interpolated by quaternion slerp. An entity with position keys and no rotation keys MUST face along its path and bank into turns.</p>
 <p><em>Rationale:</em> Smooth paths without overshoot at sharp corners.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2: spline and slerp sampling unit tests).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): centripetal Catmull-Rom paths; facing along the path with banking</li>
+<li>Verified by: <code>content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot</code></li>
 <li>See: <a href="../../design/designer/#33-how-it-plays-deterministic-with-simple-physics">Mod designer: how it plays</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>catmull_rom</code> (centripetal, α = ½, Barry–Goldman evaluation, held at the ends) passes through every key without overshoot; <code>path_rotation</code> faces the nose along the path and banks into turns by the sideways acceleration, up to 60°. Not built: rotation keyframes and their slerp.</p>
+</div>
 <h3 id="r-mod-037-timed-actions">R-MOD-037 Timed actions<a class="headerlink" href="#r-mod-037-timed-actions" title="Permanent link">&para;</a></h3>
 <p>A scripted entity MUST be able to act at given times: fire beams or a missile at a target, start chasing a target, capture a target with the tractor, be destroyed (with its looks and debris) and jump to hyperspace. Each action MUST call the same simulation functions as a battle, so the same effects and sounds play.</p>
 <p>A <code>harmless</code> flag, on an entity (scripted or autopilot) or on a single action, MUST make that entity's or action's weapons fire and show their effects but deal no damage.</p>
 <p><em>Rationale:</em> The user's request: "assign targets for them to chase, capture, or shoot at" and "time triggered destruction"; with decision D4: "Also a flag for the animations for their weapons to cause no damage."</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2: action timing unit tests).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): fire beams, fire a missile at a target, destroy</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>actions: [[time, fire_beams, seconds] | [time, missile, target] | [time, destroy]]</code> and <code>destroy_at</code>, each through the battle's own code (the beam trigger, the missile trigger with a target, <code>combat::apply_damage</code>). Not built: chase, capture with the tractor, jump to hyperspace.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>The <code>harmless</code> flag is parsed, but as built it tops up the entity's <strong>own</strong> hull to at least 1 each tick instead of making its weapons do no damage: its beams and missiles still hurt what they hit. To be corrected; until then scenes rely on paths that miss and on <code>destroy</code>.</p>
+</div>
 <h3 id="r-mod-038-autopilot-entities">R-MOD-038 Autopilot entities<a class="headerlink" href="#r-mod-038-autopilot-entities" title="Permanent link">&para;</a></h3>
 <p>An autopilot entity MUST be flown by the engine's AI with the campaign's beginner difficulty rules, towards designated targets (attack, escort, flee to a point). An optional per-entity <code>aggressive</code> flag MUST be available for background dogfights. An entity MUST be able to switch from autopilot to scripted at a given time, and back.</p>
 <p><em>Rationale:</em> The user's request: "autopilot will run based on beginner AI rules given designated targets and usually serve as background action".</p>
@@ -8005,6 +8186,10 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <p class="admonition-title">Decided (2026-11-11)</p>
 <p>D4: beginner AI rules, with an optional per-entity <code>aggressive</code> flag; the <code>harmless</code> flag is R-MOD-037. What <code>aggressive</code> changes in the AI is fixed when MD2 is built.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Not built (app 0.13.0)</p>
+<p>MD2 shipped scripted entities only; autopilot entities, the <code>aggressive</code> flag and switching between scripted and autopilot are still to come.</p>
+</div>
 <h3 id="r-mod-039-formations-in-cutscenes">R-MOD-039 Formations in cutscenes<a class="headerlink" href="#r-mod-039-formations-in-cutscenes" title="Permanent link">&para;</a></h3>
 <p>A group of fighters or ships in a cutscene MUST be placeable by a named formation from the pack's <code>formations</code> (R-MOD-047), following a leader that is scripted or autopilot.</p>
 <p><em>Rationale:</em> The user's request: "For fighters and ships, they can choose which formation to apply."</p>
@@ -8014,60 +8199,88 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <li>Verified by: Planned (MD2).</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Not built (app 0.13.0)</p>
+<p>Cutscene formations are not built; formations serve wingmen only (R-MOD-047).</p>
+</div>
 <h3 id="r-mod-040-timed-sounds">R-MOD-040 Timed sounds<a class="headerlink" href="#r-mod-040-timed-sounds" title="Permanent link">&para;</a></h3>
 <p>A cutscene MUST play sound clips (narration, music, effects) at given times, each with a volume and a fade in and out, either positioned on an entity or flat; music MUST be able to duck under narration.</p>
 <p><em>Rationale:</em> The user's request: "Sounds must be included at timed positions so that narration, music, and other audio can be played."</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): named event sounds at given times with a volume</li>
+<li>Verified by: MT-6-09</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>sounds: [[time, name, volume]]</code> plays one of the campaign's named event sounds (<code>SoundBank::play_named</code>); entities' own weapons and explosions make their sounds as in battle. Not built: sound files, fades, positioned sounds, music and its ducking.</p>
+</div>
 <h3 id="r-mod-041-captions">R-MOD-041 Captions<a class="headerlink" href="#r-mod-041-captions" title="Permanent link">&para;</a></h3>
 <p>A cutscene MUST be able to show caption text, given as text keys so that it can be translated, over given time ranges.</p>
 <p><em>Rationale:</em> Accessible narration (decision D3, 2026-11-11: yes).</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): captions over time ranges, as plain text</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a>, <a href="#r-mod-012-text-keys">R-MOD-012</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>captions: [[from, to, text]]</code>, centred in the bottom letterbox bar in the skin's font. The text is plain, not a text key, so it is not translated.</p>
+</div>
 <h3 id="r-mod-042-cameras-fixed-or-attached">R-MOD-042 Cameras, fixed or attached<a class="headerlink" href="#r-mod-042-cameras-fixed-or-attached" title="Permanent link">&para;</a></h3>
 <p>A cutscene MUST support <strong>fixed</strong> cameras, with keyframed world position, a keyframed look target or rotation and a field of view, and <strong>attached</strong> cameras, parented to an entity, whose coordinates are relative to the parent and whose distance, orbit (yaw and pitch around the parent), height and look offset are keyframed.</p>
 <p><em>Rationale:</em> The user's request: "Cameras can be defined at explicit positions or attached to an object … positioning is keyframed for distance and orbit."</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): fixed cameras (position keys, look-at, field of view) and attached cameras (distance and orbit keys)</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p>Fixed: <code>position</code> keys on the Catmull-Rom spline, <code>look_at</code> an entity or a point (the horizon kept level), <code>fov</code>. Attached: <code>attach</code>, <code>distance</code> and <code>orbit</code> (<code>[yaw, pitch]</code>) keys, linear, in the entity's frame. Not built: rotation keys for fixed cameras, keyframed field of view, height and look-offset keys.</p>
+</div>
 <h3 id="r-mod-043-camera-cuts">R-MOD-043 Camera cuts<a class="headerlink" href="#r-mod-043-camera-cuts" title="Permanent link">&para;</a></h3>
 <p>The active camera MUST be chosen by a track of keyframes, each cut instant or a short blend.</p>
 <p><em>Rationale:</em> The user's request: "Switching between cameras in the cutscene is set through keyframes."</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0): instant cuts</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code></li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>cuts: [[time, camera]]</code>; <code>Cutscene::camera_at</code> gives the cut in force (the first before it). Not built: blended cuts.</p>
+</div>
 <h3 id="r-mod-044-where-cutscenes-play">R-MOD-044 Where cutscenes play<a class="headerlink" href="#r-mod-044-where-cutscenes-play" title="Permanent link">&para;</a></h3>
 <p>The game MUST play a cutscene as a campaign's introduction, from a campaign event's action, and at a mission's start (intro) and end (outro, chosen by the result, such as win or lose).</p>
 <p><em>Rationale:</em> The user's request: animations "that play for key campaign events or at the start of specific mission definitions".</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a>, <a href="../../../definition/modding-toolkit/#f-mod-012-video-cutscenes">F-MOD-012</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.13.0, main <code>a59ffce</code>, <code>76d64d5</code>): as the campaign's introduction and from a campaign event</li>
+<li>Verified by: MT-6-08 – MT-6-10</li>
 <li>See: <a href="../../design/designer/#34-the-cutscene-file">Mod designer: the cutscene file</a>, <a href="../../design/format-campaign/">Format: campaign and game flow</a>, <a href="../../design/format-missions/">Format: missions, environments, events</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>campaign.intro: &lt;id&gt;</code> plays before a new campaign's strategy screen; the story action <code>play_cutscene(&lt;id&gt;)</code> plays one from an event; <code>--cutscene &lt;id&gt;</code> plays one from the command line. The original's films play in the same places as videos (<code>campaign.intro_video</code>, the <code>video(…)</code> action, an ending's <code>video</code>). Not built: a mission's intro and outro.</p>
+</div>
 <h3 id="r-mod-045-skipping-a-cutscene">R-MOD-045 Skipping a cutscene<a class="headerlink" href="#r-mod-045-skipping-a-cutscene" title="Permanent link">&para;</a></h3>
 <p>The player MUST always be able to skip a cutscene, engine-played or video, with Esc, the tablet console's skip button or the gamepad's Start button.</p>
 <p><em>Rationale:</em> A film never holds the player.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a>, <a href="../../../definition/modding-toolkit/#f-mod-012-video-cutscenes">F-MOD-012</a></li>
-<li>Status: planned</li>
-<li>Verified by: Planned (MD2).</li>
+<li>Status: planned — partly met (MD2, app 0.12.0 – 0.13.0): Esc (and Enter) skips a cutscene; Enter, Esc or a click skips a video</li>
+<li>Verified by: MT-6-07, MT-6-09</li>
 <li>See: <a href="../../design/designer/#34-the-cutscene-file">Mod designer: the cutscene file</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.13.0)</p>
+<p><code>CutscenePlayer::frame</code> ends on Esc or Enter; <code>VideoPlayer::frame</code> on Enter, Esc or a left click; the app then returns to the parked campaign or the launcher. Not built: skipping from the tablet console and with the gamepad's Start button.</p>
+</div>
 <h3 id="r-mod-046-video-cutscenes">R-MOD-046 Video cutscenes<a class="headerlink" href="#r-mod-046-video-cutscenes" title="Permanent link">&para;</a></h3>
 <p>A pack MUST be able to provide a video file in place of any engine-played cutscene (<code>video:</code>), with optional captions. Video files MUST play through the operating system's media framework behind the platform shim: AVFoundation on macOS, Media Foundation on Windows, and on Linux GStreamer, when installed, loaded at run time with <code>dlopen</code> (no crate dependency and no link-time dependency; GStreamer MUST NOT be bundled). Image sequences with a WAV track MUST play on every platform, and MUST be the fallback where no media framework is available. An in-crate MP4/H.264 decoder is out of scope.</p>
 <p><em>Rationale:</em> The user's request: "a user may also provide a video to play instead of scripted engine animation"; decision D2 (2026-11-11). GStreamer is LGPL: loading the system's own copy dynamically, without bundling it, keeps the project clear of it.</p>
@@ -8080,6 +8293,10 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <div class="admonition note">
 <p class="admonition-title">Open</p>
 <p>The Linux path (GStreamer through <code>dlopen</code>) MUST be evaluated on the <a href="../../../learning/best-practices/dependencies/">dependency page</a> before it is built (MD3).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Progress (app 0.12.0 – 0.13.0)</p>
+<p>Not built: MD3 is not started and no evaluation is recorded yet. Meanwhile the in-crate Smacker player (R-CMP-010) plays <code>.smk</code> files wherever a video is named — <code>campaign.intro_video</code>, the <code>video(&lt;ref&gt;)</code> action, <code>endings.&lt;id&gt;.video</code>, <code>--video</code> — from the player's data or a pack path (read, as built, from the first pack of the active set). A cutscene file cannot yet name a <code>video:</code> in its place.</p>
 </div>
 <h3 id="r-mod-047-shared-formations">R-MOD-047 Shared formations<a class="headerlink" href="#r-mod-047-shared-formations" title="Permanent link">&para;</a></h3>
 <p>Formations MUST be pack data (<code>formations:</code>): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets. As built: <code>formations: {&lt;id&gt;: {shape: vee | line_abreast | echelon | box | diamond, spacing}}</code> or <code>{slots: [[x, y, z], …], spacing}</code> (not both; a custom list continues as a vee behind its last slot), slots in the leader's frame (+X right, +Y up, +Z behind) in units of <code>spacing</code> (default 60 m); a mission role picks one with <code>formation: &lt;id&gt;</code>, else <code>flight.formation</code> (default <code>vee</code>); an unknown formation is a load error, and a campaign with no formations uses a built-in 60 m vee.</p>
@@ -8226,6 +8443,11 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7)</td>
+</tr>
+<tr>
+<td>1.16.0</td>
+<td>2026-11-11</td>
+<td>MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; Open note on R-MOD-037 (<code>harmless</code> as built protects the entity instead of disarming its weapons); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed</td>
 </tr>
 </tbody>
 </table>

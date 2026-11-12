@@ -14,7 +14,7 @@
         <link rel="prev" href="../audio/">
       
       
-        <link rel="next" href="../ini/">
+        <link rel="next" href="../mpsrc/">
       
       
         
@@ -2018,6 +2018,8 @@
       
         
       
+        
+      
     
     
     
@@ -2367,6 +2369,61 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#huffman-trees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Huffman trees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#video" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Palette
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#revision-history" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2381,6 +2438,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -2969,6 +3061,8 @@
       
         
       
+        
+      
     
     
     
@@ -3343,6 +3437,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4131,6 +4253,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4480,6 +4608,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6117,6 +6329,61 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#huffman-trees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Huffman trees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#video" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Video
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Palette
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#revision-history" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6146,9 +6413,97 @@
 
 <h1 id="smacker-video">Smacker video<a class="headerlink" href="#smacker-video" title="Permanent link">&para;</a></h1>
 <p><code>Animations/*.smk</code> are RAD Game Tools Smacker files (<code>SMK2</code>/<code>SMK4</code>): the intro, alien
-transmissions, endings and credits. The Smacker format is publicly documented (palette chunks,
-Huffman-coded block types, audio tracks). A decoder will be written in-crate in Stage 5; the
-original <code>SMACKW32.DLL</code> is never used.</p>
+transmissions, endings and credits; the cockpit display's talking heads are Smacker clips
+bundled in <code>Animations/mfdanim.mps</code> (<a href="../mpsrc/">MPSRC packs</a>). The Smacker format is publicly
+documented. OpenInterceptor decodes it in-crate (<code>formats::smacker</code>, app 0.12.0); the original
+<code>SMACKW32.DLL</code> is never used. The decoder was checked against <strong>all eleven</strong> <code>.smk</code> files of the
+reference CD — every frame and its audio decode (<em>verified</em>).</p>
+<h2 id="layout">Layout<a class="headerlink" href="#layout" title="Permanent link">&para;</a></h2>
+<p>All numbers little-endian.</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Contents</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Header (104 bytes)</td>
+<td>Signature <code>SMK2</code> or <code>SMK4</code>; width; height; frame count; frame rate (positive: milliseconds per frame; negative: hundred-thousandths; zero: 10 fps); flags (bit 0: a ring frame follows the last; bits 1 – 2: lines doubled or interlaced); seven audio-track sizes; the size of the Huffman tree data; the four trees' sizes; seven audio-track rate words (rate in the low 24 bits; flags: data present, 16-bit, stereo, compressed); a reserved word</td>
+<td>verified</td>
+</tr>
+<tr>
+<td>Frame sizes</td>
+<td>One <code>u32</code> per frame (+1 with a ring frame); the low two bits are flags, the rest the size</td>
+<td>verified</td>
+</tr>
+<tr>
+<td>Frame types</td>
+<td>One byte per frame: bit 0 a palette chunk follows; bits 1 – 7 an audio chunk for tracks 0 – 6</td>
+<td>verified</td>
+</tr>
+<tr>
+<td>Trees</td>
+<td>The four big Huffman trees — <code>mmap</code>, <code>mclr</code>, <code>full</code>, <code>type</code> — packed least-significant bit first</td>
+<td>verified</td>
+</tr>
+<tr>
+<td>Frames</td>
+<td>Each: an optional palette chunk, the audio chunks of the tracks flagged, then the video bitstream</td>
+<td>verified</td>
+</tr>
+</tbody>
+</table>
+<h2 id="huffman-trees">Huffman trees<a class="headerlink" href="#huffman-trees" title="Permanent link">&para;</a></h2>
+<p>A <strong>small tree</strong> has 8-bit leaves: a bit <code>1</code> is a node (left subtree, then right), <code>0</code> a leaf
+followed by its 8-bit value. A <strong>big tree</strong> (16-bit leaves) is preceded by a low-byte and a
+high-byte small tree and three 16-bit <strong>escape</strong> values; a leaf's value is a pair (low, high)
+decoded through the small trees. A leaf equal to an escape instead stands for one of a
+three-slot cache of the most recent values; every decoded value pushes into the cache. The
+caches are reset at the start of each frame.</p>
+<h2 id="video">Video<a class="headerlink" href="#video" title="Permanent link">&para;</a></h2>
+<p>The frame is cut into 4 × 4 blocks in raster order. A <code>type</code> value gives the block kind (two
+bits), a run length (six bits, through a table: 1 – 59, then 128, 256, 512, 1024, 2048) and, for
+solid blocks, the colour (the high byte):</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Pixels</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mono</td>
+<td><code>mclr</code> gives two colours, <code>mmap</code> a 16-bit pattern choosing between them per pixel</td>
+</tr>
+<tr>
+<td>Full</td>
+<td><code>full</code> gives the 16 pixels two at a time; in <code>SMK4</code>, two further modes give half-resolution blocks (pixels doubled)</td>
+</tr>
+<tr>
+<td>Skip</td>
+<td>Unchanged from the previous frame</td>
+</tr>
+<tr>
+<td>Solid</td>
+<td>One colour for all 16 pixels</td>
+</tr>
+</tbody>
+</table>
+<h2 id="palette">Palette<a class="headerlink" href="#palette" title="Permanent link">&para;</a></h2>
+<p>A palette chunk (its length in units of four bytes, then commands) rebuilds the 256 entries from
+the previous palette: a byte with the top bit set keeps the next <code>(b &amp; 0x7F) + 1</code> entries; one
+with bit 6 set copies <code>(b &amp; 0x3F) + 1</code> entries from a given index of the old palette; otherwise
+the byte and the next two are 6-bit red, green and blue, scaled to 8 bits.</p>
+<h2 id="audio">Audio<a class="headerlink" href="#audio" title="Permanent link">&para;</a></h2>
+<p>Up to seven tracks. Each audio chunk in a frame starts with its own length (a <code>u32</code>, itself
+included). A compressed chunk's body starts with its unpacked size, then a bit for "data", one
+for stereo and one for 16-bit, then one small tree per byte stream (one or two per channel), the
+first samples as raw values, and deltas from there (DPCM). Uncompressed chunks are raw PCM;
+8-bit samples are unsigned. The engine plays track 0.</p>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6163,6 +6518,11 @@ original <code>SMACKW32.DLL</code> is never used.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Specification 1.0.0 as a normative format page; requirements link here</td>
+</tr>
+<tr>
+<td>1.16.0</td>
+<td>2026-11-11</td>
+<td>The format as decoded in-crate (app 0.12.0): header, tables, trees with the escape cache, block kinds, palette and audio; verified on the reference CD's eleven videos; the talking heads' MPSRC pack</td>
 </tr>
 </tbody>
 </table>

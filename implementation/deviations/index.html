@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2902,6 +2939,8 @@
       
         
       
+        
+      
     
     
     
@@ -3276,6 +3315,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4074,6 +4141,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4423,6 +4496,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6384,7 +6541,7 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-051</td>
-<td><strong>The story format as built is a simpler subset of its design</strong> (app 0.10.0): <code>arc: &lt;id&gt;</code> names the arc (the step is its place in <code>steps</code>) instead of <code>{id, step}</code>; the actions are the fourteen of <code>EVENT_ACTIONS</code> — <code>mission(x)</code> offers a mission now (no <code>start_mission</code> with a place and an expiry, no <code>offer_mission</code>, no <code>reward:</code>), no map changes; plans have stages of <code>{name, count}</code>, a shipment <code>chance</code> instead of <code>ship_visibility</code>, warnings as a list of <code>{at, do}</code>, no <code>budget</code>, <code>grant_if_missed</code> or <code>plan_stage(x)</code>; relations are the <strong>player's standing with each faction</strong> only (no pairs between other factions, no <code>relation_rules</code>, no <code>scale</code>), and a stance change is a notice, not an <code>on_stance_change</code> event; of the stance effects only <em>hostile or not</em> acts (raids and battle hostility) — no allies in battle, no trade effects; the strategist is <strong>aggression only</strong> (<code>strategist:</code> with <code>aggression</code> and <code>calm_after_wins</code>, not <code>strategists.&lt;id&gt;</code> with budgets, expansion and an offence ladder); endings have <code>text</code> and <code>victory</code> only (no image, video, music or <code>continue</code>).</td>
+<td><strong>The story format as built is a simpler subset of its design</strong> (app 0.10.0): <code>arc: &lt;id&gt;</code> names the arc (the step is its place in <code>steps</code>) instead of <code>{id, step}</code>; the actions are the fourteen of <code>EVENT_ACTIONS</code> (seventeen since app 0.13.0, with <code>card</code>, <code>video</code> and <code>play_cutscene</code>) — <code>mission(x)</code> offers a mission now (no <code>start_mission</code> with a place and an expiry, no <code>offer_mission</code>, no <code>reward:</code>), no map changes; plans have stages of <code>{name, count}</code>, a shipment <code>chance</code> instead of <code>ship_visibility</code>, warnings as a list of <code>{at, do}</code>, no <code>budget</code>, <code>grant_if_missed</code> or <code>plan_stage(x)</code>; relations are the <strong>player's standing with each faction</strong> only (no pairs between other factions, no <code>relation_rules</code>, no <code>scale</code>), and a stance change is a notice, not an <code>on_stance_change</code> event; of the stance effects only <em>hostile or not</em> acts (raids and battle hostility) — no allies in battle, no trade effects; the strategist is <strong>aggression only</strong> (<code>strategist:</code> with <code>aggression</code> and <code>calm_after_wins</code>, not <code>strategists.&lt;id&gt;</code> with budgets, expansion and an offence ladder); endings have <code>text</code> and <code>victory</code> (and since app 0.12.1 <code>video</code>; no image, music or <code>continue</code>).</td>
 <td>Stage 5 first makes the story playable end to end in both campaigns with the smallest format that expresses their arcs, plans and endings; the rest of the design stays the target (R-CPN-007 – R-CPN-010 notes).</td>
 <td>5</td>
 </tr>
@@ -6393,6 +6550,24 @@ one looks like a bug.</p>
 <td><strong>The story content is incomplete and partly derived</strong> (app 0.10.1 – 0.10.2): the default campaign's chapters fly the nearest existing mission where their bespoke special mission is not built (only the finale <code>eclipse_assault</code> is its own); the <code>interceptor</code> arc's gates use the <code>type_1/2/3_saucer_examination</code> topics for the guide's Wraith, Spectre and Phantasm examinations (<em>derived</em>, unconfirmed), its later first-message day, middle-level plan counts, shipment interval, side-mission triggers and strategist values are <em>derived</em>, and only two of the seven side missions exist.</td>
 <td>The arcs, plans and endings are what the engine needed to prove; the missing missions are content work, recorded on R-CPN-004 and R-CPN-005.</td>
 <td>5</td>
+</tr>
+<tr>
+<td>DEV-053</td>
+<td><strong>Music changes state only at a segment's end, chosen by a fixed rule</strong>: the battle state is <code>battle</code> within <code>battle_range</code> of the nearest live hostile, <code>threat</code> within <code>threat_range</code>, else <code>cruise</code>; the set is the battle's seed modulo the number of sets; the <code>interceptor</code> strategy screen plays each set's cruise segments. The original's transition tables (<code>Loops/*.wtl</code>) are not read, and there is no <code>switch:</code> list.</td>
+<td>App 0.11.0: the smallest interactive-music model that plays the original's loop sets without cutting a phrase. The <code>.wtl</code> format is not decoded (<em>unknown</em>), and what the original plays on its strategy screens is <em>derived</em>. Ranges and sets are <code>music:</code> data.</td>
+<td>6</td>
+</tr>
+<tr>
+<td>DEV-054</td>
+<td><strong>The cutscene format as built is a subset of its design</strong> (MD2, app 0.13.0): scripted entities only, <strong>placed</strong> on centripetal Catmull-Rom position paths each tick (no rotation or speed keys; they face along the path and bank); actions <code>fire_beams</code>, <code>missile</code>, <code>destroy</code>; cameras' keys sit directly on the camera; cuts are instant; <code>sounds</code> are named event sounds; captions are plain text; <code>harmless</code> keeps the entity's own hull up instead of disarming it. No formations, autopilot, chase, capture or jump, mission intros and outros, or <code>video:</code> in a cutscene.</td>
+<td>The engine side first plays the default campaign's intro end to end; the rest of the design (<a href="../../specification/design/designer/#34-the-cutscene-file">Mod designer §3.4</a>) stays the target (R-MOD-033 – R-MOD-046 notes).</td>
+<td>6</td>
+</tr>
+<tr>
+<td>DEV-055</td>
+<td><strong>The <code>interceptor</code> films as built</strong>: <code>animation1.smk</code> opens a new campaign (<em>derived</em>: which of the CD's films is the original's opening), the five alien transmissions play full screen as each message arrives (<code>alientrans1</code> – <code>5</code>), and the victory plays <code>credits_sm2a.smk</code>. Films play letterboxed in the window, skippable with Enter, Esc or a click.</td>
+<td>App 0.12.0 – 0.13.0. How and where the original showed each film has not been compared side by side (<em>unknown</em>); every choice is a line of story or campaign data.</td>
+<td>6</td>
 </tr>
 </tbody>
 </table>

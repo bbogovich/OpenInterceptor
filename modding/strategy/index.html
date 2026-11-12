@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../voices/">
+        <link rel="prev" href="../cutscenes/">
       
       
         <link rel="next" href="../story/">
@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4064,6 +4131,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4413,6 +4486,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -8327,9 +8484,10 @@ unknown.</p>
 <li>No endurance or stranding on the map; no fitting rules (<code>fits</code>), power draw or stock designs —
   fitting is <em>best available</em> only, and slots of kinds other than <code>beam</code> and <code>missile</code> are filled
   but have no effect in battle.</li>
-<li>Mission outcome actions <code>relation(…)</code>, <code>capture</code>, <code>cargo_lost</code> and <code>cargo_captured</code> are still
-  <strong>ignored</strong> by the campaign (app 0.10.3): a story event's <code>relation(…)</code> moves a standing
-  (<a href="../story/#actions">Story layer</a>), a mission's does not yet. A flown convoy escort delivers its
+<li>Mission outcome actions <code>capture</code>, <code>cargo_lost</code> and <code>cargo_captured</code> are still <strong>ignored</strong> by
+  the campaign. A mission's <code>relation(faction, n)</code> moves the player's standing since app 0.12.1,
+  like a story event's (<a href="../story/#actions">Story layer</a>); a stance change it causes is logged
+  but, unlike a story event's, does not stop the clock. A flown convoy escort delivers its
   surviving share through <code>cargo:</code> instead.</li>
 <li><strong>Logistics</strong>: see <a href="#not-built-yet">Not built yet</a> — fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
   upgrades and <code>placement:</code> expressions are not built.</li>

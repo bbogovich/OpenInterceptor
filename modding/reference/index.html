@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4064,6 +4131,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4433,6 +4506,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../strategy/" class="md-nav__link">
         
   
@@ -4759,6 +4916,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#music" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        music
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#console" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4826,6 +5005,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cutscene-files-cutscenesyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cutscene files (cutscenes/*.yaml)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -6610,6 +6800,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#music" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        music
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#console" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6677,6 +6889,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cutscene-files-cutscenesyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cutscene files (cutscenes/*.yaml)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -6854,7 +7077,7 @@ may also use <code>inherit</code>, <code>delete: true</code>, <code>variants: {&
 <h2 id="rules-files-rulesyaml-campaignyaml">Rules files (<code>rules/*.yaml</code>, <code>campaign/*.yaml</code>)<a class="headerlink" href="#rules-files-rulesyaml-campaignyaml" title="Permanent link">&para;</a></h2>
 <p>Top-level sections: <code>factions</code>, <code>beams</code>, <code>missiles</code>, <code>ships</code>, <code>objects</code>, <code>systems</code>, <code>cockpits</code>,
 <code>behaviours</code>, <code>modelsets</code>, <code>debris</code>, <code>effects</code>, <code>voices</code>, <code>environments</code>, <code>terrains</code>, <code>formations</code>,
-<code>missions</code> (definitions by id), and <code>flight</code>, <code>power</code>, <code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>console</code>,
+<code>missions</code>, and since app 0.11.0 – 0.11.1 <code>music</code> and <code>skins</code> (definitions by id), and <code>flight</code>, <code>power</code>, <code>damage</code>, <code>sounds</code>, <code>audio</code>, <code>console</code>,
 <code>campaign</code> (global). The <strong>strategy layer</strong> adds the definitions <code>maps</code>, <code>star_classes</code>, <code>research</code>,
 <code>items</code>, <code>hulls</code>, <code>base_modules</code>, <code>base_types</code>, <code>raids</code>, <code>incomes</code>, <code>expenses</code> and the globals
 <code>start</code>, <code>research_model</code>, <code>pilots</code>, <code>scores</code>, <code>flags</code>, <code>economy</code>, <code>tech_ids</code> (app 0.8.0), by
@@ -7983,7 +8206,10 @@ since app 0.6.2 the computer voice at the end of a mission: <code>mission_accomp
 each weapon. Any sound reference may be <code>cue:&lt;Name&gt;</code>, a cue of the <a href="#audio">audio</a> cue table.</p>
 <h3 id="voices"><code>voices</code><a class="headerlink" href="#voices" title="Permanent link">&para;</a></h3>
 <p>Radio voice sets (app 0.6.2; guide: <a href="../voices/">Radio voices</a>). A definition section:
-<code>voices: {&lt;set id&gt;: {&lt;line&gt;: clip or [clips]}}</code>. Ships choose one with <code>voice: &lt;set id&gt;</code>.</p>
+<code>voices: {&lt;set id&gt;: {&lt;line&gt;: clip or [clips]}}</code>. Ships choose one with <code>voice: &lt;set id&gt;</code>. Since
+app 0.13.1 two more keys, which are not lines: <code>name</code> (text, the speaker shown on the comms
+panel; default the id) and <code>face</code> (asset: a picture or a <code>.smk</code> clip, also
+<code>original:&lt;pack&gt;.mps#&lt;member&gt;</code>) (<a href="../voices/#faces-on-the-comms-panel">Faces on the comms panel</a>).</p>
 <table>
 <thead>
 <tr>
@@ -8027,6 +8253,90 @@ each time. Like the <code>sounds:</code> section, a clip may be <code>cue:&lt;Na
 <td><code>cue_table</code></td>
 <td>asset</td>
 <td>A table of named sound cues: <code>original:&lt;file&gt;/&lt;section&gt;</code> — the original's <code>soundfx.ini</code> (<code>original:soundfx.ini/InterceptorSounds</code>). Each entry <code>Name = "path\file.wav"</code> makes <code>cue:Name</code> mean <code>original:file.wav</code>. Cue names ignore case; an unknown cue, or a missing table, is a load error.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="music"><code>music</code><a class="headerlink" href="#music" title="Permanent link">&para;</a></h3>
+<p>Interactive music sets (app 0.11.0; guide: <a href="../music/">Music</a>). A definition section:
+<code>music: {&lt;set id&gt;: {…}}</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>states</code></td>
+<td>map of state → asset or [assets]</td>
+<td><em>required</em></td>
+<td>Segments per state, played in turn: <code>cruise</code>, <code>threat</code>, <code>battle</code> (battles) and <code>strategy</code> (the strategy screen). A missing state falls back to <code>cruise</code>, then to the first.</td>
+</tr>
+<tr>
+<td><code>stingers</code></td>
+<td>map of name → asset</td>
+<td>none</td>
+<td>Played once: <code>victory</code> (a mission won), <code>death</code> (any other result); <code>good</code> and <code>bad</code> are loaded but not yet played.</td>
+</tr>
+<tr>
+<td><code>threat_range</code></td>
+<td>distance</td>
+<td><code>12km</code></td>
+<td>A hostile craft this close to the player: <code>threat</code>.</td>
+</tr>
+<tr>
+<td><code>battle_range</code></td>
+<td>distance</td>
+<td><code>4km</code></td>
+<td>This close: <code>battle</code>.</td>
+</tr>
+<tr>
+<td><code>volume</code></td>
+<td>fraction</td>
+<td><code>60%</code></td>
+<td>The set's level (× the player's music volume).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="skins"><code>skins</code><a class="headerlink" href="#skins" title="Permanent link">&para;</a></h3>
+<p>Skins for the menu and strategy screens (app 0.11.1; guide: <a href="../skins/">Skins</a>). A definition
+section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code> chooses one.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>colours</code></td>
+<td>map of role → <code>[r, g, b]</code> or <code>[r, g, b, a]</code></td>
+<td>the plain look</td>
+<td>Roles <code>background</code>, <code>panel</code>, <code>border</code>, <code>text</code>, <code>dim</code>, <code>accent</code>, <code>highlight</code>; an unknown role is an error.</td>
+</tr>
+<tr>
+<td><code>panel.image</code></td>
+<td>asset</td>
+<td>none</td>
+<td>A nine-slice frame image for panels and title cards.</td>
+</tr>
+<tr>
+<td><code>panel.slice</code></td>
+<td>number</td>
+<td>16</td>
+<td>Its corner size, pixels.</td>
+</tr>
+<tr>
+<td><code>font</code></td>
+<td>asset</td>
+<td>the built-in font</td>
+<td>A TrueType font for every skinned text.</td>
 </tr>
 </tbody>
 </table>
@@ -8230,6 +8540,24 @@ mission or scenario picks one with <code>environment: &lt;id&gt;</code>; without
 <td>the middle level</td>
 <td>The level a new game starts at.</td>
 </tr>
+<tr>
+<td><code>skin</code></td>
+<td>id</td>
+<td>the first skin defined</td>
+<td>The <a href="../skins/">skin</a> of the menu and strategy screens (app 0.11.1). An unknown id is an error.</td>
+</tr>
+<tr>
+<td><code>intro</code></td>
+<td>id</td>
+<td>none</td>
+<td>A <a href="../cutscenes/">cutscene</a> played before a new campaign's strategy screen (app 0.13.0).</td>
+</tr>
+<tr>
+<td><code>intro_video</code></td>
+<td>asset</td>
+<td>none</td>
+<td>A video played before a new campaign (app 0.13.0), when there is no <code>intro</code>; Smacker only (<a href="../cutscenes/#videos">Cutscenes › Videos</a>).</td>
+</tr>
 </tbody>
 </table>
 <h3 id="missions"><code>missions</code><a class="headerlink" href="#missions" title="Permanent link">&para;</a></h3>
@@ -8385,6 +8713,10 @@ part is optional.</p>
 </table>
 <p>The schema type <strong>either</strong> (<code>Ty::Either</code>) lets a key take one of two forms: <code>count: 3</code> or
 <code>count: [2, 4]</code>; <code>bearing: [10, 5]</code> or <code>bearing: random</code>; <code>class: comet</code> or <code>class: [a, b]</code>.</p>
+<h2 id="cutscene-files-cutscenesyaml">Cutscene files (<code>cutscenes/*.yaml</code>)<a class="headerlink" href="#cutscene-files-cutscenesyaml" title="Permanent link">&para;</a></h2>
+<p>One cutscene per file (app 0.13.0; editor schema <code>schemas/cutscene.schema.json</code>). Every key —
+<code>id</code>, <code>title</code>, <code>length</code>, <code>environment</code>, <code>entities</code>, <code>cameras</code>, <code>cuts</code>, <code>sounds</code>, <code>captions</code> — with
+its type and default is on <a href="../cutscenes/#the-file">Cutscenes › The file</a>.</p>
 <h2 id="text-files-textlanguageyaml">Text files (<code>text/&lt;language&gt;/*.yaml</code>)<a class="headerlink" href="#text-files-textlanguageyaml" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

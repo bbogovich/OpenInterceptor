@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2962,6 +2999,8 @@
       
         
       
+        
+      
     
     
     
@@ -3336,6 +3375,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4124,6 +4191,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4473,6 +4546,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6187,13 +6344,13 @@ the end of this stage <strong>both campaigns are playable from start to finish</
 <td>5.5</td>
 <td>Factions: patrons, independents, hostiles; <strong>dynamic relations</strong> with relation rules, drift, stances and their battle and strategy effects; stance-change events; relations screen</td>
 <td><code>campaign::relations</code>, <code>app</code></td>
-<td><strong>Partial</strong> (0.10.0, 0.10.3): the player's standings, <code>relation(f, n)</code>, monthly drift, stances; a faction no longer hostile stops raiding (0.10.0) and campaign battles carry the stances (0.10.3, <code>flight::apply_stances</code>); a stance change is a notice; the Archive tab lists standings. Not built: relation rules, standings between other factions, allied factions fighting at the player's side, effects on prices and trade, stance-change events a campaign can react to, mission outcomes' <code>relation(…)</code>. #40.</td>
+<td><strong>Partial</strong> (0.10.0, 0.10.3): the player's standings, <code>relation(f, n)</code>, monthly drift, stances; a faction no longer hostile stops raiding (0.10.0) and campaign battles carry the stances (0.10.3, <code>flight::apply_stances</code>); a stance change is a notice; the Archive tab lists standings. Not built: relation rules, standings between other factions, allied factions fighting at the player's side, effects on prices and trade, stance-change events a campaign can react to. Mission outcomes' <code>relation(…)</code> moves standings since app 0.12.1 (main <code>563c93f</code>). #40.</td>
 </tr>
 <tr>
 <td>5.6</td>
 <td>Victory, defeat and endings (total/partial victories)</td>
 <td><code>campaign</code></td>
-<td><strong>Done for the engine</strong> (0.10.0): <code>endings</code>, <code>campaign_end</code> victory and defeat conditions (defeats first), <code>victory(x)</code>/<code>defeat(x)</code> actions; the ending shown as a banner, saved. Neither campaign defines a partial victory yet; the ending screen is Stage 6. #41.</td>
+<td><strong>Done for the engine</strong> (0.10.0): <code>endings</code>, <code>campaign_end</code> victory and defeat conditions (defeats first), <code>victory(x)</code>/<code>defeat(x)</code> actions; the ending shown as a banner, saved. Neither campaign defines a partial victory yet; the ending screen is Stage 6. Since app 0.12.1 (main <code>87b04f3</code>) an ending may play a <code>video</code> (the X-COM victory plays the credits), and continuing a finished campaign shows its ending again. #41.</td>
 </tr>
 <tr>
 <td>5.7</td>

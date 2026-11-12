@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2870,6 +2907,8 @@
       
         
           
+        
+      
         
       
         
@@ -3552,6 +3591,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4340,6 +4407,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4689,6 +4762,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6764,8 +6921,10 @@ last base lost) can end the campaign.</p>
   <code>money(n)</code>, <code>salvage</code>, <code>set_flag(x)</code>, …), the kill count and — when the mission names a
   <code>cargo:</code> role — the share of its cargo still aboard (<code>mission::cargo_share</code>). Leaving from the pause menu
   is <code>retreat</code>; a mission that cannot start is counted as <code>retreat</code> too, with the error printed.</li>
-<li><code>Campaign::battle_result</code> applies the actions it knows (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>;
-  <code>lose</code> is logged; <code>relation</code>, <code>capture</code> and the cargo actions are still ignored at app 0.10.3),
+<li><code>Campaign::battle_result</code> applies the actions it knows (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>,
+  and since app 0.12.1 <code>relation(f, n)</code> through <code>change_standing</code> — a stance change it causes is
+  logged, but its notice is dropped, so it does not stop the clock; <code>lose</code> is logged; <code>capture</code>
+  and the cargo actions are still ignored),
   marks a battle for <code>after_battle</code> events, counts a win for the story, credits the party's pilots, removes a
   <code>killed</code> leader's craft (re-indexing pilots' craft handles), sends the rest home, and removes
   the contact on <code>win</code> or <code>draw</code>.</li>
@@ -6911,7 +7070,8 @@ other action splits on commas.</p>
 <li><strong>One place changes the campaign.</strong> <code>Campaign::apply_actions(def, actions, events)</code> is the only
   code that turns story actions into changes — money, flags, standings, research, raids, plan
   progress, aggression, endings — and into events for the screen (<code>Notice</code>, <code>Mission</code>,
-  <code>Ending</code>). Events, choices (<code>Campaign::choose</code>), plan warnings and completion all call it.</li>
+  <code>Ending</code>, and since app 0.11.1 – 0.13.0 <code>Card { title, text }</code>, <code>Video { reference }</code> and
+  <code>Cutscene { id }</code>, which change nothing in the campaign: <code>card</code> only logs its title). Events, choices (<code>Campaign::choose</code>), plan warnings and completion all call it.</li>
 <li><strong>Shipments reuse raids.</strong> A plan's shipment is an ordinary <code>Contact</code> with <code>plan: Some(p)</code>, so
   detection, interception and the battle need nothing new. Only the arrival differs:
   <code>Campaign::unopposed</code> sees <code>plan</code> and calls <code>shipment_arrived</code> (one more component) instead of
@@ -6925,7 +7085,12 @@ other action splits on commas.</p>
 <p>The screen (<code>app::strategy</code>) holds what is waiting for the player — <code>convoy</code>, <code>choice</code>, <code>offer</code>,
 <code>ending</code> — as <code>Option</code>s on <code>StrategyScreen</code>, checked in that order before normal input: an
 ending takes Enter/Esc to leave, a choice takes the number keys, an offer and a convoy take
-Enter (fly) or Esc (decline). The <strong>Archive</strong> tab (<code>Tab::Archive</code>) lists the started plans, the
+Enter (fly) or Esc (decline); a title card (<code>card</code>, app 0.11.1) waits for Enter, Esc or a click.
+A video or cutscene event makes the screen return <code>Next::Video</code> / <code>Next::Cutscene</code> and the app
+parks it until the film is over (<a href="../presentation/#who-plays-what-the-apps-routing">Presentation</a>).
+An ending's <code>video</code> plays before its banner; loading a save whose story has ended sets
+<code>StrategyScreen::ending</code> again, so a finished campaign shows its ending (app 0.12.1). The
+automatic player (<code>autoplay_from</code>) ignores the three presentation events. The <strong>Archive</strong> tab (<code>Tab::Archive</code>) lists the started plans, the
 standings with their stances, the aggression and battles won, and <code>Campaign::encyclopaedia</code>'s
 unlocked entries.</p>
 <h3 id="the-x-com-data-app-080">The X-COM data (app 0.8.0)<a class="headerlink" href="#the-x-com-data-app-080" title="Permanent link">&para;</a></h3>

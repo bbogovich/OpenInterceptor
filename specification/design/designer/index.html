@@ -2282,6 +2282,8 @@
       
         
       
+        
+      
     
     
     
@@ -2565,6 +2567,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -3168,6 +3205,8 @@
       
         
       
+        
+      
     
     
     
@@ -3542,6 +3581,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4330,6 +4397,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4679,6 +4752,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6929,6 +7086,24 @@ selection opens on the right.</p>
 button.</p>
 <p><em>The key names above are the proposal's; they are fixed, with their schema and the Modding
 pages, when MD2 is built.</em></p>
+<div class="admonition note">
+<p class="admonition-title">As built (MD2, app 0.13.0)</p>
+<p>The format as built is a subset, documented key by key on <a href="../../../modding/cutscenes/">Modding › Cutscenes</a>:
+<code>id</code>, <code>title</code>, <code>length</code>, <code>environment {starfield_seed, sun, environment}</code>; entities with
+<code>class</code>, <code>faction</code>, <code>enter</code>, <code>leave</code>, <code>keys.position</code>, <code>actions</code> (<code>[time, fire_beams, secs]</code>,
+<code>[time, missile, target]</code>, <code>[time, destroy]</code>), <code>destroy_at</code> and <code>harmless</code>; cameras <strong>fixed</strong>
+(<code>position</code> keys and <code>look_at</code> — an entity or a point — directly on the camera, not under
+<code>fixed: {keys: …}</code>) or <strong>attached</strong> (<code>attach</code>, <code>distance</code> and <code>orbit</code> keys directly on the
+camera, not under <code>keys:</code>), each with <code>fov</code>; <code>cuts</code> (instant); <code>sounds</code> naming the
+campaign's event sounds (<code>[time, name, volume]</code>); <code>captions</code> as plain text. It plays as the
+campaign intro (<code>campaign.intro</code>), from events (<code>play_cutscene</code>) and with <code>--cutscene</code>; Esc
+or Enter skips. Not built: formations, autopilot entities and <code>aggressive</code>, rotation and
+speed keys, chase/capture/jump actions, <code>harmless</code> as designed (R-MOD-037 Open note), sound
+files with fades and ducking, text-key captions, blended cuts, mission intros and outros,
+<code>video:</code> in a cutscene, skipping from the console or pad, scrubbing and snapshots. The
+original's Smacker films play through <code>campaign.intro_video</code>, <code>video(…)</code> and an ending's
+<code>video</code> (app 0.12.0 – 0.13.0). <a href="../../../implementation/deviations/">DEV-054</a>.</p>
+</div>
 <h3 id="35-video-instead-of-animation">3.5 Video instead of animation<a class="headerlink" href="#35-video-instead-of-animation" title="Permanent link">&para;</a></h3>
 <p>A pack can provide a video file for any cutscene. The engine has no video decoder for modern
 formats today, and the Smacker decoder planned for 6.3 covers only the original's films.
@@ -7148,6 +7323,11 @@ bundled into a product.
 <td>1.9.0</td>
 <td>2026-11-11</td>
 <td>From the user's message of 2026-11-11 (quoted): new sections 2.3 instruments on a 3D cockpit (drag, ray-cast to the face, preview), 2.4 the first test case (an <code>interceptor</code> extension with a 3D X-COM cockpit; the generic base cockpit; the example mod) and 2.5 single-file models (<code>.glb</code> beside OBJ/MTL, which stays fully supported, <code>.blend</code> as source only; confirmed by the user); the wizard's kind renamed <strong>extension</strong>; packs versus mods; plan items MD8–MD10</td>
+</tr>
+<tr>
+<td>1.16.0</td>
+<td>2026-11-11</td>
+<td>§3.4 As-built note: the cutscene format as built in MD2 (app 0.13.0) and what is not built</td>
 </tr>
 </tbody>
 </table>

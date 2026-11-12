@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4064,6 +4131,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4615,6 +4688,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6561,9 +6718,9 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 </tr>
 <tr>
 <td><code>chatter</code></td>
-<td>list of <code>{when, line, voice}</code></td>
+<td>list of <code>{when, line, voice, speaker}</code></td>
 <td>none</td>
-<td>Radio lines, each said once when its condition first holds. <code>voice</code> (optional, app 0.6.2) is a sound asset spoken on the radio with the line: <code>voice: sounds/colony_control.wav</code>, or a <code>cue:&lt;Name&gt;</code> (app 0.6.7) (<a href="../voices/">Radio voices</a>).</td>
+<td>Radio lines, each said once when its condition first holds. <code>voice</code> (optional, app 0.6.2) is a sound asset spoken on the radio with the line: <code>voice: sounds/colony_control.wav</code>, or a <code>cue:&lt;Name&gt;</code> (app 0.6.7). <code>speaker</code> (optional, app 0.13.1) is the voice set whose name and face the comms panel shows while the clip plays (<a href="../voices/#faces-on-the-comms-panel">Radio voices › Faces</a>).</td>
 </tr>
 <tr>
 <td><code>debrief</code></td>
@@ -6983,7 +7140,7 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 <td><code>relation(faction, n)</code></td>
 <td>id, number</td>
 <td>campaign</td>
-<td>Change a faction's relation.</td>
+<td>Change the player's standing with a faction (applied by the strategy layer since app 0.12.1, campaigns with dynamic relations only; a faction not in <code>relations.start</code> starts from 0 — the default campaign's <code>relation(guard, +5)</code> gives the player's own faction a standing nothing reads).</td>
 </tr>
 <tr>
 <td><code>salvage</code></td>

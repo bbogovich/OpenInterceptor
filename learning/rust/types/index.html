@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4062,6 +4129,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4411,6 +4484,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -5117,6 +5274,17 @@
     <span class="md-ellipsis">
       
         Tables built at compile time: const fn — src/input/mod.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-table-computed-at-compile-time-a-const-block-srcformatssmackerrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A table computed at compile time: a const block — src/formats/smacker.rs
       
     </span>
   </a>
@@ -6249,6 +6417,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-table-computed-at-compile-time-a-const-block-srcformatssmackerrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A table computed at compile time: a const block — src/formats/smacker.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#recursive-enums-and-recursive-descent-srcscriptmodrs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6405,6 +6584,34 @@ program — no start-up code, no allocation:</p>
 </code></pre></div>
 <p><code>&amp;'static str</code> fields fit because string literals live for the whole program. One table feeds
 parsing, defaults, the controls menu and the docs, so they cannot disagree.</p>
+<h3 id="a-table-computed-at-compile-time-a-const-block-srcformatssmackerrs">A table computed at compile time: a <code>const</code> block — <code>src/formats/smacker.rs</code><a class="headerlink" href="#a-table-computed-at-compile-time-a-const-block-srcformatssmackerrs" title="Permanent link">&para;</a></h3>
+<p>Sometimes a table is easier to <em>compute</em> than to write out. Smacker's block run lengths are 1 to
+59 and then 128, 256, 512, 1024 and 2048. Instead of 64 literals, the decoder fills the array in
+a <strong><code>const</code> block</strong>: a <code>{ … }</code> expression after <code>const NAME: Type =</code>, which the compiler runs
+while compiling.</p>
+<div class="highlight"><pre><span></span><code><span class="sd">/// Block run lengths, indexed by bits 2..7 of a `type` code.</span>
+<span class="k">const</span><span class="w"> </span><span class="n">SIZES</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="kt">u32</span><span class="p">;</span><span class="w"> </span><span class="mi">64</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="k">u32</span><span class="p">;</span><span class="w"> </span><span class="mi">64</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">59</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="n">i</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">t</span><span class="p">[</span><span class="mi">59</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">128</span><span class="p">;</span>
+<span class="w">    </span><span class="n">t</span><span class="p">[</span><span class="mi">60</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">256</span><span class="p">;</span>
+<span class="w">    </span><span class="n">t</span><span class="p">[</span><span class="mi">61</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">512</span><span class="p">;</span>
+<span class="w">    </span><span class="n">t</span><span class="p">[</span><span class="mi">62</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1024</span><span class="p">;</span>
+<span class="w">    </span><span class="n">t</span><span class="p">[</span><span class="mi">63</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2048</span><span class="p">;</span>
+<span class="w">    </span><span class="n">t</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Code in a <code>const</code> context may only do what the compiler can evaluate: local <code>let mut</code>
+variables, arithmetic, array indexing, <code>if</code> and <code>while</code> loops are fine; <strong><code>for</code> loops are not</strong>
+(they go through the <code>Iterator</code> trait, whose methods are not <code>const</code>), which is why this one is
+a <code>while</code>. Allocation, I/O and ordinary function calls are not allowed either — only <code>const fn</code>s.
+The block's last expression, <code>t</code>, is the value. The result is the same as typing the 64 numbers:
+a constant baked into the program, with no start-up code and nothing to initialise at run time,
+and the rule that made it stays readable in the source.</p>
 <h3 id="recursive-enums-and-recursive-descent-srcscriptmodrs">Recursive enums and recursive descent — <code>src/script/mod.rs</code><a class="headerlink" href="#recursive-enums-and-recursive-descent-srcscriptmodrs" title="Permanent link">&para;</a></h3>
 <p>A parsed condition such as <code>hull &lt; 25% and not disabled</code> is a <strong>tree</strong>. An enum can describe a
 tree if a variant holds more of the same enum — but a value cannot contain itself directly (its

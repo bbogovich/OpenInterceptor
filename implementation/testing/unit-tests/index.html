@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2902,6 +2939,8 @@
       
         
       
+        
+      
     
     
     
@@ -3276,6 +3315,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4146,6 +4213,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4495,6 +4568,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6188,6 +6345,25 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>747d1e9</code> (app 0.13.1)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
+build) gives <strong>379</strong> run on macOS (382 less the Linux-only test and two ignored helpers). The 13
+added since <code>76bda5c</code>: app <strong>0.11.0</strong> (<code>1f183d1</code>)
+<code>content::music::tests::sets_parse_and_the_state_follows_the_nearest_enemy</code>,
+<code>audio::music_tests::segments_cycle_within_the_wanted_state</code>; app <strong>0.11.1</strong> (<code>2dd85dd</code>)
+<code>content::skin::tests::skins_parse_colours_with_fallbacks</code>,
+<code>app::ui::tests::nine_slices_keep_corners_and_stretch_the_rest</code>; app <strong>0.12.0</strong> (<code>5163a57</code>)
+<code>formats::smacker::tests::small_and_big_trees_decode_with_the_cache</code>,
+<code>palettes_decode_explicit_kept_and_copied_entries</code>, <code>a_tiny_file_decodes_a_solid_frame</code>,
+<code>audio_dpcm_8_bit_mono</code>, and the <strong>ignored</strong> helper <code>real_smacker_file_decodes</code> (not counted:
+<code>OI_SMK=&lt;file&gt; OI_SMK_OUT=/tmp/f.png cargo test --lib real_smacker -- --ignored --nocapture</code>,
+run by hand against the player's own videos); app <strong>0.12.1</strong> (<code>563c93f</code>)
+<code>campaign::story::tests::mission_outcomes_move_standings</code>; app <strong>0.13.0</strong> (<code>a59ffce</code>)
+<code>content::cutscene::tests::catmull_rom_passes_through_keys_without_overshoot</code>,
+<code>cutscenes_parse_and_check_their_references</code>; main <code>319a31b</code>
+<code>formats::mpsrc::tests::a_pack_lists_and_returns_its_members</code>; app <strong>0.13.1</strong> (<code>747d1e9</code>)
+<code>app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves</code> (and the voice-set test in
+<code>content::rules</code> now checks <code>name</code>, <code>face</code> and <code>voice_of_clip</code>). Not unit-tested: drawing, video
+timing and cutscene playback (manual tests MT-6-01 – MT-6-13).</p>
 <p><strong>At main <code>76bda5c</code> (app 0.10.3)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
 build) gives <strong>366</strong> run on macOS (368 less the Linux-only test and the ignored helper). The 11
 added since <code>2ed1149</code>: app <strong>0.9.1</strong> (<code>3b19dea</code>)
@@ -6407,13 +6583,48 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>campaign::story</code></td>
-<td>3</td>
-<td><strong>Arcs fire in order</strong> with choices, offered missions and cooldowns; <strong>plans grow from shipments that get through</strong> (not from intercepted ones) and can end the campaign; <strong>relations drift and the strategist answers the player</strong> (app 0.10.0)</td>
+<td>4</td>
+<td><strong>Arcs fire in order</strong> with choices, offered missions and cooldowns; <strong>plans grow from shipments that get through</strong> (not from intercepted ones) and can end the campaign; <strong>relations drift and the strategist answers the player</strong> (app 0.10.0); <strong>mission outcomes move standings</strong> (app 0.12.1)</td>
 </tr>
 <tr>
 <td><code>campaign::save</code></td>
 <td>1</td>
 <td>A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused</td>
+</tr>
+<tr>
+<td><code>formats::smacker</code></td>
+<td>4</td>
+<td><strong>Small and big Huffman trees with the escape cache</strong>; palettes (kept, copied, explicit entries); a hand-built one-frame file with a solid block; 8-bit mono DPCM audio (app 0.12.0). Plus one ignored helper, <code>real_smacker_file_decodes</code> (not counted)</td>
+</tr>
+<tr>
+<td><code>formats::mpsrc</code></td>
+<td>1</td>
+<td>An MPSRC pack's table and members (case-insensitive), a missing member, a foreign file (main <code>319a31b</code>)</td>
+</tr>
+<tr>
+<td><code>content::music</code></td>
+<td>1</td>
+<td>Sets parse; a missing state falls back to cruise; the state follows the nearest enemy (cruise, threat, battle); a set without states is an error (app 0.11.0)</td>
+</tr>
+<tr>
+<td><code>content::skin</code></td>
+<td>1</td>
+<td>Colours (RGB and RGBA) with fallbacks for unset roles; the panel; an unknown role is an error (app 0.11.1)</td>
+</tr>
+<tr>
+<td><code>content::cutscene</code></td>
+<td>2</td>
+<td><strong>Centripetal Catmull-Rom passes through its keys without overshoot</strong>, holds at the ends; facing along the path; linear scalar keys; a cutscene parses (actions sorted, <code>destroy_at</code>, cuts, captions) and <strong>bad entity or camera references are errors</strong> (app 0.13.0)</td>
+</tr>
+<tr>
+<td><code>app::ui</code></td>
+<td>1</td>
+<td>Nine-slice pieces keep the corners and stretch the rest (app 0.11.1)</td>
+</tr>
+<tr>
+<td><code>app::comms</code></td>
+<td>1</td>
+<td>The panel lasts the clip plus 0.6 s, at least 2.5 s; the signal bars move and stay in range (app 0.13.1)</td>
 </tr>
 <tr>
 <td><code>formats::png</code></td>
@@ -6607,8 +6818,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>audio</code></td>
-<td>2</td>
-<td>Distance attenuation, event → sound and volume choices (incl. <code>system_damage</code>, switch sounds, <code>hyperspace</code>)</td>
+<td>3</td>
+<td>Distance attenuation, event → sound and volume choices (incl. <code>system_damage</code>, switch sounds, <code>hyperspace</code>); <strong>music segments cycle within the wanted state</strong> and a missing state plays cruise (app 0.11.0)</td>
 </tr>
 <tr>
 <td><code>app::assets</code></td>

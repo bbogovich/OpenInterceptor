@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2902,6 +2939,8 @@
       
         
       
+        
+      
     
     
     
@@ -3296,6 +3335,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../architecture/platform/" class="md-nav__link">
         
   
@@ -3552,6 +3619,17 @@
     <span class="md-ellipsis">
       
         Stage 5 progress
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-6-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 6 progress
       
     </span>
   </a>
@@ -4194,6 +4272,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4543,6 +4627,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6262,6 +6430,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#stage-6-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 6 progress
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6322,8 +6501,8 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-6-presentation/">6 Presentation</a></td>
-<td>Not started</td>
-<td></td>
+<td><strong>In progress</strong> — interactive music in <strong>0.11.0</strong>; skins in <strong>0.11.1</strong> and title cards; the Smacker decoder and player in <strong>0.12.0</strong>; volumes and the relation fix in <strong>0.12.1</strong>; endings' films; MD2 cutscenes in <strong>0.13.0</strong> and the X-COM opening film; MPSRC packs and the comms panel in <strong>0.13.1</strong>. 6.1, 6.3, 6.4, 6.6 (comms), 6.8 partial; MD2 partial; 6.2, 6.5, 6.7, MD3 not started; no manual pass yet</td>
+<td>See <a href="#stage-6-progress">Stage 6 progress</a> below</td>
 </tr>
 <tr>
 <td><a href="../plan/stage-7-modding/">7 Modding toolkit and Remastered</a></td>
@@ -6345,7 +6524,7 @@
 <li>XTXR textures (all sizes), cockpit TGAs (colour key), ADPCM sound effects and PCM music loops
   are understood. Balance data is plain INI.</li>
 <li>Unknowns that do not block stages 1–2: XSPT RLE details, a few mesh fields, the MFD animation
-  file <code>mfdanim.mps</code>, the AIFF-C codec of the extracted CD audio.</li>
+  file <code>mfdanim.mps</code> (resolved: an MPSRC pack, main <code>319a31b</code>), the AIFF-C codec of the extracted CD audio.</li>
 </ul>
 <h2 id="stage-1-checklist">Stage 1 checklist<a class="headerlink" href="#stage-1-checklist" title="Permanent link">&para;</a></h2>
 <p>Code as of main <code>bcd7706</code> (app build 0.2.1). "Done" = built, unit-tested and seen working against the reference
@@ -7024,10 +7203,73 @@ reuse existing missions); 5.11 is not built — rival logistics, enemy supply de
 them, third-party convoys; two of the seven X-COM side missions; not built: allied factions
 fighting at the player's side, the testbed event debugger and start-at-chapter, the X-COM
 <code>Think.ini</code> strategist values, <code>relation</code> effects on prices, relation rules, budgets and the
-rest of the strategist, partial victories in either campaign's data; mission outcomes'
-<code>relation(…)</code> is still ignored. <strong>Derived</strong>: the X-COM gates use the
+rest of the strategist, partial victories in either campaign's data. (Mission outcomes' <code>relation(…)</code> was fixed in app 0.12.1, main <code>563c93f</code>.) <strong>Derived</strong>: the X-COM gates use the
 <code>type_1/2/3_saucer_examination</code> topics for the guide's Wraith, Spectre and Phantasm
 examinations — unconfirmed. <strong>No play-through of either campaign has been done.</strong></p>
+<h2 id="stage-6-progress">Stage 6 progress<a class="headerlink" href="#stage-6-progress" title="Permanent link">&para;</a></h2>
+<p>App <strong>0.11.0</strong> (<code>1f183d1</code>, music), <strong>0.11.1</strong> (<code>2dd85dd</code> skins; <code>a7ea7b6</code> title cards), <strong>0.12.0</strong>
+(<code>5163a57</code>, <code>644b218</code>, Smacker), <strong>0.12.1</strong> (<code>563c93f</code> volumes and the relation fix; <code>87b04f3</code>
+endings' films), <strong>0.13.0</strong> (<code>a59ffce</code> MD2 cutscenes; <code>76d64d5</code> the X-COM opening film) and
+<strong>0.13.1</strong> (<code>319a31b</code> MPSRC packs; <code>747d1e9</code> the comms panel). <strong>379 unit tests</strong> on macOS at
+<code>747d1e9</code> by a count of the sources.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6.4 Interactive music: <code>music:</code> sets, <code>MusicPlayer</code> (state changes at a segment's end), the battle state from the nearest hostile, stingers, strategy music; <code>interceptor</code> loop sets by name; default music synthesised</td>
+<td><strong>Partial</strong> (0.11.0): no <code>switch:</code> data, <code>.wtl</code> tables, CD audio, <code>good</code>/<code>bad</code> stingers</td>
+<td><code>src/content/music.rs</code>, <code>src/audio.rs</code>, <code>tools/default_assets/music.py</code></td>
+</tr>
+<tr>
+<td>6.1 Skins: colours, nine-slice panel, font; <code>campaign.skin</code>; <code>app::ui::Ui</code>; launcher and strategy screen</td>
+<td><strong>Partial</strong> (0.11.1): no screen layouts, buttons or custom panels; other screens unskinned</td>
+<td><code>src/content/skin.rs</code>, <code>src/app/ui.rs</code></td>
+</tr>
+<tr>
+<td>6.8 Default presentation: the art-deco skin and panel, title cards (<code>card</code>), synthesised music</td>
+<td><strong>Partial</strong> (0.11.0 – 0.11.1): no recaps or stings beyond victory and death; no generator for other UI art</td>
+<td><code>resources/default/rules/skin.yaml</code>, <code>tools/default_assets/textures.py</code></td>
+</tr>
+<tr>
+<td>6.3 Smacker decoder (<code>SMK2</code>/<code>SMK4</code>, verified on all 11 CD videos) and <code>VideoPlayer</code>; <code>video(…)</code>, <code>--video</code>; the X-COM transmissions; <code>Content::read_asset</code></td>
+<td><strong>Done</strong> for the original's films (0.12.0); image-sequence video is MD3</td>
+<td><code>src/formats/smacker.rs</code>, <code>src/app/video.rs</code></td>
+</tr>
+<tr>
+<td>Options: <code>audio: {music, effects}</code>, launcher M / V</td>
+<td><strong>Done</strong> (0.12.1); the options screen is 6.2</td>
+<td><code>src/settings.rs</code>, <code>src/app/launcher.rs</code></td>
+</tr>
+<tr>
+<td>Endings' <code>video</code>; a finished campaign shows its ending on continuing</td>
+<td><strong>Done</strong> (0.12.1)</td>
+<td><code>src/content/story.rs</code>, <code>src/app/strategy.rs</code></td>
+</tr>
+<tr>
+<td>MD2 cutscenes: format, schema, <code>CutscenePlayer</code>, <code>campaign.intro</code>, <code>play_cutscene</code>, <code>--cutscene</code>; the default intro; <code>campaign.intro_video</code> (X-COM <code>animation1</code>, derived)</td>
+<td><strong>Partial</strong> (0.13.0): see <a href="../../specification/requirements/modding/#r-mod-033-cutscene-files">R-MOD-033 – R-MOD-046</a>; <code>harmless</code> does not do what it says</td>
+<td><code>src/content/cutscene.rs</code>, <code>src/app/cutscene.rs</code>, <code>resources/default/cutscenes/intro.yaml</code></td>
+</tr>
+<tr>
+<td>6.6 MPSRC packs (<code>original:&lt;pack&gt;.mps#&lt;member&gt;</code>); the comms panel: voices' <code>name</code> and <code>face</code>, chatter <code>speaker</code>, signal bars; default portraits and <code>colony_control</code></td>
+<td><strong>Partial</strong> (0.13.1): no X-COM faces (clip prefixes unmapped); custom instruments not built</td>
+<td><code>src/formats/mpsrc.rs</code>, <code>src/app/comms.rs</code>, <code>resources/default/rules/voices.yaml</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gaps</strong> (at main <code>747d1e9</code>): 6.2 (main menu, options, load/save, credits screens), 6.5, 6.7 (the X-COM
+wrapper screens — the <code>WrappersDLL</code> layouts are not mapped), MD3 (OS video frameworks; needs the
+dependency/FFI evaluation first); the rest of the cutscene format; the <code>harmless</code> flag; X-COM
+talking-head mapping; video sound ignores the volume settings; a video's pack path is read from
+the first pack. <strong>The default campaign's music WAVs are not committed</strong> (the <code>*.wav</code> ignore
+rule): a fresh clone is silent until <code>tools/default_assets/make_all.py</code> runs. No Stage 6 manual
+test has been run.</p>
 
 
 

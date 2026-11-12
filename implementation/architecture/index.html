@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2904,6 +2941,8 @@
       
         
       
+        
+      
     
     
     
@@ -3278,6 +3317,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4066,6 +4133,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4415,6 +4488,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6179,7 +6336,7 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
 <p>The order is the one written at the top of <code>src/lib.rs</code>:</p>
 <pre class="mermaid"><code>flowchart TB
     subgraph L7["7 · Application"]
-        APP["app&lt;br/&gt;launcher, viewer, asset browser, flight session,&lt;br/&gt;simulator, strategy screen"]
+        APP["app&lt;br/&gt;launcher, viewer, asset browser, flight session,&lt;br/&gt;simulator, strategy screen,&lt;br/&gt;ui (skins), video, cutscene"]
         CK["check&lt;br/&gt;headless validation"]
         EX["extract&lt;br/&gt;original data → OBJ/PNG/WAV"]
         CLI["cli + settings&lt;br/&gt;options, user data folder"]
@@ -6191,7 +6348,7 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
     subgraph L6["6 · Presentation"]
         R["render&lt;br/&gt;camera, gpu, effects, starfield"]
         H["hud&lt;br/&gt;layout, radar, MFD, draw"]
-        AU["audio&lt;br/&gt;SoundBank"]
+        AU["audio&lt;br/&gt;SoundBank, MusicPlayer"]
     end
     subgraph L5["5 · Devices"]
         IN["input&lt;br/&gt;Bindings, gamepad::PadState"]
@@ -6202,14 +6359,14 @@ No specification exists yet, so plan stages are cited instead of requirement IDs
         CA["campaign&lt;br/&gt;Campaign: the strategy layer, hour step, saves"]
     end
     subgraph L3["3 · Content"]
-        C["content&lt;br/&gt;Content, vfs, pack, rules, schema, files,&lt;br/&gt;equipment, behaviour, scenario, formation, strategy"]
+        C["content&lt;br/&gt;Content, vfs, pack, rules, schema, files,&lt;br/&gt;equipment, behaviour, scenario, formation, strategy,&lt;br/&gt;story, music, skin, cutscene"]
         SC["script&lt;br/&gt;conditions, actions, campaign context"]
     end
     subgraph L2["2 · Model"]
         M["model&lt;br/&gt;Model, ModelLod, MaterialGroup"]
     end
     subgraph L1["1 · Formats"]
-        F["formats&lt;br/&gt;pe, xmsh, xtxr, tga, wav, ini, yaml, obj, png (writer)"]
+        F["formats&lt;br/&gt;pe, xmsh, xtxr, tga, wav, ini, yaml, obj, png (writer),&lt;br/&gt;smacker"]
     end
     APP --&gt; R &amp; H &amp; AU &amp; IN &amp; S &amp; C &amp; MI &amp; RM &amp; CA
     CA --&gt; C &amp; SC
@@ -6328,6 +6485,7 @@ simulation:</p>
 <p>Each layer's public API is on its own page: <a href="formats/">Formats</a>, <a href="packs/">Packs, VFS and
 rules</a>, <a href="assets/">Assets and GPU cache</a>, <a href="sim/">Simulation</a>, <a href="script/">Conditions</a>, <a href="mission/">Missions</a>, <a href="campaign/">Campaign</a>,
 <a href="rendering/">Rendering</a>, <a href="hud/">HUD</a>, <a href="input/">Input</a>, <a href="audio/">Audio</a>,
+<a href="presentation/">Presentation</a>,
 <a href="platform/">Platform</a>, <a href="remote/">Remote console</a>, <a href="testbed/">Testbed</a>. <code>cargo doc --open</code> renders the <code>///</code> comments
 of every item.</p>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>

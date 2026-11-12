@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2904,6 +2941,8 @@
       
         
       
+        
+      
     
     
     
@@ -3029,6 +3068,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smacker-formatssmacker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smacker (formats::smacker)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mpsrc-formatsmpsrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MPSRC (formats::mpsrc)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3369,6 +3436,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4157,6 +4252,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4506,6 +4607,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6151,6 +6336,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smacker-formatssmacker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smacker (formats::smacker)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mpsrc-formatsmpsrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MPSRC (formats::mpsrc)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6215,6 +6428,8 @@ test itself — never with original game files. Plan: Stage 1 (formats needed fo
     RD --&gt; XT["xtxr::parse → XTexture"]
     RD --&gt; TG["tga::decode → Image"]
     RD --&gt; WV["wav::decode → Pcm"]
+    B --&gt; SMK["smacker::Smacker::new → next_frame&lt;br/&gt;(Bits: LSB-first bit reader)"]
+    B --&gt; MPS["mpsrc::entries, mpsrc::member → &amp;[u8]"]
     TXT["&amp;str"] --&gt; INI["ini::Ini::parse&lt;br/&gt;(original INI; legacy settings)"]
     TXT --&gt; YML["yaml::parse → Node&lt;br/&gt;(mod files, settings, bindings)"]
     TXT --&gt; OBJ["obj::parse → ObjMesh&lt;br/&gt;obj::parse_mtl"]
@@ -6273,12 +6488,64 @@ indices) → return owned data.</p>
 <td>App 0.6.7, for the console's textured target model. Since main <code>2ed1149</code> <code>encode_rgba(w, h, rgba)</code> calls the <code>image</code> crate's <code>PngEncoder</code> — <code>image</code> is already a direct dependency for decoding (its <code>png</code> feature encodes too), so the in-crate writer of app 0.6.7 (stored deflate blocks, its own CRC-32 and Adler-32) was removed as a duplicate; a length mismatch gives an empty result rather than a panic. The module keeps what the console needs first: shrinking a texture by averaging blocks. Test: the encoded PNG decodes back to the same pixels (<a href="../../../learning/best-practices/dependencies/#png-encoding-the-image-crate-already-in-the-tree">Dependency policy</a>).</td>
 </tr>
 <tr>
+<td><code>formats::smacker</code></td>
+<td>Smacker video <code>SMK2</code> / <code>SMK4</code></td>
+<td>App 0.12.0. A complete in-crate decoder (<a href="#smacker-formatssmacker">below</a>): Huffman trees with the escape cache, the four block types, delta palettes, DPCM audio.</td>
+</tr>
+<tr>
+<td><code>formats::mpsrc</code></td>
+<td>MPSRC packs (<code>.mps</code>)</td>
+<td>Main <code>319a31b</code>. The bundle <code>mfdanim.mps</code> (113 talking-head Smacker clips): <a href="#mpsrc-formatsmpsrc">below</a>.</td>
+</tr>
+<tr>
 <td><code>formats::obj</code></td>
 <td>Wavefront OBJ + MTL</td>
 <td>The mod model format. Negative indices, <code>v/vt/vn</code> forms. Faces in a <code>g</code>/<code>o</code> named <code>slot_&lt;name&gt;</code> are not kept as geometry: each such group becomes an attachment point <code>(name, centre of its faces, first face's normal)</code> in <code>ObjMesh::slots</code>.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="smacker-formatssmacker">Smacker (<code>formats::smacker</code>)<a class="headerlink" href="#smacker-formatssmacker" title="Permanent link">&para;</a></h3>
+<p>The original's films are Smacker files (<a href="../../../specification/original-formats/smacker/">format page</a>).
+<code>Smacker::new(&amp;[u8])</code> reads the 104-byte header (signature, size, frame count, frame rate,
+flags, seven audio tracks' sizes and rates), the frame size and type tables and the four big
+Huffman trees, and keeps a borrow of the bytes. <code>next_frame()</code> then decodes one frame into the
+public <code>pixels</code> (palette indices) and <code>palette</code> and returns its audio, <code>(track, samples)</code> per
+track present; <code>rgba()</code> converts the current frame. The decoder keeps no history beyond those
+two buffers, so <code>skip_to(n)</code> can resume at frame <code>n</code> after a caller restores them — which is how
+<code>app::video</code> steps a decoder it cannot store (<a href="../presentation/#videos-appvideo">Presentation › Videos</a>).</p>
+<p>How it is built, layer by layer:</p>
+<ul>
+<li><strong>Bits.</strong> <code>Bits&lt;'a&gt;</code> reads bits least-significant first from a borrowed slice; running out is
+  an error (<code>bitstream ended early</code>), never a panic.</li>
+<li><strong>Trees.</strong> A small tree (8-bit leaves) is an arena of <code>Leaf</code>/<code>Node</code> entries read recursively.
+  A <strong>big tree</strong> (16-bit leaves) is built from two small trees (low and high byte) plus three
+  escape values; a leaf equal to an escape returns one of a three-slot <strong>cache</strong> of recent
+  values instead, and every decoded value is pushed into it. The caches are reset each frame.</li>
+<li><strong>Blocks.</strong> The <code>type</code> tree gives a block kind and a run length — <code>SIZES</code>, a 64-entry table
+  built by a <code>const</code> block at compile time (1 – 59, then 128 … 2048) — over 4 × 4 blocks in
+  raster order: <strong>mono</strong> (two colours from <code>mclr</code>, a 16-bit pattern from <code>mmap</code>), <strong>full</strong>
+  (16 pixels from <code>full</code>; version 4 adds two half-resolution modes), <strong>skip</strong> (unchanged) and
+  <strong>solid</strong> (one colour).</li>
+<li><strong>Palette.</strong> A frame may carry a palette chunk: runs that keep entries, copy a range from the
+  previous palette, or set an entry from three 6-bit components (expanded to 8 bits).</li>
+<li><strong>Audio.</strong> Each track chunk is DPCM: per-channel Huffman trees of deltas from a first sample,
+  8- or 16-bit, mono or stereo (interleaved), or raw PCM; <code>decode_audio</code> returns 16-bit samples.</li>
+<li><strong>Line doubling.</strong> Files flagged as doubled or interlaced report <code>out_height() = 2 × height</code>.</li>
+</ul>
+<p>Unit tests build bitstreams by hand (<code>W</code>, an LSB-first writer): trees with the cache, palettes
+(kept, copied and explicit entries), a one-frame file with a solid block, and 8-bit mono DPCM.
+The decoder was checked by hand against <strong>all eleven</strong> of the reference CD's videos — every
+frame and its audio decode — with the ignored test <code>real_smacker_file_decodes</code>, which reads a
+file named by <code>OI_SMK</code>. No original file is in the repository.</p>
+<h3 id="mpsrc-formatsmpsrc">MPSRC (<code>formats::mpsrc</code>)<a class="headerlink" href="#mpsrc-formatsmpsrc" title="Permanent link">&para;</a></h3>
+<p>An MPSRC pack is a named-file bundle (<a href="../../../specification/original-formats/mpsrc/">format page</a>):
+an 8-byte <code>MPSRC</code> signature, a <code>u32</code> count and <code>count</code> 136-byte entries (a zero-padded 128-byte
+name, <code>u32</code> size, <code>u32</code> offset), then the files. <code>entries(&amp;[u8])</code> returns the table, checking
+every entry lies inside the data; <code>member(&amp;[u8], name)</code> returns one file's bytes as a <strong>borrowed
+slice</strong> — no copy — matching the name without regard to case. <code>Content::read_asset</code> uses it for
+references written <code>original:&lt;pack&gt;.mps#&lt;member&gt;</code> (the <code>#</code> part, which for DLLs names a
+resource, names the member). Test: <code>a_pack_lists_and_returns_its_members</code> (a two-member pack built in the
+test: the table, a case-insensitive lookup, a missing member, a foreign file).</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6333,6 +6600,18 @@ indices) → return owned data.</p>
 <td>A YAML value with its 1-based line: <code>Null</code>, <code>Scalar { text, quoted }</code>, <code>Seq</code>, <code>Map</code> (entries in file order); an error with line and message.</td>
 </tr>
 <tr>
+<td><code>smacker::Smacker&lt;'a&gt;</code>, <code>AudioTrack</code>, <code>FrameAudio</code>, <code>SmkError</code></td>
+<td>A Smacker file being decoded (borrowing its bytes): <code>width</code>, <code>height</code>, <code>frames</code>, <code>frame_time</code>, <code>tracks</code>, the current <code>pixels</code> and <code>palette</code>; one audio track's rate and format; a frame's audio per track; a decoding error.</td>
+</tr>
+<tr>
+<td><code>mpsrc::Entry</code>, <code>mpsrc::entries</code>, <code>mpsrc::member</code></td>
+<td>One file in an MPSRC pack (name, offset, size); the table; one member's bytes.</td>
+</tr>
+<tr>
+<td><code>smacker::Bits&lt;'a&gt;</code>, <code>smacker::Big</code></td>
+<td>The LSB-first bit reader; a big Huffman tree with its escape cache.</td>
+</tr>
+<tr>
 <td><code>obj::ObjMesh</code>, <code>obj::ObjMaterial</code></td>
 <td>Positions, uvs, normals, faces (as corner ranges), material names, <code>slots</code> (attachment points).</td>
 </tr>
@@ -6349,6 +6628,8 @@ indices) → return owned data.</p>
 <li><code>wav::decode(&amp;[u8]) -&gt; FResult&lt;Pcm&gt;</code>.</li>
 <li><code>Ini::parse(&amp;str)</code>, <code>Ini::parse_bytes(&amp;[u8])</code> (UTF-8 or Latin-1), <code>Ini::parse_with_warnings</code>,
   <code>ini.section(name)</code>, <code>ini.get(section, key)</code>, <code>ini.merge_from(&amp;other)</code>.</li>
+<li><code>smacker::Smacker::new(&amp;[u8]) -&gt; Result&lt;Smacker, SmkError&gt;</code>, <code>.next_frame() -&gt; Result&lt;Option&lt;FrameAudio&gt;, SmkError&gt;</code>,
+  <code>.rgba()</code>, <code>.out_height()</code>, <code>.skip_to(n)</code>; <code>smacker::decode_palette(&amp;[u8], &amp;old)</code>, <code>smacker::decode_audio(&amp;[u8], AudioTrack)</code>.</li>
 <li><code>obj::parse(&amp;str) -&gt; FResult&lt;ObjMesh&gt;</code>, <code>obj::parse_mtl(&amp;str) -&gt; Vec&lt;ObjMaterial&gt;</code>.</li>
 <li><code>yaml::parse(&amp;str) -&gt; Result&lt;Node, YamlError&gt;</code>; <code>Node::null(line)</code>, <code>Node::text(s, line)</code>,
   <code>node.get(key)</code>, <code>as_str</code>, <code>as_map</code>, <code>as_seq</code>, <code>is_null</code>, <code>to_yaml()</code>.</li>

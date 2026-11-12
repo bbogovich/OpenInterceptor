@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4064,6 +4131,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4413,6 +4486,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6485,6 +6642,9 @@ or <code>delete: true</code> an ending (<a href="../rulesets/#layering-inherit-d
 <code>relations</code>, <code>strategist</code> and <code>campaign_end</code> are <strong>global sections</strong>: the last pack to write one
 wins. Every id these sections define is a named constant in the campaign's conditions, so a
 misspelt event, arc, plan or ending id is a load error that names it.</p>
+<p>The campaign's <strong>presentation</strong> keys sit beside the story: <code>campaign.skin</code> (<a href="../skins/">Skins</a>),
+<code>campaign.intro</code> and <code>campaign.intro_video</code> (<a href="../cutscenes/">Cutscenes</a>), and the <code>music</code> sets
+(<a href="../music/">Music</a>).</p>
 <h2 id="a-worked-example">A worked example<a class="headerlink" href="#a-worked-example" title="Permanent link">&para;</a></h2>
 <p>A three-step arc with a choice, a rival plan and two endings:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># mypack/strategy/story.yaml</span>
@@ -6778,12 +6938,15 @@ directly. The design's budgets, expansion, offence ladder and <code>Think.ini</c
 <span class="w">  </span><span class="nt">defeat</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"bases</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">0"</span><span class="p p-Indicator">,</span><span class="nt"> ending</span><span class="p">:</span><span class="w"> </span><span class="nv">last_base</span><span class="p p-Indicator">}]</span>
 <span class="w">  </span><span class="nt">victory</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"flag(engine_destroyed)"</span><span class="p p-Indicator">,</span><span class="nt"> ending</span><span class="p">:</span><span class="w"> </span><span class="nv">engine_destroyed</span><span class="p p-Indicator">}]</span>
 </code></pre></div>
-<p>An ending has a <code>text</code> (a <code>@key</code> or words) and <code>victory</code> (default <code>false</code>). <code>campaign_end</code>
+<p>An ending has a <code>text</code> (a <code>@key</code> or words), <code>victory</code> (default <code>false</code>) and, since app 0.12.1,
+an optional <code>video</code> — an asset played full screen when the campaign ends this way, before its
+text (the X-COM victory plays the original's closing credits, <code>original:credits_sm2a.smk</code>). <code>campaign_end</code>
 lists conditions for each: they are checked every day and after every battle, <strong>defeats
 first</strong>, and the first that holds ends the campaign. The <code>victory(&lt;ending&gt;)</code> and
 <code>defeat(&lt;ending&gt;)</code> actions end it at once. Once ended, the campaign stops; the screen shows
-<em>VICTORY.</em> or <em>DEFEAT.</em> with the text, and Enter saves and leaves. A partial victory is simply
-another ending with <code>victory: true</code> and its own condition.</p>
+<em>VICTORY.</em> or <em>DEFEAT.</em> with the text, and Enter saves and leaves. Continuing a finished campaign
+shows its ending again (app 0.12.1). A partial victory is simply another ending with
+<code>victory: true</code> and its own condition.</p>
 <h2 id="encyclopaedia"><code>encyclopaedia</code><a class="headerlink" href="#encyclopaedia" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">encyclopaedia</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">dominion</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="nv">The Umbral Dominion</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="p p-Indicator">,</span><span class="nt"> unlock</span><span class="p">:</span><span class="w"> </span><span class="nv">day &gt;= 0</span><span class="p p-Indicator">}</span>
@@ -6812,6 +6975,21 @@ action or a wrong argument is an error with its place.</p>
 <td><code>news(text)</code></td>
 <td>text</td>
 <td>A <em>News:</em> line in the log; the clock runs on.</td>
+</tr>
+<tr>
+<td><code>card(Title \| text)</code></td>
+<td>text</td>
+<td>A full-screen <strong>title card</strong> in the campaign's <a href="../skins/">skin</a> (app 0.11.1): the title large in the skin's <code>border</code> colour, the text after <code>\|</code> wrapped beneath. The clock stops; Enter, Esc or a click dismisses it. The title goes in the log. Made for chapter openings.</td>
+</tr>
+<tr>
+<td><code>video(ref)</code></td>
+<td>asset</td>
+<td>Play a <strong>video</strong> full screen (app 0.12.0): <code>original:&lt;file&gt;.smk</code> from the player's data, or a pack path; Smacker only. The strategy screen waits and comes back afterwards (<a href="../cutscenes/#videos">Cutscenes › Videos</a>).</td>
+</tr>
+<tr>
+<td><code>play_cutscene(id)</code></td>
+<td>cutscene</td>
+<td>Play the engine <strong>cutscene</strong> <code>cutscenes/&lt;id&gt;.yaml</code> (app 0.13.0, <a href="../cutscenes/">Cutscenes</a>); back to the strategy screen afterwards.</td>
 </tr>
 <tr>
 <td><code>set_flag(x)</code>, <code>clear_flag(x)</code></td>
@@ -6865,10 +7043,14 @@ action or a wrong argument is an error with its place.</p>
 </tr>
 </tbody>
 </table>
+<p>When one day's events ask for several videos or cutscenes, the last video asked for plays, and
+a cutscene only when no video was asked for; a video and a cutscene in the same event's list do
+not both play. An unknown video or cutscene is reported on standard error when it would play
+(<code>video …: …</code>, <code>cutscene x: no cutscene 'x'</code>), not when the rules load.</p>
 <p>An action with a single text argument takes everything between the brackets, commas included:
 <code>message(Hold on, Guardsman!)</code> (app 0.10.1). In a YAML flow list, quote an action that contains
 a comma, a colon or a <code>+</code>.</p>
-<p><strong>Text keys.</strong> Message and news texts, choice texts, ending texts and encyclopaedia titles and
+<p><strong>Text keys.</strong> Message, news and card texts, choice texts, ending texts and encyclopaedia titles and
 texts may be <code>@keys</code> (app 0.10.2), resolved like any other text: <code>@msg.chapter_1</code> from the
 pack's <code>text/</code>, or <code>@orig.KEY</code> from the player's original language files.</p>
 <h2 id="conditions">Conditions<a class="headerlink" href="#conditions" title="Permanent link">&para;</a></h2>
@@ -6914,8 +7096,8 @@ pack's <code>text/</code>, or <code>@orig.KEY</code> from the player's original 
 <p><code>resources/default/strategy/story.yaml</code> (app 0.10.1) is <em>Perils of the Void</em>'s serial, as in
 the <a href="../../definition/campaigns/default-campaign/">campaign definition</a>:</p>
 <ul>
-<li><strong>Arc <code>serial</code></strong>, twelve chapters <code>ch01</code> – <code>ch12</code>, each a <code>message</code> (the chapter title and
-  its hook) and a <code>mission</code> offer. Chapters are triggered by the Guard's progress (days,
+<li><strong>Arc <code>serial</code></strong>, twelve chapters <code>ch01</code> – <code>ch12</code>, each a title card (<code>card(Chapter N -
+  Title | hook)</code>, app 0.11.1; a <code>message</code> before that) and a <code>mission</code> offer. Chapters are triggered by the Guard's progress (days,
   research, bases), its relations and the Eclipse Engine's progress (<code>plan(eclipse_engine)</code>).
   Chapter 3 sets <code>regent_revealed</code>, which starts the plan; chapter 7 is <strong>the Cartel's choice</strong> —
   escort the Cartel's shipment (the Cartel becomes an ally, money) or raid it (the Cartel turns
@@ -6966,6 +7148,11 @@ guide describes. Every estimate is marked <code>DERIVED</code> in the file.</p>
   both flying <code>ambush_pirate_squadron</code> on <em>derived</em> triggers.</li>
 <li><strong>Strategist</strong>: aggression with <em>derived</em> values (the original's <code>Think.ini</code> rules are not
   read yet).</li>
+<li><strong>Videos</strong> (app 0.12.0): each alien message also plays the original's transmission film,
+  <code>video(original:alientrans1.smk)</code> – <code>alientrans5.smk</code>; the victory ending plays the credits
+  film (<code>video: original:credits_sm2a.smk</code>, app 0.12.1); and a new campaign opens with
+  <code>campaign.intro_video: original:animation1.smk</code> (app 0.13.0) — which of the CD's films is the
+  original's opening is <em>derived</em>.</li>
 <li><strong>Endings</strong>: <code>doomsday_destroyed</code> (victory), <code>doomsday_complete</code> and <code>last_base</code>.</li>
 <li><strong>Texts from the original</strong>: the warnings, MacArthur's prompt and two endings use the
   original's own text keys — <code>@orig.DD_WARNING1</code> – <code>DD_WARNING3</code>, <code>@orig.MAC_PROMPT1</code>,

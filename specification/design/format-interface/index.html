@@ -2177,6 +2177,8 @@
       
         
       
+        
+      
     
     
     
@@ -2460,6 +2462,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -3063,6 +3100,8 @@
       
         
       
+        
+      
     
     
     
@@ -3437,6 +3476,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -4225,6 +4292,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4574,6 +4647,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6448,13 +6605,27 @@ which is the foundation for every campaign:</p>
 <p>The <code>interceptor</code> campaign's skin uses the original's wrapper art (<code>WrappersDLL.dll</code> images)
 by <code>original:</code> reference, laid out like the original screens at 640×480; the remastered mod
 can supply a widescreen layout.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.11.1)</p>
+<p>Skins only, simpler than above: <code>skins.&lt;id&gt;</code> with <code>colours</code> (seven roles: <code>background</code>,
+<code>panel</code>, <code>border</code>, <code>text</code>, <code>dim</code>, <code>accent</code>, <code>highlight</code>), one <code>panel: {image, slice}</code> and one
+<code>font</code> (a TrueType file, not a bitmap sheet); <code>campaign.skin</code> chooses it. The launcher and the
+strategy screen draw through it, and the <code>chapter</code> title card exists as the <code>card(…)</code> story
+action. Not built: <code>screens:</code> layouts and design spaces, widgets, <code>button</code>, skin <code>sounds</code>,
+several fonts, custom panels, the other screens; <code>interceptor</code> has a palette-only skin, its
+wrapper layouts not mapped. <a href="../../../modding/skins/">Modding › Skins</a>.</p>
+</div>
 <h2 id="cockpits-and-hud">Cockpits and HUD<a class="headerlink" href="#cockpits-and-hud" title="Permanent link">&para;</a></h2>
 <p>Cockpits stay as implemented (<a href="../../../modding/cockpits/">cockpits</a>): 2D art at any resolution,
 its own design space, or a 3D model; instrument rectangles, or instruments anchored on the 3D
 model's surface. Additions:</p>
 <ul>
 <li><code>instruments: {comms: …}</code>: the MFD talking-head panel (the original's 113 Smacker clips; any image
-  sequence or video for mods).</li>
+  sequence or video for mods). <em>As built (app 0.13.1):</em> not a cockpit instrument but a fixed
+  panel at the top left, driven by the voice sets — <code>name</code> and <code>face</code> (a picture or a looping
+  Smacker clip, also <code>original:mfdanim.mps#&lt;member&gt;</code>) — and chatter's <code>speaker</code>
+  (<a href="../../../modding/voices/#faces-on-the-comms-panel">Radio voices › Faces</a>). Custom instruments
+  are not built.</li>
 <li>custom instruments (<code>instruments: {&lt;custom&gt;: …}</code>) bound to a query (<code>hull</code>, <code>plan(eclipse)</code>) with a gauge style — for
   campaign-specific instruments.</li>
 <li>Per-environment HUD elements (altitude and vertical speed, horizon line) shown only in
@@ -6502,6 +6673,15 @@ of five segments, plus death, victory and good/bad-result stingers, with transit
 </code></pre></div>
 <p>Strategy-screen music, CD audio tracks (the original's Red Book audio, played from the
 player's ripped files) and the default campaign's synthesised loops use the same section.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.11.0)</p>
+<p><code>states</code> (<code>cruise</code>, <code>threat</code>, <code>battle</code>, <code>strategy</code>), <code>stingers</code>, and in place of <code>switch:</code> and
+<code>transition:</code> two ranges, <code>threat_range</code> and <code>battle_range</code>, with the transition always at a
+segment's end; plus <code>volume</code>. The <code>interceptor</code> files are named without the <code>Loops/</code> folder
+(<code>original:cruise1-1.wav</code>; the original-data index finds them by name). Not built: <code>switch:</code>
+conditions, the <code>.wtl</code> tables, CD audio. <a href="../../../modding/music/">Modding › Music</a>,
+<a href="../../../implementation/deviations/">DEV-053</a>.</p>
+</div>
 <h2 id="voices-and-chatter">Voices and chatter<a class="headerlink" href="#voices-and-chatter" title="Permanent link">&para;</a></h2>
 <p><code>voices: {&lt;id&gt;: …}</code>: a set of lines for wingman and pilot chatter (the original's 5 male and 5
 female voices × 60 lines, computer voice, alien and station lines), each line a text key plus
@@ -6509,6 +6689,12 @@ an audio file. Missions trigger lines by event (<code>chatter</code> keys); pilo
 <h2 id="video">Video<a class="headerlink" href="#video" title="Permanent link">&para;</a></h2>
 <p><code>videos: {&lt;id&gt;: …}</code>: intro, endings, cut-scenes. Smacker (the original; in-crate decoder, Stage 5)
 or an image sequence with audio for mods. An ending, briefing or chapter card may name a video.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.12.0 – 0.13.0)</p>
+<p>No <code>videos:</code> section: a video is named directly by its asset reference — the story action
+<code>video(&lt;ref&gt;)</code>, <code>endings.&lt;id&gt;.video</code> and <code>campaign.intro_video</code> — and only Smacker plays.
+Image sequences are not built (MD3).</p>
+</div>
 <p><strong>Cutscenes</strong> played by the engine, and video files in place of them (through the operating
 system's media framework, with image sequences as the fallback), are designed on
 <a href="../designer/#35-video-instead-of-animation">Mod designer, cutscene designer and game bundling</a>
@@ -6532,6 +6718,11 @@ system's media framework, with image sequences as the fallback), are designed on
 <td>1.7.0</td>
 <td>2026-11-11</td>
 <td>Video: link to the cutscene and video-cutscene design</td>
+</tr>
+<tr>
+<td>1.16.0</td>
+<td>2026-11-11</td>
+<td>As-built notes (app 0.11.0 – 0.13.1): skins, the comms panel, music, video</td>
 </tr>
 </tbody>
 </table>

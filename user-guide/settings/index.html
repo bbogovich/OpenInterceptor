@@ -2014,6 +2014,8 @@
       
         
       
+        
+      
     
     
     
@@ -2297,6 +2299,41 @@
     
   
     Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
   
 
     
@@ -2900,6 +2937,8 @@
       
         
       
+        
+      
     
     
     
@@ -3274,6 +3313,34 @@
     
   
     Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
   
 
     
@@ -3985,6 +4052,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#volumes-in-the-launcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volumes in the launcher
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4096,6 +4174,12 @@
       
         
           
+        
+      
+        
+      
+        
+      
         
       
         
@@ -4493,6 +4577,90 @@
     
   
     Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
   
 
     
@@ -6162,6 +6330,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#volumes-in-the-launcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volumes in the launcher
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6222,6 +6401,9 @@ the CD).</p>
 <span class="nt">console</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8765</span>
+<span class="nt">audio</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">music</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">70%</span>
+<span class="w">  </span><span class="nt">effects</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100%</span>
 </code></pre></div>
 <table>
 <thead>
@@ -6282,6 +6464,16 @@ the CD).</p>
 <td>8765</td>
 <td>The console's port; change it if another program uses 8765 (<code>--console-port</code> overrides it).</td>
 </tr>
+<tr>
+<td><code>audio.music</code></td>
+<td>70%</td>
+<td>The music volume, 0% to 100% (app 0.12.1): battle and strategy-screen <a href="../../modding/music/">music</a> and its stingers. The launcher's <strong>M</strong> key steps it.</td>
+</tr>
+<tr>
+<td><code>audio.effects</code></td>
+<td>100%</td>
+<td>The volume of every other sound, 0% to 100%: weapons, explosions, voices, the computer voice and cutscene sounds (app 0.12.1). The launcher's <strong>V</strong> key steps it. A video's soundtrack is not scaled by either volume yet.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="other-ways-to-set-them">Other ways to set them<a class="headerlink" href="#other-ways-to-set-them" title="Permanent link">&para;</a></h2>
@@ -6292,7 +6484,13 @@ the CD).</p>
   with <code>flight: {lighting: …}</code> (<a href="../../modding/reference/#flight">Mod file reference</a>).
   <code>graphics.brightness</code> adjusts the result for your screen.</li>
 </ul>
-<p>An in-game options screen is planned with the presentation stage; until then, edit the file.</p>
+<h2 id="volumes-in-the-launcher">Volumes in the launcher<a class="headerlink" href="#volumes-in-the-launcher" title="Permanent link">&para;</a></h2>
+<p>The launcher's line of packs ends with <em>Music 70% (M)   Effects 100% (V)</em>. <strong>M</strong> steps the music
+volume and <strong>V</strong> the effects volume up by a quarter — 0, 25, 50, 75, 100 % — and from 100 % back
+to 0 (a value in between, such as the default 70 %, goes up past the nearest quarter: 70 % → 100 %).
+Each press is saved in <code>settings.yaml</code> at once and takes effect immediately.</p>
+<p>An in-game options screen is planned with the presentation stage (plan item 6.2); until then,
+use the launcher keys or edit the file.</p>
 
 
 
