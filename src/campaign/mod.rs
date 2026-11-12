@@ -463,7 +463,7 @@ impl Campaign {
         self.messages.push(Message { hour: self.hours, text });
     }
 
-    fn roll(&mut self) -> f32 {
+    pub(crate) fn roll(&mut self) -> f32 {
         next_random(&mut self.rng)
     }
 

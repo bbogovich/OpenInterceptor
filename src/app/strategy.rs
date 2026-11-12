@@ -851,7 +851,37 @@ impl StrategyScreen {
                 "{name} is in range. {} of your craft can engage. Fly the battle yourself, or break off and let it pass.",
                 party.len()
             );
-            match widgets::modal(ui, input, "Interception", &body, &["Fly the battle", "Break off"]) {
+            match widgets::modal(ui, input, "Interception", &body, &["Fly the battle", "Auto-resolve", "Break off"]) {
+                Some(1) => {
+                    // Fought without the player: the odds from both sides' strength, the
+                    // mission's own outcome actions for the result.
+                    self.battle = None;
+                    let raid = self.campaign.contacts.iter().find(|c| c.id == id).map(|c| c.raid);
+                    let mission =
+                        raid.and_then(|r| ctx.content.rules.missions.iter().find(|m| m.id == def.raids[r].mission));
+                    let ours: Vec<&str> =
+                        party.iter().map(|&k| def.hulls[self.campaign.craft[k].hull].id.as_str()).collect();
+                    match (mission, ours.is_empty()) {
+                        (Some(m), false) => {
+                            let p = crate::balance::win_chance(&ctx.content.rules, m, &ours);
+                            let result = if self.campaign.roll() < p { "win" } else { "lose" };
+                            let actions: Vec<String> = m
+                                .outcomes
+                                .iter()
+                                .find(|(r, _)| r == result)
+                                .map(|(_, a)| a.iter().map(|x| x.display()).collect())
+                                .unwrap_or_default();
+                            let kills = if result == "win" { m.roles.iter().map(|r| r.count.0).sum() } else { 0 };
+                            self.campaign.battle_result(def, id, result, &actions, kills);
+                            self.banner =
+                                Some(format!("Auto-resolved ({:.0}% odds): {}", p * 100.0, result.to_uppercase()));
+                        }
+                        _ => {
+                            self.campaign.battle_result(def, id, "retreat", &[], 0);
+                            self.say("No craft can engage: broke off.");
+                        }
+                    }
+                }
                 Some(0) => {
                     self.battle = None;
                     let raid = self.campaign.contacts.iter().find(|c| c.id == id).map(|c| c.raid);

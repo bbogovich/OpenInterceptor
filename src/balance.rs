@@ -47,6 +47,39 @@ pub fn time_to_kill(dps: f32, target: &ShipClass) -> f32 {
     }
 }
 
+/// A craft's fighting power: how long it lasts times how hard it hits (effective hit
+/// points × sustained damage per second), square-rooted so a side's power adds up like
+/// Lanchester's law (two equal craft are worth twice one).
+pub fn power(rules: &Ruleset, c: &ShipClass) -> f32 {
+    (effective_hp(c) * sustained_dps(rules, c).max(1.0)).sqrt()
+}
+
+/// The chance the player's side wins an auto-resolved battle: the player's craft
+/// (`ours`, class ids) against the hostile roles of `mission` (each at its average
+/// count). `p = P² / (P² + E²)` with each side's summed [`power`] — the square makes a
+/// clear superiority nearly certain. 0.5 when neither side has any power.
+pub fn win_chance(rules: &Ruleset, mission: &crate::content::mission::MissionDef, ours: &[&str]) -> f32 {
+    let mine: f32 = ours.iter().filter_map(|id| rules.ship_id(id)).map(|id| power(rules, rules.ship(id))).sum();
+    let my_faction = ours.first().and_then(|id| rules.ship_id(id)).map(|id| rules.ship(id).faction);
+    let mut theirs = 0.0;
+    for role in &mission.roles {
+        let classes: Vec<_> = role.classes.iter().filter_map(|c| rules.ship_id(c)).collect();
+        let Some(&first) = classes.first() else { continue };
+        let faction = role.faction.as_deref().and_then(|f| rules.faction_id(f)).unwrap_or(rules.ship(first).faction);
+        if my_faction.is_some_and(|me| !rules.hostile(me, faction)) {
+            continue; // friends and neutrals do not fight the player
+        }
+        let each: f32 = classes.iter().map(|&c| power(rules, rules.ship(c))).sum::<f32>() / classes.len() as f32;
+        theirs += each * (role.count.0 + role.count.1) as f32 * 0.5;
+    }
+    let (p, e) = (mine * mine, theirs * theirs);
+    if p + e <= 0.0 {
+        0.5
+    } else {
+        p / (p + e)
+    }
+}
+
 /// The report, as text.
 pub fn report(rules: &Ruleset) -> String {
     let players: Vec<&ShipClass> = rules.playable_ships().into_iter().map(|id| rules.ship(id)).collect();
@@ -117,5 +150,24 @@ mod tests {
         assert!((time_to_kill(10.0, &c) - effective_hp(&c) / 10.0).abs() < 1e-3);
         assert!(time_to_kill(0.0, &c).is_infinite());
         assert!(report(&rules).contains("eff.hp"));
+    }
+
+    #[test]
+    fn auto_resolve_odds_favour_the_stronger_side() {
+        use crate::content::mission::MissionDef;
+        use crate::content::schema::Get;
+        let rules = rules();
+        let classes: Vec<String> = rules.ships.iter().map(|c| c.id.clone()).collect();
+        let m = |n: u32| {
+            let text = format!("player: {{class: fighter}}\nroles:\n  foes: {{class: raider, count: {n}}}\nobjectives: {{win: destroyed_all(foes)}}\n");
+            let doc = crate::formats::yaml::parse(&text).unwrap();
+            MissionDef::parse("t", Get(&doc), 0, &classes, &rules.difficulty_levels).unwrap()
+        };
+        let one = win_chance(&rules, &m(1), &["fighter"]);
+        let six = win_chance(&rules, &m(6), &["fighter"]);
+        assert!(one > six, "more foes, worse odds: {one} vs {six}");
+        let wing = win_chance(&rules, &m(6), &["fighter", "fighter", "fighter", "fighter", "fighter", "fighter"]);
+        assert!(wing > six, "more craft, better odds");
+        assert!((0.0..=1.0).contains(&one) && (0.0..=1.0).contains(&six));
     }
 }
