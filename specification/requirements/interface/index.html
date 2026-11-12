@@ -1,0 +1,8235 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="OpenInterceptor as built: a moddable space-combat simulator engine. Plan, architecture, original formats, modding, Rust practice and testing (docs branch)">
+      
+      
+      
+      
+        <link rel="prev" href="../strategy-logistics/">
+      
+      
+        <link rel="next" href="../campaigns/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Strategy interface - OpenInterceptor — Implementation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#strategy-interface-requirements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="OpenInterceptor — Implementation" class="md-header__button md-logo" aria-label="OpenInterceptor — Implementation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OpenInterceptor — Implementation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Strategy interface
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="OpenInterceptor — Implementation" class="md-nav__button md-logo" aria-label="OpenInterceptor — Implementation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OpenInterceptor — Implementation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../definition/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definition
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Definition
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Combat
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/cockpit-hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit & HUD
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/control-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls & control console
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/strategy-logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy & logistics
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy interface
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../definition/campaigns/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_9" id="__nav_2_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Campaigns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign features
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/interceptor-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Interceptor campaign mod
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/default-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The default campaign
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/campaigns/remastered/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interceptor Remastered
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/modding-toolkit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding toolkit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility (original data)
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/platforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../definition/testbed-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed & tools
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Requirements
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Combat
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cockpit-hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit & HUD
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls & control console
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy-logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy & logistics
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy interface
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy interface
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-001-screen-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-001 Screen sets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-002-engine-screen-catalogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-002 Engine screen catalogue
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-003-navigation-between-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-003 Navigation between screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-004-dialogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-004 Dialogs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-005-widgets-placed-by-rectangle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-005 Widgets placed by rectangle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-006-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-006 Buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-007-toggles-and-radio-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-007 Toggles and radio groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-008-labels-and-bound-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-008 Labels and bound values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-009-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-009 Lists
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-010-map-minimap-globe-and-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-010 Map, minimap, globe and clock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-011-model-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-011 Model views
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-012-text-images-and-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-012 Text, images and frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-013-portraits-and-grid-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-013 Portraits and grid views
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-014-keyboard-and-gamepad-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-014 Keyboard and gamepad navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-015-scaling-the-design-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-015 Scaling the design space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-016-localisable-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-016 Localisable text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-017-screen-sets-are-validated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-017 Screen sets are validated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-018-two-layouts-per-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-018 Two layouts per campaign
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-019-a-partial-screen-set-still-plays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-019 A partial screen set still plays
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-020-interceptor-screens-follow-the-original" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-020 Interceptor screens follow the original
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-021-original-art-by-reference-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-021 Original art by reference only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-022-the-default-campaigns-screen-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-022 The default campaign's screen set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screens
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Screens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-023-csd-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-023 CSD screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-024-orders-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-024 Orders dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-025-bases-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-025 Bases screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-026-purchase-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-026 Purchase screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-027-manufacture-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-027 Manufacture screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-028-pilots-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-028 Pilots screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-029-launch-mission-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-029 Launch mission dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-030-notice-transmission-and-choice-dialogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-030 Notice, transmission and choice dialogs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-031-briefing-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-031 Briefing screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-032-debriefing-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-032 Debriefing screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-033-research-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-033 Research screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-034-hangar-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-034 Hangar screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-035-reports-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-035 Reports screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-036-encyclopaedia-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-036 Encyclopaedia screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-037-options-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-037 Options screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-038-messages-simulator-and-title-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-038 Messages, simulator and title screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-039-custom-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-039 Custom screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-040-interface-sounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-040 Interface sounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#revision-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revision history
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaigns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../platforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testbed-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed & tools
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console protocol
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod formats and design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mod formats and design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/original-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The original, system by system
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/mod-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod structure
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/format-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: campaign and game flow
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/format-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: strategy layer
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logistics: facilities and supply lines
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/format-objects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: objects and models
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/format-missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: missions, environments, events
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/format-behaviour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: behaviours and scripting
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/format-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coverage matrix
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../original-formats/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Original data formats
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Original data formats
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/pe-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PE resource container
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/xmsh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XMSH meshes
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/xtxr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XTXR textures
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/tga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TGA images and cockpits
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/xspt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XSPT sprites
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/smacker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/mpsrc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MPSRC packs
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/ini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    INI rule files
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../original-formats/object-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object and ship table
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/plan/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation plan
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-0-foundation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 0 — Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-1-flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 1 — Flight simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-2-combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 2 — Enemies and combat
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-3-missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 3 — Missions and scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-3-interlude/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 3 interlude — Feedback and control console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-4-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 4 — Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-5-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 5 — Campaigns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-6-presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 6 — Presentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-7-modding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 7 — Modding toolkit and Remastered
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/stage-8-release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packs, VFS and rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings and data discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets and GPU cache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/sim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/script/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conditions (script)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/mission/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/rendering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input and gamepads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Presentation: skins, videos, cutscenes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/testbed/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/architecture/extract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extractor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/deviations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deviations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../implementation/testing/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/testing/unit-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unit tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/testing/manual-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/build/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/build/packaging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../user-guide/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/cockpit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../modding/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Modding
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/first-mod/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Make your first mod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/rulesets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rulesets and layering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/behaviours/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Behaviours and conditions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/looks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Looks: model sets, debris, effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/weapons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/stations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stations, modules and probes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text and translation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/music/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/skins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/screens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screen layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cutscenes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cutscenes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod file reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models and textures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/overrides/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overrides and extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/cockpits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpits (HD and 3D)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/3d-cockpit-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios and missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting (design)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns (design)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/validating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validating a mod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../learning/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../learning/rust/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn Rust with this codebase
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn Rust with this codebase
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ownership and borrowing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/lifetimes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifetimes and borrowed bytes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structs, enums and pattern matching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/traits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traits and generics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules and visibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/iterators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Iterators and closures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/collections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/ffi-unsafe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFI, repr(C) and unsafe
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/cfg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms with cfg
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing in Rust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/cargo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cargo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/async-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/rust/immediate-mode-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Immediate-mode UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../learning/best-practices/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Best practices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/data-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data model and performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/dependencies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependency policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/comments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commenting standard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/best-practices/testing-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/game-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game design (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/mathematics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematics (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/physics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Physics (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../learning/networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/original-game/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Original game
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Original game
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/original-game/gameplay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gameplay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/original-game/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/original-game/cd-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CD layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/revision-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision history
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../meta/change-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change history
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-001-screen-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-001 Screen sets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-002-engine-screen-catalogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-002 Engine screen catalogue
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-003-navigation-between-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-003 Navigation between screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-004-dialogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-004 Dialogs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-005-widgets-placed-by-rectangle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-005 Widgets placed by rectangle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-006-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-006 Buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-007-toggles-and-radio-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-007 Toggles and radio groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-008-labels-and-bound-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-008 Labels and bound values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-009-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-009 Lists
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-010-map-minimap-globe-and-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-010 Map, minimap, globe and clock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-011-model-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-011 Model views
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-012-text-images-and-frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-012 Text, images and frames
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-013-portraits-and-grid-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-013 Portraits and grid views
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-014-keyboard-and-gamepad-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-014 Keyboard and gamepad navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-015-scaling-the-design-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-015 Scaling the design space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-016-localisable-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-016 Localisable text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-017-screen-sets-are-validated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-017 Screen sets are validated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-018-two-layouts-per-campaign" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-018 Two layouts per campaign
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-019-a-partial-screen-set-still-plays" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-019 A partial screen set still plays
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-020-interceptor-screens-follow-the-original" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-020 Interceptor screens follow the original
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-021-original-art-by-reference-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-021 Original art by reference only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-022-the-default-campaigns-screen-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-022 The default campaign's screen set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screens
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Screens">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-023-csd-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-023 CSD screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-024-orders-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-024 Orders dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-025-bases-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-025 Bases screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-026-purchase-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-026 Purchase screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-027-manufacture-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-027 Manufacture screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-028-pilots-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-028 Pilots screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-029-launch-mission-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-029 Launch mission dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-030-notice-transmission-and-choice-dialogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-030 Notice, transmission and choice dialogs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-031-briefing-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-031 Briefing screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-032-debriefing-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-032 Debriefing screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-033-research-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-033 Research screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-034-hangar-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-034 Hangar screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-035-reports-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-035 Reports screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-036-encyclopaedia-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-036 Encyclopaedia screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-037-options-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-037 Options screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-038-messages-simulator-and-title-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-038 Messages, simulator and title screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-039-custom-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-039 Custom screens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r-ui-040-interface-sounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R-UI-040 Interface sounds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#revision-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Revision history
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="strategy-interface-requirements">Strategy interface requirements<a class="headerlink" href="#strategy-interface-requirements" title="Permanent link">&para;</a></h1>
+<p>Requirements for the <strong>original-style, multi-screen strategy interface</strong>: a campaign's set of
+full screens and dialogs, built from engine widgets placed by rectangle, linked to one another,
+and laid out as pack data. The <code>interceptor</code> set follows <em>X-COM: Interceptor</em>'s screens at
+640 × 480 from the player's own wrapper art; the <code>default</code> campaign has its own set with generated
+art; the single-grid strategy screen of app 0.16 stays as the <strong>testbed layout</strong>. The normative
+format is <a href="../../design/format-interface/#screen-sets-screens-and-widgets">Format: interface, text and media › Screen sets</a>.</p>
+<p>Features: <a href="../../../definition/interface/">Strategy interface</a>. How to read a requirement: <a href="../../#reading-a-requirement">Specification</a>.
+Plan: <a href="../../../implementation/plan/stage-6-presentation/#69-original-style-strategy-screens">Stage 6 › 6.9 Original-style strategy screens</a>.</p>
+<div class="admonition abstract">
+<p class="admonition-title">Source: the user's request, 2026-11-12</p>
+<p>"Critically missing from the game and requirements is the strategy UI from Interceptor. The
+gridded layout currently present is fine for testing, but we need to support the interface
+style the original game has. It broke up functionality across multiple screens as opposed to
+a single grid like currently present." — and — "there are additional screens, these are just
+a subset."</p>
+<p>The screens named below come from the user's screenshots of the original (CSD, Interceptor
+Orders, Bases, Purchase, Pilots, Briefing, Mission debriefing, Launch Mission, Alien
+Transmission, Options). <code>WrappersDLL.dll</code> holds further backgrounds (research, manufacturing,
+status reports, UFOpedia, the combat simulator, title screens), which a reverse-engineering
+pass is mapping. <strong>No requirement here depends on that pass's results</strong>: a screen the pass has
+not mapped falls back to the engine's built-in version (R-UI-019).</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#r-ui-001-screen-sets">R-UI-001 Screen sets</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-002-engine-screen-catalogue">R-UI-002 Engine screen catalogue</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-003-navigation-between-screens">R-UI-003 Navigation between screens</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-004-dialogs">R-UI-004 Dialogs</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-005-widgets-placed-by-rectangle">R-UI-005 Widgets placed by rectangle</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-006-buttons">R-UI-006 Buttons</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-007-toggles-and-radio-groups">R-UI-007 Toggles and radio groups</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-008-labels-and-bound-values">R-UI-008 Labels and bound values</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-009-lists">R-UI-009 Lists</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-010-map-minimap-globe-and-clock">R-UI-010 Map, minimap, globe and clock</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-011-model-views">R-UI-011 Model views</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-012-text-images-and-frames">R-UI-012 Text, images and frames</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-013-portraits-and-grid-views">R-UI-013 Portraits and grid views</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-014-keyboard-and-gamepad-navigation">R-UI-014 Keyboard and gamepad navigation</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-015-scaling-the-design-space">R-UI-015 Scaling the design space</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-016-localisable-text">R-UI-016 Localisable text</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-017-screen-sets-are-validated">R-UI-017 Screen sets are validated</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-018-two-layouts-per-campaign">R-UI-018 Two layouts per campaign</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-019-a-partial-screen-set-still-plays">R-UI-019 A partial screen set still plays</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-020-interceptor-screens-follow-the-original">R-UI-020 Interceptor screens follow the original</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-021-original-art-by-reference-only">R-UI-021 Original art by reference only</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-022-the-default-campaigns-screen-set">R-UI-022 The default campaign's screen set</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-023-csd-screen">R-UI-023 CSD screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-024-orders-dialog">R-UI-024 Orders dialog</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-025-bases-screen">R-UI-025 Bases screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-026-purchase-screen">R-UI-026 Purchase screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-027-manufacture-screen">R-UI-027 Manufacture screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-028-pilots-screen">R-UI-028 Pilots screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-029-launch-mission-dialog">R-UI-029 Launch mission dialog</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-030-notice-transmission-and-choice-dialogs">R-UI-030 Notice, transmission and choice dialogs</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-031-briefing-screen">R-UI-031 Briefing screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-032-debriefing-screen">R-UI-032 Debriefing screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-033-research-screen">R-UI-033 Research screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-034-hangar-screen">R-UI-034 Hangar screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-035-reports-screen">R-UI-035 Reports screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-036-encyclopaedia-screen">R-UI-036 Encyclopaedia screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-037-options-screen">R-UI-037 Options screen</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-038-messages-simulator-and-title-screens">R-UI-038 Messages, simulator and title screens</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-039-custom-screens">R-UI-039 Custom screens</a></td>
+<td>Planned</td>
+</tr>
+<tr>
+<td><a href="#r-ui-040-interface-sounds">R-UI-040 Interface sounds</a></td>
+<td>Planned</td>
+</tr>
+</tbody>
+</table>
+<h2 id="framework">Framework<a class="headerlink" href="#framework" title="Permanent link">&para;</a></h2>
+<h3 id="r-ui-001-screen-sets">R-UI-001 Screen sets<a class="headerlink" href="#r-ui-001-screen-sets" title="Permanent link">&para;</a></h3>
+<p>A campaign MUST be able to define a <strong>screen set</strong>: entries <code>screens.&lt;id&gt;</code>, each a full screen
+with its own design space (<code>design: [w, h]</code>), a <code>background</code> image and its <strong>widgets</strong>. The
+screens of a set MUST link to one another through widget actions (R-UI-003). A screen set MUST
+be ordinary pack data: a later pack (an addon, a remaster) MUST be able to replace a screen, add
+a widget, or move or restyle one widget by naming only that widget, as the layouts of
+<a href="../campaigns/#r-cpn-011-screens-and-skins">R-CPN-011</a> do today. The <code>interceptor</code> set MUST use
+the original's 640 × 480 design space.</p>
+<p><em>Rationale:</em> The user's request: the original "broke up functionality across multiple screens as
+opposed to a single grid".</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#screen-sets-screens-and-widgets">Format › Screen sets</a>, <a href="../../../modding/screens/">Screen layouts (modding)</a></li>
+</ul>
+<h3 id="r-ui-002-engine-screen-catalogue">R-UI-002 Engine screen catalogue<a class="headerlink" href="#r-ui-002-engine-screen-catalogue" title="Permanent link">&para;</a></h3>
+<p>The engine MUST provide each screen's <strong>function</strong> — its state, its named values and lists, and
+its commands — under the ids of the <a href="../../design/format-interface/#screens">Screens table</a>:
+<code>starmap</code> (the CSD), <code>bases</code>, <code>research</code>, <code>hangar</code> (equip ship), <code>market</code> (purchase), <code>factory</code>
+(manufacture), <code>pilots</code>, <code>reports</code>, <code>encyclopaedia</code>, <code>messages</code>, <code>briefing</code>, <code>debriefing</code>,
+<code>simulator</code>, <code>options</code>, and the dialogs <code>orders</code>, <code>launch</code>, <code>notice</code>, <code>transmission</code> and
+<code>choice</code>. A screen set binds widgets to those functions and MUST NOT need engine code to place,
+restyle or omit any of them. A screen the campaign does not use (its <code>campaign.systems</code>) MAY be
+left out of the set. Each function MUST be documented with its values, lists, list fields and
+commands on the modding site.</p>
+<p><em>Rationale:</em> The engine owns the logic, the mod owns the look — the rule the strategy screens
+already follow (<a href="../strategy-logistics/#r-str-010-strategy-screens">R-STR-010</a>).</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#screens">Format › Screens</a></li>
+</ul>
+<h3 id="r-ui-003-navigation-between-screens">R-UI-003 Navigation between screens<a class="headerlink" href="#r-ui-003-navigation-between-screens" title="Permanent link">&para;</a></h3>
+<p>Widget actions MUST include <code>open(&lt;screen&gt;)</code> (show a full screen, remembering the one left),
+<code>back</code> (return to the screen left), <code>home</code> (the set's <code>home</code>, <code>starmap</code> by default),
+<code>dialog(&lt;id&gt;)</code> and <code>close</code> (close the topmost dialog). Esc and the gamepad's B MUST act as
+<code>close</code> on a dialog and as <code>back</code> on any full screen other than home. Each screen MUST state
+whether the campaign clock runs while it is shown (<code>clock: runs | paused</code>); dialogs pause it
+unless they say otherwise. A battle launched from a screen MUST return through the debriefing
+(when the set has one) to the screen it was launched from.</p>
+<p><em>Rationale:</em> The original moves between full screens from the CSD's buttons and returns to the CSD.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#actions">Format › Actions</a></li>
+</ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>Whether the original's clock runs on each screen other than the CSD is <em>unknown</em>; the
+<code>interceptor</code> set records what is found (R-UI-020). The engine's default is <code>paused</code> for every
+screen but <code>starmap</code>.</p>
+</div>
+<h3 id="r-ui-004-dialogs">R-UI-004 Dialogs<a class="headerlink" href="#r-ui-004-dialogs" title="Permanent link">&para;</a></h3>
+<p>A <strong>dialog</strong> MUST be a screen drawn over another: a rectangle in the design space of the screen
+beneath (or its own <code>design</code>, centred), a <code>frame</code>, its widgets and optionally a dimming of the
+screen beneath (<code>dim: 0..1</code>). It MUST be modal — input goes to the topmost dialog — and dialogs
+MUST stack (a transmission over the orders dialog). The engine MUST raise its own dialogs when
+the campaign needs the player: <code>notice</code> and <code>transmission</code> for campaign and story notices,
+<code>choice</code> for event choices and offers, <code>orders</code> when the player selects their craft on the map,
+<code>launch</code> when a mission is launched. A dialog the set does not define MUST fall back to the
+engine's built-in modal prompt drawn in the skin (R-UI-019).</p>
+<p><em>Rationale:</em> The original's Interceptor Orders, Launch Mission and Alien Transmission dialogs sit over the CSD.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#dialogs">Format › Dialogs</a></li>
+</ul>
+<h3 id="r-ui-005-widgets-placed-by-rectangle">R-UI-005 Widgets placed by rectangle<a class="headerlink" href="#r-ui-005-widgets-placed-by-rectangle" title="Permanent link">&para;</a></h3>
+<p>Every widget MUST have a <code>type</code> from the engine's widget catalogue — <code>button</code>, <code>toggle</code>,
+<code>label</code>, <code>value</code>, <code>list</code>, <code>map</code>, <code>minimap</code>, <code>globe</code>, <code>lamp</code>, <code>clock</code>, <code>model_view</code>, <code>text</code>,
+<code>image</code>, <code>frame</code>, <code>portraits</code>, <code>grid_view</code> — and a <code>rect: [x, y, w, h]</code> in its screen's design
+space. Widgets MUST be drawn in the order listed (later on top) and hit-tested topmost first. A
+widget MAY carry <code>visible</code> and <code>enabled</code> conditions (the condition language of
+<a href="../modding/#r-mod-013-condition-language">R-MOD-013</a>) and a <code>tooltip</code> text key. Widgets MUST be drawn from data built once
+when the screen opens (no per-frame allocation of the layout).</p>
+<p><em>Rationale:</em> Functional components a modder places by rectangle — the same rule as cockpit instruments.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a></li>
+</ul>
+<h3 id="r-ui-006-buttons">R-UI-006 Buttons<a class="headerlink" href="#r-ui-006-buttons" title="Permanent link">&para;</a></h3>
+<p>A <code>button</code> MUST draw an image per state — <code>up</code>, <code>down</code> (pressed), <code>hover</code> and <code>disabled</code> — or,
+without images, a face drawn in the skin with a <code>text</code> key. A missing state MUST fall back
+(<code>hover</code> and <code>down</code> to <code>up</code>; <code>disabled</code> to <code>up</code> dimmed). A button MUST run its <code>action</code> — one
+action or a list run in order: a navigation action (R-UI-003), <code>speed(&lt;n&gt;)</code> or <code>pause</code> (the
+campaign clock), a <strong>screen command</strong> from its screen's catalogue (R-UI-002), or
+<code>run_for(&lt;duration&gt;)</code> (run the clock for that long, then pause) — when released over it. A button
+MAY have a hotkey (<code>key</code>) and MAY <code>repeat</code> while held (scroll arrows, quantity steppers).</p>
+<p><em>Rationale:</em> The original's buttons are pictures in the wrapper art with pressed and lit states.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a>, <a href="../../design/format-interface/#actions">Format › Actions</a></li>
+</ul>
+<h3 id="r-ui-007-toggles-and-radio-groups">R-UI-007 Toggles and radio groups<a class="headerlink" href="#r-ui-007-toggles-and-radio-groups" title="Permanent link">&para;</a></h3>
+<p>A <code>toggle</code> MUST draw <code>off</code> and <code>on</code> images (with optional <code>hover</code> and <code>disabled</code>) and be bound
+(<code>bind</code>) to a boolean screen state or engine value. Toggles sharing a <code>group</code> MUST form a
+<strong>radio group</strong>: each has a <code>value</code>, exactly one is on, and the group is bound to a screen state
+— for example the base overlay (<code>normal</code>, <code>defences</code>, <code>damage</code>), the purchase category, or the
+clock speed.</p>
+<p><em>Rationale:</em> The Bases screen's NORMAL / DEFENSES / DAMAGE and the purchase categories.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a></li>
+</ul>
+<h3 id="r-ui-008-labels-and-bound-values">R-UI-008 Labels and bound values<a class="headerlink" href="#r-ui-008-labels-and-bound-values" title="Permanent link">&para;</a></h3>
+<p>A <code>label</code> MUST draw a fixed text key. A <code>value</code> MUST draw a <strong>bound value</strong>: a named engine value
+(<code>money</code>, <code>date</code>, <code>time</code>, <code>speed</code>, <code>score</code>, <code>base.name</code>, <code>selected.name</code>, … — the engine's set
+plus each screen's own, R-UI-002) or a campaign query (<code>query: "plan(eclipse)"</code>), formatted by
+an optional <code>format</code> text key holding <code>{value}</code>. Both MUST take a <code>font</code> (a skin font), a
+<code>colour</code>, and an <code>align</code> (left, centre or right; top, middle or bottom), and MUST be refreshed
+when the value changes, not rebuilt every frame.</p>
+<p><em>Rationale:</em> The CSD's clock, date and money; the purchase screen's cargo and hangar space.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#bound-values-and-lists">Format › Bound values</a></li>
+</ul>
+<h3 id="r-ui-009-lists">R-UI-009 Lists<a class="headerlink" href="#r-ui-009-lists" title="Permanent link">&para;</a></h3>
+<p>A <code>list</code> MUST show a named <strong>list</strong> of its screen (<code>source</code>) in <code>columns</code> (each: a <code>bind</code> to a
+row field, a <code>width</code>, an <code>align</code>, optional <code>header</code>, <code>font</code> and <code>colour</code>), with a <code>row_height</code>.
+It MUST scroll by the wheel, keys and pad, and by named scroll buttons (<code>scroll: {up, down}</code>)
+or a scroll bar; it MUST keep a single selection bound to screen state, drawn with a highlight
+colour or image; it MUST run an <code>activate</code> action on a double click, Enter or A; it MAY name
+<strong>quantity steppers</strong> (<code>quantity: {up, down}</code>) that change the selected row's quantity; it MAY
+use <code>layout: carousel</code> to show one row at a time with previous and next buttons (a dial). An
+empty list MUST draw its <code>empty</code> text key.</p>
+<p><em>Rationale:</em> The purchase list (size, cost, stores, quantity, up/down), the docked-ships list,
+the Bases module dial.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a></li>
+</ul>
+<h3 id="r-ui-010-map-minimap-globe-and-clock">R-UI-010 Map, minimap, globe and clock<a class="headerlink" href="#r-ui-010-map-minimap-globe-and-clock" title="Permanent link">&para;</a></h3>
+<p>A <code>map</code> MUST show the star map in its rectangle, <code>shape: rect</code> or <code>round</code> (a circle inscribed in
+the rectangle, or a <code>mask</code> image), with the zoom, pan and picking of the current map; it MUST
+name a <strong>hover box</strong> widget that shows what is under the cursor (object, class, owner) and MUST
+set the <code>selected.*</code> values. A <code>minimap</code> MUST show the whole map with the main map's view marked
+and centre the map on a click. A <code>globe</code> MUST draw a picture or animation with <code>lamp</code> widgets,
+each lamp an <code>off</code> / <code>on</code> / <code>blink</code> image bound to a condition or a named alert
+(<code>alert.contact</code>, <code>alert.base_attack</code>, …). A <code>clock</code> MUST draw the campaign time as text or from
+a strip of digit images.</p>
+<p><em>Rationale:</em> The CSD: round star map, hover box, minimap, globe with status lamps, clock.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a></li>
+</ul>
+<h3 id="r-ui-011-model-views">R-UI-011 Model views<a class="headerlink" href="#r-ui-011-model-views" title="Permanent link">&para;</a></h3>
+<p>A <code>model_view</code> MUST render a 3D model from its screen's state in its rectangle — <code>subject:
+craft</code>, <code>base</code>, <code>item</code> or <code>entry</code> — with the campaign's own meshes and textures, an orbiting
+camera turned by a rotate pad (named buttons) or a drag, and zoom. On the Bases screen it MUST
+let the player pick a module <strong>slot</strong> by clicking it, and draw the overlay chosen by a radio
+group (<code>normal</code>, <code>defences</code>, <code>damage</code>). Its GPU meshes MUST be built when the screen opens, not
+per frame.</p>
+<p><em>Rationale:</em> The Bases screen's 3D base view; the craft on the hangar and purchase screens.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a>, <a href="../strategy-logistics/#r-str-006-bases">R-STR-006</a></li>
+</ul>
+<h3 id="r-ui-012-text-images-and-frames">R-UI-012 Text, images and frames<a class="headerlink" href="#r-ui-012-text-images-and-frames" title="Permanent link">&para;</a></h3>
+<p>A <code>text</code> widget MUST draw wrapped text — a text key or a screen's named text (a briefing, an
+entry, a message) with <code>{variables}</code> filled — in a skin font, colour and alignment, scrolling by
+the wheel, keys, pad and named scroll buttons when it does not fit. An <code>image</code> MUST draw a fixed
+picture or a bound one (<code>bind: item.picture</code>). A <code>frame</code> MUST draw a nine-slice or fixed image
+behind other widgets (a dialog's panel, an info box).</p>
+<p><em>Rationale:</em> The briefing's wrapped text; the purchase screen's item picture and info box.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a></li>
+</ul>
+<h3 id="r-ui-013-portraits-and-grid-views">R-UI-013 Portraits and grid views<a class="headerlink" href="#r-ui-013-portraits-and-grid-views" title="Permanent link">&para;</a></h3>
+<p>A <code>portraits</code> widget MUST lay out <strong>sockets</strong> as a ring (<code>ring: {centre, radius, count,
+start}</code>), a grid, or an explicit list of points, show one row of a bound list per socket (a
+pilot's portrait), draw an <code>empty</code> image in an unused socket, keep a selection bound to screen
+state, and page when the list is longer than the sockets. A <code>grid_view</code> MUST draw a cell grid
+(<code>cells: [columns, rows]</code>) on which its screen places icons — the briefing's formations,
+objectives and waypoints, by side.</p>
+<p><em>Rationale:</em> The Pilots screen's ring of portrait sockets; the briefing's formation grid.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#widgets">Format › Widgets</a></li>
+</ul>
+<h3 id="r-ui-014-keyboard-and-gamepad-navigation">R-UI-014 Keyboard and gamepad navigation<a class="headerlink" href="#r-ui-014-keyboard-and-gamepad-navigation" title="Permanent link">&para;</a></h3>
+<p>Every screen and dialog MUST be fully usable with the keyboard alone and with a gamepad alone.
+A <strong>focus</strong> MUST move between the enabled interactive widgets (button, toggle, list, map,
+portraits, model view) with the arrow keys, the d-pad or the left stick — to the nearest widget
+in the direction pressed, or in the screen's <code>focus</code> order when given — and Tab / Shift+Tab and
+the shoulder buttons MUST cycle it. Enter or A activates; Esc or B is <code>close</code> / <code>back</code>
+(R-UI-003). Inside a list, up and down move the selection and left and right step the quantity;
+on a map, the stick pans, the triggers zoom and A selects. The focused widget MUST be visibly
+marked (the skin's <code>focus</code> image or an outline). Hotkeys (<code>key</code>) MUST work whatever has the
+focus. Moving the mouse MUST NOT move the focus; a click does. The keys and buttons MUST be
+interface actions in the one action table (<a href="../control-console/#r-con-001-one-action-table">R-CON-001</a>),
+so they can be rebound.</p>
+<p><em>Rationale:</em> The engine is played with a gamepad from the couch as well as with the mouse.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-003-keyboard-and-gamepad-on-every-screen">F-UI-003</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#focus-and-keys">Format › Focus</a>, <a href="../../../implementation/architecture/input/">Input and gamepads</a></li>
+</ul>
+<h3 id="r-ui-015-scaling-the-design-space">R-UI-015 Scaling the design space<a class="headerlink" href="#r-ui-015-scaling-the-design-space" title="Permanent link">&para;</a></h3>
+<p>A screen set's design space MUST be scaled to the window <strong>uniformly</strong>, keeping its aspect
+ratio, centred, with the rest of the window filled by bands of a colour or an <code>outside</code> image
+(<code>scale: fit</code>, the default for screen sets) — the rule cockpits follow. <code>scale: integer</code> SHOULD
+use the largest whole multiple that fits. Images MUST be sampled so they stay crisp
+(<code>filter: nearest</code> for pixel art such as the original's, <code>linear</code> otherwise), and text MUST be
+drawn at the window's resolution, not scaled as a bitmap. The testbed layout keeps
+<code>scale: stretch</code> (as built in app 0.16.0). A mod MAY supply a screen in another design space
+(a widescreen remaster), and MAY give <code>aspects</code> alternatives chosen by the window's aspect ratio.</p>
+<p><em>Rationale:</em> 640 × 480 art on a 16:9 window must not be distorted or blurred.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-006-crisp-and-readable-at-any-window-size">F-UI-006</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#scaling">Format › Scaling</a></li>
+</ul>
+<h3 id="r-ui-016-localisable-text">R-UI-016 Localisable text<a class="headerlink" href="#r-ui-016-localisable-text" title="Permanent link">&para;</a></h3>
+<p>Every string a widget draws MUST come from a text key or a bound value; widgets MUST NOT carry
+literal player-visible text. The original's own strings MUST be reached by <code>@orig.*</code> keys. Text
+too long for its rectangle MUST be drawn smaller (down to half size) and then cut with an
+ellipsis, so a translation never spills over its neighbours; <code>--check</code> MUST report missing keys.</p>
+<p><em>Rationale:</em> Translation (<a href="../modding/#r-mod-041-captions">R-MOD-041</a>); the original's strings are read by reference.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-006-crisp-and-readable-at-any-window-size">F-UI-006</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#text-textlanguageini">Format › Text</a></li>
+</ul>
+<h3 id="r-ui-017-screen-sets-are-validated">R-UI-017 Screen sets are validated<a class="headerlink" href="#r-ui-017-screen-sets-are-validated" title="Permanent link">&para;</a></h3>
+<p>Loading and <code>--check</code> MUST reject, with a message naming the pack, file, screen and widget: an
+unknown screen, widget type, action, screen command, named value, list or list field; a widget
+without a <code>rect</code>; a radio group with no or two default members; an image that cannot be resolved;
+a missing text key. A rectangle outside its design space MUST be a warning.</p>
+<p><em>Rationale:</em> Modding first: a mistake in a layout is found before play.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../../modding/validating/">Validating (modding)</a></li>
+</ul>
+<h3 id="r-ui-018-two-layouts-per-campaign">R-UI-018 Two layouts per campaign<a class="headerlink" href="#r-ui-018-two-layouts-per-campaign" title="Permanent link">&para;</a></h3>
+<p>A campaign MUST be playable in either of two layouts: its <strong>screen set</strong> (the default where the
+campaign defines one, and so the default for <code>interceptor</code>) and the <strong>testbed layout</strong> — the
+single-grid strategy screen of app 0.16 (<code>top</code>, <code>map</code>, <code>nav</code>, <code>info</code>, <code>panel</code>). The player MUST
+be able to switch between them in Options at any time without losing campaign state; the choice
+MUST be remembered per campaign (<code>interface.layout: screens | testbed</code> in <code>settings.yaml</code>). A
+campaign with no screen set MUST use the testbed layout. Both layouts MUST drive the same screen
+functions (R-UI-002), so whatever one can do the other can. The testbed layout's widgets MUST
+stay placeable as data (<code>testbed_layout</code>); an existing <code>screens.starmap</code> whose widgets are all
+plain rectangles naming testbed widgets MUST be read as the testbed layout, with a <code>--check</code>
+warning.</p>
+<p><em>Rationale:</em> The user: "The gridded layout currently present is fine for testing".</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-004-the-testbed-layout-as-an-option">F-UI-004</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#two-layouts">Format › Two layouts</a>, <a href="../../../modding/screens/">Screen layouts (modding)</a></li>
+</ul>
+<h3 id="r-ui-019-a-partial-screen-set-still-plays">R-UI-019 A partial screen set still plays<a class="headerlink" href="#r-ui-019-a-partial-screen-set-still-plays" title="Permanent link">&para;</a></h3>
+<p>A screen set MAY define only some screens and dialogs. Opening one the set lacks MUST show the
+engine's built-in version of that function, drawn in the skin (the testbed layout's list or
+prompt for it, in a full-window panel), and <code>back</code> MUST return to the set. <code>--check</code> MUST list
+the screens that fall back.</p>
+<p><em>Rationale:</em> A set — and the <code>interceptor</code> mapping in particular — can be built and played one
+screen at a time; nothing waits for the whole original to be mapped.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#two-layouts">Format › Two layouts</a></li>
+</ul>
+<h3 id="r-ui-020-interceptor-screens-follow-the-original">R-UI-020 Interceptor screens follow the original<a class="headerlink" href="#r-ui-020-interceptor-screens-follow-the-original" title="Permanent link">&para;</a></h3>
+<p>The <code>interceptor</code> screen set MUST follow the original: which screens and dialogs exist, how they
+link, each widget's position, size, images per state, and behaviour — including the clock while a
+screen is open and the "(5 secs)" variants of buttons. Every layout fact read from the original
+MUST be marked <strong>verified</strong> (read from the data and checked against the original running) or
+<strong>derived</strong> (inferred), and what is not known as <strong>unknown</strong>, in the pack data's comments and on
+the docs site. Coordinates, sizes and resource ids are facts and MAY be in pack data. The set
+MUST NOT wait on the whole original being mapped (R-UI-019).</p>
+<p><em>Rationale:</em> Compatibility: playing <em>Interceptor</em> should look and feel like <em>Interceptor</em>.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../../definition/campaigns/interceptor-campaign/">The Interceptor campaign mod</a>, <a href="../campaigns/#r-cpn-005-interceptor-campaign-content">R-CPN-005</a></li>
+</ul>
+<div class="admonition question">
+<p class="admonition-title">Open</p>
+<p>What the "(5 secs)" buttons do is <em>derived</em> from their labels only: the action, then the
+clock runs five seconds and pauses again (<code>run_for(5s)</code>). Confirm against the original.</p>
+</div>
+<h3 id="r-ui-021-original-art-by-reference-only">R-UI-021 Original art by reference only<a class="headerlink" href="#r-ui-021-original-art-by-reference-only" title="Permanent link">&para;</a></h3>
+<p>The <code>interceptor</code> set's art MUST be named by reference — <code>original:WrappersDLL.dll#&lt;id&gt;</code> for a
+wrapper image, and <code>original:WrappersDLL.dll#&lt;id&gt;@[x, y, w, h]</code> for a part of one (a button
+drawn into a background) — and read from the player's data at load. No wrapper image, part,
+conversion, extract or screenshot of one may enter Git, the docs site or a generated file in the
+repository. When a referenced image cannot be read, <code>--check</code> MUST say so and the campaign MUST
+fall back to the testbed layout with a message.</p>
+<p><em>Rationale:</em> The project's rule: never commit original content.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/compatibility/#f-cmp-003-no-original-content-in-the-project">F-CMP-003</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../original-formats/pe-resources/">PE resource container</a></li>
+</ul>
+<h3 id="r-ui-022-the-default-campaigns-screen-set">R-UI-022 The default campaign's screen set<a class="headerlink" href="#r-ui-022-the-default-campaigns-screen-set" title="Permanent link">&para;</a></h3>
+<p>The <code>default</code> campaign MUST have its own screen set covering every screen and dialog it uses,
+with art in its art-deco style generated by <code>tools/default_assets</code>, laid out by its own design
+(not a copy of the original's coordinates); it MUST contain no original content, MUST stay fully
+playable in it, and MUST pass <code>--check</code> with no original data present. It is the worked example
+in the modding guide.</p>
+<p><em>Rationale:</em> Modding first: a feature that works only with original data is incomplete.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-005-the-default-campaigns-own-screens">F-UI-005</a>, <a href="../../../definition/campaigns/features/#f-cpn-003-the-default-campaign-perils-of-the-void">F-CPN-003</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../../definition/campaigns/default-campaign/">The default campaign</a>, <a href="../testbed-tools/#r-tst-012-asset-generators">R-TST-012</a></li>
+</ul>
+<h2 id="screens">Screens<a class="headerlink" href="#screens" title="Permanent link">&para;</a></h2>
+<p>Each screen below is an engine function (R-UI-002). What it MUST offer is listed; where it is
+drawn, and with what pictures, is the screen set's.</p>
+<h3 id="r-ui-023-csd-screen">R-UI-023 CSD screen<a class="headerlink" href="#r-ui-023-csd-screen" title="Permanent link">&para;</a></h3>
+<p><code>starmap</code> MUST offer: the star map (R-UI-010, round in <code>interceptor</code>) with the hover box (object,
+class, owner) and the selection; a minimap; buttons to the other full screens (six in the
+original); a globe with status lamps; the clock, the date and the money; the clock speeds and
+pause. Selecting one of the player's craft or squadrons MUST open <code>orders</code>; launching a mission
+MUST open <code>launch</code>.</p>
+<p><em>Rationale:</em> The original's Combat Strategic Display, the hub of the game.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-002-star-map-and-travel">R-STR-002</a></li>
+</ul>
+<h3 id="r-ui-024-orders-dialog">R-UI-024 Orders dialog<a class="headerlink" href="#r-ui-024-orders-dialog" title="Permanent link">&para;</a></h3>
+<p><code>orders</code> MUST show the selected squadron's ships with their status, and offer the commands
+<strong>Attack</strong> (when a target is in reach), <strong>Select new destination</strong> (the next click on the map
+sets it), <strong>Return to base</strong>, and the timed variant of Return to base (R-UI-020).</p>
+<p><em>Rationale:</em> The original's Interceptor Orders dialog.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-003-contacts-and-mission-generation">R-STR-003</a></li>
+</ul>
+<h3 id="r-ui-025-bases-screen">R-UI-025 Bases screen<a class="headerlink" href="#r-ui-025-bases-screen" title="Permanent link">&para;</a></h3>
+<p><code>bases</code> MUST offer: the current base and switching between bases; the 3D base view (R-UI-011)
+with module slots — choosing a module, then "select a location for the …" a free slot; the
+overlays <strong>normal</strong>, <strong>defences</strong> and <strong>damage</strong>; a rotate pad; a module dial (R-UI-009,
+carousel) of the modules that can be built, with cost and time; dismantling; building a new
+base.</p>
+<p><em>Rationale:</em> The original's Bases screen.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-006-bases">R-STR-006</a></li>
+</ul>
+<h3 id="r-ui-026-purchase-screen">R-UI-026 Purchase screen<a class="headerlink" href="#r-ui-026-purchase-screen" title="Permanent link">&para;</a></h3>
+<p><code>market</code> MUST offer: category buttons (a radio group of the campaign's item categories, ships
+among them); the list of items with size, cost, stores and quantity, and up / down to change
+the quantity; the selected item's picture and info box; the order's totals against the base's
+free <strong>cargo</strong> and <strong>hangar</strong> space; placing the order; selling where the campaign allows it.</p>
+<p><em>Rationale:</em> The original's Purchase equipment / ships screen.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-004-economy">R-STR-004</a></li>
+</ul>
+<h3 id="r-ui-027-manufacture-screen">R-UI-027 Manufacture screen<a class="headerlink" href="#r-ui-027-manufacture-screen" title="Permanent link">&para;</a></h3>
+<p><code>factory</code> MUST offer: the items the player can make, with cost and time; the manufacturing queue
+with priorities, moving up and cancelling; progress and the workshop capacity used.</p>
+<p><em>Rationale:</em> The original's manufacturing screen (a <code>WrappersDLL</code> background).</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-004-economy">R-STR-004</a></li>
+</ul>
+<h3 id="r-ui-028-pilots-screen">R-UI-028 Pilots screen<a class="headerlink" href="#r-ui-028-pilots-screen" title="Permanent link">&para;</a></h3>
+<p><code>pilots</code> MUST offer: the base's pilots in portrait sockets (R-UI-013, a ring in <code>interceptor</code>);
+the selected pilot's <strong>stat panel</strong> — the campaign's own stats, which for <code>interceptor</code> are
+assignment, kills, missions, health, intelligence, stamina, accuracy, flying ability,
+aggressiveness, bravery, psionics and salary; the docked ships with the pilot assigned to each,
+and assigning a pilot to a ship; recruiting, training and dismissing where the campaign allows.</p>
+<p><em>Rationale:</em> The original's Pilots screen; stats are data, so a campaign with other stats uses the same screen.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-008-pilots">R-STR-008</a></li>
+</ul>
+<h3 id="r-ui-029-launch-mission-dialog">R-UI-029 Launch mission dialog<a class="headerlink" href="#r-ui-029-launch-mission-dialog" title="Permanent link">&para;</a></h3>
+<p><code>launch</code> MUST list the base's docked ships, let the player select up to the campaign's limit
+(5 in <code>interceptor</code>; <code>strategy.launch.max_craft</code>), and launch them or cancel.</p>
+<p><em>Rationale:</em> The original's Launch Mission dialog.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-003-contacts-and-mission-generation">R-STR-003</a></li>
+</ul>
+<h3 id="r-ui-030-notice-transmission-and-choice-dialogs">R-UI-030 Notice, transmission and choice dialogs<a class="headerlink" href="#r-ui-030-notice-transmission-and-choice-dialogs" title="Permanent link">&para;</a></h3>
+<p><code>notice</code> MUST show a campaign notice with <strong>OK</strong> and the timed OK. <code>transmission</code> MUST show a
+story message — with its film or face playing in a named rectangle when it has one — with
+<strong>OK</strong>, the timed OK and <strong>allocate new research</strong> (open <code>research</code>). <code>choice</code> MUST show an
+event's text and one button per choice, or Fly / Decline for an offered mission.</p>
+<p><em>Rationale:</em> The original's Alien Transmission dialog; the story layer's notices and choices
+(<a href="../campaigns/#r-cpn-007-events-and-arcs">R-CPN-007</a>).</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../campaigns/#r-cpn-012-video-and-music">R-CPN-012</a></li>
+</ul>
+<h3 id="r-ui-031-briefing-screen">R-UI-031 Briefing screen<a class="headerlink" href="#r-ui-031-briefing-screen" title="Permanent link">&para;</a></h3>
+<p><code>briefing</code> MUST show the mission's briefing as wrapped text and its forces on a grid view
+(R-UI-013) — the ship formations of each side — and offer launching the battle or going back.</p>
+<p><em>Rationale:</em> The original's Briefing screen.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../missions/#r-msn-001-mission-roles">R-MSN-001</a></li>
+</ul>
+<h3 id="r-ui-032-debriefing-screen">R-UI-032 Debriefing screen<a class="headerlink" href="#r-ui-032-debriefing-screen" title="Permanent link">&para;</a></h3>
+<p><code>debriefing</code> MUST show the battle's result: what was recovered, the items gained, the score, the
+rating and the debrief text, then continue to the screen the battle was launched from (R-UI-003).</p>
+<p><em>Rationale:</em> The original's Mission debriefing screen.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../missions/#r-msn-005-debrief">R-MSN-005</a></li>
+</ul>
+<h3 id="r-ui-033-research-screen">R-UI-033 Research screen<a class="headerlink" href="#r-ui-033-research-screen" title="Permanent link">&para;</a></h3>
+<p><code>research</code> MUST offer: the topics available, the current work with its progress, rate and
+estimated completion, choosing and changing topics, and the capacity used and blocked.</p>
+<p><em>Rationale:</em> The original's research screen (a <code>WrappersDLL</code> background).</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-005-research">R-STR-005</a></li>
+</ul>
+<h3 id="r-ui-034-hangar-screen">R-UI-034 Hangar screen<a class="headerlink" href="#r-ui-034-hangar-screen" title="Permanent link">&para;</a></h3>
+<p><code>hangar</code> MUST offer: the base's craft; the selected craft in a model view; its slots and the
+items fitted, fitting and removing from stores; the pilot assigned.</p>
+<p><em>Rationale:</em> The original's Equip Ship screen.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-007-ships-and-equipment">R-STR-007</a></li>
+</ul>
+<h3 id="r-ui-035-reports-screen">R-UI-035 Reports screen<a class="headerlink" href="#r-ui-035-reports-screen" title="Permanent link">&para;</a></h3>
+<p><code>reports</code> MUST offer the periodic reports in <strong>panels</strong> (four in the original) — finances,
+activity, holdings and evaluations — chosen by period.</p>
+<p><em>Rationale:</em> The original's status reports (a <code>WrappersDLL</code> background in four panels).</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-009-funding-score-and-reports">R-STR-009</a></li>
+</ul>
+<h3 id="r-ui-036-encyclopaedia-screen">R-UI-036 Encyclopaedia screen<a class="headerlink" href="#r-ui-036-encyclopaedia-screen" title="Permanent link">&para;</a></h3>
+<p><code>encyclopaedia</code> MUST offer: the categories; the unlocked entries in the chosen category; the
+entry's model view or picture, its text and its stats.</p>
+<p><em>Rationale:</em> The original's UFOpedia.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#encyclopaedia-encyclopaediaid-entryid">Format › Encyclopaedia</a></li>
+</ul>
+<h3 id="r-ui-037-options-screen">R-UI-037 Options screen<a class="headerlink" href="#r-ui-037-options-screen" title="Permanent link">&para;</a></h3>
+<p><code>options</code> MUST offer the keyboard configuration — the bindings of
+<a href="../control-console/#r-con-004-controls-menu">R-CON-004</a>, drawn in the set's layout — and the
+game's options (audio, graphics, the layout switch of R-UI-018).</p>
+<p><em>Rationale:</em> The original's Options screen with its keyboard configuration.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-004-the-testbed-layout-as-an-option">F-UI-004</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../campaigns/#r-cpn-011-screens-and-skins">R-CPN-011</a></li>
+</ul>
+<h3 id="r-ui-038-messages-simulator-and-title-screens">R-UI-038 Messages, simulator and title screens<a class="headerlink" href="#r-ui-038-messages-simulator-and-title-screens" title="Permanent link">&para;</a></h3>
+<p><code>messages</code> MUST offer the message log and the news; <code>simulator</code> MUST offer the combat
+simulator's setup (<a href="../missions/#r-msn-010-simulator-missions">R-MSN-010</a>); a screen set MAY lay out the shell screens
+(<code>main_menu</code>, <code>load_save</code>, <code>credits</code>, <code>ending</code>) the same way, using the original's title
+backgrounds in <code>interceptor</code>.</p>
+<p><em>Rationale:</em> The remaining <code>WrappersDLL</code> backgrounds.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../strategy-logistics/#r-str-010-strategy-screens">R-STR-010</a></li>
+</ul>
+<h3 id="r-ui-039-custom-screens">R-UI-039 Custom screens<a class="headerlink" href="#r-ui-039-custom-screens" title="Permanent link">&para;</a></h3>
+<p>A pack MUST be able to add screens and dialogs beyond the catalogue — composed of the generic
+widgets, bound to named values, campaign queries and the lists of any catalogue screen, and
+linked by the navigation actions — for example a relations screen or a chapter recap.</p>
+<p><em>Rationale:</em> The user: "there are additional screens, these are just a subset" — and a custom
+campaign will want screens the original never had.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../design/format-interface/#screen-sets-screens-and-widgets">Format › Screen sets</a></li>
+</ul>
+<h3 id="r-ui-040-interface-sounds">R-UI-040 Interface sounds<a class="headerlink" href="#r-ui-040-interface-sounds" title="Permanent link">&para;</a></h3>
+<p>A button or toggle SHOULD play a <code>sound</code> when pressed (its own, or the skin's <code>click</code>), and a
+screen MAY name a music state to play while shown. <code>interceptor</code> SHOULD use the original's
+interface sounds by reference.</p>
+<p><em>Rationale:</em> The original's screens click and beep.</p>
+<ul>
+<li>Implements: <a href="../../../definition/interface/#f-ui-001-original-style-strategy-screens">F-UI-001</a>, <a href="../../../definition/interface/#f-ui-002-screens-and-widgets-as-mod-data">F-UI-002</a></li>
+<li>Status: planned</li>
+<li>Verified by: Planned.</li>
+<li>See: <a href="../../../modding/music/">Music (modding)</a></li>
+</ul>
+<h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.19.0</td>
+<td>2026-11-12</td>
+<td>New area page (user request): R-UI-001 – R-UI-040, the original-style multi-screen strategy interface — screen sets and the engine screen catalogue, navigation and dialogs, the widget catalogue, keyboard and gamepad navigation, scaling, text, validation, the testbed layout as a second layout, partial sets, <code>interceptor</code> fidelity and art by reference, the default campaign's set, and the screens and dialogs. All planned (Stage 6.9)</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.sections", "toc.follow", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

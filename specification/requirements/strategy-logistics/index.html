@@ -14,7 +14,7 @@
         <link rel="prev" href="../missions/">
       
       
-        <link rel="next" href="../campaigns/">
+        <link rel="next" href="../interface/">
       
       
         
@@ -265,6 +265,8 @@
       
         
           
+        
+      
         
       
         
@@ -566,6 +568,41 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../definition/interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy interface
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
       
@@ -591,7 +628,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -620,14 +657,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_2_9" id="__nav_2_9_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_8">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1028,6 +1065,8 @@
   
     
     
+      
+        
       
         
       
@@ -1677,6 +1716,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy interface
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -7363,7 +7437,7 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: the 3D base view, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with eleven lists). Texts are plain English in the default campaign's strategy files, not text keys. The <code>interceptor</code> wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested <code>app::widgets</code>).</p>
+<p>Not built: the 3D base view, the briefing before an interception (the mission's own briefing is shown in flight as usual), the encyclopaedia as its own screen (it is a list on the Archive tab); the Supply tab is a plain list, without a supply-traffic view; separate screens per tab (one screen with eleven lists) — the original-style multi-screen interface is now specified as <a href="../interface/">Strategy interface</a> (R-UI-001 – R-UI-040, plan item 6.9), with this screen kept as its testbed layout (R-UI-018). Texts are plain English in the default campaign's strategy files, not text keys. The <code>interceptor</code> wrapper art is not mapped (Stage 6.7). No unit test drives the screen itself (its arithmetic is in the tested <code>app::widgets</code>).</p>
 </div>
 <h3 id="r-str-011-saves">R-STR-011 Saves<a class="headerlink" href="#r-str-011-saves" title="Permanent link">&para;</a></h3>
 <p>A save MUST hold the full campaign state plus the mod list and versions; loading MUST refuse a save whose mods are missing. Logistics state (stores, orders, build progress, ships in flight with their attack rolls, survey results) MUST be saved.</p>
@@ -7645,6 +7719,11 @@
 <td>1.18.0</td>
 <td>2026-11-11</td>
 <td>The issue-audit gaps as built (app 0.16.1 – 0.16.14, main <code>f82a6ab</code> … <code>de30c2a</code>): R-STR-009 implemented (evaluations and the Reports list); R-STR-019 implemented and R-STR-023 implemented (construction strikes, #19); As-built notes on R-STR-003 (auto-resolve), R-STR-004 (queue priorities, delivery losses, storage), R-STR-005 (capture, <code>requires_any</code>, hidden topics), R-STR-006 (<code>quarters</code>, <code>storage</code>, <code>defence</code>, dismantling), R-STR-007 (the default campaign's shields and armour), R-STR-008 (training, dismissal), R-STR-010 (new prompts, lists and buttons), R-STR-011 (pack versions compared, save slots), R-STR-019; R-STR-002, R-STR-020 and R-STR-021 Open notes narrowed</td>
+</tr>
+<tr>
+<td>1.19.0</td>
+<td>2026-11-12</td>
+<td>R-STR-010 Open note: separate screens are now specified by the new <a href="../interface/">Strategy interface</a> area (R-UI-001 – R-UI-040); this screen becomes the testbed layout (R-UI-018). No requirement text changed</td>
 </tr>
 </tbody>
 </table>
