@@ -643,6 +643,8 @@
           "size": {"description": "work units", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "requires": {"description": "available when this holds", "type": "string"},
           "unlocks": {"description": "items.x, hulls.x, modules.x, base_types.x", "type": "array", "items": {"type": "string"}},
+          "requires_any": {"description": "any one of these topics (joined to requires: with and)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+          "hidden": {"description": "not offered until an event's discover(<topic>)", "type": "boolean"},
           "description": {"description": "encyclopaedia text", "type": "string"},
           "lab": {"description": "logistics: only this facility type may research it", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "site": {"description": "logistics: only at a station on this research site", "type": "string", "pattern": "^[a-z0-9_.-]+$"},

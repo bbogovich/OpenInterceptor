@@ -126,6 +126,18 @@ impl Campaign {
                         self.known[t] = true;
                     }
                 }
+                // A hidden topic is discovered (kept as the flag `discovered.<topic>`).
+                "discover" => {
+                    let flag = format!("discovered.{}", arg(0));
+                    if !self.flags.contains(&flag) {
+                        self.flags.push(flag);
+                        if let Some(t) = def.topic(arg(0)) {
+                            let text = format!("New research possible: {}", def.research[t].name);
+                            self.log(text.clone());
+                            events.push(Event::Notice(text));
+                        }
+                    }
+                }
                 "mission" => events.push(Event::Mission { mission: arg(0).to_string() }),
                 "raid" => {
                     if let Some(r) = def.raids.iter().position(|x| x.id == arg(0)) {

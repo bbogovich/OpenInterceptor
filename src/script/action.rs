@@ -111,6 +111,12 @@ pub static EVENT_ACTIONS: &[ActionDef] = &[
         doc: "change a faction's standing with the player",
     },
     ActionDef { name: "research", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "a topic becomes known" },
+    ActionDef {
+        name: "discover",
+        args: &[ArgKind::Name],
+        scope: Scope::Campaign,
+        doc: "a hidden topic is discovered: it can be researched once its prerequisites are met",
+    },
     ActionDef { name: "mission", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "offer a mission to fly now" },
     ActionDef { name: "raid", args: &[ArgKind::Name], scope: Scope::Campaign, doc: "launch a raid's contact now" },
     ActionDef {

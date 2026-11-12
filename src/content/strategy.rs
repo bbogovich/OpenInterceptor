@@ -197,6 +197,8 @@ pub struct Topic {
     /// What finishing it makes available: `items.x`, `hulls.x`, `modules.x`, `base_types.x`.
     pub unlocks: Vec<String>,
     pub description: String,
+    /// Not offered until a story event's `discover(<topic>)` (R-STR-005).
+    pub hidden: bool,
 }
 
 /// How research progresses.
@@ -499,8 +501,16 @@ impl StrategyDef {
             (!parts.is_empty()).then(|| parts.join(" and "))
         };
         // `requires:` as written, else the original's prerequisites translated.
+        // `requires_any: [a, b]` is shorthand for `research(a) or research(b)`, joined
+        // to any `requires:` with `and`.
         let req_text = |g: Get, keys: &[&str]| -> Option<String> {
-            g.str("requires").map(str::to_string).or_else(|| tech_req(g, keys))
+            let own = g.str("requires").map(str::to_string).or_else(|| tech_req(g, keys));
+            let any: Vec<String> = g.list("requires_any").iter().map(|t| format!("research({t})")).collect();
+            match (own, any.is_empty()) {
+                (own, true) => own,
+                (None, false) => Some(any.join(" or ")),
+                (Some(o), false) => Some(format!("({o}) and ({})", any.join(" or "))),
+            }
         };
         const PREREQS: [&str; 3] = ["prereq1", "prereq2", "prereq3"];
         const TECH: [&str; 2] = ["tech_required", "tech_required2"];
@@ -616,6 +626,7 @@ impl StrategyDef {
                 requires: cond(req_text(g, &PREREQS).as_deref(), &format!("research.{id}.requires"), errors),
                 unlocks: g.list("unlocks"),
                 description: g.str("description").unwrap_or("").to_string(),
+                hidden: g.bool("hidden").unwrap_or(false),
             })
             .collect();
         let rm = global("research_model");
@@ -1026,6 +1037,12 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("size", Ty::Num, "work units"),
                 f("requires", expr(), "available when this holds"),
                 f("unlocks", Ty::List(Box::new(Ty::Text)), "items.x, hulls.x, modules.x, base_types.x"),
+                f(
+                    "requires_any",
+                    Ty::List(Box::new(Ty::Name)),
+                    "any one of these topics (joined to requires: with and)",
+                ),
+                f("hidden", Ty::Bool, "not offered until an event's discover(<topic>)"),
                 f("description", Ty::Text, "encyclopaedia text"),
                 f("lab", Ty::Name, "logistics: only this facility type may research it"),
                 f("site", Ty::Name, "logistics: only at a station on this research site"),

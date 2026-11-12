@@ -595,7 +595,15 @@ impl Campaign {
 
     /// Topics that can be researched now (prerequisites met, not yet known).
     pub fn researchable(&mut self, def: &StrategyDef) -> Vec<usize> {
+        // A hidden topic waits for its discovery (an event's `discover`). (Collected
+        // first: `holds` below needs `self` mutably, for its random rolls.)
+        let shown: Vec<bool> = def
+            .research
+            .iter()
+            .map(|r| !r.hidden || self.flags.iter().any(|f| f.strip_prefix("discovered.") == Some(r.id.as_str())))
+            .collect();
         (0..def.research.len())
+            .filter(|&t| shown[t])
             .filter(|&t| !self.known[t] && self.holds(def, def.research[t].requires.as_ref()))
             // Station-only topics are researched at research stations, not at bases.
             .filter(|&t| !def.logistics.as_ref().is_some_and(|l| l.station_topics.get(t).is_some_and(|s| s.is_some())))
@@ -1609,6 +1617,27 @@ mod tests {
         assert!(c.hours > 66.0 && c.hours < 68.0, "stopped at completion: {}", c.hours);
         assert!(c.known[plasma] && c.available(&d, "items.plasma"));
         assert!(c.start_research(&d, 0, plasma).is_err(), "already known");
+    }
+
+    #[test]
+    fn requires_any_and_hidden_topics_wait_for_one_prerequisite_and_their_discovery() {
+        let text = crate::content::strategy::tests::SAMPLE.replace(
+            "  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}",
+            "  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}\n  either: {size: 10, requires_any: [plasma, basics]}\n  both: {size: 10, requires: research(basics), requires_any: [plasma]}\n  secret: {size: 10, hidden: true}",
+        );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 42);
+        let open = |c: &mut Campaign, id: &str| c.researchable(&d).contains(&d.topic(id).unwrap());
+        assert!(open(&mut c, "either"), "basics is known: one of the two is enough");
+        assert!(!open(&mut c, "both"), "requires and requires_any together");
+        assert!(!open(&mut c, "secret"), "hidden until discovered");
+        let mut events = Vec::new();
+        let discover = crate::script::action::parse("discover(secret)", crate::script::action::EVENT_ACTIONS).unwrap();
+        c.apply_actions(&d, &[discover], &mut events);
+        assert!(open(&mut c, "secret"), "discovered");
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("New research"))));
     }
 
     #[test]
