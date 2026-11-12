@@ -4,7 +4,7 @@
 # reference into the player's CD ("original:..."), and every balance value is inherited
 # from the player's GameSettings.ini. Run with --data <path to the CD or install>.
 id: interceptor
-name: "X-COM: Interceptor (original data)"
+name: "X-COM: Interceptor"
 version: "0.1"
 description: The original game's ships, stations and weapons, read from your own CD.
 kind: campaign

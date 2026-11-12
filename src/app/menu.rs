@@ -70,6 +70,16 @@ pub fn step_volume(v: f32, up: bool) -> f32 {
     (q / 4.0).clamp(0.0, 1.0)
 }
 
+/// The text size that fits a line `width` wide at `size` into `room` pixels: `size`
+/// itself if it fits, else scaled down — but never below half, to stay legible.
+pub fn fit_size(width: f32, size: f32, room: f32) -> f32 {
+    if width <= room || width <= 0.0 {
+        size
+    } else {
+        (size * room.max(0.0) / width).max(size * 0.5)
+    }
+}
+
 /// Moves a selection by one, wrapping.
 fn wrap_step(i: usize, n: usize, down: bool) -> usize {
     let n = n.max(1);
@@ -282,8 +292,12 @@ impl MainMenu {
             ui.text_in(label, px + 6.0, y + line * 0.66, line * 0.6, colour);
             if let Some(v) = value {
                 let v = if on { format!("<  {v}  >") } else { v.clone() };
-                let w = ui.measure(&v, line * 0.5);
-                ui.text_in(&v, px + pw - 40.0 - w, y + line * 0.64, line * 0.5, ui.colour("accent"));
+                // Right-aligned after the label; a value too long for the space left (a
+                // long campaign name) is drawn smaller rather than over the label.
+                let room = pw - 40.0 - (px + 6.0 + ui.measure(label, line * 0.6) + 24.0 - px);
+                let size = fit_size(ui.measure(&v, line * 0.5), line * 0.5, room);
+                let w = ui.measure(&v, size);
+                ui.text_in(&v, px + pw - 40.0 - w, y + line * 0.64, size, ui.colour("accent"));
             }
         }
         let hint =
@@ -321,5 +335,8 @@ mod tests {
         assert_eq!(step_volume(0.0, false), 0.0);
         assert_eq!(wrap_step(0, 3, false), 2);
         assert_eq!(wrap_step(2, 3, true), 0);
+        assert_eq!(fit_size(100.0, 20.0, 150.0), 20.0, "fits: unchanged");
+        assert_eq!(fit_size(200.0, 20.0, 150.0), 15.0, "scaled to the room");
+        assert_eq!(fit_size(1000.0, 20.0, 150.0), 10.0, "never below half");
     }
 }
