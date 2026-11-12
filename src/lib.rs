@@ -19,6 +19,7 @@
 //! [`settings`] (the user data folder and where the original data is found).
 pub mod app;
 pub mod audio;
+pub mod balance;
 pub mod campaign;
 pub mod check;
 pub mod cli;

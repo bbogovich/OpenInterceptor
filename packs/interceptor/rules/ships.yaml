@@ -6,9 +6,11 @@
 # Interceptor.exe; which alien mesh is which named class is DERIVED (see the docs site,
 # Original game > Formats > Object table).
 #
-# Shields, Armor, Energy, EnergyRecharge and Acceleration are engine values: in the
-# original they depend on fitted equipment (ShieldType*, ArmorType*, EngineType*), which
-# arrives with the equipment system in Stage 4. Model = original:<MESH> reads the XMSH
+# Shields and armour come from fitted equipment, as in the original: `fitted:` names the
+# ShieldType*/ArmorType* sections a class carries by default (DERIVED for each class) and
+# the engine reads their protection from the player's GameSettings.ini; a campaign
+# craft's own fit replaces them. Classes without a fit, Energy, EnergyRecharge and
+# Acceleration are engine values (DERIVED). Model = original:<MESH> reads the XMSH
 # resource of that name.
 #
 # --- X-COM interceptors (playable) ----------------------------------------------------
@@ -22,8 +24,7 @@ ships:
     model_set: lightning
     playable: true
     cockpit: a
-    shields: 100
-    armor: 80
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType1}   # its default equipment (DERIVED)
     energy: 400
     energy_recharge: 45
     acceleration: 140
@@ -41,8 +42,7 @@ ships:
     model_set: firestar
     playable: true
     cockpit: b
-    shields: 150
-    armor: 150
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType2}   # its default equipment (DERIVED)
     energy: 500
     energy_recharge: 55
     acceleration: 110
@@ -59,8 +59,7 @@ ships:
     model_set: avenger
     playable: true
     cockpit: c
-    shields: 200
-    armor: 250
+    fitted: {shield: original:GameSettings.ini/ShieldType3, armor: original:GameSettings.ini/ArmorType2}   # its default equipment (DERIVED)
     energy: 600
     energy_recharge: 65
     acceleration: 90
@@ -79,8 +78,8 @@ ships:
     name: Wraith
     description: Light, agile alien saucer.
     model_set: wraith
-    shields: 80
-    armor: 40
+    shields: 240   # DERIVED
+    armor: 120   # DERIVED
     max_speed: 650
     acceleration: 160
     roll_rate: 220
@@ -96,8 +95,8 @@ ships:
     name: Spectre
     description: Multirole alien saucer.
     model_set: spectre
-    shields: 120
-    armor: 60
+    fitted: {shield: original:GameSettings.ini/ShieldType2}   # its default equipment (DERIVED)
+    armor: 180   # DERIVED
     max_speed: 600
     acceleration: 130
     roll_rate: 180
@@ -113,8 +112,7 @@ ships:
     name: Phantasm
     description: Heavy alien beam gunship.
     model_set: phantasm
-    shields: 200
-    armor: 120
+    fitted: {shield: original:GameSettings.ini/ShieldType2, armor: original:GameSettings.ini/ArmorType3}   # its default equipment (DERIVED)
     max_speed: 520
     acceleration: 100
     roll_rate: 120
@@ -130,8 +128,7 @@ ships:
     name: Shade
     description: Elite alien fighter flown by Aereon pilots.
     model_set: shade
-    shields: 250
-    armor: 100
+    fitted: {shield: original:GameSettings.ini/ShieldType4, armor: original:GameSettings.ini/ArmorType3}   # its default equipment (DERIVED)
     max_speed: 700
     acceleration: 180
     roll_rate: 220
@@ -152,8 +149,7 @@ ships:
     kind: capital
     # Tows cargo and tries to capture disabled ships (guide).
     systems+: [tractor]
-    shields: 200
-    armor: 150
+    fitted: {shield: original:GameSettings.ini/ShieldType4, armor: original:GameSettings.ini/ArmorType3}   # its default equipment (DERIVED)
     max_speed: 300
     acceleration: 50
     roll_rate: 40
@@ -179,8 +175,8 @@ ships:
     description: Alien freighter; launches drones.
     model_set: spirit
     kind: freighter
-    shields: 150
-    armor: 150
+    shields: 450   # DERIVED
+    armor: 450   # DERIVED
     max_speed: 250
     acceleration: 40
     roll_rate: 30
@@ -229,8 +225,8 @@ ships:
     name: Rogue Freighter
     model_set: rogue_freighter
     kind: freighter
-    shields: 150
-    armor: 200
+    shields: 450   # DERIVED
+    armor: 600   # DERIVED
     max_speed: 250
     acceleration: 40
     roll_rate: 30
@@ -265,8 +261,8 @@ ships:
     name: Star Ranger Freighter
     model_set: xcom_freighter
     kind: freighter
-    shields: 150
-    armor: 200
+    shields: 450   # DERIVED
+    armor: 600   # DERIVED
     max_speed: 250
     acceleration: 40
     roll_rate: 30
@@ -279,8 +275,8 @@ ships:
     name: Patton-class Research Cruiser
     model_set: patton
     kind: capital
-    shields: 400
-    armor: 500
+    shields: 1200   # DERIVED
+    armor: 1500   # DERIVED
     max_speed: 150
     acceleration: 15
     roll_rate: 8

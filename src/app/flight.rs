@@ -134,9 +134,18 @@ pub fn apply_stances(world: &mut World, player: ShipId, stances: &[(String, bool
 }
 
 /// The campaign loadout on a battle's world (see [`FlightSession::apply_loadout`]).
-pub fn apply_loadout(world: &mut World, player: ShipId, beams: &[String], missiles: &[(String, u32)]) {
+pub fn apply_loadout(world: &mut World, player: ShipId, loadout: &crate::campaign::Loadout) {
+    let (beams, missiles) = (&loadout.beams, &loadout.missiles);
     let Some(class) = world.get(player).map(|s| s.class) else { return };
     let rules = std::sync::Arc::make_mut(&mut world.rules);
+    // Fitted shields and armour: the class in this battle's copy of the rules (shield
+    // recharge is capped by the class value), and the craft starts full.
+    if let Some(s) = loadout.shields {
+        rules.ships[class.0 as usize].shields = s;
+    }
+    if let Some(a) = loadout.armor {
+        rules.ships[class.0 as usize].armor = a;
+    }
     let beam_ids: Vec<_> = beams
         .iter()
         .filter_map(|b| rules.beams.iter().position(|x| &x.id == b))
@@ -157,6 +166,12 @@ pub fn apply_loadout(world: &mut World, player: ShipId, beams: &[String], missil
         s.next_mount = 0;
     }
     if let Some(me) = world.get_mut(player) {
+        if let Some(s) = loadout.shields {
+            (me.shield_fore, me.shield_aft) = (s, s);
+        }
+        if let Some(a) = loadout.armor {
+            me.armor = a;
+        }
         if !racks.is_empty() {
             me.missiles = racks;
             me.selected_rack = 0;
@@ -386,8 +401,8 @@ impl FlightSession {
     /// copy of the rules (`Arc::make_mut` copies the shared ruleset the first time it is
     /// changed) — the content everyone else uses is untouched. Other craft of the same
     /// class in this battle (wingmen) fly the same fit.
-    pub fn apply_loadout(&mut self, beams: &[String], missiles: &[(String, u32)]) {
-        apply_loadout(&mut self.world, self.player, beams, missiles);
+    pub fn apply_loadout(&mut self, loadout: &crate::campaign::Loadout) {
+        apply_loadout(&mut self.world, self.player, loadout);
     }
 
     /// Seconds still to wait before the debrief (0 once it shows).
@@ -1541,7 +1556,15 @@ mod tests {
         let shared = w.rules.clone();
         let beam = w.rules.beams[0].id.clone();
         let missile = w.rules.missiles[0].id.clone();
-        apply_loadout(&mut w, me, &[beam.clone(), beam.clone(), beam], &[(missile, 7), ("nope".into(), 3)]);
+        let l = crate::campaign::Loadout {
+            beams: vec![beam.clone(), beam.clone(), beam],
+            missiles: vec![(missile, 7), ("nope".into(), 3)],
+            shields: Some(321.0),
+            armor: Some(55.0),
+        };
+        apply_loadout(&mut w, me, &l);
+        let s = w.get(me).unwrap();
+        assert_eq!((s.shield_fore, s.shield_aft, s.armor), (321.0, 321.0, 55.0), "fitted protection");
         assert_eq!(w.rules.ship(f).beams.len(), 3, "three beam mounts now");
         assert_eq!(w.get(me).unwrap().beam_cooldown.len(), 3);
         assert_eq!(w.get(me).unwrap().missiles, vec![(crate::content::rules::MissileId(0), 7)], "unknown ids skipped");
@@ -1549,7 +1572,7 @@ mod tests {
         // An empty loadout keeps the class's own weapons.
         let mut w2 = crate::sim::test_support::world();
         let me2 = w2.spawn(f, FactionId(0), "me", Vec3::ZERO, glam::Quat::IDENTITY, crate::sim::Pilot::External);
-        apply_loadout(&mut w2, me2, &[], &[]);
+        apply_loadout(&mut w2, me2, &Default::default());
         assert_eq!(w2.rules.ship(f).beams.len(), 2);
     }
 

@@ -44,9 +44,10 @@ research_model:
   switching: lose_progress
 
 hulls:
-  lightning: {inherit: original:GameSettings.ini/Ship_IntType1, speed: 3000}   # speed DERIVED
-  firestar: {inherit: original:GameSettings.ini/Ship_IntType2, speed: 3600}
-  avenger: {inherit: original:GameSettings.ini/Ship_IntType3, speed: 4200}
+  # One shield and one armour slot beside the original's mount counts (DERIVED).
+  lightning: {inherit: original:GameSettings.ini/Ship_IntType1, speed: 3000, slots: {shield: 1, armor: 1}}   # speed DERIVED
+  firestar: {inherit: original:GameSettings.ini/Ship_IntType2, speed: 3600, slots: {shield: 1, armor: 1}}
+  avenger: {inherit: original:GameSettings.ini/Ship_IntType3, speed: 4200, slots: {shield: 1, armor: 1}}
 
 # Missile racks: rounds per missile slot (DERIVED until the launchers' Rounds are read).
 items:

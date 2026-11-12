@@ -15,10 +15,10 @@ ships:
     faction: guard
     playable: true
     cockpit: guard
-    hit_points: 110
-    shields: 70
+    hit_points: 440
+    shields: 280
     shield_recharge: 6
-    armor: 40
+    armor: 160
     max_speed: 620
     acceleration: 170
     roll_rate: 220
@@ -41,10 +41,10 @@ ships:
     faction: guard
     playable: true
     cockpit: guard
-    hit_points: 160
-    shields: 110
+    hit_points: 640
+    shields: 440
     shield_recharge: 7
-    armor: 90
+    armor: 360
     max_speed: 560
     acceleration: 140
     roll_rate: 180
@@ -67,10 +67,10 @@ ships:
     faction: guard
     playable: true
     cockpit: guard
-    hit_points: 230
-    shields: 160
+    hit_points: 920
+    shields: 640
     shield_recharge: 8
-    armor: 160
+    armor: 640
     max_speed: 500
     acceleration: 110
     roll_rate: 150
@@ -93,10 +93,10 @@ ships:
     model_set: victory
     faction: guard
     kind: capital
-    hit_points: 4000
-    shields: 1200
+    hit_points: 12000
+    shields: 3600
     shield_recharge: 20
-    armor: 1500
+    armor: 4500
     max_speed: 220
     acceleration: 40
     roll_rate: 20
@@ -119,9 +119,9 @@ ships:
     description: "@ship.scout_saucer.desc"
     model_set: scout_saucer
     faction: dominion
-    hit_points: 80
-    shields: 60
-    armor: 20
+    hit_points: 320
+    shields: 240
+    armor: 80
     max_speed: 680
     acceleration: 190
     roll_rate: 240
@@ -142,9 +142,9 @@ ships:
     description: "@ship.raider_saucer.desc"
     model_set: raider_saucer
     faction: dominion
-    hit_points: 130
-    shields: 100
-    armor: 50
+    hit_points: 520
+    shields: 400
+    armor: 200
     max_speed: 600
     acceleration: 160
     roll_rate: 200
@@ -169,10 +169,10 @@ ships:
     model_set: dreadnought
     faction: dominion
     kind: capital
-    hit_points: 1500
-    shields: 600
+    hit_points: 9000
+    shields: 2400
     shield_recharge: 15
-    armor: 400
+    armor: 1600
     max_speed: 250
     acceleration: 50
     roll_rate: 30
@@ -195,8 +195,8 @@ ships:
     model_set: robot_sentinel
     faction: dominion
     kind: drone
-    hit_points: 50
-    armor: 30
+    hit_points: 200
+    armor: 120
     max_speed: 720
     acceleration: 230
     roll_rate: 260
@@ -218,9 +218,9 @@ ships:
     model_set: grappler
     faction: dominion
     kind: capital
-    hit_points: 600
-    shields: 200
-    armor: 150
+    hit_points: 2400
+    shields: 800
+    armor: 600
     max_speed: 350
     acceleration: 70
     roll_rate: 60
@@ -242,9 +242,9 @@ ships:
     model_set: cargo_orb
     faction: dominion
     kind: freighter
-    hit_points: 900
-    shields: 300
-    armor: 200
+    hit_points: 3600
+    shields: 1200
+    armor: 800
     max_speed: 220
     acceleration: 40
     roll_rate: 20
@@ -269,9 +269,9 @@ ships:
     model_set: cartel_freighter
     faction: cartel
     kind: freighter
-    hit_points: 700
-    shields: 250
-    armor: 150
+    hit_points: 2800
+    shields: 1000
+    armor: 600
     max_speed: 260
     acceleration: 45
     roll_rate: 25
@@ -289,9 +289,9 @@ ships:
     model_set: prospector_hauler
     faction: prospectors
     kind: freighter
-    hit_points: 500
-    shields: 120
-    armor: 200
+    hit_points: 2000
+    shields: 480
+    armor: 800
     max_speed: 240
     acceleration: 45
     roll_rate: 25
@@ -305,9 +305,9 @@ ships:
     description: "@ship.hotrod.desc"
     model_set: hotrod
     faction: raiders
-    hit_points: 90
-    shields: 40
-    armor: 30
+    hit_points: 360
+    shields: 160
+    armor: 120
     max_speed: 650
     acceleration: 180
     roll_rate: 230

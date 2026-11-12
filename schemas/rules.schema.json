@@ -62,6 +62,10 @@
           "hit_points": {"description": "hull points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "armor": {"description": "armour points (absorbed after shields)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "shields": {"description": "shield points per facing (fore and aft)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "fitted": {"description": "default equipment whose protection sets shields/armor (e.g. an original: section)", "type": "object", "additionalProperties": false, "properties": {
+              "shield": {"description": "the shield it carries: protection from that definition", "type": "string"},
+              "armor": {"description": "the armour it carries", "type": "string"}
+            }},
           "shield_recharge": {"description": "shield points per second per facing at full charge", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "max_speed": {"description": "top speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "acceleration": {"description": "m/s²", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -121,6 +125,10 @@
           "hit_points": {"description": "hull points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "armor": {"description": "armour points (absorbed after shields)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "shields": {"description": "shield points per facing (fore and aft)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "fitted": {"description": "default equipment whose protection sets shields/armor (e.g. an original: section)", "type": "object", "additionalProperties": false, "properties": {
+              "shield": {"description": "the shield it carries: protection from that definition", "type": "string"},
+              "armor": {"description": "the armour it carries", "type": "string"}
+            }},
           "shield_recharge": {"description": "shield points per second per facing at full charge", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "max_speed": {"description": "top speed, m/s", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "acceleration": {"description": "m/s²", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -649,6 +657,7 @@
           "size": {"description": "storage space", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "requires": {"description": "available when this holds", "type": "string"},
           "rounds": {"description": "missiles: rounds one missile slot holds", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "protection": {"description": "shield: points per facing; armor: armour points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

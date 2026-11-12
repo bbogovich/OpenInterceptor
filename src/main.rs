@@ -48,6 +48,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
         return Some(0);
     }
     if !(options.check
+        || options.balance
         || options.list
         || options.extract.is_some()
         || options.soak.is_some()
@@ -173,6 +174,10 @@ fn headless(options: &cli::Options) -> Option<i32> {
         for s in &content.scenarios {
             println!("scenario {:<14} {}", s.id, s.title);
         }
+    }
+    if options.balance {
+        print!("{}", openinterceptor::balance::report(&content.rules));
+        return Some(0);
     }
     if options.check {
         // Every campaign is checked on its own (with its own addons) unless one was

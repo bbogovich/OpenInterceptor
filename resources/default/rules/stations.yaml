@@ -19,9 +19,9 @@ objects:
     model_set: guard_station
     faction: guard
     # Sturdier at cadet: the defence missions promise 150 s undefended there (soak test).
-    hit_points: {per_level: [11000, 8000, 8000, 8000]}
-    shields: 1500
-    armor: 2000
+    hit_points: {per_level: [33000, 24000, 24000, 24000]}
+    shields: 4500
+    armor: 6000
   dominion_outpost:
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     modules:
@@ -36,15 +36,15 @@ objects:
     description: "@object.dominion_outpost.desc"
     model_set: dominion_outpost
     faction: dominion
-    hit_points: 6000
-    shields: 1200
-    armor: 1500
+    hit_points: 18000
+    shields: 3600
+    armor: 4500
   cosmium_asteroid:
     name: "@object.cosmium_asteroid.name"
     description: "@object.cosmium_asteroid.desc"
     model_set: cosmium_asteroid
     faction: neutral
-    hit_points: 20000
+    hit_points: 60000
   space_mine:
     name: "@object.space_mine.name"
     description: "@object.space_mine.desc"
@@ -60,8 +60,8 @@ objects:
     name: "@object.guard_turret.name"
     model_set: guard_turret
     faction: guard
-    hit_points: 300
-    armor: 100
+    hit_points: 900
+    armor: 300
     beams: [heat_ray, heat_ray]
     turret_arc: 180
     behaviour: station_turret
@@ -69,15 +69,15 @@ objects:
     name: "@object.guard_shield_generator.name"
     model_set: guard_shield_generator
     faction: guard
-    hit_points: 500
-    armor: 150
+    hit_points: 1500
+    armor: 450
     shield_generator: true
   dominion_turret_pod:
     name: "@object.dominion_turret_pod.name"
     model_set: dominion_turret_pod
     faction: dominion
-    hit_points: 280
-    armor: 80
+    hit_points: 840
+    armor: 240
     beams: [death_ray]
     turret_arc: 180
     behaviour: station_turret
@@ -85,6 +85,6 @@ objects:
     name: "@object.dominion_shield_pod.name"
     model_set: dominion_shield_pod
     faction: dominion
-    hit_points: 450
-    armor: 120
+    hit_points: 1350
+    armor: 360
     shield_generator: true

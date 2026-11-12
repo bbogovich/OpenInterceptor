@@ -186,6 +186,19 @@ pub enum Event {
     Cutscene { id: String },
 }
 
+/// What a campaign craft flies into battle with (from [`Campaign::loadout`]).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Loadout {
+    /// Beam item ids, one per fitted beam slot.
+    pub beams: Vec<String>,
+    /// Missile item ids and rounds.
+    pub missiles: Vec<(String, u32)>,
+    /// Shield points per facing from a fitted shield (`None`: the class's own).
+    pub shields: Option<f32>,
+    /// Armour points from fitted armour (`None`: the class's own).
+    pub armor: Option<f32>,
+}
+
 /// One campaign in progress.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Campaign {
@@ -1288,24 +1301,26 @@ impl Campaign {
         Ok(format!("{} fitted: {}", self.craft[k].name, fitted.join(", ")))
     }
 
-    /// A craft's weapons for battle: beam item ids (one per fitted beam slot) and
-    /// missile item ids with their rounds. Empty when nothing is fitted (the class's own
-    /// weapons are flown then).
-    pub fn loadout(&self, def: &StrategyDef, k: usize) -> (Vec<String>, Vec<(String, u32)>) {
-        let mut beams = Vec::new();
-        let mut missiles: Vec<(String, u32)> = Vec::new();
+    /// A craft's fit for battle ([`Loadout`]): beam item ids (one per fitted beam slot),
+    /// missile item ids with their rounds, and the protection of a fitted shield and
+    /// armour. Empty parts leave the class's own (its weapons, its `shields`/`armor`).
+    pub fn loadout(&self, def: &StrategyDef, k: usize) -> Loadout {
+        let mut l = Loadout::default();
         for (slot, i) in &self.craft[k].fit {
             let it = &def.items[*i];
             match slot.as_str() {
-                "beam" => beams.push(it.id.clone()),
-                "missile" => match missiles.iter_mut().find(|(id, _)| *id == it.id) {
+                "beam" => l.beams.push(it.id.clone()),
+                "missile" => match l.missiles.iter_mut().find(|(id, _)| *id == it.id) {
                     Some((_, n)) => *n += it.rounds,
-                    None => missiles.push((it.id.clone(), it.rounds)),
+                    None => l.missiles.push((it.id.clone(), it.rounds)),
                 },
+                // One shield per craft: the strongest fitted. Armour plates add up.
+                "shield" if it.protection > 0.0 => l.shields = Some(l.shields.unwrap_or(0.0).max(it.protection)),
+                "armor" if it.protection > 0.0 => l.armor = Some(l.armor.unwrap_or(0.0) + it.protection),
                 _ => {}
             }
         }
-        (beams, missiles)
+        l
     }
 
     // --- Testbed cheats (the original's own: payday, knowitall, quickbase) ----------
@@ -1555,7 +1570,8 @@ mod tests {
         let msg = c.fit_best(&d, 0).unwrap();
         assert!(msg.contains("Laser") || msg.contains("laser"), "{msg}");
         assert_eq!(c.stock_of(laser), 0);
-        assert_eq!(c.loadout(&d, 0), (vec!["laser".to_string(), "laser".to_string()], vec![]));
+        let l = c.loadout(&d, 0);
+        assert_eq!((l.beams, l.missiles, l.shields), (vec!["laser".to_string(), "laser".to_string()], vec![], None));
         assert!(c.fit_best(&d, 1).is_err(), "nothing left for the second craft");
         // Refitting returns the old fit first.
         c.fit_best(&d, 0).unwrap();

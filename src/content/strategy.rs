@@ -233,6 +233,20 @@ pub struct Item {
     pub requires: Option<Expr>,
     /// A missile: rounds one missile slot holds (fitting takes this many from store).
     pub rounds: u32,
+    /// A shield or armour: the protection it gives when fitted ([`protection_of`]).
+    pub protection: f32,
+}
+
+/// The protection an item of `kind` gives when fitted: shield points per facing for a
+/// `shield`, armour points for an `armor` (`protection:`). An item inheriting the
+/// original's equipment has none: a shield's strength is its `Special` key and armour's
+/// its `HitPoints` (DERIVED from the original's values).
+pub fn protection_of(kind: &str, g: Get) -> Option<f32> {
+    g.num("protection").or_else(|| match kind {
+        "shield" => g.num("special"),
+        "armor" => g.num("hit_points"),
+        _ => None,
+    })
 }
 
 /// `hulls.<id>`: the strategy side of a ship class (same id).
@@ -620,6 +634,7 @@ impl StrategyDef {
                 size: g.num("size").unwrap_or(1.0),
                 requires: cond(req_text(g, &TECH).as_deref(), &format!("items.{id}.requires"), errors),
                 rounds: g.num("rounds").unwrap_or(1.0).max(1.0) as u32,
+                protection: protection_of(g.str("kind").unwrap_or("goods"), g).unwrap_or(0.0),
             })
             .collect();
         let hulls: Vec<Hull> = of(defs, "hulls")
@@ -1029,6 +1044,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("size", Ty::Num, "storage space"),
                 f("requires", expr(), "available when this holds"),
                 f("rounds", Ty::Num, "missiles: rounds one missile slot holds"),
+                f("protection", Ty::Num, "shield: points per facing; armor: armour points"),
             ])),
             "equipment and goods",
         ),

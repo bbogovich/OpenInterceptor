@@ -12,9 +12,9 @@ objects:
     model_set: mining_facility
     faction: guard
     kind: station
-    hit_points: 9000
-    shields: 1500
-    armor: 400
+    hit_points: 27000
+    shields: 4500
+    armor: 1200
     point_defence: {range: 1km, rate: 3, chance: 35%, energy: 3}
     modules:
       - {slot: turret1, class: guard_turret}
@@ -28,9 +28,9 @@ objects:
     model_set: research_station
     faction: guard
     kind: station
-    hit_points: 7000
-    shields: 2000
-    armor: 300
+    hit_points: 21000
+    shields: 6000
+    armor: 900
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     modules:
       - {slot: turret1, class: guard_turret}
@@ -43,9 +43,9 @@ objects:
     model_set: manufacturing_center
     faction: guard
     kind: station
-    hit_points: 11000
-    shields: 1800
-    armor: 500
+    hit_points: 33000
+    shields: 5400
+    armor: 1500
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     modules:
       - {slot: turret1, class: guard_turret}
@@ -60,8 +60,8 @@ objects:
     model_set: supply_pod
     faction: guard
     kind: freighter
-    hit_points: 400
-    armor: 150
+    hit_points: 1200
+    armor: 450
     # A container can be shot off (its cargo is lost) or torn away and towed off by a
     # grappler (captured): either way its share of the cargo never arrives.
     cargo: true
@@ -73,8 +73,8 @@ objects:
     name: "@object.supply_pd.name"
     model_set: guard_turret
     faction: guard
-    hit_points: 450
-    armor: 150
+    hit_points: 1350
+    armor: 450
     beams: [blaster]
     turret_arc: 180
     behaviour: supply_pd
@@ -89,9 +89,9 @@ ships:
     kind: freighter
     playable: false
     # Built to take punishment: disabling or destroying one is a long job.
-    hit_points: 7000
-    shields: 1600
-    armor: 1500
+    hit_points: 21000
+    shields: 4800
+    armor: 4500
     # ~47 m/s: ten minutes to its hyperspace point 28 km away (behaviour supply_run).
     max_speed: 47
     acceleration: 12

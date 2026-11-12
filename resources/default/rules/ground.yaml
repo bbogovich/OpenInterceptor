@@ -8,17 +8,17 @@ objects:
     model_set: mining_facility
     kind: ground
     faction: guard
-    hit_points: 6000
-    shields: 800
-    armor: 300
+    hit_points: 18000
+    shields: 2400
+    armor: 900
   dominion_flak:
     name: "@object.dominion_flak.name"
     description: "@object.dominion_flak.desc"
     model_set: dominion_turret_pod
     kind: ground
     faction: dominion
-    hit_points: 400
-    armor: 120
+    hit_points: 1200
+    armor: 360
     beams: [death_ray]
     turret_arc: 180
     behaviour: station_turret

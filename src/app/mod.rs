@@ -130,7 +130,7 @@ pub enum Next {
         mission: String,
         ship: Option<String>,
         /// The craft's fitted beams and missiles (empty: the class's own).
-        loadout: (Vec<String>, Vec<(String, u32)>),
+        loadout: crate::campaign::Loadout,
         /// The campaign's relations: `(faction, hostile to the player)`.
         stances: Vec<(String, bool)>,
     },
@@ -615,7 +615,7 @@ pub async fn run(options: Options) {
                 match flight::FlightSession::start_mission(&mut ctx, &mission, ship.as_deref()) {
                     Ok(mut f) => {
                         f.campaign_battle = true;
-                        f.apply_loadout(&loadout.0, &loadout.1);
+                        f.apply_loadout(&loadout);
                         flight::apply_stances(&mut f.world, f.player, &stances);
                         screen = Screen::Flight(Box::new(f));
                     }

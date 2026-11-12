@@ -1628,7 +1628,11 @@ fn resolve(
         return Err("inherit chain too long (is there a cycle?)".into());
     }
     let own = &defs.iter().find(|(s, i, _)| s == section && i == id).ok_or(format!("unknown {section} '{id}'"))?.2.node;
-    let Some(parent_ref) = Get(own).str("inherit") else { return Ok(own.clone()) };
+    let Some(parent_ref) = Get(own).str("inherit") else {
+        let mut node = own.clone();
+        apply_fitted(&mut node, section, original)?;
+        return Ok(node);
+    };
     let mut parent = if parent_ref.starts_with("original:") {
         original_section(parent_ref, section, original)?
     } else {
@@ -1649,7 +1653,39 @@ fn resolve(
     let mut child = own.clone();
     remove_key(&mut child, "inherit");
     merge_into(&mut parent, &child);
+    apply_fitted(&mut parent, section, original)?;
     Ok(parent)
+}
+
+/// `fitted: {shield: <ref>, armor: <ref>}` on a ship class: the protection of the
+/// equipment it carries by default, read from that equipment's definition (an
+/// `original:` section, by [`super::strategy::protection_of`]) — so a pack names the
+/// original's shield instead of copying its value. A class's own `shields:` or
+/// `armor:` wins.
+fn apply_fitted(node: &mut Node, section: &str, original: &OriginalLookup) -> Result<(), String> {
+    let fitted: Vec<(String, String)> = Get(node)
+        .node("fitted")
+        .and_then(|n| n.as_map())
+        .unwrap_or(&[])
+        .iter()
+        .filter_map(|(k, v)| Some((k.clone(), v.as_str()?.to_string())))
+        .collect();
+    for (slot, reference) in fitted {
+        let key = match slot.as_str() {
+            "shield" => "shields",
+            "armor" => "armor",
+            other => return Err(format!("fitted.{other}: only shield and armor are read")),
+        };
+        if Get(node).node(key).is_some() {
+            continue;
+        }
+        let item = original_section(&reference, section, original)?;
+        let value = super::strategy::protection_of(&slot, Get(&item))
+            .ok_or(format!("fitted.{slot}: {reference} gives no protection value"))?;
+        let add = crate::formats::yaml::parse(&format!("{key}: {value}")).map_err(|e| e.to_string())?;
+        merge_into(node, &add);
+    }
+    Ok(())
 }
 
 /// Reads `original:<file>/<section>` as a definition tree. Original keys become field
@@ -1966,7 +2002,17 @@ fn ship_class(
         playable: g.bool("playable").unwrap_or(false),
         cockpit: g.str("cockpit").map(str::to_string),
         voice: g.str("voice").map(str::to_string),
-        hull: g.num("hit_points").unwrap_or(100.0),
+        // A station inheriting the original's hit-point chart (`*HP` sections: HP1–HP4)
+        // has no HitPoints key: its hull is the chart's sections summed (DERIVED: what
+        // each section protects in the original is not known).
+        hull: g.num("hit_points").unwrap_or_else(|| {
+            let chart: f32 = ["hp1", "hp2", "hp3", "hp4"].iter().filter_map(|k| g.num(k)).sum();
+            if chart > 0.0 {
+                chart
+            } else {
+                100.0
+            }
+        }),
         armor: g.num("armor").unwrap_or(0.0),
         shields,
         shield_recharge: g.num("shield_recharge").unwrap_or(5.0),

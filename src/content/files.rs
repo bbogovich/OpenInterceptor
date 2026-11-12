@@ -180,6 +180,14 @@ fn ship() -> Ty {
         f("hit_points", Ty::Num, "hull points"),
         f("armor", Ty::Num, "armour points (absorbed after shields)"),
         f("shields", Ty::Num, "shield points per facing (fore and aft)"),
+        f(
+            "fitted",
+            Ty::Struct(vec![
+                f("shield", Ty::Asset, "the shield it carries: protection from that definition"),
+                f("armor", Ty::Asset, "the armour it carries"),
+            ]),
+            "default equipment whose protection sets shields/armor (e.g. an original: section)",
+        ),
         f("shield_recharge", Ty::Num, "shield points per second per facing at full charge"),
         f("max_speed", Ty::Num, "top speed, m/s"),
         f("acceleration", Ty::Num, "m/s²"),

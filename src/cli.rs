@@ -51,6 +51,7 @@ OPTIONS:
     --soak-pilot <P>    passive, ai or idle
     --write-schemas <DIR>  Write JSON Schema files for the mod file types (pack.yaml,
                         rules, scenarios) for editor completion and checking, then exit
+    --balance           Print each class's toughness and kill times for the playable ships
     --check             Validate all content without opening a window, then exit
     --extract <DIR>     Convert the original data to OBJ/PNG/WAV at override paths
                         (personal modding use only), then exit
@@ -95,6 +96,8 @@ pub struct Options {
     pub soak_pilot: Option<crate::soak::SoakPilot>,
     pub frames: Option<u32>,
     pub check: bool,
+    /// `--balance`: print the balance report and exit.
+    pub balance: bool,
     pub extract: Option<PathBuf>,
     pub list: bool,
     pub fullscreen: bool,
@@ -159,6 +162,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             }
             "--no-original" => o.no_original = true,
             "--check" => o.check = true,
+            "--balance" => o.balance = true,
             "--extract" => o.extract = Some(PathBuf::from(value("--extract")?)),
             "--list" => o.list = true,
             "--fullscreen" => o.fullscreen = true,
