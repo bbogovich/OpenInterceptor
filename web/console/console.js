@@ -195,10 +195,20 @@ link.addEventListener("telemetry", (e) => { latest = e.detail; });
 /** One action as a button. Held actions send down/up; taps send once. Every button
  *  lights up while pressed (class "down"): a hold for as long as it is held, a tap for
  *  at least MIN_LIT ms so a quick tap is still seen. A feature this craft has not got
- *  is shown, disabled, as "not fitted" (never hidden). */
+ *  is shown, disabled, as "not fitted" (never hidden). The action's one-sentence
+ *  description is a small line under the label (a tablet has no hover, so a tooltip
+ *  alone would never be seen) and the button's title, for a mouse and screen readers. */
 function makeButton(a) {
   const b = document.createElement("button");
   b.textContent = a.label;
+  if (a.description) {
+    // textContent, never innerHTML: the text is shown as text, whatever it contains.
+    const d = document.createElement("small");
+    d.className = "desc";
+    d.textContent = a.description;
+    b.appendChild(d);
+    b.title = a.description;
+  }
   b.className = a.kind;
   b.disabled = !a.available;
   let since = 0;

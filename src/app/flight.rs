@@ -1365,39 +1365,116 @@ fn draw_anchored(
     }
 }
 
-/// The keys help overlay: every action, grouped, with the player's current bindings,
-/// laid out in as many columns as the screen needs.
+/// Where everything in the keys help goes, worked out by [`help_layout`]. Positions are
+/// `(column, line)` pairs, turned into pixels by the caller.
+#[derive(Debug, Clone, PartialEq)]
+struct HelpLayout {
+    /// Text lines per action: 2 when each description gets a line under its label, else 1.
+    lines_per_row: usize,
+    /// How many columns the list is split into.
+    columns: usize,
+    /// Where each group's title goes.
+    titles: Vec<(usize, usize)>,
+    /// Where each action's first line goes, in table order across all groups.
+    rows: Vec<(usize, usize)>,
+}
+
+/// The narrowest column, in multiples of the text size, that is given description lines
+/// (about 55 characters at the smaller description size; longer ones are shortened).
+const HELP_DESCRIPTION_MIN_WIDTH: f32 = 20.0;
+
+/// Places the keys help: groups top to bottom, spilling into further columns. A group
+/// takes a title line, `lines_per_row` lines per action, and a blank line after; its title
+/// is never left at the foot of a column without at least its first two actions.
+fn help_place(group_sizes: &[usize], per_column: usize, lines_per_row: usize) -> HelpLayout {
+    // At least one action (plus its title) must fit in a column, or nothing would move on.
+    let per_column = per_column.max(1 + lines_per_row);
+    let (mut titles, mut rows) = (Vec::new(), Vec::new());
+    let (mut col, mut line) = (0usize, 0usize);
+    for &n in group_sizes {
+        if line > 0 && line + 1 + 2 * lines_per_row > per_column {
+            (col, line) = (col + 1, 0);
+        }
+        titles.push((col, line));
+        line += 1;
+        for _ in 0..n {
+            if line + lines_per_row > per_column {
+                (col, line) = (col + 1, 0);
+            }
+            rows.push((col, line));
+            line += lines_per_row;
+        }
+        line += 1;
+    }
+    HelpLayout { lines_per_row, columns: col + 1, titles, rows }
+}
+
+/// Chooses the keys help layout. `group_sizes` is the number of actions in each group,
+/// `per_column` how many text lines fit in one column. Descriptions are shown, each on a
+/// second line under its action, only if the columns that needs are still wide enough
+/// to read them; otherwise each action keeps to one line, as a small screen needs.
+/// Pure maths, so it is unit-tested.
+fn help_layout(group_sizes: &[usize], per_column: usize, screen_width: f32, size: f32) -> HelpLayout {
+    let detailed = help_place(group_sizes, per_column, 2);
+    if screen_width / detailed.columns as f32 >= size * HELP_DESCRIPTION_MIN_WIDTH {
+        detailed
+    } else {
+        help_place(group_sizes, per_column, 1)
+    }
+}
+
+/// Shortens `text` with a trailing "..." until it is at most `max_width` pixels wide at
+/// `size`, so a long description never runs into the next column.
+fn fit_text(text: &str, max_width: f32, size: f32) -> String {
+    let width = |s: &str| measure_text(s, None, size as u16, 1.0).width;
+    if width(text) <= max_width {
+        return text.to_string();
+    }
+    // Drop characters from the end until it fits. `char_indices` steps over whole
+    // characters, so a multi-byte character is never cut in half.
+    let mut end = text.len();
+    while let Some((i, _)) = text[..end].char_indices().next_back() {
+        end = i;
+        let short = format!("{}...", text[..end].trim_end());
+        if width(&short) <= max_width {
+            return short;
+        }
+    }
+    String::new()
+}
+
+/// The keys help overlay: every action, grouped, with the player's current bindings and,
+/// when the screen has room, a dimmer line under each saying what it does. Laid out in as
+/// many columns as the screen needs.
 fn draw_help(bindings: &crate::input::Bindings, screen: Vec2) {
     draw_rectangle(0.0, 0.0, screen.x, screen.y, Color::new(0.0, 0.02, 0.0, 0.9));
     let size = (screen.y * 0.021).clamp(13.0, 20.0);
+    let small = (size * 0.8).round();
     let line = size * 1.25;
     draw_centered("KEYS   (? or Shift+F1 or Esc to close)", size * 2.2, size * 1.4, Color::new(0.4, 1.0, 0.5, 1.0));
     let groups = crate::input::help_rows(bindings);
-    let rows: usize = groups.iter().map(|(_, r)| r.len() + 2).sum();
     let top = size * 4.0;
     let per_column = (((screen.y - top - size) / line) as usize).max(8);
-    let columns = rows.div_ceil(per_column).max(1);
-    let width = screen.x / columns as f32;
-    let (mut col, mut row) = (0usize, 0usize);
-    for (group, items) in &groups {
-        // Keep a group's title with at least its first two rows.
-        if row > 0 && row + 3 > per_column {
-            (col, row) = (col + 1, 0);
-        }
-        let x = col as f32 * width + size;
-        draw_text(group.title(), x, top + row as f32 * line, size, Color::new(0.4, 1.0, 0.5, 1.0));
-        row += 1;
-        for (label, keys) in items {
-            if row >= per_column {
-                (col, row) = (col + 1, 0);
+    let sizes: Vec<usize> = groups.iter().map(|(_, r)| r.len()).collect();
+    let layout = help_layout(&sizes, per_column, screen.x, size);
+    let width = screen.x / layout.columns as f32;
+    // (column, line) to the pixel position of a line's text baseline.
+    let at = |(col, l): (usize, usize)| (col as f32 * width + size, top + l as f32 * line);
+    // The layout's `rows` run through every group in order; this iterator hands them out.
+    let mut places = layout.rows.iter().copied();
+    for ((group, items), &title) in groups.iter().zip(&layout.titles) {
+        let (x, y) = at(title);
+        draw_text(group.title(), x, y, size, Color::new(0.4, 1.0, 0.5, 1.0));
+        for (item, place) in items.iter().zip(&mut places) {
+            let (x, y) = at(place);
+            draw_text(item.label, x, y, size, WHITE);
+            draw_text(&item.keys, x + width * 0.48, y, size, Color::new(0.75, 0.85, 0.75, 1.0));
+            if layout.lines_per_row == 2 {
+                // The description, indented and dimmer, on the line below the label.
+                let text = fit_text(item.description, width - size * 2.5, small);
+                draw_text(&text, x + size * 0.5, y + line * 0.9, small, Color::new(0.55, 0.68, 0.58, 1.0));
             }
-            let x = col as f32 * width + size;
-            let y = top + row as f32 * line;
-            draw_text(label, x, y, size, WHITE);
-            draw_text(keys, x + width * 0.48, y, size, Color::new(0.75, 0.85, 0.75, 1.0));
-            row += 1;
         }
-        row += 1;
     }
 }
 
@@ -1490,6 +1567,34 @@ mod tests {
         let (p, q) = view_pose(View::ChaseManual, pos, rot, r, &chase);
         assert!(((q * Vec3::NEG_Z) - (pos - p).normalize()).length() < 1e-4, "orbit looks at the ship");
         assert!(shows_own_ship(View::Chase) && !shows_own_ship(View::Cockpit));
+    }
+
+    #[test]
+    fn the_keys_help_shows_descriptions_only_when_the_columns_are_wide_enough() {
+        // 3 groups of 10 actions: 22 lines each with descriptions, 12 without.
+        let groups = [10, 10, 10];
+        // A wide screen: in 45-line columns, two groups share the first column (lines
+        // 0-43) and the third starts the second. 960 px columns are plenty.
+        let l = help_layout(&groups, 45, 1920.0, 20.0);
+        assert_eq!((l.lines_per_row, l.columns), (2, 2));
+        assert_eq!(l.titles, vec![(0, 0), (0, 22), (1, 0)]);
+        assert_eq!(l.rows[..2], [(0, 1), (0, 3)], "each action takes two lines");
+        assert_eq!(l.rows.len(), 30, "every action is placed");
+        // A narrow screen: 2 columns of 400 px are under 20 x 24 px, so one line each,
+        // and then everything fits in one column.
+        let l = help_layout(&groups, 45, 800.0, 24.0);
+        assert_eq!((l.lines_per_row, l.columns), (1, 1));
+        assert_eq!(l.rows[..2], [(0, 1), (0, 2)]);
+        // A short screen: a group spills into the next column, and a title never sits at
+        // the foot of a column without at least its first two actions.
+        let l = help_place(&groups, 10, 1);
+        assert_eq!(l.titles[0], (0, 0));
+        assert_eq!(l.rows[8..10], [(0, 9), (1, 0)], "the first group spills over");
+        assert_eq!(l.titles[1], (1, 2), "a title with room for two actions stays");
+        assert!(l.titles.iter().all(|&(_, line)| line + 3 <= 10));
+        // Degenerate input never divides by zero or loops forever.
+        assert_eq!(help_layout(&[], 0, 100.0, 20.0).columns, 1);
+        assert_eq!(help_place(&[3], 0, 2).rows.len(), 3);
     }
 
     #[test]

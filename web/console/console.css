@@ -53,6 +53,10 @@ oi-static canvas { width: 100%; height: 100%; image-rendering: pixelated; }
 @media (prefers-reduced-motion: reduce) { oi-static { display: none; } }
 oi-actions button:disabled { color: var(--off); border-color: var(--off); background: transparent; }
 oi-actions button:disabled::after { content: "not fitted"; display: block; font-size: 10px; }
+/* The action's description: a small, dimmer line under the label, at most two lines
+   (the button's title holds the whole sentence). Shared by both modes' buttons. */
+oi-actions button .desc, oi-tiles button .desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  line-clamp: 2; overflow: hidden; margin-top: 3px; font-size: 10px; line-height: 1.2; opacity: 0.7; }
 
 /* --- Modes ---------------------------------------------------------------------- */
 oi-mode { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 10px; }

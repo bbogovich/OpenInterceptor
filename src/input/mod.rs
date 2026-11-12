@@ -136,21 +136,30 @@ impl Group {
     }
 }
 
-/// Everything known about one action: its `bindings.yaml` name, defaults, menu group
-/// and label. One table drives parsing, defaults, the controls menu and the
-/// documentation, so they cannot drift apart.
+/// Everything known about one action: its `bindings.yaml` name, defaults, menu group,
+/// label and description. One table drives parsing, defaults, the controls menu, the keys
+/// help, the remote console and the documentation, so they cannot drift apart.
 #[derive(Debug, Clone, Copy)]
 pub struct ActionInfo {
+    /// The action's name in `bindings.yaml` and on the console protocol (`fire_beams`).
     pub name: &'static str,
+    /// The engine [`Action`] this entry describes.
     pub action: Action,
     /// Default keys, comma-separated (`Shift+` for chords).
     pub keys: &'static str,
     /// Default gamepad buttons, comma-separated (`Modifier+Button` for chords).
     pub pad: &'static str,
+    /// The menu group the action is listed under.
     pub group: Group,
+    /// A short name for buttons and menus ("Fire beams").
     pub label: &'static str,
+    /// One sentence telling a player what the action does. The keys help shows it under
+    /// the label, and the remote console shows it on the action's button.
+    pub description: &'static str,
 }
 
+/// Builds one [`ActionInfo`]. A `const fn` can run at compile time, which is what lets
+/// [`ACTIONS`] be a `const` table: it is built into the program, not at start-up.
 const fn a(
     name: &'static str,
     action: Action,
@@ -158,8 +167,9 @@ const fn a(
     pad: &'static str,
     group: Group,
     label: &'static str,
+    description: &'static str,
 ) -> ActionInfo {
-    ActionInfo { name, action, keys, pad, group, label }
+    ActionInfo { name, action, keys, pad, group, label, description }
 }
 
 use Action as A;
@@ -167,89 +177,105 @@ use Group as G;
 
 /// The action table (see [`ActionInfo`]). Gamepad defaults use the left shoulder as the
 /// modifier for the second layer.
+// One action per line reads as a table, so `cargo fmt` is told to leave it alone
+// (`rustfmt::skip`); otherwise it would split each long entry over nine lines.
+#[rustfmt::skip]
 pub const ACTIONS: &[ActionInfo] = &[
-    a("pitch_up", A::PitchUp, "Down", "", G::Flight, "Nose up"),
-    a("pitch_down", A::PitchDown, "Up", "", G::Flight, "Nose down"),
-    a("yaw_left", A::YawLeft, "Left", "", G::Flight, "Turn left"),
-    a("yaw_right", A::YawRight, "Right", "", G::Flight, "Turn right"),
-    a("roll_left", A::RollLeft, "Kp7, Q", "", G::Flight, "Roll left"),
-    a("roll_right", A::RollRight, "Kp9, E", "", G::Flight, "Roll right"),
-    a("slide_left", A::SlideLeft, "Kp4", "", G::Flight, "Slide left (VCT)"),
-    a("slide_right", A::SlideRight, "Kp6", "", G::Flight, "Slide right (VCT)"),
-    a("slide_up", A::SlideUp, "Kp8", "", G::Flight, "Slide up (VCT)"),
-    a("slide_down", A::SlideDown, "Kp2", "", G::Flight, "Slide down (VCT)"),
-    a("throttle_up", A::ThrottleUp, "Equal, KpAdd", "DpadUp", G::Throttle, "Throttle up 10%"),
-    a("throttle_down", A::ThrottleDown, "Minus, KpSubtract", "DpadDown", G::Throttle, "Throttle down 10%"),
-    a("throttle_full", A::ThrottleFull, "Backspace", "", G::Throttle, "Full throttle"),
-    a("throttle_zero", A::ThrottleZero, "Backslash", "", G::Throttle, "Zero throttle"),
-    a("reverse", A::Reverse, "Z", "", G::Throttle, "Reverse thrust"),
-    a("match_speed", A::MatchSpeed, "M", "X", G::Throttle, "Match target speed"),
-    a("afterburner", A::Afterburner, "Tab", "A", G::Throttle, "Afterburner (hold)"),
-    a("brake", A::Brake, "B", "B", G::Throttle, "Brake (hold)"),
-    a("fire_beams", A::FireBeams, "Enter, LeftControl", "RightTrigger", G::Weapons, "Fire beams"),
-    a("fire_missile", A::FireMissile, "Space", "LeftTrigger", G::Weapons, "Fire missile"),
-    a("cycle_link", A::CycleLink, "X", "Back", G::Weapons, "Beam link mode"),
-    a("cycle_missile", A::CycleMissile, "W", "LeftThumb", G::Weapons, "Next missile type"),
-    a("next_target", A::NextTarget, "T", "RightShoulder", G::Targeting, "Next target"),
-    a("prev_target", A::PrevTarget, "Y", "LeftShoulder+RightShoulder", G::Targeting, "Previous target"),
-    a("nearest_enemy", A::NearestEnemy, "R", "RightThumb", G::Targeting, "Nearest enemy"),
-    a("target_in_sights", A::TargetInSights, "G", "LeftShoulder+RightThumb", G::Targeting, "Target in sights"),
-    a("beam_charge", A::BeamCharge, "F9", "LeftShoulder+DpadLeft", G::Power, "Beam charge rate (A-E)"),
-    a("shield_charge", A::ShieldCharge, "F10", "LeftShoulder+DpadRight", G::Power, "Shield charge rate (A-E)"),
-    a("power_to_shields", A::PowerToShields, "Semicolon", "LeftShoulder+DpadDown", G::Power, "Power to shields"),
-    a("power_to_beams", A::PowerToBeams, "Apostrophe", "LeftShoulder+DpadUp", G::Power, "Power to beams"),
-    a("shield_balance", A::ShieldBalance, "S", "LeftShoulder+B", G::Power, "Shield balance"),
-    a("tractor", A::Tractor, "Shift+T", "LeftShoulder+X", G::Power, "Tractor beam"),
-    a("cloak", A::Cloak, "Shift+C", "LeftShoulder+Y", G::Power, "Cloaking device"),
-    a("ecm", A::Ecm, "Shift+J", "LeftShoulder+Back", G::Power, "ECM"),
-    a("hyperspace", A::Hyperspace, "H", "LeftShoulder+A", G::Power, "Hyperspace out / abort"),
-    a("mfd_next", A::MfdNext, "Period", "DpadRight", G::Interface, "Next MFD page"),
-    a("mfd_prev", A::MfdPrev, "Comma", "DpadLeft", G::Interface, "Previous MFD page"),
-    a("view_cockpit", A::ViewCockpit, "F1", "", G::Views, "Cockpit view"),
-    a("view_forward", A::ViewForward, "F2", "", G::Views, "Full forward view"),
-    a("view_left", A::ViewLeft, "F3", "", G::Views, "Left view"),
-    a("view_right", A::ViewRight, "F4", "", G::Views, "Right view"),
-    a("view_rear_left", A::ViewRearLeft, "F5", "", G::Views, "Rear-left view"),
-    a("view_rear_right", A::ViewRearRight, "F6", "", G::Views, "Rear-right view"),
-    a("view_chase", A::ViewChase, "F7", "Y", G::Views, "Chase view"),
-    a("view_chase_manual", A::ViewChaseManual, "F8", "", G::Views, "Manual chase view"),
-    a("chase_left", A::ChaseLeft, "Insert", "", G::Camera, "Orbit left"),
-    a("chase_right", A::ChaseRight, "Delete", "", G::Camera, "Orbit right"),
-    a("chase_up", A::ChaseUp, "PageUp", "", G::Camera, "Orbit up"),
-    a("chase_down", A::ChaseDown, "PageDown", "", G::Camera, "Orbit down"),
-    a("chase_in", A::ChaseIn, "Home", "", G::Camera, "Zoom in"),
-    a("chase_out", A::ChaseOut, "End", "", G::Camera, "Zoom out"),
-    a("chase_reset", A::ChaseReset, "Kp5", "", G::Camera, "Reset camera"),
-    a("wing_menu", A::WingMenu, "RightBracket", "LeftShoulder+LeftThumb", G::Wingmen, "Wingman menu"),
-    a("wing_fire_at_will", A::WingFireAtWill, "Shift+F", "", G::Wingmen, "Wingmen: fire at will"),
-    a("wing_attack_my_target", A::WingAttackMyTarget, "Shift+A", "", G::Wingmen, "Wingmen: attack my target"),
-    a("wing_formation", A::WingFormation, "Shift+I", "", G::Wingmen, "Wingmen: ignore my target (form up)"),
-    a("wing_evasive", A::WingEvasive, "Shift+E", "", G::Wingmen, "Wingmen: evasive"),
-    a("wing_retreat", A::WingRetreat, "Shift+R", "", G::Wingmen, "Wingmen: retreat"),
-    a("wing_status", A::WingStatus, "Shift+S", "", G::Wingmen, "Wingmen: status report"),
-    a("wing_next_formation", A::WingNextFormation, "Shift+O", "", G::Wingmen, "Wingmen: next formation"),
-    a("repeat_message", A::RepeatMessage, "L", "", G::Wingmen, "Repeat last message"),
-    a("next_nav", A::NextNav, "N", "", G::Interface, "Next nav point"),
-    a("pause", A::Pause, "P", "Start", G::Interface, "Pause"),
-    a("menu", A::Menu, "Escape", "LeftShoulder+Start", G::Interface, "Menu"),
-    a("mouse_flight", A::MouseFlight, "C", "", G::Interface, "Mouse flight on/off"),
-    a("help", A::Help, "Shift+Slash, Shift+F1", "", G::Interface, "Keys help (this list)"),
+    a("pitch_up", A::PitchUp, "Down", "", G::Flight, "Nose up", "Pulls the nose up to climb."),
+    a("pitch_down", A::PitchDown, "Up", "", G::Flight, "Nose down", "Pushes the nose down to dive."),
+    a("yaw_left", A::YawLeft, "Left", "", G::Flight, "Turn left", "Swings the nose to the left."),
+    a("yaw_right", A::YawRight, "Right", "", G::Flight, "Turn right", "Swings the nose to the right."),
+    a("roll_left", A::RollLeft, "Kp7, Q", "", G::Flight, "Roll left", "Rolls the craft anticlockwise about its nose."),
+    a("roll_right", A::RollRight, "Kp9, E", "", G::Flight, "Roll right", "Rolls the craft clockwise about its nose."),
+    a("slide_left", A::SlideLeft, "Kp4", "", G::Flight, "Slide left (VCT)", "Thrusts sideways to the left without turning."),
+    a("slide_right", A::SlideRight, "Kp6", "", G::Flight, "Slide right (VCT)", "Thrusts sideways to the right without turning."),
+    a("slide_up", A::SlideUp, "Kp8", "", G::Flight, "Slide up (VCT)", "Thrusts straight up without turning."),
+    a("slide_down", A::SlideDown, "Kp2", "", G::Flight, "Slide down (VCT)", "Thrusts straight down without turning."),
+    a("throttle_up", A::ThrottleUp, "Equal, KpAdd", "DpadUp", G::Throttle, "Throttle up 10%", "Raises the set speed by a tenth of maximum."),
+    a("throttle_down", A::ThrottleDown, "Minus, KpSubtract", "DpadDown", G::Throttle, "Throttle down 10%", "Lowers the set speed by a tenth of maximum."),
+    a("throttle_full", A::ThrottleFull, "Backspace", "", G::Throttle, "Full throttle", "Sets the throttle to maximum speed."),
+    a("throttle_zero", A::ThrottleZero, "Backslash", "", G::Throttle, "Zero throttle", "Sets the throttle to zero so the craft coasts to a stop."),
+    a("reverse", A::Reverse, "Z", "", G::Throttle, "Reverse thrust", "Reverses thrust to fly backwards."),
+    a("match_speed", A::MatchSpeed, "M", "X", G::Throttle, "Match target speed", "Sets your speed to match the current target's."),
+    a("afterburner", A::Afterburner, "Tab", "A", G::Throttle, "Afterburner (hold)", "Burns extra fuel for a burst of speed while held."),
+    a("brake", A::Brake, "B", "B", G::Throttle, "Brake (hold)", "Slows the craft down quickly while held."),
+    a("fire_beams", A::FireBeams, "Enter, LeftControl", "RightTrigger", G::Weapons, "Fire beams", "Fires the beam weapons while held."),
+    a("fire_missile", A::FireMissile, "Space", "LeftTrigger", G::Weapons, "Fire missile", "Launches the selected missile at the target."),
+    a("cycle_link", A::CycleLink, "X", "Back", G::Weapons, "Beam link mode", "Switches between firing beams together or one at a time."),
+    a("cycle_missile", A::CycleMissile, "W", "LeftThumb", G::Weapons, "Next missile type", "Selects the next missile type carried."),
+    a("next_target", A::NextTarget, "T", "RightShoulder", G::Targeting, "Next target", "Locks on to the next contact in range."),
+    a("prev_target", A::PrevTarget, "Y", "LeftShoulder+RightShoulder", G::Targeting, "Previous target", "Locks on to the previous contact in range."),
+    a("nearest_enemy", A::NearestEnemy, "R", "RightThumb", G::Targeting, "Nearest enemy", "Locks on to the closest hostile craft."),
+    a("target_in_sights", A::TargetInSights, "G", "LeftShoulder+RightThumb", G::Targeting, "Target in sights", "Locks on to the contact nearest your crosshair."),
+    a("beam_charge", A::BeamCharge, "F9", "LeftShoulder+DpadLeft", G::Power, "Beam charge rate (A-E)", "Steps the beam recharge rate through settings A to E."),
+    a("shield_charge", A::ShieldCharge, "F10", "LeftShoulder+DpadRight", G::Power, "Shield charge rate (A-E)", "Steps the shield recharge rate through settings A to E."),
+    a("power_to_shields", A::PowerToShields, "Semicolon", "LeftShoulder+DpadDown", G::Power, "Power to shields", "Moves energy from the beams into the shields."),
+    a("power_to_beams", A::PowerToBeams, "Apostrophe", "LeftShoulder+DpadUp", G::Power, "Power to beams", "Moves energy from the shields into the beams."),
+    a("shield_balance", A::ShieldBalance, "S", "LeftShoulder+B", G::Power, "Shield balance", "Spreads shield strength evenly front and rear."),
+    a("tractor", A::Tractor, "Shift+T", "LeftShoulder+X", G::Power, "Tractor beam", "Switches the tractor beam on the target on or off."),
+    a("cloak", A::Cloak, "Shift+C", "LeftShoulder+Y", G::Power, "Cloaking device", "Switches the cloaking device on or off."),
+    a("ecm", A::Ecm, "Shift+J", "LeftShoulder+Back", G::Power, "ECM", "Switches the missile-jamming countermeasures on or off."),
+    a("hyperspace", A::Hyperspace, "H", "LeftShoulder+A", G::Power, "Hyperspace out / abort", "Jumps out of the battle, or cancels a jump in progress."),
+    a("mfd_next", A::MfdNext, "Period", "DpadRight", G::Interface, "Next MFD page", "Shows the next page on the cockpit display."),
+    a("mfd_prev", A::MfdPrev, "Comma", "DpadLeft", G::Interface, "Previous MFD page", "Shows the previous page on the cockpit display."),
+    a("view_cockpit", A::ViewCockpit, "F1", "", G::Views, "Cockpit view", "Looks forward from inside the cockpit."),
+    a("view_forward", A::ViewForward, "F2", "", G::Views, "Full forward view", "Looks forward with the cockpit frame hidden."),
+    a("view_left", A::ViewLeft, "F3", "", G::Views, "Left view", "Looks out of the left side of the craft."),
+    a("view_right", A::ViewRight, "F4", "", G::Views, "Right view", "Looks out of the right side of the craft."),
+    a("view_rear_left", A::ViewRearLeft, "F5", "", G::Views, "Rear-left view", "Looks back over the left shoulder."),
+    a("view_rear_right", A::ViewRearRight, "F6", "", G::Views, "Rear-right view", "Looks back over the right shoulder."),
+    a("view_chase", A::ViewChase, "F7", "Y", G::Views, "Chase view", "Watches your craft from a camera following behind."),
+    a("view_chase_manual", A::ViewChaseManual, "F8", "", G::Views, "Manual chase view", "Watches your craft from a camera you steer yourself."),
+    a("chase_left", A::ChaseLeft, "Insert", "", G::Camera, "Orbit left", "Moves the chase camera round to the left."),
+    a("chase_right", A::ChaseRight, "Delete", "", G::Camera, "Orbit right", "Moves the chase camera round to the right."),
+    a("chase_up", A::ChaseUp, "PageUp", "", G::Camera, "Orbit up", "Moves the chase camera up over the craft."),
+    a("chase_down", A::ChaseDown, "PageDown", "", G::Camera, "Orbit down", "Moves the chase camera down under the craft."),
+    a("chase_in", A::ChaseIn, "Home", "", G::Camera, "Zoom in", "Moves the chase camera closer to the craft."),
+    a("chase_out", A::ChaseOut, "End", "", G::Camera, "Zoom out", "Moves the chase camera further from the craft."),
+    a("chase_reset", A::ChaseReset, "Kp5", "", G::Camera, "Reset camera", "Puts the chase camera back behind the craft."),
+    a("wing_menu", A::WingMenu, "RightBracket", "LeftShoulder+LeftThumb", G::Wingmen, "Wingman menu", "Opens the list of orders for your wingmen."),
+    a("wing_fire_at_will", A::WingFireAtWill, "Shift+F", "", G::Wingmen, "Wingmen: fire at will", "Lets your wingmen pick and attack their own targets."),
+    a("wing_attack_my_target", A::WingAttackMyTarget, "Shift+A", "", G::Wingmen, "Wingmen: attack my target", "Orders your wingmen to attack your current target."),
+    a("wing_formation", A::WingFormation, "Shift+I", "", G::Wingmen, "Wingmen: ignore my target (form up)", "Orders your wingmen to leave your target and form up on you."),
+    a("wing_evasive", A::WingEvasive, "Shift+E", "", G::Wingmen, "Wingmen: evasive", "Orders your wingmen to break off and dodge enemy fire."),
+    a("wing_retreat", A::WingRetreat, "Shift+R", "", G::Wingmen, "Wingmen: retreat", "Orders your wingmen to leave the battle."),
+    a("wing_status", A::WingStatus, "Shift+S", "", G::Wingmen, "Wingmen: status report", "Asks your wingmen to report their condition."),
+    a("wing_next_formation", A::WingNextFormation, "Shift+O", "", G::Wingmen, "Wingmen: next formation", "Changes the shape your wingmen fly in."),
+    a("repeat_message", A::RepeatMessage, "L", "", G::Wingmen, "Repeat last message", "Shows the last radio message again."),
+    a("next_nav", A::NextNav, "N", "", G::Interface, "Next nav point", "Moves the navigation marker to the next nav point."),
+    a("pause", A::Pause, "P", "Start", G::Interface, "Pause", "Pauses or resumes the battle."),
+    a("menu", A::Menu, "Escape", "LeftShoulder+Start", G::Interface, "Menu", "Opens the in-flight menu."),
+    a("mouse_flight", A::MouseFlight, "C", "", G::Interface, "Mouse flight on/off", "Switches steering with the mouse on or off."),
+    a("help", A::Help, "Shift+Slash, Shift+F1", "", G::Interface, "Keys help (this list)", "Shows or hides this list of keys."),
 ];
 
-/// The keys help: every group in menu order, each with `(label, keys)` rows showing the
-/// player's *current* bindings (keyboard first, then gamepad), or "unbound". Built from
-/// [`ACTIONS`], so a new action appears here, in the controls menu and on the console
+/// One row of the keys help: an action's label and description, and the player's current
+/// keys for it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct HelpRow {
+    /// The action's short label ("Fire beams").
+    pub label: &'static str,
+    /// What the action does, in one sentence.
+    pub description: &'static str,
+    /// The current keys and pad buttons, comma-separated, or "unbound".
+    pub keys: String,
+}
+
+/// The keys help: every group in menu order, each with one [`HelpRow`] per action showing
+/// the player's *current* bindings (keyboard first, then gamepad), or "unbound". Built
+/// from [`ACTIONS`], so a new action appears here, in the controls menu and on the console
 /// without further work.
-pub fn help_rows(b: &Bindings) -> Vec<(Group, Vec<(&'static str, String)>)> {
-    let mut groups: Vec<(Group, Vec<(&'static str, String)>)> = Vec::new();
+pub fn help_rows(b: &Bindings) -> Vec<(Group, Vec<HelpRow>)> {
+    let mut groups: Vec<(Group, Vec<HelpRow>)> = Vec::new();
     for info in ACTIONS {
         let mut keys: Vec<String> = b.keys.get(&info.action).into_iter().flatten().map(KeyChord::text).collect();
         keys.extend(b.pad.get(&info.action).into_iter().flatten().map(|p| format!("pad {}", p.text())));
         let keys = if keys.is_empty() { "unbound".to_string() } else { keys.join(", ") };
+        let row = HelpRow { label: info.label, description: info.description, keys };
         // Groups appear in the order their first action appears in the table.
         match groups.iter_mut().find(|(g, _)| *g == info.group) {
-            Some((_, rows)) => rows.push((info.label, keys)),
-            None => groups.push((info.group, vec![(info.label, keys)])),
+            Some((_, rows)) => rows.push(row),
+            None => groups.push((info.group, vec![row])),
         }
     }
     groups
@@ -914,14 +940,29 @@ mod tests {
     }
 
     #[test]
+    fn every_action_has_a_one_sentence_description() {
+        for a in ACTIONS {
+            let d = a.description.trim();
+            assert!(!d.is_empty(), "{} has no description", a.name);
+            // A sentence for a player: starts with a capital, ends with a full stop, and
+            // says more than the label does.
+            assert!(d.starts_with(|c: char| c.is_ascii_uppercase()), "{}: {d:?} starts in lower case", a.name);
+            assert!(d.ends_with('.'), "{}: {d:?} does not end with a full stop", a.name);
+            assert_ne!(d, a.label, "{}: the description only repeats the label", a.name);
+        }
+    }
+
+    #[test]
     fn the_keys_help_lists_every_action_with_its_current_keys() {
         let mut b = Bindings::default();
         let rows = help_rows(&b);
         assert_eq!(rows.iter().map(|(_, r)| r.len()).sum::<usize>(), ACTIONS.len(), "every action once");
         assert_eq!(rows[0].0, Group::Flight, "groups in table order");
-        let find = |rows: &[(Group, Vec<(&str, String)>)], label: &str| {
-            rows.iter().flat_map(|(_, r)| r.iter()).find(|(l, _)| *l == label).map(|(_, k)| k.clone()).unwrap()
+        let find = |rows: &[(Group, Vec<HelpRow>)], label: &str| {
+            rows.iter().flat_map(|(_, r)| r.iter()).find(|r| r.label == label).map(|r| r.keys.clone()).unwrap()
         };
+        // Each row carries its action's description from the table.
+        assert_eq!(rows[0].1[0].description, ACTIONS[0].description);
         assert_eq!(find(&rows, "Afterburner (hold)"), "tab, pad A");
         b.keys.insert(Action::Afterburner, vec![]);
         b.pad.insert(Action::Afterburner, vec![]);
