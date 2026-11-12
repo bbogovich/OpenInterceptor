@@ -2094,7 +2094,9 @@ mod tests {
     use crate::formats::yaml;
 
     const ORIGINAL: &str = "[Ship_IntType1]\nSide=XCOM\nHitPoints=100\nRollRate=200\nMaxSpeed=600\n\
-                            [LaserCannon]\nRange=4\nDamage=30\nEnergyCost=10\nRateOfFire=2\nSpeed=2000\n";
+                            [LaserCannon]\nRange=4\nDamage=30\nEnergyCost=10\nRateOfFire=2\nSpeed=2000\n\
+                            [ShieldX]\nSpecial=321\nHitPoints=50\n[ArmorX]\nHitPoints=77\n\
+                            [StationHP]\nHP1=10\nHP2=20\nHP3=30\nHP4=0\n";
 
     fn original_lookup() -> impl Fn(&str, &str) -> Option<Section> {
         let ini = Ini::parse(ORIGINAL);
@@ -2145,6 +2147,37 @@ voices:
 flight: {boost: 120, bolt_frame: ship, bolt_carry: 0.2s, lighting: {rim: 0.4}}
 sounds: {lock: 'original:target lock.wav'}
 ";
+
+    #[test]
+    fn fitted_equipment_and_hit_point_charts_set_protection() {
+        let text = "\
+factions: {xcom: {}}
+ships:
+  craft:
+    faction: xcom
+    model: m
+    fitted: {shield: 'original:GameSettings.ini/ShieldX', armor: 'original:GameSettings.ini/ArmorX'}
+  own:
+    faction: xcom
+    model: m
+    shields: 5
+    fitted: {shield: 'original:GameSettings.ini/ShieldX'}
+  copy: {inherit: craft}
+objects:
+  station: {faction: xcom, model: m, inherit: 'original:GameSettings.ini/StationHP'}
+";
+        let (rules, errors) = build(&[source(0, text)], &original_lookup());
+        assert!(errors.is_empty(), "{errors:?}");
+        let get = |id: &str| rules.ship(rules.ship_id(id).unwrap()).clone();
+        // A shield's protection is its Special, armour's its HitPoints.
+        assert_eq!((get("craft").shields, get("craft").armor), (321.0, 77.0));
+        assert_eq!(get("own").shields, 5.0, "the class's own value wins");
+        assert_eq!(get("copy").shields, 321.0, "inherited with the class");
+        assert_eq!(get("station").hull, 60.0, "hull = HP1 + HP2 + HP3 + HP4");
+        let bad = "factions: {xcom: {}}\nships:\n  c: {faction: xcom, model: m, fitted: {engine: x}}\n";
+        let (_, errors) = build(&[source(0, bad)], &original_lookup());
+        assert!(errors.iter().any(|e| e.contains("fitted.engine")), "{errors:?}");
+    }
 
     #[test]
     fn builds_typed_definitions_with_inheritance() {

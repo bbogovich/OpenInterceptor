@@ -9,6 +9,6 @@ start:
   bases: [{type: guard_base, system: mercury_gate, name: Gatehouse}]
   craft: [{hull: comet, base: 0, count: 3}]
   research: [rocketry]
-  stock: {blaster: 6, seeker: 12}
+  stock: {blaster: 6, seeker: 12, deflector_screen: 3, steel_plating: 3}
 
 flags: [regent_revealed, engine_site_found, engine_destroyed, cartel_ally]

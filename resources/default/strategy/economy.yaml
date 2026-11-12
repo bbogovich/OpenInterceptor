@@ -21,12 +21,18 @@ items:
   atomic_torpedo: {name: Atomic torpedo, kind: missile, cost: 30000, sell_price: 15000, prod_time: 150, size: 0.5, rounds: 2}
   cluster_rocket: {name: Cluster rocket, kind: missile, cost: 22000, sell_price: 11000, prod_time: 120, size: 0.4, rounds: 3}
   cosmium: {name: Cosmium, kind: goods, cost: 0, sell_price: 9000, size: 0.1}
+  # Protection: a fitted shield sets shield points per facing, armour sets armour points
+  # (protection:); a craft without them flies its class's own values.
+  deflector_screen: {name: Deflector screen, kind: shield, protection: 300, cost: 60000, sell_price: 30000, prod_time: 400}
+  force_field: {name: Force field, kind: shield, protection: 480, cost: 140000, sell_price: 70000, prod_time: 900}
+  steel_plating: {name: Steel plating, kind: armor, protection: 180, cost: 30000, sell_price: 15000, prod_time: 250}
+  saucer_alloy: {name: Saucer-alloy plating, kind: armor, protection: 380, cost: 110000, sell_price: 55000, prod_time: 800}
 
 hulls:
-  comet: {cost: 450000, prod_time: 6000, upkeep: 9000, speed: 700, slots: {beam: 2, missile: 2, special: 1}}
-  meteor: {cost: 700000, prod_time: 9000, upkeep: 14000, speed: 800, slots: {beam: 2, missile: 3, special: 2}}
-  thunderbolt: {cost: 1100000, prod_time: 14000, upkeep: 20000, speed: 750, slots: {beam: 3, missile: 4, special: 2}}
-  victory: {cost: 1900000, prod_time: 22000, upkeep: 30000, speed: 900, slots: {beam: 4, missile: 4, special: 3}}
+  comet: {cost: 450000, prod_time: 6000, upkeep: 9000, speed: 700, slots: {beam: 2, missile: 2, special: 1, shield: 1, armor: 1}}
+  meteor: {cost: 700000, prod_time: 9000, upkeep: 14000, speed: 800, slots: {beam: 2, missile: 3, special: 2, shield: 1, armor: 1}}
+  thunderbolt: {cost: 1100000, prod_time: 14000, upkeep: 20000, speed: 750, slots: {beam: 3, missile: 4, special: 2, shield: 1, armor: 1}}
+  victory: {cost: 1900000, prod_time: 22000, upkeep: 30000, speed: 900, slots: {beam: 4, missile: 4, special: 3, shield: 1, armor: 1}}
 
 base_modules:
   hangar: {name: Hangar, group: hangar, cost: 250000, build_time: 10d, maintenance: 8000, effects: {hangar: 3}}

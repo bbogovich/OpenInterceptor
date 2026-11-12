@@ -14,6 +14,8 @@ research:
   saucer_hulls: {name: Saucer hull analysis, size: 2400, requires: salvaged(saucer_raid) or salvaged(scout_probe), unlocks: [items.atomic_torpedo]}
   saucer_propulsion: {name: Saucer propulsion, size: 5000, requires: research(saucer_hulls), unlocks: [hulls.meteor]}
   disintegrators: {name: Disintegrators, size: 6000, requires: research(ion_rays) and research(saucer_hulls), unlocks: [items.disintegrator]}
+  force_fields: {name: Force fields, size: 3000, requires: research(heat_rays), unlocks: [items.force_field]}
+  saucer_alloys: {name: Saucer alloys, size: 3500, requires: research(saucer_hulls), unlocks: [items.saucer_alloy]}
   deep_radar: {name: Deep radar, size: 2500, requires: research(rocketry), unlocks: [modules.deep_radar]}
   shipyards: {name: Orbital shipyards, size: 3000, requires: research(rocketry), unlocks: [modules.shipyard]}
   thunderbolt_design: {name: Thunderbolt design, size: 7000, requires: research(saucer_propulsion) and research(shipyards), unlocks: [hulls.thunderbolt]}

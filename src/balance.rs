@@ -8,7 +8,7 @@
 //! destroy it with its beams if every bolt hit.
 //!
 //! ```text
-//! openinterceptor --campaign default --balance --difficulty veteran
+//! openinterceptor --campaign default --balance --difficulty captain
 //! ```
 //!
 //! Real fights take longer (bolts miss, shields recharge), but the ratios are what a

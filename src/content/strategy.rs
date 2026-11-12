@@ -1171,6 +1171,16 @@ fn sections_core() -> Vec<super::schema::Field> {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn protection_comes_from_the_item_or_the_originals_keys() {
+        use crate::formats::yaml;
+        let g = |s: &str| yaml::parse(s).unwrap();
+        assert_eq!(protection_of("shield", Get(&g("protection: 40\nspecial: 99"))), Some(40.0), "its own key first");
+        assert_eq!(protection_of("shield", Get(&g("special: 99\nhit_points: 5"))), Some(99.0));
+        assert_eq!(protection_of("armor", Get(&g("special: 99\nhit_points: 5"))), Some(5.0));
+        assert_eq!(protection_of("beam", Get(&g("special: 99"))), None, "only shields and armour protect");
+    }
     use crate::formats::yaml;
 
     #[test]

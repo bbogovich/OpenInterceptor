@@ -1,27 +1,31 @@
-//! # The strategy screen (Stage 4.10): the campaign between battles
+//! # The strategy screen (Stage 4.10, rebuilt in 0.16): the campaign between battles
 //!
-//! A functional, plain-skinned screen over a [`Campaign`]: the star map on the left, a
-//! panel of tabs on the right (bases, research, building, market, factory, hangar,
-//! contacts, messages), and the clock along the top. The look of the finished game
-//! (themed per campaign) is Stage 6; this screen is about every rule being playable.
+//! A screen over a [`Campaign`], laid out by the pack's `screens.starmap` (a design
+//! space stretched to the window; see [`crate::content::screens`]) and drawn in the
+//! campaign's skin with the immediate-mode [`widgets`]:
 //!
 //! ```text
-//!  2084-03-14  ▶▶ 1 day/s   Funds 2,140,000   Score 310            [F5 save]
-//! ┌──────────────────────────────────────┐┌─ Bases │ Research │ Build │ … ─┐
-//! │   ·Ajax ─────── ·Vesta Reach         ││ > Gatehouse (Mercury Gate)      │
-//! │  /                   ▲ contact       ││   3 modules, 1 building          │
-//! │ ■Mercury Gate                        ││                                  │
-//! └──────────────────────────────────────┘└──────────────────────────────────┘
+//!  2084-03-14  Funds 2,140,000  Score 310   < Gatehouse >   [||][1h][6h][1d][5d][Save][Menu]
+//! ┌─ map ─────────────────────────────┐ ┌─ nav: Bases Research Build Market … ─┐
+//! │   ·Ajax ─────── ·Vesta Reach      │ ├─ info: the selection + its buttons ───┤
+//! │  /                   ▲ contact    │ ├─ panel: a scrolling list ─────────────┤
+//! │ ■Mercury Gate                     │ │  the selected row in full + buttons    │
+//! └───────────────────────────────────┘ └────────────────────────────────────────┘
 //! ```
 //!
-//! **Keys**: Space pause, 1–4 speed, Tab / Shift+Tab change tab, Up/Down choose a row,
-//! Enter act on it, Left/Right change the current base, S sell (market), F5 save, Esc
-//! save and leave. Clicking the map chooses a system; clicking a tab or a row chooses it.
+//! **Mouse**: click the map to select a system, contact, convoy, survey ship or craft
+//! (wheel zooms about the cursor, right or middle drag pans); the info panel shows it
+//! with its actions as buttons; the nav buttons open panels; a list row is chosen by a
+//! click and acted on by a double click or the buttons under the list.
 //!
-//! **Battles.** When an interception reaches its contact the clock stops and a banner
-//! asks: Enter flies the battle (the screen hands itself to the app, which flies the
-//! contact's mission and comes back here with the debrief — see `AppContext::campaign`),
-//! Esc breaks off (the contact flies on).
+//! **Keys**: Space pause, 1–4 speed, Tab / Shift+Tab change panel, Up/Down choose a row,
+//! Enter act on it, Left/Right change the current base, F5 save, Esc save and leave.
+//!
+//! **Prompts.** When something needs a decision — an interception reaching its contact,
+//! an ambushed convoy, a story choice or mission offer, the ending, a notice — the clock
+//! stops and a modal asks, with buttons (Enter takes the first, Esc the last). Flying a
+//! battle hands the screen to the app, which flies the mission and comes back here with
+//! the debrief (see `AppContext::campaign`).
 
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
@@ -1294,14 +1298,18 @@ impl StrategyScreen {
         let size = 16.0 * k;
         let lines = widgets::wrap(&text, r[2] - pad * 2.0, &|s| ui.measure(s, size));
         let bh = 26.0 * k;
-        let rows_room = ((r[3] - 60.0 * k - bh * 2.0 - pad) / (size * 1.25)).max(1.0) as usize;
+        let button_rows = acts.len().min(6).div_ceil(2) as f32;
+        let rows_room = ((r[3] - 60.0 * k - bh * button_rows - pad) / (size * 1.25)).max(1.0) as usize;
         for (i, l) in lines.iter().take(rows_room).enumerate() {
             ui.text_in(l, r[0] + pad, r[1] + 60.0 * k + i as f32 * size * 1.25, size, ui.colour("text"));
         }
-        // Actions: two columns of buttons at the bottom.
-        let n = acts.len().min(4);
-        let area = [r[0] + pad, r[1] + r[3] - pad - bh * 2.0 - 4.0 * k, r[2] - pad * 2.0, bh * 2.0 + 4.0 * k];
-        let cells = widgets::grid(area, 4, 2, 4.0 * k);
+        // Actions: two columns of buttons at the bottom, as many rows as they need (up
+        // to three; a longer list is in the Bases and Supply panels).
+        let n = acts.len().min(6);
+        let rows_n = n.div_ceil(2).max(1) as f32;
+        let area_h = bh * rows_n + 4.0 * k * (rows_n - 1.0);
+        let area = [r[0] + pad, r[1] + r[3] - pad - area_h, r[2] - pad * 2.0, area_h];
+        let cells = widgets::grid(area, (rows_n as usize) * 2, 2, 4.0 * k);
         let mut hit = None;
         for ((label, act), cell) in acts.iter().take(n).zip(cells) {
             if widgets::button(ui, input, cell, label, true) {
