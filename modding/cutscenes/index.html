@@ -6789,7 +6789,7 @@ fires and the saucer explodes; the camera ends on the station.</p>
 <td><code>harmless</code></td>
 <td>bool</td>
 <td><code>false</code></td>
-<td>Meant to make its weapons fire without doing damage; see the note below.</td>
+<td>Its bolts and missiles fire, hit and show their effects but do <strong>no damage</strong> (app 0.14.1).</td>
 </tr>
 </tbody>
 </table>
@@ -6832,15 +6832,9 @@ path's, so bolts it fires and its engine glow look right.</p>
 </table>
 <p>Each action calls the battle's own code, so bolts, hits, shield flashes, explosions, debris and
 their sounds are the battle's. <strong>Beams and missiles do real damage</strong>: a craft caught in another's
-fire may be destroyed before its own <code>destroy_at</code>. Aim paths past each other, or rely on
-<code>destroy</code> for kills.</p>
-<div class="admonition warning">
-<p class="admonition-title"><code>harmless</code> as built (app 0.13.0)</p>
-<p>The flag is meant to make an entity's weapons fire without doing damage (R-MOD-037). As
-built it instead tops up the entity's <strong>own</strong> hull to at least 1 each tick, which helps it
-survive the scene's fire but does not stop its weapons hurting others. Recorded on
-<a href="../../specification/requirements/modding/#r-mod-037-timed-actions">R-MOD-037</a>.</p>
-</div>
+fire may be destroyed before its own <code>destroy_at</code>. Mark the shooter <code>harmless: true</code> for a show
+of fire that hurts nothing (since app 0.14.1: its hits land, with their flashes and sounds, but
+do no damage), and use <code>destroy</code> for kills.</p>
 <h3 id="cameras">Cameras<a class="headerlink" href="#cameras" title="Permanent link">&para;</a></h3>
 <p>A camera is <strong>fixed</strong> (keyframed positions) or <strong>attached</strong> to an entity.</p>
 <table>
@@ -6935,23 +6929,24 @@ bar. When the cutscene ends (or is skipped) the next screen draws its own sky ag
 </tr>
 </tbody>
 </table>
-<p>A video reference may also be a pack path (<code>video/&lt;file&gt;.smk</code>); only Smacker files play, and a
-pack path is currently read from the <strong>first pack</strong> of the active set rather than the pack that
-names it (an open issue). Enter, Esc or a click skips a video.</p>
+<p>A video reference may also be a pack path (<code>video/&lt;file&gt;.smk</code>); only Smacker files play. A pack
+path is looked for in every active pack, latest first (app 0.14.1). Enter, Esc or a click skips a
+video; its soundtrack follows the effects volume (app 0.14.1).</p>
 <h2 id="validating">Validating<a class="headerlink" href="#validating" title="Permanent link">&para;</a></h2>
 <p>Cutscene files are read with every other pack file when the game or <code>--check</code> loads: a mistake
 is reported with the file and the key, for example
 <code>default/cutscenes/intro.yaml: cameras.chase: no entity 'leed'</code>. The editor schema
-<code>schemas/cutscene.schema.json</code> checks keys and types as you type. An id named by <code>campaign.intro</code>
-or <code>play_cutscene</code> that does not exist is reported only when it would play (<code>cutscene x: no
-cutscene 'x'</code> on standard error), and the game carries on without it.</p>
+<code>schemas/cutscene.schema.json</code> checks keys and types as you type. A <code>campaign.intro</code> that names
+no cutscene is a load error (<code>campaign.intro: no cutscene 'x' (cutscenes/&lt;id&gt;.yaml)</code>, app
+0.14.1). A <code>play_cutscene</code> id that does not exist is still reported only when it would play
+(<code>cutscene x: no cutscene 'x'</code> on standard error), and the game carries on without it.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <p>From the <a href="../../specification/design/designer/#32-what-a-scene-contains">design</a>, not in app 0.13.0:</p>
 <ul>
 <li><strong>Rotation keys</strong> (slerp) and <strong>speed keys</strong>; entities only face along their paths.</li>
 <li><strong>Autopilot entities</strong> flown by the AI (<code>aggressive</code>), switching between scripted and
   autopilot, and <strong>formations</strong> of a group following a leader.</li>
-<li>The actions <strong>chase</strong>, <strong>capture</strong> (tractor) and <strong>jump</strong> (hyperspace); <code>harmless</code> as designed.</li>
+<li>The actions <strong>chase</strong>, <strong>capture</strong> (tractor) and <strong>jump</strong> (hyperspace); <code>harmless</code> on a single action (it is per entity).</li>
 <li><strong>Sound files</strong> at times with fades, positions and music ducking; captions as <strong>text keys</strong>
   (they are plain text, not translated).</li>
 <li>Camera <strong>height and look-offset keys</strong>, keyframed field of view, <strong>blended</strong> cuts.</li>
@@ -7004,6 +6999,10 @@ cutscene 'x'</code> on standard error), and the game carries on without it.</p>
 <tr>
 <td><code>sounds: expected [time, sound, volume]</code>, <code>captions: expected [from, to, text]</code></td>
 <td>Malformed lists.</td>
+</tr>
+<tr>
+<td><code>campaign.intro: no cutscene 'x' (cutscenes/&lt;id&gt;.yaml)</code></td>
+<td><code>campaign.intro</code> names no cutscene (app 0.14.1).</td>
 </tr>
 </tbody>
 </table>

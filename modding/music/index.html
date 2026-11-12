@@ -6567,13 +6567,8 @@ stingers, written as 16 kHz mono WAVs to <code>resources/default/music/</code>.<
 <span class="w">    </span><span class="nt">battle_range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3500m</span>
 <span class="w">    </span><span class="nt">volume</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">55%</span>
 </code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Generate the default music after cloning</p>
-<p>The repository's safety net ignores every <code>*.wav</code>; the default campaign's other sounds are
-committed as exceptions, but its <code>music/*.wav</code> files are not (at main <code>76d64d5</code>). After a
-fresh clone run <code>python3 tools/default_assets/make_all.py</code>; without it the music files are
-reported at start-up as <code>sound: …</code> lines and the campaign is silent.</p>
-</div>
+<p>The generated WAVs are committed (since main <code>16a9954</code>, an exception to the repository's
+<code>*.wav</code> safety net); run <code>music.py</code> again only after changing its score.</p>
 <h2 id="the-interceptor-campaign">The <code>interceptor</code> campaign<a class="headerlink" href="#the-interceptor-campaign" title="Permanent link">&para;</a></h2>
 <p><code>packs/interceptor/rules/music.yaml</code> maps the original's three loop sets by file name from the
 player's own data (<code>Loops/</code> on the CD; <code>original:&lt;file&gt;.wav</code> finds a file by name in any

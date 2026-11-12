@@ -6501,7 +6501,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-6-presentation/">6 Presentation</a></td>
-<td><strong>In progress</strong> — interactive music in <strong>0.11.0</strong>; skins in <strong>0.11.1</strong> and title cards; the Smacker decoder and player in <strong>0.12.0</strong>; volumes and the relation fix in <strong>0.12.1</strong>; endings' films; MD2 cutscenes in <strong>0.13.0</strong> and the X-COM opening film; MPSRC packs and the comms panel in <strong>0.13.1</strong>; the main menu and credits in <strong>0.14.0</strong>. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms), 6.8 and MD2 partial; 6.5, 6.7, MD3 not started; no manual pass yet</td>
+<td><strong>In progress</strong> — fixes from the docs review in <strong>0.14.1</strong>; interactive music in <strong>0.11.0</strong>; skins in <strong>0.11.1</strong> and title cards; the Smacker decoder and player in <strong>0.12.0</strong>; volumes and the relation fix in <strong>0.12.1</strong>; endings' films; MD2 cutscenes in <strong>0.13.0</strong> and the X-COM opening film; MPSRC packs and the comms panel in <strong>0.13.1</strong>; the main menu and credits in <strong>0.14.0</strong>. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms), 6.8 and MD2 partial; 6.5, 6.7, MD3 not started; no manual pass yet</td>
 <td>See <a href="#stage-6-progress">Stage 6 progress</a> below</td>
 </tr>
 <tr>
@@ -7268,13 +7268,15 @@ menu and credits). <strong>384 unit tests</strong> on macOS at <code>a18a7b4</co
 </tr>
 </tbody>
 </table>
-<p><strong>Gaps</strong> (at main <code>a18a7b4</code>): 6.5, 6.7 (the X-COM
-wrapper screens — the <code>WrappersDLL</code> layouts are not mapped), MD3 (OS video frameworks; needs the
-dependency/FFI evaluation first); the rest of the cutscene format; the <code>harmless</code> flag; X-COM
-talking-head mapping; video sound ignores the volume settings; a video's pack path is read from
-the first pack. <strong>The default campaign's music WAVs are not committed</strong> (the <code>*.wav</code> ignore
-rule): a fresh clone is silent until <code>tools/default_assets/make_all.py</code> runs. No Stage 6 manual
-test has been run.</p>
+<p><strong>Fixed in app 0.14.1</strong> (main <code>16a9954</code>, from the docs review): cutscene <code>harmless</code> (bolts and
+missiles hit but do no damage, <code>World::harmless</code>); films' sound follows the effects volume; a
+pack-path video is found in any pack, latest first; <code>campaign.intro</code> naming no cutscene is a load
+error; the default music WAVs are committed. <strong>385 unit tests</strong> on macOS at <code>16a9954</code>.</p>
+<p><strong>Gaps</strong> (at main <code>16a9954</code>): 6.5, 6.7 (the X-COM wrapper screens — the <code>WrappersDLL</code> layouts
+are not mapped), MD3 (OS video frameworks; needs the dependency/FFI evaluation first); the rest
+of the cutscene format, including translatable captions and <code>harmless</code> per action;
+<code>play_cutscene</code> ids checked only when they play; X-COM talking-head mapping; a stance change
+from a mission outcome does not stop the clock. No Stage 6 manual test has been run.</p>
 
 
 

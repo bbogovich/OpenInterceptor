@@ -6621,8 +6621,9 @@ so it cannot be stored beside them in the same struct; instead each step rebuild
 from <code>data</code>, restores the previous frame's pixels and palette, skips to the next frame and
 decodes forward (<a href="../../../learning/rust/async-loop/#an-async-open-and-a-sync-play-srcappvideors">Learn Rust › Async</a>).</p>
 <p>The picture is scaled to fit the window, centred, on black. Enter, Esc or a left click skips; at
-the end (or on a skip) the sound is stopped. The soundtrack plays at a fixed 0.9, not scaled by
-the settings' volumes.</p>
+the end (or on a skip) the sound is stopped. The soundtrack plays at 0.9 × the effects volume
+(<code>VideoPlayer::frame(volume)</code>, app 0.14.1). <code>open</code> tries the given pack first, then every pack,
+latest first, for a pack path.</p>
 <h3 id="cutscenes-appcutscene">Cutscenes (<code>app::cutscene</code>)<a class="headerlink" href="#cutscenes-appcutscene" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart TB
     N["CutscenePlayer::new(ctx, id)&lt;br/&gt;World::new(rules, shapes, starfield_seed)&lt;br/&gt;set_environment"] --&gt; F
@@ -6644,7 +6645,7 @@ simulation still moves bolts and missiles, resolves hits and makes the events th
 effects and sounds — which is why a cutscene looks and sounds exactly like a battle.</p>
 <p>Timed actions call the battle's code: holding <code>controls.fire_beams</code>, setting a target and
 <code>controls.fire_missile</code>, or <code>combat::apply_damage</code> with an overwhelming amount after zeroing
-shields and armour. The camera at time <em>t</em> is the cut in force (<code>Cutscene::camera_at</code>): a fixed
+shields and armour. A <code>harmless</code> entity's ship id goes into <code>World::harmless</code> when it spawns; <code>sim::combat</code> gives its bolts and missiles zero damage (app 0.14.1), so their hits, flashes and sounds still play. The camera at time <em>t</em> is the cut in force (<code>Cutscene::camera_at</code>): a fixed
 camera on its spline looking at an entity or a point with a level horizon, or an attached
 camera behind its entity at the keyed distance, rotated by the entity's rotation then the keyed
 yaw and pitch.</p>
@@ -6848,8 +6849,8 @@ play without it.</p>
 <li>A comms panel showing signal bars instead of a face: the set has no <code>face</code>, or it failed to
   load (<code>voices.&lt;id&gt;: face …</code> on standard error). <em>COMMS</em> instead of a name: the chatter line has
   no <code>speaker</code> and its clip is not one of a set's lines.</li>
-<li>A video pack path is read from the <strong>first</strong> pack of the active set (<code>VideoPlayer::open(…, 0)</code>
-  in <code>app::run</code>), not from the pack that named it.</li>
+<li>A video pack path not found: <code>open</code> looks in every active pack (latest first, app 0.14.1); the
+  error names the first pack's path.</li>
 </ul>
 
 

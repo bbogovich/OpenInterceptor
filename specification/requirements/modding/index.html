@@ -8114,7 +8114,7 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.13.0)</p>
-<p><code>cutscenes/&lt;id&gt;.yaml</code> with <code>id</code>, <code>title</code>, <code>length</code>, <code>environment</code> (<code>starfield_seed</code>, <code>sun</code>, <code>environment</code>), <code>entities</code>, <code>cameras</code>, <code>cuts</code>, <code>sounds</code>, <code>captions</code>, and the editor schema <code>schemas/cutscene.schema.json</code>. Read with every pack file when the content loads (<code>--check</code> included); a later pack replaces an id; mistakes are reported with the file and the key path (<code>cameras.chase: no entity 'x'</code>, <code>unknown class 'y'</code>) but without a line number. The <code>title</code> is plain text, not a text key. Every key: <a href="../../../modding/cutscenes/#the-file">Cutscenes</a>.</p>
+<p><code>cutscenes/&lt;id&gt;.yaml</code> with <code>id</code>, <code>title</code>, <code>length</code>, <code>environment</code> (<code>starfield_seed</code>, <code>sun</code>, <code>environment</code>), <code>entities</code>, <code>cameras</code>, <code>cuts</code>, <code>sounds</code>, <code>captions</code>, and the editor schema <code>schemas/cutscene.schema.json</code>. Read with every pack file when the content loads (<code>--check</code> included); a later pack replaces an id; mistakes are reported with the file and the key path (<code>cameras.chase: no entity 'x'</code>, <code>unknown class 'y'</code>) but without a line number. The <code>title</code> is plain text, not a text key. Since app 0.14.1 a <code>campaign.intro</code> naming no cutscene is a load error. Every key: <a href="../../../modding/cutscenes/#the-file">Cutscenes</a>.</p>
 </div>
 <h3 id="r-mod-034-deterministic-playback-with-simple-physics">R-MOD-034 Deterministic playback with Simple physics<a class="headerlink" href="#r-mod-034-deterministic-playback-with-simple-physics" title="Permanent link">&para;</a></h3>
 <p>A cutscene MUST run on the normal 60 Hz simulation with a fixed random seed, and every ship in it MUST fly Simple physics (R-FLT-013), so that it plays the same way every time, in the designer and in the game.</p>
@@ -8162,16 +8162,16 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-010-cutscene-designer">F-MOD-010</a>, <a href="../../../definition/modding-toolkit/#f-mod-011-cutscenes-in-the-game">F-MOD-011</a></li>
 <li>Status: planned — partly met (MD2, app 0.13.0): fire beams, fire a missile at a target, destroy</li>
-<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; MT-6-09</li>
+<li>Verified by: <code>content::cutscene::tests::cutscenes_parse_and_check_their_references</code>; <code>sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage</code>; MT-6-09</li>
 <li>See: <a href="../../design/designer/#32-what-a-scene-contains">Mod designer: what a scene contains</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.13.0)</p>
 <p><code>actions: [[time, fire_beams, seconds] | [time, missile, target] | [time, destroy]]</code> and <code>destroy_at</code>, each through the battle's own code (the beam trigger, the missile trigger with a target, <code>combat::apply_damage</code>). Not built: chase, capture with the tractor, jump to hyperspace.</p>
 </div>
-<div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>The <code>harmless</code> flag is parsed, but as built it tops up the entity's <strong>own</strong> hull to at least 1 each tick instead of making its weapons do no damage: its beams and missiles still hurt what they hit. To be corrected; until then scenes rely on paths that miss and on <code>destroy</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Fixed in app 0.14.1 (main <code>16a9954</code>)</p>
+<p><code>harmless</code> on an entity now does what the requirement says: the entity's bolts and missiles fire, hit and show their effects but do no damage (<code>World::harmless</code>, checked in <code>sim::combat</code>; test <code>sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage</code>). In app 0.13.0 it instead topped up the entity's own hull. Not built: <code>harmless</code> on a single action.</p>
 </div>
 <h3 id="r-mod-038-autopilot-entities">R-MOD-038 Autopilot entities<a class="headerlink" href="#r-mod-038-autopilot-entities" title="Permanent link">&para;</a></h3>
 <p>An autopilot entity MUST be flown by the engine's AI with the campaign's beginner difficulty rules, towards designated targets (attack, escort, flee to a point). An optional per-entity <code>aggressive</code> flag MUST be available for background dogfights. An entity MUST be able to switch from autopilot to scripted at a given time, and back.</p>
@@ -8296,7 +8296,7 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Progress (app 0.12.0 – 0.13.0)</p>
-<p>Not built: MD3 is not started and no evaluation is recorded yet. Meanwhile the in-crate Smacker player (R-CMP-010) plays <code>.smk</code> files wherever a video is named — <code>campaign.intro_video</code>, the <code>video(&lt;ref&gt;)</code> action, <code>endings.&lt;id&gt;.video</code>, <code>--video</code> — from the player's data or a pack path (read, as built, from the first pack of the active set). A cutscene file cannot yet name a <code>video:</code> in its place.</p>
+<p>Not built: MD3 is not started and no evaluation is recorded yet. Meanwhile the in-crate Smacker player (R-CMP-010) plays <code>.smk</code> files wherever a video is named — <code>campaign.intro_video</code>, the <code>video(&lt;ref&gt;)</code> action, <code>endings.&lt;id&gt;.video</code>, <code>--video</code> — from the player's data or a pack path (looked for in every active pack, latest first, since app 0.14.1). A cutscene file cannot yet name a <code>video:</code> in its place.</p>
 </div>
 <h3 id="r-mod-047-shared-formations">R-MOD-047 Shared formations<a class="headerlink" href="#r-mod-047-shared-formations" title="Permanent link">&para;</a></h3>
 <p>Formations MUST be pack data (<code>formations:</code>): named shapes such as vee, line abreast, echelon, box and diamond, and custom ones. Wingman flying and cutscenes MUST place craft from the same formations, and a formation MUST replace today's per-scenario slot offsets. As built: <code>formations: {&lt;id&gt;: {shape: vee | line_abreast | echelon | box | diamond, spacing}}</code> or <code>{slots: [[x, y, z], …], spacing}</code> (not both; a custom list continues as a vee behind its last slot), slots in the leader's frame (+X right, +Y up, +Z behind) in units of <code>spacing</code> (default 60 m); a mission role picks one with <code>formation: &lt;id&gt;</code>, else <code>flight.formation</code> (default <code>vee</code>); an unknown formation is a load error, and a campaign with no formations uses a built-in 60 m vee.</p>
@@ -8447,7 +8447,7 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <tr>
 <td>1.16.0</td>
 <td>2026-11-11</td>
-<td>MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; Open note on R-MOD-037 (<code>harmless</code> as built protects the entity instead of disarming its weapons); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed</td>
+<td>MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; R-MOD-037 <code>harmless</code> (an Open note in app 0.13.0, fixed in app 0.14.1: bolts and missiles hit but do no damage); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed</td>
 </tr>
 </tbody>
 </table>

@@ -6345,6 +6345,9 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>16a9954</code> (app 0.14.1)</strong> the count is <strong>385</strong> run on macOS: added
+<code>sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage</code> (a cutscene's <code>harmless</code> ship's
+bolts land but change neither shields, armour nor hull).</p>
 <p><strong>At main <code>a18a7b4</code> (app 0.14.0)</strong> the count is <strong>384</strong> run on macOS (387 less the Linux-only
 test and two ignored helpers): the 5 added are <code>app::menu::tests::the_menu_offers_continue_only_with_a_save</code>,
 <code>options_show_only_what_can_change</code>, <code>volumes_step_in_quarters_and_stop_at_the_ends</code>,

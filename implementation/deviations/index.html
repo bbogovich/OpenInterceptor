@@ -6559,7 +6559,7 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-054</td>
-<td><strong>The cutscene format as built is a subset of its design</strong> (MD2, app 0.13.0): scripted entities only, <strong>placed</strong> on centripetal Catmull-Rom position paths each tick (no rotation or speed keys; they face along the path and bank); actions <code>fire_beams</code>, <code>missile</code>, <code>destroy</code>; cameras' keys sit directly on the camera; cuts are instant; <code>sounds</code> are named event sounds; captions are plain text; <code>harmless</code> keeps the entity's own hull up instead of disarming it. No formations, autopilot, chase, capture or jump, mission intros and outros, or <code>video:</code> in a cutscene.</td>
+<td><strong>The cutscene format as built is a subset of its design</strong> (MD2, app 0.13.0): scripted entities only, <strong>placed</strong> on centripetal Catmull-Rom position paths each tick (no rotation or speed keys; they face along the path and bank); actions <code>fire_beams</code>, <code>missile</code>, <code>destroy</code>; cameras' keys sit directly on the camera; cuts are instant; <code>sounds</code> are named event sounds; captions are plain text; <code>harmless</code> is per entity only (since app 0.14.1 its bolts and missiles do no damage; in 0.13.0 it kept the entity's own hull up instead). No formations, autopilot, chase, capture or jump, mission intros and outros, or <code>video:</code> in a cutscene.</td>
 <td>The engine side first plays the default campaign's intro end to end; the rest of the design (<a href="../../specification/design/designer/#34-the-cutscene-file">Mod designer §3.4</a>) stays the target (R-MOD-033 – R-MOD-046 notes).</td>
 <td>6</td>
 </tr>

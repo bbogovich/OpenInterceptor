@@ -7045,8 +7045,9 @@ action or a wrong argument is an error with its place.</p>
 </table>
 <p>When one day's events ask for several videos or cutscenes, the last video asked for plays, and
 a cutscene only when no video was asked for; a video and a cutscene in the same event's list do
-not both play. An unknown video or cutscene is reported on standard error when it would play
-(<code>video …: …</code>, <code>cutscene x: no cutscene 'x'</code>), not when the rules load.</p>
+not both play. An unknown video or <code>play_cutscene</code> id is reported on standard error when it would
+play (<code>video …: …</code>, <code>cutscene x: no cutscene 'x'</code>), not when the rules load (<code>campaign.intro</code> is
+checked at load since app 0.14.1).</p>
 <p>An action with a single text argument takes everything between the brackets, commas included:
 <code>message(Hold on, Guardsman!)</code> (app 0.10.1). In a YAML flow list, quote an action that contains
 a comma, a colon or a <code>+</code>.</p>
