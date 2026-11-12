@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenInterceptor cutscene (cutscenes/*.yaml)",
+  "type": "object", "additionalProperties": false, "properties": {
+    "id": {"description": "the cutscene's id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+    "title": {"description": "its title", "type": "string"},
+    "length": {"description": "how long", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+    "environment": {"description": "the backdrop", "type": "object", "additionalProperties": false, "properties": {
+        "starfield_seed": {"description": "the stars", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "sun": {"description": "the sun's direction", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+        "environment": {"description": "a battle environment (sky, nebula, planet)", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+      }},
+    "entities": {"description": "craft and objects", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+          "class": {"description": "ship or object class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "faction": {"description": "overrides the class's", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "enter": {"description": "appears (default: its first key)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "leave": {"description": "disappears", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "keys": {"description": "its path", "type": "object", "additionalProperties": false, "properties": {
+              "position": {"description": "[[time, [x, y, z]], …]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}}
+            }},
+          "actions": {"description": "[[time, fire_beams, seconds] | [time, missile, target] | [time, destroy]]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+          "destroy_at": {"description": "explodes then", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "harmless": {"description": "its weapons do no damage", "type": "boolean"}
+        }}},
+    "cameras": {"description": "cameras", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
+          "position": {"description": "fixed: [[time, [x, y, z]], …]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+          "look_at": {"description": "fixed: an entity, or [x, y, z]", "type": "string"},
+          "attach": {"description": "behind this entity", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "distance": {"description": "attached: [[time, metres], …]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+          "orbit": {"description": "attached: [[time, [yaw, pitch]], …] degrees", "type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+          "fov": {"description": "vertical field of view, degrees", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+        }}},
+    "cuts": {"description": "[[time, camera], …]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+    "sounds": {"description": "[[time, sound, volume], …]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+    "captions": {"description": "[[from, to, text], …]", "type": "array", "items": {"type": "array", "items": {"type": "string"}}}
+  }
+}

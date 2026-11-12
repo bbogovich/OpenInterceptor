@@ -30,6 +30,7 @@
 
 pub mod assets;
 pub mod controls;
+pub mod cutscene;
 pub mod devices;
 pub mod flight;
 pub mod launcher;
@@ -113,6 +114,10 @@ pub enum Next {
     Video {
         reference: String,
     },
+    /// Play a cutscene, then come back the same way.
+    Cutscene {
+        id: String,
+    },
     /// Fly a campaign battle: a mission id and the player's hull.
     CampaignBattle {
         mission: String,
@@ -140,6 +145,7 @@ enum Screen {
     Simulator(simulator::Simulator),
     Strategy(Box<strategy::StrategyScreen>),
     Video(Box<video::VideoPlayer>),
+    Cutscene(Box<cutscene::CutscenePlayer>),
     Flight(Box<flight::FlightSession>),
 }
 
@@ -353,6 +359,16 @@ pub async fn run(options: Options) {
                 Screen::Launcher(launcher::Launcher::new(&ctx))
             }
         },
+        None if options.cutscene.is_some() => {
+            let id = options.cutscene.clone().unwrap_or_default();
+            match cutscene::CutscenePlayer::new(&mut ctx, &id) {
+                Ok(c) => Screen::Cutscene(Box::new(c)),
+                Err(e) => {
+                    eprintln!("cutscene {id}: {e}");
+                    Screen::Launcher(launcher::Launcher::new(&ctx))
+                }
+            }
+        }
         None if options.video.is_some() => {
             let r = options.video.clone().unwrap_or_default();
             match video::VideoPlayer::open(&ctx.content, &r, 0).await {
@@ -392,6 +408,18 @@ pub async fn run(options: Options) {
             Screen::Flight(f) => f.frame(&mut ctx),
             Screen::Simulator(s) => s.frame(&mut ctx),
             Screen::Strategy(s) => s.frame(&mut ctx),
+            Screen::Cutscene(c) => {
+                if c.frame(&mut ctx) {
+                    c.finish(&mut ctx);
+                    if ctx.campaign.is_some() {
+                        Next::Strategy
+                    } else {
+                        Next::Launcher
+                    }
+                } else {
+                    Next::Stay
+                }
+            }
             Screen::Video(v) => {
                 if v.frame() {
                     if ctx.campaign.is_some() {
@@ -451,7 +479,21 @@ pub async fn run(options: Options) {
                 } else {
                     strategy::StrategyScreen::load(&ctx)
                 };
+                // A new campaign opens with its intro cutscene, if it has one.
+                let intro = matches!(next, Next::NewCampaign).then(|| ctx.content.rules.intro.clone()).flatten();
                 match made {
+                    Ok(s) if intro.is_some() => {
+                        ctx.campaign = Some(Box::new(s));
+                        match cutscene::CutscenePlayer::new(&mut ctx, intro.as_deref().unwrap_or_default()) {
+                            Ok(c) => screen = Screen::Cutscene(Box::new(c)),
+                            Err(e) => {
+                                eprintln!("intro: {e}");
+                                if let Some(s) = ctx.campaign.take() {
+                                    screen = Screen::Strategy(s);
+                                }
+                            }
+                        }
+                    }
                     Ok(s) => screen = Screen::Strategy(Box::new(s)),
                     Err(e) => {
                         let mut l = launcher::Launcher::new(&ctx);
@@ -471,6 +513,21 @@ pub async fn run(options: Options) {
                         screen = Screen::Strategy(s);
                     }
                     None => screen = Screen::Launcher(launcher::Launcher::new(&ctx)),
+                }
+            }
+            Next::Cutscene { id } => {
+                let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
+                if let Screen::Strategy(s) = old {
+                    ctx.campaign = Some(s);
+                }
+                match cutscene::CutscenePlayer::new(&mut ctx, &id) {
+                    Ok(c) => screen = Screen::Cutscene(Box::new(c)),
+                    Err(e) => {
+                        eprintln!("cutscene {id}: {e}");
+                        if let Some(s) = ctx.campaign.take() {
+                            screen = Screen::Strategy(s);
+                        }
+                    }
                 }
             }
             Next::Video { reference } => {

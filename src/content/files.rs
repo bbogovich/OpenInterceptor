@@ -574,6 +574,7 @@ fn campaign() -> Ty {
         f("difficulty", names(), "difficulty level ids, easiest first"),
         f("default_difficulty", name(), "the level a new game starts at"),
         f("skin", name(), "the skin of the menus and strategy screens (skins.<id>)"),
+        f("intro", name(), "the cutscene played before a new campaign (cutscenes/<id>)"),
     ])
 }
 
@@ -700,6 +701,10 @@ pub fn json_schemas() -> Vec<(&'static str, String)> {
         ("pack.schema.json", json_schema("OpenInterceptor pack manifest (pack.yaml)", &pack())),
         ("rules.schema.json", json_schema("OpenInterceptor rules file (rules/*.yaml, campaign/*.yaml)", &rules())),
         ("scenario.schema.json", json_schema("OpenInterceptor scenario (scenarios/*.yaml)", &scenario())),
+        (
+            "cutscene.schema.json",
+            json_schema("OpenInterceptor cutscene (cutscenes/*.yaml)", &super::cutscene::schema()),
+        ),
         ("text.schema.json", json_schema("OpenInterceptor text (text/<language>/*.yaml)", &text())),
     ]
 }

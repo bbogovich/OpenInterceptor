@@ -550,6 +550,7 @@
         "difficulty": {"description": "difficulty level ids, easiest first", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
         "default_difficulty": {"description": "the level a new game starts at", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "skin": {"description": "the skin of the menus and strategy screens (skins.<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "intro": {"description": "the cutscene played before a new campaign (cutscenes/<id>)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

@@ -89,6 +89,12 @@ pub static EVENT_ACTIONS: &[ActionDef] = &[
     ActionDef { name: "news", args: &[ArgKind::Text], scope: Scope::Campaign, doc: "a news line in the log" },
     ActionDef { name: "video", args: &[ArgKind::Text], scope: Scope::Campaign, doc: "play a video (a Smacker file)" },
     ActionDef {
+        name: "play_cutscene",
+        args: &[ArgKind::Name],
+        scope: Scope::Campaign,
+        doc: "play a cutscene (cutscenes/<id>)",
+    },
+    ActionDef {
         name: "card",
         args: &[ArgKind::Text],
         scope: Scope::Campaign,

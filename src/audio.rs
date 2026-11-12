@@ -198,6 +198,13 @@ impl SoundBank {
         bank
     }
 
+    /// Plays a named event sound (one of [`NAMED`]) by its name.
+    pub fn play_named(&self, name: &str, volume: f32) {
+        if let Some(n) = NAMED.iter().find(|n| **n == name) {
+            self.play(&SoundKey::Named(n), volume);
+        }
+    }
+
     /// The length of a loaded music segment or stinger, seconds.
     pub fn length(&self, key: &SoundKey) -> Option<f32> {
         self.lengths.get(key).copied()

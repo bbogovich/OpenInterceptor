@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=../../../schemas/cutscene.schema.json
+# The default campaign's opening (MD2): a Guard patrol meets a Dominion saucer over the
+# Gatehouse. Played before a new campaign (campaign.intro); Esc skips.
+id: intro
+title: Perils of the Void
+length: 20s
+environment: {starfield_seed: 31, sun: [-0.4, 0.45, -0.8], environment: orbit}
+entities:
+  gatehouse: {class: guard_station, keys: {position: [[0s, [0, -150, -3200]]]}}
+  lead:
+    class: comet
+    keys: {position: [[0s, [-260, 40, 900]], [5s, [-80, 60, -400]], [10s, [60, 90, -1500]], [16s, [300, 160, -2600]]]}
+    actions: [[9s, fire_beams, 2.5s]]
+  left:
+    class: comet
+    keys: {position: [[0s, [-330, 30, 980]], [5s, [-150, 50, -320]], [10s, [-10, 80, -1420]], [16s, [230, 150, -2520]]]}
+  right:
+    class: comet
+    keys: {position: [[0s, [-190, 30, 980]], [5s, [-10, 50, -320]], [10s, [130, 80, -1420]], [16s, [370, 150, -2520]]]}
+  saucer:
+    class: raider_saucer
+    enter: 6s
+    keys: {position: [[6s, [1800, 400, -3800]], [9s, [700, 180, -2400]], [11s, [260, 110, -1900]]]}
+    destroy_at: 11s
+cameras:
+  wide: {position: [[0s, [-120, 70, 780]], [6s, [60, 110, -260]]], look_at: lead, fov: 50}
+  chase: {attach: lead, distance: [[6s, 70], [10s, 40]], orbit: [[6s, [25, 10]], [10s, [10, 6]]], fov: 60}
+  station: {position: [[11s, [-500, 260, -1200]], [20s, [-700, 320, -900]]], look_at: gatehouse, fov: 45}
+cuts: [[0s, wide], [6.5s, chase], [11.2s, station]]
+captions:
+  - [1s, 5s, "The frontier, 2084."]
+  - [5.5s, 9.5s, "Regent Vexor's saucers prowl the cosmium belts..."]
+  - [14s, 19.5s, "Only the Interplanetary Guard stands in their way."]

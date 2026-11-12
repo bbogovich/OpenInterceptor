@@ -632,6 +632,8 @@ pub struct Ruleset {
     pub missions: Vec<super::mission::MissionDef>,
     /// Battle environments and terrains (Stage 3.3–3.5; see [`super::environment`]).
     pub environments: Vec<super::environment::EnvironmentDef>,
+    /// The cutscene played before a new campaign (`campaign.intro`).
+    pub intro: Option<String>,
     /// Skins for the menus and strategy screens (Stage 6.1; see [`super::skin`]): the
     /// campaign's (`campaign.skin`, else the first) is `skins[0]` after loading.
     pub skins: Vec<super::skin::Skin>,
@@ -1503,6 +1505,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     (
         Ruleset {
             strategy,
+            intro: campaign.as_ref().and_then(|c| Get(c).str("intro")).map(str::to_string),
             skins,
             music,
             formations,

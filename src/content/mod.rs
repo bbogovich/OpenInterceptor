@@ -23,6 +23,7 @@
 //! ```
 
 pub mod behaviour;
+pub mod cutscene;
 pub mod environment;
 pub mod equipment;
 pub mod files;
@@ -103,6 +104,8 @@ pub struct Content {
     pub original: Option<OriginalData>,
     pub rules: Ruleset,
     pub scenarios: Vec<Scenario>,
+    /// Cutscenes from the packs' `cutscenes/` folders (MD2).
+    pub cutscenes: Vec<cutscene::Cutscene>,
     /// Player-visible strings by key (already applied to rules and scenarios).
     pub text: text::TextTable,
     /// Non-fatal problems (skipped packs, and every error below).
@@ -218,6 +221,27 @@ impl Content {
             }
         }
         scenarios.sort_by(|a, b| a.order.cmp(&b.order).then(a.title.cmp(&b.title)));
+        // Cutscenes, the same way (a later pack replaces an id).
+        let mut cutscenes: Vec<cutscene::Cutscene> = Vec::new();
+        for (i, p) in packs.iter().enumerate() {
+            for path in yaml_files(&p.dir.join("cutscenes")) {
+                let file = format!("{}/cutscenes/{}", p.id, path.file_name().unwrap_or_default().to_string_lossy());
+                match read_yaml(&path).and_then(|doc| cutscene::Cutscene::parse(schema::Get(&doc), i)) {
+                    Ok(c) => {
+                        let unknown =
+                            c.entities.iter().find(|e| rules.ship_id(&e.class).is_none()).map(|e| e.class.clone());
+                        match unknown {
+                            Some(class) => errors.push(format!("{file}: unknown class '{class}'")),
+                            None => {
+                                cutscenes.retain(|x| x.id != c.id);
+                                cutscenes.push(c);
+                            }
+                        }
+                    }
+                    Err(e) => errors.push(format!("{file}: {e}")),
+                }
+            }
+        }
         // 5. Text: every pack's text files in load order, then `@key` values resolved.
         let language = cfg.language.clone().unwrap_or_else(|| "en".into());
         let mut text = text::TextTable::default();
@@ -254,8 +278,18 @@ impl Content {
         }
         let mut rules = rules;
         errors.extend(resolve_text(&text, &mut rules, &mut scenarios));
-        let mut content =
-            Content { packs, campaign: wanted, campaigns, original, rules, scenarios, text, warnings, errors };
+        let mut content = Content {
+            packs,
+            campaign: wanted,
+            campaigns,
+            original,
+            rules,
+            scenarios,
+            cutscenes,
+            text,
+            warnings,
+            errors,
+        };
         // Terrains from heightmap images (generated ones were built with the rules).
         let mut fields = Vec::new();
         for (k, t) in content.rules.terrains.iter().enumerate() {

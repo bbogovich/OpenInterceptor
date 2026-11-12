@@ -6,3 +6,4 @@ campaign:
   difficulty: [cadet, ranger, captain, space_ace]
   default_difficulty: ranger
   skin: deco
+  intro: intro
