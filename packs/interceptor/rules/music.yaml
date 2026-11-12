@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The original's interactive music (Stage 6.4): its three loop sets, each with cruise,
+# threat and battle states of five segments and death and victory stingers, read from the
+# player's own CD (Loops/*.wav) by name. The transition tables (Loops/*.wtl) are not
+# read yet: segments change state at a segment's end.
+
+music:
+  set_1:
+    states:
+      cruise: ["original:cruise1-1.wav", "original:cruise1-2.wav", "original:cruise1-3.wav", "original:cruise1-4.wav", "original:cruise1-5.wav"]
+      threat: ["original:threat1-1.wav", "original:threat1-2.wav", "original:threat1-3.wav", "original:threat1-4.wav", "original:threat1-5.wav"]
+      battle: ["original:battle1-1.wav", "original:battle1-2.wav", "original:battle1-3.wav", "original:battle1-4.wav", "original:battle1-5.wav"]
+      strategy: ["original:cruise1-1.wav", "original:cruise1-2.wav", "original:cruise1-3.wav", "original:cruise1-4.wav", "original:cruise1-5.wav"]
+    stingers: {death: "original:death1.wav", victory: "original:victory1.wav", good: "original:goodre1.wav", bad: "original:badre1.wav"}
+    threat_range: 12km
+    battle_range: 4km
+    volume: 60%
+  set_2:
+    states:
+      cruise: ["original:cruise2-1.wav", "original:cruise2-2.wav", "original:cruise2-3.wav", "original:cruise2-4.wav", "original:cruise2-5.wav"]
+      threat: ["original:threat2-1.wav", "original:threat2-2.wav", "original:threat2-3.wav", "original:threat2-4.wav", "original:threat2-5.wav"]
+      battle: ["original:battle2-1.wav", "original:battle2-2.wav", "original:battle2-3.wav", "original:battle2-4.wav", "original:battle2-5.wav"]
+      strategy: ["original:cruise2-1.wav", "original:cruise2-2.wav", "original:cruise2-3.wav", "original:cruise2-4.wav", "original:cruise2-5.wav"]
+    stingers: {death: "original:death2.wav", victory: "original:victory2.wav", good: "original:gudrein2.wav", bad: "original:badrein2.wav"}
+    threat_range: 12km
+    battle_range: 4km
+    volume: 60%
+  set_3:
+    states:
+      cruise: ["original:cruise3-1.wav", "original:cruise3-2.wav", "original:cruise3-3.wav", "original:cruise3-4.wav", "original:cruise3-5.wav"]
+      threat: ["original:threat3-1.wav", "original:threat3-2.wav", "original:threat3-3.wav", "original:threat3-4.wav", "original:threat3-5.wav"]
+      battle: ["original:battle3-1.wav", "original:battle3-2.wav", "original:battle3-3.wav", "original:battle3-4.wav", "original:battle3-5.wav"]
+      strategy: ["original:cruise3-1.wav", "original:cruise3-2.wav", "original:cruise3-3.wav", "original:cruise3-4.wav", "original:cruise3-5.wav"]
+    stingers: {death: "original:death3.wav", victory: "original:victory3.wav", good: "original:goodrein3.wav", bad: "original:badrein3.wav"}
+    threat_range: 12km
+    battle_range: 4km
+    volume: 60%

@@ -602,6 +602,28 @@ impl FlightSession {
     }
 
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
+        // Music: one of the campaign's sets, chosen by the battle's seed; its state from
+        // the nearest hostile on the radar.
+        {
+            let rules = &self.world.rules;
+            let set = (!rules.music.is_empty()).then(|| (self.seed as usize) % rules.music.len());
+            let state = match (set, self.world.get(self.player)) {
+                (Some(s), Some(me)) => {
+                    let hostiles = self
+                        .world
+                        .ships
+                        .iter()
+                        .filter(|o| {
+                            o.alive && rules.hostile(me.faction, o.faction) && !rules.ship(o.class).kind.is_static()
+                        })
+                        .map(|o| o.position.distance(me.position));
+                    crate::content::music::battle_state(&rules.music[s], hostiles)
+                }
+                _ => "cruise",
+            };
+            let rules = self.world.rules.clone();
+            ctx.music.frame(&ctx.sounds, &rules, set, state, get_time());
+        }
         // The controls menu, opened from the pause menu, takes the whole frame.
         if let Some(menu) = &mut self.controls {
             if menu.frame(ctx) {
@@ -812,6 +834,8 @@ impl FlightSession {
                     if let (false, Some(d)) = (ended, &m.debrief) {
                         self.ended_at = Some(self.world.time);
                         let name = if d.result == "win" { "mission_accomplished" } else { "mission_failed" };
+                        let stinger = if d.result == "win" { "victory" } else { "death" };
+                        ctx.music.stinger(&ctx.sounds, &self.world.rules, stinger);
                         ctx.sounds.play(&crate::audio::SoundKey::Named(name), 0.9);
                     }
                 }

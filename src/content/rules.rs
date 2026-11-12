@@ -632,6 +632,8 @@ pub struct Ruleset {
     pub missions: Vec<super::mission::MissionDef>,
     /// Battle environments and terrains (Stage 3.3–3.5; see [`super::environment`]).
     pub environments: Vec<super::environment::EnvironmentDef>,
+    /// Interactive music sets (Stage 6.4; see [`super::music`]).
+    pub music: Vec<super::music::MusicSet>,
     /// Formations (MD1; see [`super::formation`]).
     pub formations: Vec<super::formation::FormationDef>,
     /// The strategy layer (Stage 4; see [`super::strategy`]); `None` for a campaign
@@ -771,7 +773,8 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 16] = [
+const DEF_SECTIONS: [&str; 17] = [
+    "music",
     "formations",
     "voices",
     "environments",
@@ -1407,6 +1410,13 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             Err(msg) => errors.push(format!("{}: environments.{id}: {msg}", e.origin)),
         }
     }
+    let mut music = Vec::new();
+    for (_, id, e) in of(&resolved, "music") {
+        match super::music::MusicSet::parse(id, Get(&e.node), e.pack) {
+            Ok(m) => music.push(m),
+            Err(msg) => errors.push(format!("{}: music.{id}: {msg}", e.origin)),
+        }
+    }
     let mut formations = Vec::new();
     for (_, id, e) in of(&resolved, "formations") {
         match super::formation::FormationDef::parse(id, Get(&e.node)) {
@@ -1475,6 +1485,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     (
         Ruleset {
             strategy,
+            music,
             formations,
             voices,
             voice_clips,

@@ -623,6 +623,10 @@ impl StrategyScreen {
 
     /// One frame: input, time, drawing.
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
+        {
+            let set = (!ctx.content.rules.music.is_empty()).then_some(0);
+            ctx.music.frame(&ctx.sounds, &ctx.content.rules, set, "strategy", get_time());
+        }
         super::console_idle(ctx, "campaign");
         // (Borrowed from `ctx`, which this screen does not otherwise change: the campaign
         // lives in `self`, so the two borrows never overlap.)

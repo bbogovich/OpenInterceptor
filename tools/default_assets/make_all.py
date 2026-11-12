@@ -27,11 +27,12 @@ sys.dont_write_bytecode = True  # keep __pycache__ out of the source tree
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import models  # noqa: E402  (after the path tweak, so `common` is importable)
+import music  # noqa: E402
 import sounds  # noqa: E402
 import textures  # noqa: E402
 from common import PACK, ValidationError  # noqa: E402
 
-GENERATED = ("models", "textures", "sounds")
+GENERATED = ("models", "textures", "sounds", "music")
 # Hand-made files of the old sample content that live in the same folders; they are
 # neither generated nor touched here.
 LEGACY = {"dart.obj", "dart.mtl", "dart_cockpit.obj", "dart_cockpit.mtl", "raider.obj", "raider.mtl", "ring.obj",
@@ -44,6 +45,7 @@ def build():
     rows, rects = models.build_all()
     tex = textures.build_all()
     snd = sounds.build_all()
+    snd += music.build_all()
     return rows, rects, tex, snd
 
 

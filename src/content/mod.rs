@@ -31,6 +31,7 @@ pub mod hazards;
 pub mod logistics;
 pub mod looks;
 pub mod mission;
+pub mod music;
 pub mod pack;
 pub mod rules;
 pub mod scenario;

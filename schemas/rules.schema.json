@@ -367,6 +367,16 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "music": {"description": "interactive music sets", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "states": {"description": "state: segments", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}]}},
+          "stingers": {"description": "death, victory, good, bad: a sound played once", "type": "object", "additionalProperties": {"type": "string"}},
+          "threat_range": {"description": "an enemy this close: threat", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "battle_range": {"description": "an enemy this close: battle", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "volume": {"description": "music volume", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
     "terrains": {"description": "terrains (heightfields) by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "generate": {"description": "generate the heights", "type": "object", "additionalProperties": false, "properties": {
               "kind": {"description": "rolling hills or a cratered plain", "enum": ["hills", "craters"]},

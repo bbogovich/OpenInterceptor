@@ -27,6 +27,10 @@ pub enum SoundKey {
     Effect(u16),
     /// A radio voice clip (index into `rules.voice_clips`).
     Voice(u32),
+    /// A music segment: set, state, segment (indices into `rules.music`).
+    Music(u16, u16, u16),
+    /// A music stinger: set, stinger.
+    Stinger(u16, u16),
 }
 
 /// Volume falls off with distance: full within 50 m, half at ~350 m.
@@ -129,6 +133,8 @@ pub const NAMED: [&str; 18] = [
 #[derive(Default)]
 pub struct SoundBank {
     sounds: HashMap<SoundKey, Sound>,
+    /// Lengths of music segments and stingers, seconds (to know when one ends).
+    lengths: HashMap<SoundKey, f32>,
     pub errors: Vec<String>,
 }
 
@@ -163,10 +169,23 @@ impl SoundBank {
         for (i, (r, p)) in rules.voice_clips.iter().enumerate() {
             wanted.push((SoundKey::Voice(i as u32), r.clone(), *p));
         }
+        for (s, set) in rules.music.iter().enumerate() {
+            for (k, (_, segs)) in set.states.iter().enumerate() {
+                for (j, r) in segs.iter().enumerate() {
+                    wanted.push((SoundKey::Music(s as u16, k as u16, j as u16), r.clone(), set.pack));
+                }
+            }
+            for (k, (_, r)) in set.stingers.iter().enumerate() {
+                wanted.push((SoundKey::Stinger(s as u16, k as u16), r.clone(), set.pack));
+            }
+        }
         for (key, reference, pack) in wanted {
             match content.load_sound(&reference, pack) {
                 Ok(pcm) => match load_sound_from_bytes(&pcm.to_wav_bytes()).await {
                     Ok(s) => {
+                        if matches!(key, SoundKey::Music(..) | SoundKey::Stinger(..)) {
+                            bank.lengths.insert(key.clone(), pcm.duration());
+                        }
                         bank.sounds.insert(key, s);
                     }
                     Err(e) => bank.errors.push(format!("{reference}: {e:?}")),
@@ -175,6 +194,18 @@ impl SoundBank {
             }
         }
         bank
+    }
+
+    /// The length of a loaded music segment or stinger, seconds.
+    pub fn length(&self, key: &SoundKey) -> Option<f32> {
+        self.lengths.get(key).copied()
+    }
+
+    /// Stops a sound (a music segment cut short when leaving a screen).
+    pub fn stop(&self, key: &SoundKey) {
+        if let Some(s) = self.sounds.get(key) {
+            macroquad::audio::stop_sound(s);
+        }
     }
 
     /// Plays one sound at `volume` (0..1).
@@ -256,5 +287,101 @@ mod tests {
         let on = SimEvent::Switched { ship: me, kind: crate::content::equipment::SystemKind::Cloak, on: true };
         assert_eq!(s(on), Some((SoundKey::Named("cloak"), 0.8)));
         assert_eq!(s(SimEvent::Departed { ship: me, position: Vec3::ZERO }).unwrap().0, SoundKey::Named("hyperspace"));
+    }
+}
+
+/// Plays a music set: one segment at a time, moving to the wanted state only when a
+/// segment ends (the original's `segment_end` transition), so the music never cuts
+/// mid-phrase. Owned by the app; the screens tell it which state they want each frame.
+#[derive(Debug, Default)]
+pub struct MusicPlayer {
+    /// The set playing (index into `rules.music`).
+    set: Option<usize>,
+    /// The segment playing, and when it ends (`get_time` seconds).
+    playing: Option<(SoundKey, f64)>,
+    /// Segments played so far (each state walks its segment list in turn).
+    count: usize,
+    /// Music volume from the settings, 0..1 (the set's own volume multiplies it).
+    pub volume: f32,
+}
+
+/// The next segment to play: the wanted state's segment at `count`, as a key.
+pub fn next_segment(
+    set: &crate::content::music::MusicSet,
+    set_index: usize,
+    state: &str,
+    count: usize,
+) -> Option<SoundKey> {
+    let segs = set.segments(state);
+    if segs.is_empty() {
+        return None;
+    }
+    let state_index = set.states.iter().position(|(_, v)| v.as_slice() == segs)?;
+    Some(SoundKey::Music(set_index as u16, state_index as u16, (count % segs.len()) as u16))
+}
+
+impl MusicPlayer {
+    /// A silent player at `volume` (0..1).
+    pub fn new(volume: f32) -> MusicPlayer {
+        MusicPlayer { volume, ..Default::default() }
+    }
+
+    /// Called every frame with the set and state wanted (`None`: silence). Starts the
+    /// next segment when the current one has ended (or the set changed).
+    pub fn frame(
+        &mut self,
+        bank: &SoundBank,
+        rules: &crate::content::rules::Ruleset,
+        set: Option<usize>,
+        state: &str,
+        now: f64,
+    ) {
+        if set != self.set {
+            if let Some((k, _)) = self.playing.take() {
+                bank.stop(&k);
+            }
+            self.set = set;
+            self.count = 0;
+        }
+        let Some(s) = set.and_then(|s| rules.music.get(s).map(|m| (s, m))) else { return };
+        if self.playing.as_ref().is_some_and(|(_, end)| now < *end - 0.02) {
+            return;
+        }
+        let Some(key) = next_segment(s.1, s.0, state, self.count) else { return };
+        self.count += 1;
+        let len = bank.length(&key).unwrap_or(4.0).max(0.25) as f64;
+        bank.play(&key, (s.1.volume * self.volume).clamp(0.0, 1.0));
+        self.playing = Some((key, now + len));
+    }
+
+    /// Plays a stinger of the current set once (death, victory, good, bad).
+    pub fn stinger(&self, bank: &SoundBank, rules: &crate::content::rules::Ruleset, name: &str) {
+        let Some(s) = self.set.and_then(|s| rules.music.get(s).map(|m| (s, m))) else { return };
+        if let Some(k) = s.1.stingers.iter().position(|(n, _)| n == name) {
+            bank.play(&SoundKey::Stinger(s.0 as u16, k as u16), (s.1.volume * self.volume).clamp(0.0, 1.0));
+        }
+    }
+
+    /// Stops the music (leaving a screen with music).
+    pub fn stop(&mut self, bank: &SoundBank) {
+        if let Some((k, _)) = self.playing.take() {
+            bank.stop(&k);
+        }
+        self.set = None;
+    }
+}
+
+#[cfg(test)]
+mod music_tests {
+    use super::*;
+
+    #[test]
+    fn segments_cycle_within_the_wanted_state() {
+        let n = crate::formats::yaml::parse("states: {cruise: [a, b], battle: [c, d, e]}").unwrap();
+        let set = crate::content::music::MusicSet::parse("m", crate::content::schema::Get(&n), 0).unwrap();
+        assert_eq!(next_segment(&set, 2, "cruise", 0), Some(SoundKey::Music(2, 0, 0)));
+        assert_eq!(next_segment(&set, 2, "cruise", 3), Some(SoundKey::Music(2, 0, 1)));
+        assert_eq!(next_segment(&set, 2, "battle", 4), Some(SoundKey::Music(2, 1, 1)));
+        assert_eq!(next_segment(&set, 2, "threat", 0), Some(SoundKey::Music(2, 0, 0)), "missing: cruise");
     }
 }

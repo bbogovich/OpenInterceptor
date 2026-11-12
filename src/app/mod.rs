@@ -69,6 +69,8 @@ pub struct AppContext {
     pub campaign: Option<Box<strategy::StrategyScreen>>,
     /// A campaign battle's result, left by the flight screen for the strategy screen.
     pub battle_report: Option<strategy::BattleReport>,
+    /// The music playing (Stage 6.4): screens say which set and state they want.
+    pub music: crate::audio::MusicPlayer,
 }
 
 /// What the app should do after a screen's frame.
@@ -303,6 +305,7 @@ pub async fn run(options: Options) {
         console_idle_tick: 0,
         campaign: None,
         battle_report: None,
+        music: crate::audio::MusicPlayer::new(0.7),
     };
     let direct = match (&options.mission, &options.scenario) {
         (Some(m), _) => Some((m, true)),
@@ -337,6 +340,10 @@ pub async fn run(options: Options) {
     };
     let mut frame_count: u32 = 0;
     loop {
+        // Screens without music of their own are silent.
+        if !matches!(screen, Screen::Flight(_) | Screen::Strategy(_)) {
+            ctx.music.stop(&ctx.sounds);
+        }
         let next = match &mut screen {
             Screen::Launcher(l) => l.frame(&mut ctx),
             Screen::Viewer(v) => v.frame(&mut ctx),

@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../schemas/rules.schema.json
+# The default campaign's interactive music (Stage 6.4), synthesised by
+# tools/default_assets/music.py: two seamless segments per state, and two stingers.
+
+music:
+  serial:
+    states:
+      cruise: [music/cruise1.wav, music/cruise2.wav]
+      threat: [music/threat1.wav, music/threat2.wav]
+      battle: [music/battle1.wav, music/battle2.wav]
+      strategy: [music/strategy1.wav, music/strategy2.wav]
+    stingers: {victory: music/victory.wav, death: music/death.wav}
+    threat_range: 10km
+    battle_range: 3500m
+    volume: 55%
