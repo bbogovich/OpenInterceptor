@@ -93,7 +93,7 @@ transition tables are not read ([DEV-053](../deviations/index.md)).
 `SoundBank::effects_volume` multiplies **every other** key in `SoundBank::play` (music and
 stinger keys already carry the music volume). The launcher's M and V keys step them by quarters
 and save them (`app::remember_audio`). A reload (Tab) re-reads the effects volume for the new
-bank. Video soundtracks are played by `app::video` directly, at a fixed 0.9.
+bank. Video soundtracks are played by `app::video` directly, at 0.9 × the effects volume (app 0.14.1).
 
 Playback uses macroquad's `audio` feature (quad-snd: CoreAudio on macOS, ALSA on Linux).
 
@@ -131,8 +131,8 @@ Playback uses macroquad's `audio` feature (quad-snd: CoreAudio on macOS, ALSA on
   line). Only the player's own wingmen (AI `wingman` led by the player) speak.
 - No music: the campaign needs a `music:` section, the screen must be a flight or the strategy
   screen, `audio.music` must be above 0, and the segment files must load (a failure prints a
-  `sound: …` line). The default campaign's music WAVs are generated, not committed: run
-  `python3 tools/default_assets/make_all.py` after cloning.
+  `sound: …` line). The default campaign's music WAVs are committed since main `16a9954`
+  (before that the `*.wav` ignore rule kept them out of Git).
 - The music does not change when an enemy closes in: it changes at the **end of the segment**
   playing, by design; check `threat_range` and `battle_range` against the battle's distances.
 - No sound at all on Linux: the build needs the ALSA development package (`libasound2-dev`).

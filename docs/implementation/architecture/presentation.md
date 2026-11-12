@@ -95,8 +95,9 @@ from `data`, restores the previous frame's pixels and palette, skips to the next
 decodes forward ([Learn Rust › Async](../../learning/rust/async-loop.md#an-async-open-and-a-sync-play-srcappvideors)).
 
 The picture is scaled to fit the window, centred, on black. Enter, Esc or a left click skips; at
-the end (or on a skip) the sound is stopped. The soundtrack plays at a fixed 0.9, not scaled by
-the settings' volumes.
+the end (or on a skip) the sound is stopped. The soundtrack plays at 0.9 × the effects volume
+(`VideoPlayer::frame(volume)`, app 0.14.1). `open` tries the given pack first, then every pack,
+latest first, for a pack path.
 
 ### Cutscenes (`app::cutscene`)
 
@@ -124,7 +125,7 @@ effects and sounds — which is why a cutscene looks and sounds exactly like a b
 
 Timed actions call the battle's code: holding `controls.fire_beams`, setting a target and
 `controls.fire_missile`, or `combat::apply_damage` with an overwhelming amount after zeroing
-shields and armour. The camera at time *t* is the cut in force (`Cutscene::camera_at`): a fixed
+shields and armour. A `harmless` entity's ship id goes into `World::harmless` when it spawns; `sim::combat` gives its bolts and missiles zero damage (app 0.14.1), so their hits, flashes and sounds still play. The camera at time *t* is the cut in force (`Cutscene::camera_at`): a fixed
 camera on its spline looking at an entity or a point with a level horizon, or an attached
 camera behind its entity at the keyed distance, rotated by the entity's rotation then the keyed
 yaw and pitch.
@@ -251,5 +252,5 @@ play without it.
 - A comms panel showing signal bars instead of a face: the set has no `face`, or it failed to
   load (`voices.<id>: face …` on standard error). *COMMS* instead of a name: the chatter line has
   no `speaker` and its clip is not one of a set's lines.
-- A video pack path is read from the **first** pack of the active set (`VideoPlayer::open(…, 0)`
-  in `app::run`), not from the pack that named it.
+- A video pack path not found: `open` looks in every active pack (latest first, app 0.14.1); the
+  error names the first pack's path.

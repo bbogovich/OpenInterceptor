@@ -8,6 +8,10 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**At main `16a9954` (app 0.14.1)** the count is **385** run on macOS: added
+`sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage` (a cutscene's `harmless` ship's
+bolts land but change neither shields, armour nor hull).
+
 **At main `a18a7b4` (app 0.14.0)** the count is **384** run on macOS (387 less the Linux-only
 test and two ignored helpers): the 5 added are `app::menu::tests::the_menu_offers_continue_only_with_a_save`,
 `options_show_only_what_can_change`, `volumes_step_in_quarters_and_stop_at_the_ends`,

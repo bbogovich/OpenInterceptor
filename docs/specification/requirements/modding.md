@@ -466,7 +466,7 @@ A cutscene MUST be a pack file `cutscenes/<id>.yaml` with an id, a title (a text
 - See: [Mod designer: the cutscene file](../design/designer.md#34-the-cutscene-file)
 
 !!! note "As built (app 0.13.0)"
-    `cutscenes/<id>.yaml` with `id`, `title`, `length`, `environment` (`starfield_seed`, `sun`, `environment`), `entities`, `cameras`, `cuts`, `sounds`, `captions`, and the editor schema `schemas/cutscene.schema.json`. Read with every pack file when the content loads (`--check` included); a later pack replaces an id; mistakes are reported with the file and the key path (`cameras.chase: no entity 'x'`, `unknown class 'y'`) but without a line number. The `title` is plain text, not a text key. Every key: [Cutscenes](../../modding/cutscenes.md#the-file).
+    `cutscenes/<id>.yaml` with `id`, `title`, `length`, `environment` (`starfield_seed`, `sun`, `environment`), `entities`, `cameras`, `cuts`, `sounds`, `captions`, and the editor schema `schemas/cutscene.schema.json`. Read with every pack file when the content loads (`--check` included); a later pack replaces an id; mistakes are reported with the file and the key path (`cameras.chase: no entity 'x'`, `unknown class 'y'`) but without a line number. The `title` is plain text, not a text key. Since app 0.14.1 a `campaign.intro` naming no cutscene is a load error. Every key: [Cutscenes](../../modding/cutscenes.md#the-file).
 
 ### R-MOD-034 Deterministic playback with Simple physics
 
@@ -520,14 +520,14 @@ A `harmless` flag, on an entity (scripted or autopilot) or on a single action, M
 
 - Implements: [F-MOD-010](../../definition/modding-toolkit.md#f-mod-010-cutscene-designer), [F-MOD-011](../../definition/modding-toolkit.md#f-mod-011-cutscenes-in-the-game)
 - Status: planned — partly met (MD2, app 0.13.0): fire beams, fire a missile at a target, destroy
-- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; MT-6-09
+- Verified by: `content::cutscene::tests::cutscenes_parse_and_check_their_references`; `sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage`; MT-6-09
 - See: [Mod designer: what a scene contains](../design/designer.md#32-what-a-scene-contains)
 
 !!! note "As built (app 0.13.0)"
     `actions: [[time, fire_beams, seconds] | [time, missile, target] | [time, destroy]]` and `destroy_at`, each through the battle's own code (the beam trigger, the missile trigger with a target, `combat::apply_damage`). Not built: chase, capture with the tractor, jump to hyperspace.
 
-!!! question "Open"
-    The `harmless` flag is parsed, but as built it tops up the entity's **own** hull to at least 1 each tick instead of making its weapons do no damage: its beams and missiles still hurt what they hit. To be corrected; until then scenes rely on paths that miss and on `destroy`.
+!!! note "Fixed in app 0.14.1 (main `16a9954`)"
+    `harmless` on an entity now does what the requirement says: the entity's bolts and missiles fire, hit and show their effects but do no damage (`World::harmless`, checked in `sim::combat`; test `sim::combat::tests::a_harmless_ships_bolts_hit_but_do_no_damage`). In app 0.13.0 it instead topped up the entity's own hull. Not built: `harmless` on a single action.
 
 ### R-MOD-038 Autopilot entities
 
@@ -659,7 +659,7 @@ A pack MUST be able to provide a video file in place of any engine-played cutsce
     The Linux path (GStreamer through `dlopen`) MUST be evaluated on the [dependency page](../../learning/best-practices/dependencies.md) before it is built (MD3).
 
 !!! note "Progress (app 0.12.0 – 0.13.0)"
-    Not built: MD3 is not started and no evaluation is recorded yet. Meanwhile the in-crate Smacker player (R-CMP-010) plays `.smk` files wherever a video is named — `campaign.intro_video`, the `video(<ref>)` action, `endings.<id>.video`, `--video` — from the player's data or a pack path (read, as built, from the first pack of the active set). A cutscene file cannot yet name a `video:` in its place.
+    Not built: MD3 is not started and no evaluation is recorded yet. Meanwhile the in-crate Smacker player (R-CMP-010) plays `.smk` files wherever a video is named — `campaign.intro_video`, the `video(<ref>)` action, `endings.<id>.video`, `--video` — from the player's data or a pack path (looked for in every active pack, latest first, since app 0.14.1). A cutscene file cannot yet name a `video:` in its place.
 
 ### R-MOD-047 Shared formations
 
@@ -785,4 +785,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.9.1 | 2026-11-11 | R-MOD-055 materials may name original art (implemented, app 0.4.13); R-MOD-052 note |
 | 1.12.0 | 2026-11-11 | R-MOD-015: the Tier 2 dependency evaluation is recorded on the dependency page ((a) `mlua`, (b) `rhai`, (c) grow `script::*`; recommendation (c), fallback (a)); Open note: awaiting the user's decision. No requirement wording changed |
 | 1.13.0 | 2026-11-11 | R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7) |
-| 1.16.0 | 2026-11-11 | MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; Open note on R-MOD-037 (`harmless` as built protects the entity instead of disarming its weapons); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed |
+| 1.16.0 | 2026-11-11 | MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; R-MOD-037 `harmless` (an Open note in app 0.13.0, fixed in app 0.14.1: bolts and missiles hit but do no damage); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed |

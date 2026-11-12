@@ -240,8 +240,9 @@ action or a wrong argument is an error with its place.
 
 When one day's events ask for several videos or cutscenes, the last video asked for plays, and
 a cutscene only when no video was asked for; a video and a cutscene in the same event's list do
-not both play. An unknown video or cutscene is reported on standard error when it would play
-(`video …: …`, `cutscene x: no cutscene 'x'`), not when the rules load.
+not both play. An unknown video or `play_cutscene` id is reported on standard error when it would
+play (`video …: …`, `cutscene x: no cutscene 'x'`), not when the rules load (`campaign.intro` is
+checked at load since app 0.14.1).
 
 An action with a single text argument takes everything between the brackets, commas included:
 `message(Hold on, Guardsman!)` (app 0.10.1). In a YAML flow list, quote an action that contains

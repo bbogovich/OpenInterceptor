@@ -1630,13 +1630,13 @@ No case has been run yet.
 
 ## Stage 6 cases
 
-How to start: the launcher, or `--no-original` for the default campaign. The default music must be generated after cloning (`python3 tools/default_assets/make_all.py`). References: [Music](../../modding/music.md), [Skins](../../modding/skins.md), [Cutscenes](../../modding/cutscenes.md), [Radio voices › Faces](../../modding/voices.md#faces-on-the-comms-panel).
+How to start: the launcher, or `--no-original` for the default campaign. References: [Music](../../modding/music.md), [Skins](../../modding/skins.md), [Cutscenes](../../modding/cutscenes.md), [Radio voices › Faces](../../modding/voices.md#faces-on-the-comms-panel).
 
 ### MT-6-01 — Music in a battle: states and stingers
 
 | Field | |
 |---|---|
-| Preconditions | App 0.11.0 or later. Default campaign (`--no-original`). The default music generated (`python3 tools/default_assets/make_all.py`). Music volume above 0. |
+| Preconditions | App 0.11.0 or later. Default campaign (`--no-original`). Music volume above 0. |
 | Steps | 1. Start a mission and hold position away from the enemy. 2. Fly towards the enemy until it is on radar within 10 km. 3. Close to under 3.5 km. 4. Win the mission; in another run lose or retreat. |
 | Expected | 1: calm cruise music, two segments alternating. 2: at the end of the segment playing, the threat music (pulsing bass, theremin). 3: at the next segment end, the battle music (snare, brass stabs). Changes never cut a phrase. 4: a rising fanfare with the computer voice on a win; a falling figure on any other result. |
 

@@ -349,7 +349,7 @@ pages, when MD2 is built.*
     campaign's event sounds (`[time, name, volume]`); `captions` as plain text. It plays as the
     campaign intro (`campaign.intro`), from events (`play_cutscene`) and with `--cutscene`; Esc
     or Enter skips. Not built: formations, autopilot entities and `aggressive`, rotation and
-    speed keys, chase/capture/jump actions, `harmless` as designed (R-MOD-037 Open note), sound
+    speed keys, chase/capture/jump actions, `harmless` on a single action (per entity it works since app 0.14.1), sound
     files with fades and ducking, text-key captions, blended cuts, mission intros and outros,
     `video:` in a cutscene, skipping from the console or pad, scrubbing and snapshots. The
     original's Smacker films play through `campaign.intro_video`, `video(…)` and an ending's

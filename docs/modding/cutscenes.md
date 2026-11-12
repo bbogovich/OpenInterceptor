@@ -103,7 +103,7 @@ Play it on its own with `openinterceptor --no-original --cutscene intro`.
 | `keys.position` | `[[time, [x, y, z]], …]` | *required* (at least one) | Its path. One key holds it still. |
 | `actions` | list | none | Timed actions (below). |
 | `destroy_at` | time | never | Shorthand for `[time, destroy]`. |
-| `harmless` | bool | `false` | Meant to make its weapons fire without doing damage; see the note below. |
+| `harmless` | bool | `false` | Its bolts and missiles fire, hit and show their effects but do **no damage** (app 0.14.1). |
 
 **Paths.** The keys are joined by a **centripetal Catmull-Rom spline**: the path passes through
 every key exactly at its time, curves smoothly between them, and — unlike a plain Catmull-Rom
@@ -128,14 +128,9 @@ path's, so bolts it fires and its engine glow look right.
 
 Each action calls the battle's own code, so bolts, hits, shield flashes, explosions, debris and
 their sounds are the battle's. **Beams and missiles do real damage**: a craft caught in another's
-fire may be destroyed before its own `destroy_at`. Aim paths past each other, or rely on
-`destroy` for kills.
-
-!!! warning "`harmless` as built (app 0.13.0)"
-    The flag is meant to make an entity's weapons fire without doing damage (R-MOD-037). As
-    built it instead tops up the entity's **own** hull to at least 1 each tick, which helps it
-    survive the scene's fire but does not stop its weapons hurting others. Recorded on
-    [R-MOD-037](../specification/requirements/modding.md#r-mod-037-timed-actions).
+fire may be destroyed before its own `destroy_at`. Mark the shooter `harmless: true` for a show
+of fire that hurts nothing (since app 0.14.1: its hits land, with their flashes and sounds, but
+do no damage), and use `destroy` for kills.
 
 ### Cameras
 
@@ -180,18 +175,19 @@ The original's films are Smacker videos, played full screen and letterboxed (app
 | An ending | `endings: {<id>: {video: …}}` ([Story layer](story.md#endings-and-campaign_end)) |
 | From the command line | `openinterceptor --video <ref>` |
 
-A video reference may also be a pack path (`video/<file>.smk`); only Smacker files play, and a
-pack path is currently read from the **first pack** of the active set rather than the pack that
-names it (an open issue). Enter, Esc or a click skips a video.
+A video reference may also be a pack path (`video/<file>.smk`); only Smacker files play. A pack
+path is looked for in every active pack, latest first (app 0.14.1). Enter, Esc or a click skips a
+video; its soundtrack follows the effects volume (app 0.14.1).
 
 ## Validating
 
 Cutscene files are read with every other pack file when the game or `--check` loads: a mistake
 is reported with the file and the key, for example
 `default/cutscenes/intro.yaml: cameras.chase: no entity 'leed'`. The editor schema
-`schemas/cutscene.schema.json` checks keys and types as you type. An id named by `campaign.intro`
-or `play_cutscene` that does not exist is reported only when it would play (`cutscene x: no
-cutscene 'x'` on standard error), and the game carries on without it.
+`schemas/cutscene.schema.json` checks keys and types as you type. A `campaign.intro` that names
+no cutscene is a load error (`campaign.intro: no cutscene 'x' (cutscenes/<id>.yaml)`, app
+0.14.1). A `play_cutscene` id that does not exist is still reported only when it would play
+(`cutscene x: no cutscene 'x'` on standard error), and the game carries on without it.
 
 ## Not built yet
 
@@ -200,7 +196,7 @@ From the [design](../specification/design/designer.md#32-what-a-scene-contains),
 - **Rotation keys** (slerp) and **speed keys**; entities only face along their paths.
 - **Autopilot entities** flown by the AI (`aggressive`), switching between scripted and
   autopilot, and **formations** of a group following a leader.
-- The actions **chase**, **capture** (tractor) and **jump** (hyperspace); `harmless` as designed.
+- The actions **chase**, **capture** (tractor) and **jump** (hyperspace); `harmless` on a single action (it is per entity).
 - **Sound files** at times with fades, positions and music ducking; captions as **text keys**
   (they are plain text, not translated).
 - Camera **height and look-offset keys**, keyframed field of view, **blended** cuts.
@@ -222,3 +218,4 @@ From the [design](../specification/design/designer.md#32-what-a-scene-contains),
 | `cameras.c: needs position keys (or attach:)` | A fixed camera without positions. |
 | `cuts: no camera 'y'` / `cuts: needs at least one [time, camera]` | A cut naming no camera, or cameras without cuts. |
 | `sounds: expected [time, sound, volume]`, `captions: expected [from, to, text]` | Malformed lists. |
+| `campaign.intro: no cutscene 'x' (cutscenes/<id>.yaml)` | `campaign.intro` names no cutscene (app 0.14.1). |

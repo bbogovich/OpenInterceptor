@@ -221,9 +221,6 @@ stop the clock, choices, offered missions and, finally, an ending.
 - **The end.** An ending with a film plays it first, then shows *VICTORY.* or *DEFEAT.* and its
   text. Continuing a finished campaign shows its ending again (app 0.12.1).
 
-The default campaign's music files are generated: after a fresh clone of the repository run
-`python3 tools/default_assets/make_all.py`, or the campaign plays without music.
-
 ## Money and the monthly report
 
 Incomes (the default campaign's Senate stipend grows with your bases, your month's score and,
@@ -260,8 +257,8 @@ The testbed keeps the original game's own cheat list as debug keys on the strate
   own; allied factions do not yet fly at your side; two of the original's seven side missions
   are in `interceptor`. Neither campaign has been played through from start to finish yet.
 - The ending is a banner line with an optional film, not a screen of its own (Stage 6).
-- Films and cutscenes cannot be skipped from the tablet console or the gamepad yet; a film's
-  sound ignores the volume settings.
+- Films and cutscenes cannot be skipped from the tablet console or the gamepad yet. (A film's
+  sound follows the effects volume since app 0.14.1.)
 - The `interceptor` campaign's strategy layer has not been play-tested; its research is slow
   with one downlink.
 - Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default

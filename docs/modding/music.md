@@ -71,11 +71,8 @@ music:
     volume: 55%
 ```
 
-!!! warning "Generate the default music after cloning"
-    The repository's safety net ignores every `*.wav`; the default campaign's other sounds are
-    committed as exceptions, but its `music/*.wav` files are not (at main `76d64d5`). After a
-    fresh clone run `python3 tools/default_assets/make_all.py`; without it the music files are
-    reported at start-up as `sound: …` lines and the campaign is silent.
+The generated WAVs are committed (since main `16a9954`, an exception to the repository's
+`*.wav` safety net); run `music.py` again only after changing its score.
 
 ## The `interceptor` campaign
 

@@ -52,7 +52,7 @@ audio:
 | `console.enabled` | `false` | Serve the [tablet control console](console.md) (`--console` turns it on for one run). |
 | `console.port` | 8765 | The console's port; change it if another program uses 8765 (`--console-port` overrides it). |
 | `audio.music` | 70% | The music volume, 0% to 100% (app 0.12.1): battle and strategy-screen [music](../modding/music.md) and its stingers. The launcher's **M** key steps it. |
-| `audio.effects` | 100% | The volume of every other sound, 0% to 100%: weapons, explosions, voices, the computer voice and cutscene sounds (app 0.12.1). The launcher's **V** key steps it. A video's soundtrack is not scaled by either volume yet. |
+| `audio.effects` | 100% | The volume of every other sound, 0% to 100%: weapons, explosions, voices, the computer voice and cutscene sounds (app 0.12.1), and since app 0.14.1 films' soundtracks. The launcher's **V** key steps it. |
 
 ## Other ways to set them
 
