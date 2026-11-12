@@ -991,6 +991,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         "research_model",
         "pilots",
         "scores",
+        "evaluations",
         "economy",
         "flags",
         "tech_ids",
