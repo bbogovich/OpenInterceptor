@@ -389,6 +389,8 @@ pub struct StrategyDef {
     /// The monthly evaluation (R-STR-009): the first whose condition holds rates the
     /// month and runs its actions (a funding cut, a warning, a bonus).
     pub evaluations: Vec<Evaluation>,
+    /// The share of a module's cost refunded when it is dismantled (`economy.dismantle`).
+    pub dismantle_refund: f32,
     /// Hours for a purchase to arrive.
     pub delivery: f32,
     /// Money per enemy destroyed when an outcome says `salvage`.
@@ -894,6 +896,11 @@ impl StrategyDef {
             pilots,
             scores,
             evaluations,
+            dismantle_refund: economy
+                .as_ref()
+                .and_then(|n| Get(n).qty("dismantle", Unit::Fraction))
+                .unwrap_or(0.5)
+                .clamp(0.0, 1.0),
             delivery,
             salvage,
             story: {
@@ -1142,7 +1149,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f(
                     "effects",
                     nums(),
-                    "research_rate, production_rate, sensor_range, hangar, quarters, storage, defence, income",
+                    "research_rate, production_rate, sensor_range, hangar, quarters (pilots housed), storage (store capacity, item sizes), defence (points: each turns away 15 % of unopposed raids); income is a tag for incomes: formulas (module_count)",
                 ),
                 f("requires", expr(), "available when this holds"),
             ])),
@@ -1242,6 +1249,7 @@ fn sections_core() -> Vec<super::schema::Field> {
             "economy",
             Ty::Struct(vec![
                 f("delivery", Ty::Qty(Unit::Time), "time for a purchase to arrive"),
+                f("dismantle", Ty::Qty(Unit::Fraction), "share of a module's cost refunded when dismantled (50 %)"),
                 f("salvage_per_kill", Ty::Num, "money per enemy destroyed when an outcome says salvage"),
                 f(
                     "cost_scale",

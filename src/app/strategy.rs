@@ -112,6 +112,8 @@ enum Act {
     Train(usize, bool),
     /// Dismiss a pilot.
     Dismiss(usize),
+    /// Dismantle module `m` of the current base.
+    Dismantle(usize),
     Hire(usize),
     AssignPilot(usize), // craft: give it the next free pilot
     Intercept(u32),
@@ -145,11 +147,18 @@ impl Row {
             Act::Train(_, true) => "Train",
             Act::Train(_, false) => "Stop training",
             Act::Dismiss(_) => "Dismiss",
+            Act::Dismantle(_) => "Dismantle",
             Act::Intercept(_) => "Intercept",
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
         };
         Row { text, acts: vec![(label, act)] }
+    }
+
+    /// What Enter or a double click does: the first action, unless it is destructive
+    /// (dismantling, dismissing), which only its own button does.
+    fn default_act(&self) -> Option<Act> {
+        self.acts.first().map(|(_, a)| *a).filter(|a| !matches!(a, Act::Dismantle(_) | Act::Dismiss(_)))
     }
 
     /// Adds another action.
@@ -476,10 +485,17 @@ impl StrategyScreen {
                     }
                 }
                 if let Some(b) = c.bases.get(base) {
-                    for m in &b.modules {
+                    for (mi, m) in b.modules.iter().enumerate() {
                         let left = (m.ready_at - c.hours) / 24.0;
                         let state = if left > 0.0 { format!("building, {left:.1} days") } else { "working".into() };
-                        rows.push(Row::new(format!("   {}: {state}", def.modules[m.module].name), Act::None));
+                        rows.push(Row::new(format!("   {}: {state}", def.modules[m.module].name), Act::Dismantle(mi)));
+                    }
+                    if let (Some(cap), used) = c.storage(def, base) {
+                        rows.push(Row::new(format!("Store: {used:.0} of {cap:.0} used"), Act::None));
+                    }
+                    let room = c.quarters(def);
+                    if room > 0 {
+                        rows.push(Row::new(format!("Quarters: room for {room} pilots"), Act::None));
                     }
                 }
             }
@@ -758,6 +774,7 @@ impl StrategyScreen {
             Act::FitBest(k) => c.fit_best(def, k).map(|_| ()),
             Act::Train(p, on) => c.set_training(def, p, on),
             Act::Dismiss(p) => c.dismiss(p),
+            Act::Dismantle(m) => c.dismantle_module(def, base, m),
             Act::Hire(i) => c.hire(def, i),
             Act::AssignPilot(k) => {
                 match c.pilots.iter().position(|p| p.craft.is_none() && p.state == PilotState::Ready) {
@@ -1313,8 +1330,8 @@ impl StrategyScreen {
             self.list.step(-1, rows.len(), visible);
         }
         if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
-            if let Some((_, a)) = rows.get(self.list.selected).and_then(|r| r.acts.first()) {
-                self.act(def, *a);
+            if let Some(a) = rows.get(self.list.selected).and_then(Row::default_act) {
+                self.act(def, a);
             }
         }
         // Testbed cheats (Ctrl+…): the original's payday, knowitall and quickbase, and
@@ -1483,7 +1500,7 @@ impl StrategyScreen {
                 // A second click on the same row soon after acts on it.
                 let now = get_time();
                 if self.last_click.0 == i && now - self.last_click.1 < 0.4 {
-                    hit = row.acts.first().map(|(_, a)| *a);
+                    hit = row.default_act();
                 }
                 self.last_click = (i, now);
                 self.list.selected = i;

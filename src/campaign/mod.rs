@@ -572,6 +572,38 @@ impl Campaign {
             .sum()
     }
 
+    /// Pilots the bases can house: each base type's `quarters` plus `quarters` modules.
+    pub fn quarters(&self, def: &StrategyDef) -> u32 {
+        (0..self.bases.len())
+            .map(|b| def.base_types[self.bases[b].base_type].quarters + self.effect(def, b, "quarters"))
+            .sum::<f32>() as u32
+    }
+
+    /// A base's store capacity from `storage` modules (`None`: no limit — the campaign
+    /// gives none), and what its store holds now (item `size`s).
+    pub fn storage(&self, def: &StrategyDef, base: usize) -> (Option<f32>, f32) {
+        let cap = self.effect(def, base, "storage");
+        let used = self.bases[base].stock.iter().map(|(i, n)| def.items[*i].size * *n as f32).sum();
+        let any = def.modules.iter().any(|m| m.effects.iter().any(|(k, _)| k == "storage"));
+        (any.then_some(cap), used)
+    }
+
+    /// Dismantles module `m` of base `base`: half its cost back (`economy.dismantle`
+    /// refund share), the slot free again.
+    pub fn dismantle_module(&mut self, def: &StrategyDef, base: usize, m: usize) -> Result<(), String> {
+        let b = self.bases.get_mut(base).ok_or("no such base")?;
+        if m >= b.modules.len() {
+            return Err("no such module".into());
+        }
+        let gone = b.modules.remove(m);
+        let md = &def.modules[gone.module];
+        let refund = md.cost as f64 * def.dismantle_refund as f64;
+        self.money += refund;
+        let t = format!("{}: {} dismantled ({refund:.0} back)", self.bases[base].name, md.name);
+        self.log(t);
+        Ok(())
+    }
+
     /// A base's sensor range: the hub's plus its sensor modules'.
     pub fn sensor_range(&self, def: &StrategyDef, base: usize) -> f32 {
         let hub = if self.bases[base].ready_at <= self.hours {
@@ -713,6 +745,11 @@ impl Campaign {
         if self.money < total {
             return Err(format!("costs {total:.0}; there is {:.0}", self.money));
         }
+        if let (Product::Item(i), (Some(cap), used)) = (product, self.storage(def, base)) {
+            if used + def.items[i].size * count as f32 > cap + 1e-3 {
+                return Err(format!("no room in store: {used:.0} of {cap:.0} used"));
+            }
+        }
         self.money -= total;
         self.deliveries.push(Delivery { product, base, count, arrive_at: self.hours + def.delivery as f64 });
         Ok(())
@@ -748,6 +785,13 @@ impl Campaign {
         let fee = def.pilots.as_ref().map_or(0.0, |p| p.recruit_fee) as f64;
         if recruit >= self.recruits.len() {
             return Err("no such recruit".into());
+        }
+        // Quarters (the base types' and `quarters` modules'): room for this many pilots.
+        // A campaign that gives no quarters at all has no limit.
+        let room = self.quarters(def);
+        let living = self.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as u32;
+        if room > 0 && living >= room {
+            return Err(format!("no quarters: room for {room} pilots"));
         }
         if self.money < fee {
             return Err(format!("hiring costs {fee:.0}"));
@@ -1193,7 +1237,20 @@ impl Campaign {
         let text = format!("{} struck {place} unopposed", raid.name);
         self.log(text.clone());
         events.push(Event::Notice(text));
-        // Losing a base's module: the raid damaged it (the newest finished module).
+        // Losing a base's module: the raid damaged it (the newest finished module) —
+        // unless the base's `defence` turns it away: each point of its modules' defence
+        // drives off 15 % of raids on its own (1 - 0.85^points in all).
+        let defended = c.target_base.is_some_and(|b| {
+            let points = self.effect(def, b, "defence");
+            let d = 1.0 - 0.85f32.powf(points.max(0.0));
+            d > 0.0 && self.roll() < d
+        });
+        if defended {
+            let t = format!("{place}'s defences drove the raid off");
+            self.log(t.clone());
+            events.push(Event::Notice(t));
+            return;
+        }
         if let Some(b) = c.target_base {
             if let Some(m) = self.bases[b].modules.iter().rposition(|m| m.ready_at <= self.hours) {
                 let lost = self.bases[b].modules.remove(m);
@@ -1742,6 +1799,30 @@ mod tests {
         let (_, plain) = month("");
         assert!(report.ends_with("rated Bad"), "nothing scored: the catch-all: {report}");
         assert_eq!(plain - cut, 1000.0, "its action ran");
+    }
+
+    #[test]
+    fn quarters_limit_the_roster_and_modules_can_be_dismantled() {
+        let (d, mut c) = sample();
+        c.advance(&d, 24.0 * 8.0); // the starting base's template finishes
+        assert_eq!(c.quarters(&d), 6, "the hq houses six");
+        c.money = 1e9;
+        let mut hired = 0;
+        while c.hire(&d, 0).is_ok() {
+            hired += 1;
+            if c.recruits.is_empty() {
+                c.refresh_recruits(&d);
+            }
+        }
+        let living = c.pilots.iter().filter(|p| p.state != PilotState::Dead).count();
+        assert_eq!(living, 6, "hired {hired}, then no room");
+        assert!(c.hire(&d, 0).unwrap_err().contains("quarters"));
+        let n = c.bases[0].modules.len();
+        let money = c.money;
+        c.dismantle_module(&d, 0, 0).unwrap();
+        assert_eq!(c.bases[0].modules.len(), n - 1);
+        assert!(c.money > money, "half the cost back");
+        assert!(c.dismantle_module(&d, 0, 99).is_err());
     }
 
     #[test]
