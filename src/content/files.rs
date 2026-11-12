@@ -575,6 +575,7 @@ fn campaign() -> Ty {
         f("default_difficulty", name(), "the level a new game starts at"),
         f("skin", name(), "the skin of the menus and strategy screens (skins.<id>)"),
         f("intro", name(), "the cutscene played before a new campaign (cutscenes/<id>)"),
+        f("intro_video", Ty::Asset, "a video played before a new campaign"),
     ])
 }
 

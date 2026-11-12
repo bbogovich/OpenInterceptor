@@ -6,3 +6,4 @@ campaign:
   difficulty: [beginner, experienced, veteran, genius, superhuman]
   default_difficulty: veteran
   skin: xcom
+  intro_video: original:animation1.smk   # DERIVED: which of the CD's films opens the game

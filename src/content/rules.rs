@@ -634,6 +634,8 @@ pub struct Ruleset {
     pub environments: Vec<super::environment::EnvironmentDef>,
     /// The cutscene played before a new campaign (`campaign.intro`).
     pub intro: Option<String>,
+    /// A video played before a new campaign (`campaign.intro_video`).
+    pub intro_video: Option<String>,
     /// Skins for the menus and strategy screens (Stage 6.1; see [`super::skin`]): the
     /// campaign's (`campaign.skin`, else the first) is `skins[0]` after loading.
     pub skins: Vec<super::skin::Skin>,
@@ -1506,6 +1508,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         Ruleset {
             strategy,
             intro: campaign.as_ref().and_then(|c| Get(c).str("intro")).map(str::to_string),
+            intro_video: campaign.as_ref().and_then(|c| Get(c).str("intro_video")).map(str::to_string),
             skins,
             music,
             formations,

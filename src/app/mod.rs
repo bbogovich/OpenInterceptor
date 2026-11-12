@@ -494,7 +494,24 @@ pub async fn run(options: Options) {
                             }
                         }
                     }
-                    Ok(s) => screen = Screen::Strategy(Box::new(s)),
+                    Ok(s) => {
+                        match ctx.content.rules.intro_video.clone().filter(|_| matches!(next, Next::NewCampaign)) {
+                            // Or with its intro film.
+                            Some(r) => {
+                                ctx.campaign = Some(Box::new(s));
+                                match video::VideoPlayer::open(&ctx.content, &r, 0).await {
+                                    Ok(v) => screen = Screen::Video(Box::new(v)),
+                                    Err(e) => {
+                                        eprintln!("intro video {r}: {e}");
+                                        if let Some(s) = ctx.campaign.take() {
+                                            screen = Screen::Strategy(s);
+                                        }
+                                    }
+                                }
+                            }
+                            None => screen = Screen::Strategy(Box::new(s)),
+                        }
+                    }
                     Err(e) => {
                         let mut l = launcher::Launcher::new(&ctx);
                         l.error = Some(e);
