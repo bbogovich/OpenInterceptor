@@ -18,8 +18,8 @@
 //! keeps firing or burning on a button nobody is pressing.
 //!
 //! The *catalogue* is built from [`crate::input::ACTIONS`], the same table that drives the
-//! keyboard, the gamepad, the controls menu and the keys overlay. Each action says
-//! whether it is held (`"hold"`: down while the button is pressed) or tapped (`"tap"`),
+//! keyboard, the gamepad, the controls menu and the keys overlay. Each action has a
+//! `label` (button text) and a one-sentence `description`, and says whether it is held (`"hold"`: down while the button is pressed) or tapped (`"tap"`),
 //! and whether the current craft has it (`available`). A feature the craft lacks is shown
 //! disabled on the console, never hidden (R-CON-019).
 
@@ -74,34 +74,22 @@ pub fn available(rules: &Ruleset, world: &World, player: ShipId, action: Action)
 
 /// The `catalogue` message: groups in table order, then every action.
 pub fn catalogue(rules: &Ruleset, world: &World, player: ShipId) -> String {
-    let mut groups: Vec<crate::input::Group> = Vec::new();
-    for a in ACTIONS {
-        if !groups.contains(&a.group) {
-            groups.push(a.group);
-        }
-    }
-    let groups: Vec<String> = groups
-        .iter()
-        .map(|g| Obj::new().str("id", &format!("{g:?}").to_lowercase()).str("title", g.title()).end())
-        .collect();
-    let actions: Vec<String> = ACTIONS
-        .iter()
-        .map(|a| {
-            Obj::new()
-                .str("name", a.name)
-                .str("group", &format!("{:?}", a.group).to_lowercase())
-                .str("label", a.label)
-                .str("kind", if HELD.contains(&a.action) { "hold" } else { "tap" })
-                .bool("available", available(rules, world, player, a.action))
-                .end()
-        })
-        .collect();
-    Obj::new().str("type", "catalogue").raw("groups", &array(&groups)).raw("actions", &array(&actions)).end()
+    catalogue_with(|action| available(rules, world, player, action))
 }
 
 /// The `catalogue` when no battle is running (the launcher): every action, all marked
 /// available, since there is no craft yet. The battle sends the real one on start.
 pub fn catalogue_idle() -> String {
+    catalogue_with(|_| true)
+}
+
+/// Builds a `catalogue` message, asking `is_available` whether each action is usable.
+/// Each action carries its `label` (the button text) and `description` (one sentence on
+/// what it does, which the console shows under the label).
+///
+/// `impl Fn(Action) -> bool` accepts any closure that takes an action and answers yes or
+/// no; the two callers above pass one that reads the world and one that always says yes.
+fn catalogue_with(is_available: impl Fn(Action) -> bool) -> String {
     let mut groups: Vec<crate::input::Group> = Vec::new();
     for a in ACTIONS {
         if !groups.contains(&a.group) {
@@ -119,8 +107,9 @@ pub fn catalogue_idle() -> String {
                 .str("name", a.name)
                 .str("group", &format!("{:?}", a.group).to_lowercase())
                 .str("label", a.label)
+                .str("description", a.description)
                 .str("kind", if HELD.contains(&a.action) { "hold" } else { "tap" })
-                .bool("available", true)
+                .bool("available", is_available(a.action))
                 .end()
         })
         .collect();
@@ -561,6 +550,23 @@ mod tests {
             Some(&Json::Bool(w.get(me).unwrap().system(SystemKind::Cloak).is_some()))
         );
         assert!(matches!(c.get("groups"), Some(Json::Arr(g)) if !g.is_empty()));
+        // Every action carries its label and description from the table.
+        for (a, info) in actions.iter().zip(ACTIONS) {
+            assert_eq!(a.get("label").and_then(Json::as_str), Some(info.label));
+            assert_eq!(a.get("description").and_then(Json::as_str), Some(info.description));
+        }
+    }
+
+    #[test]
+    fn the_idle_catalogue_lists_every_action_with_its_description_and_all_available() {
+        let c = super::super::json::parse(&catalogue_idle()).unwrap();
+        let Some(Json::Arr(actions)) = c.get("actions") else { panic!("no actions") };
+        assert_eq!(actions.len(), ACTIONS.len());
+        for (a, info) in actions.iter().zip(ACTIONS) {
+            assert_eq!(a.get("name").and_then(Json::as_str), Some(info.name));
+            assert_eq!(a.get("description").and_then(Json::as_str), Some(info.description));
+            assert_eq!(a.get("available"), Some(&Json::Bool(true)));
+        }
     }
 
     #[test]
