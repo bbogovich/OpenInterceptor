@@ -4284,6 +4284,8 @@
       
         
       
+        
+      
     
     
     
@@ -4661,6 +4663,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6641,6 +6671,16 @@ stances), so a campaign can react with messages, new missions or story steps. Ba
 is taken from the stances at the moment the battle starts. The <code>interceptor</code> campaign sets
 <code>dynamic: false</code> to match the original, with corporate funding as its only moving relation; the
 default campaign sets <code>dynamic: true</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.10.0 – 0.10.3)</p>
+<p><code>relations</code> is built for the <strong>player's standing with each faction</strong>: <code>dynamic</code>, <code>start</code>
+(by faction, not by pair), <code>drift</code> (monthly, towards 0) and <code>stances</code> (upper bounds; above the
+last, <code>allied</code>). Of the stance effects only <em>hostile or not</em> acts: a non-hostile faction's
+raids stop, and campaign battles make each faction hostile to the player or not by its stance.
+Not built: pairs between other factions, <code>scale</code>, <code>relation_rules</code>, <code>on_stance_change</code>
+events, allies in battle, trade and price effects. Keys: <a href="../../../modding/story/#relations">Story layer › relations</a>;
+DEV-051.</p>
+</div>
 <h3 id="evaluations-evaluationid">Evaluations: <code>evaluations: {&lt;id&gt;: …}</code><a class="headerlink" href="#evaluations-evaluationid" title="Permanent link">&para;</a></h3>
 <p>The monthly funding review is an evaluation: a period, an expression per holding, and a table
 mapping the result to changes.</p>
@@ -6856,6 +6896,15 @@ AI and reads its <code>Think.ini</code> numbers.</p>
 </code></pre></div>
 <p>The strategist launches <strong>squadrons</strong> on <strong>flight plans</strong>; when squadrons and player assets
 meet, a <a href="../format-missions/">mission</a> is generated.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.10.0)</p>
+<p>Only the <strong>aggression</strong> is built, as a global <code>strategist:</code> section (<code>aggression: {start,
+min, max, up, down}</code>, <code>calm_after_wins</code>) rather than <code>strategists.&lt;id&gt;</code>: it multiplies every
+raid's chance, rising each month the player wins fewer than <code>calm_after_wins</code> battles and
+falling otherwise. Budgets, exploration, expansion, outposts, the offence ladder, defence,
+tech levels, cheats, build priorities and the <code>Think.ini</code> values are not built.
+<a href="../../../modding/story/#strategist">Story layer › strategist</a>; DEV-051.</p>
+</div>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6880,6 +6929,11 @@ meet, a <a href="../format-missions/">mission</a> is generated.</p>
 <td>1.14.0</td>
 <td>2026-11-11</td>
 <td>As-built note: <code>tech_ids</code>, <code>cost_scale</code>, <code>module_time</code>, <code>money_from</code> (app 0.8.0) and the logistics sections (app 0.9.0); the format itself unchanged</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>As-built notes (app 0.10.0 – 0.10.3): dynamic relations (the player's standings, raids and battle hostility) and the strategist (aggression only); the format itself unchanged</td>
 </tr>
 </tbody>
 </table>

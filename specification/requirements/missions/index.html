@@ -4278,6 +4278,8 @@
       
         
       
+        
+      
     
     
     
@@ -4655,6 +4657,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6485,12 +6515,12 @@
 <li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a>, <a href="../../../modding/missions/">Missions (modding)</a></li>
 </ul>
 <h3 id="r-msn-002-arrivals-and-waves">R-MSN-002 Arrivals and waves<a class="headerlink" href="#r-msn-002-arrivals-and-waves" title="Permanent link">&para;</a></h3>
-<p>A role MUST be able to arrive at a position relative to another (<code>at: {distance, bearing, from, spread}</code>) and when a condition holds (<code>arrive:</code>); a role without <code>arrive:</code> MUST enter at the start; waves MUST repeat a role's arrival.</p>
-<p><em>Rationale:</em> One place per group (DEV-040).</p>
+<p>A role MUST be able to arrive at a position relative to another (<code>at: {distance, bearing, from, spread}</code>) and when a condition holds (<code>arrive:</code>); a role without <code>arrive:</code> MUST enter at the start; waves MUST repeat a role's arrival. A wave with <code>every: &lt;time&gt;</code> MUST come again that long after it last came, for as long as its <code>when</code> holds. A role with <code>escort: &lt;role&gt;</code> MUST fly in its formation on the newest live member of that role.</p>
+<p><em>Rationale:</em> One place per group (DEV-040). Repeating waves and escorts: the supply-convoy battle's tugs come every two minutes, each with its own squadron (the user's design, app 0.9.2).</p>
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-001-missions-as-data">F-MSN-001</a></li>
-<li>Status: implemented</li>
-<li>Verified by: <code>mission::arrivals_waves_chatter_and_a_win</code></li>
+<li>Status: implemented (<code>every:</code> and <code>escort:</code> app 0.9.2, main <code>0d1c522</code>)</li>
+<li>Verified by: <code>mission::arrivals_waves_chatter_and_a_win</code>; <code>sim::ai::tests::escorts_hold_formation_until_a_hostile_comes_close</code>; MT-4-26</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../modding/missions/">Missions (modding)</a></li>
 </ul>
@@ -6500,8 +6530,14 @@
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-001-missions-as-data">F-MSN-001</a>, <a href="../../../definition/missions/#f-msn-006-base-defence-the-player-can-win">F-MSN-006</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>mission::lose_beats_win_and_the_timer_ends_it</code>, <code>the_players_death_is_its_own_result_with_the_lose_outcomes</code>; <code>script::action::actions_parse_and_check</code>; <code>script::battle::ids_match_and_roles_are_checked_names</code></li>
+<li>Verified by: <code>mission::lose_beats_win_and_the_timer_ends_it</code>, <code>the_players_death_is_its_own_result_with_the_lose_outcomes</code>; <code>script::action::actions_parse_and_check</code>; <code>script::battle::ids_match_and_roles_are_checked_names</code>; <code>sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code> (<code>cargo(role)</code>); MT-4-27</li>
 <li>Reverse-engineered: yes</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Added (app 0.9.2): cargo</p>
+<p>The battle query <code>cargo(role)</code> gives the share (0..1) of the role's cargo containers still aboard; a mission's <code>cargo: &lt;role&gt;</code> puts that share at the end into the debrief and the campaign's battle report, where a flown convoy escort delivers it (R-STR-019).</p>
+</div>
+<ul>
 <li>See: <a href="../../../implementation/architecture/mission/">Missions (architecture)</a>, <a href="../../../implementation/architecture/script/">Conditions (script)</a></li>
 </ul>
 <h3 id="r-msn-004-mission-mistakes-found-on-load">R-MSN-004 Mission mistakes found on load<a class="headerlink" href="#r-msn-004-mission-mistakes-found-on-load" title="Permanent link">&para;</a></h3>
@@ -6570,16 +6606,17 @@
 <li><code>physics: space</code> (the default) MUST leave the campaign's flight model unchanged; <code>physics: atmosphere</code> MUST apply atmospheric flight (R-FLT-011) over the environment's <code>terrain</code> (R-FLT-012), which it then MUST name.</li>
 <li><code>arena</code>, if given, MUST replace <code>flight.arena_radius</code> for battles in that environment (a small "pocket").</li>
 <li><code>backdrop: {planet: {color, size, direction}}</code> MUST draw a lit planet disc of that colour and angular size (degrees) in that direction (orbit).</li>
+<li><code>backdrop: {nebula: {color, second_color, density, seed}}</code> MUST surround the battle with soft clouds shading between the two colours, as thick as <code>density</code> (0..1), with the stars dimmed behind them; <code>seed</code> MUST choose the pattern, the same for the same seed (a pocket inside a nebula; app 0.9.1).</li>
 <li><code>sky: {top, horizon, fog, fog_distance, stars}</code> MUST replace black space with a sky gradient from <code>top</code> (zenith) to <code>horizon</code>, fade distant objects into <code>fog</code> (default: the horizon colour) by <code>fog_distance</code>, and dim the starfield to <code>stars</code> (0–1).</li>
 <li>An object class of <code>kind: ground</code> (a ground installation: a colony, an outpost, an anti-air battery) MUST be static and MUST be set down on the terrain wherever it is placed, at the ground height plus a quarter of its collision radius. Anti-air is a turret on the ground: a <code>kind: ground</code> class with beams, a <code>turret_arc</code> and a turret behaviour. The environment MUST be set before anything is placed, so this holds for scenario objects and mission roles alike; in space a ground object stays where it is placed.</li>
 <li>Unknown environment ids in a mission MUST be reported by <code>--check</code>; a scenario with one MUST fail to build with a message naming it. An atmosphere without a terrain, or naming an unknown terrain, MUST be a rules error.</li>
 </ul>
-<p>The <code>default</code> campaign MUST ship <code>orbit</code>, <code>pocket</code>, <code>moon_surface</code> and <code>dusk_hills</code>, and the ground installations <code>guard_colony</code> and <code>dominion_flak</code> (an anti-air battery); the <code>interceptor</code> campaign stays in space, as the original.</p>
+<p>The <code>default</code> campaign MUST ship <code>orbit</code>, <code>pocket</code> (with a nebula backdrop), <code>moon_surface</code> and <code>dusk_hills</code>, and the ground installations <code>guard_colony</code> and <code>dominion_flak</code> (an anti-air battery); the <code>interceptor</code> campaign stays in space, as the original.</p>
 <p><em>Rationale:</em> Variety, and the surface missions of the default campaign. Environments are pack data so a mod can add worlds without code.</p>
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-004-environments-and-hazards">F-MSN-004</a></li>
 <li>Status: implemented (app 0.6.0, main <code>af003f6</code>; ground installations app 0.6.1, main <code>de417df</code>)</li>
-<li>Verified by: <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>, <code>sim::env::tests::ground_installations_are_set_down_on_the_terrain</code>; MT-3-37 – MT-3-40, MT-3-45, MT-3-46</li>
+<li>Verified by: <code>content::environment::tests::environments_and_terrains_parse_and_report_mistakes</code>, <code>content::environment::nebula_tests::nebula_clouds_vary_stay_in_range_and_repeat_for_a_seed</code>, <code>sim::env::tests::ground_installations_are_set_down_on_the_terrain</code>; MT-3-37 – MT-3-40, MT-3-45, MT-3-46, MT-4-24</li>
 <li>See: <a href="../../design/format-missions/">Format: missions, environments, events</a>, <a href="../../../modding/environments/">Environments and terrain</a></li>
 </ul>
 <div class="admonition question">
@@ -6640,18 +6677,22 @@
 <p>Measured with the idle pilot, <code>xcom_base_defense</code> at beginner still had 2 390 of 6 000 hull after 400 s, and the AI pilot won in 75 s with the base untouched. On veteran the mission ended at 15–18 s because the <em>player's</em> craft was destroyed by elerium torpedoes, while the debrief showed the base-lost text. The base was not too weak; the result was mislabelled. The fix is the <code>killed</code> result (R-MSN-003, R-MSN-005), not a change of pack values. Default campaign, <code>defend_station</code>, idle pilot: cadet still running at 400 s; ranger lose at 140 s; space ace killed at 8 s.</p>
 </div>
 <h3 id="r-msn-012-logistics-missions">R-MSN-012 Logistics missions<a class="headerlink" href="#r-msn-012-logistics-missions" title="Permanent link">&para;</a></h3>
-<p>The <code>convoy_ambush</code> and <code>construction_defence</code> missions MUST be playable: protect the convoy against attackers; defend a facility shown in its construction-stage state.</p>
-<p><em>Rationale:</em> Logistics in battle.</p>
+<p>The <code>convoy_ambush</code> and <code>construction_defence</code> missions MUST be playable: protect the convoy against attackers; defend a facility shown in its construction-stage state. In <code>convoy_ambush</code> the enemy MUST be after the <strong>cargo</strong>: it wins by capturing a supply vessel or every cargo container, the convoy wins when its vessels have left with cargo aboard, and a battle in which a vessel never reaches its jump point MUST end in a draw after a time limit, delivering what is still aboard.</p>
+<p><em>Rationale:</em> Logistics in battle. The convoy battle was redesigned by the user after playtesting (app 0.9.2): a battle about cargo, not about killing raiders.</p>
 <ul>
 <li>Implements: <a href="../../../definition/missions/#f-msn-007-logistics-missions">F-MSN-007</a></li>
-<li>Status: implemented</li>
-<li>Verified by: MT-3-02, MT-3-03</li>
+<li>Status: implemented (the convoy design: app 0.9.2, main <code>0d1c522</code>, <code>146195b</code>)</li>
+<li>Verified by: MT-3-02, MT-3-03, MT-4-26, MT-4-27</li>
 <li>Reverse-engineered: yes</li>
-<li>See: <a href="../../design/logistics/">Logistics</a></li>
+<li>See: <a href="../../design/logistics/">Logistics</a>, <a href="../../../modding/missions/#the-convoy-ambush-app-092">Missions › The convoy ambush</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.2)</p>
+<p>Two clippers with twelve cargo pods and a point-defence laser each (R-STR-017) run about ten minutes to their jump point; grappler tugs come every two minutes from 140 s, each with a saucer squadron in formation on it (breaking off within 1.5 km), tear pods off and haul them 3 km before jumping out; raiders (<code>freighter_raider</code>) go for the clippers. Lose: <code>captured_any(clippers) or destroyed_all(clippers) or cargo(clippers) == 0</code>; win: <code>count(clippers) == 0 and cargo(clippers) &gt; 0</code>; a 15-minute timer ends it in a draw.</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Generation from the strategy layer is R-STR-019.</p>
+<p>Generating <code>construction_defence</code> from the strategy layer is R-STR-019 / R-STR-023 (the convoy ambush is generated since app 0.9.2).</p>
 </div>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
@@ -6687,6 +6728,11 @@
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>R-MSN-005: the verdict at once, then the battle runs on for <code>flight.debrief_delay</code> (default 30 s) before the debrief; Enter skips the wait; a retreat shows it at once (app 0.7.4, from user feedback). R-MSN-007: the computer voice plays when the result is decided; <code>cue:</code> names resolve in voices and chatter (app 0.6.7)</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>From the user's playtest and convoy design (app 0.9.1 – 0.9.2): R-MSN-002 revised — repeating waves (<code>every:</code>) and escorts (<code>escort:</code>); R-MSN-003 note — <code>cargo(role)</code> and the mission key <code>cargo:</code>; R-MSN-008 revised — the nebula backdrop, the <code>pocket</code> uses it; R-MSN-012 revised — the convoy ambush is about the cargo (capture by tugs, the draw after a time limit), with an As-built note</td>
 </tr>
 </tbody>
 </table>

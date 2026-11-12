@@ -1,0 +1,7092 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="OpenInterceptor as built: a moddable space-combat simulator engine. Plan, architecture, original formats, modding, Rust practice and testing (docs branch)">
+      
+      
+      
+      
+        <link rel="prev" href="../strategy/">
+      
+      
+        <link rel="next" href="../reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Story layer - OpenInterceptor — Implementation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#story-layer" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OpenInterceptor — Implementation" class="md-header__button md-logo" aria-label="OpenInterceptor — Implementation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OpenInterceptor — Implementation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Story layer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OpenInterceptor — Implementation" class="md-nav__button md-logo" aria-label="OpenInterceptor — Implementation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    OpenInterceptor — Implementation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../definition/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definition
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Definition
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Combat
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/cockpit-hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit & HUD
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/control-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls & control console
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/strategy-logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy & logistics
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../definition/campaigns/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Campaigns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/campaigns/features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign features
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/campaigns/interceptor-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Interceptor campaign mod
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/campaigns/default-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The default campaign
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/campaigns/remastered/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interceptor Remastered
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/modding-toolkit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding toolkit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility (original data)
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/platforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../definition/testbed-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed & tools
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../specification/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Requirements
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Combat
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/cockpit-hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit & HUD
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/control-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls & control console
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/strategy-logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy & logistics
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/campaigns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/modding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compatibility
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/platforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/requirements/testbed-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed & tools
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/console-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console protocol
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod formats and design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mod formats and design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/original-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The original, system by system
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/mod-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod structure
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/format-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: campaign and game flow
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/format-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: strategy layer
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/logistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logistics: facilities and supply lines
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/format-objects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: objects and models
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/format-missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: missions, environments, events
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/format-behaviour/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: behaviours and scripting
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/format-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format: interface, text and media
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/designer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod designer, cutscenes and bundling
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/design/coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coverage matrix
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../specification/original-formats/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Original data formats
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Original data formats
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/pe-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PE resource container
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/xmsh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XMSH meshes
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/xtxr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XTXR textures
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/tga/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TGA images and cockpits
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/xspt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    XSPT sprites
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/smacker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Smacker video
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/ini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    INI rule files
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specification/original-formats/object-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object and ship table
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../implementation/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../implementation/plan/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation plan
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Implementation plan
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-0-foundation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 0 — Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-1-flight/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 1 — Flight simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-2-combat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 2 — Enemies and combat
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-3-missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 3 — Missions and scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-3-interlude/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 3 interlude — Feedback and control console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-4-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 4 — Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-5-campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 5 — Campaigns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-6-presentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 6 — Presentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-7-modding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 7 — Modding toolkit and Remastered
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/stage-8-release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../implementation/architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formats layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packs, VFS and rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings and data discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets and GPU cache
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/sim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/script/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conditions (script)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/mission/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign (strategy layer)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/rendering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/hud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpit and HUD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input and gamepads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/remote/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/testbed/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testbed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/architecture/extract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extractor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/deviations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deviations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../implementation/testing/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/testing/unit-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unit tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/testing/manual-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/build/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/build/packaging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packaging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../user-guide/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tablet console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaign
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modding
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Modding
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../first-mod/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Make your first mod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../packs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rulesets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rulesets and layering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../behaviours/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Behaviours and conditions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../looks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Looks: model sets, debris, effects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../weapons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missiles and mines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments and terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stations, modules and probes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text and translation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../missions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../voices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radio voices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-files-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the files go
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        arcs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plans
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        relations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        strategist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endings-and-campaign_end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        endings and campaign_end
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#encyclopaedia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encyclopaedia
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-default-campaigns-serial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The default campaign's serial
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-interceptor-campaigns-doomsday-arc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The interceptor campaign's Doomsday arc
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trying-a-story-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trying a story out
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mod file reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models and textures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overrides/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overrides and extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cockpits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cockpits (HD and 3D)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../3d-cockpit-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial: a 3D X-COM cockpit
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../console-themes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Console themes
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--current"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios and missions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting (design)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../campaign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Campaigns (design)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validating a mod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../learning/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../learning/rust/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn Rust with this codebase
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn Rust with this codebase
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ownership and borrowing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/lifetimes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifetimes and borrowed bytes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structs, enums and pattern matching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/traits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traits and generics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules and visibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/iterators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Iterators and closures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/collections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/ffi-unsafe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFI, repr(C) and unsafe
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/cfg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms with cfg
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing in Rust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/cargo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cargo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/rust/async-loop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async and the macroquad loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../learning/best-practices/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best practices
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Best practices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/best-practices/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/best-practices/patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/best-practices/data-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data model and performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/best-practices/dependencies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependency policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/best-practices/comments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commenting standard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/best-practices/testing-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/game-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game design (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/mathematics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematics (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/physics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Physics (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine (planned)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../learning/networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/original-game/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Original game
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Original game
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/original-game/gameplay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gameplay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/original-game/controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/original-game/cd-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CD layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/revision-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revision history
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../meta/change-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change history
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-files-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the files go
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        events
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        arcs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plans
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        relations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        strategist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endings-and-campaign_end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        endings and campaign_end
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#encyclopaedia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encyclopaedia
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-default-campaigns-serial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The default campaign's serial
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-interceptor-campaigns-doomsday-arc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The interceptor campaign's Doomsday arc
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trying-a-story-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trying a story out
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="story-layer">Story layer<a class="headerlink" href="#story-layer" title="Permanent link">&para;</a></h1>
+<p>The story layer (app 0.10.0 – 0.10.3, plan items 5.1 – 5.9) is what turns a
+<a href="../strategy/">strategy layer</a> into a campaign with a beginning, a middle and an end: <strong>events</strong>
+that fire on conditions and may offer the player a choice or a mission, <strong>arcs</strong> that put events
+in order, a rival's <strong>plans</strong> built from shipments the player can intercept, <strong>relations</strong> with
+the other factions, a <strong>strategist</strong> whose aggression answers the player, <strong>endings</strong>, and an
+<strong>encyclopaedia</strong>. All of it is pack data in the strategy files; a campaign without these
+sections plays exactly as before.</p>
+<p>Requirements: <a href="../../specification/requirements/campaigns/#r-cpn-007-events-and-arcs">R-CPN-007 – R-CPN-010</a>.
+Design (the full planned format, of which this page is the built part):
+<a href="../../specification/design/format-campaign/#arcs-story-progression">Format: campaign and game flow</a>,
+<a href="../../specification/design/format-missions/#campaign-events-eventid">Campaign events</a>,
+<a href="../../specification/design/format-strategy/#dynamic-relations-optional-per-campaign">Dynamic relations</a>.
+How the engine runs it: <a href="../../implementation/architecture/campaign/#the-story-app-0100">Architecture › Campaign › The story</a>.
+What the player sees: <a href="../../user-guide/campaign/#the-story">User guide › Campaign › The story</a>.</p>
+<h2 id="where-the-files-go">Where the files go<a class="headerlink" href="#where-the-files-go" title="Permanent link">&para;</a></h2>
+<p>Like every strategy section the story sections may sit in any rules file; by convention they go
+in <code>&lt;pack&gt;/strategy/story.yaml</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>resources/default/strategy/story.yaml</code></td>
+<td>The default campaign's twelve-chapter serial, side events, the Eclipse Engine plan, relations, the Dominion's strategist, four endings, five encyclopaedia entries (app 0.10.1)</td>
+</tr>
+<tr>
+<td><code>packs/interceptor/strategy/story.yaml</code></td>
+<td>The X-COM Doomsday arc, the Doomsday plan, two side missions, the alien strategist, three endings (app 0.10.2)</td>
+</tr>
+</tbody>
+</table>
+<p><code>events</code>, <code>arcs</code>, <code>plans</code>, <code>endings</code> and <code>encyclopaedia</code> are <strong>definition sections</strong>: they
+layer across packs like any other definitions, so an addon may add an event, <code>inherit</code> a plan
+or <code>delete: true</code> an ending (<a href="../rulesets/#layering-inherit-delete-and-list-edits">Rulesets</a>).
+<code>relations</code>, <code>strategist</code> and <code>campaign_end</code> are <strong>global sections</strong>: the last pack to write one
+wins. Every id these sections define is a named constant in the campaign's conditions, so a
+misspelt event, arc, plan or ending id is a load error that names it.</p>
+<h2 id="a-worked-example">A worked example<a class="headerlink" href="#a-worked-example" title="Permanent link">&para;</a></h2>
+<p>A three-step arc with a choice, a rival plan and two endings:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># mypack/strategy/story.yaml</span>
+<span class="nt">flags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">rival_revealed</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">beacon_destroyed</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># every flag a condition reads; one flags: list per campaign</span>
+
+<span class="nt">arcs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">steps</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">opening</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">reveal</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">finale</span><span class="p p-Indicator">]}</span>
+
+<span class="nt">events</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">opening</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">day &gt;= 0</span>
+<span class="w">    </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"message(The</span><span class="nv"> </span><span class="s">frontier</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">quiet.</span><span class="nv"> </span><span class="s">Too</span><span class="nv"> </span><span class="s">quiet.)"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">reveal</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">day &gt;= 30 or research(deep_radar)</span>
+<span class="w">    </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"message(Their</span><span class="nv"> </span><span class="s">fleet</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">building</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">beacon!)"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">set_flag(rival_revealed)</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">choices</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">"Ask</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">Senate</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">funds"</span><span class="p p-Indicator">,</span><span class="nt"> do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"money(200000)"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"relation(senate,</span><span class="nv"> </span><span class="s">-10)"</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">"Go</span><span class="nv"> </span><span class="s">it</span><span class="nv"> </span><span class="s">alone"</span><span class="p p-Indicator">,</span><span class="nt"> do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"relation(senate,</span><span class="nv"> </span><span class="s">5)"</span><span class="p p-Indicator">]}</span>
+<span class="w">  </span><span class="nt">finale</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plan(beacon) &gt;= 0.5</span>
+<span class="w">    </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"message(Strike</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">beacon</span><span class="nv"> </span><span class="s">now!)"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"mission(beacon_assault)"</span><span class="p p-Indicator">]</span>
+
+<span class="nt">plans</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">beacon</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dominion</span>
+<span class="w">    </span><span class="nt">stages</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">Frame</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">Core</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">}]</span>
+<span class="w">    </span><span class="nt">start_when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flag(rival_revealed)</span>
+<span class="w">    </span><span class="nt">every</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7d</span>
+<span class="w">    </span><span class="nt">chance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60%</span>
+<span class="w">    </span><span class="nt">raid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">beacon_shipment</span><span class="w">                </span><span class="c1"># a raid with chance: 0%, launched only by the plan</span>
+<span class="w">    </span><span class="nt">warnings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">75%</span><span class="p p-Indicator">,</span><span class="nt"> do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"message(The</span><span class="nv"> </span><span class="s">beacon</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">nearly</span><span class="nv"> </span><span class="s">complete.)"</span><span class="p p-Indicator">]}]</span>
+<span class="w">    </span><span class="nt">complete</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"defeat(beacon_lit)"</span><span class="p p-Indicator">]</span>
+
+<span class="nt">endings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">beacon_destroyed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">victory</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">beacon</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">gone."</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">beacon_lit</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">beacon</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">lit,</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">frontier</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">theirs."</span><span class="p p-Indicator">}</span>
+
+<span class="nt">campaign_end</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">victory</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"flag(beacon_destroyed)"</span><span class="p p-Indicator">,</span><span class="nt"> ending</span><span class="p">:</span><span class="w"> </span><span class="nv">beacon_destroyed</span><span class="p p-Indicator">}]</span>
+<span class="w">  </span><span class="nt">defeat</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"bases</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">0"</span><span class="p p-Indicator">,</span><span class="nt"> ending</span><span class="p">:</span><span class="w"> </span><span class="nv">beacon_lit</span><span class="p p-Indicator">}]</span>
+</code></pre></div>
+<p>The mission <code>beacon_assault</code> sets the flag in its win outcome
+(<code>outcomes: {win: [set_flag(beacon_destroyed)]}</code>), which the next daily check turns into the
+victory.</p>
+<h2 id="events"><code>events</code><a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
+<p>An event is a condition, a chance, a list of actions and, optionally, choices for the player.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>when</code></td>
+<td>condition</td>
+<td>always</td>
+<td>When it may fire, in the <a href="#conditions">campaign context</a>.</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td><code>daily</code>, <code>weekly</code>, <code>monthly</code>, <code>after_battle</code>, <code>on_research</code></td>
+<td><code>daily</code></td>
+<td>How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished.</td>
+</tr>
+<tr>
+<td><code>chance</code></td>
+<td>fraction</td>
+<td>100 %</td>
+<td>The chance per check, once <code>when</code> holds.</td>
+</tr>
+<tr>
+<td><code>do</code></td>
+<td>list of <a href="#actions">actions</a> (or one action)</td>
+<td>none</td>
+<td>What it does when it fires.</td>
+</tr>
+<tr>
+<td><code>choices</code></td>
+<td>list of <code>{text, do}</code></td>
+<td>none</td>
+<td>A choice for the player, made after <code>do</code> has run: <code>text</code> is the option (a <code>@key</code> or words), <code>do</code> its actions. Up to five are offered on number keys.</td>
+</tr>
+<tr>
+<td><code>once</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Fires only once.</td>
+</tr>
+<tr>
+<td><code>cooldown</code></td>
+<td>time</td>
+<td>0</td>
+<td>For a repeating event (<code>once: false</code>): the least time between firings (<code>60d</code>).</td>
+</tr>
+<tr>
+<td><code>arc</code></td>
+<td>arc id</td>
+<td>none</td>
+<td>The arc it is a step of. Not needed when the arc lists it in <code>steps</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>An event fires when, at a check, it is not spent (<code>once</code>) or cooling down, it is its arc's next
+step (if it belongs to an arc), <code>when</code> holds, and its chance comes up. Events are checked in the
+order they are defined.</p>
+<h2 id="arcs"><code>arcs</code><a class="headerlink" href="#arcs" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">arcs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">serial</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">steps</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">ch01</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">ch02</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">ch03</span><span class="p p-Indicator">]}</span>
+</code></pre></div>
+<p><code>steps</code> lists events in order. A step can fire only after the step before it has fired, so
+each step's <code>when</code> needs to say only what <em>this</em> step waits for; <code>arc(serial)</code> reads how many
+steps have fired. A campaign may run several arcs side by side. An event listed in <code>steps</code>
+belongs to that arc whether or not it says <code>arc:</code>; an unknown event in <code>steps</code> is an error.</p>
+<h2 id="plans"><code>plans</code><a class="headerlink" href="#plans" title="Permanent link">&para;</a></h2>
+<p>A rival's project, built from <strong>shipments</strong> the player can intercept. A plan's completion
+usually loses the campaign.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>owner</code></td>
+<td>faction id</td>
+<td>—</td>
+<td>Whose plan it is (shown in the Archive; not otherwise used yet).</td>
+</tr>
+<tr>
+<td><code>stages</code></td>
+<td>list of <code>{name, count}</code></td>
+<td>—</td>
+<td>The plan's parts in order; <code>count</code> components each (at least 1; <code>{per_level: …}</code> allowed). The plan's size is the sum.</td>
+</tr>
+<tr>
+<td><code>start_when</code></td>
+<td>condition</td>
+<td>at once</td>
+<td>When work begins (logged: <em>Intelligence: the rival's … has begun</em>).</td>
+</tr>
+<tr>
+<td><code>every</code></td>
+<td>time</td>
+<td><code>7d</code></td>
+<td>How often a shipment is rolled once work has begun.</td>
+</tr>
+<tr>
+<td><code>chance</code></td>
+<td>fraction</td>
+<td>100 %</td>
+<td>The chance per roll that a shipment leaves (<code>{per_level: …}</code> allowed).</td>
+</tr>
+<tr>
+<td><code>raid</code></td>
+<td>raid id</td>
+<td>none</td>
+<td>The <a href="../strategy/#raids">raid</a> a shipment flies as: a contact on the map, detected, intercepted and fought like any raid. Without it the plan grows only through the <code>plan(…)</code> action.</td>
+</tr>
+<tr>
+<td><code>warnings</code></td>
+<td>list of <code>{at, do}</code></td>
+<td>none</td>
+<td>Actions run once when progress passes <code>at</code> (a fraction), in order.</td>
+</tr>
+<tr>
+<td><code>complete</code></td>
+<td>actions</td>
+<td>none</td>
+<td>Actions run when the last component arrives (usually <code>defeat(&lt;ending&gt;)</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>A shipment that <strong>reaches its destination unopposed adds one component</strong>; one the player
+intercepts and wins (or draws) against is gone and adds nothing; one the player loses to or
+breaks off from flies on and may still arrive. A plan's shipments go only while the player has
+a base. Give the shipment raid <code>chance: 0%</code> so that the ordinary raid roll never launches it:
+only the plan does.</p>
+<p><code>plan(&lt;id&gt;)</code> in a condition reads the progress, 0 to 1.</p>
+<h2 id="relations"><code>relations</code><a class="headerlink" href="#relations" title="Permanent link">&para;</a></h2>
+<p>The player's standing with each other faction, from −100 to 100 (a global section).</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dynamic</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Standings change: actions move them, they drift, and stances take effect. Without it standings are fixed and the factions' own <code>hostile</code> lists decide everything.</td>
+</tr>
+<tr>
+<td><code>start</code></td>
+<td>mapping faction: number</td>
+<td>none</td>
+<td>Starting standings; an unlisted faction is 0.</td>
+</tr>
+<tr>
+<td><code>drift</code></td>
+<td>number</td>
+<td>0</td>
+<td>Each month every standing moves this much towards 0.</td>
+</tr>
+<tr>
+<td><code>stances</code></td>
+<td>mapping stance: upper bound</td>
+<td>hostile −40, wary −10, neutral 20, friendly 60</td>
+<td>Stance names and the highest standing each covers, sorted by bound; above the last bound a faction is <code>allied</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>dynamic: true</code>:</p>
+<ul>
+<li><code>relation(faction, n)</code> moves a standing; a change of stance stops the clock with <em>Relations:
+  X are now Y (were Z)</em>.</li>
+<li><strong>Raids stop</strong>: a raid of a faction that has a standing flies only while that faction is
+  <code>hostile</code>.</li>
+<li><strong>Battles follow the stances</strong> (app 0.10.3): when a campaign battle starts, every faction with
+  a standing is made hostile to the player's faction if its stance is <code>hostile</code>, and not
+  hostile otherwise — in that battle's own copy of the rules. A faction befriended stops
+  attacking; one turned hostile attacks.</li>
+<li><code>relation(&lt;faction&gt;)</code> in a condition reads the standing, and expressions may use it — the
+  default campaign's Senate stipend adds <code>relation(senate) * 3000</code>.</li>
+</ul>
+<p>Not built yet: allied factions fighting at the player's side, relation effects on prices and
+trade, the design's <code>relation_rules</code>, and standings between factions other than the player.</p>
+<h2 id="strategist"><code>strategist</code><a class="headerlink" href="#strategist" title="Permanent link">&para;</a></h2>
+<p>The rival's mood (a global section). Its <strong>aggression</strong> multiplies the chance of <strong>every raid</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aggression.start</code></td>
+<td>number</td>
+<td>1</td>
+<td>Starting aggression.</td>
+</tr>
+<tr>
+<td><code>aggression.min</code>, <code>aggression.max</code></td>
+<td>number</td>
+<td>0.5, 2</td>
+<td>Its limits.</td>
+</tr>
+<tr>
+<td><code>aggression.up</code></td>
+<td>number</td>
+<td>0.1</td>
+<td>Monthly rise while the player wins fewer than <code>calm_after_wins</code> battles that month (sits back).</td>
+</tr>
+<tr>
+<td><code>aggression.down</code></td>
+<td>number</td>
+<td>0.1</td>
+<td>Monthly fall when the player wins at least that many.</td>
+</tr>
+<tr>
+<td><code>calm_after_wins</code></td>
+<td>number</td>
+<td>2</td>
+<td>Battles won in a month that count as winning.</td>
+</tr>
+</tbody>
+</table>
+<p>Without a <code>strategist</code> section aggression stays at 1. The <code>aggression(n)</code> action moves it
+directly. The design's budgets, expansion, offence ladder and <code>Think.ini</code> values are not built.</p>
+<h2 id="endings-and-campaign_end"><code>endings</code> and <code>campaign_end</code><a class="headerlink" href="#endings-and-campaign_end" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">endings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">engine_destroyed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">victory</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">last_base</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="p p-Indicator">}</span>
+<span class="nt">campaign_end</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">defeat</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"bases</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">0"</span><span class="p p-Indicator">,</span><span class="nt"> ending</span><span class="p">:</span><span class="w"> </span><span class="nv">last_base</span><span class="p p-Indicator">}]</span>
+<span class="w">  </span><span class="nt">victory</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"flag(engine_destroyed)"</span><span class="p p-Indicator">,</span><span class="nt"> ending</span><span class="p">:</span><span class="w"> </span><span class="nv">engine_destroyed</span><span class="p p-Indicator">}]</span>
+</code></pre></div>
+<p>An ending has a <code>text</code> (a <code>@key</code> or words) and <code>victory</code> (default <code>false</code>). <code>campaign_end</code>
+lists conditions for each: they are checked every day and after every battle, <strong>defeats
+first</strong>, and the first that holds ends the campaign. The <code>victory(&lt;ending&gt;)</code> and
+<code>defeat(&lt;ending&gt;)</code> actions end it at once. Once ended, the campaign stops; the screen shows
+<em>VICTORY.</em> or <em>DEFEAT.</em> with the text, and Enter saves and leaves. A partial victory is simply
+another ending with <code>victory: true</code> and its own condition.</p>
+<h2 id="encyclopaedia"><code>encyclopaedia</code><a class="headerlink" href="#encyclopaedia" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">encyclopaedia</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">dominion</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="nv">The Umbral Dominion</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="p p-Indicator">,</span><span class="nt"> unlock</span><span class="p">:</span><span class="w"> </span><span class="nv">day &gt;= 0</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>Each entry has a <code>title</code> (default the id), a <code>text</code> and an <code>unlock</code> condition; entries whose
+condition holds are listed on the strategy screen's <strong>Archive</strong> tab.</p>
+<h2 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h2>
+<p>Every action list in the story — <code>do</code>, <code>choices[].do</code>, <code>warnings[].do</code>, <code>complete</code> — is checked
+when the rules load against the event actions (<code>script::action::EVENT_ACTIONS</code>): an unknown
+action or a wrong argument is an error with its place.</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Arguments</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message(text)</code></td>
+<td>text</td>
+<td>A message that stops the clock (and goes in the log).</td>
+</tr>
+<tr>
+<td><code>news(text)</code></td>
+<td>text</td>
+<td>A <em>News:</em> line in the log; the clock runs on.</td>
+</tr>
+<tr>
+<td><code>set_flag(x)</code>, <code>clear_flag(x)</code></td>
+<td>flag</td>
+<td>Set or clear a campaign flag.</td>
+</tr>
+<tr>
+<td><code>money(n)</code></td>
+<td>number</td>
+<td>Add (or, negative, take) money.</td>
+</tr>
+<tr>
+<td><code>score(x)</code></td>
+<td>score id</td>
+<td>Add a score entry (<a href="../strategy/#pilots-and-scores"><code>scores</code></a>).</td>
+</tr>
+<tr>
+<td><code>relation(faction, n)</code></td>
+<td>faction, number</td>
+<td>Change a standing (dynamic relations only).</td>
+</tr>
+<tr>
+<td><code>research(x)</code></td>
+<td>topic</td>
+<td>The topic becomes known.</td>
+</tr>
+<tr>
+<td><code>mission(x)</code></td>
+<td>mission</td>
+<td><strong>Offer</strong> a mission to fly now: the player accepts with Enter (the first ready craft with a pilot flies it) or declines with Esc. The outcome's campaign actions (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>) apply as for a raid's battle, and a win counts towards <code>battles_won</code>.</td>
+</tr>
+<tr>
+<td><code>raid(x)</code></td>
+<td>raid</td>
+<td>Launch that raid's contact now.</td>
+</tr>
+<tr>
+<td><code>plan(x, n)</code></td>
+<td>plan, number</td>
+<td>Add <code>n</code> components to a plan (warnings and completion follow).</td>
+</tr>
+<tr>
+<td><code>aggression(n)</code></td>
+<td>number</td>
+<td>Change the rival's aggression, within its limits.</td>
+</tr>
+<tr>
+<td><code>victory(x)</code>, <code>defeat(x)</code></td>
+<td>ending</td>
+<td>End the campaign in that ending.</td>
+</tr>
+</tbody>
+</table>
+<p>An action with a single text argument takes everything between the brackets, commas included:
+<code>message(Hold on, Guardsman!)</code> (app 0.10.1). In a YAML flow list, quote an action that contains
+a comma, a colon or a <code>+</code>.</p>
+<p><strong>Text keys.</strong> Message and news texts, choice texts, ending texts and encyclopaedia titles and
+texts may be <code>@keys</code> (app 0.10.2), resolved like any other text: <code>@msg.chapter_1</code> from the
+pack's <code>text/</code>, or <code>@orig.KEY</code> from the player's original language files.</p>
+<h2 id="conditions">Conditions<a class="headerlink" href="#conditions" title="Permanent link">&para;</a></h2>
+<p>Story conditions — <code>when</code>, <code>start_when</code>, <code>campaign_end</code> and <code>unlock</code> — use the
+<a href="../strategy/#expressions-the-campaign-context">campaign context</a> with five more queries:</p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>Result</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>arc(x)</code></td>
+<td>number</td>
+<td>Steps of arc <code>x</code> fired so far.</td>
+</tr>
+<tr>
+<td><code>plan(x)</code></td>
+<td>number</td>
+<td>Rival plan <code>x</code>'s progress, 0..1.</td>
+</tr>
+<tr>
+<td><code>relation(x)</code></td>
+<td>number</td>
+<td>Faction <code>x</code>'s standing with the player (−100..100).</td>
+</tr>
+<tr>
+<td><code>fired(x)</code></td>
+<td>number</td>
+<td>Times event <code>x</code> has fired.</td>
+</tr>
+<tr>
+<td><code>battles_won</code></td>
+<td>number</td>
+<td>Battles the player has won, story missions included.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-default-campaigns-serial">The default campaign's serial<a class="headerlink" href="#the-default-campaigns-serial" title="Permanent link">&para;</a></h2>
+<p><code>resources/default/strategy/story.yaml</code> (app 0.10.1) is <em>Perils of the Void</em>'s serial, as in
+the <a href="../../definition/campaigns/default-campaign/">campaign definition</a>:</p>
+<ul>
+<li><strong>Arc <code>serial</code></strong>, twelve chapters <code>ch01</code> – <code>ch12</code>, each a <code>message</code> (the chapter title and
+  its hook) and a <code>mission</code> offer. Chapters are triggered by the Guard's progress (days,
+  research, bases), its relations and the Eclipse Engine's progress (<code>plan(eclipse_engine)</code>).
+  Chapter 3 sets <code>regent_revealed</code>, which starts the plan; chapter 7 is <strong>the Cartel's choice</strong> —
+  escort the Cartel's shipment (the Cartel becomes an ally, money) or raid it (the Cartel turns
+  hostile, the Dominion's aggression falls, a mission); chapter 10 sets <code>engine_site_found</code>;
+  chapter 12 offers the finale <code>eclipse_assault</code>.</li>
+<li><strong>Chapters whose bespoke mission is not built yet fly the nearest existing mission</strong>
+  (<code>colony_defence</code>, <code>convoy_ambush</code>, <code>intercept_scouts</code>, <code>pocket_ambush</code>, <code>ground_strike</code>,
+  <code>defend_station</code>, <code>outpost_raid</code>); only the finale has its own.</li>
+<li><strong>Side events</strong>: the Cartel's offers (monthly, 40 %, <code>once: false</code>, <code>cooldown: 60d</code>), the Belt
+  Prospectors' tithe to friends (monthly while <code>relation(prospectors) &gt;= 20</code>) and the Black
+  Comet's truce, a choice that can buy the raiders off (standing +70 → neutral, so they stop
+  raiding and stop attacking in battle).</li>
+<li><strong>Plan <code>eclipse_engine</code></strong>: Lens, Coils and Heart, six components each; starts with
+  <code>regent_revealed</code>; a shipment every 9 days at 70 % as the raid <code>eclipse_shipment</code>
+  (<code>intercept_scouts</code>, <code>chance: 0%</code>); warnings at 33 %, 66 % and 90 %; complete =
+  <code>defeat(engine_lit)</code>.</li>
+<li><strong>Relations</strong>: dynamic; Senate 40, Cartel −5, Prospectors 15, raiders −70, Dominion −100;
+  drift 2 a month; the default stances. The Senate stipend follows the Senate's standing.</li>
+<li><strong>Strategist</strong>: aggression 1.0 (0.6 – 1.8, ±0.1 a month), calm after 3 wins.</li>
+<li><strong>Endings</strong>: <code>engine_destroyed</code> (victory, set by <code>eclipse_assault</code>'s win), <code>engine_lit</code>,
+  <code>last_base</code> (no bases left) and <code>senate_recognises</code> (<code>relation(senate) &lt;= -60</code>).</li>
+<li><strong>Encyclopaedia</strong>: the Guard, the Dominion, cosmium, the Eclipse Engine (once the Regent is
+  revealed) and the Cartel (once chapter 7 has fired).</li>
+</ul>
+<p>The finale mission <code>eclipse_assault</code> (in <code>missions/missions.yaml</code>) is set in the <code>pocket</code>
+nebula: the Engine (a <code>dominion_outpost</code>), three Thunderbolt wingmen, a guard fleet that comes
+again every two minutes while the Engine stands, and a dreadnought after 90 s; its win scores
+<code>engine_destroyed</code> and sets the flag.</p>
+<p>The unit test <code>campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code>
+plays it for a year with the automatic player (which takes each choice's first option and
+alternates mission results), a month at a time, checking that nothing refers to something that
+is not there, that arcs only move forward, and that the serial and the Engine are under way.</p>
+<h2 id="the-interceptor-campaigns-doomsday-arc">The <code>interceptor</code> campaign's Doomsday arc<a class="headerlink" href="#the-interceptor-campaigns-doomsday-arc" title="Permanent link">&para;</a></h2>
+<p><code>packs/interceptor/strategy/story.yaml</code> (app 0.10.2) expresses the original's story from the
+<a href="../../specification/design/original-analysis/">design analysis</a> — the gate chain the strategy
+guide describes. Every estimate is marked <code>DERIVED</code> in the file.</p>
+<ul>
+<li><strong>Arc <code>doomsday</code></strong>: <code>alien_message_1</code> – <code>alien_message_5</code>, <code>summon_macarthur</code>,
+  <code>final_mission</code>. The first message is checked <code>after_battle</code> from 1 February with a chance per
+  battle by difficulty, or regardless later (the later day is <em>derived</em>); the next ones need
+  their date, a saucer examination topic and the Doomsday plan's progress; MacArthur needs three
+  research topics, and the final mission (<code>destroy_doomsday_weapon</code>, whose win now sets
+  <code>doomsday_destroyed</code>) is offered about a week later.</li>
+<li><strong>Plan <code>doomsday</code></strong>: three stages (Structural, Weapon, Drive) with <code>{per_level: …}</code> counts,
+  shipments as the raid <code>doomsday_convoy</code> (the escorted alien freighter ambush) with a chance by
+  difficulty, three warnings and <code>defeat(doomsday_complete)</code>.</li>
+<li><strong>Side missions</strong>: two of the original's seven so far — a rogue freighter and Kabron pirates,
+  both flying <code>ambush_pirate_squadron</code> on <em>derived</em> triggers.</li>
+<li><strong>Strategist</strong>: aggression with <em>derived</em> values (the original's <code>Think.ini</code> rules are not
+  read yet).</li>
+<li><strong>Endings</strong>: <code>doomsday_destroyed</code> (victory), <code>doomsday_complete</code> and <code>last_base</code>.</li>
+<li><strong>Texts from the original</strong>: the warnings, MacArthur's prompt and two endings use the
+  original's own text keys — <code>@orig.DD_WARNING1</code> – <code>DD_WARNING3</code>, <code>@orig.MAC_PROMPT1</code>,
+  <code>@orig.DD_TOOLATE</code>, <code>@orig.S_LASTBASEDEAD</code> — read from the player's data at load.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Derived: the saucer examinations</p>
+<p>The gates of messages 2 – 4 use the topics <code>type_1_saucer_examination</code>,
+<code>type_2_saucer_examination</code> and <code>type_3_saucer_examination</code> for the guide's Wraith, Spectre
+and Phantasm examinations. That mapping is <strong>derived and unconfirmed</strong>.</p>
+</div>
+<h2 id="trying-a-story-out">Trying a story out<a class="headerlink" href="#trying-a-story-out" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>openinterceptor --campaign &lt;id&gt; --strategy-soak 365</code> plays a year headless and now prints the
+  last monthly report and a story line: each arc's steps (<code>serial 12/12</code>), each plan's progress,
+  the aggression and the ending reached (or <code>none</code>).</li>
+<li><code>--check --campaign &lt;id&gt;</code> reports every story error below.</li>
+<li>On the strategy screen the <strong>Archive</strong> tab shows the plans under way, every standing and
+  stance, the aggression, battles won and the unlocked encyclopaedia.</li>
+</ul>
+<p>Not built yet: a testbed event debugger (fire an event, set flags and plan progress) and
+starting the default campaign at a chosen chapter.</p>
+<h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>events.x.check: 'y' is not daily, weekly, monthly, after_battle or on_research</code></td>
+<td>A wrong check period.</td>
+</tr>
+<tr>
+<td><code>events.x.arc: unknown arc 'y'</code> / <code>arcs.x.steps: unknown event 'y'</code></td>
+<td>An arc or step that is not defined.</td>
+</tr>
+<tr>
+<td><code>events.x.do: unknown action 'y' (known: …)</code> (also <code>.choices</code>, <code>plans.x.warnings</code>, <code>plans.x.complete</code>)</td>
+<td>An action that is not an event action, or a wrong argument.</td>
+</tr>
+<tr>
+<td><code>events.x.when: …</code> (also <code>plans.x.start_when</code>, <code>encyclopaedia.x.unlock</code>, <code>campaign_end.victory</code>)</td>
+<td>A condition that does not parse, or names something not defined.</td>
+</tr>
+<tr>
+<td><code>plans.x.raid: unknown raid 'y'</code></td>
+<td>A plan shipping as a raid that is not defined.</td>
+</tr>
+<tr>
+<td><code>campaign_end.victory: unknown ending 'y'</code> (or <code>defeat</code>)</td>
+<td>An end condition naming an ending that is not defined.</td>
+</tr>
+<tr>
+<td><code>save: the story's events or arcs do not match the loaded rules (was a mod changed?)</code> (or <code>plans</code>)</td>
+<td>Continuing a save after events, arcs or plans were added or removed.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.top", "navigation.sections", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -4289,6 +4289,8 @@
       
         
       
+        
+      
     
     
     
@@ -4666,6 +4668,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6567,17 +6597,17 @@
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a>, <a href="../../../implementation/deviations/">Deviations (DEV-021)</a></li>
 </ul>
 <h3 id="r-flt-008-hyperspace-out">R-FLT-008 Hyperspace out<a class="headerlink" href="#r-flt-008-hyperspace-out" title="Permanent link">&para;</a></h3>
-<p>Hyperspace MUST count down <code>flight.hyperspace_time</code> seconds (doubled while the hyperdrive is damaged); pressing the key again MUST abort; on departure the ship MUST leave the battle with any ship it tows as a captured prize. The player jumping out of a mission MUST end it as <code>retreat</code>.</p>
+<p>Hyperspace MUST count down <code>flight.hyperspace_time</code> seconds (doubled while the hyperdrive is damaged); pressing the key again MUST abort; on departure the ship MUST leave the battle with any ship it tows as a captured prize, and with the modules still mounted on it. The player jumping out of a mission MUST end it as <code>retreat</code>.</p>
 <p><em>Rationale:</em> Original retreat and capture.</p>
 <ul>
 <li>Implements: <a href="../../../definition/flight/#f-flt-005-hyperspace-departure">F-FLT-005</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>sim::systems::hyperspace_counts_down_aborts_and_departs</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>; MT-2-07</li>
+<li>Verified by: <code>sim::systems::hyperspace_counts_down_aborts_and_departs</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>; <code>sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code>; MT-2-07, MT-4-27</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a>, <a href="../../../implementation/deviations/">Deviations (DEV-026)</a></li>
 </ul>
 <h3 id="r-flt-009-collisions">R-FLT-009 Collisions<a class="headerlink" href="#r-flt-009-collisions" title="Permanent link">&para;</a></h3>
-<p>Fighters touching (spheres at 60 % of radius) MUST be separated (in proportion to their masses, taken as radius cubed) and, while approaching, MUST exchange an impulse along the contact normal with restitution <code>flight.collision.restitution</code> (default 0.5). A fighter sweeping into a station mesh MUST be backed out and bounced the same way, with the station immovable.</p>
+<p>A module and its hub, or two modules of the same hub, MUST NOT collide (they are one craft). Fighters touching (spheres at 60 % of radius) MUST be separated (in proportion to their masses, taken as radius cubed) and, while approaching, MUST exchange an impulse along the contact normal with restitution <code>flight.collision.restitution</code> (default 0.5). A fighter sweeping into a station mesh MUST be backed out and bounced the same way, with the station immovable.</p>
 <p>Each impact MUST add spin to the ships involved:
 - from the glancing (tangential) speed, by friction at the contact point;
 - and from the angle between the ship's nose and the impact direction, scaled by <code>flight.collision.spin</code>.</p>
@@ -6588,7 +6618,7 @@
 <ul>
 <li>Implements: <a href="../../../definition/flight/#f-flt-006-collisions">F-FLT-006</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>sim::combat::fighters_bounce_off_each_other_and_stations</code>, <code>sim::combat::a_glancing_hit_sends_a_fighter_tumbling</code>, <code>sim::combat::pressed_together_ships_make_one_impact</code>, <code>sim::collision::segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code>; MT-1-15</li>
+<li>Verified by: <code>sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code> (a hub's modules do not brake it), <code>sim::combat::fighters_bounce_off_each_other_and_stations</code>, <code>sim::combat::a_glancing_hit_sends_a_fighter_tumbling</code>, <code>sim::combat::pressed_together_ships_make_one_impact</code>, <code>sim::collision::segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code>; MT-1-15</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
@@ -6697,6 +6727,11 @@
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>R-FLT-012 revised: the ground continues to the horizon as mirror-image tiles, collision and drawing agree (app 0.6.7, from user feedback)</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>Found building the convoy battle (app 0.9.2): R-FLT-008 revised — modules leave by hyperspace with their hub; R-FLT-009 revised — no collisions between a hub and its own modules (they braked a moving supply ship)</td>
 </tr>
 </tbody>
 </table>

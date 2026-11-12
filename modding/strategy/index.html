@@ -14,7 +14,7 @@
         <link rel="prev" href="../voices/">
       
       
-        <link rel="next" href="../reference/">
+        <link rel="next" href="../story/">
       
       
         
@@ -4062,6 +4062,8 @@
       
         
       
+        
+      
     
     
     
@@ -4866,10 +4868,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-090" class="md-nav__link">
+  <a href="#limits-in-app-0103" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.9.0
+        Limits in app 0.10.3
       
     </span>
   </a>
@@ -4880,6 +4882,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -6828,10 +6858,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-090" class="md-nav__link">
+  <a href="#limits-in-app-0103" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.9.0
+        Limits in app 0.10.3
       
     </span>
   </a>
@@ -6859,7 +6889,9 @@
 <p>The campaign around the battles — the star map, bases, research, the economy, craft, pilots and
 the enemy raids that start battles — is <strong>pack data</strong> (app 0.7.0 – 0.7.3), and so is the optional
 <strong>logistics</strong> layer of mining, manufacturing, research stations and supply convoys (app 0.9.0,
-<a href="#logistics">Logistics</a>). A campaign that has a
+<a href="#logistics">Logistics</a>). The story on top of it — events, arcs, the rival's plans, relations,
+the strategist, endings and the encyclopaedia (app 0.10.0) — has its own page,
+<a href="../story/">Story layer</a>. A campaign that has a
 <code>start:</code> section has a strategy layer: the launcher then leads with <em>Campaign: continue</em> and
 <em>Campaign: new game</em> (<a href="../../user-guide/campaign/">User guide › Campaign</a>). A campaign without
 <code>start:</code> is battles only, as before.</p>
@@ -6907,11 +6939,16 @@ they go in <code>&lt;pack&gt;/strategy/*.yaml</code>, which the loader reads lik
 <td><code>resources/default/strategy/logistics.yaml</code></td>
 <td><code>resources</code>, <code>components</code>, <code>recipes</code>, <code>facility_types</code>, <code>research_sites</code>, <code>logistics</code>; and, merged into the <code>reach</code> map, the hulls and the research tree: <code>deposits</code>, <code>features</code>, hull <code>components</code>, two station-only topics (app 0.9.0)</td>
 </tr>
+<tr>
+<td><code>resources/default/strategy/story.yaml</code></td>
+<td><code>events</code>, <code>arcs</code>, <code>plans</code>, <code>relations</code>, <code>strategist</code>, <code>endings</code>, <code>campaign_end</code>, <code>encyclopaedia</code> (app 0.10.1; <a href="../story/">Story layer</a>)</td>
+</tr>
 </tbody>
 </table>
 <p>The <code>interceptor</code> campaign has two (app 0.8.0, <a href="#the-interceptor-campaign-from-the-players-data">below</a>):
 <code>packs/interceptor/strategy/references.yaml</code>, generated from the player's own files, and
-<code>packs/interceptor/strategy/campaign.yaml</code>, written by hand.</p>
+<code>packs/interceptor/strategy/campaign.yaml</code>, written by hand; and since app 0.10.2 its story,
+<code>packs/interceptor/strategy/story.yaml</code> (<a href="../story/#the-interceptor-campaigns-doomsday-arc">Story layer</a>).</p>
 <p>Each file starts with <code># yaml-language-server: $schema=../../../schemas/rules.schema.json</code>, so
 an editor offers every key below. Definition sections (<code>maps</code>, <code>research</code>, <code>items</code>, …) layer
 across packs like any other definitions: an addon may add a research topic, <code>inherit</code> an item or
@@ -7023,6 +7060,11 @@ names it. Difficulty level ids are constants as well (<code>difficulty &gt;= vet
 <td><code>craft</code></td>
 <td>number</td>
 <td>The player's craft, all bases.</td>
+</tr>
+<tr>
+<td><code>arc(x)</code>, <code>plan(x)</code>, <code>relation(x)</code>, <code>fired(x)</code>, <code>battles_won</code></td>
+<td>number</td>
+<td>The story's queries (app 0.10.0): see <a href="../story/#conditions">Story layer › Conditions</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -8015,7 +8057,7 @@ expressions are not built — DEV-049). At most one facility of each type per sy
 <td><code>ambush_loss</code></td>
 <td>fraction</td>
 <td>35 %</td>
-<td>Chance that each vessel of an ambushed convoy is lost (auto-resolved; the convoy is unescorted).</td>
+<td>Chance that each vessel of an ambushed convoy is lost when the ambush is auto-resolved (no <code>ambush_mission</code>, or the player lets it fight through).</td>
 </tr>
 <tr>
 <td><code>survey_attack_chance</code></td>
@@ -8034,6 +8076,12 @@ expressions are not built — DEV-049). At most one facility of each type per sy
 <td>number</td>
 <td>500</td>
 <td>Convoy speed, map units an hour.</td>
+</tr>
+<tr>
+<td><code>ambush_mission</code></td>
+<td>mission id</td>
+<td>none</td>
+<td>The battle flown when the player escorts an ambushed convoy (app 0.9.2). With it, an ambushed convoy <strong>waits</strong> where it is and the clock stops: the player flies its escort, and the share of the mission's <a href="../missions/#the-mission"><code>cargo:</code></a> role still aboard at the end is delivered — or lets it fight through (auto-resolved as below). Without it every ambush is auto-resolved. An unknown mission is a load error. The default campaign sets <code>convoy_ambush</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -8095,8 +8143,8 @@ components of all four hulls, and two station-only topics (<code>theremin_shield
 <code>pulsar_navigation</code>). Every hull of the default campaign is therefore built from components:
 a Guard player who wants more craft must survey, mine and manufacture first.</p>
 <h3 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h3>
-<p>Convoy ambushes are <strong>auto-resolved</strong> — the <code>convoy_ambush</code> mission exists, but flying it from
-the map is not hooked up (R-STR-019). Also not built: facility fighter pools and escorts
+<p>Convoy ambushes can be <strong>flown</strong> since app 0.9.2 (<code>ambush_mission</code>; the battle is described in
+<a href="../missions/#the-convoy-ambush-app-092">Missions › The convoy ambush</a>). Not built: facility fighter pools and escorts
 (R-STR-025), strikes on facilities under construction from 50 % (R-STR-023), construction-stage
 looks on the map and in battle (R-STR-022), captured cargo and enemy supply depots (R-STR-020),
 third-party convoys (R-STR-027), supply-vessel cargo capacity (R-STR-026), facility upgrades,
@@ -8166,7 +8214,8 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   Victory hulls and the deep-radar and shipyard modules; and two station-only topics,
   <code>theremin_shielding</code> and <code>pulsar_navigation</code> (app 0.9.0, <a href="#the-default-campaigns-logistics">Logistics</a>).</li>
 <li><strong>Economy</strong>: delivery 48 h, salvage 15 000 a kill; the <strong>Senate stipend</strong> every 30 days,
-  <code>400000 + 60000 * bases + month_score * 200</code>; cosmium sales every 7 days,
+  <code>400000 + 60000 * bases + month_score * 200 + relation(senate) * 3000</code> (the standing term since
+  app 0.10.1); cosmium sales every 7 days,
   <code>12000 * module_count(cosmium_refinery)</code>; fuel and stores <code>4000 * craft</code> a week. Eight items
   (four beams, three missiles, cosmium), four hulls, nine module kinds (hangar, quarters, radar,
   deep radar, laboratory, workshop, shipyard, cosmium refinery, ray battery) and the <code>guard_base</code>
@@ -8174,7 +8223,9 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
 <li><strong>Raids</strong>: Dominion scouts (<code>intercept_scouts</code>), saucer raids (<code>defend_station</code>, from day
   10), colony raids (<code>colony_defence</code>, day 20), robot assaults (<code>outpost_raid</code>, day 45) and the
   Black Comet ambush by raiders (<code>pocket_ambush</code>, day 15) — each a mission of the default
-  campaign (<a href="../missions/#the-missions-shipped">Missions</a>).</li>
+  campaign (<a href="../missions/#the-missions-shipped">Missions</a>); and since app 0.10.1 the Eclipse
+  Engine's shipments (<code>eclipse_shipment</code>, <code>chance: 0%</code>: launched only by the
+  <a href="../story/#plans">plan</a>).</li>
 <li><strong>Pilots</strong>: flying, gunnery and nerve; five ranks from cadet to commander; salary 6000,
   recruit fee 40 000, five recruits a month, 12 days to heal, 70 % survive; twelve mission
   scores.</li>
@@ -8271,15 +8322,16 @@ unknown.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="limits-in-app-090">Limits in app 0.9.0<a class="headerlink" href="#limits-in-app-090" title="Permanent link">&para;</a></h2>
+<h2 id="limits-in-app-0103">Limits in app 0.10.3<a class="headerlink" href="#limits-in-app-0103" title="Permanent link">&para;</a></h2>
 <ul>
 <li>No endurance or stranding on the map; no fitting rules (<code>fits</code>), power draw or stock designs —
   fitting is <em>best available</em> only, and slots of kinds other than <code>beam</code> and <code>missile</code> are filled
   but have no effect in battle.</li>
-<li>Outcome actions <code>relation(…)</code> and cargo actions are <strong>logged only</strong>; they belong to Stage 5's
-  relations and the logistics battles still to be hooked up.</li>
-<li><strong>Logistics</strong>: see <a href="#not-built-yet">Not built yet</a> — convoy ambushes are auto-resolved, and
-  fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
+<li>Mission outcome actions <code>relation(…)</code>, <code>capture</code>, <code>cargo_lost</code> and <code>cargo_captured</code> are still
+  <strong>ignored</strong> by the campaign (app 0.10.3): a story event's <code>relation(…)</code> moves a standing
+  (<a href="../story/#actions">Story layer</a>), a mission's does not yet. A flown convoy escort delivers its
+  surviving share through <code>cargo:</code> instead.</li>
+<li><strong>Logistics</strong>: see <a href="#not-built-yet">Not built yet</a> — fighter pools, construction strikes, depots, third-party convoys, cargo capacity, facility
   upgrades and <code>placement:</code> expressions are not built.</li>
 <li>No designs, training, bravery, dismantling, funding evaluations or the 3D base view yet.</li>
 <li>Names and descriptions in the default campaign's strategy files are plain English, not text

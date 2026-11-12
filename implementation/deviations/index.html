@@ -4072,6 +4072,8 @@
       
         
       
+        
+      
     
     
     
@@ -4449,6 +4451,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6342,7 +6372,7 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-049</td>
-<td><strong>Logistics as built simplifies its design</strong>: facility placement is a <strong>fixed rule per role</strong> (mining: a surveyed system with deposits; research: a surveyed research site; manufacturing: at most two lanes from a base; one facility of each type per system) instead of the design's <code>placement:</code> expressions; the nearest supplier is measured in a <strong>straight line</strong> between systems, not by lane (R-STR-013); convoy ambushes are <strong>auto-resolved</strong> as per-vessel losses, and an attacked survey ship is lost on a fixed 50 % roll, instead of generating battles; <code>storage</code> limits only mining facilities.</td>
+<td><strong>Logistics as built simplifies its design</strong>: facility placement is a <strong>fixed rule per role</strong> (mining: a surveyed system with deposits; research: a surveyed research site; manufacturing: at most two lanes from a base; one facility of each type per system) instead of the design's <code>placement:</code> expressions; the nearest supplier is measured in a <strong>straight line</strong> between systems, not by lane (R-STR-013); convoy ambushes are <strong>auto-resolved</strong> as per-vessel losses (since app 0.9.2 only when the campaign has no <code>logistics.ambush_mission</code> or the player declines to fly the escort), and an attacked survey ship is lost on a fixed 50 % roll, instead of generating battles; <code>storage</code> limits only mining facilities.</td>
 <td>App 0.9.0 (<code>ff9d8fc</code>): the smallest version of the design that plays the whole chain. Expressions over the campaign context and flown ambushes (<code>convoy_ambush</code> exists) are the next steps; the survey loss chance should become data. Default campaign only; the <code>interceptor</code> campaign has no logistics.</td>
 <td>4</td>
 </tr>
@@ -6351,6 +6381,18 @@ one looks like a bug.</p>
 <td><strong>The <code>interceptor</code> strategy layer's estimates are derived</strong>: the start (date, pilots, craft, stock), the generated map's number of systems, delivery and salvage, hull speeds, missile <code>rounds</code>, module groups and effects, the X-COM base type's cost and hub sensor range, corporate funding and the raid rolls and targets are authored in <code>packs/interceptor/strategy/campaign.yaml</code>, each marked <code>DERIVED</code>; the pilot rules and mission score points are authored there too, from the design analysis, without the mark. The <strong>tech-id table</strong> in <code>references.yaml</code> is read from the player's executable by a layout that is itself <em>derived</em> (12-byte entries: <code>R_</code> name pointer, string id, tech id); ids 75 and up are not in it and are left out of conditions; research <code>unlocks</code> are not authored (items, hulls and modules are gated by their own <code>TechRequired</code>).</td>
 <td>App 0.8.0 (<code>c64d178</code>, plan item 4.12): research sizes and prerequisites, costs, production times and maintenance are inherited from the player's <code>GameSettings.ini</code> (<em>verified</em> as data, no values in the pack); what the original keeps in code or its manual describes only loosely is estimated, from the design analysis. <strong>Not play-tested</strong>: a six-month automatic run researches 4 of 71 topics on one downlink. The original's monthly evaluation per outpost and the strategist replace the funding and raid estimates in Stage 5.</td>
 <td>4</td>
+</tr>
+<tr>
+<td>DEV-051</td>
+<td><strong>The story format as built is a simpler subset of its design</strong> (app 0.10.0): <code>arc: &lt;id&gt;</code> names the arc (the step is its place in <code>steps</code>) instead of <code>{id, step}</code>; the actions are the fourteen of <code>EVENT_ACTIONS</code> — <code>mission(x)</code> offers a mission now (no <code>start_mission</code> with a place and an expiry, no <code>offer_mission</code>, no <code>reward:</code>), no map changes; plans have stages of <code>{name, count}</code>, a shipment <code>chance</code> instead of <code>ship_visibility</code>, warnings as a list of <code>{at, do}</code>, no <code>budget</code>, <code>grant_if_missed</code> or <code>plan_stage(x)</code>; relations are the <strong>player's standing with each faction</strong> only (no pairs between other factions, no <code>relation_rules</code>, no <code>scale</code>), and a stance change is a notice, not an <code>on_stance_change</code> event; of the stance effects only <em>hostile or not</em> acts (raids and battle hostility) — no allies in battle, no trade effects; the strategist is <strong>aggression only</strong> (<code>strategist:</code> with <code>aggression</code> and <code>calm_after_wins</code>, not <code>strategists.&lt;id&gt;</code> with budgets, expansion and an offence ladder); endings have <code>text</code> and <code>victory</code> only (no image, video, music or <code>continue</code>).</td>
+<td>Stage 5 first makes the story playable end to end in both campaigns with the smallest format that expresses their arcs, plans and endings; the rest of the design stays the target (R-CPN-007 – R-CPN-010 notes).</td>
+<td>5</td>
+</tr>
+<tr>
+<td>DEV-052</td>
+<td><strong>The story content is incomplete and partly derived</strong> (app 0.10.1 – 0.10.2): the default campaign's chapters fly the nearest existing mission where their bespoke special mission is not built (only the finale <code>eclipse_assault</code> is its own); the <code>interceptor</code> arc's gates use the <code>type_1/2/3_saucer_examination</code> topics for the guide's Wraith, Spectre and Phantasm examinations (<em>derived</em>, unconfirmed), its later first-message day, middle-level plan counts, shipment interval, side-mission triggers and strategist values are <em>derived</em>, and only two of the seven side missions exist.</td>
+<td>The arcs, plans and endings are what the engine needed to prove; the missing missions are content work, recorded on R-CPN-004 and R-CPN-005.</td>
+<td>5</td>
 </tr>
 </tbody>
 </table>

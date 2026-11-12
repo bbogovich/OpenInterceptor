@@ -4282,6 +4282,8 @@
       
         
       
+        
+      
     
     
     
@@ -4659,6 +4661,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6680,6 +6710,25 @@ while none of its <code>shield_generator</code> modules survives ("STATION SHIEL
 module whose model set has a <code>destroyed</code> state becomes a <code>Wreck { class, hub, offset, rotation }</code>
 in <code>World::wrecks</code>, drawn by the renderer on its hub. Modder's view:
 <a href="../../../modding/stations/">Stations and modules</a>.</p>
+<p><strong>Modules on moving hubs</strong> (app 0.9.2). Any ship class may carry modules — the default
+campaign's cargo clipper has twelve cargo pods and a point-defence turret — and three fixes
+make a moving hub work, each found while building the convoy ambush:</p>
+<ul>
+<li><strong>No collisions within one craft.</strong> <code>combat::ship_collisions</code> skips a pair when one is
+  mounted on the other or both are mounted on the same hub (<code>Ship::mount.0</code>). Before, the pods'
+  overlapping hulls collided with the clipper every tick and braked it.</li>
+<li><strong>Modules jump with their hub.</strong> <code>systems::depart</code> departs, recursively, every live module
+  still mounted on the ship that leaves, so a convoy that jumps takes its cargo with it
+  (<code>departed</code>, not destroyed — <code>mission::cargo_share</code> counts it as delivered).</li>
+<li><strong>Avoidance ignores its own modules.</strong> The AI's collision avoidance skips objects mounted on
+  itself.</li>
+<li><strong>Torn off by a tractor.</strong> A <code>towable</code> class (a cargo container) may be tractored even when
+  not disabled; in <code>systems::tractors</code> a pull on a mounted one takes its <code>mount</code> (<code>Option::take</code>),
+  so it is no longer placed back on the hub, and emits "CARGO CONTAINER TORN AWAY". The tug that
+  jumps holding it captures it like a disabled ship.</li>
+</ul>
+<p><code>sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code> and
+<code>a_tug_tears_a_container_off_and_prefers_a_disabled_ship</code> cover these.</p>
 <h3 id="systems-simsystems-stage-2">Systems (<code>sim::systems</code>, Stage 2)<a class="headerlink" href="#systems-simsystems-stage-2" title="Permanent link">&para;</a></h3>
 <p>Everything a pilot manages <em>inside</em> the ship. Data comes from the <code>systems</code>, <code>power</code> and
 <code>damage</code> sections (<a href="../../../modding/rulesets/">Rulesets</a>); each ship has <code>power: Power</code>,
@@ -6729,8 +6778,9 @@ ships and a sensor that loses its target says "TARGET LOST". Each second, a miss
 ship loses its target with chance <code>strength / 100 × efficiency</code> per active cloak, plus per active
 ECM within <code>range</code> of the missile.</p>
 <p><strong>Hyperspace.</strong> The countdown announces the last five seconds; at zero <code>depart</code> removes the
-ship (<code>alive = false</code>, <code>departed = true</code>, <code>Departed</code> event). If its tractor holds a disabled,
-<code>capturable</code> ship, that ship departs too and <code>Captured { captor, prize }</code> is emitted.</p>
+ship (<code>alive = false</code>, <code>departed = true</code>, <code>Departed</code> event), and its mounted modules with it
+(app 0.9.2). If its tractor holds a disabled, <code>capturable</code> ship — or anything <code>towable</code> — that
+ship departs too and <code>Captured { captor, prize }</code> is emitted.</p>
 <h3 id="ai-simai">AI (<code>sim::ai</code>)<a class="headerlink" href="#ai-simai" title="Permanent link">&para;</a></h3>
 <p><code>think</code> reads the whole world into a list of decisions, then writes them (two-phase update).
 Each AI ship has a <strong>role</strong> from its scenario (<code>ai::Behaviour</code>): <code>Idle</code>, <code>Target</code> (slow circle,
@@ -6748,7 +6798,7 @@ engine's <code>builtin_attack</code>.</p>
     CK --&gt;|no| FL
     ST --&gt; FL["fly(manoeuvre, params, skill)"]
     FL --&gt; AT["attack / turret: aim_point&lt;br/&gt;(reaction lag, aim error ≤ (1 − aim) × 8°),&lt;br/&gt;in_burst (burst/pause), fire_cone"]
-    FL --&gt; OT["idle, circle, patrol, evade,&lt;br/&gt;retreat (jump), tow (tractor + jump)"]
+    FL --&gt; OT["idle, circle, patrol, evade,&lt;br/&gt;retreat (jump), tow (tractor, haul, jump),&lt;br/&gt;escort (formation or attack), travel (run, jump)"]
     AT --&gt; C["Controls"]
     OT --&gt; C</code></pre>
 <ul>
@@ -6778,9 +6828,19 @@ engine's <code>builtin_attack</code>.</p>
 <li><strong>Turrets.</strong> <code>Controls::aim</code> (a world direction) lets a ship with <code>turret_arc &gt; 0</code> fire its
   beams along the aim instead of the nose, if the aim is within the arc (<code>combat::fire_beams</code>);
   the <code>turret</code> manoeuvre stays put and sets it.</li>
-<li><strong>Tow.</strong> The <code>tow</code> manoeuvre finds the nearest disabled, capturable hostile
-  (<code>nearest_prize</code>), closes in, requests the tractor within 90 % of its range and then the
-  hyperdrive.</li>
+<li><strong>Tow.</strong> The <code>tow</code> manoeuvre finds a prize (<code>nearest_prize</code>): a disabled, capturable hostile
+  first, else the nearest <code>towable</code> hostile, skipping anything another ship is already towing.
+  It closes in, requests the tractor within 90 % of its range, then hauls the prize away; it
+  remembers where it took it (<code>AiState::anchor</code>) and requests the hyperdrive once it is
+  <code>escape</code> (default 2.5 km) from there (app 0.9.2).</li>
+<li><strong>Escort</strong> (app 0.9.2). An escort's <code>AiState::leader</code> and <code>offset</code> are set when it spawns, from
+  the mission role's <code>escort:</code> (the newest live member of that role) and its formation slot.
+  <code>escort</code> flies to the slot with <code>fly_to_slot</code> — the formation code wingmen use, split out of
+  the wingman manoeuvre so both share it — and attacks the nearest hostile within <code>range</code> of the
+  leader or of itself; with no leader left it just fights.</li>
+<li><strong>Travel</strong> (app 0.9.2). Holds <code>speed</code> × top speed straight on and requests the hyperdrive
+  once it is <code>range</code> from where the state began (<code>AiState::anchor</code> again): a supply ship
+  making for its jump point.</li>
 <li>Each pilot has its own seeded random stream (<code>AiState::rng</code>), so <code>random(p)</code> and aim errors
   are deterministic.</li>
 <li><strong>Escapes (Stage 3).</strong> Whatever its behaviour wants, every AI pilot except <code>Idle</code> objects first

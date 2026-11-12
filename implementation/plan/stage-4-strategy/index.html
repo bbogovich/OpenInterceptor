@@ -4133,6 +4133,8 @@
       
         
       
+        
+      
     
     
     
@@ -4510,6 +4512,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6130,7 +6160,7 @@
 
 
 <h1 id="stage-4-strategy-layer">Stage 4 — Strategy layer<a class="headerlink" href="#stage-4-strategy-layer" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>). The real-time strategy game around the battles: the
+<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>); playtest changes in <strong>0.9.1</strong> (<code>3b19dea</code>) and flown supply-convoy battles in <strong>0.9.2</strong> (<code>0d1c522</code>, <code>146195b</code>). The real-time strategy game around the battles: the
 interactive star map, bases, research, the economy, ships and loadouts, pilots — with
 functional screens and saves. Story and the rival's planning come in Stage 5.</p>
 <p>Design: <a href="../../../specification/design/format-strategy/">strategy layer</a>, <a href="../../../specification/design/format-interface/">interface</a>.</p>
@@ -6233,7 +6263,7 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.15</td>
 <td><strong>Supply and demand</strong>: the order book (main base ← manufacturing ← mining; research ← mining once per project), automatic government supply convoys on fixed lanes (several vessels, even cargo shares), the attack point chosen at random at launch, delivery and loss/capture rules; mission-generation hooks for ambushes and construction strikes</td>
 <td><code>campaign::logistics</code>, <code>campaign::convoys</code></td>
-<td><strong>Partial</strong> (0.9.0): the order book (base hull jobs → manufacturing → mining; station start costs → mining), nearest supplier by straight-line distance (DEV-049); automatic convoys along the lanes, <code>logistics.vessels</code> each with an even share; the ambush roll and point at launch; auto-resolved vessel losses with the surviving share delivered. Open: flying <code>convoy_ambush</code> (the mission exists; #19), capture and depots, construction strikes from 50 %. #35.</td>
+<td><strong>Partial</strong> (0.9.0): the order book (base hull jobs → manufacturing → mining; station start costs → mining), nearest supplier by straight-line distance (DEV-049); automatic convoys along the lanes, <code>logistics.vessels</code> each with an even share; the ambush roll and point at launch; auto-resolved vessel losses with the surviving share delivered. <strong>Flown ambushes</strong> (0.9.2, <code>0d1c522</code>, <code>146195b</code>; the user's design): with <code>logistics.ambush_mission</code> an ambushed convoy waits for the player — fly its escort (<code>convoy_ambush</code>) and the share of cargo still aboard (<code>cargo:</code>) is delivered, or let it fight through (<code>Campaign::convoy_result</code>). In battle the enemy captures pods and clippers with tugs; the campaign counts them as lost. Open: captured cargo stored at enemy depots and seized back (5.11), construction strikes from 50 %. #35, #19.</td>
 </tr>
 <tr>
 <td>4.16</td>
@@ -6245,7 +6275,7 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.17</td>
 <td>Facility, survey and supply-traffic screens (functional); <code>default</code>: resources, components, deposits, facility types, recipes, research sites and branches (the stage models, facility objects and supply craft exist since Stage 2)</td>
 <td><code>app::strategy</code>, <code>resources/default</code></td>
-<td><strong>Partial</strong> (0.9.0): the Supply tab (survey, build, station research, stores, counts) and map markers; the default campaign's <code>strategy/logistics.yaml</code> (four resources, three components and recipes, the three facility types, two research sites, deposits in all six systems, hull components, two station-only topics). Open: a supply-traffic view (the tab is plain), the large supply-vessel model, cargo capacity. #37.</td>
+<td><strong>Partial</strong> (0.9.0): the Supply tab (survey, build, station research, stores, counts) and map markers; the default campaign's <code>strategy/logistics.yaml</code> (four resources, three components and recipes, the three facility types, two research sites, deposits in all six systems, hull components, two station-only topics). <strong>The supply vessel</strong> (0.9.2): the cargo clipper is the core vessel with twelve cargo pods and a point-defence laser as separate modules (<code>supply_pod</code>, <code>supply_pd</code>; R-STR-017). Open: a supply-traffic view (the tab is plain), cargo capacity. #37.</td>
 </tr>
 </tbody>
 </table>

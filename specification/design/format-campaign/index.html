@@ -4206,6 +4206,8 @@
       
         
       
+        
+      
     
     
     
@@ -4583,6 +4585,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6369,6 +6399,16 @@ Story progression is expressed with <a href="../format-missions/#campaign-events
 <p>A base template (<code>base_templates: {xcom_start: …}</code>) lists its modules by slot. <code>near</code>/<code>distance</code> place things
 on a generated map; a fixed map names systems instead.</p>
 <h2 id="arcs-story-progression">Arcs: story progression<a class="headerlink" href="#arcs-story-progression" title="Permanent link">&para;</a></h2>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.10.0 – 0.10.3)</p>
+<p>Arcs, plans and endings are built as a simpler subset of this page: <code>arcs.&lt;id&gt;.steps</code>;
+<code>plans.&lt;id&gt;</code> with <code>owner</code>, <code>stages</code> (<code>{name, count}</code>), <code>start_when</code>, <code>every</code>, <code>chance</code>, <code>raid</code>,
+<code>warnings</code> (a list of <code>{at, do}</code>) and <code>complete</code>; <code>endings.&lt;id&gt;</code> with <code>text</code> and <code>victory</code>,
+and <code>campaign_end</code> lists of <code>{when, ending}</code>. Not built: plan <code>budget</code>, <code>ship_visibility</code>
+(the shipment <code>chance</code> stands in), <code>grant_if_missed</code>, <code>plan_stage(x)</code>; endings' image, video,
+music and <code>continue</code>; <code>reports</code>. Keys: <a href="../../../modding/story/">Story layer</a>; differences:
+DEV-051.</p>
+</div>
 <p>The original's story is a <strong>gated chain</strong>: each step needs a date, earlier steps and campaign
 state, and opens the next activity. An arc expresses exactly that, and its steps are events:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">arcs</span><span class="p">:</span>
@@ -6447,6 +6487,11 @@ and three defeats.</p>
 <td>1.0.0</td>
 <td>2026-11-11</td>
 <td>Adopted into Specification 1.0.0 as a normative format page; requirements link here</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>As-built note (app 0.10.0 – 0.10.3): arcs, plans and endings as built, and what of this design is not; the format itself unchanged</td>
 </tr>
 </tbody>
 </table>

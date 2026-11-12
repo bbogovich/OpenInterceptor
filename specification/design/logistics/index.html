@@ -4289,6 +4289,8 @@
       
         
       
+        
+      
     
     
     
@@ -4666,6 +4668,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6465,6 +6495,14 @@ on the map and construction strikes, facility fighter pools and escorts, capture
 enemy depots, third-party convoys, cargo capacity and facility upgrades. Requirement statuses:
 R-STR-012 – R-STR-027.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.9.2, main <code>0d1c522</code>, <code>146195b</code>): flown ambushes and the supply vessel</p>
+<p>With <code>logistics.ambush_mission</code> an ambushed convoy waits for the player, who flies its escort
+(<code>convoy_ambush</code>) or lets it fight through; a flown escort delivers the share of cargo still
+aboard. The supply vessel is the cargo clipper with twelve cargo pods and a point-defence
+laser as modules; grappler tugs with saucer escorts tear pods off and capture them. Captured
+cargo is lost to the player but not yet stored at an enemy depot (5.11).</p>
+</div>
 <h2 id="what-the-player-does">What the player does<a class="headerlink" href="#what-the-player-does" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
     BA["main base&lt;br/&gt;orders components (demand)"] -- "order" --&gt; MA["manufacturing center&lt;br/&gt;needs materials for the order"]
@@ -6952,6 +6990,11 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 <td>1.14.0</td>
 <td>2026-11-11</td>
 <td>As-built note (app 0.9.0): what is built, the two differences (fixed placement rules, straight-line nearest supplier; DEV-049), auto-resolved ambushes and survey attacks, and what is not built yet</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>As-built note (app 0.9.2): flown convoy ambushes (<code>ambush_mission</code>), the supply vessel with cargo pods and a point-defence laser, tugs and escorts; depots still not built</td>
 </tr>
 </tbody>
 </table>

@@ -4278,6 +4278,8 @@
       
         
       
+        
+      
     
     
     
@@ -4655,6 +4657,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6582,24 +6612,28 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected, the event and arc debugger and start-at-chapter (Stage 5).</p>
+<p>Not built: a debug clock beyond the screen's speeds, jumping to battle from a contact not yet detected, the event and arc debugger and start-at-chapter (Stage 5; still not built at app 0.10.3 — the Archive tab shows plans, standings and aggression read-only).</p>
 </div>
 <h3 id="r-tst-011-campaign-soak">R-TST-011 Campaign soak<a class="headerlink" href="#r-tst-011-campaign-soak" title="Permanent link">&para;</a></h3>
 <p>An automated soak MUST run each campaign for a simulated year with battles auto-resolved, checking invariants (money accounting, no orphan references, monotonic arc progress).</p>
 <p><em>Rationale:</em> Stage 5 exit.</p>
 <ul>
 <li>Implements: <a href="../../../definition/testbed-tools/#f-tst-003-headless-runs">F-TST-003</a>, <a href="../../../definition/campaigns/features/#f-cpn-006-story-rivals-and-relations">F-CPN-006</a></li>
-<li>Status: planned — partly met (app 0.8.0, main <code>c64d178</code>): <code>--strategy-soak &lt;days&gt;</code></li>
-<li>Verified by: <code>campaign::tests::the_default_campaign_runs_six_months</code>; MT-4-23</li>
+<li>Status: planned — partly met (app 0.8.0, main <code>c64d178</code>: <code>--strategy-soak &lt;days&gt;</code>; app 0.10.3, main <code>76bda5c</code>: the default campaign's year-long consistency soak)</li>
+<li>Verified by: <code>campaign::tests::the_default_campaign_runs_six_months</code>, <code>the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code>; MT-4-23, MT-5-10</li>
 <li>See: <a href="../../../implementation/plan/stage-5-campaign/">Stage 5</a>, <a href="../../../modding/strategy/#trying-a-campaign-out">Strategy layer › Trying a campaign out</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.8.0)</p>
 <p><code>--strategy-soak &lt;days&gt;</code> plays a campaign's strategy layer headless with <code>campaign::autoplay</code> (every base researches, a lab and a workshop when affordable, every detected contact intercepted, battle results alternated win, win, retreat) and prints a one-line summary. Six-month results: <code>default</code> 12 of 14 topics, <code>interceptor</code> 4 of 71 topics on one downlink.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.10.1 – 0.10.3)</p>
+<p><code>the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code> plays the default campaign for a year a month at a time (<code>campaign::autoplay_from</code>; ambushed convoys fight through, each choice's first option is taken, offered missions alternate two wins and a loss) and after each month checks <strong>no orphan references</strong> (every craft, pilot, base, module, topic, contact, plan and facility index in range), finite money and score, and <strong>monotonic arc progress</strong>; at the end the serial has moved past its sixth chapter and the Eclipse Engine is under way, and every end condition evaluates. <code>--strategy-soak</code> also prints the last monthly report and the story (arcs, plans, aggression, ending; app 0.10.1 – 0.10.2).</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: invariant checks (money accounting, orphan references, arc progress), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).</p>
+<p>Not built: a money-accounting check (money is only checked to be finite), a unit-tested soak of <code>interceptor</code> (its data is the player's, so it runs only by hand with <code>--strategy-soak</code>), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).</p>
 </div>
 <h3 id="r-tst-012-asset-generators">R-TST-012 Asset generators<a class="headerlink" href="#r-tst-012-asset-generators" title="Permanent link">&para;</a></h3>
 <p><code>tools/default_assets/</code> MUST generate the default campaign's models, textures (with damage variants) and sounds.</p>
@@ -6644,6 +6678,11 @@
 <td>1.14.0</td>
 <td>2026-11-11</td>
 <td>R-TST-010 partly met: the original's cheats and jump to battle on the strategy screen (app 0.8.1); R-TST-011 partly met: <code>--strategy-soak</code> (app 0.8.0)</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>R-TST-011: As-built note — the default campaign's year-long consistency soak (orphan references, monotonic arcs; app 0.10.3) and <code>--strategy-soak</code> reporting the story; the Open note narrowed to money accounting, an <code>interceptor</code> unit soak, battles from forces and logistics. R-TST-010: the event debugger and start-at-chapter still not built. No requirement text changed</td>
 </tr>
 </tbody>
 </table>

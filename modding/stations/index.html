@@ -4062,6 +4062,8 @@
       
         
       
+        
+      
     
     
     
@@ -4401,6 +4403,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cargo-containers-and-moving-hubs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cargo containers and moving hubs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-two-campaigns" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4541,6 +4554,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6144,6 +6185,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cargo-containers-and-moving-hubs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cargo containers and moving hubs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-two-campaigns" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6269,6 +6321,43 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
   own explosion and debris).</li>
 <li><strong>Wrecks.</strong> A destroyed module whose model set has a <code>destroyed</code> state stays on the station as
   a wreck drawn in that state (<a href="../looks/#model-sets">Looks</a>); the wreck goes with the station.</li>
+</ul>
+<h2 id="cargo-containers-and-moving-hubs">Cargo containers and moving hubs<a class="headerlink" href="#cargo-containers-and-moving-hubs" title="Permanent link">&para;</a></h2>
+<p>Since app 0.9.2 a hub need not be a station: any ship class may carry <code>modules</code>, and they ride
+with it. The default campaign's cargo clipper (<code>supply_ship</code>) carries twelve cargo pods and a
+point-defence laser:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">objects</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">supply_pod</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">freighter</span>
+<span class="w">    </span><span class="nt">hit_points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">400</span>
+<span class="w">    </span><span class="nt">armor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span>
+<span class="w">    </span><span class="nt">cargo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">          </span><span class="c1"># counted by the mission's cargo(role) query</span>
+<span class="w">    </span><span class="nt">towable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">        </span><span class="c1"># a tug may tow it away even when not disabled; a mounted one is torn off</span>
+<span class="w">    </span><span class="nt">capturable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">supply_pd</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">beams</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">blaster</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">turret_arc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">180</span>
+<span class="w">    </span><span class="nt">behaviour</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">supply_pd</span><span class="w">                       </span><span class="c1"># do: turret, a long pause between bursts</span>
+<span class="w">    </span><span class="nt">point_defence</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="nv">900m</span><span class="p p-Indicator">,</span><span class="nt"> rate</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="nt"> chance</span><span class="p">:</span><span class="w"> </span><span class="nv">60%</span><span class="p p-Indicator">,</span><span class="nt"> energy</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">}</span>
+<span class="nt">ships</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">supply_ship</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">behaviour</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">supply_run</span><span class="w">                      </span><span class="c1"># do: travel, 24 km, then jump</span>
+<span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="nv">pod1</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">supply_pod</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="c1"># … pod2 – pod12</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="nv">pd</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">supply_pd</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<ul>
+<li><strong>One craft.</strong> A module never collides with its own hub, nor with another module of the same
+  hub (their hulls overlap by design; before app 0.9.2 the pods dragged on a moving clipper),
+  and a craft's collision avoidance ignores its own modules.</li>
+<li><strong>Jumping out.</strong> When a hub leaves by hyperspace, every module still mounted goes with it.</li>
+<li><strong><code>towable</code></strong> (default <code>false</code>): a tug's tractor may take the object even when it is not
+  disabled; tractoring a mounted one <strong>tears it off</strong> its hub ("CARGO CONTAINER TORN AWAY"), and
+  the tug that jumps while holding it captures it.</li>
+<li><strong><code>cargo</code></strong> (default <code>false</code>): the object is a cargo container, counted by the
+  <a href="../missions/#the-battle-context"><code>cargo(role)</code></a> query of the role whose craft carry it, and by
+  a mission's <a href="../missions/#the-mission"><code>cargo:</code></a> key.</li>
 </ul>
 <h2 id="the-two-campaigns">The two campaigns<a class="headerlink" href="#the-two-campaigns" title="Permanent link">&para;</a></h2>
 <table>

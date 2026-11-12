@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../strategy/">
+        <link rel="prev" href="../story/">
       
       
         <link rel="next" href="../models/">
@@ -4062,6 +4062,8 @@
       
         
       
+        
+      
     
     
     
@@ -4439,6 +4441,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6835,8 +6865,11 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 (<a href="../strategy/#logistics">Strategy layer › Logistics</a>). New strategy keys in app 0.8.0:
 <code>start.money_from</code>, <code>economy.cost_scale</code>, <code>economy.module_time</code>, and the original's numeric
 <code>prereq1</code> – <code>prereq3</code>, <code>tech_required</code>, <code>tech_required2</code> read through <code>tech_ids</code>
-(<a href="../strategy/#tech_ids"><code>tech_ids</code></a>). All of them are in the editor schema
-<code>schemas/rules.schema.json</code>.</p>
+(<a href="../strategy/#tech_ids"><code>tech_ids</code></a>); in app 0.9.2 <code>logistics.ambush_mission</code>. The <strong>story
+layer</strong> (app 0.10.0) adds the definitions <code>events</code>, <code>arcs</code>, <code>plans</code>, <code>endings</code>,
+<code>encyclopaedia</code> and the globals <code>relations</code>, <code>strategist</code>, <code>campaign_end</code>, by convention in
+<code>strategy/story.yaml</code> — every key is on <a href="../story/">Story layer</a>. All of them are in the editor
+schema <code>schemas/rules.schema.json</code>.</p>
 <p>Times take <code>s</code>, <code>min</code>, <code>h</code> and, since app 0.6.7, <code>d</code> (days): <code>10d</code>.</p>
 <h3 id="factions"><code>factions</code><a class="headerlink" href="#factions" title="Permanent link">&para;</a></h3>
 <table>
@@ -7238,6 +7271,18 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 <td>Can be captured with a tractor beam when disabled.</td>
 </tr>
 <tr>
+<td><code>towable</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Can be towed away even when not disabled — a cargo container; a mounted one is torn off its hub by the tractor (app 0.9.2, <a href="../stations/#cargo-containers-and-moving-hubs">Stations and modules</a>).</td>
+</tr>
+<tr>
+<td><code>cargo</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>A cargo container, counted by the mission query <code>cargo(role)</code> and the mission key <code>cargo:</code> (app 0.9.2).</td>
+</tr>
+<tr>
 <td><code>behaviour</code></td>
 <td>id</td>
 <td>none (armed AI ships fly <code>builtin_attack</code>)</td>
@@ -7259,7 +7304,7 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 <td><code>modules</code></td>
 <td>list of <code>{slot, class}</code></td>
 <td>none</td>
-<td>Stations: modules mounted at the model's attachment points — <code>slot</code> is an OBJ <code>slot_&lt;name&gt;</code> group's name or an original mesh's attachment index (quoted: <code>'0'</code>) (<a href="../stations/">Stations and modules</a>).</td>
+<td>Stations (and, since app 0.9.2, any ship — they move and jump out with it): modules mounted at the model's attachment points — <code>slot</code> is an OBJ <code>slot_&lt;name&gt;</code> group's name or an original mesh's attachment index (quoted: <code>'0'</code>) (<a href="../stations/">Stations and modules</a>).</td>
 </tr>
 <tr>
 <td><code>shield_generator</code></td>
@@ -7494,15 +7539,15 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 <tbody>
 <tr>
 <td><code>do</code></td>
-<td><code>idle</code>, <code>circle</code>, <code>patrol</code>, <code>attack</code>, <code>evade</code>, <code>retreat</code>, <code>turret</code>, <code>tow</code>, <code>mine</code></td>
+<td><code>idle</code>, <code>circle</code>, <code>patrol</code>, <code>attack</code>, <code>evade</code>, <code>retreat</code>, <code>turret</code>, <code>tow</code>, <code>escort</code>, <code>travel</code>, <code>mine</code></td>
 <td><em>required</em></td>
-<td>The manoeuvre.</td>
+<td>The manoeuvre (<a href="../behaviours/#manoeuvres">Manoeuvres</a>; <code>escort</code> and <code>travel</code> app 0.9.2).</td>
 </tr>
 <tr>
 <td><code>range</code></td>
 <td>distance</td>
 <td>2000 m</td>
-<td>Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); mine: trigger distance.</td>
+<td>Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance.</td>
 </tr>
 <tr>
 <td><code>fire_cone</code></td>
@@ -7545,6 +7590,12 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 <td>bool</td>
 <td><code>false</code></td>
 <td>Retreat: start the hyperdrive.</td>
+</tr>
+<tr>
+<td><code>escape</code></td>
+<td>distance</td>
+<td>2.5 km</td>
+<td>Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2).</td>
 </tr>
 </tbody>
 </table>
@@ -8094,9 +8145,9 @@ mission or scenario picks one with <code>environment: &lt;id&gt;</code>; without
 </tr>
 <tr>
 <td><code>backdrop</code></td>
-<td><code>{planet: {color, size, direction}}</code></td>
+<td><code>{planet: {color, size, direction}}</code> or <code>{nebula: {color, second_color, density, seed}}</code></td>
 <td>none</td>
-<td>A planet in the sky: <code>color</code> RGB (default <code>[0.3, 0.5, 0.9]</code>), <code>size</code> its angular size in degrees (default 30, 1–170), <code>direction</code> where it lies (default <code>[0, -0.5, -1]</code>).</td>
+<td>A planet in the sky: <code>color</code> RGB (default <code>[0.3, 0.5, 0.9]</code>), <code>size</code> its angular size in degrees (default 30, 1–170), <code>direction</code> where it lies (default <code>[0, -0.5, -1]</code>). Or nebula clouds all around (app 0.9.1): <code>color</code> and <code>second_color</code> RGB (defaults <code>[0.55, 0.2, 0.6]</code>, <code>[0.2, 0.35, 0.75]</code>), <code>density</code> 0..1 (default 0.8; also dims the stars), <code>seed</code> (default 1) (<a href="../environments/#space-environments">Environments</a>).</td>
 </tr>
 </tbody>
 </table>
@@ -8227,15 +8278,15 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 </tr>
 <tr>
 <td><code>roles</code></td>
-<td>mapping name: <code>{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, formation, at, arrive}</code></td>
+<td>mapping name: <code>{class, count, faction, ai, behaviour, protect, state, hull, destroyed_systems, speed, formation, escort, at, arrive}</code></td>
 <td>—</td>
 <td>Groups of craft. <code>class</code>: an id or a list (random per member); <code>count</code>: <code>n</code> or <code>[min, max]</code>; <code>at</code>: <code>{distance, bearing, from, spread}</code>; <code>arrive</code>: a condition.</td>
 </tr>
 <tr>
 <td><code>waves</code></td>
-<td>list of <code>{role, when, count, at}</code></td>
+<td>list of <code>{role, when, count, at, every}</code></td>
 <td>none</td>
-<td>Reinforcements, each once.</td>
+<td>Reinforcements, each once — or, with <code>every</code> (a time, app 0.9.2), again that long after it last came while <code>when</code> holds.</td>
 </tr>
 <tr>
 <td><code>objectives</code></td>
@@ -8284,6 +8335,12 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td><a href="#hazards">hazards</a></td>
 <td>none</td>
 <td>Asteroid field, minefield, black hole, ion storm.</td>
+</tr>
+<tr>
+<td><code>cargo</code></td>
+<td>role name</td>
+<td>none</td>
+<td>The role whose cargo containers count: the debrief reports the share still aboard (app 0.9.2).</td>
 </tr>
 </tbody>
 </table>

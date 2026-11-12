@@ -3335,6 +3335,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-story-app-0100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The story (app 0.10.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The story (app 0.10.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logic-flow-storystep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic flow: story::step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-x-com-data-app-080" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4299,6 +4338,8 @@
       
         
       
+        
+      
     
     
     
@@ -4676,6 +4717,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6374,6 +6443,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-story-app-0100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The story (app 0.10.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The story (app 0.10.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logic-flow-storystep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logic flow: story::step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-x-com-data-app-080" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6462,13 +6570,15 @@
 
 
 <h1 id="campaign-strategy-layer">Campaign (strategy layer)<a class="headerlink" href="#campaign-strategy-layer" title="Permanent link">&para;</a></h1>
-<p><code>src/campaign/</code> (<code>mod.rs</code>, <code>logistics.rs</code>, <code>save.rs</code>) with its data in <code>src/content/strategy.rs</code>
-and <code>src/content/logistics.rs</code>, its expression context in <code>src/script/campaign.rs</code> and its screen
+<p><code>src/campaign/</code> (<code>mod.rs</code>, <code>logistics.rs</code>, <code>story.rs</code>, <code>save.rs</code>) with its data in
+<code>src/content/strategy.rs</code>, <code>src/content/logistics.rs</code> and <code>src/content/story.rs</code>, its expression
+context in <code>src/script/campaign.rs</code>, its story actions in <code>src/script/action.rs</code> and its screen
 in <code>src/app/strategy.rs</code>: the real-time strategy game around the battles (Stage 4, app 0.7.0 –
-0.9.0). The modder's view is
-<a href="../../../modding/strategy/">Strategy layer</a>; the player's is
-<a href="../../../user-guide/campaign/">User guide › Campaign</a>. Requirements: R-STR-001 – R-STR-027 on
-<a href="../../../specification/requirements/strategy-logistics/">Strategy &amp; logistics</a>.</p>
+0.9.2) and the story on top of it (Stage 5, app 0.10.0 – 0.10.3). The modder's view is
+<a href="../../../modding/strategy/">Strategy layer</a> and <a href="../../../modding/story/">Story layer</a>; the
+player's is <a href="../../../user-guide/campaign/">User guide › Campaign</a>. Requirements: R-STR-001 –
+R-STR-027 on <a href="../../../specification/requirements/strategy-logistics/">Strategy &amp; logistics</a>,
+R-CPN-007 – R-CPN-010 on <a href="../../../specification/requirements/campaigns/">Campaigns</a>.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <h3 id="where-it-sits">Where it sits<a class="headerlink" href="#where-it-sits" title="Permanent link">&para;</a></h3>
 <p>The campaign is a <strong>simulation layer beside <code>sim</code></strong>: deterministic, plain data, no macroquad, no
@@ -6482,7 +6592,8 @@ rendering, no input. It reads the content layer (<code>StrategyDef</code>) and t
     end
     subgraph SIM["4 · Simulation"]
         CA["campaign::Campaign&lt;br/&gt;advance, orders, battle_result"]
-        LG["campaign::logistics&lt;br/&gt;step, Logistics"]
+        LG["campaign::logistics&lt;br/&gt;step, Logistics, convoy_result"]
+        STO["campaign::story&lt;br/&gt;step, check_end, StoryState"]
         SV["campaign::save&lt;br/&gt;write / read"]
         W["sim::World"]
     end
@@ -6490,17 +6601,22 @@ rendering, no input. It reads the content layer (<code>StrategyDef</code>) and t
         SD["content::strategy::StrategyDef"]
         LD["content::logistics::LogisticsDef&lt;br/&gt;(StrategyDef::logistics)"]
         SC["script::campaign&lt;br/&gt;QUERIES, schema"]
+        SYD["content::story::StoryDef&lt;br/&gt;(StrategyDef::story)"]
+        EA["script::action::EVENT_ACTIONS"]
     end
     ST --&gt; CA &amp; SV
     AM --&gt; ST &amp; FL
     FL --&gt; W
-    CA --&gt; SD &amp; SC &amp; LG
+    CA --&gt; SD &amp; SC &amp; LG &amp; STO
     LG --&gt; LD
+    STO --&gt; SYD
+    SYD --&gt; SC &amp; EA
     SV --&gt; CA &amp; SD
     SD --&gt; SC &amp; LD</code></pre>
 <p><code>campaign</code> never calls <code>sim</code>: a battle is handed to the app, which flies it in an ordinary
 <code>FlightSession</code> and hands the debrief back. The two simulations meet only through strings (the
-mission id, the result, the outcome's action texts) and a kill count.</p>
+mission id, the result, the outcome's action texts), a kill count, the share of cargo still
+aboard (app 0.9.2) and, going in, the factions' stances (app 0.10.3).</p>
 <h3 id="data-flow-from-yaml-to-the-screen">Data flow: from YAML to the screen<a class="headerlink" href="#data-flow-from-yaml-to-the-screen" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
     Y[("&amp;lt;pack&amp;gt;/strategy/*.yaml&lt;br/&gt;start, maps, research, items, hulls,&lt;br/&gt;base_modules, base_types, raids, …")] --&gt; RS["content::rules::build&lt;br/&gt;resolved definitions + globals"]
@@ -6565,12 +6681,16 @@ fixed, which is what makes a campaign replay exactly from a save:</p>
     J --&gt; K["contacts move; within a base's sensor range → detected, Notice;&lt;br/&gt;hidden systems in range revealed"]
     K --&gt; L["interceptions fly to their contacts → Event::Battle"]
     L --&gt; M["contacts that arrived unopposed → module lost, score(undefended), Notice"]
-    M --&gt; N["logistics::step (app 0.9.0; campaigns with logistics):&lt;br/&gt;demand, mining, recipes, stations, convoys, surveys"]</code></pre>
+    M --&gt; N["logistics::step (app 0.9.0; campaigns with logistics):&lt;br/&gt;demand, mining, recipes, stations, convoys, surveys"]
+    N --&gt; O["story::step (app 0.10.0): events, plans,&lt;br/&gt;monthly drift and aggression, the end conditions"]</code></pre>
+<p>Since app 0.10.0 a raid's roll uses <code>chance × story.aggression</code>, and is skipped while
+<code>raids_allowed</code> says its faction is no longer hostile.</p>
 <p>Every roll (raids, launch points, pilots, recruits, generated maps, <code>random(p)</code>) draws from one
 <strong>xorshift</strong> generator stored in the campaign (<code>Campaign::rng</code>), so <code>same_seed_same_campaign</code>
 can assert that two campaigns from one seed are equal after the same time.</p>
 <h3 id="expressions-the-campaign-as-a-scriptcontext">Expressions: the campaign as a <code>script::Context</code><a class="headerlink" href="#expressions-the-campaign-as-a-scriptcontext" title="Permanent link">&para;</a></h3>
-<p><code>Campaign</code> answers the 16 queries of <code>script::campaign::QUERIES</code> through a small context struct
+<p><code>Campaign</code> answers the 21 queries of <code>script::campaign::QUERIES</code> (16 until app 0.9.2; <code>arc</code>,
+<code>plan</code>, <code>relation</code>, <code>fired</code> and <code>battles_won</code> came with the story) through a small context struct
 (<code>Cx</code>) that holds <code>&amp;Campaign</code>, an optional base (so <code>module_count</code> in a research rate counts the
 base being evaluated) and the generator in a <code>Cell&lt;u64&gt;</code> — <code>Context::query</code> takes <code>&amp;self</code>, but
 <code>random(p)</code> must advance the generator, the same interior-mutability trick as
@@ -6582,14 +6702,45 @@ base being evaluated) and the generator in a <code>Cell&lt;u64&gt;</code> — <c
     participant A as app::run
     participant C as AppContext
     participant F as FlightSession
-    S-&gt;&gt;S: advance → Event::Battle{contact}; banner "fly or break off"
-    S--&gt;&gt;A: Enter → Next::CampaignBattle{mission, ship, loadout}
+    S-&gt;&gt;S: advance → Event::Battle{contact} | Convoy{convoy} | Mission{mission}; banner
+    S--&gt;&gt;A: Enter → flying = PendingBattle::Contact | Convoy | Story;&lt;br/&gt;Next::CampaignBattle{mission, ship, loadout, stances}
     A-&gt;&gt;C: mem::replace(screen, Launcher); ctx.campaign = Some(strategy screen)
-    A-&gt;&gt;F: start_mission(mission, ship); apply_loadout(loadout); campaign_battle = true
-    F--&gt;&gt;C: debrief + Enter/Esc → ctx.battle_report = {result, actions, kills}
+    A-&gt;&gt;F: start_mission(mission, ship); apply_loadout(loadout);&lt;br/&gt;apply_stances(stances); campaign_battle = true
+    F--&gt;&gt;C: debrief + Enter/Esc → ctx.battle_report = {result, actions, kills, cargo}
     F--&gt;&gt;A: Next::Strategy
     A-&gt;&gt;C: ctx.campaign.take(), ctx.battle_report.take()
-    A-&gt;&gt;S: battle_done(report) → Campaign::battle_result</code></pre>
+    A-&gt;&gt;S: battle_done(report) → battle_result | convoy_result | mission_result;&lt;br/&gt;story::check_end</code></pre>
+<p><strong>Three kinds of campaign battle</strong> (app 0.9.2 – 0.10.0). <code>StrategyScreen::flying</code> is an enum,
+<code>PendingBattle</code>, saying what the battle was <em>for</em>, so that the one report coming back is routed
+to the right place:</p>
+<table>
+<thead>
+<tr>
+<th><code>PendingBattle</code></th>
+<th>Started by</th>
+<th>The report goes to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Contact(id)</code></td>
+<td><code>Event::Battle</code> — an interception reached its contact</td>
+<td><code>Campaign::battle_result(def, id, …)</code></td>
+</tr>
+<tr>
+<td><code>Convoy(v)</code></td>
+<td><code>Event::Convoy</code> — an ambushed convoy (with <code>logistics.ambush_mission</code>)</td>
+<td><code>Campaign::convoy_result(def, v, share)</code>: <code>lose</code> → <code>Some(0.0)</code>, <code>retreat</code> → <code>None</code> (fights on alone), anything else → <code>Some(report.cargo.unwrap_or(1.0))</code></td>
+</tr>
+<tr>
+<td><code>Story</code></td>
+<td><code>Event::Mission</code> — a story event's <code>mission(x)</code> offer</td>
+<td><code>Campaign::mission_result(def, …)</code>: <code>battle_result</code> with an id no contact has, so the outcome's actions and the win apply</td>
+</tr>
+</tbody>
+</table>
+<p>After any of them <code>story::check_end</code> runs, because a battle (a flag set by a finale's win, a
+last base lost) can end the campaign.</p>
 <ul>
 <li>The strategy screen cannot stay the current <code>Screen</code> while a flight runs, and it must not be
   dropped (it owns the campaign). <code>app::run</code> moves it out of <code>screen</code> with
@@ -6602,12 +6753,20 @@ base being evaluated) and the generator in a <code>Cell&lt;u64&gt;</code> — <c
   so <code>Arc::make_mut</code> gives the battle <strong>its own copy</strong> the first time it is changed
   (copy-on-write) and the shared content stays untouched. Ids that are not weapons of the
   campaign are skipped; with no beams fitted the class's own are kept.</li>
-<li>The flight screen fills <code>AppContext::battle_report</code> (<code>BattleReport {result, actions, kills}</code>)
-  from the debrief: the result, the outcome's campaign actions as written (<code>score(x)</code>,
-  <code>money(n)</code>, <code>salvage</code>, <code>set_flag(x)</code>, …) and the kill count. Leaving from the pause menu
+<li><strong>The stances</strong> (app 0.10.3). With dynamic relations, <code>StrategyScreen::stances</code> lists every
+  faction with a standing as <code>(faction, hostile)</code> — hostile when its stance is <code>hostile</code>.
+  <code>flight::apply_stances</code> calls <code>Ruleset::set_hostile(player_faction, faction, hostile)</code> for
+  each (never for the player's own faction), which edits both factions' <code>hostile</code> lists — in the
+  battle's own copy of the rules through <code>Arc::make_mut</code>, exactly like the loadout. Without
+  dynamic relations the list is empty and the factions' own hostility stands.</li>
+<li>The flight screen fills <code>AppContext::battle_report</code> (<code>BattleReport {result, actions, kills,
+  cargo}</code>) from the debrief: the result, the outcome's campaign actions as written (<code>score(x)</code>,
+  <code>money(n)</code>, <code>salvage</code>, <code>set_flag(x)</code>, …), the kill count and — when the mission names a
+  <code>cargo:</code> role — the share of its cargo still aboard (<code>mission::cargo_share</code>). Leaving from the pause menu
   is <code>retreat</code>; a mission that cannot start is counted as <code>retreat</code> too, with the error printed.</li>
 <li><code>Campaign::battle_result</code> applies the actions it knows (<code>score</code>, <code>money</code>, <code>set_flag</code>, <code>salvage</code>;
-  <code>lose</code> is logged, the rest ignored until Stage 5), credits the party's pilots, removes a
+  <code>lose</code> is logged; <code>relation</code>, <code>capture</code> and the cargo actions are still ignored at app 0.10.3),
+  marks a battle for <code>after_battle</code> events, counts a win for the story, credits the party's pilots, removes a
   <code>killed</code> leader's craft (re-indexing pilots' craft handles), sends the rest home, and removes
   the contact on <code>win</code> or <code>draw</code>.</li>
 </ul>
@@ -6700,8 +6859,14 @@ supplier means no order: the demand waits and is asked again next hour.</p>
 <li><strong>Rolls are made when something launches</strong>, not when it arrives: the ambush and its point
   along the route, and a survey ship's attack. The outcome is then part of the saved state
   (<code>Convoy::ambush_in</code>, <code>Survey::attacked</code>), so a save loaded before the ambush replays it the
-  same way. Ambushes are auto-resolved per vessel here; flying them as <code>convoy_ambush</code> is the
-  hookup still to come (R-STR-019).</li>
+  same way.</li>
+<li><strong>An ambush waits for the player</strong> (app 0.9.2). With <code>logistics.ambush_mission</code> set, a convoy
+  reaching its ambush point is marked <code>held</code> (saved), a message names its cargo, and
+  <code>Event::Convoy { convoy }</code> goes to the screen; a held convoy does not move. The screen either
+  flies the ambush mission (<code>PendingBattle::Convoy</code>) or calls <code>Campaign::convoy_result(def,
+  convoy, None)</code>, which auto-resolves it per vessel as before. <code>convoy_result(…, Some(share))</code>
+  scales every cargo amount by the share that got through. Without an ambush mission the
+  ambush is auto-resolved on the spot, as in app 0.9.0.</li>
 <li><strong>Fixed placement rules</strong> (<code>Campaign::facility_allowed</code>): mining needs a surveyed system with
   deposits, research a surveyed research site, manufacturing at most two lanes
   (<code>lane_route(...).len() &lt;= 2</code>) from a base; one facility of each type per system. The design's
@@ -6713,6 +6878,56 @@ supplier means no order: the demand waits and is asked again next hour.</p>
   <code>Campaign::researchable</code>, so bases never offer them; <code>start_station_research</code> starts one at a
   research station of the right <code>lab</code> type on the right <code>site</code>.</li>
 </ul>
+<h3 id="the-story-app-0100">The story (app 0.10.0)<a class="headerlink" href="#the-story-app-0100" title="Permanent link">&para;</a></h3>
+<p><code>campaign::story</code> is the runtime of <code>content::story::StoryDef</code> (<code>StrategyDef::story</code>, always
+present, empty for a campaign without story sections). Its state is one more plain struct,
+<code>Campaign::story: StoryState</code> — per event the times fired and the hour it last fired, per arc the
+steps done, per plan whether it has started, components done, the next roll's hour and the
+warnings given, the standings, the aggression, battles won (in all and this month), two
+"something happened" latches for <code>after_battle</code> and <code>on_research</code>, and the ending reached. As
+everywhere in the campaign these are vectors parallel to the definitions, indexed by position.</p>
+<h4 id="data-flow">Data flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart LR
+    Y[("strategy/story.yaml&lt;br/&gt;events, arcs, plans, endings,&lt;br/&gt;encyclopaedia; relations,&lt;br/&gt;strategist, campaign_end")] --&gt; R["content::rules::build_at&lt;br/&gt;story::DEF_SECTIONS layer;&lt;br/&gt;globals read once"]
+    R --&gt; N["StrategyDef::build&lt;br/&gt;story ids join the name table"]
+    N --&gt; B["StoryDef::build&lt;br/&gt;conditions parsed (campaign schema);&lt;br/&gt;actions checked (EVENT_ACTIONS);&lt;br/&gt;arcs, raids, endings resolved to indices"]
+    B --&gt; T["content::resolve_text&lt;br/&gt;@keys in names, messages, choices,&lt;br/&gt;endings, entries resolved"]
+    T --&gt; ST["StoryState::new&lt;br/&gt;(Campaign::new, save::read)"]</code></pre>
+<p>The story ids are added to the strategy layer's <strong>name table</strong> before any expression is parsed,
+so <code>arc(serial)</code>, <code>plan(eclipse_engine)</code> and <code>fired(ch07)</code> compile to checked constants like
+every other name. Actions are parsed with <code>script::action::parse(text, EVENT_ACTIONS)</code>; a
+single-text action (<code>message</code>, <code>news</code>) keeps its whole argument, commas included, while every
+other action splits on commas.</p>
+<h4 id="logic-flow-storystep">Logic flow: <code>story::step</code><a class="headerlink" href="#logic-flow-storystep" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart TD
+    Z{"ending reached?"} --&gt;|yes| END["nothing more happens"]
+    Z --&gt;|no| A["1 · events in order: due by check period&lt;br/&gt;(day / week / month boundary crossed, or a battle / topic since last)&lt;br/&gt;not spent (once), not cooling down, next step of its arc,&lt;br/&gt;when holds, roll &lt; chance → fired, arc step +1,&lt;br/&gt;apply_actions(do); choices → Event::Choice"]
+    A --&gt; B["2 · plans: not started and start_when → started, log;&lt;br/&gt;started, not complete, next roll due → roll &lt; chance and a base →&lt;br/&gt;launch(raid), contact.plan = Some(p)"]
+    B --&gt; C{"3 · month boundary?"}
+    C --&gt;|yes| D["standings drift towards 0;&lt;br/&gt;aggression −down if month_wins ≥ calm_after_wins else +up;&lt;br/&gt;month_wins = 0"]
+    C --&gt;|no| E
+    D --&gt; E["4 · day boundary or an ending event →&lt;br/&gt;check_end: defeats, then victories; first that holds → Event::Ending"]</code></pre>
+<ul>
+<li><strong>One place changes the campaign.</strong> <code>Campaign::apply_actions(def, actions, events)</code> is the only
+  code that turns story actions into changes — money, flags, standings, research, raids, plan
+  progress, aggression, endings — and into events for the screen (<code>Notice</code>, <code>Mission</code>,
+  <code>Ending</code>). Events, choices (<code>Campaign::choose</code>), plan warnings and completion all call it.</li>
+<li><strong>Shipments reuse raids.</strong> A plan's shipment is an ordinary <code>Contact</code> with <code>plan: Some(p)</code>, so
+  detection, interception and the battle need nothing new. Only the arrival differs:
+  <code>Campaign::unopposed</code> sees <code>plan</code> and calls <code>shipment_arrived</code> (one more component) instead of
+  striking. A shipment destroyed or driven off is simply removed with its contact.</li>
+<li><strong>Relations reach two places.</strong> <code>Campaign::raids_allowed</code> stops a non-hostile faction's raids
+  in the hour step; <code>StrategyScreen::stances</code> carries the stances into battle (above). A change
+  of stance is announced in <code>change_standing</code>.</li>
+<li><strong>Arc order by data, not code.</strong> An event's arc index is set from the arc's <code>steps</code> while
+  building, so the step check is one comparison: <code>arcs[a].steps.get(arc_step[a]) == Some(&amp;e)</code>.</li>
+</ul>
+<p>The screen (<code>app::strategy</code>) holds what is waiting for the player — <code>convoy</code>, <code>choice</code>, <code>offer</code>,
+<code>ending</code> — as <code>Option</code>s on <code>StrategyScreen</code>, checked in that order before normal input: an
+ending takes Enter/Esc to leave, a choice takes the number keys, an offer and a convoy take
+Enter (fly) or Esc (decline). The <strong>Archive</strong> tab (<code>Tab::Archive</code>) lists the started plans, the
+standings with their stances, the aggression and battles won, and <code>Campaign::encyclopaedia</code>'s
+unlocked entries.</p>
 <h3 id="the-x-com-data-app-080">The X-COM data (app 0.8.0)<a class="headerlink" href="#the-x-com-data-app-080" title="Permanent link">&para;</a></h3>
 <p><code>tools/interceptor_strategy.py</code> (Python, standard library) is a build-time helper, not part of
 the engine: it reads the player's <code>GameSettings.ini</code> and <code>Interceptor.exe</code> and writes
@@ -6747,10 +6962,15 @@ needs packs that are not loaded: …"), then every index against the loaded rule
 topic, income/expense/raid counts; else "save: … does not match the loaded rules (was a mod
 changed?)"). Since app 0.9.0 a <code>logistics:</code> block follows (<code>write_logistics</code> / <code>read_logistics</code>):
 facilities with their stores, lines and projects, orders, convoys with their routes, vessels and
-pending ambush, survey ships, the surveyed flags, the reserves and the bases' stores;
+pending ambush and (app 0.9.2) whether it is <code>held</code>, survey ships, the surveyed flags, the
+reserves and the bases' stores;
 destinations are written <code>base:&lt;i&gt;</code> / <code>facility:&lt;i&gt;</code>. Its indices are checked like the rest, a
 campaign without logistics saves an empty block, and a save with facilities is refused by a
-campaign that has no logistics. A changed mod is refused with a message instead of crashing or silently changing
+campaign that has no logistics. Since app 0.10.0 a <code>story:</code> block follows too (<code>write_story</code> /
+<code>read_story</code>): events fired and when, arc steps, plan state, standings, aggression, battles won,
+the two latches and the ending; a contact's <code>plan</code>. Never-fired events hold <code>-inf</code> for their last
+firing, which YAML numbers cannot carry, so it is written as a very old hour (−10¹²) and read
+back as <code>-inf</code>. A save whose events, arcs or plans no longer match the rules is refused. A changed mod is refused with a message instead of crashing or silently changing
 the game. The screen saves to <code>&lt;user data&gt;/saves/&lt;campaign id&gt;.yaml</code> (<code>strategy::save_path</code>) on
 F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
@@ -6791,7 +7011,47 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <tr>
 <td><code>Event</code></td>
 <td><code>campaign/mod.rs</code></td>
-<td><code>Notice(String)</code> (stop the clock, show it) or <code>Battle { contact }</code>.</td>
+<td><code>Notice(String)</code> (stop the clock, show it), <code>Battle { contact }</code>, and since app 0.9.2 – 0.10.0 <code>Convoy { convoy }</code> (an ambush waiting for the player), <code>Choice { event }</code>, <code>Mission { mission }</code> (an offer) and <code>Ending { ending }</code>.</td>
+</tr>
+<tr>
+<td><code>StoryDef</code>, <code>EventDef</code>, <code>Check</code>, <code>Choice</code>, <code>ArcDef</code>, <code>PlanDef</code>, <code>Stage</code>, <code>Relations</code>, <code>Strategist</code>, <code>Ending</code>, <code>Entry</code></td>
+<td><code>content/story.rs</code></td>
+<td>The story rules (app 0.10.0); <code>story::DEF_SECTIONS</code>, <code>GLOBALS</code>, <code>sections()</code> (the schema).</td>
+</tr>
+<tr>
+<td><code>StoryState</code></td>
+<td><code>campaign/story.rs</code></td>
+<td>The story state inside <code>Campaign::story</code>; <code>standing</code>, <code>plan_progress</code>.</td>
+</tr>
+<tr>
+<td><code>story::step</code>, <code>story::check_end</code></td>
+<td><code>campaign/story.rs</code></td>
+<td>One slice of story time; the end conditions.</td>
+</tr>
+<tr>
+<td><code>Campaign::apply_actions</code>, <code>choose</code>, <code>mission_result</code>, <code>raids_allowed</code>, <code>encyclopaedia</code></td>
+<td><code>campaign/story.rs</code></td>
+<td>Story actions; a choice; a story mission's result; whether a faction raids; unlocked entries.</td>
+</tr>
+<tr>
+<td><code>Campaign::convoy_result</code>, <code>Convoy::held</code></td>
+<td><code>campaign/logistics.rs</code></td>
+<td>Settling an ambushed convoy (app 0.9.2).</td>
+</tr>
+<tr>
+<td><code>script::action::EVENT_ACTIONS</code></td>
+<td><code>script/action.rs</code></td>
+<td>The 14 story actions.</td>
+</tr>
+<tr>
+<td><code>PendingBattle</code></td>
+<td><code>app/strategy.rs</code></td>
+<td><code>Contact</code>, <code>Convoy</code> or <code>Story</code>: what the battle being flown is for.</td>
+</tr>
+<tr>
+<td><code>flight::apply_stances</code>, <code>Ruleset::set_hostile</code></td>
+<td><code>app/flight.rs</code>, <code>content/rules.rs</code></td>
+<td>The campaign's relations in the battle's own rules (app 0.10.3).</td>
 </tr>
 <tr>
 <td><code>LogisticsDef</code>, <code>FacilityType</code>, <code>Role</code>, <code>Recipe</code>, <code>Deposit</code>, <code>SystemGoods</code>, <code>StationTopic</code></td>
@@ -6814,9 +7074,9 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <td>Testbed cheats (app 0.8.1).</td>
 </tr>
 <tr>
-<td><code>campaign::autoplay</code></td>
+<td><code>campaign::autoplay</code>, <code>autoplay_from</code></td>
 <td><code>campaign/mod.rs</code></td>
-<td>The automatic player of <code>--strategy-soak</code> and the six-month test (public since app 0.8.0).</td>
+<td>The automatic player of <code>--strategy-soak</code> and the six-month and year-long tests (public since app 0.8.0; <code>autoplay_from</code> continues an existing campaign, app 0.10.3). It lets ambushed convoys fight through, takes every choice's first option and flies offered missions as two wins and a loss in turn.</td>
 </tr>
 <tr>
 <td><code>Campaign::fit_best</code>, <code>loadout</code>, <code>lane_route</code>, <code>nearest_system</code></td>
@@ -6844,12 +7104,12 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <td>The campaign context.</td>
 </tr>
 <tr>
-<td><code>StrategyScreen</code>, <code>Tab</code>, <code>SPEEDS</code>, <code>BattleReport</code>, <code>save_path</code>, <code>map_transform</code></td>
+<td><code>StrategyScreen</code>, <code>Tab</code> (ten, with <code>Archive</code>), <code>SPEEDS</code>, <code>BattleReport</code> (with <code>cargo</code>), <code>save_path</code>, <code>map_transform</code></td>
 <td><code>app/strategy.rs</code></td>
 <td>The screen.</td>
 </tr>
 <tr>
-<td><code>Next::NewCampaign</code>, <code>LoadCampaign</code>, <code>CampaignBattle</code>, <code>Strategy</code>; <code>AppContext::campaign</code>, <code>battle_report</code></td>
+<td><code>Next::NewCampaign</code>, <code>LoadCampaign</code>, <code>CampaignBattle</code> (with <code>stances</code>), <code>Strategy</code>; <code>AppContext::campaign</code>, <code>battle_report</code></td>
 <td><code>app/mod.rs</code></td>
 <td>The screen changes around a campaign battle.</td>
 </tr>
@@ -6869,7 +7129,13 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
   the check alone: <code>facility_allowed(def, facility_type, system)</code>.</li>
 <li>Cheats (app 0.8.1): <code>cheat_payday()</code>, <code>cheat_knowitall()</code>, <code>cheat_quickbase()</code>,
   <code>cheat_jump(contact) -&gt; Result&lt;usize, String&gt;</code> (the craft sent).</li>
-<li><code>campaign::autoplay(&amp;def, seed, days) -&gt; Campaign</code> — plays with the automatic player.</li>
+<li><code>campaign::autoplay(&amp;def, seed, days) -&gt; Campaign</code> — plays with the automatic player;
+  <code>autoplay_from(&amp;def, campaign, days)</code> continues one until it is <code>days</code> old.</li>
+<li>Story (app 0.10.0): <code>apply_actions(def, &amp;[Action], &amp;mut events)</code>, <code>choose(def, event, choice)
+  -&gt; Vec&lt;Event&gt;</code>, <code>mission_result(def, result, &amp;actions, kills)</code>, <code>raids_allowed(def, faction)</code>,
+  <code>encyclopaedia(def) -&gt; Vec&lt;(title, text)&gt;</code>; <code>story::step(c, def, dt, &amp;mut events)</code>,
+  <code>story::check_end(c, def, &amp;mut events)</code>.</li>
+<li>Convoys (app 0.9.2): <code>convoy_result(def, convoy, Option&lt;share&gt;)</code>.</li>
 <li>Queries: <code>date(def)</code>, <code>eval(def, &amp;Expr, base)</code>, <code>holds(def, Option&lt;&amp;Expr&gt;)</code>, <code>stock_of(item)</code>,
   <code>effect(def, base, name)</code>, <code>sensor_range(def, base)</code>, <code>hangar(def, base)</code>, <code>available(def,
   "items.x")</code>, <code>researchable(def)</code>, <code>Campaign::rank(def, &amp;pilot)</code>, <code>battle_party(contact)</code>.</li>
@@ -6888,7 +7154,18 @@ F5 and when leaving with Esc; <em>Campaign: continue</em> loads it.</p>
 <li><code>openinterceptor --campaign &lt;id&gt; --strategy-soak 180</code> plays six months headless with
   <code>campaign::autoplay</code> and prints a one-line summary (app 0.8.0): the quickest check that a
   modded strategy layer runs — six-month results at app 0.8.0: <code>interceptor</code> 4 of 71 topics on
-  one downlink, <code>default</code> 12 of 14.</li>
+  one downlink, <code>default</code> 12 of 14. Since app 0.10.1 – 0.10.2 it also prints the last monthly
+  report and a story line — <code>story: arcs [serial 12/12], plans [eclipse_engine 61%],
+  aggression 1.20, ending none</code> (an example of the form) — so a story that stalls shows which arc
+  stopped where.</li>
+<li>The story: the Archive tab shows plan progress, standings and aggression; the message log
+  records every chapter, choice (<em>Chose: …</em>), shipment that got through, stance change and the
+  ending. An arc that never moves usually has a step whose <code>when</code> cannot hold (a flag nobody
+  sets, a plan that never starts because its <code>start_when</code> is never true).</li>
+<li><code>campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code> is the
+  year-long consistency soak: it plays a month at a time with <code>autoplay_from</code> and checks after
+  each month that every craft, pilot, base, contact and facility index is in range, money and
+  score are finite, and arcs never go backwards.</li>
 <li>Logistics: the Supply tab's last row counts open orders, convoys and survey ships; the message
   log records every survey, completed facility and ambush. An order that never appears usually
   means no ready facility can fill it (a resource no mined system has, or no manufacturing

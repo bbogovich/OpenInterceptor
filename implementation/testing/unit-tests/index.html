@@ -4144,6 +4144,8 @@
       
         
       
+        
+      
     
     
     
@@ -4521,6 +4523,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6158,6 +6188,22 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>76bda5c</code> (app 0.10.3)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
+build) gives <strong>366</strong> run on macOS (368 less the Linux-only test and the ignored helper). The 11
+added since <code>2ed1149</code>: app <strong>0.9.1</strong> (<code>3b19dea</code>)
+<code>content::environment::nebula_tests::nebula_clouds_vary_stay_in_range_and_repeat_for_a_seed</code>;
+app <strong>0.9.2</strong> (<code>0d1c522</code>) <code>sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code>,
+<code>a_tug_tears_a_container_off_and_prefers_a_disabled_ship</code>,
+<code>sim::ai::tests::escorts_hold_formation_until_a_hostile_comes_close</code>,
+<code>campaign::logistics::tests::an_ambushed_convoy_waits_for_its_escort_and_delivers_the_share_that_got_through</code>;
+app <strong>0.10.0</strong> (<code>485d01e</code>) <code>campaign::story::tests::arcs_fire_in_order_with_choices_missions_and_cooldowns</code>,
+<code>plans_grow_from_shipments_that_get_through_and_can_end_the_campaign</code>,
+<code>relations_drift_and_the_strategist_answers_the_player</code>; app <strong>0.10.1</strong> (<code>66d0b5a</code>)
+<code>script::action::tests::a_text_argument_keeps_its_commas</code>; app <strong>0.10.3</strong> (<code>76bda5c</code>)
+<code>app::flight::tests::campaign_stances_decide_who_fights_whom</code>,
+<code>campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code> (the
+year-long soak, with <code>campaign::autoplay_from</code>). App 0.10.2 (<code>8926d11</code>) added no test: the
+X-COM story needs the player's data.</p>
 <p><strong>At main <code>2ed1149</code> (after app 0.9.0)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
 build) gives <strong>355</strong> run on macOS (357 less the Linux-only test and the ignored helper). Added
 since <code>9295707</code>: app <strong>0.8.0</strong> (<code>c64d178</code>)
@@ -6326,8 +6372,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::environment</code></td>
-<td>2</td>
-<td>Environments and terrains parse with defaults; mistakes reported (unknown <code>physics</code>, an atmosphere without a terrain, both or neither of <code>generate</code> / <code>heightmap</code>, an unknown generator); generated heightfields span their <code>height</code> range, are the same for the same seed and interpolate between grid points</td>
+<td>3</td>
+<td>Environments and terrains parse with defaults; mistakes reported (unknown <code>physics</code>, an atmosphere without a terrain, both or neither of <code>generate</code> / <code>heightmap</code>, an unknown generator); generated heightfields span their <code>height</code> range, are the same for the same seed and interpolate between grid points; <strong>a nebula's clouds vary, stay in range and repeat for a seed</strong> (app 0.9.1)</td>
 </tr>
 <tr>
 <td><code>content::looks</code></td>
@@ -6351,13 +6397,18 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>campaign</code></td>
-<td>11</td>
-<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong></td>
+<td>12</td>
+<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong>; <strong>the default campaign runs a year with its story and stays consistent</strong> (app 0.10.3)</td>
 </tr>
 <tr>
 <td><code>campaign::logistics</code></td>
-<td>2</td>
-<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met)</td>
+<td>3</td>
+<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met); <strong>an ambushed convoy waits for its escort and delivers the share that got through</strong> (app 0.9.2)</td>
+</tr>
+<tr>
+<td><code>campaign::story</code></td>
+<td>3</td>
+<td><strong>Arcs fire in order</strong> with choices, offered missions and cooldowns; <strong>plans grow from shipments that get through</strong> (not from intercepted ones) and can end the campaign; <strong>relations drift and the strategist answers the player</strong> (app 0.10.0)</td>
 </tr>
 <tr>
 <td><code>campaign::save</code></td>
@@ -6416,8 +6467,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim</code></td>
-<td>14</td>
-<td>Generational handles, <strong>body velocity reads drift in the ship's own axes</strong>, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold; <strong>target preferences pull the AI past a nearer target</strong>, <strong>station modules mount, follow and fall with their hub</strong>; <strong>probes extend radar and jam their enemies</strong>, <strong>AI pilots switch cloak, ECM and power by condition</strong>, <strong>protected objectives are not picked as the nearest enemy</strong></td>
+<td>16</td>
+<td>Generational handles, <strong>body velocity reads drift in the ship's own axes</strong>, deterministic RNG, scenario spawning and leaders, scenario errors, axis convention, edge-control clearing, unconsumed-press carry-over, match speed sets a speed hold; <strong>target preferences pull the AI past a nearer target</strong>, <strong>station modules mount, follow and fall with their hub</strong>; <strong>probes extend radar and jam their enemies</strong>, <strong>AI pilots switch cloak, ECM and power by condition</strong>, <strong>protected objectives are not picked as the nearest enemy</strong>; <strong>cargo modules count until torn off, destroyed or jumped away with the hub</strong> (a moving hub keeps its speed); <strong>a tug tears a container off and prefers a disabled ship</strong> (app 0.9.2)</td>
 </tr>
 <tr>
 <td><code>sim::flight</code></td>
@@ -6431,8 +6482,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::ai</code></td>
-<td>15</td>
-<td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong></td>
+<td>16</td>
+<td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong>; <strong>escorts hold formation until a hostile comes close</strong> (app 0.9.2)</td>
 </tr>
 <tr>
 <td><code>sim::systems</code></td>
@@ -6481,8 +6532,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>script::action</code></td>
-<td>1</td>
-<td>Actions parse and are checked (names, argument kinds, battle or campaign scope)</td>
+<td>2</td>
+<td>Actions parse and are checked (names, argument kinds, battle or campaign scope); <strong>a text argument keeps its commas</strong> (app 0.10.1)</td>
 </tr>
 <tr>
 <td><code>sim::collision</code></td>
@@ -6571,8 +6622,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>app::flight</code></td>
-<td>8</td>
-<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one); <strong>a campaign loadout refits the player's class in this battle only</strong>; <strong>the debrief waits for the delay after the result</strong></td>
+<td>9</td>
+<td>Camera pose for every view, <strong>3D cockpit field of view widens only on narrow screens</strong>, chase orbit, targeting and wing-order commands, pilot messages from events (incl. system, disabled, jump and capture messages), <strong>a wingman answers in its own voice</strong> (only the player's wingmen, only with the line, never the lost one); <strong>a campaign loadout refits the player's class in this battle only</strong>; <strong>the debrief waits for the delay after the result</strong>; <strong>campaign stances decide who fights whom</strong> (app 0.10.3)</td>
 </tr>
 <tr>
 <td><code>app::simulator</code></td>
@@ -6645,7 +6696,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <p>Generated from the <code>#[test]</code> functions in <code>src/</code> at main <code>bf7b7ce</code> (read with grep, not a build).</p>
 <p><strong><code>app::assets</code></strong>: <code>no_original_data_means_empty_lists</code>, <code>tabs_cycle</code></p>
 <p><strong><code>app::devices</code></strong>: <code>key_names_match_the_bindings_vocabulary</code>, <code>known_names_are_real_keycodes</code></p>
-<p><strong><code>app::flight</code></strong>: <code>a_wingman_answers_in_its_own_voice</code>, <code>chase_orbit_responds_and_resets</code>, <code>cockpit_fov_widens_only_on_narrow_screens</code>, <code>commands_target_and_order_wingmen</code>, <code>events_become_pilot_messages</code>, <code>views_place_the_camera</code></p>
+<p><strong><code>app::flight</code></strong>: <code>a_wingman_answers_in_its_own_voice</code>, <code>chase_orbit_responds_and_resets</code>, <code>cockpit_fov_widens_only_on_narrow_screens</code>, <code>commands_target_and_order_wingmen</code>, <code>events_become_pilot_messages</code>, <code>views_place_the_camera</code>, <code>campaign_stances_decide_who_fights_whom</code></p>
 <p><strong><code>app::launcher</code></strong>: <code>menu_lists_viewer_and_scenarios_and_wraps</code>, <code>scenarios_start_with_the_chosen_ship_only_when_choosing</code>, <code>wrapping_text</code></p>
 <p><strong><code>app::simulator</code></strong>: <code>a_setup_changes_environment_hazards_and_enemy_force_only</code>, <code>ships_that_cannot_enter_an_atmosphere_are_refused_there</code></p>
 <p><strong><code>app::viewer</code></strong>: <code>a_still_wheel_does_not_zoom</code>, <code>default_entries_list_every_class</code>, <code>display_modes_cycle</code>, <code>entries_are_found_by_ship_id_or_mesh_name</code>, <code>face_info_describes_a_face</code>, <code>looks_cover_damage_states_and_debris</code>, <code>near_plane_moves_out_to_the_model</code>, <code>orbit_input_clamps</code>, <code>orbit_looks_at_the_origin_from_its_distance</code></p>
@@ -6655,7 +6706,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <p><strong><code>content</code></strong>: <code>empty_pack_dirs_are_an_error</code>, <code>loads_original_free_packs_rules_scenarios_and_models</code>, <code>pack_files_override_original_assets</code>, <code>png_and_tga_pack_images_decode</code>, <code>scaling_scales_everything</code></p>
 <p><strong><code>content::behaviour</code></strong>: <code>parses_states_transitions_and_skill</code>, <code>reports_mistakes</code>, <code>target_preferences_parse_and_reject_unknown_selectors</code>, <code>the_builtin_attack_is_valid</code></p>
 <p><strong><code>content::equipment</code></strong>: <code>kinds_round_trip_and_builtins_exist</code>, <code>power_section_parses_and_validates</code>, <code>system_definitions_override_builtins</code></p>
-<p><strong><code>content::environment</code></strong>: <code>environments_and_terrains_parse_and_report_mistakes</code>, <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code></p>
+<p><strong><code>content::environment</code></strong>: <code>environments_and_terrains_parse_and_report_mistakes</code>, <code>generated_heightfields_span_their_range_are_deterministic_and_interpolate</code>, <code>nebula_clouds_vary_stay_in_range_and_repeat_for_a_seed</code></p>
 <p><strong><code>content::files</code></strong>: <code>every_schema_builds_and_exports</code></p>
 <p><strong><code>content::hazards</code></strong>: <code>hazards_parse_with_defaults_and_report_mistakes</code></p>
 <p><strong><code>content::looks</code></strong>: <code>debris_and_effects_parse_with_defaults</code>, <code>swaps_accumulate_with_damage_and_state</code>, <code>texture_keys_ignore_folders_case_and_extensions</code></p>
@@ -6700,12 +6751,12 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <p><strong><code>render::starfield</code></strong>: <code>same_seed_same_sky_and_unit_directions</code></p>
 <p><strong><code>render::terrain</code></strong>: <code>terrain_meshes_face_up_and_colour_by_height</code></p>
 <p><strong><code>script</code></strong>: <code>errors_are_found_when_loading</code>, <code>evaluates_with_precedence_and_short_circuits</code>, <code>units_and_tokens</code></p>
-<p><strong><code>script::action</code></strong>: <code>actions_parse_and_check</code></p>
+<p><strong><code>script::action</code></strong>: <code>actions_parse_and_check</code>, <code>a_text_argument_keeps_its_commas</code></p>
 <p><strong><code>script::battle</code></strong>: <code>ids_match_and_roles_are_checked_names</code></p>
 <p><strong><code>script::object</code></strong>: <code>ids_match_the_table_and_system_names_match_the_kinds</code></p>
 <p><strong><code>settings</code></strong>: <code>original_data_is_found_in_order</code>, <code>parses_and_round_trips</code></p>
-<p><strong><code>sim</code></strong>: <code>ai_pilots_switch_cloak_ecm_and_power_by_condition</code>, <code>body_velocity_reads_drift_in_the_ships_own_axes</code>, <code>generational_handles_detect_reuse</code>, <code>match_speed_copies_the_targets_speed</code>, <code>preferences_pull_the_ai_past_a_nearer_target</code>, <code>probes_extend_radar_and_jam_their_enemies</code>, <code>protected_objectives_are_not_picked_as_the_nearest_enemy</code>, <code>random_is_deterministic_and_in_range</code>, <code>scenario_errors_are_reported</code>, <code>scenario_spawns_player_objects_and_leaders</code>, <code>ship_axes_follow_the_engine_convention</code>, <code>station_modules_mount_follow_and_fall_with_their_hub</code>, <code>step_advances_time_and_clears_edge_controls</code>, <code>unconsumed_presses_carry_over_held_inputs_do_not</code></p>
-<p><strong><code>sim::ai</code></strong>: <code>aim_skill_decides_accuracy</code>, <code>disabled_ships_drift</code>, <code>enemy_hunts_and_damages_a_hostile</code>, <code>evasive_ends_and_retreat_jumps_out</code>, <code>lead_point_anticipates_motion</code>, <code>mines_go_off_when_an_enemy_comes_near</code>, <code>orders_switch_wingmen_to_attack</code>, <code>steering_turns_towards_points</code>, <code>target_drones_circle_and_idle_ships_sit</code>, <code>transitions_switch_states_on_conditions</code>, <code>tugs_tow_disabled_enemies_away</code>, <code>turrets_fire_off_the_nose</code>, <code>wingman_closes_on_its_slot</code></p>
+<p><strong><code>sim</code></strong>: <code>ai_pilots_switch_cloak_ecm_and_power_by_condition</code>, <code>body_velocity_reads_drift_in_the_ships_own_axes</code>, <code>generational_handles_detect_reuse</code>, <code>match_speed_copies_the_targets_speed</code>, <code>preferences_pull_the_ai_past_a_nearer_target</code>, <code>probes_extend_radar_and_jam_their_enemies</code>, <code>protected_objectives_are_not_picked_as_the_nearest_enemy</code>, <code>random_is_deterministic_and_in_range</code>, <code>scenario_errors_are_reported</code>, <code>scenario_spawns_player_objects_and_leaders</code>, <code>ship_axes_follow_the_engine_convention</code>, <code>station_modules_mount_follow_and_fall_with_their_hub</code>, <code>step_advances_time_and_clears_edge_controls</code>, <code>unconsumed_presses_carry_over_held_inputs_do_not</code>, <code>a_tug_tears_a_container_off_and_prefers_a_disabled_ship</code>, <code>cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code></p>
+<p><strong><code>sim::ai</code></strong>: <code>aim_skill_decides_accuracy</code>, <code>disabled_ships_drift</code>, <code>enemy_hunts_and_damages_a_hostile</code>, <code>evasive_ends_and_retreat_jumps_out</code>, <code>lead_point_anticipates_motion</code>, <code>mines_go_off_when_an_enemy_comes_near</code>, <code>orders_switch_wingmen_to_attack</code>, <code>steering_turns_towards_points</code>, <code>target_drones_circle_and_idle_ships_sit</code>, <code>transitions_switch_states_on_conditions</code>, <code>tugs_tow_disabled_enemies_away</code>, <code>turrets_fire_off_the_nose</code>, <code>wingman_closes_on_its_slot</code>, <code>escorts_hold_formation_until_a_hostile_comes_close</code></p>
 <p><strong><code>sim::collision</code></strong>: <code>segment_sphere_hits_misses_and_inside</code>, <code>segment_triangle_hits_inside_only</code>, <code>shapes_use_mesh_in_model_space</code></p>
 <p><strong><code>sim::combat</code></strong>: <code>a_bolt_leaves_with_the_muzzles_velocity_then_flies_straight</code>, <code>a_new_bolt_streak_never_reaches_behind_the_muzzle</code>, <code>beams_fire_cost_energy_respect_cooldown_and_hit</code>, <code>beams_need_energy</code>, <code>damage_layers_and_aft_shield</code>, <code>empty_racks_report_and_cycle</code>, <code>fighters_bounce_off_each_other_and_stations</code>, <code>link_modes_cycle_and_change_how_many_fire</code>, <code>lock_builds_in_the_cone_and_missile_homes_in</code>, <code>lock_is_lost_outside_the_cone_and_dumbfire_works</code>, <code>point_defence_shoots_down_hostile_missiles</code>, <code>proximity_fuse_fires_on_a_near_miss</code>, <code>rotate_towards_limits_the_turn</code>, <code>with_bolt_frame_ship_a_bolt_turns_with_the_nose_while_carried</code></p>
 <p><strong><code>sim::flight</code></strong>: <code>afterburner_raises_the_cap_drains_energy_and_excess_bleeds_off</code>, <code>assisted_model_holds_throttle_speed_and_damps_drift</code>, <code>brake_stops_against_the_direction_of_travel</code>, <code>energy_and_shields_recharge_up_to_capacity</code>, <code>half_throttle_is_half_the_acceleration</code>, <code>helpers</code>, <code>newtonian_accelerates_to_the_cap_and_coasts</code>, <code>pitching_up_raises_the_nose_and_rates_fall_with_speed</code>, <code>reverse_thrust_slows_and_then_backs_up</code>, <code>speed_hold_matches_speed_and_cancels_drift</code>, <code>static_objects_do_not_move</code>, <code>the_arena_edge_halts_outward_motion</code>, <code>turning_does_not_steer_the_velocity</code>, <code>vct_thrusts_sideways</code>, <code>yaw_right_and_roll_right_turn_the_expected_way</code></p>

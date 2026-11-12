@@ -4103,6 +4103,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-story" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The story
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#money-and-the-monthly-report" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4136,10 +4147,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-090" class="md-nav__link">
+  <a href="#limits-in-app-0103" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.9.0
+        Limits in app 0.10.3
       
     </span>
   </a>
@@ -4173,6 +4184,8 @@
       
         
           
+        
+      
         
       
         
@@ -4596,6 +4609,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6243,6 +6284,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-story" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The story
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#money-and-the-monthly-report" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6276,10 +6328,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limits-in-app-090" class="md-nav__link">
+  <a href="#limits-in-app-0103" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limits in app 0.9.0
+        Limits in app 0.10.3
       
     </span>
   </a>
@@ -6311,6 +6363,10 @@ mines, factories and research stations (app 0.9.0). When your craft meet a raid 
 battle; the debrief brings you back to the map. The default campaign, <em>Perils of the Void</em>, has
 one; so does the <code>interceptor</code> campaign since app 0.8.0, built from your own copy's data (not
 yet play-tested, and without the supply chain, which the original does not have).</p>
+<p>Since app 0.10.0 each campaign also has a <strong>story</strong> (<a href="#the-story">below</a>): chapters or
+messages that arrive as you play, choices to make, missions offered to you, a rival building
+something you must stop, factions whose standing with you changes, and endings — victory or
+defeat.</p>
 <p>The screen is <strong>functional and plain</strong> in this version: every rule is playable, but it is not
 yet dressed in the campaign's look (that is Stage 6).</p>
 <h2 id="starting">Starting<a class="headerlink" href="#starting" title="Permanent link">&para;</a></h2>
@@ -6337,7 +6393,7 @@ yet dressed in the campaign's look (that is Stage 6).</p>
   supply chain also: your <strong>facilities</strong> (a small diamond beside the system, grey while it is
   being built, orange when working), <strong>supply convoys</strong> (gold dots) and <strong>survey ships</strong> (sky-blue
   rings).</li>
-<li><strong>Panel</strong> (right): nine tabs, each a list of rows. The current base is marked <code>*</code> on the
+<li><strong>Panel</strong> (right): ten tabs, each a list of rows. The current base is marked <code>*</code> on the
   Bases tab; orders apply to it.</li>
 </ul>
 <h2 id="keys">Keys<a class="headerlink" href="#keys" title="Permanent link">&para;</a></h2>
@@ -6382,6 +6438,14 @@ yet dressed in the campaign's look (that is Stage 6).</p>
 <td>On the Hangar tab, on a craft: fit it with the best equipment in its base's store</td>
 </tr>
 <tr>
+<td>1 – 5</td>
+<td>While a choice is offered: pick that option (<a href="#the-story">The story</a>)</td>
+</tr>
+<tr>
+<td>Enter / Esc</td>
+<td>While a mission is offered or a convoy is ambushed: fly it / decline (let the convoy fight through). At the end of the campaign: leave</td>
+</tr>
+<tr>
 <td>F5</td>
 <td>Save</td>
 </tr>
@@ -6402,7 +6466,8 @@ yet dressed in the campaign's look (that is Stage 6).</p>
 <p>The clock <strong>stops by itself</strong> whenever something needs you: a building or base is finished,
 research is complete, a contact is detected, a raid strikes, the monthly report, an
 interception reaching its contact, or — with a supply chain — a facility completed, a survey's
-report or a convoy ambushed. The message is shown in a banner; Enter, Esc or a click
+report or a convoy ambushed; and story messages, choices, offered missions, a change in a
+faction's stance and the end of the campaign. The message is shown in a banner; Enter, Esc or a click
 dismisses it.</p>
 <h2 id="the-tabs">The tabs<a class="headerlink" href="#the-tabs" title="Permanent link">&para;</a></h2>
 <table>
@@ -6459,6 +6524,11 @@ dismisses it.</p>
 <td>The log, newest first, with dates</td>
 <td>—</td>
 </tr>
+<tr>
+<td><strong>Archive</strong></td>
+<td>The rival's plans you know of, with how far each is built; every faction's stance and standing with you; the rival's aggression and the battles you have won; the encyclopaedia entries unlocked so far (app 0.10.0)</td>
+<td>—</td>
+</tr>
 </tbody>
 </table>
 <p>Each order answers <em>Done.</em> or says why not (not enough money, not yet researched, the limit
@@ -6508,11 +6578,57 @@ decide where to survey and what to build.</p>
    its kind (<em>Research Theremin shielding here</em>); a topic is refused when the station is not on
    its research site or its prerequisites are not known. The station first orders the topic's
    start materials; once they arrive it researches on its own.</p>
-<p><strong>Convoys can be ambushed</strong> on the way. In this version you do not fly those battles: each
-vessel may be lost, a message says how many, and the survivors deliver their share; what is
-missing is simply ordered again.</p>
+<p><strong>Convoys can be ambushed</strong> on the way. Since app 0.9.2 the clock stops with <em>Supply convoy
+ambushed! Enter: fly its escort   Esc: let it fight through</em>, and the convoy waits:</p>
+<ul>
+<li><strong>Enter</strong> — fly its escort, <em>Convoy ambush</em>, with the first ready craft that has a pilot (from
+  any base). Two cargo clippers, each with twelve cargo pods, make for their jump point about ten
+  minutes away. Dominion grappler tugs come every couple of minutes, each with a squadron of
+  saucers flying formation on it; a tug tears a pod off with its tractor beam, hauls it clear
+  and jumps away with it, or takes a whole clipper once raiders have crippled it. Kill the tugs
+  before they get away, keep the raiders off the clippers, and the clippers' own laser helps
+  against missiles. The battle is won when the clippers have jumped with cargo aboard, lost if a
+  clipper is captured or every pod is gone, and a draw after 15 minutes if a crippled clipper
+  never makes its jump. Back on the map, the <strong>share of the cargo still aboard</strong> is delivered
+  (a loss delivers nothing; leaving the battle early lets the convoy fight on alone).</li>
+<li><strong>Esc</strong> — let it fight through alone: each vessel may be lost, a message says how many, and
+  the survivors deliver their share. This is also what happens when no craft is ready.</li>
+</ul>
+<p>What is missing is simply ordered again.</p>
+<h2 id="the-story">The story<a class="headerlink" href="#the-story" title="Permanent link">&para;</a></h2>
+<p><em>App 0.10.0 – 0.10.3.</em> The story runs by itself as the days pass; you meet it as messages that
+stop the clock, choices, offered missions and, finally, an ending.</p>
+<ul>
+<li><strong>Messages and news.</strong> A story message stops the clock and shows in the banner (a chapter of
+  the default campaign's serial, an alien transmission in <code>interceptor</code>); news lines go into the
+  log without stopping it.</li>
+<li><strong>Choices.</strong> The banner reads <em>Your choice - 1: … 2: …</em>; press the number of the option. The
+  clock does not run until you choose. What you choose changes money, relations, flags and
+  sometimes offers a mission.</li>
+<li><strong>Offered missions.</strong> <em>A mission is offered. Enter: fly it   Esc: decline</em>. Enter flies it at
+  once with the first ready craft that has a pilot; its result counts like a raid's battle
+  (score, money, salvage, and the story flags it sets). With no ready craft it says so, and the
+  offer is gone.</li>
+<li><strong>The rival's plan.</strong> A rival builds something from shipments that cross the map as contacts:
+  intercept them and win, and the shipment is lost; let one reach its destination and the plan
+  grows. Messages warn you as it nears completion, and the Archive tab shows how far it is.
+  If it is completed, you lose.</li>
+<li><strong>Relations</strong> (default campaign). Every faction has a standing with you from −100 to 100 and
+  a stance — hostile, wary, neutral, friendly or allied. What happens moves them, and they drift
+  back towards neutral each month. A change of stance stops the clock. A faction that is no
+  longer <strong>hostile</strong> stops raiding you and does not attack you in battle; one that turns hostile
+  does. The Senate's stipend grows with its standing.</li>
+<li><strong>The rival's mood.</strong> Sit back and the rival grows bolder — its raids come more often; win
+  battles every month and it grows more careful.</li>
+<li><strong>The end.</strong> When an ending is reached the banner shows <em>VICTORY.</em> or <em>DEFEAT.</em> with its text;
+  Enter saves and leaves. In the default campaign you win by destroying the Eclipse Engine and
+  lose if it is lit, if you lose your last base, or if the Senate turns against you; in
+  <code>interceptor</code> you win by destroying the Doomsday weapon and lose if it is completed or your
+  last base falls.</li>
+</ul>
 <h2 id="money-and-the-monthly-report">Money and the monthly report<a class="headerlink" href="#money-and-the-monthly-report" title="Permanent link">&para;</a></h2>
-<p>Incomes (the default campaign's Senate stipend grows with your bases and your month's score)
+<p>Incomes (the default campaign's Senate stipend grows with your bases, your month's score and,
+since app 0.10.1, the Senate's standing with you)
 and expenses are paid on their own schedules and logged. Every 30 days the <strong>monthly report</strong>
 charges module maintenance, craft upkeep and pilot salaries, shows the month's score, the total
 and your funds, and a new set of recruits is offered.</p>
@@ -6558,11 +6674,14 @@ and your funds, and a new set of recruits is offered.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="limits-in-app-090">Limits in app 0.9.0<a class="headerlink" href="#limits-in-app-090" title="Permanent link">&para;</a></h2>
+<h2 id="limits-in-app-0103">Limits in app 0.10.3<a class="headerlink" href="#limits-in-app-0103" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Fitting takes the best items in store; you cannot choose them one by one yet.</li>
-<li>Supply-convoy ambushes are decided automatically; you cannot fly them or escort convoys yet,
-  and facilities have no fighters of their own. The Supply tab is plain text.</li>
+<li>Facilities have no fighters of their own, and the Supply tab is plain text.</li>
+<li>Several chapters of the default campaign's serial fly an existing mission rather than their
+  own; allied factions do not yet fly at your side; two of the original's seven side missions
+  are in <code>interceptor</code>. Neither campaign has been played through from start to finish yet.</li>
+<li>The ending is a banner line, not a screen of its own (Stage 6).</li>
 <li>The <code>interceptor</code> campaign's strategy layer has not been play-tested; its research is slow
   with one downlink.</li>
 <li>Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default

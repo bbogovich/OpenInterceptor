@@ -4388,6 +4388,8 @@
       
         
       
+        
+      
     
     
     
@@ -4765,6 +4767,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6811,12 +6841,12 @@
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
 <h3 id="r-cmb-009-tractor-and-capture">R-CMB-009 Tractor and capture<a class="headerlink" href="#r-cmb-009-tractor-and-capture" title="Permanent link">&para;</a></h3>
-<p>The tractor MUST need power, a fitting and a disabled target in range; while it is on, beams MUST be off-line; a ship holding a disabled target when it jumps MUST capture it.</p>
-<p><em>Rationale:</em> Original capture of disabled craft.</p>
+<p>The tractor MUST need power, a fitting and a disabled target in range; while it is on, beams MUST be off-line; a ship holding a disabled target when it jumps MUST capture it. An object of a <code>towable</code> class (a cargo container) MUST be towable even when not disabled; tractoring one mounted on a hub MUST tear it off, and a ship jumping while it holds one MUST capture it.</p>
+<p><em>Rationale:</em> Original capture of disabled craft; grappler tugs stealing cargo (the user's convoy design, app 0.9.2).</p>
 <ul>
 <li>Implements: <a href="../../../definition/combat/#f-cmb-005-special-equipment">F-CMB-005</a></li>
-<li>Status: implemented</li>
-<li>Verified by: <code>sim::systems::tractor_needs_power_a_fitting_and_a_target_in_range</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>; <code>sim::ai::tugs_tow_disabled_enemies_away</code>; MT-2-04</li>
+<li>Status: implemented (<code>towable</code> app 0.9.2, main <code>0d1c522</code>)</li>
+<li>Verified by: <code>sim::systems::tractor_needs_power_a_fitting_and_a_target_in_range</code>, <code>tractor_holds_a_disabled_target_and_captures_it_on_jump</code>; <code>sim::ai::tugs_tow_disabled_enemies_away</code>; <code>sim::tests::a_tug_tears_a_container_off_and_prefers_a_disabled_ship</code>; MT-2-04, MT-4-26</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../implementation/architecture/sim/">Simulation</a></li>
 </ul>
@@ -6899,15 +6929,19 @@
 <p>The user's playtest reported wingmen and enemies ramming each other and the player. Avoidance was reactive and for wingmen only; it is now predictive and for every moving AI pilot (<code>ai::avoid_collision</code>). The default <code>guard_station</code> was given <code>hit_points: {per_level: [11000, 8000, 8000, 8000]}</code> and <code>defend_station</code> two raiders at cadet, keeping R-MSN-011's 150 s undefended promise with the AI wasting fewer runs.</p>
 </div>
 <h3 id="r-cmb-016-behaviours-as-data">R-CMB-016 Behaviours as data<a class="headerlink" href="#r-cmb-016-behaviours-as-data" title="Permanent link">&para;</a></h3>
-<p>AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (<code>prefer</code>) and systems use (cloak, ECM, power). Any definition MUST accept difficulty <code>variants</code> and <code>{per_level: …}</code> values.</p>
+<p>AI pilots MUST be driven by behaviour definitions: states using the built-in manoeuvres (idle, circle, patrol, attack, evade, retreat, turret, tow, escort, travel, mine), transitions on conditions, skill (aim, reaction), fire discipline, turret arcs, target preferences (<code>prefer</code>) and systems use (cloak, ECM, power). Any definition MUST accept difficulty <code>variants</code> and <code>{per_level: …}</code> values.</p>
 <p><em>Rationale:</em> Modding first; the original's AI is code, so its behaviours are derived (DEV-031, DEV-032).</p>
 <ul>
 <li>Implements: <a href="../../../definition/combat/#f-cmb-008-enemies-driven-by-data-with-difficulty-levels">F-CMB-008</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>content::behaviour::parses_states_transitions_and_skill</code>, <code>reports_mistakes</code>, <code>the_builtin_attack_is_valid</code>, <code>target_preferences_parse_and_reject_unknown_selectors</code>; <code>sim::ai::transitions_switch_states_on_conditions</code>, <code>aim_skill_decides_accuracy</code>, <code>turrets_fire_off_the_nose</code>; <code>sim::preferences_pull_the_ai_past_a_nearer_target</code>, <code>sim::ai_pilots_switch_cloak_ecm_and_power_by_condition</code>; MT-2-20, MT-2-27, MT-2-33</li>
+<li>Verified by: <code>content::behaviour::parses_states_transitions_and_skill</code>, <code>reports_mistakes</code>, <code>the_builtin_attack_is_valid</code>, <code>target_preferences_parse_and_reject_unknown_selectors</code>; <code>sim::ai::transitions_switch_states_on_conditions</code>, <code>aim_skill_decides_accuracy</code>, <code>turrets_fire_off_the_nose</code>, <code>escorts_hold_formation_until_a_hostile_comes_close</code>; <code>sim::preferences_pull_the_ai_past_a_nearer_target</code>, <code>sim::ai_pilots_switch_cloak_ecm_and_power_by_condition</code>; MT-2-20, MT-2-27, MT-2-33</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../design/format-behaviour/">Format: behaviours and scripting</a>, <a href="../../../modding/behaviours/">Behaviours and conditions</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Added (app 0.9.2): <code>escort</code>, <code>travel</code>, <code>tow</code> <code>escape</code></p>
+<p><code>escort</code> flies in formation on the leader the mission gives (<code>escort:</code> on the role) and attacks a hostile within <code>range</code> of the leader or itself; <code>travel</code> flies straight on for <code>range</code>, then jumps; <code>tow</code> takes a towable object when no disabled ship is near, skips a prize another ship is towing, and hauls it <code>escape</code> (default 2.5 km) before jumping.</p>
+</div>
 <h3 id="r-cmb-017-ai-missile-discipline">R-CMB-017 AI missile discipline<a class="headerlink" href="#r-cmb-017-ai-missile-discipline" title="Permanent link">&para;</a></h3>
 <p>AI pilots SHOULD launch missiles only when closing on their target, staggered between pilots, each pilot drawing from its own random sequence.</p>
 <p><em>Rationale:</em> Missiles from every enemy at once overwhelmed the player.</p>
@@ -6923,12 +6957,12 @@
 <p>No unit test names this behaviour; one should be added.</p>
 </div>
 <h3 id="r-cmb-018-station-modules">R-CMB-018 Station modules<a class="headerlink" href="#r-cmb-018-station-modules" title="Permanent link">&para;</a></h3>
-<p>Modules MUST mount at a hub's attachment points (OBJ <code>slot_&lt;name&gt;</code> groups, original manipulators by index), follow the hub, provide turrets and shield generators, and fall with the hub, leaving wrecks in their <code>destroyed</code> look.</p>
+<p>Modules MUST mount at a hub's attachment points (OBJ <code>slot_&lt;name&gt;</code> groups, original manipulators by index), follow the hub, provide turrets and shield generators, and fall with the hub, leaving wrecks in their <code>destroyed</code> look. Any ship class MAY be a hub: a module MUST NOT collide with its own hub or with another module of the same hub, a craft's collision avoidance MUST ignore its own modules, and the modules still mounted MUST leave by hyperspace with their hub.</p>
 <p><em>Rationale:</em> Base assaults and defences.</p>
 <ul>
 <li>Implements: <a href="../../../definition/combat/#f-cmb-009-stations-with-modules">F-CMB-009</a></li>
 <li>Status: implemented</li>
-<li>Verified by: <code>sim::station_modules_mount_follow_and_fall_with_their_hub</code>, <code>formats::obj::slot_groups_become_attachment_points</code>; MT-2-22, MT-2-23</li>
+<li>Verified by: <code>sim::station_modules_mount_follow_and_fall_with_their_hub</code>, <code>sim::tests::cargo_modules_count_until_torn_off_destroyed_or_jumped_away_with_the_hub</code> (a moving hub keeps its speed; modules jump with it), <code>formats::obj::slot_groups_become_attachment_points</code>; MT-2-22, MT-2-23, MT-4-26</li>
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../../modding/stations/">Stations, modules and probes</a>, <a href="../../../implementation/deviations/">Deviations (DEV-035)</a></li>
 </ul>
@@ -6946,6 +6980,10 @@
 <li>Reverse-engineered: yes</li>
 <li>See: <a href="../../design/format-objects/">Format: objects and models</a>, <a href="../../../modding/looks/">Looks</a></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Playtest (app 0.9.1): size</p>
+<p>A model set's <code>scale</code> scales its collision shape with it: the default campaign's dreadnought is set to 1.25. The default fighters were rebuilt larger (maximum radius 1.5 / 1.8 / 2.4 m for the Comet, Meteor and Thunderbolt, from 0.9 / 1.1 / 1.6) after the user found them too hard to hit — a content change, no requirement text changed.</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
 <p>Slot size classes, overlay groups and <code>lod&lt;n&gt;_*</code> files are not built (Stage 2 deferred list).</p>
@@ -7003,6 +7041,11 @@
 <td>1.13.0</td>
 <td>2026-11-11</td>
 <td>R-CMB-022 revised: slots from named formations with <code>formation:</code> / <code>flight.formation</code> and the Shift+O next-formation order (MD1, app 0.6.6); predictive collision avoidance for every moving AI pilot (app 0.6.7, from user feedback)</td>
+</tr>
+<tr>
+<td>1.15.0</td>
+<td>2026-11-11</td>
+<td>From the user's convoy design and playtest (app 0.9.1 – 0.9.2): R-CMB-009 revised — <code>towable</code> objects, torn off their hub by a tractor, captured on the jump; R-CMB-016 — the <code>escort</code> and <code>travel</code> manoeuvres and <code>tow</code> <code>escape</code>; R-CMB-018 revised — modules on any hub, no collisions within one craft, modules jump with their hub; R-CMB-019 note — the dreadnought's scale and the larger default fighters</td>
 </tr>
 </tbody>
 </table>

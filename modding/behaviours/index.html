@@ -4062,6 +4062,8 @@
       
         
       
+        
+      
     
     
     
@@ -4591,6 +4593,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6396,8 +6426,18 @@ sets how well the pilot aims and how fast it reacts.</p>
 </tr>
 <tr>
 <td><code>tow</code></td>
-<td>Finds the nearest disabled, capturable hostile ship, closes in, tractors it and jumps out with it (tugs; needs a tractor beam fitted).</td>
-<td><code>range</code> (search radius, at least 5 km)</td>
+<td>Finds a disabled, capturable hostile ship — or, failing one, the nearest <strong>towable</strong> hostile object (a cargo container, app 0.9.2) — that no one else is towing; closes in, tractors it, hauls it <code>escape</code> from where it took it and jumps out with it (tugs; needs a tractor beam fitted). A towable module is torn off its hub by the tractor.</td>
+<td><code>range</code> (search radius, at least 5 km), <code>escape</code> (default 2.5 km)</td>
+</tr>
+<tr>
+<td><code>escort</code></td>
+<td>Flies in formation on its leader — the newest live member of the role named by the mission role's <a href="../missions/#roles"><code>escort:</code></a> — and attacks any hostile that comes within <code>range</code> of the leader or of itself, returning to its slot when the threat is gone; without a leader it just fights (app 0.9.2).</td>
+<td><code>range</code>, and the attack parameters</td>
+</tr>
+<tr>
+<td><code>travel</code></td>
+<td>Flies straight on at <code>speed</code> × top speed for <code>range</code> from where the state began, then starts the hyperdrive (a supply ship making for its jump point; app 0.9.2).</td>
+<td><code>range</code>, <code>speed</code></td>
 </tr>
 </tbody>
 </table>

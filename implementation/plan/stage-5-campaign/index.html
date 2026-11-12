@@ -4122,6 +4122,8 @@
       
         
       
+        
+      
     
     
     
@@ -4499,6 +4501,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6108,12 +6138,16 @@
 
 
 <h1 id="stage-5-campaigns">Stage 5 — Campaigns<a class="headerlink" href="#stage-5-campaigns" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.6.0. Status: planned.</strong> Story, rivals and relations: what turns the strategy layer
-into a campaign with a beginning, middle and end. At the end of this stage <strong>both campaigns are
-playable from start to finish</strong>.</p>
+<p><strong>Version 0.6.0. Status: in progress</strong> — the core (events, arcs, rival plans, relations, the
+strategist, endings, the encyclopaedia) in app <strong>0.10.0</strong> (main <code>485d01e</code>); the default
+campaign's serial in <strong>0.10.1</strong> (<code>66d0b5a</code>); the X-COM Doomsday arc in <strong>0.10.2</strong> (<code>8926d11</code>);
+relations in battle and the year-long soak in <strong>0.10.3</strong> (<code>76bda5c</code>). Story, rivals and
+relations: what turns the strategy layer into a campaign with a beginning, middle and end. At
+the end of this stage <strong>both campaigns are playable from start to finish</strong>.</p>
 <p>Design: <a href="../../../specification/design/format-campaign/">campaign and game flow</a>,
 <a href="../../../specification/design/format-missions/#campaign-events-eventid">events</a>,
-<a href="../../../specification/design/format-strategy/">relations and strategist</a>.</p>
+<a href="../../../specification/design/format-strategy/">relations and strategist</a>. As built:
+<a href="../../../modding/story/">Story layer</a>, <a href="../../architecture/campaign/#the-story-app-0100">Architecture › Campaign › The story</a>.</p>
 <h2 id="work-items">Work items<a class="headerlink" href="#work-items" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6121,6 +6155,7 @@ playable from start to finish</strong>.</p>
 <th>#</th>
 <th>Item</th>
 <th>Module</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
@@ -6128,65 +6163,88 @@ playable from start to finish</strong>.</p>
 <td>5.1</td>
 <td>Events: conditions, chances per check, actions, choices, offers (accept/refuse), cooldowns; news</td>
 <td><code>campaign::events</code></td>
+<td><strong>Done</strong> (0.10.0; built as <code>content::story</code>, <code>campaign::story</code>): <code>when</code>, <code>check</code> (daily, weekly, monthly, after_battle, on_research), <code>chance</code>, <code>do</code>, <code>choices</code>, <code>once</code>, <code>cooldown</code>; <code>mission(x)</code> offers (Enter flies, Esc declines); <code>news(…)</code>. The design's offer expiry and <code>reward:</code> are not built (DEV-051). GitHub #38.</td>
 </tr>
 <tr>
 <td>5.2</td>
 <td>Arcs: ordered steps, arc state in conditions</td>
 <td><code>campaign::events</code></td>
+<td><strong>Done</strong> (0.10.0): <code>arcs.&lt;id&gt;.steps</code>, <code>arc(x)</code>, <code>fired(x)</code>. #38.</td>
 </tr>
 <tr>
 <td>5.3</td>
 <td>Rival plans: stages, budgets, shipments by convoy, visibility, grants, completion, warnings</td>
 <td><code>campaign::plan</code></td>
+<td><strong>Partial</strong> (0.10.0): stages, <code>start_when</code>, shipments rolled <code>every</code>/<code>chance</code> and flown as a raid's contact (one that arrives adds a component; one intercepted adds nothing), warnings, completion, <code>plan(x)</code>. Not built: budgets, grants if missed, <code>plan_stage(x)</code>; visibility is the shipment's <code>chance</code> (DEV-051). #39.</td>
 </tr>
 <tr>
 <td>5.4</td>
 <td>The strategist: budgets, aggression, exploration, expansion, outposts, offence ladder, defence priorities, tech levels, cheats, build priorities</td>
 <td><code>campaign::strategist</code></td>
+<td><strong>Partial</strong> (0.10.0): <strong>aggression</strong> only — it scales every raid's chance, rising while the player is passive and falling while the player wins. Not built: budgets, exploration, expansion, outposts, the offence ladder, defence priorities, tech levels, cheats, build priorities, the <code>Think.ini</code> values. #39.</td>
 </tr>
 <tr>
 <td>5.5</td>
 <td>Factions: patrons, independents, hostiles; <strong>dynamic relations</strong> with relation rules, drift, stances and their battle and strategy effects; stance-change events; relations screen</td>
 <td><code>campaign::relations</code>, <code>app</code></td>
+<td><strong>Partial</strong> (0.10.0, 0.10.3): the player's standings, <code>relation(f, n)</code>, monthly drift, stances; a faction no longer hostile stops raiding (0.10.0) and campaign battles carry the stances (0.10.3, <code>flight::apply_stances</code>); a stance change is a notice; the Archive tab lists standings. Not built: relation rules, standings between other factions, allied factions fighting at the player's side, effects on prices and trade, stance-change events a campaign can react to, mission outcomes' <code>relation(…)</code>. #40.</td>
 </tr>
 <tr>
 <td>5.6</td>
 <td>Victory, defeat and endings (total/partial victories)</td>
 <td><code>campaign</code></td>
+<td><strong>Done for the engine</strong> (0.10.0): <code>endings</code>, <code>campaign_end</code> victory and defeat conditions (defeats first), <code>victory(x)</code>/<code>defeat(x)</code> actions; the ending shown as a banner, saved. Neither campaign defines a partial victory yet; the ending screen is Stage 6. #41.</td>
 </tr>
 <tr>
 <td>5.7</td>
 <td>Encyclopaedia (functional) with unlock conditions</td>
 <td><code>app</code></td>
+<td><strong>Done</strong> (0.10.0): <code>encyclopaedia.&lt;id&gt;</code> with <code>unlock</code>, listed on the Archive tab. #42.</td>
 </tr>
 <tr>
 <td>5.8</td>
 <td><code>interceptor</code>: the Doomsday arc (five messages and their gates), the Doomsday plan per difficulty, MacArthur and the final mission, the seven side missions, the alien strategist from <code>Think.ini</code> and the guide, news and report triggers</td>
 <td><code>packs/interceptor</code></td>
+<td><strong>Partial</strong> (0.10.2): the arc (five messages with the guide's date, research and plan gates, MacArthur, the final mission), the plan by difficulty with its convoys and three warnings, endings using the original's own text keys, a strategist with <code>DERIVED</code> values; <strong>two of the seven side missions</strong>. Not built: the other five, the <code>Think.ini</code> strategist, report triggers. The saucer-examination topics in the gates are <em>derived</em> (unconfirmed). Not play-tested. #43.</td>
 </tr>
 <tr>
 <td>5.9</td>
 <td><code>default</code>: the 12-chapter serial arc with progress-based triggers, the Eclipse Engine plan, the Dominion strategist, dynamic relations among the six factions (Senate, Cartel, Prospectors, raiders), chapter title cards (plain), narrator text</td>
 <td><code>resources/default</code></td>
+<td><strong>Partial</strong> (0.10.1): the twelve chapters as messages with progress-based triggers, the Cartel's choice, side events, the Eclipse Engine plan, dynamic relations (the Senate stipend follows its standing), the strategist, four endings, the encyclopaedia, the finale <code>eclipse_assault</code>. <strong>Chapters whose bespoke special mission is not built fly the nearest existing mission.</strong> Relations are the player's with each faction, not among all six. Not play-tested. #44.</td>
 </tr>
 <tr>
 <td>5.10</td>
 <td>Fidelity: the <a href="../../../specification/design/coverage/#open-items-data-the-original-keeps-in-code">open items</a> closed or recorded as <em>derived</em></td>
 <td><code>packs/interceptor</code>, docs</td>
+<td><strong>Not started</strong> beyond the story's own <code>DERIVED</code> marks. #45.</td>
 </tr>
 <tr>
 <td>5.11</td>
 <td><strong>Rival logistics</strong> (default campaign): the Dominion's mines, cosmium shipments (the Eclipse Engine's convoys) and <strong>supply depots</strong> storing captured cargo (the player seizes a destroyed depot's stock); raids on the Guard's lanes and strikes on facilities under construction; <strong>third-party convoys</strong>: Prospector expeditions (to a system under investigation, pause, home) and Cartel runs to random destinations, with relation effects</td>
 <td><code>campaign::strategist</code>, <code>resources/default</code></td>
+<td><strong>Not built.</strong> The Eclipse Engine's shipments exist as plan contacts (5.3) and the Guard's own convoys can be ambushed and escorted (app 0.9.2, Stage 4.15); the Dominion's mines and depots, seizing them, lane raids by the rival's logistics, construction strikes and third-party convoys are not. #46.</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Testbed adds</strong>: an event and arc debugger (fire events, set flags and plan progress, view
-relations), and campaign start-at-chapter for the default campaign.</p>
+relations), and campaign start-at-chapter for the default campaign — <strong>not built</strong>. Built
+instead: <code>--strategy-soak</code> reports the story (arcs, plans, aggression, ending; 0.10.1) and the
+Archive tab shows plans, standings and aggression. #47.</p>
 <p><strong>Exit</strong>: a full play-through of each campaign at a middle difficulty (manual tests, with a log
 of milestone dates); automated soak test running each campaign for a simulated year with the
 player's battles auto-resolved, checking invariants (money accounting, no orphan references,
 arc progress monotonic).</p>
+<div class="admonition note">
+<p class="admonition-title">Exit status at app 0.10.3</p>
+<p>The <strong>automated soak is built for the default campaign</strong>:
+<code>campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code> plays a
+year a month at a time (<code>campaign::autoplay_from</code>), checking every reference, that money and
+score stay finite and that arcs only move forward, and that the serial and the Engine
+progress. Money accounting is checked only as finite. The <code>interceptor</code> story needs the
+player's data, so it has no unit test; <code>--strategy-soak 365 --campaign interceptor</code> runs it
+by hand. <strong>No play-through of either campaign has been done yet</strong> (MT-5-01 – MT-5-10).</p>
+</div>
 
 
 

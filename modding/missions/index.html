@@ -4062,6 +4062,8 @@
       
         
       
+        
+      
     
     
     
@@ -4562,6 +4564,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-convoy-ambush-app-092" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The convoy ambush (app 0.9.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4630,6 +4643,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6338,6 +6379,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-convoy-ambush-app-092" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The convoy ambush (app 0.9.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6531,6 +6583,12 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td>none</td>
 <td>Asteroid field, minefield, black hole, ion storm (<a href="#hazards">below</a>).</td>
 </tr>
+<tr>
+<td><code>cargo</code></td>
+<td>role name</td>
+<td>none</td>
+<td>The role whose <strong>cargo containers</strong> count for the campaign (app 0.9.2): the debrief reports the share still aboard (<code>cargo(&lt;role&gt;)</code> at the end), and a flown <a href="../strategy/#logistics">convoy escort</a> delivers that share. An unknown role is a load error.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="roles">Roles<a class="headerlink" href="#roles" title="Permanent link">&para;</a></h3>
@@ -6608,7 +6666,13 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td><code>formation</code></td>
 <td>id</td>
 <td><code>flight.formation</code> (<code>vee</code>)</td>
-<td>Wingmen (<code>ai: wingman</code>): the <a href="../reference/#formations">formation</a> they fly in (app 0.6.6). Wingmen of every wingman role take successive slots of it, so two roles never share a slot. An unknown formation is a load error.</td>
+<td>Wingmen (<code>ai: wingman</code>): the <a href="../reference/#formations">formation</a> they fly in (app 0.6.6). Wingmen of every wingman role take successive slots of it, so two roles never share a slot. An unknown formation is a load error. Escorts (below) use it too.</td>
+</tr>
+<tr>
+<td><code>escort</code></td>
+<td>role name</td>
+<td>none</td>
+<td><strong>Escorts</strong> (app 0.9.2): each member flies in <code>formation</code> on the <strong>newest live member</strong> of that role (a tug), with a behaviour whose manoeuvre is <a href="../behaviours/#manoeuvres"><code>escort</code></a>. A role that is not defined is a load error (<code>roles.x.escort: no role 'y'</code>).</td>
 </tr>
 <tr>
 <td><code>at</code></td>
@@ -6684,7 +6748,7 @@ no survivors) is placed relative to the player's start.</p>
 <td><code>when</code></td>
 <td>condition</td>
 <td><em>required</em></td>
-<td>Fires <strong>once</strong>, the first time it holds.</td>
+<td>Fires <strong>once</strong>, the first time it holds (unless <code>every</code>).</td>
 </tr>
 <tr>
 <td><code>count</code></td>
@@ -6697,6 +6761,12 @@ no survivors) is placed relative to the player's start.</p>
 <td>arrival</td>
 <td>the role's <code>at</code></td>
 <td>Where.</td>
+</tr>
+<tr>
+<td><code>every</code></td>
+<td>time</td>
+<td>none</td>
+<td>A <strong>repeating</strong> wave (app 0.9.2): it comes again this long after it last came, for as long as <code>when</code> still holds (<code>every: 120s</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -6845,6 +6915,11 @@ misspelled role is an error with file and line. Difficulty level names are const
 <td>The role has entered the battle.</td>
 </tr>
 <tr>
+<td><code>cargo(role)</code></td>
+<td>number</td>
+<td>The share (0..1) of the role's cargo containers still aboard (app 0.9.2): modules of a <code>cargo: true</code> class, alive and mounted on a live member — or gone into hyperspace with it — over every cargo slot the members' classes have. A container shot off, torn away by a tractor or captured is no longer aboard. 0 when the role has no cargo.</td>
+</tr>
+<tr>
 <td><code>player_alive</code></td>
 <td>true/false</td>
 <td>The player's ship is still in the battle.</td>
@@ -6961,7 +7036,7 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 <tbody>
 <tr>
 <td><code>default</code></td>
-<td><code>defend_station</code>, <code>convoy_ambush</code>, <code>construction_defence</code>, <code>intercept_scouts</code>, and since app 0.6.4 <code>colony_defence</code>, <code>ground_strike</code>, <code>outpost_raid</code>, <code>asteroid_hunt</code>, <code>pocket_ambush</code> (<code>missions/missions.yaml</code>; text in <code>text/en/missions.yaml</code>). Construction defence and convoy ambush are the <a href="../../specification/design/logistics/">logistics</a> missions; the strategy layer will generate them. The five newer ones are worked examples of environments, hazards and ground installations (below).</td>
+<td><code>defend_station</code>, <code>convoy_ambush</code>, <code>construction_defence</code>, <code>intercept_scouts</code>, and since app 0.6.4 <code>colony_defence</code>, <code>ground_strike</code>, <code>outpost_raid</code>, <code>asteroid_hunt</code>, <code>pocket_ambush</code>; since app 0.10.1 the serial's finale <code>eclipse_assault</code> (<a href="../story/#the-default-campaigns-serial">Story layer</a>) (<code>missions/missions.yaml</code>; text in <code>text/en/missions.yaml</code>). Construction defence and convoy ambush are the <a href="../../specification/design/logistics/">logistics</a> missions; the convoy ambush is flown from the strategy map since app 0.9.2 (<a href="#the-convoy-ambush-app-092">below</a>), construction defence is not generated yet. The five from app 0.6.4 are worked examples of environments, hazards and ground installations (below).</td>
 </tr>
 <tr>
 <td><code>interceptor</code></td>
@@ -7027,6 +7102,34 @@ larger or smaller enemy force, without editing its file (<a href="../../user-gui
 own — the balance check for a defence mission: at the lowest level an undefended station or base
 should hold for at least 150 s (R-MSN-011; the default campaign's <code>defend_station</code> is held to it
 by a unit test).</p>
+<h3 id="the-convoy-ambush-app-092">The convoy ambush (app 0.9.2)<a class="headerlink" href="#the-convoy-ambush-app-092" title="Permanent link">&para;</a></h3>
+<p><code>convoy_ambush</code> was rebuilt to the user's design for supply-convoy battles, and is the worked
+example of cargo, tugs, escorts and repeating waves:</p>
+<ul>
+<li><strong>The convoy</strong>: two cargo clippers (<code>supply_ship</code>, role <code>clippers</code>, <code>protect: true</code>) making for
+  their jump point at 47 m/s with the behaviour <code>supply_run</code> (manoeuvre <code>travel</code>, 24 km, then
+  the hyperdrive: about ten minutes). Each clipper is built to take punishment and carries
+  <strong>twelve cargo pods</strong> (<code>supply_pod</code>: <code>cargo</code>, <code>towable</code>, <code>capturable</code>) and one slow-recharging
+  <strong>point-defence laser</strong> (<code>supply_pd</code>, a turret that shoots missiles and close fighters) as
+  <a href="../stations/#cargo-containers-and-moving-hubs">modules</a>. <code>cargo: clippers</code> makes the pods count.</li>
+<li><strong>Grappler tugs</strong> (role <code>tugs</code>, behaviour <code>tug</code>: <code>tow</code> with <code>range: 8km</code>, <code>escape: 3km</code>) come
+  45 s in, then again every two minutes from 140 s (<code>waves: … every: 120s</code>) while a clipper lives. A tug goes
+  for a disabled clipper if there is one, else the nearest pod; a tractored pod is <strong>torn off</strong>
+  its clipper ("CARGO CONTAINER TORN AWAY"), hauled 3 km from where it was taken, and the tug
+  jumps out with it — captured.</li>
+<li><strong>Escorts</strong> (role <code>escorts</code>, <code>escort: tugs</code>, <code>formation: vee</code>, behaviour <code>tug_escort</code>) arrive
+  with each tug and fly in formation on it, breaking off to attack anything hostile within
+  1.5 km of the tug or of themselves.</li>
+<li><strong>Raiders</strong> (behaviour <code>freighter_raider</code>, <code>prefer: {freighter: 4, player: 1.2}</code>) go for the
+  clippers to cripple them for the tugs; hot-rods go for the escort fighters.</li>
+<li><strong>Win and lose</strong>: <code>lose: captured_any(clippers) or destroyed_all(clippers) or cargo(clippers) == 0</code>
+  — the Dominion wins by taking a clipper or every pod; <code>win: count(clippers) == 0 and
+  cargo(clippers) &gt; 0</code> — every clipper has left (jumped, or lost) with cargo still aboard. A
+  crippled clipper that never makes its jump ends the battle after 15 minutes in a <strong>draw</strong>
+  (<code>timer: {after: 15min, then: draw}</code>), and what is still aboard is delivered. Optional
+  objectives: <code>all_cargo</code> and <code>both_clippers</code>.</li>
+<li><strong>Chatter</strong> marks the grapplers' arrival, a quarter of the cargo lost and a minute to the jump.</li>
+</ul>
 <h2 id="common-errors">Common errors<a class="headerlink" href="#common-errors" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

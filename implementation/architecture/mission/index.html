@@ -3246,6 +3246,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cargo-escorts-and-repeating-waves-app-092" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cargo, escorts and repeating waves (app 0.9.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ai-changes-made-with-missions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4216,6 +4227,8 @@
       
         
       
+        
+      
     
     
     
@@ -4593,6 +4606,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6230,6 +6271,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cargo-escorts-and-repeating-waves-app-092" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cargo, escorts and repeating waves (app 0.9.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ai-changes-made-with-missions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6378,6 +6430,21 @@ Since app 0.6.4 the soak report counts kills while the mission is still running
 environment and hazards and its enemy roles and waves scaled, and <code>FlightSession::start_custom</code>
 starts it through the same <code>MissionRun</code> as any other mission. Nothing in <code>mission</code> knows it is
 a simulation.</p>
+<h3 id="cargo-escorts-and-repeating-waves-app-092">Cargo, escorts and repeating waves (app 0.9.2)<a class="headerlink" href="#cargo-escorts-and-repeating-waves-app-092" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>cargo(role)</code></strong> and the debrief's cargo share come from <code>mission::cargo_share(world, role)</code>:
+  the cargo containers (modules of a <code>cargo: true</code> class) still mounted on a live member — or
+  departed with a departed member — over every cargo slot of the members' classes. A container
+  torn off has no <code>mount</code>; a destroyed one is neither alive nor departed. <code>Debrief::cargo</code> is
+  <code>Some(share)</code> when the mission names a <code>cargo:</code> role, and it reaches the campaign in the
+  <code>BattleReport</code>.</li>
+<li><strong>Escorts</strong>: when a role with <code>escort:</code> spawns, each member's AI gets the newest live member
+  of the escorted role as its leader and a slot of its formation (<code>sim::ai</code>'s <code>escort</code>
+  manoeuvre flies it).</li>
+<li><strong>Repeating waves</strong>: <code>MissionRun::waves_again</code> holds, per wave with <code>every:</code>, the battle time
+  it may come again; a wave that has come is skipped unless that time has passed and its <code>when</code>
+  still holds.</li>
+</ul>
 <h3 id="ai-changes-made-with-missions">AI changes made with missions<a class="headerlink" href="#ai-changes-made-with-missions" title="Permanent link">&para;</a></h3>
 <p>Enemies now launch missiles only when closing in (within 2.5 × their attack <code>range</code>, at least
 2 km); the first launch comes 3 s plus a random part of one interval into the attack, and each

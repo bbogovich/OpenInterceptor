@@ -4062,6 +4062,8 @@
       
         
       
+        
+      
     
     
     
@@ -4585,6 +4587,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6352,7 +6382,19 @@ the battle:</p>
 <li><code>backdrop: {planet: {color, size, direction}}</code>: a planet hanging in the sky, <code>size</code> degrees
   across, in <code>direction</code>, lit from the sun's side with a darker limb. It is drawn behind
   everything, like the stars.</li>
+<li><code>backdrop: {nebula: {color, second_color, density, seed}}</code> (app 0.9.1): soft clouds of two
+  colours all around the battle, the stars dimmed behind them — the inside of a nebula. <code>color</code>
+  is the clouds' main colour and <code>second_color</code> the colour they shade into (defaults a violet
+  and a blue); <code>density</code> (0..1, default 0.8) is how thick they are, and also how much they hide
+  the stars (by up to 60 %); <code>seed</code> (default 1) picks a different cloud pattern. The pattern is
+  smooth 3D value noise sampled on a sky sphere, built once per nebula, so it costs nothing per
+  frame. The default campaign's <code>pocket</code> uses one (it showed a large purple planet until the
+  user's playtest asked for a nebula):</li>
 </ul>
+<div class="highlight"><pre><span></span><code><span class="nt">pocket</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">arena</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12km</span>
+<span class="w">  </span><span class="nt">backdrop</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">nebula</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">color</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.60</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.22</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.62</span><span class="p p-Indicator">],</span><span class="nt"> second_color</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.40</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.85</span><span class="p p-Indicator">],</span><span class="nt"> density</span><span class="p">:</span><span class="w"> </span><span class="nv">0.85</span><span class="p p-Indicator">,</span><span class="nt"> seed</span><span class="p">:</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">}}</span>
+</code></pre></div>
 <h2 id="atmospheric-flight">Atmospheric flight<a class="headerlink" href="#atmospheric-flight" title="Permanent link">&para;</a></h2>
 <p>With <code>physics: atmosphere</code> every craft that can move feels, each tick (ρ = <code>air_density</code>,
 g = <code>gravity</code>):</p>

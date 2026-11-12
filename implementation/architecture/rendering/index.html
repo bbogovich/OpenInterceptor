@@ -4304,6 +4304,8 @@
       
         
       
+        
+      
     
     
     
@@ -4681,6 +4683,34 @@
     
   
     Strategy layer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../modding/story/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Story layer
   
 
     
@@ -6637,6 +6667,16 @@ draw plain space. With a sky, the background is cleared to the horizon colour in
 <li><strong>Planet</strong> (<code>draw_planet</code>): a disc facing the camera at 80 % of the sky distance, its radius set
   by the angular <code>size</code>. Each vertex is shaded as if it were on a sphere (the normal is rebuilt
   from the disc position), lit by the sun with a darker limb, so one flat mesh reads as a lit globe.</li>
+<li><strong>Nebula</strong> (<code>nebula_sphere</code>, app 0.9.1): a latitude/longitude sphere (24 rings × 48 segments)
+  at 85 % of the sky distance, each vertex coloured and made more or less transparent by
+  <code>Nebula::color(direction)</code> — two fields of smooth 3D value noise (<code>fbm</code>: four octaves of a
+  hashed lattice, smoothstep-interpolated), one for how much cloud and one for its tint between
+  the two colours, stretched back to 0..1 and thresholded so thin areas vanish. The GPU
+  blends between vertices. The mesh is built <strong>once per nebula</strong> and kept in
+  <code>Renderer::nebula_mesh</code> with the <code>Nebula</code> it was built for; each frame its vectors are moved
+  into a <code>Mesh</code> for <code>draw_mesh</code> and moved back, as the star field does — no per-frame
+  allocation. Stars are dimmed by up to 60 % × <code>density</code>. <code>content::environment::nebula_tests</code>
+  checks the colours stay in range, vary, and repeat for a seed.</li>
 <li><strong>Terrain</strong> (<code>render::terrain::terrain_model</code>): the heightfield becomes an ordinary <code>Model</code> —
   one vertex per grid point, two triangles per square, wound counter-clockwise seen from above so
   the fronts face up for back-face culling. Vertex colours run from <code>low</code> to <code>high</code> by height,
@@ -6735,8 +6775,12 @@ Objects entirely behind the camera are skipped.</p>
 <td>The overlay pass; a face's plane by Newell's method.</td>
 </tr>
 <tr>
-<td><code>Renderer::env_sky</code>, <code>Renderer::planet</code></td>
-<td>The battle's <code>Sky</code> and <code>Planet</code> (set per frame by the flight screen, cleared after).</td>
+<td><code>Renderer::env_sky</code>, <code>Renderer::planet</code>, <code>Renderer::nebula</code></td>
+<td>The battle's <code>Sky</code>, <code>Planet</code> and (app 0.9.1) <code>Nebula</code> (set per frame by the flight screen, cleared after).</td>
+</tr>
+<tr>
+<td><code>content::environment::Nebula</code>, <code>render::nebula_sphere</code></td>
+<td>A nebula backdrop's colours, density and seed with its <code>color(dir)</code> noise; its sky-sphere mesh.</td>
 </tr>
 <tr>
 <td><code>Renderer::terrain</code></td>
