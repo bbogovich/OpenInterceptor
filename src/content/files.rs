@@ -615,6 +615,7 @@ pub fn rules_sections() -> Vec<Field> {
         f("formations", dict(super::formation::formation_schema()), "formations wingmen (and cutscenes) fly in"),
         f("music", dict(super::music::schema()), "interactive music sets"),
         f("skins", dict(super::skin::schema()), "skins for the menus and strategy screens"),
+        f("screens", dict(super::screens::schema()), "screen layouts: design space and widget rectangles"),
         f("terrains", dict(super::environment::terrain_schema()), "terrains (heightfields) by id"),
         f("modelsets", dict(modelset()), "looks: models, damage textures, states, debris"),
         f("debris", dict(debris()), "debris sets by id"),

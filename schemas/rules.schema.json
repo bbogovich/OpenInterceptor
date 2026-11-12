@@ -397,6 +397,14 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "screens": {"description": "screen layouts: design space and widget rectangles", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "design": {"description": "the design space the rectangles are written in", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+          "background": {"description": "an image over the whole design space", "type": "string"},
+          "widgets": {"description": "widget → [x, y, w, h]; starmap: top, map, nav, info, panel", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
     "terrains": {"description": "terrains (heightfields) by id", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "generate": {"description": "generate the heights", "type": "object", "additionalProperties": false, "properties": {
               "kind": {"description": "rolling hills or a cratered plain", "enum": ["hills", "craters"]},

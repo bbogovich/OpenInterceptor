@@ -42,6 +42,7 @@ pub mod strategy;
 pub mod ui;
 pub mod video;
 pub mod viewer;
+pub mod widgets;
 
 use crate::audio::SoundBank;
 use crate::cli::Options;

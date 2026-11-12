@@ -647,6 +647,9 @@ pub struct Ruleset {
     /// Skins for the menus and strategy screens (Stage 6.1; see [`super::skin`]): the
     /// campaign's (`campaign.skin`, else the first) is `skins[0]` after loading.
     pub skins: Vec<super::skin::Skin>,
+    /// Screen layouts (`screens.<id>`, Stage 6.1): `starmap` always exists (the engine's
+    /// layout under whatever a pack changed).
+    pub screens: Vec<super::screens::ScreenLayout>,
     /// Interactive music sets (Stage 6.4; see [`super::music`]).
     pub music: Vec<super::music::MusicSet>,
     /// Formations (MD1; see [`super::formation`]).
@@ -794,8 +797,9 @@ pub struct RulesSource {
 pub type OriginalLookup<'a> = dyn Fn(&str, &str) -> Option<Section> + 'a;
 
 /// The sections whose entries are definitions by id (the rest are global settings).
-const DEF_SECTIONS: [&str; 18] = [
+const DEF_SECTIONS: [&str; 19] = [
     "skins",
+    "screens",
     "music",
     "formations",
     "voices",
@@ -1460,6 +1464,29 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             None => errors.push(format!("campaign.skin: unknown skin '{want}'")),
         }
     }
+    let mut screens = vec![super::screens::default_starmap()];
+    for (_, id, e) in of(&resolved, "screens") {
+        let (base, known): (_, &[&str]) = match id.as_str() {
+            "starmap" => (super::screens::default_starmap(), &super::screens::STARMAP_WIDGETS),
+            _ => (
+                super::screens::ScreenLayout {
+                    id: id.clone(),
+                    design: [1280.0, 720.0],
+                    background: None,
+                    widgets: Vec::new(),
+                    pack: e.pack,
+                },
+                &[],
+            ),
+        };
+        match super::screens::ScreenLayout::parse(id, Get(&e.node), base, known, e.pack) {
+            Ok(l) => {
+                screens.retain(|s| s.id != l.id);
+                screens.push(l);
+            }
+            Err(msg) => errors.push(format!("{}: screens.{id}: {msg}", e.origin)),
+        }
+    }
     let mut music = Vec::new();
     for (_, id, e) in of(&resolved, "music") {
         match super::music::MusicSet::parse(id, Get(&e.node), e.pack) {
@@ -1540,6 +1567,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
             menu: super::front::MenuDef::parse(campaign.as_ref().and_then(|c| Get(c).node("menu")).map(Get)),
             credits: super::front::CreditsDef::parse(campaign.as_ref().and_then(|c| Get(c).node("credits")).map(Get)),
             skins,
+            screens,
             music,
             formations,
             voices,
