@@ -251,6 +251,15 @@ pub fn protection_of(kind: &str, g: Get) -> Option<f32> {
     })
 }
 
+/// One rating of `evaluations: [{rating, when, do}]`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Evaluation {
+    pub rating: String,
+    /// `None`: always (a last, catch-all rating).
+    pub when: Option<Expr>,
+    pub actions: Vec<crate::script::action::Action>,
+}
+
 /// `hulls.<id>`: the strategy side of a ship class (same id).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Hull {
@@ -377,6 +386,9 @@ pub struct StrategyDef {
     pub expenses: Vec<Flow>,
     pub pilots: Option<PilotRules>,
     pub scores: Vec<(String, f32)>,
+    /// The monthly evaluation (R-STR-009): the first whose condition holds rates the
+    /// month and runs its actions (a funding cut, a warning, a bonus).
+    pub evaluations: Vec<Evaluation>,
     /// Hours for a purchase to arrive.
     pub delivery: f32,
     /// Money per enemy destroyed when an outcome says `salvage`.
@@ -775,6 +787,27 @@ impl StrategyDef {
                 train_cost: g.node("training").map(Get).and_then(|t| t.num("cost")).unwrap_or(0.0).max(0.0),
             }
         });
+        let mut evaluations = Vec::new();
+        for (k, n) in global("evaluations").as_ref().and_then(|n| n.as_seq()).unwrap_or(&[]).iter().enumerate() {
+            let e = Get(n);
+            let at = format!("evaluations[{k}]");
+            let actions = e
+                .list("do")
+                .iter()
+                .filter_map(|a| match script::action::parse(a, script::action::EVENT_ACTIONS) {
+                    Ok(x) => Some(x),
+                    Err(err) => {
+                        errors.push(format!("{at}.do: {err}"));
+                        None
+                    }
+                })
+                .collect();
+            evaluations.push(Evaluation {
+                rating: e.str("rating").unwrap_or("").to_string(),
+                when: cond(e.str("when"), &format!("{at}.when"), errors),
+                actions,
+            });
+        }
         let scores = global("scores").map(|n| pairs(Get(&n), "")).unwrap_or_default();
         let scores = if scores.is_empty() {
             global("scores")
@@ -860,6 +893,7 @@ impl StrategyDef {
             expenses,
             pilots,
             scores,
+            evaluations,
             delivery,
             salvage,
             story: {
@@ -1185,6 +1219,15 @@ fn sections_core() -> Vec<super::schema::Field> {
             "pilot rules",
         ),
         f("scores", nums(), "mission score names (score(x) in outcomes): points"),
+        f(
+            "evaluations",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("rating", Ty::Text, "the month's rating"),
+                f("when", Ty::Condition, "when it applies (first match; none: always)"),
+                f("do", Ty::List(Box::new(Ty::Text)), "actions: money(-50000), news(...), relation(...)"),
+            ]))),
+            "the monthly evaluation, first match wins",
+        ),
         f(
             "tech_ids",
             Ty::Dict(Box::new(Ty::Name)),

@@ -936,8 +936,15 @@ impl Campaign {
             let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
             let total = (maintenance + upkeep + salaries) as f64;
             self.money -= total;
+            // The evaluation: the first rating whose condition holds (it may cut funding).
+            let mut rating = String::new();
+            if let Some(k) = (0..def.evaluations.len()).find(|&k| self.holds(def, def.evaluations[k].when.as_ref())) {
+                rating = format!("; rated {}", def.evaluations[k].rating);
+                let actions = def.evaluations[k].actions.clone();
+                self.apply_actions(def, &actions, events);
+            }
             let t = format!(
-                "Monthly report: score {:+.0} this month ({:.0} in all); costs {total:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}",
+                "Monthly report: score {:+.0} this month ({:.0} in all); costs {total:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}{rating}",
                 self.month_score, self.score, self.money
             );
             self.month_score = 0.0;
@@ -1711,6 +1718,30 @@ mod tests {
         c.dismiss(0).unwrap();
         assert_eq!(c.pilots.len(), n - 1);
         assert!(c.dismiss(99).is_err());
+    }
+
+    #[test]
+    fn the_monthly_evaluation_rates_the_month_and_runs_its_actions() {
+        // Two campaigns differing only in the catch-all rating's action.
+        let month = |action: &str| {
+            let text = format!(
+                "{}\nevaluations:\n  - {{rating: Fine, when: month_score > 0}}\n  - {{rating: Bad, do: [{action}]}}\n",
+                crate::content::strategy::tests::SAMPLE
+            );
+            let (d, errors) = build(&text);
+            assert!(errors.is_empty(), "{errors:?}");
+            let d = d.unwrap();
+            let mut c = Campaign::new(&d, 0, 42);
+            while !c.messages.iter().any(|m| m.text.starts_with("Monthly report")) {
+                c.advance(&d, 24.0);
+            }
+            let report = c.messages.iter().find(|m| m.text.starts_with("Monthly report")).unwrap().text.clone();
+            (report, c.money)
+        };
+        let (report, cut) = month("\"money(-1000)\"");
+        let (_, plain) = month("");
+        assert!(report.ends_with("rated Bad"), "nothing scored: the catch-all: {report}");
+        assert_eq!(plain - cut, 1000.0, "its action ran");
     }
 
     #[test]

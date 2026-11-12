@@ -49,11 +49,12 @@ pub enum Tab {
     Contacts,
     Logistics,
     Archive,
+    Reports,
     Messages,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 10] = [
+    pub const ALL: [Tab; 11] = [
         Tab::Bases,
         Tab::Research,
         Tab::Build,
@@ -63,6 +64,7 @@ impl Tab {
         Tab::Contacts,
         Tab::Logistics,
         Tab::Archive,
+        Tab::Reports,
         Tab::Messages,
     ];
     fn name(self) -> &'static str {
@@ -76,6 +78,7 @@ impl Tab {
             Tab::Contacts => "Contacts",
             Tab::Logistics => "Supply",
             Tab::Archive => "Archive",
+            Tab::Reports => "Reports",
             Tab::Messages => "Messages",
         }
     }
@@ -702,6 +705,29 @@ impl StrategyScreen {
                 ));
                 for (title, text) in c.encyclopaedia(def) {
                     rows.push(Row::new(format!("{title}: {text}"), Act::None));
+                }
+            }
+            Tab::Reports => {
+                let living = c.pilots.iter().filter(|p| p.state != PilotState::Dead).count();
+                rows.push(Row::new(
+                    format!(
+                        "Funds {}  -  score {:.0} ({:+.0} this month)  -  {} bases, {} craft, {living} pilots",
+                        money(c.money),
+                        c.score,
+                        c.month_score,
+                        c.bases.len(),
+                        c.craft.len()
+                    ),
+                    Act::None,
+                ));
+                let reports: Vec<_> =
+                    c.messages.iter().rev().filter(|m| m.text.starts_with("Monthly report")).collect();
+                if reports.is_empty() {
+                    rows.push(Row::new("No monthly report yet".into(), Act::None));
+                }
+                for m in reports {
+                    let d = def.start.date.plus_days((m.hour / 24.0) as u32);
+                    rows.push(Row::new(format!("{d}  {}", m.text.trim_start_matches("Monthly report: ")), Act::None));
                 }
             }
             Tab::Messages => {
@@ -1387,7 +1413,7 @@ impl StrategyScreen {
 
     /// The buttons to the panels.
     fn draw_nav(&mut self, ui: &Ui, r: [f32; 4], input: &Input, k: f32) {
-        let cells = widgets::grid(r, Tab::ALL.len(), 5, 4.0 * k);
+        let cells = widgets::grid(r, Tab::ALL.len(), 6, 4.0 * k);
         for (t, cell) in Tab::ALL.iter().zip(cells) {
             if *t == self.tab {
                 draw_rectangle(cell[0] - 2.0, cell[1] - 2.0, cell[2] + 4.0, cell[3] + 4.0, ui.colour("accent"));

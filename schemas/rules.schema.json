@@ -755,6 +755,11 @@
         "survive": {"description": "chance a pilot shot down survives", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
       }},
     "scores": {"description": "mission score names (score(x) in outcomes): points", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+    "evaluations": {"description": "the monthly evaluation, first match wins", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+          "rating": {"description": "the month's rating", "type": "string"},
+          "when": {"description": "when it applies (first match; none: always)", "type": "string"},
+          "do": {"description": "actions: money(-50000), news(...), relation(...)", "type": "array", "items": {"type": "string"}}
+        }}},
     "tech_ids": {"description": "the original's numeric tech ids (Prereq1..3, TechRequired) to research ids", "type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
     "flags": {"description": "campaign flags conditions may test with flag(x) (set_flag names are added)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
     "economy": {"description": "economy settings", "type": "object", "additionalProperties": false, "properties": {

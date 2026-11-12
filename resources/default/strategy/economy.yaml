@@ -57,3 +57,10 @@ base_types:
     max_distance: 3500
     limits: {hangar: 3, sensor: 1, research: 3, production: 2, industry: 2, defence: 4, quarters: 2}
     template: [hangar, radar, laboratory]
+
+# The Senate's monthly evaluation: the first rating whose condition holds (R-STR-009).
+evaluations:
+  - {rating: Outstanding, when: month_score >= 400, do: ["money(150000)", "news(The Senate commends the Guard's month)"]}
+  - {rating: Satisfactory, when: month_score >= 0}
+  - {rating: Poor, when: month_score >= -300, do: ["money(-50000)"]}
+  - {rating: Unacceptable, do: ["money(-150000)", "news(The Senate cuts the Guard's funding)"]}
