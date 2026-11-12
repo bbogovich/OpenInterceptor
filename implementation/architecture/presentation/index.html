@@ -3464,6 +3464,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main menu and credits (app::menu, app::credits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#who-plays-what-the-apps-routing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6439,6 +6450,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main menu and credits (app::menu, app::credits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#who-plays-what-the-apps-routing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6508,7 +6530,8 @@
 <p><code>src/app/ui.rs</code>, <code>src/app/video.rs</code>, <code>src/app/cutscene.rs</code>, <code>src/app/comms.rs</code>, with their data
 in <code>src/content/skin.rs</code>, <code>src/content/cutscene.rs</code> and the voice sets of <code>src/content/rules.rs</code>.
 Plan: Stage 6.1 (skins, app 0.11.1), 6.8 (title cards), 6.3 (videos, app 0.12.0), MD2
-(cutscenes, app 0.13.0) and 6.6 (the comms panel, app 0.13.1). Music is on
+(cutscenes, app 0.13.0), 6.6 (the comms panel, app 0.13.1) and 6.2 (the main menu and credits,
+<code>src/app/menu.rs</code>, <code>src/app/credits.rs</code>, <code>src/content/front.rs</code>, app 0.14.0). Music is on
 <a href="../audio/#music-app-0110">Audio</a>; the Smacker decoder on <a href="../formats/#smacker-formatssmacker">Formats</a>.</p>
 <p>These are application-layer screens and helpers: they read <code>Content</code> and draw with macroquad,
 and the cutscene player drives a <code>sim::World</code> the same way a flight session does. Nothing in
@@ -6652,6 +6675,31 @@ still picture; no face, or a failure (printed once), is the signal graphic. <cod
 — a pulse moving across the bars — is pure and tested with <code>showing_for</code> in
 <code>app::comms::tests::the_panel_lasts_the_clip_and_the_signal_moves</code>. The name is the set's <code>name</code>
 (else its id) in capitals, or <em>COMMS</em> for a clip with no speaker.</p>
+<h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
+<p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
+campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
+Esc, from leaving the strategy screen, from the end of a film or cutscene with no campaign parked,
+and from the credits — goes there too, or to the launcher for a campaign without one.</p>
+<ul>
+<li><strong>Data:</strong> <code>content::front::MenuDef</code> (<code>campaign.menu</code>: <code>title</code>, <code>subtitle</code>, <code>showcase</code>,
+  <code>starfield_seed</code>, default 7) and <code>CreditsDef</code> (<code>campaign.credits</code>: <code>lines</code>, <code>video</code>), on
+  <code>Ruleset::menu</code> and <code>Ruleset::credits</code>. <code>CreditsDef::roll()</code> is the campaign's lines, two blank
+  lines, then <code>ENGINE_CREDITS</code>.</li>
+<li><strong>Menu:</strong> two pages. The pure functions <code>items(has_save)</code> (Continue only with a save; then New
+  campaign, Battles &amp; tools, Options, Credits, Quit) and <code>settings(campaigns, simple_allowed)</code>
+  (Campaign only with more than one, Difficulty, Physics only where Simple is allowed, Music,
+  Effects, Back) build the rows; <code>step_volume(v, up)</code> moves a volume a quarter and clamps.
+  Items return <code>Next::LoadCampaign</code>, <code>NewCampaign</code>, <code>Launcher</code>, <code>Credits</code> or <code>Quit</code>; a campaign
+  or difficulty change returns <code>Next::Reload</code>, after which <code>app::run</code> reopens the menu on its
+  options page (<code>MainMenu::on_options</code>). Volumes and physics are saved at once
+  (<code>remember_audio</code>, <code>remember_physics</code>). The screen draws the starfield, the showcase ship
+  turning off to the right, the title, and the rows in a skin panel; it keeps the music playing
+  (the first set's <code>menu</code> state, else <code>strategy</code>).</li>
+<li><strong>Credits:</strong> <code>Next::Credits</code> plays <code>credits.video</code> through the video player when there is one,
+  else <code>Screen::Credits</code>: the roll rises from below the screen at a fixed speed (<code>line_y</code>), headings
+  in the skin's <code>accent</code>, and ends when its last line passes the top (<code>finished</code>) or on Esc or
+  Enter. <code>--credits</code> opens on it.</li>
+</ul>
 <h3 id="who-plays-what-the-apps-routing">Who plays what: the app's routing<a class="headerlink" href="#who-plays-what-the-apps-routing" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -6679,7 +6727,7 @@ still picture; no face, or a failure (printed once), is the signal graphic. <cod
 </tr>
 <tr>
 <td>The end of a video or cutscene</td>
-<td>Back to <code>Next::Strategy</code> when a campaign is parked, else <code>Next::Launcher</code>. A player that fails to open prints the error and returns to the parked campaign.</td>
+<td>Back to <code>Next::Strategy</code> when a campaign is parked, else <code>Next::Menu</code> (the launcher before app 0.14.0). A player that fails to open prints the error and returns to the parked campaign.</td>
 </tr>
 </tbody>
 </table>
@@ -6744,6 +6792,21 @@ play without it.</p>
 <td><code>AppContext::ui</code>, <code>AppContext::music</code></td>
 <td><code>app</code></td>
 <td>The skin and the music player, shared by every screen.</td>
+</tr>
+<tr>
+<td><code>MainMenu</code>, <code>menu::Item</code>, <code>menu::Setting</code>, <code>menu::items</code>, <code>menu::settings</code>, <code>menu::step_volume</code></td>
+<td><code>app::menu</code></td>
+<td>The main menu (app 0.14.0) and its pure row logic.</td>
+</tr>
+<tr>
+<td><code>Credits</code>, <code>credits::line_y</code>, <code>credits::finished</code></td>
+<td><code>app::credits</code></td>
+<td>The credits roll and its pure scrolling maths.</td>
+</tr>
+<tr>
+<td><code>MenuDef</code>, <code>CreditsDef</code>, <code>CreditsDef::roll</code>, <code>ENGINE_CREDITS</code></td>
+<td><code>content::front</code></td>
+<td><code>campaign.menu</code> and <code>campaign.credits</code>.</td>
 </tr>
 <tr>
 <td><code>Comms</code>, <code>showing_for</code>, <code>signal_bars</code></td>

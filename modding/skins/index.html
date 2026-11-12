@@ -4649,6 +4649,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-main-menu-and-credits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main menu and credits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fonts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6397,6 +6408,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-main-menu-and-credits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main menu and credits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fonts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6463,6 +6485,10 @@ through it: <a href="../../implementation/architecture/presentation/#skins-appui
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>Main menu (app 0.14.0)</td>
+<td>Title, subtitle, the item list in a panel, the selection bar; the credits roll's headings.</td>
+</tr>
 <tr>
 <td>Launcher</td>
 <td>Background, title and every line of text, the selection bar, hints.</td>
@@ -6571,6 +6597,32 @@ mapped yet.</p>
   the whole entry), or by adding a skin and setting <code>campaign.skin</code>.</li>
 <li>The skin is loaded when the game starts and again when the launcher switches campaign (Tab).</li>
 </ul>
+<h2 id="the-main-menu-and-credits">The main menu and credits<a class="headerlink" href="#the-main-menu-and-credits" title="Permanent link">&para;</a></h2>
+<p>Since app 0.14.0 a campaign with a strategy layer opens on a <strong>main menu</strong> drawn in its skin (the
+item list sits in a skin panel), and its <strong>Credits</strong> item rolls the campaign's credit lines.
+Both are set under <code>campaign:</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># resources/default/campaign/campaign.yaml</span>
+<span class="nt">campaign</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">menu</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">subtitle</span><span class="p">:</span><span class="w"> </span><span class="s">"A</span><span class="nv"> </span><span class="s">serial</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">space</span><span class="nv"> </span><span class="s">frontier,</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">twelve</span><span class="nv"> </span><span class="s">chapters"</span><span class="p p-Indicator">,</span><span class="nt"> showcase</span><span class="p">:</span><span class="w"> </span><span class="nv">comet</span><span class="p p-Indicator">,</span><span class="nt"> starfield_seed</span><span class="p">:</span><span class="w"> </span><span class="nv">31</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">credits</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">lines</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"#</span><span class="nv"> </span><span class="s">Perils</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">Void"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the default campaign of OpenInterceptor</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">""</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"#</span><span class="nv"> </span><span class="s">Music"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">synthesised by tools/default_assets/music.py</span>
+</code></pre></div>
+<ul>
+<li><code>menu</code>: <code>title</code> (default: the campaign's name), <code>subtitle</code>, <code>showcase</code> (a ship class turning
+  behind the menu; default the first playable ship) and <code>starfield_seed</code>.</li>
+<li><code>credits</code>: <code>lines</code> — a line starting <code>#</code> is a heading in the skin's <code>accent</code> colour, <code>""</code>
+  leaves a gap — rolled up over the stars, followed by the engine's own credits; or <code>video</code>, a
+  film played instead (<code>interceptor</code> uses the CD's credits film).</li>
+<li>The menu plays the first music set's <code>menu</code> state, or its <code>strategy</code> state
+  (<a href="../music/#the-states">Music</a>).</li>
+</ul>
+<p>Every key: <a href="../reference/#campaign">Mod file reference › <code>campaign</code></a>. Try the roll with
+<code>openinterceptor --no-original --credits</code>.</p>
 <h2 id="fonts">Fonts<a class="headerlink" href="#fonts" title="Permanent link">&para;</a></h2>
 <p><code>font: fonts/&lt;name&gt;.ttf</code> loads a TrueType font from the pack for every skinned text. Choose a
 font whose licence allows redistribution with your pack. A font or panel image that fails to
@@ -6582,7 +6634,7 @@ a much wider font may cut long rows short.</p>
 <ul>
 <li>Screen layouts as data (<code>screens:</code> with design spaces, widgets, backgrounds and custom panels
   bound to queries), buttons with hover images, skin sounds, several fonts per skin.</li>
-<li>A main menu, an options screen, load/save and credits screens beyond the launcher (6.2).</li>
+<li>A load/save screen (one save per campaign, through <em>Continue</em>); a graphics options page.</li>
 <li>The <code>interceptor</code> wrapper screens at 640 × 480 (6.7).</li>
 </ul>
 <h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>

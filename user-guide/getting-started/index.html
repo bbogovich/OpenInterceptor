@@ -4041,6 +4041,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-main-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main menu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-testbed-launcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The testbed launcher
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6447,6 +6469,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-main-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The main menu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-testbed-launcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The testbed launcher
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6580,7 +6624,8 @@ original data. The script points <code>settings.yaml</code> at <code>resources/x
 folder instead, as a real install would. Open the app from Finder. See
 <a href="../../implementation/build/packaging/">Packaging</a>.</p>
 <h2 id="run">Run<a class="headerlink" href="#run" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># The testbed launcher (the original data is found automatically):</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># The main menu of the chosen campaign (the original data is found automatically); a</span>
+<span class="c1"># campaign without a strategy layer opens on the testbed launcher instead:</span>
 target/release/openinterceptor
 
 <span class="c1"># Only original-free packs (the default campaign, your own mods):</span>
@@ -6681,12 +6726,16 @@ scripts/check.sh
 <td>Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; <a href="../campaign/">Campaign</a>). Without a strategy layer the launcher opens. The campaign's intro cutscene or film is not played this way.</td>
 </tr>
 <tr>
+<td><code>--credits</code></td>
+<td>Open on the campaign's credits roll (or its credits film), then the main menu (app 0.14.0).</td>
+</tr>
+<tr>
 <td><code>--cutscene &lt;ID&gt;</code></td>
-<td>Play this cutscene of the campaign, then open the launcher (app 0.13.0; <a href="../../modding/cutscenes/">Cutscenes</a>).</td>
+<td>Play this cutscene of the campaign, then open the main menu (or the launcher, for a campaign without a strategy layer) (app 0.13.0; <a href="../../modding/cutscenes/">Cutscenes</a>).</td>
 </tr>
 <tr>
 <td><code>--video &lt;REF&gt;</code></td>
-<td>Play this video, then open the launcher (app 0.12.0): <code>original:&lt;file&gt;.smk</code> from your data (for example <code>original:alientrans1.smk</code>) or a pack path; Smacker files only.</td>
+<td>Play this video, then open the main menu (or the launcher) (app 0.12.0): <code>original:&lt;file&gt;.smk</code> from your data (for example <code>original:alientrans1.smk</code>) or a pack path; Smacker files only.</td>
 </tr>
 <tr>
 <td><code>--strategy-soak &lt;DAYS&gt;</code></td>
@@ -6751,9 +6800,52 @@ names as you press them).</p>
 <p>The user data folder (<code>settings.yaml</code>, <code>bindings.yaml</code>, <code>original/</code>, <code>mods/</code>) is <code>~/Library/Application Support/OpenInterceptor/</code>
 on macOS and <code>$XDG_DATA_HOME/openinterceptor/</code> (default <code>~/.local/share/openinterceptor/</code>) on
 Linux.</p>
-<p>The launcher lists the model viewer, the asset browser and the test scenarios from every
-loaded pack: Up/Down to
-choose, Left/Right to pick a ship, Enter to start, Esc to quit. In flight, Esc opens the menu
+<h3 id="the-main-menu">The main menu<a class="headerlink" href="#the-main-menu" title="Permanent link">&para;</a></h3>
+<p>Since app 0.14.0 a campaign with a strategy layer — the default campaign and <code>interceptor</code> —
+opens on its <strong>main menu</strong>: the campaign's title and subtitle over a starfield, a ship turning
+behind, the campaign's skin and its menu music. Up/Down (or the pad's D-pad) choose, Enter (pad
+A or Start) selects, Esc (pad B or Back) goes back or, on the main page, quits.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Continue</strong></td>
+<td>Loads the campaign's save (shown only when there is one).</td>
+</tr>
+<tr>
+<td><strong>New campaign</strong></td>
+<td>Starts a new campaign at the chosen difficulty, after its introduction (<a href="../campaign/#starting">Campaign</a>).</td>
+</tr>
+<tr>
+<td><strong>Battles &amp; tools</strong></td>
+<td>The testbed launcher (below): scenarios, missions, the simulator, the viewers. Esc there returns to the menu.</td>
+</tr>
+<tr>
+<td><strong>Options</strong></td>
+<td>Campaign, difficulty, physics (on the levels that allow Simple), music and effects volume; Left/Right changes the row, Esc or <em>Back</em> returns. Changing the campaign or the difficulty reloads and comes back to the options. Everything is saved in <code>settings.yaml</code> (<a href="../settings/">Settings</a>).</td>
+</tr>
+<tr>
+<td><strong>Credits</strong></td>
+<td>The campaign's credits roll, then the engine's (Esc or Enter ends it); <code>interceptor</code> plays the CD's credits film instead.</td>
+</tr>
+<tr>
+<td><strong>Quit</strong></td>
+<td>Leaves the game.</td>
+</tr>
+</tbody>
+</table>
+<p>Leaving the strategy map (Esc), the end of a film or cutscene, and Esc in the launcher all come
+back to the menu.</p>
+<h3 id="the-testbed-launcher">The testbed launcher<a class="headerlink" href="#the-testbed-launcher" title="Permanent link">&para;</a></h3>
+<p>The launcher (<em>Battles &amp; tools</em>, or the first screen of a campaign without a strategy layer)
+lists the model viewer, the asset browser and the test scenarios from every loaded pack: Up/Down
+to choose, Left/Right to pick a ship, Enter to start, Esc to return to the main menu (or to quit,
+for a campaign without one). In flight, Esc opens the menu
 (R restart, L back to the launcher) and <code>?</code> lists every key (<a href="../controls/">Controls</a>). Default controls follow the original game; see the <a href="../../reference/original-game/controls/">controls reference</a>.
 Flight is newtonian by default: throttle is thrust and the ship coasts; <code>Z</code> reverses thrust,
 hold <code>B</code> to brake, <code>M</code> holds the target's speed.

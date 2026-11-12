@@ -6501,12 +6501,16 @@ The player sets the music volume in the launcher (<a href="../../user-guide/sett
 </tr>
 <tr>
 <td><code>strategy</code></td>
-<td>On the strategy screen.</td>
+<td>On the strategy screen; also on the main menu when the set has no <code>menu</code> state.</td>
+</tr>
+<tr>
+<td><code>menu</code></td>
+<td>On the main menu (app 0.14.0), when the first set defines it.</td>
 </tr>
 </tbody>
 </table>
 <p>"Hostile" means a live ship of a faction hostile to the player's; stations and other static
-objects do not count. Only these four state names are used by the engine; a set may define
+objects do not count. Only these state names are used by the engine; a set may define
 others, but nothing will ask for them.</p>
 <p>Each state's segments play <strong>in turn</strong> (the first, the second, … then the first again). When a
 segment ends the player starts the next segment of whatever state is wanted <em>now</em>, so a fight
@@ -6542,7 +6546,8 @@ segment.</p>
   <code>seed mod number of sets</code>), so the same battle always has the same music and different
   battles vary.</li>
 <li><strong>On the strategy screen</strong> the first set plays its <code>strategy</code> state (or its <code>cruise</code>).</li>
-<li>Every other screen — the launcher, the viewer, the asset browser, videos and cutscenes — is
+<li><strong>On the main menu</strong> the first set plays its <code>menu</code> state, else its <code>strategy</code> state.</li>
+<li>Every other screen — the launcher, the credits roll, the viewer, the asset browser, videos and cutscenes — is
   silent.</li>
 </ul>
 <h2 id="a-worked-example-the-default-campaign">A worked example: the default campaign<a class="headerlink" href="#a-worked-example-the-default-campaign" title="Permanent link">&para;</a></h2>

@@ -6501,7 +6501,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-6-presentation/">6 Presentation</a></td>
-<td><strong>In progress</strong> — interactive music in <strong>0.11.0</strong>; skins in <strong>0.11.1</strong> and title cards; the Smacker decoder and player in <strong>0.12.0</strong>; volumes and the relation fix in <strong>0.12.1</strong>; endings' films; MD2 cutscenes in <strong>0.13.0</strong> and the X-COM opening film; MPSRC packs and the comms panel in <strong>0.13.1</strong>. 6.1, 6.3, 6.4, 6.6 (comms), 6.8 partial; MD2 partial; 6.2, 6.5, 6.7, MD3 not started; no manual pass yet</td>
+<td><strong>In progress</strong> — interactive music in <strong>0.11.0</strong>; skins in <strong>0.11.1</strong> and title cards; the Smacker decoder and player in <strong>0.12.0</strong>; volumes and the relation fix in <strong>0.12.1</strong>; endings' films; MD2 cutscenes in <strong>0.13.0</strong> and the X-COM opening film; MPSRC packs and the comms panel in <strong>0.13.1</strong>; the main menu and credits in <strong>0.14.0</strong>. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms), 6.8 and MD2 partial; 6.5, 6.7, MD3 not started; no manual pass yet</td>
 <td>See <a href="#stage-6-progress">Stage 6 progress</a> below</td>
 </tr>
 <tr>
@@ -7210,8 +7210,8 @@ examinations — unconfirmed. <strong>No play-through of either campaign has bee
 <p>App <strong>0.11.0</strong> (<code>1f183d1</code>, music), <strong>0.11.1</strong> (<code>2dd85dd</code> skins; <code>a7ea7b6</code> title cards), <strong>0.12.0</strong>
 (<code>5163a57</code>, <code>644b218</code>, Smacker), <strong>0.12.1</strong> (<code>563c93f</code> volumes and the relation fix; <code>87b04f3</code>
 endings' films), <strong>0.13.0</strong> (<code>a59ffce</code> MD2 cutscenes; <code>76d64d5</code> the X-COM opening film) and
-<strong>0.13.1</strong> (<code>319a31b</code> MPSRC packs; <code>747d1e9</code> the comms panel). <strong>379 unit tests</strong> on macOS at
-<code>747d1e9</code> by a count of the sources.</p>
+<strong>0.13.1</strong> (<code>319a31b</code> MPSRC packs; <code>747d1e9</code> the comms panel) and <strong>0.14.0</strong> (<code>a18a7b4</code>, the main
+menu and credits). <strong>384 unit tests</strong> on macOS at <code>a18a7b4</code> by a count of the sources.</p>
 <table>
 <thead>
 <tr>
@@ -7257,13 +7257,18 @@ endings' films), <strong>0.13.0</strong> (<code>a59ffce</code> MD2 cutscenes; <c
 <td><code>src/content/cutscene.rs</code>, <code>src/app/cutscene.rs</code>, <code>resources/default/cutscenes/intro.yaml</code></td>
 </tr>
 <tr>
+<td>6.2 Main menu (<code>app::menu</code>: Continue, New campaign, Battles &amp; tools, Options, Credits, Quit), options (campaign, difficulty, physics, volumes), credits roll (<code>app::credits</code>) or film; <code>campaign.menu</code>, <code>campaign.credits</code>; <code>--credits</code>; the menu's music state</td>
+<td><strong>Done</strong> (0.14.0); no load/save screen beyond Continue, no graphics options</td>
+<td><code>src/app/menu.rs</code>, <code>src/app/credits.rs</code>, <code>src/content/front.rs</code></td>
+</tr>
+<tr>
 <td>6.6 MPSRC packs (<code>original:&lt;pack&gt;.mps#&lt;member&gt;</code>); the comms panel: voices' <code>name</code> and <code>face</code>, chatter <code>speaker</code>, signal bars; default portraits and <code>colony_control</code></td>
 <td><strong>Partial</strong> (0.13.1): no X-COM faces (clip prefixes unmapped); custom instruments not built</td>
 <td><code>src/formats/mpsrc.rs</code>, <code>src/app/comms.rs</code>, <code>resources/default/rules/voices.yaml</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Gaps</strong> (at main <code>747d1e9</code>): 6.2 (main menu, options, load/save, credits screens), 6.5, 6.7 (the X-COM
+<p><strong>Gaps</strong> (at main <code>a18a7b4</code>): 6.5, 6.7 (the X-COM
 wrapper screens — the <code>WrappersDLL</code> layouts are not mapped), MD3 (OS video frameworks; needs the
 dependency/FFI evaluation first); the rest of the cutscene format; the <code>harmless</code> flag; X-COM
 talking-head mapping; video sound ignores the volume settings; a video's pack path is read from

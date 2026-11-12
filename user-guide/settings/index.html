@@ -4053,6 +4053,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#options-in-the-main-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options in the main menu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#volumes-in-the-launcher" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6331,6 +6342,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#options-in-the-main-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options in the main menu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#volumes-in-the-launcher" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6484,13 +6506,17 @@ the CD).</p>
   with <code>flight: {lighting: …}</code> (<a href="../../modding/reference/#flight">Mod file reference</a>).
   <code>graphics.brightness</code> adjusts the result for your screen.</li>
 </ul>
+<h2 id="options-in-the-main-menu">Options in the main menu<a class="headerlink" href="#options-in-the-main-menu" title="Permanent link">&para;</a></h2>
+<p>Since app 0.14.0 the main menu's <strong>Options</strong> page sets the campaign, difficulty, physics and the
+music and effects volumes with Left/Right (volumes by a quarter, stopping at 0 % and 100 %) and
+saves them here at once (<a href="../getting-started/#the-main-menu">Getting started › The main menu</a>).</p>
 <h2 id="volumes-in-the-launcher">Volumes in the launcher<a class="headerlink" href="#volumes-in-the-launcher" title="Permanent link">&para;</a></h2>
 <p>The launcher's line of packs ends with <em>Music 70% (M)   Effects 100% (V)</em>. <strong>M</strong> steps the music
 volume and <strong>V</strong> the effects volume up by a quarter — 0, 25, 50, 75, 100 % — and from 100 % back
 to 0 (a value in between, such as the default 70 %, goes up past the nearest quarter: 70 % → 100 %).
 Each press is saved in <code>settings.yaml</code> at once and takes effect immediately.</p>
-<p>An in-game options screen is planned with the presentation stage (plan item 6.2); until then,
-use the launcher keys or edit the file.</p>
+<p>Graphics (brightness) and the console are still set in this file; the controls have their own
+menu in flight.</p>
 
 
 

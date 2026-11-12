@@ -6444,7 +6444,7 @@ simply silent.</p>
 <pre class="mermaid"><code>flowchart LR
     MD["rules: music.&amp;lt;set&amp;gt;&lt;br/&gt;content::music::MusicSet"] --&gt; BL["SoundBank::load&lt;br/&gt;SoundKey::Music(set, state, seg),&lt;br/&gt;Stinger(set, k) + their lengths"]
     FL["app::flight each frame:&lt;br/&gt;set = seed mod sets;&lt;br/&gt;battle_state(nearest hostile)"] --&gt; MP
-    SG["app::strategy each frame:&lt;br/&gt;set 0, state strategy"] --&gt; MP
+    SG["app::strategy each frame:&lt;br/&gt;set 0, state strategy;&lt;br/&gt;app::menu: menu, else strategy"] --&gt; MP
     MP["MusicPlayer::frame(bank, rules, set, state, now)"] --&gt;|"segment ended?&lt;br/&gt;next_segment(set, state, count)"| PL["SoundBank::play(key, set.volume × music volume)"]
     RES["flight: result decided"] --&gt; STG["MusicPlayer::stinger(victory | death)"] --&gt; PL
     APP["app::run: any other screen"] --&gt; STOP["MusicPlayer::stop"]</code></pre>
@@ -6467,8 +6467,8 @@ transition tables are not read (<a href="../../deviations/">DEV-053</a>).</p>
   has the same music; the strategy screen uses set 0 with the <code>strategy</code> state.</li>
 <li><strong>Stingers:</strong> when a mission's result is decided, <code>victory</code> for a win and <code>death</code> otherwise,
   with the computer voice. <code>good</code> and <code>bad</code> are loaded but not played.</li>
-<li><strong>Silence:</strong> <code>app::run</code> stops the music on every screen other than <code>Screen::Flight</code> and
-  <code>Screen::Strategy</code>, and before a video.</li>
+<li><strong>Silence:</strong> <code>app::run</code> stops the music on every screen other than <code>Screen::Flight</code>,
+  <code>Screen::Strategy</code> and (app 0.14.0) <code>Screen::Menu</code>, and before a video.</li>
 </ul>
 <p><strong>Volumes (app 0.12.1).</strong> <code>settings.yaml</code> <code>audio: {music, effects}</code> (0 – 100 %, default 70 % and
 100 %) is read at start-up: <code>MusicPlayer::volume</code> multiplies each set's own <code>volume</code>, and

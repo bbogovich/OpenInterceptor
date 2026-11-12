@@ -5894,6 +5894,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-14-main-menu-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-14 — Main menu: navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-15-main-menu-options-round-trip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-15 — Main menu: options round trip
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-16-credits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-16 — Credits
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10650,6 +10683,39 @@
     <span class="md-ellipsis">
       
         MT-6-13 — The comms panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-14-main-menu-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-14 — Main menu: navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-15-main-menu-options-round-trip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-15 — Main menu: options round trip
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-16-credits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-16 — Credits
       
     </span>
   </a>
@@ -16338,6 +16404,33 @@ Keys: <a href="../../../user-guide/campaign/">User guide › Campaign</a>.</p>
 <td></td>
 <td></td>
 </tr>
+<tr>
+<td>MT-6-14</td>
+<td>Main menu: navigation</td>
+<td>Start-up (default; <code>interceptor</code>)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MT-6-15</td>
+<td>Main menu: options round trip</td>
+<td>Main menu › Options</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MT-6-16</td>
+<td>Credits</td>
+<td>Main menu › Credits; <code>--credits</code></td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
 </tbody>
 </table>
 <h2 id="stage-6-cases">Stage 6 cases<a class="headerlink" href="#stage-6-cases" title="Permanent link">&para;</a></h2>
@@ -16638,6 +16731,75 @@ Keys: <a href="../../../user-guide/campaign/">User guide › Campaign</a>.</p>
 <tr>
 <td>Expected</td>
 <td>1: about 3 s in, with the radio clip, a green-framed panel at the top left shows the generated CRT portrait of Colony Control and <em>COLONY CONTROL</em> beneath, for about 2.5 s. 2: the Guard Wing portrait and <em>GUARD WING</em> while the wingman answers. With a voice set that has no <code>face</code>, animated signal bars instead; with a chatter clip of no speaker, <em>COMMS</em>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-14-main-menu-navigation">MT-6-14 — Main menu: navigation<a class="headerlink" href="#mt-6-14-main-menu-navigation" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.14.0 or later. Default campaign; first with no save, then with one.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Start <code>openinterceptor --no-original</code> with no save. 2. Move through the items with Up/Down (and the pad's D-pad); press Enter on <em>Battles &amp; tools</em>, then Esc. 3. <em>New campaign</em>; skip the intro; Esc on the map. 4. Look at the items again. 5. <em>Continue</em>; Esc. 6. Esc on the main page.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the menu, not the launcher: <em>Perils of the Void</em> and its subtitle over a starfield, a Comet turning to the right, the items in the gold-framed panel, the strategy music (the default set has no <code>menu</code> state); no <em>Continue</em>. 2: the selection wraps; the launcher opens; Esc returns to the menu. 3: the intro, then the map; Esc saves and returns to the menu. 4: <em>Continue</em> now first. 5: the map as saved; Esc back to the menu. 6: the game quits.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-15-main-menu-options-round-trip">MT-6-15 — Main menu: options round trip<a class="headerlink" href="#mt-6-15-main-menu-options-round-trip" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.14.0 or later. Default campaign; the player's data for the campaign row.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Options; Left/Right on Music and Effects; listen in a battle. 2. Change Physics (on a level that allows Simple). 3. Change Difficulty. 4. Change Campaign (with <code>interceptor</code> available). 5. Quit and restart; open Options; look at <code>settings.yaml</code>.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: each press moves a quarter and stops at 0 % and 100 %; the volumes apply at once. 2: Simple / Realistic toggles. 3: the campaign reloads and the menu reopens on Options with the new level. 4: the other campaign's menu, on Options, in its skin. 5: every choice kept; <code>settings.yaml</code> has <code>audio</code>, <code>game.physics</code>, <code>game.difficulty</code> and <code>game.campaign</code> to match. Physics is not listed on levels that do not allow Simple; Campaign only with more than one campaign.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-16-credits">MT-6-16 — Credits<a class="headerlink" href="#mt-6-16-credits" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.14.0 or later; the player's data for step 3.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Default campaign: Credits; watch to the end. 2. Again, press Esc part-way. 3. <code>interceptor</code>: Credits. 4. <code>openinterceptor --no-original --credits</code>.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the lines rise from below over the stars, headings (<em>Perils of the Void</em>, <em>Music</em>, …) in the skin's accent colour, then <em>Engine</em>, <em>OpenInterceptor</em> and the rest; back to the menu when the last line leaves the top. 2: the menu at once. 3: the CD's credits film plays, then the menu. 4: the roll at start-up, then the menu.</td>
 </tr>
 </tbody>
 </table>
