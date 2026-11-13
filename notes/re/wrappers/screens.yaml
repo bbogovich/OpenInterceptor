@@ -1,0 +1,480 @@
+# X-COM: Interceptor (1998) strategy-screen interface, recovered from the player's own Interceptor.exe.
+# Facts only: ids, rectangles, commands, string KEYS (never string text beyond short labels).
+#
+# Conventions
+#   rect: [left, top, right, bottom] in 640x480 screen pixels (Win32 RECT, right/bottom exclusive).
+#   center: [x, y] for widgets the exe positions by their centre (SpriteButtonC).
+#   pos: [x, y] top-left for widgets the exe positions by corner (SpriteButtonTL).
+#   id: the widget / command id the exe passes to the screen's callback or OnCommand.
+#   images: WrappersDLL ids are plain numbers; SpritesDLL ids are written "spr:NNNNN".
+#     Sprite buttons take a sprite-table index N and a state count S (last create argument); the
+#     drawn image is sprite[N + state] (0x417e79), so S=2 gives up=N, pressed=N+1 and S=1 is a
+#     single image (the CSD nav and panel buttons). "spr:A/B" lists both states.
+#   conf: verified = read from code/tables; derived = inferred from art, strings or context.
+#   screen ids are the exe's own screen numbers (global 0x682368), see navigation.md.
+
+screens:
+
+  - id: 17
+    name: CSD (Command and Strategic Display, star map)
+    source: CSD.cpp
+    class_vtable: 0x65fbc0
+    create: 0x437730          # new 0x638c bytes, ctor 0x4377f0, Init 0x438101
+    background: 5030
+    controls:
+      - {kind: map, what: round star map (hit rect), rect: [66, 61, 399, 394], conf: verified,
+         note: "SetRect(0,0,333,333) centred on (232,227); LButtonDown/Up/RButton -> 0x4431ad(mode,x,y)"}
+      - {kind: frame, what: map bezel overlay, image: 5050, pos: [52, 58], conf: verified}
+      - {kind: minimap, rect: [502, 43, 596, 137], image_mask: 5051, conf: verified,
+         note: "click/drag -> 0x44c240 converts to map coords, 0x447a14 recentres"}
+      - {kind: lamp, what: 4 animated red map-corner lamps, images: "spr:1900-1909",
+         pos: [[59, 70], [348, 70], [348, 354], [59, 354]], conf: verified}
+      - {kind: lamp, what: status lamp, images: [5060, 5061, 5062, 5063, 5064], pos: [618, 453], conf: verified}
+      - {kind: text, what: status/help line, rect: [344, 457, 620, 472], conf: verified,
+         note: "member rect +0x556c; art bar measures [343,460,612,475]"}
+      - {kind: text, what: four readouts (date / time / funds / ...), conf: derived,
+         rects: [[495, 365, 628, 380], [495, 385, 628, 401], [495, 406, 628, 421], [495, 426, 628, 441]],
+         note: "measured from the green bars in 5030; which readout is which is not yet recovered"}
+      - {kind: clock, what: time-speed dial, id: 100, widget: TimeDial 0x4cca65, center: [562, 304],
+         rect: [507, 250, 617, 358], conf: verified,
+         holes: [[523, 322], [536, 336], [554, 344], [574, 344], [592, 335], [605, 322]],
+         action: "time speed 0..5 (6 holes); keys '1'..'6' (cmd 49..54) do the same",
+         images: "spr:18500-18509 (needle), spr:18600-18611 (hole lamps)"}
+      - {kind: toggle, id: 101, widget: 0x4cd8a4, pos: [13, 25], conf: verified,
+         action: "toggles CSD display mode (member +0x56c4) -> 0x4443a7", note: "small top-left knob in 5030"}
+      - {kind: pan, id: 200, widget: PanWidget 0x5156ad, pos: [30, 445], images: "spr:1800-1803", conf: verified,
+         action: "pan the map (0x515839)"}
+      - {kind: button, id: 600, center: [460, 429], images: "spr:19200/19201", action: "launch mission (0x446ddc -> Launch Mission dialog)", conf: verified}
+      - {kind: button, id: 601, center: [460, 385], images: "spr:19202/19203", action: "launch probe (0x445f5b -> choose-probe pick list)", conf: verified}
+    panel_modes:      # member +0x5d54; the six nav buttons are rebuilt by 0x4416dc for each mode
+      - mode: 0  # normal
+        buttons:
+          - {id: 504, center: [516, 194], images: "spr:18000", action: "open Bases (screen 6)", conf: verified}
+          - {id: 515, center: [563, 194], images: "spr:18008", action: "open Equip Ships (screen 8)", conf: verified}
+          - {id: 500, center: [609, 194], images: "spr:18010", action: "open status-report panel (mode 1, image 5057)", conf: verified}
+          - {id: 502, center: [516, 226], images: "spr:18006", action: "open Research (screen 9)", conf: verified}
+          - {id: 516, center: [563, 226], images: "spr:18004", action: "open Equipment & Personnel (screen 18)", conf: verified}
+          - {id: 503, center: [609, 226], images: "spr:18002", action: "open UFOpedia panel (mode 2, image 5052)", conf: verified}
+      - mode: 1  # status reports slide-out (5057)
+        buttons:
+          - {id: 800, center: [544, 69], images: "spr:29400", action: "Income report (screen 32)", conf: verified}
+          - {id: 801, center: [544, 102], images: "spr:29401", action: "Finance report (screen 33)", conf: verified}
+          - {id: 802, center: [544, 135], images: "spr:29402", action: "Alien activity report (screen 34)", conf: verified}
+          - {id: 803, center: [603, 69], images: "spr:29403", action: "X-COM activity report (screen 35)", conf: verified}
+          - {id: 805, center: [603, 102], images: "spr:29404", action: "screen 36 (Outpost report)", conf: verified}
+          - {id: 806, center: [603, 135], images: "spr:29405", action: "screen 37 (Player status report)", conf: verified}
+          - {id: 700, center: [605, 206], images: "spr:29420", action: "close panel (mode 0)", conf: verified}
+      - mode: 2  # UFOpedia slide-out (5052): each sets global 0x68fe60 = category then opens screen 23
+        buttons:
+          - {id: 505, center: [544, 57], images: "spr:29406", action: "UFOpedia category 0", conf: verified}
+          - {id: 506, center: [544, 90], images: "spr:29407", action: "UFOpedia category 1", conf: verified}
+          - {id: 507, center: [544, 123], images: "spr:29408", action: "UFOpedia category 2", conf: verified}
+          - {id: 508, center: [544, 156], images: "spr:29409", action: "UFOpedia category 3", conf: verified}
+          - {id: 509, center: [544, 189], images: "spr:29410", action: "UFOpedia category 4", conf: verified}
+          - {id: 513, center: [603, 57], images: "spr:29411", action: "UFOpedia category 5", conf: verified}
+          - {id: 510, center: [603, 90], images: "spr:29412", action: "UFOpedia category 6", conf: verified}
+          - {id: 511, center: [603, 123], images: "spr:29413", action: "UFOpedia category 7", conf: verified}
+          - {id: 512, center: [603, 156], images: "spr:29414", action: "UFOpedia category 8", conf: verified}
+          - {id: 700, center: [605, 206], images: "spr:29420", action: "close panel", conf: verified}
+      - {note: "id 701 cycles a sub-page of the open panel (member +0x5e78); its button is not created in 0x4416dc", conf: verified}
+    other_rects:
+      - {rect: [588, 404, 640, 433], member: 0x5ddc, conf: verified, what: unknown hot zone}
+      - {rect: [493, 363, 629, 442], member: 0x5dec, conf: verified, what: "readout block (covers the four green bars)", what_conf: derived}
+    hover_info_box: {builder: 0x5e9507, fields: [S_MBS9_OBJECT, S_MBS9_NAME, S_MBS9_CLASS, S_MBS9_OWNER, S_MBS9_DESCRIPTION], conf: verified}
+    keys: {"1-6": "time speed 0..5 (OnCommand 0x4474f0, ids 49..54)", "A (65)": "case exists", "D (68)": "case exists"}
+
+  - id: 6
+    name: Bases
+    source: Bases.cpp
+    class_vtable: 0x6602d8
+    create: 0x482bec
+    init: 0x47c74d
+    background: 6105
+    controls:
+      - {kind: 3d view, what: base model, rect: [30, 50, 330, 354], conf: verified}
+      - {kind: text, what: info pane, rect: [347, 39, 639, 266], conf: verified}
+      - {kind: text, what: info header, rect: [365, 52, 603, 102], conf: verified}
+      - {kind: dial, what: rotate pad / view dial, rect: [316, 297, 484, 465], conf: verified, what_conf: derived}
+      - {kind: button, what: dial centre button, rect: [372, 362, 412, 402], conf: verified}
+      - {kind: gauge, what: small round gauge (lower left), rect: [2, 378, 80, 454], conf: verified}
+      - {kind: button, what: four 17x17 arrows in that gauge (left/right/up/down), conf: verified, what_conf: derived,
+         rects: [[10, 405, 27, 422], [49, 405, 66, 422], [30, 380, 47, 397], [30, 424, 47, 441]]}
+      - {kind: list, what: three 152x18 text slots (view mode NORMAL / DEFENSES / DAMAGE), conf: verified, what_conf: derived,
+         rects: [[130, 380, 282, 398], [130, 404, 282, 422], [130, 428, 282, 446]]}
+      - {kind: toggle, id: 300, widget: SpriteToggle 0x506c16, pos: [106, 422], images: "spr:28010/28011", action: "select view mode (0x482b98)", conf: verified}
+      - {kind: list, what: two 152x18 rows in info pane, rects: [[464, 54, 616, 72], [464, 82, 616, 100]], conf: verified}
+      - {kind: text, rects: [[90, 41, 236, 64], [100, 330, 251, 358], [307, 375, 477, 469]], conf: verified, what: unnamed member rects}
+      - {kind: dropdown, id: 310, widget: DropDown 0x511a9b, pos: [475, 13], width: 150, action: "select base", conf: verified}
+      - {kind: button, id: 200, pos: [504, 287], images: "spr:28100/28101", action: "build new base (checks S_BASE_MAXBASES)", conf: verified}
+      - {kind: button, id: 202, pos: [504, 324], images: "spr:28102/28103", action: "add module / placement mode (0x48078e, 0x48305e)", conf: verified, what_conf: derived}
+      - {kind: button, id: 204, pos: [504, 361], images: "spr:28104/28105", action: "open Equipment & Personnel (screen 18)", conf: verified}
+      - {kind: button, id: 206, pos: [504, 398], images: "spr:28106/28107", action: "open Equip Ships (screen 7)", conf: verified}
+      - {kind: button, id: 208, pos: [504, 435], images: "spr:28108/28109", action: "open Base Stats (screen 22)", conf: verified}
+      - {kind: button, id: 402, center: [387, 247], images: "spr:28140/28141", action: "previous (placement)", conf: verified, what_conf: derived}
+      - {kind: button, id: 400, center: [484, 247], images: "spr:28144/28145", action: "accept placement (0x48078e, 0x48305e)", conf: verified}
+      - {kind: button, id: 401, center: [580, 247], images: "spr:28142/28143", action: "next (placement)", conf: verified, what_conf: derived}
+      - {kind: button, id: 700, widget: TextButton, label_key: S_DISMANTLEBASE, size: [150, 20], action: "dismantle base (0x47eadd)", conf: verified}
+      - {kind: button, id: 701, widget: TextButton, label_key: S_RENAMEBASE, size: [150, 20], action: "rename base (S_S2_BASENAME prompt)", conf: verified}
+      - {kind: gauge, images: [7032, 7033], conf: verified, note: "331x32 bar pair loaded in 0x47d031; position not recovered"}
+    callback: {function: 0x47f1d9, extra_ids: {500: back, 210: CSD, 212: CSD, 600: refresh, 650: 0x47e4ec, "800-804": 0x48359f}, conf: verified}
+
+  - id: 7
+    alias_ids: [8]
+    name: Equip Ships (hangar / pilots)
+    source: EquipShip.cpp
+    class_vtable: 0x661c18
+    create: 0x53d93d
+    init: 0x535566
+    widgets_fn: 0x538633
+    background: 6100
+    controls:
+      - {kind: list, what: 9 portrait/ship sockets on the ring, size: [76, 75], conf: verified,
+         centres: [[117, 336], [65, 265], [64, 178], [115, 107], [198, 79], [282, 106], [334, 177], [334, 265], [283, 336]],
+         note: "two 9-entry coordinate arrays in 0x535566; centre semantics derived"}
+      - {kind: 3d view, what: selected ship, rect: [104, 124, 298, 316], conf: verified}
+      - {kind: text, what: stat panel, rect: [432, 89, 639, 347], conf: verified}
+      - {kind: text, what: stat panel header, rect: [432, 90, 638, 182], conf: verified}
+      - {kind: list, what: 3x3 slot grid (78x78), conf: verified, what_conf: derived,
+         origins: [[472, 224], [536, 224], [600, 224], [472, 280], [536, 280], [600, 280], [472, 336], [536, 336], [600, 336]]}
+      - {kind: list, id: 200, widget: ListBox, rect: [17, 397, 517, 457], what: docked ships, conf: verified}
+      - {kind: button, id: 204, pos: [518, 413], images: "spr:27500", action: list up, conf: verified}
+      - {kind: button, id: 205, pos: [518, 434], images: "spr:27503", action: list down, conf: verified}
+      - {kind: toggle, what: lever, rect: [558, 392, 587, 469], conf: verified}
+      - {kind: button, id: 401, center: [572, 409], images: "spr:22956", action: "0x53c06b", conf: verified}
+      - {kind: button, id: 402, center: [572, 451], images: "spr:22958", action: "0x53bf76", conf: verified}
+      - {kind: button, id: 400, pos: [597, 391], images: "spr:22950/22951", action: "0x53c696", conf: verified}
+      - {kind: button, id: 300, center: [200, 356], images: "spr:22506", action: "0x53aac9", conf: verified}
+      - {kind: button, id: 302, center: [479, 57], alt_center: [489, 57], images: "spr:22500", what: weapons tab, action: "0x53c31f", conf: verified, what_conf: derived}
+      - {kind: button, id: 304, center: [533, 57], alt_center: [577, 57], images: "spr:22502", what: equipment tab, action: "0x53c31f", conf: verified, what_conf: derived}
+      - {kind: button, id: 306, center: [587, 57], images: "spr:22504", what: pilot tab, action: "0x53c31f", conf: verified, what_conf: derived}
+      - {kind: button, id: 350, center: [404, 222], images: "spr:22903", what: ring pointer arrow, action: "0x53bd9e", conf: verified}
+      - {kind: button, id: 500, center: [445, 347], images: "spr:27506", action: previous, conf: verified}
+      - {kind: button, id: 501, center: [482, 347], images: "spr:22980", action: "0x53cb77", conf: verified}
+      - {kind: button, id: 503, center: [519, 347], images: "spr:22984", action: "0x53cd7b", conf: verified}
+      - {kind: button, id: 505, center: [556, 347], images: "spr:22986", action: "0x53cf43", conf: verified}
+      - {kind: button, id: 502, center: [593, 347], images: "spr:22982", action: "0x53cbff", conf: verified}
+      - {kind: button, id: 504, center: [630, 347], images: "spr:27509", action: next, conf: verified}
+      - {kind: dropdown, id: 2000, pos: [475, 13], width: 150, action: select base, conf: verified}
+    callback: {function: 0x53d10b, ids: {100: back, 200: list click}, conf: verified}
+
+  - id: 18
+    name: Equipment and Personnel (purchase / sell / transfer / manufacture)
+    source: EquipPerson.cpp
+    class_vtable: 0x661ef8
+    create: 0x563996
+    init: 0x563a7f
+    widgets_fn: 0x563ecf
+    background: 6110
+    controls:
+      - {kind: text, what: info box 1, rect: [9, 42, 113, 168], conf: verified}
+      - {kind: text, what: info box 2, rect: [135, 42, 275, 165], conf: verified}
+      - {kind: text, what: info box 3, rect: [301, 42, 441, 165], conf: verified}
+      - {kind: number, what: order total / funds field, rect: [299, 229, 444, 251], conf: verified, what_conf: derived}
+      - {kind: button, id: 300, pos: [81, 226], images: "spr:20014/20015", action: "category radio 1 (purchase)", conf: verified, what_conf: derived}
+      - {kind: button, id: 301, pos: [132, 226], images: "spr:20016/20017", action: "category radio 2 (sell)", conf: verified, what_conf: derived}
+      - {kind: button, id: 302, pos: [183, 226], images: "spr:20018/20019", action: "category radio 3 (transfer)", conf: verified, what_conf: derived}
+      - {kind: button, id: 303, pos: [234, 226], images: "spr:20020/20021", action: "category radio 4 (manufacture)", conf: verified, what_conf: derived}
+      - {kind: button, id: 400, pos: [514, 142], images: "spr:20010/20011", action: "mode radio: equipment/ships", conf: verified, what_conf: derived}
+      - {kind: button, id: 401, pos: [514, 204], images: "spr:20012/20013", action: "mode radio: personnel (pilots)", conf: verified, what_conf: derived}
+      - {kind: list, id: 162, widget: ListBox, rect: [18, 272, 556, 460], alt_rect: [18, 272, 195, 456], conf: verified,
+         columns_from_keys: [S_S6B_PURCHASE_HDR, S_S6B_SELL_HDR, S_S6B_TRANSFER_HDR, S_S6B_MANUFACTURE_HDR],
+         columns: "item | SIZE | COST | STORES | QUANTITY (purchase); '~' separates columns, '#' marks the editable quantity column",
+         columns_conf: verified}
+      - {kind: number, what: per-row quantity spinners, widget: Spinner 0x56db90, images: "sprite 1035 / 1036", conf: verified,
+         note: "created per row in 0x5647c4 at x offsets 35 and 100 relative to the row"}
+      - {kind: button, id: 700, pos: [562, 290], alt_pos: [195, 290], images: [6911, 6912], action: list up, conf: verified}
+      - {kind: button, id: 701, pos: [562, 314], alt_pos: [195, 314], images: [6914, 6915], action: list down, conf: verified}
+      - {kind: button, id: 180, pos: [587, 279], images: "spr:20002/20003", action: "0x56a781", conf: verified}
+      - {kind: button, id: 181, pos: [587, 373], images: "spr:20000/20001", action: "0x56a7b3", conf: verified}
+      - {kind: button, id: 106, pos: [587, 326], images: "spr:20022/20023", action: "open Production dialog (0x516180)", conf: verified}
+      - {kind: dropdown, id: 600, pos: [475, 13], width: 150, action: select base, conf: verified}
+    callback: {function: 0x569cb9, ids: {103: "cancel order (S_S6B_CANCELORDER confirm)", 162: list click}, conf: verified}
+
+  - id: 9
+    name: Research
+    source: ResearchScreen.cpp
+    class_vtable: 0x65fef8
+    create: 0x4681e0
+    init: 0x468ff0 (bg), 0x4684a8 (layout), 0x46892b (widgets)
+    background: 5101
+    controls:
+      - {kind: 3d view, what: topic picture, rect: [20, 48, 285, 313], conf: verified}
+      - {kind: list, what: topic rows 250x25 (row count not recovered), first: [330, 49, 580, 74], step_y: 34, conf: verified,
+         row_buttons: "SpriteButtonC id 110+n, sprite 1073 (spr:22000)"}
+      - {kind: text, what: description pane, rect: [20, 368, 444, 466], conf: verified}
+      - {kind: dial, rect: [493, 366, 604, 479], conf: verified, what_conf: derived}
+      - {kind: button, id: 101, center: [53, 336], images: "spr:22026", action: "previous (0x46a644)", conf: verified}
+      - {kind: button, id: 100, center: [253, 336], images: "spr:22024", action: "next (0x46a5a1)", conf: verified}
+      - {kind: button, id: 102, pos: [130, 320], images: "spr:22020", action: "0x46ac4f", conf: verified}
+      - {kind: button, ids: [204, 205], images: "spr:27500 / spr:27503", action: list up / down, conf: verified}
+    callback: {function: 0x46ab88, ids: {104: back, 105: "disabled-feature message"}, conf: verified}
+
+  - id: 22
+    name: Base Stats (Stat-O-Matic)
+    source: BaseStats.cpp
+    class_vtable: 0x6615a8
+    create: 0x5014d0
+    init: 0x50179b
+    background: 6330
+    controls:
+      - {kind: text, what: stats view, rect: [26, 60, 371, 390], alt_rect: [26, 60, 396, 425], conf: verified}
+      - {kind: dial, rect: [492, 209, 607, 418], conf: verified}
+      - {kind: button, what: three 35x35 dial buttons, rects: [[499, 223, 534, 258], [531, 214, 566, 249], [564, 223, 599, 258]], conf: verified}
+      - {kind: button, id: 200, widget: TextButton, label_key: S_BS_GENINFO, conf: verified}
+      - {kind: button, id: 201, widget: TextButton, label_key: S_BS_SHIPINFO, conf: verified}
+      - {kind: button, id: 202, widget: TextButton, label_key: S_BS_MODINFO, conf: verified}
+      - {kind: list, id: 300, widget: ListBox (0x504736), conf: verified}
+      - {kind: button, ids: [401, 400], images: "spr:27500 / spr:27503", action: list up / down, conf: verified}
+      - {kind: dropdown, id: 102, pos: [475, 13], width: 150, action: select base, conf: verified}
+    callback: {function: 0x504abf, ids: {100: back, 101: refresh}, conf: verified}
+
+  - id: 23
+    name: UFOpedia (Databank)
+    source: Databank.cpp
+    class_vtable: 0x661bb8
+    create: 0x53025b (plays alientrans1.smk first when entered from the factory)
+    init: 0x530b6b
+    background: 5107
+    controls:
+      - {kind: 3d view, what: article picture + iris, rect: [32, 12, 297, 277], images: "5112-5122 then 5199-5356", conf: verified}
+      - {kind: list, id: 100, widget: ListBox, rect: [346, 105, 596, 275], scroll_anchor: [616, 222], what: topics, conf: verified}
+      - {kind: list, id: 200, widget: ListBox, rect: [95, 325, 592, 446], scroll_anchor: [616, 386], what: article text, conf: verified}
+      - {kind: button, id: 102, center: [616, 64], images: [5103, 5104], conf: verified}
+      - {kind: button, id: 103, center: [336, 64], images: [5105, 5106], conf: verified}
+      - {kind: button, id: 108, center: [614, 123], images: [5108, 5109], conf: verified}
+      - {kind: button, id: 109, center: [614, 160], images: [5110, 5111], conf: verified}
+      - {kind: button, id: 111, widget: SpriteButton3, center: [40, 396], conf: verified}
+    category_global: 0x68fe60
+
+  - id: [32, 33, 34, 35, 36, 37]
+    name: Status reports (income, finance, alien activity, X-COM activity, outpost, player status)
+    source: Wrappers.cpp base 0x48fef4 + StatusReports.cpp
+    class_vtables: [0x6605b0, 0x6605f8, 0x660568, 0x660568, 0x660688, 0x6606d0]
+    background: 7700
+    controls:
+      - {kind: text, what: report area, rect: [24, 58, 568, 447], conf: verified}
+      - {kind: button, id: 102, center: [620, 282], images: "spr:27509", conf: verified, what_conf: derived, action: next report}
+      - {kind: button, id: 104, center: [617, 365], images: "spr:27506", conf: verified, what_conf: derived, action: previous report}
+      - {kind: button, what: finance report rows, ids: [200, 201, 202, 203, 204], size: [200, 20],
+         label_keys: [S_FINANCEREPORT_INCOME, S_FINANCEREPORT_EXPEND, S_FINANCEREPORT_MAINT, S_FINANCEREPORT_BALANCE, S_FINANCEREPORT_SCORE], conf: verified}
+      - {kind: button, what: alien/x-com activity toggles, ids: {101: S_GREP_234 TOTAL, 301: S_GREP_235 ALIEN/XCOM, 300: S_GREP_236 MODE}, size: [120, 20], conf: verified}
+    callback: {function: 0x4901ec, ids: {100: back}, conf: verified}
+
+  - id: 25
+    name: Mission briefing
+    source: Briefing.cpp
+    class_vtable: 0x661af8
+    create: 0x522030
+    init: 0x522398
+    background: 6800
+    controls:
+      - {kind: map, what: "briefing grid (overlay 6852, icons 6853-6891)", rect: [70, 30, 568, 282], conf: verified}
+      - {kind: text, what: green briefing text, rect: [102, 327, 498, 430], conf: verified}
+      - {kind: text, rect: [406, 208, 565, 280], conf: verified}
+      - {kind: text, rect: [85, 336, 552, 444], conf: verified}
+      - {kind: animation, what: alarm button, images: "6801-6817", rect_origin: [584, 410], conf: verified}
+      - {kind: gauge, what: two vertical gauges, images: "6818-6834 / 6835-6851", rect_origins: [[51, 18], [565, 18]], conf: verified}
+      - {kind: icon, images: [6923, 6924], pos: [[522, 400], [522, 415]], conf: verified}
+      - {kind: rect, rect_origin: [575, 340], member: 0x6670, conf: verified}
+    commands: {208: launch, 209: launch, 210: "abort (S_ABORTMISSION yes/no)", 211: 0x529c0f, 192: scroll, 193: scroll}
+    labels: [S_EXIT]
+
+  - id: 26
+    name: Mission debriefing
+    source: Debriefing.cpp
+    class_vtable: 0x661c98
+    create: 0x53eba0
+    init: 0x53ee96
+    background: 6900
+    controls:
+      - {kind: map, rect: [70, 22, 570, 290], conf: verified}
+      - {kind: text, rect: [102, 328, 540, 436], conf: verified}
+      - {kind: animation, images: "6901-6910", conf: verified}
+      - {kind: button, id: 102, pos: [548, 42], images: [6917, 6918], action: scroll up, conf: verified}
+      - {kind: button, id: 103, pos: [548, 67], images: [6920, 6921], action: scroll down, conf: verified}
+    commands: {"208-210": "close (back)", 192: 0x543b5e, 193: 0x543adb}
+
+  - id: 3
+    name: Game configuration (options, keyboard configuration)
+    source: MainConfig.cpp
+    class_vtable: 0x661b60
+    create: 0x52a0a0
+    init: 0x52a555
+    background: 7020
+    controls:
+      - {kind: dial, what: knob (7045-7054), rect: [45, 145, 150, 244], conf: verified, what_conf: derived}
+      - {kind: button, what: knob left / centre / right zones, rects: [[54, 158, 80, 220], [80, 150, 110, 220], [110, 158, 135, 220]], conf: verified}
+      - {kind: gauge, what: volume meter (7055-7065), rect: [200, 50, 300, 140], conf: verified, what_conf: derived}
+      - {kind: button, what: volume down / up arrows, rects: [[208, 120, 252, 140], [252, 120, 300, 140]], conf: verified}
+      - {kind: toggle, what: music switch (7068-7075), rect: [314, 50, 400, 130], conf: verified, what_conf: derived}
+      - {kind: text, what: name/label box, rect: [425, 108, 614, 146], conf: verified}
+      - {kind: list, id: 122, widget: ListBox, rect: [230, 166, 554, 424], what: key bindings, conf: verified}
+      - {kind: button, id: 113, pos: [558, 173], images: [6911, 6912], action: list up, conf: verified}
+      - {kind: button, id: 114, pos: [558, 215], images: [6914, 6915], action: list down, conf: verified}
+      - {kind: button, what: side buttons accept / cancel / keyboard (7039 / 7040 / 7041), rects: [[600, 172, 639, 210], [600, 232, 639, 272], [600, 290, 639, 330]], conf: verified, what_conf: derived}
+      - {kind: 3d view, what: preview screen (7042-7044), rect: [42, 314, 144, 416], conf: verified, what_conf: derived}
+      - {kind: gauge, what: "slider with arrows (7021, 7066, 7067)", rect: [26, 430, 162, 477], track: [36, 448, 150, 473], conf: verified}
+      - {kind: dropdown, id: 112, pos: [475, 16], width: 125, conf: verified}
+    commands: {110: "apply and leave (0x405886, 0x601776, back)", 111: noop, 112: dropdown, 113: list up, 114: list down, 210: "apply and leave", 214: "handled (meaning not recovered)", 217: "same case as 214"}
+
+  - id: 4
+    name: Combat simulator / training setup
+    source: TrainingSetup.cpp
+    class_vtable: 0x661d80
+    create: 0x543e50
+    background: 7010
+    controls:
+      - {kind: list, what: 4 pilot rows, rects: [[325, 87, 565, 122], [325, 127, 565, 162], [325, 167, 565, 202], [325, 207, 565, 242]], conf: verified}
+      - {kind: text, what: 4 name fields (EditBox 101-104), rects: [[354, 98, 530, 111], [354, 137, 530, 150], [354, 177, 530, 190], [354, 217, 530, 230]], conf: verified}
+      - {kind: text, id: 106, rect: [62, 316, 238, 335], conf: verified}
+      - {kind: text, rect: [30, 87, 640, 361], conf: verified, what: main panel}
+      - {kind: button, ids: {113: [47, 47], 111: [94, 47], 140: [141, 47], 112: [188, 47], 141: [235, 47]}, images: "spr:24004, 24002, 24015, 24006, 24013", conf: verified}
+      - {kind: button, id: 70, center: [445, 421], images: "spr:24012", action: "start simulation (screen 25 briefing)", conf: verified}
+      - {kind: dial, rect: [36, 370, 124, 458], with_arrows: [[10, 380, 30, 400], [30, 360, 50, 380], [60, 350, 80, 370], [90, 360, 110, 380], [110, 380, 130, 400]], conf: verified}
+      - {kind: text, id: 120, rect: [141, 413, 363, 431], conf: verified}
+    commands: {70: "start -> screen 25", 71: "leave (0x4b5bfe)", 208: "start -> screen 25", 210: leave}
+
+  - id: 2
+    name: Title / main menu
+    source: TitleScreen.cpp
+    class_vtable: 0x6617f0
+    create: 0x50ef10
+    init: 0x50efd7
+    background: 7600
+    controls:
+      - {kind: button, index: 0, label_key: S_MAIN_SINGLE, rect: [19, 79, 128, 109], action: "difficulty dialog then CSD (screen 17)", conf: verified}
+      - {kind: button, index: 1, label_key: S_MAIN_LOAD, rect: [19, 150, 128, 180], action: "load game dialog (0x4665f9)", conf: verified}
+      - {kind: button, index: 2, label_key: S_MAIN_MULTI, rect: [19, 292, 128, 322], action: "screen 29", conf: verified}
+      - {kind: button, index: 3, label_key: S_MAIN_SIM, rect: [19, 364, 128, 394], action: "screen 4", conf: verified}
+      - {kind: button, index: 4, label_key: S_MAIN_SETUP, rect: [512, 79, 620, 109], action: "screen 3", conf: verified}
+      - {kind: button, index: 5, label_key: S_MAIN_INTRO, rect: [513, 180, 621, 210], action: "screen 1 (intro movie)", conf: verified}
+      - {kind: button, index: 6, label_key: S_MAIN_CREDITS, rect: [513, 251, 621, 281], action: "credits (0x4b5bfe)", conf: verified}
+      - {kind: button, index: 7, label_key: S_MAIN_EXIT, rect: [513, 362, 621, 392], action: "quit (S_SUREQUIT)", conf: verified}
+      - {kind: list highlight, image: 7631, conf: verified}
+      - {kind: animation, what: porthole, images: "7632-7645", rect: [245, 206, 398, 359], conf: verified}
+      - {kind: animation, what: doors, images: "7601-7615 left, 7616-7630 right", conf: verified}
+      - {kind: lamp, images: "7646-7651, 7652-7657", conf: verified}
+    note: "button index -> label: 0x510cd0; index -> action: 0x51131f"
+
+  - id: 27
+    name: Campaign start screen
+    source: CStartScreen.cpp
+    class_vtable: 0x660a08
+    create: 0x4b5fa0
+    background: "7500+n (0x4b6ab9 builds the id at run time)"
+    controls:
+      - {kind: button, id: 102, center: [446, 338], images: "spr:2524", conf: verified}
+      - {kind: button, id: 103, center: [506, 338], images: "spr:2522", conf: verified}
+      - {kind: button, id: 101, center: [566, 338], images: "spr:2520", conf: verified}
+    commands: {49: "key 1", 50: "key 2", 51: "key 3", 210: leave}
+
+  - id: 28
+    name: Flight loading (before real-time combat)
+    background: 6542
+    note: "0x45c4fd draws S_DOWNLOADREALTIME; a thread shows 8100 or 8116 (50/50) with eye animations"
+
+  - id: 10
+    name: Credits
+    background: 8132
+    class_vtable: 0x6609a8
+
+  - id: 12
+    name: Multiplayer home
+    background: 5000
+  - id: 29
+    name: Multiplayer players
+    background: 7800
+    buttons_fn: 0x50914d
+  - id: 31
+    name: Multiplayer team select
+    background: 7900
+    buttons_fn: 0x5a8218
+  - id: 21
+    name: MiscWrappers screen
+    background: "5090 (not a WrappersDLL id)"
+    note: "five SpriteButton3 at (90/194/298/396/500, 462), ids 300-304; 400 = back"
+
+dialogs:
+  # All dialogs derive from the MsgBox base (vtable slot 15 = 0x518604 draws the frame).
+  # Frame style member +0xf4: 1 = images 6560-6575, 2 = 6580-6589, 3 = 6590-6599 (red);
+  # pipe kit 6500-6557 is the other frame set. Text buttons inside are TextButton widgets.
+  - name: Interceptor Orders
+    builder: 0x5dfdd1
+    caption_key: S_CSD_INTERCPORDERS
+    list: {id: 1010, what: ship status list, scroll: {1000: up, 1001: down}}
+    buttons: {502: S_RETBASE5SECS, 500: S_RETBASE, 501: S_SELECTNEWDEST, 203: S_CONTINUE, 600: S_PATROL,
+              601: "one attack/defend verb per target type (S_ATTACKSQUAD, S_DEFENDBASE, ...)"}
+    callback: 0x5e1637
+    layout: "buttons are 20 px tall, dialog width - 20 wide, stacked upward from (bottom - 25); max 6 (0x5e12e2)"
+    conf: verified
+  - name: Alert (ships sighted / under attack)
+    builders: [0x5e2a30, 0x5e48c8, 0x5e88f9]
+    caption_keys: [S_ALERT, S_ALIENSIGHTED_1, S_PIRATESIGHTED_1]
+    buttons: {200: S_OK, 201: S_OK5SECS, 300: S_IGNORE, 400: S_CENTERSITE, 601: S_ATTACKSQUAD, 700: S_CSD_LAUNCHMISSION,
+              500: S_RETBASE, 501: S_SELECTNEWDEST, 600: S_PATROL, 800: S_PROCEEDTOLAST}
+    actions: {201: "OK and set time speed (0x411f74)", 400: "centre map (0x447f43)", 700: "launch mission (0x446ee9)"}
+    conf: verified
+  - name: Launch Mission (choose ships)
+    builder: 0x5e5e43
+    caption_keys: [S_CSD_CHOOSESHIPCAP, S_CSD_CHOOSESHIPCAP3]
+    text_keys: [S_CSD_CHOOSESHIP, S_CSD_CHOOSESHIPFIN]
+    list: {columns_key: S_CSD_CHOOSESHIPTAB, columns: "SHIP | PILOT | STATUS", select_max: 5}
+    buttons: {OK/CANCEL: "message-box pair", 400: S_GREP_62, 401: S_GREP_61, 1000: up, 1001: down}
+    sizes: ["430x360", "430x340", "410x229"]
+    conf: verified
+  - name: Select Destination
+    builder: 0x5e7beb
+    caption_key: S_SELECTDEST
+    buttons: {900: S_CANCEL, 901: S_LAUNCH}
+    conf: verified
+  - name: Alien Transmission
+    builders: [0x4be1f1, 0x4be349]
+    caption_keys: [S_ALIENTRANS, S_AT_MESSAGE]
+    buttons: {"OK": S_OK, "OK (5 SECS)": S_OK5SECS, 200: "S_ALLOCATERESEARCH -> Research (screen 9) + time speed"}
+    conf: verified
+  - name: Research complete / topic downloaded
+    builders: [0x4bc03d, 0x4bc5fb, 0x4bc729]
+    buttons: [S_OK, S_OK5SECS, S_ALLOCATERESEARCH, S_VIEWUFOPEDIA]
+    allocate_button: {id: 200, rect: [348, 50, 608, 242]}
+    conf: verified
+  - name: Side mission
+    builder: 0x4c5812
+    caption_keys: "S_SIDEMISSION_HDR_0..6"
+    buttons: {700: S_OK, 301: "S_OK5SECS (time speed)", 302: S_CSD_LAUNCHMISSION, 201: up, 202: down}
+    list: {id: 200}
+    size: [375, 300]
+    conf: verified
+  - name: Cargo / pilot / ship delivery
+    builders: [0x4baf90, 0x4bb654]
+    list: {id: 200, size: [400, 300]}
+    buttons: "(S_OK)(S_OK5SECS), 201/202 scroll"
+    conf: verified
+  - name: Rearm, weekly report, monthly report, module built, jammer detected
+    builders: {rearm: 0x4c2d68, weekly: 0x4c388c, monthly: 0x4bcabc, module_built: 0x4c4e52, jammer: 0x4c6e9e}
+    common: "ListBox 200 + SpriteButtonC 201/202 scroll (spr:27500/27503) + OK / OK (5 SECS)"
+    conf: verified
+  - name: Difficulty select (new game)
+    builder: 0x4be6bf
+    buttons: {300: S_S1_BEGINNER, 301: S_S1_EXPERIENCED, 302: S_S1_VETERAN, 303: S_S1_GENIUS, 304: S_S1_SUPERHUMAN}
+    size: [300, 170]
+    conf: verified
+  - name: Enter pilot name
+    builders: [0x4c0dfe, 0x4c10cf]
+    fields: {100: S_ES_FIRSTNAME, 101: S_ES_CALLSIGN, 102: S_ES_LASTNAME}
+    size: [350, 200]
+    conf: verified
+  - name: Help / tour
+    builders: [0x4bf0c0, 0x4bfccf]
+    buttons: {100: S_HELP_STOPSHOWING, 101: TOUR_BTN, 700: S_CLOSETOUR, 201: up, 202: down}
+    conf: verified
+  - name: Production
+    builder: 0x51661a (ProdScreen.cpp)
+    controls: {100: list, 400: up, 401: down, 300: S_CANCEL_CUR_PROD, 500: "ImageButton 100x62"}
+    conf: verified
+  - name: Generic message box
+    builder: 0x51aacd (text, "(S_OK)" / "(S_YES)(S_NO)" button-spec string)
+    buttons: "green capsule SpriteWidget, sprite 258 (images 6520-6525)"
+    conf: verified
+  - name: Pick list (choose probe, choose base ...)
+    builder: 0x51c46b (caption key, column header key)
+    conf: verified
