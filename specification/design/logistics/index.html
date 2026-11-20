@@ -6850,8 +6850,8 @@ design's <code>supply_ship.capacity</code>, as a flat key; the default campaign 
 stages</strong> are shown on the map marker (pips) and in battle: the struck facility stands in for
 the defence mission's first protected role as its type's <code>hub</code> in its stage. The stages are
 one list for every facility type, <code>logistics.construction_stages: {state: start}</code>, rather
-than the design's <code>build.stages</code> per type, and the default starts are <strong>0 / 50 / 80 %</strong>, not
-the confirmed 0 / 60 / 90 % (DEV-063). The <strong>survey ship</strong> is a craft of its own
+than the design's <code>build.stages</code> per type (DEV-063); the default starts are the confirmed
+<strong>0 / 60 / 90 %</strong> since app 0.20.1 (<code>7345fc3</code>; 0.20.0 had 0 / 50 / 80 % by mistake). The <strong>survey ship</strong> is a craft of its own
 (<code>logistics.survey_class</code>; the default campaign's new light <code>survey_ship</code> hull, not the
 Sky-Eye probe): an attacked one waits at the survey site and fights
 <code>logistics.survey_mission</code> (the default campaign's <code>convoy_ambush</code>) as one <code>survey_class</code>,
@@ -7314,7 +7314,7 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 </tr>
 <tr>
 <td>Construction stages</td>
-<td>Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed). As built (app 0.20.0) the default starts are 0 / 50 / 80 %, data in <code>logistics.construction_stages</code> (DEV-063).</td>
+<td>Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed). As built: data in <code>logistics.construction_stages</code>, one list for every facility type (DEV-063), default 0 / 60 / 90 % (app 0.20.1).</td>
 </tr>
 <tr>
 <td>Cargo capacity (D1, 2026-11-20)</td>
@@ -7371,7 +7371,7 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 <tr>
 <td>1.22.0</td>
 <td>2026-11-20</td>
-<td>As-built note (app 0.20.0): cargo capacity per vessel (D1), construction stages shown and standing in for the struck site (one list for all types; default starts 0 / 50 / 80 %, DEV-063), the survey ship as a craft with its battle at the site and suitability in the report (D3); open questions 1 and 3 answered, decisions table extended</td>
+<td>As-built note (app 0.20.0): cargo capacity per vessel (D1), construction stages shown and standing in for the struck site (one list for all types, DEV-063; default starts 0 / 60 / 90 %, app 0.20.1), the survey ship as a craft with its battle at the site and suitability in the report (D3); open questions 1 and 3 answered, decisions table extended</td>
 </tr>
 </tbody>
 </table>

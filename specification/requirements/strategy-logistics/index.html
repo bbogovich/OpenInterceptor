@@ -7190,7 +7190,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-022-construction-stages">R-STR-022 Construction stages</a></td>
-<td>Implemented (DEV-063)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-023-construction-attacks">R-STR-023 Construction attacks</a></td>
@@ -7631,13 +7631,13 @@
 <p><em>Rationale:</em> Thresholds confirmed (2026-11-11).</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-008-facilities-under-construction">F-STR-008</a></li>
-<li>Status: implemented (app 0.20.0, main <code>9064f59</code>, #34), with deviation DEV-063 (the default starts)</li>
+<li>Status: implemented (app 0.20.0, main <code>9064f59</code>, #34; the default starts corrected to 0 / 60 / 90 % in app 0.20.1, main <code>7345fc3</code>)</li>
 <li>Verified by: <code>campaign::logistics::tests::construction_stages_follow_progress_and_stand_in_for_the_struck_site</code>, <code>content::mission::tests::a_stand_in_replaces_the_first_protected_role_in_a_copy</code>, <code>content::rules::tests::logistics_stand_ins_and_classes_are_checked</code> (the stage looks themselves are R-CMB-019, implemented); MT-4-55</li>
 <li>See: <a href="../../design/logistics/">Logistics</a>, <a href="../../../modding/strategy/#construction-stages-and-the-stand-in">Strategy layer › Construction stages and the stand-in</a></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.20.0)</p>
-<p><code>logistics.construction_stages: {&lt;state&gt;: &lt;start&gt;}</code> lists the model-set states and the progress each starts at, sorted by start. A facility under construction is in the last stage it has reached (<code>LogisticsDef::stage_at</code>, <code>Campaign::construction_stage</code>, derived from <code>ready_at</code> so a strike's setback moves it back); finished, it is intact. <strong>On the strategy map</strong> the facility marker has one pip per stage, those reached filled, and the Supply list says <em>stage N of M</em>. <strong>In battle</strong> the struck facility stands in for the construction-defence mission's first protected role as its type's <code>hub</code> class in its stage (<code>Campaign::strike_stand_in</code>, <code>MissionDef::with_stand_in</code>). Built from the starts <strong>0 / 50 / 80 %</strong> by default (<code>build_25</code>, <code>build_60</code>, <code>build_90</code>), not the confirmed 0 / 60 / 90 %: DEV-063. A campaign that sets <code>construction_stages: {build_25: 0%, build_60: 60%, build_90: 90%}</code> meets the requirement's thresholds exactly. The strategy map has no 3D view yet, so "on the strategy map" is the marker's pips, not the stage meshes (those are seen in battle).</p>
+<p><code>logistics.construction_stages: {&lt;state&gt;: &lt;start&gt;}</code> lists the model-set states and the progress each starts at, sorted by start. A facility under construction is in the last stage it has reached (<code>LogisticsDef::stage_at</code>, <code>Campaign::construction_stage</code>, derived from <code>ready_at</code> so a strike's setback moves it back); finished, it is intact. <strong>On the strategy map</strong> the facility marker has one pip per stage, those reached filled, and the Supply list says <em>stage N of M</em>. <strong>In battle</strong> the struck facility stands in for the construction-defence mission's first protected role as its type's <code>hub</code> class in its stage (<code>Campaign::strike_stand_in</code>, <code>MissionDef::with_stand_in</code>). The default starts are the requirement's <strong>0 / 60 / 90 %</strong> (<code>build_25</code>, <code>build_60</code>, <code>build_90</code>; engine default and the default campaign's data) since app 0.20.1 (<code>7345fc3</code>); app 0.20.0 shipped 0 / 50 / 80 % by mistake. The stages are one list for every facility type rather than the design's per-type <code>build.stages</code> (DEV-063). The strategy map has no 3D view yet, so "on the strategy map" is the marker's pips, not the stage meshes (those are seen in battle).</p>
 </div>
 <h3 id="r-str-023-construction-attacks">R-STR-023 Construction attacks<a class="headerlink" href="#r-str-023-construction-attacks" title="Permanent link">&para;</a></h3>
 <p>The enemy MAY strike a facility under construction from 50 % progress, at most three times per location; both numbers MUST be campaign data.</p>
@@ -7749,7 +7749,7 @@
 <tr>
 <td>1.22.0</td>
 <td>2026-11-20</td>
-<td>Batch 4.2 as built (app 0.20.0, main <code>9064f59</code>; decisions D1 and D3): R-STR-021 implemented (the report's suitability, the <code>survey_ship</code> craft, the survey battle at the site with <code>survey_mission</code>, <code>survey_class</code>, <code>survey_loss</code>), R-STR-022 implemented with DEV-063 (default starts 0 / 50 / 80 %; pips on the map marker; the struck facility standing in for the defence's first protected role) and R-STR-026 implemented (<code>cargo_capacity</code>, orders split into convoys); R-STR-019 As-built note (stand-ins). No requirement wording changed</td>
+<td>Batch 4.2 as built (app 0.20.0, main <code>9064f59</code>; decisions D1 and D3): R-STR-021 implemented (the report's suitability, the <code>survey_ship</code> craft, the survey battle at the site with <code>survey_mission</code>, <code>survey_class</code>, <code>survey_loss</code>), R-STR-022 implemented (default starts 0 / 60 / 90 % since app 0.20.1, <code>7345fc3</code>; one list for every type, DEV-063; pips on the map marker; the struck facility standing in for the defence's first protected role) and R-STR-026 implemented (<code>cargo_capacity</code>, orders split into convoys); R-STR-019 As-built note (stand-ins). No requirement wording changed</td>
 </tr>
 </tbody>
 </table>

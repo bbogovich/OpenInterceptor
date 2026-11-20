@@ -9057,7 +9057,7 @@ rules, the reserved names and examples are under
 <tr>
 <td><code>construction_stages</code></td>
 <td>mapping model-set state: fraction</td>
-<td><code>{build_25: 0%, build_60: 50%, build_90: 80%}</code></td>
+<td><code>{build_25: 0%, build_60: 60%, build_90: 90%}</code> (since app 0.20.1; 0.20.0 used 0 / 50 / 80 %)</td>
 <td>The construction stages (app 0.20.0, R-STR-022): each <strong>state of the hub's model set</strong> with the progress it starts at. Listed in any order; sorted by where they start. A site shows the last stage it has reached, on the map and in its defence battle; when finished, the intact model. A value that is not a percentage is a load error. See <a href="#construction-stages-and-the-stand-in">Construction stages and the stand-in</a>.</td>
 </tr>
 <tr>
@@ -9171,7 +9171,7 @@ it is being built:</p>
 facilities have <code>build_25</code>, <code>build_60</code> and <code>build_90</code>). <code>logistics.construction_stages</code> names
 them with the progress each starts at:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">logistics</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">construction_stages</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">build_25</span><span class="p">:</span><span class="w"> </span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="nt"> build_60</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> build_90</span><span class="p">:</span><span class="w"> </span><span class="nv">80%</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># the engine default too</span>
+<span class="w">  </span><span class="nt">construction_stages</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">build_25</span><span class="p">:</span><span class="w"> </span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="nt"> build_60</span><span class="p">:</span><span class="w"> </span><span class="nv">60%</span><span class="p p-Indicator">,</span><span class="nt"> build_90</span><span class="p">:</span><span class="w"> </span><span class="nv">90%</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># the engine default too (app 0.20.1)</span>
 </code></pre></div>
 <p>Progress is <code>1 − (time left / the type's time)</code>, so a strike's <code>setback</code> can move a site back a
 stage. A site is in the <strong>last stage whose start it has reached</strong> (below the first start,
