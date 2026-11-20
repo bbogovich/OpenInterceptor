@@ -378,13 +378,33 @@ section: `skins: {<skin id>: {…}}`; `campaign.skin` chooses one.
 ### `screens`
 
 Screen layouts (app 0.16.0; guide: [Screen layouts](screens.md)). A definition section:
-`screens: {<screen id>: {…}}`. Only `starmap` (the strategy screen) is laid out so far.
+`screens: {<screen id>: {…}}`. `starmap` is the testbed layout of the strategy screen; any other id is a screen of the campaign's **screen set** (app 0.17.0; guide: [Screen sets](screens.md#screen-sets-app-0170)), opened from `campaign.strategy_screen` or by a button's `open(<id>)`.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `design` | 2 numbers | 1280, 720 | The design space the rectangles are written in. It is stretched to the window. |
 | `background` | asset | none | An image stretched over the whole window behind the screen's widgets (drawn since app 0.16.2; a file that cannot be loaded is reported on standard error once and left out). |
-| `widgets` | mapping name: `[x, y, w, h]` | the engine's places | Where each widget goes, in the design space. `starmap`: `top`, `map`, `nav`, `info`, `panel`; another name is a load error. A widget left out keeps the engine's place. |
+| `widgets` | mapping name: `[x, y, w, h]` or widget | the engine's places | Where each widget goes, in the design space. `starmap`: `top`, `map`, `nav`, `info`, `panel`; another name is a load error. A widget left out keeps the engine's place. In a screen set each entry is a full widget (below). |
+| `dialog` | bool | `false` | A screen set's dialog: drawn over the screen under it (app 0.17.0). |
+
+A screen set's widget (app 0.17.0 – 0.17.1): `widgets.<name>: {kind, rect, …}`. A screen of a set
+keeps its shape (one scale factor, centred) instead of stretching.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info` | `image` | What it is; another kind is a load error. |
+| `rect` | 4 numbers | *required* | x, y, w, h in the screen's design space. |
+| `image` | asset | none | An `image`'s picture (a button's `up` image). |
+| `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
+| `action` | text | none | A button's action: `open(<screen>)` (the screen must exist), `back`, `speed(0-4)`, `save`, `menu`, `testbed`. Another is a load error. |
+| `value` | name | none | A `value`'s value: `date`, `date_long`, `weekday` (both app 0.17.1), `time`, `money` (or `funds`), `score`, `base`, `speed`, `selection`. Not checked: an unknown name shows as `?<name>`. |
+| `source` | name | none | A `list`'s list: `bases`, `research`, `build`, `market`, `factory`, `hangar`, `contacts`, `supply`, `archive`, `reports`, `messages`. On a `map`: `minimap`, the whole map small, without names (app 0.17.1). Not checked at load. |
+| `text` | text | none | A `text` widget's text (a `@key` is resolved), wrapped. |
+| `label` | text | none | A button's caption when it has no images. Without images or label a button is an invisible hot spot over the art. |
+| `size` | number | 12 | Text size in design pixels (at least 4). |
+| `colour` | 3 or 4 numbers | the skin's `text` | Text colour, 0 – 1. |
+| `align` | `left`, `centre`, `right` | `left` | Text alignment. |
+| `shape` | `rect`, `round` | `rect` | A map's viewport; `round` clips it to the circle inside the rectangle. |
 
 ### `console`
 
@@ -459,6 +479,7 @@ A `scatter` entry:
 | `default_difficulty` | id | the middle level | The level a new game starts at. |
 | `skin` | id | the first skin defined | The [skin](skins.md) of the menu and strategy screens (app 0.11.1). An unknown id is an error. |
 | `intro` | id | none | A [cutscene](cutscenes.md) played before a new campaign's strategy screen (app 0.13.0). |
+| `strategy_screen` | id | none | The first screen of the campaign's [screen set](screens.md#screen-sets-app-0170) (`screens.<id>`, app 0.17.0); none: the testbed layout. Ctrl+T switches between them. Not checked at load: an unknown id shows an empty screen. `interceptor`: `csd`. |
 | `menu.title` | text | the campaign's `name` | The main menu's title (app 0.14.0). |
 | `menu.subtitle` | text | none | A line under the title. |
 | `menu.showcase` | id | the first playable ship | A ship class turning behind the menu. |

@@ -238,6 +238,32 @@ flowchart TD
   buttons under the selected row. The info panel builds its own `(label, Act)` list for the
   selection (`info()`), at most four buttons.
 
+### Screen sets (`content::screens`, `StrategyScreen::draw_set`)
+
+*App 0.17.0 – 0.17.1, main `4c29f89`, `deba9f5` (plan item 6.9).* A `screens.<id>` widget entry
+that is a mapping parses as a `WidgetDef {name, kind: WidgetKind, rect, images: [Option<String>; 4],
+action: Option<UiAction>, source, size, colour, align, label, round}` into `ScreenLayout::items`
+(a bare rectangle still moves a testbed widget); `dialog` marks a screen drawn over the one under
+it. `UiAction::parse` reads `open(<screen>)`, `back`, `speed(n)`, `save`, `menu`, `testbed`, and
+`rules::build_at` checks every `open()` target once all packs are read. The images are
+`[up, down, hover, disabled]` in a fixed array indexed by the button's state, so drawing needs
+no lookup by name.
+
+`Ruleset::strategy_screen` (`campaign.strategy_screen`) switches the strategy screen into **set
+mode** unless `StrategyScreen::testbed` is set (Ctrl+T, a `testbed` button). The screen keeps
+`stack: Vec<String>` of open screen ids — the first screen at the bottom, dialogs on top — and
+`draw_set` draws from the last full screen up: each in its own `hud::Layout` (one scale factor,
+centred, as cockpits), only the top one given the frame's `Input`. Widgets reuse the testbed
+screen's own drawing — a `list` opens its tab and calls `draw_panel`, a `map` calls `draw_map`
+(clipped to a circle when `round`), `info` calls `draw_info` — so the two layouts share one set of
+campaign logic. A `map` with `source: minimap` draws the whole map at zoom 1 with no names by
+setting the view aside for the call. Textures are cached by reference in `StrategyScreen::images`
+(`HashMap<String, Option<Texture2D>>`: `None` remembers a failed load). A button's action is
+collected during the draw and applied after it, so the stack is not changed while it is being
+walked. `value()` maps a value name to text; `weekday` uses `Date::weekday` (Zeller's congruence,
+0 = Monday; tested by `weekdays_follow_the_calendar`). `--screen <id>` calls
+`StrategyScreen::open_screen`, which puts that screen over the first.
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -311,6 +337,8 @@ play without it.
 | `AppContext::ui`, `AppContext::music` | `app` | The skin and the music player, shared by every screen. |
 | `widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}` | `app::widgets` | Immediate-mode widgets for the strategy screen (app 0.16.0); the arithmetic pure and tested. |
 | `ScreenLayout`, `default_starmap`, `STARMAP_WIDGETS`, `screens::schema` | `content::screens` | `screens.<id>`: design space, background, widget rectangles; the engine's strategy-screen layout. |
+| `WidgetDef`, `WidgetKind`, `WIDGET_KINDS`, `UiAction`, `ScreenLayout::items`, `ScreenLayout::dialog` | `content::screens` | A screen set's widgets and actions (app 0.17.0). |
+| `Ruleset::strategy_screen`, `StrategyScreen::draw_set`, `stack`, `testbed`, `open_screen`, `value`; `Date::weekday` | `content::rules`, `app::strategy`, `content::strategy` | Set mode, the stack of open screens, the bound values (app 0.17.0 – 0.17.1). |
 | `menu::fit_size(width, size, room)` | `app::menu` | The text size that fits a menu option value beside its label, never below half (app 0.14.2). |
 | `MainMenu`, `menu::Item`, `menu::Setting`, `menu::items`, `menu::settings`, `menu::step_volume`, `menu::age_text` | `app::menu` | The main menu (app 0.14.0) and its pure row logic; the load page's ages (app 0.16.14). |
 | `app::skip_pressed` | `app` | Whether a film or cutscene is skipped this frame: Esc, Enter, a click, a pad's Start, A or B (app 0.16.2). |
@@ -335,6 +363,7 @@ play without it.
   `widgets::grid(Rect4, n, cols, gap) -> Vec<Rect4>`, `widgets::modal(&Ui, &Input, title, body, &[&str]) -> Option<usize>`,
   `widgets::wrap(text, width, &dyn Fn(&str) -> f32) -> Vec<String>`; `ListView::step(by, n, visible)`, `scroll(rows, n, visible)`, `fit(n, visible)`.
 - `ScreenLayout::parse(id, Get, base, known, pack) -> Result<ScreenLayout, String>`, `layout.widget(name) -> Option<[f32; 4]>`, `screens::default_starmap()`.
+- `WidgetDef::parse(name, Get) -> Result<WidgetDef, String>`, `UiAction::parse(&str) -> Result<UiAction, String>`; `StrategyScreen::open_screen(&AppContext, id)`; `Date::weekday() -> u32` (0 = Monday).
 - `Skin::parse(id, Get, pack) -> Result<Skin, String>`, `Skin::fallback()`, `skin.colour(role) -> [f32; 4]`.
 
 ## Debugging

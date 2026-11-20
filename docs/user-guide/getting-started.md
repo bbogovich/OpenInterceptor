@@ -130,7 +130,8 @@ scripts/check.sh
 | `--scenario <ID>` | Start this scenario, skipping the launcher. |
 | `--mission <ID>` | Start this mission, skipping the launcher ([Missions](../modding/missions.md)). |
 | `--strategy` | Start a new campaign on the strategy screen, skipping the launcher (app 0.7.1; [Campaign](campaign.md)). Without a strategy layer the launcher opens. The campaign's intro cutscene or film is not played this way. |
-| `--chapter <N>` | With `--strategy`: play the new campaign forward by itself until its story reaches chapter *N* (its first arc's step *N*; at most 1500 days), then open the strategy screen there (app 0.16.13; [Campaign › Testbed cheats and tools](campaign.md#testbed-cheats-and-tools)). Ignored without `--strategy`. |
+| `--chapter <N>` | With `--strategy`: play the new campaign forward by itself until its story reaches chapter *N* (its first arc's step *N*; at most 1500 days), then open the strategy screen there (app 0.16.13; [Campaign › Testbed cheats and tools](campaign.md#testbed-cheats-and-tools)). Ignored without `--strategy` (since app 0.16.15 it says so on standard error). |
+| `--screen <ID>` | With `--strategy`: open this screen of the campaign's [screen set](../modding/screens.md#screen-sets-app-0170) over its first screen (app 0.17.1). Ignored for a campaign without a set and with `--chapter`. |
 | `--credits` | Open on the campaign's credits roll (or its credits film), then the main menu (app 0.14.0). |
 | `--cutscene <ID>` | Play this cutscene of the campaign, then open the main menu (or the launcher, for a campaign without a strategy layer) (app 0.13.0; [Cutscenes](../modding/cutscenes.md)). |
 | `--video <REF>` | Play this video, then open the main menu (or the launcher) (app 0.12.0): `original:<file>.smk` from your data (for example `original:alientrans1.smk`) or a pack path; Smacker files only. |

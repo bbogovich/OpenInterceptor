@@ -219,7 +219,7 @@ condition holds are listed on the strategy screen's **Archive** tab.
 Every action list in the story — `do`, `choices[].do`, `warnings[].do`, `complete` — and the
 strategy layer's [`evaluations`](strategy.md#evaluations) `do` lists are checked when the rules
 load against the nineteen event actions (`script::action::EVENT_ACTIONS`, with `script(...)` since app 0.18.0): an unknown action or a
-wrong argument is an error with its place.
+wrong argument is an error with its place. A text argument may be a [text key](text.md) (`message(@story.beacon)`); its key is resolved when the content loads in every one of these lists — in a plan's `complete` list and in evaluations only since app 0.18.1 (before, they kept the raw `@key` and `--check` did not report a missing one).
 
 | Action | Arguments | Does |
 |---|---|---|
@@ -233,7 +233,7 @@ wrong argument is an error with its place.
 | `score(x)` | score id | Add a score entry ([`scores`](strategy.md#pilots-and-scores)). |
 | `relation(faction, n)` | faction, number | Change a standing (dynamic relations only). |
 | `research(x)` | topic | The topic becomes known. |
-| `discover(x)` | topic | A [`hidden`](strategy.md#research-and-research_model) topic is discovered: from now on it is offered once its prerequisites hold. A notice says *New research possible: <name>*; kept as the flag `discovered.<x>` (app 0.16.6). |
+| `discover(x)` | topic | A [`hidden`](strategy.md#research-and-research_model) topic is discovered: from now on it is offered once its prerequisites hold. A notice says *New research possible: <name>*; kept as the flag `discovered.<x>` (app 0.16.6). An unknown topic is logged and sets no flag (app 0.16.15). |
 | `mission(x)` | mission | **Offer** a mission to fly now: the player accepts with Enter (the first ready craft with a pilot flies it) or declines with Esc. The outcome's campaign actions (`score`, `money`, `set_flag`, `salvage`, `relation`, and since app 0.16.3 `capture`, `lose`, `cargo_lost`, `cargo_captured`) apply as for a raid's battle ([Raids and battles](strategy.md#raids-and-battles)), and a win counts towards `battles_won`. |
 | `raid(x)` | raid | Launch that raid's contact now. |
 | `plan(x, n)` | plan, number | Add `n` components to a plan (warnings and completion follow). |

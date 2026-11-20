@@ -37,6 +37,17 @@ fills the window. Since app 0.11.0 – 0.13.0 the campaign has **music**, chapte
 
 ## The screen
 
+A campaign may have its own **screen set** — several screens in the style of its original, linked
+by buttons (app 0.17.0). The `interceptor` campaign opens on its Command and Strategic Display with
+a round star map, a minimap and the time, day, date and funds readouts; its screen buttons open
+the Bases, Equip Ships, Reports, Research, Purchase and UFOpedia screens, each with a back button,
+and the holes of the time dial set the clock (app 0.17.1, a first pass: the buttons are drawn by
+the art and outlined under the mouse). **Ctrl+T** switches to the single testbed screen described
+below and back; the default campaign has only that one so far. `--screen <id>` with `--strategy`
+opens one screen of the set directly (`--strategy --screen research`).
+
+The testbed screen:
+
 ```text
 ┌ 2084-03-14   Funds 2,140,000   Score 310     [<] Gatehouse [>]     [||][1h][6h][1d][5d][Save][Menu] ┐
 ┌──────────────────────────────────────────┐ ┌ Bases │ Research │ Build │ Market │ Factory ┐
@@ -129,6 +140,7 @@ The mouse does everything; the keys are shortcuts.
 | F5 | Save (the automatic save) |
 | Ctrl+M, Ctrl+K, Ctrl+B, Ctrl+J | Testbed cheats ([below](#testbed-cheats-and-tools)) |
 | Ctrl+D | Show or hide the testbed's *Debug* list (app 0.16.13) |
+| Ctrl+T | Switch between the campaign's screen set and the testbed screen (app 0.17.0) |
 | Esc | Save and leave to the main menu |
 
 Since app 0.16.0 there are no hidden keys: selling (formerly **S**) and fitting (formerly **F**)

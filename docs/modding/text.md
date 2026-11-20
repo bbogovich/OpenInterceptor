@@ -28,7 +28,8 @@ text:
 - Keys work in the **names** of ships, objects, beams, missiles, factions and systems, ship and
   object **descriptions**, and scenario **titles and descriptions**; also mission, story and
   strategy texts, and since app 0.16.2 [cutscene](cutscenes.md#sounds-and-captions) titles and
-  captions (the default intro's are in `text/en/cutscenes.yaml`). They are resolved when the
+  captions (the default intro's are in `text/en/cutscenes.yaml`), and since app 0.18.1 the text
+  actions of a plan's `complete` list and of [evaluations](strategy.md#evaluations). They are resolved when the
   content loads.
 - Packs load in order and a **later pack's key replaces an earlier one's**.
 - The game reads each pack's `text/<language>/` folder for the chosen language, **falling back

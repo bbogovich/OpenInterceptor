@@ -182,7 +182,7 @@ says so.
 | `cost` | number | 0 | Purchase price; 0 = cannot be bought. |
 | `sell_price` | number | 0 | What one fetches on the market. |
 | `prod_time` | number | 0 | Work units to manufacture one; 0 = bought only. |
-| `size` | number | 1 | Storage space: what one takes of a base's store when the campaign has [`storage` modules](#base_modules-and-base_types) (app 0.16.10). |
+| `size` | number | 1 | Storage space: what one takes of a base's store at a base type with hub [`storage`](#base_modules-and-base_types) (app 0.16.10; since 0.16.15 the base type decides). |
 | `rounds` | number | 1 | Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2). |
 | `protection` | number | 0 | A `shield`: shield points per facing; an `armor`: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's `Special` (shields) or `HitPoints` (armour) — *derived*. In battle a craft flies with the **strongest** fitted shield and the **sum** of its fitted armour, in place of its class's `shields` / `armor`; with none fitted it keeps the class's own (which `fitted:` on the [ship class](reference.md#ships-and-objects) may supply). |
 | `requires` | condition | none | Available only while this holds (as well as any topic that unlocks it). |
@@ -222,17 +222,21 @@ revealing hidden systems) and `hangar` (craft a base houses). `research_rate` is
 - **`quarters`**: the pilots the player can keep — every base type's `quarters` plus every
   working `quarters` module, all bases together. Hiring is refused at the limit (*no quarters:
   room for n pilots*). A campaign that gives no quarters anywhere has no limit.
-- **`storage`**: a base's store capacity from its working `storage` modules, counted in item
-  `size`s; buying more than fits is refused (*no room in store: …*). If **no** module in the
-  campaign has `storage`, there is no limit — but once one does, a base without one has room for
-  nothing (deliveries, manufacture and salvage are not checked).
+- **`storage`**: a base's store capacity, counted in item `size`s — its base type's hub
+  `storage` plus its working `storage` modules; buying more than fits is refused (*no room in
+  store: …*). Since app 0.16.15 only a base type with hub `storage` above 0 has a limit; at any
+  other base there is none, and its `storage` modules add nothing. (In 0.16.10 – 0.16.14 one
+  `storage` module anywhere in the campaign limited every base, so an `interceptor` base without
+  a `cargo` module could buy nothing.) Deliveries, manufacture and salvage are not checked.
 - **`defence`**: each point of a base's working modules' defence turns away 15 % of unopposed
   raids on that base on its own — 1 − 0.85^points in all (two points: 28 %, four: 48 %). A raid
   turned away is reported and destroys nothing.
 - **`income`** stays a tag: an `incomes:` formula counts the modules with `module_count`.
 
 **Dismantling** (app 0.16.10): any module of a base can be dismantled from the Bases list; it is
-removed at once and `economy.dismantle` of its `cost` (50 %) is refunded.
+removed at once and `economy.dismantle` of its `cost` (50 %) is refunded. Since app 0.16.15 a
+`hangar` or `quarters` module is refused when the craft or pilots it houses would have nowhere to
+go (*… houses craft that would have nowhere to go*).
 
 `base_types: {<id>: …}` — kinds of base.
 
@@ -245,7 +249,8 @@ removed at once and `economy.dismantle` of its `cost` (50 %) is refunded.
 | `limits` | mapping group: count | none | The most modules of each group. |
 | `template` | ids | none | Modules a new base comes with. |
 | `sensor_range` | number | 0 | The hub's own sensor range, map units (modules add to it). |
-| `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. |
+| `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. The default Guard base houses 6 pilots (4 before app 0.16.15, which the opening crew filled). |
+| `storage` | number | 0 | The hub's store capacity in item `size`s (app 0.16.15). 0: no store limit at bases of this type; above 0, its `storage` modules add to it. |
 | `max_distance` | number | 0 | A new base must be within this many map units of one of yours (0 = anywhere). |
 
 ### `raids`
@@ -316,6 +321,10 @@ evaluations:
   - {rating: Poor, when: month_score >= -300, do: ["money(-50000)"]}
   - {rating: Unacceptable, do: ["money(-150000)", "news(The Senate cuts the Guard's funding)"]}
 ```
+
+Text in the actions may be a [text key](text.md) (`"news(@eval.cut)"`): since app 0.18.1 the
+keys in `do` — and in the scripts it calls — are resolved when the content loads, and `--check`
+reports a missing one (before, they stayed as the raw `@key`).
 
 Before app 0.16.9 the section was dropped when the rules were built (it was missing from the list
 of strategy globals), so a pack's ratings never reached the campaign.
@@ -411,7 +420,9 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
    of its class (the [`--balance`](#trying-a-campaign-out) numbers), a side's power the sum —
    the player's craft at the contact against the mission's hostile roles at their average
    counts — and the player wins with p = P² / (P² + E²). The mission's own outcome actions for
-   the rolled `win` or `lose` apply as for a flown battle (DEV-057).
+   the rolled `win` or `lose` apply as for a flown battle (DEV-057). A won auto-resolve credits
+   the kills of the hostile roles only, each at its smallest count (`balance::hostile_count`,
+   app 0.16.15).
 4. The battle's debrief comes back to the campaign: the outcome's actions apply —
    `score(<name>)`, `money(<n>)`, `set_flag(<id>)`, `relation(<faction>, <n>)`, `salvage` (money:
    `salvage_per_kill` × kills, and the raid's **id** is recorded, so `salvaged(<raid id>)` holds
@@ -420,9 +431,9 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
    - `capture` — every prize the player's tractor beam brought home (the battle reports each as
      `captured(<class>)`) is kept as **salvage**, so `salvaged(<class id>)` holds and research
      can start from a capture; without `capture` in the outcome nothing is kept;
-   - `lose(<facility type>)` — the player's most recently built facility of that type is lost
-     (its orders and the convoys bound for it go too; a notice says so); any other argument is
-     only logged;
+   - `lose(<facility type>)` — the player's facility of that type in the system of the raid's target base is
+     lost (since app 0.16.15; else the most recently built one of that type) — its orders and the
+     convoys bound for it go too, and a notice says so; any other argument is only logged;
    - `cargo_lost`, `cargo_captured` — recorded in the log (a convoy escort's own `cargo:` share
      settles the cargo).
 
@@ -775,7 +786,7 @@ unknown.
 | `save: this save has logistics but the loaded campaign has none` | Loading a save with facilities into a campaign whose logistics was removed. |
 | `save: … does not match the loaded rules (was a mod changed?)` | Loading a save whose research, modules, items, incomes or raids no longer fit the rules. |
 
-## Limits in app 0.16.14
+## Limits in app 0.18.1
 
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
   fitting is *best available* only, and slots of kinds other than `beam`, `missile` and (since app
@@ -787,8 +798,9 @@ unknown.
 - No designs, bravery, stat effects in battle, `on_destroyed` or repair, or the 3D base view
   yet. Auto-resolve counts hull classes only (not fitted items or pilots) and does not damage
   the player's craft (DEV-057).
-- `storage` limits purchases only, and as soon as any module in the campaign has it, a base
-  without a storage module can buy nothing (an `interceptor` base needs its `cargo` module).
+- `storage` limits purchases only, and only at a base type with hub `storage`. Neither campaign
+  gives its base types any yet, so neither has a store limit (the `interceptor` `cargo` module's
+  `storage` adds nothing).
 - Names and descriptions in the default campaign's strategy files are plain English, not text
   keys, so they are not yet translatable.
 - The `interceptor` strategy layer is built but not play-tested, and its estimates are
