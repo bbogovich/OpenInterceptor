@@ -122,6 +122,26 @@ fn headless(options: &cli::Options) -> Option<i32> {
             None => println!("  storage: every store within its capacity"),
             Some(first) => println!("  storage: OVER CAPACITY first on {first}"),
         }
+        // The supply chain's throughput and losses (R-TST-011's logistics soak).
+        if def.logistics.is_some() {
+            let lg = &c.logistics;
+            let t = &lg.stats;
+            let building = lg.facilities.iter().filter(|f| f.ready_at > c.hours).count();
+            let surveyed = lg.surveyed.iter().filter(|s| **s).count();
+            println!(
+                "  logistics: {} facilities ({building} building), {surveyed} systems surveyed; surveys {} sent, {} attacked, {} lost; convoys {} ({} ambushed, {} vessels lost); goods shipped {:.0}, delivered {:.0}; {} orders open",
+                lg.facilities.len(),
+                t.surveys,
+                t.surveys_attacked,
+                t.surveys_lost,
+                t.convoys,
+                t.ambushes,
+                t.vessels_lost,
+                t.shipped,
+                t.delivered,
+                lg.orders.len()
+            );
+        }
         println!(
             "  story: arcs [{}], plans [{}], aggression {:.2}, ending {ending}",
             arcs.join(", "),

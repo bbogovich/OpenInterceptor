@@ -201,6 +201,10 @@ pub enum Event {
     /// A facility under construction (index into `logistics.facilities`) is struck: fly
     /// its defence or let it be ([`Campaign::strike_result`]).
     Strike { facility: usize },
+    /// A survey ship (index into `logistics.surveys`) is attacked at its survey site:
+    /// fly its battle (the campaign's `survey_mission`) or let it be auto-resolved
+    /// ([`Campaign::survey_result`]). It waits at the site until then.
+    Survey { survey: usize },
 }
 
 /// What a campaign craft flies into battle with (from [`Campaign::loadout`]).
@@ -2082,6 +2086,11 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
                 let _ = c.manufacture(def, 0, Product::Item(i), 2);
             }
         }
+        // The supply chain: surveys, facilities and the demand that drives them.
+        logistics::autoplay_day(&mut c, def);
+        // The screen shows and clears `notices`; the automatic player has no screen, so
+        // it clears them here (they are on-screen only and never saved).
+        c.notices.clear();
         for e in c.advance(def, 24.0) {
             match e {
                 Event::Notice(t) if t.starts_with("Contact") => {
@@ -2101,6 +2110,7 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
                 Event::Ending { .. } => return c,
                 Event::Card { .. } | Event::Video { .. } | Event::Cutscene { .. } => {}
                 Event::Strike { facility } => c.strike_result(def, facility, None),
+                Event::Survey { survey } => c.survey_result(def, survey, None),
                 Event::Battle { contact } => {
                     battles += 1;
                     let result = if battles % 3 == 0 { "retreat" } else { "win" };

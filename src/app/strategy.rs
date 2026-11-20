@@ -208,6 +208,8 @@ pub enum PendingBattle {
     Story,
     /// The defence of a struck construction site (index into `logistics.facilities`).
     Strike(usize),
+    /// The battle of an attacked survey ship (index into `logistics.surveys`).
+    Survey(usize),
 }
 
 /// What a campaign battle hands back (filled in by the flight screen).
@@ -263,6 +265,8 @@ pub struct StrategyScreen {
     convoy: Option<usize>,
     /// A construction site struck, waiting for the player's choice.
     strike: Option<usize>,
+    /// An attacked survey ship waiting at its site for the player's choice.
+    survey: Option<usize>,
     /// A story event's choice waiting (index into `story.events`).
     choice: Option<usize>,
     /// A story mission offered.
@@ -405,6 +409,7 @@ impl StrategyScreen {
             battle: None,
             convoy: None,
             strike: None,
+            survey: None,
             choice: None,
             offer: None,
             ending: None,
@@ -472,6 +477,20 @@ impl StrategyScreen {
                 self.campaign.strike_result(def, f, won);
                 self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
                 self.banner = Some(format!("Construction defence: {}", report.result.to_uppercase()));
+            }
+            Some(PendingBattle::Survey(s)) => {
+                // Won or drawn: the survey ship got away and reports; lost: it is lost;
+                // left early: the attack is settled without the player.
+                let won = match report.result.as_str() {
+                    "lose" => Some(false),
+                    "retreat" => None,
+                    _ => Some(true),
+                };
+                self.campaign.survey_result(def, s, won);
+                if won.is_some() {
+                    self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
+                }
+                self.banner = Some(format!("Survey ship battle: {}", report.result.to_uppercase()));
             }
             Some(PendingBattle::Story) => {
                 self.campaign.mission_result(def, &report.result, &report.actions, report.kills);
@@ -760,7 +779,11 @@ impl StrategyScreen {
                     for (f, fac) in c.logistics.facilities.iter().enumerate() {
                         let ft = &l.facility_types[fac.ftype];
                         let state = if fac.ready_at > c.hours {
-                            format!("building, {:.1} days", (fac.ready_at - c.hours) / 24.0)
+                            let stage = c
+                                .construction_stage(l, f)
+                                .map(|st| format!(", stage {} of {}", st + 1, l.stages.len()))
+                                .unwrap_or_default();
+                            format!("building{stage}, {:.1} days", (fac.ready_at - c.hours) / 24.0)
                         } else {
                             let goods: Vec<String> =
                                 fac.store.iter().map(|(g, a)| format!("{a:.0} {}", l.goods_name(g))).collect();
@@ -953,10 +976,17 @@ impl StrategyScreen {
 
     /// Starts a campaign battle flown by craft `k`.
     fn fly(&mut self, def: &StrategyDef, k: usize, mission: String, pending: PendingBattle) -> Next {
+        // A struck site or an attacked survey ship stands in for the mission's first
+        // protected role: the battle shows the real facility in its real stage.
+        let stand_in = match pending {
+            PendingBattle::Strike(f) => self.campaign.strike_stand_in(def, f),
+            PendingBattle::Survey(_) => Some(self.campaign.survey_stand_in(def)),
+            _ => None,
+        };
         self.flying = Some(pending);
         let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
         let loadout = self.campaign.loadout(def, k);
-        Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def) }
+        Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def), stand_in }
     }
 
     /// The first ready craft with a ready pilot, anywhere.
@@ -1148,6 +1178,36 @@ impl StrategyScreen {
                 Some(_) => {
                     self.convoy = None;
                     self.campaign.convoy_result(def, v, None);
+                }
+                None => {}
+            }
+            return Some(Next::Stay);
+        }
+        if let Some(sv) = self.survey {
+            let at = self
+                .campaign
+                .logistics
+                .surveys
+                .get(sv)
+                .map(|x| self.campaign.systems[x.system].name.clone())
+                .unwrap_or_default();
+            let body =
+                format!("The survey ship at {at} is under attack. Fly its escort, or let it try to get away alone.");
+            match widgets::modal(ui, input, "Survey ship attacked", &body, &["Fly the escort", "Let it be"]) {
+                Some(0) => {
+                    self.survey = None;
+                    let mission = def.logistics.as_ref().and_then(|l| l.survey_mission.clone());
+                    match (self.ready_craft(), mission) {
+                        (Some(k), Some(m)) => return Some(self.fly(def, k, m, PendingBattle::Survey(sv))),
+                        _ => {
+                            self.campaign.survey_result(def, sv, None);
+                            self.say("No ready craft: the survey ship is on its own.");
+                        }
+                    }
+                }
+                Some(_) => {
+                    self.survey = None;
+                    self.campaign.survey_result(def, sv, None);
                 }
                 None => {}
             }
@@ -1374,6 +1434,7 @@ impl StrategyScreen {
             || self.offer.is_some()
             || self.convoy.is_some()
             || self.strike.is_some()
+            || self.survey.is_some()
             || self.saving
             || self.banner.is_some();
         // While a prompt is up, the screen underneath takes no input.
@@ -1481,6 +1542,10 @@ impl StrategyScreen {
                     Event::Strike { facility } => {
                         self.banner = None;
                         self.strike = Some(facility);
+                    }
+                    Event::Survey { survey } => {
+                        self.banner = None;
+                        self.survey = Some(survey);
                     }
                 }
             }
@@ -2117,11 +2182,24 @@ impl StrategyScreen {
             }
             ui.text_in(&def.raids[kk.raid].name, p.x + 8.0, p.y + 14.0, 14.0 * k, Color::new(1.0, 0.5, 0.5, 1.0));
         }
-        for fac in &c.logistics.facilities {
+        let stages = def.logistics.as_ref().map_or(0, |l| l.stages.len());
+        for (f, fac) in c.logistics.facilities.iter().enumerate() {
             let p = at(c.systems[fac.system].pos) + vec2(star + 8.0, star + 4.0);
             if inside(p) {
                 let col = if fac.ready_at > c.hours { GRAY } else { ORANGE };
                 draw_poly_lines(p.x, p.y, 4, 6.0, 45.0, 2.0, col);
+                // Under construction: one pip per stage under the marker, the stages
+                // reached filled (R-STR-022).
+                if let Some(st) = def.logistics.as_ref().and_then(|l| c.construction_stage(l, f)) {
+                    for i in 0..stages {
+                        let x = p.x - (stages as f32 - 1.0) * 2.5 + i as f32 * 5.0;
+                        if i <= st {
+                            draw_circle(x, p.y + 10.0, 1.8, ORANGE);
+                        } else {
+                            draw_circle_lines(x, p.y + 10.0, 1.8, 1.0, GRAY);
+                        }
+                    }
+                }
             }
         }
         for (v, cv) in c.logistics.convoys.iter().enumerate() {

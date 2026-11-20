@@ -116,3 +116,28 @@ ships:
     angular_damp: 5
     lock_speed: 400
     engine_color: [1.0, 0.7, 0.3]
+  # The light survey hull (decision D3): sent to survey systems; when attacked it fights
+  # the convoy-ambush battle, standing in for its clippers, with two sample containers as
+  # the cargo the Dominion is after.
+  survey_ship:
+    name: "@ship.survey_ship.name"
+    description: "@ship.survey_ship.desc"
+    model_set: survey_ship
+    faction: guard
+    kind: freighter
+    playable: false
+    hit_points: 4200
+    shields: 1200
+    armor: 900
+    max_speed: 47
+    acceleration: 18
+    behaviour: supply_run
+    modules:
+      - {slot: pod1, class: supply_pod}
+      - {slot: pod2, class: supply_pod}
+    roll_rate: 35
+    pitch_rate: 22
+    yaw_rate: 22
+    angular_damp: 5
+    lock_speed: 400
+    engine_color: [1.0, 0.7, 0.3]

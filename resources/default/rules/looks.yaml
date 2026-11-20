@@ -200,6 +200,13 @@ debris:
     spin: [5, 40]
     life: 30s
     chunks: {models: [models/chunk1.obj, models/chunk2.obj, models/chunk3.obj], count: 10, speed: [20, 80]}
+  survey_ship:
+    pieces: [models/survey_ship_debris1.obj, models/survey_ship_debris2.obj, models/survey_ship_debris3.obj]
+    pick: [2, 3]
+    speed: [10, 40]
+    spin: [10, 60]
+    life: 20s
+    chunks: {models: [models/chunk1.obj, models/chunk2.obj, models/chunk3.obj], count: 6, speed: [20, 80]}
   supply_pod:
     pieces: [models/supply_pod_debris1.obj, models/supply_pod_debris2.obj]
     pick: [2, 2]
@@ -505,6 +512,13 @@ modelsets:
       - {below: 66%, textures: {guard_hull: textures/guard_hull_scorched.png, cargo_pod: textures/cargo_pod_scorched.png}}
       - {below: 33%, textures: {guard_hull: textures/guard_hull_burnt.png, cargo_pod: textures/cargo_pod_burnt.png}}
     debris: supply_ship
+    destroyed_effect: explosion_large
+  survey_ship:
+    intact: models/survey_ship.obj
+    damage:
+      - {below: 66%, textures: {guard_hull: textures/guard_hull_scorched.png}}
+      - {below: 33%, textures: {guard_hull: textures/guard_hull_burnt.png}}
+    debris: survey_ship
     destroyed_effect: explosion_large
   supply_pod:
     intact: models/supply_pod.obj

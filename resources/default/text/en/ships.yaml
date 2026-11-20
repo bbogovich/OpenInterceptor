@@ -33,3 +33,5 @@ text:
   ship.hotrod.desc: "A raider's hot-rod rocket: flame paint and an oversized exhaust."
   ship.supply_ship.name: "Cargo clipper"
   ship.supply_ship.desc: "The Guard's supply ship: a cab, a spine of twelve cargo pods and four big engine bells. Slow, sturdy, and a juicy target."
+  ship.survey_ship.name: "Survey ship"
+  ship.survey_ship.desc: "A light Guard hull with a sensor dish and two sample containers. It charts what a system holds; it is no match for a raider."

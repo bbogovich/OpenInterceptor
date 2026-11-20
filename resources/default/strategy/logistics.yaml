@@ -32,14 +32,22 @@ research_sites:
 
 logistics:
   vessels: 3
+  cargo_capacity: 40               # per vessel: a convoy carries 120; larger orders split
   ambush_chance: 30%
   ambush_loss: 35%
   survey_attack_chance: 25%
+  # An attacked survey ship fights the convoy ambush at the survey site, as the one
+  # survey_ship standing in for the clippers; not flown, it is lost half the time.
+  survey_mission: convoy_ambush
+  survey_class: survey_ship
+  survey_loss: 50%
   survey_speed: 900
   convoy_speed: 450
   ambush_mission: convoy_ambush    # fly the escort when a convoy is ambushed
   # The Dominion strikes construction sites from half-built, three times at most each.
+  # The defence shows the struck facility (its type's hub) in its construction stage.
   construction_strikes: {from: 50%, max: 3, chance: 12%, mission: construction_defence, setback: 25%}
+  construction_stages: {build_25: 0%, build_60: 50%, build_90: 80%}
 
 # What each system holds (revealed by a survey).
 maps:

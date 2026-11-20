@@ -9,11 +9,13 @@
 //!    has a deposit of them.
 //! 3. A mining facility **extracts** its system's deposits every hour into its store, and
 //!    fills orders from it.
-//! 4. A filled order leaves as an automatic **convoy** of several vessels along the lanes.
+//! 4. A filled order leaves as an automatic **convoy** of several vessels along the lanes
+//!    (several convoys when it is more than one can carry, `cargo_capacity`).
 //!    At launch a roll decides whether it will be ambushed, and where along its route;
 //!    there, each vessel may be lost (auto-resolved), and the surviving share arrives.
 //! 5. A **survey ship** reveals a system's deposits and which facilities suit it; a roll
-//!    at launch decides whether it is attacked on the way.
+//!    at launch decides whether it is attacked. An attacked ship fights at the survey
+//!    site (the campaign's `survey_mission`, flown or auto-resolved) before it reports.
 //! 6. A **research station** works on station-only topics once their start materials
 //!    have been delivered.
 //!
@@ -86,7 +88,28 @@ pub struct Convoy {
 pub struct Survey {
     pub system: usize,
     pub pos: [f32; 2],
+    /// Rolled at launch: it will be attacked at the survey site.
     pub attacked: bool,
+    /// Attacked and waiting at the site for the player's choice (fly or auto-resolve).
+    pub held: bool,
+}
+
+/// Running totals of the supply chain (R-TST-011's logistics soak reads them; they are
+/// saved with the campaign so a long game's totals survive a reload).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct LogisticsStats {
+    /// Convoys that left.
+    pub convoys: u32,
+    /// Goods loaded into convoys, and goods delivered (any unit, summed).
+    pub shipped: f32,
+    pub delivered: f32,
+    /// Convoys ambushed, and vessels lost in ambushes.
+    pub ambushes: u32,
+    pub vessels_lost: u32,
+    /// Survey ships sent, attacked and lost.
+    pub surveys: u32,
+    pub surveys_attacked: u32,
+    pub surveys_lost: u32,
 }
 
 /// The logistics state of a campaign.
@@ -102,6 +125,7 @@ pub struct Logistics {
     pub reserves: Vec<Vec<Option<f32>>>,
     /// Per base: components (and anything else) in its store.
     pub base_goods: Vec<Vec<(String, f32)>>,
+    pub stats: LogisticsStats,
 }
 
 impl Logistics {
@@ -246,8 +270,102 @@ impl Campaign {
             return Err("already surveyed".into());
         }
         let attacked = self.roll() < l.survey_attack_chance;
-        self.logistics.surveys.push(Survey { system, pos: from, attacked });
+        self.logistics.surveys.push(Survey { system, pos: from, attacked, held: false });
+        self.logistics.stats.surveys += 1;
         Ok(())
+    }
+
+    /// The construction stage of facility `f` (an index into `logistics.stages`), or
+    /// `None` once it is built (or when the campaign defines no stages).
+    pub fn construction_stage(&self, l: &LogisticsDef, f: usize) -> Option<usize> {
+        let fac = self.logistics.facilities.get(f)?;
+        if fac.ready_at <= self.hours {
+            return None;
+        }
+        let time = (l.facility_types[fac.ftype].time as f64).max(1e-6);
+        let progress = (1.0 - (fac.ready_at - self.hours) / time).clamp(0.0, 1.0) as f32;
+        l.stage_at(progress)
+    }
+
+    /// What stands in for struck facility `f` in its defence battle: its type's `hub`
+    /// class and its construction stage (R-STR-022). `None` when there is no such
+    /// facility; the class is `None` when its type names no hub (the mission's own
+    /// object is then shown, in the right stage).
+    pub fn strike_stand_in(&self, def: &StrategyDef, f: usize) -> Option<crate::content::mission::StandIn> {
+        let l = def.logistics.as_ref()?;
+        let fac = self.logistics.facilities.get(f)?;
+        Some(crate::content::mission::StandIn {
+            class: l.facility_types[fac.ftype].hub.clone(),
+            state: self.construction_stage(l, f).map(|s| l.stages[s].0.clone()),
+            count: None,
+        })
+    }
+
+    /// What stands in for an attacked survey ship in its battle: one of `survey_class`.
+    pub fn survey_stand_in(&self, def: &StrategyDef) -> crate::content::mission::StandIn {
+        crate::content::mission::StandIn {
+            class: def.logistics.as_ref().and_then(|l| l.survey_class.clone()),
+            state: None,
+            count: Some(1),
+        }
+    }
+
+    /// Settles an attacked survey ship waiting at its site: `Some(true)` the player flew
+    /// its battle and won (it reports), `Some(false)` flew and lost (it is lost), `None`
+    /// not flown (lost with chance `survey_loss`).
+    pub fn survey_result(&mut self, def: &StrategyDef, s: usize, won: Option<bool>) {
+        let Some(l) = def.logistics.as_ref() else { return };
+        if s >= self.logistics.surveys.len() {
+            return;
+        }
+        let lost = match won {
+            Some(w) => !w,
+            None => self.roll() < l.survey_loss,
+        };
+        let sv = self.logistics.surveys.remove(s);
+        let text = self.survey_report(def, &sv, lost);
+        self.messages.push(Message { hour: self.hours, text: text.clone() });
+        self.notices.push(text);
+    }
+
+    /// Ends survey `sv` at its site: lost, or the system is surveyed and the report
+    /// written (deposits with their reserves, features, research sites, and which
+    /// facility types its placement rules now allow there — R-STR-021).
+    fn survey_report(&mut self, def: &StrategyDef, sv: &Survey, lost: bool) -> String {
+        let Some(l) = def.logistics.as_ref() else { return String::new() };
+        let name = self.systems[sv.system].name.clone();
+        if lost {
+            self.logistics.stats.surveys_lost += 1;
+            return format!("Survey ship attacked and lost at {name}");
+        }
+        self.logistics.surveyed[sv.system] = true;
+        let deposits: Vec<String> = l.systems[sv.system]
+            .deposits
+            .iter()
+            .map(|d| {
+                let reserve = d.reserve.map_or("unlimited".to_string(), |r| format!("{r:.0} in reserve"));
+                format!("{} {:.0}/day ({reserve})", l.goods_name(&d.resource), d.rate)
+            })
+            .collect();
+        let features = &l.systems[sv.system].features;
+        let sites: Vec<&str> =
+            l.sites.iter().filter(|(x, _)| l.site_ok(x, sv.system)).map(|(x, _)| x.as_str()).collect();
+        // Suitability: each type's own placement rule, asked now that the survey is in.
+        let suits: Vec<&str> = l
+            .facility_types
+            .iter()
+            .filter(|ft| self.placement_ok(def, ft.placement.as_ref(), sv.system))
+            .map(|ft| ft.name.as_str())
+            .collect();
+        let attacked = if sv.attacked { " (after fighting off an attack)" } else { "" };
+        let list = |v: &[&str]| if v.is_empty() { "none".to_string() } else { v.join(", ") };
+        format!(
+            "Survey of {name}{attacked}: {}; features: {}; research site: {}; suits: {}",
+            if deposits.is_empty() { "no deposits".into() } else { deposits.join(", ") },
+            list(&features.iter().map(String::as_str).collect::<Vec<_>>()),
+            list(&sites),
+            list(&suits)
+        )
     }
 
     /// Starts a research station on a station-only topic (its start materials are
@@ -416,7 +534,9 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             }
         }
     }
-    // 3. Filled orders leave as convoys.
+    // 3. Filled orders leave as convoys: as many as the order needs, each carrying at
+    // most `vessels × cargo_capacity` (decision D1).
+    let per_convoy = l.cargo_capacity.map_or(f32::INFINITY, |c| c * l.vessels as f32);
     let mut k = 0;
     while k < c.logistics.orders.len() {
         let o = c.logistics.orders[k].clone();
@@ -437,16 +557,24 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                     })
                     .sum()
             };
-            let ambush_in = (c.roll() < l.ambush_chance).then(|| c.roll() * length);
-            c.logistics.convoys.push(Convoy {
-                cargo: vec![(o.goods.clone(), o.amount)],
-                to: o.to,
-                pos: c.systems[from].pos,
-                route,
-                vessels: l.vessels,
-                ambush_in,
-                held: false,
-            });
+            let mut left = o.amount;
+            while left > 1e-4 {
+                let load = left.min(per_convoy);
+                left -= load;
+                // Each convoy rolls its own ambush, at its own point on the route.
+                let ambush_in = (c.roll() < l.ambush_chance).then(|| c.roll() * length);
+                c.logistics.convoys.push(Convoy {
+                    cargo: vec![(o.goods.clone(), load)],
+                    to: o.to,
+                    pos: c.systems[from].pos,
+                    route: route.clone(),
+                    vessels: l.vessels,
+                    ambush_in,
+                    held: false,
+                });
+                c.logistics.stats.convoys += 1;
+                c.logistics.stats.shipped += load;
+            }
             c.logistics.orders.remove(k);
         } else {
             k += 1;
@@ -475,6 +603,10 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             *left -= moved;
             if *left <= 0.0 {
                 cv.ambush_in = None;
+                // `cv` borrows the convoy list mutably; end that borrow to count the
+                // ambush on `c.logistics.stats`, then borrow the convoy again.
+                c.logistics.stats.ambushes += 1;
+                let cv = &mut c.logistics.convoys[v];
                 // With an ambush mission the player may fly the escort: the convoy waits.
                 if l.ambush_mission.is_some() {
                     cv.held = true;
@@ -498,6 +630,8 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                 }
                 let cv = &mut c.logistics.convoys[v];
                 cv.vessels -= lost;
+                c.logistics.stats.vessels_lost += lost;
+                let cv = &c.logistics.convoys[v];
                 let what =
                     cv.cargo.iter().map(|(g, a)| format!("{a:.0} {}", l.goods_name(g))).collect::<Vec<_>>().join(", ");
                 let t = format!("Supply convoy ({what}) ambushed: {lost} of {n} vessels lost");
@@ -514,6 +648,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
         let share = cv.vessels as f32 / l.vessels as f32;
         for (g, a) in &cv.cargo {
             let n = a * share;
+            c.logistics.stats.delivered += n;
             match cv.to {
                 Dest::Base(b) => add(&mut c.logistics.base_goods[b], g, n),
                 Dest::Facility(f) => add(&mut c.logistics.facilities[f].store, g, n),
@@ -539,41 +674,34 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             }
         }
     }
-    // 6. Survey ships.
+    // 6. Survey ships. An attacked one stops at the site: with a survey mission the
+    // player may fly its battle (it waits, like an ambushed convoy); without one the
+    // attack is auto-resolved at once (decision D3).
     let mut done = Vec::new();
     for s in 0..c.logistics.surveys.len() {
+        if c.logistics.surveys[s].held {
+            continue;
+        }
         let target = c.systems[c.logistics.surveys[s].system].pos;
         if travel(&mut c.logistics.surveys[s].pos, target, l.survey_speed * dtf) {
             done.push(s);
         }
     }
     for s in done.into_iter().rev() {
+        let sv = &c.logistics.surveys[s];
+        if sv.attacked {
+            c.logistics.stats.surveys_attacked += 1;
+            if l.survey_mission.is_some() {
+                let t = format!("Survey ship under attack at {}", c.systems[sv.system].name);
+                c.logistics.surveys[s].held = true;
+                c.messages.push(Message { hour: now, text: t });
+                events.push(Event::Survey { survey: s });
+                continue;
+            }
+        }
         let sv = c.logistics.surveys.remove(s);
-        let name = c.systems[sv.system].name.clone();
-        let lost = sv.attacked && c.roll() < 0.5;
-        let t = if lost {
-            format!("Survey ship attacked and lost on the way to {name}")
-        } else {
-            c.logistics.surveyed[sv.system] = true;
-            let deposits: Vec<String> = l.systems[sv.system]
-                .deposits
-                .iter()
-                .map(|d| {
-                    let reserve = d.reserve.map_or("unlimited".to_string(), |r| format!("{r:.0} in reserve"));
-                    format!("{} {:.0}/day ({reserve})", l.goods_name(&d.resource), d.rate)
-                })
-                .collect();
-            let features = &l.systems[sv.system].features;
-            let sites: Vec<&str> =
-                l.sites.iter().filter(|(x, _)| l.site_ok(x, sv.system)).map(|(x, _)| x.as_str()).collect();
-            let attacked = if sv.attacked { " (after fighting off an attack)" } else { "" };
-            format!(
-                "Survey of {name}{attacked}: {}; features: {}; research site: {}",
-                if deposits.is_empty() { "no deposits".into() } else { deposits.join(", ") },
-                if features.is_empty() { "none".into() } else { features.join(", ") },
-                if sites.is_empty() { "none".into() } else { sites.join(", ") }
-            )
-        };
+        let lost = sv.attacked && c.roll() < l.survey_loss;
+        let t = c.survey_report(def, &sv, lost);
         c.messages.push(Message { hour: now, text: t.clone() });
         events.push(Event::Notice(t));
     }
@@ -773,10 +901,75 @@ impl Campaign {
                 }
                 let cv = &mut self.logistics.convoys[convoy];
                 cv.vessels -= lost;
+                self.logistics.stats.vessels_lost += lost;
                 format!("The convoy fought through alone: {lost} of {n} vessels lost")
             }
         };
         self.messages.push(Message { hour: self.hours, text });
+    }
+}
+
+/// The automatic player's supply moves, one call a day (R-TST-011's logistics soak):
+/// keep one survey ship out to the nearest unsurveyed system in range, build one
+/// facility of each type (two mines), in supply-chain order, where its placement
+/// allows and while there is money to spare, set an idle research station on a station topic, and keep a hull on order
+/// so the supply chain has demand to fill. Refusals are expected and ignored.
+pub fn autoplay_day(c: &mut Campaign, def: &StrategyDef) {
+    let Some(l) = def.logistics.as_ref() else { return };
+    if c.bases.is_empty() {
+        return;
+    }
+    if c.logistics.surveys.is_empty() {
+        let home = c.systems[c.bases[0].system].pos;
+        let mut order: Vec<usize> = (0..c.systems.len()).filter(|&s| !c.logistics.surveyed[s]).collect();
+        order.sort_by(|&a, &b| distance(c.systems[a].pos, home).total_cmp(&distance(c.systems[b].pos, home)));
+        for s in order {
+            if (0..c.bases.len()).any(|b| c.survey(def, b, s).is_ok()) {
+                break;
+            }
+        }
+    }
+    // In supply-chain order: a center gives the hulls' orders somewhere to go, then
+    // mines feed it, then a research station. One build a day at most.
+    let mut types: Vec<usize> = (0..l.facility_types.len()).collect();
+    let rank = |r: Role| match r {
+        Role::Manufacturing => 0,
+        Role::Mining => 1,
+        Role::Research => 2,
+    };
+    types.sort_by_key(|&t| rank(l.facility_types[t].role));
+    for t in types {
+        let want = if l.facility_types[t].role == Role::Mining { 2 } else { 1 };
+        let have = c.logistics.facilities.iter().filter(|f| f.ftype == t).count();
+        if have >= want {
+            continue;
+        }
+        if c.money < l.facility_types[t].cost as f64 + 500_000.0 {
+            break; // save up for this one rather than skip ahead
+        }
+        if let Some(s) = (0..c.systems.len()).find(|&s| c.facility_allowed(def, t, s).is_ok()) {
+            let _ = c.build_facility(def, t, s);
+            break;
+        }
+    }
+    for f in 0..c.logistics.facilities.len() {
+        let fac = &c.logistics.facilities[f];
+        if l.facility_types[fac.ftype].role != Role::Research || fac.project.is_some() || fac.ready_at > c.hours {
+            continue;
+        }
+        if let Some(t) = (0..def.research.len()).find(|&t| l.station_topics[t].is_some() && !c.known[t]) {
+            let _ = c.start_station_research(def, f, t);
+        }
+    }
+    // Demand: one hull (the cheapest that needs components) waiting at the first base.
+    let waiting = c.bases[0].jobs.iter().any(|j| matches!(j.product, super::Product::Hull(_)) && !j.started);
+    let cheapest = (0..def.hulls.len())
+        .filter(|&h| l.hull_components.get(h).is_some_and(|c| !c.is_empty()))
+        .min_by(|&a, &b| def.hulls[a].cost.total_cmp(&def.hulls[b].cost));
+    if let (false, Some(h)) = (waiting, cheapest) {
+        if c.money > def.hulls[h].cost as f64 + 500_000.0 {
+            let _ = c.manufacture(def, 0, super::Product::Hull(h), 1);
+        }
     }
 }
 
@@ -1021,6 +1214,131 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         assert!(c.messages.iter().any(|m| m.text.contains("ambushed")), "every convoy is ambushed here");
         // Losses only shrink deliveries; more orders follow until the cost is met.
         assert!(c.known[theremin], "researched once its iron arrived: {:?}", c.logistics.facilities[1]);
+    }
+
+    #[test]
+    fn an_order_larger_than_a_convoy_leaves_as_several_convoys() {
+        // Four vessels of one unit each: a convoy carries 4, so 10 iron is three convoys.
+        let text = SAMPLE.replace("logistics: {vessels: 4,", "logistics: {cargo_capacity: 1, vessels: 4,");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        assert_eq!(d.logistics.as_ref().unwrap().cargo_capacity, Some(1.0));
+        let mut c = Campaign::new(&d, 0, 5);
+        c.logistics.surveyed[1] = true;
+        c.build_facility(&d, 0, 1).unwrap();
+        run(&mut c, &d, 11.0);
+        // Stock the mine by hand and order from it (no hull job: nothing else moves).
+        c.logistics.facilities[0].store = vec![("iron".into(), 10.0)];
+        c.logistics.orders.push(Order { goods: "iron".into(), amount: 10.0, to: Dest::Base(0), source: 0 });
+        c.advance(&d, 0.1);
+        let loads: Vec<f32> = c.logistics.convoys.iter().map(|v| v.cargo[0].1).collect();
+        assert_eq!(loads, vec![4.0, 4.0, 2.0], "split at the capacity");
+        assert!(c.logistics.orders.is_empty(), "the whole order left");
+        run(&mut c, &d, 5.0);
+        assert!(c.logistics.convoys.is_empty(), "all three arrived");
+        assert!((amount(&c.logistics.base_goods[0], "iron") - 10.0).abs() < 1e-3);
+        let t = &c.logistics.stats;
+        assert_eq!((t.convoys, t.shipped, t.delivered), (3, 10.0, 10.0));
+        // Without a capacity, one convoy carries any order.
+        let (d, _) = build(SAMPLE);
+        assert_eq!(d.unwrap().logistics.unwrap().cargo_capacity, None);
+    }
+
+    #[test]
+    fn construction_stages_follow_progress_and_stand_in_for_the_struck_site() {
+        let text = SAMPLE.replace("mine: {role: mining,", "mine: {hub: mine_hub, role: mining,");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let l = d.logistics.as_ref().unwrap();
+        // The default stages: build_25 from the start, build_60 from 50 %, build_90 from 80 %.
+        let names: Vec<&str> = l.stages.iter().map(|(n, _)| n.as_str()).collect();
+        assert_eq!(names, ["build_25", "build_60", "build_90"]);
+        assert_eq!(
+            (l.stage_at(0.0), l.stage_at(0.49), l.stage_at(0.5), l.stage_at(0.95)),
+            (Some(0), Some(0), Some(1), Some(2))
+        );
+        let mut c = Campaign::new(&d, 0, 5);
+        c.logistics.surveyed[1] = true;
+        c.build_facility(&d, 0, 1).unwrap(); // 10 hours
+        let state = |c: &Campaign| c.strike_stand_in(&d, 0).unwrap().state;
+        assert_eq!(state(&c).as_deref(), Some("build_25"));
+        run(&mut c, &d, 6.0);
+        assert_eq!(state(&c).as_deref(), Some("build_60"));
+        run(&mut c, &d, 3.0);
+        let si = c.strike_stand_in(&d, 0).unwrap();
+        assert_eq!((si.class.as_deref(), si.state.as_deref(), si.count), (Some("mine_hub"), Some("build_90"), None));
+        run(&mut c, &d, 2.0);
+        assert_eq!(c.construction_stage(l, 0), None, "built: no stage");
+        assert_eq!(c.strike_stand_in(&d, 5), None, "no such facility");
+        // A pack's own stages, listed in any order, are sorted by where they start.
+        let text = SAMPLE
+            .replace("logistics: {vessels: 4,", "logistics: {construction_stages: {top: 70%, frame: 0%}, vessels: 4,");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let st = d.unwrap().logistics.unwrap().stages;
+        assert_eq!(st, vec![("frame".to_string(), 0.0), ("top".to_string(), 0.7)]);
+    }
+
+    #[test]
+    fn an_attacked_survey_ship_waits_at_the_site_then_reports_or_is_lost() {
+        let text = SAMPLE.replace(
+            "survey_attack_chance: 0%",
+            "survey_attack_chance: 100%, survey_mission: m1, survey_class: scout, survey_loss: 100%",
+        );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        run(&mut c, &d, 2.0);
+        c.survey(&d, 0, 1).unwrap();
+        let mut held = None;
+        for _ in 0..5 {
+            for e in c.advance(&d, 1.0) {
+                if let Event::Survey { survey } = e {
+                    held = Some(survey);
+                }
+            }
+        }
+        let s = held.expect("attacked at the site");
+        assert!(c.logistics.surveys[s].held && !c.logistics.surveyed[1], "waits for the player");
+        let si = c.survey_stand_in(&d);
+        assert_eq!((si.class.as_deref(), si.count), (Some("scout"), Some(1)));
+        // Saved while it waits: the held ship and the totals round-trip.
+        let packs = [crate::campaign::save::PackRef { id: "t".into(), version: "1".into() }];
+        let back = crate::campaign::save::read(&crate::campaign::save::write(&c, "t", &packs), &d, &packs).unwrap();
+        assert_eq!(back.logistics, c.logistics);
+        assert_eq!((c.logistics.stats.surveys, c.logistics.stats.surveys_attacked), (1, 1));
+        // Flown and won: it reports, with the facility types the system suits.
+        c.survey_result(&d, s, Some(true));
+        assert!(c.logistics.surveyed[1] && c.logistics.surveys.is_empty());
+        let report = c.notices.last().unwrap();
+        assert!(report.contains("after fighting off an attack") && report.contains("suits: mine"), "{report}");
+        // Not flown, with a 100 % loss: lost, and the system stays unknown.
+        c.survey(&d, 0, 2).unwrap();
+        run(&mut c, &d, 5.0);
+        c.survey_result(&d, 0, None);
+        assert!(!c.logistics.surveyed[2]);
+        assert!(c.notices.last().unwrap().contains("lost"));
+        assert_eq!(c.logistics.stats.surveys_lost, 1);
+    }
+
+    #[test]
+    fn without_a_survey_mission_an_attack_is_settled_at_once() {
+        let text = SAMPLE.replace("survey_attack_chance: 0%", "survey_attack_chance: 100%, survey_loss: 0%");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        run(&mut c, &d, 2.0);
+        c.survey(&d, 0, 2).unwrap();
+        let events: Vec<Event> = (0..5).flat_map(|_| c.advance(&d, 1.0)).collect();
+        assert!(!events.iter().any(|e| matches!(e, Event::Survey { .. })), "nothing to fly");
+        assert!(c.logistics.surveyed[2], "a 0 % loss: it got away");
+        let report = c.messages.iter().rev().find(|m| m.text.starts_with("Survey of")).unwrap();
+        // The station suits a nebula; the mine has no deposit there.
+        assert!(report.text.contains("suits: plant, station"), "{}", report.text);
     }
 
     #[test]

@@ -138,6 +138,9 @@ pub enum Next {
         loadout: crate::campaign::Loadout,
         /// The campaign's relations: `(faction, hostile to the player)`.
         stances: Vec<(String, bool)>,
+        /// A campaign object standing in for the mission's first protected role (a
+        /// struck construction site, an attacked survey ship).
+        stand_in: Option<crate::content::mission::StandIn>,
     },
     /// Fly a simulator mission: a modified copy of a mission (see `simulator::apply`).
     Simulate {
@@ -660,13 +663,26 @@ pub async fn run(options: Options) {
                     }
                 }
             }
-            Next::CampaignBattle { mission, ship, loadout, stances } => {
+            Next::CampaignBattle { mission, ship, loadout, stances, stand_in } => {
                 // Keep the strategy screen (and its campaign) while the battle is flown.
                 let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
                 if let Screen::Strategy(s) = old {
                     ctx.campaign = Some(s);
                 }
-                match flight::FlightSession::start_mission(&mut ctx, &mission, ship.as_deref()) {
+                let started = match &stand_in {
+                    // The mission's own copy with the campaign object in it.
+                    Some(si) => ctx
+                        .content
+                        .rules
+                        .missions
+                        .iter()
+                        .find(|m| m.id == mission)
+                        .ok_or(format!("no mission '{mission}'"))
+                        .and_then(|m| m.with_stand_in(si))
+                        .and_then(|m| flight::FlightSession::start_mission_def(&mut ctx, m, ship.as_deref())),
+                    None => flight::FlightSession::start_mission(&mut ctx, &mission, ship.as_deref()),
+                };
+                match started {
                     Ok(mut f) => {
                         f.campaign_battle = true;
                         f.apply_loadout(&loadout);

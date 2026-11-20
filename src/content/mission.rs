@@ -390,6 +390,47 @@ impl MissionDef {
     pub fn outcome(&self, result: &str) -> &[action::Action] {
         self.outcomes.iter().find(|(r, _)| r == result).map(|(_, a)| a.as_slice()).unwrap_or(&[])
     }
+
+    /// The index of the role a campaign object stands in for: the first protected role
+    /// (`protect: true`). `None` when the mission protects nothing.
+    pub fn stand_in_role(&self) -> Option<usize> {
+        self.roles.iter().position(|r| r.protect)
+    }
+
+    /// A copy of this mission with a campaign object standing in for its first protected
+    /// role (see [`MissionDef::stand_in_role`]): a struck construction site (its
+    /// facility's class and construction stage) or an attacked survey ship (its class,
+    /// one of it). Fields of `s` left `None` keep the role's own.
+    ///
+    /// A copy, not an edit: the mission in the ruleset is shared by every battle that
+    /// flies it, so the change must not leak into the next one.
+    pub fn with_stand_in(&self, s: &StandIn) -> Result<MissionDef, String> {
+        let r = self.stand_in_role().ok_or_else(|| format!("mission '{}' has no protected role", self.id))?;
+        let mut m = self.clone();
+        let role = &mut m.roles[r];
+        if let Some(c) = &s.class {
+            role.classes = vec![c.clone()];
+        }
+        if s.state.is_some() {
+            role.state = s.state.clone();
+        }
+        if let Some(n) = s.count {
+            role.count = (n, n);
+        }
+        Ok(m)
+    }
+}
+
+/// What a campaign battle puts in its mission's first protected role (see
+/// [`MissionDef::with_stand_in`]).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct StandIn {
+    /// The class (ship or object id) it flies or stands as.
+    pub class: Option<String>,
+    /// Its model-set state (a construction stage such as `build_60`).
+    pub state: Option<String>,
+    /// How many of it.
+    pub count: Option<u32>,
 }
 
 #[cfg(test)]
@@ -436,5 +477,27 @@ mod tests {
         assert!(e("roles: {a: {class: comet}}\nobjectives: {win: alive(a)}\nwaves: [{role: b, when: time > 1}]\n")
             .contains("unknown role"));
         assert!(e("roles: {player: {class: comet}}\nobjectives: {win: player_alive}\n").contains("reserved"));
+    }
+
+    #[test]
+    fn a_stand_in_replaces_the_first_protected_role_in_a_copy() {
+        let m = parse(
+            "roles:\n  raiders: {class: saucer, count: 3}\n  site: {class: station, protect: true, count: 2, state: build_60}\n  late: {class: comet, protect: true}\n\
+             objectives: {win: destroyed_all(raiders), lose: destroyed(site)}\n",
+        )
+        .unwrap();
+        assert_eq!(m.stand_in_role(), Some(1), "the first protected role, not the first role");
+        let s = StandIn { class: Some("comet".into()), state: Some("build_25".into()), count: Some(1) };
+        let c = m.with_stand_in(&s).unwrap();
+        assert_eq!(c.roles[1].classes, vec!["comet".to_string()]);
+        assert_eq!((c.roles[1].state.as_deref(), c.roles[1].count), (Some("build_25"), (1, 1)));
+        assert_eq!(c.roles[2].classes, vec!["comet".to_string()], "later protected roles untouched");
+        assert_eq!(m.roles[1].classes, vec!["station".to_string()], "the original is unchanged");
+        // Fields left out keep the role's own.
+        let c = m.with_stand_in(&StandIn { class: Some("saucer".into()), ..Default::default() }).unwrap();
+        assert_eq!((c.roles[1].state.as_deref(), c.roles[1].count), (Some("build_60"), (2, 2)));
+        // No protected role: an error, not a silent change.
+        let plain = parse("roles: {a: {class: comet}}\nobjectives: {win: alive(a)}\n").unwrap();
+        assert!(plain.with_stand_in(&s).unwrap_err().contains("no protected role"));
     }
 }

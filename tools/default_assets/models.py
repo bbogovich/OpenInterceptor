@@ -1100,6 +1100,32 @@ def supply_ship():
     return m
 
 
+def survey_ship():
+    """Guard survey ship, ~34 m: a light, slim rocket hull with a sensor dish on its
+    back, two sample containers (cargo pods, separate objects) slung at its sides, and
+    a pair of engine bells. The strategy layer sends it to survey systems; when it is
+    attacked it fights the convoy-ambush battle with its two pods as the cargo."""
+    m = Model("survey_ship", {**POD_MATS, **SLOT}, 1500)
+    body = ogive(-17, -8, 2.8, 5, "chrome") + [(-8, 3.0, "hull"), (6, 3.2, "hull"), (8, 3.4, "chrome"),
+                                              (10, 3.4, "hull"), (13, 2.6, "hull"), (14, 2.0, "chrome")]
+    m.add(lathe("body", body, "hull", 16, uv=(0, 1, 0, 1)))
+    m.add(ellipsoid("canopy", (0, 2.6, -9), (1.5, 1.2, 2.6), "glass"))
+    # Sensor dish on a short mast: what the ship is for.
+    m.add(cylinder_between("mast", (0, 2.8, 1), (0, 5.4, 1), 0.35, "chrome", 8))
+    m.add(lathe("dish", [(0.0, 0.0, "teal"), (0.0, 0.5, "teal"), (0.9, 2.4, "teal"), (1.3, 3.4, "teal")], "teal", 16)
+          .transformed(frame_from_z((0, 1, 0)), (0, 5.2, 1)))
+    # The two sample containers ride outboard on stub pylons; each pod's front faces forward.
+    for k, sx in enumerate((-1, 1), start=1):
+        m.add(box("pylon", min(sx * 2.6, sx * 3.6), max(sx * 2.6, sx * 3.6), -0.5, 0.5, -2, 4, "red"))
+        m.add(slot(f"slot_pod{k}", (sx * 6.6, 0, 1), (0, 0, -1)))
+    for sx in (-1.3, 1.3):
+        m.add(bell("bell", 13.5, 4, 1.0, 1.6, 12).transformed(IDENTITY, (sx, 0, 0)))
+    m.add(fin("fin_top", 0, [(2.6, 6), (2.6, 13), (6.5, 17), (6.5, 14)], "red", 0.4, 0.2))
+    m.add(fin("fin_left", 240, [(2.6, 7), (2.6, 13), (5.5, 16), (5.5, 13.5)], "red", 0.4, 0.2))
+    m.add(fin("fin_right", 120, [(2.6, 7), (2.6, 13), (5.5, 16), (5.5, 13.5)], "red", 0.4, 0.2))
+    return m
+
+
 # ---------------------------------------------------------------------------------------
 # Construction stages
 # ---------------------------------------------------------------------------------------
@@ -1543,6 +1569,9 @@ SHIPS = [
     # the loop values at definition time).
     (lambda b=b, s=s: build_stage(b, s), 2)
     for b in (mining_facility, research_station, manufacturing_center, guard_station) for s in (1, 2, 3)
+] + [
+    # Added after the construction stages, so every earlier model keeps its debris seed.
+    (survey_ship, 3),
 ]
 
 

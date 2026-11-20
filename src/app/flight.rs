@@ -402,6 +402,19 @@ impl FlightSession {
         Self::start_battle(ctx, id, ship, true)
     }
 
+    /// Like [`FlightSession::start_mission`] for a mission definition built by the caller
+    /// (a campaign battle's copy with a stand-in, see
+    /// [`crate::content::mission::MissionDef::with_stand_in`]). Unlike
+    /// [`FlightSession::start_custom`], "fly again" repeats the mission by its id.
+    pub fn start_mission_def(
+        ctx: &mut AppContext,
+        def: crate::content::mission::MissionDef,
+        ship: Option<&str>,
+    ) -> Result<FlightSession, String> {
+        let id = def.id.clone();
+        Self::start_with(ctx, &id, ship, Some(def))
+    }
+
     /// Fits the player's craft with a campaign loadout (Stage 4.7): `beams` are beam ids
     /// (one per mount) and `missiles` missile ids with rounds. Ids that are not beams or
     /// missiles of this campaign are skipped; with no beams the class's own are kept.

@@ -130,6 +130,7 @@ fn write_logistics(l: &logistics::Logistics) -> Node {
                         ("system", n(v.system as f64)),
                         ("pos", nums(&[v.pos[0] as f64, v.pos[1] as f64])),
                         ("attacked", s(v.attacked)),
+                        ("held", s(v.held)),
                     ])
                 })
                 .collect()),
@@ -144,6 +145,19 @@ fn write_logistics(l: &logistics::Logistics) -> Node {
                 .collect()),
         ),
         ("base_goods", seq(l.base_goods.iter().map(|g| store(g)).collect())),
+        ("stats", {
+            let t = &l.stats;
+            nums(&[
+                t.convoys as f64,
+                t.shipped as f64,
+                t.delivered as f64,
+                t.ambushes as f64,
+                t.vessels_lost as f64,
+                t.surveys as f64,
+                t.surveys_attacked as f64,
+                t.surveys_lost as f64,
+            ])
+        }),
     ])
 }
 
@@ -329,6 +343,7 @@ fn read_logistics(
             system: num(v, "system") as usize,
             pos: [p.first().copied().unwrap_or(0.0) as f32, p.get(1).copied().unwrap_or(0.0) as f32],
             attacked: v.bool("attacked").unwrap_or(false),
+            held: v.bool("held").unwrap_or(false),
         });
     }
     out.surveyed = list("surveyed").iter().map(|x| x.as_str() == Some("true")).collect();
@@ -337,6 +352,19 @@ fn read_logistics(
         .map(|r| r.as_seq().unwrap_or(&[]).iter().map(|x| x.as_str().and_then(|t| t.parse().ok())).collect())
         .collect();
     out.base_goods = list("base_goods").iter().map(|g| store_of(Some(g))).collect();
+    // The supply totals, in a fixed order (saves from before 0.20.0 have none: zeros).
+    let t = g.node("stats").map(nums_of).unwrap_or_default();
+    let at = |i: usize| t.get(i).copied().unwrap_or(0.0);
+    out.stats = logistics::LogisticsStats {
+        convoys: at(0) as u32,
+        shipped: at(1) as f32,
+        delivered: at(2) as f32,
+        ambushes: at(3) as u32,
+        vessels_lost: at(4) as u32,
+        surveys: at(5) as u32,
+        surveys_attacked: at(6) as u32,
+        surveys_lost: at(7) as u32,
+    };
     if out.surveyed.len() != systems || out.facilities.iter().any(|f| f.system >= systems) {
         return Err(bad("the map"));
     }

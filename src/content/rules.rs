@@ -1578,9 +1578,36 @@ pub fn build_with(
                     errors.push(format!("raids.{}: unknown faction '{}'", r.id, r.faction));
                 }
             }
-            if let Some(m) = s.logistics.as_ref().and_then(|l| l.ambush_mission.as_ref()) {
-                if !missions.iter().any(|x| &x.id == m) {
-                    errors.push(format!("logistics.ambush_mission: unknown mission '{m}'"));
+            if let Some(l) = &s.logistics {
+                if let Some(m) = &l.ambush_mission {
+                    if !missions.iter().any(|x| &x.id == m) {
+                        errors.push(format!("logistics.ambush_mission: unknown mission '{m}'"));
+                    }
+                }
+                // Missions a campaign object stands in for need a protected role to put
+                // it in (see `MissionDef::with_stand_in`).
+                let stand_ins = [
+                    ("logistics.survey_mission", l.survey_mission.as_ref()),
+                    ("logistics.construction_strikes.mission", l.strikes.as_ref().and_then(|x| x.mission.as_ref())),
+                ];
+                for (key, m) in stand_ins {
+                    let Some(m) = m else { continue };
+                    match missions.iter().find(|x| &x.id == m) {
+                        None => errors.push(format!("{key}: unknown mission '{m}'")),
+                        Some(x) if x.stand_in_role().is_none() => errors.push(format!(
+                            "{key}: mission '{m}' has no protected role (protect: true) to stand in for"
+                        )),
+                        Some(_) => {}
+                    }
+                }
+                let class_ok = |c: &str| ships.iter().any(|x| x.id == c);
+                for ft in &l.facility_types {
+                    if let Some(h) = ft.hub.as_ref().filter(|h| !class_ok(h)) {
+                        errors.push(format!("facility_types.{}.hub: no ship or object class '{h}'", ft.id));
+                    }
+                }
+                if let Some(c) = l.survey_class.as_ref().filter(|c| !class_ok(c)) {
+                    errors.push(format!("logistics.survey_class: no ship or object class '{c}'"));
                 }
             }
             for h in &s.hulls {
@@ -2355,6 +2382,35 @@ flight: {model: warp}
             "pack0.yaml:14: ships.k.max_sped: unknown key (did you mean 'max_speed'?)",
             "cockpits.z: a cockpit needs an image",
             "flight.model: 'warp' is not one of",
+        ] {
+            assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
+        }
+    }
+
+    #[test]
+    fn logistics_stand_ins_and_classes_are_checked() {
+        let lookup = original_lookup();
+        let text = "\
+factions: {xcom: {}}
+ships:
+  rocket: {model: m, faction: xcom}
+missions:
+  open_space: {roles: {foes: {class: rocket}}, objectives: {win: destroyed_all(foes)}}
+start: {date: 2084-03-01, money: 1000, map: m, bases: [{type: hq, system: a, name: Home}]}
+maps: {m: {kind: fixed, systems: {a: {pos: [0, 0]}}}}
+hulls: {rocket: {cost: 1}}
+base_types: {hq: {cost: 1}}
+resources: {iron: {name: Iron}}
+facility_types: {mine: {role: mining, hub: no_such_hub}}
+logistics: {survey_mission: open_space, survey_class: ghost, construction_strikes: {mission: nowhere}}
+";
+        let (_, errors) = build(&[source(0, text)], &lookup);
+        let all = errors.join("\n");
+        for needle in [
+            "logistics.survey_mission: mission 'open_space' has no protected role",
+            "logistics.construction_strikes.mission: unknown mission 'nowhere'",
+            "facility_types.mine.hub: no ship or object class 'no_such_hub'",
+            "logistics.survey_class: no ship or object class 'ghost'",
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }

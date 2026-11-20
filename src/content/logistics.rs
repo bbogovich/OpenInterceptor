@@ -18,13 +18,21 @@
 //!   manufacturing_center: {role: manufacturing, cost: 1200000, time: 15d, lines: 2, storage: 800}
 //!   research_station: {role: research, cost: 900000, time: 20d, research_rate: 40}
 //! research_sites: {nebula_lab: {features: [nebula]}}
-//! logistics: {vessels: 3, ambush_chance: 30%, survey_attack_chance: 25%, survey_speed: 900, convoy_speed: 500}
+//! logistics: {vessels: 3, cargo_capacity: 40, ambush_chance: 30%, survey_attack_chance: 25%,
+//!             survey_speed: 900, convoy_speed: 500, survey_class: survey_ship, survey_mission: convoy_ambush}
 //! # on a map system:  deposits: {cosmium: {rate: 6, reserve: 1800}}   features: [nebula]
 //! # on a hull:        components: {hull_plating: 8}
 //! # on a topic:       lab: research_station   site: nebula_lab   start_cost: {cosmium: 20}
 //! ```
 //!
 //! Amounts are plain numbers in the resource's unit; mining `rate` is per day.
+//!
+//! **Stand-ins.** Three campaign battles put a strategy-layer object into a ready-made
+//! mission: a struck construction site, and an attacked survey ship. The mission's
+//! *first protected role* (`protect: true`) stands for it: the app replaces that role's
+//! class (the facility type's `hub`, or `survey_class`), its model-set state (the
+//! site's construction stage) and, for the survey ship, its count (one). See
+//! [`crate::content::mission::MissionDef::with_stand_in`].
 
 use super::schema::{f, Get, Ty, Unit};
 use crate::formats::yaml::Node;
@@ -130,10 +138,22 @@ pub struct LogisticsDef {
     pub station_topics: Vec<Option<StationTopic>>,
     /// Vessels per convoy (each carries an even share).
     pub vessels: u32,
+    /// Goods one vessel carries (`cargo_capacity:`, decision D1): a convoy carries
+    /// `vessels × cargo_capacity`, and a larger order leaves as several convoys.
+    /// `None` = unlimited (one convoy per order).
+    pub cargo_capacity: Option<f32>,
     pub ambush_chance: f32,
     /// Chance each vessel of an ambushed, unescorted convoy is lost (auto-resolved).
     pub ambush_loss: f32,
     pub survey_attack_chance: f32,
+    /// The battle an attacked survey ship fights at the survey site (`survey_mission:`,
+    /// decision D3), flown or auto-resolved; `None` = always auto-resolved.
+    pub survey_mission: Option<String>,
+    /// The survey ship's class in that battle (`survey_class:`): it stands in for the
+    /// mission's first protected role.
+    pub survey_class: Option<String>,
+    /// Chance an attacked survey ship is lost when its battle is not flown.
+    pub survey_loss: f32,
     pub survey_speed: f32,
     pub convoy_speed: f32,
     /// The battle flown when the player escorts an ambushed convoy (`ambush_mission:`);
@@ -141,7 +161,16 @@ pub struct LogisticsDef {
     pub ambush_mission: Option<String>,
     /// Strikes on facilities under construction (R-STR-023): `None` = none.
     pub strikes: Option<Strikes>,
+    /// The construction stages (R-STR-022): `(model-set state, progress it starts at)`,
+    /// in rising order. A site under construction is shown in the last stage it has
+    /// reached, on the map and in its defence battle.
+    pub stages: Vec<(String, f32)>,
 }
+
+/// The default construction stages: three, named for about how built each looks, and
+/// starting where the previous one's range is centred on its name (0–50 %, 50–80 %,
+/// 80–100 %).
+pub const DEFAULT_STAGES: [(&str, f32); 3] = [("build_25", 0.0), ("build_60", 0.5), ("build_90", 0.8)];
 
 /// `logistics.construction_strikes`: when the enemy strikes a construction site.
 #[derive(Debug, Clone, PartialEq)]
@@ -176,6 +205,12 @@ impl LogisticsDef {
             .or_else(|| self.components.iter().find(|c| c.0 == id).map(|c| c.1.clone()))
             .unwrap_or_else(|| id.to_string())
     }
+    /// The construction stage (an index into `stages`) of a site at `progress` (0..1):
+    /// the last stage whose start it has reached. `None` when there are no stages.
+    pub fn stage_at(&self, progress: f32) -> Option<usize> {
+        self.stages.iter().rposition(|(_, from)| progress >= *from).or((!self.stages.is_empty()).then_some(0))
+    }
+
     /// Whether a system meets a research site's features.
     pub fn site_ok(&self, site: &str, system: usize) -> bool {
         let Some((_, need)) = self.sites.iter().find(|(s, _)| s == site) else { return false };
@@ -317,9 +352,13 @@ impl LogisticsDef {
             hull_components,
             station_topics,
             vessels: num("vessels", 3.0).max(1.0) as u32,
+            cargo_capacity: lg.and_then(|g| g.num("cargo_capacity")).filter(|c| *c > 0.0),
             ambush_chance: frac("ambush_chance", 0.3),
             ambush_loss: frac("ambush_loss", 0.35),
             survey_attack_chance: frac("survey_attack_chance", 0.25),
+            survey_mission: lg.and_then(|g| g.str("survey_mission")).map(str::to_string),
+            survey_class: lg.and_then(|g| g.str("survey_class")).map(str::to_string),
+            survey_loss: frac("survey_loss", 0.5),
             survey_speed: num("survey_speed", 900.0).max(1.0),
             convoy_speed: num("convoy_speed", 500.0).max(1.0),
             ambush_mission: lg.and_then(|g| g.str("ambush_mission")).map(str::to_string),
@@ -334,6 +373,30 @@ impl LogisticsDef {
                     setback: fr("setback", 0.25),
                 }
             }),
+            stages: {
+                // `construction_stages: {build_25: 0%, build_60: 50%, build_90: 80%}`;
+                // sorted by start, whatever order the file lists them in.
+                let mut st: Vec<(String, f32)> = lg
+                    .map(|g| g.map("construction_stages"))
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|(k, v)| {
+                        let from = v
+                            .as_str()
+                            .and_then(|t| super::schema::quantity(t, Unit::Fraction).ok())
+                            .unwrap_or_else(|| {
+                                errors.push(format!("logistics.construction_stages.{k}: not a percentage"));
+                                0.0
+                            });
+                        (k.clone(), from.clamp(0.0, 1.0))
+                    })
+                    .collect();
+                if st.is_empty() {
+                    st = DEFAULT_STAGES.iter().map(|(k, f)| (k.to_string(), *f)).collect();
+                }
+                st.sort_by(|a, b| a.1.total_cmp(&b.1));
+                st
+            },
         })
     }
 }
@@ -386,9 +449,13 @@ pub fn sections() -> Vec<super::schema::Field> {
             "logistics",
             Ty::Struct(vec![
                 f("vessels", Ty::Num, "vessels per supply convoy"),
+                f("cargo_capacity", Ty::Num, "goods one vessel carries; a larger order leaves as several convoys (none: unlimited)"),
                 f("ambush_chance", Ty::Qty(Unit::Fraction), "chance a convoy is attacked on its way"),
                 f("ambush_loss", Ty::Qty(Unit::Fraction), "chance each vessel of an ambushed convoy is lost"),
                 f("survey_attack_chance", Ty::Qty(Unit::Fraction), "chance a survey ship is attacked (25 %)"),
+                f("survey_mission", Ty::Name, "the battle an attacked survey ship fights at the site (none: auto-resolved)"),
+                f("survey_class", Ty::Name, "the survey ship's class in that battle (stands in for its first protected role)"),
+                f("survey_loss", Ty::Qty(Unit::Fraction), "chance an attacked survey ship is lost when not flown (50 %)"),
                 f("survey_speed", Ty::Num, "survey ship speed, map units an hour"),
                 f("convoy_speed", Ty::Num, "convoy speed, map units an hour"),
                 f("ambush_mission", Ty::Name, "the mission flown when the player escorts an ambushed convoy (its cargo: role's surviving share arrives)"),
@@ -402,6 +469,11 @@ pub fn sections() -> Vec<super::schema::Field> {
                         f("setback", Ty::Qty(Unit::Fraction), "a strike not flown sets construction back this share (25 %)"),
                     ]),
                     "enemy strikes on facilities under construction (R-STR-023)",
+                ),
+                f(
+                    "construction_stages",
+                    Ty::Dict(Box::new(Ty::Qty(Unit::Fraction))),
+                    "model-set state: progress it starts at (default build_25: 0%, build_60: 50%, build_90: 80%)",
                 ),
             ]),
             "supply settings",
