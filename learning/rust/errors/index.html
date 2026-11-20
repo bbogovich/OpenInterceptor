@@ -6619,6 +6619,20 @@
 <span class="w">    </span><span class="err">…</span>
 <span class="p">}</span>
 </code></pre></div>
+<p><code>?</code> works on an <code>Option</code> too, in a function that returns an <code>Option</code>: <code>None</code> returns <code>None</code> at
+once. It can even stand alone as a statement, to stop early without using the value
+(<code>Campaign::room</code>, app 0.19.0):</p>
+<div class="highlight"><pre><span></span><code><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">room</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">def</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">StrategyDef</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Option</span><span class="o">&lt;</span><span class="kt">f32</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">cap</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">storage</span><span class="p">(</span><span class="n">def</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">);</span>
+<span class="w">    </span><span class="n">cap</span><span class="o">?</span><span class="p">;</span><span class="w"> </span><span class="c1">// no capacity: no limit, so there is no room to report — return None</span>
+<span class="w">    </span><span class="err">…</span>
+<span class="w">    </span><span class="nb">Some</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">store_free</span><span class="p">(</span><span class="n">def</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">inbound</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Its neighbour <code>store_free</code> returns a plain <code>f32</code>, so it cannot use <code>?</code>; it uses <code>let … else</code>
+with a pattern that matches a tuple, and returns its own value in the <code>else</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="nb">Some</span><span class="p">(</span><span class="n">cap</span><span class="p">),</span><span class="w"> </span><span class="n">used</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">storage</span><span class="p">(</span><span class="n">def</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kt">f32</span><span class="p">::</span><span class="n">MAX</span><span class="w"> </span><span class="p">};</span>
+</code></pre></div>
 <h2 id="collecting-results">Collecting results<a class="headerlink" href="#collecting-results" title="Permanent link">&para;</a></h2>
 <p><code>collect::&lt;Result&lt;Vec&lt;_&gt;, _&gt;&gt;()</code> turns "a list of results" into "a result of a list": the first
 error stops the whole thing. From <code>xmsh::parse_lod</code>:</p>

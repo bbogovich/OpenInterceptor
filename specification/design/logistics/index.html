@@ -6809,8 +6809,8 @@ radar range with the attack roll at launch, demand-driven orders, automatic conv
 vessels along the lanes with the ambush point rolled at launch, and saves — with the keys on
 <a href="../../../modding/strategy/#logistics">Strategy layer › Logistics</a> and the runtime on
 <a href="../../../implementation/architecture/campaign/#logistics">Campaign › Logistics</a>. Differences
-from this design: placement is <strong>fixed rules per role</strong> instead of <code>placement:</code> expressions,
-and the nearest supplier is measured in a straight line (DEV-049); ambushes and attacks on
+from this design: placement is <strong>fixed rules per role</strong> instead of <code>placement:</code> expressions
+(conditions since app 0.19.0, below), and the nearest supplier is measured in a straight line (DEV-049); ambushes and attacks on
 survey ships are <strong>auto-resolved</strong>. Not built yet: flying <code>convoy_ambush</code>, construction stages
 on the map and construction strikes, facility fighter pools and escorts, captured cargo and
 enemy depots, third-party convoys, cargo capacity and facility upgrades. Requirement statuses:
@@ -6823,6 +6823,24 @@ R-STR-012 – R-STR-027.</p>
 aboard. The supply vessel is the cargo clipper with twelve cargo pods and a point-defence
 laser as modules; grappler tugs with saucer escorts tear pods off and capture them. Captured
 cargo is lost to the player but not yet stored at an enemy depot (5.11).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.19.0, main <code>c28fc2c</code>): placement conditions and storage</p>
+<p><strong>Placement is built as designed</strong>: <code>facility_types.&lt;id&gt;.placement</code> is a campaign condition
+in which <code>system</code> names the candidate system and <code>nearest_base</code> the system of the player's
+base fewest lane jumps from it; <code>any</code> stands for any resource (<code>deposit(system, any)</code>, the
+richest deposit's rate) or any site (<code>research_site(system, any)</code>). A type without
+<code>placement:</code> follows its role's rule, itself a condition (<code>Role::default_placement</code>) — the
+mining and research rules are this design's own, and manufacturing's is
+<code>bases &gt; 0 and lane_distance(system, nearest_base) &lt;= 2</code> (the design's <code>owned(system) and …</code>
+would refuse every system without a base or facility in it). The design's
+<code>max_per_system: 1</code> is fixed in the engine (one facility of each type per system), not a
+key. Base types gained the same <code>placement:</code> (with the new query <code>base_distance(system)</code>),
+replacing <code>max_distance</code>. <strong>Storage</strong> now limits every facility: a manufacturing center or
+research station orders only what fits, and a recipe starts only when its output fits.
+Still different from this design: the nearest supplier is measured in a straight line
+(DEV-049); the survey's per-facility <strong>suitability</strong> is shown on the Supply list's <em>Build</em>
+rows (with the refusal's reason), not in the survey report (Batch 4.2).</p>
 </div>
 <h2 id="what-the-player-does">What the player does<a class="headerlink" href="#what-the-player-does" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
@@ -7316,6 +7334,11 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 <td>1.15.0</td>
 <td>2026-11-11</td>
 <td>As-built note (app 0.9.2): flown convoy ambushes (<code>ambush_mission</code>), the supply vessel with cargo pods and a point-defence laser, tugs and escorts; depots still not built</td>
+</tr>
+<tr>
+<td>1.21.0</td>
+<td>2026-11-20</td>
+<td>As-built note (app 0.19.0): <code>placement:</code> conditions built (with <code>system</code>, <code>nearest_base</code>, <code>any</code>; the roles' default rules as conditions; base types too, <code>base_distance</code>) and storage at every facility; DEV-049's placement part closed, the straight-line supplier remains</td>
 </tr>
 </tbody>
 </table>

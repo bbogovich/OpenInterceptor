@@ -6509,6 +6509,24 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>c28fc2c</code> (app 0.19.0, Batch 4.1)</strong> five more, so <strong>443</strong> run on macOS by the gate's
+run: <code>campaign::tests::stores_hold_deliveries_and_output_to_their_capacity</code> (a purchase counts
+what is on its way; manufacture waits for room, unpaid; a delivery that finds no room is held,
+announced once, and stored after a repair), <code>wrecked_modules_lose_what_they_held_until_repaired</code>
+(a wrecked bay loses both craft, their pilots injured; a wrecked bunk kills one pilot; repair at
+half cost and half build time; a wreck dismantled for nothing),
+<code>templates_take_the_best_module_and_placement_decides_where</code> (a template's <code>sensor</code> group gives
+the radar, then the better radar once researched; <code>base_distance(system) &lt;= 3500</code> refuses the far
+system), <code>a_whole_base_is_dismantled_with_its_craft_and_stock_moved</code> (the last base refused; craft
+rehoused, stock moved, a delivery redirected, a raid's target cleared, the refund paid), and
+<code>campaign::logistics::tests::placement_conditions_and_storage_limit_facilities</code> (a plant allowed
+only in a nebula; a role's default rule parsed as a condition; a plant with 12 units of room never
+holds more and orders nothing beyond it, yet builds three rockets in small shipments).
+<strong>Extended:</strong> <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code> (a wrecked
+module and a held delivery round-trip), <code>campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code>
+(no store above its capacity), <code>script::campaign::tests::ids_match_and_names_are_checked</code>
+(<code>base_distance</code>), and <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>
+(the refusal now reads <em>does not suit</em>).</p>
 <p><strong>At main <code>3ea5177</code> (app 0.18.1)</strong> one more: <code>content::tests::evaluation_texts_are_resolved</code> (the 0.18.1 regression: <code>@keys</code> in evaluations' <code>do</code> lists resolved), so <strong>438</strong> run on macOS (441 <code>#[test]</code> functions less the Linux-only test and two ignored helpers). App 0.16.15 (<code>00c7da5</code>) added no test function; the default campaign's six-month test now also asserts that its evaluations reach the strategy layer.</p>
 <p><strong>At main <code>5d05ba2</code> (app 0.18.0)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
 build) gives <strong>437</strong> run on macOS (440 less the Linux-only test and two ignored helpers). The 29
@@ -6818,17 +6836,17 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <tr>
 <td><code>script::campaign</code></td>
 <td>1</td>
-<td>Query ids match the table (29 queries since app 0.16.3); campaign ids and level names are constants; a misspelt name is an error</td>
+<td>Query ids match the table (29 queries since app 0.16.3, 30 with <code>base_distance</code> since 0.19.0); campaign ids and level names are constants; a misspelt name is an error</td>
 </tr>
 <tr>
 <td><code>campaign</code></td>
-<td>18</td>
-<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong>; <strong>the default campaign runs a year with its story and stays consistent</strong> (app 0.10.3); <strong>generated maps</strong> are spaced, named in order then numbered, seeded and end in a hidden black hole (0.16.2); <strong><code>requires_any</code> and hidden topics</strong> wait for one prerequisite and for <code>discover</code> (0.16.6); <strong>pilots train</strong> up to their stats' maximum at a daily cost, <strong>and can be dismissed</strong> (0.16.7); <strong>the monthly evaluation</strong> rates the month with the first rating that holds and runs its actions (0.16.8); <strong>quarters limit the roster</strong> and modules can be <strong>dismantled</strong> for a refund (0.16.10); <strong>queues reorder and cancel</strong>, and <strong>deliveries can be lost</strong> (0.16.11)</td>
+<td>22</td>
+<td>A new campaign has its start; research follows prerequisites and unlocks and stops at completion; modules, limits, bases (one per system), purchases, deliveries, manufacture and selling; monthly money flows and costs; raids detected, intercepted and fought; same seed same campaign; <strong>the default campaign runs six months</strong> (solvent, research, battles, a save round trip); fitting from the store and the loadout; lane routes (Dijkstra); <strong>the testbed cheats</strong> (payday, quickbase, knowitall, jump to battle); <strong>manufacture paid per unit as it starts, and salvage recorded by raid id</strong>; <strong>the default campaign runs a year with its story and stays consistent</strong> (app 0.10.3); <strong>generated maps</strong> are spaced, named in order then numbered, seeded and end in a hidden black hole (0.16.2); <strong><code>requires_any</code> and hidden topics</strong> wait for one prerequisite and for <code>discover</code> (0.16.6); <strong>pilots train</strong> up to their stats' maximum at a daily cost, <strong>and can be dismissed</strong> (0.16.7); <strong>the monthly evaluation</strong> rates the month with the first rating that holds and runs its actions (0.16.8); <strong>quarters limit the roster</strong> and modules can be <strong>dismantled</strong> for a refund (0.16.10); <strong>queues reorder and cancel</strong>, and <strong>deliveries can be lost</strong> (0.16.11); <strong>stores hold deliveries and output to their capacity</strong>, <strong>wrecked modules lose what they held until repaired</strong>, <strong>templates take the best module and placement decides where</strong>, and <strong>a whole base is dismantled with its craft and stock moved</strong> (0.19.0)</td>
 </tr>
 <tr>
 <td><code>campaign::logistics</code></td>
-<td>6</td>
-<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met); <strong>an ambushed convoy waits for its escort and delivers the share that got through</strong> (app 0.9.2); <strong>the logistics queries</strong> (<code>deposit</code> known only once surveyed, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code> along lanes, <code>facility_progress</code>, <code>construction_attacks</code> — 0.16.3); <strong>outcomes capture prizes and lose facilities safely</strong> (<code>captured(&lt;class&gt;)</code> kept only with <code>capture</code>; <code>lose(&lt;facility type&gt;)</code> renumbers the other facility's orders — 0.16.3); <strong>construction sites are struck from halfway, at most <code>max</code> times</strong>, a strike not flown sets the build back and a lost defence destroys the site (0.16.4)</td>
+<td>7</td>
+<td><strong>Survey, build, mine, make and deliver on demand</strong> (a mine refused before the survey, a station refused off a site; a hull built once its plating arrives; a reserve drawn down); <strong>station research waits for its start materials, and convoys lose vessels</strong> (every convoy ambushed at 50 % loss; orders follow until the start cost is met); <strong>an ambushed convoy waits for its escort and delivers the share that got through</strong> (app 0.9.2); <strong>the logistics queries</strong> (<code>deposit</code> known only once surveyed, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code> along lanes, <code>facility_progress</code>, <code>construction_attacks</code> — 0.16.3); <strong>outcomes capture prizes and lose facilities safely</strong> (<code>captured(&lt;class&gt;)</code> kept only with <code>capture</code>; <code>lose(&lt;facility type&gt;)</code> renumbers the other facility's orders — 0.16.3); <strong>construction sites are struck from halfway, at most <code>max</code> times</strong>, a strike not flown sets the build back and a lost defence destroys the site (0.16.4); <strong>placement conditions and storage limit facilities</strong> (0.19.0)</td>
 </tr>
 <tr>
 <td><code>campaign::story</code></td>
@@ -6838,7 +6856,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <tr>
 <td><code>campaign::save</code></td>
 <td>1</td>
-<td>A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused; a save from another version of a loaded pack loads with a notice (app 0.16.2)</td>
+<td>A save round-trips and the game continues identically; a save needing a missing pack, or with an index out of range, is refused; a save from another version of a loaded pack loads with a notice (app 0.16.2); wrecked modules and held deliveries round-trip (0.19.0)</td>
 </tr>
 <tr>
 <td><code>formats::smacker</code></td>

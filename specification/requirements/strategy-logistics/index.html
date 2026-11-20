@@ -7126,7 +7126,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-006-bases">R-STR-006 Bases</a></td>
-<td>Planned (partly met)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-007-ships-and-equipment">R-STR-007 Ships and equipment</a></td>
@@ -7158,7 +7158,7 @@
 </tr>
 <tr>
 <td><a href="#r-str-014-extraction-and-recipes">R-STR-014 Extraction and recipes</a></td>
-<td>Planned (partly met)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-str-015-government-supply-ships">R-STR-015 Government supply ships</a></td>
@@ -7277,8 +7277,8 @@
 <p><em>Rationale:</em> The original's economy, as data.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.9.0, 0.16.10 – 0.16.11, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>, <code>1bc200e</code>, <code>6821147</code>)</li>
-<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>queues_reorder_and_cancel_and_deliveries_can_be_lost</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>; <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>; MT-4-06, MT-4-15, MT-4-19, MT-4-46, MT-4-47</li>
+<li>Status: planned — partly met (app 0.7.0 – 0.9.0, 0.16.10 – 0.16.11, 0.19.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>c64d178</code>, <code>ff9d8fc</code>, <code>1bc200e</code>, <code>6821147</code>, <code>c28fc2c</code>); only markets per seller remain (Stage 5, #46)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>money_flows_monthly_with_costs</code>, <code>queues_reorder_and_cancel_and_deliveries_can_be_lost</code>, <code>manufacture_is_paid_per_unit_and_salvage_names_the_raid_by_id</code>, <code>the_default_campaign_runs_six_months</code>, <code>stores_hold_deliveries_and_output_to_their_capacity</code>, <code>the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code> (no store above its capacity, app 0.19.0); <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code> (a held delivery); <code>script::campaign::tests::ids_match_and_names_are_checked</code>; <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code>; MT-4-06, MT-4-15, MT-4-19, MT-4-46, MT-4-47, MT-4-50, MT-4-54</li>
 <li>See: <a href="../../../modding/strategy/#items-and-hulls">Strategy layer › items and hulls</a>, <a href="../../../modding/strategy/#incomes-and-expenses">incomes and expenses</a></li>
 </ul>
 <div class="admonition note">
@@ -7291,11 +7291,15 @@
 </div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: markets per seller; storage enforced on deliveries, manufacture and salvage (only purchases are checked).</p>
+<p>Not built: markets per seller (moved to Stage 5 with relations, #46; decision D4). Storage is enforced everywhere since app 0.19.0 (below).</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.16.10 – 0.16.11, main <code>1bc200e</code>, <code>6821147</code>)</p>
 <p><strong>Prioritised queues</strong>: a queued job moves up one place (<code>Campaign::raise_job</code>; the Factory list's <em>Move up</em>) and is cancelled (<code>cancel_job</code>: a job not yet started goes without cost, a started one keeps only its paid unit). <strong>Delivery losses</strong>: <code>economy.delivery_loss</code> (default 0 %) rolls each arriving purchase; a lost one is paid all the same and reported. <strong>Storage</strong>: a base's working <code>storage</code> modules give its store a capacity in item <code>size</code>s, and a purchase that does not fit is refused — when no module in the campaign has <code>storage</code> there is no limit (DEV-058).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.19.0, main <code>c28fc2c</code>): storage everywhere</p>
+<p>A base's store limit (its type's hub <code>storage</code> plus working <code>storage</code> modules, since 0.16.15 only at a base type with hub <code>storage</code>) is kept wherever an item enters the store (#24). <code>Campaign::room</code> — capacity less stock, the deliveries on their way (held ones too) and the item being made — refuses a <strong>purchase</strong> that does not fit (<em>no room in store: n of m used, k more on its way</em>). <strong>Manufacture</strong> of an item waits, unpaid, until its output has room. A <strong>delivery</strong> that finds no room stores what fits and waits at the base for the rest (<code>Delivery::held</code>, saved; announced once, retried every hour, its loss roll not repeated). Salvage and prizes are not store items. <code>Campaign::over_capacity</code> lists any store above its limit; <code>--strategy-soak</code> checks it daily and the year-long default test asserts it is empty. The default campaign has a hub store of 120 and a supply depot (+150); the <code>interceptor</code> base type sets no hub <code>storage</code>, so its <code>cargo</code> modules limit nothing (the original's capacity is unknown).</p>
 </div>
 <h3 id="r-str-005-research">R-STR-005 Research<a class="headerlink" href="#r-str-005-research" title="Permanent link">&para;</a></h3>
 <p>Research MUST support the download and labs models, discovery by prerequisites, salvage and capture, and unlocks.</p>
@@ -7327,8 +7331,8 @@
 <p><em>Rationale:</em> The original's bases.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-002-economy-research-and-bases">F-STR-002</a></li>
-<li>Status: planned — partly met (app 0.7.0 – 0.7.1, 0.16.10, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>1bc200e</code>)</li>
-<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>a_new_campaign_has_its_start</code>, <code>quarters_limit_the_roster_and_modules_can_be_dismantled</code>; MT-4-06, MT-4-46</li>
+<li>Status: implemented (app 0.7.0 – 0.7.1, 0.16.10, 0.19.0, main <code>77d6c9f</code>, <code>10f7fce</code>, <code>1bc200e</code>, <code>c28fc2c</code>); the 3D base view is screen work (R-STR-010, R-UI-011, 6.9 #101)</li>
+<li>Verified by: <code>campaign::tests::modules_bases_purchases_and_manufacture</code>, <code>a_new_campaign_has_its_start</code>, <code>quarters_limit_the_roster_and_modules_can_be_dismantled</code>, <code>wrecked_modules_lose_what_they_held_until_repaired</code>, <code>templates_take_the_best_module_and_placement_decides_where</code>, <code>a_whole_base_is_dismantled_with_its_craft_and_stock_moved</code>; <code>campaign::save::tests::a_save_round_trips_and_refuses_missing_packs</code> (a wreck); MT-4-06, MT-4-46, MT-4-51, MT-4-52, MT-4-53</li>
 <li>See: <a href="../../../modding/strategy/#base_modules-and-base_types">Strategy layer › base_modules and base_types</a></li>
 </ul>
 <div class="admonition note">
@@ -7336,12 +7340,16 @@
 <p><code>base_types</code> (cost, build time, <code>max_bases</code>, <code>limits</code> per module group, <code>template</code>, the hub's <code>sensor_range</code>, <code>hangar</code> and <code>quarters</code>, <code>max_distance</code> placement) and <code>base_modules</code> (group, cost, build time, maintenance, <code>effects</code>, <code>requires</code>). One base per system. A module is under construction until its build time has passed (it does not count or take effect until then); the screen shows <em>building, n days</em> or <em>working</em>. Effects acted on: <code>production_rate</code>, <code>sensor_range</code>, <code>hangar</code>; <code>research_rate</code> is available to the research-rate expression through <code>module_count</code>. An unopposed raid destroys the target base's newest finished module.</p>
 </div>
 <div class="admonition question">
-<p class="admonition-title">Open</p>
-<p>Not built: <code>on_destroyed</code> consequences (losing craft, pilots or stock); repair; placement expressions; base-type templates of "best available" modules; the 3D base view. Dismantling does not check what the module housed (craft over a hangar's room, pilots over the quarters).</p>
+<p class="admonition-title">Open (closed in app 0.19.0)</p>
+<p>Closed: <code>on_destroyed</code> consequences, repair, placement expressions and best-available templates are built in app 0.19.0 (below); dismantling checks what a module houses since 0.16.15 (craft, pilots) and 0.19.0 (stock). The 3D base view is screen work: R-STR-010 and R-UI-011 (6.9, #101).</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.16.10, main <code>1bc200e</code>): effects and dismantling</p>
 <p><strong><code>quarters</code></strong> limits the pilots the player keeps (every base type's and <code>quarters</code> module's room together; none anywhere: no limit); <strong><code>storage</code></strong> limits a base's purchases (R-STR-004); <strong><code>defence</code></strong>: each point turns away 15 % of unopposed raids on its base on its own, 1 − 0.85^points (DEV-058); <strong><code>income</code></strong> stays a tag that <code>incomes:</code> formulas count with <code>module_count</code>. <strong>Dismantling</strong>: <code>Campaign::dismantle_module</code> removes a module and refunds <code>economy.dismantle</code> (50 %) of its cost; on the screen it — like dismissing a pilot — runs only from its own button, never on Enter or a double click (#26).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.19.0, main <code>c28fc2c</code>): the base lifecycle and placement</p>
+<p><strong>Wrecks</strong>: an unopposed raid wrecks the base's newest working module (<code>ModuleInst::wrecked</code>, saved) instead of removing it; a wreck has no effects and no maintenance but keeps its slot. <strong>Destruction consequences</strong>: <code>base_modules.&lt;id&gt;.on_destroyed: [craft, pilots, stock]</code> loses what no longer has room — craft at home beyond the hangar room (their pilots eject, injured), living pilots beyond the quarters (those without a craft first), stock beyond the store — with one notice. <strong>Repair</strong>: <code>Campaign::repair_module</code> costs <code>economy.repair</code> (50 %) of the module's cost and takes that share of its build time; a wreck is dismantled for nothing. <strong>Dismantling a whole base</strong> (<code>Campaign::dismantle_base</code>, the Build list's <em>Dismantle base</em>): refused for the last base and when its quarters house pilots with nowhere else to sleep; refunds <code>economy.dismantle</code> of the hub and working modules; craft rehoused nearest first or sold; stock moved or sold; deliveries, convoys and the components store redirected to the nearest base; every base index renumbered. <strong>Templates</strong> may name a module group: the costliest module of it available when the base is ordered (<code>Campaign::template_modules</code>). <strong>Placement</strong>: <code>base_types.&lt;id&gt;.placement</code> is a campaign condition over the candidate <code>system</code> (<code>base_distance(system) &lt;= 3500</code>), replacing <code>max_distance</code>; facilities likewise (R-STR-014, DEV-049).</p>
 </div>
 <h3 id="r-str-007-ships-and-equipment">R-STR-007 Ships and equipment<a class="headerlink" href="#r-str-007-ships-and-equipment" title="Permanent link">&para;</a></h3>
 <p>Hulls, items, slots and fitting rules, power draw and stock designs MUST be data; craft MUST be bought or manufactured.</p>
@@ -7491,8 +7499,8 @@
 <p><em>Rationale:</em> Production follows supply.</p>
 <ul>
 <li>Implements: <a href="../../../definition/strategy-logistics/#f-str-005-supply-chain-logistics">F-STR-005</a></li>
-<li>Status: planned — partly met (app 0.9.0, main <code>ff9d8fc</code>)</li>
-<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code> (a reserve drawn down; a recipe run on delivered inputs); MT-4-15</li>
+<li>Status: implemented (app 0.9.0, 0.19.0, main <code>ff9d8fc</code>, <code>c28fc2c</code>)</li>
+<li>Verified by: <code>campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand</code> (a reserve drawn down; a recipe run on delivered inputs), <code>placement_conditions_and_storage_limit_facilities</code> (a plant's store never above its 12 units; nothing ordered beyond room; three rockets built in small shipments); <code>campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code>; MT-4-15, MT-4-53</li>
 <li>See: <a href="../../../modding/strategy/#recipes">Strategy layer › recipes</a>, <a href="../../../modding/strategy/#facility_types">facility_types</a></li>
 </ul>
 <div class="admonition note">
@@ -7500,8 +7508,12 @@
 <p>A mining facility adds <code>rate</code> / 24 of each deposit of its system every hour, limited by the room left in its store (<code>storage</code>) and by the deposit's reserve (<code>unlimited</code> by default). A manufacturing center starts a recipe on a free line (<code>lines</code>) only when all inputs are in its store, uses them at the start, and adds <code>output</code> to the store after <code>time</code>; it starts runs only for orders it must fill.</p>
 </div>
 <div class="admonition question">
-<p class="admonition-title">Open</p>
-<p><code>storage</code> is enforced for <strong>mining facilities only</strong>: a manufacturing center's and a research station's store has no limit yet.</p>
+<p class="admonition-title">Open (closed in app 0.19.0)</p>
+<p>Until app 0.19.0 <code>storage</code> was enforced for mining facilities only.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.19.0, main <code>c28fc2c</code>): storage at every facility; placement conditions</p>
+<p>Every facility keeps its type's <code>storage</code> (#34). <code>Campaign::facility_room</code> is the <code>storage</code> less the goods in store, the open orders and convoys bound for the facility and the output of its running recipes; <code>Campaign::want</code> orders no more than that for a manufacturing center or research station, and a recipe starts only when its output fits once its inputs are used — so storage stops production when full, and a large order is filled in smaller shipments. <strong>Placement</strong> (#34, DEV-049's placement part): <code>facility_types.&lt;id&gt;.placement</code> is a campaign condition over the candidate <code>system</code>; without it each role's default rule, written as a condition (<code>Role::default_placement</code>: mining <code>survey_known(system) and deposit(system, any) &gt; 0</code>, research <code>survey_known(system) and research_site(system, any)</code>, manufacturing <code>bases &gt; 0 and lane_distance(system, nearest_base) &lt;= 2</code>). <code>Campaign::facility_allowed</code> checks it (at most one facility of a type per system still holds) and refuses with <em>&lt;system&gt; does not suit a &lt;facility&gt;</em>, adding <em>(not surveyed yet)</em> when that is the likely reason.</p>
 </div>
 <h3 id="r-str-015-government-supply-ships">R-STR-015 Government supply ships<a class="headerlink" href="#r-str-015-government-supply-ships" title="Permanent link">&para;</a></h3>
 <p>When an order's cargo is ready, supply ships MUST be dispatched automatically along the fixed lanes; they are provided by the government and the player MUST NOT buy or manage them.</p>
@@ -7724,6 +7736,11 @@
 <td>1.19.0</td>
 <td>2026-11-12</td>
 <td>R-STR-010 Open note: separate screens are now specified by the new <a href="../interface/">Strategy interface</a> area (R-UI-001 – R-UI-040); this screen becomes the testbed layout (R-UI-018). No requirement text changed</td>
+</tr>
+<tr>
+<td>1.21.0</td>
+<td>2026-11-20</td>
+<td>Batch 4.1 as built (app 0.19.0, main <code>c28fc2c</code>): R-STR-006 implemented (wrecks and <code>on_destroyed</code>, repair, dismantling a whole base, best-available templates, <code>placement:</code> conditions; the 3D base view left to R-STR-010 / R-UI-011) and R-STR-014 implemented (storage at every facility); R-STR-004 As-built note (storage on purchases, manufacture and deliveries; held deliveries) with only markets per seller open; Open notes closed; Verified-by lines gain the new unit tests and MT-4-50 – MT-4-54. No requirement wording changed</td>
 </tr>
 </tbody>
 </table>

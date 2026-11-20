@@ -6611,7 +6611,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-4-strategy/">4 Strategy layer</a></td>
-<td><strong>In progress</strong> — MD1 formations in <strong>0.6.6</strong>; the campaign context in <strong>0.6.7</strong>; strategy data, the campaign runtime and saves in <strong>0.7.0</strong>; the default campaign's strategy layer and the strategy screen in <strong>0.7.1</strong>; fitting in <strong>0.7.2</strong>; lane travel in <strong>0.7.3</strong>; the <code>interceptor</code> strategy layer in <strong>0.8.0</strong>; testbed cheats in <strong>0.8.1</strong>; logistics in <strong>0.9.0</strong>; playtest changes (nebula, bulbous fighters, dreadnought) in <strong>0.9.1</strong>; flown supply-convoy battles in <strong>0.9.2</strong>; fitted shields and armour and <code>--balance</code> in <strong>0.15.0</strong>; the strategy screen rebuilt for the mouse in <strong>0.16.0</strong>; the issue-audit gaps in <strong>0.16.1 – 0.16.14</strong> (default shields and armour, logistics conditions and outcomes, construction strikes, <code>requires_any</code> and hidden topics, training, evaluations and the Reports list, base effects and dismantling, queue priorities and delivery losses, auto-resolve, save slots); fixes from the docs review in <strong>0.16.15</strong>; evaluation and plan texts as text keys in <strong>0.18.1</strong>; issue hygiene (Batch 4.0, 2026-11-20). 4.1, 4.9 and 4.11 done; 4.10 done as the functional screen (leftovers in 6.9); 4.15 done except depots and capture (Stage 5, #46); 4.12 done as derived (not play-tested); 4.2 – 4.8, 4.13, 4.14, 4.16, 4.17 partial</td>
+<td><strong>In progress</strong> — MD1 formations in <strong>0.6.6</strong>; the campaign context in <strong>0.6.7</strong>; strategy data, the campaign runtime and saves in <strong>0.7.0</strong>; the default campaign's strategy layer and the strategy screen in <strong>0.7.1</strong>; fitting in <strong>0.7.2</strong>; lane travel in <strong>0.7.3</strong>; the <code>interceptor</code> strategy layer in <strong>0.8.0</strong>; testbed cheats in <strong>0.8.1</strong>; logistics in <strong>0.9.0</strong>; playtest changes (nebula, bulbous fighters, dreadnought) in <strong>0.9.1</strong>; flown supply-convoy battles in <strong>0.9.2</strong>; fitted shields and armour and <code>--balance</code> in <strong>0.15.0</strong>; the strategy screen rebuilt for the mouse in <strong>0.16.0</strong>; the issue-audit gaps in <strong>0.16.1 – 0.16.14</strong> (default shields and armour, logistics conditions and outcomes, construction strikes, <code>requires_any</code> and hidden topics, training, evaluations and the Reports list, base effects and dismantling, queue priorities and delivery losses, auto-resolve, save slots); fixes from the docs review in <strong>0.16.15</strong>; evaluation and plan texts as text keys in <strong>0.18.1</strong>; issue hygiene (Batch 4.0, 2026-11-20); bases and economy completeness (Batch 4.1: storage everywhere, wrecks and repair, dismantling a base, best-available templates, placement conditions) in <strong>0.19.0</strong>. 4.1, 4.6, 4.9 and 4.11 done; 4.4 done except markets per seller (Stage 5, #46); 4.10 done as the functional screen (leftovers in 6.9); 4.15 done except depots and capture (Stage 5, #46); 4.12 done as derived (not play-tested); 4.2, 4.3, 4.5, 4.7, 4.8, 4.13, 4.14, 4.16, 4.17 partial</td>
 <td>See <a href="#stage-4-progress">Stage 4 progress</a> below</td>
 </tr>
 <tr>
@@ -7164,15 +7164,26 @@ cheats), <strong>0.9.0</strong> (<code>ff9d8fc</code>, logistics and two fixes),
 the <code>image</code> crate), <strong>0.9.1</strong> (<code>3b19dea</code>, playtest changes) and <strong>0.9.2</strong> (<code>0d1c522</code>, <code>146195b</code>,
 flown supply-convoy battles), <strong>0.15.0</strong> (<code>1ff754b</code>, durability: fitted shields and armour,
 <code>--balance</code>) and <strong>0.16.0</strong> (<code>ac7ae62</code>, the strategy screen rebuilt), then the issue-audit gaps <strong>0.16.1 –
-0.16.14</strong> (<code>f82a6ab</code> … <code>de30c2a</code>, below). At <code>2ed1149</code>, <strong>355 unit
+0.16.14</strong> (<code>f82a6ab</code> … <code>de30c2a</code>, below), and Batch 4.1 in <strong>0.19.0</strong> (<code>c28fc2c</code>). At <code>2ed1149</code>, <strong>355 unit
 tests</strong> on macOS by a count of the sources; at <code>76bda5c</code> (app 0.10.3), <strong>366</strong>; at <code>ac7ae62</code> (app
-0.16.0), <strong>394</strong>; at <code>de30c2a</code> (app 0.16.14), <strong>408</strong>; at <code>3ea5177</code> (app 0.18.1), <strong>438</strong> (<a href="../testing/unit-tests/">Unit tests</a>).</p>
+0.16.0), <strong>394</strong>; at <code>de30c2a</code> (app 0.16.14), <strong>408</strong>; at <code>3ea5177</code> (app 0.18.1), <strong>438</strong>; at
+<code>c28fc2c</code> (app 0.19.0), <strong>443</strong> by the gate's run (<a href="../testing/unit-tests/">Unit tests</a>).</p>
 <p><strong>Issue hygiene</strong> (<a href="../plan/stage-4-strategy/#batch-40-issue-hygiene-small-do-first-can-share-a-session-with-41">Batch 4.0</a>,
 2026-11-20, no code change): #29 (4.9) closed — X-COM evaluation rules → #45, the finances screen → #106;</p>
 <h1 id="35-415-closed-depots-and-captured-cargo-stage-5-46-30-410-closed-as-the-functional">35 (4.15) closed — depots and captured cargo → Stage 5, #46; #30 (4.10) closed as the functional<a class="headerlink" href="#35-415-closed-depots-and-captured-cargo-stage-5-46-30-410-closed-as-the-functional" title="Permanent link">&para;</a></h1>
 <p>screen — its leftovers are the 6.9 issues #98 – #108 and #111, strategy text keys Batch 4.5; #37
 renamed <em>4.17 Supply convoy cargo capacity (R-STR-026)</em>, its supply-traffic view moved to #99;
 stale notes corrected on #22, #27 and #36.</p>
+<p><strong>Bases and economy completeness</strong> (<a href="../plan/stage-4-strategy/#batch-41-bases-and-economy-completeness-m-no-blockers">Batch 4.1</a>,
+app <strong>0.19.0</strong>, main <code>c28fc2c</code>; #24, #26, #34; R-STR-004, R-STR-006, R-STR-014): the store limit
+holds on purchases (counting what is on its way), manufactured items and deliveries (held at the
+base until there is room), and at every facility; raids wreck modules (<code>on_destroyed</code> losses,
+repair, a wreck dismantled for nothing); a whole base can be dismantled; templates may name a
+module group; <code>placement:</code> conditions for base types (replacing <code>max_distance</code>) and facility
+types (the roles' defaults as conditions), with <code>base_distance</code> and the reserved names
+<code>system</code>, <code>nearest_base</code>, <code>any</code>. The default campaign gains a hub store of 120 and a supply
+depot. <code>--strategy-soak 180</code> at <code>c28fc2c</code>: <code>default</code> 14 of 16 topics, 47 battles, every store
+within its capacity; <code>interceptor</code> 4 of 71 topics, 1 battle, every store within its capacity.</p>
 <table>
 <thead>
 <tr>
@@ -7188,8 +7199,8 @@ stale notes corrected on #22, #27 and #36.</p>
 <td><code>src/content/formation.rs</code>, <code>src/mission/mod.rs</code>, <code>src/sim/ai.rs</code>, <code>rules/formations.yaml</code></td>
 </tr>
 <tr>
-<td>Campaign context (<code>script::campaign</code>, 16 queries, every id a checked constant; the story's 5 in 0.10.0; the eight logistics queries <code>deposit</code>, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code>, <code>facility_progress</code>, <code>construction_attacks</code> in 0.16.3 — R-MOD-014)</td>
-<td><strong>Done</strong> (0.6.7, 0.16.3; MT-4-49 not yet run)</td>
+<td>Campaign context (<code>script::campaign</code>, 16 queries, every id a checked constant; the story's 5 in 0.10.0; the eight logistics queries <code>deposit</code>, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code>, <code>facility_progress</code>, <code>construction_attacks</code> in 0.16.3 — R-MOD-014; <code>base_distance</code> and the reserved names <code>system</code>, <code>nearest_base</code>, <code>any</code> in 0.19.0)</td>
+<td><strong>Done</strong> (0.6.7, 0.16.3, 0.19.0; MT-4-49 not yet run)</td>
 <td><code>src/script/campaign.rs</code></td>
 </tr>
 <tr>
@@ -7274,7 +7285,7 @@ stale notes corrected on #22, #27 and #36.</p>
 </tr>
 <tr>
 <td>Base effects and dismantling (0.16.10, #26): <code>quarters</code> limits the roster, <code>storage</code> limits purchases (item sizes), <code>defence</code> turns away 1 − 0.85^points of unopposed raids; <code>Campaign::dismantle_module</code> refunding <code>economy.dismantle</code> (50 %); destructive actions only from their buttons (<code>Row::default_act</code>)</td>
-<td><strong>Done</strong> (MT-4-46 not yet run); see the known issue below on <code>storage</code></td>
+<td><strong>Done</strong> (MT-4-46 not yet run); <code>storage</code> everywhere since 0.19.0 (below)</td>
 <td><code>src/campaign/mod.rs</code>, <code>src/app/strategy.rs</code></td>
 </tr>
 <tr>
@@ -7298,6 +7309,11 @@ stale notes corrected on #22, #27 and #36.</p>
 <td><code>src/content/mod.rs</code></td>
 </tr>
 <tr>
+<td>Bases and economy completeness (0.19.0, <code>c28fc2c</code>, Batch 4.1; #24, #26, #34): storage on purchases (<code>Campaign::room</code> counts deliveries on their way), manufacture (an item waits, unpaid, for room) and deliveries (<code>Delivery::held</code>, saved); <code>facility_room</code> at every facility (orders and recipe runs wait for room); <code>Campaign::over_capacity</code>, checked daily by <code>--strategy-soak</code> and by the year-long test; wrecks (<code>ModuleInst::wrecked</code>, saved) with <code>on_destroyed: [craft, pilots, stock]</code>, <code>repair_module</code> (<code>economy.repair</code>), a wreck dismantled for nothing, <code>dismantle_module</code> refusing a store module in use; <code>dismantle_base</code>; template module groups (<code>template_modules</code>); <code>placement:</code> on base and facility types (<code>placement_ok</code>, <code>Role::default_placement</code>, <code>base_distance</code>, <code>RESERVED</code>); the Build list's <em>Repair</em> and <em>Dismantle base</em>; data: the default hub store 120, the supply depot, <code>on_destroyed</code> on the hangar and quarters, the <code>sensor</code> group in the template, the manufacturing center's placement written out; <code>interceptor</code> placement within 9000, the downlink, shield and sensor groups in the template (<em>derived</em>), <code>on_destroyed</code> on hangar, personnel and cargo</td>
+<td><strong>Done</strong> (MT-4-50 – MT-4-54 not yet run)</td>
+<td><code>src/campaign/mod.rs</code>, <code>src/campaign/logistics.rs</code>, <code>src/campaign/save.rs</code>, <code>src/content/strategy.rs</code>, <code>src/content/logistics.rs</code>, <code>src/script/campaign.rs</code>, <code>src/app/strategy.rs</code>, <code>src/main.rs</code>, <code>resources/default/strategy/</code>, <code>packs/interceptor/strategy/campaign.yaml</code></td>
+</tr>
+<tr>
 <td>Lane travel (4.2)</td>
 <td><strong>Done</strong> (0.7.3; MT-4-11 not yet run)</td>
 <td><code>src/campaign/mod.rs</code>, <code>src/app/strategy.rs</code></td>
@@ -7313,7 +7329,7 @@ stale notes corrected on #22, #27 and #36.</p>
 <td><code>src/content/logistics.rs</code>, <code>resources/default/strategy/logistics.yaml</code></td>
 </tr>
 <tr>
-<td>Logistics runtime (4.14 – 4.16): surveys, placement rules, construction, mining, recipes, demand-driven orders, convoys with ambush rolls (auto-resolved), station research</td>
+<td>Logistics runtime (4.14 – 4.16): surveys, placement (conditions since 0.19.0), construction, mining, recipes, demand-driven orders, convoys with ambush rolls (auto-resolved), station research; storage at every facility (0.19.0)</td>
 <td><strong>Partial</strong> (0.9.0; MT-4-13 – MT-4-18 not yet run): fighter pools, construction stages, depots, cargo capacity, upgrades open (flown ambushes since 0.9.2, construction strikes since 0.16.4)</td>
 <td><code>src/campaign/logistics.rs</code></td>
 </tr>
@@ -7339,30 +7355,33 @@ stale notes corrected on #22, #27 and #36.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Gaps</strong> (recorded honestly, at main <code>76bda5c</code>, updated at <code>de30c2a</code>): captured cargo goes
+<p><strong>Gaps</strong> (recorded honestly, at main <code>76bda5c</code>, updated at <code>de30c2a</code> and <code>c28fc2c</code>): captured cargo goes
 nowhere (<code>cargo_captured</code> is only recorded; no enemy depots); not built: facility fighter pools
-and escorts, construction stages, enemy supply depots, third-party convoys, facility upgrades, the
-design's <code>placement:</code> expressions (fixed rules per role instead, DEV-049); the Supply tab is
+and escorts, construction stages, enemy supply depots, third-party convoys, facility upgrades;
+the nearest supplier is measured in a straight line (DEV-049); the Supply tab is
 plain; no unit test round-trips a save with logistics in flight. Not built either: choosing
 items slot by slot, fitting rules, power draw, stock designs; bravery and stat effects in battle;
-<code>on_destroyed</code> consequences and repair of bases; markets per seller; endurance and stranding.
+markets per seller; endurance and stranding.
 Texts in the strategy files are plain English (DEV-047; Batch 4.5). The screen's leftovers
 (separate screens per list, the 3D base view, the briefing, the supply-traffic view) are 6.9
 work since #30 closed on 2026-11-20. Closed since <code>76bda5c</code>: construction strikes
 (0.16.4), save pack versions compared (0.16.2), generated maps tested (0.16.2), the outcome
 actions <code>relation</code> (0.12.1), <code>capture</code>, <code>lose</code> and cargo (0.16.3), a report screen (the Reports
-list, 0.16.8), the module doc (0.16.1), pilot stats in the Hangar (0.16.15).</p>
-<p><strong>Known issues</strong> (found reading the code at <code>de30c2a</code>, updated at <code>3ea5177</code>; not yet confirmed by a run): the
-store-capacity bug (an <code>interceptor</code> base without a <code>cargo</code> module could buy nothing) is fixed in
-0.16.15, but neither campaign gives its base types hub <code>storage</code>, so <strong>no base has a store limit</strong>
-now and the <code>interceptor</code> <code>cargo</code> module's <code>storage</code> effect does nothing; the
+list, 0.16.8), the module doc (0.16.1), pilot stats in the Hangar (0.16.15), and in 0.19.0
+<code>placement:</code> conditions, <code>on_destroyed</code>, repair, dismantling a base, best-available templates and
+storage on deliveries, manufacture and facilities.</p>
+<p><strong>Known issues</strong> (found reading the code at <code>de30c2a</code>, updated at <code>3ea5177</code> and <code>c28fc2c</code>; not yet confirmed by a run): the
+default campaign has a store limit since 0.19.0 (a hub store of 120 and the supply depot), but
+the <code>interceptor</code> base type still sets no hub <code>storage</code>, so its <code>cargo</code> modules limit nothing —
+the original hub's cargo capacity is unknown, an open fidelity item; the
 <code>lose(construction_site)</code> outcome of the default <code>construction_defence</code> names no facility type,
 so it is only logged (the strike's own result destroys the site); auto-resolve rates each craft
 by its hull's class, not its fitted items, and a lost auto-resolve does not hurt craft or
 pilots.</p>
 <p><strong>Exit</strong> of Stage 4 (both campaigns run 6 months; save/load round trips; a manual long run): both
-strategy layers run six months headless (<code>--strategy-soak 180</code>: <code>default</code> 12 of 14 topics,
-<code>interceptor</code> 4 of 71), and the default campaign's run is a unit test with a save round trip
+strategy layers run six months headless (<code>--strategy-soak 180</code> at <code>c28fc2c</code>: <code>default</code> 14 of 16
+topics and 47 battles, <code>interceptor</code> 4 of 71 and 1 battle, every store within its capacity in
+both), and the default campaign's run is a unit test with a save round trip
 (<code>the_default_campaign_runs_six_months</code>). Outstanding: the manual long run, the <code>interceptor</code>
 play-test and balance, and the open items above.</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>

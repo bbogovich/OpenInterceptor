@@ -5506,6 +5506,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ties-max_by-keeps-the-last-min_by-the-first-srccampaignmodrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ties: max_by keeps the last, min_by the first — src/campaign/mod.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#returning-an-iterator-impl-iterator-srccontentpackrs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6497,6 +6508,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ties-max_by-keeps-the-last-min_by-the-first-srccampaignmodrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ties: max_by keeps the last, min_by the first — src/campaign/mod.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#returning-an-iterator-impl-iterator-srccontentpackrs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6578,6 +6600,29 @@ written (here <code>self</code>). The collision mesh for a station is just
 <p>Compare with a hand-written loop: same speed, but the intent ("hostile, minimum distance") is
 in the code's shape. <code>total_cmp</code> gives floats a total order (floats have no <code>Ord</code> because of
 NaN).</p>
+<h2 id="ties-max_by-keeps-the-last-min_by-the-first-srccampaignmodrs">Ties: <code>max_by</code> keeps the last, <code>min_by</code> the first — <code>src/campaign/mod.rs</code><a class="headerlink" href="#ties-max_by-keeps-the-last-min_by-the-first-srccampaignmodrs" title="Permanent link">&para;</a></h2>
+<p>A base type's <code>template</code> may name a module <strong>group</strong>; the base then gets the best module of that
+group available now — the costliest (app 0.19.0):</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="n">best</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">def</span><span class="p">.</span><span class="n">modules</span><span class="p">.</span><span class="n">len</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|&amp;</span><span class="n">m</span><span class="o">|</span><span class="w"> </span><span class="n">def</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">m</span><span class="p">].</span><span class="n">group</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">*</span><span class="n">entry</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="o">|&amp;</span><span class="n">m</span><span class="o">|</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">available</span><span class="p">(</span><span class="n">def</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="fm">format!</span><span class="p">(</span><span class="s">"modules.{}"</span><span class="p">,</span><span class="w"> </span><span class="n">def</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">m</span><span class="p">].</span><span class="n">id</span><span class="p">)))</span>
+<span class="w">    </span><span class="c1">// `max_by` keeps the last of equals: a later (newer) module wins a tie.</span>
+<span class="w">    </span><span class="p">.</span><span class="n">max_by</span><span class="p">(</span><span class="o">|&amp;</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="o">|</span><span class="w"> </span><span class="n">def</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">a</span><span class="p">].</span><span class="n">cost</span><span class="p">.</span><span class="n">total_cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">def</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">b</span><span class="p">].</span><span class="n">cost</span><span class="p">));</span>
+<span class="n">out</span><span class="p">.</span><span class="n">extend</span><span class="p">(</span><span class="n">best</span><span class="p">);</span>
+</code></pre></div>
+<p>When two elements compare equal, the standard library is precise about which one you get:
+<code>max_by</code> (and <code>max</code>, <code>max_by_key</code>) returns the <strong>last</strong> of the equal maxima, <code>min_by</code> (and
+<code>min</code>, <code>min_by_key</code>) the <strong>first</strong> of the equal minima. The code relies on it: two sensor
+modules of the same price give the one written later in the data, which is usually the newer
+one. A hand-written loop with <code>&gt;</code> instead of <code>&gt;=</code> would silently pick the other. When a tie
+must be broken by something else, say so with <code>Ordering::then</code> instead of relying on the
+order — <code>Campaign::nearest_base_system</code> compares lane jumps first and straight-line distance
+second:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// simplified: `hops` and `dist` are small closures in the real code</span>
+<span class="p">.</span><span class="n">min_by</span><span class="p">(</span><span class="o">|&amp;</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="o">|</span><span class="w"> </span><span class="n">hops</span><span class="p">(</span><span class="n">a</span><span class="p">).</span><span class="n">cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hops</span><span class="p">(</span><span class="n">b</span><span class="p">)).</span><span class="n">then</span><span class="p">(</span><span class="n">dist</span><span class="p">(</span><span class="n">a</span><span class="p">).</span><span class="n">total_cmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dist</span><span class="p">(</span><span class="n">b</span><span class="p">))))</span>
+</code></pre></div>
+<p><code>out.extend(best)</code> works because an <code>Option</code> is itself iterable — zero or one item — so no
+<code>if let</code> is needed to push "the best one, if there is one".</p>
 <h2 id="returning-an-iterator-impl-iterator-srccontentpackrs">Returning an iterator: <code>impl Iterator</code> — <code>src/content/pack.rs</code><a class="headerlink" href="#returning-an-iterator-impl-iterator-srccontentpackrs" title="Permanent link">&para;</a></h2>
 <p>A pack must load after its <code>parent</code> and after every pack it <code>depends</code> on. Two places need "the
 packs this one needs", so it is one small function — and it returns an <em>iterator</em>, not a

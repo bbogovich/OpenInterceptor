@@ -7296,7 +7296,12 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 (<a href="../strategy/#logistics">Strategy layer › Logistics</a>). New strategy keys in app 0.8.0:
 <code>start.money_from</code>, <code>economy.cost_scale</code>, <code>economy.module_time</code>, and the original's numeric
 <code>prereq1</code> – <code>prereq3</code>, <code>tech_required</code>, <code>tech_required2</code> read through <code>tech_ids</code>
-(<a href="../strategy/#tech_ids"><code>tech_ids</code></a>); in app 0.9.2 <code>logistics.ambush_mission</code>. The <strong>story
+(<a href="../strategy/#tech_ids"><code>tech_ids</code></a>); in app 0.9.2 <code>logistics.ambush_mission</code>; in app 0.19.0
+<code>base_modules.&lt;id&gt;.on_destroyed</code>, <code>base_types.&lt;id&gt;.placement</code> (replacing the removed
+<code>max_distance</code> — a breaking change for mods), <code>facility_types.&lt;id&gt;.placement</code>, module <strong>groups</strong>
+in <code>base_types.&lt;id&gt;.template</code>, and <code>economy.repair</code>, with the campaign query <code>base_distance</code> and
+the reserved names <code>system</code>, <code>nearest_base</code> and <code>any</code>
+(<a href="../strategy/#bases-storage-wrecks-and-placement">Strategy layer › Bases: storage, wrecks and placement</a>). The <strong>story
 layer</strong> (app 0.10.0) adds the definitions <code>events</code>, <code>arcs</code>, <code>plans</code>, <code>endings</code>,
 <code>encyclopaedia</code> and the globals <code>relations</code>, <code>strategist</code>, <code>campaign_end</code>, by convention in
 <code>strategy/story.yaml</code> — every key is on <a href="../story/">Story layer</a>. All of them are in the editor
