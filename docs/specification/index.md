@@ -1,7 +1,7 @@
 ---
-spec_version: 1.19.0
+spec_version: 1.21.0
 status: current
-updated: 2026-11-12
+updated: 2026-11-20
 ---
 
 # Specification
@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's original data (an
   installed copy or the CD).
 
-Specification version **1.20.0** (257 requirements). Changes are listed in the
+Specification version **1.21.0** (257 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -95,3 +95,4 @@ Facts carry verified / derived / unknown marks.
 | 1.18.0 | 2026-11-11 | 217 requirements: the issue-audit gaps as built (app 0.16.1 – 0.16.14): R-STR-009, R-STR-019 and R-STR-023 implemented (evaluations and the Reports list; construction strikes, #19); R-MOD-014 implemented (the eight logistics queries, #8); R-MOD-041 implemented (captions as text keys); R-TST-009 implemented (the condition console, #20); As-built notes on R-STR-003 – R-STR-008, R-STR-010, R-STR-011, R-STR-019 (auto-resolve, queue priorities, delivery losses, storage, capture, `requires_any` and hidden topics, base effects and dismantling, default shields and armour, training, new prompts, pack versions compared, save slots), R-CPN-010 – R-CPN-012 (the ending screen, layout backgrounds, Load game, Full screen and Controls, the `good` and `bad` stingers, skipping by gamepad), R-MOD-045 and R-TST-010 (the event debugger, start-at-chapter); R-CPN-009 (a stance change from a mission announced), R-STR-002, R-STR-020, R-STR-021 Open notes narrowed |
 | 1.19.0 | 2026-11-12 | 257 requirements: new area *Strategy interface* (user request) — R-UI-001 – R-UI-040, the original-style multi-screen strategy interface (screen sets, the engine screen catalogue, navigation and dialogs, the widget catalogue, keyboard and gamepad navigation, scaling, text, validation, the testbed layout as a second layout, partial sets, `interceptor` fidelity and art by reference, the default campaign's set, and each screen and dialog), all planned (plan item 6.9); *Format: interface, text and media* gains *Screen sets*; R-CPN-011 and R-STR-010 Open notes point to it |
 | 1.20.0 | 2026-11-20 | 257 requirements: Stage 3 complete (app 0.18.0): R-MOD-015 implemented — the user chose (c) on 2026-11-20 and the Tier 2 statement language is built, with an As-built note; R-FLT-012 extended with terrain detail textures and decorative scatter, its Open note closed. *Format: behaviours and scripting* gains the language as built (grammar, hooks, rules); *Format: missions* and *Mod structure* as-built notes (`.ois`, DEV-061) |
+| 1.21.0 | 2026-11-20 | 257 requirements: Stage 4 Batch 4.1 as built (app 0.19.0): R-STR-006 (bases: wrecks and `on_destroyed`, repair, dismantling a whole base, best-available templates, `placement:` conditions) and R-STR-014 (storage at every facility) implemented; R-STR-004 As-built note (storage on purchases, manufacture and deliveries), only markets per seller open; R-MOD-014 As-built note (`base_distance`, reserved names); *Logistics* design as-built note (placement conditions, DEV-049's placement part closed). No requirement wording changed |

@@ -1357,6 +1357,11 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-47 | Factory queue: Move up and Cancel; delivery losses | Strategy screen, Factory and Market (default + a test addon) | not run | | | App 0.16.11; #24 |
 | MT-4-48 | Auto-resolve an interception | Strategy screen (default) | not run | | | App 0.16.12; #23 |
 | MT-4-49 | Logistics conditions in the Debug list | Strategy screen (default + a test addon) | not run | | | App 0.16.3; #8, R-MOD-014 |
+| MT-4-50 | A delivery held for room in the store | Strategy screen, Build and Market (default) | not run | | | App 0.19.0; #24, R-STR-004 |
+| MT-4-51 | A wrecked module: losses, Repair and Dismantle | Strategy screen, Build and Hangar (default) | not run | | | App 0.19.0; #26, R-STR-006 |
+| MT-4-52 | Dismantle a whole base | Strategy screen, Bases and Build (default) | not run | | | App 0.19.0; #26, R-STR-006 |
+| MT-4-53 | Placement: a base and a facility refused, with the reason | Strategy screen, Bases and Supply (default) | not run | | | App 0.19.0; #26, #34, R-STR-006, R-STR-014 |
+| MT-4-54 | The Build list's store line and the supply depot | Strategy screen, Build (default) | not run | | | App 0.19.0; #24, R-STR-004 |
 
 ## Stage 4 cases
 
@@ -1721,7 +1726,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 |---|---|
 | Preconditions | App 0.16.10 or later. A new default campaign; Ctrl+M. |
 | Steps | 1. Bases list: read the rows under the Gatehouse. 2. Hangar: hire a recruit. 3. Build › *Crew quarters*; Ctrl+B; hire again until refused. 4. Bases list: select a module row; press Enter and double-click it; then press *Dismantle*. 5. Build two *Ray batteries* (Ctrl+B) and let several raids reach the Gatehouse unopposed (*Break off*). 6. Market: buy many items. |
-| Expected | 1: each module row has *Dismantle*; a line *Quarters: room for 4 pilots*. 2: refused with *no quarters: room for 4 pilots* (the four starting pilots fill it). 3: *room for 10 pilots*; hiring works until ten living pilots. 4: Enter and the double click do nothing; *Dismantle* removes the module and logs *Gatehouse: <module> dismantled (<half its cost> back)*. 5: about one raid in four on the Gatehouse is driven off — *<place>'s defences drove the raid off* — and loses nothing; the others destroy the newest finished module as before. 6: no store limit (the default campaign has no storage modules). |
+| Expected | 1: each module row has *Dismantle*; a line *Quarters: room for 4 pilots*. 2: refused with *no quarters: room for 4 pilots* (the four starting pilots fill it). 3: *room for 10 pilots*; hiring works until ten living pilots. 4: Enter and the double click do nothing; *Dismantle* removes the module and logs *Gatehouse: <module> dismantled (<half its cost> back)*. 5: about one raid in four on the Gatehouse is driven off — *<place>'s defences drove the raid off* — and loses nothing; the others destroy the newest finished module (since app 0.19.0 they wreck it: MT-4-51). 6: no store limit (the default campaign has no storage modules; since app 0.19.0 it has a store of 120: MT-4-54). |
 
 ### MT-4-47 — Factory queue: Move up and Cancel; delivery losses
 
@@ -1746,6 +1751,46 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App 0.16.13 or later. A test addon `mods/default-queries/` (`pack.yaml`: `kind: addon`, `targets: [default]`) with `strategy/story.yaml`: `events:` `q_survey: {when: survey_known(ajax), chance: 0%, do: ["news(q)"]}`, `q_deposit: {when: deposit(ajax, cosmium) > 5, …}`, `q_feature: {when: feature(nebula_haven, nebula) and research_site(nebula_haven, nebula_lab), …}`, `q_owned: {when: owned(ajax), …}`, `q_lanes: {when: lane_distance(mercury_gate, vesta_reach) == 2, …}`, `q_building: {when: facility_progress(ajax) < 1, …}`, `q_strikes: {when: construction_attacks(ajax) >= 1, …}` (each with `chance: 0%` and the same `do`). |
 | Steps | 1. A new default campaign; Ctrl+D; read the `q_` rows. 2. Survey Ajax; read again. 3. Build a mining facility at Ajax; read. 4. After a strike on it (MT-4-41); read. 5. When it is finished; read. 6. Change `ajax` to `atlantis` in one condition and run `--check`. |
 | Expected | 1: `q_feature` and `q_lanes` *condition holds*, the others *false*; all *fired 0*. 2: `q_survey` and `q_deposit` hold. 3: `q_owned` and `q_building` hold. 4: `q_strikes` holds. 5: `q_building` false again. 6: an error naming the unknown name `atlantis`. |
+
+### MT-4-50 — A delivery held for room in the store
+
+| Field | |
+|---|---|
+| Preconditions | App 0.19.0 or later. A new default campaign; Ctrl+M three times (funds for the purchases). |
+| Steps | 1. Build › *Supply depot*; Ctrl+B; read the Build list's *Store* line. 2. Market: press *Buy 5* on the Blaster row 22 times (110 blasters on their way). 3. At once, before they arrive: Build list › select the Supply depot row › *Dismantle*; read the *Store* line. 4. Run at *1h* until the deliveries arrive (48 hours). 5. Market: *Buy 1* blaster. 6. Market: *Sell 1* on the Blaster row six times; run one more hour; read the Build list and Messages. |
+| Expected | 1: *Store: 14 of 270 used* (the opening stock, 14.4; the hub's 120 and the depot's 150). 2: every purchase accepted. 3: *Gatehouse: Supply depot dismantled (75000 back)*; *Store: 14 of 120 used* (dismantling is allowed: the stock fits without the depot, and what is on its way is not stock yet). 4: the clock stops **once** with a report *Gatehouse: no room in store for 5 x Blaster; it waits until there is*; the store reads *119 of 120 used*. 5: refused in the yellow line: *no room in store: 119 of 120 used, 5 more on its way* (the held delivery counts). 6: an hour later the five blasters are stored without another report (*Store: 118 of 120 used*). |
+
+### MT-4-51 — A wrecked module: losses, Repair and Dismantle
+
+| Field | |
+|---|---|
+| Preconditions | App 0.19.0 or later. A new default campaign; Ctrl+M. |
+| Steps | 1. Build › *Crew quarters*; Ctrl+B. Hangar: hire all five recruits (nine pilots; the Build list's *Quarters: room for 12 pilots*). 2. Run at *1d*; never intercept (break off any interception prompt) until a raid reaches the Gatehouse unopposed and the clock stops. 3. Read the report, the Build list and the Hangar's pilots. 4. Select the wrecked row; press *Repair*; note the funds and read the row. 5. Run 3.5 days; read. 6. Let another raid wreck a module; select its row and press *Dismantle*. 7. Save to a slot, load it, and read the Build list. |
+| Expected | 3: a report *Gatehouse: Crew quarters wrecked; lost: &lt;three names&gt;* — the newest working module is the quarters, so room falls from 12 to 6 and the three newest pilots without a craft die; the Build list shows *Crew quarters: wrecked (repair 60,000)* with *Repair* and *Dismantle*, and *Quarters: room for 6 pilots*. 4: funds fall by 60 000; the row reads *Crew quarters: building, 3.5 days*. 5: *Gatehouse: Crew quarters is complete*; room for 12 pilots again. 6: *Gatehouse: &lt;module&gt; dismantled (0 back)* — a wreck brings nothing back. 7: a wreck still shows as wrecked after loading. |
+
+### MT-4-52 — Dismantle a whole base
+
+| Field | |
+|---|---|
+| Preconditions | App 0.19.0 or later. A new default campaign; Ctrl+M twice. |
+| Steps | 1. Build list: look for a *the whole base* row. 2. Map: select Ajax; Bases › *Build a Guard base at Ajax*; Ctrl+B. 3. With the Gatehouse current: Market › Blaster *Buy 5*. 4. Build list: select *Gatehouse: the whole base*; press Enter, then double-click it. 5. Press *Dismantle base*. 6. Read the Bases list, the Hangar, Messages and, after 48 hours, Ajax Station's *Store* line. 7. Build list of Ajax Station: look for *the whole base* again. |
+| Expected | 1: none — the last base cannot be dismantled. 2: *Ajax Station* is built (Ajax is about 2 400 units from Mercury Gate, within the Guard base's 3 500). 4: Enter and the double click do nothing. 5: *Gatehouse dismantled (1250000 back)* — half of the hub's 1 800 000 and of its hangar, radar and laboratory. 6: one base, Ajax Station; the three Comets are at Ajax Station (its hangar holds five); the opening stock is in Ajax Station's store, and the five blasters bought for the Gatehouse arrive there. 7: no such row (one base left). |
+
+### MT-4-53 — Placement: a base and a facility refused, with the reason
+
+| Field | |
+|---|---|
+| Preconditions | App 0.19.0 or later. A new default campaign; Ctrl+M. |
+| Steps | 1. Map: select Vesta Reach; Bases › *Build a Guard base at Vesta Reach*. 2. Map: select Tycho Drift; open the Supply list; read the *Build* rows and the info panel's buttons; press the *Manufacturing center* row's button. 3. Select Ajax; Supply. 4. *Survey Ajax from Gatehouse*; run until the survey report; Supply again. 5. Select Mercury Gate; Supply. |
+| Expected | 1: refused in the yellow line, *A Guard base base cannot be built at Vesta Reach* (it is about 4 400 units from the Gatehouse, beyond `base_distance(system) <= 3500`; the doubled word is the engine's wording at app 0.19.0). 2: each row ends with its reason — *(Tycho Drift does not suit a Mining facility (not surveyed yet))*, the same for the Research station and the Manufacturing center (three lanes from the Gatehouse; the hint about the survey is added for any unsurveyed system); the info panel offers no *Build* button; the button answers with the same reason. 3: the Manufacturing center has no reason (one lane); the Mining facility and Research station say *(not surveyed yet)*. 4: the Mining facility is allowed (Ajax has iron and cosmium); the Research station says *Ajax does not suit a Research station* (Ajax is no research site). 5: Mining facility allowed only after a survey; Manufacturing center allowed (the base's own system). |
+
+### MT-4-54 — The Build list's store line and the supply depot
+
+| Field | |
+|---|---|
+| Preconditions | App 0.19.0 or later. A new default campaign; Ctrl+M. |
+| Steps | 1. Build list: read the *Store* line and the *Supply depot* row. 2. Build › *Supply depot*; read the *Store* line while it is building. 3. Ctrl+B; read. 4. Build a second; Ctrl+B; read. 5. Try a third. 6. Dismantle one depot; read. |
+| Expected | 1: *Store: 14 of 120 used*; *Supply depot - 150,000, 7 days (storage)*. 2: *Supply depot: building, 7.0 days*; still *of 120* (a module adds room only once it works). 3: *of 270*. 4: *of 420*. 5: refused, *Gatehouse already has the most storage modules it can hold (2)*. 6: *Supply depot dismantled (75000 back)*; *of 270*. |
 
 ## Stage 5 results
 

@@ -36,6 +36,26 @@ pub fn parse(data: &[u8]) -> FResult<XmshMesh> {
 }
 ```
 
+`?` works on an `Option` too, in a function that returns an `Option`: `None` returns `None` at
+once. It can even stand alone as a statement, to stop early without using the value
+(`Campaign::room`, app 0.19.0):
+
+```rust
+pub fn room(&self, def: &StrategyDef, base: usize) -> Option<f32> {
+    let (cap, _) = self.storage(def, base);
+    cap?; // no capacity: no limit, so there is no room to report — return None
+    …
+    Some(self.store_free(def, base) - inbound)
+}
+```
+
+Its neighbour `store_free` returns a plain `f32`, so it cannot use `?`; it uses `let … else`
+with a pattern that matches a tuple, and returns its own value in the `else`:
+
+```rust
+let (Some(cap), used) = self.storage(def, base) else { return f32::MAX };
+```
+
 ## Collecting results
 
 `collect::<Result<Vec<_>, _>>()` turns "a list of results" into "a result of a list": the first

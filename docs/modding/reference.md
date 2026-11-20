@@ -51,7 +51,12 @@ systems' `deposits` and `features`, hulls' `components`, topics' `lab`, `site` a
 ([Strategy layer › Logistics](strategy.md#logistics)). New strategy keys in app 0.8.0:
 `start.money_from`, `economy.cost_scale`, `economy.module_time`, and the original's numeric
 `prereq1` – `prereq3`, `tech_required`, `tech_required2` read through `tech_ids`
-([`tech_ids`](strategy.md#tech_ids)); in app 0.9.2 `logistics.ambush_mission`. The **story
+([`tech_ids`](strategy.md#tech_ids)); in app 0.9.2 `logistics.ambush_mission`; in app 0.19.0
+`base_modules.<id>.on_destroyed`, `base_types.<id>.placement` (replacing the removed
+`max_distance` — a breaking change for mods), `facility_types.<id>.placement`, module **groups**
+in `base_types.<id>.template`, and `economy.repair`, with the campaign query `base_distance` and
+the reserved names `system`, `nearest_base` and `any`
+([Strategy layer › Bases: storage, wrecks and placement](strategy.md#bases-storage-wrecks-and-placement)). The **story
 layer** (app 0.10.0) adds the definitions `events`, `arcs`, `plans`, `endings`,
 `encyclopaedia` and the globals `relations`, `strategist`, `campaign_end`, by convention in
 `strategy/story.yaml` — every key is on [Story layer](story.md). All of them are in the editor

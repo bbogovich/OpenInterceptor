@@ -260,7 +260,8 @@ pack's `text/`, or `@orig.KEY` from the player's original language files.
 Story conditions — `when`, `start_when`, `campaign_end` and `unlock` — use the
 [campaign context](strategy.md#expressions-the-campaign-context), including its logistics
 queries (`deposit`, `feature`, `research_site`, `survey_known`, `owned`, `lane_distance`,
-`facility_progress`, `construction_attacks`; app 0.16.3), with five more queries:
+`facility_progress`, `construction_attacks`; app 0.16.3) and `base_distance` (app 0.19.0), with
+five more queries:
 
 | Query | Result | Meaning |
 |---|---|---|

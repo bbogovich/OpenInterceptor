@@ -46,7 +46,7 @@ across packs like any other definitions: an addon may add a research topic, `inh
 
 - **Times** — `build_time`, `every`, `delivery` — take a time unit: `10d` (days, new in app
   0.6.7 for every time quantity), `36h`, `90min`; a plain number is hours in the strategy layer.
-- **Map units** — positions, `speed`, `sensor_range`, `max_distance` — are the map's own units;
+- **Map units** — positions, `speed`, `sensor_range`, `base_distance(…)` — are the map's own units;
   `unit_ly` says how many light years one is (for display). `speed` is map units per hour.
 - **Money** is a plain number. `upkeep`, `maintenance` and `salary` are per month (720 hours).
   `economy.cost_scale` multiplies every item, hull and module cost, sell price, upkeep and
@@ -90,9 +90,19 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `lane_distance(a, b)` | number | Jumps along the map's lanes from `a` to `b` (breadth-first; each lane one jump); 0 for the same system, −1 when no route exists; on a map without lanes every pair is 1 apart. |
 | `facility_progress(s)` | number | The construction progress (0..1) of the least finished facility in system `s`; 1 when none is building (also when there is none). |
 | `construction_attacks(s)` | number | [Construction strikes](#construction-strikes) suffered by the facilities built in system `s`. |
+| `base_distance(s)` | number | Map units from system `s` to the player's nearest base, in a straight line; 1 000 000 000 with no base (app 0.19.0). |
 
 Systems are named by their map id (`ajax`, `nebula_haven`) and are checked names like everything
 else, as are resource ids, feature tags and research-site ids (app 0.16.3).
+
+**Reserved names** (app 0.19.0). Three words have a meaning of their own as a system query's
+argument and are in every campaign's name table, so a modder should not use them as ids:
+
+| Name | Meaning |
+|---|---|
+| `system` | In a [`placement:`](#where-a-base-or-facility-may-be-built) condition, the candidate system being asked about. Elsewhere it names no system, and the query answers 0 (false). |
+| `nearest_base` | In a `placement:` condition, the system of the player's base fewest lane jumps from the candidate (ties, and systems no lane reaches, by straight-line distance). With no base it names no system. |
+| `any` | As `deposit`'s resource: the richest deposit's rate (`deposit(system, any) > 0`: the system has a deposit). As `research_site`'s site: any research site (`research_site(system, any)`). |
 
 ```text
 research(ion_rays) and research(saucer_hulls)
@@ -100,6 +110,7 @@ research(ion_rays) and research(saucer_hulls)
 400000 + 60000 * bases + month_score * 200
 survey_known(nebula_haven) and deposit(nebula_haven, dilithium) > 10
 owned(ajax) and lane_distance(mercury_gate, tycho_drift) <= 3
+base_distance(system) <= 3500                      # a placement: condition
 ```
 
 ## Sections
@@ -214,6 +225,7 @@ says so.
 | `maintenance` | number | 0 | Per month. |
 | `effects` | mapping name: number | none | Campaign quantities it adds while working: `research_rate`, `production_rate`, `sensor_range`, `hangar` (craft housed), `quarters` (pilots housed), `storage` (store capacity, in item `size`s), `defence` (points), `income`. |
 | `requires` | condition | none | Available only while this holds. |
+| `on_destroyed` | list of `craft`, `pilots`, `stock` | none | What is lost with it when a raid wrecks it (app 0.19.0; [Wrecks and repair](#wrecks-and-repair)). Another word is a load error. |
 
 As built, the engine reads `production_rate` (manufacturing), `sensor_range` (detection and
 revealing hidden systems) and `hangar` (craft a base houses). `research_rate` is a number the
@@ -223,20 +235,23 @@ revealing hidden systems) and `hangar` (craft a base houses). `research_rate` is
   working `quarters` module, all bases together. Hiring is refused at the limit (*no quarters:
   room for n pilots*). A campaign that gives no quarters anywhere has no limit.
 - **`storage`**: a base's store capacity, counted in item `size`s — its base type's hub
-  `storage` plus its working `storage` modules; buying more than fits is refused (*no room in
-  store: …*). Since app 0.16.15 only a base type with hub `storage` above 0 has a limit; at any
-  other base there is none, and its `storage` modules add nothing. (In 0.16.10 – 0.16.14 one
-  `storage` module anywhere in the campaign limited every base, so an `interceptor` base without
-  a `cargo` module could buy nothing.) Deliveries, manufacture and salvage are not checked.
+  `storage` plus its working `storage` modules. Since app 0.16.15 only a base type with hub
+  `storage` above 0 has a limit; at any other base there is none, and its `storage` modules add
+  nothing. (In 0.16.10 – 0.16.14 one `storage` module anywhere in the campaign limited every
+  base, so an `interceptor` base without a `cargo` module could buy nothing.) What the limit
+  does is under [Storage](#storage) below.
 - **`defence`**: each point of a base's working modules' defence turns away 15 % of unopposed
   raids on that base on its own — 1 − 0.85^points in all (two points: 28 %, four: 48 %). A raid
   turned away is reported and destroys nothing.
 - **`income`** stays a tag: an `incomes:` formula counts the modules with `module_count`.
 
-**Dismantling** (app 0.16.10): any module of a base can be dismantled from the Bases list; it is
+**Dismantling** (app 0.16.10): any module of a base can be dismantled from the Build list; it is
 removed at once and `economy.dismantle` of its `cost` (50 %) is refunded. Since app 0.16.15 a
 `hangar` or `quarters` module is refused when the craft or pilots it houses would have nowhere to
-go (*… houses craft that would have nowhere to go*).
+go (*… houses craft that would have nowhere to go*), and since app 0.19.0 a `storage` module
+whose stock would have nowhere to go (*… holds stock that would have nowhere to go*). A wrecked
+module is cleared for nothing; a module still building, or a wreck, houses nothing, so it is
+never refused. A whole base can be dismantled too ([below](#dismantling-a-whole-base)).
 
 `base_types: {<id>: …}` — kinds of base.
 
@@ -247,11 +262,39 @@ go (*… houses craft that would have nowhere to go*).
 | `build_time` | time | 168 h | Time to build the hub and its template modules; the base is under construction until then. |
 | `max_bases` | number | 8 | The most bases of this type. |
 | `limits` | mapping group: count | none | The most modules of each group. |
-| `template` | ids | none | Modules a new base comes with. |
+| `template` | ids | none | Modules a new base comes with. An entry names a module, or (app 0.19.0) a module **group**: then the best module of that group available when the base is ordered — the costliest whose `requires` holds, the later one in the file on a tie — and nothing while none is. A starting base's template is taken at the start, with the start's research known. |
 | `sensor_range` | number | 0 | The hub's own sensor range, map units (modules add to it). |
 | `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. The default Guard base houses 6 pilots (4 before app 0.16.15, which the opening crew filled). |
 | `storage` | number | 0 | The hub's store capacity in item `size`s (app 0.16.15). 0: no store limit at bases of this type; above 0, its `storage` modules add to it. |
-| `max_distance` | number | 0 | A new base must be within this many map units of one of yours (0 = anywhere). |
+| `placement` | condition | none (anywhere) | Where a base of this type may be built: a condition over the candidate `system` (app 0.19.0; [below](#where-a-base-or-facility-may-be-built)). `base_distance(system) <= 3500` is "within 3500 map units of one of your bases". |
+
+!!! warning "Breaking change in app 0.19.0: `max_distance` is gone"
+    `base_types.<id>.max_distance` was removed in app 0.19.0; `placement:` replaces it. A mod
+    that still sets `max_distance: 3500` gets *`base_types.<id>.max_distance: unknown key`* when
+    the content loads and from `--check`, and the value is ignored — its bases may then be built
+    **anywhere**. Write
+    `placement: base_distance(system) <= 3500` instead (`max_distance: 0`, "anywhere", needs no
+    `placement:`).
+
+Both campaigns' base types since app 0.19.0:
+
+```yaml
+base_modules:
+  supply_depot: {name: Supply depot, group: storage, cost: 150000, build_time: 7d, maintenance: 3000,
+                 effects: {storage: 150}, on_destroyed: [stock]}
+
+base_types:
+  guard_base:                                   # the default campaign
+    storage: 120                                # the hub's store, in item sizes
+    placement: base_distance(system) <= 3500
+    limits: {…, storage: 2}                     # at most two supply depots
+    template: [hangar, sensor, laboratory]      # sensor: a group — the deep radar once known
+```
+
+The `interceptor` base type sets `placement: base_distance(system) <= 9000` (1.5 light years)
+and `template: [beam_defense_laser, beam_defense_laser, downlink, shield, sensor]` — the best
+downlink, shield and sensor available (*derived* from the guide). It sets no hub `storage`, so
+its `cargo` modules limit nothing: the original hub's own cargo room is unknown.
 
 ### `raids`
 
@@ -340,7 +383,8 @@ sets them (`set_flag(x)` names in mission outcomes are added automatically).
 |---|---|---|---|
 | `delivery` | time | 48 h | Time for a purchase to arrive. |
 | `delivery_loss` | fraction | 0 % | Chance that a purchase is lost on the way (app 0.16.11): it is paid for all the same, and a notice says so. |
-| `dismantle` | fraction | 50 % | The share of a module's `cost` refunded when it is dismantled (app 0.16.10). |
+| `dismantle` | fraction | 50 % | The share of a module's `cost` refunded when it is dismantled (app 0.16.10); since app 0.19.0 also of a whole base's hub and working modules, and of the hulls of craft sold when it is dismantled. |
+| `repair` | fraction | 50 % | The share of a wrecked module's `cost` paid, and of its `build_time` taken, to repair it (app 0.19.0). |
 | `salvage_per_kill` | number | 0 | Money per enemy destroyed when an outcome says `salvage`. |
 | `cost_scale` | number | 1 | Multiplies every item and hull `cost`, `sell_price`, hull `upkeep` and module `cost` and `maintenance` (app 0.8.0). The `interceptor` campaign sets 1000: the original's money is in thousands. |
 | `module_time` | `days` | — | Modules without `build_time` take their `prod_time` in days (app 0.8.0; the original's module times are days). |
@@ -372,11 +416,12 @@ prerequisites by **number**. A topic's `prereq1` – `prereq3`, and an item's, h
 - **Training** (app 0.16.7): every hour each ready pilot in training gains `training.gain` / 24
   in every stat and the campaign pays `training.cost` / 24.
 - **Bases.** A new base is built in a system that has none, at most `max_bases` of a type,
-  within `max_distance` of one of yours; it comes with its `template` modules and is finished
+  where its type's `placement:` holds; it comes with its `template` modules and is finished
   after `build_time`. A module is refused beyond its group's limit or while not available.
 - **Buying** pays now and delivers to the current base after `economy.delivery` — unless the
-  base's store is full ([`storage`](#base_modules-and-base_types)), and with the chance
-  `economy.delivery_loss` the delivery is lost. **Selling** takes one item from the current
+  base's store has no room for it, counting what is already on its way
+  ([Storage](#storage)) — and with the chance `economy.delivery_loss` the delivery is lost.
+  **Selling** takes one item from the current
   base's store at `sell_price`. **Manufacture** queues at the base; finished units go into its
   store (hulls become craft there). The player can move a queued job up one place and cancel a
   job: a job not yet started goes without cost, a job at work keeps only the unit already paid
@@ -393,6 +438,137 @@ prerequisites by **number**. A topic's `prereq1` – `prereq3`, and an item's, h
   (`items.blaster` ↔ `beams.blaster`); ids with no such weapon are skipped, and with no beams
   fitted the class keeps its own. The refit changes only that battle's copy of the rules
   (wingmen of the same class fly it too).
+
+## Bases: storage, wrecks and placement
+
+*App 0.19.0, plan items 4.4, 4.6 and 4.14 (Batch 4.1).*
+
+### Storage
+
+A base's store holds items up to its capacity in item `size`s: the base type's hub `storage`
+plus its working `storage` modules (no hub `storage`: no limit). The **Build** list shows
+*Store: n of m used* for a base with a limit. Since app 0.19.0 the limit is kept everywhere an
+item enters the store:
+
+- **Purchases** count what is already on its way. A purchase is refused when the items bought,
+  the stock, the deliveries still coming to that base (those waiting for room too) and the item
+  being made there do not fit: *no room in store: 100 of 120 used, 16 more on its way*.
+- **Manufacture** of an item waits, unpaid, until the item it will make has room (counting the
+  deliveries on their way). Hulls take no store room.
+- **Deliveries** that find no room — a `storage` module was wrecked or dismantled while they
+  were on their way — **wait at the base**: what fits is stored, the rest is held, and a
+  notice says so once (*Gatehouse: no room in store for 3 x Blaster; it waits until there is*).
+  A held delivery is tried again every hour and stored as soon as there is room (sell something,
+  build or repair a supply depot). Its loss roll (`delivery_loss`) was made when it first
+  arrived, never again. Held deliveries are saved.
+- **Salvage** and captured prizes are not items in store, so they are not limited.
+
+With logistics, facilities keep their own `storage`
+([`facility_types`](#facility_types)):
+
+- A **mining facility** stops extracting when its store is full (since app 0.9.0).
+- A **manufacturing center** or **research station** orders only what its store has room for —
+  its `storage` less its goods, its open orders, the convoys bound for it and the output of its
+  running recipes — and a recipe starts only when its output fits once its inputs are used. A
+  large order is then delivered in several smaller shipments.
+
+A base's store of **components** (`base_goods`, what hull jobs are built from) has no limit.
+
+A store can still end up above its capacity when a raid wrecks a `storage` module that has no
+`on_destroyed: [stock]`: nothing more is stored there until it fits again.
+`--strategy-soak` checks every store every day and prints *storage: every store within its
+capacity* or the first day one was over ([Trying a campaign out](#trying-a-campaign-out)).
+
+### Wrecks and repair
+
+An unopposed raid **wrecks** the newest working module of the base it reaches. A wreck does
+nothing (its `effects` stop), costs no `maintenance`, and still fills its slot (it counts towards
+the group's `limits`). The Build list shows it as *Hangar: wrecked (repair 125,000)* with two
+buttons:
+
+- **Repair** pays `economy.repair` (50 %) of the module's `cost` now; the module works again
+  after the same share of its `build_time` (from when the base itself is finished).
+- **Dismantle** clears the wreck for nothing (no refund) and frees the slot.
+
+`on_destroyed` on the module decides what is lost with it — whatever **no longer has room** once
+it stops working:
+
+| Entry | Lost |
+|---|---|
+| `craft` | Craft at the base, not away, beyond its remaining hangar room — the newest first. Their pilots eject, injured for `pilots.heal_days`. |
+| `pilots` | Living pilots beyond the remaining quarters (all bases together) — those without a craft first, the newest first. They are killed. A campaign with no quarters anywhere has no limit, and loses none. |
+| `stock` | Items from the end of the base's store, one at a time, until the stock fits the remaining capacity. |
+
+A module without `on_destroyed` loses nothing with it. One notice names the module and what was
+lost: *Gatehouse: Hangar wrecked; lost: COMET-3* (craft are named by hull and number). Wrecks
+are saved.
+
+```yaml
+base_modules:
+  hangar:   {…, effects: {hangar: 3}, on_destroyed: [craft]}
+  quarters: {…, effects: {quarters: 6}, on_destroyed: [pilots]}
+  supply_depot: {…, effects: {storage: 150}, on_destroyed: [stock]}
+```
+
+The `interceptor` pack sets `on_destroyed` on its `hangar` (`craft`), `personnel` (`pilots`) and
+`cargo` (`stock`) modules — authored, from what the guide says is lost with them.
+
+### Dismantling a whole base
+
+With more than one base, the Build list's row *&lt;base&gt;: the whole base* has **Dismantle base**
+(a button only; Enter and a double click never do it). It is refused for the last base, and when
+the base's quarters house pilots who would have nowhere else to sleep. Otherwise:
+
+- `economy.dismantle` (50 %) of the base type's `cost` and of each working module's `cost` comes
+  back (wrecks bring nothing);
+- its **craft** move to the other bases with hangar room (or no hangar limit), nearest first;
+  those with nowhere to go
+  are sold for the same share of their hull's `cost`;
+- its **stock** moves to the nearest bases with room; what does not fit is sold at `sell_price`;
+- **deliveries** and **convoys** bound for it, and its store of components, go to the nearest
+  other base; its open orders are dropped (they are ordered again from the new base's demand);
+- its manufacturing queue stops, and its research stops (the topic keeps its progress);
+- a raid heading for it loses its target.
+
+The log says *&lt;base&gt; dismantled (&lt;refund&gt; back)*, adding *; 2 craft sold for want of hangar
+room* when some were.
+
+### Where a base or facility may be built
+
+`placement:` on a base type or a facility type is a [campaign condition](#expressions-the-campaign-context)
+about the **candidate system**: in it `system` names the system being asked about, and
+`nearest_base` the player's base fewest lanes from it. It is checked when the player orders the
+base or facility, and on the Supply list and the info panel for every facility type (the
+Supply list offers a refused facility with the reason, *Tycho Drift does not suit a
+Manufacturing center*, adding *(not surveyed yet)* whenever the system has not been surveyed,
+whichever part of the condition failed; the info panel leaves it out). A base refused by
+it says *A &lt;type name&gt; base cannot be built at &lt;system&gt;*. Asking never changes the game: a
+`random(p)` in a placement condition rolls a copy of the generator.
+
+Rules that hold besides `placement:`: one base per system and at most `max_bases` of a type; at
+most one facility of each type per system.
+
+A facility type without `placement:` follows its **role's default rule**, which is itself a
+condition (app 0.19.0; until then they were fixed rules in the code):
+
+| Role | Default `placement:` | Meaning |
+|---|---|---|
+| `mining` | `survey_known(system) and deposit(system, any) > 0` | A surveyed system with at least one deposit. |
+| `research` | `survey_known(system) and research_site(system, any)` | A surveyed system that meets at least one research site. |
+| `manufacturing` | `bases > 0 and lane_distance(system, nearest_base) <= 2` | A system at most two lanes from one of the player's bases (0 for the base's own system; a system no lane reaches answers −1, so it is allowed, as before). |
+
+To change a rule, copy the default and edit it:
+
+```yaml
+facility_types:
+  # a mine only on a rich deposit, and not in the middle of nowhere
+  mining_facility: {…, placement: "survey_known(system) and deposit(system, any) >= 3 and base_distance(system) <= 6000"}
+  # a plant only in a nebula
+  manufacturing_center: {…, placement: "feature(system, nebula) and lane_distance(system, nearest_base) <= 3"}
+```
+
+A base type without `placement:` may be built anywhere (but one per system). The default
+campaign's manufacturing center writes its role's rule out in full, as an example.
 
 ## Travel
 
@@ -444,8 +620,9 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
    mission. A `killed` result loses the craft, and its pilot ejects injured (`survive`) or dies.
    `win` and `draw` remove the contact; `lose` and `retreat` leave it flying. Leaving a campaign
    battle early from the pause menu is a `retreat`.
-5. A contact that reaches its target **unopposed**: a base target loses its newest finished
-   module, and the `undefended` score applies — unless the base's [`defence`](#base_modules-and-base_types)
+5. A contact that reaches its target **unopposed**: a base target's newest working module is
+   **wrecked** ([Wrecks and repair](#wrecks-and-repair); until app 0.19.0 it was removed), and
+   the `undefended` score applies — unless the base's [`defence`](#base_modules-and-base_types)
    turns it away (app 0.16.10).
 
 ## Logistics
@@ -498,19 +675,18 @@ An input or output that is neither a resource nor a component is a load error.
 | `role` | `mining` / `manufacturing` / `research` | *required* | What it does. Another value is a load error. |
 | `cost` | number | 0 | Build price, paid when ordered. |
 | `time` | time | 10 d | Time to build; it works from then on. |
-| `storage` | number | 500 | Mining: the most goods its store holds; extraction stops when it is full. |
+| `storage` | number | 500 | The most goods its store holds. Mining: extraction stops when it is full. Since app 0.19.0 manufacturing centers and research stations keep it too: they order only what fits, and a recipe starts only when its output fits ([Storage](#storage)). |
 | `lines` | number | 1 | Manufacturing: recipes running at once. |
 | `research_rate` | number | 0 | Research: work units an hour on its project. |
 | `hub` | id | none | The battle object at the facility, with its construction-stage looks (read; not yet used — R-STR-022). |
+| `placement` | condition | its role's rule | Where it may be built: a condition over the candidate `system` (app 0.19.0). Without it, its role's default rule. |
 
-**Where a facility may be built** (fixed rules per role, app 0.9.0; the design's `placement:`
-expressions are not built — DEV-049). At most one facility of each type per system, and:
-
-| Role | Needs |
-|---|---|
-| `mining` | A **surveyed** system with at least one deposit. |
-| `research` | A **surveyed** system that meets at least one research site's features. |
-| `manufacturing` | A system with one of the player's bases, or at most **two lanes** from one (a system no lane reaches counts as one straight hop). |
+**Where a facility may be built**: at most one facility of each type per system, where its
+`placement:` holds — by default its role's rule (a surveyed system with a deposit for mining, a
+surveyed research site for research, at most two lanes from a base for manufacturing). The
+rules, the reserved names and examples are under
+[Where a base or facility may be built](#where-a-base-or-facility-may-be-built). Until app
+0.19.0 these were fixed rules in the code (DEV-049).
 
 ### `research_sites`
 
@@ -549,13 +725,15 @@ Every hour, after the rest of the hour step ([Architecture › Campaign](../impl
 
 1. **Demand at bases.** Each hull job not yet started needs its hull's `components`. What the
    base's store lacks, less what is already on its way, is **ordered** from the nearest ready
-   manufacturing center (nearest by straight-line distance).
+   manufacturing center (nearest by straight-line distance). A manufacturing center or research
+   station orders no more than its store has room for (app 0.19.0).
 2. **Mining facilities** extract each deposit of their system at `rate` / 24 an hour, until the
    store is full (`storage`) or the reserve runs out.
 3. **Manufacturing centers** finish runs (the output goes into the store), then look at the
    orders they must fill: when the store plus the runs under way do not cover an order, a free
-   line starts the component's recipe if its inputs are in store; if they are not, the missing
-   inputs are ordered from the nearest mining facility whose system has a deposit of them.
+   line starts the component's recipe if its inputs are in store and (app 0.19.0) its output
+   fits the store once they are used; if the inputs are not there, the missing ones are ordered
+   from the nearest mining facility whose system has a deposit of them.
 4. **Research stations** with a project first order its `start_cost`; when it is in store it
    is used up, and from then on the station adds `research_rate` an hour to the topic.
 5. **Filled orders leave as convoys.** When a facility's store holds an order's amount, it is
@@ -648,9 +826,8 @@ Convoy ambushes can be **flown** since app 0.9.2 (`ambush_mission`; the battle i
 struck since app 0.16.4 ([above](#construction-strikes)). Not built: facility fighter pools and escorts
 (R-STR-025), construction-stage looks on the map and in battle (R-STR-022: the
 `construction_defence` mission shows its own research station at 60 %, whatever was struck), captured cargo and enemy supply depots (R-STR-020),
-third-party convoys (R-STR-027), supply-vessel cargo capacity (R-STR-026), facility upgrades,
-and the design's `placement:` expressions (fixed rules per role instead). The manufacturing
-center's and research station's `storage` is not enforced.
+third-party convoys (R-STR-027), supply-vessel cargo capacity (R-STR-026) and facility
+upgrades. `placement:` conditions and storage at every facility are built since app 0.19.0.
 
 ## The `interceptor` campaign from the player's data
 
@@ -688,8 +865,9 @@ own `GameSettings.ini` and `Interceptor.exe`; the pack holds **no values** from 
   `TechRequired` through `tech_ids`.
 
 It has **not been play-tested**. A six-month `--strategy-soak` with the automatic player
-researches 4 of the 71 topics on the starting base's one downlink (the default campaign: 12 of
-14), so the research pace in particular needs the developer's judgement.
+researches 4 of the 71 topics on the starting base's one downlink (the default campaign: 14 of
+16) and fights one battle (app 0.19.0, main `c28fc2c`), so the research pace in particular needs
+the developer's judgement.
 
 ## Trying a campaign out
 
@@ -697,7 +875,12 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   without a window for that many days with a simple automatic player (`campaign::autoplay`:
   every base researches the first topic it can, a lab and a workshop are built when there is
   money, every detected contact is intercepted, battles alternate win, win, retreat) and prints
-  one line: the date, funds, score, bases, craft, topics known, battles and messages.
+  one line: the date, funds, score, bases, craft, topics known, battles and messages. Since app
+  0.19.0 the automatic player also stocks the first base's store with the cheapest item that takes
+  room (buying while it has more than 3 000 000, making it while the queue is idle), the soak
+  plays day by day, and a line *storage: every store within its capacity* — or *storage: OVER
+  CAPACITY first on day n: &lt;place&gt;: &lt;used&gt; of &lt;capacity&gt;* — checks every base's and facility's
+  store each day (`Campaign::over_capacity`).
 - On the strategy screen the testbed has the original's own **cheats** (app 0.8.1): Ctrl+M
   *payday* (a million), Ctrl+K *knowitall* (every topic known), Ctrl+B *quickbase* (every base
   and module under construction finished — not facilities) and Ctrl+J *jump to battle* from
@@ -735,9 +918,13 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   `12000 * module_count(cosmium_refinery)`; fuel and stores `4000 * craft` a week. Twelve items
   (four beams, three missiles, cosmium, and since app 0.16.1 two shields — deflector screen 300,
   force field 480 — and two armours — steel plating 180, saucer-alloy plating 380), four hulls
-  (each with a `shield` and an `armor` slot since 0.16.1), nine module kinds (hangar, quarters, radar,
-  deep radar, laboratory, workshop, shipyard, cosmium refinery, ray battery) and the `guard_base`
-  type (template hangar, radar, laboratory; at most 6 bases, 3500 units apart).
+  (each with a `shield` and an `armor` slot since 0.16.1), ten module kinds (hangar, quarters, radar,
+  deep radar, laboratory, workshop, shipyard, cosmium refinery, ray battery and, since app 0.19.0,
+  the supply depot: 150 more store room, at most two a base) and the `guard_base` type
+  (template hangar, the best `sensor` — the radar, the deep radar once known — and laboratory;
+  at most 6 bases, `placement: base_distance(system) <= 3500`; a hub store of 120 since app
+  0.19.0). The hangar loses its craft and the quarters their pilots when wrecked
+  (`on_destroyed`); `economy.dismantle` and `economy.repair` are both 50 %.
 - **Raids**: Dominion scouts (`intercept_scouts`), saucer raids (`defend_station`, from day
   10), colony raids (`colony_defence`, day 20), robot assaults (`outpost_raid`, day 45) and the
   Black Comet ambush by raiders (`pocket_ambush`, day 15) — each a mission of the default
@@ -746,8 +933,9 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
   [plan](story.md#plans)).
 - **Pilots**: flying, gunnery and nerve; five ranks from cadet to commander; salary 6000,
   recruit fee 40 000, five recruits a month, 12 days to heal, 70 % survive; training 0.4 points
-  and 400 a day (app 0.16.7); twelve mission scores. The Gatehouse's `guard_base` houses four
-  pilots — the four you start with — so hiring needs a Crew quarters module first (app 0.16.10).
+  and 400 a day (app 0.16.7); twelve mission scores. The Gatehouse's `guard_base` houses six
+  pilots (four until app 0.16.15, which the four you start with filled); more need a Crew
+  quarters module (app 0.16.10).
 - **Evaluations** (app 0.16.8): the Senate rates each month *Outstanding* (a month's score of 400
   or more: +150 000 and praise), *Satisfactory* (0 or more), *Poor* (−300 or more: −50 000) or
   *Unacceptable* (−150 000 and a funding-cut notice).
@@ -756,8 +944,11 @@ researches 4 of the 71 topics on the starting base's one downlink (the default c
 
 The unit test `campaign::tests::the_default_campaign_runs_six_months` plays it for six months
 with an automatic player: it stays solvent, researches at least four topics, fights raids and
-round-trips through a save. `--strategy-soak 180` with the same player (app 0.8.0) reached 12 of
-the 14 topics — the automatic player builds no facilities, so the two station-only topics stay
+round-trips through a save; the year-long test also asserts that no store is ever above its
+capacity (app 0.19.0). `--strategy-soak 180` with the same player (app 0.8.0) reached 12 of
+the 14 topics then; at app 0.19.0 (main `c28fc2c`) it reaches **14 of the 16** (the twelve
+topics plus `force_fields` and `saucer_alloys`) and fights 47 battles, with every store within
+its capacity — the automatic player builds no facilities, so the two station-only topics stay
 unknown.
 
 ## Errors
@@ -782,25 +973,29 @@ unknown.
 | `research.x.lab: unknown facility type 'y'` / `research.x.site: unknown research site 'y'` | A station-only topic naming something not defined. |
 | `evaluations[0].when: …` / `evaluations[0].do: …` | A rating's condition or action that does not parse or names something not defined (app 0.16.8). |
 | `research.x.requires: unknown name 'y'` | Also for a misspelt topic in `requires_any` (it becomes part of `requires`). |
+| `base_modules.x.on_destroyed: 'y' is not craft, pilots or stock` | A wrong `on_destroyed` entry (app 0.19.0). |
+| `base_types.x.template: unknown module or module group 'y'` | A template entry that is neither a module id nor a module group (app 0.19.0). |
+| `base_types.x.placement: …` / `facility_types.x.placement: …` | A placement condition that does not parse or names something not defined (app 0.19.0). |
+| `base_types.x.max_distance: unknown key` | A mod written before app 0.19.0: use `placement: base_distance(system) <= <n>`. |
 | `this save needs packs that are not loaded: …` | Loading a save made with a mod that is not active. |
 | `save: this save has logistics but the loaded campaign has none` | Loading a save with facilities into a campaign whose logistics was removed. |
 | `save: … does not match the loaded rules (was a mod changed?)` | Loading a save whose research, modules, items, incomes or raids no longer fit the rules. |
 
-## Limits in app 0.18.1
+## Limits in app 0.19.0
 
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
   fitting is *best available* only, and slots of kinds other than `beam`, `missile` and (since app
   0.15.0) `shield` and `armor` are filled but have no effect in battle.
 - `cargo_lost` and `cargo_captured` are only recorded: captured cargo goes to no enemy depot.
   `lose(<x>)` acts only on a facility type; a base type or anything else is logged.
-- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction stages, depots, third-party convoys, cargo capacity, facility
-  upgrades and `placement:` expressions are not built.
-- No designs, bravery, stat effects in battle, `on_destroyed` or repair, or the 3D base view
-  yet. Auto-resolve counts hull classes only (not fitted items or pilots) and does not damage
+- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction stages, depots, third-party convoys, cargo capacity and facility
+  upgrades are not built.
+- No designs, bravery, stat effects in battle, or the 3D base view yet. Auto-resolve counts hull classes only (not fitted items or pilots) and does not damage
   the player's craft (DEV-057).
-- `storage` limits purchases only, and only at a base type with hub `storage`. Neither campaign
-  gives its base types any yet, so neither has a store limit (the `interceptor` `cargo` module's
-  `storage` adds nothing).
+- A store limit applies only at a base type with hub `storage`. The default campaign's Guard base
+  has 120 (and supply depots add 150 each); the `interceptor` base type sets none, so its
+  `cargo` modules limit nothing — the original hub's cargo capacity is unknown (an open fidelity
+  item).
 - Names and descriptions in the default campaign's strategy files are plain English, not text
   keys, so they are not yet translatable.
 - The `interceptor` strategy layer is built but not play-tested, and its estimates are

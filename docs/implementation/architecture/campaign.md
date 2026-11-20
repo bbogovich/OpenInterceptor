@@ -115,17 +115,17 @@ fixed, which is what makes a campaign replay exactly from a save:
 flowchart TD
     A["hours += dt"] --> B["construction finished → Notice"]
     B --> C["research: each base, rate = eval(research_model.rate, base)<br/>topic done → known, Notice"]
-    C --> D["manufacture: first job first; a unit not yet started is paid (cost)<br/>or, a hull with components, waits for logistics;<br/>production_rate × dt; finished unit → receive (item or craft)"]
-    D --> E["deliveries due → receive<br/>(or lost: roll < economy.delivery_loss → Notice)"]
+    C --> D["manufacture: first job first; a unit not yet started is paid (cost)<br/>or, a hull with components, waits for logistics,<br/>or, an item without room() in store, waits unpaid (0.19.0);<br/>production_rate × dt; finished unit → receive (item or craft)"]
+    D --> E["deliveries due → receive<br/>(or lost: roll < economy.delivery_loss → Notice; rolled once)<br/>items beyond store_free → held, retried next hour (0.19.0)"]
     E --> F["incomes and expenses due → money ± eval(amount);<br/>pilots in training: stats += gain × dt/24, money −= cost × dt/24"]
     F --> G{"month boundary<br/>(720 h)?"}
-    G -->|yes| H["maintenance + upkeep + salaries;<br/>evaluations: first that holds → its actions, rating;<br/>monthly report → Notice; recruits refreshed"]
+    G -->|yes| H["maintenance (not of wrecks) + upkeep + salaries;<br/>evaluations: first that holds → its actions, rating;<br/>monthly report → Notice; recruits refreshed"]
     G -->|no| I
     H --> I["injured pilots heal"]
     I --> J["raids: roll each due raid (requires, chance) → launch contact"]
     J --> K["contacts move; within a base's sensor range → detected, Notice;<br/>hidden systems in range revealed"]
     K --> L["interceptions fly to their contacts → Event::Battle"]
-    L --> M["contacts that arrived unopposed → score(undefended), Notice;<br/>roll < 1 − 0.85^defence → driven off, else module lost"]
+    L --> M["contacts that arrived unopposed → score(undefended), Notice;<br/>roll < 1 − 0.85^defence → driven off,<br/>else newest working module wrecked → on_destroyed losses (0.19.0)"]
     M --> N["logistics::step (app 0.9.0; campaigns with logistics):<br/>construction strikes → Event::Strike (0.16.4);<br/>demand, mining, recipes, stations, convoys, surveys"]
     N --> O["story::step (app 0.10.0): events, plans,<br/>monthly drift and aggression, the end conditions"]
 ```
@@ -148,12 +148,14 @@ can assert that two campaigns from one seed are equal after the same time.
 
 ### Expressions: the campaign as a `script::Context`
 
-`Campaign` answers the 29 queries of `script::campaign::QUERIES` (16 until app 0.9.2; `arc`,
+`Campaign` answers the 30 queries of `script::campaign::QUERIES` (16 until app 0.9.2; `arc`,
 `plan`, `relation`, `fired` and `battles_won` came with the story; the eight logistics queries
 with app 0.16.3, answered by `Campaign::logistics_query` — `lane_distance` by `Campaign::lane_hops`,
-a breadth-first search counting lanes, not distance) through a small context struct
-(`Cx`) that holds `&Campaign`, an optional base (so `module_count` in a research rate counts the
-base being evaluated) and the generator in a `Cell<u64>` — `Context::query` takes `&self`, but
+a breadth-first search counting lanes, not distance; `base_distance` with app 0.19.0) through a
+small context struct (`Cx`) that holds `&Campaign`, an optional base (so `module_count` in a
+research rate counts the base being evaluated), since app 0.19.0 an optional candidate system
+(the `system` of a [`placement:` condition](#placement-a-condition-about-a-candidate-system))
+and the generator in a `Cell<u64>` — `Context::query` takes `&self`, but
 `random(p)` must advance the generator, the same interior-mutability trick as
 `sim::ai::ObjectContext` ([Conditions](script.md#the-object-context)). After evaluating,
 `Campaign::eval` copies the advanced generator back.
@@ -281,7 +283,7 @@ flowchart RL
     subgraph MC["Manufacturing center"]
         MO["orders it must fill"]
         LN["lines: recipe runs<br/>(≤ lines at once)"]
-        MS[("store")]
+        MS[("store ≤ storage")]
     end
     subgraph MF["Mining facility"]
         DP["system deposits<br/>rate / 24 per hour, reserve"]
@@ -289,7 +291,7 @@ flowchart RL
     end
     subgraph RS["Research station"]
         PR["project: station-only topic<br/>start_cost once, then research_rate"]
-        RSS[("store")]
+        RSS[("store ≤ storage")]
     end
     J -- "want(component, short)<br/>Order → nearest ready center" --> MO
     MO -- "inputs short:<br/>want(resource) → nearest mine with a deposit" --> FS
@@ -350,10 +352,16 @@ Design points worth noticing:
   convoy, None)`, which auto-resolves it per vessel as before. `convoy_result(…, Some(share))`
   scales every cargo amount by the share that got through. Without an ambush mission the
   ambush is auto-resolved on the spot, as in app 0.9.0.
-- **Fixed placement rules** (`Campaign::facility_allowed`): mining needs a surveyed system with
-  deposits, research a surveyed research site, manufacturing at most two lanes
-  (`lane_route(...).len() <= 2`) from a base; one facility of each type per system. The design's
-  `placement:` expressions are not built (DEV-049).
+- **Placement** (`Campaign::facility_allowed`): one facility of each type per system, and the
+  type's `placement:` condition must hold for the system — by default its role's rule, a
+  condition string (`Role::default_placement`) parsed by `StrategyDef::build` like any other.
+  Until app 0.19.0 these were fixed rules in Rust (DEV-049); see
+  [Placement](#placement-a-condition-about-a-candidate-system).
+- **Room in a facility's store** (app 0.19.0, R-STR-014): `Campaign::facility_room(l, f)` is its
+  type's `storage` less its goods, the orders and convoys bound for it and the output of its
+  running lines. `want` clamps a facility's order to it, and a recipe starts only when
+  `facility_room + inputs >= output` (the inputs leave the store as the run starts). Every
+  store — the manufacturing center's and research station's too — is then at most `storage`.
 - **Hulls with components** are not paid in money: the manufacture step in `Campaign::advance`
   sees `hull_components` and leaves the job for `logistics::step` to start once its components
   are in the base's store.
@@ -465,14 +473,134 @@ campaign](../../modding/strategy.md#the-interceptor-campaign-from-the-players-da
   0.16.9, which the unit test did not catch because it builds the strategy layer directly.
 - **Base effects** (0.16.10): `Campaign::quarters(def)` (all bases' type `quarters` plus
   `quarters` effects; 0 = no limit) checked by `hire`; `Campaign::storage(def, base) ->
-  (Option<capacity>, used)` — `None` when no module in the campaign has `storage` — checked by
-  `buy` for items; the raid's `defence` roll in the unopposed-strike code;
+  (Option<capacity>, used)` — `None` when no module in the campaign has `storage` (since
+  0.16.15: when the base type has no hub `storage`) — checked by `buy` for items (since 0.19.0
+  everywhere, [below](#bases-storage-wrecks-and-placement-app-0190)); the raid's `defence` roll in the unopposed-strike code;
   `Campaign::dismantle_module(def, base, m)` refunding `StrategyDef::dismantle_refund`. On the
   screen `Row::default_act` keeps `Dismantle`, `Dismiss` and (0.16.11) `CancelJob` off Enter
   and the double click.
 - **Queues and deliveries** (0.16.11): `Campaign::raise_job(base, j)` swaps a job with the one
   above; `cancel_job(base, j)` removes an unstarted job, or cuts a started one to its paid unit;
   `StrategyDef::delivery_loss` rolls each arriving delivery.
+
+### Bases: storage, wrecks and placement (app 0.19.0)
+
+Batch 4.1 (main `c28fc2c`; R-STR-004, R-STR-006, R-STR-014) finished the base lifecycle and made
+the store limits hold everywhere. The modder's view is
+[Strategy layer › Bases: storage, wrecks and placement](../../modding/strategy.md#bases-storage-wrecks-and-placement).
+
+#### Storage flow
+
+Three numbers describe a base's store, all in item `size`s, and each caller uses the one that
+answers its question:
+
+| Function | Value | Used by |
+|---|---|---|
+| `storage(def, base)` | `(Option<capacity>, used)`: the hub's `storage` plus working `storage` modules (`None` = no limit), and the stock's size | the Build list's *Store* line, `over_capacity`, the `on_destroyed: [stock]` loss |
+| `store_free(def, base)` (private) | capacity − used − the item being made (`f32::MAX` with no limit) | a delivery arriving now; stock moved by `dismantle_base` |
+| `room(def, base)` | `store_free` − every delivery still bound for the base, held ones included (`None` with no limit) | `buy`; whether a manufacture job may start its next item |
+
+The item being made keeps its place (it is subtracted everywhere), so a finished unit always
+fits; what is ordered counts against `room` before it arrives, so a purchase can never
+over-fill the store. Only deliveries can meet a smaller store than they were bought for (a
+`storage` module wrecked meanwhile), and those wait:
+
+```mermaid
+flowchart LR
+    BUY["buy(item, n)"] -->|"size × n > room → Err"| X1["no room in store:<br/>used of cap, k more on its way"]
+    BUY -->|fits| DEL["Delivery {held: false}<br/>arrive_at = now + delivery"]
+    MAN["manufacture: next item"] -->|"size > room"| WAIT["job waits, unpaid"]
+    MAN -->|fits| PAY["paid, started → receive"]
+    DEL -->|"due: loss roll (once)"| ARR{"fits =<br/>⌊store_free / size⌋"}
+    ARR -->|"all"| ST[("stock")]
+    ARR -->|"some or none"| HOLD["receive(fits);<br/>count −= fits; held = true<br/>(Notice once); arrive_at = now + 1 h"]
+    HOLD -->|next hour| ARR
+```
+
+`Campaign::over_capacity(def) -> Vec<String>` lists every base and facility store above its
+limit. The year-long default test asserts it stays empty, and `--strategy-soak` (in
+`main.rs`) now advances day by day with `autoplay_from` so that it can check it every day and
+print the first breach. The automatic player stocks the first base with the cheapest item that
+takes room, so the soak really meets full stores.
+
+#### The base lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Building: build_module / build_base (template_modules)
+    Building --> Working: ready_at passed
+    Working --> Wrecked: unopposed raid → wreck_module (on_destroyed losses)
+    Wrecked --> Building: repair_module (repair share of cost and build_time)
+    Working --> [*]: dismantle_module (dismantle share back)
+    Wrecked --> [*]: dismantle_module (nothing back)
+    Building --> [*]: dismantle_module (dismantle share back)
+```
+
+- `ModuleInst { module, ready_at, wrecked }`. `ModuleInst::working(now)` (built and not a
+  wreck) replaces the old `ready_at <= now` test everywhere an effect is counted — `effect`,
+  `module_count`, the raid's choice of module — so a wreck adds nothing; the monthly maintenance
+  skips wrecks. A wreck keeps its place in `Base::modules`, so it still counts towards its
+  group's `limits`.
+- `wreck_module(def, base, m, events)` marks the module, then applies its
+  `ModuleDef::on_destroyed: Vec<Loss>`. Each `Loss` removes what the base can no longer hold
+  now that the module's effect is gone — `Craft` (home craft beyond `hangar`, the highest
+  index first; `remove_craft` keeps pilot indices valid; the pilots are set `Injured`),
+  `Pilots` (beyond `quarters`, those without a craft first), `Stock` (whole units off the end
+  of `Base::stock` until `storage` fits). It reads the limits *after* setting `wrecked`, so the
+  same functions that the screen uses decide what is lost.
+- `repair_module` charges `def.repair_share` × cost and sets `ready_at = max(now, base ready) +
+  repair_share × build_time` — a repair is a short rebuild, so the existing *building* state and
+  the *&lt;module&gt; is complete* notice serve it.
+- `dismantle_module` refuses a working module whose `hangar`, `quarters` or (0.19.0) `storage`
+  is in use; a wreck or a module still building contributes nothing, so it is never refused,
+  and a wreck refunds nothing.
+- `dismantle_base(def, base)` is the one operation that **removes a base from the middle of
+  `Campaign::bases`**. Everything that names a base by index must follow: it computes
+  `after(b) = if b > base { b − 1 } else { b }` and rewrites each craft's base, each delivery's
+  (the removed base's go to the nearest other), each contact's `target_base` (cleared when it
+  was this base), `Logistics::base_goods` (removed, its goods merged into the nearest base's),
+  orders (those for the base dropped, the rest renumbered) and convoys (redirected), then
+  removes the base. Craft are rehoused first and stock moved first, while the indices are
+  still the old ones. This is the price of index handles: removing from the middle means one
+  explicit renumbering pass, which a unit test checks
+  (`a_whole_base_is_dismantled_with_its_craft_and_stock_moved`).
+- `template_modules(def, base_type) -> Vec<usize>`: an entry that is a module id is that module;
+  an entry that is a group gives the costliest module of the group that is `available` now
+  (`max_by` on `cost`, which keeps the last of equal elements: a later module wins a tie), or
+  nothing. `Campaign::new` uses it for the starting bases after the start's research is known,
+  and `build_base` when the base is ordered (not when it is finished).
+
+#### Placement: a condition about a candidate system
+
+`BaseType::placement` and `FacilityType::placement` are `Option<Expr>`, parsed against the
+campaign's name table like every condition. A facility type's text is its own `placement:` or
+its role's `Role::default_placement()`; it is parsed in `StrategyDef::build` (not in
+`LogisticsDef::build`), because only the strategy builder owns the name table.
+
+```mermaid
+flowchart TD
+    A["build_base / build_facility / Supply list row"] --> B["placement_ok(def, placement, system)"]
+    B -->|None| OK["true (anywhere)"]
+    B --> C["Cx { c, def, base: None, system: Some(s), rng: Cell::new(rng) }"]
+    C --> D["Expr::eval → Bool / Num ≠ 0"]
+    D --> E["system query, argument name:<br/>'system' → Cx::system<br/>'nearest_base' → nearest_base_system(def, s)<br/>other → a map id"]
+    E --> F["logistics_query: deposit/research_site with 'any',<br/>base_distance = min straight-line distance to a base (1e9 with none)"]
+```
+
+- `system`, `nearest_base` and `any` are `script::campaign::RESERVED`, added to every
+  campaign's name table so that they compile as constants. `Cx::query` turns `system` and
+  `nearest_base` into a system id **before** the system lookup, so every system query accepts
+  them; outside a placement condition `Cx::system` is `None` and they name no system (0).
+- `nearest_base_system(def, s)` is the base fewest lane jumps from `s` (`lane_hops`), ties and
+  unreachable systems broken by straight-line distance — `min_by` with `Ordering::then`.
+- `placement_ok` takes `&self` and evaluates with a **copy** of the generator in the `Cell`,
+  never written back: the screen asks it for every facility type every frame, and asking must
+  not change the game (the same rule as the condition console). `eval` now goes through
+  `eval_at(…, system)`, which does copy the generator back.
+- `facility_allowed` keeps the one-per-system rule in Rust and words a refusal as
+  *&lt;system&gt; does not suit a &lt;facility&gt;* — the condition is the modder's, so the engine cannot
+  say which part failed; it adds *(not surveyed yet)* when the system is unsurveyed, the usual
+  reason.
 
 ### Testbed cheats (app 0.8.1)
 
@@ -522,7 +650,9 @@ back as `-inf`. A save whose events, arcs or plans no longer match the rules is 
 the game. Since app 0.16.2 the pack **versions** are compared too: a pack still loaded at another
 version loads, with a notice per pack (*Pack x is now version a (this save was made with b)*) in
 `Campaign::notices`. Since 0.16.3 each facility saves its `attacks`, since 0.16.7 each pilot
-`training`; older saves read them as 0 and not training. The screen saves to
+`training`; older saves read them as 0 and not training. Since 0.19.0 a wrecked module is saved
+as `[module, ready_at, 1]` (a third number only for a wreck) and a delivery has `held`; older
+saves read both as false. The screen saves to
 `<user data>/saves/<campaign id>.yaml` (`strategy::save_path`, slot 0) on F5, when leaving with
 Esc and at the ending; *Campaign: continue* loads it. Since app 0.16.14 the top bar's *Save*
 writes slot 1 – 3, `<campaign id>-<n>.yaml` (`strategy::slot_path`), loaded from the main
@@ -532,7 +662,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 
 | Symbol | Where | What it is |
 |---|---|---|
-| `StrategyDef` | `content/strategy.rs` | The strategy layer's rules: `start`, `map`, `star_classes`, `research`, `research_model`, `items`, `hulls`, `modules`, `base_types`, `raids`, `incomes`, `expenses`, `pilots`, `scores`, `evaluations` (0.16.8), `dismantle_refund` (0.16.10), `delivery_loss` (0.16.11), `delivery`, `salvage`, the `names` table and `logistics: Option<LogisticsDef>` (app 0.9.0). |
+| `StrategyDef` | `content/strategy.rs` | The strategy layer's rules: `start`, `map`, `star_classes`, `research`, `research_model`, `items`, `hulls`, `modules`, `base_types`, `raids`, `incomes`, `expenses`, `pilots`, `scores`, `evaluations` (0.16.8), `dismantle_refund` (0.16.10), `delivery_loss` (0.16.11), `repair_share` (0.19.0), `delivery`, `salvage`, the `names` table and `logistics: Option<LogisticsDef>` (app 0.9.0). |
 | `Evaluation`, `Topic::hidden`, `PilotRules::train_gain`, `train_cost` | `content/strategy.rs` | A monthly rating; a hidden topic; training (app 0.16.6 – 0.16.8). |
 | `Strikes`, `LogisticsDef::strikes` | `content/logistics.rs` | `logistics.construction_strikes` (app 0.16.4). |
 | `Date` | `content/strategy.rs` | A Gregorian calendar date (`parse`, `plus_days`). |
@@ -548,6 +678,13 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `Campaign::strike_result`, `remove_facility`, `lane_hops`, `logistics_query`, `Facility::attacks` | `campaign/logistics.rs` | Settling a construction strike; losing a facility safely; lane jumps; the logistics queries (app 0.16.3 – 0.16.4). |
 | `Campaign::fire_event`, `campaign::autoplay_to_chapter` | `campaign/story.rs`, `campaign/mod.rs` | The event debugger; start-at-chapter (app 0.16.13). |
 | `Campaign::set_training`, `dismiss`, `quarters`, `storage`, `dismantle_module`, `raise_job`, `cancel_job` | `campaign/mod.rs` | Pilots, base effects and queues (app 0.16.7 – 0.16.11). |
+| `ModuleDef::on_destroyed`, `Loss`, `BaseType::placement`, `BaseType::template` | `content/strategy.rs` | What a wreck loses (`Craft`, `Pilots`, `Stock`); where a base may be built (an `Option<Expr>`); template entries that may name a group (app 0.19.0). |
+| `ModuleInst::wrecked`, `ModuleInst::working`, `Delivery::held` | `campaign/mod.rs` | A wreck; built and not a wreck; a delivery waiting for room (app 0.19.0, saved). |
+| `Campaign::room`, `store_free`, `over_capacity`, `template_modules`, `wreck_module`, `repair_module`, `dismantle_base`, `placement_ok` | `campaign/mod.rs` | Storage, the base lifecycle and placement (app 0.19.0, [above](#bases-storage-wrecks-and-placement-app-0190)). |
+| `Cx` (`system` field) | `campaign/mod.rs` | The expression context; since 0.19.0 with the candidate system of a placement condition. |
+| `FacilityType::placement`, `Role::default_placement` | `content/logistics.rs` | A facility type's placement condition; each role's default rule as condition text (app 0.19.0). |
+| `Campaign::facility_room`, `facility_allowed`, `nearest_base_system` | `campaign/logistics.rs` | Room in a facility's store; the placement check; the base fewest lanes from a system (app 0.19.0). |
+| `script::campaign::RESERVED`, `id::BASE_DISTANCE` | `script/campaign.rs` | `system`, `nearest_base`, `any`; query 29 (app 0.19.0). |
 | `balance::power`, `balance::win_chance` | `balance.rs` | Auto-resolve odds (app 0.16.12). |
 | `script::action::EVENT_ACTIONS` | `script/action.rs` | The story actions: 14 in app 0.10.0, 17 with `card`, `video`, `play_cutscene`, 18 with `discover` (0.16.6). |
 | `PendingBattle` | `app/strategy.rs` | `Contact`, `Convoy`, `Story` or (0.16.4) `Strike`: what the battle being flown is for. |
@@ -593,6 +730,12 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
   `set_training(def, pilot, on)`, `dismiss(pilot)`, `dismantle_module(def, base, module)`,
   `raise_job(base, job)`, `cancel_job(base, job)`; queries `quarters(def) -> u32`,
   `storage(def, base) -> (Option<f32>, f32)`.
+- Bases (app 0.19.0): `repair_module(def, base, module)`, `dismantle_base(def, base)`, each
+  `-> Result<(), String>`; `template_modules(def, base_type) -> Vec<usize>`; queries
+  `room(def, base) -> Option<f32>`, `over_capacity(def) -> Vec<String>`,
+  `placement_ok(def, Option<&Expr>, system) -> bool`; logistics `facility_room(&LogisticsDef,
+  facility) -> f32`, `nearest_base_system(def, system) -> Option<usize>`. (`wreck_module` is
+  private: only a raid wrecks.)
 - Testbed (app 0.16.13): `fire_event(def, event) -> Vec<Event>`;
   `campaign::autoplay_to_chapter(&def, campaign, step, max_days) -> Campaign`.
 - Auto-resolve (app 0.16.12): `balance::win_chance(&Ruleset, &MissionDef, &[&str]) -> f32`.
@@ -629,7 +772,19 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 - `campaign::tests::the_default_campaign_runs_a_year_with_its_story_and_stays_consistent` is the
   year-long consistency soak: it plays a month at a time with `autoplay_from` and checks after
   each month that every craft, pilot, base, contact and facility index is in range, money and
-  score are finite, and arcs never go backwards.
+  score are finite, arcs never go backwards and (app 0.19.0) `over_capacity` is empty.
+- Storage (app 0.19.0): `--strategy-soak` ends with *storage: every store within its capacity*
+  or names the first day and store over its limit. A purchase refused with *k more on its way*
+  counts deliveries not yet arrived (held ones too); a manufacture job that never starts may be
+  waiting for room (sell or build a `storage` module); a held delivery's notice comes once, and
+  the delivery stays in `Campaign::deliveries` with `held: true` (visible in the save). Results at
+  app 0.19.0 (main `c28fc2c`), 180 days: `default` 14 of 16 topics, 47 battles, every store
+  within its capacity; `interceptor` 4 of 71 topics, 1 battle, every store within its capacity
+  (it has no store limit).
+- Placement: a refused facility says only *does not suit*. To see which part fails, put each
+  part of the condition in a test event's `when`, with the system's id in place of `system` and
+  the base's system id in place of `nearest_base`, and read the Debug list (Ctrl+D) as in
+  MT-4-49.
 - Logistics: the Supply tab's last row counts open orders, convoys and survey ships; the message
   log records every survey, completed facility and ambush. An order that never appears usually
   means no ready facility can fill it (a resource no mined system has, or no manufacturing

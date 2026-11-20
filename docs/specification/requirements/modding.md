@@ -1,7 +1,7 @@
 ---
-spec_version: 1.18.0
+spec_version: 1.21.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-20
 ---
 
 # Modding toolkit requirements
@@ -234,11 +234,14 @@ Conditions MUST gain a campaign context with system and facility queries (`depos
 
 - Implements: [F-MOD-005](../../definition/modding-toolkit.md#f-mod-005-conditions-actions-and-scripting), [F-STR-005](../../definition/strategy-logistics.md#f-str-005-supply-chain-logistics)
 - Status: implemented (app 0.6.7, main `65141dc`; the system and facility queries app 0.16.3, main `a45331a`, #8)
-- Verified by: `script::campaign::tests::ids_match_and_names_are_checked`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`; `campaign::logistics::tests::logistics_queries_answer_about_systems`; MT-4-49
+- Verified by: `script::campaign::tests::ids_match_and_names_are_checked`; `content::strategy::tests::a_strategy_layer_builds_with_checked_names`; `campaign::logistics::tests::logistics_queries_answer_about_systems`, `placement_conditions_and_storage_limit_facilities` (app 0.19.0); `campaign::tests::templates_take_the_best_module_and_placement_decides_where` (`base_distance`, app 0.19.0); MT-4-49, MT-4-53
 - See: [Logistics](../design/logistics.md), [Strategy layer › expressions](../../modding/strategy.md#expressions-the-campaign-context)
 
 !!! note "As built (app 0.6.7 – 0.16.3)"
     The campaign context (`script::campaign`) has 16 strategy queries (`research`, `researching`, `has`, `module_count`, `bases`, `money`, `day`, `month`, `difficulty`, `pilots`, `score`, `month_score`, `random`, `flag`, `salvaged`, `craft`; app 0.6.7), the story's five (`arc`, `plan`, `relation`, `fired`, `battles_won`; app 0.10.0) and since app 0.16.3 the eight required here: `deposit(system, resource)` (its daily rate, 0 until surveyed), `feature(system, tag)`, `research_site(system, site)`, `survey_known(system)`, `owned(system)` (a base or a facility), `lane_distance(a, b)` (jumps along lanes, breadth-first; −1 without a route; 1 on a map without lanes), `facility_progress(system)` (the least finished facility's 0..1; 1 when none is building) and `construction_attacks(system)`. Every campaign id — systems, feature tags, resources, sites included — is a checked constant.
+
+!!! note "As built (app 0.19.0, main `c28fc2c`): `base_distance` and reserved names"
+    A ninth system query, `base_distance(system)` (map units to the player's nearest base; 10⁹ with none), and three reserved names in every campaign's name table: `system` and `nearest_base` (in a `placement:` condition, the candidate system and the base fewest lanes from it) and `any` (any resource in `deposit`, any site in `research_site`). Placement conditions use them ([Strategy layer › placement](../../modding/strategy.md#where-a-base-or-facility-may-be-built)); 30 queries in all.
 
 ### R-MOD-015 Tier 2 scripting decision
 
@@ -802,3 +805,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.16.0 | 2026-11-11 | MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; R-MOD-037 `harmless` (an Open note in app 0.13.0, fixed in app 0.14.1: bolts and missiles hit but do no damage); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed |
 | 1.18.0 | 2026-11-11 | R-MOD-014 implemented: the logistics queries (`deposit`, `feature`, `research_site`, `survey_known`, `owned`, `lane_distance`, `facility_progress`, `construction_attacks`; app 0.16.3, #8), with an As-built note; R-MOD-041 implemented: captions and titles as text keys (app 0.16.2, #65); R-MOD-045 As-built note: the gamepad skips (app 0.16.2), the tablet console does not yet |
 | 1.20.0 | 2026-11-20 | R-MOD-015 implemented: decision (c) (2026-11-20) and the Tier 2 statement language as built (app 0.18.0), with an As-built note; the Open note closed. No requirement wording changed |
+| 1.21.0 | 2026-11-20 | R-MOD-014 As-built note: the query `base_distance` and the reserved names `system`, `nearest_base`, `any` (app 0.19.0). No requirement wording changed |

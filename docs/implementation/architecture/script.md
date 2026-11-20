@@ -63,12 +63,17 @@ Time quantities accept `d` (days) since app 0.6.7, for `every: 30d`.
 
 The story added five queries in app 0.10.0 (`arc`, `plan`, `relation`, `fired`, `battles_won`)
 and logistics eight in app 0.16.3 (`deposit`, `feature`, `research_site`, `survey_known`,
-`owned`, `lane_distance`, `facility_progress`, `construction_attacks`; ids 21 – 28, R-MOD-014):
-**29** in all. A logistics query's arguments are names like any other — the map's system ids and
-their feature tags, resource, component, facility-type and research-site ids were added to
-`StrategyDef::names` for them — and its first argument is always a system. `Arg::Num` carries
-the constant's index; the campaign looks the name up again (`Campaign::logistics_query`), so a
-name that is not a system answers 0 instead of failing.
+`owned`, `lane_distance`, `facility_progress`, `construction_attacks`; ids 21 – 28, R-MOD-014)
+and app 0.19.0 `base_distance` (id 29): **30** in all. A logistics query's arguments are names
+like any other — the map's system ids and their feature tags, resource, component, facility-type
+and research-site ids were added to `StrategyDef::names` for them — and its first argument is
+always a system. `Arg::Num` carries the constant's index; the campaign looks the name up again
+(`Campaign::logistics_query`), so a name that is not a system answers 0 instead of failing.
+Since app 0.19.0 three **reserved names** are in every campaign's table
+(`script::campaign::RESERVED`): `system` and `nearest_base`, which the campaign's `Cx` resolves
+to the candidate system of a `placement:` condition and the base fewest lanes from it, and `any`
+(any resource in `deposit`, any site in `research_site`)
+([Campaign › Placement](campaign.md#placement-a-condition-about-a-candidate-system)).
 
 ### The condition console (app 0.16.5)
 

@@ -40,6 +40,37 @@ Compare with a hand-written loop: same speed, but the intent ("hostile, minimum 
 in the code's shape. `total_cmp` gives floats a total order (floats have no `Ord` because of
 NaN).
 
+## Ties: `max_by` keeps the last, `min_by` the first — `src/campaign/mod.rs`
+
+A base type's `template` may name a module **group**; the base then gets the best module of that
+group available now — the costliest (app 0.19.0):
+
+```rust
+let best = (0..def.modules.len())
+    .filter(|&m| def.modules[m].group == *entry)
+    .filter(|&m| self.available(def, &format!("modules.{}", def.modules[m].id)))
+    // `max_by` keeps the last of equals: a later (newer) module wins a tie.
+    .max_by(|&a, &b| def.modules[a].cost.total_cmp(&def.modules[b].cost));
+out.extend(best);
+```
+
+When two elements compare equal, the standard library is precise about which one you get:
+`max_by` (and `max`, `max_by_key`) returns the **last** of the equal maxima, `min_by` (and
+`min`, `min_by_key`) the **first** of the equal minima. The code relies on it: two sensor
+modules of the same price give the one written later in the data, which is usually the newer
+one. A hand-written loop with `>` instead of `>=` would silently pick the other. When a tie
+must be broken by something else, say so with `Ordering::then` instead of relying on the
+order — `Campaign::nearest_base_system` compares lane jumps first and straight-line distance
+second:
+
+```rust
+// simplified: `hops` and `dist` are small closures in the real code
+.min_by(|&a, &b| hops(a).cmp(&hops(b)).then(dist(a).total_cmp(&dist(b))))
+```
+
+`out.extend(best)` works because an `Option` is itself iterable — zero or one item — so no
+`if let` is needed to push "the best one, if there is one".
+
 ## Returning an iterator: `impl Iterator` — `src/content/pack.rs`
 
 A pack must load after its `parent` and after every pack it `depends` on. Two places need "the

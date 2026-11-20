@@ -99,12 +99,12 @@ Five parts (a mod may move them: [Screen layouts](../modding/screens.md)):
   in `...`; the **selected row is shown in full** under the list, with **its actions as
   buttons**. Click a row to select it; **double-click** to do its first action. The wheel, the
   scroll bar or Up/Down scroll the list. Grey rows are information only. Buttons that cannot be
-  undone — **Dismantle**, **Dismiss** and **Cancel** — work only as buttons: Enter and a double
-  click never do them (app 0.16.10 – 0.16.11).
+  undone — **Dismantle**, **Dismantle base**, **Dismiss** and **Cancel** — work only as
+  buttons: Enter and a double click never do them (app 0.16.10 – 0.16.11, 0.19.0).
 
 Every order answers in a short yellow line at the bottom of the map: *Done.*, or why not (not
-enough money, not yet researched, the limit for that kind of module, too far from your other
-bases, no free pilot, …).
+enough money, not yet researched, the limit for that kind of module, a base type that cannot be
+built in that system, no room in store, no free pilot, …).
 
 ## Prompts
 
@@ -150,9 +150,9 @@ are the *Sell 1* and *Fit best* buttons.
 
 | List | Rows | Buttons on the selected row |
 |---|---|---|
-| **Bases** | Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: *Build a <type> at <system>* with its cost. Under the current base, each module with its state; *Store: n of m used* (a campaign with storage modules) and *Quarters: room for n pilots* (app 0.16.10) | *Select* (make it current); *Build*; on a module **Dismantle** (half its cost back) |
+| **Bases** | Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: *Build a <type> at <system>* with its cost | *Select* (make it current); *Build* |
 | **Research** | What the current base researches; every topic that can be researched now, with progress and size; the topics known | *Research* |
-| **Build** | Modules the current base can build, with cost and build time; then its modules and their state (building, days left / working) | *Build* |
+| **Build** | Modules the current base can build, with cost and build time; then its modules and their state (building, days left / working / since app 0.19.0 *wrecked (repair &lt;cost&gt;)*); with more than one base, *&lt;base&gt;: the whole base*; *Store: n of m used* (a base type with a store limit) and *Quarters: room for n pilots* (app 0.16.10) | *Build*; on a module **Dismantle** (half its cost back; a wreck brings nothing); on a wreck **Repair** (half its cost and build time, app 0.19.0); on the whole-base row **Dismantle base** (app 0.19.0: half the hub's and modules' cost back, craft and stock moved to your other bases) |
 | **Market** | Items and hulls on sale, with prices and what you have | *Buy 1*, *Buy 5* (delivered to the current base after the delivery time), *Sell 1* (items, from the current base's store) |
 | **Factory** | The current base's production rate; what it can make, with the work it takes; its queue | *Make 1*, *Make 5*; on a queued job **Move up** (not the first) and **Cancel** (app 0.16.11) |
 | **Hangar** | Every craft with its base, pilot (and *away* when out) and fit (*standard fit* or the items fitted); then your pilots with rank, kills, missions, state and *training*; then recruits with their stats and the fee | On a craft: *Assign pilot* (the next free, ready pilot), *Fit best* (the best equipment in its base's store). On a pilot (app 0.16.7): **Train** / **Stop training**, **Dismiss**. On a recruit: *Hire* (refused when your quarters are full) |
@@ -387,8 +387,12 @@ a moment; it stops after at most 1500 days or at an ending.
   since app 0.16.2).
 - The default campaign's music has no good-news or bad-news sting.
 - The `interceptor` campaign's strategy layer has not been play-tested; its research is slow
-  with one downlink. Reading the code suggests a base without a finished *cargo* module cannot
-  buy anything (*no room in store*) — please report it if you see it.
+  with one downlink. Its bases have no store limit (the original's cargo room is not known), so
+  *cargo* modules change nothing (fixed in app 0.16.15: a base without one could buy nothing).
+- In the default campaign a raid that gets through **wrecks** a module (app 0.19.0): repair it
+  from the Build list, or dismantle it. A wrecked hangar or crew quarters loses the craft or
+  pilots it no longer has room for. A purchase that arrives to a full store waits at the base
+  until you make room.
 - Fixed in app 0.9.0: manufacturing now costs money as each unit starts, and the default
   campaign's salvage topics (*Saucer hull analysis*, *Robot brains*) can be started after
   salvaging the right raid.

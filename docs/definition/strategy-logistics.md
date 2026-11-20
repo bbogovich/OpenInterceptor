@@ -1,7 +1,7 @@
 ---
-spec_version: 1.18.0
+spec_version: 1.21.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-20
 ---
 
 # Strategy & logistics
@@ -40,7 +40,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The original's strategy systems, as data.
 
-- **Status:** in-progress. Built (app 0.7.0 – 0.7.1): income and expense expressions, market, factory queues, deliveries, research (download and labs, prerequisites, unlocks, salvage), base types, modules with limits and effects, the monthly report and score; resources (app 0.9.0); since app 0.16.3 – 0.16.11 capture, `requires_any` and research discovered by events, the `quarters`, `storage` and `defence` effects, dismantling, evaluations and the Reports list, queue priorities and delivery losses; remaining: markets per seller, the 3D base view.
+- **Status:** in-progress. Built (app 0.7.0 – 0.7.1): income and expense expressions, market, factory queues, deliveries, research (download and labs, prerequisites, unlocks, salvage), base types, modules with limits and effects, the monthly report and score; resources (app 0.9.0); since app 0.16.3 – 0.16.11 capture, `requires_any` and research discovered by events, the `quarters`, `storage` and `defence` effects, dismantling, evaluations and the Reports list, queue priorities and delivery losses; since app 0.19.0 storage kept on purchases, manufacture and deliveries, wrecked modules with `on_destroyed` losses and repair, dismantling a whole base, best-available templates and `placement:` conditions for bases; remaining: markets per seller (Stage 5), the 3D base view (6.9).
 - **Source:** Plan items 4.4–4.6 and 4.9.
 - **Specified by:** [R-STR-004](../specification/requirements/strategy-logistics.md#r-str-004-economy), [R-STR-005](../specification/requirements/strategy-logistics.md#r-str-005-research), [R-STR-006](../specification/requirements/strategy-logistics.md#r-str-006-bases), [R-STR-009](../specification/requirements/strategy-logistics.md#r-str-009-funding-score-and-reports)
 
@@ -70,7 +70,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** User request for the default campaign: both sides race to mine the belts, and escort and raid missions get a strategic cause.
 
-- **Status:** in-progress. Built (app 0.9.0): resources, components and recipes as data; mining facilities, manufacturing centers and research stations; demand-driven orders from base hull jobs through manufacturing to mining; automatic government supply convoys along the lanes; saves. Flown convoy ambushes (app 0.9.2) and construction strikes (app 0.16.4). Remaining: captured cargo and depots, third-party convoys, facility upgrades.
+- **Status:** in-progress. Built (app 0.9.0): resources, components and recipes as data; mining facilities, manufacturing centers and research stations; demand-driven orders from base hull jobs through manufacturing to mining; automatic government supply convoys along the lanes; saves. Flown convoy ambushes (app 0.9.2) and construction strikes (app 0.16.4); `placement:` conditions for facilities and storage at every facility (app 0.19.0). Remaining: captured cargo and depots, third-party convoys, facility upgrades.
 - **Source:** User request (logistics design, decisions 2026-11-11); plan items 4.14–4.17.
 - **Specified by:** [R-STR-012](../specification/requirements/strategy-logistics.md#r-str-012-logistics-is-optional-data), [R-STR-013](../specification/requirements/strategy-logistics.md#r-str-013-demand-driven-orders), [R-STR-014](../specification/requirements/strategy-logistics.md#r-str-014-extraction-and-recipes), [R-STR-015](../specification/requirements/strategy-logistics.md#r-str-015-government-supply-ships), [R-STR-019](../specification/requirements/strategy-logistics.md#r-str-019-logistics-mission-generation), [R-STR-020](../specification/requirements/strategy-logistics.md#r-str-020-cargo-losses-and-depots), [R-STR-027](../specification/requirements/strategy-logistics.md#r-str-027-third-party-convoys), [R-MOD-014](../specification/requirements/modding.md#r-mod-014-campaign-context)
 
@@ -123,3 +123,4 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | 1.14.0 | 2026-11-11 | F-STR-005, F-STR-006, F-STR-007 and F-STR-009 in progress; F-STR-008 progress (app 0.9.0, logistics) |
 | 1.15.0 | 2026-11-11 | F-STR-007 progress: the supply vessel and flown convoy escorts (app 0.9.2) |
 | 1.18.0 | 2026-11-11 | F-STR-001, F-STR-002, F-STR-003, F-STR-005, F-STR-006 and F-STR-008 progress (app 0.16.1 – 0.16.12: auto-resolve, the economy and research gaps, training, construction strikes) |
+| 1.21.0 | 2026-11-20 | F-STR-002 and F-STR-005 progress (app 0.19.0: storage everywhere, the base lifecycle, best-available templates, placement conditions) |
