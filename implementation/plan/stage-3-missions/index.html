@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3280,7 +3280,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4476,6 +4476,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5030,34 +5058,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6459,7 +6459,7 @@
 
 
 <h1 id="stage-3-missions-environments-and-the-condition-language">Stage 3 — Missions, environments and the condition language<a class="headerlink" href="#stage-3-missions-environments-and-the-condition-language" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.4.0. Status: in progress</strong> — part 1 (missions as data) shipped in app 0.3.0, main
+<p><strong>Version 0.18.0. Status: Done</strong> (2026-11-20) — completed in app <strong>0.18.0</strong>: terrain detail textures and scatter (3.5, main <code>4a0bd03</code>), Tier 2 scripts (3.10, main <code>040ca26</code>), merged and versioned in <code>55999cb</code>; RE notes on the original's INI files in <code>5d05ba2</code>. Earlier: part 1 (missions as data) shipped in app 0.3.0, main
 <code>d7553f5</code>, 2026-11-11; hazards in app 0.5.1 (main <code>70d68e2</code>); environments, atmospheric flight,
 terrain and the atmosphere HUD in app 0.6.0 (main <code>af003f6</code>); ground installations in app 0.6.1
 (main <code>de417df</code>); radio voices in app 0.6.2 (main <code>5bdb47f</code>); the simulator in app 0.6.3 (main
@@ -6506,7 +6506,7 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.5</td>
 <td><strong>Terrain</strong>: heightfield from an image or a generator (craters, hills), texturing with detail maps, scattered objects, sky gradient, fog; ground installations (<code>kind: ground</code>) and anti-air turrets</td>
 <td><code>render::terrain</code> (new), <code>sim</code></td>
-<td><strong>Partial:</strong> heightfields generated (<code>hills</code>, <code>craters</code>) or from a heightmap, the coloured terrain mesh, sky dome and distance fog (app 0.6.0); ground installations, <code>kind: ground</code>, and anti-air batteries as ground turrets (app 0.6.1, main <code>de417df</code>). <strong>To do:</strong> detail-map texturing and scattered objects (deferred). GitHub #12.</td>
+<td><strong>Done</strong> (app 0.18.0, main <code>4a0bd03</code>): heightfields generated (<code>hills</code>, <code>craters</code>) or from a heightmap, the coloured terrain mesh, sky dome and distance fog (app 0.6.0); ground installations, <code>kind: ground</code>, and anti-air batteries as ground turrets (app 0.6.1, main <code>de417df</code>); <strong>detail textures</strong> (<code>detail</code>, <code>detail_scale</code>, <code>slope_detail</code>; mipmapped) and <strong>scattered objects</strong> (<code>scatter:</code> — deterministic from the battle seed, baked per cell, decoration only) with generated default textures and models (<code>tools/default_assets/terrain.py</code>) on <code>craters</code> and <code>hills</code> (DEV-061). Also fixed: terrain chunks over macroquad's 30 000-index draw limit were silently cut (<code>MAX_CHUNK_INDICES</code> = 28 000). Not done: detail or scatter for <code>interceptor</code> (no surfaces), scatter LODs and fade-in. MT-3-68 – MT-3-70. GitHub #12.</td>
 </tr>
 <tr>
 <td>3.6</td>
@@ -6524,7 +6524,7 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.8</td>
 <td>Hyperspace out with countdown; retreat outcomes; debrief screen (results, salvage, score)</td>
 <td><code>mission</code>, <code>app</code></td>
-<td><strong>Partial:</strong> hyperspace out with countdown (Stage 2) — the player jumping out is the <code>retreat</code> result; the <strong>debrief screen</strong> (result, text, kills, losses, time, optional objectives, campaign actions). Salvage and score are applied by the strategy layer (Stage 4).</td>
+<td><strong>Done:</strong> hyperspace out with countdown (Stage 2) — the player jumping out is the <code>retreat</code> result; the <strong>debrief screen</strong> (result, text, kills, losses, time, optional objectives, campaign actions). Salvage and score are applied by the strategy layer since Stage 4 (the debrief lists the campaign actions it will apply). The original-style debriefing screen is 6.9 (GitHub #108).</td>
 </tr>
 <tr>
 <td>3.9</td>
@@ -6536,7 +6536,7 @@ outcomes, in space and — new to this engine — on planet surfaces with atmosp
 <td>3.10</td>
 <td><strong>Tier 2 script language decision</strong>: dependency evaluation recorded on the dependency page, then hooks (<code>do: script</code>, <code>do: ["script(...)"]</code>) and the sandboxed API</td>
 <td><code>script</code></td>
-<td><strong>Evaluation recorded; awaiting the user's decision.</strong> <a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Tier 2 scripting, evaluated</a> compares (a) <code>mlua</code> (Lua 5.4), (b) <code>rhai</code> and (c) growing <code>script::*</code> into a small statement language; the evaluator recommends (c) as the default under the dependency policy, with (a) as the fallback if mods need a full general-purpose language. Hooks and the API follow the decision. GitHub #16.</td>
+<td><strong>Done</strong> (app 0.18.0, main <code>040ca26</code>). <strong>Decision (c)</strong> by the user on 2026-11-20: grow <code>script::*</code> into a small statement language; no crate added (<a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310">decision record</a>). <code>scripts/&lt;name&gt;.ois</code> files of <code>def</code> functions with <code>let</code>, <code>if</code>/<code>else</code>, <code>repeat</code>, <code>for each</code>, <code>return</code>; hooks <code>do: script</code> (<code>call</code>, <code>every</code>, <code>fly</code>, <code>vars</code>; object actions <code>goto</code>, <code>set_var</code>, <code>message</code>) and <code>script(...)</code> in mission outcomes (battle) and story, plan and evaluation lists (campaign); checked at load, no recursion, 10 000 operations per hook call. Example: <code>saucer_ace</code> and the testbed scenario <code>duel-saucer-ace</code> (MT-3-67). <a href="../../../modding/scripts/">Scripts (Tier 2)</a>; DEV-060. GitHub #16.</td>
 </tr>
 <tr>
 <td>3.11</td>
@@ -6564,10 +6564,13 @@ force on its screen, the difficulty from the launcher) and, with its environment
 sandbox;
 hazard scenarios <code>hazard-asteroids</code>, <code>hazard-black-hole</code>, <code>hazard-minefield</code> and environment
 scenarios <code>env-orbit</code>, <code>env-pocket</code>, <code>surface-moon</code>, <code>surface-hills</code>, <code>surface-colony</code>,
-<code>surface-strike</code>; and since app 0.16.5 (main <code>f227494</code>, GitHub #20) the <strong>condition console</strong>: backquote over any mission battle, a condition or expression typed and its value shown live (or the parse error), the battle paused, evaluated on a copy of the mission's generator (<code>MissionRun::evaluate</code>; MT-3-66). Planned originally: a mission browser (every mission type of both campaigns, with difficulty and
+<code>surface-strike</code>, and the scripted duel <code>duel-saucer-ace</code> (app 0.18.0); and since app 0.16.5 (main <code>f227494</code>, GitHub #20) the <strong>condition console</strong>: backquote over any mission battle, a condition or expression typed and its value shown live (or the parse error), the battle paused, evaluated on a copy of the mission's generator (<code>MissionRun::evaluate</code>; MT-3-66). Planned originally: a mission browser (every mission type of both campaigns, with difficulty and
 force choices — done as the simulator), a terrain flight sandbox (atmospheric handling on several worlds — done through the simulator and the surface scenarios), and a
 condition-language console.</p>
-<p><strong>Exit</strong>: every mission type winnable and losable in the testbed; atmospheric flight feels
+<p><strong>Exit</strong> (status at app 0.18.0: every work item done; the language and scripts are fully
+unit-tested; the manual passes — MT-3-01 – MT-3-70, including the iPad passes of the interlude
+and "atmospheric flight feels distinct" MT-3-41 — remain outstanding, and C5 is deferred beyond
+Stage 3): every mission type winnable and losable in the testbed; atmospheric flight feels
 distinct from space (manual test); the language fully unit-tested (parser, types, evaluation,
 error messages).</p>
 

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3222,7 +3222,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4658,6 +4658,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5212,34 +5240,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -7017,6 +7017,44 @@ draw plain space. With a sky, the background is cleared to the horizon colour in
   the tile under the camera, skipping those whose nearest part is beyond reach. The test
   <code>tiles_match_the_folded_ground_heights</code> checks every vertex of every placed tile against the
   folded height.</li>
+<li><strong>Detail textures</strong> (app 0.18.0, main <code>4a0bd03</code>). A terrain with <code>detail</code> gets a texture
+  coordinate per vertex, <code>terrain::detail_uv(x, z, detail_scale)</code> = position ÷ scale, taken from
+  the <strong>unmirrored</strong> field position in both meshes so neighbouring tiles meet with matching
+  coordinates, and its triangles go into a textured <code>MaterialGroup</code>; with <code>slope_detail</code>,
+  triangles whose steepness passes the slope-colour threshold go into a second group. <strong>No new
+  shader:</strong> the lit shader already multiplies vertex colour by texture, and untextured groups
+  sample a white texture, so a terrain without <code>detail</code> is drawn exactly as before.
+  <code>ModelCache::prepare_detail_texture</code> loads the texture into the mesh cache <em>before</em> the mesh is
+  uploaded and gives it <strong>mipmaps with trilinear filtering</strong> (<code>render::set_mipmapped</code>, through
+  the documented <code>unsafe_gl_context</code> access — macroquad has no mipmap API), so the thousands of
+  repeats in the distance average out instead of shimmering. Mipmaps need power-of-two sides on
+  GLES 2 / WebGL 1; other sizes are reported and left without. Precision note: at a 30 km
+  field's edge with a 40 m repeat the coordinate reaches ~375 — fine in 32-bit floats; a GPU
+  honouring <code>mediump</code> in the fragment stage would show blocky texels far out.</li>
+<li><strong>Scattered objects</strong> (app 0.18.0). <code>content::environment::scatter_placements</code> places one
+  entry's pieces over the field by <strong>rejection sampling</strong> with an xorshift64 generator seeded
+  from <code>World::seed</code> (the battle's seed, unchanged while it runs) and the entry's <code>seed</code>: a spot
+  too steep (<code>normal.y &lt; cos max_slope</code>) or outside <code>height</code> is redrawn, up to 30 tries per piece;
+  each try draws four numbers whether kept or not, so placement is stable. Placement is pure data
+  below the renderer (unit-tested). <code>terrain::scatter_cells</code> then <strong>bakes</strong> the pieces into one
+  mesh per cell of a <code>SCATTER_CELLS</code> = 16 × 16 grid (vertices transformed once; normal and
+  X-mirrored bakes), because macroquad has no GPU instancing — baking is the batching it allows.
+  <code>Renderer::bake_scatter</code> uploads each cell with <code>ModelCache::upload_draw_only</code> (the CPU copy of
+  vertices and faces is dropped after upload, halving memory; nothing collides with scatter).
+  The bake is cached in <code>Renderer::scatter</code> per terrain id <strong>and</strong> battle seed. Each frame,
+  for each drawn tile, a whole tile beyond an entry's <code>draw_distance</code> is skipped, then each cell
+  whose bounding sphere is beyond the draw distance or behind the eye. Only the model's first LOD
+  is used, and cells pop in at the draw distance (no fade). The default scatter costs about
+  90 – 100 MB.</li>
+<li><strong>The draw-call index limit</strong> (fixed in app 0.18.0). The window is created with
+  <code>draw_call_index_capacity: 30_000</code> (<code>main.rs</code>), and macroquad <strong>silently drops</strong> indices beyond
+  a draw call's capacity (it logs "exceeded max drawcall size"). <code>gpu::split_lod</code> cut meshes
+  into chunks by vertex count only (<code>MAX_CHUNK_VERTICES</code>); a grid whose triangles share vertices
+  has about six indices per vertex, so a terrain chunk hit the index limit long before the
+  vertex limit and <strong>most of the terrain was never drawn</strong>. Chunks now also close at
+  <code>MAX_CHUNK_INDICES</code> = 28 000 (a margin below 30 000); the test
+  <code>shared_vertex_grids_are_split_by_index_count</code> draws every index of a 100 × 100 grid
+  (58 806 indices) in chunks within both limits.</li>
 <li><strong>Fog</strong> in the lit shader: the vertex stage computes <code>fog = clamp(d / FogDistance.x, 0, 1)²</code> from
   the camera-relative position; the fragment stage mixes the colour towards <code>FogColor</code>.
   <code>FogDistance.x = 0</code> (space) turns it off. See the precision note under <a href="#debugging">Debugging</a>.</li>
@@ -7108,8 +7146,36 @@ Objects entirely behind the camera are skipped.</p>
 <td>The current terrain's GPU model, by terrain id (built once).</td>
 </tr>
 <tr>
-<td><code>terrain::terrain_model(&amp;TerrainDef, &amp;Heightfield) -&gt; Model</code></td>
-<td>The terrain mesh, coloured by height and slope.</td>
+<td><code>terrain::terrain_model(&amp;TerrainDef, &amp;Heightfield, mirror_x) -&gt; Model</code></td>
+<td>The terrain mesh, coloured by height and slope; with detail textures, textured groups (normal and slope).</td>
+</tr>
+<tr>
+<td><code>terrain::detail_uv</code>, <code>terrain::tile_placement</code></td>
+<td>Detail coordinates from the unmirrored field position; which mesh and transform draws tile <code>(i, j)</code>.</td>
+</tr>
+<tr>
+<td><code>terrain::scatter_cells(&amp;[Placement], &amp;Model, size, mirror_x) -&gt; Vec&lt;ScatterCell&gt;</code>, <code>SCATTER_CELLS</code></td>
+<td>Scatter baked into 16 × 16 cell meshes, each with a culling sphere.</td>
+</tr>
+<tr>
+<td><code>content::environment::scatter_placements(&amp;ScatterDef, &amp;Heightfield, seed) -&gt; Vec&lt;Placement&gt;</code></td>
+<td>Deterministic placement (rejection sampling, xorshift64).</td>
+</tr>
+<tr>
+<td><code>Renderer::scatter</code>, <code>ScatterDraw</code>, <code>Renderer::bake_scatter</code></td>
+<td>The baked scatter per terrain id and battle seed; one entry's GPU cells for the normal and mirrored tiles.</td>
+</tr>
+<tr>
+<td><code>ModelCache::prepare_detail_texture</code>, <code>render::set_mipmapped</code></td>
+<td>A detail texture loaded and mipmapped (trilinear) before the terrain mesh uses it.</td>
+</tr>
+<tr>
+<td><code>ModelCache::upload_draw_only</code></td>
+<td>Uploads a drawn-only mesh and drops its CPU copy.</td>
+</tr>
+<tr>
+<td><code>gpu::MAX_CHUNK_INDICES</code>, <code>gpu::MAX_CHUNK_VERTICES</code></td>
+<td>28 000 indices (below the window's 30 000 draw-call capacity) and the vertex limit per chunk.</td>
 </tr>
 <tr>
 <td><code>ModelCache::upload_model(content, Model, pack)</code></td>
@@ -7164,6 +7230,15 @@ Objects entirely behind the camera are skipped.</p>
 <li>An atmospheric battle with no visible ground: check the player starts above the terrain's
   <code>height</code> range, and that <code>fog_distance</code> is not so short that the ground is fogged out; the
   heightfield is cached per terrain id, so a changed terrain needs a new battle (not a new frame).</li>
+<li><strong>Parts of a big mesh missing, and "exceeded max drawcall size" in the log</strong>: a chunk passed
+  macroquad's 30 000-index draw-call capacity and the rest was dropped silently (the terrain
+  before app 0.18.0). <code>gpu::split_lod</code> keeps chunks within <code>MAX_CHUNK_INDICES</code>; a new mesh path
+  that bypasses it must split by indices too.</li>
+<li><strong>Detail texture shimmering in the distance</strong>: it has no mipmaps — check the start-up errors for
+  "is not a power of two" and resize it (<code>--check</code> warns too).</li>
+<li><strong>Scatter missing</strong>: beyond its <code>draw_distance</code>, a model that failed to load (the error is in
+  the model cache's errors and <code>--check</code>), or no ground within <code>max_slope</code> and <code>height</code> (fewer
+  pieces are placed, silently). Scatter is baked per battle seed, so a new battle may move it.</li>
 <li>Engine glows come from rear-facing model attachments, else the back of the bounding box;
   <code>GpuModel::engines</code> is computed once at load, so drawing glows allocates nothing per frame.</li>
 <li>A face that vanishes from one side is a back face: wind it the other way, or add a second

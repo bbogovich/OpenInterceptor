@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4414,6 +4414,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -4988,34 +5016,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../modding/campaign/" class="md-nav__link">
         
   
@@ -5487,6 +5487,17 @@
     <span class="md-ellipsis">
       
         Errors you collect, not return
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#an-error-that-is-not-a-failure-outofbudget-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An error that is not a failure: OutOfBudget — src/script/stmt.rs
       
     </span>
   </a>
@@ -6551,6 +6562,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#an-error-that-is-not-a-failure-outofbudget-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An error that is not a failure: OutOfBudget — src/script/stmt.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6624,6 +6646,26 @@ broken files, so every reader validates offsets and counts and returns an error 
 <p>Loading a ruleset does not stop at the first mistake: <code>rules::build</code> returns
 <code>(Ruleset, Vec&lt;String&gt;)</code> — everything that loaded, plus one message per broken definition — so
 one typo does not stop a whole mod, and <code>--check</code> can list every problem at once.</p>
+<h2 id="an-error-that-is-not-a-failure-outofbudget-srcscriptstmtrs">An error that is not a failure: <code>OutOfBudget</code> — <code>src/script/stmt.rs</code><a class="headerlink" href="#an-error-that-is-not-a-failure-outofbudget-srcscriptstmtrs" title="Permanent link">&para;</a></h2>
+<p>A Tier 2 script has an operation budget; when it runs out, the hook must stop <em>wherever it is</em>,
+however deep in loops and function calls. Instead of a flag checked everywhere, running out is
+an error value:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#[derive(Debug, Clone, Copy, PartialEq, Eq)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">OutOfBudget</span><span class="p">;</span>
+
+<span class="k">fn</span><span class="w"> </span><span class="nf">tick</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span><span class="w"> </span><span class="n">OutOfBudget</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="bp">self</span><span class="p">.</span><span class="n">left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">left</span><span class="p">.</span><span class="n">checked_sub</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">ok_or</span><span class="p">(</span><span class="n">OutOfBudget</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Every step of the interpreter returns <code>Result&lt;_, OutOfBudget&gt;</code> and uses <code>?</code>, so the error climbs
+out of every level by itself. It works inside short-circuit logic too:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Expr</span><span class="p">::</span><span class="n">Binary</span><span class="p">(</span><span class="n">Op</span><span class="p">::</span><span class="n">And</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Value</span><span class="p">::</span><span class="n">Bool</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">eval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="n">truth</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">eval</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="n">truth</span><span class="p">()),</span>
+</code></pre></div>
+<p><code>&amp;&amp;</code> evaluates its right side only when the left is true; if it does, and that evaluation runs
+out of budget, <code>?</code> returns from the whole function there. The error type is a unit struct — it
+carries no data, costs nothing, and the caller (<code>Program::run</code>) turns it into a report ("SCRIPT
+STOPPED").</p>
 
 
 

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4414,6 +4414,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -4988,34 +5016,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../modding/campaign/" class="md-nav__link">
         
   
@@ -5538,6 +5538,28 @@
     <span class="md-ellipsis">
       
         Order matters for determinism
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-stack-frames-by-index-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One stack, frames by index — src/script/stmt.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fixed-arrays-instead-of-vec-srcscriptstmtrs-srcsimairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed arrays instead of Vec — src/script/stmt.rs, src/sim/ai.rs
       
     </span>
   </a>
@@ -6485,6 +6507,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#one-stack-frames-by-index-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One stack, frames by index — src/script/stmt.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fixed-arrays-instead-of-vec-srcscriptstmtrs-srcsimairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed arrays instead of Vec — src/script/stmt.rs, src/sim/ai.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6592,6 +6636,30 @@ choice. The extractor (<code>src/extract.rs</code>, <code>model_to_obj</code>) c
 a <code>BTreeMap&lt;String, String&gt;</code> and writes them with <code>into_values()</code>: the <code>.mtl</code> file is
 byte-for-byte the same on every run, so extracting twice and comparing — or keeping the files
 in version control of your own art project — shows only real changes.</p>
+<h2 id="one-stack-frames-by-index-srcscriptstmtrs">One stack, frames by index — <code>src/script/stmt.rs</code><a class="headerlink" href="#one-stack-frames-by-index-srcscriptstmtrs" title="Permanent link">&para;</a></h2>
+<p>The script interpreter keeps every local variable of every active function in <strong>one</strong>
+<code>Vec&lt;Value&gt;</code>. A function's locals are a <em>frame</em>: the window <code>stack[frame .. frame + slots]</code>,
+where <code>frame</code> is a plain <code>usize</code>. A call pushes its arguments on top, <code>resize</code>s to make room for
+the callee's other locals, runs, and <code>truncate</code>s back. Two reasons over a <code>Vec</code> per call:</p>
+<ul>
+<li><strong>No allocation per call</strong> once the stack has grown (it starts <code>with_capacity(32)</code>).</li>
+<li><strong>No borrow tangle.</strong> Holding <code>&amp;mut [Value]</code> to a frame while the stack grows would be refused
+  (growing may move the buffer). An index stays valid whatever happens to the <code>Vec</code>.</li>
+</ul>
+<h2 id="fixed-arrays-instead-of-vec-srcscriptstmtrs-srcsimairs">Fixed arrays instead of <code>Vec</code> — <code>src/script/stmt.rs</code>, <code>src/sim/ai.rs</code><a class="headerlink" href="#fixed-arrays-instead-of-vec-srcscriptstmtrs-srcsimairs" title="Permanent link">&para;</a></h2>
+<p>When the size has a small known maximum, a fixed array (<code>[T; N]</code>) lives inline — on the stack or
+inside its struct — with no heap allocation:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Query arguments: at most four, so evaluate into a fixed buffer.</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="k">f32</span><span class="p">;</span><span class="w"> </span><span class="n">MAX_QUERY_ARGS</span><span class="p">];</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">slot</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">buf</span><span class="p">.</span><span class="n">iter_mut</span><span class="p">().</span><span class="n">zip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">*</span><span class="n">slot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">eval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="n">num</span><span class="p">();</span><span class="w"> </span><span class="p">}</span>
+<span class="bp">self</span><span class="p">.</span><span class="n">host</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="o">*</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">[</span><span class="o">..</span><span class="n">args</span><span class="p">.</span><span class="n">len</span><span class="p">().</span><span class="n">min</span><span class="p">(</span><span class="n">MAX_QUERY_ARGS</span><span class="p">)])</span>
+
+<span class="c1">// A pilot's object variables: at most eight.</span>
+<span class="k">pub</span><span class="w"> </span><span class="n">vars</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="kt">f32</span><span class="p">;</span><span class="w"> </span><span class="n">MAX_VARS</span><span class="p">],</span>
+</code></pre></div>
+<p><code>&amp;buf[..n]</code> passes just the used part as a slice. The AI state is copied every tick, so a fixed
+array there means the copy is a plain memory copy, never an allocation. The limits are rules a
+modder sees (<code>vars:</code> at most 8), and a test checks that every context's queries fit the buffer.</p>
 
 
 

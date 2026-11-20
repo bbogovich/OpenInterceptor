@@ -21,11 +21,11 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
-        <title>Conditions (script) - OpenInterceptor — Implementation</title>
+        <title>Conditions and scripts (script) - OpenInterceptor — Implementation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#conditions-script" class="md-skip">
+        <a href="#conditions-and-scripts-script" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Conditions (script)
+              Conditions and scripts (script)
             
           </span>
         </div>
@@ -3231,7 +3231,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -3249,7 +3249,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -3321,6 +3321,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripts-tier-2-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts (Tier 2, app 0.18.0)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -4548,6 +4559,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5102,34 +5141,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6553,6 +6564,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#scripts-tier-2-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts (Tier 2, app 0.18.0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-symbols" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6602,13 +6624,15 @@
 
 
 
-<h1 id="conditions-script">Conditions (script)<a class="headerlink" href="#conditions-script" title="Permanent link">&para;</a></h1>
+<h1 id="conditions-and-scripts-script">Conditions and scripts (script)<a class="headerlink" href="#conditions-and-scripts-script" title="Permanent link">&para;</a></h1>
 <p><code>src/script/</code>: the condition language that behaviours (and, from Stage 3, missions and
 events) use to decide things — <code>hull &lt; 25% and not system_damaged(engines)</code>. A complete little
 language implementation in four classic steps: lexing, recursive-descent parsing, type checking
 against a schema, and evaluation. Plan: Stage 2 item 2.9 (object context); Stage 3 adds the
-mission and event contexts and actions. The modder's view is on
-<a href="../../../modding/behaviours/#the-condition-language">Behaviours and conditions</a>.</p>
+mission and event contexts and actions, and in app 0.18.0 (item 3.10) the <strong>Tier 2 scripts</strong>:
+the same language grown into statements (<code>script::stmt</code>, <a href="#scripts-tier-2-app-0180">below</a>). The
+modder's view is on <a href="../../../modding/behaviours/#the-condition-language">Behaviours and conditions</a>
+and <a href="../../../modding/scripts/">Scripts (Tier 2)</a>.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
     T["condition text&lt;br/&gt;(from a rules file)"] --&gt; L["lex&lt;br/&gt;tokens: Num (units applied),&lt;br/&gt;Name, Sym"]
@@ -6634,8 +6658,8 @@ mission and event contexts and actions. The modder's view is on
   evaluated first and passed as numbers (a name argument such as <code>engines</code> is resolved to its
   index while parsing).</li>
 </ul>
-<p>There is no assignment, loop or user function, so evaluation cannot change the game and always
-finishes. <code>random(p)</code> draws from the asking pilot's seeded generator, so runs are deterministic.</p>
+<p>A <em>condition</em> has no assignment, loop or user function, so evaluation cannot change the game
+and always finishes (scripts add those, with the guarantees kept by other means — below). <code>random(p)</code> draws from the asking pilot's seeded generator, so runs are deterministic.</p>
 <h3 id="the-object-context">The object context<a class="headerlink" href="#the-object-context" title="Permanent link">&para;</a></h3>
 <p><code>script::object</code> declares the queries a behaviour may use (<code>QUERIES</code>, with <code>doc</code> strings that
 the docs table is made from) and <code>schema(levels)</code> adds the campaign's difficulty level ids as
@@ -6668,6 +6692,94 @@ names and the difficulty levels, parses, and evaluates against a <code>BattleCx<
 <code>Cell</code> <strong>copy</strong> of the mission's (<code>Cell::new(self.rng)</code>), so <code>random(p)</code> reads the dice without
 moving them — looking never changes the battle (unit-tested). The value comes back as text; a
 parse error as the <code>Err</code> string the flight screen shows in orange.</p>
+<h2 id="scripts-tier-2-app-0180">Scripts (Tier 2, app 0.18.0)<a class="headerlink" href="#scripts-tier-2-app-0180" title="Permanent link">&para;</a></h2>
+<p><code>src/script/stmt.rs</code> (main <code>040ca26</code>, decision (c) of the
+<a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310">dependency evaluation</a>):
+a small statement language on top of the condition parser. The guide is
+<a href="../../../modding/scripts/">Scripts (Tier 2)</a>; the grammar is on
+<a href="../../../specification/design/format-behaviour/#the-language-as-built-app-0180">Format: behaviours and scripting</a>.</p>
+<pre class="mermaid"><code>flowchart LR
+    F["scripts/*.ois&lt;br/&gt;(every pack, later replaces)"] --&gt;|"Library::add&lt;br/&gt;split_file: defs, braces"| LIB["Library&lt;br/&gt;SourceFile → DefSource&lt;br/&gt;(tokens, not yet checked)"]
+    H["a hook&lt;br/&gt;do: script + call:&lt;br/&gt;or script(file:fn)"] --&gt; C
+    LIB --&gt; C["Library::compile(ref, Schema,&lt;br/&gt;action table, context)"]
+    C --&gt;|"call_order: callees first,&lt;br/&gt;recursion → error"| CO["Compiler per def&lt;br/&gt;statements + Parser (expressions)&lt;br/&gt;locals → frame slots"]
+    CO --&gt; P["Program&lt;br/&gt;funcs: Vec&amp;lt;Func&amp;gt;, entry&lt;br/&gt;(Arc-shared)"]
+    P --&gt;|"Program::run(&amp;mut dyn Host)"| VM["Vm&lt;br/&gt;one value stack,&lt;br/&gt;budget 10 000"]
+    VM --&gt;|"query(id, args)"| HO["Host: Context&lt;br/&gt;ObjectHost / BattleHost /&lt;br/&gt;CampaignHost"]
+    VM --&gt;|"act(Action)"| HO</code></pre>
+<p><strong>Loading.</strong> <code>Content::load</code> reads every pack's <code>scripts/*.ois</code> into a <code>Library</code> before the rules
+(<code>Library::add</code> replaces a file of the same pack-relative path, so mods override). <code>add</code> checks
+only the file's <strong>structure</strong> (<code>split_file</code>: <code>def name(params) { … }</code> blocks, balanced braces,
+no duplicate names) and keeps each body as tokens, because a body can only be type-checked
+against a context, and only the <strong>hook</strong> knows its context.</p>
+<p><strong>Compiling a hook.</strong> <code>Library::compile(reference, schema, actions, context)</code> finds the file and
+function, refuses an entry with parameters, orders the functions it reaches callees-first
+(<code>call_order</code>, a depth-first walk whose stack <em>is</em> the call chain, so meeting a function already
+on it is recursion — reported as <code>a → b → a</code>), and compiles each with a <code>Compiler</code>. Statements are
+parsed by the compiler; expressions by the same <code>script::Parser</code> conditions use, now given the
+function's <strong>locals</strong> (<code>LocalVar</code>: name, frame slot, type) and the <strong>signatures</strong> of the functions
+already compiled (<code>FuncSig</code>), so it can produce <code>Expr::Local</code> and <code>Expr::Call</code>. Every check —
+unknown names, argument kinds, types, <code>for each</code> without a collection (<code>Schema::each</code>), name
+clashes, <code>script(...)</code> inside a script — is a load error with file and line. Three call sites:</p>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Where compiled</th>
+<th>Context</th>
+<th>Actions table</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>do: script</code> state</td>
+<td><code>content::behaviour::BehaviourDef::parse</code></td>
+<td>object, plus the behaviour's <code>vars</code> as constants (slot numbers)</td>
+<td><code>action::OBJECT_ACTIONS</code> (<code>goto</code>, <code>set_var</code>, <code>message</code>); <code>goto</code>/<code>set_var</code> targets checked against the states and <code>vars</code> afterwards (<code>Program::action_words</code>)</td>
+</tr>
+<tr>
+<td><code>script(...)</code> in <code>outcomes</code></td>
+<td><code>content::mission::MissionDef::parse_with</code> via <code>action::parse_with</code></td>
+<td>battle (with the mission's roles; <code>Schema::each = members</code>)</td>
+<td><code>action::MISSION_ACTIONS</code></td>
+</tr>
+<tr>
+<td><code>script(...)</code> in events, choices, plan warnings / complete, evaluations</td>
+<td><code>content::story</code>, <code>content::strategy</code> via <code>action::parse_with</code></td>
+<td>campaign</td>
+<td><code>action::EVENT_ACTIONS</code></td>
+</tr>
+</tbody>
+</table>
+<p>A compiled <code>Program</code> goes into an <code>Arc</code> (in <code>StateScript</code> or <code>Action::program</code>): action lists are
+cloned when they run, and every ship flying a behaviour shares one program. After the rules
+load, <code>content::mod</code> resolves <code>@text</code> keys inside programs with <code>Arc::make_mut</code> +
+<code>Program::texts_mut</code> (no other <code>Arc</code> points at a program yet, so nothing is copied).</p>
+<p><strong>Running.</strong> <code>Program::run(&amp;mut dyn Host)</code> creates a <code>Vm</code> with a budget of <code>BUDGET</code> = 10 000
+operations and calls the entry. The tree walk (<code>Vm::block</code>, <code>Vm::eval</code>) mirrors <code>Expr::eval</code>
+plus statements; every statement, expression node and loop round calls <code>tick()</code>, which
+returns <code>Err(OutOfBudget)</code> at zero — an ordinary error value that <code>?</code> carries out of every
+level, so the hook simply stops; actions already sent to the host stand. Loops run
+<code>rounds(n)</code> = whole rounds, at most <code>MAX_LOOP</code> = 1 000. Locals live in <strong>one value stack</strong>: a
+call's frame is the window <code>stack[base .. base + slots]</code>, arguments pushed by the caller become
+its first slots, and the stack is truncated back on return. Query arguments are evaluated into a
+fixed <code>[f32; MAX_QUERY_ARGS]</code> array (4; a test checks every context fits), so a query
+allocates nothing.</p>
+<p><strong>Hosts.</strong> <code>trait Host: Context { fn act(&amp;mut self, action: Action); }</code> — a host answers queries
+like any condition context and receives actions:</p>
+<ul>
+<li><code>sim::ai::ObjectHost</code> (behaviour scripts): queries through the pilot's <code>ObjectContext</code> (with
+  <code>AiState::vars</code>, a fixed <code>[f32; 8]</code>); <code>goto</code> records the state (the last wins), <code>set_var</code> writes
+  into the context at once, <code>message</code> becomes a <code>SimEvent::Radio</code>. <code>ai::step</code> runs the script on
+  the state's first tick and every <code>every</code> seconds (<code>AiState::script_clock</code>) before flying the
+  <code>fly</code> manoeuvre; out of budget raises <code>SimEvent::ScriptStopped</code> once per pilot
+  (<code>AiState::script_warned</code>).</li>
+<li><code>mission::BattleHost</code> (outcome scripts): run when the result is decided, against the battle as
+  it ended; battle actions become message lines, campaign actions join the debrief's list.</li>
+<li><code>campaign::story::CampaignHost</code> (campaign scripts): holds the one <code>&amp;mut Campaign</code> and lends it
+  out shared for each query; the roll generator sits in a <code>Cell&lt;u64&gt;</code> while the script runs and
+  is handed back around each action, which is applied at once through <code>apply_actions</code>.</li>
+</ul>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6718,6 +6830,50 @@ parse error as the <code>Err</code> string the flight screen shows in orange.</p
 <td>The condition console's evaluation (app 0.16.5).</td>
 </tr>
 <tr>
+<td><code>stmt::Library</code></td>
+<td>The loaded script files (<code>add</code>, <code>compile</code>, <code>len</code>).</td>
+</tr>
+<tr>
+<td><code>stmt::Program</code></td>
+<td>A compiled hook: its functions and entry; <code>run</code>, <code>run_with</code>, <code>reference</code>, <code>action_words</code>, <code>texts_mut</code>.</td>
+</tr>
+<tr>
+<td><code>stmt::Host</code></td>
+<td><code>trait Host: Context</code> — queries plus <code>act(Action)</code>.</td>
+</tr>
+<tr>
+<td><code>stmt::OutOfBudget</code></td>
+<td>The error a stopped hook returns.</td>
+</tr>
+<tr>
+<td><code>stmt::BUDGET</code>, <code>MAX_LOOP</code>, <code>MAX_QUERY_ARGS</code>, <code>EXTENSION</code></td>
+<td>10 000, 1 000, 4, <code>"ois"</code>.</td>
+</tr>
+<tr>
+<td><code>Expr::Local</code>, <code>Expr::Call</code></td>
+<td>A local's frame slot; a call of a script function (only from the script compiler).</td>
+</tr>
+<tr>
+<td><code>Schema::each</code></td>
+<td>The query that sizes a <code>for each</code> collection (<code>battle::id::MEMBERS</code>), or none.</td>
+</tr>
+<tr>
+<td><code>action::OBJECT_ACTIONS</code>, <code>action::Hooks</code>, <code>action::parse_with</code></td>
+<td>The behaviour scripts' actions; what a <code>script(...)</code> list entry compiles against.</td>
+</tr>
+<tr>
+<td><code>object::MAX_VARS</code>, <code>object::id::VAR</code></td>
+<td>At most 8 object variables; the <code>var(name)</code> query.</td>
+</tr>
+<tr>
+<td><code>battle::id::MEMBERS</code> … <code>MEMBER_DISTANCE</code></td>
+<td>The battle context's member queries (ids 17 – 20).</td>
+</tr>
+<tr>
+<td><code>sim::ai::ObjectHost</code>, <code>mission::BattleHost</code>, <code>campaign::story::CampaignHost</code></td>
+<td>The three hosts.</td>
+</tr>
+<tr>
 <td><code>sim::ai::ObjectContext</code></td>
 <td>The simulation's answer to object queries.</td>
 </tr>
@@ -6731,6 +6887,11 @@ parse error as the <code>Err</code> string the flight screen shows in orange.</p
 <li><code>expr.eval(&amp;dyn Context) -&gt; Value</code>, <code>expr.test(&amp;dyn Context) -&gt; bool</code>.</li>
 <li><code>script::object::schema(&amp;[String]) -&gt; Schema</code>; <code>ruleset.object_schema()</code> builds it for the
   loaded campaign's levels.</li>
+<li><code>stmt::Library::add(&amp;mut self, path, origin, text) -&gt; Result&lt;(), String&gt;</code>;
+  <code>Library::compile(&amp;self, "scripts/x.ois:fn", &amp;Schema, &amp;'static [ActionDef], context) -&gt; Result&lt;Program, String&gt;</code>.</li>
+<li><code>Program::run(&amp;self, &amp;mut dyn Host) -&gt; Result&lt;Option&lt;Value&gt;, OutOfBudget&gt;</code>; <code>run_with(.., budget)</code>.</li>
+<li><code>script::lex_lines(text, script: bool) -&gt; Result&lt;(Vec&lt;Token&gt;, Vec&lt;u32&gt;), String&gt;</code> (tokens with
+  their lines; <code>#</code> comments, <code>@keys</code>, quoted text, braces, line ends when <code>script</code>).</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>
@@ -6746,6 +6907,15 @@ parse error as the <code>Err</code> string the flight screen shows in orange.</p
   0.16.13) by giving a test story event that <code>when</code> and <code>chance: 0%</code>.</li>
 <li>The language is pure, so new queries are unit-tested with a stub <code>Context</code> (see the tests in
   <code>script/mod.rs</code>) before the simulation answers them.</li>
+<li><strong>Scripts:</strong> <code>--check</code> compiles every hook; an error names the hook
+  (<code>behaviours.b.states.s.call: …</code>, <code>missions.m.outcomes.win: …</code>, <code>events.e.do: …</code>) and the
+  file and line. A function no hook reaches is only structure-checked — call it from a test
+  hook to check its body. In play, <code>message(...)</code> lines show what a behaviour script decided;
+  <code>SCRIPT STOPPED: … used its whole operation budget</code> (message display or campaign log) means
+  a runaway loop. <code>script::stmt::tests</code> has a <code>TestHost</code> that logs actions — the quickest way
+  to try an interpreter change. The soak test
+  <code>soak::tests::the_default_campaigns_scripted_ace_taunts_and_turns_furious</code> flies the default
+  <code>saucer_ace</code> headless.</li>
 </ul>
 
 

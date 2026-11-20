@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4416,6 +4416,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../looks/" class="md-nav__link">
         
   
@@ -5154,6 +5182,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#script-files-scriptsois" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Script files (scripts/*.ois)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cutscene-files-cutscenesyaml" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5364,34 +5403,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -7079,6 +7090,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#script-files-scriptsois" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Script files (scripts/*.ois)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cutscene-files-cutscenesyaml" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7939,6 +7961,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>aim 0.5, reaction 0.7 s</td>
 <td><code>aim</code>: fraction, 0 wild … 1 perfect; <code>reaction</code>: time between looks at the target.</td>
 </tr>
+<tr>
+<td><code>vars</code></td>
+<td>ids</td>
+<td>none</td>
+<td><strong>Object variables</strong> (app 0.18.0), at most 8: each ship flying the behaviour keeps a number per name, 0 at the start. Read with <code>var(name)</code> in transitions and scripts; set by a script's <code>set_var(name, value)</code> (<a href="../scripts/#object-context-behaviour-scripts">Scripts</a>).</td>
+</tr>
 </tbody>
 </table>
 <p>A state:</p>
@@ -7954,9 +7982,27 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <tbody>
 <tr>
 <td><code>do</code></td>
-<td><code>idle</code>, <code>circle</code>, <code>patrol</code>, <code>attack</code>, <code>evade</code>, <code>retreat</code>, <code>turret</code>, <code>tow</code>, <code>escort</code>, <code>travel</code>, <code>mine</code></td>
+<td><code>idle</code>, <code>circle</code>, <code>patrol</code>, <code>attack</code>, <code>evade</code>, <code>retreat</code>, <code>turret</code>, <code>tow</code>, <code>escort</code>, <code>travel</code>, <code>mine</code>, <code>script</code></td>
 <td><em>required</em></td>
-<td>The manoeuvre (<a href="../behaviours/#manoeuvres">Manoeuvres</a>; <code>escort</code> and <code>travel</code> app 0.9.2).</td>
+<td>The manoeuvre (<a href="../behaviours/#manoeuvres">Manoeuvres</a>; <code>escort</code> and <code>travel</code> app 0.9.2), or <code>script</code>: a <a href="../scripts/">Tier 2 script</a> decides while the ship flies <code>fly:</code> (app 0.18.0).</td>
+</tr>
+<tr>
+<td><code>call</code></td>
+<td>text</td>
+<td><em>required with</em> <code>do: script</code></td>
+<td>The script function, <code>scripts/&lt;file&gt;.ois:&lt;function&gt;</code>, run in the object context. Only on <code>do: script</code> states.</td>
+</tr>
+<tr>
+<td><code>every</code></td>
+<td>time</td>
+<td>0.5 s</td>
+<td><code>do: script</code>: seconds between runs (at least one tick); it also runs on the state's first tick.</td>
+</tr>
+<tr>
+<td><code>fly</code></td>
+<td>a manoeuvre (not <code>script</code>)</td>
+<td><code>attack</code></td>
+<td><code>do: script</code>: the manoeuvre flown meanwhile, with this state's other parameters. Only on <code>do: script</code> states.</td>
 </tr>
 <tr>
 <td><code>range</code></td>
@@ -8734,6 +8780,91 @@ mission or scenario picks one with <code>environment: &lt;id&gt;</code>; without
 <td>129</td>
 <td>Grid points per side, 17–257 (the mesh and the height lookup).</td>
 </tr>
+<tr>
+<td><code>detail</code></td>
+<td>asset</td>
+<td>none</td>
+<td>A tiling texture multiplying the ground colours up close (white = unchanged); power-of-two sides, else <code>--check</code> warns (app 0.18.0; <a href="../environments/#detail-textures-app-0180">Detail textures</a>).</td>
+</tr>
+<tr>
+<td><code>detail_scale</code></td>
+<td>distance</td>
+<td>50 m</td>
+<td>Metres covered by one repeat of the detail texture (more than 0).</td>
+</tr>
+<tr>
+<td><code>slope_detail</code></td>
+<td>asset</td>
+<td>none</td>
+<td>A second detail texture for steep ground; needs <code>detail</code>.</td>
+</tr>
+<tr>
+<td><code>scatter</code></td>
+<td>list of entries (below)</td>
+<td>none</td>
+<td>Decoration placed over the ground; drawn only, no collision (<a href="../environments/#scattered-objects-app-0180">Scattered objects</a>).</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>scatter</code> entry:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td>asset</td>
+<td><em>required</em></td>
+<td>The model to place (OBJ or <code>original:</code>); first LOD.</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td>number</td>
+<td>100</td>
+<td>How many, 1 – 20 000 (fewer if few spots suit).</td>
+</tr>
+<tr>
+<td><code>scale</code></td>
+<td>number or <code>[smallest, largest]</code></td>
+<td>1</td>
+<td>Size, or a random size in the range.</td>
+</tr>
+<tr>
+<td><code>max_slope</code></td>
+<td>angle</td>
+<td>30°</td>
+<td>Steepest ground to stand on, 0 – 90°.</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>2 numbers</td>
+<td>the whole range</td>
+<td>Only on ground between <code>[lowest, highest]</code> metres.</td>
+</tr>
+<tr>
+<td><code>align</code></td>
+<td>number</td>
+<td>0</td>
+<td>Lean with the ground: 0 upright … 1 square to the slope.</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>number</td>
+<td>the entry's index + 1</td>
+<td>Mixed with the battle's seed.</td>
+</tr>
+<tr>
+<td><code>draw_distance</code></td>
+<td>distance</td>
+<td>4 km</td>
+<td>Not drawn farther away than this.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="campaign"><code>campaign</code><a class="headerlink" href="#campaign" title="Permanent link">&para;</a></h3>
@@ -8899,7 +9030,7 @@ and <code>missions/</code> (the convention for missions). Full reference, battle
 <td><code>outcomes</code></td>
 <td>mapping result: actions</td>
 <td>none</td>
-<td>Results <code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code>, <code>killed</code> (the player's craft destroyed; without its own entry it takes the <code>lose</code> actions).</td>
+<td>Results <code>win</code>, <code>lose</code>, <code>draw</code>, <code>retreat</code>, <code>killed</code> (the player's craft destroyed; without its own entry it takes the <code>lose</code> actions). An entry may be <code>script(scripts/&lt;file&gt;.ois:&lt;function&gt;)</code>, run at the battle's end in the battle context (<a href="../scripts/">Scripts</a>, app 0.18.0).</td>
 </tr>
 <tr>
 <td><code>chatter</code></td>
@@ -8974,6 +9105,79 @@ part is optional.</p>
 </table>
 <p>The schema type <strong>either</strong> (<code>Ty::Either</code>) lets a key take one of two forms: <code>count: 3</code> or
 <code>count: [2, 4]</code>; <code>bearing: [10, 5]</code> or <code>bearing: random</code>; <code>class: comet</code> or <code>class: [a, b]</code>.</p>
+<h2 id="script-files-scriptsois">Script files (<code>scripts/*.ois</code>)<a class="headerlink" href="#script-files-scriptsois" title="Permanent link">&para;</a></h2>
+<p>Tier 2 scripts (app 0.18.0): <code>def</code> functions in the statement language, named from hooks as
+<code>scripts/&lt;file&gt;.ois:&lt;function&gt;</code>. A later pack's file of the same path replaces an earlier one's.
+Hooks: a behaviour state's <code>do: script</code> / <code>call:</code> (object context) and <code>script(...)</code> entries in
+mission <code>outcomes</code> (battle) and story, plan and evaluation action lists (campaign). Queries and
+actions each context adds for scripts:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>Context</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>var(name)</code></td>
+<td>query, number</td>
+<td>object</td>
+<td>An object variable of the behaviour (<code>vars:</code>).</td>
+</tr>
+<tr>
+<td><code>goto(state)</code></td>
+<td>action</td>
+<td>object</td>
+<td>Switch the behaviour's state when the script returns.</td>
+</tr>
+<tr>
+<td><code>set_var(name, value)</code></td>
+<td>action</td>
+<td>object</td>
+<td>Set an object variable.</td>
+</tr>
+<tr>
+<td><code>message(text)</code></td>
+<td>action</td>
+<td>object</td>
+<td>A radio line from this ship on the player's message display.</td>
+</tr>
+<tr>
+<td><code>members(role)</code></td>
+<td>query, number</td>
+<td>battle</td>
+<td>Craft that have entered for the role, alive or not.</td>
+</tr>
+<tr>
+<td><code>member_alive(role, m)</code></td>
+<td>query, true/false</td>
+<td>battle</td>
+<td>The role's <code>m</code>-th member (from 0) is still in the battle.</td>
+</tr>
+<tr>
+<td><code>member_hull(role, m)</code></td>
+<td>query, number</td>
+<td>battle</td>
+<td>Its hull fraction (0 once gone).</td>
+</tr>
+<tr>
+<td><code>member_distance(role, m)</code></td>
+<td>query, number</td>
+<td>battle</td>
+<td>Its distance from the player, m (very large once gone).</td>
+</tr>
+<tr>
+<td><code>script(file:function)</code></td>
+<td>action-list entry</td>
+<td>battle, campaign</td>
+<td>Hand over to a script function (not from inside a script).</td>
+</tr>
+</tbody>
+</table>
+<p>The language, budget and errors: <a href="../scripts/">Scripts (Tier 2)</a>.</p>
 <h2 id="cutscene-files-cutscenesyaml">Cutscene files (<code>cutscenes/*.yaml</code>)<a class="headerlink" href="#cutscene-files-cutscenesyaml" title="Permanent link">&para;</a></h2>
 <p>One cutscene per file (app 0.13.0; editor schema <code>schemas/cutscene.schema.json</code>). The <code>title</code> and the captions may be text keys (app 0.16.2). Every key —
 <code>id</code>, <code>title</code>, <code>length</code>, <code>environment</code>, <code>entities</code>, <code>cameras</code>, <code>cuts</code>, <code>sounds</code>, <code>captions</code> — with

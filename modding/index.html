@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4416,6 +4416,34 @@
   
   
     <li class="md-nav__item">
+      <a href="scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="looks/" class="md-nav__link">
         
   
@@ -4970,34 +4998,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6467,8 +6467,8 @@ shared freely, because it contains nothing of MicroProse's.</p>
 <td><strong>Done:</strong> mod kinds (<code>campaign</code>, <code>addon</code>, <code>library</code>) with <code>parent</code>, <code>targets</code>, <code>format</code>; <strong>YAML mod files with schemas</strong> (format 2: units, did-you-mean errors, editor completion); ship systems and special equipment (<code>systems</code>, <code>systems+</code>), power sharing (<code>power</code>), damage to systems and repair (<code>damage</code>), capture (<code>capturable</code>), hyperspace time, crippled scenario objects (<code>destroyed_systems</code>, <code>hull</code>), the <code>power</code> and <code>systems</code> instruments; <strong>AI behaviours</strong> as state machines with the condition language; <strong>difficulty levels</strong> with per-level values and variants; 3D cockpit instruments anchored in perspective and the F12 layout editor; <strong>looks</strong> (model sets with damage textures and states, debris sets, effects); <strong>missile guidance</strong> kinds, damage modes and mines; <strong>station modules</strong> at attachment points; AI target preferences and systems use (cloak, ECM, power); the sound cue table; point defence; sensor and jamming probes; <strong>text keys and translations</strong>. <strong>To come:</strong> XSPT explosions, model-set extras</td>
 </tr>
 <tr>
-<td>3 (in progress)</td>
-<td><strong>Done:</strong> missions as data — roles with class lists, counts and arrivals, waves, objectives, optional objectives, timers, outcomes (actions), radio chatter, debriefs; the tablet console's look per campaign and cockpit (<code>console</code>, <a href="console-themes/">Console themes</a>). <strong>hazards</strong> (asteroid fields, minefields, black holes, ion storms; <a href="missions/#hazards">Missions › Hazards</a>); <strong>environments</strong> — orbit, pockets and atmospheric battles over generated or heightmap <strong>terrain</strong> with sky, fog and ground installations (<a href="environments/">Environments and terrain</a>); <strong>radio voices</strong> — pilot voice sets, spoken chatter and the computer voice (<a href="voices/">Radio voices</a>). <strong>To come:</strong> terrain detail textures and scattered objects, the campaign context, Tier 2 <strong>scripts</strong></td>
+<td>3 (done, app 0.18.0)</td>
+<td><strong>Done:</strong> missions as data — roles with class lists, counts and arrivals, waves, objectives, optional objectives, timers, outcomes (actions), radio chatter, debriefs; the tablet console's look per campaign and cockpit (<code>console</code>, <a href="console-themes/">Console themes</a>). <strong>hazards</strong> (asteroid fields, minefields, black holes, ion storms; <a href="missions/#hazards">Missions › Hazards</a>); <strong>environments</strong> — orbit, pockets and atmospheric battles over generated or heightmap <strong>terrain</strong> with sky, fog and ground installations (<a href="environments/">Environments and terrain</a>); <strong>radio voices</strong> — pilot voice sets, spoken chatter and the computer voice (<a href="voices/">Radio voices</a>). terrain <strong>detail textures</strong> and <strong>scattered objects</strong> (<code>detail</code>, <code>scatter</code>; <a href="environments/#detail-textures-app-0180">Environments and terrain › Detail textures</a>); the campaign context; Tier 2 <strong><a href="scripts/">scripts</a></strong> (<code>scripts/*.ois</code>, <code>do: script</code>, <code>script(...)</code>; app 0.18.0)</td>
 </tr>
 <tr>
 <td>4 (in progress)</td>
@@ -6574,7 +6574,8 @@ is read once, deterministically, at start-up.</p>
 <li><a href="cockpits/">Cockpits (HD and 3D)</a>: cockpit rules, design spaces, 3D cockpits, the ship status display.</li>
 <li><a href="console-themes/">Console themes</a>: the tablet console's colours, font and corners, per campaign and per cockpit.</li>
 <li><a href="scenarios/">Scenarios and missions</a>: placing ships and stations.</li>
-<li><a href="scripting/">Scripting</a> and <a href="campaign/">Tech tree and campaign</a>: planned.</li>
+<li><a href="scripts/">Scripts (Tier 2)</a>: the statement language, its hooks, the budget and a worked example.</li>
+<li><a href="campaign/">Tech tree and campaign</a>: planned.</li>
 <li><a href="validating/">Validating a mod</a>: <code>--check</code>.</li>
 </ul>
 

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4416,6 +4416,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../looks/" class="md-nav__link">
         
   
@@ -5182,34 +5210,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -7120,7 +7120,7 @@ condition holds are listed on the strategy screen's <strong>Archive</strong> tab
 <h2 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h2>
 <p>Every action list in the story — <code>do</code>, <code>choices[].do</code>, <code>warnings[].do</code>, <code>complete</code> — and the
 strategy layer's <a href="../strategy/#evaluations"><code>evaluations</code></a> <code>do</code> lists are checked when the rules
-load against the eighteen event actions (<code>script::action::EVENT_ACTIONS</code>): an unknown action or a
+load against the nineteen event actions (<code>script::action::EVENT_ACTIONS</code>, with <code>script(...)</code> since app 0.18.0): an unknown action or a
 wrong argument is an error with its place.</p>
 <table>
 <thead>
@@ -7205,6 +7205,11 @@ wrong argument is an error with its place.</p>
 <td><code>aggression(n)</code></td>
 <td>number</td>
 <td>Change the rival's aggression, within its limits.</td>
+</tr>
+<tr>
+<td><code>script(file:function)</code></td>
+<td><code>scripts/&lt;file&gt;.ois:&lt;function&gt;</code></td>
+<td>Run a <a href="../scripts/">Tier 2 script</a> in the campaign context (app 0.18.0): it reads the campaign's queries and takes these actions, each applied at once.</td>
 </tr>
 <tr>
 <td><code>victory(x)</code>, <code>defeat(x)</code></td>

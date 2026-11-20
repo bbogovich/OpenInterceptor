@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4416,6 +4416,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../looks/" class="md-nav__link">
         
   
@@ -5172,34 +5200,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -7341,6 +7341,12 @@ the debrief now and will be applied by the strategy layer (Stage 4).</p>
 <td>—</td>
 <td>campaign</td>
 <td>The enemy takes the cargo to a supply depot.</td>
+</tr>
+<tr>
+<td><code>script(file:function)</code></td>
+<td><code>scripts/&lt;file&gt;.ois:&lt;function&gt;</code></td>
+<td>battle</td>
+<td>Run a <a href="../scripts/">Tier 2 script</a> at the battle's end, in the battle context (app 0.18.0): its battle actions show on the message display, its campaign actions join the debrief's list. It may loop over a role's members with <code>for each</code> and the <code>members</code>, <code>member_alive</code>, <code>member_hull</code>, <code>member_distance</code> queries.</td>
 </tr>
 </tbody>
 </table>

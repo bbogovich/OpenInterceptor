@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4414,6 +4414,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -4988,34 +5016,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../modding/campaign/" class="md-nav__link">
         
   
@@ -5335,6 +5335,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Sharing: Arc and Rc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changing-shared-data-arcmake_mut-srccontentmodrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing shared data: Arc::make_mut — src/content/mod.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -5357,6 +5374,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Interior mutability: Cell — src/sim/ai.rs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lending-one-mut-as-shared-many-times-srccampaignstoryrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lending one &amp;mut as shared, many times — src/campaign/story.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -5375,6 +5409,17 @@
     <span class="md-ellipsis">
       
         Two borrows from two owners
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ending-a-borrow-early-copy-the-reference-out-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ending a borrow early: copy the reference out — src/script/stmt.rs
       
     </span>
   </a>
@@ -6516,6 +6561,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Sharing: Arc and Rc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changing-shared-data-arcmake_mut-srccontentmodrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing shared data: Arc::make_mut — src/content/mod.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6538,6 +6600,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Interior mutability: Cell — src/sim/ai.rs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lending-one-mut-as-shared-many-times-srccampaignstoryrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lending one &amp;mut as shared, many times — src/campaign/story.rs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6556,6 +6635,17 @@
     <span class="md-ellipsis">
       
         Two borrows from two owners
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ending-a-borrow-early-copy-the-reference-out-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ending a borrow early: copy the reference out — src/script/stmt.rs
       
     </span>
   </a>
@@ -6616,6 +6706,16 @@ cache hands out <code>Rc&lt;GpuModel&gt;</code> — the cheaper single-threaded 
 happens on one thread.</p>
 <p>Small plain values (<code>f32</code>, <code>u32</code>, <code>Vec3</code>, our <code>ShipId</code>) implement <code>Copy</code>, so they are copied
 instead of moved.</p>
+<h3 id="changing-shared-data-arcmake_mut-srccontentmodrs">Changing shared data: <code>Arc::make_mut</code> — <code>src/content/mod.rs</code><a class="headerlink" href="#changing-shared-data-arcmake_mut-srccontentmodrs" title="Permanent link">&para;</a></h3>
+<p>A compiled script (<code>Program</code>) sits in an <code>Arc</code> because action lists are cloned whenever they
+run and every ship flying a behaviour uses the same program. But once, after loading, the
+programs must be <em>changed</em>: their <code>@text</code> keys are replaced by the words of the chosen language.
+<code>Arc::make_mut(&amp;mut arc)</code> returns a <code>&amp;mut</code> to the inside — <strong>copying it first only if another
+<code>Arc</code> also points at it</strong> (<em>copy-on-write</em>). At load time no other <code>Arc</code> exists yet, so nothing is
+copied; if one did, the change could not leak into the other owner's copy.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="n">program</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="n">sync</span><span class="p">::</span><span class="n">Arc</span><span class="p">::</span><span class="n">make_mut</span><span class="p">(</span><span class="n">p</span><span class="p">);</span><span class="w">   </span><span class="c1">// &amp;mut Program, cloned only if shared</span>
+<span class="n">program</span><span class="p">.</span><span class="n">texts_mut</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="o">|</span><span class="n">s</span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* replace @key with its text */</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
 <h2 id="borrowing-and-mut">Borrowing: <code>&amp;</code> and <code>&amp;mut</code><a class="headerlink" href="#borrowing-and-mut" title="Permanent link">&para;</a></h2>
 <p>Instead of moving, you can <strong>borrow</strong>:</p>
 <ul>
@@ -6661,6 +6761,14 @@ in and out — no reference to the inside is ever handed out, so the borrow rule
 without any run-time check. (<code>RefCell</code> does the same for non-<code>Copy</code> values, checking borrows at
 run time.) After the transitions have been tested, the AI copies the advanced state back into
 its own memory with <code>cx.rng.get()</code>.</p>
+<h3 id="lending-one-mut-as-shared-many-times-srccampaignstoryrs">Lending one <code>&amp;mut</code> as shared, many times — <code>src/campaign/story.rs</code><a class="headerlink" href="#lending-one-mut-as-shared-many-times-srccampaignstoryrs" title="Permanent link">&para;</a></h3>
+<p>A campaign script reads the campaign (queries take <code>&amp;self</code>) and changes it (actions take
+<code>&amp;mut self</code>), alternately. <code>CampaignHost</code> holds the single <code>&amp;mut Campaign</code>; for each query it
+lends it out shared (a <em>reborrow</em>: through <code>&amp;self</code>, the <code>&amp;mut Campaign</code> can only be read as <code>&amp;Campaign</code>) for just that call, and for each action uses it
+mutably. Because the two never overlap, the borrow checker accepts both. The campaign's roll
+generator must advance during queries (<code>random</code>), which take <code>&amp;self</code>, so while the script runs
+the host keeps it in a <code>Cell&lt;u64&gt;</code> — exactly the <code>ObjectContext</code> trick above — and writes it
+back into the campaign around each action and at the end.</p>
 <h2 id="moving-a-value-out-of-a-place-memreplace-and-take">Moving a value out of a place: <code>mem::replace</code> and <code>take</code><a class="headerlink" href="#moving-a-value-out-of-a-place-memreplace-and-take" title="Permanent link">&para;</a></h2>
 <p>Rust will not let you move a value out of a variable or field that is still in use — the place
 would be left holding nothing. <code>std::mem::replace(&amp;mut place, new)</code> swaps a new value in and
@@ -6697,6 +6805,22 @@ borrow <code>ctx</code> shared and mutably at once and fail to compile. Keeping 
 read-only during play) and the game state (<code>self.campaign</code>) in separate owners is what makes
 the screen's code simple. While <code>def</code> is borrowed, <code>ctx</code> may still be used <strong>shared</strong>:
 <code>self.save(ctx)</code> takes <code>&amp;AppContext</code>, so it is allowed too.</p>
+<h2 id="ending-a-borrow-early-copy-the-reference-out-srcscriptstmtrs">Ending a borrow early: copy the reference out — <code>src/script/stmt.rs</code><a class="headerlink" href="#ending-a-borrow-early-copy-the-reference-out-srcscriptstmtrs" title="Permanent link">&para;</a></h2>
+<p>The script interpreter <code>Vm</code> holds <code>prog: &amp;Program</code> and calls its own <code>&amp;mut self</code> methods while
+walking a function's body, which lives <em>inside</em> the program:</p>
+<div class="highlight"><pre><span></span><code><span class="k">fn</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nb">Result</span><span class="o">&lt;</span><span class="nb">Option</span><span class="o">&lt;</span><span class="n">Value</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">OutOfBudget</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Copy the `&amp;Program` out of `self` first: `func` then borrows the program, not</span>
+<span class="w">    </span><span class="c1">// `self`, so `self` stays free for the `&amp;mut self` calls below.</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">prog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">prog</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">func</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">prog</span><span class="p">.</span><span class="n">funcs</span><span class="p">[</span><span class="n">f</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">flow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">block</span><span class="p">(</span><span class="o">&amp;</span><span class="n">func</span><span class="p">.</span><span class="n">body</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="p">);</span><span class="w">   </span><span class="c1">// &amp;mut self — allowed</span>
+<span class="w">    </span><span class="c1">// …</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Writing <code>let func = &amp;self.prog.funcs[f];</code> would borrow <em>through</em> <code>self</code>, and <code>self.block(..)</code>
+(which needs <code>&amp;mut self</code>) would be refused while <code>func</code> is alive. A shared reference is <code>Copy</code>,
+so <code>let prog = self.prog;</code> makes a second <code>&amp;Program</code> with the same lifetime that is no longer
+tied to <code>self</code>; borrowing from it leaves <code>self</code> free.</p>
 <h2 id="a-common-beginner-problem">A common beginner problem<a class="headerlink" href="#a-common-beginner-problem" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="n">ship</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">world</span><span class="p">.</span><span class="n">ships</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
 <span class="kd">let</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">world</span><span class="p">.</span><span class="n">ships</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span><span class="w">   </span><span class="c1">// error: world.ships is already borrowed mutably</span>

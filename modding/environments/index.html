@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4416,6 +4416,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../looks/" class="md-nav__link">
         
   
@@ -4572,6 +4600,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Terrains">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detail-textures-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detail textures (app 0.18.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scattered-objects-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scattered objects (app 0.18.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -5116,34 +5172,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6558,6 +6586,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Terrains">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detail-textures-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detail textures (app 0.18.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scattered-objects-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scattered objects (app 0.18.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6817,8 +6873,108 @@ ground is steep, with a slight per-point variation so wide flats do not look pai
 by the sun and fades into the fog with distance.</p>
 <p>Higher <code>resolution</code> means more detail and a heavier mesh: 129 points per side is about 32 000
 triangles; 257 is about 131 000.</p>
-<p>Not built yet: detail textures (<code>texture: {base, detail}</code>) and scattered objects such as rocks
-(<code>objects:</code>) — the design is on <a href="../../specification/design/format-missions/#battle-environments-environmentid">Format: missions, environments, events</a>.</p>
+<h3 id="detail-textures-app-0180">Detail textures (app 0.18.0)<a class="headerlink" href="#detail-textures-app-0180" title="Permanent link">&para;</a></h3>
+<p>Vertex colours are smooth across a grid square tens of metres wide, so close to the ground the
+terrain looks like painted plastic. A <strong>detail texture</strong> fixes that: a small image that tiles
+over the ground and <strong>multiplies</strong> the colours above — white leaves a colour unchanged, darker
+pixels darken it — so the <code>colors</code> still give the large-scale look and the texture adds grain.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">terrains</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">craters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">generate</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">craters</span><span class="p p-Indicator">,</span><span class="nt"> seed</span><span class="p">:</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">colors</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">low</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.30</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.27</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.26</span><span class="p p-Indicator">],</span><span class="nt"> high</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.62</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.58</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.55</span><span class="p p-Indicator">],</span><span class="nt"> slope</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.18</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.18</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">detail</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">textures/terrain_regolith.png</span><span class="w">    </span><span class="c1"># tiles over the ground</span>
+<span class="w">    </span><span class="nt">detail_scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40m</span><span class="w">                        </span><span class="c1"># one repeat covers 40 m (default 50 m)</span>
+<span class="w">    </span><span class="nt">slope_detail</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">textures/terrain_rock.png</span><span class="w">  </span><span class="c1"># on steep ground instead (needs detail)</span>
+</code></pre></div>
+<ul>
+<li>Make the texture <strong>seamless</strong> (its left edge continues its right, its top its bottom) and
+  mostly light: a mid-grey texture darkens the whole terrain.</li>
+<li>Give it <strong>power-of-two sides</strong> (256 × 256, 512 × 512): the engine then builds smaller,
+  averaged copies (<em>mipmaps</em>) so the thousands of repeats in the distance blend into one colour
+  instead of shimmering. Other sizes still work but shimmer; <code>--check</code> warns about them.</li>
+<li><code>slope_detail</code> is used on triangles steep enough to take the slope colour (bare rock on crater
+  walls); it needs <code>detail</code>.</li>
+<li>Across the mirror-image tiles beyond the field the pattern continues without a seam.</li>
+</ul>
+<h3 id="scattered-objects-app-0180">Scattered objects (app 0.18.0)<a class="headerlink" href="#scattered-objects-app-0180" title="Permanent link">&para;</a></h3>
+<p><code>scatter:</code> places copies of a model over the ground — rocks, boulders, trees. Each entry is its
+own kind of piece with its own rules:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">terrains</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">hills</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># ...</span>
+<span class="w">    </span><span class="nt">scatter</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># Woods on the lower, gentler ground; boulders anywhere not too steep.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="nv">models/scatter_tree.obj</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">6000</span><span class="p p-Indicator">,</span><span class="nt"> scale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.7</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.5</span><span class="p p-Indicator">],</span><span class="nt"> max_slope</span><span class="p">:</span><span class="w"> </span><span class="nv">18deg</span><span class="p p-Indicator">,</span><span class="nt"> height</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">900</span><span class="p p-Indicator">],</span><span class="nt"> draw_distance</span><span class="p">:</span><span class="w"> </span><span class="nv">5km</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="nv">models/scatter_boulder.obj</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">1000</span><span class="p p-Indicator">,</span><span class="nt"> scale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.2</span><span class="p p-Indicator">],</span><span class="nt"> max_slope</span><span class="p">:</span><span class="w"> </span><span class="nv">28deg</span><span class="p p-Indicator">,</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">0.8</span><span class="p p-Indicator">,</span><span class="nt"> draw_distance</span><span class="p">:</span><span class="w"> </span><span class="nv">4km</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><em>required</em></td>
+<td>The model (OBJ, or <code>original:</code>); its first LOD is used.</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td>100</td>
+<td>How many, 1 – 20 000. Fewer are placed if few spots suit (30 tries per piece).</td>
+</tr>
+<tr>
+<td><code>scale</code></td>
+<td>1</td>
+<td>A size, or <code>[smallest, largest]</code> for a random size in between.</td>
+</tr>
+<tr>
+<td><code>max_slope</code></td>
+<td>30°</td>
+<td>The steepest ground a piece stands on, 0 – 90°.</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>the whole range</td>
+<td><code>[lowest, highest]</code> metres of ground to use (trees below the tree line).</td>
+</tr>
+<tr>
+<td><code>align</code></td>
+<td>0</td>
+<td>Lean with the ground: 0 upright (trees) … 1 square to the slope (flat rocks).</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>the entry's number</td>
+<td>Mixed with the battle's seed; change it to reshuffle one entry.</td>
+</tr>
+<tr>
+<td><code>draw_distance</code></td>
+<td>4 km</td>
+<td>Not drawn farther away than this.</td>
+</tr>
+</tbody>
+</table>
+<p>Placement is <strong>deterministic</strong>: the same battle has the same pieces in the same places every
+time, and every mirror tile repeats them. Pieces get a random turn about the vertical.</p>
+<p><strong>Scatter is decoration only.</strong> Craft fly straight through it — it has no collision and cannot
+be shot. Anything a craft should hit or destroy is a <a href="#ground-installations">ground installation</a>:
+a real object with a collision shape and hit points.</p>
+<p><strong>Cost.</strong> The pieces are merged, once per battle, into one mesh per cell of a 16 × 16 grid over
+the field (about 1.9 km across on a 30 km field), and a cell is drawn only within its entry's
+<code>draw_distance</code>. That makes drawing cheap but costs memory: the default campaign's scatter (up to
+9 500 pieces on <code>craters</code>) uses roughly 90 – 100 MB. Keep <code>count</code> and the model's triangle count
+modest, and use a short <code>draw_distance</code> for small pieces. Pieces appear abruptly at the draw
+distance (no fade).</p>
+<p>The default campaign's textures and models are generated by <code>tools/default_assets/terrain.py</code>
+(<code>terrain_regolith</code>, <code>terrain_grass</code>, <code>terrain_rock</code>; <code>scatter_rock</code>, <code>scatter_boulder</code>,
+<code>scatter_tree</code>) and used by its <code>craters</code> and <code>hills</code> terrains. The <code>interceptor</code> campaign has no
+surfaces, so none of this.</p>
+<p>The design named these keys differently (<code>texture: {base, detail}</code>, <code>objects:</code>):
+<a href="../../implementation/deviations/">DEV-061</a>.</p>
 <h2 id="sky-and-fog">Sky and fog<a class="headerlink" href="#sky-and-fog" title="Permanent link">&para;</a></h2>
 <p><code>sky:</code> replaces black space:</p>
 <ul>
@@ -6885,12 +7041,12 @@ rungs at −20°, −10°, +10° and +20°. In space neither is shown.</p>
 <tr>
 <td><code>surface-moon</code></td>
 <td><code>moon_surface</code></td>
-<td>Low gravity, thin air, craters, the violet sky with stars; landing and crashing.</td>
+<td>Low gravity, thin air, craters, the violet sky with stars; landing and crashing; regolith and rock detail, scattered rocks and boulders (app 0.18.0).</td>
 </tr>
 <tr>
 <td><code>surface-hills</code></td>
 <td><code>dusk_hills</code></td>
-<td>Full gravity and thick air: rockets need speed to stay up; the warm dusk sky and fog; the ceiling at 7 km.</td>
+<td>Full gravity and thick air: rockets need speed to stay up; the warm dusk sky and fog; the ceiling at 7 km; grass and rock detail, woods below 900 m and boulders (app 0.18.0).</td>
 </tr>
 <tr>
 <td><code>surface-colony</code></td>
@@ -6938,6 +7094,30 @@ original did.</p>
 <tr>
 <td><code>terrains.x: heightmap &lt;file&gt;: …</code></td>
 <td>The heightmap image could not be loaded.</td>
+</tr>
+<tr>
+<td><code>terrains.x: slope_detail needs a detail texture too</code></td>
+<td><code>slope_detail</code> without <code>detail</code>.</td>
+</tr>
+<tr>
+<td><code>terrains.x: detail_scale must be a distance more than 0 (e.g. 40m)</code></td>
+<td>A zero, negative or unreadable <code>detail_scale</code>.</td>
+</tr>
+<tr>
+<td><code>terrains.x: scatter[n]: count c is not between 1 and 20000</code></td>
+<td>Too many (or no) pieces.</td>
+</tr>
+<tr>
+<td><code>terrains.x: scatter[n]: max_slope s is not between 0 and 90 degrees</code> / <code>align a is not between 0 and 1</code> / <code>height [a, b] has the highest below the lowest</code> / <code>scale [a, b] must be positive, smallest first</code></td>
+<td>A scatter value out of range.</td>
+</tr>
+<tr>
+<td><code>terrains.x: detail &lt;file&gt;: …</code> / <code>terrains.x: scatter &lt;model&gt;: …</code> (<code>--check</code>)</td>
+<td>A detail texture or scatter model (or one of its textures) could not be loaded.</td>
+</tr>
+<tr>
+<td><code>terrains.x: detail &lt;file&gt; is WxH; power-of-two sides let it fade smoothly into the distance</code> (<code>--check</code> warning)</td>
+<td>The texture will shimmer in the distance.</td>
 </tr>
 <tr>
 <td><code>mission x: unknown environment 'y'</code> (<code>--check</code>)</td>

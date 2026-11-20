@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4414,6 +4414,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -4988,34 +5016,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../modding/campaign/" class="md-nav__link">
         
   
@@ -5415,6 +5415,17 @@
     <span class="md-ellipsis">
       
         A trait from macroquad: Camera — src/render/camera.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-supertrait-trait-host-context-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A supertrait: trait Host: Context — src/script/stmt.rs
       
     </span>
   </a>
@@ -6497,6 +6508,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-supertrait-trait-host-context-srcscriptstmtrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A supertrait: trait Host: Context — src/script/stmt.rs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#generics-and-impl-trait" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6577,6 +6599,20 @@ Default</code>); <code>Default</code> is written by hand only when the default i
 <span class="p">}</span>
 </code></pre></div>
 <p>So <code>set_camera(&amp;cam)</code> accepts our camera, and its projection uses our own near/far planes.</p>
+<h2 id="a-supertrait-trait-host-context-srcscriptstmtrs">A supertrait: <code>trait Host: Context</code> — <code>src/script/stmt.rs</code><a class="headerlink" href="#a-supertrait-trait-host-context-srcscriptstmtrs" title="Permanent link">&para;</a></h2>
+<p>A Tier 2 script both <em>asks</em> (queries, like a condition) and <em>does</em> (actions). The query half
+already exists as the <code>Context</code> trait; the script interpreter needs one thing more:</p>
+<div class="highlight"><pre><span></span><code><span class="k">pub</span><span class="w"> </span><span class="k">trait</span><span class="w"> </span><span class="n">Host</span><span class="p">:</span><span class="w"> </span><span class="nc">Context</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="sd">/// Carries out one action (already checked against the context's table at load).</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">act</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">action</span><span class="p">:</span><span class="w"> </span><span class="nc">Action</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>Host: Context</code> makes <code>Context</code> a <strong>supertrait</strong>: a type can implement <code>Host</code> only if it also
+implements <code>Context</code>, and code holding a <code>&amp;mut dyn Host</code> may call <code>query</code> as well as <code>act</code>. The
+interpreter is written once against <code>dyn Host</code>, and each place that runs scripts supplies its
+own host — <code>sim::ai::ObjectHost</code> (a ship), <code>mission::BattleHost</code> (a finished battle) and
+<code>campaign::story::CampaignHost</code> (the campaign) — each implementing both traits. Nothing in
+<code>script</code> knows about ships or money.</p>
 <h2 id="generics-and-impl-trait">Generics and <code>impl Trait</code><a class="headerlink" href="#generics-and-impl-trait" title="Permanent link">&para;</a></h2>
 <p>A generic function works for any type that meets its trait bounds. In this codebase generics
 mostly appear as <code>impl Trait</code> in argument or return position:</p>

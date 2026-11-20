@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -2910,6 +2910,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#remaining-work-in-batches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remaining work in batches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Remaining work in batches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-protocol-every-batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch protocol (every batch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-40-issue-hygiene-small-do-first-can-share-a-session-with-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch 4.0 — issue hygiene (small; do first, can share a session with 4.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3291,7 +3330,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4487,6 +4526,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5041,34 +5108,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6463,6 +6502,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#remaining-work-in-batches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remaining work in batches
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Remaining work in batches">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-protocol-every-batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch protocol (every batch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-40-issue-hygiene-small-do-first-can-share-a-session-with-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch 4.0 — issue hygiene (small; do first, can share a session with 4.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6636,6 +6714,212 @@ topics, <code>interceptor</code> 4 of 71 — and save/load round-trips in the si
 long run and the <code>interceptor</code> play-test are outstanding): both campaigns' strategy layers run for 6 game months without errors, with economy,
 research and bases behaving as specified; save/load round-trips (unit tests on synthetic
 campaigns; manual long-run test).</p>
+<h2 id="remaining-work-in-batches">Remaining work in batches<a class="headerlink" href="#remaining-work-in-batches" title="Permanent link">&para;</a></h2>
+<p>Written 2026-11-20 from the digest of the open Stage 4 issues; code checked at <code>6462799</code> (app 0.17.1).
+Copied here from the code repository's <code>plan/stage-4-batches.md</code> on 2026-11-20 (Stage 3 closed in app
+0.18.0); this section is now the checklist of record.</p>
+<p><strong>Why batches.</strong> Each batch groups issues that touch the same modules and data, so one session can load that
+context once, finish the batch, and hand off. <strong>Start every batch in a fresh session</strong> (<code>/clear</code>) with the
+batch's <em>start prompt</em>. Only this checklist and the issues carry state between batches.</p>
+<h3 id="batch-protocol-every-batch">Batch protocol (every batch)<a class="headerlink" href="#batch-protocol-every-batch" title="Permanent link">&para;</a></h3>
+<p><strong>Start</strong></p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Fresh session. Read <code>CLAUDE.md</code>, this page's batch section, and the batch's issues (<code>gh issue view &lt;n&gt; --comments</code>).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Check the vault for the batch's topic (<code>sio-vault context "&lt;terms&gt;" --project openinterceptor --brief</code>).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Confirm the batch's <strong>decisions</strong> below are answered. If not, ask before coding.</li>
+</ul>
+<p><strong>Work</strong></p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Logic first, in <code>campaign</code>/<code>content</code>, with unit tests (synthetic data only). UI changes only where the batch says.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Every new key works in the <code>default</code> campaign. The <code>interceptor</code> pack is mapped where the original has the data.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>git add -A</code>, then <code>OPENINTERCEPTOR_DATA=resources/xcom-cd ./scripts/check.sh</code> → <code>checks: passed</code>.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bump the version (patch per change set, minor per feature batch). Commit with the attribution line. Push.</li>
+</ul>
+<p><strong>Close</strong></p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Docs pass: run one background docs agent with the commit list. It updates the Stage 4 plan page,
+      Modding pages for new keys, architecture/campaign, requirements status, deviations, manual tests (MT-4-*)
+      and the manual-test issues #88–#92. It also comments on the implementation issues.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Close finished issues, or comment with what remains. Tick this checklist and add a one-line hand-off under the batch.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Vault: one log entry and any captures (decisions, root causes).</li>
+</ul>
+<h3 id="batch-40-issue-hygiene-small-do-first-can-share-a-session-with-41">Batch 4.0 — issue hygiene (small; do first, can share a session with 4.1)<a class="headerlink" href="#batch-40-issue-hygiene-small-do-first-can-share-a-session-with-41" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Close <strong>#29</strong> (4.9 done in 0.16.8–0.16.9). Pointers: X-COM evaluation rules → #45, finances screen → #106.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Close <strong>#35</strong> (construction strikes done in 0.16.4 <code>d300642</code>). Pointer: depots and captured cargo → #46.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Close <strong>#30</strong> with pointers: base view #101, reports #106, encyclopaedia #107, briefing #108, per-list screens
+      #98–#105, testbed grid #111, traffic view → #37 / #99, text keys → Batch 4.5.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Correct stale comments:<ul>
+<li>
+<h1 id="27-the-protection_of-test-exists-and-default-shields-and-armour-were-added-in-0161">27: the <code>protection_of</code> test exists, and default shields and armour were added in 0.16.1.<a class="headerlink" href="#27-the-protection_of-test-exists-and-default-shields-and-armour-were-added-in-0161" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="22-the-generated-map-test-exists">22: the generated-map test exists.<a class="headerlink" href="#22-the-generated-map-test-exists" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="36-reserves-and-features-in-the-survey-report-are-done">36: reserves and features in the survey report are done.<a class="headerlink" href="#36-reserves-and-features-in-the-survey-report-are-done" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Merge <strong>#37</strong>'s traffic view into #99. #37 keeps cargo capacity only.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Update the Stage 4 plan page statuses to match.</li>
+</ul>
+<p>Hand-off: _</p>
+<h3 id="batch-41-bases-and-economy-completeness-m-no-blockers">Batch 4.1 — bases and economy completeness (M; no blockers)<a class="headerlink" href="#batch-41-bases-and-economy-completeness-m-no-blockers" title="Permanent link">&para;</a></h3>
+<p>Issues: <strong>#24</strong> (storage part), <strong>#34</strong> (storage at facilities), <strong>#26</strong> (lifecycle).</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Storage enforced on <strong>deliveries and manufactured output</strong>, not only on purchase (#24, R-STR-004).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Storage at <strong>manufacturing centres and research stations</strong>. Recipe output is checked against <code>ft.storage</code> (#34, R-STR-014).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Dismantle a whole base</strong>; <strong><code>on_destroyed</code></strong> consequences (craft, pilots, stock lost or moved); <strong>repair</strong> (#26, R-STR-006).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Best-available base templates</strong>: a template picks the best module researched so far, not a fixed list (#26).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong><code>placement:</code> expressions</strong> for bases (#26) and facilities (#34). They replace <code>max_distance</code> and the fixed
+      rules per role, and close DEV-049's placement part.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Save format: new state in <code>campaign/save.rs</code>, with a round-trip test.</li>
+</ul>
+<p>Files: <code>src/campaign/mod.rs</code> (storage, buy/deliver, build_base, dismantle_module, hourly step),
+<code>src/campaign/logistics.rs</code> (~320–380), <code>src/content/{strategy,logistics}.rs</code>, <code>src/campaign/save.rs</code>,
+<code>resources/default/strategy/{economy,logistics}.yaml</code>, <code>packs/interceptor/strategy/</code>.
+Done when: the gate passes; a soak of 180 days on both campaigns shows no stock above capacity; #34's storage
+item and #26's lifecycle items are ticked on the issues.
+Start prompt: <em>"Batch 4.1 of plan/stage-4-batches.md: bases and economy completeness. Follow the batch protocol."</em></p>
+<p>Hand-off: _</p>
+<h3 id="batch-42-logistics-leftovers-m-parts-blocked-by-decisions-d1-d3">Batch 4.2 — logistics leftovers (M; parts blocked by decisions D1, D3)<a class="headerlink" href="#batch-42-logistics-leftovers-m-parts-blocked-by-decisions-d1-d3" title="Permanent link">&para;</a></h3>
+<p>Issues: <strong>#34</strong> (R-STR-022), <strong>#37</strong> (R-STR-026), <strong>#36</strong> (survey), <strong>#47</strong> (logistics soak).</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Construction stages shown</strong> (R-STR-022): use <code>facility_types.hub</code> and the <code>build_25/60/90</code> states on the map
+      marker and in the <code>construction_defence</code> battle (the struck facility's own type and stage). This also fixes
+      the default mission always showing the same station.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Cargo capacity as data</strong> (R-STR-026): convoys carry up to capacity and split larger orders. <em>Needs D1.</em></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Survey report suitability</strong> for each facility type (R-STR-021).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Attacked survey ship</strong>: the survey craft plus an auto-resolved or flown battle, instead of the fixed 50 % loss. <em>Needs D3.</em></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Logistics soak</strong> (#47): autoplay builds facilities and the soak reports throughput and losses.</li>
+</ul>
+<p>Files: <code>src/campaign/logistics.rs</code>, <code>src/content/logistics.rs</code>, <code>src/app/strategy.rs</code> (Supply tab, markers),
+<code>src/app/flight.rs</code> (stage objects), <code>resources/default/strategy/logistics.yaml</code>, <code>tools/default_assets/</code>.
+Done when: construction-stage visuals are confirmed by screenshots (manual cases MT-4-*); the logistics soak runs.
+Start prompt: <em>"Batch 4.2 of plan/stage-4-batches.md: logistics leftovers. Follow the batch protocol."</em></p>
+<p>Hand-off: _</p>
+<h3 id="batch-43-map-movement-and-contacts-l-gates-csd-parity-99100-needs-d5">Batch 4.3 — map, movement and contacts (L; gates CSD parity #99/#100; needs D5)<a class="headerlink" href="#batch-43-map-movement-and-contacts-l-gates-csd-parity-99100-needs-d5" title="Permanent link">&para;</a></h3>
+<p>Issues: <strong>#22</strong>, <strong>#23</strong>, <strong>#36</strong> (fighter pools), <strong>#47</strong> (force-based soak battles). Order inside the batch:
+endurance → flight plans → pools → generated missions → auto-resolve.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Bodies</strong> in play and <strong>endurance / stranding</strong> per craft (#22, R-STR-002). <em>Needs D5.</em></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Squadrons on flight plans</strong> (patrol, launch to a destination, return) and <strong>probes as map objects</strong> (#23, R-STR-003).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Facility fighter pools</strong> (R-STR-025): built at main bases, transferred, defending a system and escorting
+      convoys (#36). Reuses the squadron model.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Missions generated from the forces that meet</strong>, replacing each raid's fixed <code>mission:</code> (#23).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Auto-resolve uses loadouts and pilots</strong>, and losses damage craft (<code>balance::win_chance</code>; known small issue).
+      Soak battles are resolved from forces (#47).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Save format and round-trip tests for squadrons, flight plans and pools.</li>
+</ul>
+<p>Files: <code>src/campaign/mod.rs</code> (contacts, interceptions, lane_route, autoplay), <code>src/campaign/logistics.rs</code>
+(escorts), <code>src/content/{strategy,mission}.rs</code>, <code>src/balance.rs</code>, <code>src/campaign/save.rs</code>, the map and info panel in
+<code>src/app/strategy.rs</code>. Split across two sessions if needed: <strong>4.3a</strong> (endurance and flight plans), then
+<strong>4.3b</strong> (pools, generated missions, auto-resolve).
+Start prompt: <em>"Batch 4.3a of plan/stage-4-batches.md: …"</em></p>
+<p>Hand-off: _</p>
+<h3 id="batch-44-ships-and-pilots-in-battle-ml-after-track-a-stat-fidelity-gates-105103">Batch 4.4 — ships and pilots in battle (M–L; after Track A stat fidelity; gates #105/#103)<a class="headerlink" href="#batch-44-ships-and-pilots-in-battle-ml-after-track-a-stat-fidelity-gates-105103" title="Permanent link">&para;</a></h3>
+<p>Issues: <strong>#27</strong>, <strong>#28</strong>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Slot-by-slot fitting</strong> (replacing <code>fit_best</code> as the only path), <strong><code>fits</code> rules</strong>, <strong>power draw</strong>, <strong>stock
+      designs</strong> (#27, R-STR-007).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Battle effects of the other slot kinds</strong> (engine, sensors/targeting, ECM, cloak, tractor, VCT, damage
+      control). <code>Loadout</code> grows beyond beam/missile/shield/armour. Uses Track A's readings of the INI keys.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Pilot stats in battle</strong>: accuracy and flying feed <code>sim::ai</code> / handling; <strong>bravery</strong> (fleeing); <strong>graded injuries</strong> (#28, R-STR-008).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Rank thresholds</strong> from <code>RankAdvancement*</code> (interceptor) and as data in default (see <code>notes/re/ini-files.md</code> §1.10).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Per-pilot voices: deferred until #50 maps the clips (decision D7).</li>
+</ul>
+<p>Files: <code>src/campaign/mod.rs</code> (Loadout, fit_best, pilots), <code>src/content/strategy.rs</code> (items, hulls, slots, pilots),
+<code>src/app/flight.rs</code> (apply_loadout), <code>src/sim/ai.rs</code>, <code>src/balance.rs</code>, <code>packs/interceptor/strategy/campaign.yaml</code>,
+<code>resources/default/strategy/{economy,pilots}.yaml</code>.
+Start prompt: <em>"Batch 4.4 of plan/stage-4-batches.md: ships and pilots in battle. Follow the batch protocol."</em></p>
+<p>Hand-off: _</p>
+<h3 id="batch-45-content-and-data-m-parts-need-d2-and-re">Batch 4.5 — content and data (M; parts need D2 and RE)<a class="headerlink" href="#batch-45-content-and-data-m-parts-need-d2-and-re" title="Permanent link">&para;</a></h3>
+<p>Issues: <strong>#33</strong>, <strong>#25</strong>, <strong>#32</strong>; <a href="../../deviations/">DEV-047</a>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Text keys for strategy texts</strong> (DEV-047). Also removes the English-prefix matching for the research
+      stinger and the Reports list (<code>app/strategy.rs</code> ~829, ~1424).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Default: the Dominion's own research tree and pods</strong> (#33).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Salvage tables</strong>: <code>*Goodies</code> percentages by difficulty for interceptor (<code>notes/re/ini-files.md</code> §1.11),
+      and a per-item salvage table format for default. Replaces <code>salvage_per_kill</code> (#25, #45).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Interceptor research pace</strong> set from D2, then play-test notes (#32). Close #32 or re-scope it.</li>
+</ul>
+<p>Files: <code>resources/default/strategy/*.yaml</code>, <code>src/content/{text,strategy}.rs</code>, <code>src/app/strategy.rs</code>,
+<code>src/campaign/story.rs</code>, <code>packs/interceptor/strategy/</code>, <code>tools/interceptor_strategy.py</code>.
+Start prompt: <em>"Batch 4.5 of plan/stage-4-batches.md: content and data. Follow the batch protocol."</em></p>
+<p>Hand-off: _</p>
+<h3 id="moved-out-of-stage-4">Moved out of Stage 4<a class="headerlink" href="#moved-out-of-stage-4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>Per-seller market</strong> (#24 remainder) and <strong>depots / captured cargo / seizure</strong> (#35 remainder) → <strong>Stage 5,
+  #46 / #40</strong> (needs relations and D4).</p>
+</li>
+<li>
+<p><strong>Screens</strong> (#30 leftovers, 3D base view, traffic view) → <strong>6.9</strong> issues, after their logic batch.</p>
+</li>
+</ul>
+<h3 id="order">Order<a class="headerlink" href="#order" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>4.0 hygiene ─┬─ 4.1 bases/economy ─┐
+             └─ 4.2 logistics ──────┼─ 4.3a/b map &amp; contacts ─ (6.9 #99/#100 CSD + dialogs)
+   Track A stats ───────────────────┴─ 4.4 ships &amp; pilots ──── (6.9 #105/#103 hangar, pilots)
+                                       4.5 content (any time after 4.0; D2 for #32)
+</code></pre></div>
+<p>4.1 and 4.2 can run in parallel with Track A, since they touch different modules.</p>
+<h3 id="decisions-needed-ask-before-the-batch-that-needs-them">Decisions needed (ask before the batch that needs them)<a class="headerlink" href="#decisions-needed-ask-before-the-batch-that-needs-them" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Blocks</th>
+<th>Suggested default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>Supply convoy <strong>cargo capacity</strong> (R-STR-026; logistics.md open question 1)</td>
+<td>4.2 cargo</td>
+<td>A capacity per vessel type in data; orders split into several convoys</td>
+</tr>
+<tr>
+<td>D2</td>
+<td><strong>Interceptor research pace</strong> (#32: 4 of 71 topics in 180 days)</td>
+<td>4.5 #32</td>
+<td>Calibrate so a normal campaign researches most topics in about 18–24 months (check against the Sybex guide)</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>The <strong>survey ship's craft</strong>, and where and in which mission an attacked survey ship fights (open question 3)</td>
+<td>4.2 survey battle</td>
+<td>A light survey hull plus the existing <code>convoy_ambush</code> shape at the survey site; auto-resolved unless the player flies</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>What a <strong>market seller</strong> is (per faction or per station; relations set prices)</td>
+<td>Stage 5</td>
+<td>Per faction, prices scaled by relation</td>
+</tr>
+<tr>
+<td>D5</td>
+<td><strong>Bodies in play</strong> and the <strong>endurance model</strong> (fuel per hull vs range per lane hop)</td>
+<td>4.3a</td>
+<td>Range per hull in lane hops; stranded craft drift until recovered</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Logistics open questions 2 and 4 (ambush chance, vessels per convoy): <strong>confirm</strong> the current data defaults</td>
+<td>none (confirm)</td>
+<td>Keep <code>ambush_chance</code> and <code>vessels</code> as they are</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>Interceptor <strong>pilot voice mapping</strong> (#50)</td>
+<td>4.4 per-pilot voices</td>
+<td>Defer</td>
+</tr>
+</tbody>
+</table>
 
 
 

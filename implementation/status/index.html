@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3220,7 +3220,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4557,6 +4557,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../modding/looks/" class="md-nav__link">
         
   
@@ -5111,34 +5139,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6650,7 +6650,7 @@
 </tr>
 <tr>
 <td><a href="../plan/stage-3-missions/">3 Missions, environments and conditions</a></td>
-<td><strong>In progress</strong> — part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later); hazards in <strong>0.5.1</strong>; environments, atmospheric flight, terrain and the atmosphere HUD in <strong>0.6.0</strong>; ground installations in <strong>0.6.1</strong>; radio voices in <strong>0.6.2</strong>; the simulator in <strong>0.6.3</strong>; five default missions in <strong>0.6.4</strong>; all 26 <code>interceptor</code> mission types in <strong>0.6.5</strong>; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in <strong>0.6.7</strong>; the battle runs on after its result in <strong>0.7.4</strong>; the condition console in <strong>0.16.5</strong>. Tier 2 scripting evaluated, awaiting the user's decision</td>
+<td><strong>Done</strong> — app <strong>0.18.0</strong> (2026-11-20; main <code>55999cb</code>): terrain detail textures and scatter (3.5) and Tier 2 scripts (3.10, decision (c)); manual passes outstanding, C5 deferred. Earlier: part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app <strong>0.3.1</strong>; console C1 in app <strong>0.4.0</strong>, a shader fix in <strong>0.4.1</strong> and the <code>resources/</code> layout in <strong>0.4.2</strong>; console C2 – C4 and C2b in <strong>0.4.11 – 0.5.0</strong> (C5 later); hazards in <strong>0.5.1</strong>; environments, atmospheric flight, terrain and the atmosphere HUD in <strong>0.6.0</strong>; ground installations in <strong>0.6.1</strong>; radio voices in <strong>0.6.2</strong>; the simulator in <strong>0.6.3</strong>; five default missions in <strong>0.6.4</strong>; all 26 <code>interceptor</code> mission types in <strong>0.6.5</strong>; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in <strong>0.6.7</strong>; the battle runs on after its result in <strong>0.7.4</strong>; the condition console in <strong>0.16.5</strong>; terrain detail and scatter and Tier 2 scripts in <strong>0.18.0</strong></td>
 <td>See <a href="#stage-3-progress">Stage 3 progress</a> below</td>
 </tr>
 <tr>
@@ -7013,7 +7013,8 @@ the console C2 – C4 and C2b: app <strong>0.4.11</strong> (<code>db2f264</code>
 ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a count of the sources (not a build; see
 <a href="../testing/unit-tests/">Unit tests</a>). Then Stage 3.7, 3.9 and 3.12: app <strong>0.6.2</strong> (<code>5bdb47f</code>, radio voices),
 <strong>0.6.3</strong> (<code>1d13b59</code>, <code>c3fb959</code>, the simulator) and <strong>0.6.4</strong> (<code>3866c34</code>, <code>90653b9</code>, default missions); at
-0.6.4, <strong>325 unit tests</strong> on macOS by the same count.</p>
+0.6.4, <strong>325 unit tests</strong> on macOS by the same count.
+Stage 3 closed with app <strong>0.18.0</strong> (2026-11-20): <code>4a0bd03</code> (3.5 terrain detail textures and scatter, and the draw-call index fix), <code>040ca26</code> (3.10 Tier 2 scripts), merged in <code>55999cb</code>, and <code>5d05ba2</code> (RE notes: the original's INI files, online sources, patch 1.2 comparison — <code>notes/re/</code> in the code repository); <strong>437 unit tests</strong> on macOS by the same count.</p>
 <table>
 <thead>
 <tr>
@@ -7050,7 +7051,7 @@ ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a c
 </tr>
 <tr>
 <td>Terrain (3.5): generated and heightmap heightfields, coloured terrain mesh, sky dome, distance fog; ground installations (<code>kind: ground</code>) and anti-air batteries</td>
-<td><strong>Partial</strong> (0.6.0; installations 0.6.1, main <code>de417df</code>; MT-3-45, MT-3-46 not yet run). Detail textures and scattered objects deferred</td>
+<td><strong>Done</strong> (0.6.0; installations 0.6.1, main <code>de417df</code>; <strong>detail textures and scattered objects 0.18.0</strong>, main <code>4a0bd03</code>, with the fix for terrain chunks over the 30 000-index draw limit; MT-3-45, MT-3-46, MT-3-68 – MT-3-70 not yet run)</td>
 <td><code>src/content/environment.rs</code>, <code>src/render/terrain.rs</code>, <code>src/render/mod.rs</code>, <code>src/sim/mod.rs</code>, <code>resources/default/rules/ground.yaml</code></td>
 </tr>
 <tr>
@@ -7109,9 +7110,9 @@ ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a c
 <td><code>resources/default/missions/</code>, <code>src/sim/mod.rs</code>, <code>src/soak.rs</code></td>
 </tr>
 <tr>
-<td>Tier 2 script language (3.10)</td>
-<td><strong>Evaluation recorded; awaiting the user's decision</strong> (<a href="../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">dependency page</a>)</td>
-<td></td>
+<td>Tier 2 scripts (3.10): decision (c) on 2026-11-20 (<a href="../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310">decision record</a>); <code>scripts/&lt;name&gt;.ois</code>; hooks <code>do: script</code> (with <code>vars</code>, <code>goto</code>, <code>set_var</code>, <code>message</code>) and <code>script(...)</code> in outcomes and campaign lists; checked at load, no recursion, budget 10 000; <code>SimEvent::Radio</code>, <code>ScriptStopped</code>; default <code>saucer_ace</code> and <code>duel-saucer-ace</code></td>
+<td><strong>Done</strong> (0.18.0, main <code>040ca26</code>; MT-3-67 not yet run — the soak AI pilot did not engage the ace, so it needs flying by hand)</td>
+<td><code>src/script/stmt.rs</code>, <code>src/script/*.rs</code>, <code>src/content/behaviour.rs</code>, <code>src/sim/ai.rs</code>, <code>src/mission/mod.rs</code>, <code>src/campaign/story.rs</code>, <code>resources/default/scripts/</code></td>
 </tr>
 <tr>
 <td>Condition-language console (testbed add)</td>
@@ -7170,7 +7171,7 @@ ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a c
 </tr>
 <tr>
 <td>Interlude C5 — physical panel over USB serial (Arduino)</td>
-<td><strong>Later</strong></td>
+<td><strong>Deferred beyond Stage 3</strong> (GitHub #5)</td>
 <td></td>
 </tr>
 <tr>
@@ -7189,14 +7190,14 @@ ground installations); at 0.6.1, <strong>321 unit tests</strong> on macOS by a c
 <td><code>src/app/flight.rs</code>, <code>src/mission/mod.rs</code></td>
 </tr>
 <tr>
-<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-64</td>
+<td>Stage 3 <a href="../testing/manual-tests/#stage-3-results">manual tests</a> MT-3-01 … MT-3-70</td>
 <td><strong>Not yet run</strong> (MT-3-27's hit static confirmed by the user). The look of the hazards, sky, fog, terrain and horizon, and how the voices sound, could not be judged from the agent environment: MT-3-33 – MT-3-59 need the user</td>
 <td></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Remaining in Stage 3</strong>: 3.1 (the campaign context exists since app 0.6.7; campaign actions such as <code>relation</code> and cargo are still logged only), 3.10 (the user's decision on Tier 2, then hooks), the open questions of 3.11 (types 2, 6, 10, 17; simulator types; the final mission's two parts) and terrain detail textures and scattered objects (3.5). The campaign actions (<code>capture</code>, <code>lose</code>, cargo) act since app 0.16.3, logistics missions — convoy ambushes and construction strikes (3.13) — are generated since 0.9.2 and 0.16.4, and the condition console is built (0.16.5).</p>
-<p><strong>Next</strong>: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32; console items C1 – C4 and C2b are built, C5 comes later) and the Stage 2 and Stage 3 manual passes, including the hazard and environment cases MT-3-33 – MT-3-46 (sky, fog, terrain, landing, crashing, the ceiling exit, ALT/VS and the horizon); the voices, simulator and new-mission cases MT-3-47 – MT-3-59; identifying the <code>interceptor</code> pilot clips by ear; the user's Tier 2 decision (3.10); then terrain detail textures and scattered objects (3.5). The strategy-layer logistics of the default campaign are designed on <a href="../../specification/design/logistics/">Logistics</a>.</p>
+<p><strong>Stage 3 is done</strong> (app 0.18.0, 2026-11-20). What remains is outside its work items: the open questions of 3.11 (<code>interceptor</code> briefing types 2, 6, 10, 17; simulator types; the final mission's two parts), C5 (the Arduino panel, deferred), and the manual passes.</p>
+<p><strong>Next</strong>: the console's iPad pass (MT-3-19 – MT-3-23, MT-3-26, MT-3-29 – MT-3-32) and the Stage 2 and Stage 3 manual passes, including the hazard and environment cases MT-3-33 – MT-3-46, the voices, simulator and new-mission cases MT-3-47 – MT-3-59, and the 0.18.0 cases MT-3-67 (the scripted ace, by hand) and MT-3-68 – MT-3-70 (terrain detail, scatter, the whole terrain drawn); identifying the <code>interceptor</code> pilot clips by ear. Stage 4's remaining work is planned in batches (<a href="../plan/stage-4-strategy/#remaining-work-in-batches">Stage 4 › Remaining work in batches</a>).</p>
 <h2 id="stage-4-progress">Stage 4 progress<a class="headerlink" href="#stage-4-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.6.6</strong> (<code>6d390d7</code>, MD1 formations), <strong>0.6.7</strong> (<code>65141dc</code> the campaign context; <code>c0e2516</code>
 playtest fixes), <strong>0.7.0</strong> (<code>77d6c9f</code>, the core), <strong>0.7.1</strong> (<code>10f7fce</code>, the default campaign's

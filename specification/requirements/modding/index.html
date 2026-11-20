@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3909,7 +3909,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -5105,6 +5105,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5659,34 +5687,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -7778,7 +7778,7 @@
 </tr>
 <tr>
 <td><a href="#r-mod-015-tier-2-scripting-decision">R-MOD-015 Tier 2 scripting decision</a></td>
-<td>Planned (evaluation recorded; awaiting the user's decision)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td><a href="#r-mod-016-headless-validation">R-MOD-016 Headless validation</a></td>
@@ -8091,17 +8091,22 @@
 <p><em>Rationale:</em> Dependency policy.</p>
 <ul>
 <li>Implements: <a href="../../../definition/modding-toolkit/#f-mod-005-conditions-actions-and-scripting">F-MOD-005</a></li>
-<li>Status: planned — <strong>evaluation recorded, awaiting the user's decision</strong> (1.12.0)</li>
-<li>Verified by: Planned.</li>
-<li>See: <a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Dependency policy › Tier 2 scripting, evaluated</a>, <a href="../../../modding/scripting/">Scripting (design)</a></li>
+<li>Status: implemented (decision (c) on 2026-11-20; app 0.18.0, main <code>040ca26</code>)</li>
+<li>Verified by: <code>script::stmt::tests::let_assignment_and_if_else_chains</code>, <code>repeat_and_for_each_are_counted_loops</code>, <code>functions_take_typed_parameters_and_return_values</code>, <code>recursion_is_refused_when_loading</code>, <code>the_budget_stops_a_runaway_hook</code>, <code>same_seed_same_result</code>, <code>mistakes_are_load_errors_with_file_and_line</code>, <code>hook_references_are_checked</code>, <code>file_structure_is_checked_when_loading</code>; <code>content::behaviour::tests::scripted_states_compile_and_check_what_they_name</code>; <code>content::tests::scripts_load_from_packs_mods_override_them_and_hooks_are_checked</code>; <code>sim::ai::tests::a_scripted_state_runs_its_script_every_interval</code>, <code>a_runaway_script_is_stopped_and_reported_once</code>; <code>mission::tests::a_script_outcome_runs_in_the_battle_context</code>; <code>campaign::story::tests::an_event_script_counts_through_flags_and_sees_its_own_actions</code>; <code>soak::tests::the_default_campaigns_scripted_ace_taunts_and_turns_furious</code>; MT-3-67</li>
+<li>See: <a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310">Dependency policy › Tier 2 scripting, evaluated</a>, <a href="../../../modding/scripts/">Scripts (Tier 2)</a></li>
 </ul>
-<div class="admonition question">
-<p class="admonition-title">Open — awaiting the user's decision</p>
-<p>The evaluation of (a) <code>mlua</code> (Lua 5.4), (b) <code>rhai</code> and (c) growing the in-crate condition
-and action language into a small statement language is on the dependency page. The
-evaluator recommends (c) as the default under the dependency policy, with (a) as the
-fallback if mods need a full general-purpose language. <strong>No decision has been made</strong>; the
-hooks and the API follow the user's choice. GitHub issue #16.</p>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.18.0)</p>
+<p>The user chose <strong>(c)</strong> on 2026-11-20: the in-crate condition and action language grown into
+a small statement language; no dependency added. Scripts are <code>scripts/&lt;name&gt;.ois</code> files of
+<code>def</code> functions (<code>let</code>, <code>if</code>/<code>else</code>, <code>repeat</code>, <code>for each</code>, <code>return</code>, action and function
+calls), called from behaviour states (<code>do: script</code>, <code>call:</code>, <code>every:</code>, <code>fly:</code>, with <code>vars:</code>
+and the object actions <code>goto</code>, <code>set_var</code>, <code>message</code>) and from <code>script(&lt;file&gt;:&lt;function&gt;)</code>
+entries in mission outcomes (battle context) and story, plan and evaluation lists (campaign
+context). Every hook is compiled and checked at load against its context; recursion is
+refused; each hook call has a budget of 10 000 operations. Guide:
+<a href="../../../modding/scripts/">Scripts (Tier 2)</a>; deviations from the design: DEV-060. GitHub
+issue #16.</p>
 </div>
 <h3 id="r-mod-016-headless-validation">R-MOD-016 Headless validation<a class="headerlink" href="#r-mod-016-headless-validation" title="Permanent link">&para;</a></h3>
 <p><code>--check</code> MUST validate the active campaign headlessly and report every error; the default campaign MUST pass with no errors and the full reference CD with no errors.</p>
@@ -8629,6 +8634,11 @@ hooks and the API follow the user's choice. GitHub issue #16.</p>
 <td>1.18.0</td>
 <td>2026-11-11</td>
 <td>R-MOD-014 implemented: the logistics queries (<code>deposit</code>, <code>feature</code>, <code>research_site</code>, <code>survey_known</code>, <code>owned</code>, <code>lane_distance</code>, <code>facility_progress</code>, <code>construction_attacks</code>; app 0.16.3, #8), with an As-built note; R-MOD-041 implemented: captions and titles as text keys (app 0.16.2, #65); R-MOD-045 As-built note: the gamepad skips (app 0.16.2), the tablet console does not yet</td>
+</tr>
+<tr>
+<td>1.20.0</td>
+<td>2026-11-20</td>
+<td>R-MOD-015 implemented: decision (c) (2026-11-20) and the Tier 2 statement language as built (app 0.18.0), with an As-built note; the Open note closed. No requirement wording changed</td>
 </tr>
 </tbody>
 </table>

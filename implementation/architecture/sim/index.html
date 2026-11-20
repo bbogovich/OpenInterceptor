@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3440,7 +3440,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4636,6 +4636,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5190,34 +5218,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -7162,6 +7162,15 @@ engine's <code>builtin_attack</code>.</p>
 <li><strong>Travel</strong> (app 0.9.2). Holds <code>speed</code> × top speed straight on and requests the hyperdrive
   once it is <code>range</code> from where the state began (<code>AiState::anchor</code> again): a supply ship
   making for its jump point.</li>
+<li><strong>Scripted states</strong> (app 0.18.0). A state with <code>do: script</code> flies its <code>fly:</code> manoeuvre and, on
+  its first tick and then every <code>every</code> seconds (<code>AiState::script_clock</code>), runs its compiled
+  script in the object context through an <code>ObjectHost</code>: queries read the world as conditions do
+  (plus <code>var(name)</code> from <code>AiState::vars</code>), <code>set_var</code> writes the variable at once, <code>goto</code> picks the
+  next state (the last wins, applied when the script returns), <code>message</code> becomes a
+  <code>SimEvent::Radio</code>. The script runs in the read phase of <code>think</code>, so its events are added after
+  the reading is done. Out of budget it stops and raises <code>SimEvent::ScriptStopped</code> once per pilot
+  (<code>AiState::script_warned</code>). The vars are a fixed array, so copying the pilot each tick costs no
+  allocation. Language and hosts: <a href="../script/#scripts-tier-2-app-0180">Conditions and scripts</a>.</li>
 <li>Each pilot has its own seeded random stream (<code>AiState::rng</code>), so <code>random(p)</code> and aim errors
   are deterministic.</li>
 <li><strong>Escapes (Stage 3).</strong> Whatever its behaviour wants, every AI pilot except <code>Idle</code> objects first
@@ -7243,7 +7252,7 @@ current order, and <code>DISABLED</code> if so.</p>
 <tbody>
 <tr>
 <td><code>World</code></td>
-<td><code>rules: Arc&lt;Ruleset&gt;</code>, <code>shapes: Arc&lt;Vec&lt;Shape&gt;&gt;</code>, <code>ships</code>, <code>bolts</code>, <code>missiles</code>, <code>events</code>, <code>time</code>, deterministic xorshift <code>random()</code>.</td>
+<td><code>rules: Arc&lt;Ruleset&gt;</code>, <code>shapes: Arc&lt;Vec&lt;Shape&gt;&gt;</code>, <code>ships</code>, <code>bolts</code>, <code>missiles</code>, <code>events</code>, <code>time</code>, deterministic xorshift <code>random()</code>; <code>seed</code> (app 0.18.0): the seed the battle was created with, unchanged while it runs (unlike the generator) — what is fixed for the whole battle, such as where terrain scatter lies, uses it.</td>
 </tr>
 <tr>
 <td><code>ShipId</code></td>
@@ -7295,7 +7304,7 @@ current order, and <code>DISABLED</code> if so.</p>
 </tr>
 <tr>
 <td><code>ai::AiState</code></td>
-<td>Per-ship AI memory: role (<code>behaviour</code>), behaviour override <code>def</code>, leader, offset, order and order time; behaviour <code>state</code>, <code>state_time</code>, <code>check_clock</code>; <code>break_timer</code>, <code>missile_timer</code>, <code>burst_clock</code>; <code>reaction_clock</code>, <code>seen</code> (last sighting), <code>aim_error</code>; <code>home</code>; <code>rng</code>.</td>
+<td>Per-ship AI memory: role (<code>behaviour</code>), behaviour override <code>def</code>, leader, offset, order and order time; behaviour <code>state</code>, <code>state_time</code>, <code>check_clock</code>; app 0.18.0: <code>vars: [f32; MAX_VARS]</code> (object variables), <code>script_clock</code>, <code>script_warned</code>; <code>break_timer</code>, <code>missile_timer</code>, <code>burst_clock</code>; <code>reaction_clock</code>, <code>seen</code> (last sighting), <code>aim_error</code>; <code>home</code>; <code>rng</code>.</td>
 </tr>
 <tr>
 <td><code>ai::ObjectContext</code></td>
@@ -7311,11 +7320,11 @@ current order, and <code>DISABLED</code> if so.</p>
 </tr>
 <tr>
 <td><code>Pilot</code></td>
-<td><code>External</code> (the player) or <code>Ai(AiState)</code>.</td>
+<td><code>External</code> (the player) or <code>Ai(AiState)</code>. <code>#[allow(clippy::large_enum_variant)]</code> with a comment: <code>Ai</code> is much bigger than <code>External</code>, but nearly every ship is AI-flown, so boxing <code>AiState</code> would add an allocation and a pointer hop per ship to save bytes on one.</td>
 </tr>
 <tr>
 <td><code>SimEvent</code></td>
-<td><code>BeamFired</code>, <code>MissileLaunched</code>, <code>Hit</code>, <code>Destroyed</code>, <code>MissileExploded { position, effect }</code>, <code>LockAcquired</code>, <code>Collision</code>, <code>Message</code>, <code>NoEnergy</code>; Stage 2: <code>SystemChanged { ship, system, condition, repaired }</code>, <code>Disabled { ship }</code>, <code>Departed { ship, position }</code>, <code>Captured { captor, prize }</code>, <code>Switched { ship, kind, on }</code>, <code>PointDefence { ship, from, to, hit }</code>.</td>
+<td>App 0.18.0: <code>Radio { ship, text }</code> (a behaviour script's <code>message</code>, shown on the message display) and <code>ScriptStopped { ship, call }</code> (a behaviour script used its whole operation budget; once per pilot). Earlier: <code>BeamFired</code>, <code>MissileLaunched</code>, <code>Hit</code>, <code>Destroyed</code>, <code>MissileExploded { position, effect }</code>, <code>LockAcquired</code>, <code>Collision</code>, <code>Message</code>, <code>NoEnergy</code>; Stage 2: <code>SystemChanged { ship, system, condition, repaired }</code>, <code>Disabled { ship }</code>, <code>Departed { ship, position }</code>, <code>Captured { captor, prize }</code>, <code>Switched { ship, kind, on }</code>, <code>PointDefence { ship, from, to, hit }</code>.</td>
 </tr>
 <tr>
 <td><code>Bolt</code>, <code>Missile</code>, <code>Lock</code>, <code>LinkMode</code></td>

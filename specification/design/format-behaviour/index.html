@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -2089,10 +2089,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#language-decision-stage-310-awaiting-the-user" class="md-nav__link">
+  <a href="#language-decision-stage-310-decided-c" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language decision (Stage 3.10) — awaiting the user
+        Language decision (Stage 3.10) — decided: (c)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-language-as-built-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The language as built (app 0.18.0)
       
     </span>
   </a>
@@ -3398,7 +3409,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4594,6 +4605,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../modding/looks/" class="md-nav__link">
         
   
@@ -5148,34 +5187,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6644,10 +6655,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#language-decision-stage-310-awaiting-the-user" class="md-nav__link">
+  <a href="#language-decision-stage-310-decided-c" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language decision (Stage 3.10) — awaiting the user
+        Language decision (Stage 3.10) — decided: (c)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-language-as-built-app-0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The language as built (app 0.18.0)
       
     </span>
   </a>
@@ -6688,11 +6710,11 @@
 
 
 <h1 id="format-behaviours-and-scripting">Format: behaviours and scripting<a class="headerlink" href="#format-behaviours-and-scripting" title="Permanent link">&para;</a></h1>
-<p><strong>Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2</strong>; actions,
-the battle and campaign contexts, the remaining manoeuvres, targeting preferences and Tier 2
-are design. Replaces the open question on <a href="../../../modding/scripting/">Scripting</a> with a two-tier
-design; the Tier 2 language decision is evaluated (Stage 3.10) and awaits the user. The implemented form is
-documented for modders on <a href="../../../modding/behaviours/">Behaviours and conditions</a>.</p>
+<p><strong>Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2</strong>; actions and
+the battle and campaign contexts in Stage 3 and 4; <strong>Tier 2 scripts implemented in app 0.18.0</strong>
+(Stage 3.10, decision (c): the condition language grown into statements). Replaces the open
+question on scripting with a two-tier design. The implemented forms are documented for modders
+on <a href="../../../modding/behaviours/">Behaviours and conditions</a> and <a href="../../../modding/scripts/">Scripts (Tier 2)</a>.</p>
 <h2 id="two-tiers">Two tiers<a class="headerlink" href="#two-tiers" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6860,24 +6882,25 @@ Tier 2 hook.</p>
 <p>A Tier 1 definition can hand control to a script through a <strong>hook</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">behaviours</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">portal_guardian</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">phase</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="nt">states</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">phase_3</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">script</span><span class="p p-Indicator">,</span><span class="nt"> call</span><span class="p">:</span><span class="w"> </span><span class="s">"scripts/guardian.lua:phase_3"</span><span class="p p-Indicator">,</span><span class="nt"> every</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5s</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">phase_3</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">script</span><span class="p p-Indicator">,</span><span class="nt"> call</span><span class="p">:</span><span class="w"> </span><span class="s">"scripts/guardian.ois:phase_3"</span><span class="p p-Indicator">,</span><span class="nt"> every</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5s</span><span class="p p-Indicator">,</span><span class="nt"> fly</span><span class="p">:</span><span class="w"> </span><span class="nv">attack</span><span class="p p-Indicator">}</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="nt">events</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">custom_ending</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"script(scripts/ending.lua:run)"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"script(scripts/ending.ois:run)"</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <ul>
 <li>Scripts see the same query and action API as Tier 1 (so nothing is reachable from a script
-  that is not documented), run on the simulation tick, and must be deterministic (no clock, no
+  that is not documented), run on the simulation tick, and are deterministic (no clock, no
   files, no network; random numbers only from the game's generator).</li>
-<li>Scripts may keep state only through the API (<code>set_flag</code>, <code>counter</code>, object variables), so
+<li>Scripts keep state only through the API (<code>set_flag</code>, object variables with <code>set_var</code>), so
   saves never need to serialise a script VM.</li>
 </ul>
-<h3 id="language-decision-stage-310-awaiting-the-user">Language decision (Stage 3.10) — awaiting the user<a class="headerlink" href="#language-decision-stage-310-awaiting-the-user" title="Permanent link">&para;</a></h3>
+<h3 id="language-decision-stage-310-decided-c">Language decision (Stage 3.10) — decided: (c)<a class="headerlink" href="#language-decision-stage-310-decided-c" title="Permanent link">&para;</a></h3>
 <p>The full evaluation is on the dependency page:
-<a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">Tier 2 scripting, evaluated</a>.
-<strong>No decision has been made.</strong></p>
+<a href="../../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310">Tier 2 scripting, evaluated</a>.
+<strong>Decided 2026-11-20 by the user: (c)</strong>, grow the in-crate language; no crate added.</p>
 <table>
 <thead>
 <tr>
@@ -6888,24 +6911,64 @@ Tier 2 hook.</p>
 <tbody>
 <tr>
 <td>(a) <strong>Lua 5.4 via <code>mlua</code></strong></td>
-<td>The modding standard; fast; MIT. Costs: bundled C sources, a C compiler on every platform, an FFI boundary, opt-in sandboxing, determinism care (<code>f64</code>, table iteration order). <strong>The fallback</strong> if mods need a full general-purpose language.</td>
+<td>The modding standard; fast; MIT. Costs: bundled C sources, a C compiler on every platform, an FFI boundary, opt-in sandboxing, determinism care (<code>f64</code>, table iteration order). <strong>The recorded fallback</strong> if mods need a full general-purpose language.</td>
 </tr>
 <tr>
 <td>(b) <code>rhai</code></td>
 <td>Pure Rust, MIT/Apache; slower; few modders know it; a larger crate tree; errors at run time. Reconsider only if a pure-Rust or WebAssembly build becomes a requirement.</td>
 </tr>
 <tr>
-<td>(c) <strong>Grow Tier 1</strong> into a small statement language (variables, <code>if</code>/<code>else</code>, bounded loops, functions, calls into the same checked API)</td>
-<td>No dependency; checked at load, deterministic and sandboxed by construction; the parser, checker and evaluator exist. Ceiling: no general-purpose data structures. <strong>Recommended as the default</strong> by the evaluator.</td>
+<td>(c) <strong>Grow Tier 1</strong> into a small statement language</td>
+<td>No dependency; checked at load, deterministic and sandboxed by construction; the parser, checker and evaluator existed. Ceiling: no general-purpose data structures. <strong>Chosen.</strong></td>
 </tr>
 </tbody>
 </table>
-<p>Earlier drafts of this page recommended (a) and rejected (c) unless both crates failed
-evaluation; the evaluation found (c) far cheaper than that assumed, because the language's
-hard parts already exist. The hook syntax above (<code>do: script</code>, <code>script(...)</code>) is the same for
-any choice; the <code>.lua</code> file names in the examples are placeholders.</p>
-<p>Because both shipped campaigns need only Tier 1, the choice can be made on its merits without
-blocking any campaign work.</p>
+<h3 id="the-language-as-built-app-0180">The language as built (app 0.18.0)<a class="headerlink" href="#the-language-as-built-app-0180" title="Permanent link">&para;</a></h3>
+<p>Files are <code>scripts/&lt;name&gt;.ois</code> in a pack ("OpenInterceptor script"; a later pack's file of the
+same path replaces an earlier one's). Grammar (<code>#</code> starts a comment):</p>
+<div class="highlight"><pre><span></span><code>file      := def*
+def       := 'def' NAME '(' [param {',' param}] ')' block
+param     := NAME [':' ('num' | 'bool')]          # a number unless marked bool
+block     := '{' {statement (NEWLINE | ';')} '}'
+statement := 'let' NAME '=' expr                   # a new local variable
+           | NAME '=' expr                         # assign to a local
+           | 'if' expr block {'else' 'if' expr block} ['else' block]
+           | 'repeat' expr block                   # expr times (at most 1000)
+           | 'for' 'each' NAME 'of' expr block     # over a role's members (battle context)
+           | 'return' [expr]
+           | NAME ['(' args ')']                   # an action, or a function of this file
+expr      := the condition language, plus locals and calls of value-returning functions
+</code></pre></div>
+<p>Rules:</p>
+<ul>
+<li><strong>Hooks.</strong> A behaviour state <code>{do: script, call: "&lt;file&gt;:&lt;function&gt;", every: 0.5s, fly:
+  &lt;manoeuvre&gt;}</code> (<code>every</code> default 0.5 s, at least one tick; <code>fly</code> default <code>attack</code>, flown with the
+  state's usual parameters) runs in the <strong>object</strong> context, with the behaviour's <code>vars: [..]</code>
+  (at most 8 object variables, readable as <code>var(name)</code> in scripts and in conditions) and the
+  object actions <code>goto(state)</code>, <code>set_var(name, value)</code>, <code>message(text)</code>. An action-list entry
+  <code>script(&lt;file&gt;:&lt;function&gt;)</code> in a mission's <code>outcomes</code> runs at the battle's end in the
+  <strong>battle</strong> context; in a story event's or choice's <code>do</code>, a plan's <code>warnings</code> / <code>complete</code> or
+  an <code>evaluations</code> <code>do</code> it runs in the <strong>campaign</strong> context, its actions applied at once.
+  <code>call:</code> or <code>fly:</code> on a state that is not <code>do: script</code> is an error.</li>
+<li><strong>Checking.</strong> Each hook compiles its function and every function it calls against its own
+  context: queries, names (roles, levels, object variables), the action table, argument kinds
+  and types; <code>goto</code> and <code>set_var</code> are checked against the behaviour's states and <code>vars</code>; text
+  keys (<code>@key</code>) are resolved at load. Entry functions take no parameters; calls only within the
+  same file; recursion (direct or through others) is rejected at load with the chain; names may
+  not clash with keywords, queries, actions, constants or other functions; a script cannot call
+  <code>script(...)</code>.</li>
+<li><strong>Running.</strong> One operation per statement, expression node and loop round; <strong>10 000</strong> per hook
+  call. Out of budget, the hook stops (actions already taken stand) and it is reported once:
+  <code>SCRIPT STOPPED</code> (the simulation's <code>ScriptStopped</code> event, or the campaign log). Locals live
+  for one call; a value-returning function that ends without <code>return</code> gives <code>0</code> / <code>false</code>.</li>
+</ul>
+<p>The modder's guide, with a worked example (the default campaign's saucer ace), is
+<a href="../../../modding/scripts/">Scripts (Tier 2)</a>. Where the language as built differs from this
+page's earlier design (no per-file context declaration, no <code>counter</code> action, <code>do: script</code>
+flying a manoeuvre, battle scripts only from outcomes, <code>for each</code> battle-only, line-based
+statements): <a href="../../../implementation/deviations/">DEV-060</a>.</p>
+<p>Because both shipped campaigns need only Tier 1, scripts are optional; the default campaign
+ships one example (<code>saucer_ace</code>).</p>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6925,6 +6988,11 @@ blocking any campaign work.</p>
 <td>1.12.0</td>
 <td>2026-11-11</td>
 <td>Tier 2 language decision: summary of the recorded evaluation ((a) <code>mlua</code>, (b) <code>rhai</code>, (c) grow Tier 1); evaluator recommends (c), fallback (a); awaiting the user's decision</td>
+</tr>
+<tr>
+<td>1.20.0</td>
+<td>2026-11-20</td>
+<td>Tier 2 decided ((c), 2026-11-20) and implemented (app 0.18.0): hooks with <code>.ois</code> files, the grammar and rules as built; <code>counter</code> replaced by object variables (<code>vars</code>, <code>set_var</code>); deviations in DEV-060</td>
 </tr>
 </tbody>
 </table>

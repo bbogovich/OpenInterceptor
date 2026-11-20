@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4414,6 +4414,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../modding/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../modding/looks/" class="md-nav__link">
         
   
@@ -4968,34 +4996,6 @@
     
   
     Scenarios and missions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../modding/scripting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
   
 
     
@@ -6396,7 +6396,7 @@ but not that you know Rust.</p>
 <tbody>
 <tr>
 <td><a href="ownership/">Ownership and borrowing</a></td>
-<td>Who owns the World, the meshes, the textures; why <code>&amp;</code> and <code>&amp;mut</code> matter; interior mutability with <code>Cell</code> (<code>ObjectContext</code>)</td>
+<td>Who owns the World, the meshes, the textures; why <code>&amp;</code> and <code>&amp;mut</code> matter; interior mutability with <code>Cell</code> (<code>ObjectContext</code>, <code>CampaignHost</code>); <code>Arc::make_mut</code>; copying a reference out of <code>self</code> to end a borrow (the script <code>Vm</code>)</td>
 </tr>
 <tr>
 <td><a href="lifetimes/">Lifetimes and borrowed bytes</a></td>
@@ -6404,15 +6404,15 @@ but not that you know Rust.</p>
 </tr>
 <tr>
 <td><a href="types/">Structs, enums and pattern matching</a></td>
-<td><code>Ship</code>, <code>Action</code>, <code>View</code>, <code>FormatError</code> and every <code>match</code>; enum decisions (<code>Tow</code>); <code>const fn</code> tables (<code>ACTIONS</code>) and a <code>const</code> block computing one (<code>SIZES</code>, Smacker); recursive enums and a recursive-descent parser (<code>script::Expr</code>)</td>
+<td><code>Ship</code>, <code>Action</code>, <code>View</code>, <code>FormatError</code> and every <code>match</code>; enum decisions (<code>Tow</code>); <code>const fn</code> tables (<code>ACTIONS</code>) and a <code>const</code> block computing one (<code>SIZES</code>, Smacker); recursive enums and a recursive-descent parser (<code>script::Expr</code>); enum size and <code>clippy::large_enum_variant</code> (<code>Pilot</code>)</td>
 </tr>
 <tr>
 <td><a href="traits/">Traits and generics</a></td>
-<td><code>Default</code>, <code>Debug</code>, <code>From</code>, <code>Iterator</code>, macroquad's <code>Camera</code></td>
+<td><code>Default</code>, <code>Debug</code>, <code>From</code>, <code>Iterator</code>, macroquad's <code>Camera</code>; a supertrait (<code>trait Host: Context</code>)</td>
 </tr>
 <tr>
 <td><a href="errors/">Error handling</a></td>
-<td><code>Result</code>, <code>?</code>, per-layer error enums; why bad data never panics</td>
+<td><code>Result</code>, <code>?</code>, per-layer error enums; why bad data never panics; an error that stops an interpreter (<code>OutOfBudget</code>)</td>
 </tr>
 <tr>
 <td><a href="modules/">Modules and visibility</a></td>
@@ -6424,7 +6424,7 @@ but not that you know Rust.</p>
 </tr>
 <tr>
 <td><a href="collections/">Collections</a></td>
-<td><code>Vec</code>, <code>HashMap</code>, when to use which</td>
+<td><code>Vec</code>, <code>HashMap</code>, when to use which; one value stack with frames by index; fixed arrays instead of <code>Vec</code></td>
 </tr>
 <tr>
 <td><a href="ffi-unsafe/">FFI, <code>repr(C)</code> and <code>unsafe</code></a></td>

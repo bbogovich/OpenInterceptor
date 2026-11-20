@@ -11,21 +11,21 @@
       
       
       
-        <link rel="prev" href="../scenarios/">
+        <link rel="prev" href="../behaviours/">
       
       
-        <link rel="next" href="../campaign/">
+        <link rel="next" href="../looks/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
-        <title>Scripting (design) - OpenInterceptor — Implementation</title>
+        <title>Scripts (Tier 2) - OpenInterceptor — Implementation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#scripting-design" class="md-skip">
+        <a href="#scripts-tier-2" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Scripting (design)
+              Scripts (Tier 2)
             
           </span>
         </div>
@@ -3218,7 +3218,7 @@
   <span class="md-ellipsis">
     
   
-    Conditions (script)
+    Conditions and scripts (script)
   
 
     
@@ -4413,6 +4413,308 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts (Tier 2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-scripts-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where scripts live
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks-where-a-script-is-called" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks: where a script is called
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hooks: where a script is called">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-behaviour-state-do-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A behaviour state: do: script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-action-list-entry-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An action-list entry: script(...)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The language
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The language">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expressions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#action-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The three contexts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The three contexts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object-context-behaviour-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Object context (behaviour scripts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#battle-context-mission-outcome-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Battle context (mission outcome scripts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#campaign-context-story-plan-and-evaluation-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign context (story, plan and evaluation scripts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-operation-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The operation budget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example-the-saucer-ace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example: the saucer ace
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trying-a-script-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trying a script out
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors-you-may-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors you may see
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-by-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits, by design
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -4978,44 +5280,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Scripting (design)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
     </li>
   
 
@@ -6374,6 +6638,241 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-scripts-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where scripts live
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks-where-a-script-is-called" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks: where a script is called
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hooks: where a script is called">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-behaviour-state-do-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A behaviour state: do: script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-action-list-entry-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An action-list entry: script(...)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The language
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The language">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expressions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#action-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-three-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The three contexts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The three contexts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object-context-behaviour-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Object context (behaviour scripts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#battle-context-mission-outcome-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Battle context (mission outcome scripts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#campaign-context-story-plan-and-evaluation-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Campaign context (story, plan and evaluation scripts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-operation-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The operation budget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example-the-saucer-ace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example: the saucer ace
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trying-a-script-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trying a script out
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors-you-may-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors you may see
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits-by-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits, by design
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -6389,20 +6888,474 @@
 
 
 
-<h1 id="scripting-design">Scripting (design)<a class="headerlink" href="#scripting-design" title="Permanent link">&para;</a></h1>
-<p>Behaviour and logic are designed in <strong><a href="../../specification/design/format-behaviour/">Behaviours and scripting</a></strong>:</p>
+<h1 id="scripts-tier-2">Scripts (Tier 2)<a class="headerlink" href="#scripts-tier-2" title="Permanent link">&para;</a></h1>
+<p>Most of a campaign is <strong>Tier 1</strong>: behaviours as state machines, missions and events as YAML
+definitions, and the <a href="../behaviours/#the-condition-language">condition language</a> for the parts
+that vary. Both shipped campaigns are written entirely in Tier 1. A <strong>script</strong> is for what Tier 1
+cannot say on its own: logic with <strong>memory and branching</strong>, such as an enemy ace who fights in
+phases, an event chain that counts, or a mission ending that looks at every member of a wing.</p>
+<p>Scripts arrived in app <strong>0.18.0</strong> (Stage 3.10, GitHub #16). The language is OpenInterceptor's own
+— the condition language grown into statements — not Lua or another general-purpose language:
+the decision and its reasons are on the <a href="../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310">dependency page</a>.
+Requirement: <a href="../../specification/requirements/modding/#r-mod-015-tier-2-scripting-decision">R-MOD-015</a>.
+Design: <a href="../../specification/design/format-behaviour/#tier-2-scripts">Format: behaviours and scripting › Tier 2</a>.</p>
+<p>What makes it safe to load a stranger's mod with scripts in it:</p>
 <ul>
-<li><strong>Tier 1</strong> (Stages 2–3): behaviours as state machines, missions and events as definitions,
-  and a small built-in condition and action language — enough for both shipped campaigns.
-  <strong>Implemented in Stage 2:</strong> behaviours and the condition language in the object context —
-  see <a href="../behaviours/">Behaviours and conditions</a>. Actions, and the mission and event contexts,
-  come with Stage 3.</li>
-<li><strong>Tier 2</strong> (Stage 3.10, <strong>awaiting the user's decision</strong>): optional scripts called through
-  hooks. The <a href="../../learning/best-practices/dependencies/#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision">evaluation</a>
-  compares Lua 5.4 via <code>mlua</code>, <code>rhai</code>, and growing the condition and action language into a small
-  statement language (variables, <code>if</code>/<code>else</code>, bounded loops, functions); it recommends the last
-  as the default, with Lua as the fallback. Until the decision, write Tier 1.</li>
+<li><strong>Checked when the campaign loads.</strong> Every query, action, state, variable, role and text key a
+  script names is checked by <code>--check</code> and on start-up, with the file and line. A misspelling
+  never waits for the moment in play when that line runs.</li>
+<li><strong>Always finishes.</strong> Loops are counted, functions cannot call themselves, and every call has
+  an operation budget. A script cannot hang the game.</li>
+<li><strong>Deterministic.</strong> No clock, files or network; the only randomness is the context's seeded
+  <code>random(p)</code>. The same battle replays the same way.</li>
+<li><strong>Nothing to save.</strong> Variables live for one call. What must last is kept through actions
+  (<code>set_flag</code>, <code>set_var</code>), which saves already store.</li>
 </ul>
+<h2 id="where-scripts-live">Where scripts live<a class="headerlink" href="#where-scripts-live" title="Permanent link">&para;</a></h2>
+<p>A script file is <code>scripts/&lt;name&gt;.ois</code> in a pack ("OpenInterceptor script"; the extension is
+our own so nobody mistakes the files for Lua). A file holds <strong>functions</strong> and comments:</p>
+<div class="highlight"><pre><span></span><code># scripts/my_ace.ois
+def duel() {
+    if hull &lt; 40% {
+        goto(berserk)
+    }
+}
+</code></pre></div>
+<p>A later pack's file with the <strong>same path replaces</strong> the earlier one, like any other pack file —
+an addon can change the default ace by shipping its own <code>scripts/saucer_ace.ois</code>.</p>
+<p>A function is named by <strong>file and function</strong>: <code>scripts/my_ace.ois:duel</code>. Functions can call other
+functions <strong>in the same file</strong> only.</p>
+<h2 id="hooks-where-a-script-is-called">Hooks: where a script is called<a class="headerlink" href="#hooks-where-a-script-is-called" title="Permanent link">&para;</a></h2>
+<p>Tier 1 hands control to a script function in two places.</p>
+<h3 id="a-behaviour-state-do-script">A behaviour state: <code>do: script</code><a class="headerlink" href="#a-behaviour-state-do-script" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">behaviours</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">my_ace</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">phase</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">hits</span><span class="p p-Indicator">]</span><span class="w">                 </span><span class="c1"># object variables the script keeps (at most 8)</span>
+<span class="w">    </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">duel</span>
+<span class="w">    </span><span class="nt">states</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">duel</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">script</span><span class="w">                      </span><span class="c1"># a script decides while in this state</span>
+<span class="w">        </span><span class="nt">call</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scripts/my_ace.ois:duel</span><span class="w">   </span><span class="c1"># the function (object context)</span>
+<span class="w">        </span><span class="nt">every</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5s</span><span class="w">                     </span><span class="c1"># how often it runs (default 0.5 s)</span>
+<span class="w">        </span><span class="nt">fly</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack</span><span class="w">                     </span><span class="c1"># the manoeuvre flown meanwhile (default attack)</span>
+<span class="w">        </span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.8km</span><span class="w">                    </span><span class="c1"># ...with the usual parameters of that manoeuvre</span>
+<span class="w">      </span><span class="nt">berserk</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">attack</span><span class="p p-Indicator">,</span><span class="nt"> range</span><span class="p">:</span><span class="w"> </span><span class="nv">1km</span><span class="p p-Indicator">,</span><span class="nt"> burst</span><span class="p">:</span><span class="w"> </span><span class="nv">2s</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>While the ship is in the state it flies the <code>fly:</code> manoeuvre with the state's usual parameters
+(<code>range</code>, <code>burst</code>, <code>missiles</code>, …), and the function runs on the state's first tick and then every
+<code>every</code> seconds (at least one 60 Hz tick). The behaviour's <code>transitions</code> are still tried first.
+The function runs in the <strong>object context</strong>: it asks the same
+<a href="../behaviours/#object-context-what-a-behaviour-can-ask">queries as a behaviour's conditions</a> about
+its own ship, plus <code>var(name)</code>, and has three actions (below).</p>
+<p><code>call:</code>, <code>every:</code> and <code>fly:</code> belong to <code>do: script</code> states only; on any other state they are an
+error.</p>
+<h3 id="an-action-list-entry-script">An action-list entry: <code>script(...)</code><a class="headerlink" href="#an-action-list-entry-script" title="Permanent link">&para;</a></h3>
+<p>Anywhere an action list is accepted in the places below, an entry may hand over to a function:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">missions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">my_mission</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">outcomes</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">win</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">score(base_defended)</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"script(scripts/endings.ois:tally)"</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Context</th>
+<th>When it runs</th>
+<th>Its actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A mission's <code>outcomes</code></td>
+<td><strong>battle</strong></td>
+<td>At the end of the battle, before the debrief, with the outcome's other actions</td>
+<td>Battle actions (<code>message</code>) show on the message display; campaign actions (<code>score</code>, <code>money</code>, …) join the debrief's list and are applied by the strategy layer like the outcome's own</td>
+</tr>
+<tr>
+<td>A story event's <code>do</code> and <code>choices[].do</code>, a plan's <code>warnings[].do</code> and <code>complete</code>, an <code>evaluations[].do</code></td>
+<td><strong>campaign</strong></td>
+<td>When that list runs</td>
+<td>Applied <strong>at once</strong>, one by one, so a later line of the script sees what an earlier one did</td>
+</tr>
+</tbody>
+</table>
+<p>A script cannot start another script with <code>script(...)</code>: call its function directly instead.
+Behaviour scripts are only the <code>do: script</code> states (there is no <code>script(...)</code> in the object
+context).</p>
+<h2 id="the-language">The language<a class="headerlink" href="#the-language" title="Permanent link">&para;</a></h2>
+<h3 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>def name() { … }                 # an entry function: hooks call it, so no parameters
+def helper(n, loud: bool) { … }  # parameters are numbers unless marked bool (or num)
+</code></pre></div>
+<p>A function either returns a value — every <code>return</code> in it gives a value of the same type — or
+returns nothing. A value-returning function that ends without <code>return</code> gives <code>0</code> (or <code>false</code>).
+Functions may call each other in any order, but <strong>never themselves</strong>, directly or through
+others: the load reports the chain, e.g. <code>recursion is not allowed (a function may not call
+itself): a → b → a</code>.</p>
+<h3 id="statements">Statements<a class="headerlink" href="#statements" title="Permanent link">&para;</a></h3>
+<p>One statement per line, or several on a line separated by <code>;</code>. A long expression may continue
+on the next line inside brackets. <code>#</code> starts a comment.</p>
+<table>
+<thead>
+<tr>
+<th>Statement</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>let x = &lt;expr&gt;</code></td>
+<td>A new local variable, a number or true/false (its type is the value's). Visible to the end of its block.</td>
+</tr>
+<tr>
+<td><code>x = &lt;expr&gt;</code></td>
+<td>Change a local variable (same type).</td>
+</tr>
+<tr>
+<td><code>if &lt;cond&gt; { … } else if &lt;cond&gt; { … } else { … }</code></td>
+<td>Branches; <code>else</code> may start the next line.</td>
+</tr>
+<tr>
+<td><code>repeat &lt;n&gt; { … }</code></td>
+<td>Run the block <code>n</code> times (whole rounds; none if <code>n</code> ≤ 0; at most <strong>1000</strong>).</td>
+</tr>
+<tr>
+<td><code>for each m of &lt;role&gt; { … }</code></td>
+<td><strong>Battle context only:</strong> <code>m</code> runs 0, 1, … over the members of a role that have entered the battle (<code>members(role)</code>); ask about each with <code>member_alive(role, m)</code>, <code>member_hull(role, m)</code>, <code>member_distance(role, m)</code>.</td>
+</tr>
+<tr>
+<td><code>return</code> / <code>return &lt;expr&gt;</code></td>
+<td>Leave the function (with a value).</td>
+</tr>
+<tr>
+<td><code>action(args)</code> or <code>action</code></td>
+<td>An action of the hook's context (tables below).</td>
+</tr>
+<tr>
+<td><code>helper(args)</code></td>
+<td>Call a function of the same file.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="expressions">Expressions<a class="headerlink" href="#expressions" title="Permanent link">&para;</a></h3>
+<p>Exactly the <a href="../behaviours/#the-condition-language">condition language</a> — numbers with units
+(<code>1.5km</code>, <code>25%</code>), <code>and</code>/<code>or</code>/<code>not</code>, comparisons, arithmetic, the context's queries and names —
+plus <strong>local variables</strong> and calls of <strong>value-returning functions</strong> (<code>hits_for_fury()</code>).</p>
+<h3 id="action-arguments">Action arguments<a class="headerlink" href="#action-arguments" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Written as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text</td>
+<td>a text key <code>@msg.my_ace.taunt</code> (resolved when the campaign loads, so a missing key is a load error) or <code>"quoted words"</code></td>
+</tr>
+<tr>
+<td>name (an id)</td>
+<td>a bare word: <code>goto(berserk)</code>, <code>set_flag(ace_beaten)</code></td>
+</tr>
+<tr>
+<td>number</td>
+<td>any number expression: <code>set_var(hits, var(hits) + 1)</code>, <code>money(500 * difficulty)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="names">Names<a class="headerlink" href="#names" title="Permanent link">&para;</a></h3>
+<p>A variable, parameter or function may not take a name that already means something: a keyword
+(<code>def let if else repeat for each of return and or not true false</code>), a query, an action, a
+constant (a role, a difficulty level, an object variable) or another function. Names are
+case-insensitive.</p>
+<h2 id="the-three-contexts">The three contexts<a class="headerlink" href="#the-three-contexts" title="Permanent link">&para;</a></h2>
+<p>Each hook compiles its function, and every function it reaches, against <strong>its own</strong> context. The
+same function can therefore be called from a behaviour (object context) and fail to compile from
+an event (campaign context) if it uses <code>goto</code>.</p>
+<h3 id="object-context-behaviour-scripts">Object context (behaviour scripts)<a class="headerlink" href="#object-context-behaviour-scripts" title="Permanent link">&para;</a></h3>
+<p>Queries: those of <a href="../behaviours/#object-context-what-a-behaviour-can-ask">behaviour conditions</a>,
+plus:</p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>var(name)</code></td>
+<td>number</td>
+<td>An object variable the behaviour declares in <code>vars:</code>; 0 until a script sets it. Also usable in the behaviour's transitions: <code>when: var(phase) &gt;= 2</code>.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Arguments</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>goto(state)</code></td>
+<td>a state of this behaviour</td>
+<td>Switch state when the script returns (if it calls <code>goto</code> twice, the last wins).</td>
+</tr>
+<tr>
+<td><code>set_var(name, value)</code></td>
+<td>a variable in <code>vars:</code>, a number</td>
+<td>Set an object variable; the next <code>var(name)</code> in the same call already sees it.</td>
+</tr>
+<tr>
+<td><code>message(text)</code></td>
+<td>text</td>
+<td>A radio line from this ship on the player's message display.</td>
+</tr>
+</tbody>
+</table>
+<p>Object variables are declared on the behaviour: <code>vars: [phase, hits]</code>, at most <strong>8</strong>, each ship
+flying the behaviour has its own, starting at 0. The names become names of the behaviour, so
+<code>var(phse)</code> is a load error; <code>goto</code> and <code>set_var</code> are checked against the behaviour's states and
+<code>vars</code> too.</p>
+<h3 id="battle-context-mission-outcome-scripts">Battle context (mission outcome scripts)<a class="headerlink" href="#battle-context-mission-outcome-scripts" title="Permanent link">&para;</a></h3>
+<p>The <a href="../missions/#the-battle-context">battle context's queries</a>, with the mission's role names, and
+four more for <code>for each</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>members(role)</code></td>
+<td>number</td>
+<td>How many craft have entered for the role, alive or not (what <code>for each</code> loops over).</td>
+</tr>
+<tr>
+<td><code>member_alive(role, m)</code></td>
+<td>true/false</td>
+<td>The role's <code>m</code>-th member (from 0) is still in the battle.</td>
+</tr>
+<tr>
+<td><code>member_hull(role, m)</code></td>
+<td>number</td>
+<td>Its hull fraction (0 once it is gone).</td>
+</tr>
+<tr>
+<td><code>member_distance(role, m)</code></td>
+<td>number</td>
+<td>Its distance from the player, m (very large once gone).</td>
+</tr>
+</tbody>
+</table>
+<p>Actions: the <a href="../missions/#actions">mission actions</a>.</p>
+<h3 id="campaign-context-story-plan-and-evaluation-scripts">Campaign context (story, plan and evaluation scripts)<a class="headerlink" href="#campaign-context-story-plan-and-evaluation-scripts" title="Permanent link">&para;</a></h3>
+<p>The <a href="../strategy/#expressions-the-campaign-context">campaign context's queries</a> and the
+<a href="../story/#actions">story's actions</a>. There is no collection, so use <code>repeat</code>.</p>
+<h2 id="the-operation-budget">The operation budget<a class="headerlink" href="#the-operation-budget" title="Permanent link">&para;</a></h2>
+<p>Each hook call may spend <strong>10 000 operations</strong> — one per statement, expression part and loop
+round. A typical hook uses tens. When a call runs out it <strong>stops where it is</strong>: actions already
+taken stand, the rest of the call does not happen, and it is reported once:</p>
+<ul>
+<li>a behaviour script: <code>SCRIPT STOPPED: scripts/x.ois:fn used its whole operation budget</code> on the
+  message display (once per ship);</li>
+<li>an outcome script: the same line among the battle's messages;</li>
+<li>a campaign script: <code>Script stopped: … used its whole operation budget</code> in the log.</li>
+</ul>
+<p>The next call starts with a fresh budget. A stopped script is a bug in the mod: look for a loop
+inside a loop.</p>
+<h2 id="a-worked-example-the-saucer-ace">A worked example: the saucer ace<a class="headerlink" href="#a-worked-example-the-saucer-ace" title="Permanent link">&para;</a></h2>
+<p>The default campaign's testbed scenario <strong>Duel: saucer ace (scripted)</strong> (<code>duel-saucer-ace</code>) is a
+duel against a raider saucer flown by the behaviour <code>saucer_ace</code>. It fights in three phases:
+<strong>duel</strong> at range, counting the hits it takes and taunting you once; <strong>fury</strong> when badly hurt
+or hit too often, closing in and firing everything; <strong>flee</strong> near the end, jumping out.</p>
+<p>The behaviour (<code>resources/default/rules/behaviours.yaml</code>, abridged):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">behaviours</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">saucer_ace</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">prefer</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">player</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">phase</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">hits</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">duel</span>
+<span class="w">    </span><span class="nt">states</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">duel</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">script</span>
+<span class="w">        </span><span class="nt">call</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scripts/saucer_ace.ois:duel</span>
+<span class="w">        </span><span class="nt">every</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5s</span>
+<span class="w">        </span><span class="nt">fly</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack</span>
+<span class="w">        </span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.8km</span>
+<span class="w">        </span><span class="nt">missiles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">      </span><span class="nt">fury</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">script</span>
+<span class="w">        </span><span class="nt">call</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scripts/saucer_ace.ois:fury</span>
+<span class="w">        </span><span class="nt">every</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5s</span>
+<span class="w">        </span><span class="nt">fly</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack</span>
+<span class="w">        </span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2km</span>
+<span class="w">        </span><span class="nt">missiles</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">12s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">8s</span><span class="p p-Indicator">]}</span><span class="w">   </span><span class="c1"># no missiles at cadet</span>
+<span class="w">      </span><span class="nt">dodge</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">evade</span><span class="p p-Indicator">,</span><span class="nt"> duration</span><span class="p">:</span><span class="w"> </span><span class="nv">2s</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">flee</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">retreat</span><span class="p p-Indicator">,</span><span class="nt"> jump</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">transitions</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="nv">dodge</span><span class="p p-Indicator">,</span><span class="nt"> to</span><span class="p">:</span><span class="w"> </span><span class="nv">fury</span><span class="p p-Indicator">,</span><span class="nt"> when</span><span class="p">:</span><span class="w"> </span><span class="s">"time_in_state</span><span class="nv"> </span><span class="s">&gt;</span><span class="nv"> </span><span class="s">2s"</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>The script (<code>resources/default/scripts/saucer_ace.ois</code>):</p>
+<div class="highlight"><pre><span></span><code># Phase 1, "duel": fight at range, count the hits taken, taunt the player once.
+def duel() {
+    if var(phase) &lt; 1 {
+        set_var(phase, 1)
+        message(@msg.saucer_ace.taunt)
+    }
+    if hit_recently(0.5s) {
+        set_var(hits, var(hits) + 1)
+    }
+    # Badly hurt, or hit too often: fury.
+    if hull &lt; 50% or var(hits) &gt;= hits_for_fury() {
+        set_var(phase, 2)
+        message(@msg.saucer_ace.fury)
+        goto(fury)
+    }
+}
+
+# Phase 2, "fury": close in and fire everything; dodge incoming missiles; flee at the end.
+def fury() {
+    if hull &lt; 20% {
+        message(@msg.saucer_ace.retreat)
+        goto(flee)
+    } else if missiles_incoming(3km) &gt; 0 and random(0.5) {
+        goto(dodge)
+    }
+}
+
+# How many hits make the ace furious: eight at the lowest difficulty, one fewer per level.
+def hits_for_fury() {
+    let n = 8
+    repeat difficulty {
+        n = n - 1
+    }
+    return n
+}
+</code></pre></div>
+<p>What to notice:</p>
+<ul>
+<li><strong>Memory goes in object variables.</strong> <code>phase</code> makes the taunt happen once; <code>hits</code> counts the
+  half-second checks in which the ace was hit. A <code>let</code> variable would be forgotten at the end of
+  each call.</li>
+<li><strong>The script decides; the state flies.</strong> While in <code>duel</code> the ship flies <code>attack</code> at 1.8 km
+  without missiles; the script only switches state. Ordinary states (<code>dodge</code>, <code>flee</code>) and
+  transitions mix freely with scripted ones: <code>dodge</code> returns to <code>fury</code> by a plain transition.</li>
+<li><strong>A helper function</strong> (<code>hits_for_fury</code>) returns a number and uses a counted loop over the
+  difficulty index.</li>
+<li><strong>Text keys</strong> (<code>@msg.saucer_ace.taunt</code>) live in <code>text/en/scripts.yaml</code> and are resolved when the
+  campaign loads.</li>
+</ul>
+<h2 id="trying-a-script-out">Trying a script out<a class="headerlink" href="#trying-a-script-out" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Run <code>openinterceptor --check</code> (or start the game): every script reachable from a hook is
+   compiled and checked; errors name the file, the line and the hook
+   (<code>behaviours.my_ace.states.duel.call: …</code>).</li>
+<li>Fly it: give a scenario an object with your behaviour, as <code>duel-saucer-ace</code> does, and watch
+   the message line for <code>message(...)</code> lines and for <code>SCRIPT STOPPED</code>.</li>
+<li>For an outcome script, win or lose the mission and read the debrief's campaign actions; for
+   a campaign script, use the strategy screen's event debugger
+   (<a href="../story/#trying-a-story-out">Story layer › Trying a story out</a>).</li>
+</ol>
+<h2 id="errors-you-may-see">Errors you may see<a class="headerlink" href="#errors-you-may-see" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>no script file 'scripts/x.ois' (scripts/&lt;name&gt;.ois in a pack; loaded: …)</code></td>
+<td>The hook names a file no pack has.</td>
+</tr>
+<tr>
+<td><code>…: no function 'f' (it has: …)</code></td>
+<td>The file has no such <code>def</code>.</td>
+</tr>
+<tr>
+<td><code>'x': name a function: &lt;file&gt;:&lt;function&gt;</code></td>
+<td><code>call:</code> or <code>script(...)</code> without <code>:function</code>.</td>
+</tr>
+<tr>
+<td><code>…: f() is called by a hook, so it cannot take parameters</code></td>
+<td>Entry functions take none.</td>
+</tr>
+<tr>
+<td><code>line n: a script file holds only functions (def name() { … }), found …</code></td>
+<td>Something outside a <code>def</code>.</td>
+</tr>
+<tr>
+<td><code>line n: def f: missing '}' at the end of the function</code> / <code>function 'f' is already defined on line m</code></td>
+<td>File structure.</td>
+</tr>
+<tr>
+<td><code>recursion is not allowed (a function may not call itself): a → b → a</code></td>
+<td>A cycle of calls.</td>
+</tr>
+<tr>
+<td><code>unknown action or function 'salvage' (actions here: …)</code> (in the object context)</td>
+<td>An action from another context.</td>
+</tr>
+<tr>
+<td><code>'for each' needs a collection to loop over, and the campaign context has none (use repeat)</code></td>
+<td><code>for each</code> outside the battle context.</td>
+</tr>
+<tr>
+<td><code>'x' is not a variable here: declare it with let x = …</code></td>
+<td>Assignment before <code>let</code>.</td>
+</tr>
+<tr>
+<td><code>'x' is already a word, variable, function, query or name here</code></td>
+<td>A name clash.</td>
+</tr>
+<tr>
+<td><code>'hull' only gives a value; a statement must do something</code></td>
+<td>A query written as a statement.</td>
+</tr>
+<tr>
+<td><code>a script cannot start another with script(…): call its function directly</code></td>
+<td><code>script(...)</code> inside a script.</td>
+</tr>
+<tr>
+<td><code>states.s: do: script needs call: &lt;file&gt;:&lt;function&gt;</code> / <code>call: and fly: belong to a do: script state</code></td>
+<td>Hook keys.</td>
+</tr>
+<tr>
+<td><code>states.s.call: …: goto(x): no state 'x'</code> / <code>set_var(v, …): 'v' is not in this behaviour's vars:</code></td>
+<td>A state or variable the behaviour lacks.</td>
+</tr>
+<tr>
+<td><code>vars: at most 8 object variables</code> / <code>vars: 'x' is named twice or is already a name</code></td>
+<td>The <code>vars:</code> list.</td>
+</tr>
+<tr>
+<td><code>text: missing key '@msg.x' (behaviours.b.states.s: scripts/x.ois:f)</code></td>
+<td>A text key no text file defines.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="limits-by-design">Limits, by design<a class="headerlink" href="#limits-by-design" title="Permanent link">&para;</a></h2>
+<ul>
+<li>No strings, lists, tables or closures; numbers are <code>f32</code> like the simulation.</li>
+<li>No <code>script(...)</code> in the object context, and <code>for each</code> only in the battle context.</li>
+<li>A file is checked for structure when it loads; a function's body is checked only when a hook
+  reaches it, so a function no hook calls can hide a mistake until one does.</li>
+<li>Battle scripts run only from mission outcomes (at the end of the battle), not during it —
+  behaviour scripts are the way to act during a battle.</li>
+</ul>
+<p>How the language differs from its original design is recorded as
+<a href="../../implementation/deviations/">DEV-060</a>. How it works inside:
+<a href="../../implementation/architecture/script/#scripts-tier-2-app-0180">Architecture › Conditions and scripts</a>.</p>
 
 
 
