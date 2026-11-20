@@ -614,6 +614,9 @@ pub struct World {
     pub env: env::Env,
     /// Deterministic random-number state (xorshift), for AI variety.
     rng: u64,
+    /// The seed the battle was created with (unchanged while it runs, unlike `rng`):
+    /// things fixed for the whole battle, such as where terrain scatter lies, use it.
+    pub seed: u64,
     /// Ships whose bolts and missiles do no damage (a cutscene's `harmless` entities: a
     /// show of fire). Hits still land, so the effects and sounds play.
     pub harmless: Vec<ShipId>,
@@ -638,6 +641,7 @@ impl World {
             wing_formation: None,
             env: Default::default(),
             rng: seed.max(1),
+            seed,
         }
     }
 
