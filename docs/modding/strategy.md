@@ -542,7 +542,7 @@ base or facility, and on the Supply list and the info panel for every facility t
 Supply list offers a refused facility with the reason, *Tycho Drift does not suit a
 Manufacturing center*, adding *(not surveyed yet)* whenever the system has not been surveyed,
 whichever part of the condition failed; the info panel leaves it out). A base refused by
-it says *A &lt;type name&gt; base cannot be built at &lt;system&gt;*. Asking never changes the game: a
+it says *&lt;type name&gt; cannot be built at &lt;system&gt;* (app 0.19.1). Asking never changes the game: a
 `random(p)` in a placement condition rolls a copy of the generator.
 
 Rules that hold besides `placement:`: one base per system and at most `max_bases` of a type; at
