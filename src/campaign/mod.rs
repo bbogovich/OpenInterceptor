@@ -1098,7 +1098,7 @@ impl Campaign {
             return Err(format!("At most {} {} bases", bt.max_bases, bt.name));
         }
         if !self.placement_ok(def, bt.placement.as_ref(), system) {
-            return Err(format!("A {} base cannot be built at {}", bt.name, self.systems[system].name));
+            return Err(format!("{} cannot be built at {}", bt.name, self.systems[system].name));
         }
         if self.money < bt.cost as f64 {
             return Err(format!("A {} base costs {:.0}; there is {:.0}", bt.name, bt.cost, self.money));
@@ -2666,6 +2666,9 @@ mod tests {
         c.advance(&d, 5.0);
         assert_eq!(c.storage(&d, 0), (Some(15.0), 15.0), "arrived after the repair");
         assert!(c.deliveries.is_empty());
+        // A full depot cannot be dismantled: its stock would have nowhere to go.
+        let err = c.dismantle_module(&d, 0, k).unwrap_err();
+        assert!(err.contains("nowhere to go"), "{err}");
     }
 
     #[test]

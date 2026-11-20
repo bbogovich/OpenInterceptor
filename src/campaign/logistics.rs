@@ -201,8 +201,14 @@ impl Campaign {
         let ft = &l.facility_types[ftype];
         if !self.placement_ok(def, ft.placement.as_ref(), system) {
             let name = &self.systems[system].name;
-            // The condition is the modder's; name the usual missing step when it is that.
-            let hint = if lg.surveyed.get(system) == Some(&false) { " (not surveyed yet)" } else { "" };
+            // The condition is the modder's; name the missing survey only when surveying
+            // would change the answer (asked of a copy: refusals are rare, so cloning is fine).
+            let survey_helps = lg.surveyed.get(system) == Some(&false) && {
+                let mut after = self.clone();
+                after.logistics.surveyed[system] = true;
+                after.placement_ok(def, ft.placement.as_ref(), system)
+            };
+            let hint = if survey_helps { " (not surveyed yet)" } else { "" };
             return Err(format!("{name} does not suit a {}{hint}", ft.name));
         }
         Ok(())
