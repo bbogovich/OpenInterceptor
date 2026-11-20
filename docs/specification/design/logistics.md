@@ -68,8 +68,8 @@ their own meshes and debris, and the `construction-defence` and `convoy-ambush` 
     stages** are shown on the map marker (pips) and in battle: the struck facility stands in for
     the defence mission's first protected role as its type's `hub` in its stage. The stages are
     one list for every facility type, `logistics.construction_stages: {state: start}`, rather
-    than the design's `build.stages` per type, and the default starts are **0 / 50 / 80 %**, not
-    the confirmed 0 / 60 / 90 % (DEV-063). The **survey ship** is a craft of its own
+    than the design's `build.stages` per type (DEV-063); the default starts are the confirmed
+    **0 / 60 / 90 %** since app 0.20.1 (`7345fc3`; 0.20.0 had 0 / 50 / 80 % by mistake). The **survey ship** is a craft of its own
     (`logistics.survey_class`; the default campaign's new light `survey_ship` hull, not the
     Sky-Eye probe): an attacked one waits at the survey site and fights
     `logistics.survey_mission` (the default campaign's `convoy_ambush`) as one `survey_class`,
@@ -447,7 +447,7 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 | Facility fighters | A separate pool from base hangars; built at main bases, then transferred; movable between facilities. |
 | Third parties | Prospector convoys: base → system under investigation → pause → base. Cartel convoys: random destinations, including empty or uncharted stars. |
 | `interceptor` | No logistics: it stays a faithful match of the original; an optional addon could add it. |
-| Construction stages | Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed). As built (app 0.20.0) the default starts are 0 / 50 / 80 %, data in `logistics.construction_stages` (DEV-063). |
+| Construction stages | Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed). As built: data in `logistics.construction_stages`, one list for every facility type (DEV-063), default 0 / 60 / 90 % (app 0.20.1). |
 | Cargo capacity (D1, 2026-11-20) | A capacity per vessel in data; larger orders split into several convoys (`logistics.cargo_capacity`, app 0.20.0). |
 | Survey ship (D3, 2026-11-20) | A light survey hull; an attacked one fights the existing `convoy_ambush` shape at the survey site, auto-resolved unless the player flies (`survey_class`, `survey_mission`, `survey_loss`, app 0.20.0). |
 
@@ -471,4 +471,4 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 | 1.14.0 | 2026-11-11 | As-built note (app 0.9.0): what is built, the two differences (fixed placement rules, straight-line nearest supplier; DEV-049), auto-resolved ambushes and survey attacks, and what is not built yet |
 | 1.15.0 | 2026-11-11 | As-built note (app 0.9.2): flown convoy ambushes (`ambush_mission`), the supply vessel with cargo pods and a point-defence laser, tugs and escorts; depots still not built |
 | 1.21.0 | 2026-11-20 | As-built note (app 0.19.0): `placement:` conditions built (with `system`, `nearest_base`, `any`; the roles' default rules as conditions; base types too, `base_distance`) and storage at every facility; DEV-049's placement part closed, the straight-line supplier remains |
-| 1.22.0 | 2026-11-20 | As-built note (app 0.20.0): cargo capacity per vessel (D1), construction stages shown and standing in for the struck site (one list for all types; default starts 0 / 50 / 80 %, DEV-063), the survey ship as a craft with its battle at the site and suitability in the report (D3); open questions 1 and 3 answered, decisions table extended |
+| 1.22.0 | 2026-11-20 | As-built note (app 0.20.0): cargo capacity per vessel (D1), construction stages shown and standing in for the struck site (one list for all types, DEV-063; default starts 0 / 60 / 90 %, app 0.20.1), the survey ship as a craft with its battle at the site and suitability in the report (D3); open questions 1 and 3 answered, decisions table extended |

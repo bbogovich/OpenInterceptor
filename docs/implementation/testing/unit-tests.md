@@ -13,8 +13,8 @@ run: `campaign::logistics::tests::an_order_larger_than_a_convoy_leaves_as_severa
 (`cargo_capacity: 1` with four vessels: an order of 10 leaves as convoys of 4, 4 and 2, all
 arrive, and the totals count 3 convoys, 10 shipped and 10 delivered; without the key one convoy
 carries any order), `construction_stages_follow_progress_and_stand_in_for_the_struck_site` (the
-default stages and `stage_at` at 0, 49, 50 and 95 %; a ten-hour build is `build_25`, then
-`build_60` at 6 h, `build_90` at 9 h, with its type's `hub` as the stand-in class, and no stage
+default stages and `stage_at` at 0, 59, 60 and 95 % — 0 / 60 / 90 % since app 0.20.1, `7345fc3`;
+a ten-hour build is `build_25`, then `build_60` at 6.5 h, `build_90` at 9.5 h, with its type's `hub` as the stand-in class, and no stage
 once built; a pack's own stages listed out of order are sorted),
 `an_attacked_survey_ship_waits_at_the_site_then_reports_or_is_lost` (an attacked ship raises
 `Event::Survey` and waits unsurveyed; one `survey_class` stands in; the held ship and the totals

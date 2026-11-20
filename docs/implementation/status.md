@@ -197,7 +197,7 @@ stale notes corrected on #22, #27 and #36.
 **Logistics leftovers** ([Batch 4.2](plan/stage-4-strategy.md#batch-42-logistics-leftovers-m-parts-blocked-by-decisions-d1-d3),
 app **0.20.0**, main `9064f59`; #34, #36, #37, #47; R-STR-021, R-STR-022, R-STR-026, R-TST-011; decisions D1 and D3):
 `logistics.cargo_capacity` per vessel splits a large order into several convoys; construction
-stages (`logistics.construction_stages`, default 0 / 50 / 80 %, DEV-063) shown as pips on the map
+stages (`logistics.construction_stages`, default 0 / 60 / 90 % as R-STR-022 says since app 0.20.1, `7345fc3` — 0.20.0 had 0 / 50 / 80 % by mistake; one list for every type, DEV-063) shown as pips on the map
 marker and on the Supply list, and the struck facility **stands in** for the defence mission's
 first protected role as its type's `hub` in its stage; the survey report lists the facility
 types the system suits, and an attacked survey ship waits at its site and fights

@@ -722,7 +722,7 @@ The supply settings (a global section).
 | `survey_speed` | number | 900 | Survey ship speed, map units an hour. |
 | `convoy_speed` | number | 500 | Convoy speed, map units an hour. |
 | `construction_strikes` | `{from, max, chance, mission, setback}` | none | Enemy strikes on facilities under construction ([below](#construction-strikes), app 0.16.4). Without it there are none. Its `mission` needs a protected role too (a load error since app 0.20.0). |
-| `construction_stages` | mapping model-set state: fraction | `{build_25: 0%, build_60: 50%, build_90: 80%}` | The construction stages (app 0.20.0, R-STR-022): each **state of the hub's model set** with the progress it starts at. Listed in any order; sorted by where they start. A site shows the last stage it has reached, on the map and in its defence battle; when finished, the intact model. A value that is not a percentage is a load error. See [Construction stages and the stand-in](#construction-stages-and-the-stand-in). |
+| `construction_stages` | mapping model-set state: fraction | `{build_25: 0%, build_60: 60%, build_90: 90%}` (since app 0.20.1; 0.20.0 used 0 / 50 / 80 %) | The construction stages (app 0.20.0, R-STR-022): each **state of the hub's model set** with the progress it starts at. Listed in any order; sorted by where they start. A site shows the last stage it has reached, on the map and in its defence battle; when finished, the intact model. A value that is not a percentage is a load error. See [Construction stages and the stand-in](#construction-stages-and-the-stand-in). |
 | `ambush_mission` | mission id | none | The battle flown when the player escorts an ambushed convoy (app 0.9.2). With it, an ambushed convoy **waits** where it is and the clock stops: the player flies its escort, and the share of the mission's [`cargo:`](missions.md#the-mission) role still aboard at the end is delivered — or lets it fight through (auto-resolved as below). Without it every ambush is auto-resolved. An unknown mission is a load error. The default campaign sets `convoy_ambush`. |
 
 ### How the chain runs
@@ -804,7 +804,7 @@ them with the progress each starts at:
 
 ```yaml
 logistics:
-  construction_stages: {build_25: 0%, build_60: 50%, build_90: 80%}   # the engine default too
+  construction_stages: {build_25: 0%, build_60: 60%, build_90: 90%}   # the engine default too (app 0.20.1)
 ```
 
 Progress is `1 − (time left / the type's time)`, so a strike's `setback` can move a site back a

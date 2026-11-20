@@ -100,7 +100,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Construction is a vulnerable period worth defending.
 
-- **Status:** implemented. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Strikes on facilities under construction, flown or let be (app 0.16.4). Stages shown on the map and in battle, the struck facility in its own stage (app 0.20.0; default stage starts 0 / 50 / 80 %, DEV-063).
+- **Status:** implemented. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Strikes on facilities under construction, flown or let be (app 0.16.4). Stages shown on the map and in battle, the struck facility in its own stage (app 0.20.0; from 0 / 60 / 90 % as confirmed since app 0.20.1).
 - **Source:** Logistics design; construction-stage looks built in Stage 2; plan items 4.14 and 3.13.
 - **Specified by:** [R-CMB-019](../specification/requirements/combat.md#r-cmb-019-model-sets-and-damage-looks), [R-STR-022](../specification/requirements/strategy-logistics.md#r-str-022-construction-stages), [R-STR-023](../specification/requirements/strategy-logistics.md#r-str-023-construction-attacks)
 
