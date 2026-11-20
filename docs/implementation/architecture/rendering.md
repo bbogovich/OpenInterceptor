@@ -207,6 +207,44 @@ draw plain space. With a sky, the background is cleared to the horizon colour in
   the tile under the camera, skipping those whose nearest part is beyond reach. The test
   `tiles_match_the_folded_ground_heights` checks every vertex of every placed tile against the
   folded height.
+- **Detail textures** (app 0.18.0, main `4a0bd03`). A terrain with `detail` gets a texture
+  coordinate per vertex, `terrain::detail_uv(x, z, detail_scale)` = position ÷ scale, taken from
+  the **unmirrored** field position in both meshes so neighbouring tiles meet with matching
+  coordinates, and its triangles go into a textured `MaterialGroup`; with `slope_detail`,
+  triangles whose steepness passes the slope-colour threshold go into a second group. **No new
+  shader:** the lit shader already multiplies vertex colour by texture, and untextured groups
+  sample a white texture, so a terrain without `detail` is drawn exactly as before.
+  `ModelCache::prepare_detail_texture` loads the texture into the mesh cache *before* the mesh is
+  uploaded and gives it **mipmaps with trilinear filtering** (`render::set_mipmapped`, through
+  the documented `unsafe_gl_context` access — macroquad has no mipmap API), so the thousands of
+  repeats in the distance average out instead of shimmering. Mipmaps need power-of-two sides on
+  GLES 2 / WebGL 1; other sizes are reported and left without. Precision note: at a 30 km
+  field's edge with a 40 m repeat the coordinate reaches ~375 — fine in 32-bit floats; a GPU
+  honouring `mediump` in the fragment stage would show blocky texels far out.
+- **Scattered objects** (app 0.18.0). `content::environment::scatter_placements` places one
+  entry's pieces over the field by **rejection sampling** with an xorshift64 generator seeded
+  from `World::seed` (the battle's seed, unchanged while it runs) and the entry's `seed`: a spot
+  too steep (`normal.y < cos max_slope`) or outside `height` is redrawn, up to 30 tries per piece;
+  each try draws four numbers whether kept or not, so placement is stable. Placement is pure data
+  below the renderer (unit-tested). `terrain::scatter_cells` then **bakes** the pieces into one
+  mesh per cell of a `SCATTER_CELLS` = 16 × 16 grid (vertices transformed once; normal and
+  X-mirrored bakes), because macroquad has no GPU instancing — baking is the batching it allows.
+  `Renderer::bake_scatter` uploads each cell with `ModelCache::upload_draw_only` (the CPU copy of
+  vertices and faces is dropped after upload, halving memory; nothing collides with scatter).
+  The bake is cached in `Renderer::scatter` per terrain id **and** battle seed. Each frame,
+  for each drawn tile, a whole tile beyond an entry's `draw_distance` is skipped, then each cell
+  whose bounding sphere is beyond the draw distance or behind the eye. Only the model's first LOD
+  is used, and cells pop in at the draw distance (no fade). The default scatter costs about
+  90 – 100 MB.
+- **The draw-call index limit** (fixed in app 0.18.0). The window is created with
+  `draw_call_index_capacity: 30_000` (`main.rs`), and macroquad **silently drops** indices beyond
+  a draw call's capacity (it logs "exceeded max drawcall size"). `gpu::split_lod` cut meshes
+  into chunks by vertex count only (`MAX_CHUNK_VERTICES`); a grid whose triangles share vertices
+  has about six indices per vertex, so a terrain chunk hit the index limit long before the
+  vertex limit and **most of the terrain was never drawn**. Chunks now also close at
+  `MAX_CHUNK_INDICES` = 28 000 (a margin below 30 000); the test
+  `shared_vertex_grids_are_split_by_index_count` draws every index of a 100 × 100 grid
+  (58 806 indices) in chunks within both limits.
 - **Fog** in the lit shader: the vertex stage computes `fog = clamp(d / FogDistance.x, 0, 1)²` from
   the camera-relative position; the fragment stage mixes the colour towards `FogColor`.
   `FogDistance.x = 0` (space) turns it off. See the precision note under [Debugging](#debugging).
@@ -244,7 +282,14 @@ Objects entirely behind the camera are skipped.
 | `Renderer::env_sky`, `Renderer::planet`, `Renderer::nebula` | The battle's `Sky`, `Planet` and (app 0.9.1) `Nebula` (set per frame by the flight screen, cleared after). |
 | `content::environment::Nebula`, `render::nebula_sphere` | A nebula backdrop's colours, density and seed with its `color(dir)` noise; its sky-sphere mesh. |
 | `Renderer::terrain` | The current terrain's GPU model, by terrain id (built once). |
-| `terrain::terrain_model(&TerrainDef, &Heightfield) -> Model` | The terrain mesh, coloured by height and slope. |
+| `terrain::terrain_model(&TerrainDef, &Heightfield, mirror_x) -> Model` | The terrain mesh, coloured by height and slope; with detail textures, textured groups (normal and slope). |
+| `terrain::detail_uv`, `terrain::tile_placement` | Detail coordinates from the unmirrored field position; which mesh and transform draws tile `(i, j)`. |
+| `terrain::scatter_cells(&[Placement], &Model, size, mirror_x) -> Vec<ScatterCell>`, `SCATTER_CELLS` | Scatter baked into 16 × 16 cell meshes, each with a culling sphere. |
+| `content::environment::scatter_placements(&ScatterDef, &Heightfield, seed) -> Vec<Placement>` | Deterministic placement (rejection sampling, xorshift64). |
+| `Renderer::scatter`, `ScatterDraw`, `Renderer::bake_scatter` | The baked scatter per terrain id and battle seed; one entry's GPU cells for the normal and mirrored tiles. |
+| `ModelCache::prepare_detail_texture`, `render::set_mipmapped` | A detail texture loaded and mipmapped (trilinear) before the terrain mesh uses it. |
+| `ModelCache::upload_draw_only` | Uploads a drawn-only mesh and drops its CPU copy. |
+| `gpu::MAX_CHUNK_INDICES`, `gpu::MAX_CHUNK_VERTICES` | 28 000 indices (below the window's 30 000 draw-call capacity) and the vertex limit per chunk. |
 | `ModelCache::upload_model(content, Model, pack)` | Uploads a model built in code rather than loaded from a pack. |
 | `FogDistance`, `FogColor` | Lit-shader uniforms: vertex stage only, fragment stage only. |
 
@@ -288,6 +333,15 @@ Objects entirely behind the camera are skipped.
 - An atmospheric battle with no visible ground: check the player starts above the terrain's
   `height` range, and that `fog_distance` is not so short that the ground is fogged out; the
   heightfield is cached per terrain id, so a changed terrain needs a new battle (not a new frame).
+- **Parts of a big mesh missing, and "exceeded max drawcall size" in the log**: a chunk passed
+  macroquad's 30 000-index draw-call capacity and the rest was dropped silently (the terrain
+  before app 0.18.0). `gpu::split_lod` keeps chunks within `MAX_CHUNK_INDICES`; a new mesh path
+  that bypasses it must split by indices too.
+- **Detail texture shimmering in the distance**: it has no mipmaps — check the start-up errors for
+  "is not a power of two" and resize it (`--check` warns too).
+- **Scatter missing**: beyond its `draw_distance`, a model that failed to load (the error is in
+  the model cache's errors and `--check`), or no ground within `max_slope` and `height` (fewer
+  pieces are placed, silently). Scatter is baked per battle seed, so a new battle may move it.
 - Engine glows come from rear-facing model attachments, else the back of the bounding box;
   `GpuModel::engines` is computed once at load, so drawing glows allocates nothing per frame.
 - A face that vanishes from one side is a back face: wind it the other way, or add a second

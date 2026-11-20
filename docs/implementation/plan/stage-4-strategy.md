@@ -54,3 +54,180 @@ topics, `interceptor` 4 of 71 — and save/load round-trips in the six-month uni
 long run and the `interceptor` play-test are outstanding): both campaigns' strategy layers run for 6 game months without errors, with economy,
 research and bases behaving as specified; save/load round-trips (unit tests on synthetic
 campaigns; manual long-run test).
+
+## Remaining work in batches
+
+Written 2026-11-20 from the digest of the open Stage 4 issues; code checked at `6462799` (app 0.17.1).
+Copied here from the code repository's `plan/stage-4-batches.md` on 2026-11-20 (Stage 3 closed in app
+0.18.0); this section is now the checklist of record.
+
+**Why batches.** Each batch groups issues that touch the same modules and data, so one session can load that
+context once, finish the batch, and hand off. **Start every batch in a fresh session** (`/clear`) with the
+batch's *start prompt*. Only this checklist and the issues carry state between batches.
+
+### Batch protocol (every batch)
+
+**Start**
+
+- [ ] Fresh session. Read `CLAUDE.md`, this page's batch section, and the batch's issues (`gh issue view <n> --comments`).
+- [ ] Check the vault for the batch's topic (`sio-vault context "<terms>" --project openinterceptor --brief`).
+- [ ] Confirm the batch's **decisions** below are answered. If not, ask before coding.
+
+**Work**
+
+- [ ] Logic first, in `campaign`/`content`, with unit tests (synthetic data only). UI changes only where the batch says.
+- [ ] Every new key works in the `default` campaign. The `interceptor` pack is mapped where the original has the data.
+- [ ] `git add -A`, then `OPENINTERCEPTOR_DATA=resources/xcom-cd ./scripts/check.sh` → `checks: passed`.
+- [ ] Bump the version (patch per change set, minor per feature batch). Commit with the attribution line. Push.
+
+**Close**
+
+- [ ] Docs pass: run one background docs agent with the commit list. It updates the Stage 4 plan page,
+      Modding pages for new keys, architecture/campaign, requirements status, deviations, manual tests (MT-4-*)
+      and the manual-test issues #88–#92. It also comments on the implementation issues.
+- [ ] Close finished issues, or comment with what remains. Tick this checklist and add a one-line hand-off under the batch.
+- [ ] Vault: one log entry and any captures (decisions, root causes).
+
+
+### Batch 4.0 — issue hygiene (small; do first, can share a session with 4.1)
+
+- [ ] Close **#29** (4.9 done in 0.16.8–0.16.9). Pointers: X-COM evaluation rules → #45, finances screen → #106.
+- [ ] Close **#35** (construction strikes done in 0.16.4 `d300642`). Pointer: depots and captured cargo → #46.
+- [ ] Close **#30** with pointers: base view #101, reports #106, encyclopaedia #107, briefing #108, per-list screens
+      #98–#105, testbed grid #111, traffic view → #37 / #99, text keys → Batch 4.5.
+- [ ] Correct stale comments:
+    - #27: the `protection_of` test exists, and default shields and armour were added in 0.16.1.
+    - #22: the generated-map test exists.
+    - #36: reserves and features in the survey report are done.
+- [ ] Merge **#37**'s traffic view into #99. #37 keeps cargo capacity only.
+- [ ] Update the Stage 4 plan page statuses to match.
+
+Hand-off: _
+
+### Batch 4.1 — bases and economy completeness (M; no blockers)
+
+Issues: **#24** (storage part), **#34** (storage at facilities), **#26** (lifecycle).
+
+- [ ] Storage enforced on **deliveries and manufactured output**, not only on purchase (#24, R-STR-004).
+- [ ] Storage at **manufacturing centres and research stations**. Recipe output is checked against `ft.storage` (#34, R-STR-014).
+- [ ] **Dismantle a whole base**; **`on_destroyed`** consequences (craft, pilots, stock lost or moved); **repair** (#26, R-STR-006).
+- [ ] **Best-available base templates**: a template picks the best module researched so far, not a fixed list (#26).
+- [ ] **`placement:` expressions** for bases (#26) and facilities (#34). They replace `max_distance` and the fixed
+      rules per role, and close DEV-049's placement part.
+- [ ] Save format: new state in `campaign/save.rs`, with a round-trip test.
+
+Files: `src/campaign/mod.rs` (storage, buy/deliver, build_base, dismantle_module, hourly step),
+`src/campaign/logistics.rs` (~320–380), `src/content/{strategy,logistics}.rs`, `src/campaign/save.rs`,
+`resources/default/strategy/{economy,logistics}.yaml`, `packs/interceptor/strategy/`.
+Done when: the gate passes; a soak of 180 days on both campaigns shows no stock above capacity; #34's storage
+item and #26's lifecycle items are ticked on the issues.
+Start prompt: *"Batch 4.1 of plan/stage-4-batches.md: bases and economy completeness. Follow the batch protocol."*
+
+Hand-off: _
+
+### Batch 4.2 — logistics leftovers (M; parts blocked by decisions D1, D3)
+
+Issues: **#34** (R-STR-022), **#37** (R-STR-026), **#36** (survey), **#47** (logistics soak).
+
+- [ ] **Construction stages shown** (R-STR-022): use `facility_types.hub` and the `build_25/60/90` states on the map
+      marker and in the `construction_defence` battle (the struck facility's own type and stage). This also fixes
+      the default mission always showing the same station.
+- [ ] **Cargo capacity as data** (R-STR-026): convoys carry up to capacity and split larger orders. *Needs D1.*
+- [ ] **Survey report suitability** for each facility type (R-STR-021).
+- [ ] **Attacked survey ship**: the survey craft plus an auto-resolved or flown battle, instead of the fixed 50 % loss. *Needs D3.*
+- [ ] **Logistics soak** (#47): autoplay builds facilities and the soak reports throughput and losses.
+
+Files: `src/campaign/logistics.rs`, `src/content/logistics.rs`, `src/app/strategy.rs` (Supply tab, markers),
+`src/app/flight.rs` (stage objects), `resources/default/strategy/logistics.yaml`, `tools/default_assets/`.
+Done when: construction-stage visuals are confirmed by screenshots (manual cases MT-4-*); the logistics soak runs.
+Start prompt: *"Batch 4.2 of plan/stage-4-batches.md: logistics leftovers. Follow the batch protocol."*
+
+Hand-off: _
+
+### Batch 4.3 — map, movement and contacts (L; gates CSD parity #99/#100; needs D5)
+
+Issues: **#22**, **#23**, **#36** (fighter pools), **#47** (force-based soak battles). Order inside the batch:
+endurance → flight plans → pools → generated missions → auto-resolve.
+
+- [ ] **Bodies** in play and **endurance / stranding** per craft (#22, R-STR-002). *Needs D5.*
+- [ ] **Squadrons on flight plans** (patrol, launch to a destination, return) and **probes as map objects** (#23, R-STR-003).
+- [ ] **Facility fighter pools** (R-STR-025): built at main bases, transferred, defending a system and escorting
+      convoys (#36). Reuses the squadron model.
+- [ ] **Missions generated from the forces that meet**, replacing each raid's fixed `mission:` (#23).
+- [ ] **Auto-resolve uses loadouts and pilots**, and losses damage craft (`balance::win_chance`; known small issue).
+      Soak battles are resolved from forces (#47).
+- [ ] Save format and round-trip tests for squadrons, flight plans and pools.
+
+Files: `src/campaign/mod.rs` (contacts, interceptions, lane_route, autoplay), `src/campaign/logistics.rs`
+(escorts), `src/content/{strategy,mission}.rs`, `src/balance.rs`, `src/campaign/save.rs`, the map and info panel in
+`src/app/strategy.rs`. Split across two sessions if needed: **4.3a** (endurance and flight plans), then
+**4.3b** (pools, generated missions, auto-resolve).
+Start prompt: *"Batch 4.3a of plan/stage-4-batches.md: …"*
+
+Hand-off: _
+
+### Batch 4.4 — ships and pilots in battle (M–L; after Track A stat fidelity; gates #105/#103)
+
+Issues: **#27**, **#28**.
+
+- [ ] **Slot-by-slot fitting** (replacing `fit_best` as the only path), **`fits` rules**, **power draw**, **stock
+      designs** (#27, R-STR-007).
+- [ ] **Battle effects of the other slot kinds** (engine, sensors/targeting, ECM, cloak, tractor, VCT, damage
+      control). `Loadout` grows beyond beam/missile/shield/armour. Uses Track A's readings of the INI keys.
+- [ ] **Pilot stats in battle**: accuracy and flying feed `sim::ai` / handling; **bravery** (fleeing); **graded injuries** (#28, R-STR-008).
+- [ ] **Rank thresholds** from `RankAdvancement*` (interceptor) and as data in default (see `notes/re/ini-files.md` §1.10).
+- [ ] Per-pilot voices: deferred until #50 maps the clips (decision D7).
+
+Files: `src/campaign/mod.rs` (Loadout, fit_best, pilots), `src/content/strategy.rs` (items, hulls, slots, pilots),
+`src/app/flight.rs` (apply_loadout), `src/sim/ai.rs`, `src/balance.rs`, `packs/interceptor/strategy/campaign.yaml`,
+`resources/default/strategy/{economy,pilots}.yaml`.
+Start prompt: *"Batch 4.4 of plan/stage-4-batches.md: ships and pilots in battle. Follow the batch protocol."*
+
+Hand-off: _
+
+### Batch 4.5 — content and data (M; parts need D2 and RE)
+
+Issues: **#33**, **#25**, **#32**; [DEV-047](../deviations/index.md).
+
+- [ ] **Text keys for strategy texts** (DEV-047). Also removes the English-prefix matching for the research
+      stinger and the Reports list (`app/strategy.rs` ~829, ~1424).
+- [ ] **Default: the Dominion's own research tree and pods** (#33).
+- [ ] **Salvage tables**: `*Goodies` percentages by difficulty for interceptor (`notes/re/ini-files.md` §1.11),
+      and a per-item salvage table format for default. Replaces `salvage_per_kill` (#25, #45).
+- [ ] **Interceptor research pace** set from D2, then play-test notes (#32). Close #32 or re-scope it.
+
+Files: `resources/default/strategy/*.yaml`, `src/content/{text,strategy}.rs`, `src/app/strategy.rs`,
+`src/campaign/story.rs`, `packs/interceptor/strategy/`, `tools/interceptor_strategy.py`.
+Start prompt: *"Batch 4.5 of plan/stage-4-batches.md: content and data. Follow the batch protocol."*
+
+Hand-off: _
+
+### Moved out of Stage 4
+
+- **Per-seller market** (#24 remainder) and **depots / captured cargo / seizure** (#35 remainder) → **Stage 5,
+  #46 / #40** (needs relations and D4).
+
+- **Screens** (#30 leftovers, 3D base view, traffic view) → **6.9** issues, after their logic batch.
+
+### Order
+
+```
+4.0 hygiene ─┬─ 4.1 bases/economy ─┐
+             └─ 4.2 logistics ──────┼─ 4.3a/b map & contacts ─ (6.9 #99/#100 CSD + dialogs)
+   Track A stats ───────────────────┴─ 4.4 ships & pilots ──── (6.9 #105/#103 hangar, pilots)
+                                       4.5 content (any time after 4.0; D2 for #32)
+```
+
+4.1 and 4.2 can run in parallel with Track A, since they touch different modules.
+
+### Decisions needed (ask before the batch that needs them)
+
+| # | Decision | Blocks | Suggested default |
+|---|---|---|---|
+| D1 | Supply convoy **cargo capacity** (R-STR-026; logistics.md open question 1) | 4.2 cargo | A capacity per vessel type in data; orders split into several convoys |
+| D2 | **Interceptor research pace** (#32: 4 of 71 topics in 180 days) | 4.5 #32 | Calibrate so a normal campaign researches most topics in about 18–24 months (check against the Sybex guide) |
+| D3 | The **survey ship's craft**, and where and in which mission an attacked survey ship fights (open question 3) | 4.2 survey battle | A light survey hull plus the existing `convoy_ambush` shape at the survey site; auto-resolved unless the player flies |
+| D4 | What a **market seller** is (per faction or per station; relations set prices) | Stage 5 | Per faction, prices scaled by relation |
+| D5 | **Bodies in play** and the **endurance model** (fuel per hull vs range per lane hop) | 4.3a | Range per hull in lane hops; stranded craft drift until recovered |
+| D6 | Logistics open questions 2 and 4 (ambush chance, vessels per convoy): **confirm** the current data defaults | none (confirm) | Keep `ambush_chance` and `vessels` as they are |
+| D7 | Interceptor **pilot voice mapping** (#50) | 4.4 per-pilot voices | Defer |

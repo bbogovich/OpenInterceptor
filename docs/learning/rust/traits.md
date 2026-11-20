@@ -40,6 +40,25 @@ impl macroquad::camera::Camera for SpaceCamera {
 
 So `set_camera(&cam)` accepts our camera, and its projection uses our own near/far planes.
 
+## A supertrait: `trait Host: Context` — `src/script/stmt.rs`
+
+A Tier 2 script both *asks* (queries, like a condition) and *does* (actions). The query half
+already exists as the `Context` trait; the script interpreter needs one thing more:
+
+```rust
+pub trait Host: Context {
+    /// Carries out one action (already checked against the context's table at load).
+    fn act(&mut self, action: Action);
+}
+```
+
+`Host: Context` makes `Context` a **supertrait**: a type can implement `Host` only if it also
+implements `Context`, and code holding a `&mut dyn Host` may call `query` as well as `act`. The
+interpreter is written once against `dyn Host`, and each place that runs scripts supplies its
+own host — `sim::ai::ObjectHost` (a ship), `mission::BattleHost` (a finished battle) and
+`campaign::story::CampaignHost` (the campaign) — each implementing both traits. Nothing in
+`script` knows about ships or money.
+
 ## Generics and `impl Trait`
 
 A generic function works for any type that meets its trait bounds. In this codebase generics

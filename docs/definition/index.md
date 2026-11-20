@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.19.0** (96 features). Changes are listed in the
+Definition version **1.20.0** (96 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -67,3 +67,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.17.0 | 2026-11-11 | 90 features: F-HUD-003 gains the ship status display (user request; app 0.15.1) |
 | 1.18.0 | 2026-11-11 | 90 features: F-STR-001 – F-STR-003, F-STR-005, F-STR-006, F-STR-008 and F-TST-004 progress (app 0.16.1 – 0.16.14) |
 | 1.19.0 | 2026-11-12 | 96 features: new area *Strategy interface* (user request) — F-UI-001 – F-UI-006 (original-style strategy screens, screens and widgets as mod data, keyboard and gamepad on every screen, the testbed layout as an option, the default campaign's own screens, crisp and readable at any window size), all planned |
+| 1.20.0 | 2026-11-20 | 96 features: Stage 3 complete (app 0.18.0): F-FLT-007 implemented (terrain detail textures and scattered objects); F-MOD-005 implemented (Tier 2 scripts, decision (c)) |

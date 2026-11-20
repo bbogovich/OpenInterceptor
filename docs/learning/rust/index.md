@@ -8,14 +8,14 @@ Read in order; each page builds on the previous one.
 
 | Page | You will be able to read… |
 |---|---|
-| [Ownership and borrowing](ownership.md) | Who owns the World, the meshes, the textures; why `&` and `&mut` matter; interior mutability with `Cell` (`ObjectContext`) |
+| [Ownership and borrowing](ownership.md) | Who owns the World, the meshes, the textures; why `&` and `&mut` matter; interior mutability with `Cell` (`ObjectContext`, `CampaignHost`); `Arc::make_mut`; copying a reference out of `self` to end a borrow (the script `Vm`) |
 | [Lifetimes and borrowed bytes](lifetimes.md) | The format readers, which parse a DLL without copying it; naming lifetimes on a returned iterator (`rules::of`) |
-| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`) and a `const` block computing one (`SIZES`, Smacker); recursive enums and a recursive-descent parser (`script::Expr`) |
-| [Traits and generics](traits.md) | `Default`, `Debug`, `From`, `Iterator`, macroquad's `Camera` |
-| [Error handling](errors.md) | `Result`, `?`, per-layer error enums; why bad data never panics |
+| [Structs, enums and pattern matching](types.md) | `Ship`, `Action`, `View`, `FormatError` and every `match`; enum decisions (`Tow`); `const fn` tables (`ACTIONS`) and a `const` block computing one (`SIZES`, Smacker); recursive enums and a recursive-descent parser (`script::Expr`); enum size and `clippy::large_enum_variant` (`Pilot`) |
+| [Traits and generics](traits.md) | `Default`, `Debug`, `From`, `Iterator`, macroquad's `Camera`; a supertrait (`trait Host: Context`) |
+| [Error handling](errors.md) | `Result`, `?`, per-layer error enums; why bad data never panics; an error that stops an interpreter (`OutOfBudget`) |
 | [Modules and visibility](modules.md) | The `src/` tree, `mod`, `pub`, `pub(crate)` |
 | [Iterators and closures](iterators.md) | Rule merging, polygon triangulation, target selection; returning `impl Iterator` (`pack::needs`) |
-| [Collections](collections.md) | `Vec`, `HashMap`, when to use which |
+| [Collections](collections.md) | `Vec`, `HashMap`, when to use which; one value stack with frames by index; fixed arrays instead of `Vec` |
 | [FFI, `repr(C)` and `unsafe`](ffi-unsafe.md) | The macOS gamepad shim |
 | [Platforms with `cfg`](cfg.md) | macOS / Linux / other code paths |
 | [Testing in Rust](testing.md) | `#[test]`, `#[cfg(test)]`, unit vs integration tests |

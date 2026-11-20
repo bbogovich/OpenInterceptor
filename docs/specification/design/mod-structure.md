@@ -104,7 +104,7 @@ a rules folder is loaded, in file-name order).
   scenarios/*.yaml          testbed arenas (implemented)
   interface/*.yaml          screen layouts, skins, fonts, HUD and cockpit layouts
   text/<language>/*.yaml    every player-visible string; encyclopaedia; messages
-  scripts/*.lua             optional scripts (Tier 2, see Behaviours and scripting)
+  scripts/*.ois             optional scripts (Tier 2, see Behaviours and scripting)
   models/                   OBJ + MTL
   textures/                 PNG/TGA; also re-skins any model texture by name
   images/                   UI art, cockpit art; images/<dll>/<id>.png overrides original images
@@ -178,3 +178,4 @@ path (YAML syntax and schema errors: `rules/ships.yaml:12: ships.comet.max_sped:
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
+| 1.20.0 | 2026-11-20 | Script files are `scripts/*.ois` (Tier 2 decided as the in-crate language, app 0.18.0) |

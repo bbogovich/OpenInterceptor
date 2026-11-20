@@ -23,6 +23,8 @@ markdown_extensions:
   - attr_list
   - tables
   - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
   # Headings are what `sio docs page <page> --section <heading>` selects; keep them stable.
   - toc:
       permalink: true
@@ -115,7 +117,7 @@ nav:
           - "Settings and data discovery": implementation/architecture/settings.md
           - "Assets and GPU cache": implementation/architecture/assets.md
           - "Simulation": implementation/architecture/sim.md
-          - "Conditions (script)": implementation/architecture/script.md
+          - "Conditions and scripts (script)": implementation/architecture/script.md
           - "Missions": implementation/architecture/mission.md
           - "Campaign (strategy layer)": implementation/architecture/campaign.md
           - "Rendering": implementation/architecture/rendering.md
@@ -152,6 +154,7 @@ nav:
       - "Packs": modding/packs.md
       - "Rulesets and layering": modding/rulesets.md
       - "Behaviours and conditions": modding/behaviours.md
+      - "Scripts (Tier 2)": modding/scripts.md
       - "Looks: model sets, debris, effects": modding/looks.md
       - "Missiles and mines": modding/weapons.md
       - "Environments and terrain": modding/environments.md
@@ -172,7 +175,6 @@ nav:
       - "Tutorial: a 3D X-COM cockpit": modding/3d-cockpit-tutorial.md
       - "Console themes": modding/console-themes.md
       - "Scenarios and missions": modding/scenarios.md
-      - "Scripting (design)": modding/scripting.md
       - "Campaigns (design)": modding/campaign.md
       - "Validating a mod": modding/validating.md
   - "Learning":

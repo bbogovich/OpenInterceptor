@@ -681,7 +681,7 @@ App 0.3.0 (main `d7553f5`); MT-3-13 – MT-3-18 cover the interlude's playtest f
 (main `c583659`); MT-3-19 – MT-3-23 cover the tablet console C1 (app 0.4.0, main `dfff71b`), and
 MT-3-24 the lit-shader fix (0.4.1) and the `resources/` layout (0.4.2, main `bf7b7ce`). MT-3-19 was revised for
 pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 covers Simple physics (0.4.6, main
-`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`); MT-3-33 – MT-3-36 the hazards (0.5.1, main `70d68e2`), MT-3-37 – MT-3-44 the environments, atmospheric flight, terrain, sky, fog and atmosphere HUD (0.6.0, main `af003f6`) MT-3-45 – MT-3-46 the ground installations (0.6.1, main `de417df`), MT-3-47 – MT-3-50 the radio voices (0.6.2, main `5bdb47f`), MT-3-51 – MT-3-54 the simulator (0.6.3, main `1d13b59`) and MT-3-55 – MT-3-59 the five new default missions (0.6.4, main `3866c34`) — their look, sound and feel could not be judged from the agent environment, so they need the user. Each mission case: fly it once to a **win** and once to a **loss**, and read the
+`9671555`) MT-3-26 keeping the tablet awake (0.4.8, main `f1c8be8`) MT-3-27 press feedback and hit static (0.4.9) and MT-3-28 the start-key guard (0.4.10, main `4edc9d7`); MT-3-29 the two console layouts and tiles (C2, 0.4.11, main `db2f264`), MT-3-30 the target view (C3, 0.4.14, main `e51eca9`), MT-3-31 the map and tap to target (C4, 0.4.15, main `e2b5012`) and MT-3-32 the console themes (C2b, 0.5.0, main `0a1c340`); MT-3-33 – MT-3-36 the hazards (0.5.1, main `70d68e2`), MT-3-37 – MT-3-44 the environments, atmospheric flight, terrain, sky, fog and atmosphere HUD (0.6.0, main `af003f6`) MT-3-45 – MT-3-46 the ground installations (0.6.1, main `de417df`), MT-3-47 – MT-3-50 the radio voices (0.6.2, main `5bdb47f`), MT-3-51 – MT-3-54 the simulator (0.6.3, main `1d13b59`) and MT-3-55 – MT-3-59 the five new default missions (0.6.4, main `3866c34`) — their look, sound and feel could not be judged from the agent environment, so they need the user. MT-3-67 covers Tier 2 scripts (the scripted saucer ace) and MT-3-68 – MT-3-70 terrain detail textures, scatter and the draw-call index fix (app 0.18.0, main `040ca26`, `4a0bd03`, merged in `55999cb`). Each mission case: fly it once to a **win** and once to a **loss**, and read the
 **debrief** each time.
 
 | ID | Case | Scenario | Result | Date | Tester / platform | Notes |
@@ -752,6 +752,10 @@ pairing from the launcher on the sixth digit (0.4.7, main `c42d773`); MT-3-25 co
 | MT-3-64 | The battle runs on before the debrief | any mission (default) | not run | | | App 0.7.4; user request |
 | MT-3-65 | Action descriptions: keys overlay and tablet | any mission (default); the tablet console | not run | | | Main `bb04952` (app 0.15.1), #6 |
 | MT-3-66 | Condition console in battle | `colony_defence` (default); any scenario | not run | | | App 0.16.5; #20, R-TST-009 |
+| MT-3-67 | A scripted enemy: the saucer ace | `duel-saucer-ace` (default) | not run | | | App 0.18.0; #16, R-MOD-015. The soak AI pilot (`--soak duel-saucer-ace --soak-pilot ai`, 90 s) scored 0 hits either way, so this must be flown by hand |
+| MT-3-68 | Terrain detail textures | `surface-moon`, `surface-hills` (default) | not run | | | App 0.18.0; #12, R-FLT-012 |
+| MT-3-69 | Scattered objects on the ground | `surface-moon`, `surface-hills` (default) | not run | | | App 0.18.0; #12, R-FLT-012 |
+| MT-3-70 | The whole terrain is drawn | `surface-strike`, `surface-moon` (default) | not run | | | App 0.18.0; the 28 000-index chunk fix |
 
 ### The debrief (every mission case)
 
@@ -1267,6 +1271,38 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | Preconditions | App 0.16.5 or later. Default campaign. |
 | Steps | 1. `openinterceptor --no-original --mission colony_defence --ship comet`. 2. After a few seconds press the backquote key (`` ` ``). 3. Type `count(raiders)`. 4. Change it to `alive(colony) and time > 10s`, then to `hull(colony)`. 5. Type `count(friends)`. 6. Clear the line with Backspace. 7. Type `random(0.5)` and watch it for a few seconds. 8. Press Esc (or `` ` `` again). 9. Start any scenario (`--scenario rocket-vs-saucer`) and press `` ` ``. |
 | Expected | 2: a dark panel along the bottom with a sky-blue frame: *CONDITION CONSOLE (` or Esc to close; the battle is paused)*, a prompt `> _` with a blinking caret and the hint *(type a condition, e.g. alive(player) and time > 30s)*; the battle stops (ships, missiles and the clock). The backquote itself is not typed. 3: `= 2` (or the level's count of raiders) in green. 4: `= true` or `= false`, changing as you type; then a number. 5: an orange error naming the unknown role. 6: the hint again. 7: a steady `true` or `false` — it does not flicker, because the console evaluates on a copy of the battle's random generator. 8: the console closes and the battle carries on from where it stopped. 9: *no mission: conditions belong to missions* in orange. |
+
+### MT-3-67 — A scripted enemy: the saucer ace
+
+| Field | |
+|---|---|
+| Preconditions | App 0.18.0 or later. Default campaign. Fly at **ranger** or above for step 3 (no missiles at cadet). The automated soak with the AI pilot did not engage the ace (0 hits either way in 90 s, the same as `duel-harbinger`), so fly this by hand. |
+| Steps | 1. Launcher › *Duel: saucer ace (scripted)* (`--scenario duel-saucer-ace`); pick any ship. 2. Close in and trade fire; watch the message line. 3. Bring the ace below half hull (or hit it repeatedly). 4. Fire a missile at it while it is furious. 5. Bring it below 20 % hull. 6. Restart, and this time do not fight for a minute. 7. Run `--check`. |
+| Expected | 2: soon after the start one taunt line, *"Ace: You fly like a cargo barge, Guardsman!"*, once only; the ace fights at range (about 1.8 km) without missiles. 3: the fury line, *"Ace: Enough games. Now you burn!"*; it closes in (about 1.2 km), fires longer bursts and, at ranger and above, launches missiles. 4: often (about half the time) it breaks into a jinking evade for about two seconds, then resumes the attack. 5: the retreat line, *"Ace: This isn't over!"*; it runs and jumps out (hyperspace). 6: the taunt still comes once; no fury line while it is unhurt. 7: no errors. No `SCRIPT STOPPED` line at any time. |
+
+### MT-3-68 — Terrain detail textures
+
+| Field | |
+|---|---|
+| Preconditions | App 0.18.0 or later. Default campaign. |
+| Steps | 1. Start `surface-moon`; fly below 500 m over flat ground and over a crater wall. 2. Climb slowly to 3 km looking down and ahead. 3. Start `surface-hills`; fly low across the field's edge (about 15 km from the start in a straight line) into the mirror-image tiles. 4. Look at a hillside in the distance while turning slowly. |
+| Expected | 1: up close the ground has grain (dust on the flats, rock on steep crater walls) on top of its colours, not smooth painted plastic; the colours by height and slope remain. 2: the grain fades smoothly into an even colour with distance; no shimmering, crawling or moiré. 3: grass and rock continue across the tile edge with no visible seam or jump in the pattern. 4: no shimmer or sparkle in the distance. |
+
+### MT-3-69 — Scattered objects on the ground
+
+| Field | |
+|---|---|
+| Preconditions | App 0.18.0 or later. Default campaign. |
+| Steps | 1. Start `surface-moon`; fly low over the plain and the craters. 2. Look at the crater walls. 3. Fly straight through a boulder. 4. Start `surface-hills`; fly over the low ground and climb the hills above 900 m. 5. Leave to the launcher and start `surface-moon` again; compare a landmark rock near the start. |
+| Expected | 1: small rocks and larger boulders lie on the ground, sitting on it (not floating or buried), rocks tilted with the slope. 2: none on steep walls. 3: no collision — the craft passes through (decoration by design; installations are the solid objects). 4: trees on the lower, gentler ground, none above about 900 m or on steep slopes; boulders scattered. Scatter appears at a few kilometres (it may pop in; there is no fade). 5: the same pieces in the same places. The frame rate stays smooth. |
+
+### MT-3-70 — The whole terrain is drawn
+
+| Field | |
+|---|---|
+| Preconditions | App 0.18.0 or later (fixes terrain drawn only in part before it). Default campaign; run from a terminal to see the log. |
+| Steps | 1. Start `surface-strike`; climb to 3 km and turn a full circle. 2. Fly low to the fog's edge in several directions. 3. Repeat 1 in `surface-moon`. 4. Read the terminal log. |
+| Expected | 1 – 3: ground everywhere to the fog, in every direction: no missing squares, holes or strips of sky where ground should be. 4: no *exceeded max drawcall size* message. |
 
 ## Stage 4 results
 

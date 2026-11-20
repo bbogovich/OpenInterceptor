@@ -36,6 +36,20 @@ happens on one thread.
 Small plain values (`f32`, `u32`, `Vec3`, our `ShipId`) implement `Copy`, so they are copied
 instead of moved.
 
+### Changing shared data: `Arc::make_mut` — `src/content/mod.rs`
+
+A compiled script (`Program`) sits in an `Arc` because action lists are cloned whenever they
+run and every ship flying a behaviour uses the same program. But once, after loading, the
+programs must be *changed*: their `@text` keys are replaced by the words of the chosen language.
+`Arc::make_mut(&mut arc)` returns a `&mut` to the inside — **copying it first only if another
+`Arc` also points at it** (*copy-on-write*). At load time no other `Arc` exists yet, so nothing is
+copied; if one did, the change could not leak into the other owner's copy.
+
+```rust
+let program = std::sync::Arc::make_mut(p);   // &mut Program, cloned only if shared
+program.texts_mut(&mut |s| { /* replace @key with its text */ });
+```
+
 ## Borrowing: `&` and `&mut`
 
 Instead of moving, you can **borrow**:
@@ -93,6 +107,16 @@ without any run-time check. (`RefCell` does the same for non-`Copy` values, chec
 run time.) After the transitions have been tested, the AI copies the advanced state back into
 its own memory with `cx.rng.get()`.
 
+### Lending one `&mut` as shared, many times — `src/campaign/story.rs`
+
+A campaign script reads the campaign (queries take `&self`) and changes it (actions take
+`&mut self`), alternately. `CampaignHost` holds the single `&mut Campaign`; for each query it
+lends it out shared (a *reborrow*: through `&self`, the `&mut Campaign` can only be read as `&Campaign`) for just that call, and for each action uses it
+mutably. Because the two never overlap, the borrow checker accepts both. The campaign's roll
+generator must advance during queries (`random`), which take `&self`, so while the script runs
+the host keeps it in a `Cell<u64>` — exactly the `ObjectContext` trick above — and writes it
+back into the campaign around each action and at the end.
+
 ## Moving a value out of a place: `mem::replace` and `take`
 
 Rust will not let you move a value out of a variable or field that is still in use — the place
@@ -139,6 +163,27 @@ borrow `ctx` shared and mutably at once and fail to compile. Keeping the rules (
 read-only during play) and the game state (`self.campaign`) in separate owners is what makes
 the screen's code simple. While `def` is borrowed, `ctx` may still be used **shared**:
 `self.save(ctx)` takes `&AppContext`, so it is allowed too.
+
+## Ending a borrow early: copy the reference out — `src/script/stmt.rs`
+
+The script interpreter `Vm` holds `prog: &Program` and calls its own `&mut self` methods while
+walking a function's body, which lives *inside* the program:
+
+```rust
+fn call(&mut self, f: usize, base: usize) -> Result<Option<Value>, OutOfBudget> {
+    // Copy the `&Program` out of `self` first: `func` then borrows the program, not
+    // `self`, so `self` stays free for the `&mut self` calls below.
+    let prog = self.prog;
+    let func = &prog.funcs[f];
+    let flow = self.block(&func.body, base);   // &mut self — allowed
+    // …
+}
+```
+
+Writing `let func = &self.prog.funcs[f];` would borrow *through* `self`, and `self.block(..)`
+(which needs `&mut self`) would be refused while `func` is alive. A shared reference is `Copy`,
+so `let prog = self.prog;` makes a second `&Program` with the same lifetime that is no longer
+tied to `self`; borrowing from it leaves `self` free.
 
 ## A common beginner problem
 

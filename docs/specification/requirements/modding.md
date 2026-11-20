@@ -26,7 +26,7 @@ Features: [Modding toolkit](../../definition/modding-toolkit.md). How to read a 
 | [R-MOD-012 Text keys](#r-mod-012-text-keys) | Implemented |
 | [R-MOD-013 Condition language](#r-mod-013-condition-language) | Implemented |
 | [R-MOD-014 Campaign context](#r-mod-014-campaign-context) | Implemented |
-| [R-MOD-015 Tier 2 scripting decision](#r-mod-015-tier-2-scripting-decision) | Planned (evaluation recorded; awaiting the user's decision) |
+| [R-MOD-015 Tier 2 scripting decision](#r-mod-015-tier-2-scripting-decision) | Implemented |
 | [R-MOD-016 Headless validation](#r-mod-016-headless-validation) | Implemented |
 | [R-MOD-017 Full validator](#r-mod-017-full-validator) | Planned |
 | [R-MOD-018 Recipes](#r-mod-018-recipes) | Planned |
@@ -247,16 +247,21 @@ Before a second-tier script language is added, its dependency evaluation MUST be
 *Rationale:* Dependency policy.
 
 - Implements: [F-MOD-005](../../definition/modding-toolkit.md#f-mod-005-conditions-actions-and-scripting)
-- Status: planned — **evaluation recorded, awaiting the user's decision** (1.12.0)
-- Verified by: Planned.
-- See: [Dependency policy › Tier 2 scripting, evaluated](../../learning/best-practices/dependencies.md#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision), [Scripting (design)](../../modding/scripting.md)
+- Status: implemented (decision (c) on 2026-11-20; app 0.18.0, main `040ca26`)
+- Verified by: `script::stmt::tests::let_assignment_and_if_else_chains`, `repeat_and_for_each_are_counted_loops`, `functions_take_typed_parameters_and_return_values`, `recursion_is_refused_when_loading`, `the_budget_stops_a_runaway_hook`, `same_seed_same_result`, `mistakes_are_load_errors_with_file_and_line`, `hook_references_are_checked`, `file_structure_is_checked_when_loading`; `content::behaviour::tests::scripted_states_compile_and_check_what_they_name`; `content::tests::scripts_load_from_packs_mods_override_them_and_hooks_are_checked`; `sim::ai::tests::a_scripted_state_runs_its_script_every_interval`, `a_runaway_script_is_stopped_and_reported_once`; `mission::tests::a_script_outcome_runs_in_the_battle_context`; `campaign::story::tests::an_event_script_counts_through_flags_and_sees_its_own_actions`; `soak::tests::the_default_campaigns_scripted_ace_taunts_and_turns_furious`; MT-3-67
+- See: [Dependency policy › Tier 2 scripting, evaluated](../../learning/best-practices/dependencies.md#tier-2-scripting-evaluated-stage-310), [Scripts (Tier 2)](../../modding/scripts.md)
 
-!!! question "Open — awaiting the user's decision"
-    The evaluation of (a) `mlua` (Lua 5.4), (b) `rhai` and (c) growing the in-crate condition
-    and action language into a small statement language is on the dependency page. The
-    evaluator recommends (c) as the default under the dependency policy, with (a) as the
-    fallback if mods need a full general-purpose language. **No decision has been made**; the
-    hooks and the API follow the user's choice. GitHub issue #16.
+!!! note "As built (app 0.18.0)"
+    The user chose **(c)** on 2026-11-20: the in-crate condition and action language grown into
+    a small statement language; no dependency added. Scripts are `scripts/<name>.ois` files of
+    `def` functions (`let`, `if`/`else`, `repeat`, `for each`, `return`, action and function
+    calls), called from behaviour states (`do: script`, `call:`, `every:`, `fly:`, with `vars:`
+    and the object actions `goto`, `set_var`, `message`) and from `script(<file>:<function>)`
+    entries in mission outcomes (battle context) and story, plan and evaluation lists (campaign
+    context). Every hook is compiled and checked at load against its context; recursion is
+    refused; each hook call has a budget of 10 000 operations. Guide:
+    [Scripts (Tier 2)](../../modding/scripts.md); deviations from the design: DEV-060. GitHub
+    issue #16.
 
 ### R-MOD-016 Headless validation
 
@@ -796,3 +801,4 @@ Every import and export — the extractor, the designer's import, the Blender ex
 | 1.13.0 | 2026-11-11 | R-MOD-047 implemented for wingmen (MD1, app 0.6.6) with the format as built; R-MOD-014 partly met: the campaign context with 16 strategy queries (app 0.6.7) |
 | 1.16.0 | 2026-11-11 | MD2 as built (app 0.13.0): R-MOD-034 implemented (entities placed on their paths, so no physics steers them); R-MOD-033, R-MOD-035 – R-MOD-037, R-MOD-040 – R-MOD-045 partly met, each with an As-built note; R-MOD-037 `harmless` (an Open note in app 0.13.0, fixed in app 0.14.1: bolts and missiles hit but do no damage); R-MOD-038, R-MOD-039 not built; R-MOD-046 progress note (Smacker videos play; MD3 not started). No requirement text changed |
 | 1.18.0 | 2026-11-11 | R-MOD-014 implemented: the logistics queries (`deposit`, `feature`, `research_site`, `survey_known`, `owned`, `lane_distance`, `facility_progress`, `construction_attacks`; app 0.16.3, #8), with an As-built note; R-MOD-041 implemented: captions and titles as text keys (app 0.16.2, #65); R-MOD-045 As-built note: the gamepad skips (app 0.16.2), the tablet console does not yet |
+| 1.20.0 | 2026-11-20 | R-MOD-015 implemented: decision (c) (2026-11-20) and the Tier 2 statement language as built (app 0.18.0), with an As-built note; the Open note closed. No requirement wording changed |

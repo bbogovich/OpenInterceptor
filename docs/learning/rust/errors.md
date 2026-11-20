@@ -78,3 +78,31 @@ Panics remain for **bugs** — a broken invariant of our own code — never for 
 Loading a ruleset does not stop at the first mistake: `rules::build` returns
 `(Ruleset, Vec<String>)` — everything that loaded, plus one message per broken definition — so
 one typo does not stop a whole mod, and `--check` can list every problem at once.
+
+## An error that is not a failure: `OutOfBudget` — `src/script/stmt.rs`
+
+A Tier 2 script has an operation budget; when it runs out, the hook must stop *wherever it is*,
+however deep in loops and function calls. Instead of a flag checked everywhere, running out is
+an error value:
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OutOfBudget;
+
+fn tick(&mut self) -> Result<(), OutOfBudget> {
+    self.left = self.left.checked_sub(1).ok_or(OutOfBudget)?;
+    Ok(())
+}
+```
+
+Every step of the interpreter returns `Result<_, OutOfBudget>` and uses `?`, so the error climbs
+out of every level by itself. It works inside short-circuit logic too:
+
+```rust
+Expr::Binary(Op::And, a, b) => Value::Bool(self.eval(a, frame)?.truth() && self.eval(b, frame)?.truth()),
+```
+
+`&&` evaluates its right side only when the left is true; if it does, and that evaluation runs
+out of budget, `?` returns from the whole function there. The error type is a unit struct — it
+carries no data, costs nothing, and the caller (`Program::run`) turns it into a report ("SCRIPT
+STOPPED").

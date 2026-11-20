@@ -197,12 +197,16 @@ A cockpit needs an `image`, a `model`, or both. Guide: [Cockpits](cockpits.md).
 | `prefer` | mapping selector: weight | none | Target preferences: a hostile matching a selector counts as if `weight` times nearer when the AI picks a new target (several matches multiply). Selectors: `player`, a ship kind (`fighter`, `freighter`, `station`, …), `class:<id>`, `faction:<id>`; weights above 0. |
 | `transitions` | list of `{from, to, when}` | none | Tried in order; the first whose `from` matches and whose condition holds wins. `from` is a state name or `"*"` (any, the default); `when` is a [condition](behaviours.md#the-condition-language). |
 | `skill` | `{aim, reaction}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. |
+| `vars` | ids | none | **Object variables** (app 0.18.0), at most 8: each ship flying the behaviour keeps a number per name, 0 at the start. Read with `var(name)` in transitions and scripts; set by a script's `set_var(name, value)` ([Scripts](scripts.md#object-context-behaviour-scripts)). |
 
 A state:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `do` | `idle`, `circle`, `patrol`, `attack`, `evade`, `retreat`, `turret`, `tow`, `escort`, `travel`, `mine` | *required* | The manoeuvre ([Manoeuvres](behaviours.md#manoeuvres); `escort` and `travel` app 0.9.2). |
+| `do` | `idle`, `circle`, `patrol`, `attack`, `evade`, `retreat`, `turret`, `tow`, `escort`, `travel`, `mine`, `script` | *required* | The manoeuvre ([Manoeuvres](behaviours.md#manoeuvres); `escort` and `travel` app 0.9.2), or `script`: a [Tier 2 script](scripts.md) decides while the ship flies `fly:` (app 0.18.0). |
+| `call` | text | *required with* `do: script` | The script function, `scripts/<file>.ois:<function>`, run in the object context. Only on `do: script` states. |
+| `every` | time | 0.5 s | `do: script`: seconds between runs (at least one tick); it also runs on the state's first tick. |
+| `fly` | a manoeuvre (not `script`) | `attack` | `do: script`: the manoeuvre flown meanwhile, with this state's other parameters. Only on `do: script` states. |
 | `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance. |
 | `fire_cone` | angle | 5° | Fire when the aim point is within this angle of the nose. |
 | `burst` | time | 1.5 s | Seconds of firing. |
@@ -428,6 +432,23 @@ Terrains (heightfields) by id (app 0.6.0; guide: [Environments and terrain](envi
 | `height` | 2 numbers | `[0, 1500]` | Lowest and highest ground, metres (plain numbers). |
 | `colors` | `{low, high, slope}` | greys | RGB of low ground, high ground and steep slopes. |
 | `resolution` | number | 129 | Grid points per side, 17–257 (the mesh and the height lookup). |
+| `detail` | asset | none | A tiling texture multiplying the ground colours up close (white = unchanged); power-of-two sides, else `--check` warns (app 0.18.0; [Detail textures](environments.md#detail-textures-app-0180)). |
+| `detail_scale` | distance | 50 m | Metres covered by one repeat of the detail texture (more than 0). |
+| `slope_detail` | asset | none | A second detail texture for steep ground; needs `detail`. |
+| `scatter` | list of entries (below) | none | Decoration placed over the ground; drawn only, no collision ([Scattered objects](environments.md#scattered-objects-app-0180)). |
+
+A `scatter` entry:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `model` | asset | *required* | The model to place (OBJ or `original:`); first LOD. |
+| `count` | number | 100 | How many, 1 – 20 000 (fewer if few spots suit). |
+| `scale` | number or `[smallest, largest]` | 1 | Size, or a random size in the range. |
+| `max_slope` | angle | 30° | Steepest ground to stand on, 0 – 90°. |
+| `height` | 2 numbers | the whole range | Only on ground between `[lowest, highest]` metres. |
+| `align` | number | 0 | Lean with the ground: 0 upright … 1 square to the slope. |
+| `seed` | number | the entry's index + 1 | Mixed with the battle's seed. |
+| `draw_distance` | distance | 4 km | Not drawn farther away than this. |
 
 ### `campaign`
 
@@ -464,7 +485,7 @@ and `missions/` (the convention for missions). Full reference, battle-context qu
 | `objectives` | `{win, lose, draw}` | none | Conditions; `lose` is checked before `win`. |
 | `optional` | mapping name: condition | none | Latched optional objectives. |
 | `timer` | `{after, then}` | none | Time limit and its result. |
-| `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`, `killed` (the player's craft destroyed; without its own entry it takes the `lose` actions). |
+| `outcomes` | mapping result: actions | none | Results `win`, `lose`, `draw`, `retreat`, `killed` (the player's craft destroyed; without its own entry it takes the `lose` actions). An entry may be `script(scripts/<file>.ois:<function>)`, run at the battle's end in the battle context ([Scripts](scripts.md), app 0.18.0). |
 | `chatter` | list of `{when, line, voice}` | none | Radio lines; `voice` is a clip spoken with the line (app 0.6.2), or a `cue:<Name>` (app 0.6.7). |
 | `debrief` | mapping result: text | none | Debrief texts, by the same results (`killed` shows no text unless given). |
 | `environment` | id | open space | The battle [environment](#environments). |
@@ -485,6 +506,28 @@ part is optional.
 
 The schema type **either** (`Ty::Either`) lets a key take one of two forms: `count: 3` or
 `count: [2, 4]`; `bearing: [10, 5]` or `bearing: random`; `class: comet` or `class: [a, b]`.
+
+## Script files (`scripts/*.ois`)
+
+Tier 2 scripts (app 0.18.0): `def` functions in the statement language, named from hooks as
+`scripts/<file>.ois:<function>`. A later pack's file of the same path replaces an earlier one's.
+Hooks: a behaviour state's `do: script` / `call:` (object context) and `script(...)` entries in
+mission `outcomes` (battle) and story, plan and evaluation action lists (campaign). Queries and
+actions each context adds for scripts:
+
+| Name | Kind | Context | Meaning |
+|---|---|---|---|
+| `var(name)` | query, number | object | An object variable of the behaviour (`vars:`). |
+| `goto(state)` | action | object | Switch the behaviour's state when the script returns. |
+| `set_var(name, value)` | action | object | Set an object variable. |
+| `message(text)` | action | object | A radio line from this ship on the player's message display. |
+| `members(role)` | query, number | battle | Craft that have entered for the role, alive or not. |
+| `member_alive(role, m)` | query, true/false | battle | The role's `m`-th member (from 0) is still in the battle. |
+| `member_hull(role, m)` | query, number | battle | Its hull fraction (0 once gone). |
+| `member_distance(role, m)` | query, number | battle | Its distance from the player, m (very large once gone). |
+| `script(file:function)` | action-list entry | battle, campaign | Hand over to a script function (not from inside a script). |
+
+The language, budget and errors: [Scripts (Tier 2)](scripts.md).
 
 ## Cutscene files (`cutscenes/*.yaml`)
 

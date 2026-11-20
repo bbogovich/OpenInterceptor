@@ -96,8 +96,9 @@ campaign uses them; the `interceptor` campaign does not.
     seed}` or `heightmap`, a single `size` (square), `height: [low, high]` as plain metres, `colors:
     {low, high, slope}` and `resolution`. Open space is simply no `environment:` (there is no `space`
     entry to define). Not built: `inherit` between environments (the rules' own `inherit` works),
-    `speed_of_sound`, `weather`, the terrain's `texture` (base and detail maps) and `objects`
-    (scattered rocks). Reference: [Environments and terrain](../../modding/environments.md).
+    `speed_of_sound`, `weather`. The terrain's detail maps and scattered rocks are built in app
+    0.18.0 as `detail`, `detail_scale`, `slope_detail` and a `scatter:` list (not `texture` and
+    `objects`; DEV-061). Reference: [Environments and terrain](../../modding/environments.md).
 
 ```yaml
 environments:
@@ -253,3 +254,4 @@ tugs and escorts.
 | 1.11.0 | 2026-11-11 | Marked as built: `hazards` (app 0.5.1) with their explicit keys; `environment`, `environments`, `terrains` and atmospheric flight (0.6.0) with the simplified forces; ground installations (0.6.1). Not built: `location`/`backdrop` from the map, `speed_of_sound`, `weather`, terrain textures and scattered objects, shield domes, landing-pad arrivals |
 | 1.15.0 | 2026-11-11 | As-built notes: campaign events (app 0.10.0) — what is built and what is not; the nebula backdrop and convoy-battle keys (app 0.9.1 – 0.9.2); the format itself unchanged |
 | 1.16.0 | 2026-11-11 | As-built note on campaign events: the presentation actions `card`, `video`, `play_cutscene` (app 0.11.1 – 0.13.0); the format itself unchanged |
+| 1.20.0 | 2026-11-20 | As-built note on terrains: detail textures and scatter (app 0.18.0) under their own keys (DEV-061); `script(...)` entries in outcomes and event lists ([Scripts](../../modding/scripts.md)) |

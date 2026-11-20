@@ -3,7 +3,10 @@
 How AI ships fly and fight is data: a **behaviour** in a pack's `behaviours:` section, named by
 a ship class (`behaviour: saucer_scout`) or by one scenario object (`behaviour: …` on the object).
 This is the Tier 1 design of [Format: behaviours and scripting](../specification/design/format-behaviour.md),
-implemented in Stage 2 (`src/content/behaviour.rs`, `src/script/`, `src/sim/ai.rs`).
+implemented in Stage 2 (`src/content/behaviour.rs`, `src/script/`, `src/sim/ai.rs`). When a
+behaviour needs memory and phases — an ace who taunts once, counts hits and turns furious — a
+state can hand its decisions to a **script** (`do: script`, app 0.18.0): see
+[Scripts (Tier 2)](scripts.md).
 
 ## A behaviour
 
@@ -73,6 +76,7 @@ All keys with types and defaults: [Mod file reference › behaviours](reference.
 | `tow` | Finds a disabled, capturable hostile ship — or, failing one, the nearest **towable** hostile object (a cargo container, app 0.9.2) — that no one else is towing; closes in, tractors it, hauls it `escape` from where it took it and jumps out with it (tugs; needs a tractor beam fitted). A towable module is torn off its hub by the tractor. | `range` (search radius, at least 5 km), `escape` (default 2.5 km) |
 | `escort` | Flies in formation on its leader — the newest live member of the role named by the mission role's [`escort:`](missions.md#roles) — and attacks any hostile that comes within `range` of the leader or of itself, returning to its slot when the threat is gone; without a leader it just fights (app 0.9.2). | `range`, and the attack parameters |
 | `travel` | Flies straight on at `speed` × top speed for `range` from where the state began, then starts the hyperdrive (a supply ship making for its jump point; app 0.9.2). | `range`, `speed` |
+| `script` | Flies the manoeuvre named by `fly:` (default `attack`) while a [script](scripts.md) function (`call:`) runs every `every` seconds (default 0.5 s) and may switch state, set object variables (`vars:`) or say a radio line (app 0.18.0). | `call`, `every`, `fly`, and the parameters of the `fly` manoeuvre |
 
 ## Using the ship's systems
 
@@ -208,8 +212,9 @@ Fractions are 0..1 (write `25%` or `0.25`), distances metres, times seconds.
 | `towing` | true/false | This ship's tractor beam holds something. |
 | `missiles_incoming(d)` | number | Hostile missiles homing on this ship within distance `d`: `missiles_incoming(3km)`. |
 | `prize_near(d)` | true/false | A disabled, capturable hostile ship is within distance `d`. |
+| `var(name)` | number | An object variable the behaviour declares in `vars:` (app 0.18.0); set by its [scripts](scripts.md) with `set_var`, 0 until then: `when: var(phase) >= 2`. |
 
-Missions and events (Stage 3) will add their own contexts with the same language.
+Missions use the same language in the [battle context](missions.md#the-battle-context), the strategy and story layers in the [campaign context](strategy.md#expressions-the-campaign-context), and [scripts](scripts.md) grow it into statements.
 
 ## Difficulty
 
@@ -222,7 +227,9 @@ Cloak lock-break chance by difficulty (Stage 2 item 2.7) is still a fixed `stren
 | Message (in `--check` or on the launcher) | Cause |
 |---|---|
 | `states.x: say what it does (do: attack, …)` | A state without `do:`. |
-| `states.x: unknown manoeuvre 'y'` | `do:` is not one of the nine manoeuvres. |
+| `states.x: unknown manoeuvre 'y'` | `do:` (or a script state's `fly:`) is not one of the manoeuvres. |
+| `states.x: do: script needs call: <file>:<function>` / `states.x: call: and fly: belong to a do: script state` | A script state's keys ([Scripts › Errors](scripts.md#errors-you-may-see)). |
+| `vars: at most 8 object variables` | Too many `vars`. |
 | `start: no state 'b'` / `transitions[2]: no state 'b'` | A name that is not a state. |
 | `unknown name 'hul'` … | A query or constant that the object context does not have. |
 | `'hull' is a number, not a condition (compare it: 'hull > 0')` | The condition is not true/false. |

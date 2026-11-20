@@ -114,13 +114,21 @@ files and nothing of it enters the codebase. See
 binary buffers; no crate is added
 ([R-MOD-053](../../specification/requirements/modding.md#r-mod-053-single-file-models)).
 
-## Tier 2 scripting, evaluated (Stage 3.10) — awaiting the user's decision
+## Tier 2 scripting, evaluated (Stage 3.10)
 
-!!! warning "Awaiting the user's decision"
-    This is the evaluation [R-MOD-015](../../specification/requirements/modding.md#r-mod-015-tier-2-scripting-decision)
-    asks for **before** a second-tier script language is added. **No decision has been made.**
-    The recommendation below is the evaluator's; the user decides. Nothing is added to
-    `Cargo.toml` until then. GitHub issue #16.
+!!! success "Decided 2026-11-20: option (c), grow `script::*`"
+    The user chose **(c)**: the in-crate condition and action language grows into a small
+    statement language. **Nothing was added to `Cargo.toml`.** Built in app **0.18.0** (main
+    `040ca26`, merged in `55999cb`; GitHub #16): `scripts/<name>.ois` files with `def`
+    functions, `let`, `if`/`else if`/`else`, `repeat` and `for each` (counted, at most 1 000
+    rounds), no recursion, a budget of 10 000 operations per hook call, all checked at load
+    against the hook's context — about 1 330 lines in `src/script/stmt.rs` with its tests, in
+    line with the 800 – 1 200 lines estimated below. For modders: [Scripts (Tier 2)](../../modding/scripts.md);
+    inside: [Architecture › Conditions and scripts](../../implementation/architecture/script.md#scripts-tier-2-app-0180).
+    (a) `mlua` stays the recorded fallback if mods ever need a general-purpose language.
+
+    The evaluation below is kept as the record of how the decision was made
+    ([R-MOD-015](../../specification/requirements/modding.md#r-mod-015-tier-2-scripting-decision)).
 
 **The question.** Tier 1 — behaviours as state machines, missions as definitions, and the
 checked condition and action language (`script::*`) — carries both shipped campaigns. Tier 2 is
@@ -164,7 +172,7 @@ figures for (c) are counted from main `90653b9`; the estimate of its growth is *
 general-purpose one:
 
 ```text
-# a hook body (illustrative syntax, not a decided design)
+# a hook body (illustrative syntax from the evaluation; the language as built is on Modding › Scripts)
 let shots = 0
 if hull < 25% and not system_damaged(engines) {
     message(@msg.guardian_enraged)
@@ -186,7 +194,7 @@ def enraged() { return hull < 25% }
 procedural generator, a custom AI planner, string processing, a mod's own data tables. If mods
 need that, a real language is needed, and the choice between (a) and (b) comes back.
 
-### Recommendation (the evaluator's; awaiting the user)
+### Recommendation (the evaluator's; the user chose (c) on 2026-11-20)
 
 1. **Default: (c), grow `script::*`.** Under the dependency policy a dependency is added only
    when building the feature here would be prohibitively expensive. It would not be: the lexer,
@@ -207,4 +215,4 @@ change if the language behind it does.
 
 ## Next candidates
 
-None pending. The Tier 2 language above awaits the user's decision.
+None pending. The Tier 2 language was decided on 2026-11-20 — option (c), no new crate.

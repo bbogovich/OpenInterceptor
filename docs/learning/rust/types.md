@@ -171,6 +171,25 @@ fn or(&mut self) -> Result<(Expr, Type), String> {
 for a bracketed sub-expression — that is the "recursive". Evaluation is a `match` over the
 enum that calls `eval` on the boxed children.
 
+### How big is an enum? `clippy::large_enum_variant` — `src/sim/mod.rs`
+
+An enum value is as large as its **largest** variant (plus a tag). `Pilot` is either
+`External` (the player: no data) or `Ai(AiState)` (several hundred bytes, with the object
+variables added in app 0.18.0), so the player's ship carries unused bytes, and clippy warns.
+The usual fix is `Ai(Box<AiState>)`, which makes the enum pointer-sized. Here it would be the
+wrong trade: nearly every ship is AI-flown, so boxing adds a heap allocation per ship and a
+pointer hop on every AI read, to save a few hundred bytes on one ship. The warning is silenced
+**with the reason written next to it**:
+
+```rust
+// Clippy warns that `Ai` is much bigger than `External` (…). Boxing `AiState` would
+// shrink the enum, but nearly every ship is AI-flown: (…)
+#[allow(clippy::large_enum_variant)]
+pub enum Pilot { External, Ai(ai::AiState) }
+```
+
+An `#[allow]` without a reason is a smell; with one it is a recorded decision.
+
 ## `match`: handle every case — `src/app/flight.rs`
 
 ```rust

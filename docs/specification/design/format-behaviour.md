@@ -1,16 +1,16 @@
 ---
-spec_version: 1.12.0
+spec_version: 1.20.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-20
 ---
 
 # Format: behaviours and scripting
 
-**Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2**; actions,
-the battle and campaign contexts, the remaining manoeuvres, targeting preferences and Tier 2
-are design. Replaces the open question on [Scripting](../../modding/scripting.md) with a two-tier
-design; the Tier 2 language decision is evaluated (Stage 3.10) and awaits the user. The implemented form is
-documented for modders on [Behaviours and conditions](../../modding/behaviours.md).
+**Status: Tier 1 behaviours and conditions (object context) implemented in Stage 2**; actions and
+the battle and campaign contexts in Stage 3 and 4; **Tier 2 scripts implemented in app 0.18.0**
+(Stage 3.10, decision (c): the condition language grown into statements). Replaces the open
+question on scripting with a two-tier design. The implemented forms are documented for modders
+on [Behaviours and conditions](../../modding/behaviours.md) and [Scripts (Tier 2)](../../modding/scripts.md).
 
 ## Two tiers
 
@@ -176,41 +176,86 @@ A Tier 1 definition can hand control to a script through a **hook**:
 ```yaml
 behaviours:
   portal_guardian:
+    vars: [phase]
     states:
-      phase_3: {do: script, call: "scripts/guardian.lua:phase_3", every: 0.5s}
+      phase_3: {do: script, call: "scripts/guardian.ois:phase_3", every: 0.5s, fly: attack}
 ```
 
 ```yaml
 events:
   custom_ending:
-    do: ["script(scripts/ending.lua:run)"]
+    do: ["script(scripts/ending.ois:run)"]
 ```
 
 - Scripts see the same query and action API as Tier 1 (so nothing is reachable from a script
-  that is not documented), run on the simulation tick, and must be deterministic (no clock, no
+  that is not documented), run on the simulation tick, and are deterministic (no clock, no
   files, no network; random numbers only from the game's generator).
-- Scripts may keep state only through the API (`set_flag`, `counter`, object variables), so
+- Scripts keep state only through the API (`set_flag`, object variables with `set_var`), so
   saves never need to serialise a script VM.
 
-### Language decision (Stage 3.10) — awaiting the user
+### Language decision (Stage 3.10) — decided: (c)
 
 The full evaluation is on the dependency page:
-[Tier 2 scripting, evaluated](../../learning/best-practices/dependencies.md#tier-2-scripting-evaluated-stage-310-awaiting-the-users-decision).
-**No decision has been made.**
+[Tier 2 scripting, evaluated](../../learning/best-practices/dependencies.md#tier-2-scripting-evaluated-stage-310).
+**Decided 2026-11-20 by the user: (c)**, grow the in-crate language; no crate added.
 
 | Option | Assessment (summary) |
 |---|---|
-| (a) **Lua 5.4 via `mlua`** | The modding standard; fast; MIT. Costs: bundled C sources, a C compiler on every platform, an FFI boundary, opt-in sandboxing, determinism care (`f64`, table iteration order). **The fallback** if mods need a full general-purpose language. |
+| (a) **Lua 5.4 via `mlua`** | The modding standard; fast; MIT. Costs: bundled C sources, a C compiler on every platform, an FFI boundary, opt-in sandboxing, determinism care (`f64`, table iteration order). **The recorded fallback** if mods need a full general-purpose language. |
 | (b) `rhai` | Pure Rust, MIT/Apache; slower; few modders know it; a larger crate tree; errors at run time. Reconsider only if a pure-Rust or WebAssembly build becomes a requirement. |
-| (c) **Grow Tier 1** into a small statement language (variables, `if`/`else`, bounded loops, functions, calls into the same checked API) | No dependency; checked at load, deterministic and sandboxed by construction; the parser, checker and evaluator exist. Ceiling: no general-purpose data structures. **Recommended as the default** by the evaluator. |
+| (c) **Grow Tier 1** into a small statement language | No dependency; checked at load, deterministic and sandboxed by construction; the parser, checker and evaluator existed. Ceiling: no general-purpose data structures. **Chosen.** |
 
-Earlier drafts of this page recommended (a) and rejected (c) unless both crates failed
-evaluation; the evaluation found (c) far cheaper than that assumed, because the language's
-hard parts already exist. The hook syntax above (`do: script`, `script(...)`) is the same for
-any choice; the `.lua` file names in the examples are placeholders.
+### The language as built (app 0.18.0)
 
-Because both shipped campaigns need only Tier 1, the choice can be made on its merits without
-blocking any campaign work.
+Files are `scripts/<name>.ois` in a pack ("OpenInterceptor script"; a later pack's file of the
+same path replaces an earlier one's). Grammar (`#` starts a comment):
+
+```text
+file      := def*
+def       := 'def' NAME '(' [param {',' param}] ')' block
+param     := NAME [':' ('num' | 'bool')]          # a number unless marked bool
+block     := '{' {statement (NEWLINE | ';')} '}'
+statement := 'let' NAME '=' expr                   # a new local variable
+           | NAME '=' expr                         # assign to a local
+           | 'if' expr block {'else' 'if' expr block} ['else' block]
+           | 'repeat' expr block                   # expr times (at most 1000)
+           | 'for' 'each' NAME 'of' expr block     # over a role's members (battle context)
+           | 'return' [expr]
+           | NAME ['(' args ')']                   # an action, or a function of this file
+expr      := the condition language, plus locals and calls of value-returning functions
+```
+
+Rules:
+
+- **Hooks.** A behaviour state `{do: script, call: "<file>:<function>", every: 0.5s, fly:
+  <manoeuvre>}` (`every` default 0.5 s, at least one tick; `fly` default `attack`, flown with the
+  state's usual parameters) runs in the **object** context, with the behaviour's `vars: [..]`
+  (at most 8 object variables, readable as `var(name)` in scripts and in conditions) and the
+  object actions `goto(state)`, `set_var(name, value)`, `message(text)`. An action-list entry
+  `script(<file>:<function>)` in a mission's `outcomes` runs at the battle's end in the
+  **battle** context; in a story event's or choice's `do`, a plan's `warnings` / `complete` or
+  an `evaluations` `do` it runs in the **campaign** context, its actions applied at once.
+  `call:` or `fly:` on a state that is not `do: script` is an error.
+- **Checking.** Each hook compiles its function and every function it calls against its own
+  context: queries, names (roles, levels, object variables), the action table, argument kinds
+  and types; `goto` and `set_var` are checked against the behaviour's states and `vars`; text
+  keys (`@key`) are resolved at load. Entry functions take no parameters; calls only within the
+  same file; recursion (direct or through others) is rejected at load with the chain; names may
+  not clash with keywords, queries, actions, constants or other functions; a script cannot call
+  `script(...)`.
+- **Running.** One operation per statement, expression node and loop round; **10 000** per hook
+  call. Out of budget, the hook stops (actions already taken stand) and it is reported once:
+  `SCRIPT STOPPED` (the simulation's `ScriptStopped` event, or the campaign log). Locals live
+  for one call; a value-returning function that ends without `return` gives `0` / `false`.
+
+The modder's guide, with a worked example (the default campaign's saucer ace), is
+[Scripts (Tier 2)](../../modding/scripts.md). Where the language as built differs from this
+page's earlier design (no per-file context declaration, no `counter` action, `do: script`
+flying a manoeuvre, battle scripts only from outcomes, `for each` battle-only, line-based
+statements): [DEV-060](../../implementation/deviations/index.md).
+
+Because both shipped campaigns need only Tier 1, scripts are optional; the default campaign
+ships one example (`saucer_ace`).
 
 ## Revision history
 
@@ -218,3 +263,4 @@ blocking any campaign work.
 |---|---|---|
 | 1.0.0 | 2026-11-11 | Adopted into Specification 1.0.0 as a normative format page; requirements link here |
 | 1.12.0 | 2026-11-11 | Tier 2 language decision: summary of the recorded evaluation ((a) `mlua`, (b) `rhai`, (c) grow Tier 1); evaluator recommends (c), fallback (a); awaiting the user's decision |
+| 1.20.0 | 2026-11-20 | Tier 2 decided ((c), 2026-11-20) and implemented (app 0.18.0): hooks with `.ois` files, the grammar and rules as built; `counter` replaced by object variables (`vars`, `set_var`); deviations in DEV-060 |

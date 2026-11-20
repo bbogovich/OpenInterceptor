@@ -64,3 +64,33 @@ choice. The extractor (`src/extract.rs`, `model_to_obj`) collects the materials 
 a `BTreeMap<String, String>` and writes them with `into_values()`: the `.mtl` file is
 byte-for-byte the same on every run, so extracting twice and comparing — or keeping the files
 in version control of your own art project — shows only real changes.
+
+## One stack, frames by index — `src/script/stmt.rs`
+
+The script interpreter keeps every local variable of every active function in **one**
+`Vec<Value>`. A function's locals are a *frame*: the window `stack[frame .. frame + slots]`,
+where `frame` is a plain `usize`. A call pushes its arguments on top, `resize`s to make room for
+the callee's other locals, runs, and `truncate`s back. Two reasons over a `Vec` per call:
+
+- **No allocation per call** once the stack has grown (it starts `with_capacity(32)`).
+- **No borrow tangle.** Holding `&mut [Value]` to a frame while the stack grows would be refused
+  (growing may move the buffer). An index stays valid whatever happens to the `Vec`.
+
+## Fixed arrays instead of `Vec` — `src/script/stmt.rs`, `src/sim/ai.rs`
+
+When the size has a small known maximum, a fixed array (`[T; N]`) lives inline — on the stack or
+inside its struct — with no heap allocation:
+
+```rust
+// Query arguments: at most four, so evaluate into a fixed buffer.
+let mut buf = [0.0f32; MAX_QUERY_ARGS];
+for (slot, a) in buf.iter_mut().zip(args) { *slot = self.eval(a, frame)?.num(); }
+self.host.query(*id, &buf[..args.len().min(MAX_QUERY_ARGS)])
+
+// A pilot's object variables: at most eight.
+pub vars: [f32; MAX_VARS],
+```
+
+`&buf[..n]` passes just the used part as a slice. The AI state is copied every tick, so a fixed
+array there means the copy is a plain memory copy, never an allocation. The limits are rules a
+modder sees (`vars:` at most 8), and a test checks that every context's queries fit the buffer.

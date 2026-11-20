@@ -411,6 +411,15 @@ flowchart TD
 - **Travel** (app 0.9.2). Holds `speed` × top speed straight on and requests the hyperdrive
   once it is `range` from where the state began (`AiState::anchor` again): a supply ship
   making for its jump point.
+- **Scripted states** (app 0.18.0). A state with `do: script` flies its `fly:` manoeuvre and, on
+  its first tick and then every `every` seconds (`AiState::script_clock`), runs its compiled
+  script in the object context through an `ObjectHost`: queries read the world as conditions do
+  (plus `var(name)` from `AiState::vars`), `set_var` writes the variable at once, `goto` picks the
+  next state (the last wins, applied when the script returns), `message` becomes a
+  `SimEvent::Radio`. The script runs in the read phase of `think`, so its events are added after
+  the reading is done. Out of budget it stops and raises `SimEvent::ScriptStopped` once per pilot
+  (`AiState::script_warned`). The vars are a fixed array, so copying the pilot each tick costs no
+  allocation. Language and hosts: [Conditions and scripts](script.md#scripts-tier-2-app-0180).
 - Each pilot has its own seeded random stream (`AiState::rng`), so `random(p)` and aim errors
   are deterministic.
 - **Escapes (Stage 3).** Whatever its behaviour wants, every AI pilot except `Idle` objects first
@@ -465,7 +474,7 @@ current order, and `DISABLED` if so.
 
 | Symbol | What it is |
 |---|---|
-| `World` | `rules: Arc<Ruleset>`, `shapes: Arc<Vec<Shape>>`, `ships`, `bolts`, `missiles`, `events`, `time`, deterministic xorshift `random()`. |
+| `World` | `rules: Arc<Ruleset>`, `shapes: Arc<Vec<Shape>>`, `ships`, `bolts`, `missiles`, `events`, `time`, deterministic xorshift `random()`; `seed` (app 0.18.0): the seed the battle was created with, unchanged while it runs (unlike the generator) — what is fixed for the whole battle, such as where terrain scatter lies, uses it. |
 | `ShipId` | `{ index, generation }` — a generational handle. A destroyed ship's slot can be reused; the generation changes, so old ids resolve to `None`. |
 | `Ship` | Class, faction, name, position, rotation (`Quat`), velocity, angular velocity, throttle, reverse, afterburning, `braking`, `speed_hold`, hull/armor/shields/energy, `controls`, `pilot`, `target`, link mode, beam cooldowns, missile racks, `lock`, `since_hit`, `alive`; Stage 2: `power`, `systems`, `repairing`, `towing`, `hyperspace`, `disabled`, `departed`. Helpers `system(kind)`, `efficiency(kind)`, `is_on(kind)`, `cloaked()`. |
 | `Controls` | Pilot input for one tick: axes, slide, throttle set/delta, reverse toggle, match speed, afterburner, `brake` (held), `hold_speed` (flight computer target, m/s), `aim` (turret direction), fire, link/missile cycling, `requests`. `carry_unconsumed` keeps unconsumed one-shot presses across frames that run no tick. |
@@ -478,12 +487,12 @@ current order, and `DISABLED` if so.
 | `SystemState`, `Condition` | One fitted system: `id`, `kind`, `hp`, `max`, `destroyed`, `offline`, `on`; `set_hp`, `condition()`, `ONLINE_AT`. `Condition::{Ok, Damaged, Inoperative, Destroyed}` with `efficiency()` 1 / 0.5 / 0 / 0. |
 | `systems::Setting`, `systems::Tow` | Beam or shield (for `raise` / `cycle`); a tractor decision (`Pull(target, velocity, max accel)` or `Release(captor)`). |
 | `ai::WingOrder`, `ai::EVASIVE_TIME` | Wingman orders (above). |
-| `ai::AiState` | Per-ship AI memory: role (`behaviour`), behaviour override `def`, leader, offset, order and order time; behaviour `state`, `state_time`, `check_clock`; `break_timer`, `missile_timer`, `burst_clock`; `reaction_clock`, `seen` (last sighting), `aim_error`; `home`; `rng`. |
+| `ai::AiState` | Per-ship AI memory: role (`behaviour`), behaviour override `def`, leader, offset, order and order time; behaviour `state`, `state_time`, `check_clock`; app 0.18.0: `vars: [f32; MAX_VARS]` (object variables), `script_clock`, `script_warned`; `break_timer`, `missile_timer`, `burst_clock`; `reaction_clock`, `seen` (last sighting), `aim_error`; `home`; `rng`. |
 | `ai::ObjectContext` | Answers condition queries about one ship ([Conditions](script.md)). |
 | `ai::CHECKS_PER_SECOND`, `MAX_AIM_ERROR`, `ENGAGE_RADIUS`, `HUNT_RADIUS` | 4, 8°, 3 km (wingmen engage near the leader), 8 km (enemies look for targets). |
 | `FlightModel` | `Newtonian` or `Assisted` (`flight.model`), in `FlightRules` with `arena_radius`. |
-| `Pilot` | `External` (the player) or `Ai(AiState)`. |
-| `SimEvent` | `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded { position, effect }`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`, `PointDefence { ship, from, to, hit }`. |
+| `Pilot` | `External` (the player) or `Ai(AiState)`. `#[allow(clippy::large_enum_variant)]` with a comment: `Ai` is much bigger than `External`, but nearly every ship is AI-flown, so boxing `AiState` would add an allocation and a pointer hop per ship to save bytes on one. |
+| `SimEvent` | App 0.18.0: `Radio { ship, text }` (a behaviour script's `message`, shown on the message display) and `ScriptStopped { ship, call }` (a behaviour script used its whole operation budget; once per pilot). Earlier: `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded { position, effect }`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`, `PointDefence { ship, from, to, hit }`. |
 | `Bolt`, `Missile`, `Lock`, `LinkMode` | Projectiles and weapon state. `Bolt::carry`, `local_offset`, `local_velocity`: the `bolt_frame: ship` carry (above). |
 | `content::rules::BoltFrame`, `FlightRules::bolt_carry` | `World` (default) or `Ship`; the carry time (0.3 s). |
 | `collision::Shape`, `TriMesh` | Bounding radius plus optional triangle mesh. |

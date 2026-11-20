@@ -16,7 +16,7 @@ Requirements for these features: [Modding toolkit requirements](../specification
 | [F-MOD-002 Readable rule files that explain mistakes](#f-mod-002-readable-rule-files-that-explain-mistakes) | Implemented |
 | [F-MOD-003 Replace any asset, in open formats](#f-mod-003-replace-any-asset-in-open-formats) | Implemented |
 | [F-MOD-004 Text and translation](#f-mod-004-text-and-translation) | Implemented |
-| [F-MOD-005 Conditions, actions and scripting](#f-mod-005-conditions-actions-and-scripting) | In progress |
+| [F-MOD-005 Conditions, actions and scripting](#f-mod-005-conditions-actions-and-scripting) | Implemented |
 | [F-MOD-006 Mod validation](#f-mod-006-mod-validation) | In progress |
 | [F-MOD-007 Generated assets (recipes)](#f-mod-007-generated-assets-recipes) | Planned |
 | [F-MOD-008 Modding guide](#f-mod-008-modding-guide) | In progress |
@@ -82,11 +82,11 @@ A mod that builds on another pack is an **extension**: the other pack is its bas
 
 ### F-MOD-005 Conditions, actions and scripting
 
-**What.** Behaviours, missions and campaign rules use a small checked language of conditions and actions; a second-tier script language is to be decided (evaluation recorded in 1.12.0, awaiting the user's decision).
+**What.** Behaviours, missions and campaign rules use a small checked language of conditions and actions; for logic with memory and branching, optional **scripts** in the same language grown into statements (`scripts/*.ois`, decided 2026-11-20, app 0.18.0).
 
 **Why.** Rules that depend on the situation, without code changes.
 
-- **Status:** in-progress
+- **Status:** implemented
 - **Source:** Plan items 2.9, 3.1 and 3.10.
 - **Specified by:** [R-MOD-013](../specification/requirements/modding.md#r-mod-013-condition-language), [R-MOD-014](../specification/requirements/modding.md#r-mod-014-campaign-context), [R-MOD-015](../specification/requirements/modding.md#r-mod-015-tier-2-scripting-decision)
 
@@ -216,3 +216,4 @@ The first test case for the mod tools is exactly this: a mod extending `intercep
 | 1.12.0 | 2026-11-11 | F-MOD-005: the Tier 2 evaluation is recorded on the dependency page (R-MOD-015); awaiting the user's decision |
 | 1.13.0 | 2026-11-11 | F-MOD-013 in progress: formations built for wingmen (MD1, app 0.6.6) |
 | 1.16.0 | 2026-11-11 | F-MOD-011 in progress: engine-played cutscenes (MD2, app 0.13.0) |
+| 1.20.0 | 2026-11-20 | F-MOD-005 implemented: Tier 2 scripts, decision (c) (app 0.18.0) |

@@ -229,6 +229,7 @@ the debrief now and will be applied by the strategy layer (Stage 4).
 | `set_flag(name)` | id | campaign | Set a campaign flag. |
 | `cargo_lost` | — | campaign | The convoy's cargo never arrives. |
 | `cargo_captured` | — | campaign | The enemy takes the cargo to a supply depot. |
+| `script(file:function)` | `scripts/<file>.ois:<function>` | battle | Run a [Tier 2 script](scripts.md) at the battle's end, in the battle context (app 0.18.0): its battle actions show on the message display, its campaign actions join the debrief's list. It may loop over a role's members with `for each` and the `members`, `member_alive`, `member_hull`, `member_distance` queries. |
 
 Quote an action that contains a comma or a `+` sign in a YAML flow list:
 `[score(x), "relation(guard, +5)"]`.

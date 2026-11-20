@@ -6,7 +6,8 @@ cases MT-3-19 – MT-3-23 still need a run on an iPad). **C2** (app 0.4.11, main
 (0.4.14, `e51eca9`), **C4** (0.4.15, `e2b5012`) and **C2b** (0.5.0, `0a1c340`) are done, so the
 console items C1 – C4 are complete; each was checked in Chrome through the DevTools protocol
 (software WebGL for C3) and still needs an iPad pass (MT-3-29 – MT-3-32). **C5** (the Arduino
-panel) comes later. User feedback from playing app 0.3.0, and the tablet control
+panel, GitHub #5) is **deferred beyond Stage 3**; the iPad passes remain open manual tests
+(noted 2026-11-20, when Stage 3 closed in app 0.18.0). User feedback from playing app 0.3.0, and the tablet control
 console, taken up before the rest of Stage 3 (environments and atmospheric flight). Each item
 cites the features and requirements it delivers; issues are filed in `sio` against those IDs.
 

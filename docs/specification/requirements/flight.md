@@ -192,16 +192,22 @@ A pack MUST be able to define terrains as data, `terrains: {<id>: {generate | he
 - The ground height under a point MUST be bilinearly interpolated; its normal comes from the slope around it.
 - The terrain MUST be drawn as a lit mesh coloured from `colors: {low, high, slope}`: low ground to high ground by height, blended towards `slope` where the ground is steep, faded into the sky's fog with distance (R-MSN-008).
 - Giving both `generate` and `heightmap`, neither, or an unknown `kind` MUST be a rules error; a heightmap that fails to load MUST be a content error naming it.
+- A terrain MAY name a tiling `detail` texture (with `detail_scale` metres per repeat, default 50 m) that MUST multiply the vertex colours up close and fade smoothly into the distance (mipmapped), and a `slope_detail` texture (only with `detail`) used on steep triangles; the detail coordinates MUST meet without seams at mirror-tile edges. `--check` SHOULD warn about a detail texture whose sides are not powers of two.
+- A terrain MAY list `scatter` entries (`model` required; `count` 1 – 20 000, default 100; `scale`; `max_slope` 0 – 90°, default 30°; `height` range; `align` 0 – 1; `seed`; `draw_distance`, default 4 km). Pieces MUST be placed deterministically from the battle's seed and the entry's seed, only on ground within the slope and height limits, and MUST be drawn only (no collision); entries beyond their draw distance MUST NOT be drawn.
 
 *Rationale:* Surface missions of the default campaign, on ground a modder can generate from a seed or paint as an image.
 
 - Implements: [F-FLT-007](../../definition/flight.md#f-flt-007-atmospheric-flight-over-terrain)
-- Status: implemented (app 0.6.0, main `af003f6`)
-- Verified by: `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`, `generated_heightfields_span_their_range_are_deterministic_and_interpolate` (mirrored beyond the edge), `render::terrain::tests::terrain_meshes_face_up_and_colour_by_height`, `tiles_match_the_folded_ground_heights`; MT-3-39, MT-3-40, MT-3-60
+- Status: implemented (app 0.6.0, main `af003f6`; detail textures and scatter in app 0.18.0, main `4a0bd03`)
+- Verified by: `content::environment::tests::environments_and_terrains_parse_and_report_mistakes`, `generated_heightfields_span_their_range_are_deterministic_and_interpolate` (mirrored beyond the edge), `detail_textures_and_scatter_parse_with_defaults`, `bad_detail_and_scatter_values_say_what_is_wrong`, `scatter_is_deterministic_and_stays_inside_the_field`, `scatter_respects_slope_height_and_alignment`, `render::terrain::tests::terrain_meshes_face_up_and_colour_by_height`, `tiles_match_the_folded_ground_heights`, `detail_coordinates_repeat_per_scale_and_meet_at_tile_edges`, `steep_triangles_take_the_slope_texture`, `scatter_is_baked_into_cells_in_place`, `render::gpu::tests::shared_vertex_grids_are_split_by_index_count`; MT-3-39, MT-3-40, MT-3-60, MT-3-68 – MT-3-70
 - See: [Environments and terrain](../../modding/environments.md), [Rendering](../../implementation/architecture/rendering.md), [Format: missions, environments, events](../design/format-missions.md)
 
-!!! question "Open"
-    Not built yet: texturing with detail maps (`texture: {base, detail}`) and scattered objects on the ground (`objects: {scatter, density}`), the rest of plan item 3.5 (ground installations are built: R-MSN-008, app 0.6.1). The terrain's look has been checked only by unit tests so far, not on screen.
+!!! note "As built (app 0.18.0, main `4a0bd03`) — formerly Open"
+    Detail textures and scattered objects are built, with keys that differ from the design's
+    `texture: {base, detail}` and `objects: {scatter, density}` (DEV-061): `detail`,
+    `detail_scale`, `slope_detail` and a `scatter:` list. Building them also fixed terrain
+    drawing: chunks of the terrain mesh exceeded macroquad's 30 000-index draw limit and were
+    silently cut (`gpu::MAX_CHUNK_INDICES` = 28 000). The look is covered by MT-3-68 – MT-3-70.
 
 !!! note "From user feedback (app 0.6.7, main `c0e2516`)"
     The user's playtest saw the ground end at the field's edge. `Heightfield::fold` maps any point back into the field (odd tiles reflected), so `height_at` answers everywhere; the renderer draws up to 7 × 7 tiles around the camera within the fog distance from two meshes, the field and its X-mirror (`render::terrain::tile_placement`). Static objects spawned over a ground now float one radius clear of it (app 0.6.7, `65141dc`).
@@ -234,3 +240,4 @@ AI craft always fly the campaign's own model (`flight.model`).
 | 1.11.0 | 2026-11-11 | R-FLT-011 atmospheric flight rewritten as built and implemented (app 0.6.0): drag from `atmosphere_max_speed`, gravity, lift capped at 2g, hover, landing below 25 m/s upright, crash damage, the ceiling exit, AI ground avoidance, Simple physics kept; keys `atmosphere_max_speed`, `lift`, `hover`, `atmospheric`; the open note on equations and key names resolved (`drag_area` not adopted). R-FLT-012 terrain rewritten as built and implemented: generated (`hills`, `craters`) and heightmap heightfields, interpolation, colours by height and slope; Open note for detail textures and scattered objects |
 | 1.13.0 | 2026-11-11 | R-FLT-012 revised: the ground continues to the horizon as mirror-image tiles, collision and drawing agree (app 0.6.7, from user feedback) |
 | 1.15.0 | 2026-11-11 | Found building the convoy battle (app 0.9.2): R-FLT-008 revised — modules leave by hyperspace with their hub; R-FLT-009 revised — no collisions between a hub and its own modules (they braked a moving supply ship) |
+| 1.20.0 | 2026-11-20 | R-FLT-012 extended as built (app 0.18.0): terrain detail textures (`detail`, `detail_scale`, `slope_detail`) and decorative `scatter` entries; the Open note on them closed (DEV-061 for the key names) |

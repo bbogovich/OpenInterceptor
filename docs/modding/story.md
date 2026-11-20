@@ -218,7 +218,7 @@ condition holds are listed on the strategy screen's **Archive** tab.
 
 Every action list in the story — `do`, `choices[].do`, `warnings[].do`, `complete` — and the
 strategy layer's [`evaluations`](strategy.md#evaluations) `do` lists are checked when the rules
-load against the eighteen event actions (`script::action::EVENT_ACTIONS`): an unknown action or a
+load against the nineteen event actions (`script::action::EVENT_ACTIONS`, with `script(...)` since app 0.18.0): an unknown action or a
 wrong argument is an error with its place.
 
 | Action | Arguments | Does |
@@ -238,6 +238,7 @@ wrong argument is an error with its place.
 | `raid(x)` | raid | Launch that raid's contact now. |
 | `plan(x, n)` | plan, number | Add `n` components to a plan (warnings and completion follow). |
 | `aggression(n)` | number | Change the rival's aggression, within its limits. |
+| `script(file:function)` | `scripts/<file>.ois:<function>` | Run a [Tier 2 script](scripts.md) in the campaign context (app 0.18.0): it reads the campaign's queries and takes these actions, each applied at once. |
 | `victory(x)`, `defeat(x)` | ending | End the campaign in that ending. |
 
 When one day's events ask for several videos or cutscenes, the last video asked for plays, and
