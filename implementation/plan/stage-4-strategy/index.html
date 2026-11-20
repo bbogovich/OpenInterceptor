@@ -6559,7 +6559,7 @@
 
 
 <h1 id="stage-4-strategy-layer">Stage 4 — Strategy layer<a class="headerlink" href="#stage-4-strategy-layer" title="Permanent link">&para;</a></h1>
-<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>); playtest changes in <strong>0.9.1</strong> (<code>3b19dea</code>) and flown supply-convoy battles in <strong>0.9.2</strong> (<code>0d1c522</code>, <code>146195b</code>); fitted shields and armour and <code>--balance</code> in <strong>0.15.0</strong> (<code>1ff754b</code>); the strategy screen rebuilt for the mouse in <strong>0.16.0</strong> (<code>ac7ae62</code>); the issue-audit gaps in <strong>0.16.1 – 0.16.14</strong> (<code>f82a6ab</code> … <code>de30c2a</code>) and the docs-review fixes in <strong>0.16.15</strong> (<code>00c7da5</code>); evaluation texts as text keys in <strong>0.18.1</strong> (<code>3ea5177</code>); issue hygiene (Batch 4.0) on 2026-11-20; bases and economy completeness (Batch 4.1) in <strong>0.19.0</strong> (<code>c28fc2c</code>). The real-time strategy game around the battles: the
+<p><strong>Version 0.5.0. Status: in progress</strong> — MD1 formations in app 0.6.6 (main <code>6d390d7</code>); the campaign context in 0.6.7 (<code>65141dc</code>); the core (strategy data, the campaign runtime, saves) in <strong>0.7.0</strong> (<code>77d6c9f</code>); the default campaign's strategy data and the strategy screen in <strong>0.7.1</strong> (<code>10f7fce</code>); fitting in <strong>0.7.2</strong> (<code>94d66c1</code>); lane travel in <strong>0.7.3</strong> (<code>076203e</code>); the <code>interceptor</code> strategy layer from the player's data in <strong>0.8.0</strong> (<code>c64d178</code>); the testbed cheats in <strong>0.8.1</strong> (<code>8e96338</code>); logistics in <strong>0.9.0</strong> (<code>ff9d8fc</code>); playtest changes in <strong>0.9.1</strong> (<code>3b19dea</code>) and flown supply-convoy battles in <strong>0.9.2</strong> (<code>0d1c522</code>, <code>146195b</code>); fitted shields and armour and <code>--balance</code> in <strong>0.15.0</strong> (<code>1ff754b</code>); the strategy screen rebuilt for the mouse in <strong>0.16.0</strong> (<code>ac7ae62</code>); the issue-audit gaps in <strong>0.16.1 – 0.16.14</strong> (<code>f82a6ab</code> … <code>de30c2a</code>) and the docs-review fixes in <strong>0.16.15</strong> (<code>00c7da5</code>); evaluation texts as text keys in <strong>0.18.1</strong> (<code>3ea5177</code>); issue hygiene (Batch 4.0) on 2026-11-20; bases and economy completeness (Batch 4.1) in <strong>0.19.0</strong> (<code>c28fc2c</code>); logistics leftovers (Batch 4.2) in <strong>0.20.0</strong> (<code>9064f59</code>). The real-time strategy game around the battles: the
 interactive star map, bases, research, the economy, ships and loadouts, pilots — with
 functional screens and saves. Story and the rival's planning come in Stage 5.</p>
 <p>Design: <a href="../../../specification/design/format-strategy/">strategy layer</a>, <a href="../../../specification/design/format-interface/">interface</a>.</p>
@@ -6656,7 +6656,7 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.14</td>
 <td><strong>Logistics</strong> (default campaign, <a href="../../../specification/design/logistics/">design</a>): resources, components and deposits (campaign data); <code>facility_types</code> mining facility, research station, manufacturing center with placement conditions, build cost, time and three construction stages; the economy tick (extraction, recipes that start only when their inputs are in store, research, construction progress)</td>
 <td><code>campaign::economy</code></td>
-<td><strong>Partial</strong> (0.9.0, <code>ff9d8fc</code>): resources, components, deposits and features (data); the three facility types with fixed placement rules per role (DEV-049), cost and build time; hourly extraction, recipes that start only on inputs in store, station research, construction time. <strong>Batch 4.1</strong> (0.19.0, <code>c28fc2c</code>): <code>placement:</code> <strong>conditions</strong> on facility types, each role's default rule a condition (<code>Role::default_placement</code>; DEV-049's placement part closed); <strong>storage at manufacturing centers and research stations</strong> — orders only what fits, a recipe starts only when its output fits. Open: the three construction stages shown (<code>hub</code> read, not used; Batch 4.2), facility upgrades. #34.</td>
+<td><strong>Partial</strong> (0.9.0, <code>ff9d8fc</code>): resources, components, deposits and features (data); the three facility types with fixed placement rules per role (DEV-049), cost and build time; hourly extraction, recipes that start only on inputs in store, station research, construction time. <strong>Batch 4.1</strong> (0.19.0, <code>c28fc2c</code>): <code>placement:</code> <strong>conditions</strong> on facility types, each role's default rule a condition (<code>Role::default_placement</code>; DEV-049's placement part closed); <strong>storage at manufacturing centers and research stations</strong> — orders only what fits, a recipe starts only when its output fits. <strong>Batch 4.2</strong> (0.20.0, <code>9064f59</code>): the <strong>construction stages shown</strong> — <code>logistics.construction_stages</code> (default <code>build_25</code> 0 %, <code>build_60</code> 50 %, <code>build_90</code> 80 %; DEV-063), stage pips on the map marker, <em>stage N of M</em> on the Supply list, and the struck facility standing in for the defence mission's first protected role as its type's <code>hub</code> in its stage (R-STR-022). Open: facility upgrades. #34.</td>
 </tr>
 <tr>
 <td>4.15</td>
@@ -6668,13 +6668,13 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 <td>4.16</td>
 <td><strong>Survey ships</strong> (a separate mission profile and craft; within the launching station's radar range; 25 % attack roll at launch; suitability per facility type), <strong>research sites</strong> and station-only tech branches (<code>lab:</code>, <code>site:</code>, <code>start_cost</code> — materials only to begin), <strong>facility fighter pools</strong> (built at main bases, transferred, movable)</td>
 <td><code>campaign</code></td>
-<td><strong>Partial</strong> (0.9.0): survey ships within the base's radar range, the attack roll at launch (<code>survey_attack_chance</code>), reports of deposits (with reserves since 0.16.2), features and sites; research sites and station-only topics (<code>lab</code>, <code>site</code>, <code>start_cost</code> once). Open: a survey craft and a battle when attacked (auto-resolved), <strong>facility fighter pools</strong>. #36.</td>
+<td><strong>Partial</strong> (0.9.0): survey ships within the base's radar range, the attack roll at launch (<code>survey_attack_chance</code>), reports of deposits (with reserves since 0.16.2), features and sites; research sites and station-only topics (<code>lab</code>, <code>site</code>, <code>start_cost</code> once). <strong>Batch 4.2</strong> (0.20.0, <code>9064f59</code>; decision D3): the report lists the facility types the system <strong>suits</strong>; an attacked survey ship <strong>waits at the site</strong> and fights <code>logistics.survey_mission</code> as one <code>survey_class</code> (the default campaign's new <code>survey_ship</code> in <code>convoy_ambush</code>), flown or auto-resolved with <code>survey_loss</code> (R-STR-021 implemented). Open: <strong>facility fighter pools</strong> (R-STR-025 → Batch 4.3b). #36.</td>
 </tr>
 <tr>
 <td>4.17</td>
 <td>Facility, survey and supply-traffic screens (functional); <code>default</code>: resources, components, deposits, facility types, recipes, research sites and branches (the stage models, facility objects and supply craft exist since Stage 2)</td>
 <td><code>app::strategy</code>, <code>resources/default</code></td>
-<td><strong>Partial</strong> (0.9.0, 0.9.2): the Supply tab (survey, build, station research, stores, counts) and map markers; the default campaign's <code>strategy/logistics.yaml</code> (four resources, three components and recipes, the three facility types, two research sites, deposits in all six systems, hull components, two station-only topics). <strong>The supply vessel</strong> (0.9.2): the cargo clipper is the core vessel with twelve cargo pods and a point-defence laser as separate modules (<code>supply_pod</code>, <code>supply_pd</code>; R-STR-017). The supply-traffic view moved to the CSD screen (6.9.2, #99) on 2026-11-20. Open: <strong>cargo capacity</strong> (R-STR-026, decision D1, Batch 4.2) — #37, renamed <em>4.17 Supply convoy cargo capacity (R-STR-026)</em>.</td>
+<td><strong>Partial</strong> (0.9.0, 0.9.2): the Supply tab (survey, build, station research, stores, counts) and map markers; the default campaign's <code>strategy/logistics.yaml</code> (four resources, three components and recipes, the three facility types, two research sites, deposits in all six systems, hull components, two station-only topics). <strong>The supply vessel</strong> (0.9.2): the cargo clipper is the core vessel with twelve cargo pods and a point-defence laser as separate modules (<code>supply_pod</code>, <code>supply_pd</code>; R-STR-017). The supply-traffic view moved to the CSD screen (6.9.2, #99) on 2026-11-20. <strong>Cargo capacity</strong> (0.20.0, <code>9064f59</code>; R-STR-026, decision D1): <code>logistics.cargo_capacity</code> per vessel (default campaign 40); a larger order leaves as several convoys — #37, waiting for the developer's verification. <strong>Done.</strong></td>
 </tr>
 </tbody>
 </table>
@@ -6682,11 +6682,15 @@ functional screens and saves. Story and the rival's planning come in Stage 5.</p
 its sandbox; the original's own cheats as debug keys — Ctrl+M <code>payday</code>, Ctrl+K <code>knowitall</code>,
 Ctrl+B <code>quickbase</code> — and Ctrl+J "jump to battle" from the chosen (detected) contact
 (<code>Campaign::cheat_*</code>); <code>--strategy-soak &lt;days&gt;</code> plays a strategy layer headless
-(<code>campaign::autoplay</code>). MT-4-20, MT-4-21; GitHub #47 (R-TST-010, R-TST-011, partly met).</p>
+(<code>campaign::autoplay</code>). MT-4-20, MT-4-21; GitHub #47 (R-TST-010, R-TST-011, partly met). Since
+0.20.0 (<code>9064f59</code>, Batch 4.2) the automatic player also runs the supply chain
+(<code>logistics::autoplay_day</code>) and <code>--strategy-soak</code> prints a <em>logistics:</em> line from the saved
+totals (<code>LogisticsStats</code>). Open on #47: a money-accounting invariant, soak battles resolved from
+the forces (Batch 4.3b), jumping to battle from an undetected contact.</p>
 <p>Requested logistics for the default campaign (4.14–4.17) are an engine capability that the
 <code>interceptor</code> campaign deliberately does not use (it stays faithful to the original; an addon
-could add it). It is all YAML data and a campaign may leave it out. Decisions and the one open
-question (cargo capacity): <a href="../../../specification/design/logistics/#decisions-2026-11-11">Logistics</a>.</p>
+could add it). It is all YAML data and a campaign may leave it out. Decisions (cargo capacity
+and the survey ship answered on 2026-11-20 as D1 and D3): <a href="../../../specification/design/logistics/#decisions-2026-11-11">Logistics</a>.</p>
 <h2 id="mod-and-cutscene-designer-md1">Mod and cutscene designer (MD1)<a class="headerlink" href="#mod-and-cutscene-designer-md1" title="Permanent link">&para;</a></h2>
 <p>From the <a href="../../../specification/design/designer/">mod designer, cutscene designer and game bundling</a> design (decisions D1–D5
 made 2026-11-11). The design places MD1 at "Stage 3 / 4"; it is planned here, in Stage 4. It
@@ -6787,19 +6791,30 @@ Start prompt: <em>"Batch 4.1 of plan/stage-4-batches.md: bases and economy compl
 <h3 id="batch-42-logistics-leftovers-m-parts-blocked-by-decisions-d1-d3">Batch 4.2 — logistics leftovers (M; parts blocked by decisions D1, D3)<a class="headerlink" href="#batch-42-logistics-leftovers-m-parts-blocked-by-decisions-d1-d3" title="Permanent link">&para;</a></h3>
 <p>Issues: <strong>#34</strong> (R-STR-022), <strong>#37</strong> (R-STR-026), <strong>#36</strong> (survey), <strong>#47</strong> (logistics soak).</p>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Construction stages shown</strong> (R-STR-022): use <code>facility_types.hub</code> and the <code>build_25/60/90</code> states on the map
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>Construction stages shown</strong> (R-STR-022): use <code>facility_types.hub</code> and the <code>build_25/60/90</code> states on the map
       marker and in the <code>construction_defence</code> battle (the struck facility's own type and stage). This also fixes
       the default mission always showing the same station.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Cargo capacity as data</strong> (R-STR-026): convoys carry up to capacity and split larger orders. <em>Needs D1.</em></li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Survey report suitability</strong> for each facility type (R-STR-021).</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Attacked survey ship</strong>: the survey craft plus an auto-resolved or flown battle, instead of the fixed 50 % loss. <em>Needs D3.</em></li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Logistics soak</strong> (#47): autoplay builds facilities and the soak reports throughput and losses.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>Cargo capacity as data</strong> (R-STR-026): convoys carry up to capacity and split larger orders. <em>Needs D1.</em></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>Survey report suitability</strong> for each facility type (R-STR-021).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>Attacked survey ship</strong>: the survey craft plus an auto-resolved or flown battle, instead of the fixed 50 % loss. <em>Needs D3.</em></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> <strong>Logistics soak</strong> (#47): autoplay builds facilities and the soak reports throughput and losses.</li>
 </ul>
 <p>Files: <code>src/campaign/logistics.rs</code>, <code>src/content/logistics.rs</code>, <code>src/app/strategy.rs</code> (Supply tab, markers),
 <code>src/app/flight.rs</code> (stage objects), <code>resources/default/strategy/logistics.yaml</code>, <code>tools/default_assets/</code>.
 Done when: construction-stage visuals are confirmed by screenshots (manual cases MT-4-*); the logistics soak runs.
 Start prompt: <em>"Batch 4.2 of plan/stage-4-batches.md: logistics leftovers. Follow the batch protocol."</em></p>
-<p>Hand-off: _</p>
+<p>Hand-off: done 2026-11-20 — app 0.20.0 (main <code>9064f59</code>; D1 and D3 taken as the suggested defaults): new keys
+<code>logistics.cargo_capacity</code>, <code>construction_stages</code>, <code>survey_mission</code>, <code>survey_class</code>, <code>survey_loss</code>; the struck
+site and the survey ship stand in for the mission's <strong>first protected role</strong> (<code>MissionDef::with_stand_in</code>); stage
+pips on the map and <em>stage N of M</em> on the Supply list; the survey report's <em>suits:</em>; the default campaign's
+<code>survey_ship</code> (hull, look, text keys, generated model); load checks for stand-in missions, <code>hub</code> and
+<code>survey_class</code>; the logistics soak (<code>autoplay_day</code>, <code>LogisticsStats</code>). 449 unit tests. <code>--strategy-soak 180</code>
+(<code>default</code>): 12 of 16 topics, 39 battles, 3 facilities, 26 convoys (11 ambushed), 134 shipped / 108 delivered,
+every store within its capacity. Docs site 0.29.0, Spec 1.22.0 (R-STR-021, R-STR-022, R-STR-026 implemented;
+DEV-063; MT-4-55, MT-4-56). Still open: facility upgrades (#34); fighter pools R-STR-025 (#36 → Batch 4.3b); on</p>
+<h1 id="47-the-money-accounting-invariant-soak-battles-from-the-forces-jumping-to-an-undetected-contact-the">47 the money-accounting invariant, soak battles from the forces, jumping to an undetected contact. The<a class="headerlink" href="#47-the-money-accounting-invariant-soak-battles-from-the-forces-jumping-to-an-undetected-contact-the" title="Permanent link">&para;</a></h1>
+<p>construction-stage visuals and the survey battle need the manual run with screenshots (MT-4-55, MT-4-56).
+Next: Batch 4.3a.</p>
 <h3 id="batch-43-map-movement-and-contacts-l-gates-csd-parity-99100-needs-d5">Batch 4.3 — map, movement and contacts (L; gates CSD parity #99/#100; needs D5)<a class="headerlink" href="#batch-43-map-movement-and-contacts-l-gates-csd-parity-99100-needs-d5" title="Permanent link">&para;</a></h3>
 <p>Issues: <strong>#22</strong>, <strong>#23</strong>, <strong>#36</strong> (fighter pools), <strong>#47</strong> (force-based soak battles). Order inside the batch:
 endurance → flight plans → pools → generated missions → auto-resolve.</p>
@@ -6878,10 +6893,10 @@ Start prompt: <em>"Batch 4.5 of plan/stage-4-batches.md: content and data. Follo
 </thead>
 <tbody>
 <tr>
-<td>D1</td>
+<td>D1 ✅</td>
 <td>Supply convoy <strong>cargo capacity</strong> (R-STR-026; logistics.md open question 1)</td>
 <td>4.2 cargo</td>
-<td>A capacity per vessel type in data; orders split into several convoys</td>
+<td>A capacity per vessel type in data; orders split into several convoys — <strong>accepted 2026-11-20</strong>, built in 0.20.0 (<code>logistics.cargo_capacity</code>)</td>
 </tr>
 <tr>
 <td>D2</td>
@@ -6890,10 +6905,10 @@ Start prompt: <em>"Batch 4.5 of plan/stage-4-batches.md: content and data. Follo
 <td>Calibrate so a normal campaign researches most topics in about 18–24 months (check against the Sybex guide)</td>
 </tr>
 <tr>
-<td>D3</td>
+<td>D3 ✅</td>
 <td>The <strong>survey ship's craft</strong>, and where and in which mission an attacked survey ship fights (open question 3)</td>
 <td>4.2 survey battle</td>
-<td>A light survey hull plus the existing <code>convoy_ambush</code> shape at the survey site; auto-resolved unless the player flies</td>
+<td>A light survey hull plus the existing <code>convoy_ambush</code> shape at the survey site; auto-resolved unless the player flies — <strong>accepted 2026-11-20</strong>, built in 0.20.0 (<code>survey_ship</code>, <code>survey_mission</code>)</td>
 </tr>
 <tr>
 <td>D4</td>

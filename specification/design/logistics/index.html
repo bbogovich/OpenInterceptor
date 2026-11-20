@@ -6842,6 +6842,23 @@ Still different from this design: the nearest supplier is measured in a straight
 (DEV-049); the survey's per-facility <strong>suitability</strong> is shown on the Supply list's <em>Build</em>
 rows (with the refusal's reason), not in the survey report (Batch 4.2).</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.20.0, main <code>9064f59</code>): cargo capacity, construction stages, the survey ship</p>
+<p>Open questions 1 and 3 are answered (decisions D1 and D3, 2026-11-20). <strong>Cargo capacity</strong> is
+<code>logistics.cargo_capacity</code>, per vessel; a larger order leaves as several convoys (the
+design's <code>supply_ship.capacity</code>, as a flat key; the default campaign 40). <strong>Construction
+stages</strong> are shown on the map marker (pips) and in battle: the struck facility stands in for
+the defence mission's first protected role as its type's <code>hub</code> in its stage. The stages are
+one list for every facility type, <code>logistics.construction_stages: {state: start}</code>, rather
+than the design's <code>build.stages</code> per type, and the default starts are <strong>0 / 50 / 80 %</strong>, not
+the confirmed 0 / 60 / 90 % (DEV-063). The <strong>survey ship</strong> is a craft of its own
+(<code>logistics.survey_class</code>; the default campaign's new light <code>survey_ship</code> hull, not the
+Sky-Eye probe): an attacked one waits at the survey site and fights
+<code>logistics.survey_mission</code> (the default campaign's <code>convoy_ambush</code>) as one <code>survey_class</code>,
+flown or auto-resolved with <code>logistics.survey_loss</code>; the report lists the facility types the
+system <strong>suits</strong>. The design's <code>survey_ships:</code> section, <code>survey_time</code> and <code>reveals</code> are not
+keys: a survey takes its flight time at <code>survey_speed</code> and reveals everything listed.</p>
+</div>
 <h2 id="what-the-player-does">What the player does<a class="headerlink" href="#what-the-player-does" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart LR
     BA["main base&lt;br/&gt;orders components (demand)"] -- "order" --&gt; MA["manufacturing center&lt;br/&gt;needs materials for the order"]
@@ -7297,17 +7314,28 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 </tr>
 <tr>
 <td>Construction stages</td>
-<td>Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed).</td>
+<td>Three, each with its own mesh and debris (implemented); shown from 0 %, 60 % and 90 % (confirmed). As built (app 0.20.0) the default starts are 0 / 50 / 80 %, data in <code>logistics.construction_stages</code> (DEV-063).</td>
+</tr>
+<tr>
+<td>Cargo capacity (D1, 2026-11-20)</td>
+<td>A capacity per vessel in data; larger orders split into several convoys (<code>logistics.cargo_capacity</code>, app 0.20.0).</td>
+</tr>
+<tr>
+<td>Survey ship (D3, 2026-11-20)</td>
+<td>A light survey hull; an attacked one fights the existing <code>convoy_ambush</code> shape at the survey site, auto-resolved unless the player flies (<code>survey_class</code>, <code>survey_mission</code>, <code>survey_loss</code>, app 0.20.0).</td>
 </tr>
 </tbody>
 </table>
 <h2 id="open-questions">Open questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Cargo capacity</strong> of a supply vessel — still TBD, set by the tech-tree balance (<code>capacity: tbd</code>).</li>
+<li>~~<strong>Cargo capacity</strong> of a supply vessel — still TBD, set by the tech-tree balance (<code>capacity: tbd</code>).~~
+   Answered by D1 (2026-11-20): data per vessel, <code>logistics.cargo_capacity</code>; the default
+   campaign's 40 is a first value for the tech-tree balance to revisit.</li>
 <li><strong>Supply-convoy attacks</strong> — whether every convoy is attacked at its chosen point, or only some
    and at what chance.</li>
-<li><strong>Survey ship</strong> — its craft (the Sky-Eye probe object or a new model), and where, when and in
-   which mission an attacked survey ship meets its attackers.</li>
+<li>~~<strong>Survey ship</strong> — its craft (the Sky-Eye probe object or a new model), and where, when and in
+   which mission an attacked survey ship meets its attackers.~~ Answered by D3 (2026-11-20): a
+   new light survey hull, attacked at the survey site in the <code>convoy_ambush</code> shape.</li>
 <li><strong>Convoy size</strong> — the number of vessels per supply convoy.</li>
 </ol>
 <h2 id="revision-history">Revision history<a class="headerlink" href="#revision-history" title="Permanent link">&para;</a></h2>
@@ -7339,6 +7367,11 @@ stage models — scaffold, frame, cladding — for the three facilities and the 
 <td>1.21.0</td>
 <td>2026-11-20</td>
 <td>As-built note (app 0.19.0): <code>placement:</code> conditions built (with <code>system</code>, <code>nearest_base</code>, <code>any</code>; the roles' default rules as conditions; base types too, <code>base_distance</code>) and storage at every facility; DEV-049's placement part closed, the straight-line supplier remains</td>
+</tr>
+<tr>
+<td>1.22.0</td>
+<td>2026-11-20</td>
+<td>As-built note (app 0.20.0): cargo capacity per vessel (D1), construction stages shown and standing in for the struck site (one list for all types; default starts 0 / 50 / 80 %, DEV-063), the survey ship as a craft with its battle at the site and suitability in the report (D3); open questions 1 and 3 answered, decisions table extended</td>
 </tr>
 </tbody>
 </table>

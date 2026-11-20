@@ -6011,6 +6011,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-4-55-construction-stages-map-pips-the-supply-line-and-the-struck-facility-in-its-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-55 — Construction stages: map pips, the Supply line and the struck facility in its stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-56-an-attacked-survey-ship-the-prompt-flying-it-the-reports-suits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-56 — An attacked survey ship: the prompt, flying it, the report's suits:
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11396,6 +11418,28 @@
     <span class="md-ellipsis">
       
         MT-4-54 — The Build list's store line and the supply depot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-55-construction-stages-map-pips-the-supply-line-and-the-struck-facility-in-its-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-55 — Construction stages: map pips, the Supply line and the struck facility in its stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-56-an-attacked-survey-ship-the-prompt-flying-it-the-reports-suits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-56 — An attacked survey ship: the prompt, flying it, the report's suits:
       
     </span>
   </a>
@@ -16927,6 +16971,24 @@ pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>);
 <td></td>
 <td>App 0.19.0; #24, R-STR-004</td>
 </tr>
+<tr>
+<td>MT-4-55</td>
+<td>Construction stages: map pips, the Supply line and the struck facility in its stage</td>
+<td>Strategy screen, Supply; <code>construction_defence</code> (default + test addon)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.20.0; #34, R-STR-022, DEV-063; screenshots wanted</td>
+</tr>
+<tr>
+<td>MT-4-56</td>
+<td>An attacked survey ship: the prompt, flying it, the report's <em>suits:</em></td>
+<td>Strategy screen, Supply; <code>convoy_ambush</code> as the survey battle (default + test addon)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App 0.20.0; #36, R-STR-021; screenshots wanted</td>
+</tr>
 </tbody>
 </table>
 <h2 id="stage-4-cases">Stage 4 cases<a class="headerlink" href="#stage-4-cases" title="Permanent link">&para;</a></h2>
@@ -17182,11 +17244,11 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 </tr>
 <tr>
 <td>Steps</td>
-<td>1. Open the Supply tab with no system chosen. 2. Click a system inside the Gatehouse's radar circle (or Mercury Gate itself); on the Supply tab choose <em>Survey <system> from Gatehouse</em>. 3. Run the clock until the survey reports. 4. Choose the same row again. 5. Click a system outside every radar circle and try to survey it.</td>
+<td>1. Open the Supply tab with no system chosen. 2. Click a system inside the Gatehouse's radar circle (or Mercury Gate itself); on the Supply tab choose <em>Survey &lt;system&gt; from Gatehouse</em>. 3. Run the clock until the survey reports. 4. Choose the same row again. 5. Click a system outside every radar circle and try to survey it.</td>
 </tr>
 <tr>
 <td>Expected</td>
-<td>1: <em>(choose a system on the map to survey it or build there)</em> and <em>0 orders open, 0 convoys under way, 0 survey ships out</em>. 2: <em>Done.</em>; a sky-blue ring leaves the base on the map; the count says <em>1 survey ships out</em>. 3: the clock stops with <em>Survey of <system>: <deposits with rates per day>; research site: …</em> (or, after an attack roll, <em>(after fighting off an attack)</em>, or <em>Survey ship attacked and lost on the way to <system></em> — then survey again). 4: the Survey row is gone. 5: <em><system> is outside Gatehouse's radar range</em>.</td>
+<td>1: <em>(choose a system on the map to survey it or build there)</em> and <em>0 orders open, 0 convoys under way, 0 survey ships out</em>. 2: <em>Done.</em>; a sky-blue ring leaves the base on the map; the count says <em>1 survey ships out</em>. 3: the clock stops with <em>Survey of &lt;system&gt;: &lt;deposits with rates per day&gt;; research site: …</em> (or, after an attack roll, <em>(after fighting off an attack)</em>, or <em>Survey ship attacked and lost on the way to &lt;system&gt;</em> — then survey again). Since app 0.20.0 the report ends with <em>suits: …</em> (the facility types the system suits), and an attacked ship stops at the system with the <strong>Survey ship attacked</strong> prompt instead (MT-4-56); a lost one reads <em>Survey ship attacked and lost at &lt;system&gt;</em>. 4: the Survey row is gone. 5: <em>&lt;system&gt; is outside Gatehouse's radar range</em>.</td>
 </tr>
 </tbody>
 </table>
@@ -17209,7 +17271,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 </tr>
 <tr>
 <td>Expected</td>
-<td>1: Mining and Research station rows end <em>(… has not been surveyed)</em>. 2: <em>Done.</em>; funds drop by its cost (400,000); a grey diamond beside the system; the Supply tab lists <em>Mining facility at <system>: building, 10.0 days</em>. 3: <em>there is already one in this system</em>. 4: allowed (a base's system); a system more than two lanes away says <em>is more than two lanes from your bases</em>. 5: <em>(… is not a research site)</em>. 6: <em>Mining facility at <system> is complete</em> stops the clock; the diamond turns orange; the facility's row lists its store filling (<em>… Iron</em>).</td>
+<td>1: Mining and Research station rows end <em>(… has not been surveyed)</em>. 2: <em>Done.</em>; funds drop by its cost (400,000); a grey diamond beside the system; the Supply tab lists <em>Mining facility at &lt;system&gt;: building, 10.0 days</em>. 3: <em>there is already one in this system</em>. 4: allowed (a base's system); a system more than two lanes away says <em>is more than two lanes from your bases</em>. 5: <em>(… is not a research site)</em>. 6: <em>Mining facility at &lt;system&gt; is complete</em> stops the clock; the diamond turns orange; the facility's row lists its store filling (<em>… Iron</em>).</td>
 </tr>
 </tbody>
 </table>
@@ -17830,7 +17892,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 </tr>
 <tr>
 <td>Expected</td>
-<td>2: no strike before a site is half built; the prompt <em>Enemy craft are striking the <facility> at <system> under construction. Fly its defence, or let the strike set the work back.</em> with <em>Fly the defence</em> and <em>Let it be</em>; the clock stopped. 3: a report <em><facility> at <system> was struck: construction set back N days</em> (a quarter of its build time) and the site finishes that much later. 4: the <em>Construction defence</em> battle (a research station at 60 % and raiders); back on the map <em>Construction defence: WIN</em> and <em>…: the strike was beaten off</em>. 5: <em>… was destroyed under construction</em>; its diamond is gone from the map. 6: at most three strikes per system. 7: <em>No ready craft: the strike goes unopposed.</em> and the set-back report.</td>
+<td>2: no strike before a site is half built; the prompt <em>Enemy craft are striking the &lt;facility&gt; at &lt;system&gt; under construction. Fly its defence, or let the strike set the work back.</em> with <em>Fly the defence</em> and <em>Let it be</em>; the clock stopped. 3: a report <em>&lt;facility&gt; at &lt;system&gt; was struck: construction set back N days</em> (a quarter of its build time) and the site finishes that much later. 4: the <em>Construction defence</em> battle (until app 0.20.0 a research station at 60 % whatever was struck; since 0.20.0 the struck facility's own type in its stage, MT-4-55, and raiders); back on the map <em>Construction defence: WIN</em> and <em>…: the strike was beaten off</em>. 5: <em>… was destroyed under construction</em>; its diamond is gone from the map. 6: at most three strikes per system. 7: <em>No ready craft: the strike goes unopposed.</em> and the set-back report.</td>
 </tr>
 </tbody>
 </table>
@@ -17853,7 +17915,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 </tr>
 <tr>
 <td>Expected</td>
-<td>2: back on the map a report <em>Mining facility at <system> lost</em>; the facility is gone and its orders with it; <em>Lost: Mining facility at <system></em> in the log. 3: <em>Captured: scout_saucer</em> in the log; the prize counts as salvage, so a topic with <code>requires: salvaged(scout_saucer)</code> could start. Without <code>capture</code> in the outcome nothing is kept. 4: nothing new: the default topics name raids in <code>salvaged(…)</code>, not classes. 5: the win adds the mission's <code>convoy_delivered</code> score; the loss records <em>Convoy cargo lost</em> and the <code>convoy_lost</code> score, as well as delivering nothing.</td>
+<td>2: back on the map a report <em>Mining facility at &lt;system&gt; lost</em>; the facility is gone and its orders with it; <em>Lost: Mining facility at &lt;system&gt;</em> in the log. 3: <em>Captured: scout_saucer</em> in the log; the prize counts as salvage, so a topic with <code>requires: salvaged(scout_saucer)</code> could start. Without <code>capture</code> in the outcome nothing is kept. 4: nothing new: the default topics name raids in <code>salvaged(…)</code>, not classes. 5: the win adds the mission's <code>convoy_delivered</code> score; the loss records <em>Convoy cargo lost</em> and the <code>convoy_lost</code> score, as well as delivering nothing.</td>
 </tr>
 </tbody>
 </table>
@@ -18130,6 +18192,52 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: <em>Store: 14 of 120 used</em>; <em>Supply depot - 150,000, 7 days (storage)</em>. 2: <em>Supply depot: building, 7.0 days</em>; still <em>of 120</em> (a module adds room only once it works). 3: <em>of 270</em>. 4: <em>of 420</em>. 5: refused, <em>Gatehouse already has the most storage modules it can hold (2)</em>. 6: <em>Supply depot dismantled (75000 back)</em>; <em>of 270</em>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-55-construction-stages-map-pips-the-supply-line-and-the-struck-facility-in-its-stage">MT-4-55 — Construction stages: map pips, the Supply line and the struck facility in its stage<a class="headerlink" href="#mt-4-55-construction-stages-map-pips-the-supply-line-and-the-struck-facility-in-its-stage" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.20.0 or later. A test addon <code>mods/default-stages-test/</code> with <code>pack.yaml</code> (<code>id: default-stages-test</code>, <code>kind: addon</code>, <code>targets: [default]</code>) and <code>strategy/logistics.yaml</code>: <code>logistics: {construction_strikes: {chance: 100%}}</code> (global sections merge key by key, so only the chance changes: a strike comes within about a day once a site is half built). <code>openinterceptor --no-original --strategy</code> (default campaign, the addon active). Ctrl+M once or twice for funds. A screenshot tool (on macOS Cmd+Shift+4); the shots are of the original-free default campaign — attach them to the Stage 4 manual-test issue, do not commit them.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Select Ajax; Supply › <em>Survey Ajax from Gatehouse</em>; run until the survey reports. 2. Build a <strong>Mining facility</strong> at Ajax (10 days); zoom the map onto Ajax and read the marker and the Supply list's facility row. <strong>Screenshot.</strong> 3. Run at <em>1d</em> and watch the pips at about day 5 and day 8; read the Supply row each time. <strong>Screenshot</strong> at each stage. 4. At the first <em>Construction under attack</em> prompt (from half built), <strong>Fly the defence</strong>; look at the site in the battle (from the cockpit, or target it and use the external view). <strong>Screenshot.</strong> Win it. 5. Let the next strike be (<em>Let it be</em>); read the pips and the Supply row. 6. Edit the addon to <code>construction_strikes: {from: 85%, chance: 100%}</code>; start a new campaign and build a <strong>Manufacturing center</strong> (15 days) at Mercury Gate (the base's own system needs no survey); fly the first strike. <strong>Screenshot.</strong> 7. Let a facility finish. 8. Remove the addon.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>2: a grey diamond beside Ajax with <strong>three small pips</strong> under it, the first filled orange, two hollow grey; the row reads <em>Mining facility at Ajax: building, stage 1 of 3, 10.0 days</em> (the days counting down). 3: from half built (about 5.0 days left) two pips filled and <em>stage 2 of 3</em>; from 80 % (about 2.0 days left) three filled and <em>stage 3 of 3</em>. 4: the <em>Construction defence</em> battle shows a <strong>mining facility</strong> (not a research station) in its <strong>60 % model</strong> (<code>build_60</code>, the second construction mesh); raiders attack it; <em>Construction defence: WIN</em> on return. 5: <em>… construction set back 2.5 days</em>; the site may drop back a stage (two pips → one if it fell below 50 %). 6: the battle shows a <strong>manufacturing center</strong> in its <strong>90 % model</strong> (<code>build_90</code>). 7: the diamond turns orange and the pips disappear; the row lists its store. 8: back to the default 12 % a day.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-56-an-attacked-survey-ship-the-prompt-flying-it-the-reports-suits">MT-4-56 — An attacked survey ship: the prompt, flying it, the report's <em>suits:</em><a class="headerlink" href="#mt-4-56-an-attacked-survey-ship-the-prompt-flying-it-the-reports-suits" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App 0.20.0 or later. A test addon <code>mods/default-survey-test/</code> with <code>pack.yaml</code> (<code>id: default-survey-test</code>, <code>kind: addon</code>, <code>targets: [default]</code>) and <code>strategy/logistics.yaml</code>: <code>logistics: {survey_attack_chance: 100%}</code> (every survey ship is attacked). <code>openinterceptor --no-original --strategy</code>; a ready Comet with a pilot at the Gatehouse (the starting craft are). A screenshot tool, as in MT-4-55.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Select Ajax; Supply › <em>Survey Ajax from Gatehouse</em>; run the clock. 2. When it stops, read the prompt and the message log; look at the survey ship's ring on the map; leave the prompt up a moment. 3. <strong>Fly the escort.</strong> In the battle, find the ship you are protecting (target it, external view). <strong>Screenshot.</strong> Keep the grapplers off its two containers until it jumps out. 4. Back on the map, read the report and the Messages list. 5. Survey Cinder; at the prompt press <strong>Fly the escort</strong>, then leave the battle early from the pause menu. 6. Survey Mercury Gate; press <strong>Let it be</strong>. Repeat with other systems until one is lost. 7. Survey another system and fly the battle, but let the grapplers take both containers. 8. Remove the addon.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>2: the clock stopped; <strong>Survey ship attacked</strong> — <em>The survey ship at Ajax is under attack. Fly its escort, or let it try to get away alone.</em> — with <strong>Fly the escort</strong> and <strong>Let it be</strong>; the log has <em>Survey ship under attack at Ajax</em>; the sky-blue ring has stopped at Ajax. 3: the <em>Convoy ambush</em> battle, but the convoy is <strong>one survey ship</strong> — a slim hull with a sensor dish on a mast and <strong>two sample containers</strong> on pylons, two engine bells — not two clippers; grapplers and escorts arrive as in MT-4-28. <strong>Screenshot.</strong> On its jump: <em>Survey ship battle: WIN</em>. 4: a report <em>Survey of Ajax (after fighting off an attack): Cosmium 6/day (1800 in reserve), Iron 20/day (unlimited); features: none; research site: none; suits: Mining facility, Manufacturing center</em>; the Supply list's Build rows agree. 5: <em>Survey ship battle: RETREAT</em>; then either the Cinder report or <em>Survey ship attacked and lost at Cinder</em> (a 50 % chance). 6: the same coin flip without a battle; a lost ship leaves <em>Survey ship attacked and lost at …</em> and the system stays unsurveyed (its Survey row is back). 7: <em>Survey ship battle: LOSE</em> and <em>… lost at …</em>. 8: survey ships are attacked a quarter of the time again. (A ship waiting at its site is saved, <code>held</code>; that round trip is unit-tested.)</td>
 </tr>
 </tbody>
 </table>

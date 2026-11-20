@@ -6751,6 +6751,11 @@ Since app 0.6.4 the soak report counts kills while the mission is still running
 environment and hazards and its enemy roles and waves scaled, and <code>FlightSession::start_custom</code>
 starts it through the same <code>MissionRun</code> as any other mission. Nothing in <code>mission</code> knows it is
 a simulation.</p>
+<p>Campaign battles use the same idea since app 0.20.0: <code>MissionDef::with_stand_in(&amp;StandIn)</code>
+returns a copy whose <strong>first protected role</strong> (<code>stand_in_role</code>, the first <code>protect: true</code>) has
+a campaign object's class, model-set state or count — a struck construction site, an attacked
+survey ship — and <code>FlightSession::start_mission_def</code> flies it (its "fly again" repeats the
+mission by id). See <a href="../campaign/#the-stand-in-a-campaign-object-in-a-ready-made-mission-app-0200">Campaign › The stand-in</a>.</p>
 <h3 id="cargo-escorts-and-repeating-waves-app-092">Cargo, escorts and repeating waves (app 0.9.2)<a class="headerlink" href="#cargo-escorts-and-repeating-waves-app-092" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong><code>cargo(role)</code></strong> and the debrief's cargo share come from <code>mission::cargo_share(world, role)</code>:
@@ -6828,12 +6833,17 @@ so pilots that start together do not act together.</p>
 <td><code>app::Next::Simulate</code>, <code>FlightSession::start_custom</code></td>
 <td>Starting a simulator mission: a ready-made, modified <code>MissionDef</code> (app 0.6.3).</td>
 </tr>
+<tr>
+<td><code>MissionDef::stand_in_role</code>, <code>with_stand_in</code>, <code>StandIn</code>; <code>FlightSession::start_mission_def</code></td>
+<td>A campaign object in a mission's first protected role, on a copy; flying that copy (app 0.20.0).</td>
+</tr>
 </tbody>
 </table>
 <h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>MissionDef::parse(id, Get, pack, classes, levels) -&gt; Result&lt;MissionDef, String&gt;</code>;
-  <code>def.outcome(result) -&gt; &amp;[Action]</code>.</li>
+  <code>def.outcome(result) -&gt; &amp;[Action]</code>; <code>def.stand_in_role() -&gt; Option&lt;usize&gt;</code>,
+  <code>def.with_stand_in(&amp;StandIn) -&gt; Result&lt;MissionDef, String&gt;</code> (app 0.20.0).</li>
 <li><code>MissionRun::start(&amp;MissionDef, Arc&lt;Ruleset&gt;, Arc&lt;Vec&lt;Shape&gt;&gt;, Option&lt;ShipClassId&gt;) -&gt;
   Result&lt;(World, MissionRun), String&gt;</code>; <code>run.update(&amp;mut World) -&gt; Vec&lt;String&gt;</code> (message lines);
   <code>run.spawn_role(&amp;mut World, role, count, at) -&gt; Result&lt;usize, String&gt;</code>; <code>run.kills() -&gt; u32</code>;

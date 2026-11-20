@@ -4282,6 +4282,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Supply">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#survey-ship-attacked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Survey ship attacked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6635,6 +6652,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Supply">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#survey-ship-attacked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Survey ship attacked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6788,7 +6822,9 @@ opens one screen of the set directly (<code>--strategy --screen research</code>)
 <li><strong>Map</strong> (left). Star systems (hidden ones appear when your sensors reach them), lanes, your
   bases (squares) with their sensor ranges, enemy contacts once detected (red, with their way
   ahead), and your craft in flight. With a supply chain also your <strong>facilities</strong> (a diamond beside
-  the system, grey while building, orange when working), <strong>supply convoys</strong> (gold dots) and
+  the system, grey while building, orange when working; since app 0.20.0 a building one has a
+  row of small <strong>stage pips</strong> under it, one per construction stage, the stages reached filled),
+  <strong>supply convoys</strong> (gold dots) and
   <strong>survey ships</strong> (sky-blue rings). A legend runs along the bottom.</li>
 <li><strong>Wheel</strong>: zoom in and out about the mouse pointer — the point under it stays put.</li>
 <li><strong>Right or middle drag</strong>: pan.</li>
@@ -6843,6 +6879,10 @@ the screen with buttons; nothing else can be clicked until you answer.</p>
 <tr>
 <td><strong>Construction under attack</strong> — a facility being built is struck (app 0.16.4)</td>
 <td><strong>Fly the defence</strong>, <strong>Let it be</strong> (Enter / Esc)</td>
+</tr>
+<tr>
+<td><strong>Survey ship attacked</strong> — a survey ship is under attack at its survey site (app 0.20.0)</td>
+<td><strong>Fly the escort</strong>, <strong>Let it be</strong> (Enter / Esc)</td>
 </tr>
 <tr>
 <td><strong>Save game</strong> — the top bar's <em>Save</em> (app 0.16.14)</td>
@@ -6944,7 +6984,7 @@ are the <em>Sell 1</em> and <em>Fit best</em> buttons.</p>
 <tbody>
 <tr>
 <td><strong>Bases</strong></td>
-<td>Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: <em>Build a <type> at <system></em> with its cost</td>
+<td>Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: <em>Build a &lt;type&gt; at &lt;system&gt;</em> with its cost</td>
 <td><em>Select</em> (make it current); <em>Build</em></td>
 </tr>
 <tr>
@@ -6979,7 +7019,7 @@ are the <em>Sell 1</em> and <em>Fit best</em> buttons.</p>
 </tr>
 <tr>
 <td><strong>Supply</strong></td>
-<td>With a system selected: <em>Survey</em> it, and <em>Build</em> each kind of facility there (with the cost, and why not when it is not allowed). Then your facilities and what they hold or how long they take to build; on a working research station, the topics it can research; the current base's store of components; how many orders, convoys and survey ships are under way (<a href="#supply">Supply</a>)</td>
+<td>With a system selected: <em>Survey</em> it, and <em>Build</em> each kind of facility there (with the cost, and why not when it is not allowed). Then your facilities and what they hold or how long they take to build (since app 0.20.0 with the construction stage); on a working research station, the topics it can research; the current base's store of components; how many orders, convoys and survey ships are under way (<a href="#supply">Supply</a>)</td>
 <td><em>Survey</em>; <em>Build</em>; <em>Start</em> (research at a station)</td>
 </tr>
 <tr>
@@ -7052,11 +7092,12 @@ automatic government <strong>supply convoys</strong> along the lanes. You do not
 decide where to survey and what to build.</p>
 <ol>
 <li><strong>Survey.</strong> Click a system on the map and press <strong>Survey</strong> in the info panel (or open the
-   Supply list and choose <em>Survey <system> from <base></em>). The system must be within the current base's radar range. The survey ship flies
+   Supply list and choose <em>Survey &lt;system&gt; from &lt;base&gt;</em>). The system must be within the current base's radar range. The survey ship flies
    there (a sky-blue ring); when it arrives a message lists the deposits it found, with their
    rates a day and how much is in reserve (or <em>unlimited</em>), the system's features and any
-   research site (reserves and features since app 0.16.2). A survey ship may be attacked on the way: it fights off
-   the attack or is lost (then survey again).</li>
+   research site (reserves and features since app 0.16.2), and since app 0.20.0 which kinds of
+   facility the system suits (<em>suits: Mining facility, Manufacturing center</em>). A survey ship may
+   be attacked at the system: see <a href="#survey-ship-attacked">below</a>.</li>
 <li><strong>Build.</strong> With a system selected, the info panel offers each kind of facility that may be
    built there as a button with its cost, and the Supply list offers every kind:</li>
 <li>a <strong>mining facility</strong> needs a surveyed system with deposits;</li>
@@ -7064,7 +7105,9 @@ decide where to survey and what to build.</p>
 <li>a <strong>research station</strong> needs a surveyed system that is a research site.</li>
 </ol>
 <p>The row says why when it cannot be built. A facility takes days to build (a grey diamond on
-   the map) and a message says when it is complete.
+   the map) and a message says when it is complete. While it builds it goes through three
+   <strong>construction stages</strong> — about a quarter, 60 % and 90 % built to look at — shown by the pips
+   under its diamond and on the Supply list (<em>building, stage 2 of 3, 6.5 days</em>; app 0.20.0).
 3. <strong>Make.</strong> Queue a hull on the Factory list as usual. Its row waits until the components have
    arrived; the Supply list shows the base's store and the orders and convoys under way.
 4. <strong>Research at a station.</strong> A finished research station lists the station-only topics of
@@ -7097,6 +7140,22 @@ The clock stops with <strong>Construction under attack</strong>:</p>
 <li><strong>Let it be</strong> — the strike sets the work back by a quarter of its build time. This is also what
   happens when no craft is ready.</li>
 </ul>
+<p>Since app 0.20.0 the defence shows the facility that was actually struck, in the stage it has
+reached.</p>
+<h3 id="survey-ship-attacked">Survey ship attacked<a class="headerlink" href="#survey-ship-attacked" title="Permanent link">&para;</a></h3>
+<p><em>App 0.20.0.</em> A survey ship may be attacked at the system it went to survey (a 25 % chance in the
+default campaign). It stops there, and the clock stops with <strong>Survey ship attacked</strong> — <em>The
+survey ship at &lt;system&gt; is under attack. Fly its escort, or let it try to get away alone.</em>:</p>
+<ul>
+<li><strong>Fly the escort</strong> — fly the <em>Convoy ambush</em> battle with the first ready craft, but the convoy
+  is <strong>the survey ship alone</strong>: a light hull with a sensor dish and two sample containers,
+  making for its jump point. Grappler tugs try to tear the containers off. If the ship jumps out
+  with a container aboard (or the battle ends in a draw), it got away and its report comes in;
+  if the battle is lost, the ship is lost. Leaving the battle early is the same as <em>Let it be</em>.</li>
+<li><strong>Let it be</strong> — the ship tries to get away alone: in the default campaign it is lost half the
+  time. This is also what happens when no craft is ready.</li>
+</ul>
+<p>A lost survey ship leaves <em>Survey ship attacked and lost at &lt;system&gt;</em>; survey again.</p>
 <h2 id="the-story">The story<a class="headerlink" href="#the-story" title="Permanent link">&para;</a></h2>
 <p><em>App 0.10.0 – 0.10.3.</em> The story runs by itself as the days pass; you meet it as messages that
 stop the clock, choices, offered missions and, finally, an ending.</p>

@@ -6952,7 +6952,7 @@
 <p><em>Rationale:</em> Stage 5 exit.</p>
 <ul>
 <li>Implements: <a href="../../../definition/testbed-tools/#f-tst-003-headless-runs">F-TST-003</a>, <a href="../../../definition/campaigns/features/#f-cpn-006-story-rivals-and-relations">F-CPN-006</a></li>
-<li>Status: planned — partly met (app 0.8.0, main <code>c64d178</code>: <code>--strategy-soak &lt;days&gt;</code>; app 0.10.3, main <code>76bda5c</code>: the default campaign's year-long consistency soak)</li>
+<li>Status: planned — partly met (app 0.8.0, main <code>c64d178</code>: <code>--strategy-soak &lt;days&gt;</code>; app 0.10.3, main <code>76bda5c</code>: the default campaign's year-long consistency soak; app 0.20.0, main <code>9064f59</code>: the logistics soak, #47)</li>
 <li>Verified by: <code>campaign::tests::the_default_campaign_runs_six_months</code>, <code>the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code>; MT-4-23, MT-5-10</li>
 <li>See: <a href="../../../implementation/plan/stage-5-campaign/">Stage 5</a>, <a href="../../../modding/strategy/#trying-a-campaign-out">Strategy layer › Trying a campaign out</a></li>
 </ul>
@@ -6964,9 +6964,13 @@
 <p class="admonition-title">As built (app 0.10.1 – 0.10.3)</p>
 <p><code>the_default_campaign_runs_a_year_with_its_story_and_stays_consistent</code> plays the default campaign for a year a month at a time (<code>campaign::autoplay_from</code>; ambushed convoys fight through, each choice's first option is taken, offered missions alternate two wins and a loss) and after each month checks <strong>no orphan references</strong> (every craft, pilot, base, module, topic, contact, plan and facility index in range), finite money and score, and <strong>monotonic arc progress</strong>; at the end the serial has moved past its sixth chapter and the Eclipse Engine is under way, and every end condition evaluates. <code>--strategy-soak</code> also prints the last monthly report and the story (arcs, plans, aggression, ending; app 0.10.1 – 0.10.2).</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">As built (app 0.19.0 – 0.20.0): storage and the logistics soak</p>
+<p>Since app 0.19.0 <code>--strategy-soak</code> plays day by day and checks every store against its capacity each day (<em>storage: every store within its capacity</em>; the year-long test asserts it too). Since app 0.20.0 (#47) the automatic player also runs the <strong>supply chain</strong> once a day (<code>campaign::logistics::autoplay_day</code>: a survey ship out to the nearest unsurveyed system, one facility of each type — two mines — built in supply-chain order where placement allows, an idle research station set on a station topic, one hull built from components kept on order), and the running totals of the chain (<code>LogisticsStats</code>: convoys, goods shipped and delivered, ambushes, vessels lost, surveys sent, attacked and lost) are kept and saved; <code>--strategy-soak</code> prints them as a <em>logistics:</em> line. The default campaign, 180 days at <code>9064f59</code>: 3 facilities, 26 convoys, 11 ambushed, 134 goods shipped and 108 delivered, every store within its capacity. The automatic player clears <code>Campaign::notices</code> daily (on-screen only, never saved).</p>
+</div>
 <div class="admonition question">
 <p class="admonition-title">Open</p>
-<p>Not built: a money-accounting check (money is only checked to be finite), a unit-tested soak of <code>interceptor</code> (its data is the player's, so it runs only by hand with <code>--strategy-soak</code>), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).</p>
+<p>Not built: a money-accounting check (money is only checked to be finite), a unit-tested soak of <code>interceptor</code> (its data is the player's, so it runs only by hand with <code>--strategy-soak</code>), auto-resolved battles from the forces involved (results are alternated; Batch 4.3b). The logistics totals are printed, not yet checked as an invariant (for example shipped = delivered + lost + in flight).</p>
 </div>
 <h3 id="r-tst-012-asset-generators">R-TST-012 Asset generators<a class="headerlink" href="#r-tst-012-asset-generators" title="Permanent link">&para;</a></h3>
 <p><code>tools/default_assets/</code> MUST generate the default campaign's models, textures (with damage variants) and sounds.</p>
@@ -7026,6 +7030,11 @@
 <td>1.18.0</td>
 <td>2026-11-11</td>
 <td>R-TST-009 implemented: the condition console (app 0.16.5, #20); R-TST-010 As-built note: the event and arc debugger (Ctrl+D, <em>Fire now</em>) and <code>--strategy --chapter N</code> (app 0.16.13, #47), the Open note narrowed (status stays partly met: no debug clock beyond the speeds, no jump from an undetected contact)</td>
+</tr>
+<tr>
+<td>1.22.0</td>
+<td>2026-11-20</td>
+<td>R-TST-011 As-built note: the storage check (app 0.19.0) and the logistics soak — the automatic player runs the supply chain, <code>LogisticsStats</code> saved, the <em>logistics:</em> line (app 0.20.0, #47); the Open note narrowed to money accounting, an <code>interceptor</code> unit soak and battles from forces (status stays partly met). No requirement text changed</td>
 </tr>
 </tbody>
 </table>

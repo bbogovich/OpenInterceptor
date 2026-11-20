@@ -7301,7 +7301,12 @@ systems' <code>deposits</code> and <code>features</code>, hulls' <code>component
 <code>max_distance</code> — a breaking change for mods), <code>facility_types.&lt;id&gt;.placement</code>, module <strong>groups</strong>
 in <code>base_types.&lt;id&gt;.template</code>, and <code>economy.repair</code>, with the campaign query <code>base_distance</code> and
 the reserved names <code>system</code>, <code>nearest_base</code> and <code>any</code>
-(<a href="../strategy/#bases-storage-wrecks-and-placement">Strategy layer › Bases: storage, wrecks and placement</a>). The <strong>story
+(<a href="../strategy/#bases-storage-wrecks-and-placement">Strategy layer › Bases: storage, wrecks and placement</a>);
+in app 0.20.0 <code>logistics.cargo_capacity</code>, <code>logistics.construction_stages</code>,
+<code>logistics.survey_mission</code>, <code>logistics.survey_class</code> and <code>logistics.survey_loss</code>, with
+<code>facility_types.&lt;id&gt;.hub</code> now used (the struck site and the survey ship stand in for a
+mission's first protected role; <a href="../strategy/#construction-stages-and-the-stand-in">Strategy layer › Construction stages and the
+stand-in</a>). The <strong>story
 layer</strong> (app 0.10.0) adds the definitions <code>events</code>, <code>arcs</code>, <code>plans</code>, <code>endings</code>,
 <code>encyclopaedia</code> and the globals <code>relations</code>, <code>strategist</code>, <code>campaign_end</code>, by convention in
 <code>strategy/story.yaml</code> — every key is on <a href="../story/">Story layer</a>. All of them are in the editor

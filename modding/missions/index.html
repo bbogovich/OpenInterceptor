@@ -6957,7 +6957,7 @@ definitions), <code>src/mission/</code> (the runtime, <a href="../../implementat
 <td><code>protect</code></td>
 <td>bool</td>
 <td><code>false</code></td>
-<td>An objective the player must keep alive (marked on the HUD, skipped by nearest-enemy targeting).</td>
+<td>An objective the player must keep alive (marked on the HUD, skipped by nearest-enemy targeting). The <strong>first</strong> protected role is also where a campaign object stands in when the strategy layer flies this mission for a struck construction site or an attacked survey ship (app 0.20.0; <a href="../strategy/#the-stand-in-rule">Strategy layer › The stand-in rule</a>).</td>
 </tr>
 <tr>
 <td><code>state</code></td>
@@ -7456,6 +7456,10 @@ example of cargo, tugs, escorts and repeating waves:</p>
   (<code>timer: {after: 15min, then: draw}</code>), and what is still aboard is delivered. Optional
   objectives: <code>all_cargo</code> and <code>both_clippers</code>.</li>
 <li><strong>Chatter</strong> marks the grapplers' arrival, a quarter of the cargo lost and a minute to the jump.</li>
+<li><strong>As the survey battle</strong> (app 0.20.0): the default campaign's <code>logistics.survey_mission</code> is
+  this mission too. One <code>survey_ship</code> — a light hull with two sample containers — stands in for
+  the <code>clippers</code> role (its first protected role), so everything above applies to that one ship
+  and its two containers (<a href="../strategy/#survey-ships-and-their-battle">Strategy layer › Survey ships and their battle</a>).</li>
 </ul>
 <h2 id="common-errors">Common errors<a class="headerlink" href="#common-errors" title="Permanent link">&para;</a></h2>
 <table>
