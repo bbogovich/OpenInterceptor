@@ -642,6 +642,25 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
                     fix(&mut a.args[0], &format!("plans.{}.warnings", p.id));
                 }
             }
+            // A plan's `complete` list carries text actions too (`message(@…)` when the
+            // plan finishes), so its keys are resolved like the warnings'.
+            for a in p.complete.iter_mut().filter(|a| texty(a)) {
+                fix(&mut a.args[0], &format!("plans.{}.complete", p.id));
+            }
+        }
+        // Monthly evaluations run action lists in the campaign context: their text
+        // actions and the scripts they call need their `@keys` resolved like events'.
+        // (`story` borrows `s.story`; `s.evaluations` is a different field, so Rust
+        // lets both mutable borrows live at once.)
+        for (k, ev) in s.evaluations.iter_mut().enumerate() {
+            for a in &mut ev.actions {
+                if let Some(p) = &mut a.program {
+                    fix_program(p, &format!("evaluations[{k}]"), &mut script_errors);
+                }
+                if texty(a) {
+                    fix(&mut a.args[0], &format!("evaluations[{k}]"));
+                }
+            }
         }
         for e in &mut story.endings {
             fix(&mut e.text, &format!("endings.{}", e.id));
@@ -803,6 +822,29 @@ mod tests {
             "{:?}",
             c.errors
         );
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn evaluation_texts_are_resolved() {
+        // Regression (0.18.1): `@keys` in evaluations' `do:` lists were never resolved.
+        let root = std::env::temp_dir().join(format!("oi-evaltext-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        make_pack(&root, "base", "", false);
+        let dir = root.join("base");
+        std::fs::create_dir_all(dir.join("strategy")).unwrap();
+        std::fs::create_dir_all(dir.join("text/en")).unwrap();
+        let strategy = format!(
+            "{}\nevaluations:\n  - {{rating: Bad, do: [\"message(@eval.bad)\"]}}\n",
+            crate::content::strategy::tests::SAMPLE
+        );
+        std::fs::write(dir.join("strategy/s.yaml"), strategy).unwrap();
+        std::fs::write(dir.join("text/en/eval.yaml"), "text: {eval.bad: A bad month}\n").unwrap();
+        let cfg = ContentConfig { pack_dirs: vec![root.clone()], ..Default::default() };
+        let c = Content::load(&cfg).unwrap();
+        assert!(c.errors.iter().all(|e| !e.contains("eval")), "{:?}", c.errors);
+        let s = c.rules.strategy.as_ref().expect("the strategy loaded");
+        assert_eq!(s.evaluations[0].actions[0].args[0], "A bad month");
         std::fs::remove_dir_all(&root).unwrap();
     }
 
