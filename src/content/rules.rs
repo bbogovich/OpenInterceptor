@@ -842,6 +842,18 @@ pub fn build(sources: &[RulesSource], original: &OriginalLookup) -> (Ruleset, Ve
 /// [`build`] at a chosen difficulty level (by id; `None` = the campaign's
 /// `default_difficulty`, else the middle level).
 pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Option<&str>) -> (Ruleset, Vec<String>) {
+    build_with(sources, &crate::script::stmt::Library::default(), original, level)
+}
+
+/// [`build_at`] with the packs' script files (`scripts/*.ois`), which behaviours'
+/// `do: script` states and `script(...)` entries in action lists call. Each call is
+/// compiled here, against its own context, so a script error is a rules error.
+pub fn build_with(
+    sources: &[RulesSource],
+    scripts: &crate::script::stmt::Library,
+    original: &OriginalLookup,
+    level: Option<&str>,
+) -> (Ruleset, Vec<String>) {
     let mut errors = Vec::new();
     // 1. Check every file against the rules schema.
     let schema = super::files::rules();
@@ -1125,7 +1137,7 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let object_schema = crate::script::object::schema(&difficulty_levels);
     let mut behaviours = Vec::new();
     for (_, id, e) in of(&resolved, "behaviours") {
-        match BehaviourDef::parse(id, Get(&e.node), &object_schema) {
+        match BehaviourDef::parse(id, Get(&e.node), &object_schema, scripts) {
             Ok(b) => behaviours.push(b),
             Err(msg) => errors.push(format!("{}: behaviours.{id}: {msg}", e.origin)),
         }
@@ -1369,7 +1381,8 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
     let class_ids: Vec<String> = ships.iter().map(|c| c.id.clone()).collect();
     let mut missions = Vec::new();
     for (_, id, e) in of(&resolved, "missions") {
-        match super::mission::MissionDef::parse(id, Get(&e.node), e.pack, &class_ids, &difficulty_levels) {
+        match super::mission::MissionDef::parse_with(id, Get(&e.node), e.pack, &class_ids, &difficulty_levels, scripts)
+        {
             Ok(m) => missions.push(m),
             Err(msg) => errors.push(format!("{}: missions.{id}: {msg}", e.origin)),
         }
@@ -1545,13 +1558,17 @@ pub fn build_at(sources: &[RulesSource], original: &OriginalLookup, level: Optio
         let mut extra: Vec<String> = factions.iter().map(|f| f.id.clone()).collect();
         extra.extend(ships.iter().map(|s| s.id.clone()));
         extra.extend(missions.iter().map(|m| m.id.clone()));
-        // Flags missions set (set_flag(x) outcomes) may be tested by campaign conditions.
+        // Flags missions set (set_flag(x) outcomes, also inside their scripts) may be
+        // tested by campaign conditions.
         for m in &missions {
             for (_, actions) in &m.outcomes {
                 extra.extend(actions.iter().filter(|a| a.name == "set_flag").filter_map(|a| a.args.first().cloned()));
+                for p in actions.iter().filter_map(|a| a.program.as_ref()) {
+                    extra.extend(p.action_words("set_flag"));
+                }
             }
         }
-        let s = super::strategy::StrategyDef::build(&defs, &lookup, &difficulty_levels, &extra, &mut errors);
+        let s = super::strategy::StrategyDef::build(&defs, &lookup, &difficulty_levels, &extra, scripts, &mut errors);
         if let Some(s) = &s {
             for r in &s.raids {
                 if !missions.iter().any(|m| m.id == r.mission) {

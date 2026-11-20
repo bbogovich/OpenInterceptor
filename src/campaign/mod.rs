@@ -273,7 +273,7 @@ pub(crate) fn travel(pos: &mut [f32; 2], dest: [f32; 2], step: f32) -> bool {
 
 /// What expressions see: the campaign, optionally from one base's point of view (for
 /// `module_count` in a research rate), and the shared roll generator.
-struct Cx<'a> {
+pub(crate) struct Cx<'a> {
     c: &'a Campaign,
     def: &'a StrategyDef,
     base: Option<usize>,

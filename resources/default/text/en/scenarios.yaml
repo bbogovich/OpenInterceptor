@@ -21,6 +21,8 @@ text:
   scenario.duel-robot-sentinel.desc: "You against 3 robot sentinels: test how this enemy flies and fights at each difficulty (D in the launcher)."
   scenario.duel-scout-saucer.title: "Duel: scout saucer"
   scenario.duel-scout-saucer.desc: "You against 2 scout saucers: test how this enemy flies and fights at each difficulty (D in the launcher)."
+  scenario.duel-saucer-ace.title: "Duel: saucer ace (scripted)"
+  scenario.duel-saucer-ace.desc: "You against a saucer ace flown by a Tier 2 script: it taunts you, counts your hits, turns furious when hurt and flees near the end. Watch the message line."
   scenario.mixed-dogfight.title: "Mixed dogfight"
   scenario.mixed-dogfight.desc: "Guard rockets, Senate patrols and Prospector haulers against saucers, robots and Black Comet hot-rods: everyone hostile to someone."
   scenario.outpost-strike.title: "Strike: the Dominion outpost"

@@ -1,0 +1,47 @@
+# The Dominion's saucer ace: a duel in phases (a Tier 2 script).
+#
+# The behaviour saucer_ace (rules/behaviours.yaml) calls these functions every half
+# second while it is in its "duel" or "fury" state. What the ace must remember between
+# calls it keeps in the behaviour's object variables (vars: [phase, hits]); a `let`
+# variable lives for one call only.
+#
+# Everything here is checked when the campaign loads (--check): every query, variable,
+# state and text key it names.
+#
+# Docs: Modding > Scripts.
+
+# Phase 1, "duel": fight at range, count the hits taken, taunt the player once.
+def duel() {
+    if var(phase) < 1 {
+        set_var(phase, 1)
+        message(@msg.saucer_ace.taunt)
+    }
+    if hit_recently(0.5s) {
+        set_var(hits, var(hits) + 1)
+    }
+    # Badly hurt, or hit too often: fury.
+    if hull < 50% or var(hits) >= hits_for_fury() {
+        set_var(phase, 2)
+        message(@msg.saucer_ace.fury)
+        goto(fury)
+    }
+}
+
+# Phase 2, "fury": close in and fire everything; dodge incoming missiles; flee at the end.
+def fury() {
+    if hull < 20% {
+        message(@msg.saucer_ace.retreat)
+        goto(flee)
+    } else if missiles_incoming(3km) > 0 and random(0.5) {
+        goto(dodge)
+    }
+}
+
+# How many hits make the ace furious: eight at the lowest difficulty, one fewer per level.
+def hits_for_fury() {
+    let n = 8
+    repeat difficulty {
+        n = n - 1
+    }
+    return n
+}

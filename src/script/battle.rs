@@ -15,6 +15,10 @@
 //! in every schema), so `alive(attackers)` checks the name at load time — a misspelled
 //! role is an error with the file and line — and passes the role's index to the query.
 //! The mission runtime ([`crate::mission`]) implements the queries.
+//!
+//! A role is also a **collection** for scripts: `for each m of attackers { … }` loops
+//! `m` over the members that have entered (0, 1, …, `members(attackers) - 1`), and the
+//! `member_…(role, m)` queries ask about one of them.
 
 use super::{Arg, QueryDef, Schema, Type};
 
@@ -37,6 +41,10 @@ pub mod id {
     pub const DESTROYED: u16 = 14;
     pub const ARRIVED: u16 = 15;
     pub const CARGO: u16 = 16;
+    pub const MEMBERS: u16 = 17;
+    pub const MEMBER_ALIVE: u16 = 18;
+    pub const MEMBER_HULL: u16 = 19;
+    pub const MEMBER_DISTANCE: u16 = 20;
 }
 
 /// The battle context's queries (index = id above).
@@ -118,6 +126,30 @@ pub static QUERIES: &[QueryDef] = &[
         result: Type::Num,
         doc: "the share (0..1) of the role's cargo containers still aboard: not destroyed, torn off or captured",
     },
+    QueryDef {
+        name: "members",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "how many craft have entered for the role, alive or not (what a script's for each loops over)",
+    },
+    QueryDef {
+        name: "member_alive",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Bool,
+        doc: "member_alive(role, m): the role's m-th member (from 0) is still in the battle",
+    },
+    QueryDef {
+        name: "member_hull",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Num,
+        doc: "member_hull(role, m): the m-th member's hull fraction (0 once it is gone)",
+    },
+    QueryDef {
+        name: "member_distance",
+        args: &[Arg::Num, Arg::Num],
+        result: Type::Num,
+        doc: "member_distance(role, m): the m-th member's distance from the player, m (very large once gone)",
+    },
 ];
 
 /// The battle schema for a mission: its role names and the campaign's difficulty level
@@ -127,7 +159,7 @@ pub fn schema(roles: &[String], levels: &[String]) -> Schema {
     let mut constants: Vec<(String, f32)> =
         roles.iter().enumerate().map(|(i, r)| (r.to_ascii_lowercase(), i as f32)).collect();
     constants.extend(levels.iter().enumerate().map(|(i, l)| (l.to_ascii_lowercase(), i as f32)));
-    Schema { queries: QUERIES, constants }
+    Schema { queries: QUERIES, constants, each: Some(id::MEMBERS) }
 }
 
 #[cfg(test)]
@@ -154,6 +186,10 @@ mod tests {
             (id::DESTROYED, "destroyed"),
             (id::ARRIVED, "arrived"),
             (id::CARGO, "cargo"),
+            (id::MEMBERS, "members"),
+            (id::MEMBER_ALIVE, "member_alive"),
+            (id::MEMBER_HULL, "member_hull"),
+            (id::MEMBER_DISTANCE, "member_distance"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

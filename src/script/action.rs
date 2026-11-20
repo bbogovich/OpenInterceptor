@@ -13,6 +13,14 @@
 //! action and every argument the right kind. **Battle** actions (a message on the
 //! pilot's display) run in the battle; **campaign** actions (score, money, relations, map
 //! changes) are listed on the debrief now and applied by the strategy layer (Stage 4).
+//!
+//! ## Script hooks
+//!
+//! One more entry may appear in a mission's or an event's list: `script(<file>:<function>)`
+//! hands control to a Tier 2 script ([`super::stmt`]). [`parse_with`] compiles it on the
+//! spot against the list's own context (the [`Hooks`] it is given) and keeps the compiled
+//! [`super::stmt::Program`] in the [`Action`], so the runtime only has to run it. A
+//! script calls the same actions as the list it was called from, checked the same way.
 
 /// What one argument of an action must be.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,6 +40,8 @@ pub enum Scope {
     Battle,
     /// On the campaign (applied by the strategy layer; listed on the debrief).
     Campaign,
+    /// On the ship whose behaviour runs the script ([`OBJECT_ACTIONS`]).
+    Object,
 }
 
 /// One known action.
@@ -74,6 +84,12 @@ pub static MISSION_ACTIONS: &[ActionDef] = &[
         args: &[],
         scope: Scope::Campaign,
         doc: "the enemy takes the cargo to a supply depot",
+    },
+    ActionDef {
+        name: "script",
+        args: &[ArgKind::Text],
+        scope: Scope::Battle,
+        doc: "run a script function in the battle context: script(scripts/<file>.ois:<function>)",
     },
 ];
 
@@ -143,7 +159,47 @@ pub static EVENT_ACTIONS: &[ActionDef] = &[
         scope: Scope::Campaign,
         doc: "end the campaign in this defeat",
     },
+    ActionDef {
+        name: "script",
+        args: &[ArgKind::Text],
+        scope: Scope::Campaign,
+        doc: "run a script function in the campaign context: script(scripts/<file>.ois:<function>)",
+    },
 ];
+
+/// The actions a behaviour's script (`do: script`) may use: they act on its own ship.
+pub static OBJECT_ACTIONS: &[ActionDef] = &[
+    ActionDef {
+        name: "goto",
+        args: &[ArgKind::Name],
+        scope: Scope::Object,
+        doc: "switch the behaviour to this state (one of its states, checked at load)",
+    },
+    ActionDef {
+        name: "set_var",
+        args: &[ArgKind::Name, ArgKind::Num],
+        scope: Scope::Object,
+        doc: "set an object variable the behaviour declares (vars:); read it with var(name)",
+    },
+    ActionDef {
+        name: "message",
+        args: &[ArgKind::Text],
+        scope: Scope::Object,
+        doc: "a radio line from this ship on the player's message display",
+    },
+];
+
+/// What a `script(...)` entry in an action list is compiled against: the loaded script
+/// files, the list's condition schema (its queries and names) and the name of its
+/// context for messages (`"battle"`, `"campaign"`).
+pub struct Hooks<'a> {
+    /// The loaded script files.
+    pub library: &'a super::stmt::Library,
+    /// The list's condition schema: the queries and names its scripts may use.
+    pub schema: &'a super::Schema,
+    /// The context's name, for messages.
+    pub context: &'static str,
+}
 
 /// A checked action call.
 #[derive(Debug, Clone, PartialEq)]
@@ -152,6 +208,10 @@ pub struct Action {
     pub scope: Scope,
     /// The arguments as written (numbers already validated).
     pub args: Vec<String>,
+    /// For `script(...)`: the compiled script. An `Arc` (a shared, reference-counted
+    /// pointer) because action lists are cloned when they run, and a program is
+    /// read-only once compiled: clones share one copy instead of duplicating its tree.
+    pub program: Option<std::sync::Arc<super::stmt::Program>>,
 }
 
 impl Action {
@@ -165,9 +225,28 @@ impl Action {
     }
 }
 
-/// Parses and checks one action call against `table`.
+/// Parses and checks one action call against `table`. A `script(...)` entry is refused:
+/// it needs [`parse_with`] and the list's [`Hooks`].
 pub fn parse(text: &str, table: &'static [ActionDef]) -> Result<Action, String> {
+    parse_with(text, table, None)
+}
+
+/// Parses and checks one action call against `table`; a `script(<file>:<function>)`
+/// entry is compiled with `hooks` (a load error when `hooks` is `None` or the script does
+/// not check in this context).
+pub fn parse_with(text: &str, table: &'static [ActionDef], hooks: Option<&Hooks>) -> Result<Action, String> {
     let t = text.trim();
+    if let Some(reference) = t.strip_prefix("script(").and_then(|r| r.strip_suffix(')')) {
+        let def = table.iter().find(|d| d.name == "script").ok_or("scripts cannot be called from here")?;
+        let h = hooks.ok_or("scripts cannot be called from here")?;
+        let program = h.library.compile(reference.trim(), h.schema, table, h.context)?;
+        return Ok(Action {
+            name: def.name,
+            scope: def.scope,
+            args: vec![reference.trim().to_string()],
+            program: Some(std::sync::Arc::new(program)),
+        });
+    }
     let (name, inner) = match t.find('(') {
         Some(open) => {
             let inner = t[open + 1..].strip_suffix(')').ok_or(format!("'{t}': missing ')'"))?;
@@ -198,7 +277,10 @@ pub fn parse(text: &str, table: &'static [ActionDef]) -> Result<Action, String> 
             return Err(format!("{name}: '{a}' is not a {kind:?}").to_lowercase());
         }
     }
-    Ok(Action { name: def.name, scope: def.scope, args })
+    if def.name == "script" {
+        return Err(format!("'{t}': write script(<file>:<function>), e.g. script(scripts/ending.ois:run)"));
+    }
+    Ok(Action { name: def.name, scope: def.scope, args, program: None })
 }
 
 #[cfg(test)]
@@ -222,5 +304,7 @@ mod tests {
         assert!(parse("money(lots)", MISSION_ACTIONS).unwrap_err().contains("num"));
         assert!(parse("teleport(x)", MISSION_ACTIONS).unwrap_err().contains("unknown action"));
         assert!(parse("score(x", MISSION_ACTIONS).is_err());
+        assert!(parse("script(scripts/a.ois:f)", MISSION_ACTIONS).unwrap_err().contains("cannot be called"));
+        assert!(parse("script(scripts/a.ois:f)", OBJECT_ACTIONS).unwrap_err().contains("cannot be called"));
     }
 }

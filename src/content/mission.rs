@@ -37,6 +37,10 @@
 //! Conditions use the battle context ([`crate::script::battle`]), where the mission's
 //! role names are constants, so a misspelled role is a load-time error. Outcomes are
 //! action lists ([`crate::script::action`]). The runtime is [`crate::mission`].
+//!
+//! An outcome may hand over to a Tier 2 script, `script(scripts/<file>.ois:<function>)`:
+//! it is compiled here against this mission's battle context (its roles included) and
+//! runs at the end of the battle, before the debrief, with the outcome's own actions.
 
 use super::scenario::AiRole;
 use super::schema::{Get, Unit};
@@ -201,6 +205,18 @@ impl MissionDef {
     /// Builds a mission from its resolved definition. `classes` are the known ship and
     /// object ids; `levels` the campaign's difficulty level names.
     pub fn parse(id: &str, g: Get, pack: usize, classes: &[String], levels: &[String]) -> Result<MissionDef, String> {
+        Self::parse_with(id, g, pack, classes, levels, &crate::script::stmt::Library::default())
+    }
+
+    /// [`MissionDef::parse`] with the packs' script files, for `script(...)` outcomes.
+    pub fn parse_with(
+        id: &str,
+        g: Get,
+        pack: usize,
+        classes: &[String],
+        levels: &[String],
+        scripts: &crate::script::stmt::Library,
+    ) -> Result<MissionDef, String> {
         // Role names first: conditions refer to them.
         let role_nodes = g.map("roles");
         if role_nodes.is_empty() {
@@ -301,6 +317,7 @@ impl MissionDef {
             None => None,
         };
         let mut outcomes = Vec::new();
+        let hooks = action::Hooks { library: scripts, schema: &schema, context: "battle" };
         for (result, list) in g.map("outcomes") {
             if !RESULTS.contains(&result.as_str()) {
                 return Err(format!("outcomes.{result}: results are win, lose, draw, retreat and killed"));
@@ -308,8 +325,10 @@ impl MissionDef {
             let mut actions = Vec::new();
             for item in list.as_seq().unwrap_or(&[]) {
                 let text = item.as_str().unwrap_or_default();
-                actions
-                    .push(action::parse(text, action::MISSION_ACTIONS).map_err(|e| format!("outcomes.{result}: {e}"))?);
+                actions.push(
+                    action::parse_with(text, action::MISSION_ACTIONS, Some(&hooks))
+                        .map_err(|e| format!("outcomes.{result}: {e}"))?,
+                );
             }
             outcomes.push((result.clone(), actions));
         }

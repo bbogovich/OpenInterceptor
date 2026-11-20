@@ -245,4 +245,40 @@ mod tests {
         let (r, result) = run_mission(&content("cadet"), "defend_station", None, 150.0, SoakPilot::Idle).unwrap();
         assert_eq!(result, None, "still running at 150 s, not {result:?} ({})", r.summary());
     }
+
+    /// The default campaign's Tier 2 example: the scripted saucer ace taunts once, and
+    /// turns furious (its `fury` state, with its own radio line) once badly hurt.
+    #[test]
+    fn the_default_campaigns_scripted_ace_taunts_and_turns_furious() {
+        let content = content("captain");
+        let sc = content.scenario("duel-saucer-ace").unwrap();
+        let rules = Arc::new(content.rules.clone());
+        let (mut w, player) =
+            World::from_scenario(sc, rules.clone(), Arc::new(collision_shapes(&content)), rules.ship_id("comet"))
+                .unwrap();
+        let ace = w.live_ids().into_iter().find(|&id| id != player).unwrap();
+        let mut radio = Vec::new();
+        let mut step = |w: &mut World, secs: f32| {
+            for _ in 0..(secs / TICK) as usize {
+                w.step();
+                radio.extend(w.events.iter().filter_map(|e| match e {
+                    SimEvent::Radio { text, .. } => Some(text.clone()),
+                    _ => None,
+                }));
+            }
+        };
+        step(&mut w, 2.0);
+        let state = |w: &World| match &w.get(ace).unwrap().pilot {
+            Pilot::Ai(st) => st.state,
+            _ => usize::MAX,
+        };
+        let def = rules.behaviour(rules.behaviour_id("saucer_ace").unwrap());
+        assert_eq!(def.states[state(&w)].name, "duel");
+        let hull = rules.ship(w.get(ace).unwrap().class).hull;
+        w.get_mut(ace).unwrap().hull = 0.4 * hull;
+        step(&mut w, 1.0);
+        assert_eq!(def.states[state(&w)].name, "fury");
+        assert_eq!(radio.len(), 2, "{radio:?}");
+        assert!(radio[0].starts_with("Ace: You fly") && radio[1].starts_with("Ace: Enough"), "{radio:?}");
+    }
 }

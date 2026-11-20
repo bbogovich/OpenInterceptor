@@ -25,9 +25,31 @@
 //!
 //! Transitions are tried in order; the first whose `from` matches the current state
 //! (`*` matches any) and whose condition holds wins.
+//!
+//! ## Scripted states (Tier 2)
+//!
+//! A state can hand its decisions to a script function ([`crate::script::stmt`]):
+//!
+//! ```yaml
+//! behaviours:
+//!   ace:
+//!     vars: [phase, hits]               # object variables the script keeps
+//!     start: duel
+//!     states:
+//!       duel: {do: script, call: "scripts/ace.ois:duel", every: 0.5s, fly: attack, range: 2km}
+//!       berserk: {do: attack, range: 1km}
+//! ```
+//!
+//! While in the state the ship flies the `fly:` manoeuvre (with the state's usual
+//! parameters), and every `every` seconds the function runs in the object context: it
+//! asks the same queries as conditions, plus `var(name)`, and may `goto(state)`,
+//! `set_var(name, value)` and `message(text)`. Everything — the file, the function, every
+//! state and variable it names — is checked when the rules load.
 
 use super::schema::{Get, Unit};
-use crate::script::{self, Expr, Schema};
+use crate::script::stmt::Library;
+use crate::script::{self, object::MAX_VARS, Expr, Schema};
+use std::sync::Arc;
 
 /// Index of a [`BehaviourDef`] in the ruleset.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -127,7 +149,21 @@ pub struct StateDef {
     pub name: String,
     pub manoeuvre: Manoeuvre,
     pub params: Params,
+    /// `do: script`: the script that decides while the ship flies `manoeuvre`.
+    pub script: Option<StateScript>,
 }
+
+/// The script hook of a `do: script` state.
+#[derive(Debug, Clone, PartialEq)]
+pub struct StateScript {
+    /// The compiled function (shared: every ship flying the behaviour runs the same one).
+    pub program: Arc<script::stmt::Program>,
+    /// Seconds between runs (at least one simulation tick).
+    pub every: f32,
+}
+
+/// How often a scripted state runs its script unless it says (`every:`), seconds.
+pub const DEFAULT_SCRIPT_EVERY: f32 = 0.5;
 
 /// A rule for leaving a state.
 #[derive(Debug, Clone, PartialEq)]
@@ -210,6 +246,9 @@ pub struct BehaviourDef {
     pub prefer: Vec<(Selector, f32)>,
     /// When to use cloak, ECM and power settings.
     pub systems: SystemsUse,
+    /// Object variables (`vars: [phase]`): names for the slots of the pilot's
+    /// `AiState::vars`, read with `var(name)` and set by scripts with `set_var`.
+    pub vars: Vec<String>,
 }
 
 impl BehaviourDef {
@@ -220,11 +259,17 @@ impl BehaviourDef {
         BehaviourDef {
             id: "builtin_attack".into(),
             states: vec![
-                StateDef { name: "engage".into(), manoeuvre: Manoeuvre::Attack, params: Params::default() },
+                StateDef {
+                    name: "engage".into(),
+                    manoeuvre: Manoeuvre::Attack,
+                    params: Params::default(),
+                    script: None,
+                },
                 StateDef {
                     name: "evade".into(),
                     manoeuvre: Manoeuvre::Evade,
                     params: Params { duration: 2.5, ..Params::default() },
+                    script: None,
                 },
             ],
             start: 0,
@@ -235,6 +280,7 @@ impl BehaviourDef {
             skill: Skill::default(),
             prefer: Vec::new(),
             systems: SystemsUse::default(),
+            vars: Vec::new(),
         }
     }
 
@@ -243,13 +289,45 @@ impl BehaviourDef {
         self.states.iter().find(|s| s.manoeuvre == m)
     }
 
-    /// Parses a `behaviours:` definition, checking every condition against `schema`.
-    pub fn parse(id: &str, g: Get, schema: &Schema) -> Result<BehaviourDef, String> {
+    /// Parses a `behaviours:` definition, checking every condition against `schema`
+    /// and compiling the scripts of `do: script` states from `scripts`.
+    pub fn parse(id: &str, g: Get, schema: &Schema, scripts: &Library) -> Result<BehaviourDef, String> {
+        // Object variables first: their names become constants of this behaviour's
+        // schema (slot numbers), so `var(phase)` checks the name like any other.
+        let vars: Vec<String> = g.list("vars").iter().map(|v| v.to_ascii_lowercase()).collect();
+        if vars.len() > MAX_VARS {
+            return Err(format!("vars: at most {MAX_VARS} object variables"));
+        }
+        let mut own = schema.clone();
+        for (i, v) in vars.iter().enumerate() {
+            if vars[..i].contains(v) || own.constants.iter().any(|(c, _)| c == v) {
+                return Err(format!("vars: '{v}' is named twice or is already a name (a difficulty level)"));
+            }
+            own.constants.push((v.clone(), i as f32));
+        }
+        let schema = &own;
         let mut states = Vec::new();
+        let mut hooks = Vec::new();
         for (name, body) in g.map("states") {
             let sg = Get(body);
             let m = sg.str("do").ok_or(format!("states.{name}: say what it does (do: attack, …)"))?;
-            let manoeuvre = Manoeuvre::parse(m).ok_or(format!("states.{name}: unknown manoeuvre '{m}'"))?;
+            // `do: script` flies its `fly:` manoeuvre (attack unless it says) and runs the
+            // script named by `call:`; any other state may not have a `call:`.
+            let scripted = m.trim().eq_ignore_ascii_case("script");
+            let fly = if scripted { sg.str("fly").unwrap_or("attack") } else { m };
+            if !scripted && (sg.str("call").is_some() || sg.str("fly").is_some()) {
+                return Err(format!("states.{name}: call: and fly: belong to a do: script state"));
+            }
+            let manoeuvre = Manoeuvre::parse(fly).ok_or(format!("states.{name}: unknown manoeuvre '{fly}'"))?;
+            if scripted {
+                let call = sg.str("call").ok_or(format!("states.{name}: do: script needs call: <file>:<function>"))?;
+                let program = scripts
+                    .compile(call, schema, script::action::OBJECT_ACTIONS, "object")
+                    .map_err(|e| format!("states.{name}.call: {e}"))?;
+                // At least one 60 Hz tick: a smaller interval could not run more often.
+                let every = sg.qty("every", Unit::Time).unwrap_or(DEFAULT_SCRIPT_EVERY).max(1.0 / 60.0);
+                hooks.push((states.len(), StateScript { program: Arc::new(program), every }));
+            }
             let d = Params::default();
             let params = Params {
                 range: sg.qty("range", Unit::Distance).unwrap_or(d.range),
@@ -262,10 +340,25 @@ impl BehaviourDef {
                 jump: sg.bool("jump").unwrap_or(d.jump),
                 escape: sg.qty("escape", Unit::Distance).unwrap_or(d.escape).max(0.0),
             };
-            states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params });
+            states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params, script: None });
         }
         if states.is_empty() {
             return Err("a behaviour needs at least one state (states: {name: {do: …}})".into());
+        }
+        // Now every state name is known: check what the scripts name.
+        for (k, hook) in hooks {
+            let at = format!("states.{}.call: {}", states[k].name, hook.program.reference());
+            for target in hook.program.action_words("goto") {
+                if !states.iter().any(|s| s.name == target) {
+                    return Err(format!("{at}: goto({target}): no state '{target}'"));
+                }
+            }
+            for v in hook.program.action_words("set_var") {
+                if !vars.contains(&v) {
+                    return Err(format!("{at}: set_var({v}, …): '{v}' is not in this behaviour's vars:"));
+                }
+            }
+            states[k].script = Some(hook);
         }
         let find = |n: &str| states.iter().position(|st| st.name.eq_ignore_ascii_case(n.trim()));
         let start = match g.str("start") {
@@ -319,7 +412,7 @@ impl BehaviourDef {
                 }
             }
         }
-        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill, prefer, systems })
+        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill, prefer, systems, vars })
     }
 }
 
@@ -335,7 +428,60 @@ mod tests {
 
     fn parse(text: &str) -> Result<BehaviourDef, String> {
         let doc = yaml::parse(text).unwrap();
-        BehaviourDef::parse("b", Get(&doc), &schema())
+        BehaviourDef::parse("b", Get(&doc), &schema(), &scripts())
+    }
+
+    /// One synthetic script file for the scripted-state tests.
+    fn scripts() -> Library {
+        let mut l = Library::default();
+        l.add(
+            "scripts/b.ois",
+            "test/scripts/b.ois",
+            "def think() {\n if var(phase) < 1 and hull < 50% {\n  set_var(phase, 1)\n  goto(rage)\n }\n}\n\
+             def bad_state() { goto(nowhere) }\ndef bad_var() { set_var(mood, 1) }\n\
+             def campaign_only() { set_flag(x) }\n",
+        )
+        .unwrap();
+        l
+    }
+
+    #[test]
+    fn scripted_states_compile_and_check_what_they_name() {
+        let b = parse(
+            "vars: [phase]\nstates:\n  think: {do: script, call: 'scripts/b.ois:think', every: 0.25s, fly: evade}\n  \
+             rage: {do: attack}\ntransitions:\n  - {from: rage, to: think, when: var(phase) > 5}\n",
+        )
+        .unwrap();
+        assert_eq!(b.vars, ["phase"]);
+        assert_eq!(b.states[0].manoeuvre, Manoeuvre::Evade);
+        let hook = b.states[0].script.as_ref().unwrap();
+        assert_eq!((hook.every, hook.program.reference()), (0.25, "scripts/b.ois:think"));
+        assert!(b.states[1].script.is_none());
+        // fly: defaults to attack, every: to half a second.
+        let b =
+            parse("vars: [phase]\nstates:\n  think: {do: script, call: 'scripts/b.ois:think'}\n  rage: {do: attack}\n")
+                .unwrap();
+        assert_eq!(b.states[0].manoeuvre, Manoeuvre::Attack);
+        assert_eq!(b.states[0].script.as_ref().unwrap().every, DEFAULT_SCRIPT_EVERY);
+        for (text, needle) in [
+            ("states: {a: {do: script}}\n", "needs call:"),
+            ("states: {a: {do: attack, call: 'scripts/b.ois:think'}}\n", "belong to a do: script"),
+            (
+                "vars: [phase]\nstates: {a: {do: script, call: 'scripts/b.ois:think', fly: dance}}\n",
+                "unknown manoeuvre",
+            ),
+            ("vars: [phase]\nstates: {rage: {do: script, call: 'scripts/b.ois:bad_state'}}\n", "no state 'nowhere'"),
+            ("vars: [phase]\nstates: {rage: {do: script, call: 'scripts/b.ois:bad_var'}}\n", "'mood' is not in"),
+            ("states: {rage: {do: script, call: 'scripts/b.ois:think'}}\n", "unknown name 'phase'"),
+            ("states: {rage: {do: script, call: 'scripts/b.ois:campaign_only'}}\n", "object context"),
+            ("states: {rage: {do: script, call: 'scripts/none.ois:x'}}\n", "no script file"),
+            ("vars: [a, a]\nstates: {s: {do: idle}}\n", "named twice"),
+            ("vars: [cadet]\nstates: {s: {do: idle}}\n", "already a name"),
+            ("vars: [a, b, c, d, e, f, g, h, i]\nstates: {s: {do: idle}}\n", "at most 8"),
+        ] {
+            let e = parse(text).unwrap_err();
+            assert!(e.contains(needle), "{text}: {e}");
+        }
     }
 
     #[test]

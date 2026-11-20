@@ -31,6 +31,12 @@
 //! | `tow` | finds a disabled enemy, tractors it and jumps out with it |
 //! | `mine` | waits; detonates when a hostile comes within `range` |
 //!
+//! A `do: script` state flies its `fly:` manoeuvre and, every `every` seconds, runs its
+//! Tier 2 script in the object context ([`ObjectHost`]): the script reads the same
+//! queries (plus the pilot's object variables, `var(name)`) and may switch state
+//! (`goto`), set a variable (`set_var`) or say something on the radio (`message`).
+//! Variables live in [`AiState::vars`], a fixed array, so they cost nothing to copy.
+//!
 //! ## Two-phase update
 //!
 //! [`think`] first *reads* the whole world to compute every AI's decision into a list,
@@ -38,9 +44,12 @@
 //! mutable borrow of one ship while reading the others, which Rust forbids — and it
 //! would also make the result depend on the order ships are processed.
 
-use super::{targeting, Controls, Pilot, Ship, ShipId, World, TICK};
-use crate::content::behaviour::{BehaviourDef, BehaviourId, Manoeuvre, Params, Selector, Skill};
+use super::{targeting, Controls, Pilot, Ship, ShipId, SimEvent, World, TICK};
+use crate::content::behaviour::{BehaviourDef, BehaviourId, Manoeuvre, Params, Selector, Skill, StateScript};
 use crate::content::equipment::SystemKind;
+use crate::script::action::Action;
+use crate::script::object::MAX_VARS;
+use crate::script::stmt::Host;
 use crate::script::{object::id, Context, Value};
 use glam::{Vec2, Vec3};
 use std::cell::Cell;
@@ -115,6 +124,12 @@ pub struct AiState {
     pub pending: super::Requests,
     /// Tow: where the prize was grabbed (the tug jumps once it has hauled it far enough).
     pub anchor: Option<Vec3>,
+    /// Object variables (the behaviour's `vars:`, by slot), kept by scripts.
+    pub vars: [f32; MAX_VARS],
+    /// Seconds until a scripted state's script runs again (0: on the next tick).
+    pub script_clock: f32,
+    /// A script of this pilot has run out of budget and been reported (once is enough).
+    pub script_warned: bool,
 }
 
 impl AiState {
@@ -139,6 +154,9 @@ impl AiState {
             rng: 0x9E37_79B9_7F4A_7C15,
             pending: super::Requests::default(),
             anchor: None,
+            vars: [0.0; MAX_VARS],
+            script_clock: 0.0,
+            script_warned: false,
         }
     }
 }
@@ -190,6 +208,8 @@ pub struct ObjectContext<'a> {
     /// Interior mutability: `Context::query` takes `&self`, but `random` must advance the
     /// pilot's generator. A `Cell` allows that for a plain `Copy` value without `&mut`.
     pub rng: Cell<u64>,
+    /// The pilot's object variables, for `var(name)`.
+    pub vars: [f32; MAX_VARS],
 }
 
 impl Context for ObjectContext<'_> {
@@ -251,7 +271,45 @@ impl Context for ObjectContext<'_> {
                         && m.position.distance(s.position) <= args[0]
                 })
                 .count() as f32),
+            id::VAR => n(self.vars.get(args[0].max(0.0) as usize).copied().unwrap_or(0.0)),
             _ => b(false),
+        }
+    }
+}
+
+/// What a behaviour script runs against: the object context, and its three actions
+/// recorded for the pilot to apply when the script returns.
+pub struct ObjectHost<'a> {
+    /// The ship's queries (its variables included, updated as the script sets them).
+    pub cx: ObjectContext<'a>,
+    /// The behaviour running the script (state and variable names).
+    pub def: &'a BehaviourDef,
+    /// The state a `goto` asked for (the last one wins).
+    pub goto: Option<usize>,
+    /// Radio lines said, as events for the end of the AI phase.
+    pub said: Vec<SimEvent>,
+}
+
+impl Context for ObjectHost<'_> {
+    fn query(&self, q: u16, args: &[f32]) -> Value {
+        self.cx.query(q, args)
+    }
+}
+
+impl Host for ObjectHost<'_> {
+    fn act(&mut self, a: Action) {
+        let arg = |i: usize| a.args.get(i).map(String::as_str).unwrap_or("");
+        match a.name {
+            // Names were checked against the behaviour's states and vars at load.
+            "goto" => self.goto = self.def.states.iter().position(|s| s.name == arg(0)).or(self.goto),
+            "set_var" => {
+                if let Some(slot) = self.def.vars.iter().position(|v| v == arg(0)) {
+                    // Written straight into the context, so the script's next `var` sees it.
+                    self.cx.vars[slot] = arg(1).parse().unwrap_or(0.0);
+                }
+            }
+            "message" => self.said.push(SimEvent::Radio { ship: self.cx.me, text: arg(0).to_string() }),
+            _ => {}
         }
     }
 }
@@ -285,6 +343,8 @@ pub fn nearest_prize(w: &World, me: ShipId, within: f32) -> Option<ShipId> {
 /// Decides controls for every AI ship. See the module docs for the two-phase update.
 pub fn think(w: &mut World) {
     let mut decisions: Vec<(usize, Controls, Option<ShipId>, AiState)> = Vec::new();
+    // Events behaviour scripts raise (radio lines), added once the reading is done.
+    let mut said: Vec<SimEvent> = Vec::new();
     for i in 0..w.ships.len() {
         let ship = &w.ships[i];
         let Pilot::Ai(state) = &ship.pilot else { continue };
@@ -308,7 +368,7 @@ pub fn think(w: &mut World) {
             Behaviour::Target => (circle(w, ship), None),
             Behaviour::Wingman => wingman(w, id, &mut state),
             Behaviour::Enemy => match behaviour_of(w, ship, &state) {
-                Some(def) => run_behaviour(w, id, &mut state, def),
+                Some(def) => run_behaviour(w, id, &mut state, def, &mut said),
                 None => (Controls::default(), None),
             },
         };
@@ -330,19 +390,28 @@ pub fn think(w: &mut World) {
         s.target = target;
         s.pilot = Pilot::Ai(state);
     }
+    w.events.extend(said);
 }
 
-/// One tick of a behaviour: maybe change state, then fly the state's manoeuvre.
-fn run_behaviour(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) -> (Controls, Option<ShipId>) {
+/// One tick of a behaviour: maybe change state, run a scripted state's script when it
+/// is due, then fly the state's manoeuvre. Events the script raises go to `said`.
+fn run_behaviour(
+    w: &World,
+    me: ShipId,
+    st: &mut AiState,
+    def: &BehaviourDef,
+    said: &mut Vec<SimEvent>,
+) -> (Controls, Option<ShipId>) {
     if st.state >= def.states.len() {
         st.state = def.start;
         st.state_time = 0.0;
+        st.script_clock = 0.0;
     }
     st.state_time += TICK;
     st.check_clock -= TICK;
     if st.check_clock <= 0.0 {
         st.check_clock = 1.0 / CHECKS_PER_SECOND;
-        let cx = ObjectContext { world: w, me, state_time: st.state_time, rng: Cell::new(st.rng) };
+        let cx = ObjectContext { world: w, me, state_time: st.state_time, rng: Cell::new(st.rng), vars: st.vars };
         let next = def
             .transitions
             .iter()
@@ -355,6 +424,15 @@ fn run_behaviour(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) ->
         if let Some(to) = next {
             st.state = to;
             st.state_time = 0.0;
+            // A scripted state's script runs on its first tick.
+            st.script_clock = 0.0;
+        }
+    }
+    if let Some(hook) = &def.states[st.state].script {
+        st.script_clock -= TICK;
+        if st.script_clock <= 0.0 {
+            st.script_clock = hook.every;
+            run_script(w, me, st, def, hook, said);
         }
     }
     let state = &def.states[st.state];
@@ -362,6 +440,34 @@ fn run_behaviour(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) ->
     // Requests act once: hand them over on this tick only.
     c.requests = c.requests.merge(std::mem::take(&mut st.pending));
     (c, t)
+}
+
+/// Runs a scripted state's script once and applies what it decided: variables, the
+/// generator's new state, a state change, radio lines, and a one-time report if it ran
+/// out of budget.
+fn run_script(
+    w: &World,
+    me: ShipId,
+    st: &mut AiState,
+    def: &BehaviourDef,
+    hook: &StateScript,
+    said: &mut Vec<SimEvent>,
+) {
+    let cx = ObjectContext { world: w, me, state_time: st.state_time, rng: Cell::new(st.rng), vars: st.vars };
+    let mut host = ObjectHost { cx, def, goto: None, said: Vec::new() };
+    let stopped = hook.program.run(&mut host).is_err();
+    st.rng = host.cx.rng.get();
+    st.vars = host.cx.vars;
+    said.append(&mut host.said);
+    if stopped && !st.script_warned {
+        st.script_warned = true;
+        said.push(SimEvent::ScriptStopped { ship: me, call: hook.program.reference().to_string() });
+    }
+    if let Some(to) = host.goto.filter(|&to| to != st.state) {
+        st.state = to;
+        st.state_time = 0.0;
+        st.script_clock = 0.0;
+    }
 }
 
 /// The system switches a behaviour's `systems:` conditions ask for right now.
@@ -1263,6 +1369,84 @@ mod tests {
         let (sharp, wild) = (hits_in_20s("sharp"), hits_in_20s("wild"));
         assert!(sharp >= 5, "a perfect pilot hits: {sharp} (wild {wild})");
         assert!(sharp as f32 > wild as f32 * 1.5, "skill matters: sharp {sharp}, wild {wild}");
+    }
+
+    #[test]
+    fn a_scripted_state_runs_its_script_every_interval() {
+        use crate::script::stmt::Library;
+        use crate::sim::test_support::{rules_with, shapes};
+        let mut lib = Library::default();
+        lib.add(
+            "scripts/ace.ois",
+            "test/scripts/ace.ois",
+            "def duel() {\n  set_var(runs, var(runs) + 1)\n  if var(runs) == 1 { message(\"Engaging\") }\n  \
+             if var(runs) >= 3 { goto(rage) }\n}\n",
+        )
+        .unwrap();
+        let rules = rules_with(
+            "behaviours:\n  ace:\n    vars: [runs]\n    states:\n      \
+             duel: {do: script, call: 'scripts/ace.ois:duel', every: 0.5s, fly: evade}\n      rage: {do: attack}\n",
+            &lib,
+        );
+        let make = || {
+            let s = shapes(&rules);
+            let mut w = World::new(rules.clone(), s, 42);
+            let me = spawn_ai(&mut w, "raider", 1, Vec3::ZERO, Behaviour::Enemy, None);
+            spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -2000.0), Behaviour::Idle, None);
+            if let Pilot::Ai(st) = &mut w.get_mut(me).unwrap().pilot {
+                st.def = rules.behaviour_id("ace");
+            }
+            (w, me)
+        };
+        let ai = |w: &World, me: ShipId| match &w.get(me).unwrap().pilot {
+            Pilot::Ai(st) => (st.state, st.vars[0]),
+            _ => unreachable!(),
+        };
+        let (mut w, me) = make();
+        w.step();
+        assert_eq!(ai(&w, me), (0, 1.0), "the script runs on the state's first tick");
+        assert!(w
+            .events
+            .iter()
+            .any(|e| matches!(e, SimEvent::Radio { ship, text } if *ship == me && text == "Engaging")));
+        w.step();
+        assert_eq!(ai(&w, me), (0, 1.0), "and then only every 0.5 s");
+        for _ in 0..(1.1 / TICK) as usize {
+            w.step();
+        }
+        assert_eq!(ai(&w, me), (1, 3.0), "the third run switches to rage");
+        // Same seed, same steps: the same result (the sim stays deterministic).
+        let (mut w2, me2) = make();
+        for _ in 0..(1.1 / TICK) as usize + 2 {
+            w2.step();
+        }
+        assert_eq!(ai(&w2, me2), ai(&w, me));
+        assert_eq!(w2.get(me2).unwrap().position, w.get(me).unwrap().position);
+    }
+
+    #[test]
+    fn a_runaway_script_is_stopped_and_reported_once() {
+        use crate::script::stmt::Library;
+        use crate::sim::test_support::{rules_with, shapes};
+        let mut lib = Library::default();
+        lib.add("scripts/loop.ois", "t", "def spin() {\n let n = 0\n repeat 1000 { repeat 1000 { n = n + 1 } }\n}\n")
+            .unwrap();
+        let rules = rules_with(
+            "behaviours:\n  spinner:\n    states:\n      s: {do: script, call: 'scripts/loop.ois:spin', every: 1s}\n",
+            &lib,
+        );
+        let s = shapes(&rules);
+        let mut w = World::new(rules.clone(), s, 42);
+        let me = spawn_ai(&mut w, "raider", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        if let Pilot::Ai(st) = &mut w.get_mut(me).unwrap().pilot {
+            st.def = rules.behaviour_id("spinner");
+        }
+        let mut reports = 0;
+        for _ in 0..(2.5 / TICK) as usize {
+            w.step();
+            reports += w.events.iter().filter(|e| matches!(e, SimEvent::ScriptStopped { .. })).count();
+        }
+        assert_eq!(reports, 1, "three runs, all stopped, reported once");
     }
 
     #[test]

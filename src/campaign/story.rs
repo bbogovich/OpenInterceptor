@@ -15,12 +15,52 @@
 //!
 //! Actions ([`Campaign::apply_actions`]) are the one place the story changes the
 //! campaign: messages, flags, money, score, relations, research, offered missions,
-//! raids, plan progress, aggression and endings.
+//! raids, plan progress, aggression and endings. A `script(...)` action runs a Tier 2
+//! script in the campaign context ([`CampaignHost`]); each action it takes is applied
+//! at once, through the same `apply_actions`, so later lines of the script see it.
 
-use super::{Campaign, Contact, Event, Message};
+use super::{Campaign, Contact, Cx, Event, Message};
 use crate::content::story::Check;
 use crate::content::strategy::StrategyDef;
 use crate::script::action::Action;
+use crate::script::stmt::Host;
+use crate::script::{Context, Value};
+use std::cell::Cell;
+
+/// What a campaign script runs against: the campaign's queries and its actions.
+///
+/// The script both reads the campaign (queries take `&self`) and changes it (actions
+/// take `&mut self`), never at the same time, so the host holds the one `&mut Campaign`
+/// and lends it out shared for each query. The roll generator is kept in a `Cell` here
+/// while the script runs (a query may roll `random`) and handed back to the campaign
+/// around each action and at the end.
+pub struct CampaignHost<'a> {
+    /// The campaign the script reads and changes.
+    pub c: &'a mut Campaign,
+    /// Its definition (names, the story).
+    pub def: &'a StrategyDef,
+    /// Where actions report what the player should see.
+    pub events: &'a mut Vec<Event>,
+    /// The roll generator while the script runs.
+    rng: Cell<u64>,
+}
+
+impl Context for CampaignHost<'_> {
+    fn query(&self, id: u16, args: &[f32]) -> Value {
+        let cx = Cx { c: self.c, def: self.def, base: None, rng: Cell::new(self.rng.get()) };
+        let v = cx.query(id, args);
+        self.rng.set(cx.rng.get());
+        v
+    }
+}
+
+impl Host for CampaignHost<'_> {
+    fn act(&mut self, a: Action) {
+        self.c.rng = self.rng.get();
+        self.c.apply_actions(self.def, std::slice::from_ref(&a), self.events);
+        self.rng.set(self.c.rng);
+    }
+}
 
 /// The story's state in a campaign.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -92,6 +132,17 @@ impl Campaign {
     /// Applies a list of story actions.
     pub fn apply_actions(&mut self, def: &StrategyDef, actions: &[Action], events: &mut Vec<Event>) {
         for a in actions {
+            if let Some(program) = &a.program {
+                let rng = Cell::new(self.rng);
+                let mut host = CampaignHost { c: self, def, events, rng };
+                let stopped = program.run(&mut host).is_err();
+                let rng = host.rng.get();
+                self.rng = rng;
+                if stopped {
+                    self.log(format!("Script stopped: {} used its whole operation budget", program.reference()));
+                }
+                continue;
+            }
             let arg = |i: usize| a.args.get(i).map(String::as_str).unwrap_or("");
             let num = |i: usize| arg(i).trim_start_matches('+').parse::<f32>().unwrap_or(0.0);
             match a.name {
@@ -441,6 +492,39 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         let more = c.messages.iter().filter(|m| m.text == "News: Tick").count() - ticks;
         assert!((1..=3).contains(&more), "{more}");
         assert_eq!(c.encyclopaedia(&d).len(), 1);
+    }
+
+    #[test]
+    fn an_event_script_counts_through_flags_and_sees_its_own_actions() {
+        use crate::content::strategy::tests::build_with;
+        let mut lib = crate::script::stmt::Library::default();
+        lib.add(
+            "scripts/chain.ois",
+            "test/scripts/chain.ois",
+            "def step() {\n  if not flag(step1) {\n    set_flag(step1)\n    \
+             if flag(step1) { money(5) }   # an action takes effect at once\n  \
+             } else if not flag(done) {\n    set_flag(done)\n    message(\"Chain complete\")\n  }\n}\n\
+             def wrong() { goto(x) }\n",
+        )
+        .unwrap();
+        let text = SAMPLE.replace("flags: [raids]", "flags: [raids, step1, done]")
+            + "events:\n  chain: {when: day >= 0, once: false, cooldown: 1d, check: daily, do: [\"script(scripts/chain.ois:step)\"]}\n";
+        let (d, errors) = build_with(&text, &lib);
+        assert!(errors.iter().all(|e| !e.contains("chain")), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 4);
+        let money = c.money;
+        let events = run(&mut c, &d, 24.0 * 4.0);
+        assert_eq!(c.money, money + 5.0);
+        assert!(c.flags.iter().any(|f| f == "done"));
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t == "Chain complete")), "{events:?}");
+        // A script that uses another context's action is an error on the event.
+        let bad = text.replace("chain.ois:step", "chain.ois:wrong");
+        let (_, errors) = build_with(&bad, &lib);
+        assert!(
+            errors.iter().any(|e| e.contains("events.chain") && e.contains("'goto'") && e.contains("campaign context")),
+            "{errors:?}"
+        );
     }
 
     #[test]

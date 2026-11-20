@@ -151,7 +151,7 @@ pub fn schema(names: &[String], levels: &[String]) -> Schema {
             constants.push((l.clone(), i as f32));
         }
     }
-    Schema { queries: QUERIES, constants }
+    Schema { queries: QUERIES, constants, each: None }
 }
 
 #[cfg(test)]

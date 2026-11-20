@@ -34,7 +34,13 @@ pub mod id {
     pub const PRIZE_NEAR: u16 = 18;
     pub const TARGET_IS_PLAYER: u16 = 19;
     pub const MISSILES_INCOMING: u16 = 20;
+    pub const VAR: u16 = 21;
 }
+
+/// How many object variables a behaviour may declare (`vars: [phase, taunts]`). A fixed
+/// number lets each AI pilot keep them in a plain array — no allocation when the
+/// simulation copies the pilot's state every tick.
+pub const MAX_VARS: usize = 8;
 
 /// The object context's queries (index = id above).
 pub const QUERIES: &[QueryDef] = &[
@@ -104,6 +110,12 @@ pub const QUERIES: &[QueryDef] = &[
         result: Type::Num,
         doc: "hostile missiles homing on this ship within a distance: missiles_incoming(3km)",
     },
+    QueryDef {
+        name: "var",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "an object variable the behaviour declares (vars: [phase]) and a script sets (set_var): var(phase)",
+    },
 ];
 
 /// The object schema with the campaign's difficulty level names as constants.
@@ -111,6 +123,7 @@ pub fn schema(levels: &[String]) -> super::Schema {
     super::Schema {
         queries: QUERIES,
         constants: levels.iter().enumerate().map(|(i, l)| (l.to_ascii_lowercase(), i as f32)).collect(),
+        each: None,
     }
 }
 
@@ -143,6 +156,7 @@ mod tests {
             (id::PRIZE_NEAR, "prize_near"),
             (id::TARGET_IS_PLAYER, "target_is_player"),
             (id::MISSILES_INCOMING, "missiles_incoming"),
+            (id::VAR, "var"),
         ];
         assert_eq!(ids.len(), QUERIES.len());
         for (i, name) in ids {

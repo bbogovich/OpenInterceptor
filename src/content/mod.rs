@@ -200,12 +200,29 @@ impl Content {
                 }
             }
         }
+        // Tier 2 scripts (`scripts/*.ois`), before the rules that call them. A later
+        // pack's file of the same name replaces an earlier one's, so mods can override.
+        let mut scripts = crate::script::stmt::Library::default();
+        for p in &packs {
+            for path in files_with_ext(&p.dir.join("scripts"), crate::script::stmt::EXTENSION) {
+                let name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let origin = format!("{}/scripts/{name}", p.id);
+                match std::fs::read_to_string(&path) {
+                    Ok(text) => {
+                        if let Err(e) = scripts.add(&format!("scripts/{name}"), &origin, &text) {
+                            errors.push(e);
+                        }
+                    }
+                    Err(e) => errors.push(format!("{origin}: {e}")),
+                }
+            }
+        }
         let lookup = |file: &str, section: &str| {
             let o = original.as_ref()?;
             let ini = Ini::parse_bytes(&o.read_file(file).ok()?);
             ini.section(section).cloned()
         };
-        let (rules, rule_errors) = rules::build_at(&sources, &lookup, cfg.difficulty.as_deref());
+        let (rules, rule_errors) = rules::build_with(&sources, &scripts, &lookup, cfg.difficulty.as_deref());
         errors.extend(rule_errors);
         // 4. Scenarios (a later pack's scenario with the same id replaces the earlier one).
         let mut scenarios: Vec<Scenario> = Vec::new();
@@ -548,6 +565,27 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
             *s = key;
         }
     };
+    // Text arguments inside compiled scripts. `Arc::make_mut` gives mutable access to
+    // the shared program: it clones it first only if another `Arc` points at it (none
+    // does yet at load), so this costs nothing in practice.
+    let fix_program = |p: &mut std::sync::Arc<crate::script::stmt::Program>, at: &str, errors: &mut Vec<String>| {
+        let program = std::sync::Arc::make_mut(p);
+        let at = format!("{at}: {}", program.reference());
+        program.texts_mut(&mut |s| {
+            if let Err(key) = t.resolve(s).map(|v| *s = v) {
+                errors.push(format!("text: missing key '@{key}' ({at})"));
+                *s = key;
+            }
+        });
+    };
+    let mut script_errors = Vec::new();
+    for b in &mut rules.behaviours {
+        for st in &mut b.states {
+            if let Some(h) = &mut st.script {
+                fix_program(&mut h.program, &format!("behaviours.{}.states.{}", b.id, st.name), &mut script_errors);
+            }
+        }
+    }
     for c in &mut rules.ships {
         fix(&mut c.name, &format!("{}.name", c.id));
         fix(&mut c.description, &format!("{}.description", c.id));
@@ -578,6 +616,11 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
         let story = &mut s.story;
         let texty = |a: &crate::script::action::Action| matches!(a.name, "message" | "news" | "card");
         for e in &mut story.events {
+            for a in e.actions.iter_mut().chain(e.choices.iter_mut().flat_map(|c| c.actions.iter_mut())) {
+                if let Some(p) = &mut a.program {
+                    fix_program(p, &format!("events.{}", e.id), &mut script_errors);
+                }
+            }
             for a in e.actions.iter_mut().filter(|a| texty(a)) {
                 fix(&mut a.args[0], &format!("events.{}", e.id));
             }
@@ -589,6 +632,11 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
             }
         }
         for p in &mut story.plans {
+            for a in p.warnings.iter_mut().flat_map(|(_, l)| l.iter_mut()).chain(p.complete.iter_mut()) {
+                if let Some(prog) = &mut a.program {
+                    fix_program(prog, &format!("plans.{}", p.id), &mut script_errors);
+                }
+            }
             for (_, list) in &mut p.warnings {
                 for a in list.iter_mut().filter(|a| texty(a)) {
                     fix(&mut a.args[0], &format!("plans.{}.warnings", p.id));
@@ -617,8 +665,13 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
             fix(&mut c.line, &format!("missions.{id}.chatter[{k}]"));
         }
         for (r, list) in &mut m.outcomes {
-            for a in list.iter_mut().filter(|a| a.name == "message") {
-                fix(&mut a.args[0], &format!("missions.{id}.outcomes.{r}"));
+            for a in list.iter_mut() {
+                if a.name == "message" {
+                    fix(&mut a.args[0], &format!("missions.{id}.outcomes.{r}"));
+                }
+                if let Some(p) = &mut a.program {
+                    fix_program(p, &format!("missions.{id}.outcomes.{r}"), &mut script_errors);
+                }
             }
         }
     }
@@ -626,6 +679,7 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
         fix(&mut s.title, &format!("scenario {}.title", s.id));
         fix(&mut s.description, &format!("scenario {}.description", s.id));
     }
+    errors.extend(script_errors);
     errors
 }
 
@@ -704,6 +758,51 @@ mod tests {
         assert!(c.load_model("original:X", 0, 1.0).unwrap_err().contains("original"));
         assert!(c.load_model("models/missing.obj", 0, 1.0).is_err());
         assert!(c.original_mesh_names().is_empty());
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn scripts_load_from_packs_mods_override_them_and_hooks_are_checked() {
+        let root = std::env::temp_dir().join(format!("oi-scripts-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        make_pack(&root, "base", "", false);
+        make_pack(&root, "zmod", "base", false);
+        let write = |pack: &str, file: &str, text: &str| {
+            let path = root.join(pack).join(file);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, text).unwrap();
+        };
+        // The base pack's behaviour calls its script; the mod replaces the script file.
+        write(
+            "base",
+            "rules/ai.yaml",
+            "behaviours:\n  ace:\n    vars: [mood]\n    states:\n      \
+             think: {do: script, call: 'scripts/ace.ois:think'}\n      calm: {do: idle}\n",
+        );
+        write("base", "scripts/ace.ois", "def think() { set_var(mood, 1) }\n");
+        write("zmod", "scripts/ace.ois", "def think() {\n  message(@ace.hello)\n  goto(calm)\n}\n");
+        write("zmod", "text/en/ace.yaml", "text: {ace.hello: Hello there}\n");
+        let cfg = ContentConfig { pack_dirs: vec![root.clone()], ..Default::default() };
+        let c = Content::load(&cfg).unwrap();
+        assert!(c.errors.iter().all(|e| !e.contains("ace")), "{:?}", c.errors);
+        let b = c.rules.behaviour(c.rules.behaviour_id("ace").unwrap());
+        let p = &b.states[0].script.as_ref().unwrap().program;
+        assert_eq!(p.action_words("goto"), ["calm"], "the mod's version of the file");
+        assert_eq!(p.action_words("message"), ["Hello there"], "text keys are resolved at load");
+        // A broken script file and a hook naming a missing function are load errors.
+        write("zmod", "scripts/broken.ois", "def oops( {\n");
+        write(
+            "zmod",
+            "rules/more.yaml",
+            "behaviours:\n  lost:\n    states:\n      s: {do: script, call: 'scripts/ace.ois:nothing'}\n",
+        );
+        let c = Content::load(&cfg).unwrap();
+        assert!(c.errors.iter().any(|e| e.starts_with("zmod/scripts/broken.ois: line 1:")), "{:?}", c.errors);
+        assert!(
+            c.errors.iter().any(|e| e.contains("behaviours.lost") && e.contains("no function 'nothing'")),
+            "{:?}",
+            c.errors
+        );
         std::fs::remove_dir_all(&root).unwrap();
     }
 

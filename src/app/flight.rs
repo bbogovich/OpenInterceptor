@@ -245,6 +245,10 @@ pub fn event_messages(world: &World, player: ShipId) -> Vec<String> {
     for e in &world.events {
         match e {
             SimEvent::Message { ship, text } if *ship == player => out.push(text.clone()),
+            SimEvent::Radio { text, .. } => out.push(text.clone()),
+            SimEvent::ScriptStopped { call, .. } => {
+                out.push(format!("SCRIPT STOPPED: {call} used its whole operation budget"))
+            }
             SimEvent::LockAcquired { ship } if *ship == player => out.push("MISSILE LOCK".into()),
             SimEvent::NoEnergy { ship } if *ship == player => out.push("INSUFFICIENT POWER".into()),
             SimEvent::Destroyed { ship, .. } if *ship == player => out.push("YOUR SHIP HAS BEEN DESTROYED".into()),

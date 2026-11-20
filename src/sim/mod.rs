@@ -183,6 +183,11 @@ pub enum LinkMode {
 }
 
 /// Who flies a ship, and their memory between ticks.
+// Clippy warns that `Ai` is much bigger than `External` (an enum is as big as its
+// largest variant, so the player's ship carries unused bytes). Boxing `AiState` would
+// shrink the enum, but nearly every ship is AI-flown: it would add a heap allocation per
+// ship and a pointer hop on every AI read, to save a few hundred bytes on one ship.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Pilot {
     /// Controlled from outside (the human player): `World::step` uses `ship.controls`
@@ -569,6 +574,18 @@ pub enum SimEvent {
         ship: ShipId,
         kind: SystemKind,
         on: bool,
+    },
+    /// A radio line from `ship` (a behaviour script's `message`), for everyone's
+    /// message display.
+    Radio {
+        ship: ShipId,
+        text: String,
+    },
+    /// `ship`'s behaviour script `call` used its whole operation budget and was stopped
+    /// (reported once per ship, for modders).
+    ScriptStopped {
+        ship: ShipId,
+        call: String,
     },
 }
 
@@ -1168,6 +1185,15 @@ behaviours:
         let doc = yaml::parse(RULES).expect("the test rules are valid YAML");
         let src = rules::RulesSource { pack: 0, file: "test.yaml".into(), doc };
         let (r, errors) = rules::build(&[src], &|_: &str, _: &str| None);
+        assert!(errors.is_empty(), "{errors:?}");
+        Arc::new(r)
+    }
+
+    /// The test rules plus one more rules file (`extra`), with script files.
+    pub fn rules_with(extra: &str, scripts: &crate::script::stmt::Library) -> Arc<Ruleset> {
+        let base = rules::RulesSource { pack: 0, file: "test.yaml".into(), doc: yaml::parse(RULES).unwrap() };
+        let more = rules::RulesSource { pack: 0, file: "extra.yaml".into(), doc: yaml::parse(extra).unwrap() };
+        let (r, errors) = rules::build_with(&[base, more], scripts, &|_: &str, _: &str| None, None);
         assert!(errors.is_empty(), "{errors:?}");
         Arc::new(r)
     }

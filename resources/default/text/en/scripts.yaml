@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../schemas/text.schema.json
+# Radio lines said by Tier 2 scripts (scripts/*.ois) in the default campaign (English).
+text:
+  msg.saucer_ace.taunt: "Ace: You fly like a cargo barge, Guardsman!"
+  msg.saucer_ace.fury: "Ace: Enough games. Now you burn!"
+  msg.saucer_ace.retreat: "Ace: This isn't over!"

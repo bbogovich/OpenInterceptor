@@ -51,6 +51,44 @@ behaviours:
       aim: {per_level: [0.2, 0.35, 0.5, 0.65]}
       reaction: {per_level: [1.2s, 0.9s, 0.7s, 0.5s]}
 
+  # A saucer ace whose phases are a Tier 2 script (scripts/saucer_ace.ois): it duels
+  # at range and counts the hits it takes; badly hurt or hit too often it turns
+  # furious, closes in and fires everything; near the end it flees. The script runs
+  # every half second in the scripted states and keeps its memory in `vars`.
+  # Testbed: "Duel: saucer ace".
+  saucer_ace:
+    prefer: {player: 2}
+    vars: [phase, hits]
+    start: duel
+    states:
+      duel:
+        do: script
+        call: scripts/saucer_ace.ois:duel
+        every: 0.5s
+        fly: attack
+        range: 1.8km
+        fire_cone: 3
+        burst: 1s
+        pause: 1.2s
+        missiles: 0
+      fury:
+        do: script
+        call: scripts/saucer_ace.ois:fury
+        every: 0.5s
+        fly: attack
+        range: 1.2km
+        fire_cone: 4
+        burst: 1.6s
+        pause: 0.6s
+        missiles: {per_level: [0, 12s, 10s, 8s]}
+      dodge: {do: evade, duration: 2s}
+      flee: {do: retreat, jump: true}
+    transitions:
+      - {from: dodge, to: fury, when: "time_in_state > 2s"}
+    skill:
+      aim: {per_level: [0.25, 0.4, 0.55, 0.7]}
+      reaction: {per_level: [1.1s, 0.85s, 0.65s, 0.45s]}
+
   # Saucers escorting a grappler: in formation on it, breaking off to attack anything
   # hostile that comes within 1.5 km of the tug or of themselves.
   tug_escort:

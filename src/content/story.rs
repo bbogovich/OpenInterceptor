@@ -211,12 +211,14 @@ impl StoryDef {
     }
 
     /// Builds the story layer. `schema` is the campaign condition schema (its names
-    /// include every story id); `raids` the strategy's raid ids.
+    /// include every story id); `raids` the strategy's raid ids; `scripts` the packs'
+    /// script files, for `script(...)` entries in action lists (campaign context).
     pub fn build(
         defs: &[(&str, &str, &Node)],
         global: &dyn Fn(&str) -> Option<Node>,
         schema: &script::Schema,
         raids: &[String],
+        scripts: &script::stmt::Library,
         errors: &mut Vec<String>,
     ) -> StoryDef {
         fn of<'a>(
@@ -234,6 +236,7 @@ impl StoryDef {
                 }
             }
         };
+        let hooks = action::Hooks { library: scripts, schema, context: "campaign" };
         let acts = |g: Get, key: &str, at: &str, errors: &mut Vec<String>| -> Vec<action::Action> {
             let list: Vec<String> = match g.node(key) {
                 Some(n) => match (n.as_seq(), n.as_str()) {
@@ -244,7 +247,7 @@ impl StoryDef {
                 None => Vec::new(),
             };
             list.iter()
-                .filter_map(|a| match action::parse(a, action::EVENT_ACTIONS) {
+                .filter_map(|a| match action::parse_with(a, action::EVENT_ACTIONS, Some(&hooks)) {
                     Ok(x) => Some(x),
                     Err(e) => {
                         errors.push(format!("{at}.{key}: {e}"));

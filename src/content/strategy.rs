@@ -463,12 +463,14 @@ impl StrategyDef {
     /// Builds the strategy layer from the resolved definitions (`(section, id, node)`) and
     /// global sections. `None` when the campaign has no `start:` (no strategy layer).
     /// Problems are added to `errors`; `extra_names` are ids from elsewhere (factions,
-    /// ship classes, missions) that expressions may also name.
+    /// ship classes, missions) that expressions may also name; `scripts` are the packs'
+    /// script files, for `script(...)` entries in action lists.
     pub fn build(
         defs: &[(&str, &str, &Node)],
         global: &dyn Fn(&str) -> Option<Node>,
         levels: &[String],
         extra_names: &[String],
+        scripts: &script::stmt::Library,
         errors: &mut Vec<String>,
     ) -> Option<StrategyDef> {
         let start_node = global("start")?;
@@ -808,13 +810,14 @@ impl StrategyDef {
             }
         });
         let mut evaluations = Vec::new();
+        let hooks = script::action::Hooks { library: scripts, schema: &schema, context: "campaign" };
         for (k, n) in global("evaluations").as_ref().and_then(|n| n.as_seq()).unwrap_or(&[]).iter().enumerate() {
             let e = Get(n);
             let at = format!("evaluations[{k}]");
             let actions = e
                 .list("do")
                 .iter()
-                .filter_map(|a| match script::action::parse(a, script::action::EVENT_ACTIONS) {
+                .filter_map(|a| match script::action::parse_with(a, script::action::EVENT_ACTIONS, Some(&hooks)) {
                     Ok(x) => Some(x),
                     Err(err) => {
                         errors.push(format!("{at}.do: {err}"));
@@ -928,7 +931,7 @@ impl StrategyDef {
             salvage,
             story: {
                 let raid_ids: Vec<String> = raids_for_story.clone();
-                super::story::StoryDef::build(defs, global, &schema, &raid_ids, errors)
+                super::story::StoryDef::build(defs, global, &schema, &raid_ids, scripts, errors)
             },
             logistics: {
                 // The chosen map's systems (their deposits and features), the hulls' and
@@ -1322,6 +1325,11 @@ pub(crate) mod tests {
 
     /// Builds a strategy layer from one YAML document holding every section.
     pub(crate) fn build(text: &str) -> (Option<StrategyDef>, Vec<String>) {
+        build_with(text, &script::stmt::Library::default())
+    }
+
+    /// [`build`] with script files.
+    pub(crate) fn build_with(text: &str, scripts: &script::stmt::Library) -> (Option<StrategyDef>, Vec<String>) {
         let doc = yaml::parse(text).unwrap();
         let mut defs = Vec::new();
         for (sec, body) in doc.as_map().unwrap() {
@@ -1336,7 +1344,7 @@ pub(crate) mod tests {
         }
         let global = |name: &str| doc.get(name).cloned();
         let mut errors = Vec::new();
-        let d = StrategyDef::build(&defs, &global, &["easy".into(), "hard".into()], &[], &mut errors);
+        let d = StrategyDef::build(&defs, &global, &["easy".into(), "hard".into()], &[], scripts, &mut errors);
         (d, errors)
     }
 

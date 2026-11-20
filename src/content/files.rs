@@ -411,14 +411,16 @@ fn mission() -> Ty {
 }
 
 fn behaviour() -> Ty {
+    const MANOEUVRES: &[&str] =
+        &["idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "escort", "travel", "mine"];
+    const DO: &[&str] = &[
+        "idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "escort", "travel", "mine", "script",
+    ];
     let state = Ty::Struct(vec![
-        f(
-            "do",
-            Ty::Enum(&[
-                "idle", "circle", "patrol", "attack", "evade", "retreat", "turret", "tow", "escort", "travel", "mine",
-            ]),
-            "the manoeuvre",
-        ),
+        f("do", Ty::Enum(DO), "the manoeuvre, or script (a Tier 2 script decides; see call:)"),
+        f("call", Ty::Text, "do: script: the function to run, scripts/<file>.ois:<function> (object context)"),
+        f("every", time(), "do: script: seconds between runs (0.5 s)"),
+        f("fly", Ty::Enum(MANOEUVRES), "do: script: the manoeuvre flown meanwhile (attack)"),
         f("range", dist(), "attack: open fire inside; patrol: radius; turret: reach; mine: trigger distance"),
         f("fire_cone", Ty::Qty(Unit::Angle), "fire when the aim point is within this angle of the nose"),
         f("burst", time(), "seconds of firing"),
@@ -431,6 +433,7 @@ fn behaviour() -> Ty {
     ]);
     Ty::Def(vec![
         f("start", name(), "the first state"),
+        f("vars", names(), "object variables (at most 8): read with var(name), set by scripts with set_var"),
         f("states", Ty::Dict(Box::new(state)), "state name: manoeuvre and parameters"),
         f(
             "transitions",

@@ -11,7 +11,9 @@
 //!    objectives are latched.
 //! 3. **The end** — `lose` is checked before `win`, then `draw`, then the timer; the
 //!    player jumping out is a `retreat`. The result's battle actions run (messages) and
-//!    the [`Debrief`] lists the rest for the strategy layer.
+//!    the [`Debrief`] lists the rest for the strategy layer. A `script(...)` outcome runs
+//!    its script here, in the battle context ([`BattleHost`]): its battle actions show on
+//!    the message display, its campaign actions join the debrief's list.
 //!
 //! ## Layering
 //!
@@ -22,8 +24,9 @@
 
 use crate::content::mission::{Arrival, MissionDef, RoleDef};
 use crate::content::scenario::{Placement, Scenario};
-use crate::script::action::Scope;
+use crate::script::action::{Action, Scope};
 use crate::script::battle::id;
+use crate::script::stmt::Host;
 use crate::script::{Context, Value};
 use crate::sim::{collision::Shape, Pilot, ShipId, SimEvent, World};
 use glam::{Quat, Vec3};
@@ -144,7 +147,49 @@ impl Context for BattleCx<'_> {
                 _ => false,
             }),
             id::ARRIVED => b(role(args[0]).is_some_and(|r| r.arrived)),
+            id::MEMBERS => n(role(args[0]).map(|r| r.members.len() as f32).unwrap_or(0.0)),
+            // One member of a role, by its index in `members` (0 = the first to enter).
+            id::MEMBER_ALIVE | id::MEMBER_HULL | id::MEMBER_DISTANCE => {
+                let ship = role(args[0]).and_then(|r| r.members.get(args[1].max(0.0) as usize)).and_then(|m| w.get(*m));
+                match q {
+                    id::MEMBER_ALIVE => b(ship.is_some()),
+                    id::MEMBER_HULL => n(ship.map(|s| s.hull / w.rules.ship(s.class).hull.max(1.0)).unwrap_or(0.0)),
+                    _ => n(match (ship, player) {
+                        (Some(s), Some(p)) => s.position.distance(p.position),
+                        _ => 1e9,
+                    }),
+                }
+            }
             _ => b(false),
+        }
+    }
+}
+
+/// What a `script(...)` outcome runs against: the battle's queries, with its actions
+/// sorted like an outcome list's — battle actions become message lines, campaign actions
+/// go to the debrief.
+pub struct BattleHost<'a> {
+    /// The battle's queries.
+    pub cx: BattleCx<'a>,
+    /// Lines for the message display (battle actions).
+    pub lines: Vec<String>,
+    /// Campaign actions, as written, for the debrief.
+    pub campaign: Vec<String>,
+}
+
+impl Context for BattleHost<'_> {
+    fn query(&self, q: u16, args: &[f32]) -> Value {
+        self.cx.query(q, args)
+    }
+}
+
+impl Host for BattleHost<'_> {
+    fn act(&mut self, a: Action) {
+        match a.scope {
+            Scope::Battle => self.lines.extend(a.args.first().cloned()),
+            Scope::Campaign => self.campaign.push(a.display()),
+            // Not in the mission table: a script here cannot name one.
+            Scope::Object => {}
         }
     }
 }
@@ -253,8 +298,8 @@ impl MissionRun {
         if let Some(e) = &def.environment {
             w.set_environment(e)?;
         }
-        for i in 0..def.roles.len() {
-            if def.roles[i].arrive.is_none() {
+        for (i, role) in def.roles.iter().enumerate() {
+            if role.arrive.is_none() {
                 run.spawn_role(&mut w, i, None, None)?;
             }
         }
@@ -485,12 +530,28 @@ impl MissionRun {
             // A mission without its own `killed` outcomes counts it as a loss.
             let has_own = self.def.outcomes.iter().any(|(r, _)| r == "killed");
             let key = if result == "killed" && !has_own { "lose" } else { result.as_str() };
+            let mut rng = self.rng;
             for a in self.def.outcome(key) {
+                if let Some(program) = &a.program {
+                    // A script outcome: run it now, against the battle as it ended.
+                    let cx = BattleCx { world: w, run: self, rng: Cell::new(rng) };
+                    let mut host = BattleHost { cx, lines: Vec::new(), campaign: Vec::new() };
+                    if program.run(&mut host).is_err() {
+                        host.lines
+                            .push(format!("SCRIPT STOPPED: {} used its whole operation budget", program.reference()));
+                    }
+                    rng = host.cx.rng.get();
+                    lines.append(&mut host.lines);
+                    campaign.append(&mut host.campaign);
+                    continue;
+                }
                 match a.scope {
                     Scope::Battle => lines.extend(a.args.first().cloned()),
                     Scope::Campaign => campaign.push(a.display()),
+                    Scope::Object => {}
                 }
             }
+            self.rng = rng;
             let text = self.def.debrief.iter().find(|(r, _)| *r == result).map(|(_, t)| t.clone()).unwrap_or_default();
             lines.push(match result.as_str() {
                 "win" => "MISSION ACCOMPLISHED".into(),
@@ -609,8 +670,8 @@ mod tests {
         kill(&mut w, m.roles[0].members[0]);
         run(&mut w, &mut m, 0.2);
         assert_eq!((m.roles[0].members.len(), m.roles[0].destroyed), (3, 1), "a wave of two");
-        for k in 1..3 {
-            kill(&mut w, m.roles[0].members[k]);
+        for &id in &m.roles[0].members[1..3] {
+            kill(&mut w, id);
         }
         let lines = run(&mut w, &mut m, 3.0);
         let d = m.debrief.clone().expect("won");
@@ -633,6 +694,43 @@ mod tests {
             mission("player: {class: fighter}\nroles:\n  x: {class: raider, ai: idle, at: {distance: 5km}}\ntimer: {after: 1s, then: draw}\n");
         run(&mut w, &mut m, 2.0);
         assert_eq!(m.debrief.as_ref().unwrap().result, "draw");
+    }
+
+    #[test]
+    fn a_script_outcome_runs_in_the_battle_context() {
+        let mut lib = crate::script::stmt::Library::default();
+        lib.add(
+            "scripts/end.ois",
+            "test/scripts/end.ois",
+            "def tally() {\n  let left = 0\n  for each m of foes {\n    if member_alive(foes, m) { left = left + 1 }\n  }\n  \
+             message(\"Survivors counted\")\n  if left == 0 { score(clean) } else { money(left * 100) }\n}\n\
+             def research_here() { research(lasers) }\ndef wrong_role() { money(count(friends)) }\n",
+        )
+        .unwrap();
+        let r = rules();
+        let classes: Vec<String> = r.ships.iter().map(|c| c.id.clone()).collect();
+        let parse = |outcome: &str| {
+            let text = format!(
+                "player: {{class: fighter}}\nroles:\n  foes: {{class: raider, count: 3, ai: idle, at: {{distance: 3km}}}}\n\
+                 objectives: {{win: time > 0.5s}}\noutcomes: {{win: ['{outcome}', salvage]}}\n"
+            );
+            let doc = yaml::parse(&text).unwrap();
+            MissionDef::parse_with("t", Get(&doc), 0, &classes, &r.difficulty_levels, &lib)
+        };
+        let def = parse("script(scripts/end.ois:tally)").unwrap();
+        let (mut w, mut m) = MissionRun::start(&def, r.clone(), shapes(&r), None).unwrap();
+        kill(&mut w, m.roles[0].members[0]);
+        let lines = run(&mut w, &mut m, 1.0);
+        let d = m.debrief.clone().expect("won");
+        assert_eq!(d.campaign, ["money(200)", "salvage"], "two survivors; then the list goes on");
+        assert!(lines.contains(&"Survivors counted".to_string()), "{lines:?}");
+        // The script is checked against this mission's battle context.
+        let e = parse("script(scripts/end.ois:research_here)").unwrap_err();
+        assert!(e.contains("outcomes.win") && e.contains("'research'") && e.contains("battle context"), "{e}");
+        assert!(parse("script(scripts/end.ois:wrong_role)").unwrap_err().contains("unknown name 'friends'"));
+        // Without the script files, a script outcome cannot be compiled.
+        let doc = yaml::parse("roles: {a: {class: raider}}\nobjectives: {win: alive(a)}\noutcomes: {win: ['script(scripts/end.ois:tally)']}\n").unwrap();
+        assert!(MissionDef::parse("t", Get(&doc), 0, &classes, &[]).unwrap_err().contains("no script file"));
     }
 
     #[test]
