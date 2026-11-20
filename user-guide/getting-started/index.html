@@ -6928,7 +6928,11 @@ scripts/check.sh
 </tr>
 <tr>
 <td><code>--chapter &lt;N&gt;</code></td>
-<td>With <code>--strategy</code>: play the new campaign forward by itself until its story reaches chapter <em>N</em> (its first arc's step <em>N</em>; at most 1500 days), then open the strategy screen there (app 0.16.13; <a href="../campaign/#testbed-cheats-and-tools">Campaign › Testbed cheats and tools</a>). Ignored without <code>--strategy</code>.</td>
+<td>With <code>--strategy</code>: play the new campaign forward by itself until its story reaches chapter <em>N</em> (its first arc's step <em>N</em>; at most 1500 days), then open the strategy screen there (app 0.16.13; <a href="../campaign/#testbed-cheats-and-tools">Campaign › Testbed cheats and tools</a>). Ignored without <code>--strategy</code> (since app 0.16.15 it says so on standard error).</td>
+</tr>
+<tr>
+<td><code>--screen &lt;ID&gt;</code></td>
+<td>With <code>--strategy</code>: open this screen of the campaign's <a href="../../modding/screens/#screen-sets-app-0170">screen set</a> over its first screen (app 0.17.1). Ignored for a campaign without a set and with <code>--chapter</code>.</td>
 </tr>
 <tr>
 <td><code>--credits</code></td>

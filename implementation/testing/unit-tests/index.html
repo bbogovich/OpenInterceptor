@@ -6509,6 +6509,7 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>At main <code>3ea5177</code> (app 0.18.1)</strong> one more: <code>content::tests::evaluation_texts_are_resolved</code> (the 0.18.1 regression: <code>@keys</code> in evaluations' <code>do</code> lists resolved), so <strong>438</strong> run on macOS (441 <code>#[test]</code> functions less the Linux-only test and two ignored helpers). App 0.16.15 (<code>00c7da5</code>) added no test function; the default campaign's six-month test now also asserts that its evaluations reach the strategy layer.</p>
 <p><strong>At main <code>5d05ba2</code> (app 0.18.0)</strong> a count of the <code>#[test]</code> functions in <code>src/</code> (grep, not a
 build) gives <strong>437</strong> run on macOS (440 less the Linux-only test and two ignored helpers). The 29
 added since <code>de30c2a</code>: app <strong>0.17.0</strong> (<code>4c29f89</code>)
@@ -6771,8 +6772,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content</code></td>
-<td>6</td>
-<td>Loading packs/rules/scenarios/models from temp folders, skipping packs that need original data, scenario replacement, <strong>per-asset overrides</strong> of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs; <strong>scripts load from packs, mods override them, and hooks are checked</strong> (text keys resolved, a broken file and a missing function reported — app 0.18.0)</td>
+<td>7</td>
+<td>Loading packs/rules/scenarios/models from temp folders, skipping packs that need original data, scenario replacement, <strong>per-asset overrides</strong> of a mesh, image and sound and their removal when the pack is disabled, PNG/TGA decoding, model scaling, empty pack dirs; <strong>scripts load from packs, mods override them, and hooks are checked</strong> (text keys resolved, a broken file and a missing function reported — app 0.18.0); <strong><code>@keys</code> in evaluations resolved</strong> (app 0.18.1)</td>
 </tr>
 <tr>
 <td><code>content::pack</code></td>

@@ -6754,6 +6754,15 @@ fills the window. Since app 0.11.0 – 0.13.0 the campaign has <strong>music</st
   (<a href="#testbed-cheats-and-tools">Testbed tools</a>).</li>
 </ul>
 <h2 id="the-screen">The screen<a class="headerlink" href="#the-screen" title="Permanent link">&para;</a></h2>
+<p>A campaign may have its own <strong>screen set</strong> — several screens in the style of its original, linked
+by buttons (app 0.17.0). The <code>interceptor</code> campaign opens on its Command and Strategic Display with
+a round star map, a minimap and the time, day, date and funds readouts; its screen buttons open
+the Bases, Equip Ships, Reports, Research, Purchase and UFOpedia screens, each with a back button,
+and the holes of the time dial set the clock (app 0.17.1, a first pass: the buttons are drawn by
+the art and outlined under the mouse). <strong>Ctrl+T</strong> switches to the single testbed screen described
+below and back; the default campaign has only that one so far. <code>--screen &lt;id&gt;</code> with <code>--strategy</code>
+opens one screen of the set directly (<code>--strategy --screen research</code>).</p>
+<p>The testbed screen:</p>
 <div class="highlight"><pre><span></span><code>┌ 2084-03-14   Funds 2,140,000   Score 310     [&lt;] Gatehouse [&gt;]     [||][1h][6h][1d][5d][Save][Menu] ┐
 ┌──────────────────────────────────────────┐ ┌ Bases │ Research │ Build │ Market │ Factory ┐
 │        ·Ajax ───────── ·Vesta Reach       │ │ Hangar│ Contacts │ Supply│ Archive│ Messages│
@@ -6910,6 +6919,10 @@ the screen with buttons; nothing else can be clicked until you answer.</p>
 <tr>
 <td>Ctrl+D</td>
 <td>Show or hide the testbed's <em>Debug</em> list (app 0.16.13)</td>
+</tr>
+<tr>
+<td>Ctrl+T</td>
+<td>Switch between the campaign's screen set and the testbed screen (app 0.17.0)</td>
 </tr>
 <tr>
 <td>Esc</td>

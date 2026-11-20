@@ -8580,7 +8580,7 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 </table>
 <h3 id="screens"><code>screens</code><a class="headerlink" href="#screens" title="Permanent link">&para;</a></h3>
 <p>Screen layouts (app 0.16.0; guide: <a href="../screens/">Screen layouts</a>). A definition section:
-<code>screens: {&lt;screen id&gt;: {…}}</code>. Only <code>starmap</code> (the strategy screen) is laid out so far.</p>
+<code>screens: {&lt;screen id&gt;: {…}}</code>. <code>starmap</code> is the testbed layout of the strategy screen; any other id is a screen of the campaign's <strong>screen set</strong> (app 0.17.0; guide: <a href="../screens/#screen-sets-app-0170">Screen sets</a>), opened from <code>campaign.strategy_screen</code> or by a button's <code>open(&lt;id&gt;)</code>.</p>
 <table>
 <thead>
 <tr>
@@ -8605,9 +8605,107 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 </tr>
 <tr>
 <td><code>widgets</code></td>
-<td>mapping name: <code>[x, y, w, h]</code></td>
+<td>mapping name: <code>[x, y, w, h]</code> or widget</td>
 <td>the engine's places</td>
-<td>Where each widget goes, in the design space. <code>starmap</code>: <code>top</code>, <code>map</code>, <code>nav</code>, <code>info</code>, <code>panel</code>; another name is a load error. A widget left out keeps the engine's place.</td>
+<td>Where each widget goes, in the design space. <code>starmap</code>: <code>top</code>, <code>map</code>, <code>nav</code>, <code>info</code>, <code>panel</code>; another name is a load error. A widget left out keeps the engine's place. In a screen set each entry is a full widget (below).</td>
+</tr>
+<tr>
+<td><code>dialog</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>A screen set's dialog: drawn over the screen under it (app 0.17.0).</td>
+</tr>
+</tbody>
+</table>
+<p>A screen set's widget (app 0.17.0 – 0.17.1): <code>widgets.&lt;name&gt;: {kind, rect, …}</code>. A screen of a set
+keeps its shape (one scale factor, centred) instead of stretching.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code></td>
+<td><code>image</code></td>
+<td>What it is; another kind is a load error.</td>
+</tr>
+<tr>
+<td><code>rect</code></td>
+<td>4 numbers</td>
+<td><em>required</em></td>
+<td>x, y, w, h in the screen's design space.</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>asset</td>
+<td>none</td>
+<td>An <code>image</code>'s picture (a button's <code>up</code> image).</td>
+</tr>
+<tr>
+<td><code>images</code></td>
+<td><code>{up, down, hover, disabled}</code></td>
+<td>none</td>
+<td>A button's state images; a missing state draws <code>up</code>.</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>text</td>
+<td>none</td>
+<td>A button's action: <code>open(&lt;screen&gt;)</code> (the screen must exist), <code>back</code>, <code>speed(0-4)</code>, <code>save</code>, <code>menu</code>, <code>testbed</code>. Another is a load error.</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>name</td>
+<td>none</td>
+<td>A <code>value</code>'s value: <code>date</code>, <code>date_long</code>, <code>weekday</code> (both app 0.17.1), <code>time</code>, <code>money</code> (or <code>funds</code>), <code>score</code>, <code>base</code>, <code>speed</code>, <code>selection</code>. Not checked: an unknown name shows as <code>?&lt;name&gt;</code>.</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>name</td>
+<td>none</td>
+<td>A <code>list</code>'s list: <code>bases</code>, <code>research</code>, <code>build</code>, <code>market</code>, <code>factory</code>, <code>hangar</code>, <code>contacts</code>, <code>supply</code>, <code>archive</code>, <code>reports</code>, <code>messages</code>. On a <code>map</code>: <code>minimap</code>, the whole map small, without names (app 0.17.1). Not checked at load.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>text</td>
+<td>none</td>
+<td>A <code>text</code> widget's text (a <code>@key</code> is resolved), wrapped.</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>text</td>
+<td>none</td>
+<td>A button's caption when it has no images. Without images or label a button is an invisible hot spot over the art.</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>number</td>
+<td>12</td>
+<td>Text size in design pixels (at least 4).</td>
+</tr>
+<tr>
+<td><code>colour</code></td>
+<td>3 or 4 numbers</td>
+<td>the skin's <code>text</code></td>
+<td>Text colour, 0 – 1.</td>
+</tr>
+<tr>
+<td><code>align</code></td>
+<td><code>left</code>, <code>centre</code>, <code>right</code></td>
+<td><code>left</code></td>
+<td>Text alignment.</td>
+</tr>
+<tr>
+<td><code>shape</code></td>
+<td><code>rect</code>, <code>round</code></td>
+<td><code>rect</code></td>
+<td>A map's viewport; <code>round</code> clips it to the circle inside the rectangle.</td>
 </tr>
 </tbody>
 </table>
@@ -8907,6 +9005,12 @@ mission or scenario picks one with <code>environment: &lt;id&gt;</code>; without
 <td>id</td>
 <td>none</td>
 <td>A <a href="../cutscenes/">cutscene</a> played before a new campaign's strategy screen (app 0.13.0).</td>
+</tr>
+<tr>
+<td><code>strategy_screen</code></td>
+<td>id</td>
+<td>none</td>
+<td>The first screen of the campaign's <a href="../screens/#screen-sets-app-0170">screen set</a> (<code>screens.&lt;id&gt;</code>, app 0.17.0); none: the testbed layout. Ctrl+T switches between them. Not checked at load: an unknown id shows an empty screen. <code>interceptor</code>: <code>csd</code>.</td>
 </tr>
 <tr>
 <td><code>menu.title</code></td>

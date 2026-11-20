@@ -4800,6 +4800,100 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#screen-sets-app-0170" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screen sets (app 0.17.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Screen sets (app 0.17.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#screen-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screen keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widget-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widget keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-testbed-layout-and-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The testbed layout and --screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-interceptor-set-app-0171" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The interceptor set (app 0.17.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-set-differs-from-the-format-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the set differs from the format design
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#not-built-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6528,6 +6622,100 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#screen-sets-app-0170" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screen sets (app 0.17.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Screen sets (app 0.17.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#screen-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screen keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widget-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widget keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-testbed-layout-and-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The testbed layout and --screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-interceptor-set-app-0171" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The interceptor set (app 0.17.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-set-differs-from-the-format-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the set differs from the format design
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#not-built-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6574,7 +6762,14 @@ skin decides how things look, the layout where they are.</p>
 <p>Requirement: <a href="../../specification/requirements/campaigns/#r-cpn-011-screens-and-skins">R-CPN-011</a>.
 Every key with its type: <a href="../reference/#screens">Mod file reference › <code>screens</code></a>. How the screen
 reads it: <a href="../../implementation/architecture/presentation/#widgets-and-screen-layouts-appwidgets-contentscreens">Architecture › Presentation › Widgets and screen layouts</a>.</p>
-<p>So far one screen is laid out: the strategy screen, <code>starmap</code>.</p>
+<p>A layout comes in two forms:</p>
+<ul>
+<li><strong>The testbed layout</strong> — <code>screens.starmap</code> moves the five widgets of the engine's single-grid
+  strategy screen (below). Every campaign has it.</li>
+<li><strong>A screen set</strong> (app 0.17.0, plan item 6.9) — a campaign's strategy interface as several
+  screens, as the original game has: each screen a background and widgets the pack defines itself,
+  linked by buttons (<a href="#screen-sets-app-0170">Screen sets</a>).</li>
+</ul>
 <h2 id="the-strategy-screens-widgets">The strategy screen's widgets<a class="headerlink" href="#the-strategy-screens-widgets" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -6658,15 +6853,337 @@ to fit, behind every widget (app 0.16.2; in 0.16.0 it was read but not drawn). I
 first time the screen draws; an image that cannot be loaded is reported once on standard error
 (<code>screens.starmap.background &lt;file&gt;: …</code>) and the screen falls back to the skin's <code>background</code>
 colour. Leave room in the picture where the map and panels sit, since they draw over it.</p>
+<h2 id="screen-sets-app-0170">Screen sets (app 0.17.0)<a class="headerlink" href="#screen-sets-app-0170" title="Permanent link">&para;</a></h2>
+<p>Set <code>strategy_screen</code> in the campaign file to the id of the first screen, and the strategy layer
+opens on that screen instead of the testbed layout:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># campaign/campaign.yaml</span>
+<span class="nt">campaign</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">strategy_screen</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command</span><span class="w">      </span><span class="c1"># screens.command is the first screen</span>
+</code></pre></div>
+<p>Each screen is a <code>screens.&lt;id&gt;</code> entry whose widgets are written <strong>in full</strong> — a mapping with a
+<code>kind</code> and a <code>rect</code> — rather than as a bare rectangle. The widget's name is yours (it is only used
+in error messages and to replace it from a later pack); its <code>kind</code> says what it is.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># rules/screens.yaml — a two-screen set</span>
+<span class="nt">screens</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">command</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">design</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">640</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">480</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">background</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images/ui/command.png</span>
+<span class="w">    </span><span class="nt">widgets</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">map</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">map</span><span class="p p-Indicator">,</span><span class="nt"> shape</span><span class="p">:</span><span class="w"> </span><span class="nv">round</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">40</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">380</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">380</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="nt">overview</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">map</span><span class="p p-Indicator">,</span><span class="nt"> source</span><span class="p">:</span><span class="w"> </span><span class="nv">minimap</span><span class="p p-Indicator">,</span><span class="nt"> shape</span><span class="p">:</span><span class="w"> </span><span class="nv">round</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">480</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">40</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">120</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">120</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="nt">day</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">weekday</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">440</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">360</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">180</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">],</span><span class="nt"> size</span><span class="p">:</span><span class="w"> </span><span class="nv">11</span><span class="p p-Indicator">,</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">date</span><span class="p">:</span><span class="w">    </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">date_long</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">440</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">380</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">180</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">],</span><span class="nt"> size</span><span class="p">:</span><span class="w"> </span><span class="nv">11</span><span class="p p-Indicator">,</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">funds</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">money</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">440</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">400</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">180</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">],</span><span class="nt"> size</span><span class="p">:</span><span class="w"> </span><span class="nv">11</span><span class="p p-Indicator">,</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">to_lab</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">button</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">440</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">200</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">80</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">],</span><span class="nt"> label</span><span class="p">:</span><span class="w"> </span><span class="nv">Research</span><span class="p p-Indicator">,</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">open(lab)</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">pause</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">button</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">440</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">240</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">],</span><span class="nt"> images</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">up</span><span class="p">:</span><span class="w"> </span><span class="nv">images/ui/pause.png</span><span class="p p-Indicator">,</span><span class="nt"> down</span><span class="p">:</span><span class="w"> </span><span class="nv">images/ui/pause_down.png</span><span class="p p-Indicator">},</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">speed(0)</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">button</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">472</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">240</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">],</span><span class="nt"> images</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">up</span><span class="p">:</span><span class="w"> </span><span class="nv">images/ui/run.png</span><span class="p p-Indicator">},</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">speed(1)</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">status</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">selection</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">450</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">400</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">],</span><span class="nt"> size</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">lab</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">design</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">640</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">480</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">background</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">images/ui/lab.png</span>
+<span class="w">    </span><span class="nt">widgets</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">title</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">text</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"@ui.lab.title"</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">600</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">],</span><span class="nt"> size</span><span class="p">:</span><span class="w"> </span><span class="nv">14</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">topics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">list</span><span class="p p-Indicator">,</span><span class="nt"> source</span><span class="p">:</span><span class="w"> </span><span class="nv">research</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">48</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">600</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">380</span><span class="p p-Indicator">]}</span>
+<span class="w">      </span><span class="nt">back</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">button</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">560</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">440</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">60</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">],</span><span class="nt"> label</span><span class="p">:</span><span class="w"> </span><span class="nv">Back</span><span class="p p-Indicator">,</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">back</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<h3 id="screen-keys">Screen keys<a class="headerlink" href="#screen-keys" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>design</code></td>
+<td><code>[width, height]</code></td>
+<td><code>[1280, 720]</code></td>
+<td>The space the rectangles are written in.</td>
+</tr>
+<tr>
+<td><code>background</code></td>
+<td>asset</td>
+<td>none</td>
+<td>Drawn over the whole design space, under the widgets. Any asset reference: a pack file or <code>original:&lt;file&gt;#&lt;id&gt;</code>.</td>
+</tr>
+<tr>
+<td><code>dialog</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Drawn over the screen under it instead of on its own.</td>
+</tr>
+<tr>
+<td><code>widgets</code></td>
+<td>map name → widget</td>
+<td>none</td>
+<td>Drawn in the order written.</td>
+</tr>
+</tbody>
+</table>
+<p>A screen of a set <strong>keeps its shape</strong>: the design space is scaled by one factor to fit the window
+and centred, as a <a href="../cockpits/">cockpit</a> is — not stretched like the testbed layout. Only the top
+screen (or dialog) takes the mouse; the ones under it are drawn but inert. Images are loaded once
+and kept; one that cannot be loaded is reported on standard error once
+(<code>strategy screen image &lt;reference&gt;: …</code>) and left out.</p>
+<h3 id="widget-keys">Widget keys<a class="headerlink" href="#widget-keys" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code></td>
+<td><code>image</code></td>
+<td>What the widget is (below).</td>
+</tr>
+<tr>
+<td><code>rect</code></td>
+<td><code>[x, y, w, h]</code></td>
+<td><em>required</em></td>
+<td>Where it goes, in the design space.</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>asset</td>
+<td>none</td>
+<td>An <code>image</code> widget's picture; a button's <code>up</code> image.</td>
+</tr>
+<tr>
+<td><code>images</code></td>
+<td><code>{up, down, hover, disabled}</code></td>
+<td>none</td>
+<td>A button's state images; a missing state draws <code>up</code>.</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>action</td>
+<td>none</td>
+<td>What a button does (<a href="#actions">Actions</a>).</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>name</td>
+<td>none</td>
+<td>A <code>value</code> widget's value (<a href="#values">Values</a>).</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>name</td>
+<td>none</td>
+<td>A <code>list</code> widget's list, or <code>minimap</code> on a <code>map</code>.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>text or <code>@key</code></td>
+<td>none</td>
+<td>A <code>text</code> widget's text.</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>text</td>
+<td>none</td>
+<td>A button's caption when it has no images (drawn as a skin button).</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>number</td>
+<td>12</td>
+<td>Text size in design pixels (at least 4).</td>
+</tr>
+<tr>
+<td><code>colour</code></td>
+<td><code>[r, g, b]</code> or <code>[r, g, b, a]</code></td>
+<td>the skin's <code>text</code> colour</td>
+<td>Text colour, 0 – 1.</td>
+</tr>
+<tr>
+<td><code>align</code></td>
+<td><code>left</code>, <code>centre</code>, <code>right</code></td>
+<td><code>left</code></td>
+<td>Text alignment in the rectangle.</td>
+</tr>
+<tr>
+<td><code>shape</code></td>
+<td><code>rect</code>, <code>round</code></td>
+<td><code>rect</code></td>
+<td>A map's viewport: <code>round</code> clips it to the circle inside the rectangle.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><code>kind</code></th>
+<th>Draws / does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image</code></td>
+<td>A picture stretched over its rectangle.</td>
+</tr>
+<tr>
+<td><code>button</code></td>
+<td>Its state image, else its <code>label</code> as a skin button, else nothing — an invisible <strong>hot spot</strong> over art that already shows the button, outlined while the mouse is over it. A click runs its <code>action</code>.</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>A live value as one line of text.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>Fixed text, wrapped to the rectangle; a value starting with <code>@</code> is a <a href="../text/">text key</a>.</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>One of the strategy screen's lists with its rows and buttons, as in the testbed layout: <code>bases</code>, <code>research</code>, <code>build</code>, <code>market</code>, <code>factory</code>, <code>hangar</code>, <code>contacts</code>, <code>supply</code>, <code>archive</code>, <code>reports</code>, <code>messages</code>.</td>
+</tr>
+<tr>
+<td><code>map</code></td>
+<td>The star map: pick, hover, zoom and pan as in the testbed layout. With <code>source: minimap</code> it is a small overview of the whole map instead — no names, no legend, not zoomed or panned.</td>
+</tr>
+<tr>
+<td><code>info</code></td>
+<td>The selected object's details and its action buttons.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>open(&lt;screen&gt;)</code></td>
+<td>Shows that screen. A full screen closes any dialogs over the current one first; a dialog opens over it. The screen must exist (checked at load).</td>
+</tr>
+<tr>
+<td><code>back</code></td>
+<td>Closes the top screen or dialog, back to the one under it (not past the first).</td>
+</tr>
+<tr>
+<td><code>speed(&lt;n&gt;)</code></td>
+<td>Sets the clock: 0 paused, 1 – 4 the four speeds (a higher number is the fastest).</td>
+</tr>
+<tr>
+<td><code>save</code></td>
+<td>The save prompt, as the testbed layout's <em>Save</em>.</td>
+</tr>
+<tr>
+<td><code>menu</code></td>
+<td>Saves and returns to the main menu.</td>
+</tr>
+<tr>
+<td><code>testbed</code></td>
+<td>Switches to the testbed layout.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="values">Values<a class="headerlink" href="#values" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>date</code></td>
+<td>The campaign date, <code>YYYY-MM-DD</code>.</td>
+</tr>
+<tr>
+<td><code>date_long</code></td>
+<td>The date as <code>JAN 01, 2067</code> (app 0.17.1).</td>
+</tr>
+<tr>
+<td><code>weekday</code></td>
+<td>The day of the week in capitals, <code>SATURDAY</code> (app 0.17.1; the Gregorian calendar).</td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td>The time of day, <code>HH:MM:SS</code>.</td>
+</tr>
+<tr>
+<td><code>money</code> (or <code>funds</code>)</td>
+<td>The funds, <code>$1,000,000</code>.</td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td>The campaign score.</td>
+</tr>
+<tr>
+<td><code>base</code></td>
+<td>The current base's name.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>The clock speed in words (<code>paused</code>, <code>1 hour/s</code> …).</td>
+</tr>
+<tr>
+<td><code>selection</code></td>
+<td>The name of what is selected on the map.</td>
+</tr>
+</tbody>
+</table>
+<p>A name the engine does not know shows as <code>?&lt;name&gt;</code>.</p>
+<h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>
+<p><strong>Ctrl+T</strong> switches between the screen set and the testbed layout at any time; a <code>testbed</code>
+button does the same one way. A campaign without <code>strategy_screen</code> uses the testbed layout only.
+To try one screen of a set, start with it open:
+<code>openinterceptor --strategy --screen lab</code> (the first screen is under it, so <code>back</code> works).</p>
+<h3 id="the-interceptor-set-app-0171">The <code>interceptor</code> set (app 0.17.1)<a class="headerlink" href="#the-interceptor-set-app-0171" title="Permanent link">&para;</a></h3>
+<p>The <code>interceptor</code> campaign's <code>rules/screens.yaml</code> lays out the original's strategy screens over the
+original art <strong>by reference</strong> into the player's own <code>WrappersDLL.dll</code> (for example
+<code>background: original:WrappersDLL.dll#&lt;id&gt;</code>) — nothing is copied. Its design space is the original's
+640 × 480. The first screen is <code>csd</code> (the Command and Strategic Display): the round star map, the
+minimap, the time, weekday, date and funds readouts, the six screen buttons, the time dial's six
+holes and the help line. The others are <code>bases</code>, <code>equip_ships</code>, <code>purchase</code>, <code>manufacture</code>,
+<code>research</code>, <code>base_stats</code>, <code>ufopedia</code> and <code>reports</code>, each its background, its list where the
+original has one, its links and a back button.</p>
+<ul>
+<li><strong>Verified</strong>: the positions read from <code>Interceptor.exe</code>'s screen setup code (each screen's
+  widgets, the button and dial centres).</li>
+<li><strong>Derived</strong>: the readouts' rectangles and the buttons' sizes (measured from the art), the
+  readouts' order (from the original running), the back buttons' positions, and how the original's
+  six speeds map onto the engine's five.</li>
+<li><strong>Unknown</strong>: the buttons' own state images, which live in the original's sprite table
+  (<code>SpritesDLL</code>), not yet read; until then the buttons are hot spots over the art.</li>
+</ul>
+<p>The file's comments name the original's own screen numbers. The <code>default</code> campaign has no set yet
+(6.9.13) and uses the testbed layout.</p>
+<h3 id="how-the-set-differs-from-the-format-design">How the set differs from the format design<a class="headerlink" href="#how-the-set-differs-from-the-format-design" title="Permanent link">&para;</a></h3>
+<p>The screen sets were <a href="../../specification/design/format-interface/#screen-sets-screens-and-widgets">specified</a>
+before they were built, and the first build differs: widgets have <code>kind</code>, not <code>type</code>; values are
+named with <code>value</code>, not <code>bind</code>; the minimap is a <code>map</code> with <code>source: minimap</code>; a button's caption
+is <code>label</code>; the first screen is <code>campaign.strategy_screen</code>, not the <code>campaign.interface</code> keys;
+and there are no toggles, labels, frames, lamps, clocks or model views yet
+(<a href="../../implementation/deviations/">DEV-062</a>).</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Layouts for the other screens: the main menu, the launcher, the credits and the prompts are
   placed in code.</li>
-<li>Other screen ids: <code>screens.&lt;id&gt;</code> with another id is read and checked, but no screen uses it
-  yet.</li>
-<li>Custom panels bound to campaign queries, and new widgets: a layout can move the engine's
-  widgets, not add its own.</li>
-<li>The <code>interceptor</code> wrapper screens at 640 × 480 from the original art (6.7).</li>
+<li>In a screen set: keyboard and gamepad focus, interface sounds, image parts
+  (<code>original:…@[x, y, w, h]</code>), the campaign <code>interface</code> keys, the Options switch between the set
+  and the testbed layout, and the fallback to a built-in screen for one a set lacks.</li>
+<li>Not checked at load: <code>campaign.strategy_screen</code> naming a screen that does not exist (the
+  strategy layer then shows an empty screen — use Ctrl+T), a <code>list</code>'s <code>source</code> and a <code>value</code>'s
+  name (shown as <code>?&lt;name&gt;</code>). <code>--screen</code> with an unknown id shows an empty screen too.</li>
+<li>Custom panels bound to campaign queries.</li>
+<li>The <code>default</code> campaign's set (6.9.13).</li>
 </ul>
 <h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
 <table>
@@ -6688,6 +7205,26 @@ colour. Leave room in the picture where the map and panels sit, since they draw 
 <tr>
 <td><code>screens.starmap: design: expected [width, height]</code></td>
 <td><code>design</code> is not two positive numbers.</td>
+</tr>
+<tr>
+<td><code>screens.x: widgets.y: kind: 'z' is not one of image, button, value, text, list, map, info</code></td>
+<td>A widget kind the engine does not have.</td>
+</tr>
+<tr>
+<td><code>screens.x: widgets.y: rect: expected [x, y, w, h]</code></td>
+<td>A full widget without a four-number <code>rect</code>.</td>
+</tr>
+<tr>
+<td><code>screens.x: widgets.y: 'z' is not open(&lt;screen&gt;), back, speed(n), save, menu or testbed</code></td>
+<td>An unknown action.</td>
+</tr>
+<tr>
+<td><code>screens.x: widgets.y: speed(z): expected 0-4</code></td>
+<td>A speed that is not a number.</td>
+</tr>
+<tr>
+<td><code>screens.x.widgets.y: open(z): no such screen</code></td>
+<td>A button opening a screen no pack defines.</td>
 </tr>
 </tbody>
 </table>

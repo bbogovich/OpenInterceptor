@@ -3549,6 +3549,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#screen-sets-contentscreens-strategyscreendraw_set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screen sets (content::screens, StrategyScreen::draw_set)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6636,6 +6647,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#screen-sets-contentscreens-strategyscreendraw_set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screen sets (content::screens, StrategyScreen::draw_set)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6950,6 +6972,29 @@ missing file is reported once and never retried.</p>
   buttons under the selected row. The info panel builds its own <code>(label, Act)</code> list for the
   selection (<code>info()</code>), at most four buttons.</li>
 </ul>
+<h3 id="screen-sets-contentscreens-strategyscreendraw_set">Screen sets (<code>content::screens</code>, <code>StrategyScreen::draw_set</code>)<a class="headerlink" href="#screen-sets-contentscreens-strategyscreendraw_set" title="Permanent link">&para;</a></h3>
+<p><em>App 0.17.0 – 0.17.1, main <code>4c29f89</code>, <code>deba9f5</code> (plan item 6.9).</em> A <code>screens.&lt;id&gt;</code> widget entry
+that is a mapping parses as a <code>WidgetDef {name, kind: WidgetKind, rect, images: [Option&lt;String&gt;; 4],
+action: Option&lt;UiAction&gt;, source, size, colour, align, label, round}</code> into <code>ScreenLayout::items</code>
+(a bare rectangle still moves a testbed widget); <code>dialog</code> marks a screen drawn over the one under
+it. <code>UiAction::parse</code> reads <code>open(&lt;screen&gt;)</code>, <code>back</code>, <code>speed(n)</code>, <code>save</code>, <code>menu</code>, <code>testbed</code>, and
+<code>rules::build_at</code> checks every <code>open()</code> target once all packs are read. The images are
+<code>[up, down, hover, disabled]</code> in a fixed array indexed by the button's state, so drawing needs
+no lookup by name.</p>
+<p><code>Ruleset::strategy_screen</code> (<code>campaign.strategy_screen</code>) switches the strategy screen into <strong>set
+mode</strong> unless <code>StrategyScreen::testbed</code> is set (Ctrl+T, a <code>testbed</code> button). The screen keeps
+<code>stack: Vec&lt;String&gt;</code> of open screen ids — the first screen at the bottom, dialogs on top — and
+<code>draw_set</code> draws from the last full screen up: each in its own <code>hud::Layout</code> (one scale factor,
+centred, as cockpits), only the top one given the frame's <code>Input</code>. Widgets reuse the testbed
+screen's own drawing — a <code>list</code> opens its tab and calls <code>draw_panel</code>, a <code>map</code> calls <code>draw_map</code>
+(clipped to a circle when <code>round</code>), <code>info</code> calls <code>draw_info</code> — so the two layouts share one set of
+campaign logic. A <code>map</code> with <code>source: minimap</code> draws the whole map at zoom 1 with no names by
+setting the view aside for the call. Textures are cached by reference in <code>StrategyScreen::images</code>
+(<code>HashMap&lt;String, Option&lt;Texture2D&gt;&gt;</code>: <code>None</code> remembers a failed load). A button's action is
+collected during the draw and applied after it, so the stack is not changed while it is being
+walked. <code>value()</code> maps a value name to text; <code>weekday</code> uses <code>Date::weekday</code> (Zeller's congruence,
+0 = Monday; tested by <code>weekdays_follow_the_calendar</code>). <code>--screen &lt;id&gt;</code> calls
+<code>StrategyScreen::open_screen</code>, which puts that screen over the first.</p>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -7097,6 +7142,16 @@ play without it.</p>
 <td><code>screens.&lt;id&gt;</code>: design space, background, widget rectangles; the engine's strategy-screen layout.</td>
 </tr>
 <tr>
+<td><code>WidgetDef</code>, <code>WidgetKind</code>, <code>WIDGET_KINDS</code>, <code>UiAction</code>, <code>ScreenLayout::items</code>, <code>ScreenLayout::dialog</code></td>
+<td><code>content::screens</code></td>
+<td>A screen set's widgets and actions (app 0.17.0).</td>
+</tr>
+<tr>
+<td><code>Ruleset::strategy_screen</code>, <code>StrategyScreen::draw_set</code>, <code>stack</code>, <code>testbed</code>, <code>open_screen</code>, <code>value</code>; <code>Date::weekday</code></td>
+<td><code>content::rules</code>, <code>app::strategy</code>, <code>content::strategy</code></td>
+<td>Set mode, the stack of open screens, the bound values (app 0.17.0 – 0.17.1).</td>
+</tr>
+<tr>
 <td><code>menu::fit_size(width, size, room)</code></td>
 <td><code>app::menu</code></td>
 <td>The text size that fits a menu option value beside its label, never below half (app 0.14.2).</td>
@@ -7153,6 +7208,7 @@ play without it.</p>
   <code>widgets::grid(Rect4, n, cols, gap) -&gt; Vec&lt;Rect4&gt;</code>, <code>widgets::modal(&amp;Ui, &amp;Input, title, body, &amp;[&amp;str]) -&gt; Option&lt;usize&gt;</code>,
   <code>widgets::wrap(text, width, &amp;dyn Fn(&amp;str) -&gt; f32) -&gt; Vec&lt;String&gt;</code>; <code>ListView::step(by, n, visible)</code>, <code>scroll(rows, n, visible)</code>, <code>fit(n, visible)</code>.</li>
 <li><code>ScreenLayout::parse(id, Get, base, known, pack) -&gt; Result&lt;ScreenLayout, String&gt;</code>, <code>layout.widget(name) -&gt; Option&lt;[f32; 4]&gt;</code>, <code>screens::default_starmap()</code>.</li>
+<li><code>WidgetDef::parse(name, Get) -&gt; Result&lt;WidgetDef, String&gt;</code>, <code>UiAction::parse(&amp;str) -&gt; Result&lt;UiAction, String&gt;</code>; <code>StrategyScreen::open_screen(&amp;AppContext, id)</code>; <code>Date::weekday() -&gt; u32</code> (0 = Monday).</li>
 <li><code>Skin::parse(id, Get, pack) -&gt; Result&lt;Skin, String&gt;</code>, <code>Skin::fallback()</code>, <code>skin.colour(role) -&gt; [f32; 4]</code>.</li>
 </ul>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>

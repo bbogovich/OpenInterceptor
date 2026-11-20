@@ -6769,6 +6769,12 @@ one looks like a bug.</p>
 <td>Vertex colours already give the large-scale look, so a base texture would only fight them; a per-entry list lets a terrain mix rocks, boulders and trees with their own rules, and a count is what a modder can reason about (and caps memory). Collision against tens of thousands of pieces would cost every tick for decoration; anything shootable is a ground installation.</td>
 <td>3</td>
 </tr>
+<tr>
+<td>DEV-062</td>
+<td><strong>Screen sets as first built differ from their format design</strong> (app 0.17.0 – 0.17.1, <a href="../../modding/screens/#screen-sets-app-0170">Screen layouts › Screen sets</a>): a widget has <code>kind</code> (seven kinds: <code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>), not <code>type</code>; a value is named with <code>value</code>, not <code>bind</code>, from a fixed list (<code>date</code>, <code>date_long</code>, <code>weekday</code>, <code>time</code>, <code>money</code>, <code>score</code>, <code>base</code>, <code>speed</code>, <code>selection</code>); the minimap is a <code>map</code> with <code>source: minimap</code>, not a <code>minimap</code> widget; a button's caption is <code>label</code>, not <code>text</code>; the first screen is <code>campaign.strategy_screen</code>, not the <code>campaign.interface</code> keys; a screen keeps its shape by one scale factor (the design's <code>scale: fit</code>) with no <code>integer</code>, <code>stretch</code>, <code>filter</code> or <code>outside</code>; the testbed layout stays at <code>screens.starmap</code> (no <code>testbed_layout</code> key) and is switched with Ctrl+T, not in Options; <code>list</code> sources and value names are not checked at load, nor is <code>strategy_screen</code>. Not yet built: toggles, labels, frames, lamps, clocks, globes, model views, portraits, grid views, focus, sounds, image parts, the partial-set fallback.</td>
+<td>The framework was built first to lay out the <code>interceptor</code> screens over the original's art (6.9.1 – 6.9.2), reusing the testbed screen's drawing; the names are those of the testbed's own lists. Either the format design is brought in line with these keys or the code with the design when 6.9.1 is finished (#98); until then this is the record.</td>
+<td>6</td>
+</tr>
 </tbody>
 </table>
 
