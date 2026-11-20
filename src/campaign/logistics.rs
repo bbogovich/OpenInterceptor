@@ -603,8 +603,8 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             *left -= moved;
             if *left <= 0.0 {
                 cv.ambush_in = None;
-                // `cv` borrows the convoy list mutably; end that borrow to count the
-                // ambush on `c.logistics.stats`, then borrow the convoy again.
+                // `cv` borrows only the `convoys` field, so the separate `stats` field
+                // can be updated while `cv` is in use (disjoint field borrows).
                 c.logistics.stats.ambushes += 1;
                 let cv = &mut c.logistics.convoys[v];
                 // With an ambush mission the player may fly the escort: the convoy waits.
@@ -1252,11 +1252,11 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         assert!(errors.is_empty(), "{errors:?}");
         let d = d.unwrap();
         let l = d.logistics.as_ref().unwrap();
-        // The default stages: build_25 from the start, build_60 from 50 %, build_90 from 80 %.
+        // The default stages (R-STR-022): build_25 from the start, build_60 from 60 %, build_90 from 90 %.
         let names: Vec<&str> = l.stages.iter().map(|(n, _)| n.as_str()).collect();
         assert_eq!(names, ["build_25", "build_60", "build_90"]);
         assert_eq!(
-            (l.stage_at(0.0), l.stage_at(0.49), l.stage_at(0.5), l.stage_at(0.95)),
+            (l.stage_at(0.0), l.stage_at(0.59), l.stage_at(0.6), l.stage_at(0.95)),
             (Some(0), Some(0), Some(1), Some(2))
         );
         let mut c = Campaign::new(&d, 0, 5);
@@ -1264,7 +1264,7 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         c.build_facility(&d, 0, 1).unwrap(); // 10 hours
         let state = |c: &Campaign| c.strike_stand_in(&d, 0).unwrap().state;
         assert_eq!(state(&c).as_deref(), Some("build_25"));
-        run(&mut c, &d, 6.0);
+        run(&mut c, &d, 6.5);
         assert_eq!(state(&c).as_deref(), Some("build_60"));
         run(&mut c, &d, 3.0);
         let si = c.strike_stand_in(&d, 0).unwrap();

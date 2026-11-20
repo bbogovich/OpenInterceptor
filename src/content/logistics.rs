@@ -167,10 +167,9 @@ pub struct LogisticsDef {
     pub stages: Vec<(String, f32)>,
 }
 
-/// The default construction stages: three, named for about how built each looks, and
-/// starting where the previous one's range is centred on its name (0–50 %, 50–80 %,
-/// 80–100 %).
-pub const DEFAULT_STAGES: [(&str, f32); 3] = [("build_25", 0.0), ("build_60", 0.5), ("build_90", 0.8)];
+/// The default construction stages (R-STR-022, the developer's logistics decisions of
+/// 2026-11-11): `build_25` from the start, `build_60` from 60 %, `build_90` from 90 %.
+pub const DEFAULT_STAGES: [(&str, f32); 3] = [("build_25", 0.0), ("build_60", 0.6), ("build_90", 0.9)];
 
 /// `logistics.construction_strikes`: when the enemy strikes a construction site.
 #[derive(Debug, Clone, PartialEq)]
@@ -473,7 +472,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f(
                     "construction_stages",
                     Ty::Dict(Box::new(Ty::Qty(Unit::Fraction))),
-                    "model-set state: progress it starts at (default build_25: 0%, build_60: 50%, build_90: 80%)",
+                    "model-set state: progress it starts at (default build_25: 0%, build_60: 60%, build_90: 90%)",
                 ),
             ]),
             "supply settings",
