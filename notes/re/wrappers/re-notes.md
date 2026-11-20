@@ -1,5 +1,10 @@
 # How Interceptor.exe builds a strategy screen
 
+> **Build:** every address on this page is for the **CD release** exe (3,008,512 bytes, compiled
+> 28 May 1998). Patch 1.2 (3,008,000 bytes, compiled 29 Jun 1998) is a full rebuild, so addresses
+> differ: for example, the sprite table is at VA 0x69b598 there, not 0x69bc18. See
+> `notes/re/online-sources.md` §4.
+
 Facts read from the player's own `Interceptor.exe` (32-bit PE, image base 0x400000, `.text`
 VA 0x401000 / file 0x400; `.rdata` VA 0x65f000 / file 0x25dc00; `.data` VA 0x66f000 / file
 0x26d800). Virtual address = file offset - section raw offset + section VA + 0x400000.
