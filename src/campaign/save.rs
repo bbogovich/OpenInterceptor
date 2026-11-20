@@ -401,7 +401,21 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("type", n(b.base_type as f64)),
                         ("system", n(b.system as f64)),
                         ("ready_at", n(b.ready_at)),
-                        ("modules", seq(b.modules.iter().map(|m| nums(&[m.module as f64, m.ready_at])).collect())),
+                        // `[module, ready_at]`, with a third number 1 for a wreck.
+                        (
+                            "modules",
+                            seq(b
+                                .modules
+                                .iter()
+                                .map(|m| {
+                                    if m.wrecked {
+                                        nums(&[m.module as f64, m.ready_at, 1.0])
+                                    } else {
+                                        nums(&[m.module as f64, m.ready_at])
+                                    }
+                                })
+                                .collect()),
+                        ),
                         ("research", b.research.map_or(Node::null(0), |t| n(t as f64))),
                         (
                             "jobs",
@@ -481,6 +495,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("base", n(d.base as f64)),
                         ("count", n(d.count as f64)),
                         ("arrive_at", n(d.arrive_at)),
+                        ("held", s(d.held)),
                     ])
                 })
                 .collect()),
@@ -612,7 +627,11 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             if module >= def.modules.len() {
                 return Err(bad("a module"));
             }
-            modules.push(ModuleInst { module, ready_at: v.get(1).copied().unwrap_or(0.0) });
+            modules.push(ModuleInst {
+                module,
+                ready_at: v.get(1).copied().unwrap_or(0.0),
+                wrecked: v.get(2).is_some_and(|w| *w != 0.0),
+            });
         }
         let mut jobs = Vec::new();
         for j in b.node("jobs").and_then(|n| n.as_seq()).unwrap_or(&[]) {
@@ -703,6 +722,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             base: idx(d, "base", bases.len(), "a delivery's base")?,
             count: f(d, "count") as u32,
             arrive_at: f(d, "arrive_at"),
+            held: d.bool("held").unwrap_or(false),
         });
     }
     let strings =
@@ -763,6 +783,15 @@ mod tests {
             c.advance(&d, 24.0);
         }
         c.pilots[0].state = PilotState::Injured(c.hours + 10.5);
+        // A wreck and a delivery waiting for room (app 0.19.0) are saved too.
+        c.bases[0].modules[0].wrecked = true;
+        c.deliveries.push(Delivery {
+            product: Product::Item(0),
+            base: 0,
+            count: 3,
+            arrive_at: c.hours + 1.0,
+            held: true,
+        });
         let packs = [
             PackRef { id: "default".into(), version: "0.6.7".into() },
             PackRef { id: "mymod".into(), version: "1".into() },

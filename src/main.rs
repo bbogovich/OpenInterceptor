@@ -83,7 +83,15 @@ fn headless(options: &cli::Options) -> Option<i32> {
             eprintln!("error: this campaign has no strategy layer");
             return Some(1);
         };
-        let c = openinterceptor::campaign::autoplay(def, 7, days);
+        // Day by day, so the stores can be checked against their capacity throughout.
+        let mut c = openinterceptor::campaign::Campaign::new(def, 1, 7);
+        let mut over = Vec::new();
+        for d in 1..=days.ceil() as u32 {
+            c = openinterceptor::campaign::autoplay_from(def, c, (d as f64).min(days));
+            if over.is_empty() {
+                over = c.over_capacity(def).into_iter().map(|o| format!("day {d}: {o}")).collect();
+            }
+        }
         let known = c.known.iter().filter(|k| **k).count();
         let battles = c.messages.iter().filter(|m| m.text.starts_with("Battle with")).count();
         println!(
@@ -109,6 +117,10 @@ fn headless(options: &cli::Options) -> Option<i32> {
         let ending = c.story.ending.map(|e| def.story.endings[e].id.clone()).unwrap_or("none".into());
         if let Some(m) = c.messages.iter().rev().find(|m| m.text.starts_with("Monthly report")) {
             println!("  last {}", m.text);
+        }
+        match over.first() {
+            None => println!("  storage: every store within its capacity"),
+            Some(first) => println!("  storage: OVER CAPACITY first on {first}"),
         }
         println!(
             "  story: arcs [{}], plans [{}], aggression {:.2}, ending {ending}",

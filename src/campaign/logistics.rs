@@ -17,6 +17,10 @@
 //! 6. A **research station** works on station-only topics once their start materials
 //!    have been delivered.
 //!
+//! A facility may be built where its type's `placement:` condition holds for the candidate
+//! `system` (its role's default rule otherwise), and its store holds at most `storage`:
+//! orders and recipe runs wait for room.
+//!
 //! The state lives in [`Logistics`] inside the campaign; [`step`] runs one slice of time.
 
 use super::{distance, travel, Campaign, Event, Message};
@@ -156,11 +160,26 @@ impl Campaign {
             })
     }
 
-    /// Makes sure `amount` of `goods` is ordered for `to` (adding to an open order).
+    /// Room left in facility `f`'s store (R-STR-014): its `storage` less what it holds,
+    /// what is ordered for it or on its way, and what its running recipes will add.
+    pub fn facility_room(&self, l: &LogisticsDef, f: usize) -> f32 {
+        let fac = &self.logistics.facilities[f];
+        let to = Dest::Facility(f);
+        let ordered: f32 = self.logistics.orders.iter().filter(|o| o.to == to).map(|o| o.amount).sum();
+        let shipping: f32 = self.logistics.convoys.iter().filter(|v| v.to == to).map(|v| total(&v.cargo)).sum();
+        let making: f32 = fac.lines.iter().map(|x| l.recipes[x.recipe].output).sum();
+        l.facility_types[fac.ftype].storage - total(&fac.store) - ordered - shipping - making
+    }
+
+    /// Makes sure `amount` of `goods` is ordered for `to` (adding to an open order). A
+    /// facility orders no more than its store has room for.
     fn want(&mut self, l: &LogisticsDef, goods: &str, amount: f32, to: Dest) {
         let ordered: f32 =
             self.logistics.orders.iter().filter(|o| o.to == to && o.goods == goods).map(|o| o.amount).sum();
-        let short = amount - ordered;
+        let mut short = amount - ordered;
+        if let Dest::Facility(f) = to {
+            short = short.min(self.facility_room(l, f));
+        }
         if short <= 1e-4 {
             return;
         }
@@ -170,40 +189,21 @@ impl Campaign {
         }
     }
 
-    /// Whether a facility type may be built in a system: mining needs a surveyed system
-    /// with deposits; research a surveyed system on a research site; manufacturing a
-    /// system at most two lanes from one of the player's bases.
+    /// Whether a facility type may be built in a system: at most one of a type per
+    /// system, and the type's `placement:` condition must hold with `system` the
+    /// candidate (by default its role's rule, [`Role::default_placement`]).
     pub fn facility_allowed(&self, def: &StrategyDef, ftype: usize, system: usize) -> Result<(), String> {
         let l = def.logistics.as_ref().ok_or("this campaign has no logistics")?;
         let lg = &self.logistics;
         if lg.facilities.iter().any(|f| f.system == system && f.ftype == ftype) {
             return Err("there is already one in this system".into());
         }
-        let name = &self.systems[system].name;
-        match l.facility_types[ftype].role {
-            Role::Mining => {
-                if !lg.surveyed[system] {
-                    return Err(format!("{name} has not been surveyed"));
-                }
-                if l.systems[system].deposits.is_empty() {
-                    return Err(format!("{name} has nothing to mine"));
-                }
-            }
-            Role::Research => {
-                if !lg.surveyed[system] {
-                    return Err(format!("{name} has not been surveyed"));
-                }
-                if !l.sites.iter().any(|(s, _)| l.site_ok(s, system)) {
-                    return Err(format!("{name} is not a research site"));
-                }
-            }
-            Role::Manufacturing => {
-                let near =
-                    self.bases.iter().any(|b| b.system == system || self.lane_route(def, b.system, system).len() <= 2);
-                if !near {
-                    return Err(format!("{name} is more than two lanes from your bases"));
-                }
-            }
+        let ft = &l.facility_types[ftype];
+        if !self.placement_ok(def, ft.placement.as_ref(), system) {
+            let name = &self.systems[system].name;
+            // The condition is the modder's; name the usual missing step when it is that.
+            let hint = if lg.surveyed.get(system) == Some(&false) { " (not surveyed yet)" } else { "" };
+            return Err(format!("{name} does not suit a {}{hint}", ft.name));
         }
         Ok(())
     }
@@ -364,7 +364,11 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                     }
                     let free = (c.logistics.facilities[f].lines.len() as u32) < ft.lines;
                     let ready = rc.inputs.iter().all(|(g, a)| amount(&c.logistics.facilities[f].store, g) >= *a);
-                    if free && ready {
+                    // The output needs room once the inputs are used (storage stops
+                    // production when full).
+                    let inputs: f32 = rc.inputs.iter().map(|(_, a)| a).sum();
+                    let fits = c.facility_room(l, f) + inputs >= rc.output - 1e-4;
+                    if free && ready && fits {
                         for (g, a) in &rc.inputs {
                             add(&mut c.logistics.facilities[f].store, g, -a);
                         }
@@ -578,15 +582,33 @@ impl Campaign {
         let goods = def.logistics.as_ref().and_then(|l| l.systems.get(s));
         let surveyed = self.logistics.surveyed.get(s) == Some(&true);
         match id {
-            // A deposit is known only once surveyed.
+            // A deposit is known only once surveyed; `any`: the richest one.
             q::DEPOSIT => Value::Num(
                 goods
                     .filter(|_| surveyed)
-                    .and_then(|g| g.deposits.iter().find(|d| d.resource == other))
-                    .map_or(0.0, |d| d.rate),
+                    .map(|g| {
+                        g.deposits
+                            .iter()
+                            .filter(|d| other == "any" || d.resource == other)
+                            .map(|d| d.rate)
+                            .fold(0.0, f32::max)
+                    })
+                    .unwrap_or(0.0),
             ),
             q::FEATURE => Value::Bool(goods.is_some_and(|g| g.features.iter().any(|f| f == other))),
-            q::RESEARCH_SITE => Value::Bool(def.logistics.as_ref().is_some_and(|l| l.site_ok(other, s))),
+            q::RESEARCH_SITE => Value::Bool(def.logistics.as_ref().is_some_and(|l| {
+                if other == "any" {
+                    l.sites.iter().any(|(x, _)| l.site_ok(x, s))
+                } else {
+                    l.site_ok(other, s)
+                }
+            })),
+            q::BASE_DISTANCE => Value::Num(
+                self.bases
+                    .iter()
+                    .map(|b| distance(self.systems[b.system].pos, self.systems[s].pos))
+                    .fold(1e9, f32::min),
+            ),
             q::SURVEY_KNOWN => Value::Bool(surveyed),
             q::OWNED => Value::Bool(
                 self.bases.iter().any(|b| b.system == s) || self.logistics.facilities.iter().any(|f| f.system == s),
@@ -669,6 +691,16 @@ impl Campaign {
         for c in &mut self.logistics.convoys {
             shift(&mut c.to);
         }
+    }
+
+    /// The system of the player's base fewest lane jumps from system `s` (ties, and
+    /// systems no lane reaches, by straight-line distance); `None` with no base.
+    pub fn nearest_base_system(&self, def: &StrategyDef, s: usize) -> Option<usize> {
+        let at = self.systems[s].pos;
+        self.bases.iter().map(|b| b.system).min_by(|&a, &b| {
+            let hops = |x: usize| self.lane_hops(def, x, s).unwrap_or(u32::MAX);
+            hops(a).cmp(&hops(b)).then(distance(self.systems[a].pos, at).total_cmp(&distance(self.systems[b].pos, at)))
+        })
     }
 
     /// Jumps along the map's lanes from system `a` to `b` (a breadth-first search: each
@@ -806,7 +838,7 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         assert!(c.messages.iter().any(|m| m.text.contains("Survey of") && m.text.contains("Iron")));
         c.build_facility(&d, mine, 1).unwrap();
         c.build_facility(&d, plant, 0).unwrap();
-        assert!(c.build_facility(&d, 2, 1).unwrap_err().contains("research site"));
+        assert!(c.build_facility(&d, 2, 1).unwrap_err().contains("does not suit"), "not a research site");
         run(&mut c, &d, 11.0);
         // Demand: a rocket needs 4 plating; the plant needs 20 iron for two runs.
         c.manufacture(&d, 0, crate::campaign::Product::Hull(0), 1).unwrap();
@@ -983,5 +1015,43 @@ logistics: {vessels: 4, ambush_chance: 0%, survey_attack_chance: 0%, survey_spee
         assert!(c.messages.iter().any(|m| m.text.contains("ambushed")), "every convoy is ambushed here");
         // Losses only shrink deliveries; more orders follow until the cost is met.
         assert!(c.known[theremin], "researched once its iron arrived: {:?}", c.logistics.facilities[1]);
+    }
+
+    #[test]
+    fn placement_conditions_and_storage_limit_facilities() {
+        // A plant that may only stand in a nebula, with room for 12 units of goods.
+        let text = SAMPLE.replace(
+            "plant: {role: manufacturing, cost: 1000, time: 10h, lines: 2, storage: 400}",
+            "plant: {role: manufacturing, cost: 1000, time: 10h, lines: 2, storage: 12, placement: \"feature(system, nebula)\"}",
+        );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        let (mine, plant) = (0, 1);
+        assert!(c.facility_allowed(&d, plant, 0).unwrap_err().contains("does not suit"), "a has no nebula");
+        c.facility_allowed(&d, plant, 2).unwrap();
+        // The mine keeps its role's default rule, written as a condition.
+        let rule = d.logistics.as_ref().unwrap().facility_types[mine].placement.clone();
+        assert!(rule.is_some(), "the default rule parsed");
+        assert!(!c.placement_ok(&d, rule.as_ref(), 1), "b is not surveyed yet");
+        c.logistics.surveyed[1] = true;
+        assert!(c.placement_ok(&d, rule.as_ref(), 1));
+        assert!(!c.placement_ok(&d, rule.as_ref(), 0), "a has no deposit");
+        run(&mut c, &d, 2.0);
+        c.build_facility(&d, mine, 1).unwrap();
+        c.build_facility(&d, plant, 2).unwrap();
+        run(&mut c, &d, 11.0);
+        // Rockets need 4 plating each: 3 rockets = 12 plating = 60 iron, far more than the
+        // plant's 12 units of room. It orders only what fits, and never holds more.
+        c.manufacture(&d, 0, crate::campaign::Product::Hull(0), 3).unwrap();
+        for _ in 0..200 {
+            run(&mut c, &d, 1.0);
+            let f = &c.logistics.facilities[1];
+            assert!(total(&f.store) <= 12.0 + 1e-3, "plant store {:?}", f.store);
+            assert!(c.facility_room(d.logistics.as_ref().unwrap(), 1) >= -1e-3, "nothing ordered beyond room");
+            assert!(c.over_capacity(&d).is_empty());
+        }
+        assert_eq!(c.craft.len(), 3, "all three built, in small shipments: {:?}", c.logistics);
     }
 }

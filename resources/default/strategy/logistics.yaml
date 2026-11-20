@@ -21,7 +21,9 @@ recipes:
 
 facility_types:
   mining_facility: {name: Mining facility, role: mining, hub: mining_facility, cost: 400000, time: 10d, storage: 400}
-  manufacturing_center: {name: Manufacturing center, role: manufacturing, hub: manufacturing_center, cost: 1200000, time: 15d, lines: 2, storage: 800}
+  # placement: where it may be built, a condition over the candidate system. Without it a
+  # facility follows its role's rule; the manufacturing center spells its rule out.
+  manufacturing_center: {name: Manufacturing center, role: manufacturing, hub: manufacturing_center, cost: 1200000, time: 15d, lines: 2, storage: 800, placement: "bases > 0 and lane_distance(system, nearest_base) <= 2"}
   research_station: {name: Research station, role: research, hub: research_station, cost: 900000, time: 20d, research_rate: 40}
 
 research_sites:

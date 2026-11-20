@@ -50,7 +50,15 @@ pub mod id {
     pub const LANE_DISTANCE: u16 = 26;
     pub const FACILITY_PROGRESS: u16 = 27;
     pub const CONSTRUCTION_ATTACKS: u16 = 28;
+    pub const BASE_DISTANCE: u16 = 29;
 }
+
+/// Names with a meaning of their own as a system query's argument: in a `placement:`
+/// condition `system` is the candidate system and `nearest_base` the system of the
+/// player's base fewest lanes from it; `any` stands for any resource
+/// (`deposit(system, any)`: the richest deposit's rate) or any site
+/// (`research_site(system, any)`). They are in every campaign's name table.
+pub const RESERVED: &[&str] = &["system", "nearest_base", "any"];
 
 /// The campaign context's queries (index = id above).
 pub const QUERIES: &[QueryDef] = &[
@@ -139,6 +147,12 @@ pub const QUERIES: &[QueryDef] = &[
         result: Type::Num,
         doc: "strikes against facilities built in the system while under construction",
     },
+    QueryDef {
+        name: "base_distance",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc: "map units from the system to the player's nearest base (1e9 with no base)",
+    },
 ];
 
 /// The campaign schema: every id in `names` is a constant (its index), then the
@@ -190,6 +204,7 @@ mod tests {
             (id::LANE_DISTANCE, "lane_distance"),
             (id::FACILITY_PROGRESS, "facility_progress"),
             (id::CONSTRUCTION_ATTACKS, "construction_attacks"),
+            (id::BASE_DISTANCE, "base_distance"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

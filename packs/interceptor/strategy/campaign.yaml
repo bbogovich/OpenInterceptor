@@ -68,8 +68,8 @@ base_modules:
   downlink_type1: {group: downlink}
   downlink_type2: {group: downlink}
   downlink_type3: {group: downlink}
-  hangar: {group: hangar, effects: {hangar: 3}}
-  personnel: {group: personnel, effects: {quarters: 5}}
+  hangar: {group: hangar, effects: {hangar: 3}, on_destroyed: [craft]}          # AUTH: ships in it are lost
+  personnel: {group: personnel, effects: {quarters: 5}, on_destroyed: [pilots]} # AUTH: pilots in it are killed
   sensor_type1: {group: sensor, effects: {sensor_range: 9000}}
   sensor_type2: {group: sensor, effects: {sensor_range: 15000}}
   sensor_type3: {group: sensor, effects: {sensor_range: 24000}}
@@ -77,7 +77,7 @@ base_modules:
   shield_generator_type2: {group: shield, effects: {defence: 2}}
   shield_generator_type3: {group: shield, effects: {defence: 3}}
   communications: {group: comms}
-  cargo: {group: cargo, effects: {storage: 1000}}
+  cargo: {group: cargo, effects: {storage: 1000}, on_destroyed: [stock]}       # AUTH: its stock is lost
   medical: {group: medical}
   training: {group: training}
   probe_launch: {group: probe}
@@ -106,10 +106,12 @@ base_types:
     cost: 1500000                   # DERIVED (the guide: 1.5M plus modules, less 25%)
     build_time: 7d
     max_bases: 8                    # the game's own limit (the executable allows 20)
-    max_distance: 9000              # 1.5 light years from one of your bases
+    placement: base_distance(system) <= 9000   # 1.5 light years from one of your bases
     sensor_range: 3000              # DERIVED: the hub's own
     limits: {shield: 1, sensor: 1, comms: 1, hangar: 3, downlink: 3, weapon: 10}
-    template: [beam_defense_laser, beam_defense_laser, downlink_type1, shield_generator_type1, sensor_type1]
+    # The guide: a new base comes with the best available downlink, shield and sensor
+    # (groups), and two beam defence lasers. DERIVED.
+    template: [beam_defense_laser, beam_defense_laser, downlink, shield, sensor]
 
 # The corporations' funding (DERIVED: the original's monthly evaluation per outpost
 # system arrives with relations in Stage 5).

@@ -26,7 +26,7 @@ pub mod logistics;
 pub mod save;
 pub mod story;
 
-use crate::content::strategy::{MapKind, RaidTarget, StrategyDef, Travel};
+use crate::content::strategy::{Loss, MapKind, RaidTarget, StrategyDef, Travel};
 use crate::script::{self, Context, Expr, Value};
 use std::cell::Cell;
 
@@ -48,6 +48,16 @@ pub struct ModuleInst {
     pub module: usize,
     /// Campaign hour it finishes building (working from then on).
     pub ready_at: f64,
+    /// Wrecked by a raid: it does nothing and costs no upkeep until repaired
+    /// ([`Campaign::repair_module`]) or dismantled, but still fills its slot.
+    pub wrecked: bool,
+}
+
+impl ModuleInst {
+    /// Built, and not a wreck: its effects count.
+    pub fn working(&self, now: f64) -> bool {
+        self.ready_at <= now && !self.wrecked
+    }
 }
 
 /// Something bought or made.
@@ -154,6 +164,8 @@ pub struct Delivery {
     pub base: usize,
     pub count: u32,
     pub arrive_at: f64,
+    /// Arrived but waiting for room in the base's store (announced once).
+    pub held: bool,
 }
 
 /// A line in the message log.
@@ -272,12 +284,14 @@ pub(crate) fn travel(pos: &mut [f32; 2], dest: [f32; 2], step: f32) -> bool {
 }
 
 /// What expressions see: the campaign, optionally from one base's point of view (for
-/// `module_count` in a research rate), and the shared roll generator.
+/// `module_count` in a research rate), optionally about one candidate system (the
+/// `system` of a `placement:` condition), and the shared roll generator.
 pub(crate) struct Cx<'a> {
-    c: &'a Campaign,
-    def: &'a StrategyDef,
-    base: Option<usize>,
-    rng: Cell<u64>,
+    pub(crate) c: &'a Campaign,
+    pub(crate) def: &'a StrategyDef,
+    pub(crate) base: Option<usize>,
+    pub(crate) system: Option<usize>,
+    pub(crate) rng: Cell<u64>,
 }
 
 impl Context for Cx<'_> {
@@ -293,8 +307,7 @@ impl Context for Cx<'_> {
             q::HAS => Value::Num(self.def.item(name()).map_or(0.0, |i| c.stock_of(i) as f32)),
             q::MODULE_COUNT => {
                 let m = self.def.module(name());
-                let count =
-                    |b: &Base| b.modules.iter().filter(|x| Some(x.module) == m && x.ready_at <= c.hours).count();
+                let count = |b: &Base| b.modules.iter().filter(|x| Some(x.module) == m && x.working(c.hours)).count();
                 Value::Num(match self.base {
                     Some(b) => count(&c.bases[b]),
                     None => c.bases.iter().map(count).sum(),
@@ -322,7 +335,8 @@ impl Context for Cx<'_> {
             q::RELATION => Value::Num(c.story.standing(name())),
             q::FIRED => Value::Num(self.def.story.event(name()).map_or(0.0, |e| c.story.fired[e] as f32)),
             q::BATTLES_WON => Value::Num(c.story.battles_won as f32),
-            // Logistics: the first argument is a system (by map id).
+            // Logistics: the first argument is a system (by map id, or `system` /
+            // `nearest_base`, resolved here to a map id).
             q::DEPOSIT
             | q::FEATURE
             | q::RESEARCH_SITE
@@ -330,9 +344,16 @@ impl Context for Cx<'_> {
             | q::OWNED
             | q::LANE_DISTANCE
             | q::FACILITY_PROGRESS
-            | q::CONSTRUCTION_ATTACKS => {
-                let arg = |k: usize| {
-                    args.get(k).and_then(|i| self.def.names.get(*i as usize)).map(String::as_str).unwrap_or("")
+            | q::CONSTRUCTION_ATTACKS
+            | q::BASE_DISTANCE => {
+                let arg = |k: usize| -> &str {
+                    let n = args.get(k).and_then(|i| self.def.names.get(*i as usize)).map(String::as_str).unwrap_or("");
+                    let sys = match n {
+                        "system" => self.system,
+                        "nearest_base" => self.system.and_then(|s| c.nearest_base_system(self.def, s)),
+                        _ => return n,
+                    };
+                    sys.map_or("", |s| c.systems[s].id.as_str())
                 };
                 let Some(s) = c.systems.iter().position(|x| x.id == arg(0)) else { return Value::Num(0.0) };
                 c.logistics_query(self.def, id, s, arg(1))
@@ -403,12 +424,13 @@ impl Campaign {
             else {
                 continue;
             };
-            let modules = def.base_types[bt]
-                .template
-                .iter()
-                .chain(&b.modules)
-                .filter_map(|m| def.module(m))
-                .map(|module| ModuleInst { module, ready_at: 0.0 })
+            // The template's best available modules (the start's research counts), then the
+            // start's own extras.
+            let modules = c
+                .template_modules(def, bt)
+                .into_iter()
+                .chain(b.modules.iter().filter_map(|m| def.module(m)))
+                .map(|module| ModuleInst { module, ready_at: 0.0, wrecked: false })
                 .collect();
             c.bases.push(Base {
                 name: b.name.clone(),
@@ -469,7 +491,24 @@ impl Campaign {
 
     /// Evaluates a number expression (optionally from one base's point of view).
     pub fn eval(&mut self, def: &StrategyDef, e: &Expr, base: Option<usize>) -> f32 {
-        let cx = Cx { c: self, def, base, rng: Cell::new(self.rng) };
+        self.eval_at(def, e, base, None)
+    }
+
+    /// Whether a `placement:` condition holds for a candidate system. It reads the
+    /// campaign without changing it: a roll inside (`random`) uses a copy of the
+    /// generator, so asking (the screen does, every frame) never alters the game.
+    pub fn placement_ok(&self, def: &StrategyDef, e: Option<&Expr>, system: usize) -> bool {
+        let Some(e) = e else { return true };
+        let cx = Cx { c: self, def, base: None, system: Some(system), rng: Cell::new(self.rng) };
+        match e.eval(&cx) {
+            Value::Num(n) => n != 0.0,
+            Value::Bool(b) => b,
+        }
+    }
+
+    /// Evaluates an expression about a candidate system (`system` in it names that one).
+    fn eval_at(&mut self, def: &StrategyDef, e: &Expr, base: Option<usize>, system: Option<usize>) -> f32 {
+        let cx = Cx { c: self, def, base, system, rng: Cell::new(self.rng) };
         let v = match e.eval(&cx) {
             Value::Num(n) => n,
             Value::Bool(b) => b as i32 as f32,
@@ -565,7 +604,7 @@ impl Campaign {
         }
         b.modules
             .iter()
-            .filter(|m| m.ready_at <= self.hours)
+            .filter(|m| m.working(self.hours))
             .flat_map(|m| &def.modules[m.module].effects)
             .filter(|(k, _)| k == name)
             .map(|(_, v)| v)
@@ -622,9 +661,13 @@ impl Campaign {
         if m >= b.modules.len() {
             return Err("no such module".into());
         }
-        // Not below what the module houses: craft in the hangar, pilots in quarters.
+        // Not below what the module houses: craft in the hangar, pilots in quarters, the
+        // store's contents. (A wreck or a module still building houses nothing.)
         let md = &def.modules[b.modules[m].module];
-        let effect = |k: &str| md.effects.iter().filter(|(e, _)| e == k).map(|(_, v)| *v).sum::<f32>();
+        let working = b.modules[m].working(self.hours);
+        let wreck = b.modules[m].wrecked;
+        let effect =
+            |k: &str| md.effects.iter().filter(|(e, _)| e == k).map(|(_, v)| *v).sum::<f32>() * working as i32 as f32;
         let craft_here = self.craft.iter().filter(|c| c.base == base).count() as f32;
         if effect("hangar") > 0.0 && (self.hangar(def, base) as f32 - effect("hangar")) < craft_here {
             return Err(format!("{} houses craft that would have nowhere to go", md.name));
@@ -636,14 +679,320 @@ impl Campaign {
         {
             return Err(format!("{} houses pilots who would have nowhere to sleep", md.name));
         }
+        if let (Some(cap), used) = self.storage(def, base) {
+            if effect("storage") > 0.0 && used > cap - effect("storage") + 1e-3 {
+                return Err(format!("{} holds stock that would have nowhere to go", md.name));
+            }
+        }
         let b = &mut self.bases[base];
         let gone = b.modules.remove(m);
         let md = &def.modules[gone.module];
-        let refund = md.cost as f64 * def.dismantle_refund as f64;
+        // A wreck is cleared for nothing.
+        let refund = if wreck { 0.0 } else { md.cost as f64 * def.dismantle_refund as f64 };
         self.money += refund;
         let t = format!("{}: {} dismantled ({refund:.0} back)", self.bases[base].name, md.name);
         self.log(t);
         Ok(())
+    }
+
+    /// Room left in a base's store for new orders (item `size`s): its capacity less what
+    /// it holds, what is on its way (deliveries, including those waiting for room) and
+    /// the item being made. `None`: the base's store has no limit.
+    pub fn room(&self, def: &StrategyDef, base: usize) -> Option<f32> {
+        let (cap, _) = self.storage(def, base);
+        cap?;
+        let inbound: f32 = self
+            .deliveries
+            .iter()
+            .filter(|d| d.base == base)
+            .filter_map(|d| match d.product {
+                Product::Item(i) => Some(def.items[i].size * d.count as f32),
+                Product::Hull(_) => None,
+            })
+            .sum();
+        Some(self.store_free(def, base) - inbound)
+    }
+
+    /// Room in a base's store for something arriving now: its capacity less what it
+    /// holds and the item being made (which has its place kept). Unlimited: `f32::MAX`.
+    fn store_free(&self, def: &StrategyDef, base: usize) -> f32 {
+        let (Some(cap), used) = self.storage(def, base) else { return f32::MAX };
+        let making: f32 = self.bases[base]
+            .jobs
+            .iter()
+            .filter(|j| j.started)
+            .filter_map(|j| match j.product {
+                Product::Item(i) => Some(def.items[i].size),
+                Product::Hull(_) => None,
+            })
+            .sum();
+        cap - used - making
+    }
+
+    /// The modules a new base of a type comes with: each `template` entry that names a
+    /// module is that module; one that names a module **group** is the best module of
+    /// that group available now (the costliest, as fitting picks the costliest item),
+    /// and is left out while none is.
+    pub fn template_modules(&mut self, def: &StrategyDef, base_type: usize) -> Vec<usize> {
+        let mut out = Vec::new();
+        for entry in &def.base_types[base_type].template {
+            if let Some(m) = def.module(entry) {
+                out.push(m);
+                continue;
+            }
+            let best = (0..def.modules.len())
+                .filter(|&m| def.modules[m].group == *entry)
+                .filter(|&m| self.available(def, &format!("modules.{}", def.modules[m].id)))
+                // `max_by` keeps the last of equals: a later (newer) module wins a tie.
+                .max_by(|&a, &b| def.modules[a].cost.total_cmp(&def.modules[b].cost));
+            out.extend(best);
+        }
+        out
+    }
+
+    /// A raid wrecks module `m` of base `base`: it stops working, and what it held that
+    /// now has no room is lost, as its `on_destroyed` says (craft, pilots, stock).
+    fn wreck_module(&mut self, def: &StrategyDef, base: usize, m: usize, events: &mut Vec<Event>) {
+        self.bases[base].modules[m].wrecked = true;
+        let md = &def.modules[self.bases[base].modules[m].module];
+        let mut lost = Vec::new();
+        for loss in &md.on_destroyed {
+            match loss {
+                Loss::Craft => {
+                    // Craft at home beyond the hangar's room, newest first; their pilots
+                    // eject, injured.
+                    let room = self.hangar(def, base) as usize;
+                    let heal = def.pilots.as_ref().map_or(14.0, |p| p.heal_days) as f64 * 24.0;
+                    loop {
+                        let home: Vec<usize> = (0..self.craft.len())
+                            .filter(|&k| self.craft[k].base == base && self.craft[k].away.is_none())
+                            .collect();
+                        let Some(&k) = home.last().filter(|_| home.len() > room) else { break };
+                        for p in self.pilots.iter_mut().filter(|p| p.craft == Some(k)) {
+                            p.state = PilotState::Injured(self.hours + heal);
+                        }
+                        lost.push(self.craft[k].name.clone());
+                        self.remove_craft(k);
+                    }
+                }
+                Loss::Pilots => {
+                    // Quarters are shared by the whole roster; those without a craft go
+                    // first, the newest first. (No quarters anywhere: no limit, no loss.)
+                    let room = self.quarters(def) as usize;
+                    while room > 0 && self.pilots.iter().filter(|p| p.state != PilotState::Dead).count() > room {
+                        let living: Vec<usize> =
+                            (0..self.pilots.len()).filter(|&p| self.pilots[p].state != PilotState::Dead).collect();
+                        let p = living
+                            .iter()
+                            .rev()
+                            .find(|&&p| self.pilots[p].craft.is_none())
+                            .or(living.last())
+                            .copied()
+                            .expect("more living pilots than a positive room, so at least one");
+                        self.pilots[p].state = PilotState::Dead;
+                        self.pilots[p].craft = None;
+                        lost.push(self.pilots[p].name.clone());
+                    }
+                }
+                Loss::Stock => {
+                    // Whole units from the end of the store until it fits.
+                    while let (Some(cap), used) = self.storage(def, base) {
+                        if used <= cap + 1e-3 {
+                            break;
+                        }
+                        let Some(&(item, _)) = self.bases[base].stock.last() else { break };
+                        self.take_stock(base, item, 1);
+                        lost.push(def.items[item].name.clone());
+                    }
+                }
+            }
+        }
+        let mut t = format!("{}: {} wrecked", self.bases[base].name, md.name);
+        if !lost.is_empty() {
+            lost.dedup();
+            t += &format!("; lost: {}", lost.join(", "));
+        }
+        self.log(t.clone());
+        events.push(Event::Notice(t));
+    }
+
+    /// Repairs a wrecked module: `economy.repair` (50 %) of its cost now, and the same
+    /// share of its build time before it works again.
+    pub fn repair_module(&mut self, def: &StrategyDef, base: usize, m: usize) -> Result<(), String> {
+        let b = self.bases.get(base).ok_or("no such base")?;
+        let inst = b.modules.get(m).ok_or("no such module")?;
+        let md = &def.modules[inst.module];
+        if !inst.wrecked {
+            return Err(format!("{} is not damaged", md.name));
+        }
+        let cost = md.cost as f64 * def.repair_share as f64;
+        if self.money < cost {
+            return Err(format!("repairing {} costs {cost:.0}; there is {:.0}", md.name, self.money));
+        }
+        self.money -= cost;
+        let start = self.hours.max(b.ready_at);
+        let inst = &mut self.bases[base].modules[m];
+        inst.wrecked = false;
+        inst.ready_at = start + (md.build_time * def.repair_share) as f64;
+        let t = format!("{}: repairing {} ({cost:.0})", self.bases[base].name, md.name);
+        self.log(t);
+        Ok(())
+    }
+
+    /// Dismantles a whole base. Its hub and working modules refund `economy.dismantle`
+    /// (50 %) of their cost. Its craft move to the other bases with hangar room, nearest
+    /// first, and the rest are sold at the same share of their hull's cost. Its store
+    /// moves to the nearest base with room, and the rest is sold. Deliveries and convoys
+    /// bound for it go to the nearest base. Its queue and research stop (research keeps
+    /// its progress). The last base cannot be dismantled, and neither can one whose
+    /// quarters house pilots who would have nowhere else to sleep.
+    pub fn dismantle_base(&mut self, def: &StrategyDef, base: usize) -> Result<(), String> {
+        if base >= self.bases.len() {
+            return Err("no such base".into());
+        }
+        if self.bases.len() == 1 {
+            return Err("you cannot dismantle your last base".into());
+        }
+        let own_quarters = def.base_types[self.bases[base].base_type].quarters + self.effect(def, base, "quarters");
+        let total = self.quarters(def) as f32;
+        let living = self.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as f32;
+        if total > 0.0 && total - own_quarters < living {
+            return Err(format!("{}'s quarters house pilots who would have nowhere to sleep", self.bases[base].name));
+        }
+        let name = self.bases[base].name.clone();
+        let here = self.systems[self.bases[base].system].pos;
+        // The other bases, nearest first.
+        let mut others: Vec<usize> = (0..self.bases.len()).filter(|&b| b != base).collect();
+        others.sort_by(|&a, &b| {
+            distance(self.systems[self.bases[a].system].pos, here)
+                .total_cmp(&distance(self.systems[self.bases[b].system].pos, here))
+        });
+        let nearest = others[0]; // there are at least two bases (checked above)
+        let share = def.dismantle_refund as f64;
+        let mut refund = def.base_types[self.bases[base].base_type].cost as f64 * share;
+        refund += self.bases[base]
+            .modules
+            .iter()
+            .filter(|m| !m.wrecked)
+            .map(|m| def.modules[m.module].cost as f64 * share)
+            .sum::<f64>();
+        // Craft: rehoused where there is hangar room, else sold.
+        let mut sold = 0;
+        let mut k = 0;
+        while k < self.craft.len() {
+            if self.craft[k].base != base {
+                k += 1;
+                continue;
+            }
+            let to = others.iter().copied().find(|&b| {
+                (self.craft.iter().filter(|c| c.base == b).count() as u32) < self.hangar(def, b)
+                    || def.base_types[self.bases[b].base_type].hangar + self.effect(def, b, "hangar") <= 0.0
+            });
+            match to {
+                Some(b) => {
+                    self.craft[k].base = b;
+                    k += 1;
+                }
+                None => {
+                    refund += def.hulls[self.craft[k].hull].cost as f64 * share;
+                    sold += 1;
+                    self.remove_craft(k);
+                }
+            }
+        }
+        // Stock: to the nearest base with room, else sold.
+        let mut sales = 0.0;
+        for (item, n) in std::mem::take(&mut self.bases[base].stock) {
+            let mut left = n;
+            for &b in &others {
+                let size = def.items[item].size;
+                let fits = if size > 0.0 {
+                    ((self.store_free(def, b) + 1e-3) / size).floor().clamp(0.0, left as f32) as u32
+                } else {
+                    left
+                };
+                if fits > 0 {
+                    self.add_stock(b, item, fits);
+                    left -= fits;
+                }
+                if left == 0 {
+                    break;
+                }
+            }
+            sales += def.items[item].sell_price as f64 * left as f64;
+        }
+        refund += sales;
+        // Everything that names bases by index: point it away from `base`, and move the
+        // indices after it down by one (the base is removed from the list at the end).
+        let after = |b: usize| if b > base { b - 1 } else { b };
+        let to_nearest = after(nearest);
+        for c in &mut self.craft {
+            c.base = after(c.base);
+        }
+        for d in &mut self.deliveries {
+            d.base = if d.base == base { to_nearest } else { after(d.base) };
+        }
+        for c in &mut self.contacts {
+            c.target_base = c.target_base.filter(|b| *b != base).map(after);
+        }
+        let lg = &mut self.logistics;
+        if base < lg.base_goods.len() {
+            let goods = lg.base_goods.remove(base);
+            if let Some(dest) = lg.base_goods.get_mut(to_nearest) {
+                for (g, a) in goods {
+                    match dest.iter_mut().find(|(x, _)| *x == g) {
+                        Some((_, have)) => *have += a,
+                        None => dest.push((g, a)),
+                    }
+                }
+            }
+        }
+        lg.orders.retain(|o| o.to != logistics::Dest::Base(base));
+        let redirect = |d: &mut logistics::Dest| {
+            if let logistics::Dest::Base(b) = d {
+                *b = if *b == base { to_nearest } else { after(*b) };
+            }
+        };
+        for o in &mut lg.orders {
+            redirect(&mut o.to);
+        }
+        for cv in &mut lg.convoys {
+            redirect(&mut cv.to);
+        }
+        self.bases.remove(base);
+        self.money += refund;
+        let mut t = format!("{name} dismantled ({refund:.0} back)");
+        if sold > 0 {
+            t += &format!("; {sold} craft sold for want of hangar room");
+        }
+        self.log(t);
+        Ok(())
+    }
+
+    /// Stores holding more than their capacity: each base and facility over its limit,
+    /// as `"<place>: <used> of <capacity>"`. The soak checks this stays empty (a wreck
+    /// without `on_destroyed: [stock]` may leave a store over its limit; nothing more
+    /// is stored there until it fits again).
+    pub fn over_capacity(&self, def: &StrategyDef) -> Vec<String> {
+        let mut out = Vec::new();
+        for b in 0..self.bases.len() {
+            if let (Some(cap), used) = self.storage(def, b) {
+                if used > cap + 1e-3 {
+                    out.push(format!("{}: {used:.1} of {cap:.1}", self.bases[b].name));
+                }
+            }
+        }
+        if let Some(l) = def.logistics.as_ref() {
+            for f in &self.logistics.facilities {
+                let cap = l.facility_types[f.ftype].storage;
+                let used: f32 = f.store.iter().map(|(_, a)| a).sum();
+                if used > cap + 1e-3 {
+                    let at = &self.systems[f.system].name;
+                    out.push(format!("{} at {at}: {used:.1} of {cap:.1}", l.facility_types[f.ftype].name));
+                }
+            }
+        }
+        out
     }
 
     /// A base's sensor range: the hub's plus its sensor modules'.
@@ -735,7 +1084,7 @@ impl Campaign {
         }
         self.money -= m.cost as f64;
         let start = self.hours.max(self.bases[base].ready_at);
-        self.bases[base].modules.push(ModuleInst { module, ready_at: start + m.build_time as f64 });
+        self.bases[base].modules.push(ModuleInst { module, ready_at: start + m.build_time as f64, wrecked: false });
         Ok(())
     }
 
@@ -748,19 +1097,19 @@ impl Campaign {
         if self.bases.iter().filter(|b| b.base_type == base_type).count() as u32 >= bt.max_bases {
             return Err(format!("At most {} {} bases", bt.max_bases, bt.name));
         }
-        let pos = self.systems[system].pos;
-        if bt.max_distance > 0.0
-            && !self.bases.iter().any(|b| distance(self.systems[b.system].pos, pos) <= bt.max_distance)
-        {
-            return Err(format!("{} is too far from your other bases", self.systems[system].name));
+        if !self.placement_ok(def, bt.placement.as_ref(), system) {
+            return Err(format!("A {} base cannot be built at {}", bt.name, self.systems[system].name));
         }
         if self.money < bt.cost as f64 {
             return Err(format!("A {} base costs {:.0}; there is {:.0}", bt.name, bt.cost, self.money));
         }
         self.money -= bt.cost as f64;
         let ready_at = self.hours + bt.build_time as f64;
-        let modules =
-            bt.template.iter().filter_map(|m| def.module(m)).map(|module| ModuleInst { module, ready_at }).collect();
+        let modules = self
+            .template_modules(def, base_type)
+            .into_iter()
+            .map(|module| ModuleInst { module, ready_at, wrecked: false })
+            .collect();
         self.bases.push(Base {
             name: name.to_string(),
             base_type,
@@ -787,13 +1136,24 @@ impl Campaign {
         if self.money < total {
             return Err(format!("costs {total:.0}; there is {:.0}", self.money));
         }
-        if let (Product::Item(i), (Some(cap), used)) = (product, self.storage(def, base)) {
-            if used + def.items[i].size * count as f32 > cap + 1e-3 {
-                return Err(format!("no room in store: {used:.0} of {cap:.0} used"));
+        if let (Product::Item(i), Some(room)) = (product, self.room(def, base)) {
+            if def.items[i].size * count as f32 > room + 1e-3 {
+                let (cap, used) = self.storage(def, base);
+                return Err(format!(
+                    "no room in store: {used:.0} of {:.0} used, {:.0} more on its way",
+                    cap.unwrap_or(0.0),
+                    cap.unwrap_or(0.0) - used - room
+                ));
             }
         }
         self.money -= total;
-        self.deliveries.push(Delivery { product, base, count, arrive_at: self.hours + def.delivery as f64 });
+        self.deliveries.push(Delivery {
+            product,
+            base,
+            count,
+            arrive_at: self.hours + def.delivery as f64,
+            held: false,
+        });
         Ok(())
     }
 
@@ -949,6 +1309,13 @@ impl Campaign {
                     if needs_parts {
                         break;
                     }
+                    // An item needs room in the store for when it is done (R-STR-014:
+                    // storage stops production when full).
+                    if let (Product::Item(i), Some(room)) = (product, self.room(def, b)) {
+                        if def.items[i].size > room + 1e-3 {
+                            break;
+                        }
+                    }
                     let cost = match product {
                         Product::Item(i) => def.items[i].cost,
                         Product::Hull(h) => def.hulls[h].cost,
@@ -982,10 +1349,10 @@ impl Campaign {
         let (arrived, waiting): (Vec<Delivery>, Vec<Delivery>) =
             std::mem::take(&mut self.deliveries).into_iter().partition(|d| d.arrive_at <= now);
         self.deliveries = waiting;
-        for d in arrived {
+        for mut d in arrived {
             // A delivery may be lost on the way (`economy.delivery_loss`), paid for all
-            // the same.
-            if def.delivery_loss > 0.0 && self.roll() < def.delivery_loss {
+            // the same. (Rolled once: a delivery held for room has already arrived.)
+            if !d.held && def.delivery_loss > 0.0 && self.roll() < def.delivery_loss {
                 let what = match d.product {
                     Product::Item(i) => def.items[i].name.clone(),
                     Product::Hull(h) => def.hulls[h].id.clone(),
@@ -996,6 +1363,33 @@ impl Campaign {
                     events,
                 );
                 continue;
+            }
+            // Items take room in the store (R-STR-004): what fits is stored, the rest waits
+            // at the base (announced once) and is tried again each hour.
+            if let Product::Item(i) = d.product {
+                let free = self.store_free(def, d.base);
+                let fits = if def.items[i].size > 0.0 {
+                    ((free + 1e-3) / def.items[i].size).floor().clamp(0.0, d.count as f32) as u32
+                } else {
+                    d.count
+                };
+                if fits < d.count {
+                    if fits > 0 {
+                        self.receive(def, d.base, d.product, fits);
+                    }
+                    d.count -= fits;
+                    d.arrive_at = now + 1.0;
+                    if !d.held {
+                        d.held = true;
+                        let t = format!(
+                            "{}: no room in store for {} x {}; it waits until there is",
+                            self.bases[d.base].name, d.count, def.items[i].name
+                        );
+                        notice(self, t, events);
+                    }
+                    self.deliveries.push(d);
+                    continue;
+                }
             }
             self.receive(def, d.base, d.product, d.count);
         }
@@ -1029,8 +1423,13 @@ impl Campaign {
         // The month: maintenance, upkeep and salaries; the report; new recruits.
         if now >= self.next_month {
             self.next_month += MONTH;
-            let maintenance: f32 =
-                self.bases.iter().flat_map(|b| &b.modules).map(|m| def.modules[m.module].maintenance).sum();
+            let maintenance: f32 = self
+                .bases
+                .iter()
+                .flat_map(|b| &b.modules)
+                .filter(|m| !m.wrecked)
+                .map(|m| def.modules[m.module].maintenance)
+                .sum();
             let upkeep: f32 = self.craft.iter().map(|c| def.hulls[c.hull].upkeep).sum();
             let living = self.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as f32;
             let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
@@ -1308,10 +1707,9 @@ impl Campaign {
             return;
         }
         if let Some(b) = c.target_base {
-            if let Some(m) = self.bases[b].modules.iter().rposition(|m| m.ready_at <= self.hours) {
-                let lost = self.bases[b].modules.remove(m);
-                let t = format!("{}: {} destroyed", self.bases[b].name, def.modules[lost.module].name);
-                self.log(t);
+            let now = self.hours;
+            if let Some(m) = self.bases[b].modules.iter().rposition(|m| m.working(now)) {
+                self.wreck_module(def, b, m, events);
             }
         }
         self.add_score(def, "undefended");
@@ -1668,6 +2066,20 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
                 if c.money > 1_500_000.0 {
                     let _ = c.build_module(def, 0, m);
                 }
+            }
+        }
+        // Stock the store (the cheapest item that takes room): bought while rich, and
+        // made while the queue is idle — so a soak meets full stores. Refusals for want
+        // of room are expected.
+        let cheapest = (0..def.items.len())
+            .filter(|&i| def.items[i].cost > 0.0 && def.items[i].size > 0.0)
+            .min_by(|&a, &b| def.items[a].cost.total_cmp(&def.items[b].cost));
+        if let Some(i) = cheapest {
+            if c.money > 3_000_000.0 {
+                let _ = c.buy(def, 0, Product::Item(i), 4);
+            }
+            if c.bases[0].jobs.is_empty() && def.items[i].prod_time > 0.0 {
+                let _ = c.manufacture(def, 0, Product::Item(i), 2);
             }
         }
         for e in c.advance(def, 24.0) {
@@ -2150,6 +2562,7 @@ mod tests {
         for f in &c.logistics.facilities {
             assert!(f.system < c.systems.len());
         }
+        assert!(c.over_capacity(def).is_empty(), "{:?}", c.over_capacity(def));
         assert!(c.money.is_finite() && c.score.is_finite());
     }
 
@@ -2194,5 +2607,150 @@ mod tests {
         a.advance(&d, 500.0);
         b.advance(&d, 500.0);
         assert_eq!(a, b);
+    }
+
+    /// The sample with a store limit, a depot, a hangar bay and a bunk room.
+    fn with_bases() -> (StrategyDef, Campaign) {
+        let text = crate::content::strategy::tests::SAMPLE
+            .replace(
+                "  radar: {group: sensor, cost: 5000, build_time: 1d, effects: {sensor_range: 2500}}",
+                "  radar: {group: sensor, cost: 5000, build_time: 1d, effects: {sensor_range: 2500}}
+  big_radar: {group: sensor, cost: 9000, build_time: 1d, effects: {sensor_range: 6000}, requires: research(plasma)}
+  depot: {group: store, cost: 1000, build_time: 1h, effects: {storage: 5}, on_destroyed: [stock]}
+  bay: {group: hangar, cost: 4000, build_time: 10h, effects: {hangar: 2}, on_destroyed: [craft]}
+  bunk: {group: bunks, cost: 1000, build_time: 1h, effects: {quarters: 1}, on_destroyed: [pilots]}",
+            )
+            .replace(
+                "template: [radar, lab], sensor_range: 500, hangar: 4, quarters: 6}",
+                "template: [sensor, lab, bay, bunk], sensor_range: 500, hangar: 0, quarters: 1, storage: 10, placement: base_distance(system) <= 3500}",
+            );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let c = Campaign::new(&d, 0, 42);
+        (d, c)
+    }
+
+    #[test]
+    fn stores_hold_deliveries_and_output_to_their_capacity() {
+        let (d, mut c) = with_bases();
+        let (laser, plasma) = (d.item("laser").unwrap(), d.item("plasma").unwrap());
+        c.money = 1e9;
+        assert_eq!(c.storage(&d, 0), (Some(10.0), 2.0), "the hub's 10, two lasers in store");
+        c.buy(&d, 0, Product::Item(laser), 8).unwrap();
+        assert!(c.buy(&d, 0, Product::Item(laser), 1).unwrap_err().contains("on its way"), "what is coming counts");
+        c.advance(&d, d.delivery as f64 + 1.0);
+        assert_eq!(c.storage(&d, 0).1, 10.0);
+        // Manufacture waits for room, unpaid.
+        c.known[d.topic("plasma").unwrap()] = true;
+        c.build_module(&d, 0, d.module("works").unwrap()).unwrap();
+        c.manufacture(&d, 0, Product::Item(plasma), 1).unwrap();
+        c.advance(&d, 48.0);
+        assert!(!c.bases[0].jobs[0].started, "no room: the job waits");
+        c.sell(&d, 0, laser, 1).unwrap();
+        c.advance(&d, 24.0);
+        assert_eq!(c.stock_of(plasma), 1, "made once there was room");
+        // A delivery that finds no room waits (announced once) and arrives when there is.
+        let depot = d.module("depot").unwrap();
+        c.build_module(&d, 0, depot).unwrap();
+        c.advance(&d, 2.0);
+        c.buy(&d, 0, Product::Item(laser), 5).unwrap();
+        let k = c.bases[0].modules.iter().position(|m| m.module == depot).unwrap();
+        c.bases[0].modules[k].wrecked = true; // the depot is lost before they arrive
+        let events = c.advance(&d, d.delivery as f64 + 1.0);
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("no room"))), "{events:?}");
+        assert_eq!(c.deliveries.len(), 1);
+        assert!(c.deliveries[0].held);
+        assert!(c.over_capacity(&d).is_empty());
+        c.repair_module(&d, 0, k).unwrap();
+        c.advance(&d, 5.0);
+        assert_eq!(c.storage(&d, 0), (Some(15.0), 15.0), "arrived after the repair");
+        assert!(c.deliveries.is_empty());
+    }
+
+    #[test]
+    fn wrecked_modules_lose_what_they_held_until_repaired() {
+        let (d, mut c) = with_bases();
+        c.advance(&d, 24.0 * 8.0);
+        assert_eq!(c.hangar(&d, 0), 2);
+        assert_eq!(c.quarters(&d), 2);
+        // Two pilots in two craft; a third hired, without a craft.
+        c.money = 1e9;
+        assert!(c.hire(&d, 0).unwrap_err().contains("quarters"));
+        let mut events = Vec::new();
+        let bay = c.bases[0].modules.iter().position(|m| def_id(&d, m) == "bay").unwrap();
+        c.wreck_module(&d, 0, bay, &mut events);
+        assert!(c.craft.is_empty(), "no hangar room left: both craft lost");
+        assert!(c.pilots.iter().all(|p| matches!(p.state, PilotState::Injured(_))), "their pilots ejected");
+        assert_eq!(c.hangar(&d, 0), 0, "a wreck does nothing");
+        let bunk = c.bases[0].modules.iter().position(|m| def_id(&d, m) == "bunk").unwrap();
+        c.wreck_module(&d, 0, bunk, &mut events);
+        assert_eq!(c.pilots.iter().filter(|p| p.state == PilotState::Dead).count(), 1, "one bunk fewer");
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("wrecked") && t.contains("lost"))));
+        // Repair: half the cost now, half the build time.
+        let money = c.money;
+        c.repair_module(&d, 0, bay).unwrap();
+        assert_eq!(c.money, money - 2000.0);
+        assert!(c.repair_module(&d, 0, bay).unwrap_err().contains("not damaged"));
+        c.advance(&d, 4.0);
+        assert_eq!(c.hangar(&d, 0), 0, "still under repair");
+        c.advance(&d, 2.0);
+        assert_eq!(c.hangar(&d, 0), 2, "working again after 5 hours");
+        // A wreck is cleared for nothing.
+        c.wreck_module(&d, 0, bunk, &mut events);
+        let money = c.money;
+        c.dismantle_module(&d, 0, bunk).unwrap();
+        assert_eq!(c.money, money);
+    }
+
+    fn def_id(d: &StrategyDef, m: &ModuleInst) -> String {
+        d.modules[m.module].id.clone()
+    }
+
+    #[test]
+    fn templates_take_the_best_module_and_placement_decides_where() {
+        let (d, mut c) = with_bases();
+        assert_eq!(def_id(&d, &c.bases[0].modules[0]), "radar", "the best sensor known at the start");
+        c.money = 1e9;
+        // b is 3000 from the base, c 4000: only b is within 3500.
+        assert!(c.build_base(&d, 0, 2, "Far").unwrap_err().contains("cannot be built"));
+        c.known[d.topic("plasma").unwrap()] = true;
+        c.build_base(&d, 0, 1, "Second").unwrap();
+        assert_eq!(def_id(&d, &c.bases[1].modules[0]), "big_radar", "the best sensor now");
+        c.advance(&d, 24.0 * 8.0);
+        c.build_base(&d, 0, 2, "Far").unwrap_err();
+    }
+
+    #[test]
+    fn a_whole_base_is_dismantled_with_its_craft_and_stock_moved() {
+        let (d, mut c) = with_bases();
+        c.money = 1e9;
+        assert!(c.dismantle_base(&d, 0).unwrap_err().contains("last base"));
+        c.build_base(&d, 0, 1, "Second").unwrap();
+        c.advance(&d, 24.0 * 8.0);
+        // The craft and the stock live at the first base; a delivery is on its way to it.
+        c.buy(&d, 0, Product::Item(0), 3).unwrap();
+        c.contacts.push(Contact {
+            id: 99,
+            raid: 0,
+            pos: [0.0, 0.0],
+            dest: [0.0, 0.0],
+            target_base: Some(0),
+            detected: false,
+            route: Vec::new(),
+            plan: None,
+        });
+        let money = c.money;
+        c.dismantle_base(&d, 0).unwrap();
+        assert_eq!(c.bases.len(), 1);
+        assert_eq!(c.bases[0].name, "Second");
+        assert_eq!(c.craft.len(), 2, "rehoused: the second base's bay holds two");
+        assert!(c.craft.iter().all(|k| k.base == 0));
+        assert_eq!(c.stock_of(0), 2, "the lasers moved");
+        assert_eq!(c.deliveries[0].base, 0, "the delivery goes to the remaining base");
+        assert_eq!(c.contacts.last().unwrap().target_base, None, "the raid's target is gone");
+        // Half the hub's 500000 and the working modules' cost back.
+        assert!(c.money >= money + 250_000.0, "{} vs {money}", c.money);
+        c.advance(&d, 100.0); // and the game goes on
     }
 }

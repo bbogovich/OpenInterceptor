@@ -303,6 +303,21 @@ pub struct ModuleDef {
     /// Named campaign quantities it adds while working.
     pub effects: Vec<(String, f32)>,
     pub requires: Option<Expr>,
+    /// What is lost with it when a raid wrecks it (`on_destroyed: [craft, pilots, stock]`).
+    pub on_destroyed: Vec<Loss>,
+}
+
+/// A consequence of losing a module (`base_modules.<id>.on_destroyed`): what no longer
+/// has room at the base once the module stops working is lost.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Loss {
+    /// Craft at the base beyond its remaining hangar room are destroyed (their pilots
+    /// eject, injured).
+    Craft,
+    /// Pilots beyond the remaining quarters are killed (those not flying a craft first).
+    Pilots,
+    /// The base's stock beyond its remaining store capacity is destroyed.
+    Stock,
 }
 
 /// `base_types.<id>`.
@@ -315,7 +330,9 @@ pub struct BaseType {
     pub max_bases: u32,
     /// Most modules per group.
     pub limits: Vec<(String, u32)>,
-    /// Modules a new base comes with.
+    /// Modules a new base comes with. An entry names a module, or a module **group**:
+    /// then the best module of that group available when the base is ordered (the
+    /// costliest; see `Campaign::template_modules`).
     pub template: Vec<String>,
     /// The hub alone: map units of sensor range, craft and pilots housed.
     pub sensor_range: f32,
@@ -323,8 +340,9 @@ pub struct BaseType {
     pub quarters: f32,
     /// Store capacity of the hub (item sizes); 0 = a base type without a store limit.
     pub storage: f32,
-    /// A new base must be within this many map units of an existing one (0 = anywhere).
-    pub max_distance: f32,
+    /// Where a base may be built: a campaign condition over the candidate `system`
+    /// (`base_distance(system) <= 9000`); `None` = anywhere.
+    pub placement: Option<Expr>,
 }
 
 /// What a raid heads for.
@@ -406,6 +424,8 @@ pub struct StrategyDef {
     pub evaluations: Vec<Evaluation>,
     /// The share of a module's cost refunded when it is dismantled (`economy.dismantle`).
     pub dismantle_refund: f32,
+    /// The share of a module's cost and build time a repair takes (`economy.repair`).
+    pub repair_share: f32,
     /// The chance a delivery is lost on the way (`economy.delivery_loss`).
     pub delivery_loss: f32,
     /// Hours for a purchase to arrive.
@@ -510,6 +530,9 @@ impl StrategyDef {
             names.extend(Get(&sc).0.as_map().unwrap_or(&[]).iter().map(|(k, _)| k.clone()));
         }
         names.extend(extra_names.iter().cloned());
+        // Words with a meaning of their own in system queries: the candidate `system` of a
+        // `placement:` condition, the `nearest_base`'s system, and `any` resource or site.
+        names.extend(script::campaign::RESERVED.iter().map(|s| s.to_string()));
         names.sort();
         names.dedup();
         let schema = script::campaign::schema(&names, levels);
@@ -734,6 +757,21 @@ impl StrategyDef {
                 maintenance: g.num("maintenance").unwrap_or(0.0) * scale,
                 effects: pairs(g, "effects"),
                 requires: cond(req_text(g, &TECH).as_deref(), &format!("base_modules.{id}.requires"), errors),
+                on_destroyed: g
+                    .list("on_destroyed")
+                    .iter()
+                    .filter_map(|x| match x.as_str() {
+                        "craft" => Some(Loss::Craft),
+                        "pilots" => Some(Loss::Pilots),
+                        "stock" => Some(Loss::Stock),
+                        other => {
+                            errors.push(format!(
+                                "base_modules.{id}.on_destroyed: '{other}' is not craft, pilots or stock"
+                            ));
+                            None
+                        }
+                    })
+                    .collect(),
             })
             .collect();
         let base_types: Vec<BaseType> = of(defs, "base_types")
@@ -749,7 +787,7 @@ impl StrategyDef {
                 hangar: g.num("hangar").unwrap_or(0.0),
                 quarters: g.num("quarters").unwrap_or(0.0),
                 storage: g.num("storage").unwrap_or(0.0),
-                max_distance: g.num("max_distance").unwrap_or(0.0),
+                placement: cond(g.str("placement"), &format!("base_types.{id}.placement"), errors),
             })
             .collect();
         // 5. Raids, incomes, expenses.
@@ -927,6 +965,11 @@ impl StrategyDef {
                 .and_then(|n| Get(n).qty("dismantle", Unit::Fraction))
                 .unwrap_or(0.5)
                 .clamp(0.0, 1.0),
+            repair_share: economy
+                .as_ref()
+                .and_then(|n| Get(n).qty("repair", Unit::Fraction))
+                .unwrap_or(0.5)
+                .clamp(0.0, 1.0),
             delivery,
             salvage,
             story: {
@@ -943,7 +986,20 @@ impl StrategyDef {
                 };
                 let hull_nodes: Vec<(&str, &Node)> = of(defs, "hulls").map(|(id, g)| (id, g.0)).collect();
                 let topic_nodes: Vec<(&str, &Node)> = of(defs, "research").map(|(id, g)| (id, g.0)).collect();
-                super::logistics::LogisticsDef::build(defs, global, &systems, &hull_nodes, &topic_nodes, errors)
+                let mut l =
+                    super::logistics::LogisticsDef::build(defs, global, &systems, &hull_nodes, &topic_nodes, errors);
+                // Placement conditions need the campaign's name table, so they are parsed
+                // here: a facility type's own `placement:`, else its role's default rule.
+                if let Some(l) = l.as_mut() {
+                    for ft in &mut l.facility_types {
+                        let own = of(defs, "facility_types")
+                            .find(|(id, _)| *id == ft.id)
+                            .and_then(|(_, g)| g.str("placement"));
+                        let text = own.unwrap_or(ft.role.default_placement());
+                        ft.placement = cond(Some(text), &format!("facility_types.{}.placement", ft.id), errors);
+                    }
+                }
+                l
             },
         };
         def.check(errors);
@@ -989,8 +1045,9 @@ impl StrategyDef {
         }
         for b in &self.base_types {
             for m in &b.template {
-                if self.module(m).is_none() {
-                    bad(format!("base_types.{}.template", b.id), "module", m);
+                // A module id, or a module group (the best available of it).
+                if self.module(m).is_none() && !self.modules.iter().any(|x| &x.group == m) {
+                    bad(format!("base_types.{}.template", b.id), "module or module group", m);
                 }
             }
         }
@@ -1178,6 +1235,11 @@ fn sections_core() -> Vec<super::schema::Field> {
                     "research_rate, production_rate, sensor_range, hangar, quarters (pilots housed), storage (store capacity, item sizes), defence (points: each turns away 15 % of unopposed raids); income is a tag for incomes: formulas (module_count)",
                 ),
                 f("requires", expr(), "available when this holds"),
+                f(
+                    "on_destroyed",
+                    Ty::List(Box::new(Ty::Enum(&["craft", "pilots", "stock"]))),
+                    "lost when a raid wrecks it: craft over the hangar room, pilots over the quarters, stock over the store",
+                ),
             ])),
             "base modules",
         ),
@@ -1189,12 +1251,16 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("build_time", Ty::Qty(Unit::Time), "time to build"),
                 f("max_bases", Ty::Num, "most bases of this type"),
                 f("limits", nums(), "group: most modules"),
-                f("template", Ty::List(Box::new(Ty::Name)), "modules a new base comes with"),
+                f(
+                    "template",
+                    Ty::List(Box::new(Ty::Name)),
+                    "modules a new base comes with; a module group gives the best available module of it",
+                ),
                 f("sensor_range", Ty::Num, "the hub's sensor range, map units"),
                 f("hangar", Ty::Num, "craft the hub houses"),
                 f("storage", Ty::Num, "store capacity of the hub (item sizes; 0 = no limit at this base type)"),
                 f("quarters", Ty::Num, "pilots the hub houses"),
-                f("max_distance", Ty::Num, "a new base must be this close to one of yours (0: anywhere)"),
+                f("placement", expr(), "where a base may be built: a condition over the candidate system (anywhere)"),
             ])),
             "base types",
         ),
@@ -1276,7 +1342,8 @@ fn sections_core() -> Vec<super::schema::Field> {
             "economy",
             Ty::Struct(vec![
                 f("delivery", Ty::Qty(Unit::Time), "time for a purchase to arrive"),
-                f("dismantle", Ty::Qty(Unit::Fraction), "share of a module's cost refunded when dismantled (50 %)"),
+                f("dismantle", Ty::Qty(Unit::Fraction), "share of a module's or base's cost refunded when dismantled (50 %)"),
+                f("repair", Ty::Qty(Unit::Fraction), "share of a module's cost and build time a repair takes (50 %)"),
                 f("delivery_loss", Ty::Qty(Unit::Fraction), "chance a purchase is lost on the way (0 %)"),
                 f("salvage_per_kill", Ty::Num, "money per enemy destroyed when an outcome says salvage"),
                 f(

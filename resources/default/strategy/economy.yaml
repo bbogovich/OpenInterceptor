@@ -4,6 +4,8 @@
 economy:
   delivery: 48h
   salvage_per_kill: 15000
+  dismantle: 50%                 # of a module's or base's cost, back when dismantled
+  repair: 50%                    # of a wrecked module's cost and build time, to repair it
 
 incomes:
   senate_stipend: {name: Senate stipend, every: 30d, amount: 400000 + 60000 * bases + month_score * 200 + relation(senate) * 3000}
@@ -35,8 +37,9 @@ hulls:
   victory: {cost: 1900000, prod_time: 22000, upkeep: 30000, speed: 900, slots: {beam: 4, missile: 4, special: 3, shield: 1, armor: 1}}
 
 base_modules:
-  hangar: {name: Hangar, group: hangar, cost: 250000, build_time: 10d, maintenance: 8000, effects: {hangar: 3}}
-  quarters: {name: Crew quarters, group: quarters, cost: 120000, build_time: 7d, maintenance: 4000, effects: {quarters: 6}}
+  # on_destroyed: what has no room once a raid wrecks the module is lost with it.
+  hangar: {name: Hangar, group: hangar, cost: 250000, build_time: 10d, maintenance: 8000, effects: {hangar: 3}, on_destroyed: [craft]}
+  quarters: {name: Crew quarters, group: quarters, cost: 120000, build_time: 7d, maintenance: 4000, effects: {quarters: 6}, on_destroyed: [pilots]}
   radar: {name: Radar dish, group: sensor, cost: 150000, build_time: 7d, maintenance: 5000, effects: {sensor_range: 2400}}
   deep_radar: {name: Deep radar array, group: sensor, cost: 400000, build_time: 14d, maintenance: 12000, effects: {sensor_range: 4500}}
   laboratory: {name: Laboratory, group: research, cost: 300000, build_time: 12d, maintenance: 12000, effects: {research_rate: 12}}
@@ -44,6 +47,7 @@ base_modules:
   shipyard: {name: Orbital shipyard, group: production, cost: 650000, build_time: 21d, maintenance: 20000, effects: {production_rate: 30}}
   cosmium_refinery: {name: Cosmium refinery, group: industry, cost: 500000, build_time: 18d, maintenance: 9000, effects: {income: 1}}
   ray_battery: {name: Ray battery, group: defence, cost: 200000, build_time: 7d, maintenance: 6000, effects: {defence: 1}}
+  supply_depot: {name: Supply depot, group: storage, cost: 150000, build_time: 7d, maintenance: 3000, effects: {storage: 150}, on_destroyed: [stock]}
 
 base_types:
   guard_base:
@@ -54,9 +58,12 @@ base_types:
     sensor_range: 1200
     hangar: 2
     quarters: 6
-    max_distance: 3500
-    limits: {hangar: 3, sensor: 1, research: 3, production: 2, industry: 2, defence: 4, quarters: 2}
-    template: [hangar, radar, laboratory]
+    storage: 120                   # the hub's store, in item sizes; supply depots add room
+    placement: base_distance(system) <= 3500     # within 3500 map units of one of your bases
+    limits: {hangar: 3, sensor: 1, research: 3, production: 2, industry: 2, defence: 4, quarters: 2, storage: 2}
+    # A module, or a module group: the best of that group researched so far (the deep
+    # radar once it is known).
+    template: [hangar, sensor, laboratory]
 
 # The Senate's monthly evaluation: the first rating whose condition holds (R-STR-009).
 evaluations:

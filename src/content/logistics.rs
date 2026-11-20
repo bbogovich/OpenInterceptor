@@ -37,6 +37,20 @@ pub enum Role {
     Research,
 }
 
+impl Role {
+    /// The rule a facility type of this role follows when it has no `placement:` of its
+    /// own, written in the condition language (so it reads as data, and a mod can copy
+    /// and change it): mining needs a surveyed system with a deposit, research a
+    /// surveyed research site, manufacturing a system at most two lanes from a base.
+    pub fn default_placement(self) -> &'static str {
+        match self {
+            Role::Mining => "survey_known(system) and deposit(system, any) > 0",
+            Role::Research => "survey_known(system) and research_site(system, any)",
+            Role::Manufacturing => "bases > 0 and lane_distance(system, nearest_base) <= 2",
+        }
+    }
+}
+
 /// `facility_types.<id>`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FacilityType {
@@ -54,6 +68,10 @@ pub struct FacilityType {
     pub research_rate: f32,
     /// The battle object at the facility (with construction stages), if any.
     pub hub: Option<String>,
+    /// Where it may be built: a campaign condition over the candidate `system` (its own
+    /// `placement:`, else [`Role::default_placement`]). Parsed by `StrategyDef::build`,
+    /// which owns the name table; `None` only when the text did not parse.
+    pub placement: Option<crate::script::Expr>,
 }
 
 /// `recipes.<id>`: inputs → an amount of a component, at a manufacturing center.
@@ -200,6 +218,7 @@ impl LogisticsDef {
                 lines: g.num("lines").unwrap_or(1.0) as u32,
                 research_rate: g.num("research_rate").unwrap_or(0.0),
                 hub: g.str("hub").map(str::to_string),
+                placement: None, // parsed by the caller, which has the campaign's names
             })
             .collect();
         if facility_types.is_empty() {
@@ -354,6 +373,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("lines", Ty::Num, "manufacturing: recipes at once"),
                 f("research_rate", Ty::Num, "research: work units an hour"),
                 f("hub", Ty::Name, "the battle object at the facility"),
+                f("placement", Ty::Condition, "where it may be built: a condition over the candidate system (default: its role's rule)"),
             ])),
             "production facility types",
         ),

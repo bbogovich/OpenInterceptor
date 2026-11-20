@@ -118,6 +118,10 @@ enum Act {
     Dismiss(usize),
     /// Dismantle module `m` of the current base.
     Dismantle(usize),
+    /// Repair wrecked module `m` of the current base.
+    Repair(usize),
+    /// Dismantle the whole current base.
+    DismantleBase,
     /// Fire a story event now (debugger).
     FireEvent(usize),
     /// Move job `j` of the current base's queue up, or cancel it.
@@ -157,6 +161,8 @@ impl Row {
             Act::Train(_, false) => "Stop training",
             Act::Dismiss(_) => "Dismiss",
             Act::Dismantle(_) => "Dismantle",
+            Act::Repair(_) => "Repair",
+            Act::DismantleBase => "Dismantle base",
             Act::RaiseJob(_) => "Move up",
             Act::FireEvent(_) => "Fire now",
             Act::CancelJob(_) => "Cancel",
@@ -173,7 +179,7 @@ impl Row {
         self.acts
             .first()
             .map(|(_, a)| *a)
-            .filter(|a| !matches!(a, Act::Dismantle(_) | Act::Dismiss(_) | Act::CancelJob(_)))
+            .filter(|a| !matches!(a, Act::Dismantle(_) | Act::DismantleBase | Act::Dismiss(_) | Act::CancelJob(_)))
     }
 
     /// Adds another action.
@@ -568,8 +574,24 @@ impl StrategyScreen {
                 if let Some(b) = c.bases.get(base) {
                     for (mi, m) in b.modules.iter().enumerate() {
                         let left = (m.ready_at - c.hours) / 24.0;
+                        let name = &def.modules[m.module].name;
+                        // A wreck offers its repair first; dismantling stays a button of its own.
+                        if m.wrecked {
+                            let cost = def.modules[m.module].cost * def.repair_share;
+                            rows.push(
+                                Row::new(
+                                    format!("   {name}: wrecked (repair {})", money(cost as f64)),
+                                    Act::Repair(mi),
+                                )
+                                .with("Dismantle", Act::Dismantle(mi)),
+                            );
+                            continue;
+                        }
                         let state = if left > 0.0 { format!("building, {left:.1} days") } else { "working".into() };
-                        rows.push(Row::new(format!("   {}: {state}", def.modules[m.module].name), Act::Dismantle(mi)));
+                        rows.push(Row::new(format!("   {name}: {state}"), Act::Dismantle(mi)));
+                    }
+                    if c.bases.len() > 1 {
+                        rows.push(Row::new(format!("{}: the whole base", b.name), Act::DismantleBase));
                     }
                     if let (Some(cap), used) = c.storage(def, base) {
                         rows.push(Row::new(format!("Store: {used:.0} of {cap:.0} used"), Act::None));
@@ -886,6 +908,8 @@ impl StrategyScreen {
             Act::Train(p, on) => c.set_training(def, p, on),
             Act::Dismiss(p) => c.dismiss(p),
             Act::Dismantle(m) => c.dismantle_module(def, base, m),
+            Act::Repair(m) => c.repair_module(def, base, m),
+            Act::DismantleBase => c.dismantle_base(def, base),
             Act::RaiseJob(j) => c.raise_job(base, j),
             Act::CancelJob(j) => c.cancel_job(base, j),
             Act::FireEvent(e) => {

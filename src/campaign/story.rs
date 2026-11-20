@@ -47,7 +47,7 @@ pub struct CampaignHost<'a> {
 
 impl Context for CampaignHost<'_> {
     fn query(&self, id: u16, args: &[f32]) -> Value {
-        let cx = Cx { c: self.c, def: self.def, base: None, rng: Cell::new(self.rng.get()) };
+        let cx = Cx { c: self.c, def: self.def, base: None, system: None, rng: Cell::new(self.rng.get()) };
         let v = cx.query(id, args);
         self.rng.set(cx.rng.get());
         v
