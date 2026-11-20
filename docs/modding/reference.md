@@ -56,7 +56,12 @@ systems' `deposits` and `features`, hulls' `components`, topics' `lab`, `site` a
 `max_distance` — a breaking change for mods), `facility_types.<id>.placement`, module **groups**
 in `base_types.<id>.template`, and `economy.repair`, with the campaign query `base_distance` and
 the reserved names `system`, `nearest_base` and `any`
-([Strategy layer › Bases: storage, wrecks and placement](strategy.md#bases-storage-wrecks-and-placement)). The **story
+([Strategy layer › Bases: storage, wrecks and placement](strategy.md#bases-storage-wrecks-and-placement));
+in app 0.20.0 `logistics.cargo_capacity`, `logistics.construction_stages`,
+`logistics.survey_mission`, `logistics.survey_class` and `logistics.survey_loss`, with
+`facility_types.<id>.hub` now used (the struck site and the survey ship stand in for a
+mission's first protected role; [Strategy layer › Construction stages and the
+stand-in](strategy.md#construction-stages-and-the-stand-in)). The **story
 layer** (app 0.10.0) adds the definitions `events`, `arcs`, `plans`, `endings`,
 `encyclopaedia` and the globals `relations`, `strategist`, `campaign_end`, by convention in
 `strategy/story.yaml` — every key is on [Story layer](story.md). All of them are in the editor

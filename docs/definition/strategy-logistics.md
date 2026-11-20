@@ -1,5 +1,5 @@
 ---
-spec_version: 1.21.0
+spec_version: 1.22.0
 status: current
 updated: 2026-11-20
 ---
@@ -17,9 +17,9 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | [F-STR-003 Ships, equipment and pilots](#f-str-003-ships-equipment-and-pilots) | In progress |
 | [F-STR-004 Saved games](#f-str-004-saved-games) | Implemented |
 | [F-STR-005 Supply-chain logistics](#f-str-005-supply-chain-logistics) | In progress |
-| [F-STR-006 Surveys](#f-str-006-surveys) | In progress |
+| [F-STR-006 Surveys](#f-str-006-surveys) | Implemented |
 | [F-STR-007 Supply convoys worth escorting](#f-str-007-supply-convoys-worth-escorting) | In progress |
-| [F-STR-008 Facilities under construction](#f-str-008-facilities-under-construction) | In progress |
+| [F-STR-008 Facilities under construction](#f-str-008-facilities-under-construction) | Implemented |
 | [F-STR-009 Research stations and fighter pools](#f-str-009-research-stations-and-fighter-pools) | In progress |
 
 ## Features
@@ -80,7 +80,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** The player chooses where to build from what is known.
 
-- **Status:** in-progress. Built (app 0.9.0): survey ships from a base within its radar range, the attack roll at launch, a report of deposits (with reserves since app 0.16.2), features and research sites; suitability shown on the Supply tab. Remaining: a survey craft and a battle when one is attacked (auto-resolved today).
+- **Status:** implemented. Built (app 0.9.0): survey ships from a base within its radar range, the attack roll at launch, a report of deposits (with reserves since app 0.16.2), features and research sites; suitability shown on the Supply tab. Since app 0.20.0: the survey ship is a craft of its own, an attacked one fights a battle at the survey site (flown or auto-resolved, the loss chance data), and the report lists the facility types the system suits.
 - **Source:** Logistics decisions (2026-11-11, revised); plan item 4.16.
 - **Specified by:** [R-STR-021](../specification/requirements/strategy-logistics.md#r-str-021-survey-ships)
 
@@ -90,7 +90,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Escort missions stay interesting and playable: single ships would be destroyed quickly.
 
-- **Status:** in-progress. Built (app 0.9.0): convoys of several vessels (data) with even shares, the ambush point chosen at launch, surviving shares delivered. Built (app 0.9.2, the user's design): the supply vessel with twelve cargo pods and a point-defence laser; flying an ambushed convoy's escort, the surviving share delivered. Remaining: cargo capacity, facility fighter escorts.
+- **Status:** in-progress. Built (app 0.9.0): convoys of several vessels (data) with even shares, the ambush point chosen at launch, surviving shares delivered. Built (app 0.9.2, the user's design): the supply vessel with twelve cargo pods and a point-defence laser; flying an ambushed convoy's escort, the surviving share delivered. Cargo capacity as data, larger orders split into several convoys (app 0.20.0). Remaining: facility fighter escorts.
 - **Source:** User decision (2026-11-11).
 - **Specified by:** [R-STR-016](../specification/requirements/strategy-logistics.md#r-str-016-supply-convoys), [R-STR-017](../specification/requirements/strategy-logistics.md#r-str-017-supply-vessel-model), [R-STR-018](../specification/requirements/strategy-logistics.md#r-str-018-supply-convoy-attack-position), [R-STR-026](../specification/requirements/strategy-logistics.md#r-str-026-supply-cargo-capacity)
 
@@ -100,7 +100,7 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 
 **Why.** Construction is a vulnerable period worth defending.
 
-- **Status:** in-progress. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Strikes on facilities under construction, flown or let be (app 0.16.4). Remaining: stages shown on the map and in battle.
+- **Status:** implemented. Built: the construction-stage looks (Stage 2); facilities take their build time (app 0.9.0). Strikes on facilities under construction, flown or let be (app 0.16.4). Stages shown on the map and in battle, the struck facility in its own stage (app 0.20.0; default stage starts 0 / 50 / 80 %, DEV-063).
 - **Source:** Logistics design; construction-stage looks built in Stage 2; plan items 4.14 and 3.13.
 - **Specified by:** [R-CMB-019](../specification/requirements/combat.md#r-cmb-019-model-sets-and-damage-looks), [R-STR-022](../specification/requirements/strategy-logistics.md#r-str-022-construction-stages), [R-STR-023](../specification/requirements/strategy-logistics.md#r-str-023-construction-attacks)
 
@@ -124,3 +124,4 @@ Requirements for these features: [Strategy & logistics requirements](../specific
 | 1.15.0 | 2026-11-11 | F-STR-007 progress: the supply vessel and flown convoy escorts (app 0.9.2) |
 | 1.18.0 | 2026-11-11 | F-STR-001, F-STR-002, F-STR-003, F-STR-005, F-STR-006 and F-STR-008 progress (app 0.16.1 – 0.16.12: auto-resolve, the economy and research gaps, training, construction strikes) |
 | 1.21.0 | 2026-11-20 | F-STR-002 and F-STR-005 progress (app 0.19.0: storage everywhere, the base lifecycle, best-available templates, placement conditions) |
+| 1.22.0 | 2026-11-20 | F-STR-006 and F-STR-008 implemented, F-STR-007 progress (app 0.20.0: the survey craft and battle, suitability in the report; construction stages on the map and in battle; cargo capacity) |

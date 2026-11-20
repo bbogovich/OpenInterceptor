@@ -1,7 +1,7 @@
 ---
-spec_version: 1.18.0
+spec_version: 1.22.0
 status: current
-updated: 2026-11-11
+updated: 2026-11-20
 ---
 
 # Testbed & tools requirements
@@ -170,7 +170,7 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 *Rationale:* Stage 5 exit.
 
 - Implements: [F-TST-003](../../definition/testbed-tools.md#f-tst-003-headless-runs), [F-CPN-006](../../definition/campaigns/features.md#f-cpn-006-story-rivals-and-relations)
-- Status: planned — partly met (app 0.8.0, main `c64d178`: `--strategy-soak <days>`; app 0.10.3, main `76bda5c`: the default campaign's year-long consistency soak)
+- Status: planned — partly met (app 0.8.0, main `c64d178`: `--strategy-soak <days>`; app 0.10.3, main `76bda5c`: the default campaign's year-long consistency soak; app 0.20.0, main `9064f59`: the logistics soak, #47)
 - Verified by: `campaign::tests::the_default_campaign_runs_six_months`, `the_default_campaign_runs_a_year_with_its_story_and_stays_consistent`; MT-4-23, MT-5-10
 - See: [Stage 5](../../implementation/plan/stage-5-campaign.md), [Strategy layer › Trying a campaign out](../../modding/strategy.md#trying-a-campaign-out)
 
@@ -180,8 +180,11 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 !!! note "As built (app 0.10.1 – 0.10.3)"
     `the_default_campaign_runs_a_year_with_its_story_and_stays_consistent` plays the default campaign for a year a month at a time (`campaign::autoplay_from`; ambushed convoys fight through, each choice's first option is taken, offered missions alternate two wins and a loss) and after each month checks **no orphan references** (every craft, pilot, base, module, topic, contact, plan and facility index in range), finite money and score, and **monotonic arc progress**; at the end the serial has moved past its sixth chapter and the Eclipse Engine is under way, and every end condition evaluates. `--strategy-soak` also prints the last monthly report and the story (arcs, plans, aggression, ending; app 0.10.1 – 0.10.2).
 
+!!! note "As built (app 0.19.0 – 0.20.0): storage and the logistics soak"
+    Since app 0.19.0 `--strategy-soak` plays day by day and checks every store against its capacity each day (*storage: every store within its capacity*; the year-long test asserts it too). Since app 0.20.0 (#47) the automatic player also runs the **supply chain** once a day (`campaign::logistics::autoplay_day`: a survey ship out to the nearest unsurveyed system, one facility of each type — two mines — built in supply-chain order where placement allows, an idle research station set on a station topic, one hull built from components kept on order), and the running totals of the chain (`LogisticsStats`: convoys, goods shipped and delivered, ambushes, vessels lost, surveys sent, attacked and lost) are kept and saved; `--strategy-soak` prints them as a *logistics:* line. The default campaign, 180 days at `9064f59`: 3 facilities, 26 convoys, 11 ambushed, 134 goods shipped and 108 delivered, every store within its capacity. The automatic player clears `Campaign::notices` daily (on-screen only, never saved).
+
 !!! question "Open"
-    Not built: a money-accounting check (money is only checked to be finite), a unit-tested soak of `interceptor` (its data is the player's, so it runs only by hand with `--strategy-soak`), auto-resolved battles from the forces involved (results are alternated), a soak of the logistics chain (the automatic player builds no facilities).
+    Not built: a money-accounting check (money is only checked to be finite), a unit-tested soak of `interceptor` (its data is the player's, so it runs only by hand with `--strategy-soak`), auto-resolved battles from the forces involved (results are alternated; Batch 4.3b). The logistics totals are printed, not yet checked as an invariant (for example shipped = delivered + lost + in flight).
 
 ### R-TST-012 Asset generators
 
@@ -209,3 +212,4 @@ An automated soak MUST run each campaign for a simulated year with battles auto-
 | 1.15.0 | 2026-11-11 | R-TST-011: As-built note — the default campaign's year-long consistency soak (orphan references, monotonic arcs; app 0.10.3) and `--strategy-soak` reporting the story; the Open note narrowed to money accounting, an `interceptor` unit soak, battles from forces and logistics. R-TST-010: the event debugger and start-at-chapter still not built. No requirement text changed |
 | 1.17.0 | 2026-11-11 | R-TST-006 As-built note: `--balance`, a static report of protection, sustained beam damage and kill times (app 0.15.0) |
 | 1.18.0 | 2026-11-11 | R-TST-009 implemented: the condition console (app 0.16.5, #20); R-TST-010 As-built note: the event and arc debugger (Ctrl+D, *Fire now*) and `--strategy --chapter N` (app 0.16.13, #47), the Open note narrowed (status stays partly met: no debug clock beyond the speeds, no jump from an undetected contact) |
+| 1.22.0 | 2026-11-20 | R-TST-011 As-built note: the storage check (app 0.19.0) and the logistics soak — the automatic player runs the supply chain, `LogisticsStats` saved, the *logistics:* line (app 0.20.0, #47); the Open note narrowed to money accounting, an `interceptor` unit soak and battles from forces (status stays partly met). No requirement text changed |

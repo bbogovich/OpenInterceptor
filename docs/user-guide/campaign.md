@@ -75,7 +75,9 @@ Five parts (a mod may move them: [Screen layouts](../modding/screens.md)):
 - **Map** (left). Star systems (hidden ones appear when your sensors reach them), lanes, your
   bases (squares) with their sensor ranges, enemy contacts once detected (red, with their way
   ahead), and your craft in flight. With a supply chain also your **facilities** (a diamond beside
-  the system, grey while building, orange when working), **supply convoys** (gold dots) and
+  the system, grey while building, orange when working; since app 0.20.0 a building one has a
+  row of small **stage pips** under it, one per construction stage, the stages reached filled),
+  **supply convoys** (gold dots) and
   **survey ships** (sky-blue rings). A legend runs along the bottom.
   - **Wheel**: zoom in and out about the mouse pointer — the point under it stays put.
   - **Right or middle drag**: pan.
@@ -117,6 +119,7 @@ the screen with buttons; nothing else can be clicked until you answer.
 | **Interception** — your craft reached a contact | **Fly the battle**, **Auto-resolve** (app 0.16.12), **Break off** (Enter / Esc) |
 | **Convoy ambushed** | **Fly the escort**, **Let it fight** (Enter / Esc) |
 | **Construction under attack** — a facility being built is struck (app 0.16.4) | **Fly the defence**, **Let it be** (Enter / Esc) |
+| **Survey ship attacked** — a survey ship is under attack at its survey site (app 0.20.0) | **Fly the escort**, **Let it be** (Enter / Esc) |
 | **Save game** — the top bar's *Save* (app 0.16.14) | **Slot 1**, **Slot 2**, **Slot 3**, **Cancel** |
 | **A decision** — a story choice | One button per option (or the keys 1 – 5) |
 | **Mission offered** | **Fly it**, **Decline** (Enter / Esc) |
@@ -150,14 +153,14 @@ are the *Sell 1* and *Fit best* buttons.
 
 | List | Rows | Buttons on the selected row |
 |---|---|---|
-| **Bases** | Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: *Build a <type> at <system>* with its cost | *Select* (make it current); *Build* |
+| **Bases** | Each base: system, modules (and how many are building), what it researches. With a system selected that has no base: *Build a &lt;type&gt; at &lt;system&gt;* with its cost | *Select* (make it current); *Build* |
 | **Research** | What the current base researches; every topic that can be researched now, with progress and size; the topics known | *Research* |
 | **Build** | Modules the current base can build, with cost and build time; then its modules and their state (building, days left / working / since app 0.19.0 *wrecked (repair &lt;cost&gt;)*); with more than one base, *&lt;base&gt;: the whole base*; *Store: n of m used* (a base type with a store limit) and *Quarters: room for n pilots* (app 0.16.10) | *Build*; on a module **Dismantle** (half its cost back; a wreck brings nothing); on a wreck **Repair** (half its cost and build time, app 0.19.0); on the whole-base row **Dismantle base** (app 0.19.0: half the hub's and modules' cost back, craft and stock moved to your other bases) |
 | **Market** | Items and hulls on sale, with prices and what you have | *Buy 1*, *Buy 5* (delivered to the current base after the delivery time), *Sell 1* (items, from the current base's store) |
 | **Factory** | The current base's production rate; what it can make, with the work it takes; its queue | *Make 1*, *Make 5*; on a queued job **Move up** (not the first) and **Cancel** (app 0.16.11) |
 | **Hangar** | Every craft with its base, pilot (and *away* when out) and fit (*standard fit* or the items fitted); then your pilots with rank, kills, missions, state and *training*; then recruits with their stats and the fee | On a craft: *Assign pilot* (the next free, ready pilot), *Fit best* (the best equipment in its base's store). On a pilot (app 0.16.7): **Train** / **Stop training**, **Dismiss**. On a recruit: *Hire* (refused when your quarters are full) |
 | **Contacts** | Detected enemy flights and where they head | *Intercept*: send the current base's craft that are at home and have a ready pilot |
-| **Supply** | With a system selected: *Survey* it, and *Build* each kind of facility there (with the cost, and why not when it is not allowed). Then your facilities and what they hold or how long they take to build; on a working research station, the topics it can research; the current base's store of components; how many orders, convoys and survey ships are under way ([Supply](#supply)) | *Survey*; *Build*; *Start* (research at a station) |
+| **Supply** | With a system selected: *Survey* it, and *Build* each kind of facility there (with the cost, and why not when it is not allowed). Then your facilities and what they hold or how long they take to build (since app 0.20.0 with the construction stage); on a working research station, the topics it can research; the current base's store of components; how many orders, convoys and survey ships are under way ([Supply](#supply)) | *Survey*; *Build*; *Start* (research at a station) |
 | **Archive** | The rival's plans you know of, with how far each is built; every faction's stance and standing with you; the rival's aggression and the battles you have won; the encyclopaedia entries unlocked so far (app 0.10.0) | — |
 | **Reports** | Your funds, score (and this month's), bases, craft and living pilots; then every monthly report, newest first, with its rating (app 0.16.8) | — |
 | **Messages** | The log, newest first, with dates | — |
@@ -215,11 +218,12 @@ automatic government **supply convoys** along the lanes. You do not move the con
 decide where to survey and what to build.
 
 1. **Survey.** Click a system on the map and press **Survey** in the info panel (or open the
-   Supply list and choose *Survey <system> from <base>*). The system must be within the current base's radar range. The survey ship flies
+   Supply list and choose *Survey &lt;system&gt; from &lt;base&gt;*). The system must be within the current base's radar range. The survey ship flies
    there (a sky-blue ring); when it arrives a message lists the deposits it found, with their
    rates a day and how much is in reserve (or *unlimited*), the system's features and any
-   research site (reserves and features since app 0.16.2). A survey ship may be attacked on the way: it fights off
-   the attack or is lost (then survey again).
+   research site (reserves and features since app 0.16.2), and since app 0.20.0 which kinds of
+   facility the system suits (*suits: Mining facility, Manufacturing center*). A survey ship may
+   be attacked at the system: see [below](#survey-ship-attacked).
 2. **Build.** With a system selected, the info panel offers each kind of facility that may be
    built there as a button with its cost, and the Supply list offers every kind:
    - a **mining facility** needs a surveyed system with deposits;
@@ -227,7 +231,9 @@ decide where to survey and what to build.
    - a **research station** needs a surveyed system that is a research site.
 
    The row says why when it cannot be built. A facility takes days to build (a grey diamond on
-   the map) and a message says when it is complete.
+   the map) and a message says when it is complete. While it builds it goes through three
+   **construction stages** — about a quarter, 60 % and 90 % built to look at — shown by the pips
+   under its diamond and on the Supply list (*building, stage 2 of 3, 6.5 days*; app 0.20.0).
 3. **Make.** Queue a hull on the Factory list as usual. Its row waits until the components have
    arrived; the Supply list shows the base's store and the orders and convoys under way.
 4. **Research at a station.** A finished research station lists the station-only topics of
@@ -261,6 +267,25 @@ The clock stops with **Construction under attack**:
   strike is beaten off; lose, and the site is destroyed.
 - **Let it be** — the strike sets the work back by a quarter of its build time. This is also what
   happens when no craft is ready.
+
+Since app 0.20.0 the defence shows the facility that was actually struck, in the stage it has
+reached.
+
+### Survey ship attacked
+
+*App 0.20.0.* A survey ship may be attacked at the system it went to survey (a 25 % chance in the
+default campaign). It stops there, and the clock stops with **Survey ship attacked** — *The
+survey ship at &lt;system&gt; is under attack. Fly its escort, or let it try to get away alone.*:
+
+- **Fly the escort** — fly the *Convoy ambush* battle with the first ready craft, but the convoy
+  is **the survey ship alone**: a light hull with a sensor dish and two sample containers,
+  making for its jump point. Grappler tugs try to tear the containers off. If the ship jumps out
+  with a container aboard (or the battle ends in a draw), it got away and its report comes in;
+  if the battle is lost, the ship is lost. Leaving the battle early is the same as *Let it be*.
+- **Let it be** — the ship tries to get away alone: in the default campaign it is lost half the
+  time. This is also what happens when no craft is ready.
+
+A lost survey ship leaves *Survey ship attacked and lost at &lt;system&gt;*; survey again.
 
 ## The story
 

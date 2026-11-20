@@ -615,7 +615,8 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
 
    A stance change that a `relation(…)` outcome causes is announced as soon as the map is back,
    and stops the clock (app 0.16.2). A flown convoy escort or construction defence applies its
-   outcome's actions too (app 0.16.3, 0.16.4).
+   outcome's actions too (app 0.16.3, 0.16.4), and so does a flown survey-ship battle unless it
+   was left early (app 0.20.0).
    The leader is credited the kills and experience (kills + 1); every pilot in the party a
    mission. A `killed` result loses the craft, and its pilot ejects injured (`survive`) or dies.
    `win` and `draw` remove the contact; `lose` and `retreat` leave it flying. Leaving a campaign
@@ -678,7 +679,7 @@ An input or output that is neither a resource nor a component is a load error.
 | `storage` | number | 500 | The most goods its store holds. Mining: extraction stops when it is full. Since app 0.19.0 manufacturing centers and research stations keep it too: they order only what fits, and a recipe starts only when its output fits ([Storage](#storage)). |
 | `lines` | number | 1 | Manufacturing: recipes running at once. |
 | `research_rate` | number | 0 | Research: work units an hour on its project. |
-| `hub` | id | none | The battle object at the facility, with its construction-stage looks (read; not yet used — R-STR-022). |
+| `hub` | ship or object class | none | The battle object at the facility. Since app 0.20.0 it **stands in** for the site in its construction-strike defence, in the site's current [construction stage](#construction-stages-and-the-stand-in) (its model set should have those states). Without it, the defence mission's own object is shown, still in the right stage. A class that does not exist is a load error. |
 | `placement` | condition | its role's rule | Where it may be built: a condition over the candidate `system` (app 0.19.0). Without it, its role's default rule. |
 
 **Where a facility may be built**: at most one facility of each type per system, where its
@@ -711,12 +712,17 @@ The supply settings (a global section).
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `vessels` | number | 3 | Vessels in each supply convoy; each carries an even share of the cargo. |
+| `cargo_capacity` | number | none (unlimited) | Goods **one vessel** carries (app 0.20.0, R-STR-026). A convoy carries `vessels` × `cargo_capacity`; a filled order larger than that leaves as **several convoys**, each with its own ambush roll. Without it (or 0) one convoy carries any order, as before app 0.20.0. Amounts of every resource and component count alike. |
 | `ambush_chance` | fraction | 30 % | Chance, rolled when a convoy launches, that it will be attacked on its way; the point along its route is rolled then too. |
 | `ambush_loss` | fraction | 35 % | Chance that each vessel of an ambushed convoy is lost when the ambush is auto-resolved (no `ambush_mission`, or the player lets it fight through). |
-| `survey_attack_chance` | fraction | 25 % | Chance, rolled when a survey ship launches, that it is attacked on the way. |
+| `survey_attack_chance` | fraction | 25 % | Chance, rolled when a survey ship launches, that it is attacked — since app 0.20.0 **at the survey site**, on arrival ([Survey ships and their battle](#survey-ships-and-their-battle)). |
+| `survey_mission` | mission id | none | The battle an attacked survey ship fights at the site (app 0.20.0). With it, the ship **waits** there and the clock stops: the player flies it or lets it be auto-resolved. Without it every attack is auto-resolved on arrival. The mission needs a protected role (`protect: true`) for the ship to [stand in for](#the-stand-in-rule); an unknown mission, or one without a protected role, is a load error. The default campaign sets `convoy_ambush`. |
+| `survey_class` | ship or object class | none | The survey ship's class in that battle (app 0.20.0): **one** of it replaces the mission's first protected role. Without it the role keeps its own class and only its count becomes one. An unknown class is a load error. The default campaign sets `survey_ship`. |
+| `survey_loss` | fraction | 50 % | Chance that an attacked survey ship is lost when its battle is **not flown** — auto-resolved, let be, or left early (app 0.20.0; before, a fixed 50 % in the code). |
 | `survey_speed` | number | 900 | Survey ship speed, map units an hour. |
 | `convoy_speed` | number | 500 | Convoy speed, map units an hour. |
-| `construction_strikes` | `{from, max, chance, mission, setback}` | none | Enemy strikes on facilities under construction ([below](#construction-strikes), app 0.16.4). Without it there are none. |
+| `construction_strikes` | `{from, max, chance, mission, setback}` | none | Enemy strikes on facilities under construction ([below](#construction-strikes), app 0.16.4). Without it there are none. Its `mission` needs a protected role too (a load error since app 0.20.0). |
+| `construction_stages` | mapping model-set state: fraction | `{build_25: 0%, build_60: 50%, build_90: 80%}` | The construction stages (app 0.20.0, R-STR-022): each **state of the hub's model set** with the progress it starts at. Listed in any order; sorted by where they start. A site shows the last stage it has reached, on the map and in its defence battle; when finished, the intact model. A value that is not a percentage is a load error. See [Construction stages and the stand-in](#construction-stages-and-the-stand-in). |
 | `ambush_mission` | mission id | none | The battle flown when the player escorts an ambushed convoy (app 0.9.2). With it, an ambushed convoy **waits** where it is and the clock stops: the player flies its escort, and the share of the mission's [`cargo:`](missions.md#the-mission) role still aboard at the end is delivered — or lets it fight through (auto-resolved as below). Without it every ambush is auto-resolved. An unknown mission is a load error. The default campaign sets `convoy_ambush`. |
 
 ### How the chain runs
@@ -738,16 +744,23 @@ Every hour, after the rest of the hour step ([Architecture › Campaign](../impl
    is used up, and from then on the station adds `research_rate` an hour to the topic.
 5. **Filled orders leave as convoys.** When a facility's store holds an order's amount, it is
    taken out and a convoy of `vessels` vessels leaves along the lanes for the order's base or
-   facility. The ambush roll and point are decided now.
+   facility. The ambush roll and point are decided now. With `cargo_capacity` (app 0.20.0) an
+   order larger than `vessels` × `cargo_capacity` leaves as several full convoys and one with
+   the rest, each rolling its own ambush: with 3 vessels of 40, an order of 100 is one convoy
+   and an order of 300 is three, carrying 120, 120 and 60.
 6. **Convoys travel** at `convoy_speed`. At the ambush point each vessel may be lost
    (`ambush_loss`) and a message says how many; on arrival the surviving share of the cargo is
    delivered. A short delivery is simply wanted again: the next hour's demand orders the rest.
 7. **Hull jobs** whose components are in the base's store start, using them up; the factory
    then works on them as usual.
-8. **Survey ships** arrive. One that was attacked is lost half the time; otherwise the system is
-   **surveyed** and a message lists its deposits (with rates a day and the reserve, or
-   *unlimited*), its features and the research sites it meets (reserves and features since app
-   0.16.2).
+8. **Survey ships** arrive. One that was attacked **waits at the site** for its battle when there
+   is a `survey_mission`, or is lost with `survey_loss` at once when there is none
+   ([below](#survey-ships-and-their-battle)); a waiting ship stays put until the player decides.
+   Otherwise the system is **surveyed** and a message lists its deposits (with rates a day and
+   the reserve, or *unlimited*), its features, the research sites it meets (reserves and
+   features since app 0.16.2) and, since app 0.20.0, **which facility types it suits** — those
+   whose [`placement:`](#where-a-base-or-facility-may-be-built) holds there now that it is
+   surveyed.
 9. **Construction strikes** (app 0.16.4, with `construction_strikes`): see below.
 
 An order is placed only when a facility exists that can fill it: a base without a reachable
@@ -781,6 +794,99 @@ Each hour every site past `from` whose system has had fewer than `max` strikes r
   `setback` × its build time.
 
 Every strike counts towards `construction_attacks(<system>)` (saved).
+
+### Construction stages and the stand-in
+
+*App 0.20.0, R-STR-022.* A facility under construction passes through **stages**, each a
+**state** of its hub's model set (the meshes and debris of [Looks](looks.md) — the default
+facilities have `build_25`, `build_60` and `build_90`). `logistics.construction_stages` names
+them with the progress each starts at:
+
+```yaml
+logistics:
+  construction_stages: {build_25: 0%, build_60: 50%, build_90: 80%}   # the engine default too
+```
+
+Progress is `1 − (time left / the type's time)`, so a strike's `setback` can move a site back a
+stage. A site is in the **last stage whose start it has reached** (below the first start,
+the first stage). A pack may name its own states and any number of them —
+`{frame: 0%, top: 70%}` gives two stages — but every facility type's hub then needs those states
+in its model set. Leave the key out for the default three.
+
+Where the stage shows:
+
+- **On the strategy map** a facility under construction (a grey diamond) has one small **pip**
+  per stage underneath, the stages it has reached filled in orange; a finished facility (an
+  orange diamond) has none.
+- **On the Supply list** a building facility reads *building, stage 2 of 3, 6.5 days*.
+- **In the construction-strike defence**: the struck facility **stands in** for the mission's
+  first protected role — as its type's `hub` class, in its current stage. The default
+  `construction_defence` therefore shows the mining facility, manufacturing center or research
+  station that was actually struck, at 25, 60 or 90 % built, instead of always its own research
+  station at 60 % (before app 0.20.0). A type without `hub` keeps the mission's own class, in
+  the site's stage.
+
+#### The stand-in rule
+
+Two campaign battles put a strategy-layer object into a ready-made mission: a **struck
+construction site** (`construction_strikes.mission`) and an **attacked survey ship**
+(`survey_mission`). The object stands in for the mission's **first protected role** — the first
+role, in the mission file's order, with `protect: true`:
+
+| What stands in | Class | Model-set state | Count |
+|---|---|---|---|
+| A struck construction site | the facility type's `hub` (else the role's own) | its construction stage | the role's own |
+| An attacked survey ship | `survey_class` (else the role's own) | the role's own | **one** |
+
+The rest of the mission is unchanged: the role keeps its id, so objectives and conditions that
+name it (`destroyed(site)`, `cargo(clippers)`) now mean the stand-in; later protected roles keep
+their own classes. The change is made on a **copy** of the mission for that battle only — the
+same mission flown from the launcher or the simulator, or the next campaign battle, is the
+original. A mission named by either key must have a protected role: `--check` reports
+*logistics.survey_mission: mission 'x' has no protected role (protect: true) to stand in for*
+(and the same for `logistics.construction_strikes.mission`). When writing such a mission, make
+the role the stand-in replaces the first `protect: true` role and keep its objectives about that
+role.
+
+### Survey ships and their battle
+
+*App 0.20.0, R-STR-021 (decision D3).* A survey ship is rolled for attack at launch
+(`survey_attack_chance`); the attack happens **at the survey site** when it arrives.
+
+- **With `survey_mission`** the ship stops at the site (the message *Survey ship under attack
+  at &lt;system&gt;*) and the clock stops with the **Survey ship attacked** prompt:
+  - **Fly the escort** — the first ready craft flies `survey_mission`, with one `survey_class`
+    standing in for the mission's first protected role ([the stand-in rule](#the-stand-in-rule)).
+    A **loss** loses the survey ship; leaving early (a **retreat**) settles it as if not flown;
+    any other result — a win, a draw, or even the player's craft destroyed — means it got away,
+    and it reports. The mission's outcome actions apply for every result but a retreat.
+  - **Let it be** (or no ready craft) — the ship is lost with `survey_loss`, else it reports.
+- **Without `survey_mission`** the attack is settled on arrival: lost with `survey_loss`, else
+  it reports.
+
+A ship that got away reports as usual with *(after fighting off an attack)*; a lost one leaves
+the message *Survey ship attacked and lost at &lt;system&gt;*, and the system stays unsurveyed
+(survey again). A ship waiting at its site is saved (`held`).
+
+**The report** (every survey) ends with the facility types the system now suits:
+
+```text
+Survey of Ajax: Cosmium 6/day (1800 in reserve), Iron 20/day (unlimited); features: none; research site: none; suits: Mining facility, Manufacturing center
+```
+
+(The default campaign's Ajax, from its own data.) A type is listed when its
+`placement:` condition — or its role's default rule — holds for the system at that moment, so a
+rule that depends on other things (money, bases, lanes) can change later; the Supply list's
+*Build* rows always give the current answer.
+
+The default campaign's survey ship is the `survey_ship` class (`rules/logistics.yaml`, text keys
+`ship.survey_ship.name` and `.desc`, model set and debris in `rules/looks.yaml`, the model
+generated by `tools/default_assets/models.py`): a light Guard hull with a sensor dish and **two
+sample containers** (`supply_pod` modules), behaviour `supply_run`. Its `survey_mission` is the
+[convoy ambush](missions.md#the-convoy-ambush-app-092): the survey ship replaces the two
+clippers (`clippers`, the first protected role), so the grapplers go for its two containers and
+it wins by jumping out with cargo aboard. The mission's optional objective *both clippers*
+(`count(clippers) == 2`) cannot be met by one ship.
 
 ### The player's orders
 
@@ -817,17 +923,21 @@ facility types (mining facility, manufacturing center, research station), two re
 (`nebula_lab`, `pulsar_array`), deposits in every one of the Reach's six systems and two features, the
 components of all four hulls, and two station-only topics (`theremin_shielding`,
 `pulsar_navigation`). Every hull of the default campaign is therefore built from components:
-a Guard player who wants more craft must survey, mine and manufacture first.
+a Guard player who wants more craft must survey, mine and manufacture first. Since app 0.20.0:
+`cargo_capacity: 40` (a convoy of three carries 120), the survey battle (`survey_mission:
+convoy_ambush`, `survey_class: survey_ship`, `survey_loss: 50%`) and the default
+construction stages spelled out; every facility type names its own hub (`mining_facility`,
+`manufacturing_center`, `research_station`).
 
 ### Not built yet
 
 Convoy ambushes can be **flown** since app 0.9.2 (`ambush_mission`; the battle is described in
-[Missions › The convoy ambush](missions.md#the-convoy-ambush-app-092)), and construction sites are
-struck since app 0.16.4 ([above](#construction-strikes)). Not built: facility fighter pools and escorts
-(R-STR-025), construction-stage looks on the map and in battle (R-STR-022: the
-`construction_defence` mission shows its own research station at 60 %, whatever was struck), captured cargo and enemy supply depots (R-STR-020),
-third-party convoys (R-STR-027), supply-vessel cargo capacity (R-STR-026) and facility
-upgrades. `placement:` conditions and storage at every facility are built since app 0.19.0.
+[Missions › The convoy ambush](missions.md#the-convoy-ambush-app-092)), construction sites are
+struck since app 0.16.4 ([above](#construction-strikes)), and since app 0.20.0 cargo capacity,
+construction stages and the survey battle are built. Not built: facility fighter pools and
+escorts (R-STR-025), captured cargo and enemy supply depots (R-STR-020), third-party convoys
+(R-STR-027) and facility upgrades. `placement:` conditions and storage at every facility are
+built since app 0.19.0.
 
 ## The `interceptor` campaign from the player's data
 
@@ -880,7 +990,16 @@ the developer's judgement.
   room (buying while it has more than 3 000 000, making it while the queue is idle), the soak
   plays day by day, and a line *storage: every store within its capacity* — or *storage: OVER
   CAPACITY first on day n: &lt;place&gt;: &lt;used&gt; of &lt;capacity&gt;* — checks every base's and facility's
-  store each day (`Campaign::over_capacity`).
+  store each day (`Campaign::over_capacity`). Since app 0.20.0, in a campaign with logistics,
+  the automatic player also runs the **supply chain** once a day (`logistics::autoplay_day`):
+  it keeps a survey ship out to the nearest unsurveyed system it can reach, builds one facility
+  of each type (two mines) in supply-chain order — manufacturing, then mining, then research —
+  where placement allows and while it keeps 500 000 in hand, sets an idle research station on a
+  station-only topic, and keeps one hull (the cheapest built from components) on order so the
+  chain has demand. Attacked survey ships are let be. A **logistics** line follows:
+  *logistics: 3 facilities (0 building), 3 systems surveyed; surveys 3 sent, 0 attacked, 0
+  lost; convoys 26 (11 ambushed, 11 vessels lost); goods shipped 134, delivered 108; 2 orders
+  open* — the running totals are part of the save (`stats` in its `logistics:` block).
 - On the strategy screen the testbed has the original's own **cheats** (app 0.8.1): Ctrl+M
   *payday* (a million), Ctrl+K *knowitall* (every topic known), Ctrl+B *quickbase* (every base
   and module under construction finished — not facilities) and Ctrl+J *jump to battle* from
@@ -940,7 +1059,9 @@ the developer's judgement.
   or more: +150 000 and praise), *Satisfactory* (0 or more), *Poor* (−300 or more: −50 000) or
   *Unacceptable* (−150 000 and a funding-cut notice).
 - **Logistics**: construction strikes at 12 % a day from half-built, three at most per system,
-  flown as `construction_defence`, a quarter of the build time set back when let be (app 0.16.4).
+  flown as `construction_defence`, a quarter of the build time set back when let be (app 0.16.4),
+  the struck facility shown in its construction stage (app 0.20.0); convoys of three vessels of
+  40 each; an attacked survey ship flies the convoy ambush as the `survey_ship` (app 0.20.0).
 
 The unit test `campaign::tests::the_default_campaign_runs_six_months` plays it for six months
 with an automatic player: it stays solvent, researches at least four topics, fights raids and
@@ -948,8 +1069,11 @@ round-trips through a save; the year-long test also asserts that no store is eve
 capacity (app 0.19.0). `--strategy-soak 180` with the same player (app 0.8.0) reached 12 of
 the 14 topics then; at app 0.19.0 (main `c28fc2c`) it reaches **14 of the 16** (the twelve
 topics plus `force_fields` and `saucer_alloys`) and fights 47 battles, with every store within
-its capacity — the automatic player builds no facilities, so the two station-only topics stay
-unknown.
+its capacity — the automatic player built no facilities then, so the two station-only topics
+stayed unknown. At app 0.20.0 (main `9064f59`) the automatic player also runs the supply chain:
+**12 of 16** topics and 39 battles (money now goes into facilities and hulls built from
+components), 3 facilities, 3 systems surveyed, 26 convoys (11 ambushed, 11 vessels lost), 134
+goods shipped and 108 delivered, every store within its capacity.
 
 ## Errors
 
@@ -971,6 +1095,10 @@ unknown.
 | `maps: system x: unknown resource 'y'` | A deposit of an undefined resource. |
 | `hulls.x.components: unknown component 'y'` | A hull built from an undefined component. |
 | `research.x.lab: unknown facility type 'y'` / `research.x.site: unknown research site 'y'` | A station-only topic naming something not defined. |
+| `facility_types.x.hub: no ship or object class 'y'` / `logistics.survey_class: no ship or object class 'y'` | A hub or survey class that is not a ship or object class (app 0.20.0). |
+| `logistics.survey_mission: unknown mission 'y'` / `logistics.construction_strikes.mission: unknown mission 'y'` | A survey or defence mission that does not exist (app 0.20.0). |
+| `logistics.survey_mission: mission 'y' has no protected role (protect: true) to stand in for` (and `construction_strikes.mission`) | The mission has no role for the survey ship or the struck site to [stand in for](#the-stand-in-rule) (app 0.20.0). |
+| `logistics.construction_stages.x: not a percentage` | A stage's start that is not a fraction (app 0.20.0). |
 | `evaluations[0].when: …` / `evaluations[0].do: …` | A rating's condition or action that does not parse or names something not defined (app 0.16.8). |
 | `research.x.requires: unknown name 'y'` | Also for a misspelt topic in `requires_any` (it becomes part of `requires`). |
 | `base_modules.x.on_destroyed: 'y' is not craft, pilots or stock` | A wrong `on_destroyed` entry (app 0.19.0). |
@@ -981,15 +1109,16 @@ unknown.
 | `save: this save has logistics but the loaded campaign has none` | Loading a save with facilities into a campaign whose logistics was removed. |
 | `save: … does not match the loaded rules (was a mod changed?)` | Loading a save whose research, modules, items, incomes or raids no longer fit the rules. |
 
-## Limits in app 0.19.0
+## Limits in app 0.20.0
 
 - No endurance or stranding on the map; no fitting rules (`fits`), power draw or stock designs —
   fitting is *best available* only, and slots of kinds other than `beam`, `missile` and (since app
   0.15.0) `shield` and `armor` are filled but have no effect in battle.
 - `cargo_lost` and `cargo_captured` are only recorded: captured cargo goes to no enemy depot.
   `lose(<x>)` acts only on a facility type; a base type or anything else is logged.
-- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, construction stages, depots, third-party convoys, cargo capacity and facility
-  upgrades are not built.
+- **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, depots, third-party
+  convoys and facility upgrades are not built. Construction stages are one list for every
+  facility type (`logistics.construction_stages`), not a list per type.
 - No designs, bravery, stat effects in battle, or the 3D base view yet. Auto-resolve counts hull classes only (not fitted items or pilots) and does not damage
   the player's craft (DEV-057).
 - A store limit applies only at a base type with hub `storage`. The default campaign's Guard base

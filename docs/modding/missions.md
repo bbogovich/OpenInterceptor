@@ -89,7 +89,7 @@ missions:
 | `faction` | id | the class's | Side. |
 | `ai` | `enemy`, `wingman`, `target`, `idle` | `enemy` | How it is flown (wingmen follow the player). |
 | `behaviour` | id | the class's | A behaviour to fly instead of the class's. |
-| `protect` | bool | `false` | An objective the player must keep alive (marked on the HUD, skipped by nearest-enemy targeting). |
+| `protect` | bool | `false` | An objective the player must keep alive (marked on the HUD, skipped by nearest-enemy targeting). The **first** protected role is also where a campaign object stands in when the strategy layer flies this mission for a struck construction site or an attacked survey ship (app 0.20.0; [Strategy layer › The stand-in rule](strategy.md#the-stand-in-rule)). |
 | `state` | id | none | Model-set state, e.g. a construction stage (`build_60`): no modules or point defence. |
 | `hull` | fraction | 100 % | Starting hull. |
 | `destroyed_systems` | ids | none | Systems that start destroyed. |
@@ -305,6 +305,10 @@ example of cargo, tugs, escorts and repeating waves:
   (`timer: {after: 15min, then: draw}`), and what is still aboard is delivered. Optional
   objectives: `all_cargo` and `both_clippers`.
 - **Chatter** marks the grapplers' arrival, a quarter of the cargo lost and a minute to the jump.
+- **As the survey battle** (app 0.20.0): the default campaign's `logistics.survey_mission` is
+  this mission too. One `survey_ship` — a light hull with two sample containers — stands in for
+  the `clippers` role (its first protected role), so everything above applies to that one ship
+  and its two containers ([Strategy layer › Survey ships and their battle](strategy.md#survey-ships-and-their-battle)).
 
 ## Common errors
 

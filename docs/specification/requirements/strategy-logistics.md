@@ -1,5 +1,5 @@
 ---
-spec_version: 1.21.0
+spec_version: 1.22.0
 status: current
 updated: 2026-11-20
 ---
@@ -32,12 +32,12 @@ Features: [Strategy & logistics](../../definition/strategy-logistics.md). How to
 | [R-STR-018 Supply convoy attack position](#r-str-018-supply-convoy-attack-position) | Implemented |
 | [R-STR-019 Logistics mission generation](#r-str-019-logistics-mission-generation) | Implemented |
 | [R-STR-020 Cargo losses and depots](#r-str-020-cargo-losses-and-depots) | Planned (partly met) |
-| [R-STR-021 Survey ships](#r-str-021-survey-ships) | Planned (partly met) |
-| [R-STR-022 Construction stages](#r-str-022-construction-stages) | Planned |
+| [R-STR-021 Survey ships](#r-str-021-survey-ships) | Implemented |
+| [R-STR-022 Construction stages](#r-str-022-construction-stages) | Implemented (DEV-063) |
 | [R-STR-023 Construction attacks](#r-str-023-construction-attacks) | Implemented |
 | [R-STR-024 Research stations and sites](#r-str-024-research-stations-and-sites) | Implemented |
 | [R-STR-025 Facility fighter pools](#r-str-025-facility-fighter-pools) | Planned |
-| [R-STR-026 Supply cargo capacity](#r-str-026-supply-cargo-capacity) | Planned |
+| [R-STR-026 Supply cargo capacity](#r-str-026-supply-cargo-capacity) | Implemented |
 | [R-STR-027 Third-party convoys](#r-str-027-third-party-convoys) | Planned |
 
 ## Requirements
@@ -401,7 +401,10 @@ A `convoy_ambush` mission MUST be generated when an attacked convoy reaches its 
     With `logistics.ambush_mission` (the default campaign: `convoy_ambush`) an attacked convoy that reaches its attack position **waits** and the clock stops: the player flies its escort — the first ready craft with a pilot, from any base — or lets it fight through (Esc, or no ready craft: auto-resolved as above). After the battle `Campaign::convoy_result` delivers the share of the mission's `cargo:` role still aboard: a win or draw delivers that share, a loss nothing, a retreat falls back to the auto-resolve. Without `ambush_mission` every ambush is auto-resolved, as in app 0.9.0.
 
 !!! note "As built (app 0.16.3 – 0.16.4)"
-    A construction strike (R-STR-023) stops the clock with a prompt: fly `construction_defence` (`logistics.construction_strikes.mission`) or let it be; with no ready craft or no mission it is auto-resolved as a setback. A flown convoy escort applies its outcome's actions too (0.16.3). The struck facility is represented by the mission's own site (a research station at 60 %), not by its own type and stage (R-STR-022).
+    A construction strike (R-STR-023) stops the clock with a prompt: fly `construction_defence` (`logistics.construction_strikes.mission`) or let it be; with no ready craft or no mission it is auto-resolved as a setback. A flown convoy escort applies its outcome's actions too (0.16.3). The struck facility is represented by the mission's own site (a research station at 60 %), not by its own type and stage (R-STR-022) — closed in app 0.20.0, below.
+
+!!! note "As built (app 0.20.0, main `9064f59`): stand-ins and the survey battle"
+    The struck facility now **stands in** for the defence mission's first protected role (`protect: true`) as its type's `hub` class in its construction stage (R-STR-022), and an attacked survey ship generates its own battle: `logistics.survey_mission` (the default campaign: `convoy_ambush`) with one `logistics.survey_class` standing in for the first protected role, flown or auto-resolved with `logistics.survey_loss` (R-STR-021). The substitution is made on a copy of the mission (`MissionDef::with_stand_in`); a stand-in mission without a protected role is a load error.
 
 ### R-STR-020 Cargo losses and depots
 
@@ -427,15 +430,15 @@ Surveys MUST be flown by survey ships, a mission profile and craft distinct from
 *Rationale:* Logistics decisions (2026-11-11, revised): survey and supply are different.
 
 - Implements: [F-STR-006](../../definition/strategy-logistics.md#f-str-006-surveys)
-- Status: planned — partly met (app 0.9.0, main `ff9d8fc`)
-- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand` (survey first; the report names the deposit); MT-4-13, MT-4-39
+- Status: implemented (app 0.9.0, main `ff9d8fc`; app 0.20.0, main `9064f59`, #36, decision D3)
+- Verified by: `campaign::logistics::tests::survey_build_mine_make_and_deliver_on_demand` (survey first; the report names the deposit), `an_attacked_survey_ship_waits_at_the_site_then_reports_or_is_lost`, `without_a_survey_mission_an_attack_is_settled_at_once` (the report's *suits:*), `content::rules::tests::logistics_stand_ins_and_classes_are_checked`; MT-4-13, MT-4-39, MT-4-56
 - See: [Strategy layer › The player's orders](../../modding/strategy.md#the-players-orders)
 
 !!! note "As built (app 0.9.0)"
     `Campaign::survey(def, base, system)` launches a survey ship (separate from convoys) from a base to a system within that base's sensor range, not yet surveyed. At launch a roll against `logistics.survey_attack_chance` (default 25 %) marks it attacked. It flies straight at `logistics.survey_speed`; on arrival an attacked ship is lost half the time, else the system is surveyed and a notice lists its deposits with their daily rates and the research sites it meets. Suitability per facility type is the Supply tab's reason on each *Build* row (R-STR-010).
 
-!!! question "Open"
-    Since app 0.16.2 (#36) the report gives each deposit's reserve (or *unlimited*) and the system's features by name. The survey ship has no craft or battle model, and an attack is auto-resolved (lost on a fixed 50 % roll, not campaign data) instead of generating a mission.
+!!! note "As built (app 0.16.2 – 0.20.0)"
+    Since app 0.16.2 (#36) the report gives each deposit's reserve (or *unlimited*) and the system's features by name. Since app 0.20.0 (decision D3) it ends with **suits:** — the facility types whose `placement:` (or role default) holds for the system once surveyed — so suitability is part of the survey, as well as the Supply tab's reason on each *Build* row. The survey ship has a **craft**: `logistics.survey_class` (the default campaign's `survey_ship`, a light Guard hull with a sensor dish and two sample containers, distinct from the supply clipper). The attack roll is still made at launch; an attacked ship **waits at the survey site** (`Survey::held`, saved; `Event::Survey`) and fights `logistics.survey_mission` as one `survey_class` standing in for the mission's first protected role — flown by the player (`PendingBattle::Survey`; a loss loses it, a retreat counts as not flown, any other result and it reports) or let be, when it is lost with `logistics.survey_loss` (default 50 %, now campaign data). Without `survey_mission` the attack is settled on arrival with the same roll.
 
 ### R-STR-022 Construction stages
 
@@ -444,12 +447,12 @@ A facility under construction MUST be shown in its `build_25` state from 0 %, `b
 *Rationale:* Thresholds confirmed (2026-11-11).
 
 - Implements: [F-STR-008](../../definition/strategy-logistics.md#f-str-008-facilities-under-construction)
-- Status: planned
-- Verified by: Planned (the stage looks themselves are R-CMB-019, implemented).
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.20.0, main `9064f59`, #34), with deviation DEV-063 (the default starts)
+- Verified by: `campaign::logistics::tests::construction_stages_follow_progress_and_stand_in_for_the_struck_site`, `content::mission::tests::a_stand_in_replaces_the_first_protected_role_in_a_copy`, `content::rules::tests::logistics_stand_ins_and_classes_are_checked` (the stage looks themselves are R-CMB-019, implemented); MT-4-55
+- See: [Logistics](../design/logistics.md), [Strategy layer › Construction stages and the stand-in](../../modding/strategy.md#construction-stages-and-the-stand-in)
 
-!!! question "Open"
-    App 0.9.0 builds facilities over their `time` (grey on the map until finished) and reads `facility_types.<id>.hub`, but shows no construction stages and no battle at a facility.
+!!! note "As built (app 0.20.0)"
+    `logistics.construction_stages: {<state>: <start>}` lists the model-set states and the progress each starts at, sorted by start. A facility under construction is in the last stage it has reached (`LogisticsDef::stage_at`, `Campaign::construction_stage`, derived from `ready_at` so a strike's setback moves it back); finished, it is intact. **On the strategy map** the facility marker has one pip per stage, those reached filled, and the Supply list says *stage N of M*. **In battle** the struck facility stands in for the construction-defence mission's first protected role as its type's `hub` class in its stage (`Campaign::strike_stand_in`, `MissionDef::with_stand_in`). Built from the starts **0 / 50 / 80 %** by default (`build_25`, `build_60`, `build_90`), not the confirmed 0 / 60 / 90 %: DEV-063. A campaign that sets `construction_stages: {build_25: 0%, build_60: 60%, build_90: 90%}` meets the requirement's thresholds exactly. The strategy map has no 3D view yet, so "on the strategy map" is the marker's pips, not the stage meshes (those are seen in battle).
 
 ### R-STR-023 Construction attacks
 
@@ -497,12 +500,12 @@ A supply vessel's cargo capacity MUST be campaign data.
 *Rationale:* Balance belongs to the campaign.
 
 - Implements: [F-STR-007](../../definition/strategy-logistics.md#f-str-007-supply-convoys-worth-escorting)
-- Status: planned
-- Verified by: Planned.
-- See: [Logistics](../design/logistics.md)
+- Status: implemented (app 0.20.0, main `9064f59`, #37, decision D1)
+- Verified by: `campaign::logistics::tests::an_order_larger_than_a_convoy_leaves_as_several_convoys`
+- See: [Logistics](../design/logistics.md), [Strategy layer › `logistics`](../../modding/strategy.md#logistics_1)
 
-!!! question "Open"
-    The value is TBD, set by tech-tree balance. In app 0.9.0 a convoy carries a whole order, whatever its size.
+!!! note "As built (app 0.20.0)"
+    `logistics.cargo_capacity` is the goods one vessel carries (one number for every vessel; the campaign has one supply vessel type). A convoy carries `vessels × cargo_capacity`; a filled order larger than that leaves as several convoys, each with its own ambush roll. Absent (or 0): unlimited, a whole order per convoy as before. The default campaign sets 40 (120 a convoy of three); its value is a first balance guess, to be revisited with the tech-tree balance. Until app 0.20.0 a convoy carried a whole order, whatever its size.
 
 ### R-STR-027 Third-party convoys
 
@@ -527,3 +530,4 @@ Prospector convoys MUST fly expeditions (base → system under investigation →
 | 1.18.0 | 2026-11-11 | The issue-audit gaps as built (app 0.16.1 – 0.16.14, main `f82a6ab` … `de30c2a`): R-STR-009 implemented (evaluations and the Reports list); R-STR-019 implemented and R-STR-023 implemented (construction strikes, #19); As-built notes on R-STR-003 (auto-resolve), R-STR-004 (queue priorities, delivery losses, storage), R-STR-005 (capture, `requires_any`, hidden topics), R-STR-006 (`quarters`, `storage`, `defence`, dismantling), R-STR-007 (the default campaign's shields and armour), R-STR-008 (training, dismissal), R-STR-010 (new prompts, lists and buttons), R-STR-011 (pack versions compared, save slots), R-STR-019; R-STR-002, R-STR-020 and R-STR-021 Open notes narrowed |
 | 1.19.0 | 2026-11-12 | R-STR-010 Open note: separate screens are now specified by the new [Strategy interface](interface.md) area (R-UI-001 – R-UI-040); this screen becomes the testbed layout (R-UI-018). No requirement text changed |
 | 1.21.0 | 2026-11-20 | Batch 4.1 as built (app 0.19.0, main `c28fc2c`): R-STR-006 implemented (wrecks and `on_destroyed`, repair, dismantling a whole base, best-available templates, `placement:` conditions; the 3D base view left to R-STR-010 / R-UI-011) and R-STR-014 implemented (storage at every facility); R-STR-004 As-built note (storage on purchases, manufacture and deliveries; held deliveries) with only markets per seller open; Open notes closed; Verified-by lines gain the new unit tests and MT-4-50 – MT-4-54. No requirement wording changed |
+| 1.22.0 | 2026-11-20 | Batch 4.2 as built (app 0.20.0, main `9064f59`; decisions D1 and D3): R-STR-021 implemented (the report's suitability, the `survey_ship` craft, the survey battle at the site with `survey_mission`, `survey_class`, `survey_loss`), R-STR-022 implemented with DEV-063 (default starts 0 / 50 / 80 %; pips on the map marker; the struck facility standing in for the defence's first protected role) and R-STR-026 implemented (`cargo_capacity`, orders split into convoys); R-STR-019 As-built note (stand-ins). No requirement wording changed |

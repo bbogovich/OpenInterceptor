@@ -8,6 +8,27 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**At main `9064f59` (app 0.20.0, Batch 4.2)** six more, so **449** run on macOS by the gate's
+run: `campaign::logistics::tests::an_order_larger_than_a_convoy_leaves_as_several_convoys`
+(`cargo_capacity: 1` with four vessels: an order of 10 leaves as convoys of 4, 4 and 2, all
+arrive, and the totals count 3 convoys, 10 shipped and 10 delivered; without the key one convoy
+carries any order), `construction_stages_follow_progress_and_stand_in_for_the_struck_site` (the
+default stages and `stage_at` at 0, 49, 50 and 95 %; a ten-hour build is `build_25`, then
+`build_60` at 6 h, `build_90` at 9 h, with its type's `hub` as the stand-in class, and no stage
+once built; a pack's own stages listed out of order are sorted),
+`an_attacked_survey_ship_waits_at_the_site_then_reports_or_is_lost` (an attacked ship raises
+`Event::Survey` and waits unsurveyed; one `survey_class` stands in; the held ship and the totals
+round-trip through a save; flown and won it reports *after fighting off an attack* with
+*suits: mine*; not flown with `survey_loss: 100%` it is lost and the system stays unknown),
+`without_a_survey_mission_an_attack_is_settled_at_once` (no event; a 0 % loss reports at once,
+*suits: plant, station*), `content::mission::tests::a_stand_in_replaces_the_first_protected_role_in_a_copy`
+(the first protected role, not the first role; class, state and count replaced on a copy, later
+protected roles and the original untouched; fields left out kept; no protected role is an
+error), and `content::rules::tests::logistics_stand_ins_and_classes_are_checked` (a survey
+mission without a protected role, an unknown defence mission, an unknown `hub` and an unknown
+`survey_class` are each reported). Not unit-tested (manual MT-4-55, MT-4-56): the stage pips,
+the stand-in seen in battle, the survey prompt and battle.
+
 **At main `c28fc2c` (app 0.19.0, Batch 4.1)** five more, so **443** run on macOS by the gate's
 run: `campaign::tests::stores_hold_deliveries_and_output_to_their_capacity` (a purchase counts
 what is on its way; manufacture waits for room, unpaid; a delivery that finds no room is held,

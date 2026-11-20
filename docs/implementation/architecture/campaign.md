@@ -4,7 +4,7 @@
 `src/content/strategy.rs`, `src/content/logistics.rs` and `src/content/story.rs`, its expression
 context in `src/script/campaign.rs`, its story actions in `src/script/action.rs` and its screen
 in `src/app/strategy.rs`: the real-time strategy game around the battles (Stage 4, app 0.7.0 –
-0.9.2, filled in by app 0.16.1 – 0.16.14) and the story on top of it (Stage 5, app 0.10.0 – 0.10.3; its
+0.9.2, filled in by app 0.16.1 – 0.16.14 and 0.19.0 – 0.20.0) and the story on top of it (Stage 5, app 0.10.0 – 0.10.3; its
 testbed tools in 0.16.13). The modder's view is
 [Strategy layer](../../modding/strategy.md) and [Story layer](../../modding/story.md); the
 player's is [User guide › Campaign](../../user-guide/campaign.md). Requirements: R-STR-001 –
@@ -168,17 +168,17 @@ sequenceDiagram
     participant A as app::run
     participant C as AppContext
     participant F as FlightSession
-    S->>S: advance → Event::Battle{contact} | Convoy{convoy} | Mission{mission}; banner
-    S-->>A: Enter → flying = PendingBattle::Contact | Convoy | Story;<br/>Next::CampaignBattle{mission, ship, loadout, stances}
+    S->>S: advance → Event::Battle{contact} | Convoy{convoy} | Mission{mission}<br/>| Strike{facility} | Survey{survey}; banner or prompt
+    S-->>A: Enter → flying = PendingBattle::Contact | Convoy | Story | Strike | Survey;<br/>Next::CampaignBattle{mission, ship, loadout, stances, stand_in}
     A->>C: mem::replace(screen, Launcher); ctx.campaign = Some(strategy screen)
-    A->>F: start_mission(mission, ship); apply_loadout(loadout);<br/>apply_stances(stances); campaign_battle = true
+    A->>F: stand_in? start_mission_def(mission.with_stand_in(si), ship)<br/>: start_mission(mission, ship);<br/>apply_loadout(loadout); apply_stances(stances); campaign_battle = true
     F-->>C: debrief + Enter/Esc → ctx.battle_report = {result, actions, kills, cargo}
     F-->>A: Next::Strategy
     A->>C: ctx.campaign.take(), ctx.battle_report.take()
-    A->>S: battle_done(report) → battle_result | convoy_result | mission_result;<br/>story::check_end
+    A->>S: battle_done(report) → battle_result | convoy_result | strike_result<br/>| survey_result | mission_result; story::check_end
 ```
 
-**Four kinds of campaign battle** (app 0.9.2 – 0.16.4). `StrategyScreen::flying` is an enum,
+**Five kinds of campaign battle** (app 0.9.2 – 0.20.0). `StrategyScreen::flying` is an enum,
 `PendingBattle`, saying what the battle was *for*, so that the one report coming back is routed
 to the right place:
 
@@ -187,7 +187,8 @@ to the right place:
 | `Contact(id)` | `Event::Battle` — an interception reached its contact | `Campaign::battle_result(def, id, …)` |
 | `Convoy(v)` | `Event::Convoy` — an ambushed convoy (with `logistics.ambush_mission`) | `Campaign::convoy_result(def, v, share)`: `lose` → `Some(0.0)`, `retreat` → `None` (fights on alone), anything else → `Some(report.cargo.unwrap_or(1.0))` |
 | `Story` | `Event::Mission` — a story event's `mission(x)` offer | `Campaign::mission_result(def, …)`: `battle_result` with an id no contact has, so the outcome's actions and the win apply |
-| `Strike(f)` (app 0.16.4) | `Event::Strike { facility }` — a construction strike, flown with `logistics.construction_strikes.mission` | `Campaign::strike_result(def, f, won)`: `win` → `Some(true)` (beaten off), `lose` → `Some(false)` (the site removed), anything else → `None` (set back); then `mission_result` for the outcome's actions |
+| `Strike(f)` (app 0.16.4) | `Event::Strike { facility }` — a construction strike, flown with `logistics.construction_strikes.mission`; since 0.20.0 with the struck facility as the stand-in (`Campaign::strike_stand_in`) | `Campaign::strike_result(def, f, won)`: `win` → `Some(true)` (beaten off), `lose` → `Some(false)` (the site removed), anything else → `None` (set back); then `mission_result` for the outcome's actions |
+| `Survey(s)` (app 0.20.0) | `Event::Survey { survey }` — an attacked survey ship waiting at its site, flown with `logistics.survey_mission` and one `survey_class` as the stand-in (`Campaign::survey_stand_in`) | `Campaign::survey_result(def, s, won)`: `lose` → `Some(false)` (lost), `retreat` → `None` (lost with `survey_loss`), anything else → `Some(true)` (it reports); then, unless a retreat, `mission_result` for the outcome's actions |
 
 A flown **convoy** escort also runs `mission_result` since app 0.16.3, so its outcome's score and
 actions apply like any battle's. **Auto-resolve** (app 0.16.12) never leaves the screen: the
@@ -197,6 +198,41 @@ rolled `win` or `lose` (rendered back to text with `Action::display`), with the 
 minimum counts as kills on a win. **Prizes** (app 0.16.3): the flight screen adds
 `captured(<class id>)` to the report's actions for each prize the player's tractor brought home;
 `battle_result` keeps them as salvage only when the outcome also says `capture`.
+
+#### The stand-in: a campaign object in a ready-made mission (app 0.20.0)
+
+A struck construction site and an attacked survey ship are campaign objects, but their battles
+are ordinary missions written once (`construction_defence`, `convoy_ambush`). Rather than
+generate a mission, the strategy layer **substitutes** the object into the mission's **first
+protected role** (`MissionDef::stand_in_role`, the first `protect: true`), on a copy made for
+that one battle:
+
+```mermaid
+sequenceDiagram
+    participant S as StrategyScreen
+    participant K as Campaign
+    participant A as app::run
+    participant M as MissionDef (ruleset)
+    participant F as FlightSession
+    S->>S: prompt answered "Fly" → fly(def, craft, mission, PendingBattle::Strike(f) | Survey(s))
+    S->>K: strike_stand_in(def, f) → StandIn{class: hub, state: stage, count: None}<br/>survey_stand_in(def) → StandIn{class: survey_class, state: None, count: Some(1)}
+    S-->>A: Next::CampaignBattle{mission, ship, loadout, stances, stand_in: Some(si)}
+    A->>M: rules.missions.find(mission)?.with_stand_in(&si) → a clone, role r replaced
+    A->>F: FlightSession::start_mission_def(ctx, copy, ship)
+    Note over F: "fly again" repeats the mission by its id (start_with), unlike start_custom
+```
+
+`StandIn` (`content/mission.rs`) has three optional fields — `class`, `state` (a model-set
+state such as `build_60`) and `count` — and `with_stand_in` replaces only the ones that are
+`Some`, leaving the role's id, placement, AI and objectives alone. It returns
+`Result<MissionDef, String>`: a mission without a protected role is an error, not a silent
+no-op — and `content::rules::build_with` refuses such a mission at load for both keys, so the
+error should never reach the battle. Why a **copy**: the ruleset's missions are shared by every
+battle that flies them (the launcher, the simulator, the next strike), so the substitution must
+not leak into them. It is the same reason `simulator::apply` works on a clone. Any failure
+(the mission gone, no protected role) goes down the same `Err` branch of `match started { … }`
+as a failed `start_mission`: the error is printed to the terminal and the battle comes back as
+a `retreat`, so a strike is set back and a survey ship settled with `survey_loss`.
 
 After any of them `story::check_end` runs, because a battle (a flag set by a finale's win, a
 last base lost) can end the campaign.
@@ -268,7 +304,8 @@ along the lanes. Routes are part of the saved state.
 `campaign::logistics` (app 0.9.0, plan items 4.14 – 4.17) is the runtime of
 `content::logistics::LogisticsDef`. Its state is one more plain struct inside the campaign,
 `Campaign::logistics: Logistics` — facilities, open orders, convoys and survey ships in flight,
-which systems are surveyed, what each deposit has left, and each base's store of components —
+which systems are surveyed, what each deposit has left, each base's store of components and
+(app 0.20.0) the running totals `stats: LogisticsStats` —
 and `logistics::step(campaign, def, dt, events)` runs one slice of it at the end of the hour step.
 The modder's view is [Strategy layer › Logistics](../../modding/strategy.md#logistics).
 
@@ -299,7 +336,7 @@ flowchart RL
     DP --> FS
     MO --> LN
     LN -- "output" --> MS
-    MS -- "filled order → Convoy<br/>(vessels, lane route, ambush roll)" --> BS
+    MS -- "filled order → Convoy(s)<br/>(≤ vessels × cargo_capacity each,<br/>lane route, ambush roll each)" --> BS
     FS -- "filled order → Convoy" --> MS
     FS -- "filled order → Convoy" --> RSS
     BS -- "all components in store →<br/>job.started = true" --> J
@@ -324,10 +361,10 @@ flowchart TD
     C -->|mining| M["each deposit: min(rate/24 × dt, room, reserve) → store; reserve −="]
     C -->|manufacturing| P["finished lines → output to store;<br/>per order it fills: store + running ≥ amount? else<br/>free line and inputs in store → start recipe (inputs used)<br/>inputs short → want(inputs)"]
     C -->|research| R["project not started: start_cost in store? use it : want(start_cost)<br/>started: progress[topic] += research_rate × dt → known, Notice"]
-    M & P & R --> D["3 · orders whose source store holds the amount →<br/>Convoy {cargo, to, route = lane_route, vessels, ambush_in = roll < ambush_chance ? roll × length}"]
+    M & P & R --> D["3 · orders whose source store holds the amount →<br/>while left > 0: Convoy {cargo = min(left, vessels × cargo_capacity), to,<br/>route = lane_route, vessels, ambush_in = roll < ambush_chance ? roll × length};<br/>stats.convoys += 1, stats.shipped += load"]
     D --> E["4 · convoys travel convoy_speed × dt along the route;<br/>ambush_in reaches 0 → each vessel lost with ambush_loss, Notice;<br/>at the end → deliver cargo × surviving / vessels"]
     E --> F["5 · hull jobs whose components are in base_goods → use them, started = true"]
-    F --> G["6 · survey ships travel survey_speed × dt;<br/>arrived: attacked and roll < 0.5 → lost, else surveyed;<br/>Notice with deposits (rate, reserve), features and sites"]
+    F --> G["6 · survey ships not held travel survey_speed × dt;<br/>arrived and attacked with a survey_mission → held = true, Event::Survey (waits);<br/>else attacked and roll < survey_loss → lost, else surveyed;<br/>survey_report: deposits (rate, reserve), features, sites, suits: placement_ok per type"]
 ```
 
 Design points worth noticing:
@@ -342,7 +379,7 @@ Design points worth noticing:
   `(goods, amount)` a center must fill — and then mutates freely. With a few dozen orders the
   clones cost nothing, and the code stays free of `RefCell` and of index juggling.
 - **Rolls are made when something launches**, not when it arrives: the ambush and its point
-  along the route, and a survey ship's attack. The outcome is then part of the saved state
+  along the route (one per convoy when an order is split), and a survey ship's attack. The outcome is then part of the saved state
   (`Convoy::ambush_in`, `Survey::attacked`), so a save loaded before the ambush replays it the
   same way.
 - **An ambush waits for the player** (app 0.9.2). With `logistics.ambush_mission` set, a convoy
@@ -372,6 +409,41 @@ Design points worth noticing:
   `Event::Strike` and stops the loop, so strikes come one at a time. `strike_result` settles it:
   beaten off, destroyed (`remove_facility`), or set back (`ready_at += time × setback`), with a
   message and a notice. The automatic player lets every strike be.
+- **Cargo capacity** (app 0.20.0, R-STR-026, decision D1): `LogisticsDef::cargo_capacity:
+  Option<f32>` is per vessel. Step 3 splits a filled order into loads of at most `vessels ×
+  cargo_capacity` (`f32::INFINITY` when `None`, so the loop runs once), each its own `Convoy`
+  with its own ambush roll and a clone of the route. Demand is unchanged: `inbound` already sums
+  every convoy bound for a destination, so several convoys count as one shipment.
+- **Construction stages** (app 0.20.0, R-STR-022): `LogisticsDef::stages: Vec<(String, f32)>`
+  — `(model-set state, start)`, sorted by start, `DEFAULT_STAGES` when the key is absent.
+  `LogisticsDef::stage_at(progress)` is the last stage whose start has been reached
+  (`rposition`), else the first. `Campaign::construction_stage(l, f)` computes the progress the
+  same way as the strikes do and returns `None` once the facility is built. Nothing is stored:
+  the stage is derived from `ready_at` whenever it is needed (the map draws its pips from it
+  every frame; the Supply list names it), so a setback moves the stage back with no extra state.
+- **Survey ships and their battle** (app 0.20.0, R-STR-021, decision D3): an attacked ship that
+  arrives is marked `Survey::held` (saved) and raises `Event::Survey { survey }` when the
+  campaign has a `survey_mission`; a held ship does not move. `Campaign::survey_result(def, s,
+  won)` settles it — `Some(true)` reports, `Some(false)` loses it, `None` rolls `survey_loss` —
+  removes it, and writes the message and a notice. Without a survey mission the same roll is
+  made on arrival. Both paths end in the private `survey_report`, which marks the system
+  surveyed and lists, after the deposits, features and sites, the **facility types whose
+  placement holds** there (`placement_ok` with the type's condition or its role's default) —
+  asked *after* `surveyed[s]` is set, since every default rule starts with `survey_known(system)`.
+- **Running totals** (app 0.20.0, #47): `LogisticsStats` counts convoys, goods shipped and
+  delivered, ambushes, vessels lost, and surveys sent, attacked and lost. They are counted where
+  the thing happens (step 3, the ambush point, delivery, `convoy_result`, `survey`,
+  `survey_report`) and saved, so a long game's totals survive a reload; `--strategy-soak` prints
+  them.
+- **The automatic player's supply moves** (app 0.20.0, `logistics::autoplay_day`, called once a
+  day by `autoplay_from`): one survey ship out to the nearest unsurveyed system any base can
+  reach; at most one build a day, in supply-chain order (manufacturing, mining ×2, research),
+  where `facility_allowed` says yes, keeping 500 000 in hand (it waits rather than skipping
+  ahead); an idle research station set on the first unknown station topic; and one hull — the
+  cheapest with `components` — kept on order at the first base, so the chain always has demand.
+  Every order may be refused; refusals are ignored. `autoplay_from` also clears
+  `Campaign::notices` each day: the screen normally shows and clears them, the automatic player
+  has no screen, and they are never saved.
 - **Station-only topics** (`station_topics[t]` is `Some`) are filtered out of
   `Campaign::researchable`, so bases never offer them; `start_station_research` starts one at a
   research station of the right `lab` type on the right `site`.
@@ -638,8 +710,9 @@ needs packs that are not loaded: …"), then every index against the loaded rule
 topic, income/expense/raid counts; else "save: … does not match the loaded rules (was a mod
 changed?)"). Since app 0.9.0 a `logistics:` block follows (`write_logistics` / `read_logistics`):
 facilities with their stores, lines and projects, orders, convoys with their routes, vessels and
-pending ambush and (app 0.9.2) whether it is `held`, survey ships, the surveyed flags, the
-reserves and the bases' stores;
+pending ambush and (app 0.9.2) whether it is `held`, survey ships (with `held` since 0.20.0),
+the surveyed flags, the reserves, the bases' stores and (app 0.20.0) `stats`, the eight running
+totals as one number list in a fixed order (older saves read zeros);
 destinations are written `base:<i>` / `facility:<i>`. Its indices are checked like the rest, a
 campaign without logistics saves an empty block, and a save with facilities is refused by a
 campaign that has no logistics. Since app 0.10.0 a `story:` block follows too (`write_story` /
@@ -669,7 +742,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `MapKind`, `Travel`, `RaidTarget`, `ResearchMode` | `content/strategy.rs` | Fixed / generated maps; free / lane travel; base / system raids; download / labs. |
 | `Campaign` | `campaign/mod.rs` | One game in progress: `hours`, `money`, `systems`, `bases`, `known`, `progress`, `craft`, `pilots`, `recruits`, `contacts`, `deliveries`, flow and raid timers, score, flags, salvaged, messages, and `notices` (app 0.16.2, not saved). |
 | `Base`, `ModuleInst`, `Job`, `Craft`, `Pilot`, `Contact`, `Delivery` | `campaign/mod.rs` | The parts of the state, each referring to the others by index. |
-| `Event` | `campaign/mod.rs` | `Notice(String)` (stop the clock, show it), `Battle { contact }`, and since app 0.9.2 – 0.10.0 `Convoy { convoy }` (an ambush waiting for the player), `Choice { event }`, `Mission { mission }` (an offer) and `Ending { ending }`; since 0.16.4 `Strike { facility }`. |
+| `Event` | `campaign/mod.rs` | `Notice(String)` (stop the clock, show it), `Battle { contact }`, and since app 0.9.2 – 0.10.0 `Convoy { convoy }` (an ambush waiting for the player), `Choice { event }`, `Mission { mission }` (an offer) and `Ending { ending }`; since 0.16.4 `Strike { facility }`; since 0.20.0 `Survey { survey }`. |
 | `StoryDef`, `EventDef`, `Check`, `Choice`, `ArcDef`, `PlanDef`, `Stage`, `Relations`, `Strategist`, `Ending`, `Entry` | `content/story.rs` | The story rules (app 0.10.0); `story::DEF_SECTIONS`, `GLOBALS`, `sections()` (the schema). |
 | `StoryState` | `campaign/story.rs` | The story state inside `Campaign::story`; `standing`, `plan_progress`. |
 | `story::step`, `story::check_end` | `campaign/story.rs` | One slice of story time; the end conditions. |
@@ -677,6 +750,10 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `Campaign::convoy_result`, `Convoy::held` | `campaign/logistics.rs` | Settling an ambushed convoy (app 0.9.2). |
 | `Campaign::strike_result`, `remove_facility`, `lane_hops`, `logistics_query`, `Facility::attacks` | `campaign/logistics.rs` | Settling a construction strike; losing a facility safely; lane jumps; the logistics queries (app 0.16.3 – 0.16.4). |
 | `Campaign::fire_event`, `campaign::autoplay_to_chapter` | `campaign/story.rs`, `campaign/mod.rs` | The event debugger; start-at-chapter (app 0.16.13). |
+| `LogisticsDef::cargo_capacity`, `survey_mission`, `survey_class`, `survey_loss`, `stages`, `stage_at`, `DEFAULT_STAGES` | `content/logistics.rs` | Cargo capacity, the survey battle and the construction stages (app 0.20.0). |
+| `MissionDef::stand_in_role`, `MissionDef::with_stand_in`, `StandIn` | `content/mission.rs` | The first protected role; a copy of a mission with a campaign object in it (app 0.20.0). |
+| `Campaign::construction_stage`, `strike_stand_in`, `survey_stand_in`, `survey_result`, `Survey::held`, `LogisticsStats`, `Logistics::stats`, `logistics::autoplay_day` | `campaign/logistics.rs` | Stages, stand-ins, settling an attacked survey ship, the running totals and the automatic player's supply moves (app 0.20.0). |
+| `Event::Survey { survey }`, `PendingBattle::Survey`, `Next::CampaignBattle::stand_in`, `FlightSession::start_mission_def` | `campaign/mod.rs`, `app/strategy.rs`, `app/mod.rs`, `app/flight.rs` | The survey-battle hand-off and the stand-in's way into the flight screen (app 0.20.0). |
 | `Campaign::set_training`, `dismiss`, `quarters`, `storage`, `dismantle_module`, `raise_job`, `cancel_job` | `campaign/mod.rs` | Pilots, base effects and queues (app 0.16.7 – 0.16.11). |
 | `ModuleDef::on_destroyed`, `Loss`, `BaseType::placement`, `BaseType::template` | `content/strategy.rs` | What a wreck loses (`Craft`, `Pilots`, `Stock`); where a base may be built (an `Option<Expr>`); template entries that may name a group (app 0.19.0). |
 | `ModuleInst::wrecked`, `ModuleInst::working`, `Delivery::held` | `campaign/mod.rs` | A wreck; built and not a wreck; a delivery waiting for room (app 0.19.0, saved). |
@@ -687,7 +764,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `script::campaign::RESERVED`, `id::BASE_DISTANCE` | `script/campaign.rs` | `system`, `nearest_base`, `any`; query 29 (app 0.19.0). |
 | `balance::power`, `balance::win_chance` | `balance.rs` | Auto-resolve odds (app 0.16.12). |
 | `script::action::EVENT_ACTIONS` | `script/action.rs` | The story actions: 14 in app 0.10.0, 17 with `card`, `video`, `play_cutscene`, 18 with `discover` (0.16.6). |
-| `PendingBattle` | `app/strategy.rs` | `Contact`, `Convoy`, `Story` or (0.16.4) `Strike`: what the battle being flown is for. |
+| `PendingBattle` | `app/strategy.rs` | `Contact`, `Convoy`, `Story`, (0.16.4) `Strike` or (0.20.0) `Survey`: what the battle being flown is for. |
 | `flight::apply_stances`, `Ruleset::set_hostile` | `app/flight.rs`, `content/rules.rs` | The campaign's relations in the battle's own rules (app 0.10.3). |
 | `LogisticsDef`, `FacilityType`, `Role`, `Recipe`, `Deposit`, `SystemGoods`, `StationTopic` | `content/logistics.rs` | The logistics rules (app 0.9.0): resources, components, recipes, facility types, sites, per-system goods, per-hull components, per-topic station restrictions, supply settings. |
 | `Logistics`, `Facility`, `Line`, `Order`, `Convoy`, `Survey`, `Dest` | `campaign/logistics.rs` | The logistics state inside `Campaign::logistics`. |
@@ -701,7 +778,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `save::write`, `save::read`, `save::PackRef`, `save::FORMAT` | `campaign/save.rs` | Saves and their pack header. |
 | `script::campaign::QUERIES`, `id`, `schema` | `script/campaign.rs` | The campaign context. |
 | `StrategyScreen`, `Tab` (eleven with `Reports` since 0.16.8, and the testbed's `Debug`), `SPEEDS`, `BattleReport` (with `cargo`), `save_path`, `slot_path`, `map_transform` | `app/strategy.rs` | The screen. |
-| `Next::NewCampaign`, `LoadCampaign`, `LoadSlot` (0.16.14), `CampaignBattle` (with `stances`), `Strategy`; `AppContext::campaign`, `battle_report` | `app/mod.rs` | The screen changes around a campaign battle. |
+| `Next::NewCampaign`, `LoadCampaign`, `LoadSlot` (0.16.14), `CampaignBattle` (with `stances`; `stand_in` since 0.20.0), `Strategy`; `AppContext::campaign`, `battle_report` | `app/mod.rs` | The screen changes around a campaign battle. |
 
 ## API Reference
 
@@ -726,6 +803,13 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 - Convoys (app 0.9.2): `convoy_result(def, convoy, Option<share>)`.
 - Strikes (app 0.16.4): `strike_result(def, facility, Option<won>)`; `remove_facility(f)`;
   `lane_hops(def, a, b) -> Option<u32>`.
+- Stages, stand-ins and surveys (app 0.20.0): `LogisticsDef::stage_at(progress) ->
+  Option<usize>`; `construction_stage(&LogisticsDef, facility) -> Option<usize>`;
+  `strike_stand_in(def, facility) -> Option<StandIn>`; `survey_stand_in(def) -> StandIn`;
+  `survey_result(def, survey, Option<won>)`; `MissionDef::stand_in_role() -> Option<usize>`,
+  `MissionDef::with_stand_in(&StandIn) -> Result<MissionDef, String>`;
+  `FlightSession::start_mission_def(ctx, MissionDef, Option<&str>) -> Result<FlightSession,
+  String>`; `logistics::autoplay_day(&mut Campaign, &StrategyDef)`.
 - Pilots, bases and queues (app 0.16.7 – 0.16.11), each `-> Result<(), String>`:
   `set_training(def, pilot, on)`, `dismiss(pilot)`, `dismantle_module(def, base, module)`,
   `raise_job(base, job)`, `cancel_job(base, job)`; queries `quarters(def) -> u32`,
@@ -786,7 +870,19 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
   the base's system id in place of `nearest_base`, and read the Debug list (Ctrl+D) as in
   MT-4-49.
 - Logistics: the Supply tab's last row counts open orders, convoys and survey ships; the message
-  log records every survey, completed facility and ambush. An order that never appears usually
+  log records every survey, completed facility and ambush. Since app 0.20.0 `--strategy-soak`
+  prints a *logistics:* line — facilities (and how many still building), systems surveyed,
+  surveys sent / attacked / lost, convoys (ambushed, vessels lost), goods shipped and delivered
+  (summed over every unit), open orders. At app 0.20.0 (main `9064f59`), `default`, 180 days: 3
+  facilities, 3 systems surveyed, 3 surveys (none attacked), 26 convoys (11 ambushed, 11 vessels
+  lost), 134 shipped, 108 delivered, 2 orders open, every store within its capacity; 12 of 16
+  topics and 39 battles. Shipped minus delivered is what ambushes cost plus what is still on
+  its way. In a save, `stats:` under `logistics:` holds the same totals.
+- A construction-strike defence or survey battle showing the wrong object: the stand-in goes
+  into the mission's **first** `protect: true` role — check the role order in the mission file;
+  a type without `hub` keeps the mission's own class (only the stage changes). A battle that
+  will not start prints *error: …* in the terminal (for example *mission 'x' has no protected
+  role*) and counts as a retreat. An order that never appears usually
   means no ready facility can fill it (a resource no mined system has, or no manufacturing
   center); a hull job that never starts is waiting for its `components`.
 - The campaign is unit-testable without a window: `campaign::autoplay` plays any

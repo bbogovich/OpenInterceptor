@@ -99,6 +99,12 @@ environment and hazards and its enemy roles and waves scaled, and `FlightSession
 starts it through the same `MissionRun` as any other mission. Nothing in `mission` knows it is
 a simulation.
 
+Campaign battles use the same idea since app 0.20.0: `MissionDef::with_stand_in(&StandIn)`
+returns a copy whose **first protected role** (`stand_in_role`, the first `protect: true`) has
+a campaign object's class, model-set state or count — a struck construction site, an attacked
+survey ship — and `FlightSession::start_mission_def` flies it (its "fly again" repeats the
+mission by id). See [Campaign › The stand-in](campaign.md#the-stand-in-a-campaign-object-in-a-ready-made-mission-app-0200).
+
 ### Cargo, escorts and repeating waves (app 0.9.2)
 
 - **`cargo(role)`** and the debrief's cargo share come from `mission::cargo_share(world, role)`:
@@ -137,11 +143,13 @@ so pilots that start together do not act together.
 | `World::spawn_placement`, `World::same_slot` | Spawn one placed object; whether an id's slot still holds its ship. |
 | `app::Next::Mission`, `FlightSession::start_mission` | Starting a mission from the launcher or `--mission`. |
 | `app::Next::Simulate`, `FlightSession::start_custom` | Starting a simulator mission: a ready-made, modified `MissionDef` (app 0.6.3). |
+| `MissionDef::stand_in_role`, `with_stand_in`, `StandIn`; `FlightSession::start_mission_def` | A campaign object in a mission's first protected role, on a copy; flying that copy (app 0.20.0). |
 
 ## API Reference
 
 - `MissionDef::parse(id, Get, pack, classes, levels) -> Result<MissionDef, String>`;
-  `def.outcome(result) -> &[Action]`.
+  `def.outcome(result) -> &[Action]`; `def.stand_in_role() -> Option<usize>`,
+  `def.with_stand_in(&StandIn) -> Result<MissionDef, String>` (app 0.20.0).
 - `MissionRun::start(&MissionDef, Arc<Ruleset>, Arc<Vec<Shape>>, Option<ShipClassId>) ->
   Result<(World, MissionRun), String>`; `run.update(&mut World) -> Vec<String>` (message lines);
   `run.spawn_role(&mut World, role, count, at) -> Result<usize, String>`; `run.kills() -> u32`;

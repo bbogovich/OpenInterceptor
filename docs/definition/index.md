@@ -1,5 +1,5 @@
 ---
-spec_version: 1.21.0
+spec_version: 1.22.0
 status: current
 updated: 2026-11-20
 ---
@@ -11,7 +11,7 @@ written in terms of **features**: a feature names an outcome ("a modder can repl
 never the mechanism that delivers it. The [specification](../specification/index.md) turns each
 feature into testable requirements; the [implementation](../implementation/index.md) builds them.
 
-Definition version **1.21.0** (96 features). Changes are listed in the
+Definition version **1.22.0** (96 features). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Areas
@@ -69,3 +69,4 @@ Remastered* — and the game design that the mod formats implement.
 | 1.19.0 | 2026-11-12 | 96 features: new area *Strategy interface* (user request) — F-UI-001 – F-UI-006 (original-style strategy screens, screens and widgets as mod data, keyboard and gamepad on every screen, the testbed layout as an option, the default campaign's own screens, crisp and readable at any window size), all planned |
 | 1.20.0 | 2026-11-20 | 96 features: Stage 3 complete (app 0.18.0): F-FLT-007 implemented (terrain detail textures and scattered objects); F-MOD-005 implemented (Tier 2 scripts, decision (c)) |
 | 1.21.0 | 2026-11-20 | 96 features: F-STR-002 and F-STR-005 progress (app 0.19.0: storage everywhere, the base lifecycle, best-available templates, placement conditions) |
+| 1.22.0 | 2026-11-20 | 96 features: F-STR-006 (surveys) and F-STR-008 (facilities under construction) implemented; F-STR-007 progress (cargo capacity) (app 0.20.0, Batch 4.2) |
