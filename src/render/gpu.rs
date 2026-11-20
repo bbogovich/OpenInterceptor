@@ -18,6 +18,12 @@ use std::rc::Rc;
 /// Largest chunk sent in one draw (must fit the window's draw-call capacity).
 pub const MAX_CHUNK_VERTICES: usize = 16_000;
 
+/// Most indices sent in one draw. The window's index capacity is 30 000 (`main.rs`), and
+/// macroquad silently *drops* whatever is beyond it. A mesh whose triangles share
+/// vertices (a terrain grid: about six indices per vertex) reaches this limit long
+/// before the vertex limit, so both are checked.
+pub const MAX_CHUNK_INDICES: usize = 28_000;
+
 /// A CPU-side chunk ready to become a `Mesh`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chunk {
@@ -43,7 +49,7 @@ pub fn split_lod(lod: &ModelLod) -> Vec<Chunk> {
         let mut remap: HashMap<u32, u16> = HashMap::new();
         for tri in group.indices.chunks_exact(3) {
             // Start a new chunk if this triangle might not fit.
-            if chunk.vertices.len() + 3 > MAX_CHUNK_VERTICES {
+            if chunk.vertices.len() + 3 > MAX_CHUNK_VERTICES || chunk.indices.len() + 3 > MAX_CHUNK_INDICES {
                 out.push(std::mem::replace(&mut chunk, empty()));
                 remap.clear();
             }
@@ -202,9 +208,43 @@ impl ModelCache {
         tex
     }
 
+    /// Prepares a terrain detail texture: loads it (once, into the same cache the meshes
+    /// use, so the terrain mesh then finds it there) and gives it mipmaps, so its many
+    /// repeats in the distance average out instead of shimmering. Mipmaps need sides that
+    /// are powers of two on older GPUs (OpenGL ES 2, WebGL 1); other sizes are left
+    /// without them and reported.
+    pub fn prepare_detail_texture(&mut self, content: &Content, name: &str, pack: usize) {
+        let Some(t) = self.texture(content, name, pack) else { return };
+        // `u32::is_power_of_two`: exactly one bit set (1, 2, 4, 8…).
+        if (t.width() as u32).is_power_of_two() && (t.height() as u32).is_power_of_two() {
+            super::set_mipmapped(&t);
+        } else {
+            self.errors.push(format!(
+                "texture {name}: {}x{} is not a power of two; it will shimmer in the distance",
+                t.width(),
+                t.height()
+            ));
+        }
+    }
+
     /// Uploads a model built in code (a terrain mesh) rather than loaded from a pack.
     pub fn upload_model(&mut self, content: &Content, model: Model, pack: usize) -> Rc<GpuModel> {
         Rc::new(self.upload(content, model, pack))
+    }
+
+    /// Like [`ModelCache::upload_model`], for a big mesh that is only ever drawn (baked
+    /// terrain scatter): the CPU copy of its vertices and triangles is dropped after the
+    /// upload instead of being kept for collision, halving its memory. `GpuModel::model`
+    /// then keeps only the name, radius and bounds.
+    pub fn upload_draw_only(&mut self, content: &Content, model: Model, pack: usize) -> Rc<GpuModel> {
+        let mut gpu = self.upload(content, model, pack);
+        for lod in &mut gpu.model.lods {
+            // `Vec::new()` does not allocate: assigning it frees the old buffers.
+            lod.vertices = Vec::new();
+            lod.groups = Vec::new();
+            lod.faces = Vec::new();
+        }
+        Rc::new(gpu)
     }
 
     fn upload(&mut self, content: &Content, model: Model, pack: usize) -> GpuModel {
@@ -287,5 +327,30 @@ mod tests {
         assert!(chunks.iter().all(|c| c.vertices.len() <= MAX_CHUNK_VERTICES));
         let total: usize = chunks.iter().map(|c| c.indices.len()).sum();
         assert_eq!(total as u32, n - n % 3);
+    }
+
+    #[test]
+    fn shared_vertex_grids_are_split_by_index_count() {
+        // A 100 × 100 grid: 10 000 shared vertices but 58 806 indices, about twice what one
+        // draw takes; every index must still be drawn, in chunks small enough.
+        let n = 100u32;
+        let indices: Vec<u32> = (0..n - 1)
+            .flat_map(|r| {
+                (0..n - 1).flat_map(move |c| {
+                    let a = r * n + c;
+                    [a, a + n, a + 1, a + 1, a + n, a + n + 1]
+                })
+            })
+            .collect();
+        let lod = ModelLod {
+            switch_distance: 1.0,
+            vertices: (0..n * n).map(vertex).collect(),
+            groups: vec![MaterialGroup { texture: None, indices: indices.clone(), overlay: false }],
+            faces: vec![],
+        };
+        let chunks = split_lod(&lod);
+        assert!(chunks.len() >= 3, "{} chunks", chunks.len());
+        assert!(chunks.iter().all(|c| c.indices.len() <= MAX_CHUNK_INDICES && c.vertices.len() <= MAX_CHUNK_VERTICES));
+        assert_eq!(chunks.iter().map(|c| c.indices.len()).sum::<usize>(), indices.len());
     }
 }

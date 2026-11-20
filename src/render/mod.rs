@@ -294,6 +294,9 @@ pub struct Renderer {
     /// The terrain mesh of the current battle, by terrain id (built once).
     /// (Normal and X-mirrored meshes, for the mirror-image tiles to the horizon.)
     terrain: Option<(String, [Rc<GpuModel>; 2])>,
+    /// The terrain's scattered objects, baked once per terrain id and battle seed (the
+    /// seed decides where they lie): one entry per `scatter` item.
+    scatter: Option<(String, u64, Vec<ScatterDraw>)>,
     stars: Vec<starfield::Star>,
     star_seed: u64,
     // Reused per-frame buffers (see the module docs).
@@ -301,6 +304,13 @@ pub struct Renderer {
     glow_indices: Vec<u16>,
     sky_vertices: Vec<Vertex>,
     sky_indices: Vec<u16>,
+}
+
+/// One scatter entry ready to draw: its cells on the GPU, for the normal (`cells[0]`) and
+/// the X-mirrored (`cells[1]`) tiles, each with its culling sphere (field space).
+struct ScatterDraw {
+    draw_distance: f32,
+    cells: [Vec<(Vec3, f32, Rc<GpuModel>)>; 2],
 }
 
 /// Creates a radial-gradient texture: bright centre fading to transparent edge.
@@ -446,6 +456,7 @@ impl Renderer {
             nebula: None,
             nebula_mesh: None,
             terrain: None,
+            scatter: None,
             stars: Vec::new(),
             star_seed: u64::MAX,
             glow_vertices: Vec::new(),
@@ -618,37 +629,7 @@ impl Renderer {
         hide: Option<ShipId>,
     ) {
         self.begin_solid(cam, sun);
-        // The ground of an atmospheric battle (its mesh built once per terrain).
-        if let Some(field) = world.env.ground.clone() {
-            let def = world.rules.terrains.iter().find(|t| t.field.as_ref().is_some_and(|f| Arc::ptr_eq(f, &field)));
-            if let Some(def) = def {
-                if self.terrain.as_ref().is_none_or(|(id, _)| id != &def.id) {
-                    let mut up = |mirror| {
-                        self.models.upload_model(content, terrain::terrain_model(def, &field, mirror), def.pack)
-                    };
-                    let meshes = [up(false), up(true)];
-                    self.terrain = Some((def.id.clone(), meshes));
-                }
-                if let Some((_, meshes)) = &self.terrain {
-                    // Every tile within sight (the fog distance, else three fields), up
-                    // to 7 × 7 around the one under the camera.
-                    let reach = self.env_sky.as_ref().map_or(field.size * 3.0, |s| s.fog_distance * 1.1);
-                    let n = ((reach / field.size).ceil() as i32 + 1).min(3);
-                    let ci = ((cam.position.x / field.size) + 0.5).floor() as i32;
-                    let cj = ((cam.position.z / field.size) + 0.5).floor() as i32;
-                    for i in ci - n..=ci + n {
-                        for j in cj - n..=cj + n {
-                            let (mirror, at, rot) = terrain::tile_placement(&field, i, j);
-                            let flat = Vec3::new(at.x - cam.position.x, 0.0, at.z - cam.position.z);
-                            if flat.length() - field.size * 0.75 > reach {
-                                continue;
-                            }
-                            self.draw_model(cam, &meshes[mirror as usize], at, rot, Vec3::ZERO);
-                        }
-                    }
-                }
-            }
-        }
+        self.draw_terrain(content, world, cam);
         for i in 0..world.ships.len() {
             let s = &world.ships[i];
             if !s.alive || Some(world.id_of(i)) == hide {
@@ -687,6 +668,97 @@ impl Renderer {
         if let Some(b) = world.hazards.black_hole {
             draw_sphere(b.position - cam.position, b.radius, None, BLACK);
         }
+    }
+
+    /// The ground of an atmospheric battle and the objects scattered over it. Both are
+    /// built once (per terrain, and for scatter per battle seed) and then only drawn:
+    /// the field and its mirror-image tiles to the horizon, and each tile's scatter cells
+    /// within their draw distance. Call inside the solid pass.
+    fn draw_terrain(&mut self, content: &Content, world: &World, cam: &SpaceCamera) {
+        let Some(field) = world.env.ground.clone() else { return };
+        // The environment holds only the heights; find the terrain they belong to.
+        let Some(def) = world.rules.terrains.iter().find(|t| t.field.as_ref().is_some_and(|f| Arc::ptr_eq(f, &field)))
+        else {
+            return;
+        };
+        if self.terrain.as_ref().is_none_or(|(id, _)| id != &def.id) {
+            // Detail textures first, so the mesh upload finds them cached with mipmaps.
+            for t in def.detail.iter().chain(def.slope_detail.iter()) {
+                self.models.prepare_detail_texture(content, t, def.pack);
+            }
+            let mut up =
+                |mirror| self.models.upload_model(content, terrain::terrain_model(def, &field, mirror), def.pack);
+            let meshes = [up(false), up(true)];
+            self.terrain = Some((def.id.clone(), meshes));
+        }
+        if self.scatter.as_ref().is_none_or(|(id, seed, _)| id != &def.id || *seed != world.seed) {
+            let draws = self.bake_scatter(content, def, &field, world.seed);
+            self.scatter = Some((def.id.clone(), world.seed, draws));
+        }
+        let (Some((_, meshes)), Some((_, _, scatter))) = (&self.terrain, &self.scatter) else { return };
+        let forward = cam.rotation * Vec3::NEG_Z;
+        // Every tile within sight (the fog distance, else three fields), up to 7 × 7
+        // around the one under the camera.
+        let reach = self.env_sky.as_ref().map_or(field.size * 3.0, |s| s.fog_distance * 1.1);
+        let n = ((reach / field.size).ceil() as i32 + 1).min(3);
+        let ci = ((cam.position.x / field.size) + 0.5).floor() as i32;
+        let cj = ((cam.position.z / field.size) + 0.5).floor() as i32;
+        for i in ci - n..=ci + n {
+            for j in cj - n..=cj + n {
+                let (mirror, at, rot) = terrain::tile_placement(&field, i, j);
+                let flat = Vec3::new(at.x - cam.position.x, 0.0, at.z - cam.position.z);
+                if flat.length() - field.size * 0.75 > reach {
+                    continue;
+                }
+                self.draw_model(cam, &meshes[mirror as usize], at, rot, Vec3::ZERO);
+                for entry in scatter {
+                    // A whole tile beyond the draw distance: none of its cells can show.
+                    if flat.length() - field.size * 0.75 > entry.draw_distance {
+                        continue;
+                    }
+                    for (centre, radius, model) in &entry.cells[mirror as usize] {
+                        // Cull a cell beyond the entry's draw distance or behind the eye.
+                        let rel = at + rot * *centre - cam.position;
+                        if rel.length() - radius > entry.draw_distance || rel.dot(forward) < -radius {
+                            continue;
+                        }
+                        self.draw_model(cam, model, at, rot, Vec3::ZERO);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Places and bakes a terrain's scatter for one battle (see [`terrain::scatter_cells`]).
+    /// A model that fails to load is reported in the cache's errors and skipped.
+    fn bake_scatter(
+        &mut self,
+        content: &Content,
+        def: &crate::content::environment::TerrainDef,
+        field: &crate::content::environment::Heightfield,
+        seed: u64,
+    ) -> Vec<ScatterDraw> {
+        let mut out = Vec::with_capacity(def.scatter.len());
+        for s in &def.scatter {
+            let piece = match content.load_model(&s.model, def.pack, 1.0) {
+                Ok(m) => m,
+                Err(e) => {
+                    self.models.errors.push(format!("terrains.{}: scatter {}: {e}", def.id, s.model));
+                    continue;
+                }
+            };
+            let placed = crate::content::environment::scatter_placements(s, field, seed);
+            // Normal and mirrored bakes, each cell uploaded once.
+            let mut bake = |mirror| -> Vec<(Vec3, f32, Rc<GpuModel>)> {
+                terrain::scatter_cells(&placed, &piece, field.size, mirror)
+                    .into_iter()
+                    .map(|c| (c.centre, c.radius, self.models.upload_draw_only(content, c.model, def.pack)))
+                    .collect()
+            };
+            let cells = [bake(false), bake(true)];
+            out.push(ScatterDraw { draw_distance: s.draw_distance, cells });
+        }
+        out
     }
 
     /// Draws engine glows, bolts, missiles, sparks and explosions.
@@ -965,6 +1037,21 @@ fn unsafe_gl_context() -> macroquad::window::InternalGlContext<'static> {
 fn set_repeat(texture: &Texture2D) {
     let gl = unsafe_gl_context();
     gl.quad_context.texture_set_wrap(texture.raw_miniquad_id(), TextureWrap::Repeat, TextureWrap::Repeat);
+}
+
+/// Gives a texture mipmaps and turns on trilinear filtering: the GPU then samples a
+/// pre-shrunk copy that matches how small the texture appears on screen (blending
+/// between the two nearest sizes), so a texture repeated many times into the distance
+/// averages out smoothly instead of shimmering ("aliasing").
+fn set_mipmapped(texture: &Texture2D) {
+    let gl = unsafe_gl_context();
+    let id = texture.raw_miniquad_id();
+    gl.quad_context.texture_generate_mipmaps(id);
+    gl.quad_context.texture_set_min_filter(
+        id,
+        macroquad::miniquad::FilterMode::Linear,
+        macroquad::miniquad::MipmapFilterMode::Linear,
+    );
 }
 
 /// Identity transform, re-exported for callers drawing in camera space.

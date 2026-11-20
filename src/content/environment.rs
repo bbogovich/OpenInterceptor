@@ -22,14 +22,26 @@
 //!     size: 30km
 //!     height: [0, 1800]                  # lowest and highest ground, metres
 //!     colors: {low: [0.30, 0.27, 0.25], high: [0.62, 0.58, 0.52], slope: [0.22, 0.20, 0.19]}
+//!     detail: textures/terrain_regolith.png   # optional: tiles over the ground up close
+//!     detail_scale: 40m                       # one repeat of the texture covers 40 m
+//!     slope_detail: textures/terrain_rock.png # optional: a second texture on steep ground
+//!     scatter:                                # optional: decoration placed over the ground
+//!       - {model: models/scatter_boulder.obj, count: 300, scale: [0.6, 1.8], max_slope: 25deg, align: 1}
 //! ```
 //!
 //! A **heightfield** is a square grid of heights ([`Heightfield`]): the simulation asks it
 //! for the ground height under a craft, and the renderer turns it into a mesh. Generated
 //! terrains are deterministic for their seed.
+//!
+//! **Scatter** ([`ScatterDef`], [`scatter_placements`]) is decoration: rocks, trees or
+//! buildings placed over the field from the battle's seed, standing on the ground. It is
+//! drawn only — craft fly through it. Anything a craft should hit or shoot is a ground
+//! installation: a real object in the scenario, with a collision shape and hit points.
+//! Placement is pure data and lives here, below the renderer, so it is unit-tested and the
+//! simulation could use it later without depending on rendering.
 
 use super::schema::{f, Get, Ty, Unit};
-use glam::Vec3;
+use glam::{Quat, Vec3};
 
 /// How craft fly in an environment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -169,6 +181,150 @@ pub struct TerrainDef {
     /// The heights, built once: generated ones while the rules are read, heightmaps when
     /// the content loads (they need the pack's files). Shared, not copied, per battle.
     pub field: Option<std::sync::Arc<Heightfield>>,
+    /// A tiling texture that modulates the ground colours up close (`detail`), and the
+    /// optional one used on steep ground instead (`slope_detail`). `None`: vertex colours
+    /// only, exactly as without the keys.
+    pub detail: Option<String>,
+    pub slope_detail: Option<String>,
+    /// Metres of ground covered by one repeat of the detail texture.
+    pub detail_scale: f32,
+    /// Decoration placed over the ground.
+    pub scatter: Vec<ScatterDef>,
+}
+
+/// One kind of scattered decoration (`terrains.<id>.scatter[i]`): a model placed up to
+/// `count` times over the field where the ground suits it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ScatterDef {
+    /// The model (an asset reference, like a ship's `model`).
+    pub model: String,
+    /// How many to place (fewer if the field has too few suitable spots).
+    pub count: usize,
+    /// Smallest and largest size, as multiples of the model's own size.
+    pub scale: [f32; 2],
+    /// The steepest ground a piece may stand on, in degrees from level.
+    pub max_slope: f32,
+    /// Only on ground between these heights (metres).
+    pub height: [f32; 2],
+    /// How far each piece leans with the ground: 0 = upright (trees, buildings), 1 =
+    /// square to the slope (rocks).
+    pub align: f32,
+    /// Mixed with the battle's seed, so two entries with the same model differ.
+    pub seed: u64,
+    /// Not drawn farther than this from the camera (metres).
+    pub draw_distance: f32,
+}
+
+/// The most pieces one scatter entry may ask for (a guard against a typo such as
+/// `count: 2000000`, which would stall loading and fill the GPU).
+pub const MAX_SCATTER_COUNT: usize = 20_000;
+
+/// One placed piece of scatter, in the field's own space (inside the field's square).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Placement {
+    pub position: Vec3,
+    pub rotation: Quat,
+    pub scale: f32,
+}
+
+impl ScatterDef {
+    /// Reads one `scatter` list item. `index` numbers it for messages and the default
+    /// seed; `height` is the terrain's own range (the default for the item's).
+    fn parse(index: usize, g: Get, height: [f32; 2]) -> Result<ScatterDef, String> {
+        let at = format!("scatter[{index}]");
+        let model = g.str("model").ok_or(format!("{at}: needs a model"))?.to_string();
+        let count = g.num("count").unwrap_or(100.0);
+        if !(1.0..=MAX_SCATTER_COUNT as f32).contains(&count) {
+            return Err(format!("{at}: count {count} is not between 1 and {MAX_SCATTER_COUNT}"));
+        }
+        // `scale: 2` (always that size) or `scale: [0.5, 2]` (a range).
+        let scale = match (g.num("scale"), g.nums("scale")) {
+            (Some(s), _) => [s, s],
+            (None, Some(v)) if v.len() == 2 => [v[0], v[1]],
+            (None, None) if g.node("scale").is_none() => [1.0, 1.0],
+            _ => return Err(format!("{at}: scale is a number or [smallest, largest]")),
+        };
+        if scale[0] <= 0.0 || scale[1] < scale[0] {
+            return Err(format!("{at}: scale [{}, {}] must be positive, smallest first", scale[0], scale[1]));
+        }
+        let max_slope = g.qty("max_slope", Unit::Angle).unwrap_or(30.0);
+        if !(0.0..=90.0).contains(&max_slope) {
+            return Err(format!("{at}: max_slope {max_slope} is not between 0 and 90 degrees"));
+        }
+        let h = match g.nums("height") {
+            Some(v) if v.len() == 2 => [v[0], v[1]],
+            Some(_) => return Err(format!("{at}: height is [lowest, highest]")),
+            None => height,
+        };
+        if h[1] < h[0] {
+            return Err(format!("{at}: height [{}, {}] has the highest below the lowest", h[0], h[1]));
+        }
+        let align = g.num("align").unwrap_or(0.0);
+        if !(0.0..=1.0).contains(&align) {
+            return Err(format!("{at}: align {align} is not between 0 and 1"));
+        }
+        let draw_distance = g.qty("draw_distance", Unit::Distance).unwrap_or(4000.0);
+        if draw_distance <= 0.0 {
+            return Err(format!("{at}: draw_distance must be more than 0"));
+        }
+        Ok(ScatterDef {
+            model,
+            count: count as usize,
+            scale,
+            max_slope,
+            height: h,
+            align,
+            seed: g.num("seed").map(|s| s as u64).unwrap_or(index as u64 + 1),
+            draw_distance,
+        })
+    }
+}
+
+/// Places one scatter entry over `field`, deterministically for `battle_seed`: the same
+/// battle always has the same rocks in the same places.
+///
+/// Spots are drawn at random over the field's square (*rejection sampling*): a spot whose
+/// ground is too steep or outside the height range is thrown away and another drawn, up
+/// to 30 tries per piece, so a field with few suitable spots gets fewer pieces rather
+/// than a loop that never ends. Each piece gets a random turn about the vertical, a size
+/// in the scale range, and leans towards the ground's normal by `align`.
+pub fn scatter_placements(def: &ScatterDef, field: &Heightfield, battle_seed: u64) -> Vec<Placement> {
+    // xorshift64: tiny, fast and fully determined by its seed. Its state must never be
+    // 0 (it would stay 0 for ever), hence `| 1`.
+    let mut rng = (battle_seed ^ def.seed.wrapping_mul(0x9E37_79B9_7F4A_7C15)).wrapping_mul(0xBF58_476D_1CE4_E5B9) | 1;
+    let mut next = move || {
+        rng ^= rng << 13;
+        rng ^= rng >> 7;
+        rng ^= rng << 17;
+        // The top 24 bits as a float in 0..1 (24 bits: exactly what an f32 holds).
+        (rng >> 40) as f32 / (1u64 << 24) as f32
+    };
+    // The slope test compares the normal's up component with the cosine of the steepest
+    // allowed tilt: a level normal has y = 1, a wall y = 0.
+    let min_up = def.max_slope.to_radians().cos();
+    let half = field.size * 0.5;
+    let mut out = Vec::with_capacity(def.count);
+    for _ in 0..def.count * 30 {
+        if out.len() == def.count {
+            break;
+        }
+        // Always draw all four numbers, so every try uses the same amount of the
+        // sequence whether or not it is rejected.
+        let (u, v, turn, size) = (next(), next(), next(), next());
+        let (x, z) = (-half + u * field.size, -half + v * field.size);
+        let h = field.height_at(x, z);
+        let n = field.normal_at(x, z);
+        if n.y < min_up - 1e-6 || h < def.height[0] || h > def.height[1] {
+            continue;
+        }
+        let up = Vec3::Y.lerp(n, def.align).normalize();
+        // Quaternions compose right to left: `lean * spin` spins about the vertical
+        // first, then leans the spun piece over to `up`.
+        let rotation = Quat::from_rotation_arc(Vec3::Y, up) * Quat::from_rotation_y(turn * std::f32::consts::TAU);
+        let scale = def.scale[0] + (def.scale[1] - def.scale[0]) * size;
+        out.push(Placement { position: Vec3::new(x, h, z), rotation, scale });
+    }
+    out
 }
 
 fn rgb(g: Get, k: &str, d: [f32; 3]) -> [f32; 3] {
@@ -255,7 +411,30 @@ impl TerrainDef {
             TerrainSource::Heightmap(_) => None,
         };
         let c = |k: &str, d: [f32; 3]| colors.map(|c| rgb(c, k, d)).unwrap_or(d);
+        let detail = g.str("detail").map(str::to_string);
+        let slope_detail = g.str("slope_detail").map(str::to_string);
+        if slope_detail.is_some() && detail.is_none() {
+            return Err("slope_detail needs a detail texture too".into());
+        }
+        let detail_scale = match g.node("detail_scale") {
+            None => 50.0,
+            Some(_) => g
+                .qty("detail_scale", Unit::Distance)
+                .filter(|s| *s > 0.0)
+                .ok_or("detail_scale must be a distance more than 0 (e.g. 40m)")?,
+        };
+        let mut scatter = Vec::new();
+        if let Some(items) = g.node("scatter") {
+            let items = items.as_seq().ok_or("scatter is a list of {model, count, …}")?;
+            for (i, item) in items.iter().enumerate() {
+                scatter.push(ScatterDef::parse(i, Get(item), height)?);
+            }
+        }
         Ok(TerrainDef {
+            detail,
+            slope_detail,
+            detail_scale,
+            scatter,
             id: id.to_string(),
             source,
             size,
@@ -488,6 +667,27 @@ pub fn terrain_schema() -> Ty {
             "ground colours",
         ),
         f("resolution", Ty::Num, "grid points per side (17..257, default 129)"),
+        f("detail", Ty::Asset, "a tiling texture multiplying the ground colours up close (white = unchanged)"),
+        f("detail_scale", Ty::Qty(Unit::Distance), "metres covered by one repeat of the detail texture (default 50m)"),
+        f("slope_detail", Ty::Asset, "a second detail texture for steep ground (needs detail)"),
+        f(
+            "scatter",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("model", Ty::Asset, "the model to place (OBJ or original:)"),
+                f("count", Ty::Num, "how many (1..20000, default 100; fewer if few spots suit)"),
+                f(
+                    "scale",
+                    Ty::Either(Box::new(Ty::Num), Box::new(Ty::Numbers(2))),
+                    "size: a number or [smallest, largest] (default 1)",
+                ),
+                f("max_slope", Ty::Qty(Unit::Angle), "steepest ground to stand on, degrees (default 30)"),
+                f("height", Ty::Numbers(2), "only on ground between [lowest, highest] metres (default: all)"),
+                f("align", Ty::Num, "lean with the ground: 0 upright .. 1 square to the slope (default 0)"),
+                f("seed", Ty::Num, "mixed with the battle's seed (default: the item's number)"),
+                f("draw_distance", Ty::Qty(Unit::Distance), "not drawn farther away than this (default 4km)"),
+            ]))),
+            "decoration placed over the ground (drawn only: craft fly through it)",
+        ),
     ])
 }
 
@@ -539,6 +739,109 @@ mod tests {
         assert_eq!((t.size, t.height), (20000.0, [0.0, 1200.0]));
         let both = yaml::parse("generate: {kind: hills}\nheightmap: a.png\n").unwrap();
         assert!(TerrainDef::parse("x", Get(&both), 0).is_err());
+        // No detail or scatter keys: vertex colours only, nothing scattered.
+        assert_eq!((t.detail.as_deref(), t.slope_detail.as_deref(), t.detail_scale), (None, None, 50.0));
+        assert!(t.scatter.is_empty());
+    }
+
+    /// Parses a terrain with `extra` YAML lines after a valid base.
+    fn terrain(extra: &str) -> Result<TerrainDef, String> {
+        let doc = yaml::parse(&format!("generate: {{kind: hills, seed: 2}}\nsize: 4km\nheight: [100, 900]\n{extra}"))
+            .map_err(|e| format!("{e:?}"))?;
+        TerrainDef::parse("t", Get(&doc), 0)
+    }
+
+    #[test]
+    fn detail_textures_and_scatter_parse_with_defaults() {
+        let t = terrain(
+            "detail: textures/d.png\ndetail_scale: 0.04km\nslope_detail: textures/s.png\nscatter:\n  \
+             - {model: models/rock.obj, count: 50, scale: [0.5, 2], max_slope: 20deg, height: [200, 800], align: 1, seed: 9, draw_distance: 2km}\n  \
+             - {model: models/tree.obj, scale: 3}\n",
+        )
+        .unwrap();
+        assert_eq!(t.detail.as_deref(), Some("textures/d.png"));
+        assert_eq!(t.slope_detail.as_deref(), Some("textures/s.png"));
+        assert!((t.detail_scale - 40.0).abs() < 1e-4);
+        let r = &t.scatter[0];
+        assert_eq!((r.model.as_str(), r.count, r.scale, r.max_slope), ("models/rock.obj", 50, [0.5, 2.0], 20.0));
+        assert_eq!((r.height, r.align, r.seed, r.draw_distance), ([200.0, 800.0], 1.0, 9, 2000.0));
+        // Defaults: 100 pieces, upright, the terrain's whole height range, seed = number + 1.
+        let d = &t.scatter[1];
+        assert_eq!((d.count, d.scale, d.max_slope, d.height), (100, [3.0, 3.0], 30.0, [100.0, 900.0]));
+        assert_eq!((d.align, d.seed, d.draw_distance), (0.0, 2, 4000.0));
+    }
+
+    #[test]
+    fn bad_detail_and_scatter_values_say_what_is_wrong() {
+        for (extra, needle) in [
+            ("slope_detail: textures/s.png\n", "slope_detail needs a detail"),
+            ("detail: d.png\ndetail_scale: 0\n", "detail_scale must be"),
+            ("detail: d.png\ndetail_scale: far\n", "detail_scale must be"),
+            ("scatter: {model: m.obj}\n", "scatter is a list"),
+            ("scatter:\n  - {count: 4}\n", "scatter[0]: needs a model"),
+            ("scatter:\n  - {model: m.obj, count: 0}\n", "count 0 is not between"),
+            ("scatter:\n  - {model: m.obj, count: 900000}\n", "not between 1 and 20000"),
+            ("scatter:\n  - {model: m.obj, scale: [2, 1]}\n", "smallest first"),
+            ("scatter:\n  - {model: m.obj, scale: [1, 2, 3]}\n", "scale is a number or"),
+            ("scatter:\n  - {model: m.obj, scale: -1}\n", "must be positive"),
+            ("scatter:\n  - {model: m.obj}\n  - {model: m.obj, max_slope: 120}\n", "scatter[1]: max_slope 120"),
+            ("scatter:\n  - {model: m.obj, height: [500, 100]}\n", "highest below the lowest"),
+            ("scatter:\n  - {model: m.obj, height: [5]}\n", "height is [lowest, highest]"),
+            ("scatter:\n  - {model: m.obj, align: 2}\n", "align 2 is not between 0 and 1"),
+            ("scatter:\n  - {model: m.obj, draw_distance: 0}\n", "draw_distance must be"),
+        ] {
+            let e = terrain(extra).unwrap_err();
+            assert!(e.contains(needle), "{extra:?}: '{e}' lacks '{needle}'");
+        }
+    }
+
+    fn rocks(count: usize) -> ScatterDef {
+        ScatterDef {
+            model: "m".into(),
+            count,
+            scale: [0.5, 2.0],
+            max_slope: 90.0,
+            height: [f32::MIN, f32::MAX],
+            align: 0.0,
+            seed: 1,
+            draw_distance: 1000.0,
+        }
+    }
+
+    #[test]
+    fn scatter_is_deterministic_and_stays_inside_the_field() {
+        let field = Heightfield::generate("hills", 3, 33, 4000.0, [0.0, 600.0]);
+        let def = rocks(200);
+        let a = scatter_placements(&def, &field, 42);
+        assert_eq!(a.len(), 200, "every piece placed when any ground will do");
+        assert_eq!(a, scatter_placements(&def, &field, 42), "same battle seed, same placement");
+        assert_ne!(a, scatter_placements(&def, &field, 43), "another battle, other places");
+        assert_ne!(a, scatter_placements(&ScatterDef { seed: 2, ..def.clone() }, &field, 42), "the entry's seed");
+        for p in &a {
+            assert!(p.position.x.abs() <= 2000.0 && p.position.z.abs() <= 2000.0, "{p:?} outside the field");
+            assert!((p.position.y - field.height_at(p.position.x, p.position.z)).abs() < 1e-3, "on the ground");
+            assert!((0.5..=2.0).contains(&p.scale));
+            // Upright (align 0): the piece's up is the world's up.
+            assert!((p.rotation * Vec3::Y).abs_diff_eq(Vec3::Y, 1e-4));
+        }
+    }
+
+    #[test]
+    fn scatter_respects_slope_height_and_alignment() {
+        let field = Heightfield::generate("craters", 5, 33, 4000.0, [0.0, 600.0]);
+        let def = ScatterDef { max_slope: 8.0, height: [100.0, 400.0], align: 1.0, ..rocks(300) };
+        let placed = scatter_placements(&def, &field, 7);
+        assert!(!placed.is_empty());
+        for p in &placed {
+            let n = field.normal_at(p.position.x, p.position.z);
+            assert!(n.y >= 8f32.to_radians().cos() - 1e-5, "too steep: {n:?}");
+            assert!((100.0..=400.0).contains(&p.position.y), "{}", p.position.y);
+            // Fully aligned: the piece's up is the ground's normal.
+            assert!((p.rotation * Vec3::Y).abs_diff_eq(n, 1e-3));
+        }
+        // Ground that never suits gives nothing rather than looping for ever.
+        let none = ScatterDef { height: [5000.0, 6000.0], ..rocks(50) };
+        assert!(scatter_placements(&none, &field, 7).is_empty());
     }
 
     #[test]

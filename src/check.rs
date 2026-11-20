@@ -144,6 +144,43 @@ pub fn run(content: &Content) -> Report {
             }
         }
     }
+    // Terrains: detail textures load (and can be mipmapped: power-of-two sides), and
+    // every scatter model loads with its textures.
+    for t in &rules.terrains {
+        for tex in t.detail.iter().chain(t.slope_detail.iter()) {
+            match content.load_texture(tex, t.pack) {
+                Ok(img) => {
+                    r.textures += 1;
+                    if !(img.width.is_power_of_two() && img.height.is_power_of_two()) {
+                        r.warnings.push(format!(
+                            "terrains.{}: detail {tex} is {}x{}; power-of-two sides let it fade smoothly into the distance",
+                            t.id, img.width, img.height
+                        ));
+                    }
+                }
+                Err(e) => r.errors.push(format!("terrains.{}: detail {tex}: {e}", t.id)),
+            }
+        }
+        for s in &t.scatter {
+            match content.load_model(&s.model, t.pack, 1.0) {
+                Ok(m) => {
+                    r.models += 1;
+                    for g in m.lods.iter().flat_map(|l| l.groups.iter()) {
+                        let Some(tex) = &g.texture else { continue };
+                        if textures_seen.insert((tex.clone(), t.pack)) {
+                            match content.load_texture(tex, t.pack) {
+                                Ok(_) => r.textures += 1,
+                                Err(e) => {
+                                    r.errors.push(format!("terrains.{}: scatter {}: texture {tex}: {e}", t.id, s.model))
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(e) => r.errors.push(format!("terrains.{}: scatter {}: {e}", t.id, s.model)),
+            }
+        }
+    }
     let mut pieces_seen = HashSet::new();
     for d in &rules.debris_sets {
         for piece in d.pieces.iter().chain(d.chunks.iter()) {
@@ -288,7 +325,9 @@ mod tests {
             dir.join("rules/r.yaml"),
             "factions: {a: {}}\nships:\n  x: {model: models/missing.obj, faction: a, playable: true, cockpit: nope, debris: [models/gone.obj]}\n  \
              y: {faction: a}\n  z: {model: m, faction: a, speeed: 3}\ncockpits: {c: {image: img/none.png}}\nbeams: {b: {sound: s/none.wav}}\n\
-             sounds: {boom: s/boom.wav}\n",
+             sounds: {boom: s/boom.wav}\n\
+             terrains:\n  t: {generate: {kind: hills}, detail: textures/none.png, scatter: [{model: models/nope.obj, count: 3}]}\n  \
+             u: {generate: {kind: hills}, scatter: [{model: models/rock.obj, max_slope: 95}]}\n",
         )
         .unwrap();
         std::fs::write(dir.join("scenarios/s.yaml"), "id: s\nobjects:\n  o: {class: ghost}\n").unwrap();
@@ -307,6 +346,9 @@ mod tests {
             "s/none.wav",
             "s/boom.wav",
             "scenario s",
+            "terrains.t: detail textures/none.png",
+            "terrains.t: scatter models/nope.obj",
+            "terrains.u: scatter[0]: max_slope 95",
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }
