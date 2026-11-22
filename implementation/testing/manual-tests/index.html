@@ -6779,6 +6779,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-33-interface-sounds-hover-help-the-time-dial-and-lamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-33 — Interface sounds, hover help, the time dial and lamps
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12406,6 +12417,17 @@
     <span class="md-ellipsis">
       
         MT-6-32 — History, the clock by screen, and message boxes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-33-interface-sounds-hover-help-the-time-dial-and-lamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-33 — Interface sounds, hover help, the time dial and lamps
       
     </span>
   </a>
@@ -20618,11 +20640,34 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 </tr>
 <tr>
 <td>Steps</td>
-<td>1. <code>openinterceptor --campaign interceptor --strategy</code>; set the dial to 1 hour; watch the clock. 2. Open Bases; wait; then its close button (top-left). 3. CSD → Bases → Purchase → the manufacture radio → close; close again. 4. CSD → Research → close. 5. <code>--strategy --notice "Hello"</code>; click <em>OK (5-SECS)</em>; repeat with <em>OK</em>. 6. Play until a module finishes building.</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code>; set the dial to 1 hour; watch the clock. 2. Open Bases; wait; then its close button (top-left). 7. Open the UFOpedia; press its exit. 3. CSD → Bases → Purchase → the manufacture radio → close; close again. 4. CSD → Research → close. 5. <code>--strategy --notice "Hello"</code>; click <em>OK (5-SECS)</em>; repeat with <em>OK</em>. 6. Play until a module finishes building.</td>
 </tr>
 <tr>
 <td>Expected</td>
-<td>1: the clock runs. 2: on Bases the clock stands still; closing returns to the CSD and it runs again at 1 hour. 3: the first close returns from Manufacture to Bases (the radio did not add a step), the second to the CSD. 4: back on the CSD. 5: a message box with the original's fill and two capsule buttons; <em>OK (5-SECS)</em> sets the dial to 5 s, <em>OK</em> leaves it. 6: the module report shows both buttons and the speed is unchanged until one is chosen.</td>
+<td>1: the clock runs. 2: on Bases the clock stands still; closing returns to the CSD and it runs again at 1 hour. 3: the first close returns from Manufacture to Bases (the radio did not add a step), the second to the CSD. 4: back on the CSD. 5: the original's red style-3 message box (frame kit, blinking ornament at the bottom right, caption in the black slot) with the fill and capsule buttons; <em>OK (5-SECS)</em> sets the dial to 5 s, <em>OK</em> leaves it (since app 0.22.15 a <code>--notice</code> is kind <em>other</em>: a plain OK). 6: the module report shows both buttons and the speed is unchanged until one is chosen; a story notice shows a plain OK. 7: the UFOpedia's exit (bottom right) goes back.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-33-interface-sounds-hover-help-the-time-dial-and-lamps">MT-6-33 — Interface sounds, hover help, the time dial and lamps<a class="headerlink" href="#mt-6-33-interface-sounds-hover-help-the-time-dial-and-lamps" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data; sound on.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code>. Watch the four red map-corner lamps and the small lamp at the bottom right. 2. Rest the cursor on the Bases button, then on a dial hole, then on the minimap; move off. 3. Click each dial hole; press keys 1 – 6. 4. Press the Bases button; on Bases press a side button; on Purchase press a scroll arrow and an action button; open Equip Ships and press a tab. 5. <code>--strategy --notice "Hello"</code>, click OK.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the corner lamps flicker through their frames about 1.5 times a second, all four together; the status lamp cycles. 2: after the cursor stops, a dark-blue box with the original's help text appears above the control (below it near the top of the screen); it closes when the cursor leaves. 3: each click turns the rotary switch (its sound), lights that hole's lamp and sets the speed; the globe turns faster or slower with the clock and stops on other screens; keys 1 – 6 pick speeds 5 s … 1 day. 4: each press makes the original's sound (beep, click, Beep8, Beep29b, Beep3025). 5: the box's opening sound, then MsgBoxBtn on OK.</td>
 </tr>
 </tbody>
 </table>

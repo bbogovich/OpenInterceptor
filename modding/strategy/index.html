@@ -8615,6 +8615,18 @@ and 1 hour, 6 hours, 1 day and 5 days per second.</p>
 <td><code>[OK, "OK (slow)"]</code></td>
 <td>With <code>ask</code>: the Report's buttons (text or <code>@key</code>). <code>interceptor</code>: <code>[@orig.S_OK, @orig.S_OK5SECS]</code>, the original's "OK" and "OK (5 secs)" (RQ-S-18, <strong>verified</strong>: 0x46bdc4 → <code>SetSpeed(0)</code>).</td>
 </tr>
+<tr>
+<td><code>first_key</code></td>
+<td>number</td>
+<td><code>on_event</code> + 1</td>
+<td>The speed the number key 1 picks; 2 the next, up to 6 (app 0.22.15). <code>interceptor</code>: 0 — keys 1 – 6 pick the six speeds (<strong>verified</strong>, OnCommand 49 – 54).</td>
+</tr>
+<tr>
+<td><code>ask_for</code></td>
+<td>list of notice kinds</td>
+<td>all</td>
+<td>With <code>notices: ask</code>: the kinds of notice that offer the two buttons; the rest are a plain OK that keeps the speed (app 0.22.15). Kinds: <code>base_built</code>, <code>module_built</code>, <code>research_complete</code>, <code>delivery</code>, <code>report</code>, <code>contact</code>, <code>damage</code>, <code>other</code>. <code>interceptor</code>: all but <code>other</code> — the original offers "OK (5 secs)" for ships damaged, people killed, modules and bases built, research complete, the reports, deliveries and sightings, and a plain OK otherwise (<strong>verified</strong>, <code>ui-framework.md</code> §4.5). An unknown kind is an error.</td>
+</tr>
 </tbody>
 </table>
 <p>The screen-set action <code>speed(n)</code> picks speed <code>n</code> (<a href="../screens/#actions">Screen layouts</a>); the
@@ -8630,6 +8642,8 @@ keep or ask</code>; <code>clock.notice_buttons: expected two captions [keep, slo
 <span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">                                    </span><span class="c1"># Space: 30 min per second</span>
 <span class="w">  </span><span class="nt">notices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ask</span><span class="w">                              </span><span class="c1"># a Report offers OK and OK (5 secs)</span>
 <span class="w">  </span><span class="nt">notice_buttons</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"@orig.S_OK"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@orig.S_OK5SECS"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">first_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                              </span><span class="c1"># keys 1-6 pick the six speeds</span>
+<span class="w">  </span><span class="nt">ask_for</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">base_built</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">module_built</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">research_complete</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">delivery</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">report</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">contact</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">damage</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>The original's dial has six holes and no pause: its slowest speed is five times real time, and
 its "(5 secs)" buttons select it.</p>

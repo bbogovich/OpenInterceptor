@@ -4882,6 +4882,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Text buttons and dialogs (app 0.22.7)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-originals-message-box-dialogkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's message box (dialog.kit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interface-sounds-and-hover-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interface sounds and hover help
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6721,6 +6749,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Text buttons and dialogs (app 0.22.7)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-originals-message-box-dialogkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's message box (dialog.kit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interface-sounds-and-hover-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interface sounds and hover help
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -7221,11 +7277,145 @@ original's three frame kits) is #127.</p>
 </tr>
 </tbody>
 </table>
-<p>The original has three frame kits (sprite rows 163 – 178, 179 – 188 and 189 – 198, the third in
-red with an ornament at the top). Which piece goes where is not recovered yet, so <code>interceptor</code>
-draws no frame; a mod can assemble its own with <code>frame</code>. <code>--check</code> loads every dialog image.</p>
+<h3 id="the-originals-message-box-dialogkit">The original's message box (<code>dialog.kit</code>)<a class="headerlink" href="#the-originals-message-box-dialogkit" title="Permanent link">&para;</a></h3>
+<p>Since app 0.22.15 a <code>kit</code> makes prompts the original's message boxes (MsgBox.cpp, <strong>verified</strong>,
+<code>ui-framework.md</code> §4):</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dialog.kit</code></td>
+<td>asset</td>
+<td>none</td>
+<td>A frame kit's base sprite B: 8 rows from B (top, bottom, left and right edges; top-left, top-right, bottom-right and bottom-left corners). <code>interceptor</code>: <code>original:sprite#190</code> (style 3); the others are 163 (style 1) and 179 (style 2).</td>
+</tr>
+<tr>
+<td><code>dialog.frame_style</code></td>
+<td>0 – 3</td>
+<td>0</td>
+<td>With a kit: the style's text insets (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61; 0: the kit's side sizes + 3), its padding, and its live pieces (1: the knob, rows B + 8 … B + 15; 2: the ornament and two sliders, B + 8 … B + 10; 3: the blinking ornament B + 8).</td>
+</tr>
+<tr>
+<td><code>dialog.fill_large</code></td>
+<td>asset</td>
+<td><code>fill</code></td>
+<td>The fill for boxes bigger than <code>fill</code> (row 429, 640 × 480).</td>
+</tr>
+</tbody>
+</table>
+<p>With a kit the box follows the exe:</p>
+<ul>
+<li><strong>Size.</strong> Width = max(325, the caption, the body), 100 tall. A body wider than 425 wraps: the
+  box is 425 wide and grows by (line height + 2) × body width / 425, at most 400 tall.</li>
+<li><strong>Padding.</strong> Style 1 grows 20 px up and to each side (10 more on the right); style 2 grows
+  20 px to each side.</li>
+<li><strong>Height.</strong> Styles 2 and 3 round the height so the side edge tile fits a whole number of times.</li>
+<li><strong>Placement.</strong> The box is centred on (320, 240).</li>
+<li><strong>Frame.</strong> Every edge is tiled at its natural size, never stretched, in the order top, bottom,
+  left, right; the corners go on last.</li>
+<li><strong>Fill.</strong> <code>fill</code> (or <code>fill_large</code> when the box is bigger) is centred on the box.</li>
+<li><strong>Caption.</strong> Upper-cased; style 3 draws it at (client centre, top + 54).</li>
+<li><strong>Buttons.</strong> Capsules, each max(100, caption + 20) × 14 and 10 px apart. A row wider than 465
+  wraps into up to 4 rows, 17 px apart. One button is centred; two sit 50 / 60, 90 / 90 or
+  20 / 20 px from the sides (styles 1, 2 and the others).</li>
+</ul>
+<p>With a kit, <code>width</code>, <code>title_y</code>, <code>body_top</code>, <code>button_step</code> and <code>frame</code> are not used. Engine choices
+(<strong>derived</strong>):</p>
+<ul>
+<li>The fill is clipped to the text rect, not the whole box, so it does not show through the kit's
+  open margins.</li>
+<li>The box grows when its wrapped text would leave the text rect.</li>
+<li>The lowest button row ends 25 px above the box's bottom.</li>
+<li>Captions of styles 1 and 2 sit 23 px above the text rect.</li>
+<li><code>interceptor</code> uses style 3 for every prompt, because which dialog uses which style is not
+  settled.</li>
+</ul>
+<p>A mod can still build its own frame from pieces with <code>frame</code>. <code>--check</code> loads every dialog image.</p>
 <p>The default campaign uses both, in its own colours, with <code>font_title</code> and <code>font_body</code>. To see a
 dialog, run <code>openinterceptor --no-original --strategy --notice "Hello"</code>.</p>
+<h2 id="interface-sounds-and-hover-help">Interface sounds and hover help<a class="headerlink" href="#interface-sounds-and-hover-help" title="Permanent link">&para;</a></h2>
+<p>Since app 0.22.15 (plan M2 #126, RQ-UI-09/10) a skin names the sounds its controls make and how
+hover help looks:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/skin.yaml</span>
+<span class="nt">skins</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">xcom</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sounds</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">button</span><span class="p">:</span><span class="w"> </span><span class="nv">ui_click</span><span class="p p-Indicator">,</span><span class="nt"> text_button</span><span class="p">:</span><span class="w"> </span><span class="nv">ui_beep29b</span><span class="p p-Indicator">,</span><span class="nt"> capsule</span><span class="p">:</span><span class="w"> </span><span class="nv">ui_box_button</span><span class="p p-Indicator">,</span><span class="nt"> box_open</span><span class="p">:</span><span class="w"> </span><span class="nv">ui_box_open</span><span class="p p-Indicator">,</span><span class="nt"> arrow</span><span class="p">:</span><span class="w"> </span><span class="nv">ui_beep8</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">tooltip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sounds.button</code></td>
+<td>name</td>
+<td>silent</td>
+<td>A sprite, image or hot-spot button, and check rows, when pressed.</td>
+</tr>
+<tr>
+<td><code>sounds.text_button</code></td>
+<td>name</td>
+<td>silent</td>
+<td>A text button (a labelled button, a list's actions, plain prompt buttons).</td>
+</tr>
+<tr>
+<td><code>sounds.capsule</code></td>
+<td>name</td>
+<td>silent</td>
+<td>A message-box capsule.</td>
+</tr>
+<tr>
+<td><code>sounds.box_open</code></td>
+<td>name</td>
+<td>silent</td>
+<td>A prompt opening.</td>
+</tr>
+<tr>
+<td><code>sounds.arrow</code></td>
+<td>name</td>
+<td>silent</td>
+<td>A list's scroll arrow.</td>
+</tr>
+<tr>
+<td><code>tooltip.font</code></td>
+<td>name</td>
+<td><em>required</em></td>
+<td>A sheet font of the skin for hover help (without <code>tooltip</code> there is none).</td>
+</tr>
+<tr>
+<td><code>tooltip.fill</code>, <code>tooltip.frame</code></td>
+<td>colour</td>
+<td>RGB(0, 0, 100) at 75 %, light grey</td>
+<td>The box's translucent fill and its 1 px frame.</td>
+</tr>
+<tr>
+<td><code>tooltip.right</code></td>
+<td>number</td>
+<td>630</td>
+<td>The rightmost x the box may reach.</td>
+</tr>
+</tbody>
+</table>
+<p>Each sound is a <strong>name in the rules' <code>sounds:</code></strong> — any name besides the engine's event sounds is an
+interface sound, loaded at start (<code>ui_click: cue:Click</code>, <code>ui_open: sounds/radio_status.wav</code>).
+<code>none</code> silences one; a widget's own <code>sound</code> wins. A name that is not in <code>sounds:</code> is a <code>--check</code>
+error. The original's table (<strong>verified</strong>, <code>ui-framework.md</code> §2.6) is Click for buttons,
+MsgBoxOpen for a box opening, MsgBoxBtn for capsules, RotarySwitch for the time dial, Beep8 for
+scroll arrows, and sndBeep22, sndBeep29b and sndBeep3025 for the CSD and Bases buttons, text
+buttons and Equip Ships' tabs. The sound plays when the control is pressed.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used

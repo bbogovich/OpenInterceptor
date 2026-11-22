@@ -9438,7 +9438,19 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 <td><code>dialog</code></td>
 <td><code>{design, width, title_font, body_font, title_y, body_top, button_step, fill, capsule, frame}</code></td>
 <td>none (plain prompts)</td>
-<td>Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22. Since app 0.22.12: <code>fill</code> (an image tiled over the body), <code>capsule</code> (message-box capsule buttons from a base sprite), <code>frame</code> (pieces <code>{image, at, offset, tile}</code>).</td>
+<td>Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22. Since app 0.22.12: <code>fill</code> (an image tiled over the body), <code>capsule</code> (message-box capsule buttons from a base sprite), <code>frame</code> (pieces <code>{image, at, offset, tile}</code>); <code>kit</code>, <code>frame_style</code>, <code>fill_large</code>: the original's message box, sized and framed as the exe does (<a href="../skins/#the-originals-message-box-dialogkit">Skins › The original's message box</a>).</td>
+</tr>
+<tr>
+<td><code>sounds</code></td>
+<td><code>{button, text_button, capsule, box_open, arrow}</code></td>
+<td>silent</td>
+<td>Interface sounds by control: names in the rules' <code>sounds:</code> (app 0.22.15; <a href="../skins/#interface-sounds-and-hover-help">Skins › Interface sounds</a>).</td>
+</tr>
+<tr>
+<td><code>tooltip</code></td>
+<td><code>{font, fill, frame, right}</code></td>
+<td>none</td>
+<td>Hover help boxes (app 0.22.15).</td>
 </tr>
 </tbody>
 </table>
@@ -9507,7 +9519,7 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code> (app 0.22.10)</td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code> (app 0.22.10), <code>anim</code> (app 0.22.15)</td>
 <td><code>image</code></td>
 <td>What it is; another kind is a load error.</td>
 </tr>
@@ -9672,6 +9684,36 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td>name, bool</td>
 <td>none, <code>false</code></td>
 <td>A radio group: the chosen member stays latched; <code>selected</code> (else the first) starts latched. On a <code>check</code>: starts on.</td>
+</tr>
+<tr>
+<td><code>sound</code></td>
+<td>name</td>
+<td>the skin's</td>
+<td>The interface sound when pressed (app 0.22.15): a name in the rules' <code>sounds:</code>, or <code>none</code>; an unknown name is a <code>--check</code> error.</td>
+</tr>
+<tr>
+<td><code>tip</code></td>
+<td>text</td>
+<td>none</td>
+<td>Hover help (text or <code>@key</code>, lines split at <code>~</code>), shown after the cursor rests (app 0.22.15).</td>
+</tr>
+<tr>
+<td><code>frames</code></td>
+<td>list of assets</td>
+<td>none</td>
+<td>An <code>anim</code>'s frames (app 0.22.15); <code>--check</code> loads them.</td>
+</tr>
+<tr>
+<td><code>interval</code></td>
+<td>number</td>
+<td>6</td>
+<td>An <code>anim</code>'s step, ticks (1/60 s; at least 1).</td>
+</tr>
+<tr>
+<td><code>with_clock</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>An <code>anim</code> that moves only while the campaign clock runs.</td>
 </tr>
 <tr>
 <td><code>shape</code></td>

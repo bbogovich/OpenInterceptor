@@ -6963,8 +6963,8 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-089</td>
-<td><strong>Message boxes are partly the original's.</strong> Built (<strong>verified</strong>): the fill surface, capsule buttons and their captions, the history stack, the clock running on the CSD only, and "OK (5 secs)". Not built: the three frame kits (which piece goes where is not recovered, so <code>interceptor</code> boxes have no frame), MsgBoxOpen/capsule sounds (#126), per-dialog sizes and the frame-style-3 caption at top + 54. The fill's tiling, the capsules' row and widths, the box's width and the close buttons' hot spots are <strong>derived</strong>. Every notice asks, where the original asks only for its queued-event dialogs. The UFOpedia's exit is not recovered.</td>
-<td>The frame layout needs more reading of MsgBox.cpp (0x51941f, 0x518604; RE #136).</td>
+<td><strong>Message boxes follow the original's rules, with a few engine choices.</strong> Since the RE of MsgBox.cpp (<code>ui-framework.md</code> §4, <strong>verified</strong>) the box is sized, framed (the 8-row kit, edges tiled, corners last), filled, captioned and given its buttons and live pieces as the exe does, notices ask by kind, and the UFOpedia exit is control 106. <strong>Derived:</strong> the fill is clipped to the text rect, not the whole box; the box grows when its wrapped text would leave the text rect; the lowest button row ends 25 px above the box's bottom (the exe's "moved down by the kit's bottom height" is in its own coordinates); styles 1 and 2 put the caption 23 px above the text rect; the "never further in than 35 px" rule for two buttons is not applied; every <code>interceptor</code> prompt uses style 3; and the red close buttons' hot spots are measured from the art. <strong>Not built:</strong> the opening animation (10 × 3 ticks, then a reveal) and the progress/check row.</td>
+<td>The style per dialog and the button-row coordinates are not settled; RE #136.</td>
 <td>M2 (#127)</td>
 </tr>
 <tr>
@@ -6978,6 +6978,12 @@ one looks like a bug.</p>
 <td><strong>Tachyon Pulser, link modes and burning as built</strong> (app 0.22.14, #117). The Tachyon's shield step, systems-only damage and repair slowdown follow the original (<strong>verified</strong>); its second system table's number of tries and which entries carry damage are <em>derived</em> (as the first table's), and a cloaked target's shield is not skipped (the engine models no cloak skip on any hit yet). <code>flight.link_modes: original</code> (<strong>verified</strong>) keeps the engine's cycling of the selected mount after each unlinked shot (<em>derived</em>: the original's selection is the player's). <code>power.recharge_while_burning</code> (<strong>verified</strong>). The default campaign keeps the engine's rules for all three.</td>
 <td>Data switches; the default campaign is unchanged.</td>
 <td>4 (A1, A2, A3; #117)</td>
+</tr>
+<tr>
+<td>DEV-092</td>
+<td><strong>Hover help, the dial and the lamps, partly derived.</strong> <strong>Verified:</strong> the sound table, the floater's rules, the dial's holes, keys and help keys, the lamps' timing. <strong>Derived:</strong> the floater's height (16 px a line + 3) and multi-line indent; its fill level 75 read as 75 %; the dial hole lamps' pairing (rows 966 + 2k out, + 1 lit); the globe's rate (4 ticks) and that it turns with the clock; the lamps' top-left placement. <strong>Not built:</strong> the option that turns hover help off (window flag +0xd7), the alternate status-lamp set 5065 – 5069, the CSD map's own animations (stars, bases, fleets; #128).</td>
+<td>The remaining facts are not recovered; RE #136.</td>
+<td>M2 (#126)</td>
 </tr>
 </tbody>
 </table>

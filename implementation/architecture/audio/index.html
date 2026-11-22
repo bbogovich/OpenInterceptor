@@ -6682,7 +6682,7 @@ bank. Video soundtracks are played by <code>app::video</code> directly, at 0.9 Ã
 <tbody>
 <tr>
 <td><code>SoundKey</code></td>
-<td><code>Named(&amp;'static str)</code>, <code>Beam(u16)</code>, <code>Missile(u16)</code>, <code>Effect(u16)</code>, since app 0.6.2 <code>Voice(u32)</code> (an index into <code>Ruleset::voice_clips</code>), and since app 0.11.0 <code>Music(set, state, segment)</code> and <code>Stinger(set, stinger)</code> (indices into <code>Ruleset::music</code>).</td>
+<td><code>Named(&amp;'static str)</code>, <code>Beam(u16)</code>, <code>Missile(u16)</code>, <code>Effect(u16)</code>, since app 0.6.2 <code>Voice(u32)</code> (an index into <code>Ruleset::voice_clips</code>), and since app 0.11.0 <code>Music(set, state, segment)</code> and <code>Stinger(set, stinger)</code> (indices into <code>Ruleset::music</code>); since app 0.22.15 <code>Ui(u16)</code>: every other <code>sounds:</code> entry (interface sounds), by its index in the sorted <code>SoundBank::ui_names</code>, played with <code>SoundBank::play_ui(name)</code>.</td>
 </tr>
 <tr>
 <td><code>content::music::MusicSet</code>, <code>battle_state</code></td>

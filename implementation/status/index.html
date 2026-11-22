@@ -7832,10 +7832,20 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td><strong>Done</strong> (app 0.22.12; MT-6-32 not yet run; DEV-089)</td>
 <td><code>src/app/history.rs</code>, <code>src/app/caption.rs</code>, <code>src/app/ui.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/{screens,skin,strategy}.rs</code>, <code>src/content/rules.rs</code> (one constructor), <code>src/check.rs</code>, <code>packs/interceptor/rules/{screens,skin}.yaml</code>, <code>packs/interceptor/strategy/campaign.yaml</code></td>
 </tr>
+<tr>
+<td>#126 RQ-UI-09 – 12: interface sounds (<code>sounds:</code> names as <code>SoundKey::Ui</code>; skin <code>sounds</code>, widget <code>sound</code>; prompts' open and button sounds), hover help (<code>tip</code>, skin <code>tooltip</code>, <code>app::floater</code>), <code>kind: anim</code> lamps and animations (<code>frames</code>, <code>interval</code>, <code>with_clock</code>), speed buttons lit by the clock, <code>clock.first_key</code>; <code>interceptor</code>: the original's sound table, CSD help keys, the dial's holes, lamps and globe, the corner and status lamps</td>
+<td><strong>Done</strong> (app 0.22.15; MT-6-33 not yet run; DEV-092)</td>
+<td><code>src/app/floater.rs</code>, <code>src/audio.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/{screens,skin,strategy}.rs</code>, <code>src/check.rs</code>, <code>packs/interceptor/rules/{screens,skin}.yaml</code>, <code>packs/interceptor/strategy/campaign.yaml</code>, <code>resources/default/rules/skin.yaml</code></td>
+</tr>
+<tr>
+<td>#127 follow-up (RE of MsgBox.cpp): the original's message box (<code>app::msgbox</code>: size, frame kit tiled with corners last, fill, per-style insets, padding, rounding and live pieces, button rows and offsets; <code>dialog.kit</code>, <code>frame_style</code>, <code>fill_large</code>); notices tagged by kind and <code>clock.ask_for</code>; the UFOpedia exit (control 106)</td>
+<td><strong>Done</strong> (app 0.22.15; DEV-089 updated)</td>
+<td><code>src/app/msgbox.rs</code>, <code>src/app/caption.rs</code>, <code>src/campaign/{mod,logistics,story}.rs</code>, <code>src/content/{skin,strategy}.rs</code>, <code>src/app/strategy.rs</code>, <code>packs/interceptor/rules/{skin,screens}.yaml</code>, <code>packs/interceptor/strategy/campaign.yaml</code></td>
+</tr>
 </tbody>
 </table>
 <p>Not yet: map labels in the TrueType font (#128); the list box's spinners, row icons, blinking
-rows and sounds (DEV-086); the TextButton end caps and <code>enabled_when</code> (DEV-087); the original's dialog frame kits (DEV-089). The default campaign has no
+rows and sounds (DEV-086); the TextButton end caps and <code>enabled_when</code> (DEV-087); the message box's opening animation and progress row (DEV-089). The default campaign has no
 screen set: its sheet fonts show in its dialogs only.</p>
 
 

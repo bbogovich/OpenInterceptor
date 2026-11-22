@@ -4947,6 +4947,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sounds-hover-help-and-animations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sounds, hover help and animations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6830,6 +6841,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sounds-hover-help-and-animations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sounds, hover help and animations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7230,6 +7252,24 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>A radio group: the chosen member stays latched (pressed image); <code>selected</code> (else the first) starts latched. On a <code>check</code>: starts on.</td>
 </tr>
 <tr>
+<td><code>sound</code></td>
+<td>name</td>
+<td>the skin's for the kind</td>
+<td>The interface sound when pressed: a name in the rules' <code>sounds:</code>, or <code>none</code> (app 0.22.15).</td>
+</tr>
+<tr>
+<td><code>tip</code></td>
+<td>text or <code>@key</code></td>
+<td>none</td>
+<td>Hover help: a floating box after the cursor rests on the widget (app 0.22.15; <a href="#sounds-hover-help-and-animations">Sounds, hover help and animations</a>).</td>
+</tr>
+<tr>
+<td><code>frames</code>, <code>interval</code>, <code>with_clock</code></td>
+<td>list of assets, ticks, bool</td>
+<td>none, 6, <code>false</code></td>
+<td>An <code>anim</code>: its frames in turn, one every <code>interval</code> ticks (1/60 s), looping; <code>with_clock</code> only while the campaign clock runs.</td>
+</tr>
+<tr>
 <td><code>shape</code></td>
 <td><code>rect</code>, <code>round</code></td>
 <td><code>rect</code></td>
@@ -7563,9 +7603,42 @@ set yet.</p>
 </ul>
 <p><code>interceptor</code> since app 0.22.12: every screen with the art's red close button in its top-left
 corner has <code>back</code> there, a 22 px hot spot centred on (16, 16), <strong>derived</strong> from the art. The old
-<code>[596, 440]</code> hot spot was wrong. The UFOpedia's art has no close button and its exit control is
-not recovered, so it keeps the old hot spot. Purchase and Manufacture switch between each other with
+<code>[596, 440]</code> hot spot was wrong. The UFOpedia's exit is control 106 (<strong>verified</strong>): a 23 × 23
+sprite button (rows 4 / 5) centred at (619, 466), bottom right, which goes back. Purchase and Manufacture switch between each other with
 <code>replace</code>, as the original's category radios do.</p>
+<h3 id="sounds-hover-help-and-animations">Sounds, hover help and animations<a class="headerlink" href="#sounds-hover-help-and-animations" title="Permanent link">&para;</a></h3>
+<p>Since app 0.22.15 (plan M2 #126, RQ-UI-09 – 12):</p>
+<ul>
+<li><strong>Sounds.</strong> A widget's <code>sound</code> (or its skin's default for its kind) plays when it is pressed;
+  prompts play the skin's <code>box_open</code> when they appear and its <code>capsule</code> (or <code>text_button</code>)
+  sound when one of their buttons is clicked (<a href="../skins/#interface-sounds-and-hover-help">Skins</a>).</li>
+<li><strong>Hover help.</strong> A widget with <code>tip</code> opens a floating box once the cursor has stopped over it
+  (the same position two frames running) and no mouse button is down; moving off closes it.
+  The box (Floaters.cpp, <strong>verified</strong>) holds the text in the skin's <code>tooltip.font</code>, lines split
+  at <code>~</code>, 16 px apart, the widest line + 20 wide. It sits with its last line 19 px above the
+  widget at the cursor's x — under the widget when that would go above y = 4 — and is pushed
+  left to end by <code>tooltip.right</code>. One line is centred in it; several start 10 px in.</li>
+<li><strong>Animations and lamps</strong> (<code>kind: anim</code>): <code>frames</code> shown in turn, one every <code>interval</code> ticks,
+  looping. With <code>with_clock</code> the animation moves only while the campaign clock runs.</li>
+<li><strong>Speed buttons light up.</strong> A button whose action is <code>speed(n)</code> shows its pressed (lit) state
+  while the clock runs at speed <code>n</code> — the time dial's hole lamps.</li>
+</ul>
+<p><code>interceptor</code> (app 0.22.15):</p>
+<ul>
+<li>The CSD's screen buttons, minimap and dial holes carry the original's help keys
+  (<code>S_CSD_BASES</code> … <code>S_TIME_5SECS</code> … <code>S_TIME_24HOUR</code>, <strong>verified</strong>).</li>
+<li>Every control has the original's sound.</li>
+<li>The time dial's six holes are 20 px hot spots on their <strong>verified</strong> centres. Each hole's lamp
+  pair (sprite rows 966 + 2k and 967 + 2k) lights for the current speed; the pairing is
+  <strong>derived</strong> from the art.</li>
+<li>The globe in the dial (rows 918 – 929) turns while the clock runs; its rate and place are
+  <strong>derived</strong>.</li>
+<li>The four map-corner lamps (SpritesDLL 1900 – 1909) step every 4 ticks, looping over 10
+  frames (<code>notes/re/unknowns-2026-11.md</code> §1.4, <strong>verified</strong>; their top-left placement is
+  <strong>derived</strong>).</li>
+<li>The status lamp at (618, 453) cycles WrappersDLL 5060 – 5064 every 6 ticks.</li>
+<li>Keys 1 – 6 pick the six speeds (<code>clock.first_key: 0</code>).</li>
+</ul>
 <h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>
 <p><strong>Ctrl+T</strong> switches between the screen set and the testbed layout at any time; a <code>testbed</code>
 button does the same one way. A campaign without <code>strategy_screen</code> uses the testbed layout only.

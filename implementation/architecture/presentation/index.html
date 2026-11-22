@@ -3645,6 +3645,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-originals-message-box-appmsgbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's message box (app::msgbox)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sounds-hover-help-the-dial-and-lamps-appfloater" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sounds, hover help, the dial and lamps (app::floater)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6798,6 +6820,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-originals-message-box-appmsgbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's message box (app::msgbox)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sounds-hover-help-the-dial-and-lamps-appfloater" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sounds, hover help, the dial and lamps (app::floater)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7318,6 +7362,84 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 <li><code>content::screens::tests</code>: <code>clock</code>, <code>history</code>, <code>menu(x)</code>, <code>replace(x)</code>.</li>
 <li><code>check::tests</code>: a missing dialog image.</li>
 </ul>
+<h3 id="the-originals-message-box-appmsgbox">The original's message box (<code>app::msgbox</code>)<a class="headerlink" href="#the-originals-message-box-appmsgbox" title="Permanent link">&para;</a></h3>
+<p><em>App NEXT, branch <code>parity/m2</code> (follow-up to #127; <code>ui-framework.md</code> §4).</em></p>
+<p><code>app::msgbox</code> holds the exe's message-box rules as pure functions:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>base_size</code></td>
+<td>Width max(325, caption, body); wrap at 425; height 100 → ≤ 400.</td>
+</tr>
+<tr>
+<td><code>button_rows</code>, <code>button_width</code></td>
+<td>max(100, text + 20) × 14, 10 apart, rows of ≤ 465, up to 4.</td>
+</tr>
+<tr>
+<td><code>layout</code></td>
+<td>Centred on (320, 240); style padding; styles 2/3 rounded to whole side tiles; per-style insets (<code>insets</code>); button rows and the 1- or 2-button offsets.</td>
+</tr>
+<tr>
+<td><code>kit_pieces</code></td>
+<td>The 8-row kit: edges tiled at natural size from the exe's start and end points, corners last.</td>
+</tr>
+<tr>
+<td><code>fill_rect</code></td>
+<td>The fill centred and clipped.</td>
+</tr>
+<tr>
+<td><code>step</code>, <code>knob_frame</code>, <code>slider_offset</code>, <code>ornament_on</code></td>
+<td>The live pieces on the 5-tick dialog counter (knob ping-pong; sliders one tile every 7 ticks, bouncing; ornament 4 of 8 steps).</td>
+</tr>
+</tbody>
+</table>
+<p><code>caption::kit_dialog</code> draws a prompt with them when the skin's <code>dialog.kit</code> is set: the
+<code>DialogStyle::images</code> (kit rows, live pieces, <code>fill</code>, <code>fill_large</code>, capsules) are loaded by
+<code>Ui</code> at start. The campaign tags each notice with a <code>NoticeKind</code>
+(<code>campaign::Event::Notice(text, kind)</code>); <code>ClockDef::asks(kind)</code> decides whether the Report
+offers "OK (5 secs)" (<code>clock.ask_for</code>).</p>
+<p>Tests:</p>
+<ul>
+<li><code>app::msgbox::tests</code>: size and wrapping; buttons and their rows; the style extensions and
+  rounding; centred and offset buttons; kit tiling with corners last; fill clipping; the knob,
+  sliders and ornament timings.</li>
+<li>The clock tests: <code>ask_for</code>.</li>
+<li><code>content::skin::tests</code>: <code>kit</code>, <code>frame_style</code>, <code>fill_large</code>.</li>
+</ul>
+<h3 id="sounds-hover-help-the-dial-and-lamps-appfloater">Sounds, hover help, the dial and lamps (<code>app::floater</code>)<a class="headerlink" href="#sounds-hover-help-the-dial-and-lamps-appfloater" title="Permanent link">&para;</a></h3>
+<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #126; RQ-UI-09 – 12).</em></p>
+<ul>
+<li><strong>Sounds.</strong> The <code>SoundBank</code> loads every non-event <code>sounds:</code> entry as <code>SoundKey::Ui</code>.
+  <code>strategy::play_ui(ctx, own, default)</code> plays a widget's <code>sound</code> (<code>none</code> silences it), else the
+  skin's <code>UiSounds</code> default for its kind. It plays on the press, in <code>draw_set</code> for buttons and
+  check rows and in <code>draw_list_art</code> for arrows and action buttons. Prompts go through
+  <code>strategy::ask</code>, which plays the capsule or text-button sound on a click. The box-opening
+  sound plays when a prompt appears (<code>StrategyScreen::prompt_up</code>).</li>
+<li><strong>Hover help.</strong> <code>floater::tip_box(widths, rect, cursor_x, right)</code> places the box and its
+  lines (Floaters.cpp rules). <code>floater::Floater&lt;K&gt;</code> opens it when the cursor rests with no
+  button down and closes it when the hovered control changes. <code>draw_set</code> records the hovered
+  widget with a <code>tip</code>; <code>draw_floater</code> draws it in the skin's <code>TooltipStyle</code>.</li>
+<li><strong>Animations.</strong> <code>floater::anim_frame(ticks, interval, n)</code> gives the frame. <code>with_clock</code>
+  animations use <code>StrategyScreen::clock_seconds</code>, which advances only while time runs.
+  Original frames are keyed by their corner colour.</li>
+<li><strong>The dial.</strong> Speed buttons latch while <code>self.speed</code> is theirs. <code>ClockDef::first_key</code> maps
+  the number keys.</li>
+</ul>
+<p>Tests:</p>
+<ul>
+<li><code>app::floater::tests</code>: box placement over, under and pushed left, multi-line; open and close
+  on rest, leaving and a held button; lamp frames at 4 ticks × 10 and 6 ticks × 5.</li>
+<li><code>content::screens::tests</code>: <code>anim</code>, <code>sound</code>, <code>tip</code>, <code>interval</code>.</li>
+<li><code>content::skin::tests</code>: <code>sounds</code>, <code>tooltip</code>.</li>
+<li>The clock tests: <code>first_key</code>.</li>
+<li><code>check::tests</code>: an unknown widget sound.</li>
+</ul>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -7468,6 +7590,16 @@ play without it.</p>
 <td><code>caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}</code>; <code>StrategyScreen::draw_list_art</code>, <code>notice</code></td>
 <td><code>app::caption</code>, <code>app::strategy</code></td>
 <td>Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7).</td>
+</tr>
+<tr>
+<td><code>msgbox::{layout, MsgBox, Kit, insets, base_size, button_rows, button_width, kit_pieces, fill_rect, knob_frame, slider_offset, ornament_on}</code>; <code>caption::kit_dialog</code>; <code>DialogStyle::{kit, frame_style, fill_large, row}</code>; <code>NoticeKind</code>, <code>ClockDef::{ask_for, asks}</code>, <code>StrategyScreen::banner_kind</code></td>
+<td><code>app::msgbox</code>, <code>app::caption</code>, <code>content::skin</code>, <code>content::strategy</code>, <code>campaign</code>, <code>app::strategy</code></td>
+<td>The original's message box and which notices ask (app 0.22.15, #127 follow-up).</td>
+</tr>
+<tr>
+<td><code>floater::{tip_box, Floater, anim_frame, LINE}</code>; <code>strategy::{play_ui, ask, draw_floater}</code>; <code>SoundKey::Ui</code>, <code>SoundBank::{ui_names, play_ui}</code>; <code>UiSounds</code>, <code>TooltipStyle</code>; <code>WidgetDef::{sound, tip, frames, interval, with_clock}</code>, <code>WidgetKind::Anim</code>; <code>ClockDef::first_key</code></td>
+<td><code>app::floater</code>, <code>app::strategy</code>, <code>audio</code>, <code>content::skin</code>, <code>content::screens</code>, <code>content::strategy</code></td>
+<td>Interface sounds, hover help, animations and the dial (app 0.22.15).</td>
 </tr>
 <tr>
 <td><code>history::{History, DEFAULT_LIMIT}</code>; <code>UiAction::{MenuOpen, Replace}</code>; <code>ScreenLayout::{clock_runs, history, empty}</code>; <code>StrategyScreen::{history, screen_holds_clock}</code>; <code>NoticeClock</code>, <code>ClockDef::{notices, notice_buttons}</code>; <code>caption::{frame_piece, capsule_parts, capsule_row}</code>; <code>DialogStyle::{fill, capsule, frame, images}</code>, <code>FramePiece</code>, <code>Anchor</code>; <code>Ui::image</code></td>
