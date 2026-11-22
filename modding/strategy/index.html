@@ -8653,9 +8653,9 @@ kills by type.</p>
 </tr>
 <tr>
 <td><code>salary</code></td>
-<td>number</td>
+<td>number or table</td>
 <td>0</td>
-<td>Per month, per living pilot.</td>
+<td>Per month, per living pilot. App NEXT: or the original's table <code>{base, rank, brackets, kills, max_health}</code> — a month's pay is <code>base</code> + (the rank's entry of <code>rank</code> + every bracket bonus) / 12, where <code>brackets: {&lt;stat&gt;: [[from, bonus], …]}</code>, <code>kills</code> and <code>max_health</code> give the bonus of the last entry whose <code>from</code> the value reaches (the first when none does). <code>interceptor</code>: 4,000 + the exe's rank and bracket tables (<strong>verified</strong>, <code>0x410297</code>).</td>
 </tr>
 <tr>
 <td><code>recruit_fee</code></td>
@@ -8692,6 +8692,30 @@ kills by type.</p>
 <td><code>{gain, cost}</code></td>
 <td>none</td>
 <td>Pilot training (app 0.16.7): a ready pilot put into training gains <code>gain</code> points in <strong>every</strong> stat a day, up to the top of that stat's <code>stats</code> range, and costs <code>cost</code> money a day. Without it (or with <code>gain: 0</code>) the Hangar offers no <em>Train</em> button. Training continues until stopped; it is saved.</td>
+</tr>
+<tr>
+<td><code>training</code> (periodic)</td>
+<td><code>{every, stats, factor, add, scale_by, capacity}</code></td>
+<td>—</td>
+<td>App NEXT, the original's training: every <code>every</code> a pilot in training gains, in each of <code>stats</code>, <code>trunc(scale_by / 100 × stat × factor + add)</code> up to <code>stat_max</code>; at most the bases' <code>capacity</code> module effect train at once, the rest drop out. <code>interceptor</code>: every 5 days, Accuracy, Flying and Psionics, <code>trunc(Int / 100 × stat × 0.1 / 6 + 1)</code>, 5 per Training module (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>generate</code></td>
+<td><code>{rank_roll, bonus}</code></td>
+<td>none</td>
+<td>App NEXT, the original's recruit generator: a starting rank — the last of <code>rank_roll</code>'s thresholds a 1 – 100 roll reaches (the pilot gets that rank's experience) — and <code>bonus: {&lt;stat&gt;: [by rank]}</code> or <code>{&lt;stat&gt;: {add: [by rank], times: &lt;stat&gt;}}</code> (the bonus × that stat / 100, truncated) added up to <code>stat_max</code>. <code>interceptor</code>: thresholds 41/61/81/96; Stamina +0/3/6/9/12, Accuracy +0/5/10/15/20 and Flying +0/5/15/20/30 times Intelligence / 100, Aggressiveness −5/0/5/10/15 (<strong>verified</strong>, <code>0x40e8b6</code>).</td>
+</tr>
+<tr>
+<td><code>health</code></td>
+<td><code>{max, per_day, in_medical, medical, fly_from}</code></td>
+<td>none</td>
+<td>App NEXT: pilots have health. <code>max: {base, per_rank}</code> (whole-number ranges) rolls a recruit's maximum (<code>base</code> + rank × <code>per_rank</code>) and the pilot starts at it; every day each hurt pilot heals <code>per_day</code>, or <code>in_medical</code> while the bases' <code>medical</code> module effect has room; a pilot below <code>fly_from</code> (100 %) of the maximum is grounded. A battle's injuries come back with the pilot (<a href="../reference/#damage"><code>damage.pilot_injury</code></a>); below 0 the pilot is dead. Without it, injuries last <code>heal_days</code>. <code>interceptor</code>: 5 – 15 + rank × 1 – 5, 1 a day, 2 in a medical bay (5 per Medical module, <em>derived</em>), grounded until whole (<em>derived</em>).</td>
+</tr>
+<tr>
+<td><code>stat_max</code></td>
+<td>number</td>
+<td>each range's maximum</td>
+<td>App NEXT: the most training or a generator bonus raises a stat to. <code>interceptor</code>: 100.</td>
 </tr>
 </tbody>
 </table>

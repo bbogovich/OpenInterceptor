@@ -7021,6 +7021,12 @@ one looks like a bug.</p>
 <td>The original's per-body data and its mission counters are not read.</td>
 <td>M3 (#131)</td>
 </tr>
+<tr>
+<td>DEV-099</td>
+<td><strong>Pilots as built</strong> (app 0.22.28, #133). The generator (stat ranges, starting rank, rank bonuses, health), training, healing rates, the salary tables and the battle injury are the original's (<strong>verified</strong>, read from the exe). Different or unknown: a hurt pilot is grounded until whole (<em>derived</em> from the medical bay's leave event); medical bay places are 5 per module (<em>derived</em>) and counted across all bases, as are training places; the split chains injure once per chain (an Enveloping hit twice); a pilot out cold or dead leaves a drifting wreck that still counts as alive for mission conditions (what the original's missions do with it is not traced); the campaign hands only the flying craft's pilot into battle (mission wingmen keep their roles' records); hiring, the recruit pool and promotion (<code>RankAdvancement*</code>) are not traced, so ranks still follow the experience thresholds; the alien grades above 2 (from month 8 − d/2) are not traced.</td>
+<td>Data; the derived values are keys.</td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
