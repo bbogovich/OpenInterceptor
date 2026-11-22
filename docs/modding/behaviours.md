@@ -71,7 +71,7 @@ All keys with types and defaults: [Mod file reference › behaviours](reference.
 | `attack` | Pursues the target (its current one, else the nearest visible hostile within 8 km) with lead and aim error; fires in bursts inside `fire_cone` and `range` (and 95 % of its first beam's reach); launches a missile every `missiles` seconds when locked and within `missile_range`; breaks off for 2 s when about to ram; VCT hulls strafe when the target faces them. Without a target it cruises at half speed. | `range`, `fire_cone`, `burst`, `pause`, `missiles`, `missile_range`, `speed` |
 | `evade` | Weaves unpredictably at top speed (VCT hulls also slide). Leave it with a transition on `time_in_state`. | `duration` |
 | `retreat` | Runs from the nearest hostile at top speed, afterburning while energy lasts. | `jump: true` also starts the hyperdrive |
-| `turret` | Stays put; beams that can swivel (`turret_arc` on the ship class) track hostiles within `range` (and 95 % of the first beam's reach) and fire in bursts. | `range`, `burst`, `pause` |
+| `turret` | Stays put; beams that can swivel (`turret_arc` on the ship class) track hostiles within `range` (and 95 % of the first beam's reach) and fire in bursts — or, with `aim: fixed` or `gimballed`, fire as the original's turrets do ([Turret fire control](#turret-fire-control)); a turret with missiles and no beams launches them. | `range`, `burst`, `pause`; `aim`, `lead_speed`, `accuracy`, `accuracy_factor`, `miss`, `miss_beyond`, `interval`, `interval_jitter`, `line_of_sight`, `free_fire`, `lock_time` |
 | `mine` | Waits; when a hostile is within `range`, detonates its first missile rack as an area blast and is gone ([Missiles and mines](weapons.md#mines)). | `range` (trigger distance) |
 | `tow` | Finds a disabled, capturable hostile ship — or, failing one, the nearest **towable** hostile object (a cargo container, app 0.9.2) — that no one else is towing; closes in, tractors it, hauls it `escape` from where it took it and jumps out with it (tugs; needs a tractor beam fitted). A towable module is torn off its hub by the tractor. | `range` (search radius, at least 5 km), `escape` (default 2.5 km) |
 | `escort` | Flies in formation on its leader — the newest live member of the role named by the mission role's [`escort:`](missions.md#roles) — and attacks any hostile that comes within `range` of the leader or of itself, returning to its slot when the threat is gone; without a leader it just fights (app 0.9.2). | `range`, and the attack parameters |
@@ -238,3 +238,47 @@ Cloak lock-break chance by difficulty (Stage 2 item 2.7) is still a fixed `stren
 | `unknown name 'hul'` … | A query or constant that the object context does not have. |
 | `'hull' is a number, not a condition (compare it: 'hull > 0')` | The condition is not true/false. |
 | `variants: unknown difficulty level 'x'` | A level id the campaign does not define. |
+
+## Turret fire control
+
+Since app NEXT (issue #115) a `turret` state can fire as the original's station and freighter
+turrets do (flight notes §8.6, §8.8, **verified**):
+
+```yaml
+behaviours:
+  station_turret_alien:
+    states:
+      guns:
+        do: turret
+        aim: fixed                 # or gimballed; engine (the default) keeps bursts and aim error
+        range: 5km
+        accuracy: {per_level: [[40, 75], [45, 80], [50, 85], [55, 90], [60, 95]]}
+        interval: {per_level: [1s, 0.975s, 0.95s, 0.925s, 0.9s]}
+        interval_jitter: 0.05s
+        line_of_sight: true
+        free_fire: true
+```
+
+- **`aim: fixed`** — the turret leads fully with its beam's speed. On each tick a roll on its
+  accuracy fails and the target is beyond `miss_beyond` (200 m), it aims up to `miss` (20 m) to
+  one side, along the target's sideways or vertical axis. `accuracy` is a band in % rolled once
+  per turret (`[40, 75]`), one value (`65`), or `pilot` — the pilot record's Accuracy of the turret
+  or the craft it is mounted on (25 with none), times `accuracy_factor`; it is held to 1 – 99 %.
+  It fires only when the aim lies within the class's `turret_arc` of the mount's facing.
+- **`aim: gimballed`** — it leads as if its shot flew at `lead_speed` (2,000 m/s), with no error,
+  and fires only at targets in front of the mount.
+- **`interval`** — one shot every `interval` seconds plus up to `interval_jitter` at random, one
+  mount at a time; `interval: rate_of_fire` fires once per beam `rate_of_fire`.
+- **`line_of_sight`** — fires only when the line ahead (5 km) meets nothing, the target or an
+  object of another side.
+- **`free_fire`** — shots draw no energy and ignore the mounts' own cooldown.
+- **Missile turrets** — a turret class with `missiles` and no `beams` launches them, homing, once
+  a target has stayed in its arc and range for `lock_time`, one every interval, while rounds
+  last.
+
+`interceptor`: the X-COM base's beam turrets are gimballed (one shot per the laser's rate of
+fire, 5 km); the alien base's plasma pods fixed (85°, 5 km, accuracy rolled in 40 + 5 × level …
+75 + 5 × level %, 1 s − 25 ms × level + 0 – 50 ms); the pirate base's and arms dealer's turrets
+fixed with their table's accuracy, interval and line-of-sight flag; and the X-COM and rogue
+freighters carry two fixed laser turrets each (2 km, the pilot's Accuracy fore and ¾ of it aft,
+750 ms − 25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own.

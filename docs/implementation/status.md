@@ -388,6 +388,16 @@ the alien base is destroyed by hull or all four points, its tendrils placed at t
 points 1 – 3 (derived) with a 100 m radius (assumed); mine rings start from the unit X vector as the
 original's; mines with `range: 0` go off on contact (the alien base's).
 
+**Parity M1, #115** (app NEXT; RQ-C-06, RQ-C-08, RQ-C-09 and RQ-C-22, facts from `notes/re/flight`
+§8.6, §8.8 and `notes/re/unknowns-2026-11.md` §6, plus the freighter turret set-up read from the
+player's exe): `turret` states with `aim: fixed | gimballed`, `lead_speed`, `accuracy` (band,
+value or `pilot`), `accuracy_factor`, `miss`, `miss_beyond`, `interval` (or `rate_of_fire`),
+`interval_jitter`, `line_of_sight`, `free_fire`, `lock_time`; missile turrets. `interceptor`: the
+X-COM base's turrets gimballed, the alien base's fixed, the pirate stations' with their table
+values, two fixed laser turrets on the X-COM and rogue freighters. `default`: unchanged. Manual case
+MT-4-70; **530** `#[test]` functions. Not yet: capital-ship turrets, missile-defence modules on the
+bases (DEV-090).
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),

@@ -261,6 +261,16 @@ A state:
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
 | `break_off` | distance | 0 | Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × `max_speed` with the target ahead. `interceptor`: 250 m (**verified**). |
 | `lock_cone` | angle | 0 | Attack (app 0.22.8): the pilot's **own missile lock**, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's `lock_time` (or the missile's) after it started, `missiles` seconds apart exactly, with `missile_chance` per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). `interceptor`: 5° (**verified** as the code reads; the window may be inverted in the original, *derived*). |
+| `aim` | `engine`, `fixed`, `gimballed` | `engine` | Turret (app NEXT): the original's fixed or gimballed turret instead of bursts and aim error ([Turret fire control](behaviours.md#turret-fire-control)). |
+| `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
+| `accuracy` | `[from, to]`, number or `pilot` | 50 | Fixed turret: accuracy in %, a band rolled once per turret, or the pilot record's (25 with none). |
+| `accuracy_factor` | fraction | 100 % | With `accuracy: pilot`: times this. |
+| `miss`, `miss_beyond` | distance | 20 m, 200 m | Fixed turret: the largest sideways miss on a failed roll, and the range inside which it never misses. |
+| `interval` | time or `rate_of_fire` | 0 | Turret: seconds between shots (0 = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. |
+| `interval_jitter` | time | 0 | Turret: up to this much more per shot, at random. |
+| `line_of_sight` | bool | `false` | Turret: fire only when the 5 km line ahead meets nothing, the target or another side. |
+| `free_fire` | bool | `false` | Turret: shots draw no energy and ignore the mounts' cooldown. |
+| `lock_time` | time | 0 | Missile turret: seconds a target must stay in arc and range before the first launch. |
 | `missile_chance` | fraction | 100 % | With `lock_cone`: the chance per tick that a ready missile fires. `interceptor`: 5 + 2 × level % (**verified**). |
 
 #### Pilot records and grades
