@@ -6,6 +6,8 @@ research_model:
   mode: labs
   rate: 6 + module_count(laboratory) * 12
   switching: keep_progress
+  # Score for a finished topic by its `level` (0 when not given).
+  score_by_level: [100, 200, 300]
 
 research:
   rocketry: {name: Rocketry, size: 100, description: "The Guard's own rocket engineering."}
@@ -13,6 +15,9 @@ research:
   ion_rays: {name: Ion rays, size: 3600, requires: research(heat_rays), unlocks: [items.ion_ray]}
   saucer_hulls: {name: Saucer hull analysis, size: 2400, requires: salvaged(saucer_raid) or salvaged(scout_probe), unlocks: [items.atomic_torpedo]}
   saucer_propulsion: {name: Saucer propulsion, size: 5000, requires: research(saucer_hulls), unlocks: [hulls.meteor]}
+  # An artefact-gated topic: offered once a Dominion power cell is recovered from a won
+  # battle (raids.yaml's salvage_items), and only while one stays in a base's stores.
+  power_cell_analysis: {name: Power cell analysis, size: 3000, level: 1, requires_item: dominion_power_cell, description: "A recovered Dominion power cell, taken apart."}
   disintegrators: {name: Disintegrators, size: 6000, requires: research(ion_rays) and research(saucer_hulls), unlocks: [items.disintegrator]}
   force_fields: {name: Force fields, size: 3000, requires: research(heat_rays), unlocks: [items.force_field]}
   saucer_alloys: {name: Saucer alloys, size: 3500, requires: research(saucer_hulls), unlocks: [items.saucer_alloy]}
