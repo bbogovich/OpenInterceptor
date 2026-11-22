@@ -734,8 +734,7 @@ and tech level (the salvage roll itself is per item, §11.2).
 * **Mines** (`0x4d9141`, an object destroyed in flight): destroying an **alien mine** (side 9, rt type
   7) makes its topic available — beam mine (mine type 0) → ALIEN_BEAM_MINE (5), explosive (1) →
   ALIEN_EXPLOSIVE_MINE (8), missile (2) → ALIEN_MISSILE_MINE (16).
-* **Probes** (debriefing `0x4e01ef`): an alien probe in the mission → ALIEN_SENSOR_PROBE (17),
-  ALIEN_INTEL_JAMMER_PROBE (10), ALIEN_COMM_JAMMER_PROBE (6) by probe type (derived: probe destroyed).
+* **Probes**: see below (probe item → topic).
 * **Doomsday component pieces** (debriefing `0x4e3398`): by the mission's cargo-piece value (`0x4e8e50`,
   1/2/3, derived: a Doomsday piece carried by an alien freighter in the battle): 1 →
   STRUCTURAL_COMPONENT_PIECE_1 (18), 2 → WEAPON_COMPONENT_PIECE_2 (19), 3 → DRIVE_COMPONENT_PIECE_3
@@ -747,8 +746,20 @@ and tech level (the salvage roll itself is per item, §11.2).
   (ALIEN_FREIGHTER) (`0x406584`).
 * **Corpses** (counters 82-86): recovered with the AlienCorpse goodies chance; each makes its topic
   available and puts the corpse item in stores (the table above).
-* **Unknown:** what makes **POLTERGEIST_EXAMINATION (49)** and **ALIEN_DRONE (4/78)** available — no
-  direct writer was found (no constant push of 49 or 4 to the available-flag setter).
+* **POLTERGEIST_EXAMINATION (49) and ALIEN_DRONE (4; also loaded at 78):** **nothing in normal play
+  sets their available flag** (verified by elimination): no constant push of 49, 4 or 78 to the
+  available-flag setter `0x40686b`; no item has them as `TechRequired` (the indirect calls take an
+  item's TechRequired from the beam / launcher / missile / equipment tables); no direct write to the
+  flag bytes. The only path is the all-topics routine `0x4a592b` (complete + available for topics
+  0-101), reached from a typed cheat word (`0x48ebce`) and the debug menu (`0x4a7fb6`).
+  So in the original these two topics are effectively unobtainable (derived); ALIEN_DRONE also needs
+  POLTERGEIST known (its Prereq1 = 49).
+* **Probe types** (debriefing `0x4e2259`, verified): for each alien (side 9) probe record of the
+  mission's encounter, its probe item (equipment index) decides the topic:
+  **CommunicationsJammerProbe (20) → ALIEN_COMM_JAMMER_PROBE (6)**, **IntelJammerProbe (23) →
+  ALIEN_INTEL_JAMMER_PROBE (10)**, **SensorProbe (25) → ALIEN_SENSOR_PROBE (17)**; CommunicationsProbe
+  (19), ECMProbe (21), IntelProbe (22) and HunterProbe (24) give nothing. (Whether the probe must be
+  destroyed rather than just met is derived.)
 
 ## 10. What remains unknown
 
