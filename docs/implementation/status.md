@@ -362,6 +362,18 @@ control computer, hull second; nothing at 0 is repaired). `default`: unchanged. 
 are unchanged (about 10 s). Manual case MT-4-67; **482** `#[test]` functions. Not yet: pilot
 injury (D-08, with the pilots of #133), the flight-control wobble.
 
+**Parity M1, #118** (app NEXT; D-19 – D-23, RQ-C-10 and RQ-C-23, facts from `notes/re/flight`
+§5, §5.1, §9 and `notes/re/unknowns-2026-11.md` §5): AI speed requests are m/s against the drive
+factor (`ai::top_speed`; throttle `v × drag ÷ S`), no AI afterburner under the drive; behaviour
+keys `break_off`, `lock_cone`, `missile_chance`; skill keys `accuracy: pilot`, `pilot_clamp`,
+`steer: original`, `fire_mode: pilot`; ship `pilot_grade`; `flight.pilot_grades` (look-ahead
+and sprint); a scenario object's `pilot:` record. `interceptor`'s `original_attack` uses all of
+them. Soak (veteran, `--seconds 180`) against 0.22.6: `duel-wraith` passive 9.7 → 22.1 s, ai 8.4
+→ 14.0 s (the Wraiths' missiles now need their own lock window); `duel-pirate-lightning` passive
+32.4 → 9.9 s, ai 36.9 → 9.1 s (the original steering tracks far better); to re-measure in #121.
+`default`: unchanged. Manual case MT-4-68; **505** `#[test]` functions. Not yet: weapon choice,
+campaign pilots in battle (#133), the miss axis.
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),
