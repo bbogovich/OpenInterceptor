@@ -118,6 +118,9 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `decoys` | number | 2 | `parallax`: decoys released at launch. |
 | `cluster` | `{missile, count, at}` | count 6, at 600 m | `cluster`: the submunition missile id, how many, and how close to the target it splits. |
 | `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
+| `fuse` | time | 0 | A Nova bomb (app NEXT): it never goes off on contact or by its proximity fuse; it flies on and detonates this long after launch, damaging nothing (what the original's blast does is not traced). 0 = an ordinary missile. `interceptor`: `nova_bomb`, 60 s (**verified**). |
+| `ends_battle_after` | time | 0 | With `fuse`: the battle is over this long after the detonation — the `battle_over` mission query turns true (app NEXT). `interceptor`: 60 s (**verified**). |
+| `warnings` | list of `{at, text}` | none | With `fuse`: radio lines this long after launch (app NEXT). `interceptor`: at 30 s, 60 s, 88 s and 107 s, in the engine's words (the original's message texts are not mapped). |
 
 ### `ships` and `objects`
 
@@ -238,6 +241,8 @@ A cockpit needs an `image`, a `model`, or both. Guide: [Cockpits](cockpits.md).
 |---|---|---|---|
 | `start` | id | the first state | The first state. |
 | `states` | mapping state name: state | *required* (at least one) | Manoeuvre and parameters (below). |
+| `retreat_when_disarmed` | `{to, every, settle, rows, clamp, no_pilot}` | none | App NEXT: when every beam mount is gone, the pilot rolls — at most every `every` (5 s), `settle` (5 s) after its last change of state — to switch to state `to`, with the chance its record gives ([Retreat rolls](behaviours.md#retreat-rolls)). |
+| `retreat_on_nova` | `{to, rows, clamp, no_pilot}` | none | App NEXT: one roll per pilot when a Nova bomb goes off. |
 | `systems` | `{cloak, ecm, shields_first, beams_first}` | none | When the pilot uses its ship's systems: each a condition, checked with the transitions. `cloak` / `ecm` on while it holds, off otherwise (if fitted); `shields_first` moves power to shields one step at a time while it holds; else `beams_first` moves it to beams. |
 | `prefer` | mapping selector: weight | none | Target preferences: a hostile matching a selector counts as if `weight` times nearer when the AI picks a new target (several matches multiply). Selectors: `player`, a ship kind (`fighter`, `freighter`, `station`, …), `class:<id>`, `faction:<id>`; weights above 0. |
 | `transitions` | list of `{from, to, when}` | none | Tried in order; the first whose `from` matches and whose condition holds wins. `from` is a state name or `"*"` (any, the default); `when` is a [condition](behaviours.md#the-condition-language). |
@@ -263,6 +268,7 @@ A state:
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
 | `break_off` | distance | 0 | Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × `max_speed` with the target ahead. `interceptor`: 250 m (**verified**). |
+| `break_time` | time | 2 s | Attack (app NEXT): how long a break-off lasts before the pilot comes round again. `interceptor`: 5 s − 0.5 s × level (*derived* from the original's 5,000 − 500d ms). |
 | `lock_cone` | angle | 0 | Attack (app 0.22.8): the pilot's **own missile lock**, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's `lock_time` (or the missile's) after it started, `missiles` seconds apart exactly, with `missile_chance` per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). `interceptor`: 5° (**verified** as the code reads; the window may be inverted in the original, *derived*). |
 | `aim` | `engine`, `fixed`, `gimballed` | `engine` | Turret (app 0.22.13): the original's fixed or gimballed turret instead of bursts and aim error ([Turret fire control](behaviours.md#turret-fire-control)). |
 | `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
@@ -859,6 +865,8 @@ actions each context adds for scripts:
 | `member_alive(role, m)` | query, true/false | battle | The role's `m`-th member (from 0) is still in the battle. |
 | `member_hull(role, m)` | query, number | battle | Its hull fraction (0 once gone). |
 | `member_distance(role, m)` | query, number | battle | Its distance from the player, m (very large once gone). |
+| `nova_time` | query, number | battle | Seconds since a Nova bomb went off; −1 before (app NEXT). |
+| `battle_over` | query, true/false | battle | A Nova bomb's `ends_battle_after` has run out (app NEXT). |
 | `script(file:function)` | action-list entry | battle, campaign | Hand over to a script function (not from inside a script). |
 
 The language, budget and errors: [Scripts (Tier 2)](scripts.md).

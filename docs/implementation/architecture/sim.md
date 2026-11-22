@@ -350,6 +350,16 @@ hull gets nothing — and emits `SimEvent::HardPointDestroyed { position, explos
 (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and `hard_hp`. A `mine` state
 with `range: 0` goes off when its hull touches a hostile's.
 
+**Retreat rolls and the Nova** (app NEXT, #119). `ai::retreat_rolls` runs in `run_behaviour`
+after the transition check: with `retreat_when_disarmed`, a `disarmed` ship (all damageable beam
+mounts at 0) rolls `RetreatRule::chance` (its record, or the `no_pilot` band) at most every
+`every` and `settle` after its last change of state (`AiState::last_retreat_roll`); with
+`retreat_on_nova`, every pilot rolls once after `World::nova_at` is set (`AiState::nova_rolled`).
+`guidance::launch` gives a `fuse` missile its fuse as life and schedules its `warnings` in
+`World::timed_lines` (emitted as `Radio` events by `World::step`); `guidance::step` skips its
+contact and proximity checks and, when the fuse runs out, sets `nova_at` and `battle_over_at`
+and emits `NovaDetonated`. The mission queries `nova_time` and `battle_over` read them.
+
 **Damage modes** (app 0.22.14, #117). `combat::apply_hit` dispatches on `DamageMode`: `Normal` and
 `BypassShields` run one `hit_chain` (with or without the shield step); `Enveloping` runs two half
 chains with the side forced fore and aft (`front: Some(true/false)`) at the same impact point;

@@ -292,3 +292,39 @@ Phantasm a phase turret below, a plasma turret below and one above (besides its 
 Shade a phase turret aft; the Harbinger two tachyon turrets ahead and a 275 m one behind (no
 guns of its own); the Spirit freighter a plasma turret below and one above (no guns of its own).
 The Phantasm's Psi Blaster turret is not built.
+
+## Retreat rolls
+
+Since app NEXT (issue #119) a behaviour can send its pilot home the way the original does
+(flight notes §9, **verified**) — not on hull damage, but when it is **disarmed** or when a
+**Nova bomb** goes off:
+
+```yaml
+behaviours:
+  original_attack:
+    states:
+      engage: {do: attack}
+      flee: {do: retreat, jump: true}
+    retreat_when_disarmed:
+      to: flee
+      every: 5s                # roll at most this often
+      settle: 5s               # and only this long after the last change of state
+      rows: [{ranks: [0, 1], bravery: 0.7, add: 40}, {ranks: [2, 2], bravery: 0.6, add: 25}, {ranks: [3, 9], bravery: 0.5}]
+      clamp: [5, 85]
+      no_pilot: [50, 75]
+    retreat_on_nova:
+      to: flee
+      rows: [{ranks: [0, 1], bravery: 0.25, intelligence: 0.1, stamina: 0.05, add: 50}]
+      clamp: [5, 95]
+```
+
+- **Disarmed** means the class has beam mounts and every one of them has been destroyed (mounts
+  without `hit_points` never are).
+- **The chance**, in %, comes from the pilot's record (a scenario object's `pilot:` with
+  `rank`): with `b = 100 − Bravery`, `i = 100 − Intelligence`, `s = 100 − Stamina`, the first row
+  whose `ranks` hold the pilot's rank gives `bravery·b + intelligence·i + stamina·s + add`, held to
+  `clamp`. A ship with no record rolls its chance in `no_pilot`.
+- On success the pilot switches to state `to`; a Nova roll happens once per pilot.
+
+`interceptor`'s `original_attack` uses the original's tables and no longer flees on hull damage;
+its break-off lasts 5 s − 0.5 s × level (`break_time`) before the pilot comes round again.
