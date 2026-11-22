@@ -300,6 +300,38 @@ draws no frame; a mod can assemble its own with `frame`. `--check` loads every d
 The default campaign uses both, in its own colours, with `font_title` and `font_body`. To see a
 dialog, run `openinterceptor --no-original --strategy --notice "Hello"`.
 
+## Interface sounds and hover help
+
+Since app NEXT (plan M2 #126, RQ-UI-09/10) a skin names the sounds its controls make and how
+hover help looks:
+
+```yaml
+# packs/interceptor/rules/skin.yaml
+skins:
+  xcom:
+    sounds: {button: ui_click, text_button: ui_beep29b, capsule: ui_box_button, box_open: ui_box_open, arrow: ui_beep8}
+    tooltip: {font: body}
+```
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `sounds.button` | name | silent | A sprite, image or hot-spot button, and check rows, when pressed. |
+| `sounds.text_button` | name | silent | A text button (a labelled button, a list's actions, plain prompt buttons). |
+| `sounds.capsule` | name | silent | A message-box capsule. |
+| `sounds.box_open` | name | silent | A prompt opening. |
+| `sounds.arrow` | name | silent | A list's scroll arrow. |
+| `tooltip.font` | name | *required* | A sheet font of the skin for hover help (without `tooltip` there is none). |
+| `tooltip.fill`, `tooltip.frame` | colour | RGB(0, 0, 100) at 75 %, light grey | The box's translucent fill and its 1 px frame. |
+| `tooltip.right` | number | 630 | The rightmost x the box may reach. |
+
+Each sound is a **name in the rules' `sounds:`** — any name besides the engine's event sounds is an
+interface sound, loaded at start (`ui_click: cue:Click`, `ui_open: sounds/radio_status.wav`).
+`none` silences one; a widget's own `sound` wins. A name that is not in `sounds:` is a `--check`
+error. The original's table (**verified**, `ui-framework.md` §2.6) is Click for buttons,
+MsgBoxOpen for a box opening, MsgBoxBtn for capsules, RotarySwitch for the time dial, Beep8 for
+scroll arrows, and sndBeep22, sndBeep29b and sndBeep3025 for the CSD and Bases buttons, text
+buttons and Equip Ships' tabs. The sound plays when the control is pressed.
+
 ## Not built yet
 
 - Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used

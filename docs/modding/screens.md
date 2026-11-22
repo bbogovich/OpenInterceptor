@@ -178,6 +178,9 @@ and kept; one that cannot be loaded is reported on standard error once
 | `images.sprite`, `images.states` | asset, 1 – 8 | none, 2 | A button's states as consecutive sprites: `original:sprite#N` is state 0, `#N+k` state k. With 1 state nothing is drawn when up. |
 | `fire_on_press`, `repeat` | bool, `[delay, interval]` | `false`, none | A button fires when pressed instead of released; held, it fires again after `delay` ticks every `interval` (1/60 s). |
 | `group`, `selected` | name, bool | none, `false` | A radio group: the chosen member stays latched (pressed image); `selected` (else the first) starts latched. On a `check`: starts on. |
+| `sound` | name | the skin's for the kind | The interface sound when pressed: a name in the rules' `sounds:`, or `none` (app NEXT). |
+| `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app NEXT; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
+| `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
 | `kind` | Draws / does |
@@ -383,6 +386,40 @@ corner has `back` there, a 22 px hot spot centred on (16, 16), **derived** from 
 `[596, 440]` hot spot was wrong. The UFOpedia's art has no close button and its exit control is
 not recovered, so it keeps the old hot spot. Purchase and Manufacture switch between each other with
 `replace`, as the original's category radios do.
+
+### Sounds, hover help and animations
+
+Since app NEXT (plan M2 #126, RQ-UI-09 – 12):
+
+- **Sounds.** A widget's `sound` (or its skin's default for its kind) plays when it is pressed;
+  prompts play the skin's `box_open` when they appear and its `capsule` (or `text_button`)
+  sound when one of their buttons is clicked ([Skins](skins.md#interface-sounds-and-hover-help)).
+- **Hover help.** A widget with `tip` opens a floating box once the cursor has stopped over it
+  (the same position two frames running) and no mouse button is down; moving off closes it.
+  The box (Floaters.cpp, **verified**) holds the text in the skin's `tooltip.font`, lines split
+  at `~`, 16 px apart, the widest line + 20 wide. It sits with its last line 19 px above the
+  widget at the cursor's x — under the widget when that would go above y = 4 — and is pushed
+  left to end by `tooltip.right`. One line is centred in it; several start 10 px in.
+- **Animations and lamps** (`kind: anim`): `frames` shown in turn, one every `interval` ticks,
+  looping. With `with_clock` the animation moves only while the campaign clock runs.
+- **Speed buttons light up.** A button whose action is `speed(n)` shows its pressed (lit) state
+  while the clock runs at speed `n` — the time dial's hole lamps.
+
+`interceptor` (app NEXT):
+
+- The CSD's screen buttons, minimap and dial holes carry the original's help keys
+  (`S_CSD_BASES` … `S_TIME_5SECS` … `S_TIME_24HOUR`, **verified**).
+- Every control has the original's sound.
+- The time dial's six holes are 20 px hot spots on their **verified** centres. Each hole's lamp
+  pair (sprite rows 966 + 2k and 967 + 2k) lights for the current speed; the pairing is
+  **derived** from the art.
+- The globe in the dial (rows 918 – 929) turns while the clock runs; its rate and place are
+  **derived**.
+- The four map-corner lamps (SpritesDLL 1900 – 1909) step every 4 ticks, looping over 10
+  frames (`notes/re/unknowns-2026-11.md` §1.4, **verified**; their top-left placement is
+  **derived**).
+- The status lamp at (618, 453) cycles WrappersDLL 5060 – 5064 every 6 ticks.
+- Keys 1 – 6 pick the six speeds (`clock.first_key: 0`).
 
 ### The testbed layout and `--screen`
 

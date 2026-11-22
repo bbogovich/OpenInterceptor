@@ -2375,3 +2375,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`; set the dial to 1 hour; watch the clock. 2. Open Bases; wait; then its close button (top-left). 3. CSD → Bases → Purchase → the manufacture radio → close; close again. 4. CSD → Research → close. 5. `--strategy --notice "Hello"`; click *OK (5-SECS)*; repeat with *OK*. 6. Play until a module finishes building. |
 | Expected | 1: the clock runs. 2: on Bases the clock stands still; closing returns to the CSD and it runs again at 1 hour. 3: the first close returns from Manufacture to Bases (the radio did not add a step), the second to the CSD. 4: back on the CSD. 5: a message box with the original's fill and two capsule buttons; *OK (5-SECS)* sets the dial to 5 s, *OK* leaves it. 6: the module report shows both buttons and the speed is unchanged until one is chosen. |
 
+### MT-6-33 — Interface sounds, hover help, the time dial and lamps
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data; sound on. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy`. Watch the four red map-corner lamps and the small lamp at the bottom right. 2. Rest the cursor on the Bases button, then on a dial hole, then on the minimap; move off. 3. Click each dial hole; press keys 1 – 6. 4. Press the Bases button; on Bases press a side button; on Purchase press a scroll arrow and an action button; open Equip Ships and press a tab. 5. `--strategy --notice "Hello"`, click OK. |
+| Expected | 1: the corner lamps flicker through their frames about 1.5 times a second, all four together; the status lamp cycles. 2: after the cursor stops, a dark-blue box with the original's help text appears above the control (below it near the top of the screen); it closes when the cursor leaves. 3: each click turns the rotary switch (its sound), lights that hole's lamp and sets the speed; the globe turns faster or slower with the clock and stops on other screens; keys 1 – 6 pick speeds 5 s … 1 day. 4: each press makes the original's sound (beep, click, Beep8, Beep29b, Beep3025). 5: the box's opening sound, then MsgBoxBtn on OK. |
+

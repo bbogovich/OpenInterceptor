@@ -662,6 +662,8 @@ section: `skins: {<skin id>: {…}}`; `campaign.skin` chooses one.
 | `fonts.<name>` | asset or `{sheet, top, wrap_offset, spacing, centre_raise}` | none | Grid sheet bitmap fonts for screen-set widgets' `font:` (app 0.22.5; [Skins › Sheet fonts](skins.md#sheet-fonts-app-0225)). `sheet`: the image; `top`: glyph top = anchor y − `top` (default half the line height); `wrap_offset`: extra drop of wrapped text; `spacing`: extra pixels per character; `centre_raise` (app 0.22.7): a centred line moves up this much. `sheet: builtin:small` (app 0.22.7) is the engine's 6-pixel caption font with the original's advances. `interceptor`: the original's nine SpritesDLL fonts. |
 | `text_button` | `{font, colour, line, fill}` | none (plain buttons) | The original's TextButton for labelled buttons, list actions and dialog buttons (app 0.22.7; [Skins › Text buttons and dialogs](skins.md#text-buttons-and-dialogs-app-0227)). Defaults: the original's 200,200,200 caption, 0,150,0 lines, 0,200,0 fill at 50 %. |
 | `dialog` | `{design, width, title_font, body_font, title_y, body_top, button_step, fill, capsule, frame}` | none (plain prompts) | Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22. Since app 0.22.12: `fill` (an image tiled over the body), `capsule` (message-box capsule buttons from a base sprite), `frame` (pieces `{image, at, offset, tile}`). |
+| `sounds` | `{button, text_button, capsule, box_open, arrow}` | silent | Interface sounds by control: names in the rules' `sounds:` (app NEXT; [Skins › Interface sounds](skins.md#interface-sounds-and-hover-help)). |
+| `tooltip` | `{font, fill, frame, right}` | none | Hover help boxes (app NEXT). |
 
 ### `screens`
 
@@ -682,7 +684,7 @@ keeps its shape (one scale factor, centred) instead of stretching.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info`, `check` (app 0.22.10) | `image` | What it is; another kind is a load error. |
+| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info`, `check` (app 0.22.10), `anim` (app NEXT) | `image` | What it is; another kind is a load error. |
 | `rect` | 4 numbers | *required* | x, y, w, h in the screen's design space. |
 | `image` | asset | none | An `image`'s picture (a button's `up` image). |
 | `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
@@ -710,6 +712,11 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `fire_on_press` | bool | `false` | A button fires when pressed, not when released (app 0.22.10: buttons fire on release). |
 | `repeat` | 2 numbers | none | A held button fires again after `[delay, interval]` ticks (1/60 s; interval at least 1). |
 | `group`, `selected` | name, bool | none, `false` | A radio group: the chosen member stays latched; `selected` (else the first) starts latched. On a `check`: starts on. |
+| `sound` | name | the skin's | The interface sound when pressed (app NEXT): a name in the rules' `sounds:`, or `none`; an unknown name is a `--check` error. |
+| `tip` | text | none | Hover help (text or `@key`, lines split at `~`), shown after the cursor rests (app NEXT). |
+| `frames` | list of assets | none | An `anim`'s frames (app NEXT); `--check` loads them. |
+| `interval` | number | 6 | An `anim`'s step, ticks (1/60 s; at least 1). |
+| `with_clock` | bool | `false` | An `anim` that moves only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport; `round` clips it to the circle inside the rectangle. |
 
 ### `console`
