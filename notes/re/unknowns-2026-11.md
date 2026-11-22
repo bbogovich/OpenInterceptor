@@ -332,10 +332,18 @@ The field is **pilot record +0x28** (byte; the "+0xa0" in `flight/README.md` was
 | 4 | AlienType4 (and Type4 raid escorts) |
 
 `0x5a44f9(2, class)` picks the alien grade; from month 8 − d/2 on it can return higher grades.
-Effects: the generator adds a grade bonus to generated stats (byte tables 0x65f0a8 / 0x65f0b0 / 0x65f0b8:
-0/3/6/9/12, 0/5/10/15/20, 0/5/15/20/30 scaled by Intelligence/100, derived), and in flight the look-ahead
-(0 → 225 m, 2 → 100 m, else 250 m) and the sprint rule (`a = 1.0625 S` when grade ≠ 0). No strategy screen
-shows it.
+Effects: in the generator the grade only picks the **Psionics** range (jump table 0x40efe7, verified):
+grade 0 `rand % 101`, 1 `rand[0, 10)`, 2 `0`, 3 `rand[50, 80)`, 4 `rand[45, 70)`, 5 `rand[75, 100)`. In flight
+it sets the look-ahead (0 → 225 m, 2 → 100 m, else 250 m) and the sprint rule (`a = 1.0625 S` when grade ≠ 0).
+No strategy screen shows it.
+
+**Correction (2026-11-22, #133, verified):** the stat bonus tables 0x65f0a8 / 0x65f0b0 / 0x65f0b8 / 0x65f0c0
+(0/3/6/9/12 Stamina, 0/5/10/15/20 Accuracy × Int/100, 0/5/15/20/30 Flying × Int/100, −5/0/5/10/15
+Aggressiveness) are indexed by the pilot's **rank** just rolled in the generator (`[ebp−0xc]`, the rank
+from the 1–100 roll against 0x65f068 = 0/41/61/81/96), **not by the grade**. The whole generator:
+Int 50 + rand % 50; Stamina 50 + rand % 50 + bonus; Accuracy and Flying 25 + rand % 75 + trunc(Int/100 ×
+bonus); Aggressiveness 25 + rand % 75 + bonus; Bravery 25 + rand % 75 (each capped at 100); maximum health
+(+0x31) `(rand % 5 + 1) × rank + rand % 11 + 5`, health = maximum.
 
 ## 6. Gimballed turret aim (verified, `0x5992b9`, `0x59970f`, `0x599d0a`, solution `0x59878d`)
 
