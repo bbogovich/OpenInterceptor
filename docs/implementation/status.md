@@ -398,6 +398,12 @@ values, two fixed laser turrets on the X-COM and rogue freighters. `default`: un
 MT-4-70; **530** `#[test]` functions. Not yet: capital-ship turrets, missile-defence modules on the
 bases (DEV-090).
 
+**#115 follow-up** (app NEXT; `notes/re/flight` §8.8): both bases' turrets check their line of
+sight; `aim:` turrets default to 500 ms and 2,500 m; `accuracy_unpiloted` and `accuracy_minus`; the
+Phantasm, Shade, Harbinger and Spirit carry the original's turrets (the Harbinger and Spirit no
+guns of their own); the freighter accuracies are S and int(S × 0.75) (the RE table's "25" and "from
+the pilot" are that S's no-pilot value and factor; both readings on #115).
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),

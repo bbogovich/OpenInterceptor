@@ -265,8 +265,10 @@ A state:
 | `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
 | `accuracy` | `[from, to]`, number or `pilot` | 50 | Fixed turret: accuracy in %, a band rolled once per turret, or the pilot record's (25 with none). |
 | `accuracy_factor` | fraction | 100 % | With `accuracy: pilot`: times this. |
+| `accuracy_unpiloted` | `[from, to]` | 25, 25 | With `accuracy: pilot` and no pilot record: the band the turret rolls once (app NEXT). |
+| `accuracy_minus` | `[from, to]` | 0, 0 | Fixed turret: a band rolled once and taken off its accuracy (app NEXT; the original's `S − rand[5, 15)`). |
 | `miss`, `miss_beyond` | distance | 20 m, 200 m | Fixed turret: the largest sideways miss on a failed roll, and the range inside which it never misses. |
-| `interval` | time or `rate_of_fire` | 0 | Turret: seconds between shots (0 = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. |
+| `interval` | time or `rate_of_fire` | 0 (0.5 s with `aim`) | Turret: seconds between shots (0 without `aim` = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. With `aim: fixed`/`gimballed` an unset `range` is 2.5 km (app NEXT). |
 | `interval_jitter` | time | 0 | Turret: up to this much more per shot, at random. |
 | `line_of_sight` | bool | `false` | Turret: fire only when the 5 km line ahead meets nothing, the target or another side. |
 | `free_fire` | bool | `false` | Turret: shots draw no energy and ignore the mounts' cooldown. |
