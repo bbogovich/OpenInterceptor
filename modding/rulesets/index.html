@@ -7219,7 +7219,13 @@ C / C; <code>balance: share</code>. The original has no step budget — the sett
    the beam's <code>shield_factor</code> points (1; the original's Phase Cannon 1.5): a bank that holds
    <code>damage × shield_factor</code> stops the hit, one that holds less stops <code>bank / shield_factor</code>
    and falls. <code>bypass_shields</code> missiles skip this step; <code>enveloping</code> ones put half on each
-   facing. A station with a <code>shield_pool</code> has one pool that takes the whole hit from any side.</li>
+   facing. A station with a <code>shield_pool</code> has one pool that takes the whole hit from any side.
+   Since app 0.22.14: <code>enveloping</code> runs half the damage through the fore chain (fore shield, fore
+   armour, hull) and half through the aft chain; <code>permeator</code> runs half the struck side's chain and
+   half past the shield; their halves take no shield factor. A class with
+   <code>accumulator_shields</code> takes an ordinary hit on a raised bank as a quarter of itself <em>added</em>
+   to that bank. A beam with <code>effect: systems</code> (the Tachyon Pulser) stops at the shield 1:1 and
+   sends the rest to the systems only (<a href="../reference/#damage"><code>damage.tachyon_table</code></a>).</li>
 <li><strong>Armour</strong>: the one pool, or with <code>damage.armor: per_side</code> the bank on that side.</li>
 <li><strong>Systems</strong>: while the hull is below <code>system_below</code> of its maximum, <code>system_share</code> of what
    is left strikes one random working system — instead of the hull with <code>system_divert: true</code>,

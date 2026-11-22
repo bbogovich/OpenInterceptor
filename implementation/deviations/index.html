@@ -6825,9 +6825,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-066</td>
-<td><strong>No accumulator shields.</strong> The original's fourth shield type turns an ordinary hit on a raised bank into a quarter of its damage added to that bank (<strong>verified</strong>).</td>
-<td>A shield behaviour beyond the plain bank; it would be a new shield kind in data.</td>
-<td>4 (A3)</td>
+<td><strong>Accumulator shields</strong> were missing until app 0.22.14; since then <code>accumulator_shields: true</code> (the Shade and Harbinger in <code>interceptor</code>) turns an ordinary hit on a raised bank into a quarter of its damage added to that bank (<strong>verified</strong>), held to the bank's maximum (<em>derived</em>). <strong>Still different:</strong> a campaign craft fitted with the original's ShieldType4 does not get it yet (the item has no such property; strategy layer).</td>
+<td>—</td>
+<td>4 (A3; #117)</td>
 </tr>
 <tr>
 <td>DEV-067</td>
@@ -6867,9 +6867,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-073</td>
-<td><strong>Permeator and Enveloping hits are simplified.</strong> Here a Permeator (<code>damage: bypass_shields</code>) skips the shields entirely and an Enveloping torpedo (<code>enveloping</code>) puts half its damage on each shield bank, then one armour bank. In the original a Permeator sends half its damage through the struck side's normal chain and half past the shield, and an Enveloping hit runs half through the fore chain and half through the aft chain (shield, armour, hull each), both injuring the pilot (<strong>verified</strong>).</td>
-<td>The two warhead modes predate the RE notes; matching them is part of the missile work (Track A A5); still open after app 0.22.0, which adopted the lock and guidance but not the warheads.</td>
-<td>4 (A5)</td>
+<td><strong>Permeator and Enveloping hits</strong> follow the original since app 0.22.14 (<code>damage: permeator</code>, <code>enveloping</code>; <strong>verified</strong>): half the normal chain and half past the shield, or half the fore chain and half the aft chain, with no shield factor; the halves are not direct hits. <strong>Still different:</strong> the original's fixed pilot injury (1 – 3 health) on these hits waits for pilot health (DEV-065); a non-ship target's half-damage path (<code>0x45481f</code>) is the station's chain here.</td>
+<td>—</td>
+<td>4 (A1; #117)</td>
 </tr>
 <tr>
 <td>DEV-074</td>
@@ -6969,9 +6969,15 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-090</td>
-<td><strong>Turret fire control as built</strong> (app 0.22.13, #115). The original's fixed and gimballed turrets are <code>turret</code> states (<strong>verified</strong> rules); still different: the gimballed turret's slew (90° a frame) is instant here and its two barrels alternate as the module's two mounts; the miss roll runs every tick; whether the X-COM and alien bases check their line of sight is not traced (<em>derived</em>: no); the freighters' turrets are modules with the X-COM turret's mesh and hit points (<em>derived</em>) and replace the freighters' own beams; no base carries missile-defence modules yet (their layout comes from the strategy layer, DEV-035), though missile turrets work; the capital ships' turrets (AlienType3 – 5, the alien freighter, the Patton) are not placed — their positions are not tabulated.</td>
+<td><strong>Turret fire control as built</strong> (app 0.22.13, #115). The original's fixed and gimballed turrets are <code>turret</code> states (<strong>verified</strong> rules); still different: the gimballed turret's slew (90° a frame) is instant here and its two barrels alternate as the module's two mounts; the miss roll runs every tick; the freighters' turrets are modules with the X-COM turret's mesh and hit points (<em>derived</em>) and replace the freighters' own beams; no base carries missile-defence modules yet (their layout comes from the strategy layer, DEV-035), though missile turrets work; since app 0.22.14 the alien capital ships' and freighter's turrets are placed from flight §8.8 (<strong>verified</strong>) as modules with the alien gun pod's look (<em>derived</em>), the Shade's and the Harbinger pair's facings are <em>derived</em> (the exe copies them), the Phantasm's Psi Blaster turret is not built, and a turret's skill with a pilot record is that record's Accuracy (<em>derived</em> for the Phantasm, which averages three stats); the Patton has no turrets (<strong>verified</strong>), and beam mines (with their two turrets) are not modelled.</td>
 <td>The rules are data on the <code>turret</code> state; the derived parts are layout and look.</td>
 <td>4 (A7; #115)</td>
+</tr>
+<tr>
+<td>DEV-091</td>
+<td><strong>Tachyon Pulser, link modes and burning as built</strong> (app 0.22.14, #117). The Tachyon's shield step, systems-only damage and repair slowdown follow the original (<strong>verified</strong>); its second system table's number of tries and which entries carry damage are <em>derived</em> (as the first table's), and a cloaked target's shield is not skipped (the engine models no cloak skip on any hit yet). <code>flight.link_modes: original</code> (<strong>verified</strong>) keeps the engine's cycling of the selected mount after each unlinked shot (<em>derived</em>: the original's selection is the player's). <code>power.recharge_while_burning</code> (<strong>verified</strong>). The default campaign keeps the engine's rules for all three.</td>
+<td>Data switches; the default campaign is unchanged.</td>
+<td>4 (A1, A2, A3; #117)</td>
 </tr>
 </tbody>
 </table>

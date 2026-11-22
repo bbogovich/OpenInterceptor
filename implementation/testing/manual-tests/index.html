@@ -6217,6 +6217,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-4-71-interceptor-accumulator-shields-the-tachyon-pulser-link-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-71 — interceptor: accumulator shields, the Tachyon Pulser, link modes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11833,6 +11844,17 @@
     <span class="md-ellipsis">
       
         MT-4-70 — interceptor: station and freighter turrets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-71-interceptor-accumulator-shields-the-tachyon-pulser-link-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-71 — interceptor: accumulator shields, the Tachyon Pulser, link modes
       
     </span>
   </a>
@@ -17563,6 +17585,15 @@ pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>);
 <td></td>
 <td>App NEXT; #115, <code>aim: fixed</code>/<code>gimballed</code>, <code>interval</code>, <code>free_fire</code>, <code>line_of_sight</code></td>
 </tr>
+<tr>
+<td>MT-4-71</td>
+<td><code>interceptor</code>: accumulator shields, the Tachyon Pulser, link modes</td>
+<td><code>duel-shade</code>, <code>duel-harbinger</code>, <code>gunnery-range</code> (<code>interceptor</code>), Avenger</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App NEXT; #117</td>
+</tr>
 </tbody>
 </table>
 <h2 id="stage-4-cases">Stage 4 cases<a class="headerlink" href="#stage-4-cases" title="Permanent link">&para;</a></h2>
@@ -19134,6 +19165,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: the plasma pods open fire from about 5 km, steadily (about one shot a second each, not bursts), and hit a still target most of the time but miss by up to 20 m sideways now and then; they do not fire at you from behind their facing. 2: X-COM turrets fire at the laser's rate and almost never miss a target in front of them. 3: pirate turrets fire singly at a steady pace, some stop when part of the station is between you and them. 4: each freighter fires from a nose turret and a tail turret (no longer from its own beams), within 2 km.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-71-interceptor-accumulator-shields-the-tachyon-pulser-link-modes">MT-4-71 — <code>interceptor</code>: accumulator shields, the Tachyon Pulser, link modes<a class="headerlink" href="#mt-4-71-interceptor-accumulator-shields-the-tachyon-pulser-link-modes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's data. <code>--scenario duel-shade --ship avenger</code>, then <code>duel-harbinger</code>, then <code>gunnery-range --ship avenger</code>.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Fire beams at a Shade whose shields are up; watch its shield readout. 2. Bring its shields down with missiles, then fire beams. 3. Let the Harbinger's tachyon turrets hit you; watch hull, armour, systems and how fast they repair. 4. In <code>gunnery-range</code>, set linked (the Avenger mixes beam types) and fire; then full; hold the afterburner and watch the energy.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the Shade's shields <strong>rise</strong> under beam fire instead of falling. 2: once down, beams hurt it. 3: the shields drop, then only systems are damaged (mostly the engine) — hull and armour stay — and repair crawls (ten times slower) until everything is whole. 4: linked fires every mount of one beam type together; with little energy, full fires the mounts it can pay for rather than none; energy still recharges while burning, so it drains more slowly than 100 per second.</td>
 </tr>
 </tbody>
 </table>

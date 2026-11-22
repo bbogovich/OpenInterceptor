@@ -6653,11 +6653,15 @@ sound — or a 25 m, 0.8 s fireball.</p>
 </tr>
 <tr>
 <td><code>bypass_shields</code></td>
-<td>Ignores shields: straight to armour and hull (the original's Permeator).</td>
+<td>Ignores shields: straight to armour and hull.</td>
 </tr>
 <tr>
 <td><code>enveloping</code></td>
-<td>Spread over both shield facings, as if the whole surface were hit.</td>
+<td>Half the damage runs the fore chain (fore shield, fore armour, hull) and half the aft chain, whatever side was hit (the original's Enveloping torpedo, <strong>verified</strong>; until app 0.22.14 both halves met the struck side's armour, which is the same with one armour pool).</td>
+</tr>
+<tr>
+<td><code>permeator</code></td>
+<td>Half runs the struck side's normal chain, half skips the shield and goes armour → hull (app 0.22.14; the original's Permeator, <strong>verified</strong>).</td>
 </tr>
 </tbody>
 </table>
@@ -6719,7 +6723,7 @@ blast</strong> reaching four times the warhead's <code>proximity_radius</code> (
 <tbody>
 <tr>
 <td><code>interceptor</code></td>
-<td>X-Winder (homing), Sidestep, Permeator (<code>bypass_shields</code>), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (<code>cloaked_wait</code>), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each.</td>
+<td>X-Winder (homing), Sidestep, Permeator (<code>permeator</code>), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (<code>cloaked_wait</code>), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each.</td>
 </tr>
 <tr>
 <td><code>default</code></td>

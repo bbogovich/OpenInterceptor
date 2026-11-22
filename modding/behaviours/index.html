@@ -7208,16 +7208,26 @@ turrets do (flight notes §8.6, §8.8, <strong>verified</strong>):</p>
 <li><strong><code>line_of_sight</code></strong> — fires only when the line ahead (5 km) meets nothing, the target or an
   object of another side.</li>
 <li><strong><code>free_fire</code></strong> — shots draw no energy and ignore the mounts' own cooldown.</li>
+<li><strong>Defaults</strong> — with <code>aim: fixed</code> or <code>gimballed</code>, an unset <code>interval</code> is 0.5 s and an unset
+  <code>range</code> 2.5 km (the original's turret constructor). With <code>accuracy: pilot</code>, a turret with no
+  pilot record rolls its accuracy in <code>accuracy_unpiloted</code> (default <code>[25, 25]</code>); <code>accuracy_minus:
+  [5, 15]</code> takes a band rolled once off it (the original's <code>S − rand[5, 15)</code>).</li>
 <li><strong>Missile turrets</strong> — a turret class with <code>missiles</code> and no <code>beams</code> launches them, homing, once
   a target has stayed in its arc and range for <code>lock_time</code>, one every interval, while rounds
   last.</li>
 </ul>
 <p><code>interceptor</code>: the X-COM base's beam turrets are gimballed (one shot per the laser's rate of
 fire, 5 km); the alien base's plasma pods fixed (85°, 5 km, accuracy rolled in 40 + 5 × level …
-75 + 5 × level %, 1 s − 25 ms × level + 0 – 50 ms); the pirate base's and arms dealer's turrets
-fixed with their table's accuracy, interval and line-of-sight flag; and the X-COM and rogue
-freighters carry two fixed laser turrets each (2 km, the pilot's Accuracy fore and ¾ of it aft,
-750 ms − 25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own.</p>
+75 + 5 × level %, 1 s − 25 ms × level + 0 – 50 ms); both bases check their line of sight (app
+NEXT). The pirate base's and arms dealer's turrets are fixed with their table's accuracy,
+interval and line-of-sight flag; the X-COM and rogue freighters carry two fixed laser turrets
+each (2 km, the pilot's Accuracy fore and ¾ of it aft — 25 and 18 with no pilot — 750 ms −
+25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own. Since app 0.22.14 the
+alien ships carry the original's fixed turrets too (flight notes §8.8, <strong>verified</strong>): the
+Phantasm a phase turret below, a plasma turret below and one above (besides its guns); the
+Shade a phase turret aft; the Harbinger two tachyon turrets ahead and a 275 m one behind (no
+guns of its own); the Spirit freighter a plasma turret below and one above (no guns of its own).
+The Phantasm's Psi Blaster turret is not built.</p>
 
 
 

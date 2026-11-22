@@ -6563,17 +6563,17 @@ and <a href="../../../modding/rulesets/">Rulesets</a> pages for every new key; t
 <tr>
 <td>A1</td>
 <td><strong>Damage pipeline</strong>: shield → armour → hull, facings, systems.</td>
-<td><strong>Largely done — app 0.21.0</strong> (main <code>cb79f45</code>): <code>damage.spread</code> (75 – 100 %), per-side armour banks, <code>system_below</code> / <code>system_divert</code> (30 % of hull damage to systems below 75 % hull), the beam <code>shield_factor</code> (Phase Cannon 1.5), the difficulty factors on bank maxima and on the player's hits, <code>protection_scale</code>. App NEXT (#116): the system-hit table with mounts and launchers (<code>damage.system_table</code>, DEV-068), per-system efficiency and the engine failure below 15 % (DEV-064), the original's repair (<code>damage.repair_order</code>, DEV-029). Open: pilot injury (DEV-065, needs pilot health, #133), the flight-control wobble, the Tachyon and Psi effects (#117).</td>
+<td><strong>Largely done — app 0.21.0</strong> (main <code>cb79f45</code>): <code>damage.spread</code> (75 – 100 %), per-side armour banks, <code>system_below</code> / <code>system_divert</code> (30 % of hull damage to systems below 75 % hull), the beam <code>shield_factor</code> (Phase Cannon 1.5), the difficulty factors on bank maxima and on the player's hits, <code>protection_scale</code>. App NEXT (#116): the system-hit table with mounts and launchers (<code>damage.system_table</code>, DEV-068), per-system efficiency and the engine failure below 15 % (DEV-064), the original's repair (<code>damage.repair_order</code>, DEV-029). Open: pilot injury (DEV-065, needs pilot health, #133), the flight-control wobble, the Tachyon and Psi effects (#117). App NEXT (#117): Permeator and Enveloping split (DEV-073), the Tachyon Pulser (DEV-091).</td>
 </tr>
 <tr>
 <td>A2</td>
 <td><strong>Beam fire</strong>: <code>RateOfFire</code>, <code>EnergyCost</code>, <code>Speed</code>, <code>Range</code>.</td>
-<td><strong>Largely done — app 0.21.0</strong>: <code>RateOfFire</code> is shots per second per mount and <code>EnergyCost</code> energy per shot from the one pool (as built since Stage 2, now verified); <code>Range</code> is km (DEV-008 confirmed). App 0.22.0: <code>flight.bolt_inherit: false</code> — bolts take the muzzle speed alone, as the original; the AI's and the HUD's lead follow it (DEV-043 resolved). Open: knock-back (DEV-067); mount-health fire rate (DEV-068).</td>
+<td><strong>Largely done — app 0.21.0</strong>: <code>RateOfFire</code> is shots per second per mount and <code>EnergyCost</code> energy per shot from the one pool (as built since Stage 2, now verified); <code>Range</code> is km (DEV-008 confirmed). App 0.22.0: <code>flight.bolt_inherit: false</code> — bolts take the muzzle speed alone, as the original; the AI's and the HUD's lead follow it (DEV-043 resolved). Open: knock-back (DEV-067); mount-health fire rate (DEV-068). App NEXT (#117): the original's link modes.</td>
 </tr>
 <tr>
 <td>A3</td>
 <td><strong>Shields and energy</strong>: the pool, recharge, balance.</td>
-<td><strong>Largely done — app 0.21.0</strong>: the 1000-point pool at 0 / 7 / 10 / 15 / 22 per second (<code>power.energy</code>, <code>energy_recharge</code>), start C / C, <code>power.balance: share</code>, bank maxima from <code>Special</code> × the difficulty factor, the afterburner at 100 per second. Open: accumulator shields (DEV-066), the cloak's drain (DEV-072).</td>
+<td><strong>Largely done — app 0.21.0</strong>: the 1000-point pool at 0 / 7 / 10 / 15 / 22 per second (<code>power.energy</code>, <code>energy_recharge</code>), start C / C, <code>power.balance: share</code>, bank maxima from <code>Special</code> × the difficulty factor, the afterburner at 100 per second. Open: accumulator shields (DEV-066), the cloak's drain (DEV-072). App NEXT (#117): accumulator shields (DEV-066), energy recharge while burning.</td>
 </tr>
 <tr>
 <td>A4</td>

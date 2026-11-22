@@ -6539,6 +6539,19 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>Parity M1, #117 (app 0.22.14)</strong> six more, so <strong>537</strong>: <code>content::equipment::tests::tachyon_table_and_recharge_while_burning_parse</code>
+and in <code>sim::combat</code> <code>accumulator_shields_turn_ordinary_hits_into_shield</code> (40 on a raised 20-point bank:
+no damage, the bank 30; held to 40; a bank at 0 takes it; a Permeator's halves do not accumulate),
+<code>permeator_and_enveloping_split_their_damage_as_the_original</code> (per-side armour: a Permeator's 60 from
+ahead leaves the fore shield 10 and the fore armour 20; an Enveloping 120 from behind runs 60 through
+each chain), <code>tachyon_hits_skip_armour_and_hull_and_slow_the_repair</code> (50 at a 40-point bank: the bank 0,
+the engine −10, armour and hull untouched; repair a tenth as fast until whole; a station is
+untouched), <code>original_link_modes_fire_by_type_and_each_mount_on_its_own</code> (linked fires both lasers of a
+laser–heavy–laser fit; full with 60 energy fires the laser and the heavy; the engine's rule fires
+nothing with 55) and <code>energy_recharges_through_the_afterburner_when_the_rules_say_so</code>.</p>
+<p><strong>#115 follow-up (app 0.22.14)</strong> one more, so <strong>531</strong>: <code>sim::ai::tests::turret_defaults_and_pilot_accuracy_bands</code>
+(an <code>aim: fixed</code> state with no interval or range gets 0.5 s and 2.5 km; with no record a turret's
+accuracy lies in rand[50, 75) − rand[5, 15); with Accuracy 80, in 65 … 75 %).</p>
 <p><strong>Parity M1, #115 (app 0.22.13)</strong> four more, so <strong>530</strong>: in <code>sim::ai</code>
 <code>fixed_turrets_lead_fully_and_miss_sideways_on_a_failed_roll</code> (the aim is the target plus 1 s of its
 velocity at 1 km and a 1,000 m/s beam; at 1 % accuracy and 300 m every miss is within 20 m along one
@@ -6936,7 +6949,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::equipment</code></td>
-<td>5</td>
+<td>6</td>
 <td>System kinds round trip and built-ins exist, <code>systems</code> definitions overriding built-ins, <code>power</code> parsing and validation (level counts, start levels); <strong>system <code>efficiency</code> tables, <code>repair_order</code>, <code>system_table</code> and <code>mounts</code> parse</strong> (app 0.22.6)</td>
 </tr>
 <tr>
@@ -7111,12 +7124,12 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::combat</code></td>
-<td>14</td>
-<td>Beams (energy, cooldown, hits on the aft shield), <strong>bolt streak never trails behind the muzzle</strong>, <strong>a bolt leaves with the muzzle's velocity (ω × r) then flies straight</strong>, <strong>with <code>bolt_frame: ship</code> it turns with the nose while carried</strong>, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; <strong>point defence shoots down hostile missiles</strong></td>
+<td>19</td>
+<td>Beams (energy, cooldown, hits on the aft shield), <strong>bolt streak never trails behind the muzzle</strong>, <strong>a bolt leaves with the muzzle's velocity (ω × r) then flies straight</strong>, <strong>with <code>bolt_frame: ship</code> it turns with the nose while carried</strong>, link modes, no-energy, lock and homing missile kill, lock loss and dumbfire expiry, proximity fuse on a near miss, empty racks, damage layers, rotate limits, collisions; <strong>point defence shoots down hostile missiles</strong>; <strong>accumulator shields, the Permeator and Enveloping split, the Tachyon Pulser, the original's link modes, recharge while burning</strong> (app 0.22.14, #117)</td>
 </tr>
 <tr>
 <td><code>sim::ai</code></td>
-<td>26</td>
+<td>27</td>
 <td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong>; <strong>escorts hold formation until a hostile comes close</strong> (app 0.9.2); <strong>a scripted state runs its script every interval</strong> and <strong>a runaway script is stopped and reported once</strong> (app 0.18.0); <strong>the original's steering, pilot accuracy bands, grades (look-ahead, sprint), the pilot's own missile lock and break-off</strong> (app 0.22.8, #118); <strong>the original's fixed, gimballed and missile turrets</strong> (app 0.22.13, #115)</td>
 </tr>
 <tr>

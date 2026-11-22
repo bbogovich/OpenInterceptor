@@ -7538,6 +7538,17 @@ X-COM base's turrets gimballed, the alien base's fixed, the pirate stations' wit
 values, two fixed laser turrets on the X-COM and rogue freighters. <code>default</code>: unchanged. Manual case
 MT-4-70; <strong>530</strong> <code>#[test]</code> functions. Not yet: capital-ship turrets, missile-defence modules on the
 bases (DEV-090).</p>
+<p><strong>#115 follow-up</strong> (app 0.22.14; <code>notes/re/flight</code> §8.8): both bases' turrets check their line of
+sight; <code>aim:</code> turrets default to 500 ms and 2,500 m; <code>accuracy_unpiloted</code> and <code>accuracy_minus</code>; the
+Phantasm, Shade, Harbinger and Spirit carry the original's turrets (the Harbinger and Spirit no
+guns of their own); the freighter accuracies are S and int(S × 0.75) (the RE table's "25" and "from
+the pilot" are that S's no-pilot value and factor; both readings on #115).</p>
+<p><strong>Parity M1, #117</strong> (app 0.22.14; D-03, D-04, D-07, D-11, D-14): <code>accumulator_shields</code>; beam <code>effect:
+systems</code> and <code>repair_slowdown</code> with <code>damage.tachyon_table</code>; missile <code>damage: permeator</code> and
+<code>enveloping</code> as the original's fore/aft chains; <code>power.recharge_while_burning</code>; <code>flight.link_modes:
+original</code>. <code>interceptor</code> uses all of them (the Shade and Harbinger accumulate; the Tachyon Pulser
+hits systems and slows repair tenfold). <code>default</code>: unchanged (with its one armour pool <code>enveloping</code>
+lands as before). Manual case MT-4-71; <strong>537</strong> <code>#[test]</code> functions.</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and

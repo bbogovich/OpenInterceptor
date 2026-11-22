@@ -7141,6 +7141,17 @@ hull gets nothing — and emits <code>SimEvent::HardPointDestroyed { position, e
 (<code>app::flight::event_messages</code> shows its text, <code>render::effects</code> the explosion). <code>DestroyedWhen</code>
 (<code>Hull</code>, <code>HardPoints</code>, <code>Either</code>) decides destruction from the hull and <code>hard_hp</code>. A <code>mine</code> state
 with <code>range: 0</code> goes off when its hull touches a hostile's.</p>
+<p><strong>Damage modes</strong> (app 0.22.14, #117). <code>combat::apply_hit</code> dispatches on <code>DamageMode</code>: <code>Normal</code> and
+<code>BypassShields</code> run one <code>hit_chain</code> (with or without the shield step); <code>Enveloping</code> runs two half
+chains with the side forced fore and aft (<code>front: Some(true/false)</code>) at the same impact point;
+<code>Permeator</code> a half with the shield and a half without; <code>Systems</code> calls <code>tachyon_hit</code> (shield 1:1,
+the rest to <code>systems::damage_by_table</code> with <code>damage.tachyon_table</code>, <code>Ship::repair_slow</code> raised to the
+beam's <code>repair_slowdown</code>; static objects ignore it). <code>hit_chain</code>'s <code>direct</code> flag marks the common
+path: only it accumulates on <code>accumulator_shields</code> banks and strikes <code>hits: direct</code> hard points. Bolts
+carry the beam's <code>mode</code> and <code>repair_slowdown</code>. Repair divides by <code>repair_slow</code> and resets it to 1 when
+nothing is left to repair. <code>fire_beams</code> with <code>flight.link_modes: original</code> builds the linked group
+from the selected mount's beam type and keeps only the mounts whose own cooldown has run out and
+whose shot the remaining energy pays (<code>charge &gt; cost</code>), one by one.</p>
 <p><strong>Turret fire control</strong> (app 0.22.13, #115). A <code>turret</code> state whose <code>Params::turret.aim</code> is not
 <code>Engine</code> runs <code>ai::original_turret</code>: the lead (<code>dist ÷ beam speed</code>, or <code>lead_speed</code> when
 gimballed), for fixed turrets an accuracy rolled once into <code>AiState::turret_accuracy</code> (band, or the

@@ -7568,6 +7568,18 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>Bolt colour.</td>
 </tr>
 <tr>
+<td><code>effect</code></td>
+<td><code>normal</code>, <code>systems</code></td>
+<td><code>normal</code></td>
+<td><code>systems</code> (app 0.22.14): the struck shield bank absorbs the hit 1:1 (no shield factor); what is left skips armour and hull and strikes the systems through <a href="#damage"><code>damage.tachyon_table</code></a> (or one random system). Stations ignore it. <code>interceptor</code>: the Tachyon Pulser (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>repair_slowdown</code></td>
+<td>number</td>
+<td>1</td>
+<td>With <code>effect: systems</code>: the ship hit repairs this many times more slowly until nothing is left to repair (app 0.22.14). <code>interceptor</code>: 10 (the original repairs once every 10 s instead of every second, <strong>verified</strong>).</td>
+</tr>
+<tr>
 <td><code>hit_points</code></td>
 <td>number</td>
 <td>0</td>
@@ -7684,9 +7696,9 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 <tr>
 <td><code>damage</code></td>
-<td><code>normal</code>, <code>bypass_shields</code>, <code>enveloping</code></td>
+<td><code>normal</code>, <code>bypass_shields</code>, <code>enveloping</code>, <code>permeator</code></td>
 <td><code>normal</code></td>
-<td>How the warhead's damage lands.</td>
+<td>How the warhead's damage lands (<a href="../weapons/">Missiles and mines</a>); <code>permeator</code> app 0.22.14, <code>enveloping</code> splits fore/aft chains since app 0.22.14. The halves of <code>enveloping</code> and <code>permeator</code> take no shield factor and are not <em>direct</em> hits.</td>
 </tr>
 <tr>
 <td><code>decoys</code></td>
@@ -7959,6 +7971,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>id</td>
 <td>none (armed AI ships fly <code>builtin_attack</code>)</td>
 <td>AI behaviour (<a href="../behaviours/">Behaviours</a>).</td>
+</tr>
+<tr>
+<td><code>accumulator_shields</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>App NEXT: while the struck shield bank holds points, an ordinary (direct) hit does no damage and adds a quarter of itself to that bank, up to its maximum (the original's ShieldType4, <strong>verified</strong>; the cap <em>derived</em>). <code>interceptor</code>: the Shade and the Harbinger.</td>
 </tr>
 <tr>
 <td><code>pilot_grade</code></td>
@@ -8436,6 +8454,18 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td>With <code>accuracy: pilot</code>: times this.</td>
 </tr>
 <tr>
+<td><code>accuracy_unpiloted</code></td>
+<td><code>[from, to]</code></td>
+<td>25, 25</td>
+<td>With <code>accuracy: pilot</code> and no pilot record: the band the turret rolls once (app 0.22.14).</td>
+</tr>
+<tr>
+<td><code>accuracy_minus</code></td>
+<td><code>[from, to]</code></td>
+<td>0, 0</td>
+<td>Fixed turret: a band rolled once and taken off its accuracy (app 0.22.14; the original's <code>S − rand[5, 15)</code>).</td>
+</tr>
+<tr>
 <td><code>miss</code>, <code>miss_beyond</code></td>
 <td>distance</td>
 <td>20 m, 200 m</td>
@@ -8444,8 +8474,8 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <tr>
 <td><code>interval</code></td>
 <td>time or <code>rate_of_fire</code></td>
-<td>0</td>
-<td>Turret: seconds between shots (0 = <code>burst</code> and <code>pause</code>); <code>rate_of_fire</code> = once per beam rate of fire.</td>
+<td>0 (0.5 s with <code>aim</code>)</td>
+<td>Turret: seconds between shots (0 without <code>aim</code> = <code>burst</code> and <code>pause</code>); <code>rate_of_fire</code> = once per beam rate of fire. With <code>aim: fixed</code>/<code>gimballed</code> an unset <code>range</code> is 2.5 km (app 0.22.14).</td>
 </tr>
 <tr>
 <td><code>interval_jitter</code></td>
@@ -8843,6 +8873,12 @@ When a class breaks off, jinks or flees is still the pack's own (derived).</p>
 <td>The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates (<a href="#flightturning">below</a>).</td>
 </tr>
 <tr>
+<td><code>link_modes</code></td>
+<td><code>engine</code>, <code>original</code></td>
+<td><code>engine</code></td>
+<td>App NEXT: <code>original</code> — linked fires every mount of the selected mount's beam type, and every mode lets each mount fire on its own timer as far as the energy pays shot by shot (the original, <strong>verified</strong>); <code>engine</code> — linked fires the next two mounts and a group waits for all its mounts and its whole energy. <code>interceptor</code>: <code>original</code>.</td>
+</tr>
+<tr>
 <td><code>pilot_grades</code></td>
 <td><code>{lookahead, grades, sprint}</code></td>
 <td>none</td>
@@ -9051,6 +9087,12 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td>The pool's recharge per second at the top beam level, for classes without their own (app 0.21.0). <code>interceptor</code>: 22.</td>
 </tr>
 <tr>
+<td><code>recharge_while_burning</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>App NEXT: the energy pool keeps recharging while the afterburner burns (the original's 1 s tick, <strong>verified</strong>); <code>false</code> stops it. <code>interceptor</code>: <code>true</code>.</td>
+</tr>
+<tr>
 <td><code>balance</code></td>
 <td><code>shift</code> / <code>share</code></td>
 <td><code>shift</code></td>
@@ -9169,6 +9211,12 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td><code>{tries, rolls}</code></td>
 <td>none</td>
 <td>The original's system hits (app 0.22.6): the system share of a hit is dealt by up to <code>tries</code> weighted <code>rolls</code>, each <code>{chance, hit, carry}</code> — <code>hit</code> a system kind, <code>beams</code> (a random mount), <code>launchers</code> (a random rack), <code>special</code> (a random system other than engines, manoeuvring, sensors, shields, hyperdrive) or <code>none</code>; chances left over strike nothing. A roll whose target is missing or at 0 uses up its try. Damage beyond what the target has left goes on to the next try with <code>carry: true</code>, otherwise it is lost. Without it: one random system takes it all. <code>interceptor</code>: 5 tries; mounts 20 %, launchers 30 %, shields, flight control, sensor, engine 10 % each, hyperdrive 5 %, special 3 % (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>tachyon_table</code></td>
+<td><code>{tries, rolls}</code></td>
+<td>none</td>
+<td>App NEXT: the table <code>effect: systems</code> beams strike with, the same shape as <code>system_table</code>. A <code>hit: none</code> roll with <code>carry: true</code> only uses up its try (the damage stays). <code>interceptor</code>: beam mounts 10 %, empty 10 %, shield generator 10 %, sensor 5 %, engine 50 %, hyperdrive 10 %, special 3 % (<strong>verified</strong>; tries and carries <em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>mounts</code></td>
