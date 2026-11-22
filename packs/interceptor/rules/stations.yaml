@@ -49,18 +49,25 @@ objects:
     faction: alien
     model_set: alien_base
     inherit: original:GameSettings.ini/AlienBaseHP   # hull = HP1 (VERIFIED)
-    # The connection point: 1,400 points in a 124 m sphere at model (0, -217, 0); direct
-    # hits inside it with the shields down strike it instead of the hull, and its fall is
-    # announced (README §8.4, VERIFIED). The three 550-point tendrils (sub-objects 1-3 of
-    # the model) are not placed: where they are is not traced, and the base is destroyed
-    # by its hull until they are (the original: hull, or all four points).
+    # Hard points (README §8.4, VERIFIED unless marked): the connection point, 1,400 points
+    # in a 124 m sphere at model (0, -217, 0), takes direct hits only; the three 550-point
+    # tendrils take any hit that reaches them. While the pool is up the pool takes the hit;
+    # past it, a hard point takes the hit whole (its points may go below 0, nothing reaches
+    # the hull). A fallen tendril shows its message and a 100 m explosion. The base falls
+    # to its hull or to all four points (either). The tendrils' positions are the
+    # al-base01 manipulators with ids 1-3, 120 deg apart at r 287 m, y 213 m (DERIVED: the
+    # exe gives them none, unknowns §9), and their 100 m radius is an assumption.
+    destroyed_when: either
     hard_points:
       - {name: connection_point, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: "@orig.S_GREP_363"}
+      - {name: tendril_1, hit_points: 550, at: [286.9, 212.8, 0], radius: 100m, hits: any, explosion: 100m, message: "@orig.S_GREP_364"}
+      - {name: tendril_2, hit_points: 550, at: [-143.4, 212.8, 248.4], radius: 100m, hits: any, explosion: 100m, message: "@orig.S_GREP_364"}
+      - {name: tendril_3, hit_points: 550, at: [-143.4, 212.8, -248.4], radius: 100m, hits: any, explosion: 100m, message: "@orig.S_GREP_364"}
     # Mines (0x59dc04 / 0x4d12fe, VERIFIED but for the ring planes): from Superhuman, with
     # chance 50 + 5d %, two rings of d/2 + 2 missile mines 4 km round the base; from
     # Experienced, with chance 25 + 5d %, two rings of d + 5 explosive mines 2 km round a
-    # point 500 m above it. Each ring is the original's angles (0x4000 = 90 deg) read as
-    # yaw, pitch, roll (DERIVED).
+    # point 500 m above it. Ring k of n: the unit X vector yawed by 360k/n deg, then by the
+    # ring's yaw, pitch, roll (0x49a811: 0x4000 = 90 deg, VERIFIED).
     minefields:
       - mine: alien_missile_mine
         count: {per_level: [0, 0, 0, 0, 4]}

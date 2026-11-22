@@ -314,9 +314,9 @@ objects:
     destroyed_when: either
     hard_points:
       - {name: connection, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: Connection Point Destroyed}
-      - {name: t1, hit_points: 550, at: [400, 0, 0], radius: 60m}
-      - {name: t2, hit_points: 550, at: [-400, 0, 0], radius: 60m}
-      - {name: t3, hit_points: 550, at: [0, 0, 400], radius: 60m}
+      - {name: t1, hit_points: 550, at: [400, 0, 0], radius: 60m, hits: any, explosion: 100m}
+      - {name: t2, hit_points: 550, at: [-400, 0, 0], radius: 60m, hits: any}
+      - {name: t3, hit_points: 550, at: [0, 0, 400], radius: 60m, hits: any}
     modules:
       - {at: [0, 188, 0], facing: [0, 1, 0], class: laser}
       - {at: [0, -188, 0], facing: [0, -1, 0], class: laser}
@@ -327,7 +327,10 @@ objects:
       - {mine: boom, count: {per_level: [0, 0, 0, 0, 4]}, radius: 4km, rings: [[90, 0, 90], [90, 0, -90]], chance: {per_level: [0%, 0%, 0%, 0%, 100%]}}
       - {mine: boom, count: {per_level: [0, 6, 7, 8, 9]}, radius: 2km, center: [0, 500, 0], rings: [[45, 0, 0], [-45, 0, 0]]}
   laser: {model: m, faction: red, hit_points: 100, beams: [laser], turret_arc: 85, behaviour: gunner}
-  boom: {model: m, faction: red, kind: mine, hit_points: 10, missiles: {dart: 1}, behaviour: mine}
+  boom: {model: m, faction: red, kind: mine, hit_points: 10, missiles: {dart: 1}, behaviour: contact}
+behaviours:
+  contact:
+    states: {wait: {do: mine, range: 0}}
 ";
 
     /// The hive at difficulty `level`, its turrets' chance `chance`, and world seed `seed`.
@@ -375,7 +378,7 @@ objects:
     }
 
     #[test]
-    fn hard_points_take_direct_hits_only_with_the_shields_down() {
+    fn hard_points_take_hits_whole_behind_the_shields() {
         let (mut w, hub) = hive(0, "100%", 1);
         let at = Vec3::new(0.0, -217.0, 0.0);
         // Shields up: the pool takes it, the point is untouched.
@@ -393,11 +396,26 @@ objects:
         combat::apply_damage_mode(&mut w, hub, 100.0, at, crate::content::rules::DamageMode::Enveloping);
         let s = w.get(hub).unwrap();
         assert_eq!((s.hard_hp[0], s.hull), (1100.0, 4800.0));
-        // All four down: the base is destroyed with hull to spare.
-        for (k, p) in [(0, at), (1, Vec3::new(400.0, 0.0, 0.0)), (2, Vec3::new(-400.0, 0.0, 0.0))] {
-            let hp = w.get(hub).unwrap().hard_hp[k];
-            combat::apply_damage(&mut w, hub, hp, p);
-        }
+        // A hit larger than the point holds is taken whole: the point goes below 0 and
+        // the hull is untouched.
+        combat::apply_damage(&mut w, hub, 1500.0, at);
+        let s = w.get(hub).unwrap();
+        assert_eq!((s.hard_hp[0], s.hull), (-400.0, 4800.0));
+        assert!(w
+            .events
+            .iter()
+            .any(|e| matches!(e, SimEvent::HardPointDestroyed { text, .. } if text == "Connection Point Destroyed")));
+        // A tendril takes any hit, enveloping too; once down, hits there reach the hull.
+        let t1 = Vec3::new(400.0, 0.0, 0.0);
+        combat::apply_damage_mode(&mut w, hub, 600.0, t1, crate::content::rules::DamageMode::Enveloping);
+        assert!(w
+            .events
+            .iter()
+            .any(|e| matches!(e, SimEvent::HardPointDestroyed { explosion, .. } if *explosion == 100.0)));
+        combat::apply_damage(&mut w, hub, 50.0, t1);
+        assert_eq!(w.get(hub).unwrap().hull, 4750.0);
+        let hp = w.get(hub).unwrap().hard_hp[2];
+        combat::apply_damage(&mut w, hub, hp, Vec3::new(-400.0, 0.0, 0.0));
         assert!(w
             .events
             .iter()
@@ -438,6 +456,26 @@ objects:
             })
             .count();
         assert_eq!((far, near), (8, 18));
+        // Ring k of n: the unit X vector yawed by 2πk/n, then turned by the ring (here yaw
+        // 90°, roll 90°), times the radius: mine 0 of the first ring.
+        let first = crate::sim::euler(Vec3::new(90.0, 0.0, 90.0)) * Vec3::X * 4000.0;
+        assert!(w.ships.iter().any(|s| s.name.starts_with("hive.mine") && (s.position - first).length() < 1e-2));
+    }
+
+    #[test]
+    fn mines_with_no_range_go_off_on_contact() {
+        let (mut w, _) = hive(4, "100%", 1);
+        let mine = w.live_ids().into_iter().find(|id| w.get(*id).unwrap().name == "hive.mine0").unwrap();
+        let at = w.get(mine).unwrap().position;
+        let fighter = w.rules.ship_id("fighter").unwrap();
+        let blue = w.rules.faction_id("blue").unwrap();
+        let idle = Pilot::Ai(ai::AiState::new(ai::Behaviour::Idle, None, Vec3::ZERO));
+        let me = w.spawn(fighter, blue, "me", at + Vec3::new(0.0, 0.0, 150.0), Quat::IDENTITY, idle);
+        ai::think(&mut w);
+        assert!(!w.get(mine).unwrap().controls.requests.detonate, "150 m away: two 50 m hulls do not touch");
+        w.get_mut(me).unwrap().position = at + Vec3::new(0.0, 0.0, 90.0);
+        ai::think(&mut w);
+        assert!(w.get(mine).unwrap().controls.requests.detonate, "touching");
     }
 
     #[test]

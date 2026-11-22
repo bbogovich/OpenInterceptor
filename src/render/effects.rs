@@ -102,6 +102,22 @@ impl Effects {
                     })
                 }
                 SimEvent::PointDefence { from, to, .. } => self.tracers.push(Tracer { from: *from, to: *to, age: 0.0 }),
+                // A station's weak point blown off: the built-in explosion at its size.
+                SimEvent::HardPointDestroyed { position, explosion, .. } if *explosion > 0.0 => {
+                    let fx = world
+                        .rules
+                        .effect_id("explosion")
+                        .map(|id| world.rules.effect(id).clone())
+                        .unwrap_or_else(|| crate::content::looks::EffectDef::builtin("explosion"));
+                    self.explosions.push(Explosion {
+                        position: *position,
+                        radius: explosion * fx.size,
+                        age: 0.0,
+                        life: fx.duration,
+                        color: fx.color,
+                        shockwave: fx.shockwave.then_some(Vec3::Y),
+                    });
+                }
                 SimEvent::Destroyed { ship, position, radius } => {
                     // The slot still holds the dead ship's data this tick.
                     let s = &world.ships[ship.index as usize];

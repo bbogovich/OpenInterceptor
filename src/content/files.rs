@@ -283,6 +283,12 @@ fn ship() -> Ty {
                 f("at", Ty::Numbers(3), "centre in model space, metres (engine axes)"),
                 f("radius", dist(), "direct hits landing within this distance strike it"),
                 f("message", Ty::Text, "said when it is destroyed (@key allowed)"),
+                f(
+                    "hits",
+                    Ty::Enum(&["direct", "any"]),
+                    "direct: only direct beam and missile hits (default); any: every hit",
+                ),
+                f("explosion", dist(), "radius of the blast shown when it falls (0 = none)"),
             ]))),
             "stations: weak points that take direct hits while the shields are down",
         ),
@@ -574,6 +580,36 @@ fn behaviour() -> Ty {
             "attack: the pilot's own missile lock while the aim is within this angle (0 = a full sensor lock)",
         ),
         f("missile_chance", Ty::Qty(Unit::Fraction), "with lock_cone: chance per tick that a ready missile fires"),
+        f(
+            "aim",
+            Ty::Enum(&["engine", "fixed", "gimballed"]),
+            "turret: the engine's aim, or the original's fixed or gimballed turret",
+        ),
+        f("lead_speed", Ty::Num, "gimballed turret: the shot speed its lead assumes, m/s (2000)"),
+        f(
+            "accuracy",
+            Ty::Either(
+                Box::new(Ty::Numbers(2)),
+                Box::new(Ty::Either(Box::new(Ty::Num), Box::new(Ty::Enum(&["pilot"])))),
+            ),
+            "fixed turret: accuracy %, a [from, to] band rolled once per turret, or pilot",
+        ),
+        f("accuracy_factor", Ty::Qty(Unit::Fraction), "with accuracy: pilot, times this (100 %)"),
+        f("miss", dist(), "fixed turret: largest sideways miss on a failed accuracy roll (20m)"),
+        f("miss_beyond", dist(), "fixed turret: no miss closer than this (200m)"),
+        f(
+            "interval",
+            Ty::Either(Box::new(time()), Box::new(Ty::Enum(&["rate_of_fire"]))),
+            "turret: seconds between shots (0 = burst and pause), or rate_of_fire",
+        ),
+        f("interval_jitter", time(), "turret: up to this much more, at random, per shot"),
+        f(
+            "line_of_sight",
+            Ty::Bool,
+            "turret: fire only when the 5 km line ahead meets nothing, the target or another side",
+        ),
+        f("free_fire", Ty::Bool, "turret: shots draw no energy and ignore the mounts' cooldown"),
+        f("lock_time", time(), "missile turret: seconds in the arc before the first launch"),
     ]);
     Ty::Def(vec![
         f("start", name(), "the first state"),

@@ -24,7 +24,9 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #116 D-02 (repair order, hull, 2/4 per s, 0 is final), D-05 (system table, mounts and launchers), D-06 (per-system efficiency), RQ-C-16 (engine fails below 15 %), RQ-C-17 (sensor/hyperdrive damage inert); D-08 deferred to #133 | 0.22.6 |
 | #113 follow-up: the pool drops to 0 when the last generator falls; outposts/OPPs pooled by their chart's SD (unknowns-2026-11 §8) | 0.22.6 |
 | #118 D-19 (AI speed in m/s), D-20 (no AI afterburner), D-21 (original steering), D-22 (AI's own missile lock), D-23 (sprint, 250 m break-off; weapon choice and wobble open), RQ-C-10 (pilot Accuracy/Intelligence via records; campaign hand-off → #133), RQ-C-23 (grades: look-ahead, sprint) | 0.22.8 |
-| #114 RQ-C-05 (hard points: the connection point; tendrils untraced), RQ-C-07 (modules by position and chance: pirate base and arms dealer turret tables; alien base minefields) | NEXT |
+| #114 RQ-C-05 (hard points: the connection point; tendrils untraced), RQ-C-07 (modules by position and chance: pirate base and arms dealer turret tables; alien base minefields) | 0.22.11 |
+| #114 follow-up: hard points take hits whole, either destruction, tendrils at the model's attachment points 1-3 (derived), contact mines, ring construction (unknowns §9) | NEXT |
+| #115 RQ-C-06 (station turrets: fixed/gimballed, 5 km, intervals, free fire, LOS), RQ-C-08 (missile turrets, not placed), RQ-C-09 (freighter turrets; capital ships open), RQ-C-22 (gimballed lead 2,000 m/s, no error) | NEXT |
 
 ## Issues
 

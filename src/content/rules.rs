@@ -198,6 +198,11 @@ pub struct HardPoint {
     pub radius: f32,
     /// Said when it is destroyed (a text, `@key` allowed).
     pub message: String,
+    /// Takes only direct hits (`hits: direct`, the connection point) or any hit that
+    /// reaches it (`hits: any`, a tendril).
+    pub direct_only: bool,
+    /// The radius of the explosion shown when it falls (`explosion: 100m`; 0 = none).
+    pub explosion: f32,
 }
 
 /// What destroys a station (`destroyed_when:`).
@@ -2655,6 +2660,8 @@ fn ship_class(
                     at,
                     radius: h.qty("radius", Unit::Distance).unwrap_or(0.0).max(0.0),
                     message: h.str("message").unwrap_or("").to_string(),
+                    direct_only: h.str("hits") != Some("any"),
+                    explosion: h.qty("explosion", Unit::Distance).unwrap_or(0.0).max(0.0),
                 }
             })
             .collect(),
@@ -2877,7 +2884,9 @@ objects:
                 hit_points: 1400.0,
                 at: [0.0, -217.0, 0.0],
                 radius: 124.0,
-                message: "@x".into()
+                message: "@x".into(),
+                direct_only: true,
+                explosion: 0.0
             }]
         );
         assert_eq!(hive.modules.len(), 2, "the entry with neither slot nor at is dropped");

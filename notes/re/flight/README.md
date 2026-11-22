@@ -754,6 +754,16 @@ pilot's Accuracy, or 25 with no pilot.
 
 The intervals marked "…" use a difficulty term that was not decoded.
 
+**Freighter turrets in detail** (`0x593e13`, read for #115 from the player's exe, Track A; verified).
+`S` = the pilot record's Accuracy byte (+0x2c), 25 with no pilot. Two fixed (kind 0) Laser turrets:
+
+| Turret | Position (model, original axes) | Facing | Range | Arc | Accuracy | Interval (ms) | LOS |
+|---|---|---|---|---|---|---|---|
+| 1 | (0, 4.27, 161.68) | (0, 0, 1) | 2,000 | 85° | S | rand[750, 850) − 25d | on |
+| 2 | (0, 40.937, −77) | (0, 0, −1) | 2,000 | 80° | (int)(S × 0.75) | rand[750, 850) − 25d | on |
+
+Both positions lie inside the `XFRE98-5` / `P-FRE98-5` meshes (z −176 … 179, y −55 … 55).
+
 ## 9. Pilot stats in battle (verified)
 
 Pilot record: Intelligence +0x2a, Stamina +0x2b, Accuracy +0x2c, Flying +0x2d, Aggressiveness

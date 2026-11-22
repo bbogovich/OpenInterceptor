@@ -100,6 +100,9 @@ pub struct Controls {
     /// AI pilots with their own lock (`lock_cone`): a missile fired this tick homes on the
     /// target although the sensor has not locked.
     pub guide_missile: bool,
+    /// Turrets with `free_fire`: this tick's shot draws no energy and ignores the mounts'
+    /// cooldown (the turret's own interval decides when it fires).
+    pub free_fire: bool,
 }
 
 /// One-press requests to the ship's power and equipment, as pilots make them from the
@@ -669,11 +672,14 @@ pub enum SimEvent {
         ship: ShipId,
         call: String,
     },
-    /// One of `ship`'s hard points (`hard_points:`) was destroyed; `text` is its message.
+    /// One of `ship`'s hard points (`hard_points:`) was destroyed at `position`; `text` is
+    /// its message and `explosion` the radius of the blast shown (0 = none).
     HardPointDestroyed {
         ship: ShipId,
         name: String,
         text: String,
+        position: Vec3,
+        explosion: f32,
     },
 }
 
@@ -971,9 +977,10 @@ impl World {
     }
 
     /// Lays the class's `minefields` around `hub`: for each field that its `chance`
-    /// allows, `count` mines evenly spaced on a circle of `radius` around `center` in
-    /// each ring's plane (the horizontal circle turned by the ring's yaw, pitch and roll),
-    /// with the hub's faction. Returns how many mines were laid.
+    /// allows, and each ring, `count` mines — mine k at the unit X vector turned by yaw
+    /// 2πk/count, then by the ring's yaw, pitch and roll, times `radius`, plus `center`
+    /// (the original's `0x4d12fe`, verified) — with the hub's faction. Returns how many
+    /// mines were laid.
     pub fn spawn_minefields(&mut self, hub: ShipId) -> usize {
         let Some(h) = self.get(hub) else { return 0 };
         let (class, faction, name, pos, rot) = (h.class, h.faction, h.name.clone(), h.position, h.rotation);
@@ -986,10 +993,9 @@ impl World {
             for ring in &f.rings {
                 let turn = euler(Vec3::from(*ring));
                 for k in 0..f.count {
-                    // Mine k sits at angle 2πk/count round the ring's axis, `radius` out.
+                    // Mine k: the unit X vector yawed by 2πk/count, then turned by the ring.
                     let angle = std::f32::consts::TAU * k as f32 / f.count as f32;
-                    let local =
-                        Vec3::from(f.center) + turn * (Quat::from_rotation_y(angle) * Vec3::new(0.0, 0.0, f.radius));
+                    let local = Vec3::from(f.center) + turn * (Quat::from_rotation_y(angle) * Vec3::X) * f.radius;
                     let idle = Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, Vec3::ZERO));
                     self.spawn(f.mine, faction, &format!("{name}.mine{laid}"), pos + rot * local, rot, idle);
                     laid += 1;

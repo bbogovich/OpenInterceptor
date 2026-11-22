@@ -138,6 +138,60 @@ pub struct Params {
     /// With `lock_cone`: the chance per tick that a ready missile is fired (the original's
     /// 5 + 2 × level %).
     pub missile_chance: f32,
+    /// Turret: the original's turret fire control (`aim:`), or the engine's.
+    pub turret: TurretParams,
+}
+
+/// How a `turret` state aims and fires (`aim:` and the keys beside it). The original's
+/// station and freighter turrets (flight README §8.6, §8.8; notes/re/unknowns-2026-11.md
+/// §6, verified) come in two kinds:
+///
+/// - **fixed**: leads fully with the beam's speed; when a roll on its accuracy fails and
+///   the target is beyond `miss_beyond`, it aims up to `miss` to one side along the
+///   target's x or y axis; fires only when the aim lies within its arc (`turret_arc`);
+/// - **gimballed**: leads as if its shot flew at `lead_speed`, with no error at all, and
+///   only at targets in front of the mount.
+///
+/// Both fire one shot per `interval` (+ up to `interval_jitter` at random), optionally only
+/// with a clear `line_of_sight`, and with `free_fire` pay no energy.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct TurretParams {
+    pub aim: TurretAim,
+    /// Gimballed: the shot speed the lead assumes, m/s (the original's 2,000).
+    pub lead_speed: f32,
+    /// Fixed: the accuracy band a turret rolls once, percent (`accuracy: [40, 75]`).
+    pub accuracy: [f32; 2],
+    /// Fixed: take the accuracy from the pilot's record instead (`accuracy: pilot`),
+    /// times this factor (`accuracy_factor`); 25 with no record.
+    pub accuracy_from_pilot: bool,
+    pub accuracy_factor: f32,
+    /// Fixed: the largest sideways miss, metres, and the distance below which it does
+    /// not miss.
+    pub miss: f32,
+    pub miss_beyond: f32,
+    /// Seconds between shots (0: the `burst`/`pause` cycle); `interval_from_rate`: one
+    /// shot per beam `rate_of_fire` (`interval: rate_of_fire`).
+    pub interval: f32,
+    pub interval_jitter: f32,
+    pub interval_from_rate: bool,
+    /// Fire only when the line ahead (5 km) meets nothing, the target, or another side.
+    pub line_of_sight: bool,
+    /// Shots draw no energy and ignore the mounts' own cooldown.
+    pub free_fire: bool,
+    /// Missile turrets: seconds a target must stay in the arc before the first launch.
+    pub lock_time: f32,
+}
+
+/// A `turret` state's kind of aim (`aim:`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TurretAim {
+    /// The engine's: the skill's aim error, bursts and pauses.
+    #[default]
+    Engine,
+    /// The original's fixed turret.
+    Fixed,
+    /// The original's gimballed turret.
+    Gimballed,
 }
 
 impl Default for Params {
@@ -156,6 +210,14 @@ impl Default for Params {
             break_off: 0.0,
             lock_cone: 0.0,
             missile_chance: 1.0,
+            turret: TurretParams {
+                lead_speed: 2000.0,
+                accuracy: [50.0, 50.0],
+                accuracy_factor: 1.0,
+                miss: 20.0,
+                miss_beyond: 200.0,
+                ..TurretParams::default()
+            },
         }
     }
 }
@@ -459,6 +521,32 @@ impl BehaviourDef {
                 break_off: sg.qty("break_off", Unit::Distance).unwrap_or(d.break_off).max(0.0),
                 lock_cone: sg.qty("lock_cone", Unit::Angle).unwrap_or(d.lock_cone).clamp(0.0, 180.0),
                 missile_chance: sg.qty("missile_chance", Unit::Fraction).unwrap_or(d.missile_chance).clamp(0.0, 1.0),
+                turret: {
+                    let t = d.turret;
+                    let band = sg.nums("accuracy").filter(|v| v.len() == 2).map(|v| [v[0], v[1]]);
+                    TurretParams {
+                        aim: match sg.str("aim") {
+                            None | Some("engine") => TurretAim::Engine,
+                            Some("fixed") => TurretAim::Fixed,
+                            Some("gimballed") => TurretAim::Gimballed,
+                            Some(other) => {
+                                return Err(format!("states.{name}.aim: '{other}' is not engine, fixed or gimballed"))
+                            }
+                        },
+                        lead_speed: sg.num("lead_speed").unwrap_or(t.lead_speed).max(1.0),
+                        accuracy: band.or_else(|| sg.num("accuracy").map(|a| [a, a])).unwrap_or(t.accuracy),
+                        accuracy_from_pilot: sg.str("accuracy") == Some("pilot"),
+                        accuracy_factor: sg.qty("accuracy_factor", Unit::Fraction).unwrap_or(1.0).max(0.0),
+                        miss: sg.qty("miss", Unit::Distance).unwrap_or(t.miss).max(0.0),
+                        miss_beyond: sg.qty("miss_beyond", Unit::Distance).unwrap_or(t.miss_beyond).max(0.0),
+                        interval: sg.qty("interval", Unit::Time).unwrap_or(0.0).max(0.0),
+                        interval_jitter: sg.qty("interval_jitter", Unit::Time).unwrap_or(0.0).max(0.0),
+                        interval_from_rate: sg.str("interval") == Some("rate_of_fire"),
+                        line_of_sight: sg.bool("line_of_sight").unwrap_or(false),
+                        free_fire: sg.bool("free_fire").unwrap_or(false),
+                        lock_time: sg.qty("lock_time", Unit::Time).unwrap_or(0.0).max(0.0),
+                    }
+                },
             };
             states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params, script: None });
         }

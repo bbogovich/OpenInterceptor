@@ -201,10 +201,12 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         s.next_mount = (s.next_mount + 1) % n;
         return;
     }
-    if !group.iter().all(|&(k, _)| s.beam_cooldown[k] <= 0.0) {
+    let free = s.controls.free_fire;
+    if !free && !group.iter().all(|&(k, _)| s.beam_cooldown[k] <= 0.0) {
         return;
     }
-    let cost: f32 = group.iter().map(|&(k, _)| rules.beam(class.beams[k]).energy_cost).sum();
+    // A free-firing turret (the original's station turrets) pays no energy.
+    let cost: f32 = if free { 0.0 } else { group.iter().map(|&(k, _)| rules.beam(class.beams[k]).energy_cost).sum() };
     if s.energy < cost {
         // Not enough energy: report it, and hold the mounts for half a second so the
         // warning is not repeated every tick while the trigger is held.
@@ -500,17 +502,6 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     let mut absorbed = 0.0;
     let mut downed: Vec<&str> = Vec::new();
     let class = rules.ship(s.class);
-    // A direct hit (beams and ordinary missiles) on a station whose shields were already
-    // down may strike a hard point (flight README §8.4): note that before they absorb.
-    let direct_unshielded = mode == DamageMode::Normal
-        && !class.hard_points.is_empty()
-        && if class.shield_pool.is_some() {
-            super::stations::pool_points(s) <= 0.0
-        } else if from_front {
-            s.shield_fore <= 0.0
-        } else {
-            s.shield_aft <= 0.0
-        };
     match mode {
         DamageMode::BypassShields => {}
         // A station's one pool takes the whole hit, from any side and in either mode.
@@ -564,19 +555,20 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     if d.system_divert {
         rest -= to_system.min(rest);
     }
-    // A hard point the hit lands in takes it instead of the hull; what it cannot hold
-    // goes on to the hull (derived: the original's overflow is not traced).
+    // What gets past the shields and lands inside a standing hard point is taken by it,
+    // whole: its hit points may go below 0 and nothing reaches the hull (flight README
+    // §8.4, verified). A `direct` point (the connection point) takes only direct hits.
     let mut fallen: Option<usize> = None;
-    if direct_unshielded && rest > 0.0 {
+    if rest > 0.0 && !class.hard_points.is_empty() {
         let (pos, rot) = (s.position, s.rotation);
+        let direct = mode == DamageMode::Normal;
         let inside = |k: usize| {
             let h = &class.hard_points[k];
-            s.hard_hp[k] > 0.0 && at.distance(pos + rot * Vec3::from(h.at)) <= h.radius
+            s.hard_hp[k] > 0.0 && (direct || !h.direct_only) && at.distance(pos + rot * Vec3::from(h.at)) <= h.radius
         };
         if let Some(k) = (0..class.hard_points.len()).find(|&k| inside(k)) {
-            let took = rest.min(s.hard_hp[k]);
-            s.hard_hp[k] -= took;
-            rest -= took;
+            s.hard_hp[k] -= rest;
+            rest = 0.0;
             if s.hard_hp[k] <= 0.0 {
                 fallen = Some(k);
             }
@@ -585,6 +577,7 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     s.hull -= rest;
     s.since_hit = 0.0;
     let all_points_down = !s.hard_hp.is_empty() && s.hard_hp.iter().all(|h| *h <= 0.0);
+    let s_rot = s.rotation;
     let destroyed = match class.destroyed_when {
         DestroyedWhen::Hull => s.hull <= 0.0,
         DestroyedWhen::HardPoints => all_points_down,
@@ -596,7 +589,13 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     }
     if let Some(k) = fallen {
         let h = &class.hard_points[k];
-        w.events.push(SimEvent::HardPointDestroyed { ship: id, name: h.name.clone(), text: h.message.clone() });
+        w.events.push(SimEvent::HardPointDestroyed {
+            ship: id,
+            name: h.name.clone(),
+            text: h.message.clone(),
+            position: pos + s_rot * Vec3::from(h.at),
+            explosion: h.explosion,
+        });
     }
     let shield_only = rest <= 0.0 && to_armor <= 0.0 && to_system <= 0.0 && fallen.is_none();
     w.events.push(SimEvent::Hit { ship: id, position: at, shield: shield_only });

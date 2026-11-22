@@ -22,32 +22,57 @@ behaviours:
       aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}
       reaction: {per_level: [1.2s, 1s, 0.8s, 0.6s, 0.45s]}
 
+  # The original's station turrets (README §8.6, unknowns §6, VERIFIED): no energy, one
+  # shot per interval, 5 km. The X-COM base's are gimballed: they lead at 2,000 m/s with no
+  # error, only at targets in front of them, one shot per the beam's RateOfFire. The alien
+  # base's are fixed (85 deg arc): full lead, accuracy rolled once in [40 + 5d, 75 + 5d) %, a
+  # miss of up to 20 m along the target's x or y axis on a failed roll beyond 200 m, a shot
+  # every 1,000 - 25d ms + 0-50 ms. Whether either base checks its line of sight is not
+  # traced (DERIVED: no).
+  station_turret_xcom:
+    prefer: {fighter: 1.5}
+    states:
+      guns: {do: turret, aim: gimballed, lead_speed: 2000, range: 5km, interval: rate_of_fire, free_fire: true}
+  station_turret_alien:
+    prefer: {fighter: 1.5}
+    states:
+      guns:
+        do: turret
+        aim: fixed
+        range: 5km
+        accuracy: {per_level: [[40, 75], [45, 80], [50, 85], [55, 90], [60, 95]]}
+        interval: {per_level: [1s, 0.975s, 0.95s, 0.925s, 0.9s]}
+        interval_jitter: 0.05s
+        free_fire: true
+
   # Pirate station turrets (README §8.6; tables 0x67d430 / 0x67d548, VERIFIED): Laser,
-  # range and arc per row; a shot every interval (ms: base + per level x d, plus 0-50
-  # at random, not modelled). Their accuracy (a + b x d %, full lead, a 20 m miss on a
-  # failed roll) and the line-of-sight check are the turret fire control of #115; until
-  # then they aim like the station turrets. In the original they are gun points on the
-  # station's own model: here they are modules with the X-COM laser turret's mesh and
-  # hit points (DERIVED), and the arc is read as the half-angle off their facing (DERIVED).
+  # range and arc per row; fixed turrets (full lead, accuracy a + b x d %, a 20 m miss on a
+  # failed roll), a shot every base + per level x d ms + 0-50 ms, the line of sight per row,
+  # no energy. In the original they are gun points on the station's own model: here they
+  # are modules with the X-COM laser turret's mesh and hit points (DERIVED), and the arc is
+  # read as the half-angle off their facing (DERIVED).
   pirate_turret_long:    # rows 0-1: 3,000 m, 125 deg, accuracy 50 + 7d, 950 - 25d ms
-    states: {guns: {do: turret, range: 3km, burst: 0.02s, pause: {per_level: [0.95s, 0.925s, 0.9s, 0.875s, 0.85s]}}}
-    skill: {aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}, reaction: 0.5s}
+    states: {guns: {do: turret, aim: fixed, range: 3km, accuracy: {per_level: [50, 57, 64, 71, 78]}, interval: {per_level: [0.95s, 0.925s, 0.9s, 0.875s, 0.85s]}, interval_jitter: 0.05s, line_of_sight: false, free_fire: true}}
   pirate_turret_short:   # rows 2-9: 2,250 m, 75 deg, accuracy 60 + 7d, 800 - 15d ms
-    states: {guns: {do: turret, range: 2.25km, burst: 0.02s, pause: {per_level: [0.8s, 0.785s, 0.77s, 0.755s, 0.74s]}}}
-    skill: {aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}, reaction: 0.5s}
+    states: {guns: {do: turret, aim: fixed, range: 2.25km, accuracy: {per_level: [60, 67, 74, 81, 88]}, interval: {per_level: [0.8s, 0.785s, 0.77s, 0.755s, 0.74s]}, interval_jitter: 0.05s, line_of_sight: true, free_fire: true}}
   dealer_turret_top:     # row 0: 3,000 m, 125 deg, accuracy 75 + 5d, 950 + 25d ms
-    states: {guns: {do: turret, range: 3km, burst: 0.02s, pause: {per_level: [0.95s, 0.975s, 1s, 1.025s, 1.05s]}}}
-    skill: {aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}, reaction: 0.5s}
+    states: {guns: {do: turret, aim: fixed, range: 3km, accuracy: {per_level: [75, 80, 85, 90, 95]}, interval: {per_level: [0.95s, 0.975s, 1s, 1.025s, 1.05s]}, interval_jitter: 0.05s, line_of_sight: false, free_fire: true}}
   dealer_turret_low:     # rows 1-2: 2,000 m, 85 deg, accuracy 65 + 5d, 1,250 - 25d ms
-    states: {guns: {do: turret, range: 2km, burst: 0.02s, pause: {per_level: [1.25s, 1.225s, 1.2s, 1.175s, 1.15s]}}}
-    skill: {aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}, reaction: 0.5s}
+    states: {guns: {do: turret, aim: fixed, range: 2km, accuracy: {per_level: [65, 70, 75, 80, 85]}, interval: {per_level: [1.25s, 1.225s, 1.2s, 1.175s, 1.15s]}, interval_jitter: 0.05s, line_of_sight: true, free_fire: true}}
   dealer_turret_side:    # rows 3-4: 3,000 m, 90 deg, accuracy 65 + 5d, 1,000 - 10d ms
-    states: {guns: {do: turret, range: 3km, burst: 0.02s, pause: {per_level: [1s, 0.99s, 0.98s, 0.97s, 0.96s]}}}
-    skill: {aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}, reaction: 0.5s}
-  # Alien base mines: they wait and go off when a hostile comes near. What the original's
-  # mines do is not traced (DERIVED: the engine's mine manoeuvre at 150 m).
+    states: {guns: {do: turret, aim: fixed, range: 3km, accuracy: {per_level: [65, 70, 75, 80, 85]}, interval: {per_level: [1s, 0.99s, 0.98s, 0.97s, 0.96s]}, interval_jitter: 0.05s, line_of_sight: false, free_fire: true}}
+  # Freighter turrets (X-COM, outpost and pirate freighters, 0x593e13, VERIFIED): two fixed
+  # Laser turrets, 2,000 m, the fore one at the pilot's Accuracy (25 without a pilot), the
+  # aft one at 0.75 of it, a shot every 750 - 25d ms + 0-100 ms, line of sight checked.
+  freighter_turret_fore:
+    states: {guns: {do: turret, aim: fixed, range: 2km, accuracy: pilot, interval: {per_level: [0.75s, 0.725s, 0.7s, 0.675s, 0.65s]}, interval_jitter: 0.1s, line_of_sight: true, free_fire: true}}
+  freighter_turret_aft:
+    states: {guns: {do: turret, aim: fixed, range: 2km, accuracy: pilot, accuracy_factor: 75%, interval: {per_level: [0.75s, 0.725s, 0.7s, 0.675s, 0.65s]}, interval_jitter: 0.1s, line_of_sight: true, free_fire: true}}
+
+  # Alien base mines go off on contact: collidable objects of radius 10 whose INI Range
+  # is 0 (unknowns §9, DERIVED).
   alien_mine:
-    states: {wait: {do: mine, range: 150m}}
+    states: {wait: {do: mine, range: 0}}
 
 modelsets:
   xcom_turret: {intact: original:GUNTURRET2, debris: xcom_base, destroyed_effect: explosion_fighter}
@@ -65,7 +90,7 @@ objects:
     faction: xcom
     beams: [laser_cannon, laser_cannon]
     turret_arc: 180
-    behaviour: station_turret
+    behaviour: station_turret_xcom
     shielded_by_hub: true
   xcom_shield_generator:
     inherit: original:GameSettings.ini/M_XCOMShieldGeneratorType1
@@ -86,8 +111,8 @@ objects:
     model_set: alien_gun_pod
     faction: alien
     beams: [plasma_cannon]
-    turret_arc: 180
-    behaviour: station_turret
+    turret_arc: 85
+    behaviour: station_turret_alien
     shielded_by_hub: true
   alien_shield_pod:
     inherit: original:GameSettings.ini/M_ALIENShieldGeneratorType2
@@ -139,3 +164,15 @@ objects:
     hit_points: 50
     missiles: {alien_mine_missile: 1}
     behaviour: alien_mine
+  # Freighter turrets (0x593e13, VERIFIED but for the look: the X-COM turret's mesh and hit
+  # points, DERIVED).
+  freighter_turret_fore:
+    inherit: pirate_turret_long
+    name: Freighter laser turret
+    faction: xcom
+    turret_arc: 85
+    behaviour: freighter_turret_fore
+  freighter_turret_aft:
+    inherit: freighter_turret_fore
+    turret_arc: 80
+    behaviour: freighter_turret_aft
