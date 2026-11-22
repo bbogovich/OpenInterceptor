@@ -8,7 +8,7 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
-**#133 (app NEXT)** four more: `sim::combat::tests::hull_hits_and_collisions_hurt_the_pilot_until_out_cold_or_dead`,
+**#133 (app 0.22.28)** four more: `sim::combat::tests::hull_hits_and_collisions_hurt_the_pilot_until_out_cold_or_dead`,
 `content::behaviour::tests::health_rolls_follow_the_original_generator`,
 `campaign::tests::pilots_heal_train_and_are_paid_as_the_original` (health 4 → 8 in two days in the
 bay; a 75-Int pilot's Accuracy 60 → 61 in 5 days; a commander with 96 Accuracy and a kill earns
