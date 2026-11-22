@@ -206,14 +206,14 @@ yet.
 A topic finishes when its work reaches `size`; every base working on it stops, a message
 says so, and its `score_by_level` score is added to the month's.
 
-`goodies: {<id>: …}` (app NEXT) — salvage chances for raids' `salvage_items`.
+`goodies: {<id>: …}` (app 0.22.25) — salvage chances for raids' `salvage_items`.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `chances` | list of numbers | none | Per cent by difficulty level, easiest first; a level past the list takes the last. |
 | `beginner` … `superhuman` | number | none | The same as the original's keys, read through inheritance: `interceptor` inherits `original:GameSettings.ini/BeamGoodies`, `MissileGoodies`, `FreighterGoodies` and `AlienCorpseGoodies` (**verified** tables, `unknowns-2026-11.md` §11.2). |
 
-`interceptor` (app NEXT) gates its alien topics on artefacts: the alien weapons on their own items
+`interceptor` (app 0.22.25) gates its alien topics on artefacts: the alien weapons on their own items
 (Phase Cannon, Plasma Cannon, Psi Blaster, Elerium, Enveloping and Parallax torpedoes), the five
 alien races on corpse items, the three saucer examinations on wreckage items, and the alien
 probes and drone on their own artefacts. Which item a topic needs (the exe's table at

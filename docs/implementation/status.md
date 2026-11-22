@@ -614,7 +614,7 @@ screen set: its sheet fonts show in its dialogs only.
 generated systems their planets (the original's per-class table, read from the exe). A 90-day
 `interceptor` strategy soak: 4 battles, 3/71 topics, 0 craft left (D-24 is #134's). DEV-096.
 
-**#129** (app NEXT; RQ-S-02, RQ-S-03; strategy README §2.4, §4.2; unknowns §11.2): a finished topic
+**#129** (app 0.22.25; RQ-S-02, RQ-S-03; strategy README §2.4, §4.2; unknowns §11.2): a finished topic
 earns `research_model.score_by_level` at its `level` (`interceptor` 250 / 250 / 500 / 750);
 artefact-gated topics (`requires_item`) open once a won battle recovers their item through the
 raid's `salvage_items` and a `goodies` chance (`interceptor` inherits the original's `*Goodies`
