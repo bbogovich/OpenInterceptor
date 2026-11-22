@@ -27,8 +27,9 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #114 RQ-C-05 (hard points: the connection point; tendrils untraced), RQ-C-07 (modules by position and chance: pirate base and arms dealer turret tables; alien base minefields) | 0.22.11 |
 | #114 follow-up: hard points take hits whole, either destruction, tendrils at the model's attachment points 1-3 (derived), contact mines, ring construction (unknowns §9) | 0.22.13 |
 | #115 RQ-C-06 (station turrets: fixed/gimballed, 5 km, intervals, free fire, LOS), RQ-C-08 (missile turrets, not placed), RQ-C-09 (freighter turrets; capital ships open), RQ-C-22 (gimballed lead 2,000 m/s, no error) | 0.22.13 |
-| #115 follow-up: base turrets check line of sight; capital-ship turrets (AlienType3/4/5, alien freighter); turret defaults 500 ms / 2,500 m; freighter accuracy S and int(S x 0.75) | NEXT |
-| #117 D-03 (accumulator shields), D-04 (Tachyon Pulser), D-07 (Permeator/Enveloping split), D-11 (recharge while burning), D-14 (link modes) | NEXT |
+| #115 follow-up: base turrets check line of sight; capital-ship turrets (AlienType3/4/5, alien freighter); turret defaults 500 ms / 2,500 m; freighter accuracy S and int(S x 0.75) | 0.22.14 |
+| #117 D-03 (accumulator shields), D-04 (Tachyon Pulser), D-07 (Permeator/Enveloping split), D-11 (recharge while burning), D-14 (link modes) | 0.22.14 |
+| #119 RQ-C-11 (retreat when disarmed), RQ-C-12 (retreat on a Nova), RQ-C-13 (250 m break-off, 5 - 0.5d s), RQ-C-14 (Nova fuse 60 s, battle over 60 s later) | NEXT |
 
 ## Issues
 

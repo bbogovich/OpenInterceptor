@@ -138,6 +138,9 @@ pub struct Params {
     /// With `lock_cone`: the chance per tick that a ready missile is fired (the original's
     /// 5 + 2 × level %).
     pub missile_chance: f32,
+    /// Attack: seconds a break-off lasts before the pilot comes round again (2; the
+    /// original's 5,000 − 500 × level ms, derived).
+    pub break_time: f32,
     /// Turret: the original's turret fire control (`aim:`), or the engine's.
     pub turret: TurretParams,
 }
@@ -216,6 +219,7 @@ impl Default for Params {
             break_off: 0.0,
             lock_cone: 0.0,
             missile_chance: 1.0,
+            break_time: 2.0,
             turret: TurretParams {
                 lead_speed: 2000.0,
                 accuracy: [50.0, 50.0],
@@ -338,12 +342,21 @@ pub struct PilotStats {
     pub bravery: f32,
     pub stamina: f32,
     pub grade: Option<u8>,
+    /// The pilot's rank, 0 (rookie) upwards (`rank:`; 0 when unset).
+    pub rank: Option<u8>,
 }
 
 impl PilotStats {
     /// The original's values for a ship with no pilot record.
-    pub const NONE: PilotStats =
-        PilotStats { accuracy: 50.0, intelligence: 50.0, flying: 50.0, bravery: 50.0, stamina: 50.0, grade: None };
+    pub const NONE: PilotStats = PilotStats {
+        accuracy: 50.0,
+        intelligence: 50.0,
+        flying: 50.0,
+        bravery: 50.0,
+        stamina: 50.0,
+        grade: None,
+        rank: None,
+    };
 
     /// Parses `pilot: {accuracy: 80, intelligence: 60, flying: 50, bravery: 50, stamina: 50, grade: 1}`.
     pub fn parse(g: Get) -> PilotStats {
@@ -356,6 +369,7 @@ impl PilotStats {
             bravery: stat("bravery", n.bravery),
             stamina: stat("stamina", n.stamina),
             grade: g.num("grade").map(|v| v.clamp(0.0, 255.0) as u8),
+            rank: g.num("rank").map(|v| v.clamp(0.0, 255.0) as u8),
         }
     }
 }
@@ -434,6 +448,100 @@ pub struct BehaviourDef {
     /// Object variables (`vars: [phase]`): names for the slots of the pilot's
     /// `AiState::vars`, read with `var(name)` and set by scripts with `set_var`.
     pub vars: Vec<String>,
+    /// Jump out when every beam mount is gone (`retreat_when_disarmed:`).
+    pub retreat_disarmed: Option<RetreatRule>,
+    /// Jump out when a Nova bomb goes off (`retreat_on_nova:`).
+    pub retreat_nova: Option<RetreatRule>,
+}
+
+/// A pilot's chance to leave the battle, from its record (the original's retreat rolls,
+/// flight README §9, verified): with `b = 100 − Bravery`, `i = 100 − Intelligence` and
+/// `s = 100 − Stamina`, the first row whose rank band holds the pilot's rank gives
+/// `p = bravery·b + intelligence·i + stamina·s + add` (%), held to `clamp`; a ship with no
+/// pilot record rolls `p` in `no_pilot`.
+///
+/// ```yaml
+/// retreat_when_disarmed:
+///   to: flee                 # the state to switch to (a retreat with jump: true)
+///   every: 5s                # at most this often
+///   settle: 5s               # and at least this long after the last change of state
+///   rows: [{ranks: [0, 1], bravery: 0.7, add: 40}, {ranks: [2, 2], bravery: 0.6, add: 25}, {ranks: [3, 9], bravery: 0.5}]
+///   clamp: [5, 85]
+///   no_pilot: [50, 75]
+/// ```
+#[derive(Debug, Clone, PartialEq)]
+pub struct RetreatRule {
+    /// Index of the state it switches to.
+    pub to: usize,
+    pub every: f32,
+    pub settle: f32,
+    pub rows: Vec<RetreatRow>,
+    pub clamp: [f32; 2],
+    pub no_pilot: [f32; 2],
+}
+
+/// One `rows:` entry of a [`RetreatRule`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RetreatRow {
+    pub ranks: [u8; 2],
+    pub bravery: f32,
+    pub intelligence: f32,
+    pub stamina: f32,
+    pub add: f32,
+}
+
+impl RetreatRule {
+    /// The chance (0..1) for a pilot record; `None` asks for the `no_pilot` roll, which the
+    /// caller makes with `roll` (a number in 0..1).
+    pub fn chance(&self, pilot: Option<&PilotStats>, roll: f32) -> f32 {
+        let p = match pilot {
+            None => self.no_pilot[0] + (self.no_pilot[1] - self.no_pilot[0]) * roll,
+            Some(r) => {
+                let rank = r.rank.unwrap_or(0);
+                let row = self.rows.iter().find(|w| (w.ranks[0]..=w.ranks[1]).contains(&rank));
+                let p = row.map_or(0.0, |w| {
+                    w.bravery * (100.0 - r.bravery)
+                        + w.intelligence * (100.0 - r.intelligence)
+                        + w.stamina * (100.0 - r.stamina)
+                        + w.add
+                });
+                p.clamp(self.clamp[0], self.clamp[1])
+            }
+        };
+        (p / 100.0).clamp(0.0, 1.0)
+    }
+
+    fn parse(g: Get, at: &str, states: &[StateDef]) -> Result<RetreatRule, String> {
+        let to = g.str("to").ok_or(format!("{at}: needs to: (a state)"))?;
+        let to = states.iter().position(|s| s.name.eq_ignore_ascii_case(to)).ok_or(format!("{at}: no state '{to}'"))?;
+        let pair = |k: &str, d: [f32; 2]| g.nums(k).filter(|v| v.len() == 2).map(|v| [v[0], v[1]]).unwrap_or(d);
+        let rows = g
+            .node("rows")
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .map(|item| {
+                let r = Get(item);
+                let ranks =
+                    r.nums("ranks").filter(|v| v.len() == 2).map(|v| [v[0] as u8, v[1] as u8]).unwrap_or([0, 255]);
+                RetreatRow {
+                    ranks,
+                    bravery: r.num("bravery").unwrap_or(0.0),
+                    intelligence: r.num("intelligence").unwrap_or(0.0),
+                    stamina: r.num("stamina").unwrap_or(0.0),
+                    add: r.num("add").unwrap_or(0.0),
+                }
+            })
+            .collect();
+        Ok(RetreatRule {
+            to,
+            every: g.qty("every", Unit::Time).unwrap_or(5.0).max(0.0),
+            settle: g.qty("settle", Unit::Time).unwrap_or(5.0).max(0.0),
+            rows,
+            clamp: pair("clamp", [0.0, 100.0]),
+            no_pilot: pair("no_pilot", [50.0, 75.0]),
+        })
+    }
 }
 
 impl BehaviourDef {
@@ -466,6 +574,8 @@ impl BehaviourDef {
             prefer: Vec::new(),
             systems: SystemsUse::default(),
             vars: Vec::new(),
+            retreat_disarmed: None,
+            retreat_nova: None,
         }
     }
 
@@ -528,6 +638,7 @@ impl BehaviourDef {
                 break_off: sg.qty("break_off", Unit::Distance).unwrap_or(d.break_off).max(0.0),
                 lock_cone: sg.qty("lock_cone", Unit::Angle).unwrap_or(d.lock_cone).clamp(0.0, 180.0),
                 missile_chance: sg.qty("missile_chance", Unit::Fraction).unwrap_or(d.missile_chance).clamp(0.0, 1.0),
+                break_time: sg.qty("break_time", Unit::Time).unwrap_or(d.break_time).max(0.0),
                 turret: {
                     let t = d.turret;
                     let band = sg.nums("accuracy").filter(|v| v.len() == 2).map(|v| [v[0], v[1]]);
@@ -670,7 +781,26 @@ impl BehaviourDef {
                 }
             }
         }
-        Ok(BehaviourDef { id: id.to_string(), states, start, transitions, skill, prefer, systems, vars })
+        let retreat_disarmed = match g.node("retreat_when_disarmed") {
+            Some(n) => Some(RetreatRule::parse(Get(n), "retreat_when_disarmed", &states)?),
+            None => None,
+        };
+        let retreat_nova = match g.node("retreat_on_nova") {
+            Some(n) => Some(RetreatRule::parse(Get(n), "retreat_on_nova", &states)?),
+            None => None,
+        };
+        Ok(BehaviourDef {
+            id: id.to_string(),
+            states,
+            start,
+            transitions,
+            skill,
+            prefer,
+            systems,
+            vars,
+            retreat_disarmed,
+            retreat_nova,
+        })
     }
 }
 
@@ -800,5 +930,36 @@ mod tests {
     fn the_builtin_attack_is_valid() {
         let b = BehaviourDef::builtin_attack(&schema());
         assert_eq!(b.states[b.start].manoeuvre, Manoeuvre::Attack);
+    }
+
+    #[test]
+    fn retreat_chances_follow_rank_stats_and_clamps() {
+        let b = parse(
+            "states: {go: {do: attack}, flee: {do: retreat, jump: true}}
+retreat_when_disarmed: {to: flee, every: 5s, settle: 5s, rows: [{ranks: [0, 1], bravery: 0.7, add: 40}, {ranks: [2, 2], bravery: 0.6, add: 25}, {ranks: [3, 9], bravery: 0.5}], clamp: [5, 85], no_pilot: [50, 75]}
+retreat_on_nova: {to: flee, rows: [{ranks: [4, 9], bravery: 0.5, intelligence: 0.25, stamina: 0.25, add: -25}, {ranks: [2, 3], bravery: 0.6, intelligence: 0.1, stamina: 0.05, add: 25}, {ranks: [0, 1], bravery: 0.25, intelligence: 0.1, stamina: 0.05, add: 50}], clamp: [5, 95]}
+",
+        )
+        .unwrap();
+        let d = b.retreat_disarmed.as_ref().unwrap();
+        let rec = |rank: u8, stat: f32| PilotStats {
+            rank: Some(rank),
+            bravery: stat,
+            intelligence: stat,
+            stamina: stat,
+            ..PilotStats::NONE
+        };
+        // RQ-C-11: rank 0, Bravery 100: 40 %; rank 3: 0, held to 5 %; rank 0, Bravery 0: 110 → 85.
+        assert!((d.chance(Some(&rec(0, 100.0)), 0.0) - 0.40).abs() < 1e-6);
+        assert!((d.chance(Some(&rec(3, 100.0)), 0.0) - 0.05).abs() < 1e-6);
+        assert!((d.chance(Some(&rec(0, 0.0)), 0.0) - 0.85).abs() < 1e-6);
+        assert!((d.chance(None, 0.5) - 0.625).abs() < 1e-6, "no pilot: the band");
+        assert_eq!((d.to, d.every, d.settle), (1, 5.0, 5.0));
+        // RQ-C-12: rank 0, all stats 100: 50 %; all 0: 25 + 10 + 5 + 50 = 90 %.
+        let n = b.retreat_nova.as_ref().unwrap();
+        assert!((n.chance(Some(&rec(0, 100.0)), 0.0) - 0.50).abs() < 1e-6);
+        assert!((n.chance(Some(&rec(0, 0.0)), 0.0) - 0.90).abs() < 1e-6);
+        assert!((n.chance(Some(&rec(4, 100.0)), 0.0) - 0.05).abs() < 1e-6, "−25, held to 5");
+        assert!(parse("states: {go: {do: attack}}\nretreat_on_nova: {to: nowhere}\n").unwrap_err().contains("nowhere"));
     }
 }

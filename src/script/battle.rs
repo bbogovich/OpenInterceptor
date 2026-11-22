@@ -45,6 +45,8 @@ pub mod id {
     pub const MEMBER_ALIVE: u16 = 18;
     pub const MEMBER_HULL: u16 = 19;
     pub const MEMBER_DISTANCE: u16 = 20;
+    pub const NOVA_TIME: u16 = 21;
+    pub const BATTLE_OVER: u16 = 22;
 }
 
 /// The battle context's queries (index = id above).
@@ -150,6 +152,8 @@ pub static QUERIES: &[QueryDef] = &[
         result: Type::Num,
         doc: "member_distance(role, m): the m-th member's distance from the player, m (very large once gone)",
     },
+    QueryDef { name: "nova_time", args: &[], result: Type::Num, doc: "seconds since a Nova bomb went off (-1 before)" },
+    QueryDef { name: "battle_over", args: &[], result: Type::Bool, doc: "a Nova bomb's ends_battle_after has run out" },
 ];
 
 /// The battle schema for a mission: its role names and the campaign's difficulty level
@@ -190,6 +194,8 @@ mod tests {
             (id::MEMBER_ALIVE, "member_alive"),
             (id::MEMBER_HULL, "member_hull"),
             (id::MEMBER_DISTANCE, "member_distance"),
+            (id::NOVA_TIME, "nova_time"),
+            (id::BATTLE_OVER, "battle_over"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

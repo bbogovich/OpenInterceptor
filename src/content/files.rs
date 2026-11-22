@@ -115,6 +115,16 @@ fn missile() -> Ty {
             "cluster: what it splits into",
         ),
         f("trigger_range", dist(), "cloaked_wait: wakes when a hostile comes this close"),
+        f("fuse", time(), "a Nova bomb: no contact detonation; it goes off this long after launch (0 = none)"),
+        f("ends_battle_after", time(), "with fuse: the battle is over this long after the detonation (battle_over)"),
+        f(
+            "warnings",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("at", time(), "seconds after launch"),
+                f("text", Ty::Text, "the radio line (@key allowed)"),
+            ]))),
+            "with fuse: radio lines on the way",
+        ),
     ])
 }
 
@@ -588,6 +598,7 @@ fn behaviour() -> Ty {
         f("missile_range", dist(), "launch missiles only this close (default 2.5 × range, at least 2 km)"),
         f("jump", Ty::Bool, "retreat: start the hyperdrive"),
         f("escape", dist(), "tow: haul the prize this far before jumping out (2.5 km)"),
+        f("break_time", time(), "attack: how long a break-off lasts before coming round again (2s)"),
         f("break_off", dist(), "attack: break off closer than this (0 = 120 m + 0.15 × max_speed)"),
         f(
             "lock_cone",
@@ -660,6 +671,42 @@ fn behaviour() -> Ty {
             Ty::Dict(Box::new(Ty::Num)),
             "target preferences: player, a kind (fighter, station…), class:<id> or faction:<id> → weight (2 = as if half as far)",
         ),
+        f("retreat_when_disarmed", Ty::Struct(vec![
+                f("to", name(), "the state to switch to (a retreat with jump: true)"),
+                f("every", time(), "roll at most this often (5s)"),
+                f("settle", time(), "and at least this long after the last change of state (5s)"),
+                f(
+                    "rows",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("ranks", Ty::Numbers(2), "the rank band this row is for"),
+                        f("bravery", Ty::Num, "times 100 - Bravery"),
+                        f("intelligence", Ty::Num, "times 100 - Intelligence"),
+                        f("stamina", Ty::Num, "times 100 - Stamina"),
+                        f("add", Ty::Num, "plus this (%)"),
+                    ]))),
+                    "the chance in % by rank",
+                ),
+                f("clamp", Ty::Numbers(2), "the chance is held to this band (%)"),
+                f("no_pilot", Ty::Numbers(2), "a ship with no pilot record rolls its chance in this band ([50, 75])"),
+            ]), "jump out by chance when every beam mount is gone"),
+        f("retreat_on_nova", Ty::Struct(vec![
+                f("to", name(), "the state to switch to (a retreat with jump: true)"),
+                f("every", time(), "roll at most this often (5s)"),
+                f("settle", time(), "and at least this long after the last change of state (5s)"),
+                f(
+                    "rows",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("ranks", Ty::Numbers(2), "the rank band this row is for"),
+                        f("bravery", Ty::Num, "times 100 - Bravery"),
+                        f("intelligence", Ty::Num, "times 100 - Intelligence"),
+                        f("stamina", Ty::Num, "times 100 - Stamina"),
+                        f("add", Ty::Num, "plus this (%)"),
+                    ]))),
+                    "the chance in % by rank",
+                ),
+                f("clamp", Ty::Numbers(2), "the chance is held to this band (%)"),
+                f("no_pilot", Ty::Numbers(2), "a ship with no pilot record rolls its chance in this band ([50, 75])"),
+            ]), "jump out by chance when a Nova bomb goes off"),
         f(
             "skill",
             Ty::Struct(vec![
@@ -1076,6 +1123,7 @@ pub fn scenario() -> Ty {
                 f("bravery", Ty::Num, "0–100 (50)"),
                 f("stamina", Ty::Num, "0–100 (50)"),
                 f("grade", Ty::Num, "the pilot's grade (flight.pilot_grades; default the class's)"),
+                f("rank", Ty::Num, "the pilot's rank, 0 upwards (retreat rolls)"),
             ]),
             "the AI pilot's record",
         ),
