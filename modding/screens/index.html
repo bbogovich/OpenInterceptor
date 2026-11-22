@@ -7360,6 +7360,12 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>A <code>knob</code>'s turning frames (rows N … N + count − 1, at <code>pos</code>), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22).</td>
 </tr>
 <tr>
+<td><code>panel</code></td>
+<td>name</td>
+<td>none</td>
+<td>The panel the widget belongs to: <code>hide(&lt;panel&gt;)</code> and <code>show(&lt;panel&gt;)</code> hide and show it (app 0.22.23).</td>
+</tr>
+<tr>
 <td><code>zoom_levels</code></td>
 <td>list of numbers</td>
 <td>none</td>
@@ -7481,6 +7487,10 @@ and kept; one that cannot be loaded is reported on standard error once
 <tr>
 <td><code>testbed</code></td>
 <td>Switches to the testbed layout.</td>
+</tr>
+<tr>
+<td><code>hide(&lt;panel&gt;)</code>, <code>show(&lt;panel&gt;)</code></td>
+<td>Since app 0.22.23: hides or shows the widgets with that <code>panel:</code> (hidden ones are neither drawn nor clicked), e.g. Bases' side panel.</td>
 </tr>
 <tr>
 <td><code>list(prev)</code>, <code>list(next)</code>, <code>list(act)</code></td>
@@ -7670,15 +7680,20 @@ lists that fill columns, in this order:</p>
 <li>Bases has no scroll arrows (since app 0.22.22; 0.22.21 placed its panel buttons as arrows): its
   module panel shows one module at a time and steps with three 42 × 32 buttons (§14.2,
   <strong>verified</strong>): previous 402 at (387, 247) (rows 1377 / 1378), close panel 400 at (484, 247)
-  (1381 / 1382, the check mark that accepts) and next 401 at (580, 247) (1379 / 1380).
-  <code>interceptor</code> keeps its list of modules and has the buttons step its selection (<code>list(prev)</code>,
-  <code>list(next)</code>) and build the selected module (<code>list(act)</code>) (<strong>derived</strong>); the wheel still
-  scrolls the list.</li>
+  (1381 / 1382) and next 401 at (580, 247) (1379 / 1380). Close panel closes the side panel in
+  every mode: its buttons hidden, the slide sound, placement mode cleared. Since app 0.22.23
+  <code>interceptor</code> puts the list and the three buttons in a <code>panel: side</code> that close panel hides
+  (<code>hide(side)</code>, with <code>sndSlideSide</code>) and the add-module button 202 at (504, 324) shows again
+  (<code>show(side)</code>; its rows 1343 / 1344 <strong>derived</strong> from the side buttons' numbering); previous
+  and next step the list's selection and a double click builds (<strong>derived</strong>). The panel starts
+  open (<strong>derived</strong>).</li>
 <li>Equip Ships' nine ring sockets (centres <strong>verified</strong>) show the selected ship's hard points as
   icons only, since app 0.22.21 (§13.2, <strong>verified</strong>): since app 0.22.22 the fitted item's icon
   (§14.3, a launcher and its missile sharing one), row 1237 where the hull has no hard point, the
   selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the body
-  font (23011). The probes' icons are not matched to <code>interceptor</code>'s probes yet.</li>
+  font (23011). Probes by INI section (since app 0.22.23): HunterProbe 1429, SensorProbe 1438
+  (CommunicationsProbe 1418 and CommunicationsJammerProbe 1417 are not in <code>interceptor</code>'s items);
+  the ECM, Intel and IntelJammer probes have none.</li>
 <li>Research keeps its rows on the art's slots.</li>
 </ul>
 <p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
@@ -7774,17 +7789,21 @@ income report read in full, <code>unknowns-2026-11.md</code> §13.1, §14.8, <st
 </tr>
 <tr>
 <td><code>alien</code>, <code>xcom</code></td>
-<td>Alien contacts launched and interceptions sent each month.</td>
+<td>Alien and X-COM incursions each month (below).</td>
 </tr>
 </tbody>
 </table>
-<p>A <code>map</code> with <code>source: activity_alien</code> or <code>activity_xcom</code> draws every system coloured by its
-average actions a month — none, 1 – 5, 6 – 15, 16 and more — with the four <code>legend</code> texts under
-it, cut with "..." where one would pass the widget's right edge. The months come from the
-campaign's history, which saves keep since app 0.22.21.</p>
+<p>Since app 0.22.23 the activity is the original's (§14.7, <strong>verified</strong>): an alien incursion is each
+alien fleet sighting the player is alerted to, counted at the fleet's position; an X-COM
+incursion is each mission launched, counted at its launch point. Each is binned into a 16 × 16
+grid over the galaxy (3,750 units a cell on the 60,000-unit map; the map's size / 16) with a
+count per cell per month. The graphs chart the months' totals.</p>
+<p>A <code>map</code> with <code>source: activity_alien</code> or <code>activity_xcom</code> tints each grid cell by its average
+incursions a month — none, 1 – 5, 6 – 15, 16 and more — and draws the systems in their cell's
+colour, with the four <code>legend</code> texts under it, cut with "..." where one would pass the widget's
+right edge. The months and the grid come from the campaign's history, which saves keep.</p>
 <p><strong>Derived:</strong> the panels, the other graphs' fitted ranges, the series line's colour (<code>colour</code>,
-default green), the activity colours, and what counts as alien and X-COM activity (the exe's
-source for those arrays was not traced, §14.7).</p>
+default green), and the activity colours and tint.</p>
 <h3 id="zoom-levels">Zoom levels<a class="headerlink" href="#zoom-levels" title="Permanent link">&para;</a></h3>
 <p><code>zoom_levels: [45, 30]</code> on a <code>map</code> (app 0.22.21) replaces free zoom by the original CSD's levels
 (<code>unknowns-2026-11.md</code> §1.1, §13.4, §14.4, <strong>verified</strong>): level 0 shows 45 map units a pixel,
@@ -7805,8 +7824,9 @@ ignores the levels.</p>
 <p>A click within <code>reach</code> of stop k picks level k (the last stop: the system picture, only while a
 system that can be opened is selected) and plays the widget's <code>sound</code>; the knob turns through
 its frames to that stop (stop k at frame k × (count − 1) / (stops − 1)). A lamp per stop: on for
-the level shown, off for the others, <code>unavailable</code> on a stop that cannot be chosen. Where the
-lamps go (on the stops) and how fast the knob turns are <strong>derived</strong>.</p>
+the level shown, off for the others, <code>unavailable</code> on a stop that cannot be chosen; each lamp
+is centred on its stop and the knob frame is drawn over them (<code>0x4cda2d</code>, <strong>verified</strong> since app
+NEXT). How fast the knob turns is <strong>derived</strong>.</p>
 <h3 id="sprite-buttons-toggles-and-radio-groups">Sprite buttons, toggles and radio groups<a class="headerlink" href="#sprite-buttons-toggles-and-radio-groups" title="Permanent link">&para;</a></h3>
 <p>Since app 0.22.10 (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
 (Interceptor.exe button base 0x65f420, <strong>verified</strong>):</p>
