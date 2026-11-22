@@ -550,6 +550,62 @@ one tagged section per subsystem, each refusing to load when its tag or version 
 fixed-size blocks with count + used flags. The engine's own save can mirror this with YAML or binary
 sections without copying the byte layout.
 
+## 13. Track B screen questions (2026-11-22)
+
+### 13.1 The six reports (StatusReports.cpp; verified call sites, layout derived)
+
+Each report is a title (DrawText) plus a **line graph** drawn with 1-px lines (`0x6354af`): a grid of
+horizontal lines every step in RGB(0,50,0) with RGB(0,100,0) ticks, the axes in RGB(0,100,0), x labels
+= month abbreviations `S_MONTH_ABREV_*` (up to 16 months) and y labels in the built-in 6 px font
+(`0x5ffa81`) in RGB(0,200,0); "no data" text when empty.
+* **Income** (`0x490d4b`): `INCOMEREPORT_TITLE`, graph of monthly income (`INCOMEREPORT_GRAPHTITLE`).
+* **Finance** (`0x492125`): `FINANCEREPORT_TITLE`, graph with low / high / account lines
+  (`S_FINANCEREPORT_LOW/HIGH/ACC`); the five row buttons (income, expenditure, maintenance, balance,
+  score) pick the series.
+* **Alien activity / X-COM activity** (`0x495187`): `ALIENREPORT_*` / `XCOMREPORT_*` graph, plus
+  (`0x493cd8`) a map of systems coloured by activity count with the legend no activity / 1–5 / 6–15 /
+  16+ (`S_AR_*`), toggles TOTAL / ALIEN-XCOM / MODE.
+* **Outpost report** (`0x496a16`): `S_OUTPOSTREPORT_TITLE`, a table with six columns (`S_GREP_238`…
+  `243`) and a small map.
+* **Player status** (`0x497df3`): pilot/skill list (`S_SKILL_%d`, `S_GREP_268`…`276`).
+
+### 13.2 Equip Ships ring sockets (`0x5360c6` → `0x536969`, verified)
+
+The nine ring sockets show **the selected ship's hard points, as icons only (no text)**: each socket
+draws, at its rect centre, the fitted item's icon (sprite row from the table 0x690990 by item kind),
+row 1237 when the slot cannot be used, the selection overlay row 1235 at (+1, +1) on the selected
+socket, and an overlay 1249 + n in a socket mode n. Names and stats are drawn in the right-hand panel
+(`0x536dcc`, `0x5373e6`, pilot panel `0x537913`) with DrawText / DrawTextRect in **font 23011**.
+
+### 13.3 Scroll arrows (verified where given)
+
+* UFOpedia: list scroll anchors (616, 222) for the topic list and (616, 386) for the article text.
+* Reports: next / previous report buttons at (620, 282) and (617, 365); report lists' own arrows (ids
+  201/202) are placed relative to their list.
+* Base Stats (ids 401 up / 400 down, `0x501e0d`): up at (list right + 8, list top + 65), down at
+  (list right + 8, list bottom − 20) — relative to the stats list rect (member +0x175c).
+* Bases: ids 400 / 401 at **(484, 247)** and **(580, 247)** (sprite rows 1381 / 1379, left/right module
+  scroll, `0x47d3bf`).
+
+### 13.4 CSD zoom switching and the level-2 picture
+
+* Levels 0 / 1 come from the **view knob** (dial member +0x524; its position byte is read by
+  `0x4444fd` on every update). Clicking a system sets level 2 and turns the knob to it
+  (`0x447c42` → `0x4cdd20(2)`); clicking a black hole only re-centres. Level 3 shows the "removed"
+  message.
+* Level 2 picture: `0x440a61` picks the portrait (star class rows 454-554, bases 566/586) and
+  `0x43d493` draws the system view; the portrait's exact placement was not traced.
+
+### 13.5 Star classes of the generated galaxy (`0x5da74e`, verified)
+
+The original **generates the galaxy at random** for each new game (no fixed star list):
+* **System count:** r = rand % 100: ≤ 10 → 65, ≤ 20 → 70, ≤ 90 → 75, else 80 (table 0x662f68).
+* **Star class** per system: r = rand % 100 against table 0x662f70: ≤ 2 Red Giant, ≤ 6 Blue Giant,
+  ≤ 10 Black Hole, ≤ 13 White Dwarf, ≤ 24 Blue, ≤ 35 White, ≤ 70 Yellow, ≤ 85 Orange, else Red Dwarf.
+  A black-hole roll is re-drawn from the table (entries 1–7) — black holes are placed separately
+  (a flag at `var_268`, derived).
+* Planets per system: 1 + a per-class table (0x662e60, 10 entries per class), clamped to 2–5.
+
 ## 10. What remains unknown
 
 * Counter meanings 36–90 and 95–104 (objective events); the debrief field +0x30c.

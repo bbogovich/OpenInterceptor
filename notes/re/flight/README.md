@@ -95,6 +95,15 @@ Others: `f = max(0.1, 1 − (5 − d) × 0.12)`, `g = max(0.1, 1 − (5 − d) �
 `1 + (2 − d) × 0.25` and `1 + (2 − d) × 0.15` when d < 2. The Patton class has shields × 3 and
 armour × 4.
 
+**Patton fit** (verified, `0x4094d2` → hull case `0x40a27a`; the Patton is created as an X-COM ship,
+owner 0, by `0x55b0fe`): EngineType3 (9), SensorTargetingSystem2 (13), **ShieldType3** (5),
+**ArmorType3** (2), and special system DimensionJumpDrive (11, `0x408662`). Its protection is therefore
+**max shield per bank = ShieldType3 `Special` × f(X-COM) × 3** and **max armour per bank = ArmorType3
+`HitPoints` × g(X-COM) × 4** (`0x40c333`, `0x40c4ca`); with the player's INI (500 and 425) that is
+1,500 shields and 1,700 armour per bank from Veteran up (2,250 / 2,210 on Beginner, 1,875 / 1,955 on
+Experienced). (Other X-COM-built ships get the best researched engine, armour, shield and targeting
+system the same way: topics 35/36, 65/68, 67/27, 1/29.)
+
 ## 4. Damage (verified)
 
 A beam hit (`0x45352c`) does `Damage − rand() % (Damage / 4 + 1)`, which is 75–100 % of `Damage`.
@@ -887,7 +896,14 @@ the angle error. It is **not speed matching**, which is `SetSpeed` (`0x585a79`, 
     `../unknowns-2026-11.md` §11.1), a loss message 0x39 and the defeat cue (5, 1). Counter 0x71c458 (index 134, outside the scored 0–133) counts Nova endings.
   * **Messages 0x46–0x49** are wingman radio messages; `0x4035c2` maps them to voice-phrase (wave)
     numbers **33, 34, 35, 36** (case table 0x404568 → 0x404418; logged as "Incoming Message ...
-    WAVE %d"). The string/clip each wave plays was not traced.
+    WAVE %d"). Each wave n plays the speaker's clip `{M|F}Pilot{v}{nn}` (`../unknowns-2026-11.md` §11.4).
+  * **Radio message → wave** (`0x4035c2`, byte table 0x404568 → case table 0x404418; verified): fixed
+    waves 4→5, 5→6, 9→11, 10→12, 11→13, 12→14, 13→15, 14→55, 15→16, 23→56, 24…32→52…60,
+    35→39, 36…45→37, 48…52→51, 53→37, 54→49, 55→50, 56→8, 57→16, 58→15, 59…74→22…37 (so the Nova
+    messages 70…73 → 33…36), 75→39, 76→38, 78→3, 82→3, 86→6, 91→4, 113→7, 114→8. Other ids pick a
+    random wave from a small set (e.g. 1 or 4; 9, 10 or 1) or compute it (`0x402361`), and some are
+    **rejected** (no wave, logged "Rejected Wingman Message"). **Message 7 — the break-off call — is
+    rejected: it plays nothing** (its case `0x40397d` leaves the wave at −1).
   * Timeline from launch: +2.5 s it spins; +20 s it grows ×1.1; +30 s message 0x46, particles,
     ×1.5; +55 s it grows ×1.25 per frame; **+60 s it detonates** (message 0x47, the object is
     removed, `0x6a3e18` = 1).
