@@ -8,6 +8,17 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**Parity M1, #114 (app NEXT)** three more, so **519** `#[test]` functions:
+`content::rules::tests::hard_points_placed_modules_and_minefields_parse` (`destroyed_when`, a hard
+point, modules by `at`/`facing`/`chance` beside a slot, a minefield; a module with neither slot
+nor at, an unknown mine and a bad `destroyed_when` are errors; absent keys change nothing) and in
+`sim::stations` `hard_points_take_direct_hits_only_with_the_shields_down` (the pool takes a hit
+while up; with it down a direct hit inside the 124 m sphere lowers the point, not the hull; a hit
+outside it or an enveloping one strikes the hull; the fall is announced; all four down destroys
+the station with hull to spare) and `turrets_by_position_and_chance_and_minefields_by_level` (five
+turrets at 100 %, facing out; two at 0 %; a seeded 50 % varies; no mines on level 0; on level 4
+8 mines 4 km out and 18 at 2 km round (0, 500, 0)).
+
 **Parity M1, #118 (app 0.22.8)** four more, so **505** `#[test]` functions by a count of the
 sources (Track B's merges included): in `sim::ai`
 `the_original_steering_closes_a_small_error_within_two_ticks` (1° to the right: under 0.01° left
@@ -372,7 +383,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 | `sim::systems` | 19 | **Power**: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; **damage**: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; **hyperspace** countdown, abort and departure; **tractor** hold and capture on jump, and its refusals (power, fitting, range); **cloak** hides from enemy sensors beyond range; **ECM** makes missiles lose their target; **the console's sliders set power levels and balance outright**, within the budget; **the original's repair order, per-system efficiency, engine failure below 15 %, sensors and hyperdrive unaffected, the system table with mounts, launchers, carry-over and its weights** (app 0.22.6, #116) |
 | `sim::guidance` | 7 | Homing hits and dumbfire misses an offset target; sidestep still arrives; parallax decoys lure enemy missiles; cloaked wait sleeps until prey comes near; cluster splits into submunitions; doppelganger launches a decoy ship that expires; damage modes |
 | `mission` | 7 | Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; **the player's death is its own result (`killed`) with the lose outcomes**; **wingmen take successive slots of their formation** across roles; **the condition console evaluates against the battle without changing it** (a role count, an unknown role is an error, the mission's generator untouched — app 0.16.5); **a script outcome runs in the battle context** (checked against the mission's roles — app 0.18.0) |
-| `sim::stations` | 7 | **A station's one shield pool** starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; **a pool without generators recharges to its own `shields`**; **covered modules** pass hits to the hub's pool and the overflow to the hub's hull; **`damage_model: station`** skips armour, systems and the difficulty factor (app 0.22.4, #113) |
+| `sim::stations` | 9 | **A station's one shield pool** starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; **a pool without generators recharges to its own `shields`**; **covered modules** pass hits to the hub's pool and the overflow to the hub's hull; **`damage_model: station`** skips armour, systems and the difficulty factor (app 0.22.4, #113); **hard points and destruction by them; modules by position and chance; minefields by level** (app NEXT, #114) |
 | `sim::targeting` | 4 | Cycling with wrap-around, nearest hostile, most-central-in-sights, nothing to target |
 | `sim::hazards` | 4 | Asteroid fields and minefields are scattered in their sphere, clear of craft, deterministically, asteroids as scenery; a black hole pulls harder when near (capped) and swallows what crosses its radius; AI pilots turn away from it; an ion storm shortens radar range |
 | `sim::env` | 5 | Drag, gravity and lift act in an atmosphere and not in space (hover cancels gravity, lift carries the weight at the `lift` speed); AI pilots pull up near the ground; gentle touchdowns land, hard ones crash with damage, and the ceiling is an exit; ground installations are set down on the terrain; **craft spawned below 300 m over a ground are lifted to 300 m** |
