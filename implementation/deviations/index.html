@@ -6640,7 +6640,7 @@ one looks like a bug.</p>
 <tr>
 <td>DEV-035</td>
 <td><strong>Module placement on the original bases is derived</strong>: which of the X-COM base's 33 and the alien base's 28 attachment points carries a turret, shield generator, hangar or pod. Hit points come from the original <code>M_XCOM*</code> / <code>M_ALIEN*</code> sections (verified); destroying the hub destroys its modules. Since app 0.22.4 the <code>interceptor</code> bases have the original's shield rules (<strong>verified</strong>, flight notes §8.2 – §8.3): one pool sized by the generator type (2,000 X-COM Type1, 3,000 alien Type2), 2 points per second, modules covered by it; when the last generator falls the pool drops to 0 (app 0.22.6, <strong>verified</strong>, unknowns §8; 0.22.4 kept it). The outposts and ore plants have their own pools of their chart's <code>SD</code> at 2 per second (app 0.22.6, <strong>verified</strong>).</td>
-<td>The original assembles bases on the strategy layer (Stage 4), so their battle layout is not stored; the cascade rule follows the strategy guide's description (derived) — no code was found in the original that destroys a hub's modules with it (<em>unknown</em>). Placement is <code>modules: [{slot, class}]</code> data.</td>
+<td>The original assembles bases on the strategy layer (Stage 4), so their battle layout is not stored; the cascade rule follows the strategy guide's description (derived) — no code was found in the original that destroys a hub's modules with it (<em>unknown</em>). Placement is <code>modules: [{slot, class}]</code> data. Since app 0.22.11 the pirate base and the arms dealer have the original's turret tables (positions, facings, ranges, arcs; the base's 75 − 5d % chance per turret; <strong>verified</strong>), and the alien base its connection point and minefields (DEV-088).</td>
 <td>2</td>
 </tr>
 <tr>
@@ -6954,6 +6954,12 @@ one looks like a bug.</p>
 <td><strong>Sprite buttons are partly built.</strong> Built (<strong>verified</strong>): consecutive state sprites, nothing drawn when up for one-state buttons, firing on release, fire-on-press, auto-repeat, radio groups, check rows. Not built: <code>enabled_when</code> (no button is disabled by a condition yet), per-button sounds (#126), the sell/transfer radios, E&amp;P's mode radios and Equip Ships' tab pages (the tabs only latch), and the TextButton end caps. A sprite's key is its corner colour (<strong>derived</strong>). Radio choices are not saved.</td>
 <td>The engine has no sell, transfer or per-tab pages yet; sounds are #126.</td>
 <td>M2 (#125)</td>
+</tr>
+<tr>
+<td>DEV-088</td>
+<td><strong>Station layouts as built</strong> (app 0.22.11, #114). The pirate turrets are modules with the X-COM laser turret's mesh and hit points (in the original they are gun points on the station's own model, <em>derived</em>), their arc is read as a half-angle off their facing (<em>derived</em>), and they aim and fire like the station turrets until #115 brings the original's turret fire control (accuracy <code>a + b·d</code>, full lead, a 20 m miss, the line-of-sight check, the 0–50 ms jitter). The alien base's three tendrils are not placed — where they are is not traced — so it falls to its hull only; a hit that overflows a hard point goes to the hull (<em>derived</em>). The alien base's mine rings are in the planes the original's angles give when read as yaw, pitch and roll (<em>derived</em>), and the mines are ordinary proximity mines with the INI warhead damage and a 150 m trigger (<em>derived</em>: their behaviour is not traced).</td>
+<td>Everything verified is data (<code>modules</code> with <code>at</code>/<code>facing</code>/<code>chance</code>, <code>hard_points</code>, <code>minefields</code>); the derived parts are one value or one key away from the original once traced.</td>
+<td>4 (A4; #114)</td>
 </tr>
 </tbody>
 </table>

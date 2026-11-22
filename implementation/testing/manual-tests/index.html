@@ -6195,6 +6195,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-4-69-interceptor-station-layouts-the-connection-point-and-minefields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-69 — interceptor: station layouts, the connection point and minefields
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11778,6 +11789,17 @@
     <span class="md-ellipsis">
       
         MT-4-68 — interceptor: AI flying and missiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-69-interceptor-station-layouts-the-connection-point-and-minefields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-69 — interceptor: station layouts, the connection point and minefields
       
     </span>
   </a>
@@ -17479,6 +17501,15 @@ pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>);
 <td></td>
 <td>App NEXT; #118, <code>steer</code>, <code>lock_cone</code>, <code>pilot_grades</code>, speed requests</td>
 </tr>
+<tr>
+<td>MT-4-69</td>
+<td><code>interceptor</code>: station layouts, the connection point and minefields</td>
+<td><code>base-assault</code>, <code>station-tour</code> (<code>interceptor</code>)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App NEXT; #114, <code>hard_points</code>, <code>modules</code> by <code>at</code>, <code>minefields</code></td>
+</tr>
 </tbody>
 </table>
 <h2 id="stage-4-cases">Stage 4 cases<a class="headerlink" href="#stage-4-cases" title="Permanent link">&para;</a></h2>
@@ -19004,6 +19035,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: pirates track you tightly (their aim corrects within a frame or two), but half the time lead too little or too much. 2: they break off at about 250 m. 3: Wraiths fire missiles only just after swinging onto you (within about 2.5 s of the aim settling), never with the nose away; launches are at least 5 s apart. 4: pirates and Wraiths sprint after you (slightly faster than their normal top speed); they never light an afterburner. 5: wingmen hold their slots at your speed instead of falling behind; an AI ship never runs out of energy from burning.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-69-interceptor-station-layouts-the-connection-point-and-minefields">MT-4-69 — <code>interceptor</code>: station layouts, the connection point and minefields<a class="headerlink" href="#mt-4-69-interceptor-station-layouts-the-connection-point-and-minefields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's data. <code>openinterceptor --campaign interceptor --scenario station-tour</code>; then <code>--scenario base-assault --difficulty superhuman</code> and <code>--difficulty beginner</code>.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Fly round the pirate base and the arms dealer; count their turrets and watch where they sit. 2. Restart <code>station-tour</code> a few times. 3. In <code>base-assault</code> on Superhuman, look round the alien base from a distance before closing. 4. Bring its shields down, then fire at the underside of the hub (the connection point, about 217 m below its centre) until it is destroyed. 5. Repeat 3 on Beginner.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the arms dealer has five laser turrets — on top, two on the underside angled down, and one on each side; the pirate base up to six — top, bottom and on its mid-ring — each standing on the hull and firing outwards. 2: the pirate base's turret count varies (each is there 75 % of the time on Beginner). 3: mines ring the base (most likely: two rings of four missile mines 4 km out and two of nine explosive mines 2 km out); they go off when you fly near. 4: shots at the underside drain the connection point first (the hull does not drop); "Connection Point Destroyed" appears; the base is not destroyed by it alone. 5: no minefields on Beginner.</td>
 </tr>
 </tbody>
 </table>

@@ -6708,6 +6708,65 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 <p>In <code>default</code>'s <code>outpost-strike</code> the Dominion outpost's pods are covered: wear the pool down
 first, then the shield pod falls and the pool is gone for good. <code>interceptor</code>'s outposts and ore
 plants keep the ship damage model: the original's own hull routines for them are not traced.</p>
+<h2 id="modules-by-position-and-chance">Modules by position and chance<a class="headerlink" href="#modules-by-position-and-chance" title="Permanent link">&para;</a></h2>
+<p>Since app 0.22.11 (issue #114) a module may be placed by position instead of an attachment point,
+and may be there only by chance — the original's pirate stations have turrets on fixed points
+of their own model, some of which are missing:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">objects</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pirate_base</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">337</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="nt"> facing</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">pirate_turret_long</span><span class="p p-Indicator">,</span><span class="nt"> chance</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">75%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">70%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">65%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">60%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">55%</span><span class="p p-Indicator">]}}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="s">'3'</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">xcom_shield_generator</span><span class="p p-Indicator">}</span><span class="w">      </span><span class="c1"># attachment points still work</span>
+</code></pre></div>
+<ul>
+<li><strong><code>at</code></strong> — the module's position in the station's model space (engine axes: x right, y up,
+  −z ahead; metres). <strong><code>facing</code></strong> — the direction its front (−Z) points (default <code>[0, 0, -1]</code>).
+  An entry needs <code>slot</code> or <code>at</code>.</li>
+<li><strong><code>chance</code></strong> — the chance (per difficulty level, if you like) that the module is there when
+  the station is placed; rolled on the battle's seeded generator, so a seed replays the same
+  layout. Default 100 %.</li>
+</ul>
+<h2 id="hard-points">Hard points<a class="headerlink" href="#hard-points" title="Permanent link">&para;</a></h2>
+<p>A station can have <strong>weak points</strong> with hit points of their own, as the original's alien base
+has its connection point (app 0.22.11; flight notes §8.4, <strong>verified</strong>):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">objects</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">alien_base</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">hard_points</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">connection_point</span><span class="p p-Indicator">,</span><span class="nt"> hit_points</span><span class="p">:</span><span class="w"> </span><span class="nv">1400</span><span class="p p-Indicator">,</span><span class="nt"> at</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-217</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">124m</span><span class="p p-Indicator">,</span><span class="nt"> message</span><span class="p">:</span><span class="w"> </span><span class="s">"@orig.S_GREP_363"</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">destroyed_when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hull</span><span class="w">        </span><span class="c1"># hull (default), hard_points, or either</span>
+</code></pre></div>
+<ul>
+<li>A <strong>direct</strong> hit — a beam bolt or an ordinary missile, not a shield-bypassing or enveloping
+  one — that lands within <code>radius</code> of a standing hard point's centre (<code>at</code>, model space) while
+  the station's shields on that side (or its pool) were already down damages the hard point
+  instead of the hull. What the hard point cannot hold goes on to the hull (<em>derived</em>).</li>
+<li>When one falls, its <code>message</code> (a text or <code>@key</code>) appears on every player's message line.</li>
+<li><strong><code>destroyed_when</code></strong>: <code>hull</code> — only the hull destroys the station (hard points just soak
+  hits); <code>hard_points</code> — only all hard points at 0 do; <code>either</code> — whichever comes first (the
+  original's alien base, with its connection point and three tendrils).</li>
+</ul>
+<p><code>interceptor</code>'s alien base has its connection point. Its three 550-point tendrils are not placed
+yet — where they are on the model is not traced — so it is still destroyed by its hull alone.</p>
+<h2 id="minefields">Minefields<a class="headerlink" href="#minefields" title="Permanent link">&para;</a></h2>
+<p>An object can lay <strong>mines</strong> around itself when it is placed (app 0.22.11):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">objects</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">alien_base</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">minefields</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">mine</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alien_explosive_mine</span><span class="w">           </span><span class="c1"># a kind: mine object</span>
+<span class="w">        </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9</span><span class="p p-Indicator">]}</span><span class="w">  </span><span class="c1"># mines per ring</span>
+<span class="w">        </span><span class="nt">chance</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">30%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">35%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">40%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">45%</span><span class="p p-Indicator">]}</span>
+<span class="w">        </span><span class="nt">radius</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2km</span>
+<span class="w">        </span><span class="nt">center</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">500</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">]</span><span class="w">                  </span><span class="c1"># model space</span>
+<span class="w">        </span><span class="nt">rings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">45</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-45</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">]]</span><span class="w">     </span><span class="c1"># yaw, pitch, roll of each ring</span>
+</code></pre></div>
+<p>Each ring is the horizontal circle of <code>radius</code> round <code>center</code>, turned by its yaw, pitch and roll;
+<code>count</code> mines sit on it evenly spaced, with the object's faction. The whole field is laid with
+<code>chance</code> (rolled once on the seeded generator). An object placed in a construction <code>state</code> lays
+none. <code>interceptor</code>'s alien base lays the original's fields (flight notes §8.6, <strong>verified</strong> but
+for the ring planes): from Superhuman, 70 %, two rings of four missile mines 4 km out; from
+Experienced, 25 + 5 × level %, two rings of level + 5 explosive mines 2 km round a point 500 m
+above the base. What the original's mines do when triggered is not traced: here they are
+ordinary <code>kind: mine</code> objects with the original's warhead damage (300 and 250) and 50 hit points.</p>
 <h2 id="cargo-containers-and-moving-hubs">Cargo containers and moving hubs<a class="headerlink" href="#cargo-containers-and-moving-hubs" title="Permanent link">&para;</a></h2>
 <p>Since app 0.9.2 a hub need not be a station: any ship class may carry <code>modules</code>, and they ride
 with it. The default campaign's cargo clipper (<code>supply_ship</code>) carries twelve cargo pods and a
@@ -6773,7 +6832,17 @@ point-defence laser:</p>
 <tr>
 <td><code>interceptor</code></td>
 <td>Alien base (<code>AL-BASE01</code>, 28 attachment points)</td>
-<td>plasma gun pods, shield pods</td>
+<td>plasma gun pods, shield pods; the connection point; minefields</td>
+</tr>
+<tr>
+<td><code>interceptor</code></td>
+<td>Pirate base (<code>PBASE3</code>)</td>
+<td>six laser turrets by position, each there with 75 − 5 × level % (the exe's table, <strong>verified</strong>)</td>
+</tr>
+<tr>
+<td><code>interceptor</code></td>
+<td>Arms dealer (<code>ARMS4</code>)</td>
+<td>five laser turrets by position (<strong>verified</strong>)</td>
 </tr>
 </tbody>
 </table>

@@ -7980,9 +7980,27 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 <tr>
 <td><code>modules</code></td>
-<td>list of <code>{slot, class}</code></td>
+<td>list of <code>{slot \| at, facing, class, chance}</code></td>
 <td>none</td>
-<td>Stations (and, since app 0.9.2, any ship — they move and jump out with it): modules mounted at the model's attachment points — <code>slot</code> is an OBJ <code>slot_&lt;name&gt;</code> group's name or an original mesh's attachment index (quoted: <code>'0'</code>) (<a href="../stations/">Stations and modules</a>).</td>
+<td>Stations (and, since app 0.9.2, any ship — they move and jump out with it): modules mounted at the model's attachment points — <code>slot</code> is an OBJ <code>slot_&lt;name&gt;</code> group's name or an original mesh's attachment index (quoted: <code>'0'</code>) (<a href="../stations/">Stations and modules</a>). Since app 0.22.11 an entry may give <code>at</code> (model-space position) and <code>facing</code> instead of <code>slot</code>, and a <code>chance</code> (per level) that it is there (<a href="../stations/#modules-by-position-and-chance">Modules by position and chance</a>).</td>
+</tr>
+<tr>
+<td><code>hard_points</code></td>
+<td>list of <code>{name, hit_points, at, radius, message}</code></td>
+<td>none</td>
+<td>Stations (app 0.22.11): weak points that take direct hits landing within <code>radius</code> of <code>at</code> while the shields are down; <code>message</code> is said when one falls (<a href="../stations/#hard-points">Hard points</a>). <code>interceptor</code>: the alien base's connection point (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>destroyed_when</code></td>
+<td><code>hull</code>, <code>hard_points</code>, <code>either</code></td>
+<td><code>hull</code></td>
+<td>What destroys the object (app 0.22.11): its hull at 0, all its hard points at 0, or either.</td>
+</tr>
+<tr>
+<td><code>minefields</code></td>
+<td>list of <code>{mine, count, radius, center, rings, chance}</code></td>
+<td>none</td>
+<td>Mines laid round the object when it is placed (app 0.22.11; <a href="../stations/#minefields">Minefields</a>). <code>interceptor</code>: the alien base's two fields (<strong>verified</strong> but for the ring planes).</td>
 </tr>
 <tr>
 <td><code>shield_generator</code></td>
