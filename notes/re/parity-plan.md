@@ -39,6 +39,8 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #131 RQ-S-04/05/06 outposts as objects: monthly income, funding drift, withdrawal, scores by system (DEV-098) | 0.22.26 |
 | #129 follow-up: item gating per exe table 0x66f768 (11 topics), unlock_on/complete_on battle events (§15), salvage_fits from destroyed ships | 0.22.27 |
 | #133 RQ-S-10 healing 1/2 a day and training every 5 d, RQ-S-11 salary table, the generator (start rank, rank bonuses, health), D-08 pilot injury in battle, campaign pilot hand-off (RQ-C-10 link), RQ-C-23 grade 2 from month 2 | 0.22.28 |
+| #132 RQ-S-08 base price 0.75 x template, 29-day build, placement 5,850 / 30,000; RQ-S-09 technician pool (10 + 10 per OPP); RQ-S-16 hull 6,000 repairing max(5, 2/min) (DEV-100) | 0.22.29 |
+| #129 probe types: raids' kinds, kind(<kind>) opens topics 6/10/17 | 0.22.30 |
 
 ## Issues
 
