@@ -213,17 +213,96 @@ the briefing grid labels, the title-screen button labels and the CSD scale text.
 
 ## 4. Dialog frames (MsgBox.cpp) — verified unless marked
 
-The MsgBox paint 0x518604 intersects the dirty rect with four frame strips around the client
-rect (`+0xe0..+0xec`), draws the body (0x519622, fill from surface row 430 = 5006, derived), the
-frame (0x51941f) and per style (`+0xf4`): style 1 = rows 163-178 (6560-6575, 16 pieces; the
-style-1 branch also places row 171 twice, mirrored about the centre); style 2 = rows 179-188
-(6580-6589; its branch places rows 181, 182, 185, 186, 187, 188 and 189, stacked by their
-heights); style 3 = rows 189-198 (6590-6599, red) with a top ornament row 198 at (centre − 54,
-top − 47). Which row is which corner/edge is **derived** from the art, not settled here and the caption
-(§3.3). Buttons are message-box capsules (§3.3) or TextButtons 20 px tall, width − 20, stacked
-upward from bottom − 25 (Interceptor Orders, max 6). Opening plays MsgBoxOpen (1) — derived from
-the table name; the capsule press plays 3. A message box **pauses the game clock** while open and
-resumes it on close (0x4120b7 / 0x41207f, two calls each in MsgBox.cpp, derived pairing).
+### 4.1 The eight-piece frame kit (`0x4c9a20`, client insets `0x4c9d84`)
+
+A frame kit is 8 consecutive sprite rows from a base B (dialog member +0xf0). For a box rect
+(l, t, r, b), drawn in this order, **every edge tiled at its natural size, never stretched**:
+
+| Order | Row | Piece | Placement |
+|---|---|---|---|
+| 1 | B+0 | top edge | y = t; tiles from x = l + w(B+4) − 1 while x < r − w(B+4) |
+| 2 | B+1 | bottom edge | y = b − h(B+1); tiles from x = l + w(B+7) − 1 while x < r − w(B+7) |
+| 3 | B+2 | left edge | x = l; tiles from y = t + h(B+4) while y < b − h(B+7) |
+| 4 | B+3 | right edge | x = r − w(B+3); tiles from y = t + h(B+5) while y < b − h(B+6) |
+| 5 | B+4 | top-left corner | (l, t) |
+| 6 | B+5 | top-right corner | (r − w, t) |
+| 7 | B+6 | bottom-right corner | (r − w, b − h) |
+| 8 | B+7 | bottom-left corner | (l, b − h) |
+
+Corners are drawn last, over the edge tiles (the last tile of a run may run under a corner).
+Sizes come from the sprite's image rect (w, h) or its second rect (+0x10, used for the tiling
+steps and corner widths; derived: the opaque content).
+
+**Kits** (`0x517f70`): style 1 B = **163** (rows 163-170; 171-178 are the knob animation),
+style 2 B = **179** (rows 179-186; 187-189 are extras), style 3 B = **190** (rows 190-197; 198 is
+the ornament). Style 0 dialogs use kit 242 when the buttons need 2 rows and 250 for 3-4 rows.
+
+**Client (text) rect** = box minus fixed insets (left, top, right, bottom): style 1 (36, 50, 44,
+45); style 2 (51, 42, 51, 54); style 3 (28, 77, 55, 61); any other kit: side widths/heights + 3.
+
+**Body fill** (`0x51941f`): row 430 (524 × 275) if the box fits in it, else row 429 (640 × 480),
+**centred on the box** and clipped to it; drawn before the frame.
+
+### 4.2 Box size and buttons (`0x519b16`)
+
+* Width = max(**325**, caption text width, body text width). A body wider than **425** wraps: width
+  425 and height = 100 + (line height + 2) × body width / 425 (asserted ≤ 400). Default height
+  **100**; +20 when the box has a progress/check row. An explicit rect from the caller overrides.
+* Buttons: each `max(100, text width + 20)` × 14, 10 px apart. If the row is wider than 465 they
+  wrap into up to 4 rows; otherwise a box narrower than the row grows to row width − 40.
+* Centred on the requested point, else on (320, 240); the client rect is inset 3 px horizontally;
+  then pushed back on-screen.
+* Style adjustments: style 1 extends the box 20 px up and 20 px on each side (+10 more on the right);
+  style 2 extends 20 px on each side. Style 2 and 3 heights are rounded so the side edge tile (rows
+  181 / 192) fits a whole number of times between its end caps (181 between 184 and 185; 192
+  between 195 and 196).
+* Button rows sit at bottom − 25, − 42, − 59, − 76 (17 px pitch) and are then moved down by the
+  kit's bottom height. A single button is centred. Two buttons sit either side of the centre (1 px
+  gap), the left one starting at l + 50 (style 1, right edge − 5), l + 90 (style 2) or l + 20 (others),
+  the right one ending at r − 60 / r − 90 / r − 20, but never further in than 35 px from the edge.
+* A progress/check row: width = (member rect +0x1c0 width) − 20, height 20, at (client left + 10,
+  bottom − 40).
+
+### 4.3 Per-style live pieces (`0x518604`, `0x518bdd`, `0x518dda`)
+
+A dialog counter (0x68be84) steps every 5 ticks (≈ 83 ms).
+* **Style 1:** knob animation rows 171-178 at (r − w(171), t): frames 0→7 then 7→0 (ping-pong, 16
+  steps ≈ 1.33 s).
+* **Style 2:** ornament row 187 centred on the top edge; two sliders (rows 188 left at x = l,
+  189 right at x = r − w) run along the side edges one edge tile (row 181's height) every 7
+  ticks, bouncing at the ends (member +0x604 position, +0x60c direction).
+* **Style 3:** ornament row 198 at (**r − 47, b − 54**), shown for 4 of every 8 steps (blinking);
+  the caption at (client centre x, **t + 54**), centred, font member +0x614.
+* **Title** (`0x519622`): text at +0xfc drawn upper-cased and centred in the client rect inset 5 px
+  each side. Opening animation: 10 steps of 3 ticks (≈ 0.5 s) then a 4-step reveal (derived).
+
+### 4.4 Buttons, sounds, clock
+
+Buttons are message-box capsules (§3.3) or TextButtons 20 px tall, width − 20, stacked upward from
+bottom − 25 (Interceptor Orders, max 6). Opening plays MsgBoxOpen (1) — derived from the table name;
+the capsule press plays 3. A message box **pauses the game clock** while open and resumes it on
+close (0x4120b7 / 0x41207f).
+
+### 4.5 "OK / OK (5 secs)" (verified: every user of the button string "(S_OK)(S_OK5SECS)")
+
+The second button sets the clock to speed 0, the slowest (`0x411f74(0)`, verified in the main loop;
+same pattern elsewhere, derived). Dialogs that offer it:
+* queued events in the main loop (`0x552f90`): **2** ship damaged, **6** people killed,
+  **0xc** base built; **0xb** module built goes through `0x4c4e52` (also offers it);
+* research complete (`0x4bc03d`, with allocate-research and UFOpedia buttons), downlink offline
+  (`0x4c6e9e`), the monthly and weekly reports (`0x4bcabc`, `0x4c388c`);
+* deliveries (`0x4baf90`: cargo/pilots/ships delivered or refused), no room for a pilot (`0x4481aa`),
+  allocate research (`0x4be1f1`), rearm (`0x4c2d68`), side-mission offers (`0x4c5812`);
+* flight-plan notices: probe to a black hole (`0x561db9`), out of fuel (`0x5626d1`), alien sightings
+  and unusual freighters (`0x5e2a30`, `0x5e48c8`, `0x5e88f9`, which add centre/launch/ignore buttons).
+
+**Plain OK:** event **0xd** (pilot leaves the medical bay) and every other message box.
+
+### 4.6 UFOpedia exit (verified, `0x530d66`, `0x53421d`)
+
+The exit is **control 106 (EXIT_ID)**, a standard kind-2 sprite button (table 0x670c40: rows 4/5,
+WrappersDLL 4000/4001, 23 × 23, idle/pressed) centred at **(619, 466)**, bottom-right. Its handler
+asserts id 106, calls the screen's close method and goes back in the history (`0x4b5da5`).
 
 ## 5. Navigation semantics — verified (0x4b5bfe-0x4b5e5b)
 

@@ -738,21 +738,40 @@ traced.
 See §13.2. There, a station's beam and missile modules count with fixed weights. Its ECM type 1
 modules add 100 each to its defence.
 
-### 8.8 Turrets on capital ships and freighters (derived class mapping)
+### 8.8 Turrets on capital ships and freighters (verified, #115)
 
-These agent classes create turret objects in their set-up routines. In the table, `S` is the
-pilot's Accuracy, or 25 with no pilot.
+Set-up API (`0x5985bc` fixed: beam, position, facing, rt, side, range; `0x59865a` gimballed: beam,
+kind, sub-object, rt, side, range; then arc `0x59852c` (degrees), accuracy `0x598574` (clamped 1–99),
+interval `0x598553` (ms), LOS flag `0x59a1e2`). Defaults from the constructor `0x598347`: kind 0
+(fixed), accuracy 50, interval 500 ms, range 2,500 m when ≤ 0, **LOS off**. `S` = the ship's turret
+skill base (25 with no pilot; AlienType3/4 take it from the pilot, see the AlienType3 row). d = difficulty
+0–4. Positions and facings are model co-ordinates (m).
 
-| Class (set-up) | Turrets: beam, range, arc, accuracy |
-|---|---|
-| AlienType3 (`0x58dd9b`) | Phase 3,000 m 85° `S − rand[5,15)`, 50(4 − d) + 900 ms. Plasma 2,500 m 95° `S`, 25(4 − d) + 750 ms. PsiBlaster 2,000 m 90° `S − rand[10,35)`, 4,500 + 200(4 − d) ms. Plasma 1,500 m 92° `S − rand[5,15)`. Skill +0x320 = clamp((Int + Acc + Fly)/3, 25 + 5d, 75 + 5d), rand[50,75) with no pilot |
-| AlienType4 (`0x58fac7`) | Phase 1,500 m 45° `S − rand[5,15)` |
-| AlienType5 (`0x59098b`) | TachyonPulser 1,000 m 85° `50 + 5d`; Tachyon 275 m 15° accuracy 0 |
-| AlienFreighter (`0x591527`) | two Plasma, 1,000 m, 85° / 95° |
-| X-COM, Outpost and Pirate freighters (`0x593e13`) | two LaserCannon, 2,000 m, 85° / 80°, LOS check |
-| Patton (`0x5946c2`) | table-driven, 75°, interval rand[1,500, 2,500 − …) |
+**Every capital-ship and freighter turret is a fixed turret (kind 0); none is gimballed.** Only the
+X-COM base uses gimballed turrets.
 
-The intervals marked "…" use a difficulty term that was not decoded.
+| Class (set-up) | # | Beam | Position | Facing | Range | Arc | Accuracy | Interval (ms) | LOS |
+|---|---|---|---|---|---|---|---|---|---|
+| AlienType3 (`0x58dd9b`) | 1 | Phase | (0, −2, 0) | down (0, −1, 0) | 3,000 | 85° | S − rand[5,15) | 50(4 − d) + 900 | off |
+| | 2 | Plasma | (0, −4.25, 0) | down | 2,500 | 95° | S | 25(4 − d) + 750 | off |
+| | 3 | PsiBlaster | (0, 3, 0) | up (0, 1, 0) | 2,000 | 90° | S − rand[10,35) | 200(4 − d) + 4,500 | off |
+| | 4 | Plasma | (0, 4.25, 0) | up | 1,500 | 92° | S − rand[5,15) | 50(4 − d) + 500 | off |
+| AlienType4 (`0x58fac7`) | 1 | Phase | (0, −0.41, −9.82) | (copied, not decoded) | 1,500 | 45° | S − rand[5,15) | 50(4 − d) + 750 | off |
+| AlienType5 (`0x59098b`) | 2 | TachyonPulser | (±13.27, 7.2, 10.31) | (copied) | 1,000 | 85° | 50 + 5d | rand[1,000, 1,250) − 25d | off |
+| | 1 | TachyonPulser | (0, −5, −15) | back (0, 0, −1) | 275 | 15° | 0 → clamped to 1 | 0 (every frame) | off |
+| AlienFreighter (`0x591527`) | 1 | Plasma | (0, −23, 0) | down | 1,000 | 85° | 25 | rand[750, 850) − 25d | off |
+| | 2 | Plasma | (0, 27, 0) | up | 1,000 | 95° | from the pilot (float → int) | rand[750, 850) − 25d | off |
+| X-COM, Outpost, Pirate freighters (`0x593e13`) | 1 | LaserCannon | (0, 4.27, 161.68) | forward (0, 0, 1) | 2,000 | 85° | 25 | rand[750, 850) − 25d | **on** |
+| | 2 | LaserCannon | (0, 40.94, −77) | back (0, 0, −1) | 2,000 | 80° | from the pilot | rand[750, 850) − 25d | **on** |
+
+**Patton:** its constructor (`0x59444a`) is the base agent `0x585133` with no turret set-up, so it
+has **no turrets** (derived). The earlier "Patton (`0x5946c2`)" row was wrong: `0x5946c2` is the
+**beam-mine turret** helper, called only from the mine set-ups `0x4d12fe` / `0x4d193e` (2 turrets,
+arc 75°, interval rand[1,500, 2,500 − 125d), beam, range and side from the caller).
+
+**Stations:** the X-COM base's turrets (`0x59c124`, gimballed kinds 1 and 2) and the alien base's
+fixed turrets (`0x59cc07`, arc 85°) both set **LOS on** (`0x59a1e2(1)`); the pirate tables carry their
+own LOS byte per row (+0x34).
 
 **Freighter turrets in detail** (`0x593e13`, read for #115 from the player's exe, Track A; verified).
 `S` = the pilot record's Accuracy byte (+0x2c), 25 with no pilot. Two fixed (kind 0) Laser turrets:
