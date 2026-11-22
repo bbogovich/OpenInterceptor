@@ -435,6 +435,58 @@ and the launchers' rounds; `flight.start_throttle`; Parallax `images`, Passive C
 Doppelganger `retarget_every`; the pirate and corporate hulls from their own sections. D-18 (the
 Patton's protection from its fit) is open: DEV-095.
 
+**#120 follow-up** (app NEXT; `notes/re/flight` §3, §12): the Patton is an X-COM ship with its fit
+(ShieldType3, ArmorType3, EngineType3) and `protection_scale: {shields: 3, armor: 4}` — 1,500 / 1,700
+from Veteran up; `interceptor`'s `original_attack` has no `break_call` (message 7 is rejected).
+
+**#121** (app NEXT; audit D-31, D-42, D-43): `--balance` fills the banks as the battle does
+(difficulty, `protection_scale`, station pools), spends the energy pool at the start beam setting
+before the sustained rate, and applies `player_hits`; a soak reports the first hit and hits on
+friends. Re-measured with `--soak <duel> --difficulty <level> --seconds 180` (`interceptor`, app NEXT):
+each cell is *destroyed at* (time under fire); enemies destroyed — or *lives* with the hull left.
+
+`passive` pilot
+
+| Scenario | beginner | experienced | veteran | genius | superhuman |
+|---|---|---|---|---|---|
+| `duel-wraith` | 43.5 s (35.8); 0/2 | 49.2 s (42.0); 0/2 | 21.2 s (14.4); 0/2 | 10.6 s (4.3); 0/2 | 10.1 s (3.8); 0/2 |
+| `duel-spectre` | 52.3 s (43.9); 0/2 | 36.8 s (29.5); 0/2 | 18.0 s (11.2); 0/2 | 17.1 s (10.3); 0/2 | 10.1 s (3.8); 0/2 |
+| `duel-phantasm` | lives, 29 %; 4/4 | 10.5 s (3.5); 0/4 | 9.9 s (3.2); 0/4 | 9.5 s (3.0); 0/4 | 9.3 s (3.1); 0/4 |
+| `duel-shade` | 83.8 s (76.8); 0/2 | 10.5 s (3.7); 0/2 | 9.4 s (2.9); 0/2 | 9.2 s (2.9); 0/2 | 8.9 s (2.8); 0/2 |
+| `duel-drone` | lives, 100 %; 0/3 | lives, 100 %; 0/3 | lives, 100 %; 0/3 | lives, 100 %; 0/3 | lives, 100 %; 0/3 |
+| `duel-harbinger` | lives, 100 %; 0/4 | lives, 100 %; 0/4 | lives, 100 %; 0/4 | lives, 100 %; 0/4 | lives, 100 %; 0/4 |
+| `duel-pirate-lightning` | 65.4 s (58.4); 0/2 | 10.5 s (3.7); 0/2 | 9.4 s (2.9); 0/2 | 9.6 s (3.3); 0/2 | 9.7 s (3.6); 0/2 |
+| `duel-pirate-firestar` | 9.6 s (2.6); 0/1 | 8.6 s (1.8); 0/1 | 8.1 s (1.6); 0/1 | 7.9 s (1.6); 0/1 | 7.7 s (1.7); 0/1 |
+| `duel-pirate-avenger` | 10.9 s (3.4); 0/1 | 10.1 s (2.6); 0/1 | 9.6 s (2.1); 0/1 | 9.6 s (2.1); 0/1 | 9.6 s (2.1); 0/1 |
+
+`ai` pilot
+
+| Scenario | beginner | experienced | veteran | genius | superhuman |
+|---|---|---|---|---|---|
+| `duel-wraith` | lives, 100 %; 2/2 | lives, 100 %; 2/2 | lives, 100 %; 2/2 | 24.9 s (19.3); 1/2 | 9.6 s (4.3); 0/2 |
+| `duel-spectre` | 25.2 s (18.3); 0/2 | 35.6 s (29.1); 2/2 | 11.2 s (5.1); 0/2 | 17.9 s (12.2); 0/2 | 12.8 s (7.1); 1/2 |
+| `duel-phantasm` | 17.0 s (10.6); 0/4 | 9.6 s (3.5); 0/4 | 9.0 s (3.1); 0/4 | 8.7 s (3.1); 0/4 | 8.4 s (3.0); 0/4 |
+| `duel-shade` | 18.6 s (12.5); 0/2 | 9.7 s (3.7); 0/2 | 18.8 s (13.0); 0/2 | 9.1 s (3.6); 0/2 | 9.1 s (3.8); 0/2 |
+| `duel-drone` | lives, 100 %; 3/3 | lives, 100 %; 3/3 | lives, 100 %; 3/3 | lives, 100 %; 3/3 | lives, 100 %; 3/3 |
+| `duel-harbinger` | lives, 100 %; 4/4 | lives, 100 %; 0/4 | lives, 100 %; 4/4 | lives, 100 %; 0/4 | lives, 100 %; 4/4 |
+| `duel-pirate-lightning` | 17.5 s (11.4); 1/2 | 9.7 s (3.7); 1/2 | 9.0 s (3.2); 0/2 | 9.2 s (3.7); 0/2 | 8.9 s (3.6); 0/2 |
+| `duel-pirate-firestar` | 8.4 s (2.2); 0/1 | 7.7 s (1.8); 0/1 | 7.4 s (1.7); 0/1 | 7.1 s (1.7); 0/1 | 6.6 s (1.4); 0/1 |
+| `duel-pirate-avenger` | 9.5 s (2.9); 0/1 | 9.1 s (2.5); 0/1 | 8.6 s (2.0); 0/1 | 8.5 s (2.0); 0/1 | 8.5 s (2.0); 0/1 |
+
+**D-42 closed.** The time under fire matches perfect fire from `--balance`: a pirate Firestar
+(367 dps at full fire) takes a veteran Lightning's 650 points in 1.8 s by the report and 1.6 – 1.7 s
+in the soaks; a pirate Avenger 3.0 s and 2.0 – 2.1 s. The original's beams have no hit roll and its
+AI leads a target that does not move perfectly, so a pilot who does not evade dies this fast in the
+original too; most of the 6 – 7 s before the first hit is the approach. Alien fighters take longer
+by their refire interval (500 + 60 (4 − d) ms), and on Beginner and Experienced the protection
+factors stretch every fight. The `ai` pilot in the player's seat flies the enemy behaviour and dies
+about as fast; the drone and Harbinger duels do not hurt the player (the Harbinger runs no attack
+routine).
+
+**D-43 closed.** `rocket-vs-saucer` and `black-comet-ambush` do engage: the saucers go for the guard
+station (257 hits in 60 s at cadet) and the hot-rods for the freighter (11), not the player; the
+soak now shows it (`soak::tests::default_scenarios_engage_the_players_friends`).
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),
