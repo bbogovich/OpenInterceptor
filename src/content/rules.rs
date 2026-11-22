@@ -455,6 +455,14 @@ pub struct MissileClass {
     /// A launcher's hit points (`launcher_hit_points`; the original's `*Launcher`
     /// `HitPoints`). 0: the launcher cannot be damaged.
     pub launcher_hit_points: f32,
+    /// A Nova bomb (`fuse: 60s`): it does not go off on contact; it detonates this many
+    /// seconds after launch (0 = an ordinary missile).
+    pub fuse: f32,
+    /// With `fuse`: the battle is over this many seconds after the detonation (the
+    /// `battle_over` mission query; 0 = never).
+    pub ends_battle_after: f32,
+    /// With `fuse`: radio lines at these seconds after launch (`warnings: [{at, text}]`).
+    pub warnings: Vec<(f32, String)>,
     /// Turn rate while homing, degrees per second.
     pub turn_rate: f32,
     /// Seconds the target must stay in the lock cone before launch locks on.
@@ -1541,6 +1549,18 @@ pub fn build_with(
                 mass: g.num("mass").unwrap_or(0.0).max(0.0),
                 lead_speed: g.num("lead_speed").unwrap_or(0.0).max(0.0),
                 launcher_hit_points: g.num("launcher_hit_points").unwrap_or(0.0).max(0.0),
+                fuse: g.qty("fuse", Unit::Time).unwrap_or(0.0).max(0.0),
+                ends_battle_after: g.qty("ends_battle_after", Unit::Time).unwrap_or(0.0).max(0.0),
+                warnings: g
+                    .node("warnings")
+                    .and_then(|n| n.as_seq())
+                    .unwrap_or(&[])
+                    .iter()
+                    .filter_map(|item| {
+                        let w = Get(item);
+                        Some((w.qty("at", Unit::Time)?.max(0.0), w.str("text")?.to_string()))
+                    })
+                    .collect(),
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),
                 lock_time: g.qty("lock_time", Unit::Time).unwrap_or(2.0),
                 color: rgb(g, "color", [1.0, 0.8, 0.4]),

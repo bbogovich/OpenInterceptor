@@ -679,6 +679,11 @@ pub enum SimEvent {
         ship: ShipId,
         call: String,
     },
+    /// A Nova bomb (`fuse`) launched by `ship` went off at `position`.
+    NovaDetonated {
+        ship: ShipId,
+        position: Vec3,
+    },
     /// One of `ship`'s hard points (`hard_points:`) was destroyed at `position`; `text` is
     /// its message and `explosion` the radius of the blast shown (0 = none).
     HardPointDestroyed {
@@ -775,6 +780,13 @@ pub struct World {
     /// Ships whose bolts and missiles do no damage (a cutscene's `harmless` entities: a
     /// show of fire). Hits still land, so the effects and sounds play.
     pub harmless: Vec<ShipId>,
+    /// When a Nova bomb went off (world time), if one has (`fuse` missiles).
+    pub nova_at: Option<f64>,
+    /// When the battle is over (a Nova's `ends_battle_after`); the `battle_over` mission
+    /// query turns true then.
+    pub battle_over_at: Option<f64>,
+    /// Radio lines due at a world time (a Nova's `warnings`): `(time, speaker, text)`.
+    pub timed_lines: Vec<(f64, ShipId, String)>,
 }
 
 impl World {
@@ -784,6 +796,9 @@ impl World {
             rules,
             shapes,
             harmless: Vec::new(),
+            nova_at: None,
+            battle_over_at: None,
+            timed_lines: Vec::new(),
             ships: Vec::new(),
             generations: Vec::new(),
             bolts: Vec::new(),
@@ -1136,6 +1151,14 @@ impl World {
             }
         }
         self.update_modules();
+        // Radio lines whose time has come (a Nova bomb's warnings).
+        if !self.timed_lines.is_empty() {
+            let now = self.time;
+            let (due, later): (Vec<_>, Vec<_>) =
+                std::mem::take(&mut self.timed_lines).into_iter().partition(|l| l.0 <= now);
+            self.timed_lines = later;
+            self.events.extend(due.into_iter().map(|(_, ship, text)| SimEvent::Radio { ship, text }));
+        }
         // Decoys that have run their time vanish in a puff.
         for i in 0..self.ships.len() {
             let Some(left) = self.ships[i].expires.filter(|_| self.ships[i].alive) else { continue };

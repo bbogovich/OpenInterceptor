@@ -125,6 +125,8 @@ impl Context for BattleCx<'_> {
             id::PLAYER_HULL => n(player.map(|p| p.hull / w.rules.ship(p.class).hull.max(1.0)).unwrap_or(0.0)),
             id::PLAYER_RETREATED => b(w.ships[self.run.player.index as usize].departed),
             id::DIFFICULTY => n(w.rules.difficulty as f32),
+            id::NOVA_TIME => n(w.nova_at.map_or(-1.0, |t| (w.time - t) as f32)),
+            id::BATTLE_OVER => b(w.battle_over_at.is_some_and(|t| w.time >= t)),
             id::RANDOM => {
                 let mut r = self.rng.get();
                 let x = next(&mut r);

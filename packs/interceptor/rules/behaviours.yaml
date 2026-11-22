@@ -30,6 +30,30 @@ behaviours:
         break_off: 250m
         lock_cone: 5
         missile_chance: {per_level: [5%, 7%, 9%, 11%, 13%]}
+        # The break-off lasts 5,000 - 500 x level ms before the pilot comes round again
+        # (README §10, DERIVED).
+        break_time: {per_level: [5s, 4.5s, 4s, 3.5s, 3s]}
+      flee: {do: retreat, jump: true}
+    # No retreat on hull damage. A pilot whose beam mounts are all gone rolls every 5 s
+    # (5 s after its last change of state) to jump out; every pilot rolls once when a Nova
+    # bomb goes off. b = 100 - Bravery, i = 100 - Intelligence, s = 100 - Stamina; no
+    # pilot record: rand[50, 75) % (README §9, VERIFIED; the rank bands are by the
+    # derived rank +0x29).
+    retreat_when_disarmed:
+      to: flee
+      every: 5s
+      settle: 5s
+      rows: [{ranks: [0, 1], bravery: 0.7, add: 40}, {ranks: [2, 2], bravery: 0.6, add: 25}, {ranks: [3, 9], bravery: 0.5}]
+      clamp: [5, 85]
+      no_pilot: [50, 75]
+    retreat_on_nova:
+      to: flee
+      rows:
+        - {ranks: [4, 9], bravery: 0.5, intelligence: 0.25, stamina: 0.25, add: -25}
+        - {ranks: [2, 3], bravery: 0.6, intelligence: 0.1, stamina: 0.05, add: 25}
+        - {ranks: [0, 1], bravery: 0.25, intelligence: 0.1, stamina: 0.05, add: 50}
+      clamp: [5, 95]
+      no_pilot: [50, 75]
     # The pilot's own Accuracy (50 with no record), held below level 2 (Veteran) to
     # 50-100 for X-COM and 25+10d to 50+10d for others; the original's steering law; all
     # mounts with chance (Intelligence + Accuracy) / 2 near the aim point.
@@ -47,11 +71,9 @@ behaviours:
       # One trigger pull every 500 + 60 x (4 - level) ms (verified).
       engage: {burst: 0.02s, pause: {per_level: [0.74s, 0.68s, 0.62s, 0.56s, 0.5s]}}
       jink: {do: evade, duration: 2s}
-      flee: {do: retreat, jump: true}
     transitions:
       - {from: engage, to: jink, when: "hit_recently(0.3s) and random(0.4)"}
       - {from: jink, to: engage, when: "time_in_state > 2s"}
-      - {from: "*", to: flee, when: "hull < 15% and difficulty >= veteran"}
 
   spectre:
     inherit: wraith
@@ -90,10 +112,6 @@ behaviours:
   human_pilot:
     inherit: original_attack
     systems: {ecm: missiles_incoming(3km) > 0, shields_first: hull < 50%}
-    states:
-      flee: {do: retreat, jump: true}
-    transitions:
-      - {from: "*", to: flee, when: "hull < 25%"}
 
   # X-COM wingmen.
   xcom_pilot:

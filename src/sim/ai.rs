@@ -154,6 +154,10 @@ pub struct AiState {
     pub turret_accuracy: Option<f32>,
     /// Turrets with an `interval`: the world time of the next allowed shot.
     pub next_shot: f64,
+    /// When this pilot last rolled to retreat because it was disarmed (−∞ = never).
+    pub last_retreat_roll: f64,
+    /// This pilot has had its one roll to retreat from a Nova bomb.
+    pub nova_rolled: bool,
 }
 
 impl AiState {
@@ -186,6 +190,8 @@ impl AiState {
             last_missile: f64::NEG_INFINITY,
             turret_accuracy: None,
             next_shot: 0.0,
+            last_retreat_roll: f64::NEG_INFINITY,
+            nova_rolled: false,
         }
     }
 }
@@ -468,6 +474,7 @@ fn run_behaviour(
             st.script_clock = 0.0;
         }
     }
+    retreat_rolls(w, me, st, def);
     if let Some(hook) = &def.states[st.state].script {
         st.script_clock -= TICK;
         if st.script_clock <= 0.0 {
@@ -480,6 +487,45 @@ fn run_behaviour(
     // Requests act once: hand them over on this tick only.
     c.requests = c.requests.merge(std::mem::take(&mut st.pending));
     (c, t)
+}
+
+/// True when `ship` has beam mounts and none of them is left (every mount that can be
+/// damaged is at 0; a mount without hit points always counts as there).
+pub fn disarmed(w: &World, ship: &Ship) -> bool {
+    let class = w.rules.ship(ship.class);
+    !class.beams.is_empty()
+        && (0..class.beams.len())
+            .all(|k| w.rules.beam(class.beams[k]).hit_points > 0.0 && ship.beam_hp.get(k).is_some_and(|h| *h <= 0.0))
+}
+
+/// The original's retreat rolls (`0x587949`, flight README §9, verified): a disarmed pilot
+/// rolls at most every `every` seconds and only `settle` seconds after its last change of
+/// state; every pilot rolls once when a Nova bomb goes off. A success switches to the
+/// rule's `to` state (a retreat that jumps out).
+fn retreat_rolls(w: &World, me: ShipId, st: &mut AiState, def: &BehaviourDef) {
+    let Some(ship) = w.get(me) else { return };
+    let mut go = None;
+    if let Some(r) = def.retreat_disarmed.as_ref().filter(|r| st.state != r.to) {
+        if st.state_time >= r.settle && w.time - st.last_retreat_roll >= r.every as f64 && disarmed(w, ship) {
+            st.last_retreat_roll = w.time;
+            let roll = next_random(&mut st.rng);
+            if next_random(&mut st.rng) < r.chance(st.pilot.as_ref(), roll) {
+                go = Some(r.to);
+            }
+        }
+    }
+    if let Some(r) = def.retreat_nova.as_ref().filter(|_| w.nova_at.is_some() && !st.nova_rolled) {
+        st.nova_rolled = true;
+        let roll = next_random(&mut st.rng);
+        if st.state != r.to && next_random(&mut st.rng) < r.chance(st.pilot.as_ref(), roll) {
+            go = Some(r.to);
+        }
+    }
+    if let Some(to) = go {
+        st.state = to;
+        st.state_time = 0.0;
+        st.script_clock = 0.0;
+    }
 }
 
 /// Runs a scripted state's script once and applies what it decided: variables, the
@@ -1082,7 +1128,7 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     let breaks =
         if p.break_off > 0.0 { dist < p.break_off } else { dist < 120.0 + class.max_speed * 0.15 && ahead > 0.5 };
     if breaks {
-        st.break_timer = 2.0;
+        st.break_timer = p.break_time;
     }
     // Strafe with VCT to dodge when the target faces us.
     if class.vct && (ship.position - t.position).normalize_or_zero().dot(t.forward()) > 0.95 {
@@ -1769,6 +1815,57 @@ behaviours:
             w.step();
             assert!(!w.events.iter().any(|e| matches!(e, SimEvent::MissileLaunched { ship, .. } if *ship == gun)));
         }
+    }
+
+    #[test]
+    fn disarmed_pilots_and_a_nova_send_ships_home() {
+        // A rule that always succeeds (clamp [100, 100]), so the timing alone decides.
+        let rules = crate::sim::test_support::rules_with(
+            "beams:
+  hard: {damage: 10, energy_cost: 1, rate_of_fire: 2, speed: 2000, range: 2km, hit_points: 20}
+ships:
+  gunboat: {inherit: raider, beams: [hard, hard], behaviour: skittish}
+behaviours:
+  skittish:
+    states: {go: {do: attack}, flee: {do: retreat, jump: true}}
+    retreat_when_disarmed: {to: flee, every: 5s, settle: 5s, rows: [{ranks: [0, 9], add: 100}], clamp: [100, 100]}
+    retreat_on_nova: {to: flee, rows: [{ranks: [0, 9], add: 100}], clamp: [100, 100]}
+",
+            &Default::default(),
+        );
+        let shapes = crate::sim::test_support::shapes(&rules);
+        let mut w = World::new(rules, shapes, 5);
+        let me = spawn_ai(&mut w, "gunboat", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -1500.0), Behaviour::Idle, None);
+        if let Pilot::Ai(st) = &mut w.get_mut(me).unwrap().pilot {
+            st.pilot = Some(PilotStats { rank: Some(0), ..PilotStats::NONE });
+        }
+        let state = |w: &World| match &w.get(me).unwrap().pilot {
+            Pilot::Ai(st) => st.state,
+            _ => unreachable!(),
+        };
+        // One mount still there: it never rolls.
+        w.get_mut(me).unwrap().beam_hp[0] = 0.0;
+        for _ in 0..(8 * 60) {
+            think(&mut w);
+            w.time += TICK as f64;
+        }
+        assert_eq!(state(&w), 0, "one mount left");
+        // Both gone: it rolls (5 s after its last change of state) and runs.
+        w.get_mut(me).unwrap().beam_hp[1] = 0.0;
+        think(&mut w);
+        assert_eq!(state(&w), 1, "disarmed: flee");
+        // A fresh ship, armed: a Nova bomb going off sends it home, once.
+        let other = spawn_ai(&mut w, "gunboat", 1, Vec3::new(100.0, 0.0, 0.0), Behaviour::Enemy, None);
+        think(&mut w);
+        let st_of = |w: &World| match &w.get(other).unwrap().pilot {
+            Pilot::Ai(st) => (st.state, st.nova_rolled),
+            _ => unreachable!(),
+        };
+        assert_eq!(st_of(&w), (0, false));
+        w.nova_at = Some(w.time);
+        think(&mut w);
+        assert_eq!(st_of(&w), (1, true));
     }
 
     #[test]

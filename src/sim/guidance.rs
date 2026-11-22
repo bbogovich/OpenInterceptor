@@ -63,6 +63,15 @@ pub fn launch(w: &mut World, mut m: Missile) {
             w.missiles.push(m);
         }
         Guidance::Doppelganger => launch_doppelganger(w, &m, class.duration),
+        _ if class.fuse > 0.0 => {
+            // A Nova bomb: its life is its fuse, and its warnings are scheduled now.
+            m.life = class.fuse;
+            let now = w.time;
+            for (at, text) in &class.warnings {
+                w.timed_lines.push((now + *at as f64, m.owner, text.clone()));
+            }
+            w.missiles.push(m);
+        }
         _ => w.missiles.push(m),
     }
 }
@@ -231,6 +240,25 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         let speed = (m.velocity.length() + class.speed * dt).min(class.speed);
         m.velocity = new_dir * speed;
         let next = m.position + m.velocity * dt;
+        // A Nova bomb (`fuse`) ignores contact and its proximity fuse: it flies on until
+        // its fuse runs out, then goes off — the battle's end is counted from then (the
+        // original's `0x596dea`, flight README §12, verified). What its blast does to the
+        // ships round it is not traced: here it damages nothing.
+        if class.fuse > 0.0 {
+            m.position = next;
+            if m.life > 0.0 {
+                keep.push(m);
+            } else {
+                let now = w.time;
+                w.nova_at.get_or_insert(now);
+                if class.ends_battle_after > 0.0 {
+                    w.battle_over_at.get_or_insert(now + class.ends_battle_after as f64);
+                }
+                w.events.push(SimEvent::NovaDetonated { ship: m.owner, position: m.position });
+                blasts.push((None, m.position, 0.0, DamageMode::Normal, class.explosion));
+            }
+            continue;
+        }
         // A harmless owner's missile explodes but does no damage.
         let scale = if w.harmless.contains(&m.owner) { 0.0 } else { 1.0 };
         if let Some((j, t)) = first_hit(w, m.position, next, m.owner) {
@@ -431,5 +459,52 @@ mod tests {
         assert_eq!((s.shield_fore, s.shield_aft), (10.0, 10.0), "both facings share the blast");
         area_blast(&mut w, f.position + Vec3::X * 50.0, 100.0, 100.0, None);
         assert!(w.get(foe).unwrap().shield_fore < 10.0);
+    }
+
+    #[test]
+    fn a_nova_bomb_goes_off_on_its_fuse_and_ends_the_battle_a_minute_later() {
+        let mut w = world();
+        let mut r = (*w.rules).clone();
+        let mut nova = r.missiles[0].clone();
+        (nova.id, nova.fuse, nova.ends_battle_after, nova.speed) = ("nova".into(), 60.0, 60.0, 175.0);
+        nova.warnings = vec![(30.0, "ARMED".into()), (88.0, "32 S".into())];
+        r.missiles.push(nova);
+        w.rules = std::sync::Arc::new(r);
+        let class = MissileId(w.rules.missiles.len() as u16 - 1);
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        // Launched straight at a ship it would hit within a second: it does not go off.
+        let foe = w.spawn(f, FactionId(1), "foe", Vec3::new(0.0, 0.0, -100.0), Quat::IDENTITY, Pilot::External);
+        let m = Missile::new(
+            class,
+            me,
+            FactionId(0),
+            Some(foe),
+            Vec3::new(0.0, 0.0, -10.0),
+            Vec3::new(0.0, 0.0, -175.0),
+            0.0,
+        );
+        launch(&mut w, m);
+        let (mut went, mut lines) = (None, Vec::new());
+        for k in 1..=(125 * 60) {
+            w.step();
+            let t = k as f32 / 60.0;
+            for e in &w.events {
+                match e {
+                    SimEvent::NovaDetonated { .. } => went = Some(t),
+                    SimEvent::Radio { text, .. } => lines.push((t, text.clone())),
+                    _ => {}
+                }
+            }
+            if (59.0..59.02).contains(&t) {
+                assert!(went.is_none() && w.nova_at.is_none(), "not yet at 59 s");
+            }
+        }
+        let went = went.expect("it went off");
+        assert!((went - 60.0).abs() < 0.05, "at 60 s: {went}");
+        assert_eq!(w.get(foe).unwrap().hull, 100.0, "no contact detonation, no blast damage");
+        assert!((w.battle_over_at.unwrap() - w.nova_at.unwrap() - 60.0).abs() < 1e-6);
+        assert_eq!(lines.iter().map(|l| l.1.as_str()).collect::<Vec<_>>(), ["ARMED", "32 S"]);
+        assert!((lines[0].0 - 30.0).abs() < 0.05 && (lines[1].0 - 88.0).abs() < 0.05);
     }
 }
