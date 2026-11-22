@@ -305,7 +305,7 @@ dependencies = [
 
 [[package]]
 name = "openinterceptor"
-version = "0.22.22"
+version = "0.22.23"
 dependencies = [
  "glam",
  "image",
