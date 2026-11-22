@@ -634,6 +634,9 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
     for c in &mut rules.ships {
         fix(&mut c.name, &format!("{}.name", c.id));
         fix(&mut c.description, &format!("{}.description", c.id));
+        for h in &mut c.hard_points {
+            fix(&mut h.message, &format!("{}.hard_points.{}.message", c.id, h.name));
+        }
     }
     for b in &mut rules.beams {
         fix(&mut b.name, &format!("beams.{}.name", b.id));

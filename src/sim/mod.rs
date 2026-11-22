@@ -409,6 +409,8 @@ pub struct Ship {
     pub beam_hp: Vec<f32>,
     /// Remaining missiles per rack.
     pub missiles: Vec<(MissileId, u32)>,
+    /// Hit points left on each of the class's `hard_points`.
+    pub hard_hp: Vec<f32>,
     /// Hit points of each missile launcher (rack), in `missiles` order.
     pub rack_hp: Vec<f32>,
     pub selected_rack: usize,
@@ -667,6 +669,12 @@ pub enum SimEvent {
         ship: ShipId,
         call: String,
     },
+    /// One of `ship`'s hard points (`hard_points:`) was destroyed; `text` is its message.
+    HardPointDestroyed {
+        ship: ShipId,
+        name: String,
+        text: String,
+    },
 }
 
 /// A destroyed module left on its station.
@@ -847,6 +855,7 @@ impl World {
             next_mount: 0,
             beam_hp: c.beams.iter().map(|b| self.rules.beam(*b).hit_points).collect(),
             missiles: c.missiles.clone(),
+            hard_hp: c.hard_points.iter().map(|h| h.hit_points).collect(),
             rack_hp: c.missiles.iter().map(|(m, _)| self.rules.missile(*m).launcher_hit_points).collect(),
             selected_rack: 0,
             missile_cooldown: 0.0,
@@ -908,20 +917,35 @@ impl World {
         ShipId { index: index as u32, generation: self.generations[index] }
     }
 
-    /// Mounts the class's modules on station `hub` at its attachment points (and their
-    /// modules on them, and so on). Returns an error for a slot the model does not have.
+    /// Mounts the class's modules on station `hub` at its attachment points or given
+    /// positions (and their modules on them, and so on); a module with a `chance` below 1
+    /// is there only if a roll on the world's generator says so. Returns an error for a
+    /// slot the model does not have.
     pub fn spawn_modules(&mut self, hub: ShipId, depth: usize) -> Result<(), String> {
         let Some(h) = self.get(hub) else { return Ok(()) };
         let (class, faction, name) = (h.class, h.faction, h.name.clone());
         let modules = self.rules.ship(class).modules.clone();
-        for (k, (slot, module)) in modules.into_iter().enumerate() {
-            let mounts = &self.shapes[class.0 as usize].mounts;
-            let found = match slot.parse::<usize>() {
-                Ok(i) => mounts.get(i),
-                Err(_) => mounts.iter().find(|(n, _, _)| n.as_deref() == Some(slot.as_str())),
-            };
-            let Some((_, at, facing)) = found.cloned() else {
-                return Err(format!("{name}: the model has no attachment point '{slot}'"));
+        for (k, m) in modules.into_iter().enumerate() {
+            // Only an uncertain module draws a number, so stations without chances keep
+            // the generator's sequence (and so every seeded battle) as it was.
+            if m.chance < 1.0 && self.random() >= m.chance {
+                continue;
+            }
+            let module = m.class;
+            let (at, facing) = match m.at {
+                Some(p) => (Vec3::from(p), Vec3::from(m.facing)),
+                None => {
+                    let mounts = &self.shapes[class.0 as usize].mounts;
+                    let slot = &m.slot;
+                    let found = match slot.parse::<usize>() {
+                        Ok(i) => mounts.get(i),
+                        Err(_) => mounts.iter().find(|(n, _, _)| n.as_deref() == Some(slot.as_str())),
+                    };
+                    let Some((_, at, facing)) = found.cloned() else {
+                        return Err(format!("{name}: the model has no attachment point '{slot}'"));
+                    };
+                    (at, facing)
+                }
             };
             let local = Quat::from_rotation_arc(Vec3::NEG_Z, facing.normalize_or(Vec3::NEG_Z));
             let behaviour =
@@ -944,6 +968,35 @@ impl World {
             }
         }
         Ok(())
+    }
+
+    /// Lays the class's `minefields` around `hub`: for each field that its `chance`
+    /// allows, `count` mines evenly spaced on a circle of `radius` around `center` in
+    /// each ring's plane (the horizontal circle turned by the ring's yaw, pitch and roll),
+    /// with the hub's faction. Returns how many mines were laid.
+    pub fn spawn_minefields(&mut self, hub: ShipId) -> usize {
+        let Some(h) = self.get(hub) else { return 0 };
+        let (class, faction, name, pos, rot) = (h.class, h.faction, h.name.clone(), h.position, h.rotation);
+        let fields = self.rules.ship(class).minefields.clone();
+        let mut laid = 0;
+        for f in fields {
+            if f.count == 0 || f.rings.is_empty() || (f.chance < 1.0 && self.random() >= f.chance) {
+                continue;
+            }
+            for ring in &f.rings {
+                let turn = euler(Vec3::from(*ring));
+                for k in 0..f.count {
+                    // Mine k sits at angle 2πk/count round the ring's axis, `radius` out.
+                    let angle = std::f32::consts::TAU * k as f32 / f.count as f32;
+                    let local =
+                        Vec3::from(f.center) + turn * (Quat::from_rotation_y(angle) * Vec3::new(0.0, 0.0, f.radius));
+                    let idle = Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, Vec3::ZERO));
+                    self.spawn(f.mine, faction, &format!("{name}.mine{laid}"), pos + rot * local, rot, idle);
+                    laid += 1;
+                }
+            }
+        }
+        laid
     }
 
     /// Keeps modules on their hubs, destroys the modules of destroyed hubs, and matches
@@ -1131,6 +1184,7 @@ impl World {
         // A station shown in a state (under construction) has no modules yet.
         if p.state.is_none() {
             self.spawn_modules(id, 0).map_err(|e| format!("object {e}"))?;
+            self.spawn_minefields(id);
         }
         if p.protect {
             let mine = self.get(player).map(|s| s.faction);

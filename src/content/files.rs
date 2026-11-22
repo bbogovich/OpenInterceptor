@@ -268,9 +268,40 @@ fn ship() -> Ty {
             "modules",
             Ty::List(Box::new(Ty::Struct(vec![
                 f("slot", Ty::Text, "attachment point: its index (original meshes) or slot name (OBJ slot_<name>)"),
+                f("at", Ty::Numbers(3), "instead of slot: model-space position, metres (engine axes)"),
+                f("facing", Ty::Numbers(3), "with at: the direction the module's front faces ([0, 0, -1])"),
                 f("class", name(), "the module's object id"),
+                f("chance", Ty::Qty(Unit::Fraction), "the chance it is there when the station is placed (100 %)"),
             ]))),
-            "stations: modules mounted at the model's attachment points",
+            "stations: modules mounted at the model's attachment points or at given positions",
+        ),
+        f(
+            "hard_points",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("name", Ty::Name, "its id"),
+                f("hit_points", Ty::Num, "its own hit points"),
+                f("at", Ty::Numbers(3), "centre in model space, metres (engine axes)"),
+                f("radius", dist(), "direct hits landing within this distance strike it"),
+                f("message", Ty::Text, "said when it is destroyed (@key allowed)"),
+            ]))),
+            "stations: weak points that take direct hits while the shields are down",
+        ),
+        f(
+            "destroyed_when",
+            Ty::Enum(&["hull", "hard_points", "either"]),
+            "what destroys it: hull at 0 (default), all hard points at 0, or either",
+        ),
+        f(
+            "minefields",
+            Ty::List(Box::new(Ty::Struct(vec![
+                f("mine", name(), "the mine's object id"),
+                f("count", Ty::Num, "mines per ring"),
+                f("radius", dist(), "ring radius (1km)"),
+                f("center", Ty::Numbers(3), "ring centre in model space ([0, 0, 0])"),
+                f("rings", Ty::List(Box::new(Ty::Numbers(3))), "each ring's yaw, pitch, roll in degrees ([[0, 0, 0]])"),
+                f("chance", Ty::Qty(Unit::Fraction), "the chance the field is laid (100 %)"),
+            ]))),
+            "mines laid around the object when it is placed",
         ),
         f("shield_generator", Ty::Bool, "modules: while one survives, its station's shields work"),
         f(

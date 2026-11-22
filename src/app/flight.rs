@@ -247,6 +247,9 @@ pub fn event_messages(world: &World, player: ShipId) -> Vec<String> {
         match e {
             SimEvent::Message { ship, text } if *ship == player => out.push(text.clone()),
             SimEvent::Radio { text, .. } => out.push(text.clone()),
+            // A station's weak point falling is news to everyone (the original's
+            // "Connection Point Destroyed").
+            SimEvent::HardPointDestroyed { text, .. } if !text.is_empty() => out.push(text.clone()),
             SimEvent::ScriptStopped { call, .. } => {
                 out.push(format!("SCRIPT STOPPED: {call} used its whole operation budget"))
             }

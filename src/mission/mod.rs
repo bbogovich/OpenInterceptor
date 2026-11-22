@@ -204,7 +204,7 @@ pub fn cargo_share(w: &World, r: &RoleRun) -> f32 {
         .filter(|m| w.same_slot(**m))
         .map(|m| {
             let class = w.ships[m.index as usize].class;
-            w.rules.ship(class).modules.iter().filter(|(_, c)| w.rules.ship(*c).cargo).count()
+            w.rules.ship(class).modules.iter().filter(|m| w.rules.ship(m.class).cargo).count()
         })
         .sum();
     if slots == 0 {
