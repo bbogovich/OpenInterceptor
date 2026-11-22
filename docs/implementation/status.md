@@ -427,6 +427,14 @@ launch with the battle over 60 s later. `default`: unchanged. Manual case MT-4-7
 `mpilot1`); the final missions' (5, 3) / (5, 1) are music stingers, played as for any won or lost
 mission.
 
+**#120** (app NEXT; audit D-09, D-10, D-12, D-13, D-15, D-17; `notes/re/flight` §3 – 5, §12):
+beam bolts strike missiles (`flight.beams_hit_missiles`, missile `hit_points`; `interceptor` has no
+point defence any more); the cloak's `drain`, `shields_off` and `no_missiles`; the original's missile
+flight (`flight: original`, `pass_fuse`, `blast`, `dud_on_expiry`, `lose_lock_beyond`); `launcher_rate`
+and the launchers' rounds; `flight.start_throttle`; Parallax `images`, Passive Cloaking `max_life`,
+Doppelganger `retarget_every`; the pirate and corporate hulls from their own sections. D-18 (the
+Patton's protection from its fit) is open: DEV-095.
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),

@@ -8,6 +8,14 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#120 (app NEXT)** seven more, so **563**: `sim::combat::tests::bolts_shoot_down_missiles_and_cloaks_cost_energy_shields_and_missiles`
+(a 30-damage bolt destroys a 20-point missile 80 – 97 times in 100; a cloaked hit skips the shields;
+no missile from cloak; −50 energy a second, no shield recharge, the cloak drops at 0),
+`launcher_rate_and_start_throttle_come_from_the_rules`, `sim::guidance::tests::original_missiles_fly_straight_first_and_slow_in_hard_turns`,
+`original_blasts_hit_everything_round_them_without_falloff`, `original_fuses_duds_and_lost_locks`,
+`decoy_images_life_caps_and_doppelganger_pulls` and
+`content::rules::tests::original_missile_flight_cloak_and_flight_keys_parse`.
+
 **#119 follow-up (app NEXT)** two more, so **551**: `sim::ai::tests::the_original_break_off_ends_with_its_manoeuvre_by_range_or_chance`
 (a break-off at 1,500 m ends with its first manoeuvre; at 800 m not before 5 s, then on a 25 %
 roll; breaking off at another ship sends the call) and

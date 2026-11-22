@@ -69,8 +69,31 @@ objects:
 | `energy` | 4 | Energy per shot, from the ship's capacitor; no energy, no shot. |
 
 Each shot draws a tracer and plays the `point_defence` event sound. Point defence is fitted to
-the Patton, the X-COM freighter and the bases (`interceptor`), and to the dreadnought and the
-stations (`default`); the numbers are derived (DEV-038).
+the dreadnought and the stations (`default`); the numbers are derived (DEV-038). The original has
+no automatic point defence: since app NEXT `interceptor` has none, and instead every beam bolt
+can strike a missile (`flight.beams_hit_missiles`, 90 % to apply its damage against the missile's
+`hit_points`).
+
+## The original's missile flight
+
+With `flight: original` (app NEXT) a missile flies as the original's: straight for 250 ms, then
+homing at most 2.5 rad/s, losing throttle while it is off target, so a hard turn slows it. Its
+warhead can hit everything round it:
+
+```yaml
+missiles:
+  xwinder:
+    inherit: original:GameSettings.ini/XWinderMissile
+    launcher_rate: 4                     # shots a second from its launcher
+    flight: original
+    pass_fuse: 25m                       # goes off passing within 25 m, > 45 deg off
+    blast: {impact: 15m, radius: 200m}   # every object, either side, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
+```
+
+`images`, `max_life` and `retarget_every` give the Parallax, Passive Cloaking and Doppelganger
+torpedoes their original behaviour; see the [reference](reference.md#missiles).
 
 ## Mines
 
@@ -84,7 +107,7 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 
 | Campaign | Missiles |
 |---|---|
-| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (`cloaked_wait`), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each. |
+| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (two images after 1 s), Passive Cloaking torpedo (`cloaked_wait`, 10 s), Doppelganger (hostiles turn to it every 5 – 6 s), all with the original's flight, fuse, blast, launcher rate and rounds (app NEXT, **verified**); the Super Avenger's testbed load carries one of each. |
 | `default` | Seeker rockets, atomic torpedoes, cluster rockets (Thunderbolt), decoy rockets (Meteor), Dominion space-mine warheads (`dominion-raid`). |
 
 ## The Nova bomb

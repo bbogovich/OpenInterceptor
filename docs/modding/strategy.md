@@ -196,7 +196,7 @@ says so.
 | `sell_price` | number | 0 | What one fetches on the market. |
 | `prod_time` | number | 0 | Work units to manufacture one; 0 = bought only. |
 | `size` | number | 1 | Storage space: what one takes of a base's store at a base type with hub [`storage`](#base_modules-and-base_types) (app 0.16.10; since 0.16.15 the base type decides). |
-| `rounds` | number | 1 | Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2). |
+| `rounds` | number | 1 | Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2). `interceptor` (app NEXT): each `*Launcher`'s `Rounds` — X-Winder 5, Permeator 3, Sidestep 4, Fusion 2, Elerium 4, Enveloping 3, Parallax 3, Passive Cloaking 2, Doppelganger 1, Nova 1 (**verified**). |
 | `protection` | number | 0 | A `shield`: shield points per facing; an `armor`: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's `Special` (shields) or `HitPoints` (armour) — *derived*. In battle a craft flies with the **strongest** fitted shield and the **sum** of its fitted armour, in place of its class's `shields` / `armor`; with none fitted it keeps the class's own (which `fitted:` on the [ship class](reference.md#ships-and-objects) may supply). |
 | `requires` | condition | none | Available only while this holds (as well as any topic that unlocks it). |
 | `tech_required`, `tech_required2` | numbers | none | The original's numeric tech ids, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become the prerequisite (app 0.8.0). Also on hulls and modules. |
