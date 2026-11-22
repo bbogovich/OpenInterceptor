@@ -2168,7 +2168,7 @@ impl Campaign {
     }
 
     /// A battle's events (§15.3) — `destroyed(<class>)`, `captured(<class>)`, `won(<raid>)`,
-    /// `won(<raid>#<n>)` — open the topics they `unlock_on` and finish those they
+    /// `won(<raid>#<n>)`, `kind(<kind>)` — open the topics they `unlock_on` and finish those they
     /// `complete_on`.
     pub fn battle_events(&mut self, def: &StrategyDef, events: &[String]) {
         for (t, topic) in def.research.iter().enumerate() {
@@ -2282,6 +2282,12 @@ impl Campaign {
                         self.recover_artefact(def, home, i);
                     }
                 }
+            }
+            // The raid's kind (a probe's type, §15.3): one of `kinds`, picked from the contact
+            // id (DERIVED: the original's alien AI picks it; here every kind is as likely).
+            if let Some(kinds) = raid.map(|r| &def.raids[r].kinds).filter(|k| !k.is_empty()) {
+                let k = (contact as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) >> 32;
+                tokens.push(format!("kind({})", kinds[(k % kinds.len() as u64) as usize]));
             }
             if let Some(r) = raid {
                 if self.raid_wins.len() < def.raids.len() {
@@ -2867,7 +2873,8 @@ mod tests {
     fn battle_events_open_special_topics_and_fits_drive_salvage() {
         // Event-gated topics, a launcher-or-torpedo topic, a destroyed class's fit.
         let text = SAMPLE
-            .replace("  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}", "  plasma: {size: 1000, unlock_on: [\"captured(saucer)\", \"won(raid#2)\"]}\n  rays: {size: 1000, requires_item: [ray_launcher, ray_round]}\n  wreck_study: {size: 1000, complete_on: [\"captured(freighter)\"]}")
+            .replace("  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}", "  plasma: {size: 1000, unlock_on: [\"captured(saucer)\", \"won(raid#2)\"]}\n  rays: {size: 1000, requires_item: [ray_launcher, ray_round]}\n  wreck_study: {size: 1000, complete_on: [\"captured(freighter)\"]}\n  scout_study: {size: 1000, unlock_on: [\"kind(scout)\"]}")
+            .replace("speed: 500, requires: flag(raids)}", "speed: 500, requires: flag(raids), kinds: [scout]}")
             .replace("items:\n", "items:\n  ray_launcher: {kind: launcher, cost: 0}\n  ray_round: {kind: missile, cost: 0}\n")
             + "goodies:\n  always: {chances: [100]}\nsalvage_fits:\n  saucer: [{item: ray_round, goodies: always}]\n";
         let (d, errors) = build(&text);
@@ -2900,6 +2907,8 @@ mod tests {
         assert!(open(&mut c, plasma), "won(raid#2)");
         assert!(c.known[study], "complete_on: finished outright");
         assert_eq!(c.raid_wins, vec![2]);
+        let scout = d.topic("scout_study").unwrap();
+        assert!(open(&mut c, scout), "a won raid reports its kind");
     }
 
     #[test]

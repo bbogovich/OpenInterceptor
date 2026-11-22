@@ -103,8 +103,9 @@ goodies:
 # §15). Eleven need an item in some base's stores (the exe's table 0x66f768, VERIFIED): the
 # corpses, the three torpedoes (the launcher or its torpedoes) and the three alien beams. The
 # others open on a battle event (§15.3, VERIFIED): the saucer and Shade examinations when that
-# alien class is captured or disabled, the probes when a probe is destroyed (this pack's one
-# probe class, `drone`, opens all three: DERIVED), the Doomsday pieces from the convoys that
+# alien class is captured or disabled, the probes by the probe's type (§15.3: of the seven,
+# only the sensor, intel jammer and comm jammer probes give a topic; the alien_probe raid's
+# `kinds` stand for the type, one per contact, all as likely: DERIVED), the Doomsday pieces from the convoys that
 # carry them (the n-th won convoy carrying piece n: DERIVED). Still open as before: the mines
 # (the flight layer does not report destroyed mines yet), Poltergeist and the Drone (unknown,
 # §15.3).
@@ -124,9 +125,9 @@ research:
   type_2_saucer_examination: {unlock_on: ["captured(spectre)"]}
   type_3_saucer_examination: {unlock_on: ["captured(phantasm)"]}
   shade_examination: {unlock_on: ["captured(shade)"]}
-  alien_sensor_probe: {unlock_on: ["destroyed(drone)"]}
-  alien_intel_jammer_probe: {unlock_on: ["destroyed(drone)"]}
-  alien_comm_jammer_probe: {unlock_on: ["destroyed(drone)"]}
+  alien_sensor_probe: {unlock_on: ["kind(sensor_probe)"]}
+  alien_intel_jammer_probe: {unlock_on: ["kind(intel_jammer_probe)"]}
+  alien_comm_jammer_probe: {unlock_on: ["kind(comm_jammer_probe)"]}
   alien_structural_component_piece_1: {unlock_on: ["won(doomsday_convoy#1)"]}
   alien_weapon_component_piece_2: {unlock_on: ["won(doomsday_convoy#2)"]}
   alien_drive_component_piece_3: {unlock_on: ["won(doomsday_convoy#3)"]}
@@ -258,7 +259,8 @@ raids:
   # race is DERIVED).
   # Alien flights seen by a base's sensors turn on that base with 25 + 10 x level %
   # (react_on_detect; strategy README §6.3: the chance VERIFIED, the re-tasking DERIVED).
-  alien_probe: {name: Alien probe, mission: destroy_alien_probe, faction: alien, every: 3d, chance: 60%, target: system, speed: 1500, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]}}
+  alien_probe: {name: Alien probe, mission: destroy_alien_probe, faction: alien, every: 3d, chance: 60%, target: system, speed: 1500, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
+                kinds: [communications_probe, comm_jammer_probe, ecm_probe, intel_probe, intel_jammer_probe, hunter_probe, sensor_probe]}
   deep_space_contact: {name: Alien squadron, mission: deep_space_encounter, faction: alien, every: 4d, chance: 50%, target: system, speed: 1800, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
                    salvage_items: [{item: sectoid_corpse, goodies: alien_corpse}, {item: muton_corpse, goodies: alien_corpse}, {item: aereon_corpse, goodies: alien_corpse},
                      {item: ethereal_corpse, goodies: alien_corpse}, {item: psilord_corpse, goodies: alien_corpse}]}

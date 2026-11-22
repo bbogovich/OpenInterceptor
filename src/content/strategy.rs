@@ -245,7 +245,8 @@ pub struct Topic {
     pub requires_item: Vec<String>,
     /// A special topic opened by a battle event instead (§15.3): offered once any of these
     /// happened — `destroyed(<class>)`, `captured(<class>)` (captured or disabled),
-    /// `won(<raid>)`, `won(<raid>#<n>)` (that raid's n-th win).
+    /// `won(<raid>)`, `won(<raid>#<n>)` (that raid's n-th win), `kind(<kind>)` (a won
+    /// raid's kind).
     pub unlock_on: Vec<String>,
     /// Finished outright by any of these events (the original's topics 74 / 75).
     pub complete_on: Vec<String>,
@@ -708,6 +709,9 @@ pub struct Raid {
     /// Artefacts a won battle may recover: `(item, goodies table)` — each
     /// rolled once with the table's chance at the campaign's difficulty (RQ-S-03).
     pub salvage_items: Vec<(String, String)>,
+    /// What each launch of this raid may be (`kinds:`, e.g. the original's seven probe
+    /// types): one is picked per contact, and a won battle reports it as `kind(<kind>)`.
+    pub kinds: Vec<String>,
 }
 
 /// `incomes.<id>` and `expenses.<id>`: an amount every so often.
@@ -1400,6 +1404,7 @@ impl StrategyDef {
                 },
                 speed: g.num("speed").unwrap_or(600.0).max(1.0),
                 react_on_detect: g.qty("react_on_detect", Unit::Fraction).unwrap_or(0.0).clamp(0.0, 1.0),
+                kinds: g.list("kinds"),
                 salvage_items: g
                     .node("salvage_items")
                     .and_then(|n| n.as_seq())
@@ -2101,6 +2106,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                     ]))),
                     "artefacts a won battle may recover",
                 ),
+                f("kinds", Ty::List(Box::new(Ty::Name)), "what each launch may be; a won battle reports kind(<kind>)"),
             ])),
             "enemy flights the campaign launches",
         ),
