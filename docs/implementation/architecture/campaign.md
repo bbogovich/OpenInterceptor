@@ -523,8 +523,8 @@ the engine: it reads the player's `GameSettings.ini` and `Interceptor.exe` and w
 to the original's sections, with no values. The engine then treats the X-COM campaign like any
 other: inheritance reads the values from the player's file at load, `tech_ids` turns the numeric
 prerequisites into conditions (above), and `cost_scale`, `module_time` and `money_from` adapt the
-original's units. The executable's table layout (12-byte entries: a pointer to the `R_` section
-name, a string id, the tech id) is *derived*; see [Strategy layer › the `interceptor`
+original's units. The numbering is `GameSettings.ini`'s numbered topic list, which the executable
+indexes its topics by (*verified*, app 0.22.3); see [Strategy layer › the `interceptor`
 campaign](../../modding/strategy.md#the-interceptor-campaign-from-the-players-data).
 
 ### The economy's later rules (app 0.16.6 – 0.16.11)

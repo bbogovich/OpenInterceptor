@@ -82,8 +82,9 @@ silently wrong.
 
 !!! note "As built (app 0.8.0)"
     The table is generated from the player's executable by `tools/interceptor_strategy.py` into
-    `packs/interceptor/strategy/references.yaml` (*derived*: the executable's 12-byte entries of
-    `R_` name pointer, string id and tech id). `--check` checks that every research id the table
+    `packs/interceptor/strategy/references.yaml` (*verified* since app 0.22.3: the numbered topic
+    list in `GameSettings.ini`, which the executable indexes its topics by; before that a databank
+    table, off by one). `--check` checks that every research id the table
     gives is a defined topic once a condition uses it, but it does **not** compare the table with
     the original file again: a number the table does not list is left out of the condition
     silently (by design for the alien ids 75 and up). Research `unlocks` are not authored; items,

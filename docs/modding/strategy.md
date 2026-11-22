@@ -985,12 +985,15 @@ own `GameSettings.ini` and `Interceptor.exe`; the pack holds **no values** from 
       > packs/interceptor/strategy/references.yaml
   ```
 
-- The tech-id table comes from the executable, which keeps it as 12-byte entries of a pointer
-  to an `R_` section name, a string id and the tech id; the tool finds the run of entries whose
-  pointers lead to `R_` names. *Derived* (the layout is inferred, not documented). With it, 67
-  of the 69 `TechRequired` values resolve to topics; eight `Prereq` links point to a topic of a
-  higher `Level`; ids 75 and up (alien craft and installations) are not in it and are left out
-  of conditions.
+- The tech-id numbering is the numbered topic list in a comment of the player's
+  `GameSettings.ini` (`00 ACCUMULATOR_SHIELDS` … `73 VECTOR_CONTROL_THRUSTERS`): the executable
+  indexes its topic records by it and its loader is called with that index (*verified* from the
+  executable, app 0.22.3). A numbered name maps to the `R_<NAME>` section; numbers without a
+  section (the minefield placeholders 21/32/41, the alien craft and modules from 74, and 127,
+  "special": an artefact must be recovered) are left out of conditions. With it, 4 `Prereq`
+  links point to a topic of a higher `Level`, as in the original's own data. Up to app 0.22.2
+  the tool read a 12-byte table in the executable whose third field is a databank entry number,
+  not the tech id; that shifted every id from 4 on by one and made 16 topics unreachable.
 - `packs/interceptor/strategy/campaign.yaml` is written by hand on top: a generated **Frontier**
   map, **downlink** research (`research_model.rate` from the three downlink module types,
   switching loses progress), hulls inheriting `Ship_IntType1` – `Ship_IntType3`, missile
