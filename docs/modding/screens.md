@@ -171,7 +171,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `at` | `[x, y]` | none | With `font`: an anchor point instead of the rectangle. |
 | `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
 | `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-0227), app 0.22.7). |
-| `style`, `columns`, `bar`, `up`, `down` | | | A `list` in a sheet font as the original's list box: rows, columns, the pulsing bar, scroll arrows ([Compact list boxes](#compact-list-boxes), app NEXT). |
+| `style`, `columns`, `bar`, `up`, `down` | | | A `list` in a sheet font as the original's list box: rows, columns, the pulsing bar, scroll arrows ([Compact list boxes](#compact-list-boxes), app 0.22.9). |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
 | `kind` | Draws / does |
@@ -264,7 +264,7 @@ topics: {kind: list, source: research, rect: [330, 49, 250, 264], font: body, ro
 
 #### Compact list boxes
 
-`style: compact` (app NEXT, plan M2 #124, RQ-UI-13) draws a list in a sheet font as the
+`style: compact` (app 0.22.9, plan M2 #124, RQ-UI-13) draws a list in a sheet font as the
 original's list box (ListBox.cpp, **verified** unless marked):
 
 | Rule | |
@@ -291,7 +291,7 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
         down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
 ```
 
-`interceptor` (app NEXT):
+`interceptor` (app 0.22.9):
 
 - Purchase, Manufacture and Equip Ships use compact boxes with columns and their arrows. The
   arrows' positions and images are **verified**; Equip Ships' columns borrow the CSD's ship-list
