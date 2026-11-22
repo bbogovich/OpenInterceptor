@@ -92,16 +92,19 @@ screens:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
       # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
       # row and its actions at the pane's foot (placement in the pane DERIVED).
-      # The module panel's three 42 x 32 buttons (VERIFIED, unknowns-2026-11.md §14.2; idle row N,
-      # pressed N + 1): 402 previous at (387, 247) rows 1377 / 1378, 400 close panel at (484, 247)
-      # rows 1381 / 1382 (the check mark: accept the placement), 401 next at (580, 247) rows
-      # 1379 / 1380. The original's panel shows one module at a time and steps with these; it has
-      # no scroll arrows. Here they step the list's selection and build the selected module
-      # (DERIVED); the wheel still scrolls the list.
-      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 212, 274, 18]}
-      previous: {kind: button, centre: [387, 247], images: {sprite: "original:sprite#1377", states: 2}, action: list(prev)}
-      close_panel: {kind: button, centre: [484, 247], images: {sprite: "original:sprite#1381", states: 2}, action: list(act)}
-      next: {kind: button, centre: [580, 247], images: {sprite: "original:sprite#1379", states: 2}, action: list(next)}
+      # The side panel's three 42 x 32 buttons (VERIFIED, unknowns-2026-11.md §14.2; idle row N,
+      # pressed N + 1): 402 previous at (387, 247) rows 1377 / 1378, 401 next at (580, 247) rows
+      # 1379 / 1380, and 400 close panel at (484, 247) rows 1381 / 1382, which in every mode closes
+      # the side panel (its buttons hidden, sndSlideSide, placement cleared). The original's panel
+      # shows one module at a time and has no scroll arrows; here previous / next step the
+      # list's selection (DERIVED) and a double click builds. The panel is reopened by 202,
+      # "add module", at (504, 324) (VERIFIED position; sprite rows 1343 / 1344 DERIVED from the
+      # side buttons' numbering, 28104 -> 1345). It starts open (DERIVED).
+      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 212, 274, 18], panel: side}
+      previous: {kind: button, centre: [387, 247], images: {sprite: "original:sprite#1377", states: 2}, action: list(prev), panel: side}
+      close_panel: {kind: button, centre: [484, 247], images: {sprite: "original:sprite#1381", states: 2}, action: hide(side), sound: ui_slide, panel: side}
+      next: {kind: button, centre: [580, 247], images: {sprite: "original:sprite#1379", states: 2}, action: list(next), panel: side}
+      add_module: {kind: button, pos: [504, 324], images: {sprite: "original:sprite#1343", states: 2}, action: show(side), sound: ui_slide}
       # The side buttons 204/206/208 (VERIFIED): SpriteButtonTL with their top-left at
       # these points, two states (rows 1345/1347/1349: up, then pressed).
       purchase: {kind: button, pos: [504, 361], images: {sprite: "original:sprite#1345", states: 2}, action: open(purchase), sound: ui_beep22}
@@ -129,8 +132,9 @@ screens:
       # as icons only (VERIFIED, unknowns-2026-11.md §13.2) - row 1237 where the hull has no
       # hard point, the selection overlay 1235 at (+1, +1). The fitted items' icons by item
       # (VERIFIED, §14.3: catalogue 0x65f880 -> table 0x690990; a launcher and its missile share
-      # one). Accumulator shields have none; the probes' (1417/1418/1429/1438) are not matched
-      # to these probes yet.
+      # one). Probes by INI section (§14.3): HunterProbe 1429, SensorProbe 1438 (the
+      # communications probes' 1418 / 1417 belong to probes this pack does not define); ECM,
+      # Intel and IntelJammer probes and accumulator shields have none.
       ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, style: compact, columns: "@orig.S_CSD_CHOOSESHIPTAB",
               slots: [[117, 336], [65, 265], [64, 178], [115, 107], [198, 79], [282, 106], [334, 177], [334, 265], [283, 336]],
               slot_unusable: "original:sprite#1237", slot_selected: "original:sprite#1235",
@@ -146,7 +150,7 @@ screens:
                 permeator: "original:sprite#1434", permeator_missile_launcher: "original:sprite#1434", doppelganger: "original:sprite#1420", doppelganger_missile_launcher: "original:sprite#1420",
                 nova_bomb: "original:sprite#1431", nova_bomb_launcher: "original:sprite#1431", elerium_torpedo: "original:sprite#1421", elerium_torpedo_launcher: "original:sprite#1421",
                 enveloping_torpedo: "original:sprite#1425", enveloping_fusion_torpedo_launcher: "original:sprite#1425", sidestep: "original:sprite#1445", sidestep_missile_launcher: "original:sprite#1445",
-                cloaking_torpedo: "original:sprite#1433", passive_cloaking_torpedo_launcher: "original:sprite#1433", parallax_torpedo: "original:sprite#1432", parallax_torpedo_launcher: "original:sprite#1432"},
+                cloaking_torpedo: "original:sprite#1433", passive_cloaking_torpedo_launcher: "original:sprite#1433", parallax_torpedo: "original:sprite#1432", parallax_torpedo_launcher: "original:sprite#1432", sensor_probe: "original:sprite#1438", hunter_probe: "original:sprite#1429"},
               detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20],
               up: {rect: [518, 413, 24, 24], images: ["original:SpritesDLL.dll#27500", "original:SpritesDLL.dll#27501", "original:SpritesDLL.dll#27502"]},
               down: {rect: [518, 434, 24, 24], images: ["original:SpritesDLL.dll#27503", "original:SpritesDLL.dll#27504", "original:SpritesDLL.dll#27505"]}}
@@ -356,3 +360,4 @@ sounds:
   ui_beep22: cue:sndBeep22        # 17: CSD screen buttons, Bases' side buttons, E&P categories
   ui_beep29b: cue:sndBeep29b      # 18: text buttons
   ui_beep3025: cue:sndBeep3025    # 19: Equip Ships' tabs
+  ui_slide: cue:sndSlideSide      # Bases' side panel closing (§14.2) and opening

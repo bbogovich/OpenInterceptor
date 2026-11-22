@@ -541,7 +541,14 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ("story", write_story(&c.story)),
         ("history", seq(c.history.iter().map(|m| nums(&m.to_nums())).collect())),
         ("this_month", nums(&c.this_month.to_nums())),
-        ("activity", seq(c.activity.iter().map(|a| nums(&[a[0] as f64, a[1] as f64])).collect())),
+        (
+            "activity_grid",
+            seq(c
+                .activity
+                .iter()
+                .map(|a| nums(&[a.month as f64, a.cell as f64, a.who as f64, a.count as f64]))
+                .collect()),
+        ),
     ]);
     format!("# OpenInterceptor campaign save\n{}", doc.to_yaml())
 }
@@ -796,11 +803,14 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         // The reports' history (since app NEXT; older saves have none).
         history: list("history").iter().map(|m| MonthRecord::from_nums(&numbers(m))).collect(),
         this_month: g.node("this_month").map(|m| MonthRecord::from_nums(&numbers(m))).unwrap_or_default(),
-        activity: list("activity")
+        // The activity grid (app NEXT; 0.22.21's per-system `activity` is not read).
+        activity: list("activity_grid")
             .iter()
-            .map(|a| {
-                let v = numbers(a);
-                [v.first().copied().unwrap_or(0.0) as u32, v.get(1).copied().unwrap_or(0.0) as u32]
+            .filter_map(|a| match numbers(a).as_slice() {
+                [m, cell, who, n] => {
+                    Some(ActivityCell { month: *m as u32, cell: *cell as u16, who: *who as u8, count: *n as u32 })
+                }
+                _ => None,
             })
             .collect(),
     })
@@ -826,7 +836,7 @@ mod tests {
         c.pilots[0].state = PilotState::Injured(c.hours + 10.5);
         // The reports' history and activity (app NEXT) are saved too.
         assert!(!c.history.is_empty(), "40 days close a month");
-        c.count_activity(0, 1);
+        c.count_activity(&d, [100.0, 100.0], 1);
         // A wreck and a delivery waiting for room (app 0.19.0) are saved too.
         c.bases[0].modules[0].wrecked = true;
         c.deliveries.push(Delivery {
