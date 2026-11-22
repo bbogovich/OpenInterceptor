@@ -177,6 +177,16 @@ pub struct Message {
 
 pub use crate::content::strategy::NoticeKind;
 
+/// A value as a readout shows it: one that rounds to zero is plain 0, never "-0" (D-29;
+/// `-0.0` and tiny negatives print with a minus sign under `{:.0}`).
+pub fn shown(x: f64) -> f64 {
+    if x.round() == 0.0 {
+        0.0
+    } else {
+        x
+    }
+}
+
 /// What happened during [`Campaign::advance`] that the screen should react to.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
@@ -1456,9 +1466,14 @@ impl Campaign {
                 let actions = def.evaluations[k].actions.clone();
                 self.apply_actions(def, &actions, events);
             }
+            let (maintenance, upkeep, salaries) =
+                (shown(maintenance as f64), shown(upkeep as f64), shown(salaries as f64));
             let t = format!(
-                "Monthly report: score {:+.0} this month ({:.0} in all); costs {total:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}{rating}",
-                self.month_score, self.score, self.money
+                "Monthly report: score {:+.0} this month ({:.0} in all); costs {:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}{rating}",
+                shown(self.month_score as f64),
+                shown(self.score as f64),
+                shown(total),
+                shown(self.money)
             );
             self.month_score = 0.0;
             self.refresh_recruits(def);
@@ -2181,6 +2196,15 @@ fn generate_map(
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn readouts_never_show_negative_zero() {
+        assert_eq!(format!("{:.0}", shown(-0.0)), "0");
+        assert_eq!(format!("{:.0}", shown(-0.4)), "0");
+        assert_eq!(format!("{:.0}", shown(-3.0)), "-3");
+        assert_eq!(format!("{:+.0}", shown(-0.2)), "+0");
+    }
+
     use super::*;
     use crate::content::strategy::tests::{build, SAMPLE};
 

@@ -1,0 +1,8 @@
+# The default campaign's strategy screen: the engine's own layout (`starmap`), with the
+# map labelled the original's way - only the stars and bases near the cursor, upper-cased,
+# taking turns every second - in the default skin's 5x9 body font (the 6 px `small` font
+# is too fine for this 1280 x 720 screen). See the docs' Modding > Screens.
+screens:
+  starmap:
+    widgets:
+      map: {kind: map, rect: [8, 52, 790, 660], labels: {font: body, rise: 16, base_rise: 12, box: 40}}

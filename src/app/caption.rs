@@ -277,11 +277,13 @@ pub fn capsule_row(dialog: IRect, widths: &[i32], h: i32, gap: i32) -> Vec<IRect
 /// the text and stacked text buttons in the style's design space. `None` when the
 /// style's fonts are not loaded (the caller draws its plain prompt); else the button
 /// clicked this frame, if any.
+#[allow(clippy::too_many_arguments)]
 pub fn dialog(
     ui: &Ui,
     style: &DialogStyle,
     mouse: Vec2,
     clicked: bool,
+    kind: &str,
     title: &str,
     body: &str,
     buttons: &[&str],
@@ -291,8 +293,9 @@ pub fn dialog(
     let (sw, sh) = (screen_width(), screen_height());
     let layout = Layout::new(vec2(sw, sh), vec2(style.design[0], style.design[1]));
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.55));
-    if style.kit.is_some() {
-        if let Some(hit) = kit_dialog(ui, style, &layout, title_sheet, body_sheet, mouse, clicked, title, body, buttons)
+    if !style.kits.is_empty() {
+        if let Some(hit) =
+            kit_dialog(ui, style, &layout, title_sheet, body_sheet, mouse, clicked, kind, title, body, buttons)
         {
             return Some(hit);
         }
@@ -368,10 +371,11 @@ pub fn dialog(
     Some(hit)
 }
 
-/// The original's message box (`dialog.kit`, `app::msgbox`): sized by its text and
-/// buttons, the fill centred and clipped, the frame kit tiled around it, the style's live
-/// pieces, the caption, the text in the client rect and capsule buttons. `None` when the
-/// kit's images are not loaded (the caller falls back to the plain box).
+/// The original's message box (`dialog.kits`, `app::msgbox`): its style from the
+/// prompt's kind, sized and laid out as the exe does, the fill centred and clipped to
+/// the box, the frame kit tiled around it, the style's live pieces, the caption, the text
+/// centred in the text rect (inset 5 px) and capsule buttons on the exe's rows. `None`
+/// when a needed kit's images are not loaded (the caller falls back to the plain box).
 #[allow(clippy::too_many_arguments)]
 fn kit_dialog(
     ui: &Ui,
@@ -381,44 +385,48 @@ fn kit_dialog(
     body_sheet: &SheetFace,
     mouse: Vec2,
     clicked: bool,
+    kind: &str,
     title: &str,
     body: &str,
     buttons: &[&str],
 ) -> Option<Option<usize>> {
-    use super::msgbox;
-    let base = style.kit.as_deref()?;
-    let row = |i: usize| ui.image(&DialogStyle::row(base, i));
-    let pieces: Vec<&Texture2D> = (0..8).map(row).collect::<Option<_>>()?;
-    let mut kit: msgbox::Kit = [[0; 2]; 8];
-    for (k, t) in kit.iter_mut().zip(&pieces) {
-        *k = [t.width() as i32, t.height() as i32];
-    }
+    use super::msgbox::{self, KitChoice};
+    let frame_style = style.style_for(kind);
+    let sizes = |name: &str| -> Option<(Vec<&Texture2D>, msgbox::Kit)> {
+        let base = style.kit(name)?;
+        let pieces: Vec<&Texture2D> = (0..8).map(|i| ui.image(&DialogStyle::row(base, i))).collect::<Option<_>>()?;
+        let mut kit: msgbox::Kit = [[0; 2]; 8];
+        for (k, t) in kit.iter_mut().zip(&pieces) {
+            *k = [t.width() as i32, t.height() as i32];
+        }
+        Some((pieces, kit))
+    };
+    let two = sizes("rows2")?;
+    let more = sizes("rows3").unwrap_or_else(|| two.clone());
+    // Style 0 has no kit of its own: the two-row kit stands in.
+    let own = if frame_style == 0 { two.clone() } else { sizes(&format!("style{frame_style}"))? };
     let (tf, bf) = (title_sheet.face(), body_sheet.face());
     // The exe draws the title upper-cased.
     let heading = title.to_uppercase();
     let button_w: Vec<i32> = buttons.iter().map(|b| text::width(&tf, b, false)).collect();
     let lh = body_sheet.font.line_height as i32;
-    let at = |extra: i32| {
-        msgbox::layout(
-            style.frame_style,
-            &kit,
-            text::width(&tf, &heading, false),
-            text::width(&bf, body, false),
-            lh,
-            &button_w,
-            extra,
-        )
+    let (m, choice) = msgbox::layout(
+        frame_style,
+        &own.1,
+        &two.1,
+        &more.1,
+        text::width(&tf, &heading, false),
+        text::width(&bf, body, false),
+        lh,
+        &button_w,
+    );
+    let (pieces, kit) = match choice {
+        KitChoice::Own => &own,
+        KitChoice::TwoRows => &two,
+        KitChoice::MoreRows => &more,
     };
-    let mut m = at(0);
-    // The text as DrawTextRect lays it in the client rect: grow the box if it would run
-    // out of it (DERIVED — the exe sizes by its own rule only).
-    let lines = text::wrap(&bf, body, m.client[2], false).len() as i32;
-    let needed = if lines <= 1 { lh } else { lh / 2 + lh + bf.wrap_offset + (lines - 1) * (lh + lh / 3) + lh - bf.top };
-    if needed > m.client[3] {
-        m = at(needed - m.client[3]);
-    }
     let to_screen = |r: [i32; 4]| layout.rect(r.map(|v| v as f32));
-    // The fill: row 430 when the box fits in it, else row 429 — centred and clipped.
+    // The fill: row 430 when the box fits in it, else row 429 — centred, clipped to the box.
     let small = style.fill.as_deref().and_then(|f| ui.image(f));
     let large = style.fill_large.as_deref().and_then(|f| ui.image(f));
     let fill = match (small, large) {
@@ -426,40 +434,33 @@ fn kit_dialog(
         (_, l) => l,
     };
     if let Some(f) = fill {
-        // Centred on the box; clipped to the client rect so it does not show through the
-        // kit's open margins (the clip is DERIVED; the exe clips to the box).
         let (d, s) = msgbox::fill_rect(m.frame, f.width() as i32, f.height() as i32);
-        let c = m.client;
-        let (x0, y0) = (d[0].max(c[0]), d[1].max(c[1]));
-        let (x1, y1) = ((d[0] + d[2]).min(c[0] + c[2]), (d[1] + d[3]).min(c[1] + c[3]));
-        if x1 > x0 && y1 > y0 {
-            let src = [s[0] + x0 - d[0], s[1] + y0 - d[1], x1 - x0, y1 - y0];
-            draw_part(f, to_screen([x0, y0, x1 - x0, y1 - y0]), src.map(|v| v as f32));
-        }
+        draw_part(f, to_screen(d), s.map(|v| v as f32));
     }
-    for (i, r) in msgbox::kit_pieces(m.frame, &kit) {
+    for (i, r) in msgbox::kit_pieces(m.frame, kit) {
         draw_part(pieces[i], to_screen(r), [0.0, 0.0, r[2] as f32, r[3] as f32]);
     }
-    // The style's live pieces, on the dialog counter (every 5 ticks).
+    // The style's live pieces (only on its own kit), on the dialog counter (every 5 ticks).
     let ticks = (get_time() * 60.0) as u64;
     let step = msgbox::step(ticks);
     let [l, t, w, h] = m.frame;
     let (r, b) = (l + w, t + h);
+    let base = style.kit(&format!("style{frame_style}"));
+    let row = |i: usize| base.and_then(|bs| ui.image(&DialogStyle::row(bs, i)));
     let put = |i: usize, x: i32, y: i32| {
         if let Some(tex) = row(i) {
             let (tw, th) = (tex.width(), tex.height());
             draw_part(tex, to_screen([x, y, tw as i32, th as i32]), [0.0, 0.0, tw, th]);
         }
     };
-    match style.frame_style {
+    match (frame_style, choice) {
         // The knob in the top-right corner, back and forth.
-        1 => {
-            let k = 8 + msgbox::knob_frame(step);
+        (1, KitChoice::Own) => {
             let kw = row(8).map_or(0, |t| t.width() as i32);
-            put(k, r - kw, t);
+            put(8 + msgbox::knob_frame(step), r - kw, t);
         }
         // The ornament on the top edge; two sliders running along the sides.
-        2 => {
+        (2, KitChoice::Own) => {
             if let Some(o) = row(8) {
                 put(8, l + (w - o.width() as i32) / 2, t + (kit[0][1] - o.height() as i32) / 2);
             }
@@ -471,17 +472,22 @@ fn kit_dialog(
             put(10, r - rw, y);
         }
         // The blinking ornament at (r − 47, b − 54).
-        3 if msgbox::ornament_on(step) => put(8, r - 47, b - 54),
+        (3, KitChoice::Own) if msgbox::ornament_on(step) => put(8, r - 47, b - 54),
         _ => {}
     }
-    // The caption: style 3 at (client centre, top + 54), centred; the others 23 px above
-    // the client (DERIVED: the same gap as style 3's).
-    let cx = m.client[0] + m.client[2] / 2;
-    let cy = if style.frame_style == 3 { t + 54 } else { m.client[1] - 23 };
+    // The caption: only style 3 draws one, at (text centre, top + 54), centred (§4.3);
+    // the other styles show the message text alone (the exe's "title" routine 0x519622
+    // draws the message itself in the text rect — DERIVED reading).
     let mut buf = Vec::new();
-    caption(ui, title_sheet, layout, &heading, [cx, cy], Align::Centre, WHITE, &mut buf);
+    if frame_style == 3 {
+        let cx = m.client[0] + m.client[2] / 2;
+        caption(ui, title_sheet, layout, &heading, [cx, t + 54], Align::Centre, WHITE, &mut buf);
+    }
     buf.clear();
-    text::draw_text_rect(&bf, body, m.client, Align::Left, false, &mut buf);
+    // The text: centred in the text rect inset 5 px each side; no clip, no growth (text
+    // taller than the rect runs onto the frame art, as in the exe).
+    let text_rect = [m.client[0] + 5, m.client[1], m.client[2] - 10, m.client[3]];
+    text::draw_text_rect(&bf, body, text_rect, Align::Centre, false, &mut buf);
     ui.draw_glyphs(body_sheet, &buf, layout, WHITE);
     // The buttons: capsules on the 14 px button rects (centred on them).
     let caps: Option<Vec<&Texture2D>> =

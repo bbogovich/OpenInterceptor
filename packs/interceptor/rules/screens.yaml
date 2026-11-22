@@ -19,7 +19,10 @@ screens:
     history: 29
     background: original:WrappersDLL.dll#5030
     widgets:
-      map: {kind: map, shape: round, rect: [66, 61, 333, 333]}
+      # Labels as the original's (VERIFIED, notes/re/unknowns-2026-11.md §1.3): only for the
+      # objects in a 30 px box around the cursor, upper-cased, in the 6 px font, centred 20 px
+      # above a star (8 above a base), kept 3 px inside the circle, taking turns every second.
+      map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}}
       minimap: {kind: map, source: minimap, shape: round, rect: [502, 43, 94, 94], tip: "@orig.S_CSD_MINIMAP"}
       # The four green readouts (VERIFIED, Interceptor.exe 0x43fb0f): font 23010, centred
       # on x 561 at y 370/390/410/430 (glyph tops 363/383/403/423); the time monospaced.
@@ -98,7 +101,11 @@ screens:
       # is not recovered). Cells: ship, pilot, base and state. Arrows 204/205 top-left
       # (518,413)/(518,434), sprites 60/63: 27500/27501, 27503/27504, disabled 27502/27505
       # (VERIFIED).
+      # The ring's nine sockets (centres VERIFIED, 0x535566; what they show DERIVED: the
+      # craft's name and pilot in the 6 px font).
       ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, style: compact, columns: "@orig.S_CSD_CHOOSESHIPTAB",
+              slots: [[117, 336], [65, 265], [64, 178], [115, 107], [198, 79], [282, 106], [334, 177], [334, 265], [283, 336]],
+              slot_font: caption,
               detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20],
               up: {rect: [518, 413, 24, 24], images: ["original:SpritesDLL.dll#27500", "original:SpritesDLL.dll#27501", "original:SpritesDLL.dll#27502"]},
               down: {rect: [518, 434, 24, 24], images: ["original:SpritesDLL.dll#27503", "original:SpritesDLL.dll#27504", "original:SpritesDLL.dll#27505"]}}
@@ -194,21 +201,81 @@ screens:
     background: original:WrappersDLL.dll#5107
     widgets:
       # Topics ListBox [346,105,596,275] and the article ListBox [95,325,592,446] (VERIFIED).
-      topics: {kind: list, source: archive, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121]}
+      topics: {kind: list, source: databank, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121]}
       # The exit, control 106 (VERIFIED, 0x530d66): a 23x23 sprite button (rows 4/5,
       # WrappersDLL 4000/4001) centred at (619, 466); it goes back.
       back: {kind: button, centre: [619, 466], images: {sprite: "original:sprite#4", states: 2}, action: back}
 
   # 32-37: the status reports.
-  reports:
+  # 32-37: the six status reports (VERIFIED: their screens, the report area [24,58,568,447],
+  # next 102 at (620, 282) and previous 104 at (617, 365), sprite rows 69 / 66). The
+  # contents are the engine's (DERIVED: income = the monthly reports, finance = funds and
+  # this month's costs, alien = contacts and raids, X-COM = battles, craft, pilots,
+  # outposts = the bases, player = score and standing). Next / previous cycle through them.
+  reports:   # Income (screen 32)
     design: [640, 480]
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      # The report area [24,58,568,447] (VERIFIED).
-      report: {kind: list, source: reports, rect: [28, 62, 534, 326], font: body, style: compact, detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
-      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
-      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      report: {kind: list, source: report_income, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
+               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_finance)}
+      previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_player)}
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
+
+  report_finance:   # Finance (33)
+    design: [640, 480]
+    clock: pause
+    background: original:WrappersDLL.dll#7700
+    widgets:
+      report: {kind: list, source: report_finance, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
+               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_alien)}
+      previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(reports)}
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
+
+  report_alien:   # Alien activity (34)
+    design: [640, 480]
+    clock: pause
+    background: original:WrappersDLL.dll#7700
+    widgets:
+      report: {kind: list, source: report_alien, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
+               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_xcom)}
+      previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_finance)}
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
+
+  report_xcom:   # X-COM activity (35)
+    design: [640, 480]
+    clock: pause
+    background: original:WrappersDLL.dll#7700
+    widgets:
+      report: {kind: list, source: report_xcom, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
+               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_outpost)}
+      previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_alien)}
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
+
+  report_outpost:   # Outposts (36)
+    design: [640, 480]
+    clock: pause
+    background: original:WrappersDLL.dll#7700
+    widgets:
+      report: {kind: list, source: report_outpost, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
+               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_player)}
+      previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_xcom)}
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
+
+  report_player:   # Player status (37)
+    design: [640, 480]
+    clock: pause
+    background: original:WrappersDLL.dll#7700
+    widgets:
+      report: {kind: list, source: report_player, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
+               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(reports)}
+      previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_outpost)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
 # The interface sounds by the original's cue names (soundfx.ini; the per-control table at

@@ -197,6 +197,9 @@ pub struct StarClass {
     pub id: String,
     pub color: [f32; 3],
     pub weight: f32,
+    /// An image drawn for the star on the map instead of a dot (the original: its
+    /// 9 × 9 star-class icons, `original:sprite#893`…`#901`).
+    pub icon: Option<String>,
 }
 
 /// `research.<id>`.
@@ -881,7 +884,12 @@ impl StrategyDef {
         let star_classes = of(defs, "star_classes")
             .map(|(id, g)| {
                 let c = g.nums("color").filter(|v| v.len() == 3).unwrap_or(vec![1.0, 0.9, 0.6]);
-                StarClass { id: id.to_string(), color: [c[0], c[1], c[2]], weight: g.num("weight").unwrap_or(1.0) }
+                StarClass {
+                    id: id.to_string(),
+                    color: [c[0], c[1], c[2]],
+                    weight: g.num("weight").unwrap_or(1.0),
+                    icon: g.str("icon").map(str::to_string),
+                }
             })
             .collect();
         // 3. Research.
@@ -1366,7 +1374,11 @@ fn sections_core() -> Vec<super::schema::Field> {
         ),
         f(
             "star_classes",
-            dict(Ty::Def(vec![f("color", Ty::Numbers(3), "star colour"), f("weight", Ty::Num, "relative frequency")])),
+            dict(Ty::Def(vec![
+                f("color", Ty::Numbers(3), "star colour"),
+                f("weight", Ty::Num, "relative frequency"),
+                f("icon", Ty::Asset, "an image for the star on the map instead of a dot"),
+            ])),
             "star classes",
         ),
         f(

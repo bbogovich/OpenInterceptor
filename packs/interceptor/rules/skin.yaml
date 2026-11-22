@@ -39,14 +39,17 @@ skins:
     # Prompts as the original's message boxes: caption in 23010, text in 23011, text
     # buttons stacked up from the bottom (MsgBox.cpp, VERIFIED). The width and offsets
     # are DERIVED until the frame art (#127) gives the caption its verified top + 54.
-    # The original's message box (MsgBox.cpp, VERIFIED - ui-framework.md §4): frame kit
-    # style 3 (8 rows from 190: edges tiled, corners last; the blinking ornament row 198 at
-    # (right - 47, bottom - 54); caption at top + 54), the body fill row 430 (row 429 for big
-    # boxes) centred and clipped, sized by its text (325 wide at least, wrapped at 425,
-    # 100 tall up to 400) with capsule buttons (rows 258-263, 100+ x 14, 10 px apart).
-    # Which style each kind of dialog uses is not settled: style 3 for every prompt here
-    # (DERIVED).
-    dialog: {title_font: readout, body_font: body, kit: "original:sprite#190", frame_style: 3,
+    # The original's message box (MsgBox.cpp, VERIFIED - ui-framework.md §4): the style
+    # kits 163 / 179 / 190 and the kits every style switches to for two (242) or three and
+    # more (250) button rows; sized by its text (325 wide at least, wrapped at 425, 100 tall
+    # up to 400), the fill row 430 (429 for big boxes) centred and clipped, capsule buttons
+    # (rows 258-263) on the exe's rows. The style per dialog (§4.6): the common box and
+    # every queued-event notice use style 1; research complete 0; reports and deliveries 2;
+    # sightings, side-mission offers (and the research prompt) 3.
+    dialog: {title_font: readout, body_font: body,
+             kits: {style1: "original:sprite#163", style2: "original:sprite#179", style3: "original:sprite#190",
+                    rows2: "original:sprite#242", rows3: "original:sprite#250"},
+             styles: {default: 1, research_complete: 0, report: 2, delivery: 2, contact: 3, interception: 3, offer: 3},
              fill: "original:sprite#430", fill_large: "original:sprite#429", capsule: "original:sprite#258"}
     # Interface sounds by control (names of the sounds: in screens.yaml) and the hover
     # help box: font 23011, fill RGB(0,0,100) at level 75 (read as 75 %: DERIVED), frame,
