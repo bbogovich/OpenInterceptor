@@ -813,7 +813,7 @@ success sends radio message 8 or 0x20 and `0x586b63(1)` (state 5, jump out).
 
 1. **Nova detonation.** Once per ship (flag +0x2b9), when a Nova bomb has gone off
    (`0x6a3e18` and `0x6a3e14` set, §12) and the mission type is not 18. With `b = 100 − Bravery`,
-   `i = 100 − Intelligence` and `s = 100 − Stamina`, clamped to [5, 95]:
+   `i = 100 − Intelligence` and `s = 100 − Stamina`; **p** is clamped to [5, 95]:
 
    | Rank | p |
    |---|---|
@@ -824,8 +824,8 @@ success sends radio message 8 or 0x20 and `0x586b63(1)` (state 5, jump out).
 
 2. **Disarmed.** At most every 5 s (+0x158), at least 5 s after the last state change (+0x278),
    and for combat hulls only (`0x5a5710`: not the freighters 3, 4, 11, 15 or Patton 19). When the
-   ship has **no beam mount left** (all six +0xa8 type bytes −1), with `b = 100 − Bravery`,
-   clamped to [5, 85]:
+   ship has **no beam mount left** (all six +0xa8 type bytes −1), with `b = 100 − Bravery`;
+   p clamped to [5, 85]:
 
    | Rank | p |
    |---|---|
@@ -847,7 +847,7 @@ fighter class):
 |---|---|---|
 | 1 | Search | acquire a target (`0x58070f` when `0x6a3e0c` is set, else the preset target +0x5c) → 2 |
 | 2 | Attack (`0x59262d` → `0x588891`) | target gone → 1; under 250 m → 3, then with `chance(25)` and d > 1 a radio call `0x5862be(7, 4000 ms)` |
-| 3 | Break off (`0x592730` → manoeuvre `0x58a316`) | when the manoeuvre ends and more than `5000 − 500d` ms have passed in state 3 (derived) → 2 |
+| 3 | Break off (`0x592730` → manoeuvre `0x58a316`) | only when the manoeuvre ends (verified): no target → 1; else back to 2 if the target is **more than 1,200 m** away, or, once more than `5000 − 500d` ms have passed in state 3, with `chance(25)` regardless of range; otherwise another break-off manoeuvre. On re-engaging it resets the fire mode (`0x58843d(0)`), sets +0x5c0, picks manoeuvre 6 and stores the target's position |
 | 4 | Re-evaluate (`0x592825`) | flag +0x5c0 → 3; a target → 2; else → 1 |
 | 5 | Retreat / jump out (`0x586b63`) | |
 | other | | → 1 |
@@ -873,7 +873,21 @@ the angle error. It is **not speed matching**, which is `SetSpeed` (`0x585a79`, 
 
 ## 12. Special missiles (verified unless marked)
 
-* **NovaBomb** (per frame `0x596dea`; its constructor `0x596af0` sets `0x6a3e14`):
+* **NovaBomb** (per frame `0x596dea`; its constructor `0x596af0` sets `0x6a3e14`). Verified
+  2026-11-22 for #119:
+  * **The detonation does no damage**: there is no radius and no damage call in `0x596dea`,
+    `0x501228` or the object removal `0x4d2d08(bomb, 1, 2)`; no ship is destroyed by it. Its effects
+    are the message 0x47, `0x6a3e18` = 1 (which triggers the AI retreat roll, §9) and the mission
+    check: in mission type 8 the bomb object is just removed; in every other mission the "Nova
+    fired" flag `0x684768` is set and the mission is evaluated at once (`0x4db064`).
+  * **60 s later** (`0x5011e6(1)`): the flag is set, the mission is evaluated, and the flight ends
+    (`0x461413`). The final-mission evaluators (`0x4dc1f5`, `0x4dee7d`) count a fired Nova as a **win
+    (outcome 1) when an X-COM Patton (hull 19) is still in the battle**; the other branch was not
+    traced. A win plays message 0x3a and records result (5, 3) (`0x550fd5`), a loss message 0x39 and
+    (5, 1). Counter 0x71c458 (index 134, outside the scored 0–133) counts Nova endings.
+  * **Messages 0x46–0x49** are wingman radio messages; `0x4035c2` maps them to voice-phrase (wave)
+    numbers **33, 34, 35, 36** (case table 0x404568 → 0x404418; logged as "Incoming Message ...
+    WAVE %d"). The string/clip each wave plays was not traced.
   * Timeline from launch: +2.5 s it spins; +20 s it grows ×1.1; +30 s message 0x46, particles,
     ×1.5; +55 s it grows ×1.25 per frame; **+60 s it detonates** (message 0x47, the object is
     removed, `0x6a3e18` = 1).
