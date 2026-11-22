@@ -30,14 +30,14 @@ screens:
       research: {kind: button, rect: [496, 212, 40, 28], action: open(research)}
       purchase: {kind: button, rect: [543, 212, 40, 28], action: open(purchase)}
       ufopedia: {kind: button, rect: [589, 212, 40, 28], action: open(ufopedia)}
-      # The time dial's six holes (centres verified): pause and the speeds (the
-      # original's six speeds onto the engine's five - DERIVED).
+      # The time dial's six holes (centres verified): the original's six speeds, slowest
+      # first (no pause; see clock: in strategy/campaign.yaml).
       speed0: {kind: button, rect: [516, 315, 14, 14], action: speed(0)}
       speed1: {kind: button, rect: [529, 329, 14, 14], action: speed(1)}
       speed2: {kind: button, rect: [547, 337, 14, 14], action: speed(2)}
       speed3: {kind: button, rect: [567, 337, 14, 14], action: speed(3)}
       speed4: {kind: button, rect: [585, 328, 14, 14], action: speed(4)}
-      speed5: {kind: button, rect: [598, 315, 14, 14], action: speed(4)}
+      speed5: {kind: button, rect: [598, 315, 14, 14], action: speed(5)}
       # The help line along the bottom bar: what is selected.
       status: {kind: value, value: selection, rect: [344, 457, 276, 15], size: 10, colour: [0.6, 1.0, 0.6]}
 

@@ -165,12 +165,13 @@ pub fn apply_loadout(world: &mut World, player: ShipId, loadout: &crate::campaig
         s.beam_cooldown = vec![0.0; mounts];
         s.next_mount = 0;
     }
+    let fitted = loadout.shields.is_some() || loadout.armor.is_some();
+    let rules = world.rules.clone();
     if let Some(me) = world.get_mut(player) {
-        if let Some(s) = loadout.shields {
-            (me.shield_fore, me.shield_aft) = (s, s);
-        }
-        if let Some(a) = loadout.armor {
-            me.armor = a;
+        if fitted {
+            // The fitted protection, after the class's scale and the difficulty factors,
+            // with every bank full.
+            crate::sim::fill_protection(me, &rules);
         }
         if !racks.is_empty() {
             me.missiles = racks;

@@ -185,7 +185,7 @@ pub fn telemetry(world: &World, player: ShipId, time: f64, hits: [u32; 2]) -> St
             .num("distance", me.position.distance(t.position) as f64)
             .num("closing", -((t.velocity - me.velocity).dot((t.position - me.position).normalize_or_zero())) as f64)
             .num("hull", frac(t.hull, tc.hull))
-            .nums("shields", &[frac(t.shield_fore, tc.shields), frac(t.shield_aft, tc.shields)])
+            .nums("shields", &[frac(t.shield_fore, t.shield_max), frac(t.shield_aft, t.shield_max)])
             .nums("rotation", &[rel.x as f64, rel.y as f64, rel.z as f64, rel.w as f64])
             .end();
         o = o.raw("target", &target);

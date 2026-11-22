@@ -121,7 +121,7 @@ impl CutscenePlayer {
                     }
                     Action::Destroy => {
                         if let Some(s) = self.world.get_mut(id) {
-                            (s.shield_fore, s.shield_aft, s.armor) = (0.0, 0.0, 0.0);
+                            (s.shield_fore, s.shield_aft, s.armor, s.armor_aft) = (0.0, 0.0, 0.0, 0.0);
                             let at = s.position;
                             crate::sim::combat::apply_damage(&mut self.world, id, f32::MAX / 4.0, at);
                         }

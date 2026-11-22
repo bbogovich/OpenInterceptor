@@ -1,7 +1,19 @@
 # yaml-language-server: $schema=../../../schemas/rules.schema.json
-# Global flight settings. Afterburner Boost/Cost come from the original file.
+# Global flight settings.
 flight:
-  inherit: original:GameSettings.ini/Afterburners
+  # The afterburner draws 100 energy a second from the pool (Interceptor.exe, verified;
+  # the INI's Afterburners Boost/Cost are only sent to multiplayer peers).
+  cost: 100
+  # The original's motion (Interceptor.exe and xcgen.dll, verified): drag dv/dt = a - 2v
+  # on every ship; the player's push is engine thrust (kN) x 1000 x throttle % x engine
+  # power / mass, where each beam or shield level and system step in use costs 1/12 of
+  # the engine's power; reverse is half; the afterburner adds half the full thrust; a
+  # shield adds 250 kg. The player is held to MaxSpeed; AI ships drive by ai_speed.
+  drive: {drag: 2, thrust_scale: 100000, power_cost: 8.333%, reverse: 50%, afterburner: 50%, shield_mass: 250}
+  # The original's turn model: hull rates x 0.08 per stick, settling at that / k with
+  # k = 4 x (1 - 0.1 x AngularDamp) (a Lightning rolls 5 rad/s, tau 0.31 s); AI pilots
+  # turn at their class's ai_turn rates.
+  turning: {gain: 0.08, damping: 4, damp_step: 0.1, ai_rates: {pitch: 2, yaw: 2, roll: 3}}
   # newtonian: throttle is thrust, ships coast, Z reverses thrust, B brakes.
   # assisted: throttle is a target speed with automatic slowing (arcade feel).
   model: newtonian

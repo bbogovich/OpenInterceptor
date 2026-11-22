@@ -177,8 +177,14 @@ pub struct ShipClass {
     pub armor: f32,
     /// Shield points per facing (fore and aft).
     pub shields: f32,
-    /// Shield regeneration, points per second per facing.
+    /// Shield regeneration at the top shield level, points per second (per facing with
+    /// `power.balance: shift`; shared by both with `share`).
     pub shield_recharge: f32,
+    /// Multiplies the shields of every bank (`protection_scale: {shields: 3}`; the
+    /// original's Patton class holds three times its shield's protection).
+    pub shield_scale: f32,
+    /// Multiplies the armour of every bank (`protection_scale: {armor: 4}`).
+    pub armor_scale: f32,
     // --- Flight model ------------------------------------------------------------
     /// Top cruise speed, m/s.
     pub max_speed: f32,
@@ -203,8 +209,21 @@ pub struct ShipClass {
     pub hover: bool,
     /// Can enter an atmosphere at all.
     pub atmospheric: bool,
+    /// Hull mass, kilograms, before shields, missiles and systems (`flight.drive`).
+    pub mass: f32,
+    /// Engine thrust, kN (`thrust:`, or `fitted: {engine: …}`; `flight.drive`).
+    pub thrust: f32,
+    /// The AI's drive factor S (`flight.drive`): an AI ship accelerates at
+    /// `S × throttle` and so tops out at `S / drag`.
+    pub ai_speed: Option<AiSpeed>,
+    /// AI pilots of this class turn at these fixed rates, radians per second as
+    /// `[pitch, yaw, roll]`, with no damping (`ai_turn: {pitch, yaw, roll}`; the
+    /// original's per-class table). `None`: AI pilots turn like the player.
+    pub ai_turn: Option<[f32; 3]>,
     // --- Power and weapons ----------------------------------------------------------
+    /// The energy pool that beams, the afterburner and the cloak draw on.
     pub energy: f32,
+    /// The pool's recharge at the top beam level, per second.
     pub energy_recharge: f32,
     /// One entry per beam mount.
     pub beams: Vec<BeamId>,
@@ -256,6 +275,9 @@ pub struct BeamClass {
     pub speed: f32,
     /// Maximum reach, metres.
     pub range: f32,
+    /// Shields lose this many points per point of damage they stop (the original's
+    /// Phase Cannon: 1.5).
+    pub shield_factor: f32,
     pub color: [f32; 3],
     /// Sound asset reference, if any.
     pub sound: Option<String>,
@@ -275,6 +297,8 @@ pub struct MissileClass {
     pub proximity_damage: f32,
     /// Distance at which the proximity fuse triggers, metres.
     pub proximity_radius: f32,
+    /// Kilograms each round adds to the carrying ship's mass (`flight.drive` only).
+    pub mass: f32,
     /// Turn rate while homing, degrees per second.
     pub turn_rate: f32,
     /// Seconds the target must stay in the lock cone before launch locks on.
@@ -401,6 +425,135 @@ pub struct FlightRules {
     /// Seconds the battle runs on after a mission's result before the debrief appears,
     /// so the last explosion can be watched (`flight: {debrief_delay: 30s}`).
     pub debrief_delay: f32,
+    /// The original's motion model (`flight: {drive: {…}}`), if the campaign uses it.
+    pub drive: Option<Drive>,
+    /// The original's turn model (`flight: {turning: {…}}`), if the campaign uses it;
+    /// otherwise turn rates are degrees per second, smoothed by `AngularDamp`.
+    pub turning: Option<Turning>,
+}
+
+/// The original Interceptor's motion model (`flight.drive`; Interceptor.exe and
+/// xcgen.dll, verified). Every ship is slowed by drag, `dv/dt = a − drag × v`, so it
+/// settles at `a / drag` and coasting ships come to rest.
+///
+/// - **Flown by the player:** `a = thrust (kN) × thrust_scale × power × throttle / mass`
+///   along the nose, where `power = 1 − power_cost × (beam level + shield level +
+///   switched-on system steps)`; reverse gives `reverse` of that; the afterburner adds
+///   `afterburner × thrust × thrust_scale / mass` at any throttle. Speed is then held to
+///   `MaxSpeed`.
+/// - **AI pilots:** `a = S × throttle` (the class's `ai_speed`), with no mass and no
+///   speed cap. Their speed requests are read as a share of the class's `max_speed`.
+///
+/// ```yaml
+/// drive: {drag: 2, thrust_scale: 100000, power_cost: 8.333%, reverse: 50%, afterburner: 50%, shield_mass: 250}
+/// ```
+#[derive(Debug, Clone, PartialEq)]
+pub struct Drive {
+    /// Drag, per second.
+    pub drag: f32,
+    /// Newtons of push per kN of thrust at full throttle (the original multiplies by its
+    /// throttle percentage, so 100,000).
+    pub thrust_scale: f32,
+    /// Engine power lost per power level or system step in use.
+    pub power_cost: f32,
+    /// Reverse thrust as a share of forward thrust.
+    pub reverse: f32,
+    /// Afterburner thrust as a share of full thrust.
+    pub afterburner: f32,
+    /// Kilograms a fitted shield adds.
+    pub shield_mass: f32,
+    /// The range AI drive factors are held to.
+    pub ai_speed_range: [f32; 2],
+}
+
+impl Drive {
+    fn parse(g: Get) -> Drive {
+        let range = g.nums("ai_speed_range").filter(|v| v.len() == 2).unwrap_or(vec![100.0, 500.0]);
+        Drive {
+            drag: g.num("drag").unwrap_or(2.0).max(0.0),
+            thrust_scale: g.num("thrust_scale").unwrap_or(1000.0).max(0.0),
+            power_cost: g.qty("power_cost", Unit::Fraction).unwrap_or(0.0).max(0.0),
+            reverse: g.qty("reverse", Unit::Fraction).unwrap_or(0.5).max(0.0),
+            afterburner: g.qty("afterburner", Unit::Fraction).unwrap_or(0.5).max(0.0),
+            shield_mass: g.num("shield_mass").unwrap_or(0.0).max(0.0),
+            ai_speed_range: [range[0].min(range[1]), range[0].max(range[1])],
+        }
+    }
+}
+
+/// An AI drive factor (`ai_speed: 250` or `ai_speed: {min: 350, max: 400, level_step: 40}`):
+/// each ship rolls one between `min` and `max`, plus `level_step` per difficulty level.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AiSpeed {
+    pub min: f32,
+    pub max: f32,
+    pub level_step: f32,
+}
+
+impl AiSpeed {
+    fn parse(n: &Node) -> Result<AiSpeed, String> {
+        if let Some(v) = n.as_str() {
+            let v: f32 = v.parse().map_err(|_| format!("'{v}' is not a number"))?;
+            return Ok(AiSpeed { min: v, max: v, level_step: 0.0 });
+        }
+        let g = Get(n);
+        let min = g.num("min").ok_or("give a number or {min, max, level_step}")?;
+        let max = g.num("max").unwrap_or(min).max(min);
+        Ok(AiSpeed { min, max, level_step: g.num("level_step").unwrap_or(0.0) })
+    }
+
+    /// The factor for difficulty `level` and a roll `r` in 0..1, held to `range`.
+    pub fn pick(&self, level: usize, r: f32, range: [f32; 2]) -> f32 {
+        (self.min + (self.max - self.min) * r + self.level_step * level as f32).clamp(range[0], range[1])
+    }
+}
+
+/// The original Interceptor's turn model (`flight.turning`; Interceptor.exe, verified).
+///
+/// The hull's `RollRate`, `PitchRate` and `YawRate` are the original's own numbers, not
+/// degrees. Per axis the stick asks for `u = rate × gain × stick` (pitch and yaw also
+/// fall to zero at `LockSpeed`), and the turn rate approaches `u / k` with time constant
+/// `1 / k`, where `k = damping × (1 − damp_step × AngularDamp) × q` and `q` is the
+/// manoeuvring system's condition. AI pilots instead turn at their class's fixed
+/// `ai_turn` rates (or `ai_rates`) with no smoothing.
+///
+/// ```yaml
+/// turning: {gain: 0.08, damping: 4, damp_step: 0.1, ai_rates: {pitch: 2, yaw: 2, roll: 3}}
+/// ```
+#[derive(Debug, Clone, PartialEq)]
+pub struct Turning {
+    pub gain: f32,
+    pub damping: f32,
+    pub damp_step: f32,
+    /// AI turn rates, radians per second as `[pitch, yaw, roll]`, for classes without
+    /// `ai_turn`.
+    pub ai_rates: [f32; 3],
+}
+
+impl Turning {
+    fn parse(g: Get) -> Turning {
+        let r = g.node("ai_rates").map(Get);
+        let rate = |k: &str, d: f32| r.as_ref().and_then(|r| r.num(k)).unwrap_or(d).max(0.0);
+        Turning {
+            gain: g.num("gain").unwrap_or(0.08).max(0.0),
+            damping: g.num("damping").unwrap_or(4.0).max(0.01),
+            damp_step: g.num("damp_step").unwrap_or(0.1).max(0.0),
+            ai_rates: [rate("pitch", 2.0), rate("yaw", 2.0), rate("roll", 3.0)],
+        }
+    }
+
+    /// The steady turn rate (radians per second) the stick at full deflection gives on
+    /// one axis at rest, for a hull `rate` and `angular_damp`, undamaged.
+    pub fn steady_rate(&self, rate: f32, angular_damp: f32) -> f32 {
+        rate * self.gain / self.k(angular_damp, 1.0)
+    }
+
+    /// The response constant `k` (1/s) for `angular_damp` and controls condition `q`.
+    pub fn k(&self, angular_damp: f32, q: f32) -> f32 {
+        // A very loose hull (AngularDamp near 10) would reach k = 0 and never settle:
+        // keep a small floor so the maths stays finite.
+        (self.damping * (1.0 - self.damp_step * angular_damp) * q).max(0.05)
+    }
 }
 
 /// How ships respond to hitting each other (see `sim::combat::ship_collisions`).
@@ -1008,6 +1161,7 @@ pub fn build_with(
         "scores",
         "evaluations",
         "economy",
+        "clock",
         "flags",
         "tech_ids",
         "logistics",
@@ -1065,6 +1219,7 @@ pub fn build_with(
                 rate_of_fire: g.num("rate_of_fire").unwrap_or(2.0).max(0.1),
                 speed: g.num("speed").unwrap_or(2000.0).max(1.0),
                 range: g.qty("range", Unit::Distance).unwrap_or(3000.0),
+                shield_factor: g.num("shield_factor").unwrap_or(1.0).max(0.01),
                 color: rgb(g, "color", [1.0, 0.2, 0.2]),
                 sound: g.str("sound").map(|x| sound_ref(x, &format!("beams.{id}.sound"))),
                 pack: e.pack,
@@ -1082,6 +1237,7 @@ pub fn build_with(
                 impact_damage: g.num("impact_damage").unwrap_or(300.0),
                 proximity_damage: g.num("proximity_damage").unwrap_or(200.0),
                 proximity_radius: g.qty("proximity_radius", Unit::Distance).unwrap_or(25.0),
+                mass: g.num("mass").unwrap_or(0.0).max(0.0),
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),
                 lock_time: g.qty("lock_time", Unit::Time).unwrap_or(2.0),
                 color: rgb(g, "color", [1.0, 0.8, 0.4]),
@@ -1127,7 +1283,7 @@ pub fn build_with(
             Err(msg) => errors.push(format!("{}: systems.{id}: {msg}", e.origin)),
         }
     }
-    let damage = DamageRules::parse(damage_node.as_ref().map(|(n, _)| Get(n)));
+    let damage = DamageRules::parse(damage_node.as_ref().map(|(n, _)| Get(n)), &mut errors);
     let power = PowerRules::parse(power_node.as_ref().map(|(n, _)| Get(n))).unwrap_or_else(|msg| {
         errors.push(format!("power: {msg}"));
         PowerRules::default()
@@ -1182,6 +1338,7 @@ pub fn build_with(
                 missiles: &missiles,
                 systems: &systems,
                 behaviours: &behaviours,
+                power: &power,
             };
             let looks = Looks { model_sets: &mut model_sets, debris_sets: &mut debris_sets, effects: &effects };
             match ship_class(id, Get(&e.node), section, &refs, &damage, e.pack, looks) {
@@ -1336,6 +1493,8 @@ pub fn build_with(
         formation_gap: fl.and_then(|g| g.num("formation_gap")).unwrap_or(3.0).max(0.0),
         formation: fl.and_then(|g| g.str("formation")).unwrap_or("vee").to_string(),
         debrief_delay: fl.and_then(|g| g.qty("debrief_delay", Unit::Time)).unwrap_or(30.0).max(0.0),
+        turning: fl.and_then(|g| g.node("turning")).map(|n| Turning::parse(Get(n))),
+        drive: fl.and_then(|g| g.node("drive")).map(|n| Drive::parse(Get(n))),
     };
     // The console theme (R-CON-020).
     let layer = |g: Get, errors: &mut Vec<String>, at: &str| ThemeLayer {
@@ -1746,8 +1905,8 @@ fn resolve(
     Ok(parent)
 }
 
-/// `fitted: {shield: <ref>, armor: <ref>}` on a ship class: the protection of the
-/// equipment it carries by default, read from that equipment's definition (an
+/// `fitted: {shield: <ref>, armor: <ref>, engine: <ref>}` on a ship class: the
+/// protection (and an engine's thrust) of the equipment it carries by default, read from that equipment's definition (an
 /// `original:` section, by [`super::strategy::protection_of`]) — so a pack names the
 /// original's shield instead of copying its value. A class's own `shields:` or
 /// `armor:` wins.
@@ -1763,14 +1922,20 @@ fn apply_fitted(node: &mut Node, section: &str, original: &OriginalLookup) -> Re
         let key = match slot.as_str() {
             "shield" => "shields",
             "armor" => "armor",
-            other => return Err(format!("fitted.{other}: only shield and armor are read")),
+            "engine" => "thrust",
+            other => return Err(format!("fitted.{other}: only shield, armor and engine are read")),
         };
         if Get(node).node(key).is_some() {
             continue;
         }
         let item = original_section(&reference, section, original)?;
-        let value = super::strategy::protection_of(&slot, Get(&item))
-            .ok_or(format!("fitted.{slot}: {reference} gives no protection value"))?;
+        let value = if slot == "engine" {
+            // An engine's `Special` is its thrust in kN (the original's own comment says so).
+            Get(&item).num("special").ok_or(format!("fitted.engine: {reference} gives no thrust (special)"))?
+        } else {
+            super::strategy::protection_of(&slot, Get(&item))
+                .ok_or(format!("fitted.{slot}: {reference} gives no protection value"))?
+        };
         let add = crate::formats::yaml::parse(&format!("{key}: {value}")).map_err(|e| e.to_string())?;
         merge_into(node, &add);
     }
@@ -1940,6 +2105,8 @@ struct ClassRefs<'a> {
     missiles: &'a [MissileClass],
     systems: &'a [SystemDef],
     behaviours: &'a [BehaviourDef],
+    /// Pack-wide defaults for classes that leave a power value out.
+    power: &'a PowerRules,
 }
 
 /// The systems a class has when its definition has no `systems` list: what any craft of
@@ -1995,7 +2162,7 @@ fn ship_class(
     pack: usize,
     looks: Looks,
 ) -> Result<ShipClass, String> {
-    let ClassRefs { factions, beams, missiles, systems, behaviours } = *refs;
+    let ClassRefs { factions, beams, missiles, systems, behaviours, power } = *refs;
     let default_kind = if section == "objects" { ShipKind::Station } else { ShipKind::Fighter };
     let kind = match g.str("kind") {
         Some(k) => ShipKind::parse(k).ok_or(format!("unknown kind '{k}'"))?,
@@ -2120,8 +2287,22 @@ fn ship_class(
         lift: g.num("lift").unwrap_or(if kind == ShipKind::Fighter { 120.0 } else { 0.0 }).max(0.0),
         hover: g.bool("hover").unwrap_or(false),
         atmospheric: g.bool("atmospheric").unwrap_or(true),
-        energy: g.num("energy").unwrap_or(500.0),
-        energy_recharge: g.num("energy_recharge").unwrap_or(40.0),
+        energy: g.num("energy").unwrap_or(power.energy),
+        energy_recharge: g.num("energy_recharge").unwrap_or(power.energy_recharge),
+        mass: g.num("mass").unwrap_or(10_000.0).max(1.0),
+        thrust: g.num("thrust").unwrap_or(0.0).max(0.0),
+        ai_speed: match g.node("ai_speed") {
+            None => None,
+            Some(n) => Some(AiSpeed::parse(n).map_err(|e| format!("ai_speed: {e}"))?),
+        },
+        shield_scale: g.node("protection_scale").and_then(|n| Get(n).num("shields")).unwrap_or(1.0).max(0.0),
+        armor_scale: g.node("protection_scale").and_then(|n| Get(n).num("armor")).unwrap_or(1.0).max(0.0),
+        ai_turn: g.node("ai_turn").map(|n| {
+            let t = Get(n);
+            // Radians per second, as the original's table holds them.
+            let r = |k: &str| t.num(k).unwrap_or(0.0).max(0.0);
+            [r("pitch"), r("yaw"), r("roll")]
+        }),
         beams: beam_ids,
         missiles: missile_ids,
         systems: system_ids,
@@ -2235,9 +2416,14 @@ objects:
         assert_eq!(get("own").shields, 5.0, "the class's own value wins");
         assert_eq!(get("copy").shields, 321.0, "inherited with the class");
         assert_eq!(get("station").hull, 60.0, "hull = HP1 + HP2 + HP3 + HP4");
-        let bad = "factions: {xcom: {}}\nships:\n  c: {faction: xcom, model: m, fitted: {engine: x}}\n";
+        let bad = "factions: {xcom: {}}\nships:\n  c: {faction: xcom, model: m, fitted: {wings: x}}\n";
         let (_, errors) = build(&[source(0, bad)], &original_lookup());
-        assert!(errors.iter().any(|e| e.contains("fitted.engine")), "{errors:?}");
+        assert!(errors.iter().any(|e| e.contains("fitted.wings")), "{errors:?}");
+        // An engine's Special is its thrust in kN.
+        let engine = "factions: {xcom: {}}\nships:\n  c: {faction: xcom, model: m, fitted: {engine: 'original:GameSettings.ini/ShieldX'}}\n";
+        let (rules, errors) = build(&[source(0, engine)], &original_lookup());
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(rules.ship(rules.ship_id("c").unwrap()).thrust, 321.0);
     }
 
     #[test]

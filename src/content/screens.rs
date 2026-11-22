@@ -50,7 +50,7 @@ pub enum UiAction {
     Open(String),
     /// Closes this screen or dialog (back to the one under it).
     Back,
-    /// Sets the campaign clock's speed (0 = paused).
+    /// Sets the campaign clock's speed: an index into `clock.speeds` (0 = the first).
     Speed(usize),
     Save,
     Menu,
@@ -69,7 +69,10 @@ impl UiAction {
         match name {
             "open" if !arg.is_empty() => Ok(UiAction::Open(arg.to_string())),
             "back" => Ok(UiAction::Back),
-            "speed" => arg.parse().map(UiAction::Speed).map_err(|_| format!("speed({arg}): expected 0-4")),
+            "speed" => arg
+                .parse()
+                .map(UiAction::Speed)
+                .map_err(|_| format!("speed({arg}): expected a speed number (0 = the first)")),
             "save" => Ok(UiAction::Save),
             "menu" => Ok(UiAction::Menu),
             "testbed" => Ok(UiAction::Testbed),
@@ -259,7 +262,7 @@ pub fn schema() -> Ty {
                         ]),
                         "a button's states",
                     ),
-                    f("action", Ty::Text, "open(<screen>), back, speed(0-4), save, menu, testbed"),
+                    f("action", Ty::Text, "open(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed"),
                     f("value", Ty::Name, "a value: date, time, money, score, base, speed, selection"),
                     f("source", Ty::Name, "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages"),
                     f("text", Ty::Text, "fixed text (a text key)"),

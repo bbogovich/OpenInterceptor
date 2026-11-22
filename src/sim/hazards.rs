@@ -110,7 +110,7 @@ pub fn step(w: &mut World, dt: f32) {
     for i in swallowed {
         let id = w.id_of(i);
         let s = &mut w.ships[i];
-        (s.shield_fore, s.shield_aft, s.armor) = (0.0, 0.0, 0.0);
+        (s.shield_fore, s.shield_aft, s.armor, s.armor_aft) = (0.0, 0.0, 0.0, 0.0);
         let at = s.position;
         super::combat::apply_damage(w, id, f32::MAX / 4.0, at);
     }

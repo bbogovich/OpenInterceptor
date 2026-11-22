@@ -127,6 +127,8 @@ pub struct SystemDef {
     pub strength: f32,
     /// Damage control only: repair speed multiplier.
     pub repair_rate: f32,
+    /// Kilograms it adds to a ship's mass (`flight.drive` only).
+    pub mass: f32,
 }
 
 impl SystemDef {
@@ -148,7 +150,17 @@ impl SystemDef {
             SystemKind::Ecm => ("ECM pod", 100.0, 1, 250.0, 10.0, 1.0),
             SystemKind::DamageControl => ("Damage control computer", 150.0, 0, 0.0, 0.0, 4.0),
         };
-        SystemDef { id: kind.key().into(), name: name.into(), kind, hit_points, power, range, strength, repair_rate }
+        SystemDef {
+            id: kind.key().into(),
+            name: name.into(),
+            kind,
+            hit_points,
+            power,
+            range,
+            strength,
+            repair_rate,
+            mass: 0.0,
+        }
     }
 
     /// Parses a `systems:` definition. Missing keys take the kind's built-in values.
@@ -168,6 +180,7 @@ impl SystemDef {
             range: g.qty("range", Unit::Distance).unwrap_or(d.range).max(0.0),
             strength: g.num("strength").unwrap_or(d.strength).max(0.0),
             repair_rate: g.num("repair_rate").unwrap_or(d.repair_rate).max(0.0),
+            mass: g.num("mass").unwrap_or(0.0).max(0.0),
         })
     }
 }
@@ -190,8 +203,28 @@ pub struct PowerRules {
     pub start_beam: u8,
     pub start_shield: u8,
     /// How far shield balance shifts capacity: with balance forward, the fore shield
-    /// holds `1 + shift` times its normal capacity and the aft `1 − shift`.
+    /// holds `1 + shift` times its normal capacity and the aft `1 − shift`
+    /// (`balance: shift` only).
     pub balance_shift: f32,
+    /// What the shield balance setting changes (`balance: shift | share`).
+    pub balance: BalanceMode,
+    /// The energy pool of every class that gives no `energy` of its own.
+    pub energy: f32,
+    /// The pool's recharge at the top beam level, per second, for classes without
+    /// `energy_recharge`.
+    pub energy_recharge: f32,
+}
+
+/// What the shield balance setting does (`power.balance`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BalanceMode {
+    /// Balance moves *capacity*: the favoured facing holds more, the other less, and
+    /// each facing recharges at the full rate (the engine's own reading).
+    Shift,
+    /// Balance moves the *recharge*: both facings hold the same, and the generator's one
+    /// stream of points goes to the favoured facing first, the overflow to the other;
+    /// "equal" splits it in half (the original Interceptor).
+    Share,
 }
 
 impl Default for PowerRules {
@@ -203,6 +236,9 @@ impl Default for PowerRules {
             start_beam: 3,
             start_shield: 3,
             balance_shift: 0.5,
+            balance: BalanceMode::Shift,
+            energy: 500.0,
+            energy_recharge: 40.0,
         }
     }
 }
@@ -241,40 +277,150 @@ impl PowerRules {
             start_beam: step("start_beam", d.start_beam.min(top as u8)),
             start_shield: step("start_shield", d.start_shield.min(top as u8)),
             balance_shift: g.qty("balance_shift", Unit::Fraction).unwrap_or(d.balance_shift).clamp(0.0, 1.0),
+            balance: match g.str("balance") {
+                None | Some("shift") => BalanceMode::Shift,
+                Some("share") => BalanceMode::Share,
+                Some(other) => return Err(format!("balance: '{other}' is not shift or share")),
+            },
+            energy: g.num("energy").unwrap_or(d.energy).max(0.0),
+            energy_recharge: g.num("energy_recharge").unwrap_or(d.energy_recharge).max(0.0),
             beam_recharge,
             shield_recharge,
         })
     }
 }
 
-/// The global `[damage]` section.
+/// The global `[damage]` section: how a hit is shared between shields, armour, hull
+/// and the ship's systems.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DamageRules {
-    /// Fraction of the damage that gets past the armour which also strikes one system.
+    /// Fraction of the damage reaching the hull that strikes one system.
     pub system_share: f32,
+    /// Systems are struck only while the hull is below this fraction of its maximum
+    /// (1 = always).
+    pub system_below: f32,
+    /// True: the system share is taken off the hull damage (the original); false: it is
+    /// dealt to a system as well as the hull.
+    pub system_divert: bool,
     /// A system whose hit points fall below `−destroy_below × HitPoints` is destroyed
     /// for the rest of the battle (otherwise it is only knocked out and can be repaired).
     pub destroy_below: f32,
     /// Hit points per second the crew repairs (one system at a time) without a damage
     /// control computer. A ship class may override it with `RepairRate`.
     pub repair_rate: f32,
+    /// Each hit does between `spread` and all of its damage, uniformly (1 = always all).
+    pub spread: f32,
+    /// One armour pool, or one bank per facing like the shields.
+    pub armor: ArmorMode,
+    /// Factors by difficulty level, if the campaign has them.
+    pub difficulty: Option<DifficultyFactors>,
+}
+
+/// How armour is held (`damage.armor`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArmorMode {
+    /// One pool, struck from any side.
+    Pool,
+    /// A fore and an aft bank, each holding the full armour: a hit strikes the bank on
+    /// its side (the original Interceptor).
+    PerSide,
+}
+
+/// Protection and damage factors per difficulty level (`damage.difficulty`), each a list
+/// with one factor per level, easiest first. A missing level uses 1.
+///
+/// ```yaml
+/// difficulty:
+///   side: xcom                    # whose ships use the own_* factors
+///   own_shields: [150%, 125%, 100%, 100%, 100%]
+///   other_shields: [40%, 52%, 64%, 76%, 88%]
+///   player_hits: [115%, 115%]     # damage dealt by the player's own craft
+/// ```
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct DifficultyFactors {
+    /// The faction id whose ships use the `own_*` factors; every other ship uses `other_*`.
+    pub side: String,
+    pub own_shields: Vec<f32>,
+    pub own_armor: Vec<f32>,
+    pub other_shields: Vec<f32>,
+    pub other_armor: Vec<f32>,
+    /// Damage dealt by beam hits from the player's own craft.
+    pub player_hits: Vec<f32>,
+    /// Damage taken from beam hits by the player's own craft.
+    pub hits_on_player: Vec<f32>,
+}
+
+impl DifficultyFactors {
+    /// The factor for `level` in `table` (1 where the table is short).
+    pub fn at(table: &[f32], level: usize) -> f32 {
+        table.get(level).copied().unwrap_or(1.0)
+    }
 }
 
 impl Default for DamageRules {
     fn default() -> Self {
-        DamageRules { system_share: 1.0, destroy_below: 0.5, repair_rate: 2.0 }
+        DamageRules {
+            system_share: 1.0,
+            system_below: 1.0,
+            system_divert: false,
+            destroy_below: 0.5,
+            repair_rate: 2.0,
+            spread: 1.0,
+            armor: ArmorMode::Pool,
+            difficulty: None,
+        }
     }
 }
 
 impl DamageRules {
-    /// Parses the `damage:` section (or defaults when absent).
-    pub fn parse(g: Option<Get>) -> DamageRules {
+    /// Parses the `damage:` section (or defaults when absent). Problems are pushed to
+    /// `errors` and the default is used for that key.
+    pub fn parse(g: Option<Get>, errors: &mut Vec<String>) -> DamageRules {
         let d = DamageRules::default();
         let Some(g) = g else { return d };
+        let frac = |key: &str, default: f32| g.qty(key, Unit::Fraction).unwrap_or(default);
+        let armor = match g.str("armor") {
+            None | Some("pool") => ArmorMode::Pool,
+            Some("per_side") => ArmorMode::PerSide,
+            Some(other) => {
+                errors.push(format!("damage.armor: '{other}' is not pool or per_side"));
+                ArmorMode::Pool
+            }
+        };
+        let difficulty = g.node("difficulty").map(|n| {
+            let g = Get(n);
+            let table = |key: &str, errors: &mut Vec<String>| -> Vec<f32> {
+                let items = g.list(key);
+                items
+                    .iter()
+                    .filter_map(|v| match super::schema::quantity(v, Unit::Fraction) {
+                        Ok(x) if x >= 0.0 => Some(x),
+                        _ => {
+                            errors.push(format!("damage.difficulty.{key}: '{v}' is not a factor (e.g. 85%)"));
+                            None
+                        }
+                    })
+                    .collect()
+            };
+            DifficultyFactors {
+                side: g.str("side").unwrap_or("").to_ascii_lowercase(),
+                own_shields: table("own_shields", errors),
+                own_armor: table("own_armor", errors),
+                other_shields: table("other_shields", errors),
+                other_armor: table("other_armor", errors),
+                player_hits: table("player_hits", errors),
+                hits_on_player: table("hits_on_player", errors),
+            }
+        });
         DamageRules {
-            system_share: g.qty("system_share", Unit::Fraction).unwrap_or(d.system_share).max(0.0),
-            destroy_below: g.qty("destroy_below", Unit::Fraction).unwrap_or(d.destroy_below).max(0.0),
+            system_share: frac("system_share", d.system_share).max(0.0),
+            system_below: frac("system_below", d.system_below).clamp(0.0, 1.0),
+            system_divert: g.bool("system_divert").unwrap_or(d.system_divert),
+            destroy_below: frac("destroy_below", d.destroy_below).max(0.0),
             repair_rate: g.num("repair_rate").unwrap_or(d.repair_rate).max(0.0),
+            spread: frac("spread", d.spread).clamp(0.0, 1.0),
+            armor,
+            difficulty,
         }
     }
 }
@@ -322,7 +468,30 @@ x: {}
         let bad = doc("beam_recharge: [0, 1]\nshield_recharge: [0, 1, 2]\n");
         assert!(PowerRules::parse(Some(Get(&bad))).is_err());
         assert_eq!(PowerRules::parse(None).unwrap(), PowerRules::default());
-        let d = DamageRules::parse(Some(Get(&doc("repair_rate: 5\n"))));
-        assert_eq!((d.repair_rate, d.system_share), (5.0, 1.0));
+        let mut errors = Vec::new();
+        let d = DamageRules::parse(Some(Get(&doc("repair_rate: 5\n"))), &mut errors);
+        assert_eq!((d.repair_rate, d.system_share, d.armor, d.spread), (5.0, 1.0, ArmorMode::Pool, 1.0));
+        let p = PowerRules::parse(Some(Get(&doc("balance: share\nenergy: 1000\nenergy_recharge: 22\n")))).unwrap();
+        assert_eq!((p.balance, p.energy, p.energy_recharge), (BalanceMode::Share, 1000.0, 22.0));
+        assert!(PowerRules::parse(Some(Get(&doc("balance: sideways\n")))).is_err());
+    }
+
+    #[test]
+    fn damage_section_reads_the_originals_pipeline_keys() {
+        let mut errors = Vec::new();
+        let n = doc("system_share: 30%\nsystem_below: 75%\nsystem_divert: true\nspread: 75%\narmor: per_side
+difficulty: {side: XCOM, own_shields: [150%, 125%], other_armor: [50%, 0.6, lots]}
+");
+        let d = DamageRules::parse(Some(Get(&n)), &mut errors);
+        assert_eq!((d.system_share, d.system_below, d.system_divert, d.spread), (0.3, 0.75, true, 0.75));
+        assert_eq!(d.armor, ArmorMode::PerSide);
+        let f = d.difficulty.unwrap();
+        assert_eq!(f.side, "xcom", "ids are lower case");
+        assert_eq!((f.own_shields.clone(), f.other_armor.clone()), (vec![1.5, 1.25], vec![0.5, 0.6]));
+        assert_eq!(DifficultyFactors::at(&f.own_shields, 1), 1.25);
+        assert_eq!(DifficultyFactors::at(&f.own_shields, 4), 1.0, "short tables give 1");
+        assert!(errors.iter().any(|e| e.contains("other_armor") && e.contains("lots")), "{errors:?}");
+        DamageRules::parse(Some(Get(&doc("armor: thick\n"))), &mut errors);
+        assert!(errors.iter().any(|e| e.contains("damage.armor")));
     }
 }

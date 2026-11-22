@@ -61,6 +61,7 @@ fn beam() -> Ty {
         f("rate_of_fire", Ty::Num, "shots per second per mount"),
         f("speed", Ty::Num, "bolt speed, m/s"),
         f("range", dist(), "reach (2.4km, 2400m; a plain number is metres)"),
+        f("shield_factor", Ty::Num, "shield points lost per point of damage they stop (1)"),
         f("color", rgb(), "bolt colour"),
         f("sound", Ty::Asset, "firing sound"),
     ])
@@ -74,6 +75,7 @@ fn missile() -> Ty {
         f("impact_damage", Ty::Num, "damage on a direct hit"),
         f("proximity_damage", Ty::Num, "damage from the proximity fuse"),
         f("proximity_radius", dist(), "proximity fuse radius"),
+        f("mass", Ty::Num, "kg per round carried (flight.drive)"),
         f("turn_rate", Ty::Num, "degrees per second while homing"),
         f("lock_time", time(), "seconds in the lock cone to lock on"),
         f("color", rgb(), "trail colour"),
@@ -185,10 +187,46 @@ fn ship() -> Ty {
             Ty::Struct(vec![
                 f("shield", Ty::Asset, "the shield it carries: protection from that definition"),
                 f("armor", Ty::Asset, "the armour it carries"),
+                f("engine", Ty::Asset, "the engine it carries: its special is the thrust in kN"),
             ]),
             "default equipment whose protection sets shields/armor (e.g. an original: section)",
         ),
-        f("shield_recharge", Ty::Num, "shield points per second per facing at full charge"),
+        f(
+            "shield_recharge",
+            Ty::Num,
+            "shield points per second at full charge (per facing, or shared with power.balance: share)",
+        ),
+        f(
+            "protection_scale",
+            Ty::Struct(vec![
+                f("shields", Ty::Num, "multiplies each shield bank (1)"),
+                f("armor", Ty::Num, "multiplies each armour bank (1)"),
+            ]),
+            "a class that holds more than its fitted equipment gives",
+        ),
+        f("mass", Ty::Num, "hull mass in kg, before shields, missiles and systems (flight.drive)"),
+        f("thrust", Ty::Num, "engine thrust in kN (flight.drive; or fitted: {engine: …})"),
+        f(
+            "ai_speed",
+            Ty::Either(
+                Box::new(Ty::Num),
+                Box::new(Ty::Struct(vec![
+                    f("min", Ty::Num, "lowest factor"),
+                    f("max", Ty::Num, "highest factor (each ship rolls one in between)"),
+                    f("level_step", Ty::Num, "added per difficulty level"),
+                ])),
+            ),
+            "AI drive factor S (flight.drive): acceleration S × throttle, top speed S / drag",
+        ),
+        f(
+            "ai_turn",
+            Ty::Struct(vec![
+                f("pitch", Ty::Num, "radians per second"),
+                f("yaw", Ty::Num, "radians per second"),
+                f("roll", Ty::Num, "radians per second"),
+            ]),
+            "AI pilots of this class turn at these fixed rates, with no damping",
+        ),
         f("max_speed", Ty::Num, "top speed, m/s"),
         f("acceleration", Ty::Num, "m/s²"),
         f("roll_rate", Ty::Num, "degrees per second"),
@@ -201,8 +239,8 @@ fn ship() -> Ty {
         f("lift", Ty::Num, "forward speed at which the wings carry the craft's weight; 0 = no wings"),
         f("hover", Ty::Bool, "hovers: vertical thrust cancels gravity"),
         f("atmospheric", Ty::Bool, "can enter an atmosphere (default true)"),
-        f("energy", Ty::Num, "beam capacitor"),
-        f("energy_recharge", Ty::Num, "capacitor recharge per second at full beam charge"),
+        f("energy", Ty::Num, "energy pool for beams, afterburner and cloak (default power.energy)"),
+        f("energy_recharge", Ty::Num, "pool recharge per second at full beam charge (default power.energy_recharge)"),
         f("beams", names(), "one beam id per mount"),
         f("missiles", Ty::Dict(Box::new(Ty::Num)), "missile id: count, one rack each"),
         f("systems", names(), "fitted systems (replaces the default list)"),
@@ -307,6 +345,7 @@ fn system() -> Ty {
         f("range", dist(), "tractor hold range, ECM radius, cloak detection range"),
         f("strength", Ty::Num, "tractor pull m/s², ECM/cloak break chance % per second"),
         f("repair_rate", Ty::Num, "damage control: repair speed multiplier"),
+        f("mass", Ty::Num, "kg it adds to the ship (flight.drive)"),
     ])
 }
 
@@ -525,6 +564,37 @@ fn flight() -> Ty {
         ),
         f("formation", Ty::Name, "the formation wingmen fly in when a role names none (formations.<id>; vee)"),
         f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
+        f(
+            "drive",
+            Ty::Struct(vec![
+                f("drag", Ty::Num, "dv/dt = a − drag × v: ships settle at a / drag and coast to rest (2)"),
+                f("thrust_scale", Ty::Num, "newtons per kN of thrust at full throttle (1000)"),
+                f("power_cost", Ty::Qty(Unit::Fraction), "engine power lost per beam/shield level and system step (0)"),
+                f("reverse", Ty::Qty(Unit::Fraction), "reverse thrust as a share of forward (50 %)"),
+                f("afterburner", Ty::Qty(Unit::Fraction), "afterburner thrust as a share of full thrust (50 %)"),
+                f("shield_mass", Ty::Num, "kilograms a fitted shield adds (0)"),
+                f("ai_speed_range", Ty::Numbers(2), "AI drive factors are held to this range ([100, 500])"),
+            ]),
+            "the original's motion model: thrust, mass and drag for the player, a drive factor for AI ships",
+        ),
+        f(
+            "turning",
+            Ty::Struct(vec![
+                f("gain", Ty::Num, "stick to turn request per unit of hull rate (0.08)"),
+                f("damping", Ty::Num, "response at AngularDamp 0, 1/s (4)"),
+                f("damp_step", Ty::Num, "how much each point of AngularDamp slows the response (0.1)"),
+                f(
+                    "ai_rates",
+                    Ty::Struct(vec![
+                        f("pitch", Ty::Num, "radians per second (2)"),
+                        f("yaw", Ty::Num, "radians per second (2)"),
+                        f("roll", Ty::Num, "radians per second (3)"),
+                    ]),
+                    "AI turn rates for classes without ai_turn",
+                ),
+            ]),
+            "the original's turn model: hull turn rates in its own units, AI at fixed rates",
+        ),
     ])
 }
 
@@ -568,13 +638,61 @@ fn power() -> Ty {
         f("budget", Ty::Num, "power steps shared by both settings and switched-on systems"),
         f("start_beam", Ty::Num, "starting beam level (0 = A)"),
         f("start_shield", Ty::Num, "starting shield level"),
-        f("balance_shift", Ty::Qty(Unit::Fraction), "how much shield balance shifts capacity"),
+        f("balance_shift", Ty::Qty(Unit::Fraction), "with balance: shift, how much shield balance shifts capacity"),
+        f(
+            "balance",
+            Ty::Enum(&["shift", "share"]),
+            "shift: balance moves shield capacity; share: it sends the recharge to one facing first (the original)",
+        ),
+        f("energy", Ty::Num, "energy pool of classes without their own energy (500)"),
+        f(
+            "energy_recharge",
+            Ty::Num,
+            "pool recharge at the top beam level, per second, for classes without their own (40)",
+        ),
     ])
 }
 
 fn damage() -> Ty {
     Ty::Def(vec![
-        f("system_share", Ty::Qty(Unit::Fraction), "share of hull damage that also strikes a system"),
+        f(
+            "system_share",
+            Ty::Qty(Unit::Fraction),
+            "share of the damage reaching the hull that strikes a system (100 %)",
+        ),
+        f(
+            "system_below",
+            Ty::Qty(Unit::Fraction),
+            "systems are struck only while the hull is below this share (100 %)",
+        ),
+        f("system_divert", Ty::Bool, "true: the system share is taken off the hull damage; false: dealt as well"),
+        f("spread", Ty::Qty(Unit::Fraction), "each hit does between this share and all of its damage (100 %)"),
+        f("armor", Ty::Enum(&["pool", "per_side"]), "one armour pool, or a fore and an aft bank each holding it all"),
+        f(
+            "difficulty",
+            Ty::Struct(vec![
+                f("side", Ty::Name, "the faction whose ships use the own_* factors"),
+                f(
+                    "own_shields",
+                    Ty::List(Box::new(Ty::Qty(Unit::Fraction))),
+                    "per level, easiest first: that side's shields",
+                ),
+                f("own_armor", Ty::List(Box::new(Ty::Qty(Unit::Fraction))), "per level: that side's armour"),
+                f("other_shields", Ty::List(Box::new(Ty::Qty(Unit::Fraction))), "per level: everyone else's shields"),
+                f("other_armor", Ty::List(Box::new(Ty::Qty(Unit::Fraction))), "per level: everyone else's armour"),
+                f(
+                    "player_hits",
+                    Ty::List(Box::new(Ty::Qty(Unit::Fraction))),
+                    "per level: beam damage the player's craft deals",
+                ),
+                f(
+                    "hits_on_player",
+                    Ty::List(Box::new(Ty::Qty(Unit::Fraction))),
+                    "per level: beam damage the player's craft takes",
+                ),
+            ]),
+            "protection and damage factors by difficulty level (a short list gives 100 % for the rest)",
+        ),
         f("destroy_below", Ty::Qty(Unit::Fraction), "a system this far below zero is destroyed"),
         f("repair_rate", Ty::Num, "default crew repair rate, hit points per second"),
     ])

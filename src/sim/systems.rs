@@ -23,7 +23,7 @@
 
 use super::flight::approach_vec;
 use super::{Condition, Power, Requests, ShieldBalance, Ship, ShipId, SimEvent, World};
-use crate::content::equipment::{PowerRules, SystemKind};
+use crate::content::equipment::{BalanceMode, PowerRules, SystemKind};
 use crate::content::rules::{Ruleset, ShipClass};
 
 /// Which of the two power settings a request changes.
@@ -303,20 +303,25 @@ fn toggle_hyperspace(s: &mut Ship, rules: &Ruleset) -> String {
     format!("HYPERDRIVE ACTIVATED: JUMP IN {time:.0} S")
 }
 
-/// Regenerates the beam capacitor and the shields for one tick, honouring the power
-/// settings, the shield generator's condition and the shield balance.
+/// Regenerates the energy pool and the shields for one tick, honouring the power
+/// settings, the shield generator's condition and the shield balance
+/// (`power.balance`: shift moves capacity, share moves the recharge).
 pub fn recharge(ship: &mut Ship, class: &ShipClass, p: &PowerRules, dt: f32) {
     let level = |table: &[f32], l: u8| table.get(l as usize).copied().unwrap_or(0.0);
     if !ship.afterburning {
         let rate = class.energy_recharge * level(&p.beam_recharge, ship.power.beam);
         ship.energy = (ship.energy + rate * dt).min(class.energy);
     }
-    if class.shields <= 0.0 {
+    if ship.shield_max <= 0.0 {
         return;
     }
     let eff = ship.efficiency(SystemKind::Shields);
     let rate = class.shield_recharge * level(&p.shield_recharge, ship.power.shield) * eff;
-    let (cap_f, cap_a) = shield_caps(class.shields, ship.power.balance, p.balance_shift);
+    if p.balance == BalanceMode::Share {
+        share_recharge(ship, rate * dt);
+        return;
+    }
+    let (cap_f, cap_a) = shield_caps(ship.shield_max, ship.power.balance, p.balance_shift);
     // Shield points above a facing's capacity flow to the other facing, as fast as the
     // generator can move them; any that do not fit are lost.
     let transfer = class.shield_recharge.max(1.0) * 2.0 * eff * dt;
@@ -335,6 +340,36 @@ pub fn recharge(ship: &mut Ship, class: &ShipClass, p: &PowerRules, dt: f32) {
     }
     if ship.shield_aft < cap_a {
         ship.shield_aft = (ship.shield_aft + rate * dt).min(cap_a);
+    }
+}
+
+/// `power.balance: share` (the original): the generator makes `gain` points, and the
+/// balance decides where they go. Forward fills the fore bank first and sends the
+/// overflow aft; aft the reverse; equal gives each half, and a full bank's half goes to
+/// the other. Both banks hold at most `shield_max`.
+pub fn share_recharge(ship: &mut Ship, gain: f32) {
+    let max = ship.shield_max;
+    // Adds up to `amount` to one bank and returns what did not fit.
+    let fill = |bank: &mut f32, amount: f32| -> f32 {
+        let room = (max - *bank).max(0.0);
+        let put = amount.min(room);
+        *bank += put;
+        amount - put
+    };
+    match ship.power.balance {
+        ShieldBalance::Forward => {
+            let left = fill(&mut ship.shield_fore, gain);
+            fill(&mut ship.shield_aft, left);
+        }
+        ShieldBalance::Aft => {
+            let left = fill(&mut ship.shield_aft, gain);
+            fill(&mut ship.shield_fore, left);
+        }
+        ShieldBalance::Equal => {
+            let left = fill(&mut ship.shield_fore, gain * 0.5) + fill(&mut ship.shield_aft, gain * 0.5);
+            let left = fill(&mut ship.shield_fore, left);
+            fill(&mut ship.shield_aft, left);
+        }
     }
 }
 
@@ -366,7 +401,8 @@ pub fn repair(ship: &mut Ship, class: &ShipClass, rules: &Ruleset, dt: f32) -> O
     (before != after).then_some((i, before, after))
 }
 
-/// Strikes one random working system of `id` with `amount` damage.
+/// Strikes one random working system of `id` with `amount` damage (the caller has
+/// already taken `damage.system_share` of the hit).
 pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
     if amount <= 0.0 {
         return;
@@ -378,11 +414,10 @@ pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
     }
     let pick = candidates[((w.random() * candidates.len() as f32) as usize).min(candidates.len() - 1)];
     let destroy_below = w.rules.damage.destroy_below;
-    let share = w.rules.damage.system_share;
     let Some(ship) = w.get_mut(id) else { return };
     let s = &mut ship.systems[pick];
     let before = s.condition();
-    s.set_hp(s.hp - amount * share);
+    s.set_hp(s.hp - amount);
     if s.hp < -destroy_below * s.max {
         s.destroyed = true;
     }
@@ -641,6 +676,38 @@ mod tests {
 
     fn rules5() -> PowerRules {
         PowerRules { budget: 6, ..PowerRules::default() }
+    }
+
+    #[test]
+    fn shared_recharge_fills_the_favoured_bank_first() {
+        let mut w = world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let id = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let s = w.get_mut(id).unwrap();
+        // shield_max 40. Forward: 10 points go fore until it is full, the rest aft.
+        (s.shield_fore, s.shield_aft) = (35.0, 0.0);
+        s.power.balance = ShieldBalance::Forward;
+        share_recharge(s, 10.0);
+        assert_eq!((s.shield_fore, s.shield_aft), (40.0, 5.0));
+        // Equal: half each; a full bank's half spills to the other.
+        (s.shield_fore, s.shield_aft) = (39.0, 0.0);
+        s.power.balance = ShieldBalance::Equal;
+        share_recharge(s, 10.0);
+        assert_eq!((s.shield_fore, s.shield_aft), (40.0, 9.0));
+        s.power.balance = ShieldBalance::Aft;
+        (s.shield_fore, s.shield_aft) = (0.0, 38.0);
+        share_recharge(s, 10.0);
+        assert_eq!((s.shield_fore, s.shield_aft), (8.0, 40.0));
+        // Through `recharge`: the generator's rate is shared, not given to each bank.
+        let mut p = w.rules.power.clone();
+        p.balance = BalanceMode::Share;
+        let class = w.rules.ship(f).clone();
+        let s = w.get_mut(id).unwrap();
+        (s.shield_fore, s.shield_aft) = (0.0, 0.0);
+        s.power.balance = ShieldBalance::Equal;
+        s.power.shield = p.levels() - 1;
+        recharge(s, &class, &p, 1.0);
+        assert!((s.shield_fore + s.shield_aft - class.shield_recharge).abs() < 1e-4);
     }
 
     #[test]

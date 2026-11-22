@@ -17,9 +17,10 @@
 
 use crate::content::rules::{Ruleset, ShipClass};
 
-/// Damage one facing absorbs before the ship is destroyed: shield, armour, hull.
+/// Damage one facing absorbs before the ship is destroyed: shield, armour, hull (the
+/// banks after the class's `protection_scale`; difficulty factors are not included).
 pub fn effective_hp(c: &ShipClass) -> f32 {
-    c.shields + c.armor + c.hull
+    c.shields * c.shield_scale + c.armor * c.armor_scale + c.hull
 }
 
 /// Beam damage per second the class can keep up: every mount at its rate of fire, cut
@@ -31,10 +32,12 @@ pub fn sustained_dps(rules: &Ruleset, c: &ShipClass) -> f32 {
         dps += beam.damage * beam.rate_of_fire;
         cost += beam.energy_cost * beam.rate_of_fire;
     }
+    // A hit does between `damage.spread` and all of its damage: on average the middle.
+    let mean = (1.0 + rules.damage.spread) * 0.5;
     if cost > c.energy_recharge && cost > 0.0 {
-        dps * (c.energy_recharge / cost)
+        dps * mean * (c.energy_recharge / cost)
     } else {
-        dps
+        dps * mean
     }
 }
 

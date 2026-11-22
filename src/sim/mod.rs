@@ -329,9 +329,24 @@ pub struct Ship {
     /// A persistent speed hold set by "match speed"; cleared by any throttle input.
     pub speed_hold: Option<f32>,
     pub hull: f32,
+    /// Armour: the one pool, or the fore bank with `damage.armor: per_side`.
     pub armor: f32,
+    /// The aft armour bank (`damage.armor: per_side`; always 0 with one pool).
+    pub armor_aft: f32,
     pub shield_fore: f32,
     pub shield_aft: f32,
+    /// The most one shield bank holds: the class's shields after its scale and the
+    /// difficulty factors (see [`protection_max`]).
+    pub shield_max: f32,
+    /// The most one armour bank holds.
+    pub armor_max: f32,
+    /// Mass in kg and the share of engine power left after the power settings
+    /// (`flight.drive`; refreshed every tick by [`flight::update_drive`]).
+    pub mass: f32,
+    pub engine_power: f32,
+    /// The AI drive factor S this ship rolled (`flight.drive` and the class's
+    /// `ai_speed`); 0 when it has none.
+    pub drive_factor: f32,
     pub energy: f32,
     pub controls: Controls,
     pub pilot: Pilot,
@@ -444,6 +459,8 @@ pub struct Bolt {
     /// Speed relative to the ship that fired it (m/s), i.e. the weapon's muzzle speed.
     pub muzzle_speed: f32,
     pub damage: f32,
+    /// Shield points lost per point of damage the shields stop (the beam's `shield_factor`).
+    pub shield_factor: f32,
     pub color: [f32; 3],
     /// Seconds the bolt still moves in its owner's frame (`flight: {bolt_frame: ship}`);
     /// 0 for an ordinary bolt that flies in a straight line.
@@ -598,6 +615,36 @@ pub struct Wreck {
     pub rotation: Quat,
 }
 
+/// The most a ship of `class` flying for `faction` holds in each shield and armour bank:
+/// the class's protection times its `protection_scale` and, when the campaign has
+/// `damage.difficulty`, the factor for the current level and the ship's side.
+pub fn protection_max(rules: &Ruleset, class: ShipClassId, faction: FactionId) -> (f32, f32) {
+    let c = rules.ship(class);
+    let (mut shields, mut armor) = (c.shields * c.shield_scale, c.armor * c.armor_scale);
+    if let Some(f) = &rules.damage.difficulty {
+        use crate::content::equipment::DifficultyFactors;
+        let own = rules.factions.get(faction.0 as usize).is_some_and(|x| x.id == f.side);
+        let (s, a) = if own { (&f.own_shields, &f.own_armor) } else { (&f.other_shields, &f.other_armor) };
+        shields *= DifficultyFactors::at(s, rules.difficulty);
+        armor *= DifficultyFactors::at(a, rules.difficulty);
+    }
+    (shields, armor)
+}
+
+/// Sets a ship's bank maxima from its class and side and fills every bank (both shields;
+/// one armour pool, or both armour banks with `damage.armor: per_side`).
+pub fn fill_protection(ship: &mut Ship, rules: &Ruleset) {
+    let (shields, armor) = protection_max(rules, ship.class, ship.faction);
+    ship.shield_max = shields;
+    ship.armor_max = armor;
+    (ship.shield_fore, ship.shield_aft) = (shields, shields);
+    ship.armor = armor;
+    ship.armor_aft = match rules.damage.armor {
+        crate::content::equipment::ArmorMode::PerSide => armor,
+        crate::content::equipment::ArmorMode::Pool => 0.0,
+    };
+}
+
 /// The whole simulated space arena.
 pub struct World {
     /// Shared, read-only game rules. `Arc` = *atomically reference-counted* pointer: many
@@ -718,9 +765,15 @@ impl World {
             braking: false,
             speed_hold: None,
             hull: c.hull,
-            armor: c.armor,
-            shield_fore: c.shields,
-            shield_aft: c.shields,
+            armor: 0.0,
+            armor_aft: 0.0,
+            shield_fore: 0.0,
+            shield_aft: 0.0,
+            shield_max: 0.0,
+            armor_max: 0.0,
+            drive_factor: 0.0,
+            mass: c.mass,
+            engine_power: 1.0,
             energy: c.energy,
             controls: Controls::default(),
             pilot,
@@ -747,6 +800,15 @@ impl World {
             mount: None,
             protected_by: None,
         };
+        let mut ship = ship;
+        fill_protection(&mut ship, &self.rules);
+        // An AI drive factor is rolled per ship (only when the class has one, so worlds
+        // without `flight.drive` draw the same random numbers as before).
+        if let (Some(d), Some(s)) = (&self.rules.flight.drive, c.ai_speed) {
+            let range = d.ai_speed_range;
+            let level = self.rules.difficulty;
+            ship.drive_factor = s.pick(level, self.random(), range);
+        }
         let index = match self.ships.iter().position(|s| !s.alive) {
             Some(i) => {
                 self.generations[i] += 1;
@@ -934,6 +996,7 @@ impl World {
         for id in ids {
             let ship = &mut self.ships[id.index as usize];
             env::air(ship, rules.ship(ship.class), &self.env, TICK);
+            flight::update_drive(ship, &rules);
             flight::step(ship, rules.ship(ship.class), &rules.flight, TICK);
             // The arena edge: ships are halted against it (an environment may set it).
             let arena = self.env.arena.unwrap_or(rules.flight.arena_radius);

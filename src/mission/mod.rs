@@ -596,7 +596,7 @@ mod tests {
     /// Destroys a ship outright (shields and armour first, so the hit lands on the hull).
     fn kill(w: &mut World, id: ShipId) {
         let s = w.get_mut(id).unwrap();
-        (s.shield_fore, s.shield_aft, s.armor) = (0.0, 0.0, 0.0);
+        (s.shield_fore, s.shield_aft, s.armor, s.armor_aft) = (0.0, 0.0, 0.0, 0.0);
         crate::sim::combat::apply_damage(w, id, 1e9, Vec3::ZERO);
     }
 

@@ -27,6 +27,7 @@ beams:
   phase_cannon:
     inherit: original:GameSettings.ini/PhaseCannon
     name: Phase Cannon
+    shield_factor: 1.5   # x 1.5 against shields (Interceptor.exe, verified)
     color: [0.6, 0.4, 1.0]
     sound: cue:Beam4
   plasma_cannon:
@@ -46,6 +47,7 @@ missiles:
   # from the guide's descriptions (DERIVED).
   xwinder:
     inherit: original:GameSettings.ini/XWinderMissile
+    mass: 85   # kg per round (Interceptor.exe)
     name: X-Winder
     turn_rate: 100
     lock_time: 2.0
@@ -53,6 +55,7 @@ missiles:
     sound: cue:Missile1
   permeator:
     inherit: original:GameSettings.ini/PermeatorMissile
+    mass: 370   # kg per round (Interceptor.exe)
     name: Permeator
     damage: bypass_shields   # "bypasses shields"
     turn_rate: 90
@@ -61,6 +64,7 @@ missiles:
     sound: cue:Missile3
   sidestep:
     inherit: original:GameSettings.ini/SidestepMissile
+    mass: 230   # kg per round (Interceptor.exe)
     name: Sidestep
     guidance: sidestep       # its own thrusters
     turn_rate: 160
@@ -69,6 +73,7 @@ missiles:
     sound: cue:Missile1
   fusion:
     inherit: original:GameSettings.ini/FusionMissile
+    mass: 940   # kg per round (Interceptor.exe)
     name: Fusion Missile
     turn_rate: 40
     lock_time: 3.0
@@ -76,6 +81,7 @@ missiles:
     sound: cue:Missile2
   elerium_torpedo:
     inherit: original:GameSettings.ini/EleriumTorpedo
+    mass: 70   # kg per round (Interceptor.exe)
     name: Elerium Torpedo
     turn_rate: 80
     lock_time: 2.0
@@ -83,6 +89,7 @@ missiles:
     sound: cue:Missile6
   enveloping_torpedo:
     inherit: original:GameSettings.ini/EnvelopingFusionTorpedo
+    mass: 670   # kg per round (Interceptor.exe)
     name: Enveloping Fusion Torpedo
     damage: enveloping       # damage spread over the whole surface
     turn_rate: 60
@@ -91,6 +98,7 @@ missiles:
     sound: cue:Missile2
   parallax_torpedo:
     inherit: original:GameSettings.ini/ParallaxTorpedo
+    mass: 210   # kg per round (Interceptor.exe)
     name: Parallax Torpedo
     guidance: parallax       # two decoys
     decoys: 2
@@ -100,6 +108,7 @@ missiles:
     sound: cue:Missile6
   cloaking_torpedo:
     inherit: original:GameSettings.ini/PassiveCloakingTorpedo
+    mass: 440   # kg per round (Interceptor.exe)
     name: Passive Cloaking Torpedo
     guidance: cloaked_wait   # dropped; waits cloaked
     trigger_range: 800m
@@ -109,6 +118,7 @@ missiles:
     sound: cue:MissileCloak
   doppelganger:
     inherit: original:GameSettings.ini/DoppelgangerMissile
+    mass: 1145   # kg per round (Interceptor.exe)
     name: Doppelganger
     guidance: doppelganger   # a decoy copy of your ship
     turn_rate: 0

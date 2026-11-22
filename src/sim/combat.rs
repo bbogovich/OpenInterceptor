@@ -23,6 +23,7 @@
 
 use super::collision::segment_shape;
 use super::{Bolt, LinkMode, Missile, ShipId, SimEvent, World};
+use crate::content::equipment::ArmorMode;
 use crate::content::equipment::SystemKind;
 use crate::content::rules::DamageMode;
 use glam::Vec3;
@@ -221,6 +222,7 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
             age: 0.0,
             muzzle_speed: beam.speed,
             damage: beam.damage,
+            shield_factor: beam.shield_factor,
             color: beam.color,
             carry,
             // `conjugate` undoes a rotation (for a unit quaternion it is the inverse):
@@ -297,7 +299,8 @@ pub fn first_hit(w: &World, a: Vec3, b: Vec3, owner: ShipId) -> Option<(usize, f
 
 fn move_bolts(w: &mut World, dt: f32) {
     // Phase 1: move bolts and find hits (only reads ships).
-    let mut hits: Vec<(usize, Vec3, f32)> = Vec::new();
+    // (ship index, where, damage, shield factor, who fired)
+    let mut hits: Vec<(usize, Vec3, f32, f32, ShipId)> = Vec::new();
     let mut keep = Vec::with_capacity(w.bolts.len());
     for mut b in std::mem::take(&mut w.bolts) {
         // A bolt still carried in its owner's frame (`bolt_frame: ship`) is placed from
@@ -319,7 +322,7 @@ fn move_bolts(w: &mut World, dt: f32) {
             // A harmless owner's bolt still hits (for the effect) but does no damage.
             Some((j, t)) => {
                 let dmg = if w.harmless.contains(&b.owner) { 0.0 } else { b.damage };
-                hits.push((j, b.position.lerp(next, t), dmg))
+                hits.push((j, b.position.lerp(next, t), dmg, b.shield_factor, b.owner))
             }
             None if b.life > dt => keep.push(Bolt { position: next, life: b.life - dt, age: b.age + dt, ..b }),
             None => {}
@@ -327,9 +330,11 @@ fn move_bolts(w: &mut World, dt: f32) {
     }
     w.bolts = keep;
     // Phase 2: apply damage (mutates ships).
-    for (j, pos, dmg) in hits {
+    // Each hit rolls its damage (`damage.spread`) and takes the difficulty factors.
+    for (j, pos, dmg, factor, owner) in hits {
         let id = w.id_of(j);
-        apply_damage(w, id, dmg, pos);
+        let dmg = roll_damage(w, dmg) * beam_factor(w, owner, id);
+        apply_hit(w, id, dmg, pos, DamageMode::Normal, factor);
     }
 }
 
@@ -346,7 +351,7 @@ pub fn rotate_towards(from: Vec3, to: Vec3, max_angle: f32) -> Vec3 {
 }
 
 /// Applies `amount` damage to `id`, hit at world position `at`. Shields (fore or aft)
-/// absorb first, then armour, then hull; damage reaching the hull also strikes one of
+/// absorb first, then armour, then hull; damage reaching the hull may also strike one of
 /// the ship's systems ([`super::systems::damage_system`]). Emits `Hit` and possibly
 /// `Destroyed`.
 pub fn apply_damage(w: &mut World, id: ShipId, amount: f32, at: Vec3) {
@@ -355,21 +360,73 @@ pub fn apply_damage(w: &mut World, id: ShipId, amount: f32, at: Vec3) {
 
 /// [`apply_damage`] with a choice of how the damage lands (see [`DamageMode`]).
 pub fn apply_damage_mode(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageMode) {
+    apply_hit(w, id, amount, at, mode, 1.0);
+}
+
+/// A weapon's damage for one hit: between `damage.spread` and all of `base`, rolled on
+/// the world's seeded generator (so a battle replays identically).
+pub fn roll_damage(w: &mut World, base: f32) -> f32 {
+    let spread = w.rules.damage.spread;
+    if spread >= 1.0 {
+        return base;
+    }
+    base * (spread + (1.0 - spread) * w.random())
+}
+
+/// The difficulty factor on a beam hit from `owner` on `target`: the player's own hits
+/// (`damage.difficulty.player_hits`) and hits on the player (`hits_on_player`). The
+/// player's craft is the one flown from outside the sim ([`super::Pilot::External`]).
+pub fn beam_factor(w: &World, owner: ShipId, target: ShipId) -> f32 {
+    let Some(f) = &w.rules.damage.difficulty else { return 1.0 };
+    use crate::content::equipment::DifficultyFactors;
+    let level = w.rules.difficulty;
+    let player = |id: ShipId| w.get(id).is_some_and(|s| s.pilot == super::Pilot::External);
+    let mut k = 1.0;
+    if player(owner) {
+        k *= DifficultyFactors::at(&f.player_hits, level);
+    }
+    if player(target) {
+        k *= DifficultyFactors::at(&f.hits_on_player, level);
+    }
+    k
+}
+
+/// The layered damage model. `shield_factor` is how many shield points each point of
+/// damage costs (the original's Phase Cannon: 1.5): a shield bank that holds
+/// `amount × shield_factor` stops the hit, and one that does not stops
+/// `bank / shield_factor` of it before it falls.
+pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageMode, shield_factor: f32) {
     let radius = match w.get(id) {
         Some(s) => w.shapes[s.class.0 as usize].radius,
         None => return,
     };
+    let rules = w.rules.clone();
+    let hull_max = match w.get(id) {
+        Some(s) => rules.ship(s.class).hull,
+        None => return,
+    };
+    let m = shield_factor.max(0.01);
     let Some(s) = w.get_mut(id) else { return };
     let from_front = (at - s.position).dot(s.forward()) >= 0.0;
+    // Stops what it can of `amount` with one shield bank; returns the damage it stopped.
+    let stop = |shield: &mut f32, amount: f32| -> f32 {
+        if *shield >= amount * m {
+            *shield -= amount * m;
+            amount
+        } else {
+            let stopped = *shield / m;
+            *shield = 0.0;
+            stopped
+        }
+    };
     let mut absorbed = 0.0;
     let mut downed: Vec<&str> = Vec::new();
     match mode {
         DamageMode::BypassShields => {}
         DamageMode::Normal => {
             let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
-            absorbed = amount.min(*shield);
             let was_up = *shield > 0.0;
-            *shield -= absorbed;
+            absorbed = stop(shield, amount);
             if was_up && *shield <= 0.0 {
                 downed.push(if from_front { "FORE SHIELD DOWN" } else { "AFT SHIELD DOWN" });
             }
@@ -377,10 +434,8 @@ pub fn apply_damage_mode(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode:
         DamageMode::Enveloping => {
             // Half the blast on each facing; what a facing cannot hold goes through.
             for (shield, label) in [(&mut s.shield_fore, "FORE SHIELD DOWN"), (&mut s.shield_aft, "AFT SHIELD DOWN")] {
-                let take = (amount * 0.5).min(*shield);
                 let was_up = *shield > 0.0;
-                *shield -= take;
-                absorbed += take;
+                absorbed += stop(shield, amount * 0.5);
                 if was_up && *shield <= 0.0 {
                     downed.push(label);
                 }
@@ -392,9 +447,22 @@ pub fn apply_damage_mode(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode:
     }
     let Some(s) = w.get_mut(id) else { return };
     let mut rest = amount - absorbed;
-    let to_armor = rest.min(s.armor);
-    s.armor -= to_armor;
+    // Armour: the one pool, or the bank on the side that was hit.
+    let armor = match rules.damage.armor {
+        ArmorMode::PerSide if !from_front => &mut s.armor_aft,
+        _ => &mut s.armor,
+    };
+    let to_armor = rest.min(*armor);
+    *armor -= to_armor;
     rest -= to_armor;
+    // Systems: while the hull is below `system_below`, `system_share` of what reaches it
+    // strikes a system, instead of the hull (`system_divert`) or as well.
+    let d = &rules.damage;
+    let struck = rest > 0.0 && (d.system_below >= 1.0 || s.hull < d.system_below * hull_max);
+    let to_system = if struck { rest * d.system_share } else { 0.0 };
+    if d.system_divert {
+        rest -= to_system.min(rest);
+    }
     s.hull -= rest;
     s.since_hit = 0.0;
     let destroyed = s.hull <= 0.0;
@@ -402,12 +470,13 @@ pub fn apply_damage_mode(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode:
     if destroyed {
         s.alive = false;
     }
-    w.events.push(SimEvent::Hit { ship: id, position: at, shield: rest <= 0.0 && to_armor <= 0.0 });
+    let shield_only = rest <= 0.0 && to_armor <= 0.0 && to_system <= 0.0;
+    w.events.push(SimEvent::Hit { ship: id, position: at, shield: shield_only });
     if destroyed {
         w.events.push(SimEvent::Destroyed { ship: id, position: pos, radius });
         forget_ship(w, id);
-    } else if rest > 0.0 {
-        super::systems::damage_system(w, id, rest);
+    } else if to_system > 0.0 {
+        super::systems::damage_system(w, id, to_system);
     }
 }
 
@@ -865,6 +934,101 @@ mod tests {
         assert!(w.get(foe).is_none());
         assert!(w.events.iter().any(|e| matches!(e, SimEvent::Destroyed { .. })));
         apply_damage(&mut w, foe, 10.0, Vec3::ZERO); // dead ships ignore damage
+    }
+
+    /// A duel under changed damage rules (both ships refilled under them).
+    fn duel_with(change: impl Fn(&mut crate::content::equipment::DamageRules)) -> (World, ShipId, ShipId) {
+        let (mut w, me, foe) = duel();
+        let mut r = (*w.rules).clone();
+        change(&mut r.damage);
+        w.rules = Arc::new(r);
+        let rules = w.rules.clone();
+        for id in [me, foe] {
+            crate::sim::fill_protection(w.get_mut(id).unwrap(), &rules);
+        }
+        (w, me, foe)
+    }
+
+    #[test]
+    fn per_side_armour_has_a_full_bank_on_each_facing() {
+        let (mut w, _, foe) = duel_with(|d| d.armor = ArmorMode::PerSide);
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.armor, s.armor_aft, s.armor_max), (50.0, 50.0, 50.0));
+        // From behind: aft shield 40, then 20 of the aft armour; the fore bank is untouched.
+        apply_damage(&mut w, foe, 60.0, Vec3::new(0.0, 0.0, -290.0));
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_aft, s.armor_aft, s.armor, s.hull), (0.0, 30.0, 50.0, 100.0));
+        // With one pool (the default) there is no aft bank.
+        let (w, _, foe) = duel();
+        assert_eq!(w.get(foe).unwrap().armor_aft, 0.0);
+    }
+
+    #[test]
+    fn a_shield_factor_drains_shields_faster() {
+        let (mut w, _, foe) = duel();
+        let behind = Vec3::new(0.0, 0.0, -290.0);
+        // 20 damage × 1.5 = 30 shield points; the bank holds.
+        apply_hit(&mut w, foe, 20.0, behind, DamageMode::Normal, 1.5);
+        assert_eq!(w.get(foe).unwrap().shield_aft, 10.0);
+        // 20 more: 10 points stop 10/1.5 of it; the rest (13.33) goes to the armour.
+        apply_hit(&mut w, foe, 20.0, behind, DamageMode::Normal, 1.5);
+        let s = w.get(foe).unwrap();
+        assert_eq!(s.shield_aft, 0.0);
+        assert!((s.armor - (50.0 - (20.0 - 10.0 / 1.5))).abs() < 1e-3, "{}", s.armor);
+    }
+
+    #[test]
+    fn hull_damage_feeds_systems_only_below_the_threshold() {
+        let (mut w, _, foe) = duel_with(|d| {
+            d.system_share = 0.3;
+            d.system_below = 0.75;
+            d.system_divert = true;
+        });
+        let behind = Vec3::new(0.0, 0.0, -290.0);
+        let s = w.get_mut(foe).unwrap();
+        (s.shield_aft, s.armor) = (0.0, 0.0);
+        let systems_hp = |w: &World| w.get(foe).unwrap().systems.iter().map(|x| x.hp).sum::<f32>();
+        let full = systems_hp(&w);
+        // Hull 100 of 100: all 20 goes to the hull.
+        apply_damage(&mut w, foe, 20.0, behind);
+        assert_eq!((w.get(foe).unwrap().hull, systems_hp(&w)), (80.0, full));
+        // Hull 70 %: 30 % of the hit goes to a system instead.
+        w.get_mut(foe).unwrap().hull = 70.0;
+        apply_damage(&mut w, foe, 10.0, behind);
+        assert!((w.get(foe).unwrap().hull - 63.0).abs() < 1e-4);
+        assert!((full - systems_hp(&w) - 3.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn hits_vary_within_the_spread_and_follow_difficulty() {
+        let (mut w, me, foe) = duel_with(|d| {
+            d.spread = 0.75;
+            d.difficulty = Some(crate::content::equipment::DifficultyFactors {
+                side: "blue".into(),
+                own_shields: vec![1.5],
+                other_shields: vec![0.5],
+                other_armor: vec![0.4],
+                player_hits: vec![1.15],
+                ..Default::default()
+            });
+        });
+        // Beginner (level 0): blue's shields × 1.5, red's × 0.5 and armour × 0.4.
+        assert_eq!(w.get(me).unwrap().shield_max, 60.0);
+        let f = w.get(foe).unwrap();
+        assert_eq!((f.shield_max, f.shield_fore, f.armor), (20.0, 20.0, 20.0));
+        for _ in 0..200 {
+            let d = roll_damage(&mut w, 40.0);
+            assert!((30.0..=40.0).contains(&d), "{d}");
+        }
+        // The player's own beams hit harder; the AI-flown foe's do not.
+        assert_eq!(beam_factor(&w, me, foe), 1.15);
+        let ai = crate::sim::ai::AiState::new(crate::sim::ai::Behaviour::Wingman, None, Vec3::ZERO);
+        w.get_mut(me).unwrap().pilot = Pilot::Ai(ai);
+        assert_eq!(beam_factor(&w, me, foe), 1.0);
+        // On the next level both tables are short: every factor is 1.
+        let mut r = (*w.rules).clone();
+        r.difficulty = 1;
+        assert_eq!(crate::sim::protection_max(&r, w.get(foe).unwrap().class, FactionId(1)), (40.0, 50.0));
     }
 
     #[test]

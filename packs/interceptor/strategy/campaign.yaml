@@ -10,6 +10,14 @@ economy:
   delivery: 72h             # DERIVED
   salvage_per_kill: 20000   # DERIVED (the original's salvage tables, *Goodies, come later)
 
+# The time dial (Interceptor.exe, verified): six speeds of game time per real second and
+# no pause. Events and prompts drop the clock to the slowest; the original's "(5 secs)"
+# buttons select it too.
+clock:
+  speeds: [5s, 1min, 5min, 30min, 1h, 1d]
+  on_event: 0
+  run: 3
+
 start:
   date: 2067-01-01                          # DERIVED from the manual's opening
   money_from: original:GameSettings.ini/StartingTreasury

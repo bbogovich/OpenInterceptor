@@ -264,6 +264,111 @@ pub fn protection_of(kind: &str, g: Get) -> Option<f32> {
     })
 }
 
+/// The strategy clock's speeds (`clock:`): how much game time passes per real second at
+/// each setting of the time controls, and what an interrupting event does to it.
+///
+/// ```yaml
+/// clock:
+///   speeds: [0, 1h, 6h, 1d, 5d]   # game time per real second; 0 is a pause
+///   labels: [paused, 1 hour/s, 6 hours/s, 1 day/s, 5 days/s]
+///   on_event: 0                  # the speed an event or prompt drops the clock to
+///   run: 3                       # the speed the Space key toggles to
+/// ```
+///
+/// The original Interceptor's dial has six speeds and no pause (5 s, 1 min, 5 min,
+/// 30 min, 1 h and 1 day per second); its "(5 secs)" buttons pick the slowest.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClockDef {
+    /// Game hours per real second, one per speed.
+    pub speeds: Vec<f64>,
+    /// What the speed readout shows for each speed.
+    pub labels: Vec<String>,
+    /// The speed an event drops the clock to.
+    pub on_event: usize,
+    /// The speed Space toggles to from `on_event`.
+    pub run: usize,
+}
+
+impl Default for ClockDef {
+    /// The engine's own clock: a pause and four speeds from an hour to five days per second.
+    fn default() -> Self {
+        ClockDef {
+            speeds: vec![0.0, 1.0, 6.0, 24.0, 120.0],
+            labels: ["paused", "1 hour/s", "6 hours/s", "1 day/s", "5 days/s"].iter().map(|s| s.to_string()).collect(),
+            on_event: 0,
+            run: 3,
+        }
+    }
+}
+
+impl ClockDef {
+    /// Reads `clock:` (the default clock when it is absent). Errors name the bad key.
+    pub fn parse(node: Option<&Node>, errors: &mut Vec<String>) -> ClockDef {
+        let d = ClockDef::default();
+        let Some(n) = node else { return d };
+        let g = Get(n);
+        let mut speeds = Vec::new();
+        for item in g.list("speeds") {
+            // `Unit::Time` gives seconds; the campaign clock counts hours.
+            match super::schema::quantity(&item, Unit::Time) {
+                Ok(v) if v >= 0.0 => speeds.push(v as f64 / 3600.0),
+                _ => errors.push(format!("clock.speeds: '{item}' is not a time per second (e.g. 5s, 1h, 1d)")),
+            }
+        }
+        if speeds.is_empty() {
+            if !g.list("speeds").is_empty() {
+                return d;
+            }
+            speeds = d.speeds.clone();
+        }
+        let mut labels: Vec<String> = g.list("labels").iter().map(|s| s.to_string()).collect();
+        // Speeds without a label get one made from their rate.
+        for &h in speeds.iter().skip(labels.len()) {
+            labels.push(ClockDef::describe(h));
+        }
+        labels.truncate(speeds.len());
+        let top = speeds.len() - 1;
+        let index = |key: &str, default: usize, errors: &mut Vec<String>| match g.num(key) {
+            Some(v) if v >= 0.0 && (v as usize) <= top => v as usize,
+            Some(v) => {
+                errors.push(format!("clock.{key}: {v} is not one of the {} speeds (0–{top})", speeds.len()));
+                default.min(top)
+            }
+            None => default.min(top),
+        };
+        let on_event = index("on_event", 0, errors);
+        let run = index("run", 3, errors);
+        ClockDef { speeds, labels, on_event, run }
+    }
+
+    /// A short button caption for a rate of `hours` per second ("||", "5s", "30m", "1d").
+    pub fn short(hours: f64) -> String {
+        let s = hours * 3600.0;
+        let (v, unit) = match s {
+            s if s <= 0.0 => return "||".to_string(),
+            s if s < 60.0 => (s, "s"),
+            s if s < 3600.0 => (s / 60.0, "m"),
+            s if s < 86400.0 => (s / 3600.0, "h"),
+            s => (s / 86400.0, "d"),
+        };
+        format!("{v:.0}{unit}")
+    }
+
+    /// A readout for a rate of `hours` game hours per real second ("paused", "5 secs/s").
+    pub fn describe(hours: f64) -> String {
+        let s = hours * 3600.0;
+        let (v, one, many) = match s {
+            s if s <= 0.0 => return "paused".to_string(),
+            s if s < 60.0 => (s, "sec", "secs"),
+            s if s < 3600.0 => (s / 60.0, "min", "mins"),
+            s if s < 86400.0 => (s / 3600.0, "hour", "hours"),
+            s => (s / 86400.0, "day", "days"),
+        };
+        let v = v.round();
+        format!("{v:.0} {}/s", if v == 1.0 { one } else { many })
+    }
+}
+
 /// One rating of `evaluations: [{rating, when, do}]`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Evaluation {
@@ -436,6 +541,8 @@ pub struct StrategyDef {
     pub logistics: Option<super::logistics::LogisticsDef>,
     /// Events, arcs, rival plans, relations and endings (Stage 5).
     pub story: super::story::StoryDef,
+    /// The time controls' speeds (`clock:`).
+    pub clock: ClockDef,
 }
 
 /// The dictionary sections of the strategy layer.
@@ -972,6 +1079,7 @@ impl StrategyDef {
                 .clamp(0.0, 1.0),
             delivery,
             salvage,
+            clock: ClockDef::parse(global("clock").as_ref(), errors),
             story: {
                 let raid_ids: Vec<String> = raids_for_story.clone();
                 super::story::StoryDef::build(defs, global, &schema, &raid_ids, scripts, errors)
@@ -1339,6 +1447,16 @@ fn sections_core() -> Vec<super::schema::Field> {
             "campaign flags conditions may test with flag(x) (set_flag names are added)",
         ),
         f(
+            "clock",
+            Ty::Struct(vec![
+                f("speeds", Ty::List(Box::new(Ty::Qty(Unit::Time))), "game time per real second at each speed; 0 is a pause"),
+                f("labels", Ty::List(Box::new(Ty::Text)), "what the speed readout shows for each speed"),
+                f("on_event", Ty::Num, "the speed (0 = first) an event or alert drops the clock to"),
+                f("run", Ty::Num, "the speed the Space key toggles to"),
+            ]),
+            "the time controls (default: a pause, then 1 h, 6 h, 1 d and 5 d per second)",
+        ),
+        f(
             "economy",
             Ty::Struct(vec![
                 f("delivery", Ty::Qty(Unit::Time), "time for a purchase to arrive"),
@@ -1361,6 +1479,32 @@ fn sections_core() -> Vec<super::schema::Field> {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+
+    #[test]
+    fn the_clock_reads_speeds_as_time_per_second() {
+        let g = |s: &str| yaml::parse(s).unwrap();
+        let mut errors = Vec::new();
+        // No `clock:` keeps the engine's pause and four speeds.
+        let d = ClockDef::parse(None, &mut errors);
+        assert_eq!((d.speeds.len(), d.speeds[0], d.speeds[4], d.run), (5, 0.0, 120.0, 3));
+        // The original's dial: six speeds, no pause; labels made from the rates.
+        let n = g("speeds: [5s, 1min, 5min, 30min, 1h, 1d]\non_event: 0\nrun: 3");
+        let c = ClockDef::parse(Some(&n), &mut errors);
+        assert!(errors.is_empty(), "{errors:?}");
+        let secs: Vec<f64> = c.speeds.iter().map(|h| (h * 3600.0).round()).collect();
+        assert_eq!(secs, vec![5.0, 60.0, 300.0, 1800.0, 3600.0, 86400.0]);
+        assert_eq!(c.labels[0], "5 secs/s");
+        assert_eq!(c.labels[5], "1 day/s");
+        assert_eq!(ClockDef::short(c.speeds[3]), "30m");
+        assert_eq!(ClockDef::short(0.0), "||");
+        // Own labels win; a bad speed or index is an error naming the key.
+        let n = g("speeds: [0, 2h, fast]\nlabels: [stop]\nrun: 7");
+        let c = ClockDef::parse(Some(&n), &mut errors);
+        assert_eq!(c.labels, vec!["stop".to_string(), "2 hours/s".into()]);
+        assert_eq!(c.run, 1, "clamped to the last speed");
+        assert!(errors.iter().any(|e| e.contains("clock.speeds") && e.contains("fast")), "{errors:?}");
+        assert!(errors.iter().any(|e| e.contains("clock.run")), "{errors:?}");
+    }
 
     #[test]
     fn weekdays_follow_the_calendar() {

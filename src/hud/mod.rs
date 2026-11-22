@@ -129,7 +129,7 @@ pub fn gauge_values(rules: &Ruleset, ship: &Ship) -> [f32; 4] {
     [
         frac(ship.forward_speed().abs(), c.max_speed + rules.flight.afterburner_boost),
         frac(ship.energy, c.energy),
-        frac(ship.shield_fore + ship.shield_aft, c.shields * 2.0),
+        frac(ship.shield_fore + ship.shield_aft, ship.shield_max * 2.0),
         frac(ship.hull, c.hull),
     ]
 }
@@ -150,10 +150,33 @@ pub struct PowerReadout {
     pub aft: f32,
 }
 
+/// The armour and hull line: "ARMOR 40  HULL 100", or both banks with
+/// `damage.armor: per_side` ("ARMOR 40/25  HULL 100").
+pub fn armor_text(rules: &Ruleset, s: &Ship) -> String {
+    match rules.damage.armor {
+        crate::content::equipment::ArmorMode::Pool => format!("ARMOR {:.0}  HULL {:.0}", s.armor, s.hull),
+        crate::content::equipment::ArmorMode::PerSide => {
+            format!("ARMOR {:.0}/{:.0}  HULL {:.0}", s.armor, s.armor_aft, s.hull)
+        }
+    }
+}
+
+/// The target panel's armour: "ARM 40", or "ARM 40/25" with one bank per facing.
+pub fn armor_short(rules: &Ruleset, s: &Ship) -> String {
+    match rules.damage.armor {
+        crate::content::equipment::ArmorMode::Pool => format!("ARM {:.0}", s.armor),
+        crate::content::equipment::ArmorMode::PerSide => format!("ARM {:.0}/{:.0}", s.armor, s.armor_aft),
+    }
+}
+
 /// Reads the ship's power state for the `power` instrument.
 pub fn power_readout(rules: &Ruleset, ship: &Ship) -> PowerReadout {
-    let c = rules.ship(ship.class);
-    let (cap_f, cap_a) = systems::shield_caps(c.shields, ship.power.balance, rules.power.balance_shift);
+    let (cap_f, cap_a) = match rules.power.balance {
+        crate::content::equipment::BalanceMode::Shift => {
+            systems::shield_caps(ship.shield_max, ship.power.balance, rules.power.balance_shift)
+        }
+        crate::content::equipment::BalanceMode::Share => (ship.shield_max, ship.shield_max),
+    };
     let frac = |v: f32, max: f32| if max > 0.0 { (v / max).clamp(0.0, 1.0) } else { 0.0 };
     PowerReadout {
         beam: ship.power.beam,
@@ -282,7 +305,7 @@ pub fn mfd_lines(world: &World, player: ShipId, page: MfdPage, nav: Option<(&str
                 }
                 lines.extend([
                     format!("RANGE {}  SPD {:.0}", format_distance(dist), t.forward_speed()),
-                    format!("SHD {:.0}/{:.0}  ARM {:.0}", t.shield_fore, t.shield_aft, t.armor),
+                    format!("SHD {:.0}/{:.0}  {}", t.shield_fore, t.shield_aft, armor_short(rules, t)),
                     format!("HULL {:.0}%  {lock}", 100.0 * t.hull / c.hull.max(1.0)),
                 ]);
                 lines
@@ -311,7 +334,7 @@ pub fn mfd_lines(world: &World, player: ShipId, page: MfdPage, nav: Option<(&str
             vec![
                 c.name.clone(),
                 format!("SHIELD F {:.0} A {:.0} {balance}", me.shield_fore, me.shield_aft),
-                format!("ARMOR {:.0}  HULL {:.0}", me.armor, me.hull),
+                armor_text(rules, me),
                 format!("ENERGY {:.0}/{:.0}", me.energy, c.energy),
                 format!(
                     "BEAM {} SHLD {} PWR {}/{}",

@@ -24,7 +24,7 @@
 //! (a chance each second) and from then on chases the nearest decoy instead; when the
 //! decoys are gone it returns to its target.
 
-use super::combat::{apply_damage_mode, first_hit, rotate_towards};
+use super::combat::{apply_damage_mode, first_hit, roll_damage, rotate_towards};
 use super::{ai, Missile, Pilot, ShipId, SimEvent, World};
 use crate::content::rules::{DamageMode, Guidance, Ruleset};
 use glam::Vec3;
@@ -251,6 +251,8 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         w.events.push(SimEvent::MissileExploded { position: pos, effect });
         if let Some(j) = slot {
             let id = w.id_of(j);
+            // Missile damage varies like beam damage (`damage.spread`).
+            let dmg = roll_damage(w, dmg);
             apply_damage_mode(w, id, dmg, pos, mode);
         }
     }

@@ -235,7 +235,7 @@ impl Context for ObjectContext<'_> {
         let b = Value::Bool;
         match q {
             id::HULL => n(frac(s.hull, class.hull)),
-            id::SHIELDS => n(frac(s.shield_fore + s.shield_aft, 2.0 * class.shields)),
+            id::SHIELDS => n(frac(s.shield_fore + s.shield_aft, 2.0 * s.shield_max)),
             id::ENERGY => n(frac(s.energy, class.energy)),
             id::SPEED => n(s.velocity.length()),
             id::HAS_TARGET => b(target.is_some()),
@@ -1051,7 +1051,7 @@ pub fn wing_status(w: &World, leader: ShipId) -> Vec<String> {
             "{}: HULL {:.0}% SHIELDS {:.0}% {}{}",
             s.name.to_uppercase(),
             pct(s.hull, c.hull),
-            pct(s.shield_fore + s.shield_aft, 2.0 * c.shields),
+            pct(s.shield_fore + s.shield_aft, 2.0 * s.shield_max),
             order,
             if s.disabled { " - DISABLED" } else { "" }
         ));

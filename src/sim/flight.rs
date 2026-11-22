@@ -35,12 +35,17 @@
 //! | `LockSpeed` | speed at which pitch and yaw rates fall to zero (linear in between) |
 //! | `AngularDamp` | 0 = turns respond instantly … 10 = sluggish |
 //!
+//! With `flight.turning` (the original's model, see [`Turning`]) the three rates are the
+//! original's own numbers instead: a Lightning (Roll 200, Pitch/Yaw 100, AngularDamp 2)
+//! rolls at 5 rad/s and pitches at 2.5 rad/s, settling with a 0.31 s time constant; AI
+//! pilots turn at their class's fixed `ai_turn` rates.
+//!
 //! Quaternions represent orientation without the "gimbal lock" of yaw/pitch/roll angles;
 //! multiplying `rotation * small_rotation` applies a turn in the ship's *own* frame.
 
-use super::{Controls, Ship};
+use super::{Controls, Pilot, Ship};
 use crate::content::equipment::SystemKind;
-use crate::content::rules::{FlightModel, FlightRules, ShipClass};
+use crate::content::rules::{Drive, FlightModel, FlightRules, Ruleset, ShipClass, Turning};
 use glam::{Quat, Vec3};
 
 /// Fraction of max speed the VCT can slide at in the assisted model.
@@ -106,7 +111,7 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
         ship.rotation = (ship.rotation * Quat::from_scaled_axis(ship.angular_velocity * dt)).normalize();
         return;
     }
-    turn(ship, class, &c, dt);
+    turn(ship, class, rules, &c, dt);
 
     // --- Afterburner ---------------------------------------------------------------------
     let burn_cost = rules.afterburner_cost * dt;
@@ -119,6 +124,8 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
 
     if ship.simple_physics {
         simple(ship, class, rules, &c, dt);
+    } else if let Some(d) = &rules.drive {
+        driven(ship, class, d, &c, dt);
     } else {
         match rules.model {
             FlightModel::Newtonian => newtonian(ship, class, rules, &c, dt),
@@ -128,8 +135,42 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
     ship.position += ship.velocity * dt;
 }
 
+/// The turn rate (body axes, radians per second: pitch, yaw, roll) the stick asks for,
+/// and the time constant the rate approaches it with, under the original's turn model
+/// (see [`Turning`]). AI pilots get their class's fixed rates and no smoothing (a time
+/// constant of 0).
+pub fn original_turn(ship: &Ship, class: &ShipClass, t: &Turning, c: &Controls) -> (Vec3, f32) {
+    let stick = Vec3::new(c.pitch.clamp(-1.0, 1.0), -c.yaw.clamp(-1.0, 1.0), -c.roll.clamp(-1.0, 1.0));
+    if matches!(ship.pilot, Pilot::Ai(_)) {
+        let [p, y, r] = class.ai_turn.unwrap_or(t.ai_rates);
+        return (stick * Vec3::new(p, y, r), 0.0);
+    }
+    // Pitch and yaw fall to zero at LockSpeed; roll is not slowed by speed.
+    let slow = turn_factor(ship.forward_speed(), class.lock_speed);
+    let u = stick * Vec3::new(class.pitch_rate * slow, class.yaw_rate * slow, class.roll_rate) * t.gain;
+    // Damaged controls (`q` < 1) respond more slowly; the original's floor is 1/40.
+    let q = ship.efficiency(SystemKind::Manoeuvring).max(1.0 / 40.0);
+    let k = t.k(class.angular_damp, q);
+    (u / k, 1.0 / k)
+}
+
 /// Rotation from stick input, shared by both models.
-fn turn(ship: &mut Ship, class: &ShipClass, c: &Controls, dt: f32) {
+fn turn(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Controls, dt: f32) {
+    if let Some(t) = &rules.turning {
+        let (desired, tau) = original_turn(ship, class, t, c);
+        // The same exact first-order step as below (ω ← ω·e^(−t/τ) + target·(1 − e^(−t/τ))),
+        // which is what the original computes; τ = 0 jumps straight to the target.
+        let (desired, tau) = if ship.tumble > 0.0 {
+            ship.tumble = (ship.tumble - dt).max(0.0);
+            (desired * 0.25, tau.max(0.05) * 6.0)
+        } else {
+            (desired, tau)
+        };
+        let blend = if tau > 0.0 { 1.0 - (-dt / tau).exp() } else { 1.0 };
+        ship.angular_velocity += (desired - ship.angular_velocity) * blend;
+        ship.rotation = (ship.rotation * Quat::from_scaled_axis(ship.angular_velocity * dt)).normalize();
+        return;
+    }
     // A damaged manoeuvring system turns at half rate; a knocked-out one not at all.
     let factor = turn_factor(ship.forward_speed(), class.lock_speed) * ship.efficiency(SystemKind::Manoeuvring);
     // Roll is not reduced by speed (the original data describes only pitch and yaw).
@@ -188,6 +229,64 @@ fn newtonian(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Contro
     if after > cap {
         let allowed = if before > cap { (before - bleed * dt).max(cap) } else { cap };
         ship.velocity *= allowed / after;
+    }
+}
+
+/// Refreshes a ship's mass and engine power for [`driven`] (`flight.drive` only): the
+/// hull, a fitted shield, the missiles still carried and the fitted systems; and the
+/// engine power the beam and shield settings and switched-on systems leave.
+pub fn update_drive(ship: &mut Ship, rules: &Ruleset) {
+    let Some(d) = &rules.flight.drive else { return };
+    let class = rules.ship(ship.class);
+    let shield = if ship.shield_max > 0.0 { d.shield_mass } else { 0.0 };
+    let missiles: f32 = ship.missiles.iter().map(|(m, n)| rules.missile(*m).mass * *n as f32).sum();
+    let systems: f32 = ship.systems.iter().map(|s| rules.system(s.id).mass).sum();
+    ship.mass = (class.mass + shield + missiles + systems).max(1.0);
+    let steps = super::systems::power_used(ship, rules) as f32;
+    ship.engine_power = (1.0 - d.power_cost * steps).max(0.0);
+}
+
+/// The original's motion model (see [`Drive`]): thrust along the nose and drag, stepped
+/// exactly. The player's craft is held to `MaxSpeed`; AI ships are not.
+fn driven(ship: &mut Ship, class: &ShipClass, d: &Drive, c: &Controls, dt: f32) {
+    let fwd = ship.forward();
+    let ai = matches!(ship.pilot, Pilot::Ai(_));
+    let accel = if ai && ship.drive_factor > 0.0 {
+        // AI: a speed request is a share of the class's max_speed, turned into a throttle
+        // in the original's range −0.25..1; `a = S × throttle`.
+        let wanted = c.hold_speed.or(ship.speed_hold).map(|v| v / class.max_speed.max(1.0));
+        let throttle = wanted.unwrap_or(if ship.reverse { -ship.throttle } else { ship.throttle });
+        ship.drive_factor * throttle.clamp(-0.25, 1.0)
+    } else {
+        // Full forward push in m/s² at this power, engines and mass. A class with no
+        // thrust figure uses its `acceleration` as that push instead.
+        let push = if class.thrust > 0.0 { class.thrust * d.thrust_scale / ship.mass } else { class.acceleration };
+        let full = push * ship.engine_power * ship.efficiency(SystemKind::Engines);
+        let throttle = match c.hold_speed.or(ship.speed_hold) {
+            // Match speed: the throttle whose terminal speed is the wanted speed.
+            Some(v) if full > 0.0 => (v * d.drag / full).clamp(-d.reverse, 1.0),
+            Some(_) => 0.0,
+            None if c.brake => 0.0,
+            None if ship.reverse => -ship.throttle * d.reverse,
+            None => ship.throttle,
+        };
+        let boost = if ship.afterburning { push * d.afterburner * ship.efficiency(SystemKind::Engines) } else { 0.0 };
+        full * throttle + boost
+    };
+    // dv/dt = a·fwd − drag·v has the exact solution v(t) = target + (v₀ − target)·e^(−drag·t),
+    // with target = a·fwd / drag: frame-rate independent, and it never overshoots.
+    if d.drag > 0.0 {
+        let target = fwd * (accel / d.drag);
+        ship.velocity = target + (ship.velocity - target) * (-d.drag * dt).exp();
+    } else {
+        ship.velocity += fwd * accel * dt;
+    }
+    if !ai {
+        // The player's craft is scaled back to MaxSpeed, afterburner or not.
+        let speed = ship.velocity.length();
+        if speed > class.max_speed && speed > 0.0 {
+            ship.velocity *= class.max_speed / speed;
+        }
     }
 }
 
@@ -498,6 +597,95 @@ mod tests {
         recharge(&mut w, 100.0);
         let s = w.get(id).unwrap();
         assert_eq!((s.energy, s.shield_fore), (500.0, 40.0));
+    }
+
+    #[test]
+    fn the_original_turn_model_matches_the_lightning() {
+        let (mut w, id) = fighter();
+        let mut rules = (*w.rules).clone();
+        rules.flight.turning = Some(Turning { gain: 0.08, damping: 4.0, damp_step: 0.1, ai_rates: [2.0, 2.0, 3.0] });
+        w.rules = std::sync::Arc::new(rules);
+        let t = w.rules.flight.turning.clone().unwrap();
+        // The test fighter has the Lightning's numbers: roll 200, pitch 100, AngularDamp 2.
+        assert!((t.steady_rate(200.0, 2.0) - 5.0).abs() < 1e-4);
+        assert!((1.0 / t.k(2.0, 1.0) - 0.3125).abs() < 1e-4, "time constant");
+        // After one time constant the roll rate is 63 % of the way to 5 rad/s.
+        run(&mut w, id, 0.3125, Controls { roll: 1.0, ..Default::default() });
+        let roll = -w.get(id).unwrap().angular_velocity.z;
+        assert!((roll - 5.0 * (1.0 - (-1.0f32).exp())).abs() < 0.05, "{roll}");
+        run(&mut w, id, 3.0, Controls { roll: 1.0, ..Default::default() });
+        assert!((-w.get(id).unwrap().angular_velocity.z - 5.0).abs() < 1e-3);
+        // At half of LockSpeed pitch is halved; AI pilots use their fixed rates at once.
+        let s = w.get_mut(id).unwrap();
+        s.velocity = Vec3::NEG_Z * 500.0;
+        let class = w.rules.ship(w.get(id).unwrap().class).clone();
+        let (want, _) = original_turn(w.get(id).unwrap(), &class, &t, &Controls { pitch: 1.0, ..Default::default() });
+        assert!((want.x - 1.25).abs() < 1e-4, "{want:?}");
+        let mut ai = w.get(id).unwrap().clone();
+        ai.pilot = Pilot::Ai(crate::sim::ai::AiState::new(crate::sim::ai::Behaviour::Wingman, None, Vec3::ZERO));
+        let (want, tau) = original_turn(&ai, &class, &t, &Controls { pitch: 0.5, roll: 1.0, ..Default::default() });
+        assert_eq!((want, tau), (Vec3::new(1.0, 0.0, -3.0), 0.0));
+    }
+
+    /// The test fighter as a Lightning under the original's drive: 75 kN, 8,300 kg as
+    /// fitted, beams and shields at C (engine power 2/3).
+    fn lightning_drive() -> (crate::sim::World, crate::sim::ShipId) {
+        let (mut w, id) = fighter();
+        let mut rules = (*w.rules).clone();
+        rules.flight.drive = Some(Drive {
+            drag: 2.0,
+            thrust_scale: 100_000.0,
+            power_cost: 1.0 / 12.0,
+            reverse: 0.5,
+            afterburner: 0.5,
+            shield_mass: 0.0,
+            ai_speed_range: [100.0, 500.0],
+        });
+        let f = rules.ship_id("fighter").unwrap();
+        rules.ships[f.0 as usize].thrust = 75.0;
+        rules.ships[f.0 as usize].mass = 8300.0;
+        w.rules = std::sync::Arc::new(rules);
+        let s = w.get_mut(id).unwrap();
+        (s.power.beam, s.power.shield) = (2, 2);
+        let rules = w.rules.clone();
+        update_drive(w.get_mut(id).unwrap(), &rules);
+        (w, id)
+    }
+
+    #[test]
+    fn the_original_drive_settles_where_thrust_meets_drag() {
+        let (mut w, id) = lightning_drive();
+        let s = w.get(id).unwrap();
+        assert!((s.engine_power - 2.0 / 3.0).abs() < 1e-5 && s.mass == 8300.0);
+        // a = 75 kN × 100,000 × 2/3 × 50 % / 8,300 kg ≈ 301 m/s²; terminal a/2 ≈ 151 m/s.
+        let terminal = 75.0 * 100_000.0 * (2.0 / 3.0) * 0.5 / 8300.0 / 2.0;
+        run(&mut w, id, 6.0, Controls { throttle_set: Some(0.5), ..Default::default() });
+        assert!((w.get(id).unwrap().forward_speed() - terminal).abs() < 0.5, "{}", w.get(id).unwrap().forward_speed());
+        // Cut the throttle: drag brings the ship to rest (no coasting).
+        run(&mut w, id, 6.0, Controls { throttle_set: Some(0.0), ..Default::default() });
+        assert!(w.get(id).unwrap().forward_speed().abs() < 1.0);
+        // Full throttle and the afterburner: held to MaxSpeed 600.
+        run(&mut w, id, 6.0, Controls { throttle_set: Some(1.0), afterburner: true, ..Default::default() });
+        assert!(w.get(id).unwrap().forward_speed() <= 600.0 + 1e-3);
+        assert!(w.get(id).unwrap().forward_speed() > 2.0 * terminal);
+        // Match speed picks the throttle that settles at the wanted speed.
+        run(&mut w, id, 6.0, Controls { hold_speed: Some(100.0), ..Default::default() });
+        assert!((w.get(id).unwrap().forward_speed() - 100.0).abs() < 0.5);
+    }
+
+    #[test]
+    fn ai_ships_drive_by_their_factor_with_no_cap() {
+        let (mut w, id) = lightning_drive();
+        let s = w.get_mut(id).unwrap();
+        s.pilot = Pilot::Ai(crate::sim::ai::AiState::new(crate::sim::ai::Behaviour::Wingman, None, Vec3::ZERO));
+        s.drive_factor = 500.0;
+        // A request for the class's max_speed is full throttle: S / drag = 250 m/s.
+        run(&mut w, id, 6.0, Controls { hold_speed: Some(600.0), ..Default::default() });
+        assert!((w.get(id).unwrap().forward_speed() - 250.0).abs() < 0.5);
+        // Factors are rolled within the class's range plus the level, then held to 100..500.
+        let s = crate::content::rules::AiSpeed { min: 350.0, max: 400.0, level_step: 40.0 };
+        assert_eq!(s.pick(0, 0.0, [100.0, 500.0]), 350.0);
+        assert_eq!(s.pick(4, 1.0, [100.0, 500.0]), 500.0);
     }
 
     #[test]

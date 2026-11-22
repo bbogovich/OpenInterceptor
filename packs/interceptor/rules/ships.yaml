@@ -9,9 +9,17 @@
 # Shields and armour come from fitted equipment, as in the original: `fitted:` names the
 # ShieldType*/ArmorType* sections a class carries by default (DERIVED for each class) and
 # the engine reads their protection from the player's GameSettings.ini; a campaign
-# craft's own fit replaces them. Classes without a fit, Energy, EnergyRecharge and
-# Acceleration are engine values (DERIVED). Model = original:<MESH> reads the XMSH
-# resource of that name.
+# craft's own fit replaces them; damage.difficulty in systems.yaml scales them by level.
+# Classes without a fit and Acceleration are engine values (DERIVED). Every ship shares
+# the original's 1000-point energy pool (power: in systems.yaml). Model = original:<MESH>
+# reads the XMSH resource of that name.
+#
+# Motion (flight.drive in flight.yaml; Interceptor.exe, verified): mass is each hull's
+# base in kg, from the exe's own table; the player's thrust is the fitted engine's
+# Special in kN (which engine each hull carries by default is DERIVED). AI ships ignore
+# mass and thrust: ai_speed is the exe's per-class drive factor S (top speed S/2, held to
+# 100-500; aliens 1-3 gain per difficulty level). ai_turn is the exe's per-class AI turn
+# table in rad/s (which axis is which is DERIVED); classes without it turn at 2, 2, 3.
 #
 # --- X-COM interceptors (playable) ----------------------------------------------------
 #
@@ -19,14 +27,15 @@
 ships:
   lightning:
     inherit: original:GameSettings.ini/Ship_IntType1
+    mass: 6700
+    ai_speed: 500
+    ai_turn: {pitch: 2.1, yaw: 2.0, roll: 2.55}
     name: X-1A Lightning II
     description: Fast, fragile patrol interceptor.
     model_set: lightning
     playable: true
     cockpit: a
-    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType1}   # its default equipment (DERIVED)
-    energy: 400
-    energy_recharge: 45
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType1, engine: original:GameSettings.ini/EngineType1}   # its default equipment (DERIVED)
     acceleration: 140
     beams: [laser_cannon, laser_cannon]
     missiles: {xwinder: 5, sidestep: 4}
@@ -37,14 +46,15 @@ ships:
     behaviour: xcom_pilot
   firestar:
     inherit: original:GameSettings.ini/Ship_IntType2
+    mass: 12700
+    ai_speed: 500
+    ai_turn: {pitch: 1.7, yaw: 1.4, roll: 1.5}
     name: S-2 Firestar
     description: Tri-titanium multirole fighter.
     model_set: firestar
     playable: true
     cockpit: b
-    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType2}   # its default equipment (DERIVED)
-    energy: 500
-    energy_recharge: 55
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType2, engine: original:GameSettings.ini/EngineType2}   # its default equipment (DERIVED)
     acceleration: 110
     beams: [gatling_laser, gatling_laser, laser_cannon, laser_cannon]
     missiles: {xwinder: 5, permeator: 3, sidestep: 4}
@@ -54,14 +64,15 @@ ships:
     behaviour: xcom_pilot
   avenger:
     inherit: original:GameSettings.ini/Ship_IntType3
+    mass: 22700
+    ai_speed: 500
+    ai_turn: {pitch: 1.5, yaw: 1.3, roll: 1.5}
     name: M-3 Super Avenger
     description: Alien-alloy heavy fighter-bomber.
     model_set: avenger
     playable: true
     cockpit: c
-    fitted: {shield: original:GameSettings.ini/ShieldType3, armor: original:GameSettings.ini/ArmorType2}   # its default equipment (DERIVED)
-    energy: 600
-    energy_recharge: 65
+    fitted: {shield: original:GameSettings.ini/ShieldType3, armor: original:GameSettings.ini/ArmorType2, engine: original:GameSettings.ini/EngineType3}   # its default equipment (DERIVED)
     acceleration: 90
     beams: [heavy_laser, heavy_laser, laser_cannon, laser_cannon]
     missiles: {xwinder: 5, permeator: 3, sidestep: 4, fusion: 2, parallax_torpedo: 2, cloaking_torpedo: 2, doppelganger: 1, enveloping_torpedo: 2}
@@ -75,6 +86,9 @@ ships:
     behaviour: xcom_pilot
   wraith:
     inherit: original:GameSettings.ini/Ship_AlienType1
+    mass: 5500
+    ai_speed: {min: 350, max: 400, level_step: 40}
+    ai_turn: {pitch: 2.3, yaw: 2.1, roll: 3.75}
     name: Wraith
     description: Light, agile alien saucer.
     model_set: wraith
@@ -92,6 +106,9 @@ ships:
     behaviour: wraith
   spectre:
     inherit: original:GameSettings.ini/Ship_AlienType2
+    mass: 11000
+    ai_speed: {min: 350, max: 400, level_step: 40}
+    ai_turn: {pitch: 1.7, yaw: 1.7, roll: 0.75}
     name: Spectre
     description: Multirole alien saucer.
     model_set: spectre
@@ -109,6 +126,9 @@ ships:
     behaviour: spectre
   phantasm:
     inherit: original:GameSettings.ini/Ship_AlienType3
+    mass: 19000
+    ai_speed: {min: 450, max: 500, level_step: 30}
+    ai_turn: {pitch: 1.3, yaw: 1.3, roll: 1.5}
     name: Phantasm
     description: Heavy alien beam gunship.
     model_set: phantasm
@@ -125,6 +145,8 @@ ships:
     behaviour: phantasm
   shade:
     inherit: original:GameSettings.ini/Ship_AlienType4
+    mass: 11000
+    ai_speed: 500
     name: Shade
     description: Elite alien fighter flown by Aereon pilots.
     model_set: shade
@@ -143,6 +165,8 @@ ships:
     behaviour: shade
   harbinger:
     inherit: original:GameSettings.ini/Ship_AlienType5
+    mass: 110000
+    ai_speed: {min: 200, max: 250}
     name: Harbinger
     description: Alien tug; tows cargo and tries to capture disabled ships.
     model_set: harbinger
@@ -160,6 +184,8 @@ ships:
     behaviour: harbinger
   alien_container:
     inherit: original:GameSettings.ini/Ship_AlienType6
+    mass: 157000
+    ai_speed: {min: 175, max: 349}
     name: Alien Container
     description: Cargo towed by a Harbinger (class mapping derived).
     model_set: alien_container
@@ -171,6 +197,9 @@ ships:
     yaw_rate: 10
   spirit:
     inherit: original:GameSettings.ini/Ship_AlienFreighter
+    mass: 110000
+    ai_speed: {min: 100, max: 174}
+    ai_turn: {pitch: 0.7, yaw: 0.7, roll: 0.3}
     name: Spirit
     description: Alien freighter; launches drones.
     model_set: spirit
@@ -186,6 +215,7 @@ ships:
     engine_color: [0.4, 1.0, 0.4]
   drone:
     inherit: original:GameSettings.ini/Ship_AlienDrone
+    ai_speed: 250
     name: Alien Drone
     description: Fast, unarmoured, psionically controlled.
     model_set: drone
@@ -201,6 +231,7 @@ ships:
     behaviour: drone
   pirate_lightning:
     inherit: lightning
+    ai_turn: {pitch: 2, yaw: 2, roll: 3}
     faction: pirate
     playable: false
     name: Pirate Lightning II
@@ -222,6 +253,8 @@ ships:
     behaviour: human_pilot
   rogue_freighter:
     inherit: original:GameSettings.ini/Ship_PirateFreighter
+    mass: 157000
+    ai_speed: {min: 100, max: 174}
     name: Rogue Freighter
     model_set: rogue_freighter
     kind: freighter
@@ -258,6 +291,9 @@ ships:
   xcom_freighter:
     point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_XCOMFreighter
+    mass: 157000
+    ai_speed: {min: 100, max: 174}
+    ai_turn: {pitch: 1.0, yaw: 1.0, roll: 0.3}
     name: Star Ranger Freighter
     model_set: xcom_freighter
     kind: freighter
@@ -272,6 +308,9 @@ ships:
   patton:
     point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_PattonClass
+    mass: 250000
+    ai_speed: 100
+    ai_turn: {pitch: 0.3, yaw: 0.3, roll: 0.15}
     name: Patton-class Research Cruiser
     model_set: patton
     kind: capital

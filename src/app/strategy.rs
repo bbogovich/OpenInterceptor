@@ -34,9 +34,6 @@ use crate::campaign::{save, Campaign, Event, PilotState, Product};
 use crate::content::strategy::StrategyDef;
 use macroquad::prelude::*;
 
-/// Campaign hours per real second at each speed (0 = paused).
-pub const SPEEDS: [f64; 5] = [0.0, 1.0, 6.0, 24.0, 120.0];
-
 /// The panel's tabs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tab {
@@ -505,7 +502,8 @@ impl StrategyScreen {
             self.ending = Some(*ending);
             self.pending_video = def.story.endings[*ending].video.clone();
         }
-        self.speed = 0;
+        // Back from a battle: the clock drops to its event speed (`clock.on_event`).
+        self.speed = def.clock.on_event;
     }
 
     /// The relations a battle uses: each faction with a standing, hostile or not
@@ -1425,7 +1423,7 @@ impl StrategyScreen {
         // Notices raised outside the clock (a debrief's change of stance), one at a time.
         if self.banner.is_none() && !self.campaign.notices.is_empty() {
             self.banner = Some(self.campaign.notices.remove(0));
-            self.speed = 0;
+            self.speed = def.clock.on_event;
         }
         let prompting = self.card.is_some()
             || self.battle.is_some()
@@ -1498,12 +1496,15 @@ impl StrategyScreen {
         }
 
         // --- Time ---------------------------------------------------------------
-        let dt = SPEEDS[self.speed] * get_frame_time().min(0.1) as f64;
+        // Game hours this frame: the speed's rate times the frame's real seconds (capped,
+        // so a stalled frame does not jump the campaign ahead).
+        let rate = def.clock.speeds.get(self.speed).copied().unwrap_or(0.0);
+        let dt = rate * get_frame_time().min(0.1) as f64;
         if dt > 0.0 && !prompting {
             let mut video: Option<String> = None;
             let mut cutscene: Option<String> = None;
             for e in self.campaign.advance(def, dt) {
-                self.speed = 0;
+                self.speed = def.clock.on_event;
                 match e {
                     Event::Notice(t) => {
                         if t.starts_with("Research complete") {
@@ -1567,11 +1568,16 @@ impl StrategyScreen {
             return Some(Next::Menu);
         }
         if is_key_pressed(KeyCode::Space) {
-            self.speed = if self.speed == 0 { 3 } else { 0 };
+            let clock = &def.clock;
+            self.speed = if self.speed == clock.on_event { clock.run } else { clock.on_event };
         }
-        for (k, key) in [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4].into_iter().enumerate() {
-            if is_key_pressed(key) {
-                self.speed = k + 1;
+        // The number keys pick the speeds after the event speed: with a pause first, 1 is
+        // the first running speed.
+        let keys = [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4, KeyCode::Key5, KeyCode::Key6];
+        for (k, key) in keys.into_iter().enumerate() {
+            let speed = def.clock.on_event + k + 1;
+            if is_key_pressed(key) && speed < def.clock.speeds.len() {
+                self.speed = speed;
             }
         }
         if is_key_pressed(KeyCode::F5) {
@@ -1894,7 +1900,7 @@ impl StrategyScreen {
                     self.stack.pop();
                 }
             }
-            Some(UiAction::Speed(n)) => self.speed = n.min(SPEEDS.len() - 1),
+            Some(UiAction::Speed(n)) => self.speed = n.min(def.clock.speeds.len().saturating_sub(1)),
             Some(UiAction::Save) => self.saving = true,
             Some(UiAction::Menu) => {
                 let _ = self.save(ctx);
@@ -1928,7 +1934,7 @@ impl StrategyScreen {
             "money" | "funds" => format!("${}", money(c.money)),
             "score" => format!("{:.0}", c.score),
             "base" => c.bases.get(self.base).map(|b| b.name.clone()).unwrap_or_default(),
-            "speed" => ["paused", "1 hour/s", "6 hours/s", "1 day/s", "5 days/s"][self.speed.min(4)].to_string(),
+            "speed" => def.clock.labels.get(self.speed).cloned().unwrap_or_default(),
             "selection" => self.info(def).0,
             other => format!("?{other}"),
         }
@@ -1961,20 +1967,23 @@ impl StrategyScreen {
         if widgets::button(ui, input, [after, r[1] + 6.0 * k, bh, bh], ">", nb > 1) {
             self.base = (self.base + 1) % nb;
         }
-        // Time: pause and the four speeds; then save and leave.
-        let labels = ["||", "1h", "6h", "1d", "5d", "Save", "Menu"];
+        // Time: one button per clock speed; then save and leave.
+        let speeds = def.clock.speeds.len();
+        let mut labels: Vec<String> =
+            def.clock.speeds.iter().map(|&h| crate::content::strategy::ClockDef::short(h)).collect();
+        labels.extend(["Save".to_string(), "Menu".to_string()]);
         let bw = 46.0 * k;
         let row = [r[0] + r[2] - (bw + 4.0 * k) * labels.len() as f32 - 8.0 * k, r[1] + 6.0 * k, r[2], bh];
         for (i, l) in labels.iter().enumerate() {
             let x = row[0] + i as f32 * (bw + 4.0 * k);
             let rect = [x, row[1], bw, bh];
-            if i < 5 && i == self.speed {
+            if i < speeds && i == self.speed {
                 draw_rectangle(rect[0] - 2.0, rect[1] - 2.0, rect[2] + 4.0, rect[3] + 4.0, ui.colour("accent"));
             }
             if widgets::button(ui, input, rect, l, true) {
                 match i {
-                    0..=4 => self.speed = i,
-                    5 => self.saving = true,
+                    i if i < speeds => self.speed = i,
+                    i if i == speeds => self.saving = true,
                     _ => {
                         let _ = self.save(ctx);
                         return Some(Next::Menu);
