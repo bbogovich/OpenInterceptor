@@ -408,7 +408,10 @@ fn kit_dialog(
     let (tf, bf) = (title_sheet.face(), body_sheet.face());
     // The exe draws the title upper-cased.
     let heading = title.to_uppercase();
-    let button_w: Vec<i32> = buttons.iter().map(|b| text::width(&tf, b, false)).collect();
+    // A `~` before a label makes the button full-width (§4.9); it is not shown.
+    let labels: Vec<(&str, bool)> = buttons.iter().map(|b| msgbox::full_width(b)).collect();
+    let button_w: Vec<i32> = labels.iter().map(|(b, _)| text::width(&tf, b, false)).collect();
+    let full: Vec<bool> = labels.iter().map(|(_, f)| *f).collect();
     let lh = body_sheet.font.line_height as i32;
     let (m, choice) = msgbox::layout(
         frame_style,
@@ -419,6 +422,7 @@ fn kit_dialog(
         text::width(&bf, body, false),
         lh,
         &button_w,
+        &full,
     );
     let (pieces, kit) = match choice {
         KitChoice::Own => &own,
@@ -495,7 +499,7 @@ fn kit_dialog(
         style.capsule.as_ref().and_then(|c| (0..6).map(|k| ui.image(&DialogStyle::row(c, k))).collect());
     let down = is_mouse_button_down(MouseButton::Left);
     let mut hit = None;
-    for (i, (label, br)) in buttons.iter().zip(&m.buttons).enumerate() {
+    for (i, ((label, _), br)) in labels.iter().zip(&m.buttons).enumerate() {
         let inside = super::widgets::contains(to_screen(*br), mouse);
         let pressed = inside && down;
         match &caps {
