@@ -426,7 +426,8 @@ fn kit_dialog(
         KitChoice::MoreRows => &more,
     };
     let to_screen = |r: [i32; 4]| layout.rect(r.map(|v| v as f32));
-    // The fill: row 430 when the box fits in it, else row 429 — centred, clipped to the box.
+    // The fill: row 430 when the box fits in it, else row 429 — centred on the text rect and
+    // clipped to it, drawn before the frame (`ui-framework.md` §4.8, verified).
     let small = style.fill.as_deref().and_then(|f| ui.image(f));
     let large = style.fill_large.as_deref().and_then(|f| ui.image(f));
     let fill = match (small, large) {
@@ -434,7 +435,7 @@ fn kit_dialog(
         (_, l) => l,
     };
     if let Some(f) = fill {
-        let (d, s) = msgbox::fill_rect(m.frame, f.width() as i32, f.height() as i32);
+        let (d, s) = msgbox::fill_rect(m.client, m.client, f.width() as i32, f.height() as i32);
         draw_part(f, to_screen(d), s.map(|v| v as f32));
     }
     for (i, r) in msgbox::kit_pieces(m.frame, kit) {

@@ -256,12 +256,21 @@ pub fn kit_pieces(frame: IRect, kit: &Kit) -> Vec<(usize, IRect)> {
     out
 }
 
-/// The body fill centred on the frame and clipped to it: `(dest, source)` rects.
-pub fn fill_rect(frame: IRect, fill_w: i32, fill_h: i32) -> (IRect, IRect) {
-    let [l, t, w, h] = frame;
-    let (dw, dh) = (w.min(fill_w), h.min(fill_h));
-    let (sx, sy) = ((fill_w - dw) / 2, (fill_h - dh) / 2);
-    ([l + (w - dw) / 2, t + (h - dh) / 2, dw, dh], [sx, sy, dw, dh])
+/// The body fill centred on `centre_on` and clipped to `clip`: `(dest, source)` rects.
+/// The exe centres it on the text rect and clips it to the text rect (`0x51941f`,
+/// `ui-framework.md` §4.8), then draws the frame over it, so it shows only inside the
+/// box's opening and through the bands' keyed pixels.
+pub fn fill_rect(centre_on: IRect, clip: IRect, fill_w: i32, fill_h: i32) -> (IRect, IRect) {
+    let [l, t, w, h] = centre_on;
+    // Where the whole fill would sit, centred.
+    let (fx, fy) = (l + (w - fill_w) / 2, t + (h - fill_h) / 2);
+    // Its intersection with the clip.
+    let x0 = fx.max(clip[0]);
+    let y0 = fy.max(clip[1]);
+    let x1 = (fx + fill_w).min(clip[0] + clip[2]);
+    let y1 = (fy + fill_h).min(clip[1] + clip[3]);
+    let (dw, dh) = ((x1 - x0).max(0), (y1 - y0).max(0));
+    ([x0, y0, dw, dh], [x0 - fx, y0 - fy, dw, dh])
 }
 
 /// The dialog counter's step (every 5 ticks) and the live pieces it drives.
@@ -298,6 +307,24 @@ pub fn ornament_on(step: u64) -> bool {
 
 #[cfg(test)]
 mod tests {
+
+    /// The RE's worked example (`ui-framework.md` §4.8): a one-line style-1 notice with one
+    /// button, the kits at their real piece sizes.
+    #[test]
+    fn a_one_line_style_1_box_matches_the_exes_worked_example() {
+        let style1: Kit = [[10, 73], [10, 73], [82, 16], [82, 16], [82, 73], [82, 73], [82, 73], [82, 73]];
+        let k242: Kit = [[32, 64], [32, 75], [60, 32], [60, 32], [60, 64], [60, 64], [60, 90], [60, 90]];
+        let k250: Kit = [[32, 64], [32, 118], [60, 32], [60, 32], [60, 64], [60, 64], [60, 130], [60, 130]];
+        let (m, choice) = layout(1, &style1, &k242, &k250, 30, 36, 14, &[20]);
+        assert_eq!(choice, KitChoice::Own);
+        // (56, 97, 595, 363): 539 x 266.
+        assert_eq!(m.frame, [56, 97, 539, 266]);
+        // The text rect (92, 147, 551, 318).
+        assert_eq!(m.client, [92, 147, 459, 171]);
+        // The button row's top: 363 - 25 - 7 = 331, the button centred.
+        assert_eq!(m.buttons, vec![[275, 331, 100, 14]]);
+    }
+
     use super::*;
 
     /// A kit: edges 10 px thick, corners 40 × 30; side tiles 20 tall.
@@ -387,8 +414,15 @@ mod tests {
 
     #[test]
     fn the_fill_is_centred_and_clipped_and_the_live_pieces_move() {
-        assert_eq!(fill_rect([100, 100, 300, 120], 524, 275), ([100, 100, 300, 120], [112, 77, 300, 120]));
-        assert_eq!(fill_rect([0, 0, 600, 300], 524, 275), ([38, 12, 524, 275], [0, 0, 524, 275]));
+        let f = [100, 100, 300, 120];
+        assert_eq!(fill_rect(f, f, 524, 275), ([100, 100, 300, 120], [112, 77, 300, 120]));
+        let g = [0, 0, 600, 300];
+        assert_eq!(fill_rect(g, g, 524, 275), ([38, 12, 524, 275], [0, 0, 524, 275]));
+        // Clipped to the opening: the source moves with the clip, the centring stays.
+        assert_eq!(fill_rect(g, [50, 40, 100, 60], 524, 275), ([50, 40, 100, 60], [12, 28, 100, 60]));
+        // The exe's way: centred on the text rect and clipped to it.
+        let t = [92, 147, 459, 171];
+        assert_eq!(fill_rect(t, t, 524, 275), ([92, 147, 459, 171], [32, 52, 459, 171]));
         assert_eq!((knob_frame(0), knob_frame(7), knob_frame(8), knob_frame(15), knob_frame(16)), (0, 7, 7, 0, 0));
         assert_eq!((slider_offset(0, 20, 60), slider_offset(21, 20, 60), slider_offset(42, 20, 60)), (0, 60, 0));
         assert_eq!((ornament_on(3), ornament_on(4), ornament_on(8)), (true, false, true));
