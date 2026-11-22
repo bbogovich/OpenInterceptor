@@ -175,8 +175,17 @@ pub enum Travel {
 pub enum MapKind {
     /// Hand-made: the systems and lanes as written.
     Fixed,
-    /// Made when a campaign starts: `count` systems in a `size` rectangle, seeded.
-    Generated { size: [f32; 2], count: (u32, u32), names: Vec<String>, seed: Option<u64>, black_holes: u32 },
+    /// Made when a campaign starts: `count` systems in a `size` rectangle, seeded. With a
+    /// `count_table` (`system_counts: {count: weight, …}`) the count is rolled from it instead
+    /// (the original: 65 / 70 / 75 / 80 systems, `unknowns-2026-11.md` §13.5).
+    Generated {
+        size: [f32; 2],
+        count: (u32, u32),
+        count_table: Vec<(u32, f32)>,
+        names: Vec<String>,
+        seed: Option<u64>,
+        black_holes: u32,
+    },
 }
 
 /// `maps.<id>`.
@@ -200,6 +209,10 @@ pub struct StarClass {
     /// An image drawn for the star on the map instead of a dot (the original: its
     /// 9 × 9 star-class icons, `original:sprite#893`…`#901`).
     pub icon: Option<String>,
+    /// The system picture a zoomed-in map shows (the CSD's level 2), and how many
+    /// animation frames follow it (`portrait_frames`, rows N … N + frames − 1).
+    pub portrait: Option<String>,
+    pub portrait_frames: u32,
 }
 
 /// `research.<id>`.
@@ -855,9 +868,16 @@ impl StrategyDef {
                         Some(v) if v.len() == 2 => (v[0] as u32, v[1] as u32),
                         _ => (g.num("systems").unwrap_or(30.0) as u32, g.num("systems").unwrap_or(30.0) as u32),
                     };
+                    // `system_counts: {65: 11, 70: 10, …}`: counts and their weights.
+                    let count_table: Vec<(u32, f32)> = g
+                        .map("system_counts")
+                        .iter()
+                        .filter_map(|(k, n)| Some((k.trim().parse().ok()?, n.as_str()?.trim().parse().ok()?)))
+                        .collect();
                     MapKind::Generated {
                         size: [size[0], size[1]],
                         count,
+                        count_table,
                         names: g.list("names"),
                         seed: g.num("seed").map(|s| s as u64),
                         black_holes: g.num("black_holes").unwrap_or(1.0) as u32,
@@ -889,6 +909,8 @@ impl StrategyDef {
                     color: [c[0], c[1], c[2]],
                     weight: g.num("weight").unwrap_or(1.0),
                     icon: g.str("icon").map(str::to_string),
+                    portrait: g.str("portrait").map(str::to_string),
+                    portrait_frames: g.num("portrait_frames").map_or(1, |v| v.max(1.0) as u32),
                 }
             })
             .collect();
@@ -1334,6 +1356,7 @@ fn sections_core() -> Vec<super::schema::Field> {
             "maps",
             dict(Ty::Def(vec![
                 f("kind", Ty::Enum(&["fixed", "generated"]), "hand-made or generated"),
+                f("system_counts", Ty::Dict(Box::new(Ty::Num)), "generated: system counts and their weights"),
                 f(
                     "systems",
                     Ty::Either(
@@ -1378,6 +1401,8 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("color", Ty::Numbers(3), "star colour"),
                 f("weight", Ty::Num, "relative frequency"),
                 f("icon", Ty::Asset, "an image for the star on the map instead of a dot"),
+                f("portrait", Ty::Asset, "the system picture of a map's zoom level 2"),
+                f("portrait_frames", Ty::Num, "the portrait's animation frames (rows N, N+1, ...)"),
             ])),
             "star classes",
         ),

@@ -539,6 +539,9 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ("next_contact", n(c.next_contact as f64)),
         ("logistics", write_logistics(&c.logistics)),
         ("story", write_story(&c.story)),
+        ("history", seq(c.history.iter().map(|m| nums(&m.to_nums())).collect())),
+        ("this_month", nums(&c.this_month.to_nums())),
+        ("activity", seq(c.activity.iter().map(|a| nums(&[a[0] as f64, a[1] as f64])).collect())),
     ]);
     format!("# OpenInterceptor campaign save\n{}", doc.to_yaml())
 }
@@ -790,6 +793,16 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             .map(|m| Message { hour: f(Get(m), "hour"), text: Get(m).str("text").unwrap_or("").to_string() })
             .collect(),
         next_contact: f(g, "next_contact") as u32,
+        // The reports' history (since app NEXT; older saves have none).
+        history: list("history").iter().map(|m| MonthRecord::from_nums(&numbers(m))).collect(),
+        this_month: g.node("this_month").map(|m| MonthRecord::from_nums(&numbers(m))).unwrap_or_default(),
+        activity: list("activity")
+            .iter()
+            .map(|a| {
+                let v = numbers(a);
+                [v.first().copied().unwrap_or(0.0) as u32, v.get(1).copied().unwrap_or(0.0) as u32]
+            })
+            .collect(),
     })
 }
 
@@ -811,6 +824,9 @@ mod tests {
             c.advance(&d, 24.0);
         }
         c.pilots[0].state = PilotState::Injured(c.hours + 10.5);
+        // The reports' history and activity (app NEXT) are saved too.
+        assert!(!c.history.is_empty(), "40 days close a month");
+        c.count_activity(0, 1);
         // A wreck and a delivery waiting for room (app 0.19.0) are saved too.
         c.bases[0].modules[0].wrecked = true;
         c.deliveries.push(Delivery {

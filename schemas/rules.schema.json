@@ -670,7 +670,7 @@
           "clock": {"description": "whether the campaign clock runs while this screen is on top (default run)", "enum": ["run", "pause"]},
           "history": {"description": "on the first screen: how many screens Back remembers (the original: 29)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "widgets": {"description": "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
-                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info", "check", "anim"]},
+                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info", "check", "anim", "graph"]},
                   "rect": {"description": "x, y, w, h in the design space", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
                   "image": {"description": "its picture", "type": "string"},
                   "images": {"description": "a button's states", "type": "object", "additionalProperties": false, "properties": {
@@ -724,18 +724,25 @@
                   "style": {"description": "a list in a sheet font: compact = the original's list box", "enum": ["plain", "compact"]},
                   "columns": {"description": "a list's header template (text or @key): columns split at ~, # = editable", "type": "string"},
                   "bar": {"description": "compact: the pulsing selection bar's colour (default green)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
-                  "slots": {"description": "sockets (centres) where the rows with cells (craft) also show", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
+                  "slots": {"description": "sockets (centres) showing the selected craft's hard points", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
                   "slot_size": {"description": "a socket's clickable size (default 76 x 75)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
-                  "slot_font": {"description": "the sockets' sheet font", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "slot_icons": {"description": "a fitted item's icon by item kind", "type": "object", "additionalProperties": {"type": "string"}},
+                  "slot_unusable": {"description": "drawn on sockets past the hull's hard points", "type": "string"},
+                  "slot_selected": {"description": "the selected socket's overlay, at (+1, +1)", "type": "string"},
                   "up": {"description": "a list's scroll-up arrow", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
                         "rect": {"description": "x, y, w, h", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                        "pos": {"description": "top-left; sized by the first image", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                         "images": {"description": "normal, pressed, disabled", "type": "array", "items": {"type": "string"}}
                       }}]},
                   "down": {"description": "a list's scroll-down arrow", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
                         "rect": {"description": "x, y, w, h", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                        "pos": {"description": "top-left; sized by the first image", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                         "images": {"description": "normal, pressed, disabled", "type": "array", "items": {"type": "string"}}
                       }}]},
-                  "shape": {"description": "a map's viewport", "enum": ["rect", "round"]}
+                  "shape": {"description": "a map's viewport", "enum": ["rect", "round"]},
+                  "months": {"description": "a graph's month names, January first", "type": "array", "items": {"type": "string"}},
+                  "zoom_levels": {"description": "a map's fixed zoom levels, map units per design pixel", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+                  "legend": {"description": "an activity map's legend: none, 1-5, 6-15, 16+ a month", "type": "array", "items": {"type": "string"}}
                 }}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
@@ -1033,6 +1040,7 @@
       }},
     "maps": {"description": "star maps", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "kind": {"description": "hand-made or generated", "enum": ["fixed", "generated"]},
+          "system_counts": {"description": "generated: system counts and their weights", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "systems": {"description": "fixed: the systems; generated: [min, max] count", "anyOf": [{"type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
                   "name": {"description": "display name", "type": "string"},
                   "pos": {"description": "map position", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
@@ -1063,6 +1071,8 @@
           "color": {"description": "star colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
           "weight": {"description": "relative frequency", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "icon": {"description": "an image for the star on the map instead of a dot", "type": "string"},
+          "portrait": {"description": "the system picture of a map's zoom level 2", "type": "string"},
+          "portrait_frames": {"description": "the portrait's animation frames (rows N, N+1, ...)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

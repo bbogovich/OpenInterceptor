@@ -46,6 +46,9 @@ pub enum WidgetKind {
     Check,
     /// An animation: its `frames` in turn, one every `interval` ticks (RQ-UI-12).
     Anim,
+    /// A status report's line graph of a month-by-month `source` (`income`, `finance`,
+    /// `alien`, `xcom`), labels in `font` (D-27).
+    Graph,
 }
 
 /// How a map labels its objects (the original's CSD, `notes/re/unknowns-2026-11.md` §1.3):
@@ -198,6 +201,13 @@ pub struct WidgetDef {
     /// A `map`'s labels the original's way (`labels:`): only for objects near the
     /// cursor, upper-cased, in a sheet font, taking turns. `None`: every star's name.
     pub labels: Option<MapLabels>,
+    /// A `map`'s fixed zoom levels in map units per design pixel (the CSD's 45 and 30):
+    /// the wheel picks one, a click on a system with a portrait shows it (level 2).
+    pub zoom_levels: Vec<f32>,
+    /// A `graph`'s month names, January first (text keys allowed; default Jan … Dec).
+    pub months: Vec<String>,
+    /// An activity map's legend: none, 1 – 5, 6 – 15, 16+ a month (text keys allowed).
+    pub legend: Vec<String>,
     /// A label drawn on a button without images.
     pub label: Option<String>,
     /// Map: clipped to a circle.
@@ -236,12 +246,15 @@ pub struct ListStyle {
     /// The scroll arrows (one row per step, repeating while held).
     pub up: Option<Arrow>,
     pub down: Option<Arrow>,
-    /// Sockets on the art (centres) where the list's rows that have cells (the hangar's
-    /// craft) are also shown, name over second cell, in `slot_font` (D-30: Equip Ships'
-    /// ring of nine). Clicking one selects its row.
+    /// Sockets on the art (centres) showing the selected craft's hard points as icons
+    /// only (Equip Ships' ring of nine, `unknowns-2026-11.md` §13.2): the fitted item's
+    /// icon by item kind (`slot_icons`), `slot_unusable` on sockets past the hull's hard
+    /// points, `slot_selected` at (+1, +1) on the selected socket. A click selects one.
     pub slots: Vec<[f32; 2]>,
     pub slot_size: [f32; 2],
-    pub slot_font: Option<String>,
+    pub slot_icons: Vec<(String, String)>,
+    pub slot_unusable: Option<String>,
+    pub slot_selected: Option<String>,
 }
 
 /// A list's scroll arrow: where it is and its images (normal, pressed, disabled; any may
@@ -253,19 +266,29 @@ pub struct Arrow {
 }
 
 impl Arrow {
-    /// Parses `[x, y, w, h]` or `{rect, images: [normal, pressed, disabled]}`.
+    /// Parses `[x, y, w, h]`, `{rect, images: [normal, pressed, disabled]}` or
+    /// `{pos: [x, y], images}` (top-left at `pos`, sized by its first image: the rect's
+    /// width and height are 0 until drawn).
     fn parse(key: &str, n: &crate::formats::yaml::Node) -> Result<Arrow, String> {
         if let Some([x, y, w, h]) = numbers(n).as_deref() {
             return Ok(Arrow { rect: [*x, *y, *w, *h], images: Vec::new() });
         }
         let g = Get(n);
-        let rect = rect_of(&g, "rect")?.ok_or(format!("{key}: expected [x, y, w, h] or {{rect, images}}"))?;
+        if let Some(p) = g.node("pos") {
+            let images = g.list("images");
+            return match numbers(p).as_deref() {
+                Some([x, y]) if !images.is_empty() => Ok(Arrow { rect: [*x, *y, 0.0, 0.0], images }),
+                _ => Err(format!("{key}: pos needs [x, y] and images")),
+            };
+        }
+        let rect =
+            rect_of(&g, "rect")?.ok_or(format!("{key}: expected [x, y, w, h], {{rect, images}} or {{pos, images}}"))?;
         Ok(Arrow { rect, images: g.list("images") })
     }
 }
 
 /// The widget kinds by name.
-pub const WIDGET_KINDS: [(&str, WidgetKind); 9] = [
+pub const WIDGET_KINDS: [(&str, WidgetKind); 10] = [
     ("image", WidgetKind::Image),
     ("button", WidgetKind::Button),
     ("value", WidgetKind::Value),
@@ -275,6 +298,7 @@ pub const WIDGET_KINDS: [(&str, WidgetKind); 9] = [
     ("info", WidgetKind::Info),
     ("check", WidgetKind::Check),
     ("anim", WidgetKind::Anim),
+    ("graph", WidgetKind::Graph),
 ];
 
 impl WidgetDef {
@@ -282,7 +306,7 @@ impl WidgetDef {
     pub fn parse(name: &str, g: Get) -> Result<WidgetDef, String> {
         let kind_name = g.str("kind").unwrap_or("image");
         let kind = WIDGET_KINDS.iter().find(|(n, _)| *n == kind_name).map(|(_, k)| *k).ok_or(format!(
-            "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check, anim"
+            "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check, anim, graph"
         ))?;
         let point = |k: &str| -> Result<Option<[f32; 2]>, String> {
             match g.node(k) {
@@ -364,6 +388,9 @@ impl WidgetDef {
                 Some(v) => return Err(format!("interval: {v} is not a whole number of ticks (at least 1)")),
             },
             with_clock: g.bool("with_clock").unwrap_or(false),
+            months: g.list("months"),
+            zoom_levels: g.nums("zoom_levels").unwrap_or_default().into_iter().filter(|v| *v > 0.0).collect(),
+            legend: g.list("legend"),
             labels: match g.node("labels").map(Get) {
                 None => None,
                 Some(lg) => {
@@ -419,7 +446,13 @@ impl WidgetDef {
                     Some([w, h]) => [*w, *h],
                     _ => [76.0, 75.0],
                 },
-                slot_font: g.str("slot_font").map(str::to_string),
+                slot_icons: g
+                    .map("slot_icons")
+                    .iter()
+                    .filter_map(|(k, n)| n.as_str().map(|v| (k.clone(), v.to_string())))
+                    .collect(),
+                slot_unusable: g.str("slot_unusable").map(str::to_string),
+                slot_selected: g.str("slot_selected").map(str::to_string),
             },
             label: g.str("label").map(str::to_string),
             round: g.str("shape") == Some("round"),
@@ -573,7 +606,7 @@ pub fn schema() -> Ty {
             Ty::Dict(Box::new(Ty::Either(
                 Box::new(Ty::Numbers(4)),
                 Box::new(Ty::Struct(vec![
-                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check", "anim"]), "what it is"),
+                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check", "anim", "graph"]), "what it is"),
                     f("rect", Ty::Numbers(4), "x, y, w, h in the design space"),
                     f("image", Ty::Asset, "its picture"),
                     f(
@@ -639,15 +672,18 @@ pub fn schema() -> Ty {
                     f("style", Ty::Enum(&["plain", "compact"]), "a list in a sheet font: compact = the original's list box"),
                     f("columns", Ty::Text, "a list's header template (text or @key): columns split at ~, # = editable"),
                     f("bar", Ty::Numbers(3), "compact: the pulsing selection bar's colour (default green)"),
-                    f("slots", Ty::List(Box::new(Ty::Numbers(2))), "sockets (centres) where the rows with cells (craft) also show"),
+                    f("slots", Ty::List(Box::new(Ty::Numbers(2))), "sockets (centres) showing the selected craft's hard points"),
                     f("slot_size", Ty::Numbers(2), "a socket's clickable size (default 76 x 75)"),
-                    f("slot_font", Ty::Name, "the sockets' sheet font"),
+                    f("slot_icons", Ty::Dict(Box::new(Ty::Asset)), "a fitted item's icon by item kind"),
+                    f("slot_unusable", Ty::Asset, "drawn on sockets past the hull's hard points"),
+                    f("slot_selected", Ty::Asset, "the selected socket's overlay, at (+1, +1)"),
                     f(
                         "up",
                         Ty::Either(
                             Box::new(Ty::Numbers(4)),
                             Box::new(Ty::Struct(vec![
                                 f("rect", Ty::Numbers(4), "x, y, w, h"),
+                                f("pos", Ty::Numbers(2), "top-left; sized by the first image"),
                                 f("images", Ty::List(Box::new(Ty::Asset)), "normal, pressed, disabled"),
                             ])),
                         ),
@@ -659,12 +695,16 @@ pub fn schema() -> Ty {
                             Box::new(Ty::Numbers(4)),
                             Box::new(Ty::Struct(vec![
                                 f("rect", Ty::Numbers(4), "x, y, w, h"),
+                                f("pos", Ty::Numbers(2), "top-left; sized by the first image"),
                                 f("images", Ty::List(Box::new(Ty::Asset)), "normal, pressed, disabled"),
                             ])),
                         ),
                         "a list's scroll-down arrow",
                     ),
                     f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
+                    f("months", Ty::List(Box::new(Ty::Text)), "a graph's month names, January first"),
+                    f("zoom_levels", Ty::List(Box::new(Ty::Num)), "a map's fixed zoom levels, map units per design pixel"),
+                    f("legend", Ty::List(Box::new(Ty::Text)), "an activity map's legend: none, 1-5, 6-15, 16+ a month"),
                 ])),
             ))),
             "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)",

@@ -38,6 +38,7 @@ pub mod cutscene;
 pub mod devices;
 pub mod flight;
 pub mod floater;
+pub mod graph;
 pub mod history;
 pub mod launcher;
 pub mod listbox;
@@ -435,12 +436,14 @@ pub async fn run(options: Options) {
         }
         None if options.strategy => match strategy::StrategyScreen::new_campaign(&ctx) {
             // `--chapter n`: played forward to the story's chapter n (testbed).
-            Some(s) if options.chapter.is_some() => {
-                let def = ctx.content.rules.strategy.as_ref().expect("new_campaign found the strategy layer");
-                let c = crate::campaign::autoplay_to_chapter(def, s.campaign, options.chapter.unwrap_or(0), 1500.0);
-                Screen::Strategy(Box::new(strategy::StrategyScreen::from_campaign(c)))
-            }
             Some(mut s) => {
+                // `--chapter n`: played forward to the story's chapter n (testbed); the
+                // options below apply to the played-forward campaign too.
+                if options.chapter.is_some() {
+                    let def = ctx.content.rules.strategy.as_ref().expect("new_campaign found the strategy layer");
+                    let c = crate::campaign::autoplay_to_chapter(def, s.campaign, options.chapter.unwrap_or(0), 1500.0);
+                    s = strategy::StrategyScreen::from_campaign(c);
+                }
                 if let Some(id) = &options.screen {
                     s.open_screen(&ctx, id);
                 }
