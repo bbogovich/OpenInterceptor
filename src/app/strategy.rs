@@ -330,6 +330,8 @@ pub struct StrategyScreen {
     base_pics: (Vec<String>, u32),
     /// The view knob's shown frame (it turns towards its stop).
     knob_frame: f32,
+    /// The panels `hide(<panel>)` has hidden (`show` brings them back).
+    hidden_panels: Vec<String>,
     /// The selected hard-point socket (Equip Ships' ring).
     socket: usize,
     /// `--hover`: where the map's labels take the cursor to be (design space; testbed).
@@ -507,6 +509,7 @@ impl StrategyScreen {
             map_labels: None,
             hover: None,
             socket: 0,
+            hidden_panels: Vec::new(),
             levels: (Vec::new(), 1.0),
             level: 0,
             view_at: None,
@@ -2030,6 +2033,10 @@ impl StrategyScreen {
             // The control under the cursor that has hover help (screen, widget, rect).
             let mut hovered_tip: Option<(usize, usize, [f32; 4])> = None;
             for (wi, wd) in screen.items.iter().enumerate() {
+                // A hidden panel's widgets are neither drawn nor clicked.
+                if wd.panel.as_ref().is_some_and(|p| self.hidden_panels.contains(p)) {
+                    continue;
+                }
                 let r = layout.rect(wd.rect);
                 let size = wd.size * layout.scale;
                 let colour = wd.colour.map_or(ctx.ui.colour("text"), |c| Color::new(c[0], c[1], c[2], c[3]));
@@ -2269,7 +2276,7 @@ impl StrategyScreen {
                         }
                     }
                     WidgetKind::Map if wd.source.as_deref().is_some_and(|s| s.starts_with("activity_")) => {
-                        self.draw_activity_map(ctx, wd, r, &layout);
+                        self.draw_activity_map(ctx, def, wd, r, &layout);
                     }
                     WidgetKind::Map if wd.source.as_deref() == Some("minimap") => {
                         // The whole map, small, in its own (round) window: the view's
@@ -2393,6 +2400,12 @@ impl StrategyScreen {
                 next = Some(Next::Menu);
             }
             Some(UiAction::Testbed) => self.testbed = true,
+            Some(UiAction::Hide(p)) => {
+                if !self.hidden_panels.contains(&p) {
+                    self.hidden_panels.push(p);
+                }
+            }
+            Some(UiAction::Show(p)) => self.hidden_panels.retain(|x| *x != p),
             Some(UiAction::List(op)) => {
                 let rows = self.rows(def);
                 match op {
@@ -3058,18 +3071,23 @@ impl StrategyScreen {
         }
     }
 
-    /// The activity reports' map (D-27, §13.1): every system, coloured by its average
-    /// alien (`activity_alien`) or X-COM (`activity_xcom`) actions a month — none, 1 – 5,
-    /// 6 – 15, 16+ — with the `legend` beneath in `font`. The colours are DERIVED.
+    /// The activity reports' map (D-27, §13.1, §14.7): the 16 × 16 activity grid over the
+    /// galaxy, each cell tinted by its average alien (`activity_alien`) or X-COM
+    /// (`activity_xcom`) incursions a month — none, 1 – 5, 6 – 15, 16+ — with the systems as
+    /// dots in their cell's colour and the `legend` beneath in `font`. The colours and the
+    /// tint are DERIVED.
     fn draw_activity_map(
         &self,
         ctx: &AppContext,
+        def: &StrategyDef,
         wd: &crate::content::screens::WidgetDef,
         r: [f32; 4],
         layout: &crate::hud::Layout,
     ) {
         let c = &self.campaign;
-        let who = usize::from(wd.source.as_deref() == Some("activity_xcom"));
+        let who = u8::from(wd.source.as_deref() == Some("activity_xcom"));
+        let cells = c.activity_by_cell(who);
+        let size = crate::campaign::activity_cell_size(def, &c.systems);
         let months = c.history.len() + 1;
         let colours = [
             Color::from_rgba(70, 70, 70, 255),
@@ -3082,10 +3100,20 @@ impl StrategyScreen {
         let mr = [r[0], r[1], r[2], r[3] - legend_h];
         let pos: Vec<[f32; 2]> = c.systems.iter().map(|s| s.pos).collect();
         let (s, off) = map_transform(&pos, mr);
-        for (i, sys) in c.systems.iter().enumerate().filter(|(_, s)| !s.hidden) {
-            let total = c.activity.get(i).map_or(0, |a| a[who]);
+        let class_of = |cell: usize| graph::activity_class(cells[cell], months);
+        // The cells with activity, tinted.
+        let n = crate::campaign::ACTIVITY_GRID;
+        for cell in (0..n * n).filter(|&k| cells[k] > 0) {
+            let (cx, cy) = ((cell % n) as f32 * size, (cell / n) as f32 * size);
+            let p = vec2(off[0], off[1]) + vec2(cx, cy) * s;
+            let mut tint = colours[class_of(cell)];
+            tint.a = 0.35;
+            draw_rectangle(p.x, p.y, size * s, size * s, tint);
+        }
+        for sys in c.systems.iter().filter(|s| !s.hidden) {
+            let cell = crate::campaign::activity_cell(sys.pos, size) as usize;
             let p = vec2(off[0], off[1]) + vec2(sys.pos[0], sys.pos[1]) * s;
-            draw_circle(p.x, p.y, 2.5 * layout.scale, colours[graph::activity_class(total, months)]);
+            draw_circle(p.x, p.y, 2.0 * layout.scale, colours[class_of(cell)]);
         }
         let Some(sheet) = wd.font.as_deref().and_then(|f| ctx.ui.sheet(f)) else { return };
         if wd.legend.len() != 4 {
@@ -3124,7 +3152,7 @@ impl StrategyScreen {
         class_pic || base_pic
     }
 
-    /// The CSD's view knob (§14.5): its turning frames at `pos`, a lamp per stop, and a
+    /// The CSD's view knob (§14.5): its turning frames at `pos` over a lamp per stop, and a
     /// click within `reach` of a stop choosing that zoom level (the last stop: the
     /// selected system's picture, when it can be opened) with the widget's sound.
     fn draw_knob(
@@ -3169,7 +3197,9 @@ impl StrategyScreen {
             _ => [wd.rect[0], wd.rect[1]],
         };
         let frame = crate::content::skin::DialogStyle::row(&k.frames, self.knob_frame.round() as usize);
-        let mut images: Vec<(String, [f32; 2], bool)> = vec![(frame, pos, false)];
+        // The lamps first, each centred on its click point, then the knob frame on top
+        // (`0x4cda2d`, §14.5).
+        let mut images: Vec<(String, [f32; 2], bool)> = Vec::new();
         for i in 0..n {
             let lamp = if !available(i) {
                 k.unavailable.clone()
@@ -3182,6 +3212,7 @@ impl StrategyScreen {
                 images.push((l, k.stops[i], true));
             }
         }
+        images.push((frame, pos, false));
         for (img, at, centred) in images {
             let Some(tex) = self.image_keyed(ctx, &img, pack, img.starts_with("original:")) else { continue };
             let (w, h) = (tex.width(), tex.height());

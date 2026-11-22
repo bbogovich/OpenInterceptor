@@ -681,7 +681,7 @@
                       "sprite": {"description": "a sprite's base image (original:sprite#N): state k is row N+k", "type": "string"},
                       "states": {"description": "how many states the sprite has (1: nothing drawn when up)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
                     }},
-                  "action": {"description": "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed, list(prev|next|act)", "type": "string"},
+                  "action": {"description": "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed, list(prev|next|act), hide(<panel>), show(<panel>)", "type": "string"},
                   "value": {"description": "a value: date, time, money, score, base, speed, selection", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "source": {"description": "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "text": {"description": "fixed text (a text key)", "type": "string"},
@@ -741,6 +741,7 @@
                       }}]},
                   "shape": {"description": "a map's viewport", "enum": ["rect", "round"]},
                   "months": {"description": "a graph's month names, January first", "type": "array", "items": {"type": "string"}},
+                  "panel": {"description": "the panel the widget belongs to (hide(panel) / show(panel))", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "y_range": {"description": "a graph's fixed y range (default: fitted to the values)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                   "y_steps": {"description": "a graph's y grid steps (fixed: default 18; fitted: about 6)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "base_portraits": {"description": "a map's level-2 picture of a system with a base: x-com, enemy", "type": "array", "items": {"type": "string"}},

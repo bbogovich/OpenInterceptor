@@ -132,8 +132,12 @@ pub enum UiAction {
     Testbed,
     /// `list(prev)`, `list(next)`: moves the screen's list selection one row (the
     /// original's one-at-a-time panels, Bases' 401 / 402); `list(act)` runs the selected
-    /// row's first action (Bases' 400, accept and close).
+    /// row's first action.
     List(ListOp),
+    /// `hide(<panel>)`, `show(<panel>)`: hides or shows the widgets of a `panel` (Bases'
+    /// 400 closes its side panel).
+    Hide(String),
+    Show(String),
 }
 
 /// What `list(…)` does.
@@ -164,6 +168,8 @@ impl UiAction {
             "save" => Ok(UiAction::Save),
             "menu" => Ok(UiAction::Menu),
             "testbed" => Ok(UiAction::Testbed),
+            "hide" if !arg.is_empty() => Ok(UiAction::Hide(arg.to_string())),
+            "show" if !arg.is_empty() => Ok(UiAction::Show(arg.to_string())),
             "list" => match arg {
                 "prev" => Ok(UiAction::List(ListOp::Prev)),
                 "next" => Ok(UiAction::List(ListOp::Next)),
@@ -171,7 +177,7 @@ impl UiAction {
                 _ => Err(format!("list({arg}): expected list(prev), list(next) or list(act)")),
             },
             _ => Err(format!(
-                "'{s}' is not open(<screen>), menu(<screen>), replace(<screen>), back, speed(n), save, menu, testbed or list(prev|next|act)"
+                "'{s}' is not open(<screen>), menu(<screen>), replace(<screen>), back, speed(n), save, menu, testbed, list(prev|next|act), hide(<panel>) or show(<panel>)"
             )),
         }
     }
@@ -238,6 +244,8 @@ pub struct WidgetDef {
     /// A `map`'s labels the original's way (`labels:`): only for objects near the
     /// cursor, upper-cased, in a sheet font, taking turns. `None`: every star's name.
     pub labels: Option<MapLabels>,
+    /// The panel the widget belongs to (`panel:`): `hide(<panel>)` hides it.
+    pub panel: Option<String>,
     /// A `knob`'s frames, stops and lamps.
     pub knob: Option<KnobDef>,
     /// A `map`'s picture for an opened system with a base: `[x-com, enemy]` portraits
@@ -436,6 +444,7 @@ impl WidgetDef {
                 Some(v) => return Err(format!("interval: {v} is not a whole number of ticks (at least 1)")),
             },
             with_clock: g.bool("with_clock").unwrap_or(false),
+            panel: g.str("panel").map(str::to_string),
             months: g.list("months"),
             base_portraits: g.list("base_portraits"),
             y_range: match g.nums("y_range").as_deref() {
@@ -700,7 +709,7 @@ pub fn schema() -> Ty {
                     f(
                         "action",
                         Ty::Text,
-                        "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed, list(prev|next|act)",
+                        "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed, list(prev|next|act), hide(<panel>), show(<panel>)",
                     ),
                     f("value", Ty::Name, "a value: date, time, money, score, base, speed, selection"),
                     f("source", Ty::Name, "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages"),
@@ -779,6 +788,7 @@ pub fn schema() -> Ty {
                     ),
                     f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
                     f("months", Ty::List(Box::new(Ty::Text)), "a graph's month names, January first"),
+                    f("panel", Ty::Name, "the panel the widget belongs to (hide(panel) / show(panel))"),
                     f("y_range", Ty::Numbers(2), "a graph's fixed y range (default: fitted to the values)"),
                     f("y_steps", Ty::Num, "a graph's y grid steps (fixed: default 18; fitted: about 6)"),
                     f("base_portraits", Ty::List(Box::new(Ty::Asset)), "a map's level-2 picture of a system with a base: x-com, enemy"),
@@ -846,6 +856,7 @@ mod tests {
         assert_eq!(UiAction::parse("replace(csd)"), Ok(UiAction::Replace("csd".into())));
         assert_eq!(UiAction::parse("list(next)"), Ok(UiAction::List(ListOp::Next)));
         assert!(UiAction::parse("list(up)").is_err());
+        assert_eq!(UiAction::parse("hide(side)"), Ok(UiAction::Hide("side".into())));
         assert_eq!(UiAction::parse("menu"), Ok(UiAction::Menu));
         let ck = yaml::parse("clock: pause\nhistory: 29\nwidgets: {}").unwrap();
         let ckl = ScreenLayout::parse("bases", Get(&ck), l.clone(), &[], 0).unwrap();

@@ -276,8 +276,41 @@ pub struct Campaign {
     pub history: Vec<MonthRecord>,
     /// The month running now (folded into `history` at the month's end).
     pub this_month: MonthRecord,
-    /// Per system: `[alien, X-COM]` activity counts in all (the activity reports' map).
-    pub activity: Vec<[u32; 2]>,
+    /// The activity reports' counts (§14.7): per month, grid cell and side, how many alien
+    /// incursions (sightings the player was alerted to) or X-COM incursions (missions
+    /// launched) happened there. Only non-zero cells are kept.
+    pub activity: Vec<ActivityCell>,
+}
+
+/// The activity grid's size: 16 × 16 cells over the galaxy (the original's, 3,750 map units
+/// a cell on its 60,000-unit map; `unknowns-2026-11.md` §14.7).
+pub const ACTIVITY_GRID: usize = 16;
+
+/// One activity count: `count` events of side `who` (0 alien, 1 X-COM) in grid `cell`
+/// (row × 16 + column) during month `month` (an index into `history`; the running month
+/// is `history.len()`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ActivityCell {
+    pub month: u32,
+    pub cell: u16,
+    pub who: u8,
+    pub count: u32,
+}
+
+/// The activity grid's cell size for a map: its generated size (or the systems' extent)
+/// over 16 cells.
+pub fn activity_cell_size(def: &StrategyDef, systems: &[StarSystem]) -> f32 {
+    let extent = match &def.map.kind {
+        MapKind::Generated { size, .. } => size[0].max(size[1]),
+        MapKind::Fixed => systems.iter().map(|s| s.pos[0].max(s.pos[1])).fold(1.0, f32::max),
+    };
+    (extent / ACTIVITY_GRID as f32).max(1.0)
+}
+
+/// The grid cell (row × 16 + column) holding map point `p`, cells `size` units wide.
+pub fn activity_cell(p: [f32; 2], size: f32) -> u16 {
+    let at = |v: f32| ((v / size).floor().max(0.0) as usize).min(ACTIVITY_GRID - 1);
+    (at(p[1]) * ACTIVITY_GRID + at(p[0])) as u16
 }
 
 /// One month's figures, as the original's status reports chart them (StatusReports.cpp,
@@ -1293,7 +1326,6 @@ impl Campaign {
         }
         let target = c.pos;
         let mut sent = 0;
-        let target_sys = self.nearest_system(target);
         for &k in craft {
             if self.craft.get(k).is_some_and(|c| c.away.is_none())
                 && self.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready)
@@ -1301,8 +1333,10 @@ impl Campaign {
                 let home_sys = self.bases[self.craft[k].base].system;
                 let home = self.systems[home_sys].pos;
                 self.craft[k].away = Some((contact, home));
-                // X-COM activity, counted at the system nearest the contact.
-                self.count_activity(target_sys, 1);
+                // X-COM activity: one mission launched, at its launch point (§14.7).
+                if sent == 0 {
+                    self.count_activity(def, home, 1);
+                }
                 // On a lane map, along the lanes to the system nearest the contact.
                 if def.map.travel == Travel::Lanes {
                     let to = self.nearest_system(target);
@@ -1607,6 +1641,8 @@ impl Campaign {
                 .any(|b| distance(self.systems[self.bases[b].system].pos, pos) <= self.sensor_range(def, b))
             {
                 self.contacts[k].detected = true;
+                // Alien activity: a sighting the player is alerted to, at the fleet (§14.7).
+                self.count_activity(def, pos, 0);
                 let raid = &def.raids[self.contacts[k].raid];
                 let what = match self.contacts[k].target_base {
                     Some(b) => format!(", heading for {}", self.bases[b].name),
@@ -1781,24 +1817,31 @@ impl Campaign {
             Travel::Free => (pos, Vec::new()),
         };
         self.contacts.push(Contact { id, raid: r, pos, dest, target_base, detected: false, route, plan: None });
-        // Alien activity, counted at the system the contact heads for.
-        let sys = self.nearest_system(dest);
-        self.count_activity(sys, 0);
     }
 
-    /// Counts one alien (`who` 0) or X-COM (1) action this month and at system `sys`.
-    pub fn count_activity(&mut self, sys: usize, who: usize) {
+    /// Counts one alien (`who` 0) or X-COM (1) incursion this month in the grid cell at
+    /// map point `p` (§14.7), and in the month's totals.
+    pub fn count_activity(&mut self, def: &StrategyDef, p: [f32; 2], who: u8) {
         if who == 0 {
             self.this_month.alien += 1;
         } else {
             self.this_month.xcom += 1;
         }
-        if self.activity.len() < self.systems.len() {
-            self.activity.resize(self.systems.len(), [0, 0]);
+        let cell = activity_cell(p, activity_cell_size(def, &self.systems));
+        let month = self.history.len() as u32;
+        match self.activity.iter_mut().find(|a| a.month == month && a.cell == cell && a.who == who) {
+            Some(a) => a.count += 1,
+            None => self.activity.push(ActivityCell { month, cell, who, count: 1 }),
         }
-        if let Some(a) = self.activity.get_mut(sys) {
-            a[who] += 1;
+    }
+
+    /// The activity of side `who` in all months, per grid cell (16 × 16).
+    pub fn activity_by_cell(&self, who: u8) -> Vec<u32> {
+        let mut out = vec![0; ACTIVITY_GRID * ACTIVITY_GRID];
+        for a in self.activity.iter().filter(|a| a.who == who) {
+            out[a.cell as usize] += a.count;
         }
+        out
     }
 
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
@@ -2342,6 +2385,10 @@ mod tests {
         let r = MonthRecord { income: 5.0, spent: 3.0, maintenance: 2.0, balance: 9.0, score: -1.0, alien: 4, xcom: 2 };
         assert_eq!(MonthRecord::from_nums(&r.to_nums()), r);
         assert_eq!(MonthRecord::from_nums(&[1.0]).income, 1.0);
+        // The activity grid: 3,750-unit cells on a 60,000-unit map, row-major.
+        assert_eq!(activity_cell([0.0, 0.0], 3750.0), 0);
+        assert_eq!(activity_cell([3750.0, 7499.0], 3750.0), 16 + 1);
+        assert_eq!(activity_cell([70000.0, -5.0], 3750.0), 15, "clamped to the grid");
     }
 
     #[test]
