@@ -658,9 +658,11 @@ keyed image cache (`star_icons`). Tests: `app::maplabel::tests`, `content::conte
 
 ### Report graphs (`app::graph`)
 
-`graph::layout(rect, margin, values, lines)` places a status report's line graph in design
-pixels — the plot area, the grid lines with their values (a 1 / 2 / 5 step from `nice_step`), the
-last 16 months' x positions and the series' points — and `activity_class(total, months)` picks an
+`graph::layout(panel, axes, values)` places a status report's line graph in design pixels
+(`Axes`: the original's margins 60 / 30 / 15 / 40, 22 months, a `Scale::Fixed` range in
+whole-pixel steps or `Scale::Auto`) — the plot area, the grid lines with their values, the month
+columns' centres and the series' points; `graph::years` groups the months for the year
+brackets; `activity_class(total, months)` picks an
 activity map's colour class. `StrategyScreen::draw_graph` and `draw_activity_map` draw them from
 `Campaign::history` (`MonthRecord`s closed each month), `this_month` and `activity` (per system,
 `count_activity`), which the campaign layer fills and saves. Tests: `app::graph::tests`,

@@ -145,7 +145,8 @@ How a new campaign begins. **Without `start:` the campaign has no strategy layer
 | `names` | list of text | none | Generated: system names to draw from (then numbered). An entry `original:<file>/<section>` (app 0.22.17) stands for the lines of `[section]` in a text file of the player's data — `interceptor` uses `original:starcorp1.txt/STAR NAMES`, the original's 101 star names. A missing file or section is a load warning. |
 | `system_counts` | map of count → weight | none | Generated: the system count rolled from this table instead of `systems` (app 0.22.21). `interceptor`: `{65: 11, 70: 10, 75: 70, 80: 9}`, the original's roll (**verified**, `unknowns-2026-11.md` §13.5). |
 | `seed` | number | the campaign's | Generated: a fixed seed, so every campaign gets the same map. |
-| `black_holes` | number | 1 | Generated: how many systems are hidden black holes. |
+| `black_holes` | number or `[min, max]` | 1 | Generated: how many systems are hidden black holes. |
+| `black_hole_spacing` | number | 0 | Generated: with a spacing (app NEXT), the black holes are `black_holes` (rolled in its range) existing systems picked at random, each at least this far from the others; without, the last systems become them. `interceptor`: `[4, 5]` and 7,500 (1.25 ly), the original's (**verified**, §14.6). |
 | `unit_ly` | number | 0.001 | Light years per map unit (display only). |
 
 Fixed-map systems also take `bodies` (a list of planets, moons and belts; descriptive) and, for
@@ -163,8 +164,9 @@ system of that class, animated through rows N … N + frames − 1.
 Since app 0.22.21 `interceptor` has the original's nine classes (red giant, blue giant, white
 dwarf, blue, white, yellow, orange, red dwarf, black hole) weighted by its class roll (**verified**,
 §13.5; black holes weigh 0 and are placed by `black_holes`), each with its CSD icon and a
-portrait: five 20-frame star pictures in rows 454 – 553 (yellow 454, orange 474, red 494, blue 514,
-white 534; which class takes which is **derived**). Planets per system (2 – 5 by a per-class
+portrait: five 20-frame star pictures (**verified** since app NEXT, §14.4): 454 yellow, 474
+orange, 494 red giant and red dwarf, 514 blue giant and blue, 534 white dwarf and white; black
+holes have none. Planets per system (2 – 5 by a per-class
 table) are not generated.
 
 ### `research` and `research_model`
