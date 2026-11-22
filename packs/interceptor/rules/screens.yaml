@@ -22,7 +22,10 @@ screens:
       # Labels as the original's (VERIFIED, notes/re/unknowns-2026-11.md §1.3): only for the
       # objects in a 30 px box around the cursor, upper-cased, in the 6 px font, centred 20 px
       # above a star (8 above a base), kept 3 px inside the circle, taking turns every second.
-      map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}}
+      # Zoom levels 0 and 1: 45 and 30 map units a pixel (VERIFIED, §1.1); the wheel steps
+      # between them in place of the view knob (whose control is not placed yet). A click on
+      # a system shows its star-class picture (level 2, §13.4; centred, DERIVED).
+      map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}, zoom_levels: [45, 30]}
       minimap: {kind: map, source: minimap, shape: round, rect: [502, 43, 94, 94], tip: "@orig.S_CSD_MINIMAP"}
       # The four green readouts (VERIFIED, Interceptor.exe 0x43fb0f): font 23010, centred
       # on x 561 at y 370/390/410/430 (glyph tops 363/383/403/423); the time monospaced.
@@ -77,7 +80,11 @@ screens:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
       # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
       # row and its actions at the pane's foot (placement in the pane DERIVED).
-      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18]}
+      # The module scroll buttons, ids 400 / 401 at (484, 247) and (580, 247), sprite rows
+      # 1381 / 1379 (VERIFIED, unknowns-2026-11.md §13.3; the pressed row N + 1 is DERIVED).
+      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18],
+                up: {pos: [484, 247], images: ["original:sprite#1381", "original:sprite#1382", "original:sprite#1381"]},
+                down: {pos: [580, 247], images: ["original:sprite#1379", "original:sprite#1380", "original:sprite#1379"]}}
       # The side buttons 204/206/208 (VERIFIED): SpriteButtonTL with their top-left at
       # these points, two states (rows 1345/1347/1349: up, then pressed).
       purchase: {kind: button, pos: [504, 361], images: {sprite: "original:sprite#1345", states: 2}, action: open(purchase), sound: ui_beep22}
@@ -101,11 +108,13 @@ screens:
       # is not recovered). Cells: ship, pilot, base and state. Arrows 204/205 top-left
       # (518,413)/(518,434), sprites 60/63: 27500/27501, 27503/27504, disabled 27502/27505
       # (VERIFIED).
-      # The ring's nine sockets (centres VERIFIED, 0x535566; what they show DERIVED: the
-      # craft's name and pilot in the 6 px font).
+      # The ring's nine sockets (centres VERIFIED, 0x535566): the selected ship's hard points
+      # as icons only (VERIFIED, unknowns-2026-11.md §13.2) - row 1237 where the hull has no
+      # hard point, the selection overlay 1235 at (+1, +1). The fitted items' icons come from
+      # a table by item kind (0x690990) whose rows are not read yet: no slot_icons.
       ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, style: compact, columns: "@orig.S_CSD_CHOOSESHIPTAB",
               slots: [[117, 336], [65, 265], [64, 178], [115, 107], [198, 79], [282, 106], [334, 177], [334, 265], [283, 336]],
-              slot_font: caption,
+              slot_unusable: "original:sprite#1237", slot_selected: "original:sprite#1235",
               detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20],
               up: {rect: [518, 413, 24, 24], images: ["original:SpritesDLL.dll#27500", "original:SpritesDLL.dll#27501", "original:SpritesDLL.dll#27502"]},
               down: {rect: [518, 434, 24, 24], images: ["original:SpritesDLL.dll#27503", "original:SpritesDLL.dll#27504", "original:SpritesDLL.dll#27505"]}}
@@ -189,7 +198,10 @@ screens:
     background: original:WrappersDLL.dll#6330
     widgets:
       # The stats view [26,60,371,390] (VERIFIED): rows, then the selected row and its actions.
-      stats: {kind: list, source: bases, rect: [32, 64, 334, 256], font: body, style: compact, detail: [32, 324, 334, 42], buttons: [32, 368, 334, 20]}
+      # Arrows 401 / 400 at (list right + 8, list top + 65) and (list right + 8, list bottom
+      # - 20) (VERIFIED, §13.3); their size, 24 x 24 hot spots over the art, is DERIVED.
+      stats: {kind: list, source: bases, rect: [32, 64, 334, 256], font: body, style: compact, detail: [32, 324, 334, 42], buttons: [32, 368, 334, 20],
+              up: [374, 129, 24, 24], down: [374, 300, 24, 24]}
       # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
       # DERIVED from the art); it goes back (the history, RQ-UI-15).
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -201,24 +213,34 @@ screens:
     background: original:WrappersDLL.dll#5107
     widgets:
       # Topics ListBox [346,105,596,275] and the article ListBox [95,325,592,446] (VERIFIED).
-      topics: {kind: list, source: databank, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121]}
+      # The topic list's scroll anchor (616, 222) (VERIFIED, §13.3): its upper and lower
+      # halves scroll up and down (24 x 48 around the anchor, DERIVED). The article text's
+      # anchor (616, 386) is not built: the article box does not scroll yet.
+      topics: {kind: list, source: databank, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121],
+               up: [604, 198, 24, 24], down: [604, 222, 24, 24]}
       # The exit, control 106 (VERIFIED, 0x530d66): a 23x23 sprite button (rows 4/5,
       # WrappersDLL 4000/4001) centred at (619, 466); it goes back.
       back: {kind: button, centre: [619, 466], images: {sprite: "original:sprite#4", states: 2}, action: back}
 
   # 32-37: the status reports.
-  # 32-37: the six status reports (VERIFIED: their screens, the report area [24,58,568,447],
-  # next 102 at (620, 282) and previous 104 at (617, 365), sprite rows 69 / 66). The
-  # contents are the engine's (DERIVED: income = the monthly reports, finance = funds and
-  # this month's costs, alien = contacts and raids, X-COM = battles, craft, pilots,
-  # outposts = the bases, player = score and standing). Next / previous cycle through them.
-  reports:   # Income (screen 32)
+  # 32-37: the six status reports (StatusReports.cpp, unknowns-2026-11.md §13.1). VERIFIED:
+  # the screens, the report area [24,58,568,447], next 102 at (620, 282) and previous 104 at
+  # (617, 365) (sprite rows 69 / 66); each report is a title and a 1 px line graph (grid
+  # RGB(0,50,0), ticks and axes RGB(0,100,0), up to 16 month labels and values in the 6 px
+  # font RGB(0,200,0)); finance's five rows pick its series and it draws LOW / HIGH lines;
+  # the activity reports add a system map coloured by activity (none / 1-5 / 6-15 / 16+);
+  # the outpost report a six-column table and a small map; player status a pilot/skill list.
+  # DERIVED: every position and size below, the activity colours, the series line's colour,
+  # the table's columns, and the player status title (no text key found).
+  reports:   # Income (32)
     design: [640, 480]
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: report_income, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
-               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      title: {kind: text, text: "@orig.INCOMEREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
+      graph_title: {kind: text, text: "@orig.INCOMEREPORT_GRAPHTITLE", rect: [40, 90, 520, 10], font: caption, at: [296, 94], align: centre}
+      graph: {kind: graph, source: income, rect: [40, 104, 512, 170], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      report: {kind: list, source: report_income, rect: [40, 300, 512, 120], font: body, style: compact, detail: [40, 424, 512, 18]}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_finance)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_player)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -228,8 +250,10 @@ screens:
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: report_finance, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
-               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      title: {kind: text, text: "@orig.FINANCEREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
+      graph: {kind: graph, source: finance, rect: [40, 96, 512, 178], font: caption, legend: ["@orig.S_FINANCEREPORT_LOW", "@orig.S_FINANCEREPORT_HIGH"], months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      # The five rows pick the graph's series: income, expenditure, maintenance, balance, score.
+      report: {kind: list, source: report_finance, rect: [40, 300, 512, 90], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_alien)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(reports)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -239,8 +263,11 @@ screens:
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: report_alien, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
-               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      title: {kind: text, text: "@orig.ALIENREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
+      graph_title: {kind: text, text: "@orig.ALIENREPORT_GRAPHTITLE", rect: [40, 90, 300, 10], font: caption, at: [190, 94], align: centre}
+      graph: {kind: graph, source: alien, rect: [40, 104, 300, 170], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      activity: {kind: map, source: activity_alien, rect: [356, 90, 200, 250], font: caption, legend: ["@orig.S_AR_ALIEN_NOACTIV", "@orig.S_AR_ALIEN_1TO5", "@orig.S_AR_ALIEN_6TO15", "@orig.S_AR_ALIEN_16"]}
+      report: {kind: list, source: report_alien, rect: [40, 300, 300, 120], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_xcom)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_finance)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -250,8 +277,11 @@ screens:
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: report_xcom, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
-               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      title: {kind: text, text: "@orig.XCOMREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
+      graph_title: {kind: text, text: "@orig.XCOMREPORT_GRAPHTITLE", rect: [40, 90, 300, 10], font: caption, at: [190, 94], align: centre}
+      graph: {kind: graph, source: xcom, rect: [40, 104, 300, 170], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      activity: {kind: map, source: activity_xcom, rect: [356, 90, 200, 250], font: caption, legend: ["@orig.S_AR_XCOM_NOACTIV", "@orig.S_AR_XCOM_1TO5", "@orig.S_AR_XCOM_6TO15", "@orig.S_AR_XCOM_16"]}
+      report: {kind: list, source: report_xcom, rect: [40, 300, 300, 120], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_outpost)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_alien)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -261,8 +291,10 @@ screens:
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: report_outpost, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
-               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      title: {kind: text, text: "@orig.S_OUTPOSTREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
+      report: {kind: list, source: report_outpost, rect: [40, 96, 400, 330], font: body, style: compact, header: 18, title_font: readout,
+               columns: "OUTPOST            ~SYSTEM        ~MODULES ~WORKING ~HULL  ~STATE"}
+      map: {kind: map, source: minimap, rect: [448, 110, 110, 110]}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_player)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_xcom)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -272,8 +304,8 @@ screens:
     clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: report_player, rect: [28, 62, 534, 326], font: body, style: compact, header: 18, title_font: readout,
-               detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      title: {kind: text, text: "PLAYER STATUS", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
+      report: {kind: list, source: report_player, rect: [40, 96, 512, 330], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(reports)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_outpost)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}

@@ -39,21 +39,31 @@ maps:
   frontier:
     kind: generated
     size: [60000, 60000]      # the executable's MAX_GRIDRANGE
-    systems: [30, 45]         # DERIVED (the executable allows up to 85)
-    black_holes: 1            # the gateway, hidden until found
+    # The count rolled as the original does (VERIFIED, unknowns-2026-11.md §13.5: rand % 100
+    # <= 10 -> 65, <= 20 -> 70, <= 90 -> 75, else 80).
+    system_counts: {65: 11, 70: 10, 75: 70, 80: 9}
+    black_holes: 1            # the gateway, hidden until found (how many the original places is not read)
     names: ["original:starcorp1.txt/STAR NAMES"]   # the original's star names (Text/starcorp1.txt)
     travel: free
     unit_ly: 0.000167
 
-# Icons: the CSD's level-0 star-class icons, 9 x 9 (sprite rows 893-901, VERIFIED -
-# notes/re/unknowns-2026-11.md §1.2); which of the original's nine classes stands for each
-# of these is DERIVED (red = Red Dwarf, white = White, blue = Blue).
+# The original's nine star classes (VERIFIED, unknowns-2026-11.md §13.5): weights from its
+# class roll (rand % 100: <= 2 Red Giant, <= 6 Blue Giant, <= 10 Black Hole, <= 13 White
+# Dwarf, <= 24 Blue, <= 35 White, <= 70 Yellow, <= 85 Orange, else Red Dwarf); a black-hole
+# roll is re-drawn, so black holes weigh 0 here and are placed by black_holes. Icons: the
+# CSD's level-0 class icons, 9 x 9 (sprite rows 893-901, §1.2). Portraits (the CSD's level
+# 2): rows 454-553 hold five 20-frame star pictures - yellow 454, orange 474, red 494, blue
+# 514, white 534 (OBSERVED from the rows; which class takes which, giants and dwarfs
+# sharing their colour's, is DERIVED). Colours (the dot when an icon is missing) are DERIVED.
 star_classes:
-  yellow: {color: [1.0, 0.92, 0.55], weight: 3, icon: "original:sprite#897"}
-  orange: {color: [1.0, 0.7, 0.35], weight: 3, icon: "original:sprite#898"}
-  red: {color: [1.0, 0.45, 0.35], weight: 4, icon: "original:sprite#900"}
-  white: {color: [0.95, 0.95, 1.0], weight: 2, icon: "original:sprite#894"}
-  blue: {color: [0.55, 0.7, 1.0], weight: 1, icon: "original:sprite#895"}
+  red_giant: {color: [1.0, 0.4, 0.3], weight: 3, icon: "original:sprite#899", portrait: "original:sprite#494", portrait_frames: 20}
+  blue_giant: {color: [0.5, 0.65, 1.0], weight: 4, icon: "original:sprite#896", portrait: "original:sprite#514", portrait_frames: 20}
+  white_dwarf: {color: [0.9, 0.9, 1.0], weight: 3, icon: "original:sprite#893", portrait: "original:sprite#534", portrait_frames: 20}
+  blue: {color: [0.55, 0.7, 1.0], weight: 11, icon: "original:sprite#895", portrait: "original:sprite#514", portrait_frames: 20}
+  white: {color: [0.95, 0.95, 1.0], weight: 11, icon: "original:sprite#894", portrait: "original:sprite#534", portrait_frames: 20}
+  yellow: {color: [1.0, 0.92, 0.55], weight: 35, icon: "original:sprite#897", portrait: "original:sprite#454", portrait_frames: 20}
+  orange: {color: [1.0, 0.7, 0.35], weight: 15, icon: "original:sprite#898", portrait: "original:sprite#474", portrait_frames: 20}
+  red_dwarf: {color: [1.0, 0.45, 0.35], weight: 14, icon: "original:sprite#900", portrait: "original:sprite#494", portrait_frames: 20}
   black_hole: {color: [0.5, 0.2, 0.7], weight: 0, icon: "original:sprite#901"}
 
 # Research is downloaded from Earth through each base's downlinks (30/35/40 work units an

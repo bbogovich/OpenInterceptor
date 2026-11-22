@@ -55,25 +55,34 @@ pub fn base_size(caption_w: i32, body_w: i32, lh: i32) -> (i32, i32) {
     }
 }
 
-/// Splits button widths into rows: a row breaks when it would pass `limit` (the box's
-/// width − 70), buttons 10 px apart, at most 4 rows. Row 0 is the first (bottom) row.
+/// Splits button widths into rows as the exe does (§4.9): buttons go to rows in order, row
+/// 0 is the bottom row, and a new row starts when the running sum of (width + 10) passes
+/// `limit` (the box's width − 70). A full-width button (`limit` wide) therefore sits alone.
+/// At most 4 rows.
 pub fn button_rows(widths: &[i32], limit: i32) -> Vec<Vec<usize>> {
     let mut rows: Vec<Vec<usize>> = vec![Vec::new()];
-    let mut w = 0;
+    let mut sum = 0;
     for (i, bw) in widths.iter().enumerate() {
+        sum += bw + 10;
         let empty = rows.last().is_some_and(|r| r.is_empty());
-        let add = if empty { *bw } else { bw + 10 };
-        if w + add > limit && !empty && rows.len() < 4 {
+        if sum > limit && !empty && rows.len() < 4 {
             rows.push(Vec::new());
-            w = *bw;
-        } else {
-            w += add;
+            sum = bw + 10;
         }
         if let Some(r) = rows.last_mut() {
             r.push(i);
         }
     }
     rows
+}
+
+/// A button label's full-width flag: the exe's `~` before the label key (research
+/// complete's "(~S_ALLOCATERESEARCH)"). Returns the label without it.
+pub fn full_width(label: &str) -> (&str, bool) {
+    match label.strip_prefix('~') {
+        Some(rest) => (rest, true),
+        None => (label, false),
+    }
 }
 
 /// A button's width for a caption `text_w` wide.
@@ -128,21 +137,33 @@ pub fn layout(
     body_w: i32,
     lh: i32,
     button_text_w: &[i32],
+    full: &[bool],
 ) -> (MsgBox, KitChoice) {
-    // 1. Content size and the buttons.
+    let is_full = |i: usize| full.get(i).copied().unwrap_or(false);
+    // 1. Content size and the buttons. The one-row sum is Σ(width + 10) over the normal
+    // buttons; past 465 the width is "set to fit": sum − 100 reproduces the RE's worked
+    // example (550 → 450; DERIVED from that one example).
     let (mut w, h) = base_size(caption_w, body_w, lh);
-    let widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
-    let one_row: i32 = widths.iter().sum::<i32>() + 10 * (widths.len() as i32 - 1).max(0);
+    let mut widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
+    let one_row: i32 = (0..widths.len()).filter(|i| !is_full(*i)).map(|i| widths[i] + 10).sum();
     if one_row > 465 {
-        w = w.max(465);
+        w = one_row - 100;
     } else if w < one_row {
         w = one_row - 40;
     }
-    // 2-3. Centred on (320, 240), the style kit's side edges added and re-centred.
+    // 2-3. Centred on (320, 240), the style kit's side edges added, re-centred and pushed
+    // on screen. (The style's change and the bands come after the push, so the final box
+    // may overhang the screen, as in the exe.)
     let w = w + own[2][0] + own[3][0];
-    let (mut l, mut t) = (320 - w / 2, 240 - h / 2);
+    let (mut l, mut t) = ((320 - w / 2).clamp(0, (640 - w).max(0)), (240 - h / 2).clamp(0, (480 - h).max(0)));
     let (mut r, mut b) = (l + w, t + h);
-    // 4. Rows (row 0 at the bottom), breaking past the box's width − 70.
+    // 4. Rows (row 0 at the bottom), breaking past the box's width − 70; full-width
+    // buttons are that wide.
+    for (i, bw) in widths.iter_mut().enumerate() {
+        if is_full(i) {
+            *bw = w - 70;
+        }
+    }
     let rows = if widths.is_empty() { Vec::new() } else { button_rows(&widths, w - 70) };
     let n = rows.len();
     let choice = kit_choice(style, n);
@@ -173,12 +194,6 @@ pub fn layout(
         let inner = (b - t - caps).max(0);
         t = b - (caps + (inner + tile - 1) / tile * tile);
     }
-    // Back on the screen.
-    let (fw, fh) = (r - l, b - t);
-    let fx = l.clamp(0, (640 - fw).max(0));
-    let fy = t.clamp(0, (480 - fh).max(0));
-    let (dx, dy) = (fx - l, fy - t);
-    let (l, t, r, b) = (l + dx, t + dy, r + dx, b + dy);
     let frame = [l, t, r - l, b - t];
     // 7. The text rect: the final kit's insets (fixed for the style kits; else each edge + 3).
     let ins = match (choice, insets(style)) {
@@ -213,7 +228,8 @@ pub fn layout(
                 buttons[row[1]] = [rl, y, rr - rl, 14];
             }
             _ => {
-                // Three or more in a row: centred, 10 px apart (not described; DERIVED).
+                // Three or more in a row: the exe leaves them unplaced (§4.9, no such
+                // dialog in the game); the engine centres them 10 px apart (DEV-089).
                 let rw: i32 = row.iter().map(|i| widths[*i]).sum::<i32>() + 10 * (row.len() as i32 - 1);
                 let mut x = cx - rw / 2;
                 for i in row {
@@ -315,7 +331,7 @@ mod tests {
         let style1: Kit = [[10, 73], [10, 73], [82, 16], [82, 16], [82, 73], [82, 73], [82, 73], [82, 73]];
         let k242: Kit = [[32, 64], [32, 75], [60, 32], [60, 32], [60, 64], [60, 64], [60, 90], [60, 90]];
         let k250: Kit = [[32, 64], [32, 118], [60, 32], [60, 32], [60, 64], [60, 64], [60, 130], [60, 130]];
-        let (m, choice) = layout(1, &style1, &k242, &k250, 30, 36, 14, &[20]);
+        let (m, choice) = layout(1, &style1, &k242, &k250, 30, 36, 14, &[20], &[]);
         assert_eq!(choice, KitChoice::Own);
         // (56, 97, 595, 363): 539 x 266.
         assert_eq!(m.frame, [56, 97, 539, 266]);
@@ -323,6 +339,18 @@ mod tests {
         assert_eq!(m.client, [92, 147, 459, 171]);
         // The button row's top: 363 - 25 - 7 = 331, the button centred.
         assert_eq!(m.buttons, vec![[275, 331, 100, 14]]);
+        // The RE's two-row example (§4.9): five 100 px buttons. Content 450 wide, side
+        // edges, break at 544 (four in row 0, one in row 1), kit 242, the style's change
+        // after the push (overhanging at -7), bands 64 / 75.
+        let (m, choice) = layout(1, &style1, &k242, &k250, 30, 36, 14, &[20; 5], &[]);
+        assert_eq!(choice, KitChoice::TwoRows);
+        assert_eq!(m.frame, [-7, 106, 664, 259], "(-7, 106, 657, 365)");
+        assert_eq!(m.buttons[0][1], 328, "row 0's top");
+        assert_eq!(m.buttons[4][1], 311, "row 1's top");
+        // A `~` button takes its row alone.
+        let (m, _) = layout(1, &style1, &k242, &k250, 30, 36, 14, &[20, 20], &[true, false]);
+        assert_eq!((m.buttons[0][2], m.buttons[0][1] > m.buttons[1][1]), (489 - 70, true));
+        assert_eq!(full_width("~View"), ("View", true));
     }
 
     use super::*;
@@ -343,7 +371,8 @@ mod tests {
     #[test]
     fn buttons_break_rows_at_the_box_width_less_70() {
         assert_eq!((button_width(30), button_width(120)), (100, 140));
-        assert_eq!(button_rows(&[100, 100, 100], 345), vec![vec![0, 1, 2]], "320 fits in 345");
+        assert_eq!(button_rows(&[100, 100, 100], 345), vec![vec![0, 1, 2]], "330 fits in 345");
+        assert_eq!(button_rows(&[100; 5], 544), vec![vec![0, 1, 2, 3], vec![4]], "550 passes 544");
         assert_eq!(button_rows(&[200, 200, 200], 345), vec![vec![0], vec![1], vec![2]]);
         assert_eq!(button_rows(&[100; 9], 120).len(), 4, "never more than 4 rows");
         assert_eq!(
@@ -356,14 +385,14 @@ mod tests {
     fn the_rows_sit_on_the_final_box_bottom_by_style() {
         let k = kit();
         // One row, style 1: bottom − 32; style 0: bottom − 25; style 2: − 33.
-        let (one, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20]);
+        let (one, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20], &[]);
         assert_eq!(one.buttons[0][1], one.frame[1] + one.frame[3] - 32);
-        let (zero, c0) = layout(0, &k, &k, &k, 0, 0, 14, &[20]);
+        let (zero, c0) = layout(0, &k, &k, &k, 0, 0, 14, &[20], &[]);
         assert_eq!((zero.buttons[0][1], c0), (zero.frame[1] + zero.frame[3] - 25, KitChoice::TwoRows));
-        let (two_style, _) = layout(2, &k, &k, &k, 0, 0, 14, &[20]);
+        let (two_style, _) = layout(2, &k, &k, &k, 0, 0, 14, &[20], &[]);
         assert_eq!(two_style.buttons[0][1], two_style.frame[1] + two_style.frame[3] - 33);
         // Two rows, style 3: row 0 at bottom − 25 − 7 − 5, row 1 17 px higher; kit 242.
-        let (rows, c) = layout(3, &k, &k, &k, 0, 0, 14, &[300, 300]);
+        let (rows, c) = layout(3, &k, &k, &k, 0, 0, 14, &[300, 300], &[]);
         let bottom = rows.frame[1] + rows.frame[3];
         assert_eq!((rows.buttons[0][1], rows.buttons[1][1], c), (bottom - 37, bottom - 54, KitChoice::TwoRows));
     }
@@ -371,12 +400,12 @@ mod tests {
     #[test]
     fn styles_change_the_box_and_two_buttons_stretch_to_their_offsets() {
         let k = kit();
-        let (one, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20]);
+        let (one, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20], &[]);
         // 325 + the side edges (20) + style 1's 20 + 30; the top 20 higher plus the top band.
         assert_eq!(one.frame[2], 325 + 20 + 50);
         assert_eq!(one.frame[3], 100 + 20 + 10 + 10);
         assert_eq!(one.client, [one.frame[0] + 36, one.frame[1] + 50, one.frame[2] - 80, one.frame[3] - 95]);
-        let (two, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20, 20]);
+        let (two, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20, 20], &[]);
         let (l, r) = (two.frame[0], two.frame[0] + two.frame[2]);
         let cx = l + two.frame[2] / 2;
         assert_eq!(
@@ -385,7 +414,7 @@ mod tests {
             "style 1: inner edge pulled in by 5"
         );
         assert_eq!((two.buttons[1][0], two.buttons[1][0] + two.buttons[1][2]), (cx + 6, r - 60));
-        let (o, _) = layout(3, &k, &k, &k, 0, 0, 14, &[20, 20]);
+        let (o, _) = layout(3, &k, &k, &k, 0, 0, 14, &[20, 20], &[]);
         assert_eq!(o.buttons[0][0], o.frame[0] + 20);
         // Styles 2 and 3: whole side tiles between the caps (the top moves up).
         let (t3, _) = layout(
@@ -397,6 +426,7 @@ mod tests {
             0,
             14,
             &[20],
+            &[],
         );
         assert_eq!((t3.frame[3] - 60) % 22, 0);
     }

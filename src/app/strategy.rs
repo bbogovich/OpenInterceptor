@@ -30,6 +30,7 @@
 use super::button;
 use super::caption;
 use super::floater;
+use super::graph;
 use super::history::History;
 use super::listbox;
 use super::maplabel;
@@ -318,6 +319,15 @@ pub struct StrategyScreen {
     /// The map's labels the original's way (`labels:`), and the screen's layout they are
     /// placed in; `None`: every star's name.
     map_labels: Option<(crate::content::screens::MapLabels, crate::hud::Layout)>,
+    /// The map's fixed zoom levels this frame (`zoom_levels`, units per design pixel) and
+    /// the layout scale they are drawn at; empty: free zoom.
+    levels: (Vec<f32>, f32),
+    /// The zoom level shown: an index into `levels`, or `levels.len()` for a system's
+    /// picture (the CSD's level 2), and the map point the fixed levels centre on.
+    level: usize,
+    view_at: Option<[f32; 2]>,
+    /// The selected hard-point socket (Equip Ships' ring).
+    socket: usize,
     /// `--hover`: where the map's labels take the cursor to be (design space; testbed).
     pub hover: Option<[f32; 2]>,
     /// The map is the small overview (no names, no legend).
@@ -492,6 +502,10 @@ impl StrategyScreen {
             map_round: false,
             map_labels: None,
             hover: None,
+            socket: 0,
+            levels: (Vec::new(), 1.0),
+            level: 0,
+            view_at: None,
             minimap: false,
             base: 0,
             system: None,
@@ -1432,9 +1446,19 @@ impl StrategyScreen {
 
     /// The map transform: map units → screen, for the map rectangle `r`, with zoom and pan.
     fn map_view(&self, r: [f32; 4]) -> (f32, Vec2) {
+        let centre = vec2(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
+        // Fixed levels: a set scale, centred on `view_at` (default the first base's
+        // system), then panned.
+        if let Some(units) = self.levels.0.get(self.level.min(self.levels.0.len().saturating_sub(1))) {
+            let s = self.levels.1 / units;
+            let at = self.view_at.unwrap_or_else(|| {
+                let c = &self.campaign;
+                c.bases.first().map_or([0.0, 0.0], |b| c.systems[b.system].pos)
+            });
+            return (s, centre - vec2(at[0], at[1]) * s - self.pan * s);
+        }
         let pos: Vec<[f32; 2]> = self.campaign.systems.iter().map(|s| s.pos).collect();
         let (scale, off) = map_transform(&pos, r);
-        let centre = vec2(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
         // Zoom about the rectangle's centre, then pan (in map units).
         let s = scale * self.zoom;
         let origin = centre + (vec2(off[0], off[1]) - centre) * self.zoom - self.pan * s;
@@ -1622,7 +1646,18 @@ impl StrategyScreen {
         let (s, origin) = self.map_view(map);
         if !prompting {
             if widgets::contains(map, input.mouse) {
-                if input.wheel != 0.0 {
+                if input.wheel != 0.0 && !self.levels.0.is_empty() {
+                    // Fixed levels: the wheel steps between them (in place of the CSD's
+                    // view knob); from a system's picture it goes back to the closest.
+                    let n = self.levels.0.len();
+                    self.level = if self.level >= n {
+                        n - 1
+                    } else if input.wheel > 0.0 {
+                        (self.level + 1).min(n - 1)
+                    } else {
+                        self.level.saturating_sub(1)
+                    };
+                } else if input.wheel != 0.0 {
                     // Zoom about the cursor: the map point under it stays under it.
                     let before = (input.mouse - origin) / s;
                     self.zoom = (self.zoom * if input.wheel > 0.0 { 1.2 } else { 1.0 / 1.2 }).clamp(0.5, 12.0);
@@ -1635,6 +1670,21 @@ impl StrategyScreen {
                         self.sel = Some(sel);
                         if let Sel::System(sys) = sel {
                             self.system = Some(sys);
+                            // Fixed levels: a system with a picture goes to it (level 2);
+                            // one without (a black hole) is only centred.
+                            if !self.levels.0.is_empty() && self.level < self.levels.0.len() {
+                                let sy = &self.campaign.systems[sys];
+                                self.view_at = Some(sy.pos);
+                                self.pan = Vec2::ZERO;
+                                let pic = def
+                                    .star_classes
+                                    .iter()
+                                    .find(|c| c.id == sy.class)
+                                    .and_then(|c| c.portrait.as_ref());
+                                if pic.is_some() {
+                                    self.level = self.levels.0.len();
+                                }
+                            }
                             if let Some(b) = self.campaign.bases.iter().position(|b| b.system == sys) {
                                 self.base = b;
                             }
@@ -1844,6 +1894,7 @@ impl StrategyScreen {
     fn draw_grid(&mut self, ctx: &AppContext, def: &StrategyDef, live: &Input) -> ([f32; 4], f32, Option<Next>) {
         self.art = false;
         self.map_round = false;
+        self.levels.0.clear();
         let layout_def = ctx
             .content
             .rules
@@ -2000,6 +2051,7 @@ impl StrategyScreen {
                     hovered_tip = Some((si, wi, wd.rect));
                 }
                 match wd.kind {
+                    WidgetKind::Graph => self.draw_graph(ctx, def, wd, &layout),
                     WidgetKind::Image => {
                         let img = wd.sprite.clone().or_else(|| wd.images[0].clone());
                         if let Some(tex) = img.and_then(|i| self.image(ctx, &i, screen.pack)) {
@@ -2215,11 +2267,16 @@ impl StrategyScreen {
                             ui.text_in(l, r[0], r[1] + size * (1.0 + i as f32 * 1.3), size, colour);
                         }
                     }
+                    WidgetKind::Map if wd.source.as_deref().is_some_and(|s| s.starts_with("activity_")) => {
+                        self.draw_activity_map(ctx, wd, r, &layout);
+                    }
                     WidgetKind::Map if wd.source.as_deref() == Some("minimap") => {
                         // The whole map, small, in its own (round) window: the view's
                         // zoom and pan are set aside while it draws.
                         let (zoom, pan) = (self.zoom, self.pan);
                         (self.zoom, self.pan) = (1.0, Vec2::ZERO);
+                        // The whole map: the fixed levels are set aside too.
+                        let levels = std::mem::take(&mut self.levels.0);
                         self.map_round = wd.round;
                         self.minimap = true;
                         let (s, origin) = self.map_view(r);
@@ -2227,11 +2284,21 @@ impl StrategyScreen {
                         let icons = self.star_icons(ctx, def);
                         self.draw_map(&ctx.ui, def, r, s, origin, layout.scale * 0.6, &icons);
                         self.minimap = false;
+                        self.levels.0 = levels;
                         (self.zoom, self.pan) = (zoom, pan);
                     }
                     WidgetKind::Map => {
                         self.map_round = wd.round;
                         map_rect = r;
+                        self.levels = (wd.zoom_levels.clone(), layout.scale);
+                        if self.level > wd.zoom_levels.len() {
+                            self.level = 0;
+                        }
+                        // Level 2: the selected system's picture instead of the map.
+                        if !wd.zoom_levels.is_empty() && self.level == wd.zoom_levels.len() {
+                            self.draw_portrait(ctx, def, r, &layout);
+                            continue;
+                        }
                         let (s, origin) = self.map_view(r);
                         // Labels need their font; without it the map names every star.
                         self.map_labels = wd
@@ -2602,30 +2669,43 @@ impl StrategyScreen {
             let (n, first) = (rows.len() as f32, self.list.first as f32);
             draw_rectangle(t[0], t[1] + t[3] * first / n, t[2], t[3] * visible as f32 / n, ui.colour("border"));
         }
-        // Sockets on the art (Equip Ships' ring): the rows with cells (the craft), one per
-        // socket, name over its second cell; a click selects that row.
+        // Sockets on the art (Equip Ships' ring, §13.2): the selected craft's hard points
+        // as icons only — the fitted item's icon by kind, the unusable sprite past the
+        // hull's hard points, the selection overlay at (+1, +1). A click selects a socket.
         if !style.slots.is_empty() {
-            let sf = style.slot_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
-            let face = sf.face();
-            let craft: Vec<usize> = (0..rows.len()).filter(|i| !rows[*i].cells.is_empty()).collect();
-            for (slot, &i) in style.slots.iter().zip(&craft) {
-                let [cx, cy] = slot.map(|v| v as i32);
+            let craft = (self.list.selected < self.campaign.craft.len()).then_some(self.list.selected);
+            let points = craft.map(|k| socket_items(&self.campaign.craft[k], def)).unwrap_or_default();
+            for (j, slot) in style.slots.iter().enumerate() {
                 let [sw, sh] = style.slot_size;
                 let sr = layout.rect([slot[0] - sw / 2.0, slot[1] - sh / 2.0, sw, sh]);
-                if i == self.list.selected {
-                    draw_circle_lines(sr[0] + sr[2] / 2.0, sr[1] + sr[3] / 2.0, sr[3] * 0.42, 2.0, ui.colour("border"));
+                if input.clicked_in(sr) && j < points.len() {
+                    self.socket = j;
                 }
-                if input.clicked_in(sr) {
-                    self.list.selected = i;
+                let image = match points.get(j) {
+                    None => style.slot_unusable.clone(),
+                    Some(Some(item)) => {
+                        let kind = &def.items[*item].kind;
+                        style.slot_icons.iter().find(|(k, _)| k == kind).map(|(_, v)| v.clone())
+                    }
+                    Some(None) => None,
+                };
+                let mut images = vec![(image, 0.0)];
+                if j == self.socket && j < points.len() {
+                    images.push((style.slot_selected.clone(), 1.0));
                 }
-                glyphs.clear();
-                let cells = &rows[i].cells;
-                let name = cells[0].to_uppercase();
-                text::draw_text(&face, &name, cx, cy - 4, text::Align::Centre, false, &mut glyphs);
-                if let Some(second) = cells.get(1) {
-                    text::draw_text(&face, &second.to_uppercase(), cx, cy + 6, text::Align::Centre, false, &mut glyphs);
+                for (img, d) in images {
+                    let Some(img) = img else { continue };
+                    let Some(tex) = self.image_keyed(ctx, &img, pack, img.starts_with("original:")) else { continue };
+                    let (w, h) = (tex.width(), tex.height());
+                    let rr = layout.rect([slot[0] - w / 2.0 + d, slot[1] - h / 2.0 + d, w, h]);
+                    draw_texture_ex(
+                        &tex,
+                        rr[0],
+                        rr[1],
+                        WHITE,
+                        DrawTextureParams { dest_size: Some(vec2(rr[2], rr[3])), ..Default::default() },
+                    );
                 }
-                ui.draw_glyphs(sf, &glyphs, layout, WHITE);
             }
         }
         // The scroll arrows: one row per step, firing on press and repeating while held
@@ -2633,7 +2713,14 @@ impl StrategyScreen {
         for (k, arrow) in [&style.up, &style.down].into_iter().enumerate() {
             let Some(arrow) = arrow else { continue };
             let enabled = if k == 0 { self.list.first > 0 } else { self.list.first + visible < rows.len() };
-            let sr = layout.rect(arrow.rect);
+            // A `pos` arrow takes its size from its first image.
+            let mut ar = arrow.rect;
+            if ar[2] == 0.0 {
+                if let Some(t) = arrow.images.first().and_then(|i| self.image_keyed(ctx, i, pack, true)) {
+                    (ar[2], ar[3]) = (t.width(), t.height());
+                }
+            }
+            let sr = layout.rect(ar);
             let inside = widgets::contains(sr, input.mouse);
             let fire = self.arrows[k].update(ticks, enabled && input.clicked && inside, held && inside, 20, 5);
             if enabled && input.clicked && inside {
@@ -2826,6 +2913,178 @@ impl StrategyScreen {
         let mut buf = Vec::new();
         text::draw_text(&face, text_s, x as i32, y as i32, text::Align::Centre, false, &mut buf);
         ui.draw_glyphs(sheet, &buf, layout, Color::new(colour[0], colour[1], colour[2], colour[3]));
+    }
+
+    /// A status report's line graph (D-27, `app::graph`): the month-by-month series of its
+    /// `source` — `income` ($1000s), `alien`, `xcom`, or `finance`, whose series the
+    /// screen's list picks (income, expenditure, maintenance, balance, score) and which also
+    /// draws the low and high lines (labelled by `legend`).
+    fn draw_graph(
+        &self,
+        ctx: &AppContext,
+        def: &StrategyDef,
+        wd: &crate::content::screens::WidgetDef,
+        layout: &crate::hud::Layout,
+    ) {
+        let ui = &ctx.ui;
+        let h = &self.campaign.history;
+        let source = wd.source.as_deref().unwrap_or("income");
+        let values: Vec<f64> = match source {
+            "alien" => h.iter().map(|m| m.alien as f64).collect(),
+            "xcom" => h.iter().map(|m| m.xcom as f64).collect(),
+            "finance" => h
+                .iter()
+                .map(|m| match self.list.selected {
+                    0 => m.income / 1000.0,
+                    1 => m.spent / 1000.0,
+                    2 => m.maintenance / 1000.0,
+                    3 => m.balance / 1000.0,
+                    _ => m.score,
+                })
+                .collect(),
+            _ => h.iter().map(|m| m.income / 1000.0).collect(),
+        };
+        let px = layout.scale;
+        let rgb = |r: u8, g: u8, b: u8| Color::from_rgba(r, g, b, 255);
+        let sheet = wd.font.as_deref().and_then(|f| ui.sheet(f));
+        let mut glyphs = Vec::new();
+        let mut label = |s: &str, x: f32, y: f32, align: text::Align, colour: Color| {
+            if let Some(sh) = sheet {
+                glyphs.clear();
+                text::draw_text(&sh.face(), s, x as i32, y as i32, align, false, &mut glyphs);
+                ui.draw_glyphs(sh, &glyphs, layout, colour);
+            }
+        };
+        let r = wd.rect;
+        if values.is_empty() {
+            label("NO DATA", r[0] + r[2] / 2.0, r[1] + r[3] / 2.0, text::Align::Centre, rgb(0, 200, 0));
+            return;
+        }
+        let g = graph::layout(r, [34.0, 12.0], &values, 5);
+        let at = |x: f32, y: f32| vec2(layout.offset.x + x * px, layout.offset.y + y * px);
+        let line = |a: Vec2, b: Vec2, c: Color| draw_line(a.x, a.y, b.x, b.y, px.max(1.0), c);
+        let [pl, pt, pw, ph] = g.plot;
+        // The grid, then the axes and ticks over it.
+        for (y, v) in &g.grid {
+            line(at(pl, *y), at(pl + pw, *y), rgb(0, 50, 0));
+            line(at(pl - 3.0, *y), at(pl, *y), rgb(0, 100, 0));
+            label(&format!("{:.0}", crate::campaign::shown(*v)), pl - 5.0, *y, text::Align::Right, rgb(0, 200, 0));
+        }
+        line(at(pl, pt), at(pl, pt + ph), rgb(0, 100, 0));
+        line(at(pl, pt + ph), at(pl + pw, pt + ph), rgb(0, 100, 0));
+        let names: Vec<String> = if wd.months.len() == 12 {
+            wd.months.iter().map(|m| ctx.content.text.resolve(m).unwrap_or(m.clone())).collect()
+        } else {
+            ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                .map(String::from)
+                .to_vec()
+        };
+        let start = def.start.date.month.max(1) as usize - 1;
+        for (x, i) in &g.months {
+            line(at(*x, pt + ph), at(*x, pt + ph + 3.0), rgb(0, 100, 0));
+            // Where the months are closer than 22 px, only their first letter (the
+            // original also has one-letter names, S_MONTH_ABREV_*2; DERIVED when).
+            let full = names[(start + i) % 12].to_uppercase();
+            let name = if pw / (graph::MONTHS - 1) as f32 >= 22.0 { full } else { full.chars().take(1).collect() };
+            label(&name, *x, pt + ph + 8.0, text::Align::Centre, rgb(0, 200, 0));
+        }
+        // Finance: the low and high lines of the shown months.
+        if source == "finance" {
+            let shown = &values[values.len().saturating_sub(graph::MONTHS)..];
+            let lo = shown.iter().copied().fold(f64::MAX, f64::min);
+            let hi = shown.iter().copied().fold(f64::MIN, f64::max);
+            let y_of = |v: f64| pt + ph - ((v - g.range[0]) / (g.range[1] - g.range[0])) as f32 * ph;
+            let text_of = |k: usize, d: &str| {
+                wd.legend.get(k).map(|t| ctx.content.text.resolve(t).unwrap_or(t.clone())).unwrap_or(d.to_string())
+            };
+            for (v, k, d) in [(lo, 0, "LOW"), (hi, 1, "HIGH")] {
+                line(at(pl, y_of(v)), at(pl + pw, y_of(v)), rgb(0, 150, 0));
+                label(&text_of(k, d), pl + pw - 2.0, y_of(v) - 5.0, text::Align::Right, rgb(0, 200, 0));
+            }
+        }
+        // The series, 1 px.
+        let c = wd.colour.map(|c| Color::new(c[0], c[1], c[2], c[3])).unwrap_or(rgb(0, 255, 0));
+        for w in g.points.windows(2) {
+            line(at(w[0][0], w[0][1]), at(w[1][0], w[1][1]), c);
+        }
+        if g.points.len() == 1 {
+            let p = at(g.points[0][0], g.points[0][1]);
+            draw_rectangle(p.x - px, p.y - px, 2.0 * px, 2.0 * px, c);
+        }
+    }
+
+    /// The activity reports' map (D-27, §13.1): every system, coloured by its average
+    /// alien (`activity_alien`) or X-COM (`activity_xcom`) actions a month — none, 1 – 5,
+    /// 6 – 15, 16+ — with the `legend` beneath in `font`. The colours are DERIVED.
+    fn draw_activity_map(
+        &self,
+        ctx: &AppContext,
+        wd: &crate::content::screens::WidgetDef,
+        r: [f32; 4],
+        layout: &crate::hud::Layout,
+    ) {
+        let c = &self.campaign;
+        let who = usize::from(wd.source.as_deref() == Some("activity_xcom"));
+        let months = c.history.len() + 1;
+        let colours = [
+            Color::from_rgba(70, 70, 70, 255),
+            Color::from_rgba(0, 200, 0, 255),
+            Color::from_rgba(200, 200, 0, 255),
+            Color::from_rgba(220, 40, 0, 255),
+        ];
+        // The map fills the rectangle minus the legend's rows.
+        let legend_h = if wd.legend.len() == 4 { 4.0 * 9.0 * layout.scale } else { 0.0 };
+        let mr = [r[0], r[1], r[2], r[3] - legend_h];
+        let pos: Vec<[f32; 2]> = c.systems.iter().map(|s| s.pos).collect();
+        let (s, off) = map_transform(&pos, mr);
+        for (i, sys) in c.systems.iter().enumerate().filter(|(_, s)| !s.hidden) {
+            let total = c.activity.get(i).map_or(0, |a| a[who]);
+            let p = vec2(off[0], off[1]) + vec2(sys.pos[0], sys.pos[1]) * s;
+            draw_circle(p.x, p.y, 2.5 * layout.scale, colours[graph::activity_class(total, months)]);
+        }
+        let Some(sheet) = wd.font.as_deref().and_then(|f| ctx.ui.sheet(f)) else { return };
+        if wd.legend.len() != 4 {
+            return;
+        }
+        let mut glyphs = Vec::new();
+        let base = (r[1] + r[3] - legend_h - layout.offset.y) / layout.scale;
+        let left = (r[0] - layout.offset.x) / layout.scale;
+        for (k, t) in wd.legend.iter().enumerate() {
+            let y = base + 4.0 + 9.0 * k as f32;
+            let sq = layout.rect([left, y, 5.0, 5.0]);
+            draw_rectangle(sq[0], sq[1], sq[2], sq[3], colours[k]);
+            let t = ctx.content.text.resolve(t).unwrap_or(t.clone()).to_uppercase();
+            glyphs.clear();
+            text::draw_text(&sheet.face(), &t, left as i32 + 9, y as i32 + 3, text::Align::Left, false, &mut glyphs);
+            ctx.ui.draw_glyphs(sheet, &glyphs, layout, Color::from_rgba(0, 200, 0, 255));
+        }
+    }
+
+    /// The CSD's level 2 (§13.4): the selected system's star-class picture, animated one
+    /// frame every 4 ticks, centred in the map (the placement and the frame rate are
+    /// DERIVED), the system's name above it in the map labels' style if set.
+    fn draw_portrait(&mut self, ctx: &AppContext, def: &StrategyDef, r: [f32; 4], layout: &crate::hud::Layout) {
+        let Some(sys) = self.system.filter(|s| *s < self.campaign.systems.len()) else {
+            self.level = 0;
+            return;
+        };
+        let class = self.campaign.systems[sys].class.clone();
+        let Some(sc) = def.star_classes.iter().find(|c| c.id == class) else { return };
+        let Some(base) = sc.portrait.clone() else { return };
+        let frame = ((get_time() * 60.0) as u64 / 4 % sc.portrait_frames as u64) as usize;
+        let pack = ctx.content.campaign_pack().unwrap_or(0);
+        let img = crate::content::skin::DialogStyle::row(&base, frame);
+        if let Some(tex) = self.image_keyed(ctx, &img, pack, img.starts_with("original:")) {
+            let (w, h) = (tex.width() * layout.scale, tex.height() * layout.scale);
+            let (cx, cy) = (r[0] + r[2] / 2.0, r[1] + r[3] / 2.0);
+            draw_texture_ex(
+                &tex,
+                cx - w / 2.0,
+                cy - h / 2.0,
+                WHITE,
+                DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() },
+            );
+        }
     }
 
     /// The star classes' map icons (`star_classes.<id>.icon`), by class index; the
@@ -3040,6 +3299,19 @@ fn ask(ctx: &AppContext, input: &Input, kind: &str, title: &str, body: &str, but
     chosen
 }
 
+/// A craft's hard points in socket order: each of the hull's slots (kind × count, in
+/// order), with the item fitted there (the n-th fitted item of that kind), if any.
+fn socket_items(cr: &crate::campaign::Craft, def: &StrategyDef) -> Vec<Option<usize>> {
+    let mut out = Vec::new();
+    for (kind, count) in &def.hulls[cr.hull].slots {
+        let mut fitted = cr.fit.iter().filter(|(k, _)| k == kind).map(|(_, i)| *i);
+        for _ in 0..*count {
+            out.push(fitted.next());
+        }
+    }
+    out
+}
+
 /// The rows of status report `k` (0 income … 5 player status) from the campaign's state.
 fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
     use crate::campaign::shown;
@@ -3056,25 +3328,15 @@ fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
                 rows.push(line("No monthly report yet".into()));
             }
         }
-        // Finance: funds, this month's costs, the score.
+        // Finance: the five series the graph can show, picked by selecting a row (§13.1),
+        // with this month's figures so far.
         1 => {
-            let maintenance: f32 = c
-                .bases
-                .iter()
-                .flat_map(|b| &b.modules)
-                .filter(|m| !m.wrecked)
-                .map(|m| def.modules[m.module].maintenance)
-                .sum();
-            let upkeep: f32 = c.craft.iter().map(|cr| def.hulls[cr.hull].upkeep).sum();
-            let living = c.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as f32;
-            let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
-            rows.push(line(format!("Funds: {}", money(shown(c.money)))));
-            rows.push(line(format!("Module maintenance a month: {}", money(shown(maintenance as f64)))));
-            rows.push(line(format!("Craft upkeep a month: {}", money(shown(upkeep as f64)))));
-            rows.push(line(format!("Salaries a month: {}", money(shown(salaries as f64)))));
-            rows.push(line(format!("Total costs a month: {}", money(shown((maintenance + upkeep + salaries) as f64)))));
-            rows.push(line(format!("Score this month: {:+.0}", shown(c.month_score as f64))));
-            rows.push(line(format!("Score in all: {:.0}", shown(c.score as f64))));
+            let m = &c.this_month;
+            rows.push(line(format!("Income: {}", money(shown(m.income)))));
+            rows.push(line(format!("Expenditure: {}", money(shown(m.spent)))));
+            rows.push(line(format!("Maintenance: {}", money(shown(m.maintenance)))));
+            rows.push(line(format!("Balance: {}", money(shown(c.money)))));
+            rows.push(line(format!("Score: {:+.0}", shown(c.month_score))));
         }
         // Alien activity: the contacts on the sensors and the raids struck.
         2 => {
@@ -3105,31 +3367,37 @@ fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
                 rows.push(line(format!("{}: {} kills, {} missions", p.name, p.kills, p.missions)));
             }
         }
-        // Outposts: the bases and their systems.
+        // Outposts: per base, its system, modules, condition and state (the original's
+        // lines, S_GREP_238 - 243, with the engine's figures; DERIVED).
         4 => {
             for b in &c.bases {
-                let building = if b.ready_at > c.hours { " (under construction)" } else { "" };
-                rows.push(line(format!(
-                    "{} - {}{building}: {} modules",
-                    b.name,
-                    c.systems[b.system].name,
-                    b.modules.len()
-                )));
+                let intact = b.modules.iter().filter(|m| !m.wrecked).count();
+                let hull = if b.modules.is_empty() { 100 } else { intact * 100 / b.modules.len() };
+                let state = if b.ready_at > c.hours { "under construction" } else { "operating" };
+                rows.push(line(format!("{} in the {} system", b.name, c.systems[b.system].name)).cells(vec![
+                    b.name.clone(),
+                    c.systems[b.system].name.clone(),
+                    b.modules.len().to_string(),
+                    intact.to_string(),
+                    format!("{hull}%"),
+                    state.to_string(),
+                ]));
             }
         }
-        // Player status: score, standing, the rival.
+        // Player status: the pilots with their skill rank, then the losses (§13.1).
         _ => {
-            rows.push(line(format!(
-                "Score {:.0} ({:+.0} this month)",
-                shown(c.score as f64),
-                shown(c.month_score as f64)
-            )));
-            if let Some(r) = &def.story.relations {
-                for (f, v) in &c.story.standing {
-                    rows.push(line(format!("{f}: {} ({v:+.0})", r.stance(*v))));
-                }
+            for p in c.pilots.iter().filter(|p| p.state != PilotState::Dead) {
+                let rank = def
+                    .pilots
+                    .as_ref()
+                    .and_then(|r| r.ranks.get(Campaign::rank(def, p)))
+                    .map(|r| r.0.clone())
+                    .unwrap_or_default();
+                rows.push(line(format!("{}: {rank}, {} kills, {} missions", p.name, p.kills, p.missions)));
             }
-            rows.push(line(format!("Rival aggression x{:.2}", c.story.aggression)));
+            let dead = c.pilots.iter().filter(|p| p.state == PilotState::Dead).count();
+            rows.push(line(format!("Pilots killed in action: {dead}")));
+            rows.push(line(format!("Score {:.0} ({:+.0} this month)", shown(c.score), shown(c.month_score))));
         }
     }
     rows

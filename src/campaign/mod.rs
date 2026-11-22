@@ -272,6 +272,47 @@ pub struct Campaign {
     pub logistics: logistics::Logistics,
     /// Events, arcs, plans, relations, the rival's mood and the ending (Stage 5).
     pub story: story::StoryState,
+    /// The months closed so far, oldest first (the status reports' graphs).
+    pub history: Vec<MonthRecord>,
+    /// The month running now (folded into `history` at the month's end).
+    pub this_month: MonthRecord,
+    /// Per system: `[alien, X-COM]` activity counts in all (the activity reports' map).
+    pub activity: Vec<[u32; 2]>,
+}
+
+/// One month's figures, as the original's status reports chart them (StatusReports.cpp,
+/// `unknowns-2026-11.md` §13.1): money in and out, maintenance, the balance at the end,
+/// the month's score, and the alien and X-COM activity counts.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct MonthRecord {
+    pub income: f64,
+    pub spent: f64,
+    pub maintenance: f64,
+    pub balance: f64,
+    pub score: f64,
+    pub alien: u32,
+    pub xcom: u32,
+}
+
+impl MonthRecord {
+    /// The record as numbers, in field order (saves).
+    pub fn to_nums(&self) -> [f64; 7] {
+        [self.income, self.spent, self.maintenance, self.balance, self.score, self.alien as f64, self.xcom as f64]
+    }
+
+    /// The record from [`to_nums`](Self::to_nums)' numbers (missing ones are 0).
+    pub fn from_nums(v: &[f64]) -> MonthRecord {
+        let g = |i: usize| v.get(i).copied().unwrap_or(0.0);
+        MonthRecord {
+            income: g(0),
+            spent: g(1),
+            maintenance: g(2),
+            balance: g(3),
+            score: g(4),
+            alien: g(5) as u32,
+            xcom: g(6) as u32,
+        }
+    }
 }
 
 /// Hours in a campaign month (reports, salaries, maintenance).
@@ -399,9 +440,14 @@ impl Campaign {
                     hidden: s.hidden,
                 })
                 .collect(),
-            MapKind::Generated { size, count, names, seed: map_seed, black_holes } => {
+            MapKind::Generated { size, count, count_table, names, seed: map_seed, black_holes } => {
                 let mut r = map_seed.map_or(rng, |s| s.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
-                generate_map(def, *size, *count, names, *black_holes, &mut r)
+                // A count table rolls the count; the range is then that one number.
+                let count = match roll_count(count_table, &mut r) {
+                    Some(n) => (n, n),
+                    None => *count,
+                };
+                generate_map(def, *size, count, names, *black_holes, &mut r)
             }
         };
         let mut c = Campaign {
@@ -430,6 +476,9 @@ impl Campaign {
             next_contact: 1,
             logistics: Default::default(),
             story: story::StoryState::new(def),
+            history: Vec::new(),
+            this_month: MonthRecord::default(),
+            activity: Vec::new(),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -1231,6 +1280,7 @@ impl Campaign {
         }
         let target = c.pos;
         let mut sent = 0;
+        let target_sys = self.nearest_system(target);
         for &k in craft {
             if self.craft.get(k).is_some_and(|c| c.away.is_none())
                 && self.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready)
@@ -1238,6 +1288,8 @@ impl Campaign {
                 let home_sys = self.bases[self.craft[k].base].system;
                 let home = self.systems[home_sys].pos;
                 self.craft[k].away = Some((contact, home));
+                // X-COM activity, counted at the system nearest the contact.
+                self.count_activity(target_sys, 1);
                 // On a lane map, along the lanes to the system nearest the contact.
                 if def.map.travel == Travel::Lanes {
                     let to = self.nearest_system(target);
@@ -1428,6 +1480,11 @@ impl Campaign {
                 self.next_flow[k] += flow.every as f64;
                 let amount = self.eval(def, &flow.amount, None) as f64 * sign;
                 self.money += amount;
+                if amount >= 0.0 {
+                    self.this_month.income += amount;
+                } else {
+                    self.this_month.spent -= amount;
+                }
                 self.log(format!("{}: {:+.0}", flow.name, amount));
             }
         }
@@ -1459,6 +1516,12 @@ impl Campaign {
             let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
             let total = (maintenance + upkeep + salaries) as f64;
             self.money -= total;
+            // The month's record for the reports.
+            self.this_month.spent += total;
+            self.this_month.maintenance = total;
+            self.this_month.balance = self.money;
+            self.this_month.score = self.month_score;
+            self.history.push(std::mem::take(&mut self.this_month));
             // The evaluation: the first rating whose condition holds (it may cut funding).
             let mut rating = String::new();
             if let Some(k) = (0..def.evaluations.len()).find(|&k| self.holds(def, def.evaluations[k].when.as_ref())) {
@@ -1470,8 +1533,8 @@ impl Campaign {
                 (shown(maintenance as f64), shown(upkeep as f64), shown(salaries as f64));
             let t = format!(
                 "Monthly report: score {:+.0} this month ({:.0} in all); costs {:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}{rating}",
-                shown(self.month_score as f64),
-                shown(self.score as f64),
+                shown(self.month_score),
+                shown(self.score),
                 shown(total),
                 shown(self.money)
             );
@@ -1705,6 +1768,24 @@ impl Campaign {
             Travel::Free => (pos, Vec::new()),
         };
         self.contacts.push(Contact { id, raid: r, pos, dest, target_base, detected: false, route, plan: None });
+        // Alien activity, counted at the system the contact heads for.
+        let sys = self.nearest_system(dest);
+        self.count_activity(sys, 0);
+    }
+
+    /// Counts one alien (`who` 0) or X-COM (1) action this month and at system `sys`.
+    pub fn count_activity(&mut self, sys: usize, who: usize) {
+        if who == 0 {
+            self.this_month.alien += 1;
+        } else {
+            self.this_month.xcom += 1;
+        }
+        if self.activity.len() < self.systems.len() {
+            self.activity.resize(self.systems.len(), [0, 0]);
+        }
+        if let Some(a) = self.activity.get_mut(sys) {
+            a[who] += 1;
+        }
     }
 
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
@@ -2148,6 +2229,22 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
     c
 }
 
+/// Rolls a system count from a weighted table (`None` when the table is empty).
+fn roll_count(table: &[(u32, f32)], rng: &mut u64) -> Option<u32> {
+    let total: f32 = table.iter().map(|(_, w)| w.max(0.0)).sum();
+    if table.is_empty() || total <= 0.0 {
+        return None;
+    }
+    let mut pick = next_random(rng) * total;
+    for (n, w) in table {
+        pick -= w.max(0.0);
+        if pick <= 0.0 {
+            return Some(*n);
+        }
+    }
+    table.last().map(|(n, _)| *n)
+}
+
 /// Makes a generated map: `count` systems scattered in a `size` rectangle, at least a
 /// little apart, star classes by weight, names from the list (then numbered), and
 /// `black_holes` of them hidden.
@@ -2198,6 +2295,13 @@ fn generate_map(
 mod tests {
 
     #[test]
+    fn month_records_round_trip_and_activity_counts() {
+        let r = MonthRecord { income: 5.0, spent: 3.0, maintenance: 2.0, balance: 9.0, score: -1.0, alien: 4, xcom: 2 };
+        assert_eq!(MonthRecord::from_nums(&r.to_nums()), r);
+        assert_eq!(MonthRecord::from_nums(&[1.0]).income, 1.0);
+    }
+
+    #[test]
     fn readouts_never_show_negative_zero() {
         assert_eq!(format!("{:.0}", shown(-0.0)), "0");
         assert_eq!(format!("{:.0}", shown(-0.4)), "0");
@@ -2207,6 +2311,17 @@ mod tests {
 
     use super::*;
     use crate::content::strategy::tests::{build, SAMPLE};
+
+    #[test]
+    fn system_counts_roll_from_their_table() {
+        let t = [(65, 11.0), (70, 10.0), (75, 70.0), (80, 9.0)];
+        let mut rng = 7u64;
+        let rolls: Vec<u32> = (0..400).map(|_| roll_count(&t, &mut rng).unwrap()).collect();
+        assert!(rolls.iter().all(|n| [65, 70, 75, 80].contains(n)));
+        let most = rolls.iter().filter(|n| **n == 75).count();
+        assert!(most > 200, "75 is the common count ({most} of 400)");
+        assert_eq!(roll_count(&[], &mut rng), None);
+    }
 
     #[test]
     fn generated_maps_are_spaced_named_seeded_and_hide_black_holes() {
