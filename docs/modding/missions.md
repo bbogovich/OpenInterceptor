@@ -208,7 +208,7 @@ misspelled role is an error with file and line. Difficulty level names are const
 | `player_hull` | number | The player's hull fraction. |
 | `player_retreated` | true/false | The player jumped out. |
 | `nova_time` | number | Seconds since a Nova bomb (a missile with `fuse`) went off; −1 before (app 0.22.16). |
-| `battle_over` | true/false | A Nova bomb's `ends_battle_after` has run out (app 0.22.16): for an objective such as `draw: battle_over`. |
+| `battle_over` | true/false | A Nova bomb's `ends_battle_after` has run out (app 0.22.16). When no objective decides the battle then, it ends as a **draw** (app NEXT); the original's final missions count it a win when an X-COM Patton is still in the battle — `win: battle_over and alive(patton)`. |
 | `difficulty` | number | The difficulty level's index (compare with level names). |
 | `random(p)` | true/false | True with probability `p` per check (seeded). |
 

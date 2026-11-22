@@ -120,7 +120,17 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
 | `fuse` | time | 0 | A Nova bomb (app 0.22.16): it never goes off on contact or by its proximity fuse; it flies on and detonates this long after launch, damaging nothing (what the original's blast does is not traced). 0 = an ordinary missile. `interceptor`: `nova_bomb`, 60 s (**verified**). |
 | `ends_battle_after` | time | 0 | With `fuse`: the battle is over this long after the detonation — the `battle_over` mission query turns true (app 0.22.16). `interceptor`: 60 s (**verified**). |
-| `warnings` | list of `{at, text}` | none | With `fuse`: radio lines this long after launch (app 0.22.16). `interceptor`: at 30 s, 60 s, 88 s and 107 s, in the engine's words (the original's message texts are not mapped). |
+| `warnings` | list of `{at, line, text}` | none | With `fuse`: this long after launch, one of the launcher's wingmen says voice `line` and/or `text` goes on the message display (app 0.22.16; `line` app NEXT). `interceptor`: voice waves 33 – 36 (`wave33` … `wave36` of its `mpilot`/`fpilot` voice sets, the original's chatter clips) at 30 s, 60 s, 88 s and 107 s (**verified**). |
+| `launcher_rate` | number | 0 | App NEXT: shots per second from its launcher; the next launch is ready after 1 / rate (twice that with the launcher at half health or less). 0 = the engine's fixed 0.6 s. `interceptor`: each `*Launcher`'s `RateOfFire` (X-Winder 4, Fusion 6, Elerium 1, …; **verified**); -1 in the file (Doppelganger, Nova) keeps the engine's refire. |
+| `flight` | `engine`, `original` | `engine` | App NEXT: `original` — the original's missile flight: straight for 250 ms, then homing whose throttle falls while it is off target (−0.025 … −0.1 a frame beyond 5° / 10° / 15°) and recovers on target, pushing at least 250 m/s². `interceptor`: every missile but the Nova (**verified**). |
+| `pass_fuse` | distance | 0 | App NEXT: it also goes off this close to its target when it is more than 45° off it (passing). `interceptor`: 25 m. |
+| `blast` | `{impact, radius}` | none | App NEXT: the warhead hits **every object** round it, either side, with no falloff: `impact_damage` within `impact` (15 m), `proximity_damage` out to `radius` (200 m). Without it, only the target takes the proximity damage. `interceptor`: 15 m / 200 m (**verified**). |
+| `dud_on_expiry` | bool | `false` | App NEXT: out of fuel it vanishes without a blast. |
+| `lose_lock_beyond` | number | 0 | App NEXT: degrees off the nose beyond which the lock is lost (0 = never). `interceptor`: 170, except the Enveloping and Passive Cloaking torpedoes. |
+| `hit_points` | number | 10 | App NEXT: what a beam bolt's damage must beat to destroy it, held to 10 – 500 ([`flight.beams_hit_missiles`](#flight)). `interceptor`: the missile section's `HitPoints`. |
+| `max_life` | time | 0 | App NEXT: its flight time is held to this (0 = `duration`). `interceptor`: Passive Cloaking torpedo 10 s (**verified**). |
+| `images` | `{count, offset, after}` | none | App NEXT: decoy images put out `after` launch, `offset` to either side. `interceptor`: Parallax torpedo, 2 at 20 m after 1 s (**verified**). |
+| `retarget_every` | `[min, max]` (times) | none | App NEXT: `doppelganger` — while the launcher and its decoy live, hostile pilots turn to the decoy at a random interval in the band. `interceptor`: 5 – 6 s (the interval **verified**, the retarget *derived*). |
 
 ### `ships` and `objects`
 
@@ -181,7 +191,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `shield_pool` | `{recharge, on_generator_lost}` | none (two banks) | Stations (app 0.22.4): **one** shield pool instead of fore and aft banks; hits from any side drain it. `recharge`: points per second while a generator stands (default 2); `on_generator_lost`: `keep` (the points stay but no longer recharge) or `drop` (the pool empties, "STATION SHIELDS DOWN"; default). The pool starts full and has no difficulty factor. `interceptor`: the X-COM and alien bases, `{recharge: 2, on_generator_lost: drop}` (**verified**; `keep` until app 0.22.6); the outposts and ore plants `{recharge: 2}` with no generator, sized by their chart's `SD` (app 0.22.6, **verified**). |
 | `shielded_by_hub` | bool | `false` | Modules (app 0.22.4): while the hub's `shield_pool` holds points, a hit on this module drains the hub's pool instead, and what gets through strikes the **hub's** hull; once the pool is down the module takes its own hits. `interceptor`: every base module (**verified**). |
 | `damage_model` | `ship`, `station` | `ship` | How hits past the shields are taken (app 0.22.4). `station`: straight to the hull — no armour, no difficulty factor on beam hits, no system hits. `interceptor`: the X-COM, alien, pirate, arms-dealer and science stations (**verified**). |
-| `point_defence` | `{range, rate, chance, energy}` | none | Guns that shoot down hostile missiles (and decoys): `range` (distance, default 800 m), `rate` (shots per second, default 3), `chance` (fraction a shot destroys the missile, default 35 %), `energy` (per shot, default 4). |
+| `point_defence` | `{range, rate, chance, energy}` | none | Guns that shoot down hostile missiles (and decoys; the original has none — `interceptor` uses [`flight.beams_hit_missiles`](#flight) since app NEXT): `range` (distance, default 800 m), `rate` (shots per second, default 3), `chance` (fraction a shot destroys the missile, default 35 %), `energy` (per shot, default 4). |
 | `probe` | `{sensors, jamming}` | none | Probes: `sensors` (distance) — its side's radar sees every contact this close to the probe; `jamming` (distance) — hostile ships this close have half radar range and lock missiles at half speed. |
 | `engine_color` | RGB | 0.5, 0.7, 1.0 | Engine glow colour. |
 
@@ -195,6 +205,9 @@ The same keys; `objects` defaults to `kind: station`.
 | `power` | number | per kind | Power steps while switched on. |
 | `range` | distance | per kind | Tractor hold range, ECM radius, cloak detection range. |
 | `strength` | number | per kind | Tractor pull m/s²; ECM and cloak: chance per second, in %, that a homing missile loses its target. |
+| `drain` | number | 0 | Cloak (app NEXT): energy per second while on, **instead of** the shield recharge; at 0 energy the cloak drops. `interceptor`: 50 (**verified**). |
+| `shields_off` | bool | `false` | Cloak (app NEXT): while on, hits skip the ship's shields. `interceptor`: `true` (**verified**). |
+| `no_missiles` | bool | `false` | Cloak (app NEXT): while on, no missile can be fired. `interceptor`: `true` (**verified**). |
 | `repair_rate` | number | per kind (4 for damage control) | Damage control: repair speed multiplier. `interceptor`: 2 — 4 points a second instead of 2 (app 0.22.6, **verified**; it was 4, so 8). |
 | `efficiency` | `standard`, `linear`, `ignore` or a list of `{below, factor}` | `standard` | How it works when damaged (app 0.22.6, [Rulesets › How systems behave in flight](rulesets.md#how-systems-behave-in-flight)). Steps: below `below` of its hit points it works at `factor` (up to four; the lowest that applies wins; at 0 hit points nothing). `linear`: in proportion to its hit points. `ignore`: damage changes nothing, even destroyed. `standard`: the engine's table (½ at half or less, off at 0 until repaired to 25 %). |
 | `min_hit_points` | number | 0 | Hits never take it below this, so it is never destroyed (app 0.22.6). `interceptor`: flight control 1 (**verified**). |
@@ -268,7 +281,11 @@ A state:
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
 | `break_off` | distance | 0 | Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × `max_speed` with the target ahead. `interceptor`: 250 m (**verified**). |
-| `break_time` | time | 2 s | Attack (app 0.22.16): how long a break-off lasts before the pilot comes round again. `interceptor`: 5 s − 0.5 s × level (*derived* from the original's 5,000 − 500d ms). |
+| `break_time` | time | 2 s | Attack: how long a break-off lasts before the pilot comes round again; with `reengage_beyond`, how long before the `reengage_chance` roll may end it (app NEXT). `interceptor`: 5 s − 0.5 s × level (**verified**). |
+| `reengage_beyond` | distance | 0 | Attack (app NEXT): the original's break-off — it ends only when a `break_manoeuvre` ends; then the pilot comes round if the target is farther than this, or after `break_time` with `reengage_chance`, else flies another. 0 = the fixed `break_time`. `interceptor`: 1,200 m (**verified**). |
+| `reengage_chance` | fraction | 25 % | With `reengage_beyond`: the roll after `break_time`. |
+| `break_manoeuvre` | time | 2 s | With `reengage_beyond`: one break-off manoeuvre's length (`interceptor`: 2 s, *derived*). |
+| `break_call` | `{chance, from_level, line, text}` | none | Attack (app NEXT): on breaking off at anyone but the player's craft, from difficulty level index `from_level`, with `chance`: the pilot's voice set says `line` and/or `text` goes on the message display. `interceptor`: 25 % from level 2, line `radio_7` (the original's message 7; its clip is not mapped). |
 | `lock_cone` | angle | 0 | Attack (app 0.22.8): the pilot's **own missile lock**, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's `lock_time` (or the missile's) after it started, `missiles` seconds apart exactly, with `missile_chance` per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). `interceptor`: 5° (**verified** as the code reads; the window may be inverted in the original, *derived*). |
 | `aim` | `engine`, `fixed`, `gimballed` | `engine` | Turret (app 0.22.13): the original's fixed or gimballed turret instead of bursts and aim error ([Turret fire control](behaviours.md#turret-fire-control)). |
 | `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
@@ -441,6 +458,8 @@ Texture names match a model's textures by file name without folder or extension,
 | `drive` | map | none | The original's motion model (app 0.21.0): thrust, mass and drag for the player, a drive factor for AI ships. Replaces `model` for every ship that is not on simple physics ([below](#flightdrive)). |
 | `turning` | map | none | The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates ([below](#flightturning)). |
 | `link_modes` | `engine`, `original` | `engine` | App NEXT: `original` — linked fires every mount of the selected mount's beam type, and every mode lets each mount fire on its own timer as far as the energy pays shot by shot (the original, **verified**); `engine` — linked fires the next two mounts and a group waits for all its mounts and its whole energy. `interceptor`: `original`. |
+| `start_throttle` | fraction | 0 | App NEXT: the throttle every ship starts at. `interceptor`: 50 % (**verified**). |
+| `beams_hit_missiles` | `{chance, radius}` | none | App NEXT: beam bolts strike hostile missiles passing within `radius` (3 m, *derived*); each applies its damage with `chance` (90 %), and a missile whose `hit_points` that beats is destroyed. `interceptor`: 90 % (**verified**); it has no `point_defence`. |
 | `pilot_grades` | `{lookahead, grades, sprint}` | none | AI pilot grades (app 0.22.8): obstacle look-ahead and the long-range sprint by grade ([Pilot records and grades](#pilot-records-and-grades)). Without it AI pilots use the engine's predictive collision avoidance and never sprint. |
 
 #### `flight.drive`
@@ -868,7 +887,7 @@ actions each context adds for scripts:
 | `member_hull(role, m)` | query, number | battle | Its hull fraction (0 once gone). |
 | `member_distance(role, m)` | query, number | battle | Its distance from the player, m (very large once gone). |
 | `nova_time` | query, number | battle | Seconds since a Nova bomb went off; −1 before (app 0.22.16). |
-| `battle_over` | query, true/false | battle | A Nova bomb's `ends_battle_after` has run out (app 0.22.16). |
+| `battle_over` | query, true/false | battle | A Nova bomb's `ends_battle_after` has run out (app 0.22.16). If no objective decides the battle then, it ends as a draw (app NEXT). |
 | `script(file:function)` | action-list entry | battle, campaign | Hand over to a script function (not from inside a script). |
 
 The language, budget and errors: [Scripts (Tier 2)](scripts.md).

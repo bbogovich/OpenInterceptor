@@ -69,8 +69,31 @@ objects:
 | `energy` | 4 | Energy per shot, from the ship's capacitor; no energy, no shot. |
 
 Each shot draws a tracer and plays the `point_defence` event sound. Point defence is fitted to
-the Patton, the X-COM freighter and the bases (`interceptor`), and to the dreadnought and the
-stations (`default`); the numbers are derived (DEV-038).
+the dreadnought and the stations (`default`); the numbers are derived (DEV-038). The original has
+no automatic point defence: since app NEXT `interceptor` has none, and instead every beam bolt
+can strike a missile (`flight.beams_hit_missiles`, 90 % to apply its damage against the missile's
+`hit_points`).
+
+## The original's missile flight
+
+With `flight: original` (app NEXT) a missile flies as the original's: straight for 250 ms, then
+homing at most 2.5 rad/s, losing throttle while it is off target, so a hard turn slows it. Its
+warhead can hit everything round it:
+
+```yaml
+missiles:
+  xwinder:
+    inherit: original:GameSettings.ini/XWinderMissile
+    launcher_rate: 4                     # shots a second from its launcher
+    flight: original
+    pass_fuse: 25m                       # goes off passing within 25 m, > 45 deg off
+    blast: {impact: 15m, radius: 200m}   # every object, either side, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
+```
+
+`images`, `max_life` and `retarget_every` give the Parallax, Passive Cloaking and Doppelganger
+torpedoes their original behaviour; see the [reference](reference.md#missiles).
 
 ## Mines
 
@@ -84,15 +107,17 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 
 | Campaign | Missiles |
 |---|---|
-| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (`cloaked_wait`), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each. |
+| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (two images after 1 s), Passive Cloaking torpedo (`cloaked_wait`, 10 s), Doppelganger (hostiles turn to it every 5 – 6 s), all with the original's flight, fuse, blast, launcher rate and rounds (app NEXT, **verified**); the Super Avenger's testbed load carries one of each. |
 | `default` | Seeker rockets, atomic torpedoes, cluster rockets (Thunderbolt), decoy rockets (Meteor), Dominion space-mine warheads (`dominion-raid`). |
 
 ## The Nova bomb
 
-A missile with a `fuse` (app 0.22.16) is a Nova bomb: it never goes off on contact; it flies on and
-detonates `fuse` after launch, sends its `warnings` over the radio at their times, sets the
-`nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll, and
-`ends_battle_after` later turns `battle_over` true:
+A missile with a `fuse` is a Nova bomb: it never goes off on contact; it flies on and detonates
+`fuse` after launch, doing no damage (the original's detonation damages nothing, **verified**); it
+sets the `nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll,
+and `ends_battle_after` later turns `battle_over` true — the battle then ends as a draw unless an
+objective decides it (app NEXT). Its `warnings` are voice lines of the launcher's wingmen and/or
+texts at given times:
 
 ```yaml
 missiles:
@@ -100,9 +125,13 @@ missiles:
     inherit: original:GameSettings.ini/NovaBomb
     fuse: 60s
     ends_battle_after: 60s
-    warnings: [{at: 30s, text: NOVA BOMB ARMED}, {at: 60s, text: NOVA BOMB DETONATED}]
+    warnings: [{at: 30s, line: wave33}, {at: 60s, line: wave34}, {at: 88s, line: wave35}, {at: 107s, line: wave36}]
 ```
 
-`interceptor` has it with the original's timing (**verified**); a campaign craft fitted with the
-Nova Bomb carries it. Its blast damages nothing yet, and no mission ends on `battle_over` yet —
-what the original's detonation does to the ships and the campaign is not traced.
+`interceptor` has it with the original's timing and messages: voice waves 33 – 36, which its
+`mpilot1` … `fpilot5` voice sets map to the original's chatter clips `{M|F}Pilot{v}{33–36}.wav`
+(**verified**; there is no subtitle). A campaign craft fitted with the Nova Bomb carries it. The
+original's final missions count a fired Nova as a win when an X-COM Patton is still in the battle;
+the win and loss only cue the victory and death music stingers (the original's `0x550fd5(5, 3)` and
+`(5, 1)`, which the engine plays for any won or lost mission) — nothing is recorded on the strategy
+layer.
