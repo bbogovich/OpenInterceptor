@@ -7488,12 +7488,24 @@ from <code>notes/re/flight</code> §8): a station's hull is its chart's <code>HP
 the alien base 5,000, outposts 3,500; DEV-056's sum resolved); <code>shield_pool</code> (one pool,
 <code>recharge</code>, <code>on_generator_lost: keep | drop</code>), generator <code>shield_capacity</code>, <code>shielded_by_hub</code>
 modules and <code>damage_model: station</code>, in the new <code>sim::stations</code>. <code>interceptor</code>: the X-COM and
-alien bases have one 2,000 / 3,000 pool at 2 per second that keeps its points when the
-generators fall; every base module is covered; the six station hubs take hull hits without
+alien bases have one 2,000 / 3,000 pool at 2 per second that drops to 0 when the last generator
+falls (<code>keep</code> in 0.22.4; corrected in app 0.22.6 from <code>notes/re/unknowns-2026-11.md</code> §8, which also
+gives the outposts and ore plants pools of their chart's <code>SD</code>, 1,500 / 1,000, at 2 per second); every base module is covered; the six station hubs take hull hits without
 armour, difficulty factor or system hits. <code>default</code>: the Dominion outpost has a pool (its 3,600
 <code>shields</code>, 5 per second, <code>drop</code>) covering its pods; the Guard station is unchanged. Manual case
 MT-4-66; <strong>474</strong> <code>#[test]</code> functions. Not yet: the alien base's hard points (#114), the outposts'
 own shield routines, <code>--balance</code> showing pools (#121).</p>
+<p><strong>Parity M1, #116</strong> (app 0.22.6; D-02, D-05, D-06, RQ-C-16, RQ-C-17 of the parity plan, facts from
+<code>notes/re/flight</code> §3 – §5, §11): system <code>efficiency</code> tables (steps, <code>linear</code>, <code>ignore</code>),
+<code>min_hit_points</code> and the engine's <code>disables_below</code>; beam <code>hit_points</code> and missile
+<code>launcher_hit_points</code> with <code>damage.mounts</code>; <code>damage.system_table</code> and <code>damage.repair_order</code>.
+<code>interceptor</code>: the original's engine, shield, flight-control, sensor and hyperdrive behaviour,
+its system table (mounts 20 %, launchers 30 %, …), its repair (2 per second, 4 with a damage
+control computer, hull second; nothing at 0 is repaired). <code>default</code>: unchanged. Soak
+<code>duel-wraith</code> with <code>--soak-pilot ai</code> (veteran): the Lightning now survives about 98 s instead of
+16 s — the Wraiths lose beam mounts to system hits (to re-measure in #121); passive runs
+are unchanged (about 10 s). Manual case MT-4-67; <strong>482</strong> <code>#[test]</code> functions. Not yet: pilot
+injury (D-08, with the pilots of #133), the flight-control wobble.</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and

@@ -6614,7 +6614,7 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 <div class="highlight"><pre><span></span><code><span class="nt">objects</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">xcom_base</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">damage_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">station</span><span class="w">                               </span><span class="c1"># hull hits: no armour, factor or system hits</span>
-<span class="w">    </span><span class="nt">shield_pool</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">recharge</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> on_generator_lost</span><span class="p">:</span><span class="w"> </span><span class="nv">keep</span><span class="p p-Indicator">}</span><span class="w"> </span><span class="c1"># one pool, 2 points a second</span>
+<span class="w">    </span><span class="nt">shield_pool</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">recharge</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> on_generator_lost</span><span class="p">:</span><span class="w"> </span><span class="nv">drop</span><span class="p p-Indicator">}</span><span class="w"> </span><span class="c1"># one pool, 2 points a second</span>
 <span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="s">'3'</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">xcom_shield_generator</span><span class="p p-Indicator">}</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="s">'0'</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">xcom_beam_defense</span><span class="p p-Indicator">}</span>
@@ -6632,12 +6632,14 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 <li><strong>Its size.</strong> The pool's maximum is the <code>shield_capacity</code> of the <strong>first</strong> standing generator
   in the hub's <code>modules</code> list (a generator without one gives the hub's own <code>shields</code>);
   generators do not add up. A hub that lists no generator keeps its own <code>shields</code> as the maximum
-  for the whole battle. The pool starts full and takes no difficulty factor.</li>
+  for the whole battle; a station with a pool and no <code>modules</code> that inherits an original
+  hit-point chart takes the chart's <code>SD</code> as its <code>shields</code> (app 0.22.6, the original's outposts
+  and ore plants, <strong>verified</strong>). The pool starts full and takes no difficulty factor.</li>
 <li><strong>Recharge.</strong> <code>recharge</code> points per second (default 2), up to the maximum. When the first
   generator falls the next one sets the maximum, and a pool above it comes down to it.</li>
-<li><strong>The last generator.</strong> <code>on_generator_lost: keep</code> — the pool keeps its points but no longer
-  recharges (the original, <em>derived</em>: its maximum becomes 0 and no code empties the pool);
-  <code>drop</code> — it empties at once ("STATION SHIELDS DOWN").</li>
+<li><strong>The last generator.</strong> <code>on_generator_lost: drop</code> — the pool empties at once ("STATION
+  SHIELDS DOWN"; the original, <strong>verified</strong> since app 0.22.6); <code>keep</code> — it keeps its points but no
+  longer recharges (an engine option; app 0.22.4 used it for <code>interceptor</code>).</li>
 <li><strong>Covered modules.</strong> A module with <code>shielded_by_hub: true</code> cannot be shot off through intact
   shields: while its hub's pool holds points, a hit on the module drains the hub's pool, and
   what gets through strikes the <strong>hub's</strong> hull, not the module. Once the pool is empty the
@@ -6676,16 +6678,23 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 <tr>
 <td><code>interceptor</code></td>
 <td>X-COM base</td>
-<td>2,000 (Type1 generator), 2 per second, <code>keep</code></td>
+<td>2,000 (Type1 generator), 2 per second, <code>drop</code></td>
 <td>all</td>
 <td>station</td>
 </tr>
 <tr>
 <td><code>interceptor</code></td>
 <td>Alien base</td>
-<td>3,000 (Type2 shield pod), 2 per second, <code>keep</code></td>
+<td>3,000 (Type2 shield pod), 2 per second, <code>drop</code></td>
 <td>all</td>
 <td>station</td>
+</tr>
+<tr>
+<td><code>interceptor</code></td>
+<td>Outposts and ore plants (X-COM, alien)</td>
+<td>their chart's <code>SD</code>: 1,500 / 1,000, 2 per second, no generator</td>
+<td>—</td>
+<td>ship</td>
 </tr>
 <tr>
 <td><code>interceptor</code></td>
@@ -6698,7 +6707,7 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 </table>
 <p>In <code>default</code>'s <code>outpost-strike</code> the Dominion outpost's pods are covered: wear the pool down
 first, then the shield pod falls and the pool is gone for good. <code>interceptor</code>'s outposts and ore
-plants keep the ship model: the original handles them in other routines that are not traced yet.</p>
+plants keep the ship damage model: the original's own hull routines for them are not traced.</p>
 <h2 id="cargo-containers-and-moving-hubs">Cargo containers and moving hubs<a class="headerlink" href="#cargo-containers-and-moving-hubs" title="Permanent link">&para;</a></h2>
 <p>Since app 0.9.2 a hub need not be a station: any ship class may carry <code>modules</code>, and they ride
 with it. The default campaign's cargo clipper (<code>supply_ship</code>) carries twelve cargo pods and a

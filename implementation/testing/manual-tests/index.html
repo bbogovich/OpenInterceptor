@@ -6173,6 +6173,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-4-67-interceptor-system-damage-mounts-and-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-67 — interceptor: system damage, mounts and repair
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11701,6 +11712,17 @@
     <span class="md-ellipsis">
       
         MT-4-66 — Station shield pool and covered modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-67-interceptor-system-damage-mounts-and-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-67 — interceptor: system damage, mounts and repair
       
     </span>
   </a>
@@ -17349,7 +17371,16 @@ pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>);
 <td>not run</td>
 <td></td>
 <td></td>
-<td>App NEXT; #113, <code>shield_pool</code>, <code>shielded_by_hub</code>, <code>damage_model: station</code>, hull = <code>HP1</code></td>
+<td>App 0.22.4; #113, <code>shield_pool</code>, <code>shielded_by_hub</code>, <code>damage_model: station</code>, hull = <code>HP1</code></td>
+</tr>
+<tr>
+<td>MT-4-67</td>
+<td><code>interceptor</code>: system damage, mounts and repair</td>
+<td><code>duel-wraith</code> (<code>interceptor</code>), Lightning</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App NEXT; #116, <code>system_table</code>, <code>repair_order</code>, <code>efficiency</code>, <code>disables_below</code></td>
 </tr>
 </tbody>
 </table>
@@ -18821,7 +18852,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tbody>
 <tr>
 <td>Preconditions</td>
-<td>App NEXT or later. <code>openinterceptor --campaign interceptor --scenario base-assault --ship lightning</code> (the player's data); then <code>openinterceptor --campaign default --scenario outpost-strike</code>. Target the base (<code>T</code>) and read the target box.</td>
+<td>App 0.22.4 or later. <code>openinterceptor --campaign interceptor --scenario base-assault --ship lightning</code> (the player's data); then <code>openinterceptor --campaign default --scenario outpost-strike</code>. Target the base (<code>T</code>) and read the target box.</td>
 </tr>
 <tr>
 <td>Steps</td>
@@ -18830,6 +18861,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: hull <strong>5,000</strong> (an X-COM base: 6,000); shields <strong>3,000</strong> on both rings. 2: the pod does not lose hull; the base's shields fall instead. 3: both rings fall together, by the same amount, whichever side you hit. 4: once the shields are at 0 the pod takes the hits, and hits on the base go straight to its hull (no armour). 5: <strong>interceptor</strong>: the shields keep what they had and do not recharge; <strong>default</strong>: "STATION SHIELDS DOWN" and they go to 0 when the shield pod dies. While a generator stands the shields climb back at 2 points per second (interceptor) or 5 (default).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-67-interceptor-system-damage-mounts-and-repair">MT-4-67 — <code>interceptor</code>: system damage, mounts and repair<a class="headerlink" href="#mt-4-67-interceptor-system-damage-mounts-and-repair" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's data. <code>openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning</code>. The MFD Status page (systems) and the hull readout.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Let the Wraiths hit you until the hull is below 75 % and system messages appear; break off and fly clear. 2. Watch the hull and the systems for 30 s. 3. Fight on until a beam mount or launcher is reported destroyed; fire the guns and the missiles. 4. Keep taking hits until the engine is badly damaged. 5. Shoot a Wraith's systems down the same way and watch how it fights.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: messages name beam mounts and launchers as well as systems. 2: the <strong>hull climbs about 2 points a second</strong> first if the engine is whole (the engine is repaired first when damaged); then the shield generator, flight control and so on; a system shown destroyed never comes back. 3: a destroyed mount no longer fires (one of two guns fires); a destroyed launcher's missiles are gone and the rack is skipped. 4: thrust falls to half, then a quarter; below 15 % the craft is <strong>disabled</strong> — no thrust, afterburner off — and the hull is repaired before the engine. Turning gets sluggish as flight control is hit but never stops. Missile lock and the hyperdrive work as usual however damaged the sensor and hyperdrive are. 5: a Wraith that lost its guns stops hurting you.</td>
 </tr>
 </tbody>
 </table>

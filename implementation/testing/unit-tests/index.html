@@ -6539,6 +6539,28 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>Parity M1, #113 follow-up (app 0.22.6)</strong> one more, so <strong>482</strong>:
+<code>sim::stations::tests::a_pool_without_generators_recharges_to_its_own_shields</code> (an ore plant's
+1,000 pool from its <code>shields</code>, emptied by a 1,200 hit with 200 to the hull and never below 0,
+back to 10 after 5 s); <code>content::rules::tests::fitted_equipment_and_hit_point_charts_set_protection</code>
+now also checks that a pooled class with no modules takes its chart's <code>SD</code> as <code>shields</code>.</p>
+<p><strong>Parity M1, #116 (app 0.22.6)</strong> seven more, so <strong>481</strong> <code>#[test]</code> functions by a count of the
+sources: <code>content::equipment::tests::efficiency_tables_follow_the_share_of_hit_points</code> (the
+engine's steps at 60 / 50 / 49 / 24 / 16 / 14 % give 1 / 1 / 0.5 / 0.25 / 0.25 / 0 whatever
+order they are written in; <code>linear</code>, <code>ignore</code>, <code>min_hit_points</code>, <code>disables_below</code>; an unknown word
+is an error) and <code>repair_order_system_table_and_mounts_parse</code> (unknown items reported and dropped,
+chances over 100 % an error, absent keys give today's rules); in <code>sim::systems</code>
+<code>repair_follows_the_order_hull_included_at_two_a_second</code> (hull 50 → 52 in 1 s while the shield
+generator waits; 4 a second with a damage control computer; the engine before the hull; a sensor
+at 0 never repaired), <code>efficiency_steps_and_the_engine_failure_below_fifteen_percent</code> (engine
+efficiency by hit points; flight control at 10 / 40 works at 0.25; at 16 % the ship flies, at 14 %
+it is disabled, the cloak and afterburner drop, no thrust, and the hull is repaired before the
+engine), <code>damaged_sensors_and_hyperdrives_change_nothing_when_set_to_ignore</code> (10 %: full
+efficiency and the normal jump time), <code>the_system_table_strikes_mounts_and_carries_over</code> (30 on a
+20-point mount wrecks one, the rest is lost; a wrecked mount's rate 0, at 40 % ½; a destroyed
+launcher loses its rounds; a carrying shield hit leaves the generator destroyed at 0; flight
+control floored at 1) and <code>the_system_table_rolls_follow_their_weights</code> (10,000 rolls land
+50 % / 30 % within 3 points).</p>
 <p><strong>Parity M1, #113 (app 0.22.4)</strong> seven more, so <strong>474</strong> <code>#[test]</code> functions by a count of the
 sources: <code>content::rules::tests::station_shield_pool_and_damage_model_keys</code> (<code>shield_pool</code>,
 <code>shield_capacity</code>, <code>shielded_by_hub</code>, <code>damage_model</code> parse; a capacity implies a generator, none
@@ -6872,8 +6894,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::equipment</code></td>
-<td>3</td>
-<td>System kinds round trip and built-ins exist, <code>systems</code> definitions overriding built-ins, <code>power</code> parsing and validation (level counts, start levels)</td>
+<td>5</td>
+<td>System kinds round trip and built-ins exist, <code>systems</code> definitions overriding built-ins, <code>power</code> parsing and validation (level counts, start levels); <strong>system <code>efficiency</code> tables, <code>repair_order</code>, <code>system_table</code> and <code>mounts</code> parse</strong> (app 0.22.6)</td>
 </tr>
 <tr>
 <td><code>content::hazards</code></td>
@@ -7057,8 +7079,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::systems</code></td>
-<td>14</td>
-<td><strong>Power</strong>: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; <strong>damage</strong>: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; <strong>hyperspace</strong> countdown, abort and departure; <strong>tractor</strong> hold and capture on jump, and its refusals (power, fitting, range); <strong>cloak</strong> hides from enemy sensors beyond range; <strong>ECM</strong> makes missiles lose their target; <strong>the console's sliders set power levels and balance outright</strong>, within the budget</td>
+<td>19</td>
+<td><strong>Power</strong>: raising takes from the other setting, cycling wraps to A, balance caps and message, requests change power and balance, shield balance moves points and recharge follows power; <strong>damage</strong>: knocked out and repaired back, destroyed beyond repair, disabled when engines and manoeuvring are out; <strong>hyperspace</strong> countdown, abort and departure; <strong>tractor</strong> hold and capture on jump, and its refusals (power, fitting, range); <strong>cloak</strong> hides from enemy sensors beyond range; <strong>ECM</strong> makes missiles lose their target; <strong>the console's sliders set power levels and balance outright</strong>, within the budget; <strong>the original's repair order, per-system efficiency, engine failure below 15 %, sensors and hyperdrive unaffected, the system table with mounts, launchers, carry-over and its weights</strong> (app 0.22.6, #116)</td>
 </tr>
 <tr>
 <td><code>sim::guidance</code></td>
@@ -7072,8 +7094,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::stations</code></td>
-<td>6</td>
-<td><strong>A station's one shield pool</strong> starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; <strong>covered modules</strong> pass hits to the hub's pool and the overflow to the hub's hull; <strong><code>damage_model: station</code></strong> skips armour, systems and the difficulty factor (app 0.22.4, #113)</td>
+<td>7</td>
+<td><strong>A station's one shield pool</strong> starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; <strong>a pool without generators recharges to its own <code>shields</code></strong>; <strong>covered modules</strong> pass hits to the hub's pool and the overflow to the hub's hull; <strong><code>damage_model: station</code></strong> skips armour, systems and the difficulty factor (app 0.22.4, #113)</td>
 </tr>
 <tr>
 <td><code>sim::targeting</code></td>

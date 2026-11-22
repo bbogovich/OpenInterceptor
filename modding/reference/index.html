@@ -7524,6 +7524,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>Bolt colour.</td>
 </tr>
 <tr>
+<td><code>hit_points</code></td>
+<td>number</td>
+<td>0</td>
+<td>A mount's hit points (app 0.22.6), struck by <a href="#damage"><code>damage.system_table</code></a>; damaged, it fires at half rate or not at all (<code>damage.mounts</code>). 0: it cannot be damaged. <code>interceptor</code>: the beam section's <code>HitPoints</code> (inherited; Laser Cannon 20, <strong>verified</strong>).</td>
+</tr>
+<tr>
 <td><code>sound</code></td>
 <td>asset</td>
 <td>none</td>
@@ -7595,6 +7601,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>time</td>
 <td>2 s</td>
 <td>Seconds in the lock cone to lock on, when the ship's sensor sets no <a href="#systems"><code>lock_time</code></a>.</td>
+</tr>
+<tr>
+<td><code>launcher_hit_points</code></td>
+<td>number</td>
+<td>0</td>
+<td>A launcher's (rack's) hit points (app 0.22.6), struck by <code>damage.system_table</code>; damaged, it fires twice as slowly or not at all, and destroyed it loses its rounds. 0: it cannot be damaged. <code>interceptor</code>: 25, each <code>*Launcher</code>'s <code>HitPoints</code> (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>mass</code></td>
@@ -7740,7 +7752,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>shields</code></td>
 <td>number</td>
 <td>0</td>
-<td>Shield points per facing (fore and aft). With <code>shield_pool</code>: the pool's size when no generator module gives a <code>shield_capacity</code>.</td>
+<td>Shield points per facing (fore and aft). With <code>shield_pool</code>: the pool's size when no generator module gives a <code>shield_capacity</code>. A class with <code>shield_pool</code>, no <code>modules</code> and an inherited original hit-point chart gets the chart's <code>SD</code> (app 0.22.6, <strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>fitted</code></td>
@@ -7938,7 +7950,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>shield_pool</code></td>
 <td><code>{recharge, on_generator_lost}</code></td>
 <td>none (two banks)</td>
-<td>Stations (app 0.22.4): <strong>one</strong> shield pool instead of fore and aft banks; hits from any side drain it. <code>recharge</code>: points per second while a generator stands (default 2); <code>on_generator_lost</code>: <code>keep</code> (the points stay but no longer recharge) or <code>drop</code> (the pool empties, "STATION SHIELDS DOWN"; default). The pool starts full and has no difficulty factor. <code>interceptor</code>: the X-COM and alien bases, <code>{recharge: 2, on_generator_lost: keep}</code> (<strong>verified</strong> / <em>derived</em>).</td>
+<td>Stations (app 0.22.4): <strong>one</strong> shield pool instead of fore and aft banks; hits from any side drain it. <code>recharge</code>: points per second while a generator stands (default 2); <code>on_generator_lost</code>: <code>keep</code> (the points stay but no longer recharge) or <code>drop</code> (the pool empties, "STATION SHIELDS DOWN"; default). The pool starts full and has no difficulty factor. <code>interceptor</code>: the X-COM and alien bases, <code>{recharge: 2, on_generator_lost: drop}</code> (<strong>verified</strong>; <code>keep</code> until app 0.22.6); the outposts and ore plants <code>{recharge: 2}</code> with no generator, sized by their chart's <code>SD</code> (app 0.22.6, <strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>shielded_by_hub</code></td>
@@ -8023,7 +8035,25 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>repair_rate</code></td>
 <td>number</td>
 <td>per kind (4 for damage control)</td>
-<td>Damage control: repair speed multiplier.</td>
+<td>Damage control: repair speed multiplier. <code>interceptor</code>: 2 — 4 points a second instead of 2 (app 0.22.6, <strong>verified</strong>; it was 4, so 8).</td>
+</tr>
+<tr>
+<td><code>efficiency</code></td>
+<td><code>standard</code>, <code>linear</code>, <code>ignore</code> or a list of <code>{below, factor}</code></td>
+<td><code>standard</code></td>
+<td>How it works when damaged (app 0.22.6, <a href="../rulesets/#how-systems-behave-in-flight">Rulesets › How systems behave in flight</a>). Steps: below <code>below</code> of its hit points it works at <code>factor</code> (up to four; the lowest that applies wins; at 0 hit points nothing). <code>linear</code>: in proportion to its hit points. <code>ignore</code>: damage changes nothing, even destroyed. <code>standard</code>: the engine's table (½ at half or less, off at 0 until repaired to 25 %).</td>
+</tr>
+<tr>
+<td><code>min_hit_points</code></td>
+<td>number</td>
+<td>0</td>
+<td>Hits never take it below this, so it is never destroyed (app 0.22.6). <code>interceptor</code>: flight control 1 (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>disables_below</code></td>
+<td>fraction</td>
+<td>0</td>
+<td>Engines (app 0.22.6): below this share of its hit points, or destroyed, the ship is <strong>disabled</strong> — no thrust, the afterburner and the cloak drop, and repair takes the hull first. 0: only the engine's own rule (engines and manoeuvring both out). <code>interceptor</code>: 15 % (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>mass</code></td>
@@ -8927,13 +8957,31 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td><code>destroy_below</code></td>
 <td>fraction</td>
 <td>50 %</td>
-<td>A system this far below zero hit points is destroyed for the battle.</td>
+<td>A system this far below zero hit points is destroyed for the battle. <strong>0</strong>: a system at 0 is destroyed — never repaired (app 0.22.6; <code>interceptor</code>, <strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>repair_rate</code></td>
 <td>number</td>
 <td>2</td>
-<td>Default crew repair rate, hit points per second.</td>
+<td>Default crew repair rate, hit points per second. <code>interceptor</code>: 2 (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>repair_order</code></td>
+<td>list</td>
+<td>none</td>
+<td>The original's repair (app 0.22.6): the whole repair rate goes to the <strong>first</strong> item in the list that needs it — system kinds, <code>hull</code>, <code>beams</code> (the first damaged mount), <code>launchers</code>, <code>others</code> (any system the list does not name). Something at 0 hit points is never repaired; a disabled ship repairs its hull first. Without it: one system at a time, the worst first, never the hull. <code>interceptor</code>: <code>[engines, hull, shields, manoeuvring, hyperdrive, sensors, beams, launchers, others]</code> (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>system_table</code></td>
+<td><code>{tries, rolls}</code></td>
+<td>none</td>
+<td>The original's system hits (app 0.22.6): the system share of a hit is dealt by up to <code>tries</code> weighted <code>rolls</code>, each <code>{chance, hit, carry}</code> — <code>hit</code> a system kind, <code>beams</code> (a random mount), <code>launchers</code> (a random rack), <code>special</code> (a random system other than engines, manoeuvring, sensors, shields, hyperdrive) or <code>none</code>; chances left over strike nothing. A roll whose target is missing or at 0 uses up its try. Damage beyond what the target has left goes on to the next try with <code>carry: true</code>, otherwise it is lost. Without it: one random system takes it all. <code>interceptor</code>: 5 tries; mounts 20 %, launchers 30 %, shields, flight control, sensor, engine 10 % each, hyperdrive 5 %, special 3 % (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>mounts</code></td>
+<td><code>{half_rate, no_fire}</code></td>
+<td>50 %, 25 %</td>
+<td>A damaged beam mount or launcher at or below <code>half_rate</code> of its hit points fires at half rate, at or below <code>no_fire</code> not at all (app 0.22.6; <strong>verified</strong> for <code>interceptor</code>).</td>
 </tr>
 </tbody>
 </table>

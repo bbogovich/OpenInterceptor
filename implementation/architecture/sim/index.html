@@ -6829,7 +6829,7 @@ ceiling (<code>sim::env</code>, app 0.6.0; ground installations 0.6.1).</p>
     GC --&gt; HZ["hazards::step&lt;br/&gt;black-hole pull, swallowed craft destroyed"]
     HZ --&gt; E["combat::step&lt;br/&gt;lock → beams → missile controls → link mode&lt;br/&gt;→ point_defence → move_bolts → guidance::step"]
     E --&gt; F["combat::ship_collisions"]
-    F --&gt; S["systems::step&lt;br/&gt;recharge → repair → disabled check&lt;br/&gt;→ tractors → countermeasures → hyperdrives"]
+    F --&gt; S["systems::step&lt;br/&gt;recharge → disabled check → repair&lt;br/&gt;→ tractors → countermeasures → hyperdrives"]
     S --&gt; WR["destroyed modules with a destroyed look → wrecks"]
     WR --&gt; MO["update_modules&lt;br/&gt;modules follow hubs, cascade, shield generators"]
     MO --&gt; EX["expiring ships (doppelgangers) counted down"]
@@ -7176,12 +7176,12 @@ make a moving hub work, each found while building the convoy ambush:</p>
     end
     subgraph step["step (after combat)"]
       S1["recharge(): energy × beam_recharge[level] (not while afterburning);&lt;br/&gt;shields × shield_recharge[level] × efficiency;&lt;br/&gt;shift: excess over a facing's cap flows to the other;&lt;br/&gt;share: share_recharge routes the stream by balance"]
-      S2["repair(): one system, worst first,&lt;br/&gt;repair_rate × damage-control multiplier"]
-      S3["disabled = engines and manoeuvring both at 0"]
+      S3["is_disabled(): engines and manoeuvring both at 0,&lt;br/&gt;or engines below disables_below"]
+      S2["repair(): one system, worst first, or&lt;br/&gt;repair_in_order() with damage.repair_order;&lt;br/&gt;repair_rate × damage-control multiplier"]
       S4["tractors(): collect Tow::Pull / Tow::Release, then apply"]
       S5["countermeasures(): sensors lose cloaked targets;&lt;br/&gt;missiles may lose cloaked / jamming targets"]
       S6["hyperdrives(): count down, 'JUMP IN n',&lt;br/&gt;depart(); a held disabled capturable ship is Captured"]
-      S1 --&gt; S2 --&gt; S3 --&gt; S4 --&gt; S5 --&gt; S6
+      S1 --&gt; S3 --&gt; S2 --&gt; S4 --&gt; S5 --&gt; S6
     end</code></pre>
 <p><strong>Conditions.</strong> <code>SystemState::condition()</code> is <code>Ok</code> above half its hit points (efficiency 1),
 <code>Damaged</code> at half or below (0.5), <code>Inoperative</code> once its hit points reach 0 (0) and
@@ -7190,12 +7190,33 @@ make a moving hub work, each found while building the convoy ambush:</p>
 <code>ONLINE_AT</code> = 25 % of its hit points, so the first moments of repair do not bring a wreck
 straight back. A knocked-out switchable system switches off; a knocked-out hyperdrive aborts a
 countdown.</p>
+<p><strong>Efficiency</strong> (app 0.22.6, #116). Each <code>SystemState</code> carries a copy of its definition's
+<code>efficiency: Efficiency</code> (a <code>Copy</code> enum with a fixed four-step array, so no allocation per
+ship) and its <code>min_hp</code>; <code>SystemState::efficiency()</code> applies it — <code>Standard</code> is the condition
+table above, <code>Steps</code> the first-below rule, <code>Linear</code> hit points ÷ maximum, <code>Ignore</code> always 1 —
+and <code>Ship::efficiency(kind)</code> reads it. <code>Ship::thrust_factor()</code> is 0 while the ship is
+<code>disabled</code> and is what <code>flight</code> multiplies thrust and the afterburner by (the AI's drive too).</p>
 <p><strong>Damage.</strong> <code>damage_system</code> strikes one random non-destroyed system with the share of the hit
 that <code>combat::apply_hit</code> set aside (<code>system_share</code> of what reached the hull, below
-<code>system_below</code>), and emits <code>SystemChanged</code> when the condition changes.</p>
+<code>system_below</code>), and emits <code>SystemChanged</code> when the condition changes. With
+<code>damage.system_table</code> it calls <code>damage_by_table</code> instead: up to <code>tries</code> rolls on the world's
+generator walk the cumulative <code>chance</code>s; a system kind, a random beam mount (<code>Ship::beam_hp</code>), a
+random rack (<code>Ship::rack_hp</code>; at 0 its rounds are cleared) or a random "special" system takes
+the damage, the rest carrying to the next try for <code>carry</code> entries. <code>strike_system</code> is the
+shared single-system step: <code>set_hp</code> (never below <code>min_hp</code>), destroyed below
+<code>−destroy_below × max</code> — or at 0 when <code>destroy_below</code> is 0 — switched off when it stops working.
+<code>combat::mount_rate</code> and <code>rack_rate</code> turn a mount's hit points into 1, ½ or 0 by <code>damage.mounts</code>
+for <code>fire_beams</code> (a mount out of action is dropped from its group; half rate doubles its
+cooldown) and <code>handle_missile_controls</code> (a wrecked rack is skipped, "LAUNCHER INOPERATIVE").</p>
 <p><strong>Repair.</strong> <code>repair</code> keeps working on the current job; otherwise it takes the worst-off system
 (first in fitting order on a tie). Speed = class <code>repair_rate</code> × (1 + (<code>repair_rate</code> of the damage
-control computer − 1) × its efficiency); the computer does not speed up its own repair.</p>
+control computer − 1) × its efficiency); the computer does not speed up its own repair. With
+<code>damage.repair_order</code>, <code>repair_in_order</code> gives the whole amount to the first <code>RepairItem</code> that
+needs it (<code>Hull</code>, <code>System(kind)</code>, <code>Beams</code>, <code>Launchers</code>, <code>Others</code>; a <code>Job</code> enum names what was
+found); nothing at 0 is repaired, a disabled ship's hull comes first, and static kinds never
+repair their hull. <strong>Disabled</strong> (<code>is_disabled</code>) is checked before repair, so a ship disabled by
+this tick's hit already repairs its hull first; on the change it drops the afterburner and the
+cloak.</p>
 <p><strong>Power.</strong> <code>raise</code> and <code>cycle</code> work on a plain <code>Power</code> value and the <code>PowerRules</code>, not on the
 world, so they are tested exhaustively. With <code>power.balance: shift</code>, <code>shield_caps(shield_max,
 balance, shift)</code> gives the fore and aft capacities <code>shield_max × (1 ± shift)</code>. With <code>share</code> (app

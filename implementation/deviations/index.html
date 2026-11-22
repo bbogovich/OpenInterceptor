@@ -6603,9 +6603,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-029</td>
-<td><strong>System condition thresholds</strong>: above half its hit points a system works fully, at half or below at half effect, at zero it stops until repaired back to 25 %, below <code>−destroy_below × hit_points</code> (−50 %) it is destroyed for the battle. Repair takes the worst system first.</td>
-<td>The original shows damaged / inoperative / destroyed systems and repairs them, but its thresholds and repair order are not in the data (derived). Thresholds below zero and the repair rate are <code>damage</code> data. Since app 0.21.0 the original's own thresholds and repair are known (<strong>verified</strong>, <code>notes/re/flight</code> §3–§5, §4.3: repair 2 points per second, 4 with a damage control computer, in a fixed order — engine, hull, shield generator, flight control, hyperdrive, sensor, then mounts and specials — and a destroyed system is never repaired; the INI <code>RepairRate</code> keys are never read) but not yet adopted; see DEV-064.</td>
-<td>2</td>
+<td><strong>System condition thresholds</strong> (the engine's <code>standard</code> table): above half its hit points a system works fully, at half or below at half effect, at zero it stops until repaired back to 25 %, below <code>−destroy_below × hit_points</code> (−50 %) it is destroyed for the battle. Repair takes the worst system first.</td>
+<td>The original shows damaged / inoperative / destroyed systems and repairs them, but its thresholds and repair order were not in the data (derived). Since app 0.22.6 the original's repair is data and <strong><code>interceptor</code> uses it</strong> (<strong>verified</strong>, <code>notes/re/flight</code> §4.3): <code>damage.repair_order</code> — 2 points per second, 4 with a damage control computer, to the first of engine, hull, shield generator, flight control, hyperdrive, sensor, mounts, specials — and <code>destroy_below: 0</code> (a system at 0 is never repaired). <strong>No longer a deviation</strong> in <code>interceptor</code>; the default campaign keeps the engine's rule. Static objects never repair their hull (<em>derived</em>).</td>
+<td>2 → 4 (#116, resolved in <code>interceptor</code>)</td>
 </tr>
 <tr>
 <td>DEV-030</td>
@@ -6639,7 +6639,7 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-035</td>
-<td><strong>Module placement on the original bases is derived</strong>: which of the X-COM base's 33 and the alien base's 28 attachment points carries a turret, shield generator, hangar or pod. Hit points come from the original <code>M_XCOM*</code> / <code>M_ALIEN*</code> sections (verified); destroying the hub destroys its modules. Since app 0.22.4 the <code>interceptor</code> bases have the original's shield rules (<strong>verified</strong>, flight notes §8.2 – §8.3): one pool sized by the generator type (2,000 X-COM Type1, 3,000 alien Type2), 2 points per second, modules covered by it; what happens to the pool when the last generator falls (it keeps its points, no recharge) is <em>derived</em>.</td>
+<td><strong>Module placement on the original bases is derived</strong>: which of the X-COM base's 33 and the alien base's 28 attachment points carries a turret, shield generator, hangar or pod. Hit points come from the original <code>M_XCOM*</code> / <code>M_ALIEN*</code> sections (verified); destroying the hub destroys its modules. Since app 0.22.4 the <code>interceptor</code> bases have the original's shield rules (<strong>verified</strong>, flight notes §8.2 – §8.3): one pool sized by the generator type (2,000 X-COM Type1, 3,000 alien Type2), 2 points per second, modules covered by it; when the last generator falls the pool drops to 0 (app 0.22.6, <strong>verified</strong>, unknowns §8; 0.22.4 kept it). The outposts and ore plants have their own pools of their chart's <code>SD</code> at 2 per second (app 0.22.6, <strong>verified</strong>).</td>
 <td>The original assembles bases on the strategy layer (Stage 4), so their battle layout is not stored; the cascade rule follows the strategy guide's description (derived) — no code was found in the original that destroys a hub's modules with it (<em>unknown</em>). Placement is <code>modules: [{slot, class}]</code> data.</td>
 <td>2</td>
 </tr>
@@ -6813,9 +6813,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-064</td>
-<td><strong>System efficiency is one half / zero rule</strong> (DEV-029): a system works fully above half its hit points, at half effect at or below half, and not at all at 0. The original's thresholds differ per system (<strong>verified</strong>): beam mounts fire at full rate above 50 %, half rate at 25 – 50 %, not at all at or below 25 %; shield recharge is halved below 50 % and zero below 25 %; engine thrust is × 0.5 below 50 %, × 0.25 below 25 % and nothing below 15 %; flight control scales the turn response continuously (health / 40) and adds a wobble.</td>
-<td>One condition model serves every kind and every campaign; per-kind threshold tables would be new <code>systems</code> data (Track A, after A1).</td>
-<td>4 (A1)</td>
+<td><strong>System efficiency is one half / zero rule</strong> (DEV-029) by default. Since app 0.22.6 a system's <code>efficiency:</code> sets its own table and <strong><code>interceptor</code> uses the original's</strong> (<strong>verified</strong>): engine thrust × 0.5 below 50 %, × 0.25 below 25 %, nothing below 15 % (where the ship is disabled, <code>disables_below</code>); shield recharge halved below 50 % and zero below 25 %; flight control in proportion to health / 40 (never below 1); sensor and hyperdrive damage changes nothing. <strong>Still different:</strong> the flight-control wobble when damaged (proportional to 1 − q and to speed) is not modelled; whether the disabled flag clears when the engine is repaired above 15 % is <em>unknown</em> (here it does); what the other special systems do when damaged is <em>unknown</em> (they keep the standard table).</td>
+<td>Per-kind tables are <code>systems</code> data; the default campaign keeps the standard table.</td>
+<td>4 (A1; #116)</td>
 </tr>
 <tr>
 <td>DEV-065</td>
@@ -6837,9 +6837,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-068</td>
-<td><strong>Beam and launcher mounts have no hit points of their own for fire rate.</strong> In the original a beam mount fires at full rate above 50 % of its <code>HitPoints</code>, half rate at 25 – 50 % and not at all below; a launcher fires above 25 % at half rate at or below 50 % (<strong>verified</strong>). Here mounts are not separate systems.</td>
-<td>Mount damage needs per-mount system state; it comes with the system-hit table (Track A, A1 follow-up).</td>
-<td>4 (A2)</td>
+<td><strong>Beam and launcher mounts</strong> have hit points since app 0.22.6 (beam <code>hit_points</code>, missile <code>launcher_hit_points</code>), struck only through <code>damage.system_table</code>; at 50 % or less they fire at half rate, at 25 % or less not at all (<code>damage.mounts</code>), and a destroyed launcher loses its rounds — as in the original (<strong>verified</strong>). <strong>No longer a deviation</strong> in <code>interceptor</code>. Still different: the original's launcher <code>RateOfFire</code> and alternation between same-type racks (D-13, #120); the engine's one missile cooldown per ship is doubled for a half-health rack. Hits on a mount are not reported on the HUD beyond "BEAM MOUNT DESTROYED" / "LAUNCHER DESTROYED".</td>
+<td>Mount state is two <code>Vec&lt;f32&gt;</code> on the ship, filled at spawn; the default campaign gives its weapons no hit points, so its mounts cannot be damaged.</td>
+<td>4 (A2; #116)</td>
 </tr>
 <tr>
 <td>DEV-069</td>
