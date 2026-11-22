@@ -519,7 +519,8 @@ impl MissionRun {
         let player_gone = me.departed;
         // `same_slot` guards against a reused slot: a destroyed player's slot may hold a
         // new ship later, and that ship's state says nothing about the player.
-        let player_killed = !w.same_slot(self.player) || !me.alive;
+        // A dead pilot (`damage.pilot_injury`) loses the craft as surely as its hull.
+        let player_killed = !w.same_slot(self.player) || !me.alive || me.pilot_health.is_some_and(|h| h < 0.0);
         let result = if player_gone {
             Some("retreat")
         } else if player_killed {

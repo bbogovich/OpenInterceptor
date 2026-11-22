@@ -759,11 +759,14 @@ impl FlightSession {
                     actions.extend(self.captured_ids.iter().map(|id| format!("captured({id})")));
                     // And each enemy destroyed, by class (salvage and research triggers).
                     actions.extend(d.destroyed.iter().map(|id| format!("destroyed({id})")));
+                    // The pilot's health, read from the slot (a lost craft's too).
+                    let pilot_health = self.world.ships.get(self.player.index as usize).and_then(|s| s.pilot_health);
                     ctx.battle_report = Some(super::strategy::BattleReport {
                         result: d.result.clone(),
                         actions,
                         kills: d.kills,
                         cargo: d.cargo,
+                        pilot_health,
                     });
                 }
                 return Next::Strategy;
@@ -812,6 +815,7 @@ impl FlightSession {
                     actions: Vec::new(),
                     kills: 0,
                     cargo: None,
+                    pilot_health: self.world.get(self.player).and_then(|s| s.pilot_health),
                 });
                 return Next::Strategy;
             } else if raw.pressed.contains("l") || raw.pressed.contains("q") {

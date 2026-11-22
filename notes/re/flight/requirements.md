@@ -515,9 +515,10 @@ Priority: **P1** = changes how often battles are won or lost, **P2** = visible i
 ### RQ-C-23 Pilot grade (P2)
 
 * **Original:** pilot +0x28 is a grade 0–4 (X-COM 0, pirates 1, outpost freighter crews 2, aliens 1–4 by
-  hull and month); it adds a generation bonus to stats and sets the AI look-ahead (225/100/250 m) and
+  hull and month); it picks the generated Psionics range and sets the AI look-ahead (225/100/250 m) and
   sprint (`../unknowns-2026-11.md` §5).
-* **Pack key:** `pilots.grades: {<n>: {stat_bonus, lookahead_m, sprint}}`, hull `pilot_grade`.
+* **Pack key:** `pilots.grades: {<n>: {lookahead_m, sprint}}`, hull `pilot_grade` (the generator's stat bonus is
+  by **rank**, not grade: `pilots.generate`, `../unknowns-2026-11.md` §5; the grade picks only the Psionics range).
 * **Default:** same.
 * **Test:** U — look-ahead per grade; generated stats include the bonus.
 

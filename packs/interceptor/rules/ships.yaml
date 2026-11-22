@@ -92,7 +92,10 @@ ships:
     behaviour: xcom_pilot
   wraith:
     inherit: original:GameSettings.ini/Ship_AlienType1
-    pilot_grade: 1   # AlienType1/2 early on; grade 2 from month 2 is not modelled (VERIFIED)
+    pilot_grade: 1   # AlienType1/2 early on (VERIFIED)
+    # From month 2, grade 2 with 50 + 2m % (unknowns §5, VERIFIED; m = months since the
+    # campaign began, DERIVED); the higher grades from month 8 - d/2 are not traced.
+    grade_rise: {from_month: 2, chance: 50%, per_month: 2%, grade: 2}
     mass: 5500
     ai_speed: {min: 350, max: 400, level_step: 40}
     ai_turn: {pitch: 2.3, yaw: 2.1, roll: 3.75}
@@ -113,7 +116,10 @@ ships:
     behaviour: wraith
   spectre:
     inherit: original:GameSettings.ini/Ship_AlienType2
-    pilot_grade: 1   # AlienType1/2 early on; grade 2 from month 2 is not modelled (VERIFIED)
+    pilot_grade: 1   # AlienType1/2 early on (VERIFIED)
+    # From month 2, grade 2 with 50 + 2m % (unknowns §5, VERIFIED; m = months since the
+    # campaign began, DERIVED); the higher grades from month 8 - d/2 are not traced.
+    grade_rise: {from_month: 2, chance: 50%, per_month: 2%, grade: 2}
     mass: 11000
     ai_speed: {min: 350, max: 400, level_step: 40}
     ai_turn: {pitch: 1.7, yaw: 1.7, roll: 0.75}

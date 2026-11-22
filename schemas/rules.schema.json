@@ -138,6 +138,12 @@
           "cargo": {"description": "a cargo container: counted by the cargo(role) mission query", "type": "boolean"},
           "behaviour": {"description": "AI behaviour id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "pilot_grade": {"description": "AI ships of this class: their pilot's grade (flight.pilot_grades)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "grade_rise": {"description": "campaign battles: AI pilots of the class may fly at a higher grade later on", "type": "object", "additionalProperties": false, "properties": {
+              "from_month": {"description": "campaign month (0 = the first) it starts", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "chance": {"description": "chance at month 0", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "per_month": {"description": "added per month", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "grade": {"description": "the grade", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
           "accumulator_shields": {"description": "an ordinary hit on a raised shield bank does no damage and adds a quarter of itself to it", "type": "boolean"},
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
@@ -248,6 +254,12 @@
           "cargo": {"description": "a cargo container: counted by the cargo(role) mission query", "type": "boolean"},
           "behaviour": {"description": "AI behaviour id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "pilot_grade": {"description": "AI ships of this class: their pilot's grade (flight.pilot_grades)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "grade_rise": {"description": "campaign battles: AI pilots of the class may fly at a higher grade later on", "type": "object", "additionalProperties": false, "properties": {
+              "from_month": {"description": "campaign month (0 = the first) it starts", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "chance": {"description": "chance at month 0", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "per_month": {"description": "added per month", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "grade": {"description": "the grade", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
           "accumulator_shields": {"description": "an ordinary hit on a raised shield bank does no damage and adds a quarter of itself to it", "type": "boolean"},
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
@@ -996,6 +1008,15 @@
                   "carry": {"description": "damage beyond what the system has left goes to the next try", "type": "boolean"}
                 }}}
           }},
+        "pilot_injury": {"description": "pilots get hurt by hull hits and collisions; 0 = unconscious, below 0 = dead", "type": "object", "additionalProperties": false, "properties": {
+            "amount": {"description": "health a hit on the hull takes, [min, max] ([1, 3])", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+            "collision": {"description": "health a collision takes ([5, 10])", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+            "health": {"description": "the health of a pilot without a record", "type": "object", "additionalProperties": false, "properties": {
+                "base": {"description": "whole-number range ([5, 15])", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                "per_rank": {"description": "added per rank, whole-number range ([0, 0])", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                "rank_roll": {"description": "rank thresholds on a 1-100 roll", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
+              }}
+          }},
         "mounts": {"description": "how damaged beam mounts and launchers fire", "type": "object", "additionalProperties": false, "properties": {
             "half_rate": {"description": "at or below this share a mount fires at half rate (50 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
             "no_fire": {"description": "at or below this share it cannot fire (25 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
@@ -1249,16 +1270,46 @@
     "pilots": {"description": "pilot rules", "type": "object", "additionalProperties": false, "properties": {
         "stats": {"description": "stat: [min, max]", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
         "ranks": {"description": "rank: experience needed", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
-        "salary": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "salary": {"description": "per month: a number, or the original's table (base + bonuses / 12)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}, {"type": "object", "additionalProperties": false, "properties": {
+              "base": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "rank": {"description": "a year's bonus by rank", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+              "brackets": {"description": "stat: [[from, a year's bonus], ...]", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}}},
+              "kills": {"description": "[[kills from, a year's bonus], ...]", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
+              "max_health": {"description": "[[maximum health from, a year's bonus], ...]", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}}
+            }}]},
         "recruit_fee": {"description": "cost to hire", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "pool": {"description": "candidates offered", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "names": {"description": "names to draw from", "type": "array", "items": {"type": "string"}},
         "heal_days": {"description": "days to heal an injury", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "training": {"description": "pilot training", "type": "object", "additionalProperties": false, "properties": {
             "gain": {"description": "stat points a day while training (up to each stat's maximum)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-            "cost": {"description": "money a day per pilot training", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            "cost": {"description": "money a day per pilot training", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "every": {"description": "the original's training: gains come this often", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "stats": {"description": "with every: the stats that grow", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+            "factor": {"description": "with every: trunc(scale_by / 100 x stat x factor + add)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "add": {"description": "with every: see factor (1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "scale_by": {"description": "with every: the stat that scales the gain", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+            "capacity": {"description": "with every: the base module effect that limits trainees", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
           }},
-        "survive": {"description": "chance a pilot shot down survives", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+        "survive": {"description": "chance a pilot shot down survives", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "stat_max": {"description": "the most training or a generator bonus raises a stat to (each range's maximum)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "generate": {"description": "the original's recruit generator: starting rank and rank bonuses", "type": "object", "additionalProperties": false, "properties": {
+            "rank_roll": {"description": "starting rank: thresholds on a 1-100 roll", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+            "bonus": {"description": "stat: [by rank] or {add: [by rank], times: stat}", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}, {"type": "object", "additionalProperties": false, "properties": {
+                    "add": {"description": "by rank", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+                    "times": {"description": "a stat: the bonus x stat / 100, truncated", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+                  }}]}}
+          }},
+        "health": {"description": "pilot health: battle injuries, healing and death", "type": "object", "additionalProperties": false, "properties": {
+            "max": {"description": "a recruit's maximum health", "type": "object", "additionalProperties": false, "properties": {
+                "base": {"description": "whole-number range", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                "per_rank": {"description": "added per rank, whole-number range", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}
+              }},
+            "per_day": {"description": "healing a day (1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "in_medical": {"description": "healing a day in a medical bay (1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "medical": {"description": "the base module effect: medical bay places", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+            "fly_from": {"description": "grounded below this share of the maximum (100 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }}
       }},
     "scores": {"description": "mission score names (score(x) in outcomes): points", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
     "evaluations": {"description": "the monthly evaluation, first match wins", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {

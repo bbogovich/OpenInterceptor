@@ -458,6 +458,21 @@ pub struct DamageRules {
     pub tachyon_table: Option<SystemTable>,
     /// How a damaged beam mount or missile launcher fires (`mounts:`).
     pub mounts: MountRules,
+    /// Pilots get hurt (`pilot_injury:`); `None`: they never are.
+    pub pilot_injury: Option<PilotInjury>,
+}
+
+/// `damage.pilot_injury` (the original's `0x4516ae`, flight README §4.2, verified): a hit
+/// that reaches the hull takes `amount` health from the pilot with a chance of
+/// `min(damage, 100)` % — always on the split chains (Permeator, Enveloping) — and a
+/// collision takes `collision`. At 0 the pilot is unconscious and the ship drifts; below
+/// 0 the pilot is dead and the ship tumbles. Ships without a pilot record roll one
+/// (`health`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PilotInjury {
+    pub amount: [f32; 2],
+    pub collision: [f32; 2],
+    pub health: super::behaviour::HealthRoll,
 }
 
 /// One entry of `damage.repair_order`.
@@ -599,6 +614,7 @@ impl Default for DamageRules {
             system_table: None,
             tachyon_table: None,
             mounts: MountRules { half_rate: 0.5, no_fire: 0.25 },
+            pilot_injury: None,
         }
     }
 }
@@ -706,11 +722,23 @@ impl DamageRules {
                 }
             }
         };
+        let pilot_injury = g.node("pilot_injury").map(|n| {
+            let p = Get(n);
+            let pair = |k: &str, d: [f32; 2]| p.nums(k).filter(|v| v.len() == 2).map_or(d, |v| [v[0], v[1]]);
+            PilotInjury {
+                amount: pair("amount", [1.0, 3.0]),
+                collision: pair("collision", [5.0, 10.0]),
+                health: p.node("health").map(|h| super::behaviour::HealthRoll::parse(Get(h))).unwrap_or(
+                    super::behaviour::HealthRoll { base: [5.0, 15.0], per_rank: [0.0, 0.0], rank_roll: Vec::new() },
+                ),
+            }
+        });
         DamageRules {
             repair_order,
             system_table,
             tachyon_table,
             mounts,
+            pilot_injury,
             system_share: frac("system_share", d.system_share).max(0.0),
             system_below: frac("system_below", d.system_below).clamp(0.0, 1.0),
             system_divert: g.bool("system_divert").unwrap_or(d.system_divert),

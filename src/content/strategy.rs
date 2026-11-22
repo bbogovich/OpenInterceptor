@@ -717,6 +717,85 @@ pub struct PilotRules {
     /// stat's maximum) and its cost a day; 0 gain = no training.
     pub train_gain: f32,
     pub train_cost: f32,
+    /// The original's training instead (`training: {every: 5d, ...}`): see [`Training`].
+    pub training: Option<Training>,
+    /// The original's salary (`salary: {base, rank, brackets, ...}`): see [`SalaryTable`].
+    /// `None`: the flat `salary`.
+    pub salary_table: Option<SalaryTable>,
+    /// The original's generator extras (`generate:`): see [`Generate`].
+    pub generate: Option<Generate>,
+    /// Pilot health (`health:`): see [`HealthRules`]. `None`: injuries last `heal_days`.
+    pub health: Option<HealthRules>,
+    /// The most a stat can reach by training or a generator bonus (`stat_max:`; `None`:
+    /// each stat's own range maximum).
+    pub stat_max: Option<f32>,
+}
+
+impl PilotRules {
+    /// The most stat `k` can reach.
+    pub fn ceiling(&self, k: usize) -> f32 {
+        self.stat_max.unwrap_or_else(|| self.stats.get(k).map_or(f32::MAX, |(_, r)| r[1]))
+    }
+}
+
+/// `pilots.training: {every: 5d, stats: [accuracy, flying, psionics], factor: 0.016667,
+/// add: 1, scale_by: intelligence, capacity: training}` (the original's `0x40f55c`, strategy
+/// README §5.1): every `every` a pilot in training gains, in each of `stats`,
+/// `trunc(scale_by / 100 × stat × factor + add)` up to the stat's maximum; at most the
+/// bases' `capacity` effect (5 per Training module) train, the rest drop out.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Training {
+    pub every: f32,
+    pub stats: Vec<String>,
+    pub factor: f32,
+    pub add: f32,
+    pub scale_by: Option<String>,
+    pub capacity: Option<String>,
+}
+
+/// `pilots.salary: {base: 4000, rank: [...], brackets: {stat: [[from, bonus], ...]},
+/// kills: [[from, bonus], ...], max_health: [...]}` (the original's `0x410297`, §5.2): a
+/// month's pay is `base + (rank bonus + every bracket bonus) / 12`; a bracket list gives
+/// the bonus of the last entry whose `from` the value reaches (the first when none does).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SalaryTable {
+    pub base: f32,
+    pub rank: Vec<f32>,
+    pub brackets: Vec<(String, Vec<[f32; 2]>)>,
+    pub kills: Vec<[f32; 2]>,
+    pub max_health: Vec<[f32; 2]>,
+}
+
+impl SalaryTable {
+    /// The bonus a bracket list gives for `v`.
+    pub fn bracket(list: &[[f32; 2]], v: f32) -> f32 {
+        list.iter().rposition(|e| v >= e[0]).or((!list.is_empty()).then_some(0)).map_or(0.0, |k| list[k][1])
+    }
+}
+
+/// `pilots.generate: {rank_roll: [0, 41, 61, 81, 96], bonus: {stamina: [0, 3, 6, 9, 12],
+/// accuracy: {add: [0, 5, 10, 15, 20], times: intelligence}}}` (the original's generator
+/// `0x40e8b6`, verified): a recruit's starting rank is the last threshold a 1–100 roll
+/// reaches; each stat with a `bonus` gains the rank's entry (times `times / 100`,
+/// truncated), up to its maximum.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Generate {
+    pub rank_roll: Vec<f32>,
+    pub bonus: Vec<(String, Vec<f32>, Option<String>)>,
+}
+
+/// `pilots.health: {max: {base: [5, 15], per_rank: [1, 5]}, per_day: 1, in_medical: 2,
+/// medical: medical, fly_from: 100%}` (strategy README §5.1): a recruit's maximum health
+/// is rolled (and the pilot starts at it); every day each pilot heals `per_day`, or
+/// `in_medical` while the bases' `medical` effect has room; a pilot below `fly_from` of
+/// the maximum is grounded, at or below 0 out cold, below 0 dead.
+#[derive(Debug, Clone, PartialEq)]
+pub struct HealthRules {
+    pub max: super::behaviour::HealthRoll,
+    pub per_day: f32,
+    pub in_medical: f32,
+    pub medical: Option<String>,
+    pub fly_from: f32,
 }
 
 /// The whole strategy layer of a campaign.
@@ -1372,6 +1451,75 @@ impl StrategyDef {
                 survive: g.qty("survive", Unit::Fraction).unwrap_or(0.6).clamp(0.0, 1.0),
                 train_gain: g.node("training").map(Get).and_then(|t| t.num("gain")).unwrap_or(0.0).max(0.0),
                 train_cost: g.node("training").map(Get).and_then(|t| t.num("cost")).unwrap_or(0.0).max(0.0),
+                training: g.node("training").map(Get).filter(|t| t.str("every").is_some()).map(|t| Training {
+                    every: hours(t, "every").unwrap_or(120.0).max(1.0),
+                    stats: t.list("stats"),
+                    factor: t.num("factor").unwrap_or(0.0),
+                    add: t.num("add").unwrap_or(1.0),
+                    scale_by: t.str("scale_by").map(str::to_string),
+                    capacity: t.str("capacity").map(str::to_string),
+                }),
+                salary_table: g.node("salary").filter(|n| n.as_map().is_some()).map(|n| {
+                    let t = Get(n);
+                    let pairs_of = |n: Option<&Node>| -> Vec<[f32; 2]> {
+                        n.and_then(|n| n.as_seq())
+                            .unwrap_or(&[])
+                            .iter()
+                            .filter_map(|e| {
+                                let v: Vec<f32> = e.as_seq()?.iter().filter_map(|x| x.as_str()?.parse().ok()).collect();
+                                (v.len() == 2).then(|| [v[0], v[1]])
+                            })
+                            .collect()
+                    };
+                    SalaryTable {
+                        base: t.num("base").unwrap_or(0.0),
+                        rank: t.nums("rank").unwrap_or_default(),
+                        brackets: t.map("brackets").iter().map(|(k, v)| (k.clone(), pairs_of(Some(v)))).collect(),
+                        kills: pairs_of(t.node("kills")),
+                        max_health: pairs_of(t.node("max_health")),
+                    }
+                }),
+                generate: g.node("generate").map(|n| {
+                    let t = Get(n);
+                    Generate {
+                        rank_roll: t.nums("rank_roll").unwrap_or_default(),
+                        // `stat: [..]` is the `add` list; `stat: {add, times}` scales it.
+                        bonus: t
+                            .map("bonus")
+                            .iter()
+                            .map(|(k, v)| {
+                                let list = |n: &Node| -> Vec<f32> {
+                                    n.as_seq().unwrap_or(&[]).iter().filter_map(|x| x.as_str()?.parse().ok()).collect()
+                                };
+                                match v.as_seq() {
+                                    Some(_) => (k.clone(), list(v), None),
+                                    None => (
+                                        k.clone(),
+                                        Get(v).node("add").map(list).unwrap_or_default(),
+                                        Get(v).str("times").map(str::to_string),
+                                    ),
+                                }
+                            })
+                            .collect(),
+                    }
+                }),
+                stat_max: g.num("stat_max"),
+                health: g.node("health").map(|n| {
+                    let t = Get(n);
+                    HealthRules {
+                        max: t.node("max").map(|m| super::behaviour::HealthRoll::parse(Get(m))).unwrap_or(
+                            super::behaviour::HealthRoll {
+                                base: [100.0, 100.0],
+                                per_rank: [0.0, 0.0],
+                                rank_roll: Vec::new(),
+                            },
+                        ),
+                        per_day: t.num("per_day").unwrap_or(1.0).max(0.0),
+                        in_medical: t.num("in_medical").unwrap_or(1.0).max(0.0),
+                        medical: t.str("medical").map(str::to_string),
+                        fly_from: t.qty("fly_from", Unit::Fraction).unwrap_or(1.0).clamp(0.0, 1.0),
+                    }
+                }),
             }
         });
         let mut evaluations = Vec::new();
@@ -1918,7 +2066,20 @@ fn sections_core() -> Vec<super::schema::Field> {
             Ty::Struct(vec![
                 f("stats", Ty::Dict(Box::new(Ty::Numbers(2))), "stat: [min, max]"),
                 f("ranks", nums(), "rank: experience needed"),
-                f("salary", Ty::Num, "per month"),
+                f(
+                    "salary",
+                    Ty::Either(
+                        Box::new(Ty::Num),
+                        Box::new(Ty::Struct(vec![
+                            f("base", Ty::Num, "per month"),
+                            f("rank", Ty::List(Box::new(Ty::Num)), "a year's bonus by rank"),
+                            f("brackets", Ty::Dict(Box::new(Ty::List(Box::new(Ty::Numbers(2))))), "stat: [[from, a year's bonus], ...]"),
+                            f("kills", Ty::List(Box::new(Ty::Numbers(2))), "[[kills from, a year's bonus], ...]"),
+                            f("max_health", Ty::List(Box::new(Ty::Numbers(2))), "[[maximum health from, a year's bonus], ...]"),
+                        ])),
+                    ),
+                    "per month: a number, or the original's table (base + bonuses / 12)",
+                ),
                 f("recruit_fee", Ty::Num, "cost to hire"),
                 f("pool", Ty::Num, "candidates offered"),
                 f("names", Ty::List(Box::new(Ty::Text)), "names to draw from"),
@@ -1928,10 +2089,53 @@ fn sections_core() -> Vec<super::schema::Field> {
                     Ty::Struct(vec![
                         f("gain", Ty::Num, "stat points a day while training (up to each stat's maximum)"),
                         f("cost", Ty::Num, "money a day per pilot training"),
+                        f("every", Ty::Qty(Unit::Time), "the original's training: gains come this often"),
+                        f("stats", Ty::List(Box::new(Ty::Name)), "with every: the stats that grow"),
+                        f("factor", Ty::Num, "with every: trunc(scale_by / 100 x stat x factor + add)"),
+                        f("add", Ty::Num, "with every: see factor (1)"),
+                        f("scale_by", Ty::Name, "with every: the stat that scales the gain"),
+                        f("capacity", Ty::Name, "with every: the base module effect that limits trainees"),
                     ]),
                     "pilot training",
                 ),
                 f("survive", Ty::Qty(Unit::Fraction), "chance a pilot shot down survives"),
+                f("stat_max", Ty::Num, "the most training or a generator bonus raises a stat to (each range's maximum)"),
+                f(
+                    "generate",
+                    Ty::Struct(vec![
+                        f("rank_roll", Ty::List(Box::new(Ty::Num)), "starting rank: thresholds on a 1-100 roll"),
+                        f(
+                            "bonus",
+                            Ty::Dict(Box::new(Ty::Either(
+                                Box::new(Ty::List(Box::new(Ty::Num))),
+                                Box::new(Ty::Struct(vec![
+                                    f("add", Ty::List(Box::new(Ty::Num)), "by rank"),
+                                    f("times", Ty::Name, "a stat: the bonus x stat / 100, truncated"),
+                                ])),
+                            ))),
+                            "stat: [by rank] or {add: [by rank], times: stat}",
+                        ),
+                    ]),
+                    "the original's recruit generator: starting rank and rank bonuses",
+                ),
+                f(
+                    "health",
+                    Ty::Struct(vec![
+                        f(
+                            "max",
+                            Ty::Struct(vec![
+                                f("base", Ty::Numbers(2), "whole-number range"),
+                                f("per_rank", Ty::Numbers(2), "added per rank, whole-number range"),
+                            ]),
+                            "a recruit's maximum health",
+                        ),
+                        f("per_day", Ty::Num, "healing a day (1)"),
+                        f("in_medical", Ty::Num, "healing a day in a medical bay (1)"),
+                        f("medical", Ty::Name, "the base module effect: medical bay places"),
+                        f("fly_from", Ty::Qty(Unit::Fraction), "grounded below this share of the maximum (100 %)"),
+                    ]),
+                    "pilot health: battle injuries, healing and death",
+                ),
             ]),
             "pilot rules",
         ),

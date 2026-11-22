@@ -264,6 +264,8 @@ pub struct BattleReport {
     pub kills: u32,
     /// The share of the mission's cargo that got through (convoy escorts).
     pub cargo: Option<f32>,
+    /// The player's pilot's health at the end (`damage.pilot_injury`).
+    pub pilot_health: Option<f32>,
 }
 
 /// The strategy screen and the campaign it shows.
@@ -367,6 +369,8 @@ pub struct StrategyScreen {
     pending_video: Option<String>,
     /// The battle being flown.
     pub flying: Option<PendingBattle>,
+    /// The craft flying it (its pilot comes back hurt or not: `Campaign::pilot_back`).
+    flying_craft: Option<usize>,
     /// A short feedback line (an order's error, a save).
     flash: Option<(String, f64)>,
 }
@@ -533,6 +537,7 @@ impl StrategyScreen {
             card: None,
             pending_video: None,
             flying: None,
+            flying_craft: None,
             flash: None,
         }
     }
@@ -559,6 +564,9 @@ impl StrategyScreen {
         // The music's good-news or bad-news stinger for the result (R-CPN-012).
         let mood = if report.result == "win" { "good" } else { "bad" };
         ctx.music.stinger(&ctx.sounds, &ctx.content.rules, mood);
+        if let (Some(k), Some(h)) = (self.flying_craft.take(), report.pilot_health) {
+            self.campaign.pilot_back(def, k, h);
+        }
         match self.flying.take() {
             Some(PendingBattle::Contact(id)) => {
                 self.campaign.battle_result(def, id, &report.result, &report.actions, report.kills);
@@ -1141,9 +1149,13 @@ impl StrategyScreen {
             _ => None,
         };
         self.flying = Some(pending);
+        self.flying_craft = Some(k);
         let ship = def.hulls[self.campaign.craft[k].hull].id.clone();
         let loadout = self.campaign.loadout(def, k);
-        Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def), stand_in }
+        // The craft's pilot record, and the campaign month (`grade_rise`).
+        let pilot = self.campaign.battle_pilot(def, k);
+        let month = (self.campaign.hours / crate::campaign::MONTH).max(0.0) as u32;
+        Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def), stand_in, pilot, month }
     }
 
     /// The first ready craft with a ready pilot, anywhere.

@@ -732,6 +732,7 @@ fn hit_chain(
             }
         }
     }
+    let to_hull = rest;
     s.hull -= rest;
     s.since_hit = 0.0;
     let all_points_down = !s.hard_hp.is_empty() && s.hard_hp.iter().all(|h| *h <= 0.0);
@@ -754,6 +755,16 @@ fn hit_chain(
             position: pos + s_rot * Vec3::from(h.at),
             explosion: h.explosion,
         });
+    }
+    // The pilot (`damage.pilot_injury`): a hit that reaches the hull hurts with a chance of
+    // min(damage, 100) %; a split chain (Permeator, Enveloping) always does.
+    if !destroyed && to_hull > 0.0 {
+        if let Some(inj) = &rules.damage.pilot_injury {
+            if !direct || w.random() * 100.0 < to_hull {
+                let n = crate::content::behaviour::whole_in(inj.amount, w.random());
+                hurt_pilot(w, id, n);
+            }
+        }
     }
     let shield_only = rest <= 0.0 && to_armor <= 0.0 && to_system <= 0.0 && fallen.is_none();
     w.events.push(SimEvent::Hit { ship: id, position: at, shield: shield_only });
@@ -914,8 +925,39 @@ pub fn ship_collisions(w: &mut World) {
         if dmg > 1.0 {
             let id = w.id_of(k);
             apply_damage(w, id, dmg, at);
+            // A collision always shakes the pilot (`pilot_injury.collision`).
+            if let Some(inj) = &rules.damage.pilot_injury {
+                let n = crate::content::behaviour::whole_in(inj.collision, w.random());
+                hurt_pilot(w, id, n);
+            }
         }
     }
+}
+
+/// Takes `n` from the pilot's health (the original's `0x4516ae`): at 0 the pilot is
+/// unconscious and the ship drifts; below 0 dead, and the ship tumbles away as a wreck
+/// (its spin random, its speed 10 m/s along an axis); a mission counts the player's craft
+/// lost then. A ship with no pilot health, or a pilot already dead, is unaffected.
+pub fn hurt_pilot(w: &mut World, id: ShipId, n: f32) {
+    let spin = Vec3::new(w.random() - 0.5, w.random() - 0.5, w.random() - 0.5) * 2.0;
+    let Some(s) = w.get_mut(id) else { return };
+    let Some(h) = s.pilot_health.filter(|h| *h >= 0.0) else { return };
+    let after = h - n;
+    s.pilot_health = Some(after);
+    if after > 0.0 {
+        return;
+    }
+    s.disabled = true;
+    s.controls = Default::default();
+    let text = if after < 0.0 {
+        s.angular_velocity = spin;
+        s.tumble = 999.0;
+        s.velocity = s.forward() * 10.0;
+        "PILOT KILLED"
+    } else {
+        "PILOT UNCONSCIOUS"
+    };
+    w.events.push(SimEvent::Message { ship: id, text: text.into() });
 }
 
 #[cfg(test)]
@@ -1164,6 +1206,66 @@ mod tests {
         (s.target, s.controls.fire_missile) = (Some(foe), true);
         step(&mut w, TICK);
         assert!((w.get(me).unwrap().missile_cooldown - 0.25).abs() < 1e-6, "D-13: 4 shots a second");
+    }
+
+    #[test]
+    fn hull_hits_and_collisions_hurt_the_pilot_until_out_cold_or_dead() {
+        use crate::content::behaviour::HealthRoll;
+        use crate::content::equipment::PilotInjury;
+        let (mut w, me, foe) = duel();
+        let mut r = (*w.rules).clone();
+        r.damage.pilot_injury = Some(PilotInjury {
+            amount: [1.0, 3.0],
+            collision: [5.0, 10.0],
+            health: HealthRoll { base: [5.0, 15.0], per_rank: [0.0, 0.0], rank_roll: Vec::new() },
+        });
+        w.rules = Arc::new(r);
+        let bare = |w: &mut World| {
+            let s = w.get_mut(foe).unwrap();
+            (s.shield_fore, s.shield_aft, s.armor, s.hull) = (0.0, 0.0, 0.0, 1e6);
+        };
+        bare(&mut w);
+        w.get_mut(foe).unwrap().pilot_health = Some(20.0);
+        let at = w.get(foe).unwrap().position;
+        // 100 damage on the hull: the min(damage, 100) % roll always succeeds, 1-3 lost.
+        apply_damage(&mut w, foe, 100.0, at);
+        let h = w.get(foe).unwrap().pilot_health.unwrap();
+        assert!((17.0..=19.0).contains(&h), "{h}");
+        // A split chain always hurts, whatever the damage: Enveloping runs two.
+        apply_damage_mode(&mut w, foe, 0.2, at, DamageMode::Enveloping);
+        let h2 = w.get(foe).unwrap().pilot_health.unwrap();
+        assert!(h - h2 >= 2.0 && h - h2 <= 6.0, "{h} -> {h2}");
+        // A hit stopped by the shields does not.
+        w.get_mut(foe).unwrap().shield_fore = 1e6;
+        w.get_mut(foe).unwrap().shield_aft = 1e6;
+        apply_damage(&mut w, foe, 100.0, at);
+        assert_eq!(w.get(foe).unwrap().pilot_health, Some(h2));
+        // To 0: out cold, the ship drifts; below 0: dead and tumbling.
+        hurt_pilot(&mut w, foe, h2);
+        let s = w.get(foe).unwrap();
+        assert!(s.disabled && s.pilot_health == Some(0.0));
+        assert!(w.events.iter().any(|e| matches!(e, SimEvent::Message { text, .. } if text == "PILOT UNCONSCIOUS")));
+        hurt_pilot(&mut w, foe, 1.0);
+        let s = w.get(foe).unwrap();
+        assert!(s.alive && s.disabled && s.pilot_health == Some(-1.0) && s.angular_velocity.length() > 0.0);
+        hurt_pilot(&mut w, foe, 5.0);
+        assert_eq!(w.get(foe).unwrap().pilot_health, Some(-1.0), "the dead are not hurt again");
+        // The systems step keeps an out-cold pilot's ship disabled.
+        crate::sim::systems::step(&mut w, TICK);
+        assert!(w.get(foe).unwrap().disabled);
+        // A collision costs 5-10.
+        w.get_mut(me).unwrap().pilot_health = Some(30.0);
+        let p = w.get(me).unwrap().position;
+        let f = w.rules.ship_id("fighter").unwrap();
+        let rock = w.spawn(f, FactionId(1), "rock", p + Vec3::new(0.0, 0.0, -1.0), Quat::IDENTITY, Pilot::External);
+        w.get_mut(me).unwrap().velocity = Vec3::NEG_Z * 200.0;
+        w.get_mut(rock).unwrap().velocity = Vec3::Z * 200.0;
+        ship_collisions(&mut w);
+        let h = w.get(me).unwrap().pilot_health.unwrap();
+        assert!((20.0..=25.0).contains(&h), "{h}");
+        // Spawned without a record: health rolled from 5-15.
+        let n = w.spawn(f, FactionId(0), "n", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        assert!((5.0..=15.0).contains(&w.get(n).unwrap().pilot_health.unwrap()));
     }
 
     #[test]

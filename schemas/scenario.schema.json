@@ -60,7 +60,8 @@
               "bravery": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "stamina": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "grade": {"description": "the pilot's grade (flight.pilot_grades; default the class's)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-              "rank": {"description": "the pilot's rank, 0 upwards (retreat rolls)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+              "rank": {"description": "the pilot's rank, 0 upwards (retreat rolls)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "health": {"description": "the pilot's health (damage.pilot_injury; default rolled)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
             }}
         }}},
     "nav": {"description": "navigation points", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {

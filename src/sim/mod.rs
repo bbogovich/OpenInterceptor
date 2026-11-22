@@ -437,6 +437,9 @@ pub struct Ship {
     pub hyperspace: Option<f32>,
     /// Engines and manoeuvring both knocked out: the ship drifts helplessly.
     pub disabled: bool,
+    /// The pilot's health with `damage.pilot_injury` (`None`: pilots are never hurt). At
+    /// 0 the pilot is unconscious and the ship drifts (`disabled`); below 0 dead.
+    pub pilot_health: Option<f32>,
     /// Left the battle by hyperspace (no longer `alive`, but not destroyed).
     pub departed: bool,
     /// Decoys (doppelgangers): seconds until it vanishes.
@@ -857,6 +860,25 @@ impl World {
         (self.rng >> 40) as f32 / (1u64 << 24) as f32
     }
 
+    /// A campaign battle in campaign month `month` (0 = the first): AI pilots of classes
+    /// with `grade_rise` roll for their higher grade (a pilot with its own grade keeps it).
+    pub fn campaign_month(&mut self, month: u32) {
+        let rules = self.rules.clone();
+        for k in 0..self.ships.len() {
+            let Some(rise) = rules.ship(self.ships[k].class).grade_rise.filter(|r| month >= r.from_month) else {
+                continue;
+            };
+            let roll = self.random();
+            if let Pilot::Ai(st) = &mut self.ships[k].pilot {
+                let own = st.pilot.and_then(|p| p.grade).is_some();
+                if !own && roll < rise.chance + rise.per_month * month as f32 {
+                    let p = st.pilot.unwrap_or(crate::content::behaviour::PilotStats::NONE);
+                    st.pilot = Some(crate::content::behaviour::PilotStats { grade: Some(rise.grade), ..p });
+                }
+            }
+        }
+    }
+
     /// Adds a ship of `class` and returns its handle. Reuses a dead slot if one exists.
     pub fn spawn(
         &mut self,
@@ -932,6 +954,7 @@ impl World {
             towing: None,
             hyperspace: None,
             disabled: false,
+            pilot_health: None,
             departed: false,
             expires: None,
             pd_cooldown: 0.0,
@@ -947,6 +970,21 @@ impl World {
             let range = d.ai_speed_range;
             let level = self.rules.difficulty;
             ship.drive_factor = s.pick(level, self.random(), range);
+        }
+        // `damage.pilot_injury`: the pilot's record gives the health, else it is rolled as
+        // the original's generator does (rank from a 1–100 roll, then the health).
+        if let Some(inj) = self.rules.damage.pilot_injury.clone() {
+            let given = match &ship.pilot {
+                Pilot::Ai(a) => a.pilot.and_then(|p| p.health),
+                Pilot::External => None,
+            };
+            ship.pilot_health = Some(match given {
+                Some(h) => h,
+                None => {
+                    let rank = inj.health.rank(self.random());
+                    inj.health.health(rank, self.random(), self.random())
+                }
+            });
         }
         let index = match self.ships.iter().position(|s| !s.alive) {
             Some(i) => {
