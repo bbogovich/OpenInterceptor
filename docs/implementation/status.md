@@ -640,7 +640,7 @@ over time (`strike_damage` from unopposed strikes), production by outpost techni
 (`manufacture:`). `interceptor`: 0.75 × (1.5M + the template), 29 days, 20 bases, within 5,850 of a
 base and 30,000 of the centre, 6,000 hull, technicians; `default`: a 4,000-point hull. DEV-100.
 
-**#129 probes** (app NEXT; unknowns §15.3): raids' `kinds` and the event `kind(<kind>)`; the
+**#129 probes** (app 0.22.30; unknowns §15.3): raids' `kinds` and the event `kind(<kind>)`; the
 alien probe raid's seven probe types, of which the sensor, intel jammer and comm jammer probes open
 their topics. DEV-097 updated.
 
