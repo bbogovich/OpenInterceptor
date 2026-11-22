@@ -308,7 +308,9 @@ fn toggle_hyperspace(s: &mut Ship, rules: &Ruleset) -> String {
 /// (`power.balance`: shift moves capacity, share moves the recharge).
 pub fn recharge(ship: &mut Ship, class: &ShipClass, p: &PowerRules, dt: f32) {
     let level = |table: &[f32], l: u8| table.get(l as usize).copied().unwrap_or(0.0);
-    if !ship.afterburning {
+    // The engine stops the recharge while the afterburner burns; the original does not
+    // (`power.recharge_while_burning`, flight README §3, D-11).
+    if !ship.afterburning || p.recharge_while_burning {
         let rate = class.energy_recharge * level(&p.beam_recharge, ship.power.beam);
         ship.energy = (ship.energy + rate * dt).min(class.energy);
     }
@@ -399,11 +401,16 @@ pub fn repair(ship: &mut Ship, class: &ShipClass, rules: &Ruleset, dt: f32) -> O
             .map(|(i, _)| i)
     });
     ship.repairing = idx;
-    let i = idx?;
+    let Some(i) = idx else {
+        // Nothing left to repair: a Tachyon hit's slowdown wears off.
+        ship.repair_slow = 1.0;
+        return None;
+    };
     let dc = damage_control_factor(ship, rules, Some(i));
+    let slow = ship.repair_slow.max(1.0);
     let s = &mut ship.systems[i];
     let before = s.condition();
-    s.set_hp(s.hp + class.repair_rate * dc * dt);
+    s.set_hp(s.hp + class.repair_rate * dc * dt / slow);
     let after = s.condition();
     (before != after).then_some((i, before, after))
 }
@@ -463,9 +470,15 @@ pub fn repair_in_order(
         Some(Job::System(i)) => Some(i),
         _ => None,
     };
-    let amount = class.repair_rate * damage_control_factor(ship, rules, skip) * dt;
+    let amount = class.repair_rate * damage_control_factor(ship, rules, skip) * dt / ship.repair_slow.max(1.0);
     ship.repairing = skip;
-    match job? {
+    let Some(job) = job else {
+        // Nothing left to repair: a Tachyon hit's slowdown wears off (the original clears
+        // its flag then).
+        ship.repair_slow = 1.0;
+        return None;
+    };
+    match job {
         Job::Hull => ship.hull = (ship.hull + amount).min(class.hull),
         Job::Beam(k) => ship.beam_hp[k] = (ship.beam_hp[k] + amount).min(rules.beam(class.beams[k]).hit_points),
         Job::Rack(k) => {
@@ -499,8 +512,10 @@ pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
     if amount <= 0.0 {
         return;
     }
-    if w.rules.damage.system_table.is_some() {
-        damage_by_table(w, id, amount);
+    // `Arc` clone: a pointer copy, so the table can be read while `w` is changed.
+    let rules = w.rules.clone();
+    if let Some(table) = &rules.damage.system_table {
+        damage_by_table(w, id, amount, table);
         return;
     }
     let Some(ship) = w.get(id) else { return };
@@ -517,9 +532,7 @@ pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
 /// uses up its try. When the damage is more than the system has left, the system goes
 /// to 0 (or to its `min_hit_points`) and, for a `carry` entry, the rest goes on to the
 /// next try; otherwise the rest is lost.
-pub fn damage_by_table(w: &mut World, id: ShipId, amount: f32) {
-    let rules = w.rules.clone();
-    let Some(table) = &rules.damage.system_table else { return };
+pub fn damage_by_table(w: &mut World, id: ShipId, amount: f32, table: &crate::content::equipment::SystemTable) {
     let mut left = amount;
     for _ in 0..table.tries {
         if left <= 0.0 {
@@ -540,7 +553,10 @@ pub fn damage_by_table(w: &mut World, id: ShipId, amount: f32) {
         // A uniform pick among `n` things, from the world's seeded generator.
         let pick = |w: &mut World, n: usize| ((w.random() * n as f32) as usize).min(n.saturating_sub(1));
         match entry.hit {
-            SystemHit::None => left = 0.0,
+            // Nothing: the damage is lost, or with `carry` the try is simply used up
+            // (the Tachyon table's empty rolls).
+            SystemHit::None if !entry.carry => left = 0.0,
+            SystemHit::None => {}
             SystemHit::System(kind) => {
                 let Some((i, sys)) = ship.system(kind) else { continue };
                 if sys.destroyed || sys.hp <= 0.0 {

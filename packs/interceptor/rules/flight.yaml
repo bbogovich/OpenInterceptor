@@ -19,6 +19,9 @@ flight:
   # 100 m for grade 2, 250 m otherwise and with no pilot; beyond 3 km from its target a
   # pilot sprints at 1.0625 x the full throttle when its grade is not 0, and every pilot
   # does from Genius (level index 3) on.
+  # Beam link modes as the original's (README §3, VERIFIED): linked fires every mount of the
+  # selected mount's type, and each mount fires on its own timer and energy.
+  link_modes: original
   pilot_grades:
     lookahead: 250m
     grades: [{lookahead: 225m, sprint: false}, {lookahead: 250m}, {lookahead: 100m}, {lookahead: 250m}, {lookahead: 250m}]

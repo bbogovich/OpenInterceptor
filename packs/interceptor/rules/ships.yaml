@@ -163,6 +163,7 @@ ships:
     description: Elite alien fighter flown by Aereon pilots.
     model_set: shade
     fitted: {shield: original:GameSettings.ini/ShieldType4, armor: original:GameSettings.ini/ArmorType3}   # its default equipment (DERIVED)
+    accumulator_shields: true   # ShieldType4 (README §4, VERIFIED)
     max_speed: 700
     acceleration: 180
     roll_rate: 220
@@ -190,6 +191,7 @@ ships:
     # Tows cargo and tries to capture disabled ships (guide).
     systems+: [tractor]
     fitted: {shield: original:GameSettings.ini/ShieldType4, armor: original:GameSettings.ini/ArmorType3}   # its default equipment (DERIVED)
+    accumulator_shields: true   # ShieldType4 (README §4, VERIFIED)
     max_speed: 300
     acceleration: 50
     roll_rate: 40

@@ -393,6 +393,10 @@ pub struct ShipClass {
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
     pub engine_color: [f32; 3],
+    /// Its shields are accumulators (`accumulator_shields: true`; the original's
+    /// ShieldType4): while the struck bank holds points, an ordinary hit does no damage
+    /// and a quarter of it is added to that bank (flight README §4, verified).
+    pub accumulator_shields: bool,
     /// The grade of the pilot an AI ship of this class carries (`pilot_grade:`), unless a
     /// scenario gives it a pilot of its own ([`crate::content::behaviour::PilotStats`]).
     pub pilot_grade: Option<u8>,
@@ -424,6 +428,11 @@ pub struct BeamClass {
     pub sound: Option<String>,
     /// Pack that defined this beam (pack-relative sound paths resolve there).
     pub pack: usize,
+    /// How its hits land (`effect: normal | systems`).
+    pub damage_mode: DamageMode,
+    /// `effect: systems` beams: a ship they hit repairs this many times more slowly until
+    /// nothing is left to repair (`repair_slowdown: 10`, the Tachyon Pulser; 1 = no effect).
+    pub repair_slowdown: f32,
 }
 
 /// A missile or torpedo.
@@ -508,10 +517,19 @@ impl Guidance {
 pub enum DamageMode {
     /// Shields (the facing hit), then armour, then hull.
     Normal,
-    /// Straight through the shields to the armour (the Permeator).
+    /// Straight through the shields to the armour.
     BypassShields,
-    /// Spread over the whole ship: both shield facings share it (the Enveloping torpedo).
+    /// Spread over the whole ship: half runs the fore chain (fore shield, fore armour,
+    /// hull) and half the aft chain, whatever side was hit (the Enveloping torpedo; flight
+    /// README §5.2, verified). With one armour pool both halves meet the same armour.
     Enveloping,
+    /// Half runs the struck side's normal chain, half skips the shield and goes armour →
+    /// hull (the original's Permeator, flight README §5.2, verified).
+    Permeator,
+    /// The struck shield absorbs 1:1; whatever is left skips armour and hull and strikes
+    /// the ship's systems (`damage.tachyon_table`, or one random system); the target's
+    /// repair slows (the original's Tachyon Pulser, flight README §4.4, verified).
+    Systems,
 }
 
 /// A side in the conflict.
@@ -586,6 +604,8 @@ pub struct FlightRules {
     /// AI pilots' grades (`flight: {pilot_grades: …}`): obstacle look-ahead and the long-range
     /// sprint, if the campaign uses them.
     pub pilot_grades: Option<PilotGrades>,
+    /// How beam link modes group the mounts (`flight: {link_modes: engine | original}`).
+    pub link_modes: LinkModes,
     /// The original's turn model (`flight: {turning: {…}}`), if the campaign uses it;
     /// otherwise turn rates are degrees per second, smoothed by `AngularDamp`.
     pub turning: Option<Turning>,
@@ -665,6 +685,20 @@ impl AiSpeed {
     pub fn pick(&self, level: usize, r: f32, range: [f32; 2]) -> f32 {
         (self.min + (self.max - self.min) * r + self.level_step * level as f32).clamp(range[0], range[1])
     }
+}
+
+/// How the beam link modes pick the mounts that fire (`flight.link_modes`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LinkModes {
+    /// The engine's: full = every mount, linked = the next two mounts, unlinked = the
+    /// next mount; a group fires together once all its mounts are ready and its whole
+    /// energy is there.
+    #[default]
+    Engine,
+    /// The original's (flight README §3, verified): full = every mount, linked = every
+    /// mount of the selected mount's beam type, unlinked = the selected mount; each mount
+    /// fires on its own when its own timer has run out and the energy pays for its shot.
+    Original,
 }
 
 /// AI pilot grades (`flight.pilot_grades`; the original's pilot record +0x28, a grade
@@ -1482,6 +1516,11 @@ pub fn build_with(
                 range: g.qty("range", Unit::Distance).unwrap_or(3000.0),
                 shield_factor: g.num("shield_factor").unwrap_or(1.0).max(0.01),
                 hit_points: g.num("hit_points").unwrap_or(0.0).max(0.0),
+                damage_mode: match g.str("effect") {
+                    Some("systems") => DamageMode::Systems,
+                    _ => DamageMode::Normal,
+                },
+                repair_slowdown: g.num("repair_slowdown").unwrap_or(1.0).max(1.0),
                 color: rgb(g, "color", [1.0, 0.2, 0.2]),
                 sound: g.str("sound").map(|x| sound_ref(x, &format!("beams.{id}.sound"))),
                 pack: e.pack,
@@ -1511,6 +1550,7 @@ pub fn build_with(
                 damage_mode: match g.str("damage") {
                     Some("bypass_shields") => DamageMode::BypassShields,
                     Some("enveloping") => DamageMode::Enveloping,
+                    Some("permeator") => DamageMode::Permeator,
                     _ => DamageMode::Normal,
                 },
                 decoys: g.num("decoys").unwrap_or(2.0).max(0.0) as u32,
@@ -1839,6 +1879,14 @@ pub fn build_with(
         turning: fl.and_then(|g| g.node("turning")).map(|n| Turning::parse(Get(n))),
         drive: fl.and_then(|g| g.node("drive")).map(|n| Drive::parse(Get(n))),
         pilot_grades: fl.and_then(|g| g.node("pilot_grades")).map(|n| PilotGrades::parse(Get(n))),
+        link_modes: match fl.and_then(|g| g.str("link_modes")) {
+            None | Some("engine") => LinkModes::Engine,
+            Some("original") => LinkModes::Original,
+            Some(other) => {
+                errors.push(format!("flight.link_modes: '{other}' is not engine or original"));
+                LinkModes::Engine
+            }
+        },
     };
     // The console theme (R-CON-020).
     let layer = |g: Get, errors: &mut Vec<String>, at: &str| ThemeLayer {
@@ -2702,6 +2750,7 @@ fn ship_class(
         towable: g.bool("towable").unwrap_or(false),
         cargo: g.bool("cargo").unwrap_or(false),
         pilot_grade: g.num("pilot_grade").map(|n| n.clamp(0.0, 255.0) as u8),
+        accumulator_shields: g.bool("accumulator_shields").unwrap_or(false),
     })
 }
 
