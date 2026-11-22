@@ -185,6 +185,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `y_range`, `y_steps` | `[low, high]`, number | fitted, 18 / about 6 | A `graph`'s fixed y range in that many grid steps (the original's income report: `[0, 18000]`, 18); without it the range fits the values (app 0.22.22). |
 | `base_portraits`, `base_portrait_frames` | list of assets, number | none, 1 | A `map`'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app 0.22.22). |
 | `knob` | `{frames, count, stops, reach, lamps_off, lamps_on, unavailable}` | none | A `knob`'s turning frames (rows N … N + count − 1, at `pos`), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22). |
+| `panel` | name | none | The panel the widget belongs to: `hide(<panel>)` and `show(<panel>)` hide and show it (app NEXT). |
 | `zoom_levels` | list of numbers | none | A `map`'s fixed zoom levels in map units per design pixel, in place of free zoom (app 0.22.21, [Zoom levels](#zoom-levels)). |
 | `months`, `legend` | list of text | Jan … Dec, none | A `graph`'s month names (January first), and the labels of a finance graph's low / high lines or of an activity map's four classes; text keys allowed (app 0.22.21). |
 | `labels` | `{font, colour, base_colour, rise, base_rise, box, cycle, margin}` | none | A `map`'s labels the original's way ([Map labels](#map-labels), app 0.22.17). Without it every star's name is drawn beside it. |
@@ -216,6 +217,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `save` | The save prompt, as the testbed layout's *Save*. |
 | `menu` | Saves and returns to the main menu. |
 | `testbed` | Switches to the testbed layout. |
+| `hide(<panel>)`, `show(<panel>)` | Since app NEXT: hides or shows the widgets with that `panel:` (hidden ones are neither drawn nor clicked), e.g. Bases' side panel. |
 | `list(prev)`, `list(next)`, `list(act)` | Since app 0.22.22: moves the screen's list selection up or down a row, or runs the selected row's first action (the original's one-at-a-time panels: Bases' previous, next and close-panel buttons). |
 
 ### Values
@@ -328,15 +330,20 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
 - Bases has no scroll arrows (since app 0.22.22; 0.22.21 placed its panel buttons as arrows): its
   module panel shows one module at a time and steps with three 42 × 32 buttons (§14.2,
   **verified**): previous 402 at (387, 247) (rows 1377 / 1378), close panel 400 at (484, 247)
-  (1381 / 1382, the check mark that accepts) and next 401 at (580, 247) (1379 / 1380).
-  `interceptor` keeps its list of modules and has the buttons step its selection (`list(prev)`,
-  `list(next)`) and build the selected module (`list(act)`) (**derived**); the wheel still
-  scrolls the list.
+  (1381 / 1382) and next 401 at (580, 247) (1379 / 1380). Close panel closes the side panel in
+  every mode: its buttons hidden, the slide sound, placement mode cleared. Since app NEXT
+  `interceptor` puts the list and the three buttons in a `panel: side` that close panel hides
+  (`hide(side)`, with `sndSlideSide`) and the add-module button 202 at (504, 324) shows again
+  (`show(side)`; its rows 1343 / 1344 **derived** from the side buttons' numbering); previous
+  and next step the list's selection and a double click builds (**derived**). The panel starts
+  open (**derived**).
 - Equip Ships' nine ring sockets (centres **verified**) show the selected ship's hard points as
   icons only, since app 0.22.21 (§13.2, **verified**): since app 0.22.22 the fitted item's icon
   (§14.3, a launcher and its missile sharing one), row 1237 where the hull has no hard point, the
   selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the body
-  font (23011). The probes' icons are not matched to `interceptor`'s probes yet.
+  font (23011). Probes by INI section (since app NEXT): HunterProbe 1429, SensorProbe 1438
+  (CommunicationsProbe 1418 and CommunicationsJammerProbe 1417 are not in `interceptor`'s items);
+  the ECM, Intel and IntelJammer probes have none.
 - Research keeps its rows on the art's slots.
 
 A `button` with a `label` and no images is drawn as a **text button** when the skin has
@@ -393,16 +400,21 @@ income report read in full, `unknowns-2026-11.md` §13.1, §14.8, **verified**):
 |---|---|
 | `income` | Money received each month, in $1000s. |
 | `finance` | The series the screen's list picks: its rows are income, expenditure, maintenance, balance and score. Also draws the low and high lines of the months shown, labelled by `legend`. |
-| `alien`, `xcom` | Alien contacts launched and interceptions sent each month. |
+| `alien`, `xcom` | Alien and X-COM incursions each month (below). |
 
-A `map` with `source: activity_alien` or `activity_xcom` draws every system coloured by its
-average actions a month — none, 1 – 5, 6 – 15, 16 and more — with the four `legend` texts under
-it, cut with "..." where one would pass the widget's right edge. The months come from the
-campaign's history, which saves keep since app 0.22.21.
+Since app NEXT the activity is the original's (§14.7, **verified**): an alien incursion is each
+alien fleet sighting the player is alerted to, counted at the fleet's position; an X-COM
+incursion is each mission launched, counted at its launch point. Each is binned into a 16 × 16
+grid over the galaxy (3,750 units a cell on the 60,000-unit map; the map's size / 16) with a
+count per cell per month. The graphs chart the months' totals.
+
+A `map` with `source: activity_alien` or `activity_xcom` tints each grid cell by its average
+incursions a month — none, 1 – 5, 6 – 15, 16 and more — and draws the systems in their cell's
+colour, with the four `legend` texts under it, cut with "..." where one would pass the widget's
+right edge. The months and the grid come from the campaign's history, which saves keep.
 
 **Derived:** the panels, the other graphs' fitted ranges, the series line's colour (`colour`,
-default green), the activity colours, and what counts as alien and X-COM activity (the exe's
-source for those arrays was not traced, §14.7).
+default green), and the activity colours and tint.
 
 ### Zoom levels
 
@@ -429,8 +441,9 @@ view_knob: {kind: knob, pos: [13, 25], sound: ui_dial,
 A click within `reach` of stop k picks level k (the last stop: the system picture, only while a
 system that can be opened is selected) and plays the widget's `sound`; the knob turns through
 its frames to that stop (stop k at frame k × (count − 1) / (stops − 1)). A lamp per stop: on for
-the level shown, off for the others, `unavailable` on a stop that cannot be chosen. Where the
-lamps go (on the stops) and how fast the knob turns are **derived**.
+the level shown, off for the others, `unavailable` on a stop that cannot be chosen; each lamp
+is centred on its stop and the knob frame is drawn over them (`0x4cda2d`, **verified** since app
+NEXT). How fast the knob turns is **derived**.
 
 ### Sprite buttons, toggles and radio groups
 
