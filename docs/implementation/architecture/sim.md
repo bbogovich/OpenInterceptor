@@ -350,7 +350,7 @@ hull gets nothing — and emits `SimEvent::HardPointDestroyed { position, explos
 (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and `hard_hp`. A `mine` state
 with `range: 0` goes off when its hull touches a hostile's.
 
-**Retreat rolls and the Nova** (app NEXT, #119). `ai::retreat_rolls` runs in `run_behaviour`
+**Retreat rolls and the Nova** (app 0.22.16, #119). `ai::retreat_rolls` runs in `run_behaviour`
 after the transition check: with `retreat_when_disarmed`, a `disarmed` ship (all damageable beam
 mounts at 0) rolls `RetreatRule::chance` (its record, or the `no_pilot` band) at most every
 `every` and `settle` after its last change of state (`AiState::last_retreat_roll`); with

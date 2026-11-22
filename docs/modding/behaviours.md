@@ -295,7 +295,7 @@ The Phantasm's Psi Blaster turret is not built.
 
 ## Retreat rolls
 
-Since app NEXT (issue #119) a behaviour can send its pilot home the way the original does
+Since app 0.22.16 (issue #119) a behaviour can send its pilot home the way the original does
 (flight notes §9, **verified**) — not on hull damage, but when it is **disarmed** or when a
 **Nova bomb** goes off:
 

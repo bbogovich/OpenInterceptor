@@ -89,7 +89,7 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 
 ## The Nova bomb
 
-A missile with a `fuse` (app NEXT) is a Nova bomb: it never goes off on contact; it flies on and
+A missile with a `fuse` (app 0.22.16) is a Nova bomb: it never goes off on contact; it flies on and
 detonates `fuse` after launch, sends its `warnings` over the radio at their times, sets the
 `nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll, and
 `ends_battle_after` later turns `battle_over` true:
