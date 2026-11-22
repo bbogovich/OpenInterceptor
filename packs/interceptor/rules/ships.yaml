@@ -149,6 +149,11 @@ ships:
     missiles: {elerium_torpedo: 3}
     engine_color: [0.4, 1.0, 0.4]
     behaviour: phantasm
+    # Its turrets (README §8.8, VERIFIED; model positions with z negated) besides its guns.
+    modules:
+      - {at: [0, -2, 0], facing: [0, -1, 0], class: phantasm_phase}
+      - {at: [0, -4.25, 0], facing: [0, -1, 0], class: phantasm_plasma_low}
+      - {at: [0, 4.25, 0], facing: [0, 1, 0], class: phantasm_plasma_top}
   shade:
     inherit: original:GameSettings.ini/Ship_AlienType4
     pilot_grade: 4   # AlienType4 (VERIFIED)
@@ -170,6 +175,10 @@ ships:
     missiles: {elerium_torpedo: 4}
     engine_color: [0.8, 0.4, 1.0]
     behaviour: shade
+    # A phase turret at (0, -0.41, -9.82) (VERIFIED; z negated), facing aft (DERIVED: the
+    # exe copies its facing from elsewhere).
+    modules:
+      - {at: [0, -0.41, 9.82], facing: [0, 0, 1], class: shade_phase}
   harbinger:
     inherit: original:GameSettings.ini/Ship_AlienType5
     mass: 110000
@@ -186,9 +195,14 @@ ships:
     roll_rate: 40
     pitch_rate: 25
     yaw_rate: 25
-    beams: [tachyon_pulser, tachyon_pulser]
     engine_color: [0.4, 1.0, 0.4]
     behaviour: harbinger
+    # No guns of its own (AlienType5 runs no attack routine): three tachyon turrets (VERIFIED;
+    # z negated; the pair's facing is copied in the exe, DERIVED: ahead).
+    modules:
+      - {at: [13.27, 7.2, -10.31], facing: [0, 0, -1], class: harbinger_tachyon}
+      - {at: [-13.27, 7.2, -10.31], facing: [0, 0, -1], class: harbinger_tachyon}
+      - {at: [0, -5, 15], facing: [0, 0, 1], class: harbinger_tachyon_tail}
   alien_container:
     inherit: original:GameSettings.ini/Ship_AlienType6
     mass: 157000
@@ -218,8 +232,11 @@ ships:
     roll_rate: 30
     pitch_rate: 20
     yaw_rate: 20
-    beams: [plasma_cannon]
     engine_color: [0.4, 1.0, 0.4]
+    # No guns of its own: two plasma turrets (README §8.8, VERIFIED).
+    modules:
+      - {at: [0, -23, 0], facing: [0, -1, 0], class: spirit_plasma_low}
+      - {at: [0, 27, 0], facing: [0, 1, 0], class: spirit_plasma_top}
   drone:
     inherit: original:GameSettings.ini/Ship_AlienDrone
     ai_speed: 250

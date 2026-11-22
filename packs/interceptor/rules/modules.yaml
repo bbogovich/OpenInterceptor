@@ -27,12 +27,12 @@ behaviours:
   # error, only at targets in front of them, one shot per the beam's RateOfFire. The alien
   # base's are fixed (85 deg arc): full lead, accuracy rolled once in [40 + 5d, 75 + 5d) %, a
   # miss of up to 20 m along the target's x or y axis on a failed roll beyond 200 m, a shot
-  # every 1,000 - 25d ms + 0-50 ms. Whether either base checks its line of sight is not
-  # traced (DERIVED: no).
+  # every 1,000 - 25d ms + 0-50 ms. Both bases check their line of sight (0x59c124 and
+  # 0x59cc07 set LOS on, README §8.8, VERIFIED).
   station_turret_xcom:
     prefer: {fighter: 1.5}
     states:
-      guns: {do: turret, aim: gimballed, lead_speed: 2000, range: 5km, interval: rate_of_fire, free_fire: true}
+      guns: {do: turret, aim: gimballed, lead_speed: 2000, range: 5km, interval: rate_of_fire, line_of_sight: true, free_fire: true}
   station_turret_alien:
     prefer: {fighter: 1.5}
     states:
@@ -43,6 +43,7 @@ behaviours:
         accuracy: {per_level: [[40, 75], [45, 80], [50, 85], [55, 90], [60, 95]]}
         interval: {per_level: [1s, 0.975s, 0.95s, 0.925s, 0.9s]}
         interval_jitter: 0.05s
+        line_of_sight: true
         free_fire: true
 
   # Pirate station turrets (README §8.6; tables 0x67d430 / 0x67d548, VERIFIED): Laser,
@@ -68,6 +69,28 @@ behaviours:
     states: {guns: {do: turret, aim: fixed, range: 2km, accuracy: pilot, interval: {per_level: [0.75s, 0.725s, 0.7s, 0.675s, 0.65s]}, interval_jitter: 0.1s, line_of_sight: true, free_fire: true}}
   freighter_turret_aft:
     states: {guns: {do: turret, aim: fixed, range: 2km, accuracy: pilot, accuracy_factor: 75%, interval: {per_level: [0.75s, 0.725s, 0.7s, 0.675s, 0.65s]}, interval_jitter: 0.1s, line_of_sight: true, free_fire: true}}
+
+  # Alien ship turrets (README §8.8, VERIFIED; every one fixed, no line-of-sight check, no
+  # energy). S is the ship's turret skill: from the pilot's record (DERIVED: its Accuracy;
+  # AlienType3 averages Intelligence, Accuracy and Flying), else rand[50, 75) on the
+  # Phantasm (AlienType3) and 25 on the others. The Phantasm's Psi Blaster turret is not
+  # built (no Psi beam yet, #117).
+  phantasm_phase:      # (0, -2, 0) down, 3,000 m, 85 deg, S - rand[5, 15), 50(4 - d) + 900 ms
+    states: {guns: {do: turret, aim: fixed, range: 3km, accuracy: pilot, accuracy_unpiloted: [50, 75], accuracy_minus: [5, 15], interval: {per_level: [1.1s, 1.05s, 1s, 0.95s, 0.9s]}, free_fire: true}}
+  phantasm_plasma_low: # (0, -4.25, 0) down, 2,500 m, 95 deg, S, 25(4 - d) + 750 ms
+    states: {guns: {do: turret, aim: fixed, range: 2.5km, accuracy: pilot, accuracy_unpiloted: [50, 75], interval: {per_level: [0.85s, 0.825s, 0.8s, 0.775s, 0.75s]}, free_fire: true}}
+  phantasm_plasma_top: # (0, 4.25, 0) up, 1,500 m, 92 deg, S - rand[5, 15), 50(4 - d) + 500 ms
+    states: {guns: {do: turret, aim: fixed, range: 1.5km, accuracy: pilot, accuracy_unpiloted: [50, 75], accuracy_minus: [5, 15], interval: {per_level: [0.7s, 0.65s, 0.6s, 0.55s, 0.5s]}, free_fire: true}}
+  shade_phase:         # 1,500 m, 45 deg, S - rand[5, 15), 50(4 - d) + 750 ms
+    states: {guns: {do: turret, aim: fixed, range: 1.5km, accuracy: pilot, accuracy_minus: [5, 15], interval: {per_level: [0.95s, 0.9s, 0.85s, 0.8s, 0.75s]}, free_fire: true}}
+  harbinger_tachyon:   # 1,000 m, 85 deg, 50 + 5d, rand[1,000, 1,250) - 25d ms
+    states: {guns: {do: turret, aim: fixed, range: 1km, accuracy: {per_level: [50, 55, 60, 65, 70]}, interval: {per_level: [1s, 0.975s, 0.95s, 0.925s, 0.9s]}, interval_jitter: 0.25s, free_fire: true}}
+  harbinger_tachyon_tail: # 275 m, 15 deg, accuracy 0 (held to 1), every frame
+    states: {guns: {do: turret, aim: fixed, range: 275m, accuracy: 0, interval: 0s, free_fire: true}}
+  spirit_plasma_low:   # (0, -23, 0) down, 1,000 m, 85 deg, S (25), rand[750, 850) - 25d ms
+    states: {guns: {do: turret, aim: fixed, range: 1km, accuracy: pilot, interval: {per_level: [0.75s, 0.725s, 0.7s, 0.675s, 0.65s]}, interval_jitter: 0.1s, free_fire: true}}
+  spirit_plasma_top:   # (0, 27, 0) up, 1,000 m, 95 deg, int(S x 0.75)
+    states: {guns: {do: turret, aim: fixed, range: 1km, accuracy: pilot, accuracy_factor: 75%, interval: {per_level: [0.75s, 0.725s, 0.7s, 0.675s, 0.65s]}, interval_jitter: 0.1s, free_fire: true}}
 
   # Alien base mines go off on contact: collidable objects of radius 10 whose INI Range
   # is 0 (unknowns §9, DERIVED).
@@ -176,3 +199,17 @@ objects:
     inherit: freighter_turret_fore
     turret_arc: 80
     behaviour: freighter_turret_aft
+  # Alien ship turrets: gun points on the ship's own model in the original; here modules
+  # with the alien gun pod's mesh and the plasma pod's hit points (DERIVED).
+  phantasm_phase:
+    inherit: alien_beam_pod
+    name: Alien phase turret
+    beams: [phase_cannon]
+    behaviour: phantasm_phase
+  phantasm_plasma_low: {inherit: alien_beam_pod, name: Alien plasma turret, turret_arc: 95, behaviour: phantasm_plasma_low}
+  phantasm_plasma_top: {inherit: alien_beam_pod, name: Alien plasma turret, turret_arc: 92, behaviour: phantasm_plasma_top}
+  shade_phase: {inherit: phantasm_phase, turret_arc: 45, behaviour: shade_phase}
+  harbinger_tachyon: {inherit: alien_beam_pod, name: Alien tachyon turret, beams: [tachyon_pulser], behaviour: harbinger_tachyon}
+  harbinger_tachyon_tail: {inherit: harbinger_tachyon, turret_arc: 15, behaviour: harbinger_tachyon_tail}
+  spirit_plasma_low: {inherit: alien_beam_pod, name: Alien plasma turret, behaviour: spirit_plasma_low}
+  spirit_plasma_top: {inherit: alien_beam_pod, name: Alien plasma turret, turret_arc: 95, behaviour: spirit_plasma_top}

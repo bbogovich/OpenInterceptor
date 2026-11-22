@@ -1160,11 +1160,22 @@ fn original_turret(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &
                         Some(Pilot::Ai(h)) => h.pilot,
                         _ => None,
                     });
-                    rec.map(|r| r.accuracy).unwrap_or(25.0) * tp.accuracy_factor
+                    let unpiloted = |st: &mut AiState| {
+                        let [lo, hi] = tp.accuracy_unpiloted;
+                        lo + (hi - lo) * next_random(&mut st.rng)
+                    };
+                    let base = match rec {
+                        Some(r) => r.accuracy,
+                        None => unpiloted(st),
+                    };
+                    base * tp.accuracy_factor
                 } else {
                     let [lo, hi] = tp.accuracy;
                     lo + (hi - lo) * next_random(&mut st.rng)
                 };
+                // `S − rand[a, b)`: some turrets are a little worse than their skill.
+                let [lo, hi] = tp.accuracy_minus;
+                let a = if hi > 0.0 { a - (lo + (hi - lo) * next_random(&mut st.rng)) } else { a };
                 let a = (a / 100.0).clamp(0.01, 0.99); // the original holds it to 1–99 %
                 st.turret_accuracy = Some(a);
                 a
@@ -1618,6 +1629,8 @@ behaviours:
     states: {{guns: {{do: turret, aim: gimballed, range: 5km, interval: 0.5s, free_fire: true}}}}
   missile_t:
     states: {{guns: {{do: turret, aim: fixed, range: 5km, interval: 2s, lock_time: 2s}}}}
+  bare_t:
+    states: {{guns: {{do: turret, aim: fixed}}}}
 "
             ),
             &Default::default(),
@@ -1686,6 +1699,35 @@ behaviours:
         let p = turret_params(&w, "fixed_t");
         let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
         assert!(!original_turret(&w, gun, t, &mut st, &p).fire_beams, "blocked by its own side");
+    }
+
+    #[test]
+    fn turret_defaults_and_pilot_accuracy_bands() {
+        // The original's constructor defaults: 500 ms, 2,500 m.
+        let w = turret_world("accuracy: 100");
+        let p = turret_params(&w, "gimbal_t");
+        assert_eq!((p.turret.interval, p.range), (0.5, 5000.0), "given values win");
+        let w = turret_world("accuracy: pilot, accuracy_unpiloted: [50, 75], accuracy_minus: [5, 15]");
+        let mut p = turret_params(&w, "fixed_t");
+        p.turret.interval = 0.0;
+        let bare = turret_params(&w, "bare_t");
+        assert_eq!((bare.turret.interval, bare.range), (0.5, 2500.0));
+        // No record: rand[50, 75) − rand[5, 15) lies in 35 … 70 %.
+        let mut w = w;
+        let gun = spawn_ai(&mut w, "fixed_gun", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -1000.0), Behaviour::Idle, None);
+        for k in 0..20u64 {
+            let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+            st.rng ^= k.wrapping_mul(0x9E37_79B9);
+            original_turret(&w, gun, t, &mut st, &p);
+            let a = st.turret_accuracy.unwrap();
+            assert!((0.35..=0.70).contains(&a), "{a}");
+        }
+        // With a record of 80: 65 … 75 %.
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        st.pilot = Some(PilotStats { accuracy: 80.0, ..PilotStats::NONE });
+        original_turret(&w, gun, t, &mut st, &p);
+        assert!((0.65..=0.75).contains(&st.turret_accuracy.unwrap()));
     }
 
     #[test]

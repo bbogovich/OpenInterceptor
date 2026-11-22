@@ -595,6 +595,12 @@ fn behaviour() -> Ty {
             "fixed turret: accuracy %, a [from, to] band rolled once per turret, or pilot",
         ),
         f("accuracy_factor", Ty::Qty(Unit::Fraction), "with accuracy: pilot, times this (100 %)"),
+        f(
+            "accuracy_unpiloted",
+            Ty::Numbers(2),
+            "with accuracy: pilot and no pilot record: a band rolled once ([25, 25])",
+        ),
+        f("accuracy_minus", Ty::Numbers(2), "fixed turret: a band rolled once and taken off the accuracy ([0, 0])"),
         f("miss", dist(), "fixed turret: largest sideways miss on a failed accuracy roll (20m)"),
         f("miss_beyond", dist(), "fixed turret: no miss closer than this (200m)"),
         f(
