@@ -116,7 +116,11 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
     // --- Afterburner ---------------------------------------------------------------------
     let burn_cost = rules.afterburner_cost * dt;
     let engines = ship.thrust_factor();
-    ship.afterburning = c.afterburner && !ship.reverse && !c.brake && ship.energy >= burn_cost && engines > 0.0;
+    // Under `flight.drive` an AI ship never burns: the original's agents never run the
+    // afterburner routine, and their thrust ignores it (D-20; it only drained energy).
+    let ai_driven = rules.drive.is_some() && ship.drive_factor > 0.0 && matches!(ship.pilot, Pilot::Ai(_));
+    ship.afterburning =
+        c.afterburner && !ai_driven && !ship.reverse && !c.brake && ship.energy >= burn_cost && engines > 0.0;
     if ship.afterburning {
         ship.energy -= burn_cost;
     }
@@ -252,12 +256,14 @@ fn driven(ship: &mut Ship, class: &ShipClass, d: &Drive, c: &Controls, dt: f32) 
     let fwd = ship.forward();
     let ai = matches!(ship.pilot, Pilot::Ai(_));
     let accel = if ai && ship.drive_factor > 0.0 {
-        // AI: a speed request is a share of the class's max_speed, turned into a throttle
-        // in the original's range −0.25..1; `a = S × throttle`.
-        let wanted = c.hold_speed.or(ship.speed_hold).map(|v| v / class.max_speed.max(1.0));
+        // AI: a speed request in m/s becomes the throttle whose terminal speed it is: with
+        // `a = S × throttle` and `dv/dt = a − drag·v`, that is `v × drag / S` (the
+        // original's `SetSpeed`). The throttle is held to −0.25..1.25: the original clamps
+        // its setter to −0.25..1 but scales it by up to 1.25 (`0x585aec`; the sprint).
+        let wanted = c.hold_speed.or(ship.speed_hold).map(|v| v * d.drag / ship.drive_factor);
         let throttle = wanted.unwrap_or(if ship.reverse { -ship.throttle } else { ship.throttle });
         // A disabled ship's thrust is zeroed (the original's `0x44d874`).
-        ship.drive_factor * throttle.clamp(-0.25, 1.0) * if ship.disabled { 0.0 } else { 1.0 }
+        ship.drive_factor * throttle.clamp(-0.25, 1.25) * if ship.disabled { 0.0 } else { 1.0 }
     } else {
         // Full forward push in m/s² at this power, engines and mass. A class with no
         // thrust figure uses its `acceleration` as that push instead.
@@ -680,9 +686,20 @@ mod tests {
         let s = w.get_mut(id).unwrap();
         s.pilot = Pilot::Ai(crate::sim::ai::AiState::new(crate::sim::ai::Behaviour::Wingman, None, Vec3::ZERO));
         s.drive_factor = 500.0;
-        // A request for the class's max_speed is full throttle: S / drag = 250 m/s.
-        run(&mut w, id, 6.0, Controls { hold_speed: Some(600.0), ..Default::default() });
+        // D-19: a request in m/s is the throttle that settles there (200 × 2 / 500 = 0.8).
+        run(&mut w, id, 6.0, Controls { hold_speed: Some(200.0), ..Default::default() });
+        assert!((w.get(id).unwrap().forward_speed() - 200.0).abs() < 0.5, "{}", w.get(id).unwrap().forward_speed());
+        // Full throttle is S / drag = 250 m/s; a request above that is held to throttle
+        // 1.25 (the original's setter scale): 312.5 m/s, whatever the class's max_speed.
+        run(&mut w, id, 6.0, Controls { hold_speed: Some(250.0), ..Default::default() });
         assert!((w.get(id).unwrap().forward_speed() - 250.0).abs() < 0.5);
+        run(&mut w, id, 6.0, Controls { hold_speed: Some(600.0), ..Default::default() });
+        assert!((w.get(id).unwrap().forward_speed() - 312.5).abs() < 0.5);
+        // D-20: an AI ship under `flight.drive` never burns, so its energy is not drained.
+        let e = w.get(id).unwrap().energy;
+        run(&mut w, id, 5.0, Controls { hold_speed: Some(250.0), afterburner: true, ..Default::default() });
+        let s = w.get(id).unwrap();
+        assert!(!s.afterburning && s.energy >= e, "{} {}", s.energy, e);
         // Factors are rolled within the class's range plus the level, then held to 100..500.
         let s = crate::content::rules::AiSpeed { min: 350.0, max: 400.0, level_step: 40.0 };
         assert_eq!(s.pick(0, 0.0, [100.0, 500.0]), 350.0);

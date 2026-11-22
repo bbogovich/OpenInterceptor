@@ -89,6 +89,8 @@ pub struct Placement {
     pub state: Option<String>,
     /// A behaviour id overriding the class's (`behaviour = scout_saucer`).
     pub behaviour: Option<String>,
+    /// The AI pilot's record (`pilot: {accuracy: 80, grade: 1, …}`); `None` = no record.
+    pub pilot: Option<super::behaviour::PilotStats>,
 }
 
 /// A navigation point.
@@ -173,6 +175,7 @@ impl Scenario {
                 protect: o.bool("protect").unwrap_or(false),
                 state: o.str("state").map(str::to_ascii_lowercase),
                 behaviour: o.str("behaviour").map(str::to_string),
+                pilot: o.node("pilot").map(|n| super::behaviour::PilotStats::parse(Get(n))),
             });
         }
         let nav_points = g

@@ -128,6 +128,16 @@ pub struct Params {
     pub jump: bool,
     /// Tow: how far to haul the prize from where it was grabbed before jumping out.
     pub escape: f32,
+    /// Attack: break off when closer than this, metres (0 = the engine's
+    /// `120 m + 0.15 × max_speed`; the original's 250 m).
+    pub break_off: f32,
+    /// Attack: the pilot's own missile lock (the original's AI): a timer starts while the
+    /// aim point is within this many degrees on both axes, and missiles may fire during
+    /// the sensor's lock time after it started. 0 = fire only on a full sensor lock.
+    pub lock_cone: f32,
+    /// With `lock_cone`: the chance per tick that a ready missile is fired (the original's
+    /// 5 + 2 × level %).
+    pub missile_chance: f32,
 }
 
 impl Default for Params {
@@ -143,6 +153,9 @@ impl Default for Params {
             missile_range: 0.0,
             jump: false,
             escape: 2500.0,
+            break_off: 0.0,
+            lock_cone: 0.0,
+            missile_chance: 1.0,
         }
     }
 }
@@ -194,11 +207,102 @@ pub struct Skill {
     /// Beyond this distance the pilot aims straight at the target, without lead
     /// (0 = always leads; the original's 1,750 m).
     pub lead_range: f32,
+    /// `accuracy: pilot`: the accuracy is the pilot's own (its `PilotStats`; 50 with no
+    /// pilot), held to `pilot_clamp` on the easy levels; `accuracy` holds that fallback.
+    pub accuracy_from_pilot: bool,
+    /// Below some difficulty level the pilot's accuracy is held to a band (the original:
+    /// X-COM's own pilots 50–100, everyone else 25 + 10·level … 50 + 10·level).
+    pub pilot_clamp: Option<PilotClamp>,
+    /// How the pilot turns towards its aim point (`steer:`).
+    pub steer: Steer,
+    /// `fire_mode: pilot`: near the aim point the pilot fires every mount with the chance
+    /// `(intelligence + accuracy) / 2`, otherwise one mount at a time (the original).
+    pub fire_mode_from_pilot: bool,
+}
+
+/// How an AI pilot turns towards a point (`skill.steer`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Steer {
+    /// The engine's: a stick of `4 × sin(error)` (soft for small errors, banking).
+    #[default]
+    Smooth,
+    /// The original's (`0x585bf6`, flight README §5, verified): each axis turns at the
+    /// error *in degrees* used as radians per second, up to its maximum, which closes a
+    /// small error within about a tick; a sluggish frame turns at 6 % of that, unclamped.
+    Original,
+}
+
+/// `skill.pilot_clamp`: below difficulty level `below_level`, a pilot's accuracy is held
+/// to `own` (pilots of the player's faction) or `others` + `per_level × level`, in %.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PilotClamp {
+    pub below_level: usize,
+    pub own: [f32; 2],
+    pub others: [f32; 2],
+    pub per_level: f32,
+}
+
+impl PilotClamp {
+    /// The accuracy (%) a pilot with `accuracy` flies with at `level`, `own` side or not.
+    pub fn apply(&self, accuracy: f32, level: usize, own: bool) -> f32 {
+        if level >= self.below_level {
+            return accuracy;
+        }
+        let [lo, hi] = if own {
+            self.own
+        } else {
+            let up = self.per_level * level as f32;
+            [self.others[0] + up, self.others[1] + up]
+        };
+        accuracy.clamp(lo, hi)
+    }
+}
+
+/// A pilot's record as the AI uses it in battle (the original's pilot record, flight
+/// README §9): stats 0–100 and a grade. A scenario gives one with `pilot:`; a ship with
+/// none uses [`PilotStats::NONE`] (the original's 50 everywhere) and its class's grade.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PilotStats {
+    pub accuracy: f32,
+    pub intelligence: f32,
+    pub flying: f32,
+    pub bravery: f32,
+    pub stamina: f32,
+    pub grade: Option<u8>,
+}
+
+impl PilotStats {
+    /// The original's values for a ship with no pilot record.
+    pub const NONE: PilotStats =
+        PilotStats { accuracy: 50.0, intelligence: 50.0, flying: 50.0, bravery: 50.0, stamina: 50.0, grade: None };
+
+    /// Parses `pilot: {accuracy: 80, intelligence: 60, flying: 50, bravery: 50, stamina: 50, grade: 1}`.
+    pub fn parse(g: Get) -> PilotStats {
+        let n = PilotStats::NONE;
+        let stat = |k: &str, d: f32| g.num(k).unwrap_or(d).clamp(0.0, 100.0);
+        PilotStats {
+            accuracy: stat("accuracy", n.accuracy),
+            intelligence: stat("intelligence", n.intelligence),
+            flying: stat("flying", n.flying),
+            bravery: stat("bravery", n.bravery),
+            stamina: stat("stamina", n.stamina),
+            grade: g.num("grade").map(|v| v.clamp(0.0, 255.0) as u8),
+        }
+    }
 }
 
 impl Default for Skill {
     fn default() -> Self {
-        Skill { aim: 0.5, reaction: 0.7, accuracy: None, lead_range: 0.0 }
+        Skill {
+            aim: 0.5,
+            reaction: 0.7,
+            accuracy: None,
+            lead_range: 0.0,
+            accuracy_from_pilot: false,
+            pilot_clamp: None,
+            steer: Steer::Smooth,
+            fire_mode_from_pilot: false,
+        }
     }
 }
 
@@ -352,6 +456,9 @@ impl BehaviourDef {
                 missile_range: sg.qty("missile_range", Unit::Distance).unwrap_or(d.missile_range).max(0.0),
                 jump: sg.bool("jump").unwrap_or(d.jump),
                 escape: sg.qty("escape", Unit::Distance).unwrap_or(d.escape).max(0.0),
+                break_off: sg.qty("break_off", Unit::Distance).unwrap_or(d.break_off).max(0.0),
+                lock_cone: sg.qty("lock_cone", Unit::Angle).unwrap_or(d.lock_cone).clamp(0.0, 180.0),
+                missile_chance: sg.qty("missile_chance", Unit::Fraction).unwrap_or(d.missile_chance).clamp(0.0, 1.0),
             };
             states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params, script: None });
         }
@@ -396,11 +503,38 @@ impl BehaviourDef {
         let skill = match g.node("skill") {
             Some(n) => {
                 let sk = Get(n);
+                let from_pilot = sk.str("accuracy") == Some("pilot");
                 Skill {
                     aim: sk.qty("aim", Unit::Fraction).unwrap_or(d.aim).clamp(0.0, 1.0),
                     reaction: sk.qty("reaction", Unit::Time).unwrap_or(d.reaction).max(0.05),
-                    accuracy: sk.qty("accuracy", Unit::Fraction).map(|a| a.clamp(0.0, 1.0)),
+                    // `pilot`: the original's model at the pilot's own accuracy, 50 % when
+                    // there is no pilot.
+                    accuracy: if from_pilot {
+                        Some(0.5)
+                    } else {
+                        sk.qty("accuracy", Unit::Fraction).map(|a| a.clamp(0.0, 1.0))
+                    },
                     lead_range: sk.qty("lead_range", Unit::Distance).unwrap_or(0.0).max(0.0),
+                    accuracy_from_pilot: from_pilot,
+                    pilot_clamp: sk.node("pilot_clamp").map(|n| {
+                        let c = Get(n);
+                        let pair = |k: &str, dflt: [f32; 2]| match c.nums(k).as_deref() {
+                            Some([a, b]) => [*a, *b],
+                            _ => dflt,
+                        };
+                        PilotClamp {
+                            below_level: c.num("below_level").unwrap_or(2.0).max(0.0) as usize,
+                            own: pair("own", [50.0, 100.0]),
+                            others: pair("others", [25.0, 50.0]),
+                            per_level: c.num("per_level").unwrap_or(10.0),
+                        }
+                    }),
+                    steer: match sk.str("steer") {
+                        None | Some("smooth") => Steer::Smooth,
+                        Some("original") => Steer::Original,
+                        Some(other) => return Err(format!("skill.steer: '{other}' is not smooth or original")),
+                    },
+                    fire_mode_from_pilot: sk.str("fire_mode") == Some("pilot"),
                 }
             }
             None => d,
@@ -530,7 +664,10 @@ mod tests {
         assert_eq!((b.transitions[0].from, b.transitions[0].to), (Some(0), 1));
         assert_eq!((b.transitions[2].from, b.transitions[2].to), (None, 2));
         assert_eq!(b.states[0].params.missile_range, 1200.0);
-        assert_eq!(b.skill, Skill { aim: 0.6, reaction: 0.8, accuracy: Some(0.5), lead_range: 1750.0 });
+        assert_eq!(
+            b.skill,
+            Skill { aim: 0.6, reaction: 0.8, accuracy: Some(0.5), lead_range: 1750.0, ..Skill::default() }
+        );
         assert_eq!(b.state_with(Manoeuvre::Retreat).unwrap().name, "flee");
     }
 

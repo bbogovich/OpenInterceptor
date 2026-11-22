@@ -388,6 +388,7 @@ impl MissionRun {
                 protect: role.protect,
                 state: role.state.clone(),
                 behaviour: role.behaviour.clone(),
+                pilot: None,
             };
             let id = w.spawn_placement(&p, self.player)?;
             // Escorts fly in formation on the newest live member of the role they guard.

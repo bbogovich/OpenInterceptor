@@ -260,6 +260,7 @@ fn ship() -> Ty {
         ),
         f("cargo", Ty::Bool, "a cargo container: counted by the cargo(role) mission query"),
         f("behaviour", name(), "AI behaviour id"),
+        f("pilot_grade", Ty::Num, "AI ships of this class: their pilot's grade (flight.pilot_grades)"),
         f("turret_arc", Ty::Qty(Unit::Angle), "beams can aim this far off the nose (turrets)"),
         f("debris", Ty::List(Box::new(Ty::Asset)), "wreckage models"),
         f("engine_color", rgb(), "engine glow colour"),
@@ -535,6 +536,13 @@ fn behaviour() -> Ty {
         f("missile_range", dist(), "launch missiles only this close (default 2.5 × range, at least 2 km)"),
         f("jump", Ty::Bool, "retreat: start the hyperdrive"),
         f("escape", dist(), "tow: haul the prize this far before jumping out (2.5 km)"),
+        f("break_off", dist(), "attack: break off closer than this (0 = 120 m + 0.15 × max_speed)"),
+        f(
+            "lock_cone",
+            Ty::Qty(Unit::Angle),
+            "attack: the pilot's own missile lock while the aim is within this angle (0 = a full sensor lock)",
+        ),
+        f("missile_chance", Ty::Qty(Unit::Fraction), "with lock_cone: chance per tick that a ready missile fires"),
     ]);
     Ty::Def(vec![
         f("start", name(), "the first state"),
@@ -571,8 +579,24 @@ fn behaviour() -> Ty {
                 f("reaction", time(), "seconds between looks at the target"),
                 f(
                     "accuracy",
-                    Ty::Qty(Unit::Fraction),
-                    "the original's aim model instead of aim: errs in the lead time by 1 − accuracy",
+                    Ty::Either(Box::new(Ty::Qty(Unit::Fraction)), Box::new(Ty::Enum(&["pilot"]))),
+                    "the original's aim model instead of aim: errs in the lead time by 1 − accuracy; pilot = the pilot's own",
+                ),
+                f(
+                    "pilot_clamp",
+                    Ty::Struct(vec![
+                        f("below_level", Ty::Num, "below this difficulty level index (2)"),
+                        f("own", Ty::Numbers(2), "the player's side's pilots: accuracy band, % ([50, 100])"),
+                        f("others", Ty::Numbers(2), "everyone else at level 0, % ([25, 50])"),
+                        f("per_level", Ty::Num, "added to others per level (10)"),
+                    ]),
+                    "accuracy: pilot is held to a band on the easy levels",
+                ),
+                f("steer", Ty::Enum(&["smooth", "original"]), "how the pilot turns to its aim point (smooth)"),
+                f(
+                    "fire_mode",
+                    Ty::Enum(&["linked", "pilot"]),
+                    "pilot: every mount with chance (intelligence + accuracy) / 2 near the aim, else one at a time",
                 ),
                 f("lead_range", dist(), "beyond this, aim straight at the target without lead (0 = always lead)"),
             ]),
@@ -643,6 +667,30 @@ fn flight() -> Ty {
         ),
         f("formation", Ty::Name, "the formation wingmen fly in when a role names none (formations.<id>; vee)"),
         f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
+        f(
+            "pilot_grades",
+            Ty::Struct(vec![
+                f("lookahead", dist(), "obstacle look-ahead with no grade or one not listed (250m)"),
+                f(
+                    "grades",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("lookahead", dist(), "how far ahead along its course the pilot looks for obstacles"),
+                        f("sprint", Ty::Bool, "sprints at long range (true)"),
+                    ]))),
+                    "per grade, from 0",
+                ),
+                f(
+                    "sprint",
+                    Ty::Struct(vec![
+                        f("beyond", dist(), "sprint when the target is farther than this (3km)"),
+                        f("throttle", Ty::Qty(Unit::Fraction), "AI throttle while sprinting (106.25 %)"),
+                        f("from_level", Ty::Num, "from this difficulty level index every pilot sprints (never)"),
+                    ]),
+                    "the long-range sprint",
+                ),
+            ]),
+            "AI pilot grades: obstacle look-ahead and the sprint (with the original's AI rules)",
+        ),
         f(
             "drive",
             Ty::Struct(vec![
@@ -909,6 +957,18 @@ pub fn scenario() -> Ty {
         ),
         f("hull", Ty::Qty(Unit::Fraction), "starting hull fraction"),
         f("behaviour", name(), "behaviour id instead of the class's"),
+        f(
+            "pilot",
+            Ty::Struct(vec![
+                f("accuracy", Ty::Num, "0–100 (50)"),
+                f("intelligence", Ty::Num, "0–100 (50)"),
+                f("flying", Ty::Num, "0–100 (50)"),
+                f("bravery", Ty::Num, "0–100 (50)"),
+                f("stamina", Ty::Num, "0–100 (50)"),
+                f("grade", Ty::Num, "the pilot's grade (flight.pilot_grades; default the class's)"),
+            ]),
+            "the AI pilot's record",
+        ),
     ]);
     Ty::Struct(vec![
         f("id", name(), "unique scenario id"),

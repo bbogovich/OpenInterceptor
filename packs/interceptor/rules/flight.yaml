@@ -14,6 +14,15 @@ flight:
   # k = 4 x (1 - 0.1 x AngularDamp) (a Lightning rolls 5 rad/s, tau 0.31 s); AI pilots
   # turn at their class's ai_turn rates.
   turning: {gain: 0.08, damping: 4, damp_step: 0.1, ai_rates: {pitch: 2, yaw: 2, roll: 3}}
+  # AI pilot grades (the pilot record's +0x28; notes/re/unknowns-2026-11.md §5 and
+  # flight README §5.1, VERIFIED): obstacle look-ahead along the course 225 m for grade 0,
+  # 100 m for grade 2, 250 m otherwise and with no pilot; beyond 3 km from its target a
+  # pilot sprints at 1.0625 x the full throttle when its grade is not 0, and every pilot
+  # does from Genius (level index 3) on.
+  pilot_grades:
+    lookahead: 250m
+    grades: [{lookahead: 225m, sprint: false}, {lookahead: 250m}, {lookahead: 100m}, {lookahead: 250m}, {lookahead: 250m}]
+    sprint: {beyond: 3km, throttle: 106.25%, from_level: 3}
   # newtonian: throttle is thrust, ships coast, Z reverses thrust, B brakes.
   # assisted: throttle is a target speed with automatic slowing (arcade feel).
   model: newtonian

@@ -318,6 +318,9 @@ pub struct ShipClass {
     pub debris: Vec<String>,
     /// Engine glow colour (RGB 0..1).
     pub engine_color: [f32; 3],
+    /// The grade of the pilot an AI ship of this class carries (`pilot_grade:`), unless a
+    /// scenario gives it a pilot of its own ([`crate::content::behaviour::PilotStats`]).
+    pub pilot_grade: Option<u8>,
 }
 
 /// A beam (energy) weapon.
@@ -505,6 +508,9 @@ pub struct FlightRules {
     pub debrief_delay: f32,
     /// The original's motion model (`flight: {drive: {…}}`), if the campaign uses it.
     pub drive: Option<Drive>,
+    /// AI pilots' grades (`flight: {pilot_grades: …}`): obstacle look-ahead and the long-range
+    /// sprint, if the campaign uses them.
+    pub pilot_grades: Option<PilotGrades>,
     /// The original's turn model (`flight: {turning: {…}}`), if the campaign uses it;
     /// otherwise turn rates are degrees per second, smoothed by `AngularDamp`.
     pub turning: Option<Turning>,
@@ -583,6 +589,64 @@ impl AiSpeed {
     /// The factor for difficulty `level` and a roll `r` in 0..1, held to `range`.
     pub fn pick(&self, level: usize, r: f32, range: [f32; 2]) -> f32 {
         (self.min + (self.max - self.min) * r + self.level_step * level as f32).clamp(range[0], range[1])
+    }
+}
+
+/// AI pilot grades (`flight.pilot_grades`; the original's pilot record +0x28, a grade
+/// 0–4: X-COM 0, pirates 1, freighter crews 2, aliens 1–4; notes/re/unknowns-2026-11.md §5).
+///
+/// A grade sets how far ahead along its course an AI pilot looks for obstacles, and whether
+/// it **sprints** when its target is far: with `sprint`, beyond `sprint_beyond` it flies at
+/// `sprint_throttle` (the original's 1.0625 S) — so does every pilot from difficulty level
+/// `sprint_from_level` on.
+///
+/// ```yaml
+/// pilot_grades:
+///   lookahead: 250m                     # no pilot, or a grade not listed
+///   grades: [{lookahead: 225m, sprint: false}, {lookahead: 250m}, {lookahead: 100m}]
+///   sprint: {beyond: 3km, throttle: 106.25%, from_level: 3}
+/// ```
+#[derive(Debug, Clone, PartialEq)]
+pub struct PilotGrades {
+    /// Look-ahead in metres for a ship without a grade, or a grade beyond the list.
+    pub lookahead: f32,
+    /// Per grade, from 0: `(lookahead in metres, sprints)`.
+    pub grades: Vec<(f32, bool)>,
+    pub sprint_beyond: f32,
+    pub sprint_throttle: f32,
+    /// Difficulty level index from which every pilot sprints (`usize::MAX` = never).
+    pub sprint_from_level: usize,
+}
+
+impl PilotGrades {
+    fn parse(g: Get) -> PilotGrades {
+        let lookahead = g.qty("lookahead", Unit::Distance).unwrap_or(250.0).max(0.0);
+        let grades = g
+            .node("grades")
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .map(|item| {
+                let gr = Get(item);
+                (gr.qty("lookahead", Unit::Distance).unwrap_or(lookahead).max(0.0), gr.bool("sprint").unwrap_or(true))
+            })
+            .collect();
+        let sp = g.node("sprint").map(Get);
+        PilotGrades {
+            lookahead,
+            grades,
+            sprint_beyond: sp.and_then(|s| s.qty("beyond", Unit::Distance)).unwrap_or(3000.0).max(0.0),
+            sprint_throttle: sp.and_then(|s| s.qty("throttle", Unit::Fraction)).unwrap_or(1.0625).clamp(0.0, 1.25),
+            sprint_from_level: sp.and_then(|s| s.num("from_level")).map(|l| l.max(0.0) as usize).unwrap_or(usize::MAX),
+        }
+    }
+
+    /// `(look-ahead, sprints)` for a pilot of `grade` (`None`: no pilot record) at
+    /// difficulty `level`.
+    pub fn of(&self, grade: Option<u8>, level: usize) -> (f32, bool) {
+        let (ahead, sprint) =
+            grade.and_then(|k| self.grades.get(k as usize).copied()).unwrap_or((self.lookahead, true));
+        (ahead, sprint || level >= self.sprint_from_level)
     }
 }
 
@@ -1645,6 +1709,7 @@ pub fn build_with(
         debrief_delay: fl.and_then(|g| g.qty("debrief_delay", Unit::Time)).unwrap_or(30.0).max(0.0),
         turning: fl.and_then(|g| g.node("turning")).map(|n| Turning::parse(Get(n))),
         drive: fl.and_then(|g| g.node("drive")).map(|n| Drive::parse(Get(n))),
+        pilot_grades: fl.and_then(|g| g.node("pilot_grades")).map(|n| PilotGrades::parse(Get(n))),
     };
     // The console theme (R-CON-020).
     let layer = |g: Get, errors: &mut Vec<String>, at: &str| ThemeLayer {
@@ -2486,6 +2551,7 @@ fn ship_class(
         engine_color: rgb(g, "engine_color", [0.5, 0.7, 1.0]),
         towable: g.bool("towable").unwrap_or(false),
         cargo: g.bool("cargo").unwrap_or(false),
+        pilot_grade: g.num("pilot_grade").map(|n| n.clamp(0.0, 255.0) as u8),
     })
 }
 
