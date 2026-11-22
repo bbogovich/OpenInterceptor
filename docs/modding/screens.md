@@ -182,9 +182,9 @@ and kept; one that cannot be loaded is reported on standard error once
 | `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app 0.22.15; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
 | `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
-| `y_range`, `y_steps` | `[low, high]`, number | fitted, 18 / about 6 | A `graph`'s fixed y range in that many grid steps (the original's income report: `[0, 18000]`, 18); without it the range fits the values (app NEXT). |
-| `base_portraits`, `base_portrait_frames` | list of assets, number | none, 1 | A `map`'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app NEXT). |
-| `knob` | `{frames, count, stops, reach, lamps_off, lamps_on, unavailable}` | none | A `knob`'s turning frames (rows N … N + count − 1, at `pos`), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app NEXT). |
+| `y_range`, `y_steps` | `[low, high]`, number | fitted, 18 / about 6 | A `graph`'s fixed y range in that many grid steps (the original's income report: `[0, 18000]`, 18); without it the range fits the values (app 0.22.22). |
+| `base_portraits`, `base_portrait_frames` | list of assets, number | none, 1 | A `map`'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app 0.22.22). |
+| `knob` | `{frames, count, stops, reach, lamps_off, lamps_on, unavailable}` | none | A `knob`'s turning frames (rows N … N + count − 1, at `pos`), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22). |
 | `zoom_levels` | list of numbers | none | A `map`'s fixed zoom levels in map units per design pixel, in place of free zoom (app 0.22.21, [Zoom levels](#zoom-levels)). |
 | `months`, `legend` | list of text | Jan … Dec, none | A `graph`'s month names (January first), and the labels of a finance graph's low / high lines or of an activity map's four classes; text keys allowed (app 0.22.21). |
 | `labels` | `{font, colour, base_colour, rise, base_rise, box, cycle, margin}` | none | A `map`'s labels the original's way ([Map labels](#map-labels), app 0.22.17). Without it every star's name is drawn beside it. |
@@ -202,7 +202,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `info` | The selected object's details and its action buttons. |
 | `check` | A check row (app 0.22.10): a lamp at its left that a click toggles — `images: {sprite, states: 2}` (off, on) or `{up, down}` — and its `label` 20 px to the right in the skin's text-button font. |
 | `graph` | A status report's line graph of a month-by-month `source` (app 0.22.21, [Report graphs](#report-graphs)). |
-| `knob` | A view knob that sets a `map`'s zoom level (app NEXT, [Zoom levels](#zoom-levels)). |
+| `knob` | A view knob that sets a `map`'s zoom level (app 0.22.22, [Zoom levels](#zoom-levels)). |
 
 ### Actions
 
@@ -216,7 +216,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `save` | The save prompt, as the testbed layout's *Save*. |
 | `menu` | Saves and returns to the main menu. |
 | `testbed` | Switches to the testbed layout. |
-| `list(prev)`, `list(next)`, `list(act)` | Since app NEXT: moves the screen's list selection up or down a row, or runs the selected row's first action (the original's one-at-a-time panels: Bases' previous, next and close-panel buttons). |
+| `list(prev)`, `list(next)`, `list(act)` | Since app 0.22.22: moves the screen's list selection up or down a row, or runs the selected row's first action (the original's one-at-a-time panels: Bases' previous, next and close-panel buttons). |
 
 ### Values
 
@@ -325,7 +325,7 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
   (list right + 8, list bottom − 20) (24 × 24 hot spots, **derived**); the UFOpedia topic list's
   scroll anchor (616, 222), its upper and lower halves (**derived**). The article text's anchor
   (616, 386) is not built.
-- Bases has no scroll arrows (since app NEXT; 0.22.21 placed its panel buttons as arrows): its
+- Bases has no scroll arrows (since app 0.22.22; 0.22.21 placed its panel buttons as arrows): its
   module panel shows one module at a time and steps with three 42 × 32 buttons (§14.2,
   **verified**): previous 402 at (387, 247) (rows 1377 / 1378), close panel 400 at (484, 247)
   (1381 / 1382, the check mark that accepts) and next 401 at (580, 247) (1379 / 1380).
@@ -333,7 +333,7 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
   `list(next)`) and build the selected module (`list(act)`) (**derived**); the wheel still
   scrolls the list.
 - Equip Ships' nine ring sockets (centres **verified**) show the selected ship's hard points as
-  icons only, since app 0.22.21 (§13.2, **verified**): since app NEXT the fitted item's icon
+  icons only, since app 0.22.21 (§13.2, **verified**): since app 0.22.22 the fitted item's icon
   (§14.3, a launcher and its missile sharing one), row 1237 where the hull has no hard point, the
   selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the body
   font (23011). The probes' icons are not matched to `interceptor`'s probes yet.
@@ -377,7 +377,7 @@ screenshots).
 ### Report graphs
 
 A `graph` widget (app 0.22.21, D-27) charts a month-by-month figure in its rect (the report's
-panel) as the original's status reports do (StatusReports.cpp; since app NEXT the axes of the
+panel) as the original's status reports do (StatusReports.cpp; since app 0.22.22 the axes of the
 income report read in full, `unknowns-2026-11.md` §13.1, §14.8, **verified**):
 
 - 1 px lines. The plot runs from the panel's left + 60 to right − 15 and top + 30 to bottom − 40.
@@ -409,12 +409,12 @@ source for those arrays was not traced, §14.7).
 `zoom_levels: [45, 30]` on a `map` (app 0.22.21) replaces free zoom by the original CSD's levels
 (`unknowns-2026-11.md` §1.1, §13.4, §14.4, **verified**): level 0 shows 45 map units a pixel,
 level 1 30, centred on the first base's system. Level 2 is the opened system's picture: its
-star class's `portrait`, or (app NEXT) `base_portraits` where the player has a base; a black hole
+star class's `portrait`, or (app 0.22.22) `base_portraits` where the player has a base; a black hole
 cannot be opened (a click only centres it). Clicking a system opens it; the wheel also steps the
 levels (an engine extra). The picture's place (centred in the map) is **derived**. A minimap
 ignores the levels.
 
-A `knob` widget (app NEXT) picks the level as the CSD's view knob does (control 101, §14.5,
+A `knob` widget (app 0.22.22) picks the level as the CSD's view knob does (control 101, §14.5,
 **verified**):
 
 ```yaml
