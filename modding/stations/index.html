@@ -4640,43 +4640,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cargo-containers-and-moving-hubs" class="md-nav__link">
+  <a href="#shield-pools-and-covered-modules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cargo containers and moving hubs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-two-campaigns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The two campaigns
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mines
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#probes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Probes
+        Shield pools and covered modules
       
     </span>
   </a>
@@ -6536,43 +6503,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cargo-containers-and-moving-hubs" class="md-nav__link">
+  <a href="#shield-pools-and-covered-modules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cargo containers and moving hubs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-two-campaigns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The two campaigns
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mines
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#probes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Probes
+        Shield pools and covered modules
       
     </span>
   </a>
@@ -6667,12 +6601,104 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
   moves and turns with the station.</li>
 <li><strong>Shield generators.</strong> A station with <code>shield_generator</code> modules keeps its shields only while
   at least one of them survives; when the last one goes, its shields drop to zero and stay down
-  ("STATION SHIELDS DOWN").</li>
+  ("STATION SHIELDS DOWN"). A station with a <code>shield_pool</code> follows its generators as described
+  <a href="#shield-pools-and-covered-modules">below</a>.</li>
 <li><strong>Cascade.</strong> When the hub is destroyed, all its modules are destroyed with it (each with its
   own explosion and debris).</li>
 <li><strong>Wrecks.</strong> A destroyed module whose model set has a <code>destroyed</code> state stays on the station as
   a wreck drawn in that state (<a href="../looks/#model-sets">Looks</a>); the wreck goes with the station.</li>
 </ul>
+<h2 id="shield-pools-and-covered-modules">Shield pools and covered modules<a class="headerlink" href="#shield-pools-and-covered-modules" title="Permanent link">&para;</a></h2>
+<p>Since app 0.22.4 a station can use the original game's station model instead of a ship's (issue</p>
+<h1 id="113-facts-from-the-players-own-program-flight-notes-8-verified-unless-marked">113; facts from the player's own program, flight notes §8, <strong>verified</strong> unless marked):<a class="headerlink" href="#113-facts-from-the-players-own-program-flight-notes-8-verified-unless-marked" title="Permanent link">&para;</a></h1>
+<div class="highlight"><pre><span></span><code><span class="nt">objects</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">xcom_base</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">damage_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">station</span><span class="w">                               </span><span class="c1"># hull hits: no armour, factor or system hits</span>
+<span class="w">    </span><span class="nt">shield_pool</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">recharge</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> on_generator_lost</span><span class="p">:</span><span class="w"> </span><span class="nv">keep</span><span class="p p-Indicator">}</span><span class="w"> </span><span class="c1"># one pool, 2 points a second</span>
+<span class="w">    </span><span class="nt">modules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="s">'3'</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">xcom_shield_generator</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">slot</span><span class="p">:</span><span class="w"> </span><span class="s">'0'</span><span class="p p-Indicator">,</span><span class="nt"> class</span><span class="p">:</span><span class="w"> </span><span class="nv">xcom_beam_defense</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">xcom_shield_generator</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">shield_capacity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2000</span><span class="w">     </span><span class="c1"># the pool's maximum while this is the first standing generator</span>
+<span class="w">    </span><span class="nt">shielded_by_hub</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">     </span><span class="c1"># hits drain the hub's pool while it holds points</span>
+<span class="w">  </span><span class="nt">xcom_beam_defense</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">beams</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">laser_cannon</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">laser_cannon</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">shielded_by_hub</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<ul>
+<li><strong>One pool.</strong> A station with <code>shield_pool</code> has a single shield pool with no fore and aft
+  facings: a hit from any side, and both halves of an enveloping blast, drain the same points.
+  It is held in both of the hub's shield banks, so the target display shows it on both rings.</li>
+<li><strong>Its size.</strong> The pool's maximum is the <code>shield_capacity</code> of the <strong>first</strong> standing generator
+  in the hub's <code>modules</code> list (a generator without one gives the hub's own <code>shields</code>);
+  generators do not add up. A hub that lists no generator keeps its own <code>shields</code> as the maximum
+  for the whole battle. The pool starts full and takes no difficulty factor.</li>
+<li><strong>Recharge.</strong> <code>recharge</code> points per second (default 2), up to the maximum. When the first
+  generator falls the next one sets the maximum, and a pool above it comes down to it.</li>
+<li><strong>The last generator.</strong> <code>on_generator_lost: keep</code> — the pool keeps its points but no longer
+  recharges (the original, <em>derived</em>: its maximum becomes 0 and no code empties the pool);
+  <code>drop</code> — it empties at once ("STATION SHIELDS DOWN").</li>
+<li><strong>Covered modules.</strong> A module with <code>shielded_by_hub: true</code> cannot be shot off through intact
+  shields: while its hub's pool holds points, a hit on the module drains the hub's pool, and
+  what gets through strikes the <strong>hub's</strong> hull, not the module. Once the pool is empty the
+  module takes its own hits (its own armour, then hull).</li>
+<li><strong><code>damage_model: station</code>.</strong> What gets past the shields goes straight to the hull: the hub's
+  armour is never used, the difficulty factor on the player's beam hits
+  (<a href="../rulesets/"><code>damage.difficulty</code></a>) does not apply, and no hit strikes a system. It also
+  works without a pool (with the usual banks).</li>
+</ul>
+<p>Absent keys keep the earlier behaviour: two banks, modules hit directly, the ship damage model.</p>
+<table>
+<thead>
+<tr>
+<th>Campaign</th>
+<th>Station</th>
+<th>Pool</th>
+<th>Covered modules</th>
+<th>Damage model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td>Guard station</td>
+<td>— (banks)</td>
+<td>—</td>
+<td>ship</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>Dominion outpost</td>
+<td>3,600 (its <code>shields</code>), 5 per second, <code>drop</code></td>
+<td>pods and shield pod</td>
+<td>ship</td>
+</tr>
+<tr>
+<td><code>interceptor</code></td>
+<td>X-COM base</td>
+<td>2,000 (Type1 generator), 2 per second, <code>keep</code></td>
+<td>all</td>
+<td>station</td>
+</tr>
+<tr>
+<td><code>interceptor</code></td>
+<td>Alien base</td>
+<td>3,000 (Type2 shield pod), 2 per second, <code>keep</code></td>
+<td>all</td>
+<td>station</td>
+</tr>
+<tr>
+<td><code>interceptor</code></td>
+<td>Pirate base, arms dealer, science stations</td>
+<td>—</td>
+<td>—</td>
+<td>station</td>
+</tr>
+</tbody>
+</table>
+<p>In <code>default</code>'s <code>outpost-strike</code> the Dominion outpost's pods are covered: wear the pool down
+first, then the shield pod falls and the pool is gone for good. <code>interceptor</code>'s outposts and ore
+plants keep the ship model: the original handles them in other routines that are not traced yet.</p>
 <h2 id="cargo-containers-and-moving-hubs">Cargo containers and moving hubs<a class="headerlink" href="#cargo-containers-and-moving-hubs" title="Permanent link">&para;</a></h2>
 <p>Since app 0.9.2 a hub need not be a station: any ship class may carry <code>modules</code>, and they ride
 with it. The default campaign's cargo clipper (<code>supply_ship</code>) carries twelve cargo pods and a
@@ -6746,8 +6772,9 @@ point-defence laser:</p>
 <code>M_ALIEN*</code> in <code>GameSettings.ini</code>, verified); their meshes are the original turret and pod meshes;
 <strong>which attachment point holds which module is derived</strong> (the original builds bases from the
 strategy layer, Stage 4) — see DEV-035.</p>
-<p>Testbed arenas: <code>outpost-strike</code> (default) and <code>base-assault</code> (interceptor) — knock out the
-shield modules to bring the hub's shields down, silence the guns, then destroy the hub.</p>
+<p>Testbed arenas: <code>outpost-strike</code> (default) and <code>base-assault</code> (interceptor) — wear the hub's
+shield pool down, knock out the shield modules so it cannot recharge, silence the guns, then
+destroy the hub.</p>
 <h2 id="mines">Mines<a class="headerlink" href="#mines" title="Permanent link">&para;</a></h2>
 <p>A <code>kind: mine</code> object flies the <code>mine</code> manoeuvre: it waits and, when a hostile comes within the
 state's <code>range</code>, detonates its <strong>first missile rack</strong> as the warhead. The blast reaches four

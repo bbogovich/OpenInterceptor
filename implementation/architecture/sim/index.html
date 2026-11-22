@@ -7123,8 +7123,22 @@ original manipulator index, looked up in the class's <code>collision::Shape::mou
 module's −Z follows the slot's facing, with the hub's faction and <code>Ship::mount = (hub, offset,
 rotation)</code>; modules with a behaviour fly it (<code>turret</code>), the rest are idle; up to five levels.
 <code>update_modules</code> (every tick, after systems) puts each module back on its hub, destroys the
-modules of a destroyed hub, removes wrecks whose hub is gone, and zeroes a station's shields
-while none of its <code>shield_generator</code> modules survives ("STATION SHIELDS DOWN"). A destroyed
+modules of a destroyed hub, removes wrecks whose hub is gone, and calls
+<code>stations::update_shields</code>, which zeroes a station's banks while none of its <code>shield_generator</code>
+modules survives ("STATION SHIELDS DOWN") or, for a <code>shield_pool</code> station, sets the pool's
+maximum from its first standing generator (<code>Ruleset::pool_capacity</code>) and clears
+<code>Ship::pool_powered</code> (and, with <code>drop</code>, the points) when none stands.</p>
+<p><strong><code>sim::stations</code></strong> (app 0.22.4, #113) holds the station shield rules. A pool is stored in both
+banks (<code>shield_fore == shield_aft</code>), so the HUD, the remote console and the AI read it without
+knowing pools exist; only <code>stations::absorb</code>, <code>stations::recharge</code> and <code>update_shields</code> change
+it, and they write both banks together. <code>fill_protection</code> sizes it with
+<code>stations::initial_capacity</code> (no scale, no difficulty factor); <code>systems::recharge</code> hands a pool
+class to <code>stations::recharge</code> (<code>recharge</code> points per second, <code>max − pool</code> clamped as the
+original's <code>min(max − pool, 2)</code>). <code>combat::apply_hit</code> first asks <code>stations::hit_target</code>, which
+returns the hub for a <code>shielded_by_hub</code> module while the hub's pool holds points (counted as 0
+while the hub is cloaked), so the hub's pool and then the hub's hull take the hit;
+<code>combat::beam_factor</code> resolves the same taker and returns 1 for a <code>damage_model: station</code> class,
+and <code>apply_hit</code> skips armour and the system roll for such a class. A destroyed
 module whose model set has a <code>destroyed</code> state becomes a <code>Wreck { class, hub, offset, rotation }</code>
 in <code>World::wrecks</code>, drawn by the renderer on its hub. Modder's view:
 <a href="../../../modding/stations/">Stations and modules</a>.</p>

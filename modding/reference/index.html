@@ -7728,7 +7728,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>hit_points</code></td>
 <td>number</td>
 <td>100</td>
-<td>Hull points. A class inheriting an original station's hit-point chart (<code>HP1</code> – <code>HP4</code>, no <code>HitPoints</code>) gets the four summed (app 0.15.0, <em>derived</em>).</td>
+<td>Hull points. A class inheriting an original station's hit-point chart (<code>HP1</code> – <code>HP4</code>, no <code>HitPoints</code>) gets its <code>HP1</code>, the only value the original reads (app 0.22.4, <strong>verified</strong>; app 0.15.0 – 0.22.x summed the four).</td>
 </tr>
 <tr>
 <td><code>armor</code></td>
@@ -7740,7 +7740,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>shields</code></td>
 <td>number</td>
 <td>0</td>
-<td>Shield points per facing (fore and aft).</td>
+<td>Shield points per facing (fore and aft). With <code>shield_pool</code>: the pool's size when no generator module gives a <code>shield_capacity</code>.</td>
 </tr>
 <tr>
 <td><code>fitted</code></td>
@@ -7926,7 +7926,31 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>shield_generator</code></td>
 <td>bool</td>
 <td><code>false</code></td>
-<td>Modules: while one survives, its station's shields work.</td>
+<td>Modules: while one survives, its station's shields work. Implied by a <code>shield_capacity</code> above 0.</td>
+</tr>
+<tr>
+<td><code>shield_capacity</code></td>
+<td>number</td>
+<td>0</td>
+<td>Generator modules (app 0.22.4): the hub's <code>shield_pool</code> maximum while this is its first standing generator, in the order of the hub's <code>modules</code> list; generators do not add up. 0 = the hub's own <code>shields</code>. <code>interceptor</code>: X-COM generator 2,000 (Type1), alien shield pod 3,000 (Type2) (<strong>verified</strong>; <a href="../stations/#shield-pools-and-covered-modules">Stations and modules</a>).</td>
+</tr>
+<tr>
+<td><code>shield_pool</code></td>
+<td><code>{recharge, on_generator_lost}</code></td>
+<td>none (two banks)</td>
+<td>Stations (app 0.22.4): <strong>one</strong> shield pool instead of fore and aft banks; hits from any side drain it. <code>recharge</code>: points per second while a generator stands (default 2); <code>on_generator_lost</code>: <code>keep</code> (the points stay but no longer recharge) or <code>drop</code> (the pool empties, "STATION SHIELDS DOWN"; default). The pool starts full and has no difficulty factor. <code>interceptor</code>: the X-COM and alien bases, <code>{recharge: 2, on_generator_lost: keep}</code> (<strong>verified</strong> / <em>derived</em>).</td>
+</tr>
+<tr>
+<td><code>shielded_by_hub</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Modules (app 0.22.4): while the hub's <code>shield_pool</code> holds points, a hit on this module drains the hub's pool instead, and what gets through strikes the <strong>hub's</strong> hull; once the pool is down the module takes its own hits. <code>interceptor</code>: every base module (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>damage_model</code></td>
+<td><code>ship</code>, <code>station</code></td>
+<td><code>ship</code></td>
+<td>How hits past the shields are taken (app 0.22.4). <code>station</code>: straight to the hull — no armour, no difficulty factor on beam hits, no system hits. <code>interceptor</code>: the X-COM, alien, pirate, arms-dealer and science stations (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>point_defence</code></td>

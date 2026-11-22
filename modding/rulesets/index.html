@@ -7189,6 +7189,9 @@ C / C; <code>balance: share</code>. The original has no step budget — the sett
 <h3 id="how-a-hit-lands">How a hit lands<a class="headerlink" href="#how-a-hit-lands" title="Permanent link">&para;</a></h3>
 <p>Every beam or missile hit goes through the same pipeline (<code>sim::combat::apply_hit</code>):</p>
 <ol>
+<li><strong>Covered modules.</strong> A hit on a <code>shielded_by_hub</code> module whose hub's <code>shield_pool</code> holds
+   points is taken by the hub instead (app 0.22.4, <a href="../stations/#shield-pools-and-covered-modules">Stations and
+   modules</a>).</li>
 <li><strong>Spread and difficulty.</strong> The hit does between <code>damage.spread</code> and all of its damage; a
    beam hit from or on the player's craft is scaled by <code>damage.difficulty.player_hits</code> /
    <code>hits_on_player</code>.</li>
@@ -7196,13 +7199,15 @@ C / C; <code>balance: share</code>. The original has no step budget — the sett
    the beam's <code>shield_factor</code> points (1; the original's Phase Cannon 1.5): a bank that holds
    <code>damage × shield_factor</code> stops the hit, one that holds less stops <code>bank / shield_factor</code>
    and falls. <code>bypass_shields</code> missiles skip this step; <code>enveloping</code> ones put half on each
-   facing.</li>
+   facing. A station with a <code>shield_pool</code> has one pool that takes the whole hit from any side.</li>
 <li><strong>Armour</strong>: the one pool, or with <code>damage.armor: per_side</code> the bank on that side.</li>
 <li><strong>Systems</strong>: while the hull is below <code>system_below</code> of its maximum, <code>system_share</code> of what
    is left strikes one random working system — instead of the hull with <code>system_divert: true</code>,
    or as well.</li>
 <li><strong>Hull.</strong> At zero the ship is destroyed.</li>
 </ol>
+<p>A class with <code>damage_model: station</code> skips the difficulty factor, armour and systems: what gets
+through its shields goes straight to the hull (app 0.22.4; the original's stations, <strong>verified</strong>).</p>
 <p>Bank maxima come from the class's protection (its <code>fitted</code> equipment), times its
 <code>protection_scale</code> and, with <code>damage.difficulty</code>, the factor for the level and the ship's side;
 every bank starts full.</p>

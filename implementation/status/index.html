@@ -7483,6 +7483,17 @@ data — the default campaign again sets none of the new keys:</p>
 (resolved in <code>interceptor</code>), DEV-073; new DEV-074 – DEV-080. Manual cases MT-4-63 – MT-4-65. At
 <code>2bc263b</code>, <strong>466</strong> <code>#[test]</code> functions by a count of the sources. What remains:
 <a href="../plan/track-a-fidelity/">Track A</a>.</p>
+<p><strong>Parity M1</strong> (app 0.22.4; issue #113, RQ-C-01 – 04 and D-16 of <code>notes/re/parity-plan.md</code>, facts
+from <code>notes/re/flight</code> §8): a station's hull is its chart's <code>HP1</code> alone (the X-COM base 6,000,
+the alien base 5,000, outposts 3,500; DEV-056's sum resolved); <code>shield_pool</code> (one pool,
+<code>recharge</code>, <code>on_generator_lost: keep | drop</code>), generator <code>shield_capacity</code>, <code>shielded_by_hub</code>
+modules and <code>damage_model: station</code>, in the new <code>sim::stations</code>. <code>interceptor</code>: the X-COM and
+alien bases have one 2,000 / 3,000 pool at 2 per second that keeps its points when the
+generators fall; every base module is covered; the six station hubs take hull hits without
+armour, difficulty factor or system hits. <code>default</code>: the Dominion outpost has a pool (its 3,600
+<code>shields</code>, 5 per second, <code>drop</code>) covering its pods; the Guard station is unchanged. Manual case
+MT-4-66; <strong>474</strong> <code>#[test]</code> functions. Not yet: the alien base's hard points (#114), the outposts'
+own shield routines, <code>--balance</code> showing pools (#121).</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and

@@ -6539,6 +6539,23 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>Parity M1, #113 (app 0.22.4)</strong> seven more, so <strong>474</strong> <code>#[test]</code> functions by a count of the
+sources: <code>content::rules::tests::station_shield_pool_and_damage_model_keys</code> (<code>shield_pool</code>,
+<code>shield_capacity</code>, <code>shielded_by_hub</code>, <code>damage_model</code> parse; a capacity implies a generator, none
+gives the hub's <code>shields</code>; the pool's defaults are 2 per second and <code>drop</code>; absent keys keep two
+banks and the ship model; a bad <code>on_generator_lost</code> is an error) and six in the new
+<code>sim::stations</code>: <code>the_pool_starts_full_at_the_first_generators_capacity</code> (3,000, not 5,000),
+<code>the_pool_recharges_two_points_a_second_up_to_its_maximum</code> (2,990 → 2,992 after 1 s, 3,000 and
+no more after 10 s), <code>losing_a_generator_follows_the_next_and_losing_all_keeps_or_drops</code> (the
+2,000 generator takes over and the pool comes down to it; <code>keep</code> holds 1,500 without recharge;
+<code>drop</code> empties with "STATION SHIELDS DOWN"), <code>hits_from_fore_and_aft_drain_the_same_pool</code>,
+<code>module_hits_are_taken_by_the_hubs_pool_while_it_is_up</code> (100 on a covered pod at pool 500 leaves
+the pod whole and the pool 400; 600 at 400 puts 200 on the <strong>hub's</strong> hull; with the pool down the
+pod takes its own armour and hull) and <code>station_hull_hits_skip_armour_systems_and_difficulty</code>
+(a player's beam on Beginner: factor 1, exactly the damage on the hull, armour and systems
+untouched, no <code>SystemChanged</code>; a ship still takes 1.15). <strong>Changed:</strong>
+<code>content::rules::tests::fitted_equipment_and_hit_point_charts_set_protection</code> expects <code>HP1</code> (10),
+not the sum of <code>HP1</code> – <code>HP4</code> (60).</p>
 <p><strong>At main <code>9064f59</code> (app 0.20.0, Batch 4.2)</strong> six more, so <strong>449</strong> run on macOS by the gate's
 run: <code>campaign::logistics::tests::an_order_larger_than_a_convoy_leaves_as_several_convoys</code>
 (<code>cargo_capacity: 1</code> with four vessels: an order of 10 leaves as convoys of 4, 4 and 2, all
@@ -6850,8 +6867,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::rules</code></td>
-<td>7</td>
-<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, <strong>voice sets and their clips</strong>, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong>; <strong><code>fitted:</code> equipment and hit-point charts set protection</strong> (a shield's <code>Special</code>, armour's <code>HitPoints</code>, a class's own value winning, inherited; <code>HP1</code> – <code>HP4</code> summed; an unknown <code>fitted</code> slot is an error — app 0.16.1)</td>
+<td>8</td>
+<td>Typed definitions with original-section inheritance (YAML), variants, defaults, sounds, <strong>voice sets and their clips</strong>, hostility, flight model and arena defaults, <strong><code>bolt_frame</code>, <code>bolt_carry</code> and <code>lighting</code> (unset keys keep defaults)</strong>, cockpits; <strong>later packs merge, delete and edit lists</strong>; <strong>difficulty variants and per-level values</strong>; every error reported; <strong>spelling of original keys</strong> (<code>HitPoints</code> → <code>hit_points</code>, <code>Side</code> → <code>faction</code>, beam <code>Range</code> in km); <strong>sound cues resolve through the original table</strong>; <strong><code>fitted:</code> equipment and hit-point charts set protection</strong> (a shield's <code>Special</code>, armour's <code>HitPoints</code>, a class's own value winning, inherited; the hull is <code>HP1</code> alone (app 0.22.4; <code>HP1</code> – <code>HP4</code> summed before); an unknown <code>fitted</code> slot is an error — app 0.16.1); <strong>station shield pools, covered modules and the station damage model parse</strong> (app 0.22.4)</td>
 </tr>
 <tr>
 <td><code>content::equipment</code></td>
@@ -7052,6 +7069,11 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 <td><code>mission</code></td>
 <td>7</td>
 <td>Roles are placed, counted and faced at the player; arrivals, waves, chatter and a win; lose beats win and the timer ends it; <strong>the player's death is its own result (<code>killed</code>) with the lose outcomes</strong>; <strong>wingmen take successive slots of their formation</strong> across roles; <strong>the condition console evaluates against the battle without changing it</strong> (a role count, an unknown role is an error, the mission's generator untouched — app 0.16.5); <strong>a script outcome runs in the battle context</strong> (checked against the mission's roles — app 0.18.0)</td>
+</tr>
+<tr>
+<td><code>sim::stations</code></td>
+<td>6</td>
+<td><strong>A station's one shield pool</strong> starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; <strong>covered modules</strong> pass hits to the hub's pool and the overflow to the hub's hull; <strong><code>damage_model: station</code></strong> skips armour, systems and the difficulty factor (app 0.22.4, #113)</td>
 </tr>
 <tr>
 <td><code>sim::targeting</code></td>
