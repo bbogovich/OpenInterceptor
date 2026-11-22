@@ -757,6 +757,8 @@ impl FlightSession {
                     // (kept only if the outcome says `capture`).
                     let mut actions = d.campaign.clone();
                     actions.extend(self.captured_ids.iter().map(|id| format!("captured({id})")));
+                    // And each enemy destroyed, by class (salvage and research triggers).
+                    actions.extend(d.destroyed.iter().map(|id| format!("destroyed({id})")));
                     ctx.battle_report = Some(super::strategy::BattleReport {
                         result: d.result.clone(),
                         actions,

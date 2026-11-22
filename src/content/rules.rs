@@ -1495,6 +1495,7 @@ pub fn build_with(
         "start",
         "research_model",
         "outposts",
+        "salvage_fits",
         "pilots",
         "scores",
         "evaluations",

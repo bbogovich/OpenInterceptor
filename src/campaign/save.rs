@@ -559,6 +559,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ),
         ("system_scores", seq(c.system_scores.iter().map(|s| nums(&[s[0], s[1]])).collect())),
         ("pool_scores", nums(&[c.pool_scores[0], c.pool_scores[1]])),
+        ("raid_wins", nums(&c.raid_wins.iter().map(|n| *n as f64).collect::<Vec<_>>())),
         (
             "activity_grid",
             seq(c
@@ -852,6 +853,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
                 _ => [0.0, 0.0],
             })
             .collect(),
+        raid_wins: g.node("raid_wins").map_or(Vec::new(), |n| numbers(n).iter().map(|v| *v as u32).collect()),
         pool_scores: g.node("pool_scores").map_or([0.0, 0.0], |p| match numbers(p).as_slice() {
             [a, b] => [*a, *b],
             _ => [0.0, 0.0],
