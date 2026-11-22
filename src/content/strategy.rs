@@ -236,6 +236,12 @@ pub struct Topic {
     pub description: String,
     /// Not offered until a story event's `discover(<topic>)` (R-STR-005).
     pub hidden: bool,
+    /// The original's Level (0 – 3): the score its completion earns
+    /// (`research_model.score_by_level`).
+    pub level: u32,
+    /// An artefact-gated topic (the original's Prereq 127, RQ-S-03): offered only once the
+    /// artefact item has been recovered, and only while it stays in some base's stores.
+    pub requires_item: Option<String>,
 }
 
 /// How research progresses.
@@ -255,6 +261,25 @@ pub struct ResearchModel {
     pub rate: Expr,
     /// Switching a base to another topic loses the old topic's progress.
     pub switching_loses: bool,
+    /// Score for finishing a topic, by its Level (`score_by_level`; the original's 250,
+    /// 250, 500, 750). Empty: none.
+    pub score_by_level: Vec<f32>,
+}
+
+/// `goodies.<id>`: a salvage chance per difficulty level (the original's `*Goodies`
+/// tables, per cent from Beginner to Superhuman; `unknowns-2026-11.md` §11.2).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Goodies {
+    pub id: String,
+    /// Fractions 0 – 1, by difficulty index.
+    pub chances: Vec<f32>,
+}
+
+impl Goodies {
+    /// The chance at difficulty `d` (the last level's past the table's end).
+    pub fn chance(&self, d: usize) -> f32 {
+        self.chances.get(d).or(self.chances.last()).copied().unwrap_or(0.0)
+    }
 }
 
 /// `items.<id>`: equipment, ammunition and goods.
@@ -599,6 +624,9 @@ pub struct Raid {
     /// The chance that a contact, once a base's sensors see it, turns on that base
     /// (`react_on_detect`, per level; the original: 25 + 10 × level %). 0: never.
     pub react_on_detect: f32,
+    /// Artefacts a won battle may recover: `(item, goodies table)` — each
+    /// rolled once with the table's chance at the campaign's difficulty (RQ-S-03).
+    pub salvage_items: Vec<(String, String)>,
 }
 
 /// `incomes.<id>` and `expenses.<id>`: an amount every so often.
@@ -648,6 +676,8 @@ pub struct StrategyDef {
     pub modules: Vec<ModuleDef>,
     pub base_types: Vec<BaseType>,
     pub raids: Vec<Raid>,
+    /// Salvage chance tables (`goodies:`).
+    pub goodies: Vec<Goodies>,
     pub incomes: Vec<Flow>,
     pub expenses: Vec<Flow>,
     pub pilots: Option<PilotRules>,
@@ -674,7 +704,8 @@ pub struct StrategyDef {
 }
 
 /// The dictionary sections of the strategy layer.
-pub const DEF_SECTIONS: [&str; 10] = [
+pub const DEF_SECTIONS: [&str; 11] = [
+    "goodies",
     "maps",
     "star_classes",
     "research",
@@ -798,13 +829,21 @@ impl StrategyDef {
         // `requires:` as written, else the original's prerequisites translated.
         // `requires_any: [a, b]` is shorthand for `research(a) or research(b)`, joined
         // to any `requires:` with `and`.
+        // `requires_all: [a, b]` adds `research(a) and research(b)` (Nova Bomb's five extra
+        // prerequisites, which the original's code adds to its INI ones).
         let req_text = |g: Get, keys: &[&str]| -> Option<String> {
             let own = g.str("requires").map(str::to_string).or_else(|| tech_req(g, keys));
             let any: Vec<String> = g.list("requires_any").iter().map(|t| format!("research({t})")).collect();
-            match (own, any.is_empty()) {
+            let own = match (own, any.is_empty()) {
                 (own, true) => own,
                 (None, false) => Some(any.join(" or ")),
                 (Some(o), false) => Some(format!("({o}) and ({})", any.join(" or "))),
+            };
+            let all: Vec<String> = g.list("requires_all").iter().map(|t| format!("research({t})")).collect();
+            match (own, all.is_empty()) {
+                (own, true) => own,
+                (None, false) => Some(all.join(" and ")),
+                (Some(o), false) => Some(format!("({o}) and {}", all.join(" and "))),
             }
         };
         const PREREQS: [&str; 3] = ["prereq1", "prereq2", "prereq3"];
@@ -946,6 +985,9 @@ impl StrategyDef {
                 unlocks: g.list("unlocks"),
                 description: g.str("description").unwrap_or("").to_string(),
                 hidden: g.bool("hidden").unwrap_or(false),
+                // `level` is the original's `Level`, read by inheritance.
+                level: g.num("level").map_or(0, |v| v.max(0.0) as u32),
+                requires_item: g.str("requires_item").map(str::to_string),
             })
             .collect();
         let rm = global("research_model");
@@ -958,8 +1000,23 @@ impl StrategyDef {
                 },
                 rate: num_expr(g.and_then(|g| g.str("rate")).or(Some("10")), "research_model.rate", errors),
                 switching_loses: g.and_then(|g| g.str("switching")) == Some("lose_progress"),
+                score_by_level: g.and_then(|g| g.nums("score_by_level")).unwrap_or_default(),
             }
         };
+        // Salvage chances: `chances: [..]` in per cent, or the original's keys Beginner …
+        // Superhuman (read by inheritance from a `*Goodies` section).
+        const LEVELS: [&str; 5] = ["beginner", "experienced", "veteran", "genius", "superhuman"];
+        let goodies: Vec<Goodies> = of(defs, "goodies")
+            .map(|(id, g)| Goodies {
+                id: id.to_string(),
+                chances: g
+                    .nums("chances")
+                    .unwrap_or_else(|| LEVELS.iter().map_while(|k| g.num(k)).collect())
+                    .iter()
+                    .map(|p| (p / 100.0).clamp(0.0, 1.0))
+                    .collect(),
+            })
+            .collect();
         // Money in the original's files is in thousands (`economy.cost_scale: 1000`), and
         // its module build times are days (`economy.module_time: days`).
         let economy = global("economy");
@@ -1065,8 +1122,34 @@ impl StrategyDef {
                 },
                 speed: g.num("speed").unwrap_or(600.0).max(1.0),
                 react_on_detect: g.qty("react_on_detect", Unit::Fraction).unwrap_or(0.0).clamp(0.0, 1.0),
+                salvage_items: g
+                    .node("salvage_items")
+                    .and_then(|n| n.as_seq())
+                    .unwrap_or(&[])
+                    .iter()
+                    .filter_map(|n| {
+                        let e = Get(n);
+                        Some((e.str("item")?.to_string(), e.str("goodies")?.to_string()))
+                    })
+                    .collect(),
             })
             .collect();
+        // Every raid's salvage names an item and a goodies table.
+        for r in &raids {
+            for (item, table) in &r.salvage_items {
+                if !items.iter().any(|i| &i.id == item) {
+                    errors.push(format!("raids.{}.salvage_items: no item '{item}'", r.id));
+                }
+                if !goodies.iter().any(|g| &g.id == table) {
+                    errors.push(format!("raids.{}.salvage_items: no goodies table '{table}'", r.id));
+                }
+            }
+        }
+        for t in &research {
+            if let Some(item) = t.requires_item.as_ref().filter(|i| !items.iter().any(|x| &x.id == *i)) {
+                errors.push(format!("research.{}.requires_item: no item '{item}'", t.id));
+            }
+        }
         let flows = |s: &str, errors: &mut Vec<String>| -> Vec<Flow> {
             of(defs, s)
                 .map(|(id, g)| Flow {
@@ -1210,6 +1293,7 @@ impl StrategyDef {
             modules,
             base_types,
             raids,
+            goodies,
             incomes,
             expenses,
             pilots,
@@ -1435,6 +1519,18 @@ fn sections_core() -> Vec<super::schema::Field> {
             "star classes",
         ),
         f(
+            "goodies",
+            dict(Ty::Def(vec![
+                f("chances", Ty::List(Box::new(Ty::Num)), "per cent by difficulty, Beginner first"),
+                f("beginner", Ty::Num, "per cent at Beginner (the original's key)"),
+                f("experienced", Ty::Num, "per cent at Experienced"),
+                f("veteran", Ty::Num, "per cent at Veteran"),
+                f("genius", Ty::Num, "per cent at Genius"),
+                f("superhuman", Ty::Num, "per cent at Superhuman"),
+            ])),
+            "salvage chance tables",
+        ),
+        f(
             "research",
             dict(Ty::Def(vec![
                 f("name", Ty::Text, "display name"),
@@ -1447,6 +1543,9 @@ fn sections_core() -> Vec<super::schema::Field> {
                     "any one of these topics (joined to requires: with and)",
                 ),
                 f("hidden", Ty::Bool, "not offered until an event's discover(<topic>)"),
+                f("level", Ty::Num, "the original's Level: the score its completion earns"),
+                f("requires_item", Ty::Name, "an artefact item: offered once recovered, while it is in a base's stores"),
+                f("requires_all", Ty::List(Box::new(Ty::Name)), "topics that must all be known as well"),
                 f("description", Ty::Text, "encyclopaedia text"),
                 f("lab", Ty::Name, "logistics: only this facility type may research it"),
                 f("site", Ty::Name, "logistics: only at a station on this research site"),
@@ -1460,6 +1559,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("mode", Ty::Enum(&["download", "labs"]), "how research is described"),
                 f("rate", expr(), "work units per hour at one base"),
                 f("switching", Ty::Enum(&["keep_progress", "lose_progress"]), "switching topics"),
+                f("score_by_level", Ty::List(Box::new(Ty::Num)), "score for a finished topic by its Level (0, 1, 2, 3)"),
             ]),
             "how research progresses",
         ),
@@ -1550,6 +1650,14 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("target", Ty::Enum(&["base", "system"]), "what it heads for"),
                 f("react_on_detect", Ty::Qty(Unit::Fraction), "chance it turns on the base whose sensors see it (per_level allowed)"),
                 f("speed", Ty::Num, "map units per hour"),
+                f(
+                    "salvage_items",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("item", Ty::Name, "the artefact item"),
+                        f("goodies", Ty::Name, "the goodies table giving its chance"),
+                    ]))),
+                    "artefacts a won battle may recover",
+                ),
             ])),
             "enemy flights the campaign launches",
         ),

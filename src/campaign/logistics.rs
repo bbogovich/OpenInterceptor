@@ -525,6 +525,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                     c.progress[topic] += ft.research_rate * dtf;
                     if c.progress[topic] >= def.research[topic].size {
                         c.known[topic] = true;
+                        c.research_score(def, topic);
                         c.logistics.facilities[f].project = None;
                         let t = format!("Research complete: {}", def.research[topic].name);
                         c.messages.push(Message { hour: now, text: t.clone() });

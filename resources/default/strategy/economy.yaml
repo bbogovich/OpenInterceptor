@@ -15,6 +15,8 @@ expenses:
   fuel: {name: Fuel and stores, every: 7d, amount: 4000 * craft}
 
 items:
+  # Artefacts: no price, recovered by salvage only (see raids.yaml).
+  dominion_power_cell: {name: Dominion power cell, kind: artefact}
   blaster: {name: Blaster, kind: beam, cost: 40000, sell_price: 20000, prod_time: 300}
   heat_ray: {name: Heat ray, kind: beam, cost: 90000, sell_price: 45000, prod_time: 600}
   ion_ray: {name: Ion ray, kind: beam, cost: 150000, sell_price: 75000, prod_time: 900}

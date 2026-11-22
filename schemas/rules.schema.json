@@ -1093,6 +1093,17 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "goodies": {"description": "salvage chance tables", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
+          "chances": {"description": "per cent by difficulty, Beginner first", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+          "beginner": {"description": "per cent at Beginner (the original's key)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "experienced": {"description": "per cent at Experienced", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "veteran": {"description": "per cent at Veteran", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "genius": {"description": "per cent at Genius", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "superhuman": {"description": "per cent at Superhuman", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
+          "delete": {"type": "boolean"},
+          "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
+        }}},
     "research": {"description": "research topics", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "name": {"description": "display name", "type": "string"},
           "size": {"description": "work units", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -1100,6 +1111,9 @@
           "unlocks": {"description": "items.x, hulls.x, modules.x, base_types.x", "type": "array", "items": {"type": "string"}},
           "requires_any": {"description": "any one of these topics (joined to requires: with and)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
           "hidden": {"description": "not offered until an event's discover(<topic>)", "type": "boolean"},
+          "level": {"description": "the original's Level: the score its completion earns", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "requires_item": {"description": "an artefact item: offered once recovered, while it is in a base's stores", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "requires_all": {"description": "topics that must all be known as well", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
           "description": {"description": "encyclopaedia text", "type": "string"},
           "lab": {"description": "logistics: only this facility type may research it", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "site": {"description": "logistics: only at a station on this research site", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -1111,7 +1125,8 @@
     "research_model": {"description": "how research progresses", "type": "object", "additionalProperties": false, "properties": {
         "mode": {"description": "how research is described", "enum": ["download", "labs"]},
         "rate": {"description": "work units per hour at one base", "type": "string"},
-        "switching": {"description": "switching topics", "enum": ["keep_progress", "lose_progress"]}
+        "switching": {"description": "switching topics", "enum": ["keep_progress", "lose_progress"]},
+        "score_by_level": {"description": "score for a finished topic by its Level (0, 1, 2, 3)", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
       }},
     "items": {"description": "equipment and goods", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "name": {"description": "display name", "type": "string"},
@@ -1178,6 +1193,10 @@
           "target": {"description": "what it heads for", "enum": ["base", "system"]},
           "react_on_detect": {"description": "chance it turns on the base whose sensors see it (per_level allowed)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "speed": {"description": "map units per hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "salvage_items": {"description": "artefacts a won battle may recover", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "item": {"description": "the artefact item", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "goodies": {"description": "the goodies table giving its chance", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+              }}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

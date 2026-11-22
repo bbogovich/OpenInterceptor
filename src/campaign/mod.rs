@@ -1154,7 +1154,9 @@ impl Campaign {
             .collect();
         (0..def.research.len())
             .filter(|&t| shown[t])
-            .filter(|&t| !self.known[t] && self.holds(def, def.research[t].requires.as_ref()))
+            .filter(|&t| {
+                !self.known[t] && self.holds(def, def.research[t].requires.as_ref()) && self.artefact_open(def, t)
+            })
             // Station-only topics are researched at research stations, not at bases.
             .filter(|&t| !def.logistics.as_ref().is_some_and(|l| l.station_topics.get(t).is_some_and(|s| s.is_some())))
             .collect()
@@ -1403,6 +1405,7 @@ impl Campaign {
             if self.progress[t] >= def.research[t].size && !self.known[t] {
                 self.known[t] = true;
                 self.story.research_pending = true;
+                self.research_score(def, t);
                 for base in &mut self.bases {
                     if base.research == Some(t) {
                         base.research = None;
@@ -1901,6 +1904,46 @@ impl Campaign {
         self.add_score(def, "undefended");
     }
 
+    /// The score for finishing topic `t`: `research_model.score_by_level` at its Level
+    /// (RQ-S-02; the original's 250 / 250 / 500 / 750, §2.4).
+    pub(crate) fn research_score(&mut self, def: &StrategyDef, t: usize) {
+        let levels = &def.research_model.score_by_level;
+        if let Some(v) = levels.get(def.research[t].level as usize).or(levels.last()) {
+            self.score += *v as f64;
+            self.month_score += *v as f64;
+        }
+    }
+
+    /// Whether an artefact-gated topic is open (RQ-S-03, §4.2): its artefact has been
+    /// recovered (flag `artefact.<topic>`) and is still in some base's stores; when the
+    /// artefact is gone the flag is cleared, as the original's `0x40689e` does. A topic
+    /// without `requires_item` is always open.
+    fn artefact_open(&mut self, def: &StrategyDef, t: usize) -> bool {
+        let Some(item) = &def.research[t].requires_item else { return true };
+        let flag = format!("artefact.{}", def.research[t].id);
+        let present = def.items.iter().position(|i| &i.id == item).is_some_and(|i| self.stock_of(i) > 0);
+        if !present {
+            self.flags.retain(|f| *f != flag);
+        }
+        present && self.flags.contains(&flag)
+    }
+
+    /// Puts a recovered artefact into base `base`'s stores and opens the topics that
+    /// need it (their `artefact.<topic>` flag).
+    pub fn recover_artefact(&mut self, def: &StrategyDef, base: usize, item: usize) {
+        if base >= self.bases.len() {
+            return;
+        }
+        self.add_stock(base, item, 1);
+        for t in def.research.iter().filter(|t| t.requires_item.as_deref() == Some(def.items[item].id.as_str())) {
+            let flag = format!("artefact.{}", t.id);
+            if !self.flags.contains(&flag) {
+                self.flags.push(flag);
+            }
+        }
+        self.log(format!("Recovered: {}", def.items[item].name));
+    }
+
     fn add_score(&mut self, def: &StrategyDef, key: &str) {
         let v = def.score(key) as f64;
         self.score += v;
@@ -1946,6 +1989,21 @@ impl Campaign {
         // `capture`: the prizes the player brought home (`captured(<class>)`, added by the
         // battle) become salvage — research that needs them can start.
         let keep_prizes = actions.iter().any(|a| a.trim() == "capture");
+        // Artefacts (RQ-S-03, the salvage counters of §11.2): on a won battle, each of the
+        // raid's salvage items is rolled with its goodies chance at this difficulty and
+        // goes to the party's home base.
+        if result == "win" {
+            let raid = self.contacts.iter().find(|c| c.id == contact).map(|c| c.raid);
+            let home = party.first().map(|&k| self.craft[k].base).unwrap_or(0);
+            for (item, table) in raid.map(|r| def.raids[r].salvage_items.clone()).unwrap_or_default() {
+                let chance = def.goodies.iter().find(|g| g.id == table).map_or(0.0, |g| g.chance(self.difficulty));
+                if let Some(i) = def.items.iter().position(|x| x.id == item) {
+                    if next_random(&mut self.rng) < chance {
+                        self.recover_artefact(def, home, i);
+                    }
+                }
+            }
+        }
         for a in actions {
             let (name, arg) = match a.split_once('(') {
                 Some((n, rest)) => (n.trim(), rest.trim_end_matches(')').trim()),
@@ -2445,6 +2503,85 @@ mod tests {
                 assert!(distance(*a, *b) >= 7500.0);
             }
         }
+    }
+
+    #[test]
+    fn finished_topics_score_by_their_level() {
+        let text = SAMPLE
+            .replace(
+                "  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}",
+                "  plasma: {size: 10, level: 3, unlocks: [items.plasma]}",
+            )
+            .replace("switching: keep_progress}", "switching: keep_progress, score_by_level: [250, 250, 500, 750]}");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 1);
+        let t = d.topic("plasma").unwrap();
+        assert_eq!(d.research[t].level, 3);
+        c.start_research(&d, 0, t).unwrap();
+        let before = c.month_score;
+        c.advance(&d, 24.0);
+        assert!(c.known[t]);
+        assert_eq!(c.month_score - before, 750.0, "Level 3: 750");
+    }
+
+    #[test]
+    fn artefact_topics_open_with_their_salvage_and_close_when_it_is_gone() {
+        // An artefact item, a topic needing it, a goodies table that always hits, and a
+        // raid whose salvage brings the artefact.
+        let text = SAMPLE
+            .replace(
+                "  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}",
+                "  plasma: {size: 1000, requires_item: wreck}",
+            )
+            .replace("items:\n", "items:\n  wreck: {kind: artefact, cost: 0}\n")
+            .replace(
+                "speed: 500, requires: flag(raids)}",
+                "speed: 500, requires: flag(raids), salvage_items: [{item: wreck, goodies: always}]}",
+            )
+            + "goodies:\n  always: {chances: [100, 100, 100, 100, 100]}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 1);
+        let t = d.topic("plasma").unwrap();
+        assert!(!c.researchable(&d).contains(&t), "hidden until the artefact is recovered");
+        // A won battle with salvage recovers it into the party's base.
+        c.contacts.push(Contact {
+            id: 7,
+            raid: 0,
+            pos: [0.0, 0.0],
+            dest: [0.0, 0.0],
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+            plan: None,
+        });
+        c.battle_result(&d, 7, "win", &["salvage".into()], 1);
+        let wreck = d.items.iter().position(|i| i.id == "wreck").unwrap();
+        assert_eq!(c.stock_of(wreck), 1);
+        assert!(c.researchable(&d).contains(&t), "open while the artefact is in stores");
+        // Gone from the stores (sold, lost): the topic closes, and stays closed even if
+        // an artefact comes back by other means (the flag was cleared).
+        c.bases[0].stock.retain(|(i, _)| *i != wreck);
+        assert!(!c.researchable(&d).contains(&t));
+        c.bases[0].stock.push((wreck, 1));
+        assert!(!c.researchable(&d).contains(&t), "only recovery sets the flag");
+        // Unknown items and tables are load errors.
+        let bad = text.replace("goodies: always", "goodies: never");
+        assert!(build(&bad).1.iter().any(|e| e.contains("no goodies table 'never'")));
+    }
+
+    #[test]
+    fn goodies_tables_read_the_originals_keys() {
+        let text = format!(
+            "{SAMPLE}goodies:\n  beam: {{beginner: 30, experienced: 25, veteran: 15, genius: 10, superhuman: 7}}\n"
+        );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let g = &d.unwrap().goodies[0];
+        assert_eq!((g.chance(0), g.chance(4), g.chance(9)), (0.3, 0.07, 0.07));
     }
 
     #[test]
