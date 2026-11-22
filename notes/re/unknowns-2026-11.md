@@ -394,7 +394,19 @@ shows it.
   owners use the X-COM row. This corrects `flight/README.md` §8.1: the Outpost/OPP charts **are** used
   (HP1 and SD only).
 
-## 9. What remains unknown
+## 9. Follow-ups for #114 (verified unless marked)
+
+* **Pirate turrets** (`0x59d8fc`, `0x59d6c9`, subtype switch at `0x59df3a`): arms dealer (subtype 1) =
+  5 turrets, always. Raider (2) and pirate base (5) use a 10-row table, but rows 3, 5, 6 and 8 are never
+  built. Raider: 6 turrets, always. Pirate base: each of the 10 rows first rolls `chance(25 + 5d)` and is
+  **skipped** on success (`0x405070` = `rand % 100 < p`), so each of the 6 buildable rows is present with
+  75 − 5d %. Subtypes 3 and 4 get none.
+* **Alien base:** see `flight/README.md` §8.4 — tendrils are the children in attach slots 1–3 of the
+  `al-base01` object (hit through their own geometry); destruction is hull **or** all hard points; no hard
+  point damage spills to the hull.
+* **Mines:** rings by yaw steps; contact trigger (derived), INI `Range` 0.
+
+## 10. What remains unknown
 
 * Counter meanings 36–90 and 95–104 (objective events); the debrief field +0x30c.
 * Raid fleet sizes per target type and difficulty (two jump tables in `0x573998`, not tabulated).
@@ -402,3 +414,4 @@ shows it.
 * Alien ship build time in a slot; Doomsday piece costs (unchanged).
 * The two small ints per outpost/OPP chart (§8).
 * The byte layout inside each save chunk (only tags, order and record sizes were read).
+* Where xcgen fills the `al-base01` attach slots 1–3 (tendril objects) from.

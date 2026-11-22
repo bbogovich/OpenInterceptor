@@ -592,7 +592,7 @@ radius at +0x60 + 4i, and HP at +0x80 + 4i. Unused slots have HP −1.
 | Slot | What | HP | Radius / position |
 |---|---|---|---|
 | 0 | Connection point (`S_GREP_363`) | 1,400 | 124 m sphere at model (0, −217, 0) |
-| 1–3 | Tendrils (sub-objects 1–3 of the model, own rt objects of type 0x20; `S_GREP_364`) | 550 each | — |
+| 1–3 | Tendrils: the objects found in **attach slots 1–3** of the `al-base01` XCGEN object (object +0xa0 table, 12-byte entries, child pointer at +8), each registered as its own rt object of type 0x20 (`0x4d2ac9`); `S_GREP_364` | 550 each | none: the exe leaves position 0 and radius −1; a tendril is hit through its own object's geometry |
 | 4–7 | unused | −1 | — |
 
 * **Connection point.** A *direct* beam or missile hit carries an impact point and the flag
@@ -603,7 +603,15 @@ radius at +0x60 + 4i, and HP at +0x80 + 4i. Unused slots have HP −1.
   its hull**.
 
 So an alien base falls to hull 0 *or* to its four hard points (1,400 + 3 × 550 = 3,050 points
-behind the shields).
+behind the shields) — **either** (verified: both `0x454854` and the hard-point paths call `0x4a10cf`).
+
+**No overflow from hard points to the hull** (verified): a connection-point hit is consumed whole (its
+HP may go negative); a tendril hit is consumed whole while the slot is above 0 and ignored once it is at
+0 (`0x454d25`, type 0x20 branch). Only *pool* overflow (`dmg − old pool`) continues to the connection
+point or hull. A destroyed tendril triggers a 100 m explosion effect and `0x4a397d` (derived: removes the
+part). Where the attach slots' children come from (xcgen's object loader, not the exe) is **unknown**;
+the XMSH manipulators of `al-base01` with ids 1–3 sit 120° apart at radius ≈ 287 m and height ≈ 213 m
+(derived candidate positions).
 
 ### 8.5 What destroys a station
 
@@ -674,8 +682,8 @@ from `0x598251` (module type → missile).
 |---|---|---|---|---|---|
 | X-COM base (side 0) | `0x59c124` | one gimballed turret (kind 1 or 2) per beam-defence module of its 33 slots; missile turrets per missile module | 5,000 m | rand[60 − 5d, 100 − 5d) (**worse on harder levels**) | `1000 / RateOfFire` of the module's beam (the INI key) |
 | Alien base (side 9) | `0x59cc07` | one fixed turret per beam-defence module; missile turrets per missile module | 5,000 m, 85° | rand[40 + 5d, 75 + 5d) | `1000 − 25d + rand[0, 50)` |
-| Pirate arms dealer (subtype 1) | `0x59d6c9` | 5 Laser turrets, table 0x67d430 (stride 0x38: beam, position, facing, range, arc, acc base, acc per d, interval base, per d, LOS) | 2,000–3,000 m, 85–125° | 65–75 + 5d | 950–1,250 ± 10–25·d, + rand[0, 50) |
-| Pirate raider / pirate base (subtypes 2, 5) | `0x59d8fc` | 10 Laser turrets, table 0x67d548, some only with `chance(25 + 5d)` | 2,250–3,000 m, 75–125° | 50–60 + 7d | 800–950 − 15–25·d, + rand[0, 50) |
+| Pirate arms dealer (subtype 1) | `0x59d6c9` | 5 Laser turrets, all always built (no chance roll), table 0x67d430 (stride 0x38: beam, position, facing, range, arc, acc base, acc per d, interval base, per d, LOS) | 2,000–3,000 m, 85–125° | 65–75 + 5d | 950–1,250 ± 10–25·d, + rand[0, 50) |
+| Pirate raider / pirate base (subtypes 2, 5) | `0x59d8fc` | table 0x67d548 has 10 rows but rows 3, 5, 6, 8 are **never** built: raider (subtype 2) = the 6 rows always; pirate base (subtype 5) = each of the 6 rows **skipped** when `chance(25 + 5d)` succeeds, so present with 75 − 5d % (verified, `0x59d936`; `0x405070` = `rand % 100 < p`) | 2,250–3,000 m, 75–125° | 50–60 + 7d | 800–950 − 15–25·d, + rand[0, 50) |
 | Science stations (3, 4) | — | none | | | |
 
 **Pirate turret tables** (read for #114 from the player's exe, Track A, 2026-11-22; verified). Rows of
@@ -716,6 +724,12 @@ The alien base also gets **mines** (`0x4d12fe`, mine table 0x73f4ac):
 
 * With d > 3 and `chance(50 + 5d)`: two lines of `d/2 + 2` missile mines, 4,000 m apart.
 * With d > 0 and `chance(25 + 5d)`: two lines of `d + 5` type-1 mines, 2,000 m apart.
+* **Layout** (verified, `0x4d12fe`): each "line" is a **ring**: mine k of n sits at the unit X vector
+  rotated by yaw `65536·k/n` (`0x49a811(yaw, pitch, roll)`: angle 1 about Y, 2 about X, 3 about Z, 65,536
+  units per turn), then by the set's orientation, scaled by the ring radius and added to the centre.
+* **Trigger** (derived): contact. Mines are collidable objects with radius field 10.0 (object +0x78) and
+  a collision callback (`0x4574cc`); the mine record keeps the INI `Range` (0 for all three mine types).
+  Beam mines (`albeam3`) also get a turret agent.
 
 +0x118 of the station agent is 2,000 (alien), 2,500 (X-COM) or 3,000 (others); its use was not
 traced.
