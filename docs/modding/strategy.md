@@ -189,6 +189,9 @@ yet.
 | `unlocks` | list | none | What finishing it makes available: `items.<id>`, `hulls.<id>`, `modules.<id>` (or `base_modules.<id>`), `base_types.<id>`. Something a topic unlocks cannot be bought, made or built until the topic is known. |
 | `description` | text | empty | Encyclopaedia text (Stage 5 shows it). |
 | `prereq1`, `prereq2`, `prereq3` | numbers | none | The original's numeric prerequisites, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become `research(a) and research(b)` (app 0.8.0). |
+| `requires_all` | list of topic ids | none | App NEXT: topics that must **all** be known as well — `research(a) and research(b)` joined to `requires` (and to the translated `prereq*`). `interceptor`: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (**verified**). |
+| `level` | number | 0 | App NEXT: the original's `Level` (read through inheritance); a finished topic earns `research_model.score_by_level` at its level. |
+| `requires_item` | item id | none | App NEXT: an **artefact-gated** topic (the original's Prereq 127, RQ-S-03): offered only once that item has been *recovered* by salvage (raids' [`salvage_items`](#raids)) and only while one stays in some base's stores. When it is gone (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error. |
 | `lab`, `site`, `start_cost` | | none | A **station-only** topic: see [Logistics › research stations](#research-stations-and-station-only-topics) (app 0.9.0). |
 
 `research_model:` — how research progresses.
@@ -198,9 +201,25 @@ yet.
 | `mode` | `download` / `labs` | `download` | How it is described: the original's downloads, or staff in labs. The rule is the same: each base works on **one** topic at a time. |
 | `rate` | expression | 10 | Work units per hour at one base, evaluated per base (so `module_count` counts that base's modules). |
 | `switching` | `keep_progress` / `lose_progress` | `keep_progress` | Whether switching a base to another topic keeps the work done on the old one (with `lose_progress` it is lost unless another base is still working on it). |
+| `score_by_level` | list of numbers | none | App NEXT: the score a finished topic earns, by its `level` (a level past the list takes the last). `interceptor`: `[250, 250, 500, 750]` (**verified** +250 / +500 / +750 for Levels 1 – 3; Level 0 taking 250 is *derived*). `default`: `[100, 200, 300]`. |
 
-A topic finishes when its work reaches `size`; every base working on it stops, and a message
-says so.
+A topic finishes when its work reaches `size`; every base working on it stops, a message
+says so, and its `score_by_level` score is added to the month's.
+
+`goodies: {<id>: …}` (app NEXT) — salvage chances for raids' `salvage_items`.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `chances` | list of numbers | none | Per cent by difficulty level, easiest first; a level past the list takes the last. |
+| `beginner` … `superhuman` | number | none | The same as the original's keys, read through inheritance: `interceptor` inherits `original:GameSettings.ini/BeamGoodies`, `MissileGoodies`, `FreighterGoodies` and `AlienCorpseGoodies` (**verified** tables, `unknowns-2026-11.md` §11.2). |
+
+`interceptor` (app NEXT) gates its alien topics on artefacts: the alien weapons on their own items
+(Phase Cannon, Plasma Cannon, Psi Blaster, Elerium, Enveloping and Parallax torpedoes), the five
+alien races on corpse items, the three saucer examinations on wreckage items, and the alien
+probes and drone on their own artefacts. Which item a topic needs (the exe's table at
+0x66f768 is not extracted), which raid yields which artefact, and the probe and saucer tables are
+*derived*. The mines, the Doomsday component pieces (#135), Poltergeist and Shade stay open as
+before, having no source yet.
 
 ### `items` and `hulls`
 
@@ -330,6 +349,7 @@ its `cargo` modules limit nothing: the original hub's own cargo room is unknown.
 | `requires` | condition | none | Rolled only while this holds (`day >= 10`). |
 | `target` | `base` / `system` | `base` | What it heads for: one of the player's bases, or any system. |
 | `speed` | number | 600 | Map units per hour. |
+| `salvage_items` | list of `{item, goodies}` | none | App NEXT: artefacts a **won** battle with this raid may recover: each is rolled once with its [`goodies`](#research-and-research_model) table's chance at the campaign's difficulty and goes to the home base of the first craft in the battle (base 0 if none), opening the topics whose `requires_item` it is. Unknown item or table: load error. |
 | `react_on_detect` | fraction (`per_level`) | 0 | App NEXT: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. `interceptor`: alien raids `{per_level: [25%, 35%, 45%, 55%, 65%]}` (the original's 25 + 10 × level %, **verified**; that it re-tasks against the detector is *derived*). |
 
 On a free-travel map a launched raid appears well outside the map, in a random direction, and
