@@ -1364,6 +1364,12 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-54 | The Build list's store line and the supply depot | Strategy screen, Build (default) | not run | | | App 0.19.0; #24, R-STR-004 |
 | MT-4-55 | Construction stages: map pips, the Supply line and the struck facility in its stage | Strategy screen, Supply; `construction_defence` (default + test addon) | not run | | | App 0.20.0; #34, R-STR-022, DEV-063; screenshots wanted |
 | MT-4-56 | An attacked survey ship: the prompt, flying it, the report's *suits:* | Strategy screen, Supply; `convoy_ambush` as the survey battle (default + test addon) | not run | | | App 0.20.0; #36, R-STR-021; screenshots wanted |
+| MT-4-57 | `interceptor`: the clock dial's six speeds | Strategy screen (`interceptor`) | not run | | | App 0.21.0; Track A B3; needs the player's data |
+| MT-4-58 | `interceptor`: a Lightning reaches about 150 m/s at 50 % throttle and coasts to rest | `flight-test` (`interceptor`), Lightning | not run | | | App 0.21.0; Track A A6, `flight.drive` |
+| MT-4-59 | `interceptor`: a Lightning rolls at about 286°/s | `flight-test` (`interceptor`), Lightning | not run | | | App 0.21.0; Track A A6, `flight.turning` |
+| MT-4-60 | `interceptor`: shield balance routes the recharge | `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.21.0; Track A A3, `power.balance: share` |
+| MT-4-61 | `interceptor`: per-side armour in the HUD (`ARMOR f/a`) | `duel-wraith` (`interceptor`), Lightning; `rocket-vs-saucer` (default) | not run | | | App 0.21.0; Track A A1, `damage.armor: per_side` |
+| MT-4-62 | `interceptor`: duel times against a Wraith, Beginner vs Veteran | `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.21.0; Track A A1, `damage.difficulty`; record the times for #45 |
 
 ## Stage 4 cases
 
@@ -1809,6 +1815,54 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App 0.20.0 or later. A test addon `mods/default-survey-test/` with `pack.yaml` (`id: default-survey-test`, `kind: addon`, `targets: [default]`) and `strategy/logistics.yaml`: `logistics: {survey_attack_chance: 100%}` (every survey ship is attacked). `openinterceptor --no-original --strategy`; a ready Comet with a pilot at the Gatehouse (the starting craft are). A screenshot tool, as in MT-4-55. |
 | Steps | 1. Select Ajax; Supply › *Survey Ajax from Gatehouse*; run the clock. 2. When it stops, read the prompt and the message log; look at the survey ship's ring on the map; leave the prompt up a moment. 3. **Fly the escort.** In the battle, find the ship you are protecting (target it, external view). **Screenshot.** Keep the grapplers off its two containers until it jumps out. 4. Back on the map, read the report and the Messages list. 5. Survey Cinder; at the prompt press **Fly the escort**, then leave the battle early from the pause menu. 6. Survey Mercury Gate; press **Let it be**. Repeat with other systems until one is lost. 7. Survey another system and fly the battle, but let the grapplers take both containers. 8. Remove the addon. |
 | Expected | 2: the clock stopped; **Survey ship attacked** — *The survey ship at Ajax is under attack. Fly its escort, or let it try to get away alone.* — with **Fly the escort** and **Let it be**; the log has *Survey ship under attack at Ajax*; the sky-blue ring has stopped at Ajax. 3: the *Convoy ambush* battle, but the convoy is **one survey ship** — a slim hull with a sensor dish on a mast and **two sample containers** on pylons, two engine bells — not two clippers; grapplers and escorts arrive as in MT-4-28. **Screenshot.** On its jump: *Survey ship battle: WIN*. 4: a report *Survey of Ajax (after fighting off an attack): Cosmium 6/day (1800 in reserve), Iron 20/day (unlimited); features: none; research site: none; suits: Mining facility, Manufacturing center*; the Supply list's Build rows agree. 5: *Survey ship battle: RETREAT*; then either the Cinder report or *Survey ship attacked and lost at Cinder* (a 50 % chance). 6: the same coin flip without a battle; a lost ship leaves *Survey ship attacked and lost at …* and the system stays unsurveyed (its Survey row is back). 7: *Survey ship battle: LOSE* and *… lost at …*. 8: survey ships are attacked a quarter of the time again. (A ship waiting at its site is saved, `held`; that round trip is unit-tested.) |
+
+### MT-4-57 — `interceptor`: the clock dial's six speeds
+
+| Field | |
+|---|---|
+| Preconditions | App 0.21.0 or later; the player's data. A new `interceptor` campaign (`--campaign interceptor --strategy`) on its main screen (the CSD, as in MT-4-22). |
+| Steps | 1. Click the time dial's six holes in turn, slowest (left) first, watching the time readout for about 10 s at each. 2. Press Space, then Space again. 3. Press 1, 2, 3, 4 and 5 in turn. 4. Run the clock until an event (a research topic finishing or a contact). 5. Ctrl+T (the testbed layout): read the clock buttons on the top bar; press Ctrl+T again. 6. Start a default campaign (`--no-original --strategy`) and read its clock buttons. |
+| Expected | 1: in about 10 s the clock moves on about 50 s, 10 min, 50 min, 5 h, 10 h and 10 days — 5 s, 1 min, 5 min, 30 min, 1 h and 1 day per second; **the sixth hole is faster than the fifth** (before 0.21.0 both gave the same speed); no hole stops the clock. 2: Space switches between 30 min per second and 5 s per second. 3: 1 min, 5 min, 30 min, 1 h, 1 day per second. 4: the clock drops to 5 s per second (it does not stop) and the event is shown. 5: the buttons read `5s`, `1m`, `5m`, `30m`, `1h`, `1d`, *Save*, *Menu*, the running speed outlined. 6: the default campaign's clock is unchanged: a pause and `1h`, `6h`, `1d`, `5d`. |
+
+### MT-4-58 — `interceptor`: a Lightning reaches about 150 m/s at 50 % throttle and coasts to rest
+
+| Field | |
+|---|---|
+| Preconditions | App 0.21.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario flight-test --ship lightning`. Beams and shields at their start setting C / C (the `power` instrument or the MFD Status page shows `BEAM C SHLD C`). The status line shows throttle and speed. |
+| Steps | 1. Brake (hold B) to a stop if moving; throttle to zero (`\`). 2. Throttle up five steps (`=` five times: 50 %); time the climb and read the settled speed. 3. Full throttle (Backspace). 4. Cycle the beam and shield charge to A (F9 and F10) at full throttle. 5. Hold the afterburner. 6. Release it; throttle to zero (`\`) and time the slowdown. |
+| Expected | 2: the speed climbs fast at first (about 130 m/s after 1 s) and settles at **about 150 m/s** (time constant 0.5 s). 3: about 300 m/s. 4: about 450 m/s (the settings no longer take engine power). 5: faster still, but never above 600 m/s (the Lightning's MaxSpeed). 6: the ship **coasts to rest**: speed halves about every 0.35 s and is near zero within about 3 s; it does not drift on. **Judge the feel** against the original if you can; record the numbers. |
+
+### MT-4-59 — `interceptor`: a Lightning rolls at about 286°/s
+
+| Field | |
+|---|---|
+| Preconditions | App 0.21.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario flight-test --ship lightning`, at rest (throttle zero). |
+| Steps | 1. Roll at full deflection (Q / E or the stick) for 3 s; count the turns; release. 2. Pitch at full deflection for 5 s at rest; count the loops. 3. Fly at about 300 m/s and pitch at full deflection again. 4. Watch an AI ship (the practice targets, then a Wraith in `duel-wraith`) turn. |
+| Expected | 1: about **0.8 turns per second** (286°/s, 5 rad/s), reached within about half a second (time constant 0.31 s); the roll stops as quickly on release. 2: about 143°/s at rest — a loop in about 2.5 s. 3: slower, about 100°/s (pitch and yaw fall to zero at LockSpeed 1000 m/s; roll does not). 4: AI ships turn at a steady fixed rate with no ease-in; a Wraith rolls faster than it pitches. |
+
+### MT-4-60 — `interceptor`: shield balance routes the recharge
+
+| Field | |
+|---|---|
+| Preconditions | App 0.21.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning`. The MFD Status page (`SHIELD F n A n EVEN`). |
+| Steps | 1. Let the Wraiths hit you from ahead and from behind until both shield banks are well down; break off and fly clear (or let them lose interest). 2. Set the shield charge to E (F10). 3. Balance forward (`S` until the line reads `FWD`); watch both numbers for 10 s. 4. Balance aft (`AFT`); watch. 5. Balance even (`EVEN`); watch until both are full. |
+| Expected | 3: **only the fore bank refills** (5 points a second at E); the aft bank stays put until the fore one is full, then the aft one takes all of it. 4: the reverse. 5: each bank gains half; once one is full the other gains all of it. Both banks always top out at the **same** maximum (the balance moves the recharge, not the capacity — in the default campaign it moves capacity instead). |
+
+### MT-4-61 — `interceptor`: per-side armour in the HUD (`ARMOR f/a`)
+
+| Field | |
+|---|---|
+| Preconditions | App 0.21.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning`; the MFD Status page, then the Target page. |
+| Steps | 1. Read the armour line at the start. 2. Let a Wraith hit you **from behind** until the aft shield falls and the armour drops. 3. Turn and take hits from ahead. 4. Target a Wraith and open the MFD Target page; hit it from behind. 5. `openinterceptor --no-original --scenario rocket-vs-saucer`: read the Status page. |
+| Expected | 1: `ARMOR a/a  HULL h` — two equal, full banks (fore / aft). 2: only the **second** (aft) number falls; the fore bank stays full; the hull drops only after the aft bank reaches 0, even with fore armour left. 3: now the first number falls. 4: the Target page reads `SHD f/a  ARM f/a`, and the Wraith's aft armour falls. 5: one number, `ARMOR n  HULL h` (the default campaign keeps one pool). |
+
+### MT-4-62 — `interceptor`: duel times against a Wraith, Beginner vs Veteran
+
+| Field | |
+|---|---|
+| Preconditions | App 0.21.0 or later; the player's data. A stopwatch. |
+| Steps | 1. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning --difficulty beginner`. Fight both Wraiths with beams only; time each kill from your first hit, and note your shields, armour and hull at the end. 2. The same with `--difficulty veteran`. 3. Repeat each once more. |
+| Expected | Beginner is **clearly shorter and less costly**: the Wraiths hold 40 % of their shield and 50 % of their armour protection (Veteran 64 % and 70 %), your hits do × 1.15 and theirs × 0.85, and your own banks hold 150 % / 130 % (Veteran 100 %). Expect kill times at Beginner of roughly two thirds of Veteran's or less. At Veteran the Wraiths are also faster (drive factor 430 – 480 against 350 – 400: top speeds about 215 – 240 m/s against 175 – 200 m/s). Record the times on #45 as the reference for later fidelity work. |
 
 ## Stage 5 results
 

@@ -110,6 +110,7 @@ nav:
           - "Stage 6 — Presentation": implementation/plan/stage-6-presentation.md
           - "Stage 7 — Modding toolkit and Remastered": implementation/plan/stage-7-modding.md
           - "Stage 8 — Platforms and release": implementation/plan/stage-8-release.md
+          - "Track A — Combat-stat fidelity": implementation/plan/track-a-fidelity.md
       - "Architecture":
           - implementation/architecture/index.md
           - "Formats layer": implementation/architecture/formats.md

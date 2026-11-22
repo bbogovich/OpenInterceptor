@@ -21,7 +21,7 @@ A layout comes in two forms:
 
 | Widget | What it holds |
 |---|---|
-| `top` | The top bar: date, funds and score; the base switcher; pause and the four speeds; *Save*; *Menu*. |
+| `top` | The top bar: date, funds and score; the base switcher; one button per clock speed (by default pause and four speeds; [`clock`](strategy.md#clock)); *Save*; *Menu*. |
 | `map` | The star map, with the hover label and the legend along its bottom edge. |
 | `nav` | The ten buttons that choose the list (two rows of five). |
 | `info` | The selection on the map: its name, its details and up to four action buttons. |
@@ -185,7 +185,7 @@ and kept; one that cannot be loaded is reported on standard error once
 |---|---|
 | `open(<screen>)` | Shows that screen. A full screen closes any dialogs over the current one first; a dialog opens over it. The screen must exist (checked at load). |
 | `back` | Closes the top screen or dialog, back to the one under it (not past the first). |
-| `speed(<n>)` | Sets the clock: 0 paused, 1 – 4 the four speeds (a higher number is the fastest). |
+| `speed(<n>)` | Sets the clock to speed `n` of the campaign's [`clock.speeds`](strategy.md#clock), 0 = the first (by default 0 paused, 1 – 4 the four speeds; `interceptor`: 0 – 5, the dial's six). A number past the last picks the last. |
 | `save` | The save prompt, as the testbed layout's *Save*. |
 | `menu` | Saves and returns to the main menu. |
 | `testbed` | Switches to the testbed layout. |
@@ -201,7 +201,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `money` (or `funds`) | The funds, `$1,000,000`. |
 | `score` | The campaign score. |
 | `base` | The current base's name. |
-| `speed` | The clock speed in words (`paused`, `1 hour/s` …). |
+| `speed` | The clock speed in words: the speed's `clock.labels` entry (`paused`, `1 hour/s`, `5 secs/s` …). |
 | `selection` | The name of what is selected on the map. |
 
 A name the engine does not know shows as `?<name>`.
@@ -227,8 +227,9 @@ original has one, its links and a back button.
 - **Verified**: the positions read from `Interceptor.exe`'s screen setup code (each screen's
   widgets, the button and dial centres).
 - **Derived**: the readouts' rectangles and the buttons' sizes (measured from the art), the
-  readouts' order (from the original running), the back buttons' positions, and how the original's
-  six speeds map onto the engine's five.
+  readouts' order (from the original running) and the back buttons' positions. Since app 0.21.0
+  the dial's six holes select the original's six speeds (`speed(0)` – `speed(5)`, verified from the
+  program's clock table; see [`clock`](strategy.md#clock)).
 - **Unknown**: the buttons' own state images, which live in the original's sprite table
   (`SpritesDLL`), not yet read; until then the buttons are hot spots over the art.
 
@@ -267,7 +268,7 @@ and there are no toggles, labels, frames, lamps, clocks or model views yet
 | `screens.x: widgets.y: kind: 'z' is not one of image, button, value, text, list, map, info` | A widget kind the engine does not have. |
 | `screens.x: widgets.y: rect: expected [x, y, w, h]` | A full widget without a four-number `rect`. |
 | `screens.x: widgets.y: 'z' is not open(<screen>), back, speed(n), save, menu or testbed` | An unknown action. |
-| `screens.x: widgets.y: speed(z): expected 0-4` | A speed that is not a number. |
+| `screens.x: widgets.y: speed(z): expected a speed number (0 = the first)` | A speed that is not a number. |
 | `screens.x.widgets.y: open(z): no such screen` | A button opening a screen no pack defines. |
 
 Each message is prefixed by the file it came from; `--check` reports them without a window.

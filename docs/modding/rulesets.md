@@ -74,8 +74,8 @@ The gate fails if the committed schemas differ from the engine's.
 | `debris` | Debris sets: pieces, how many, speed, spin, life, rubble. |
 | `effects` | Explosions and other effects. |
 | `flight` | Global flight and sensor settings. |
-| `power` | Global power-sharing rules: beam and shield charge levels, budget. |
-| `damage` | Global rules for damage to systems and repair. |
+| `power` | Global power rules: beam and shield charge levels, budget, the energy pool, what shield balance does. |
+| `damage` | Global rules for how a hit lands (spread, armour banks, systems, difficulty factors) and repair. |
 | `sounds` | Event sounds (assets, or `cue:<Name>` from the cue table). |
 | `audio` | The sound cue table (`cue_table: original:soundfx.ini/<section>`). |
 | `environments` | Battle environments: space or atmosphere, arena, gravity, air, ceiling, terrain, sky, planet ([Environments and terrain](environments.md)). |
@@ -155,7 +155,7 @@ Conditions can also test the level: `difficulty >= captain`
 
 | Campaign | Levels (default **bold**) | Source |
 |---|---|---|
-| `interceptor` | beginner, experienced, **veteran**, genius, superhuman | the original's five levels (`GameSettings.ini` has a section per level; verified). What each level changes in the original beyond those sections is unknown. |
+| `interceptor` | beginner, experienced, **veteran**, genius, superhuman | the original's five levels (`GameSettings.ini` has a section per level; verified). In battle the original also scales shield and armour maxima, the player's hits and the hits on the player, and some alien classes' speed by level (verified; `damage.difficulty` and `ai_speed.level_step`, app 0.21.0). |
 | `default` | cadet, **ranger**, captain, space_ace | this project |
 
 An unknown level in `variants`, `--difficulty` or `settings.yaml` is reported (the middle level
@@ -216,8 +216,9 @@ systems:
 | Inoperative | hit points reached 0 — stays off until repaired back to **25 %** | 0 |
 | Destroyed | hit points below `−destroy_below × hit_points`; for the rest of the battle | 0 |
 
-- Damage that gets past the shields and armour also strikes **one working system at random**
-  (times `damage.system_share`). A knocked-out switchable system switches off; a knocked-out
+- Damage that reaches the hull also strikes **one working system at random** (times
+  `damage.system_share`; only below `damage.system_below` of the hull, and taken off the hull's
+  share with `system_divert` — [How a hit lands](#how-a-hit-lands)). A knocked-out switchable system switches off; a knocked-out
   hyperdrive aborts a countdown.
 - The crew repairs **one system at a time, worst first**, at the class's `repair_rate`; a
   working damage control computer multiplies it (by less when it is itself damaged).
@@ -229,8 +230,12 @@ systems:
 Each ship has a **beam charge** and a **shield charge** setting, both chosen from the same list
 of levels (the original's A–E). The two settings plus every switched-on system may not use more
 than `budget` steps together: raising one setting can force the other down, and switching on a
-cloak needs free steps. Damage to systems and repair follow the `damage` section. Keys:
-[reference](reference.md#power).
+cloak needs free steps. With [`flight.drive`](reference.md#flightdrive) every step in use also
+costs engine power (`power_cost`). Beams and the afterburner draw on one **energy pool** per ship
+(`energy`, refilled at `energy_recharge × beam_recharge[level]` per second, not while the
+afterburner burns). Shield balance (`S`) either moves capacity between the facings
+(`balance: shift`) or routes the one recharge stream (`balance: share`, the original). Damage to
+systems and repair follow the `damage` section. Keys: [reference](reference.md#power).
 
 ```yaml
 power:
@@ -246,10 +251,59 @@ damage:
   repair_rate: 2
 ```
 
-The `interceptor` campaign restates the original `BeamRechargeRate` (0, 7, 10, 15, 22) and
-`ShieldRechargeRate` (0, 1, 2, 3, 5) tables as fractions of their top level (verified from
-`GameSettings.ini`); its budget, start levels and system power steps are engine values
-(derived — the original data does not say how many levels may be high at once, see DEV-024).
+That is the default campaign's set (it sets none of the app 0.21.0 keys and plays as before).
+The `interceptor` campaign follows the original program (app 0.21.0, verified): a 1000-point pool
+refilled once a second by `BeamRechargeRate` (0, 7, 10, 15, 22) and shields by
+`ShieldRechargeRate` (0, 1, 2, 3, 5), restated as fractions of their top level; ships start at
+C / C; `balance: share`. The original has no step budget — the settings cost engine power instead
+— so its budget is set out of reach (20), and the cloak costs 6 steps, half the engine's power
+(DEV-024). Its full `power` and `damage` sections are on the
+[reference](reference.md#power).
+
+### How a hit lands
+
+Every beam or missile hit goes through the same pipeline (`sim::combat::apply_hit`):
+
+1. **Spread and difficulty.** The hit does between `damage.spread` and all of its damage; a
+   beam hit from or on the player's craft is scaled by `damage.difficulty.player_hits` /
+   `hits_on_player`.
+2. **Shield bank** on the side that was hit (fore or aft). Each point of damage costs the bank
+   the beam's `shield_factor` points (1; the original's Phase Cannon 1.5): a bank that holds
+   `damage × shield_factor` stops the hit, one that holds less stops `bank / shield_factor`
+   and falls. `bypass_shields` missiles skip this step; `enveloping` ones put half on each
+   facing.
+3. **Armour**: the one pool, or with `damage.armor: per_side` the bank on that side.
+4. **Systems**: while the hull is below `system_below` of its maximum, `system_share` of what
+   is left strikes one random working system — instead of the hull with `system_divert: true`,
+   or as well.
+5. **Hull.** At zero the ship is destroyed.
+
+Bank maxima come from the class's protection (its `fitted` equipment), times its
+`protection_scale` and, with `damage.difficulty`, the factor for the level and the ship's side;
+every bank starts full.
+
+### The original's flight model
+
+Two optional `flight` maps reproduce how the original moves and turns ships (app 0.21.0, verified;
+the `interceptor` pack sets both, the default campaign neither):
+
+- **`flight.drive`**: drag `dv/dt = a − 2v` on every ship, so ships settle at a speed set by
+  thrust and coast to rest. The player's push is the fitted engine's thrust × throttle × engine
+  power / mass, held to `max_speed`; mass counts the hull, the shield, the missiles still carried
+  and the systems. AI ships push with their class's drive factor `ai_speed` instead.
+- **`flight.turning`**: the hull's turn rates in the original's own units, reached with a time
+  constant set by `angular_damp`; AI pilots turn at their class's fixed `ai_turn` rates.
+
+Keys and worked examples: [reference › `flight.drive`](reference.md#flightdrive) and
+[`flight.turning`](reference.md#flightturning).
+
+```yaml
+# mods/heavier-lightning/rules/ships.yaml — an addon to interceptor
+ships:
+  lightning:
+    mass: 9000            # heavier hull: a lower speed at every throttle step
+    thrust: 90            # kN, instead of its fitted engine's
+```
 
 ## Example: a small balance addon
 

@@ -48,7 +48,10 @@ Two models, chosen per ruleset with `flight.model`:
 flowchart TD
     C["Controls (player or AI)"] --> T["update_throttle<br/>set / delta / reverse;<br/>any manual input clears speed_hold"]
     T --> R["turn(): desired rates × turn_factor,<br/>exponential smoothing, quaternion update"]
-    R --> M{"flight.model"}
+    R --> D{"flight.drive?"}
+    D -- yes --> O["driven(): a = thrust × power × throttle / mass<br/>(AI: S × throttle);<br/>v ← a/drag + (v − a/drag)·e^(−drag·dt);<br/>player held to max_speed"]
+    D -- no --> M{"flight.model"}
+    O --> P
     M -- newtonian --> N["brake? approach_vec(v, 0)<br/>hold? approach_vec(v, nose × hold)<br/>else thrust = nose × acceleration × throttle<br/>(reverse: −nose; afterburner: ×2)<br/>+ VCT thrust; cap at max_speed (+boost)"]
     M -- assisted --> A["forward speed → throttle × max_speed;<br/>drift damped; brake = 0"]
     N --> P["position += velocity × dt"]
@@ -78,7 +81,35 @@ forward speed (`throttle × max_speed`, reverse −½), the ship accelerates or 
 it, sideways drift is damped, VCT slides at 25 % of `max_speed` (`VCT_SPEED_FRACTION`), brake
 targets zero.
 
-**Both models**: pitch and yaw rates scale with
+**The original's motion (`flight.drive`, app 0.21.0).** When the ruleset has
+`content::rules::Drive`, `driven()` replaces both models for every ship not on simple physics.
+Drag acts on every ship, `dv/dt = a·fwd − drag·v`, stepped with its exact solution
+`v ← target + (v − target)·e^(−drag·dt)`, `target = a·fwd / drag` — frame-rate independent and
+never overshooting, so a ship settles at `a / drag` and coasts to rest. The **player's** push is
+`thrust × thrust_scale × engine_power × efficiency(Engines) × throttle / mass` (a class with no
+`thrust` uses its `acceleration`); reverse is `reverse` of it, the afterburner adds
+`afterburner` of the full push, match speed solves for the throttle whose settling speed is the
+wanted one, and the speed is then scaled back to `max_speed`. An **AI** ship with a
+`drive_factor` S pushes with `S × throttle`, throttle clamped to −0.25 … 1, where a behaviour's
+speed request (`hold_speed`) becomes `request / max_speed`; it has no mass and no cap.
+`flight::update_drive(ship, rules)`, called for every ship each tick before flight, refreshes
+`Ship::mass` (hull `mass`, `shield_mass` if it has shields, the `mass` of every missile still in
+its racks and of every fitted system) and `Ship::engine_power` (`1 − power_cost × power_used`,
+the beam and shield levels plus switched-on system steps). The drive factor is rolled once when
+the ship is placed (`AiSpeed::pick`: a uniform roll between `min` and `max`, plus `level_step` ×
+the difficulty level, clamped to `ai_speed_range`).
+
+**The original's turning (`flight.turning`, app 0.21.0).** `original_turn(ship, class, turning,
+controls) -> (target rate, τ)`: per axis `u = rate × gain × stick`, pitch and yaw times
+`turn_factor` (roll not slowed), `k = damping × (1 − damp_step × angular_damp) × q` with
+`q = max(efficiency(Manoeuvring), 1/40)`, giving the steady rate `u / k` and `τ = 1 / k`; the
+same exact first-order step as below then blends the angular velocity toward it. Hull rates are
+read in the original's units, not degrees: a Lightning rolls at 5 rad/s with τ 0.31 s
+(`Turning::steady_rate`, `Turning::k`). AI pilots get their class's `ai_turn` (or `ai_rates`)
+and `τ = 0`: they turn at the fixed rate at once. A collision tumble still quarters the stick
+and slows the response sixfold.
+
+**Both models** (without `flight.turning`): pitch and yaw rates scale with
 `turn_factor(speed, lock_speed) = clamp(1 − |speed| / lock_speed, 0, 1)`; roll is not reduced.
 Angular velocity approaches the desired value with `blend = 1 − exp(−dt / τ)`,
 `τ = damping_time(angular_damp) = 0.05 + 0.06 × angular_damp`. Orientation is a quaternion
@@ -132,13 +163,40 @@ limit. Default 60 000 m.
 - **Missiles** are launched and flown by `sim::guidance` (below); impact damage on a hit; the
   proximity fuse detonates on a near *miss* (inside `proximity_radius` and moving away);
   expired missiles pop harmlessly.
-- **Damage** (`apply_damage`): fore or aft shield (by which side was hit) → armour → hull;
-  hull ≤ 0 → `alive = false`, `Destroyed`, and every ship targeting or towing it lets go
-  (`forget_ship`). Damage that gets past the armour without destroying the ship also strikes a
-  system (`systems::damage_system`). A shield facing reaching zero says "FORE/AFT SHIELD DOWN".
+- **Damage** (app 0.21.0: `apply_hit(world, id, amount, at, mode, shield_factor)`; `apply_damage`
+  is the plain beam case). A hit's `amount` comes from `roll_damage(world, base)` — between
+  `damage.spread` and all of `base`, on the world's seeded generator so a battle replays
+  identically — times `beam_factor(world, owner, target)` for beams (the difficulty's
+  `player_hits` when the owner is the `Pilot::External` craft, `hits_on_player` when the target
+  is). Then the pipeline (diagram below): the shield bank on the side that was hit, the armour,
+  the systems' share, the hull. `DamageMode::BypassShields` skips the shield step; `Enveloping`
+  puts half the amount on each shield bank. Hull ≤ 0 → `alive = false`, `Destroyed`, and every
+  ship targeting or towing it lets go (`forget_ship`).
+- **Protection.** `sim::protection_max(rules, class, faction) -> (shield, armour)` is the class's
+  protection × its `protection_scale` × (with `damage.difficulty`) the level's `own_*` factor for
+  the `side` faction or `other_*` for everyone else. `sim::fill_protection(ship, rules)` stores
+  them as `Ship::shield_max` / `armor_max` and fills every bank (both shields; `armor`, and
+  `armor_aft` with `per_side`); it runs when a ship is spawned and when a campaign craft's fit is
+  applied (`app::flight::apply_loadout`).
 - **Collisions**: fighter–fighter spheres (60 % of radius) push apart and swap half their
   velocities; a fighter sweeping into a station mesh is backed out and bounced. Damage =
   relative speed × 0.1.
+
+**The damage pipeline** (`combat::apply_hit`, app 0.21.0):
+
+```mermaid
+flowchart TD
+    H["hit: amount, side (fore if in front of the target's centre)"] --> S{"shield bank on that side<br/>≥ amount × shield_factor?"}
+    S -- yes --> X["bank −= amount × shield_factor; done"]
+    S -- no --> S2["amount −= bank / shield_factor; bank = 0<br/>('FORE/AFT SHIELD DOWN')"]
+    S2 --> A["armour: the pool, or with armor: per_side<br/>armor (fore) / armor_aft; absorbs what it holds"]
+    A --> Y{"hull < system_below × max?"}
+    Y -- yes --> Z["system_share of the rest → systems::damage_system<br/>(taken off the hull with system_divert)"]
+    Y -- no --> U["hull −= rest"]
+    Z --> U
+    U --> K{"hull ≤ 0?"}
+    K -- yes --> Q["alive = false, Destroyed, forget_ship"]
+```
 
 ### Point defence (Stage 2)
 
@@ -299,7 +357,7 @@ flowchart TD
       R5["H: start countdown (hyperspace_time / efficiency)<br/>or abort"]
     end
     subgraph step["step (after combat)"]
-      S1["recharge(): energy × beam_recharge[level];<br/>shields × shield_recharge[level] × efficiency;<br/>excess over a facing's cap flows to the other"]
+      S1["recharge(): energy × beam_recharge[level] (not while afterburning);<br/>shields × shield_recharge[level] × efficiency;<br/>shift: excess over a facing's cap flows to the other;<br/>share: share_recharge routes the stream by balance"]
       S2["repair(): one system, worst first,<br/>repair_rate × damage-control multiplier"]
       S3["disabled = engines and manoeuvring both at 0"]
       S4["tractors(): collect Tow::Pull / Tow::Release, then apply"]
@@ -317,16 +375,21 @@ flowchart TD
 straight back. A knocked-out switchable system switches off; a knocked-out hyperdrive aborts a
 countdown.
 
-**Damage.** `damage_system` strikes one random non-destroyed system with the damage that got
-past the armour × `system_share`, and emits `SystemChanged` when the condition changes.
+**Damage.** `damage_system` strikes one random non-destroyed system with the share of the hit
+that `combat::apply_hit` set aside (`system_share` of what reached the hull, below
+`system_below`), and emits `SystemChanged` when the condition changes.
 
 **Repair.** `repair` keeps working on the current job; otherwise it takes the worst-off system
 (first in fitting order on a tie). Speed = class `repair_rate` × (1 + (`repair_rate` of the damage
 control computer − 1) × its efficiency); the computer does not speed up its own repair.
 
 **Power.** `raise` and `cycle` work on a plain `Power` value and the `PowerRules`, not on the
-world, so they are tested exhaustively. `shield_caps(shields, balance, shift)` gives the fore
-and aft capacities `shields × (1 ± shift)`.
+world, so they are tested exhaustively. With `power.balance: shift`, `shield_caps(shield_max,
+balance, shift)` gives the fore and aft capacities `shield_max × (1 ± shift)`. With `share` (app
+0.21.0, the original) both banks hold `shield_max` and `share_recharge(ship, gain)` routes the
+tick's gain: *forward* fills the fore bank and sends the overflow aft, *aft* the reverse, *equal*
+gives each half and a full bank's half to the other. A class without its own `energy` /
+`energy_recharge` takes `power.energy` / `power.energy_recharge`.
 
 **Tractor.** The beam holds its target on its current bearing at a distance between 1.2 × the
 two radii and 0.6 × `range`, steering the target's velocity towards the captor's by at most
@@ -476,7 +539,7 @@ current order, and `DISABLED` if so.
 |---|---|
 | `World` | `rules: Arc<Ruleset>`, `shapes: Arc<Vec<Shape>>`, `ships`, `bolts`, `missiles`, `events`, `time`, deterministic xorshift `random()`; `seed` (app 0.18.0): the seed the battle was created with, unchanged while it runs (unlike the generator) — what is fixed for the whole battle, such as where terrain scatter lies, uses it. |
 | `ShipId` | `{ index, generation }` — a generational handle. A destroyed ship's slot can be reused; the generation changes, so old ids resolve to `None`. |
-| `Ship` | Class, faction, name, position, rotation (`Quat`), velocity, angular velocity, throttle, reverse, afterburning, `braking`, `speed_hold`, hull/armor/shields/energy, `controls`, `pilot`, `target`, link mode, beam cooldowns, missile racks, `lock`, `since_hit`, `alive`; Stage 2: `power`, `systems`, `repairing`, `towing`, `hyperspace`, `disabled`, `departed`. Helpers `system(kind)`, `efficiency(kind)`, `is_on(kind)`, `cloaked()`. |
+| `Ship` | Class, faction, name, position, rotation (`Quat`), velocity, angular velocity, throttle, reverse, afterburning, `braking`, `speed_hold`, hull/armor/shields/energy, `controls`, `pilot`, `target`, link mode, beam cooldowns, missile racks, `lock`, `since_hit`, `alive`; Stage 2: `power`, `systems`, `repairing`, `towing`, `hyperspace`, `disabled`, `departed`; app 0.21.0: `armor_aft` (the aft bank with `damage.armor: per_side`; `armor` is then the fore bank), `shield_max` and `armor_max` (one bank's maximum, from `protection_max`), `mass` and `engine_power` (refreshed by `flight::update_drive`), `drive_factor` (the AI drive factor S it rolled; 0 = none). Helpers `system(kind)`, `efficiency(kind)`, `is_on(kind)`, `cloaked()`. |
 | `Controls` | Pilot input for one tick: axes, slide, throttle set/delta, reverse toggle, match speed, afterburner, `brake` (held), `hold_speed` (flight computer target, m/s), `aim` (turret direction), fire, link/missile cycling, `requests`. `carry_unconsumed` keeps unconsumed one-shot presses across frames that run no tick. |
 | `Requests` | Edge-triggered power and equipment presses: `beam_charge`, `shield_charge`, `power_to_shields`, `power_to_beams`, `shield_balance`, `tractor`, `cloak`, `ecm`, `hyperspace`, `detonate` (mines); `merge`. |
 | `Wreck`, `World::wrecks` | A destroyed module left on its hub. |
@@ -491,6 +554,14 @@ current order, and `DISABLED` if so.
 | `ai::ObjectContext` | Answers condition queries about one ship ([Conditions](script.md)). |
 | `ai::CHECKS_PER_SECOND`, `MAX_AIM_ERROR`, `ENGAGE_RADIUS`, `HUNT_RADIUS` | 4, 8°, 3 km (wingmen engage near the leader), 8 km (enemies look for targets). |
 | `FlightModel` | `Newtonian` or `Assisted` (`flight.model`), in `FlightRules` with `arena_radius`. |
+| `content::rules::Drive`, `FlightRules::drive` | App 0.21.0: the original's motion model (`flight.drive`): `drag`, `thrust_scale`, `power_cost`, `reverse`, `afterburner`, `shield_mass`, `ai_speed_range`. |
+| `content::rules::Turning`, `FlightRules::turning` | App 0.21.0: the original's turn model (`flight.turning`): `gain`, `damping`, `damp_step`, `ai_rates`; `steady_rate(rate, angular_damp)`, `k(angular_damp, q)`. |
+| `content::rules::AiSpeed`, `ShipClass::ai_speed`, `ShipClass::ai_turn` | App 0.21.0: an AI drive factor `{min, max, level_step}` and `pick(level, roll, range)`; the class's fixed AI turn rates `[pitch, yaw, roll]` in rad/s. `ShipClass` also gains `mass`, `thrust`, `shield_scale`, `armor_scale`; `Beam::shield_factor`, `Missile::mass`, `System::mass`. |
+| `content::equipment::DamageRules`, `ArmorMode`, `DifficultyFactors`, `BalanceMode` | App 0.21.0: `spread`, `armor` (`Pool` / `PerSide`), `system_share`, `system_below`, `system_divert`, `difficulty` (per-level lists; `DifficultyFactors::at(table, level)` gives 1 past the end); `PowerRules::balance` (`Shift` / `Share`), `energy`, `energy_recharge`. |
+| `sim::protection_max`, `sim::fill_protection` | App 0.21.0: a class's bank maxima for a faction at the current level; set them on a ship and fill every bank. |
+| `combat::apply_hit`, `combat::roll_damage`, `combat::beam_factor` | App 0.21.0: the damage pipeline with a shield factor; a hit's spread roll; the difficulty factor on a beam hit. |
+| `flight::update_drive`, `flight::original_turn` | App 0.21.0: refresh a ship's mass and engine power; the original's turn target and time constant. |
+| `systems::share_recharge` | App 0.21.0: route one shield recharge stream by the balance setting (`balance: share`). |
 | `Pilot` | `External` (the player) or `Ai(AiState)`. `#[allow(clippy::large_enum_variant)]` with a comment: `Ai` is much bigger than `External`, but nearly every ship is AI-flown, so boxing `AiState` would add an allocation and a pointer hop per ship to save bytes on one. |
 | `SimEvent` | App 0.18.0: `Radio { ship, text }` (a behaviour script's `message`, shown on the message display) and `ScriptStopped { ship, call }` (a behaviour script used its whole operation budget; once per pilot). Earlier: `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded { position, effect }`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`, `PointDefence { ship, from, to, hit }`. |
 | `Bolt`, `Missile`, `Lock`, `LinkMode` | Projectiles and weapon state. `Bolt::carry`, `local_offset`, `local_velocity`: the `bolt_frame: ship` carry (above). |
@@ -515,7 +586,12 @@ current order, and `DISABLED` if so.
   `hold_in_arena(&mut Ship, radius) -> bool`; constants `VCT_THRUST_FRACTION`,
   `VCT_SPEED_FRACTION`.
 - `combat::step(&mut World, dt)`, `apply_damage(world, id, amount, at)`, `ship_collisions`,
-  `rotate_towards`, `mount_offset`.
+  `rotate_towards`, `mount_offset`; app 0.21.0: `apply_hit(world, id, amount, at, DamageMode,
+  shield_factor)`, `roll_damage(&mut World, base) -> f32`, `beam_factor(&World, owner, target) -> f32`.
+- `sim::protection_max(&Ruleset, ShipClassId, FactionId) -> (f32, f32)`,
+  `sim::fill_protection(&mut Ship, &Ruleset)` (app 0.21.0).
+- `flight::update_drive(&mut Ship, &Ruleset)`, `flight::original_turn(&Ship, &ShipClass, &Turning,
+  &Controls) -> (Vec3, f32)` (app 0.21.0).
 - `combat::forget_ship(world, id)` — every ship targeting or towing `id` lets go.
 - `guidance::launch(&mut World, Missile)`, `guidance::step(&mut World, dt, &Ruleset)`,
   `guidance::area_blast(world, at, radius, damage, except)`.
@@ -527,7 +603,7 @@ current order, and `DISABLED` if so.
   the nearest hostile with distances divided by matching preference weights.
 - `systems::handle_requests(&mut World)`, `systems::step(&mut World, dt)`,
   `raise(&mut Power, Setting, &PowerRules, switched) -> bool`, `cycle(...) -> bool`,
-  `shield_caps(shields, balance, shift) -> (f32, f32)`, `power_message(&Power, &PowerRules)`,
+  `shield_caps(shields, balance, shift) -> (f32, f32)`, `share_recharge(&mut Ship, gain)` (app 0.21.0), `power_message(&Power, &PowerRules)`,
   `switched_power(&Ship, &Ruleset)`, `power_used(&Ship, &Ruleset)`,
   `recharge(&mut Ship, &ShipClass, &PowerRules, dt)`,
   `repair(&mut Ship, &ShipClass, &Ruleset, dt) -> Option<(index, before, after)>`,

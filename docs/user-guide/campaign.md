@@ -70,7 +70,9 @@ Five parts (a mod may move them: [Screen layouts](../modding/screens.md)):
 
 - **Top bar.** The date, your funds and the campaign score. In the middle the **current base**
   between `<` and `>` buttons: orders apply to it. On the right the clock — `||` pause, then
-  `1h`, `6h`, `1d` and `5d` (campaign time per real second; the running speed is outlined) —
+  `1h`, `6h`, `1d` and `5d` (campaign time per real second; the running speed is outlined; a
+  campaign may set its own speeds: the `interceptor` campaign has the original's six, `5s` to `1d`,
+  and no pause) —
   then **Save** and **Menu** (save and go to the main menu).
 - **Map** (left). Star systems (hidden ones appear when your sensors reach them), lanes, your
   bases (squares) with their sensor ranges, enemy contacts once detected (red, with their way
@@ -132,8 +134,8 @@ The mouse does everything; the keys are shortcuts.
 
 | Key | Does |
 |---|---|
-| Space | Pause, or resume at 1 day a second |
-| 1 – 4 | Clock speed: 1 hour, 6 hours, 1 day or 5 days a second |
+| Space | Pause, or resume at 1 day a second (`interceptor`: 5 seconds or 30 minutes a second) |
+| 1 – 4 | Clock speed: 1 hour, 6 hours, 1 day or 5 days a second (`interceptor`: 1 – 5, from 1 minute to 1 day a second) |
 | Tab / Shift+Tab | Next / previous list |
 | Up / Down | Choose a row |
 | Enter | Do the selected row's first action |

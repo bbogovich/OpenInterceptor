@@ -218,8 +218,8 @@ flowchart TD
     X --> Y{"prompt?"}
     Y -- yes --> Z["prompts(): widgets::modal → choose,<br/>fly (Next::CampaignBattle), leave"]
     Y -- no --> M["map input: wheel zoom about the cursor,<br/>right/middle drag pan, click → pick()"]
-    M --> K["keys(): Space, 1–4, Tab, Up/Down, Enter,<br/>Left/Right, F5, Esc, cheats"]
-    K --> T["advance the clock (SPEEDS[speed]);<br/>events → prompts, Next::Video / Cutscene"]
+    M --> K["keys(): Space, 1–6, Tab, Up/Down, Enter,<br/>Left/Right, F5, Esc, cheats"]
+    K --> T["advance the clock (clock.speeds[speed]);<br/>events → prompts, Next::Video / Cutscene"]
 ```
 
 - **Stretch, not fit.** A cockpit keeps its proportions and is centred (`hud::Layout`); a screen

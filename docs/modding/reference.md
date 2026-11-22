@@ -61,7 +61,8 @@ in app 0.20.0 `logistics.cargo_capacity`, `logistics.construction_stages`,
 `logistics.survey_mission`, `logistics.survey_class` and `logistics.survey_loss`, with
 `facility_types.<id>.hub` now used (the struck site and the survey ship stand in for a
 mission's first protected role; [Strategy layer › Construction stages and the
-stand-in](strategy.md#construction-stages-and-the-stand-in)). The **story
+stand-in](strategy.md#construction-stages-and-the-stand-in)); in app 0.21.0 the global `clock`
+(the time controls' speeds; [Strategy layer › `clock`](strategy.md#clock)). The **story
 layer** (app 0.10.0) adds the definitions `events`, `arcs`, `plans`, `endings`,
 `encyclopaedia` and the globals `relations`, `strategist`, `campaign_end`, by convention in
 `strategy/story.yaml` — every key is on [Story layer](story.md). All of them are in the editor
@@ -86,7 +87,8 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `energy_cost` | number | 10 | Energy per shot. |
 | `rate_of_fire` | number | 2 | Shots per second per mount. |
 | `speed` | number | 2000 | Bolt speed, m/s. |
-| `range` | distance | 3000 m | Reach (`2.4km`, `2400m`; a plain number is metres). An original `Range` inherited from `GameSettings.ini` is read as kilometres (DEV-008). |
+| `range` | distance | 3000 m | Reach (`2.4km`, `2400m`; a plain number is metres). An original `Range` inherited from `GameSettings.ini` is read as kilometres (DEV-008; confirmed from the original program in app 0.21.0). |
+| `shield_factor` | number | 1 | Shield points lost per point of damage the shields stop (app 0.21.0). A bank that holds `damage × shield_factor` stops the hit; one that holds less stops `bank / shield_factor` of it and falls ([Rulesets › How a hit lands](rulesets.md#how-a-hit-lands)). `interceptor`: the Phase Cannon 1.5 (verified). |
 | `color` | RGB | 1, 0.2, 0.2 | Bolt colour. |
 | `sound` | asset | none | Firing sound. |
 
@@ -102,6 +104,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `proximity_radius` | distance | 25 m | Proximity fuse radius. |
 | `turn_rate` | number | 90 | Degrees per second while homing. |
 | `lock_time` | time | 2 s | Seconds in the lock cone to lock on. |
+| `mass` | number | 0 | Kilograms per round carried (app 0.21.0): each round still in a rack adds this to the ship's mass under [`flight.drive`](#flightdrive). `interceptor`: the original's per-missile table (verified). |
 | `color` | RGB | 1, 0.8, 0.4 | Trail colour. |
 | `sound` | asset | none | Launch sound (or `cue:<Name>`). |
 | `explosion` | id | a 25 m, 0.8 s fireball | Effect of its detonation ([effects](#effects)); its `size` is in metres, and its `sound`, if any, plays instead of the `explosion` event sound. |
@@ -130,11 +133,16 @@ The same keys; `objects` defaults to `kind: station`.
 | `hit_points` | number | 100 | Hull points. A class inheriting an original station's hit-point chart (`HP1` – `HP4`, no `HitPoints`) gets the four summed (app 0.15.0, *derived*). |
 | `armor` | number | 0 | Armour points, absorbed after shields. |
 | `shields` | number | 0 | Shield points per facing (fore and aft). |
-| `fitted` | `{shield, armor}` | none | The equipment the class carries by default (app 0.15.0): each a reference to a definition with a protection value — an `original:` section such as `original:GameSettings.ini/ShieldType1`, read by its `Special` key (shields) or `HitPoints` key (armour). Its protection fills `shields` / `armor` **unless the class has them already** — set by itself or by what it inherits. A key other than `shield` or `armor`, or a reference with no protection value, is a load error. A campaign craft's own fit replaces both in battle ([Strategy layer › items](strategy.md#items-and-hulls)). |
-| `shield_recharge` | number | 5 | Shield points per second per facing at full charge. |
+| `fitted` | `{shield, armor, engine}` | none | The equipment the class carries by default (app 0.15.0; `engine` since app 0.21.0): each a reference to a definition with a protection value — an `original:` section such as `original:GameSettings.ini/ShieldType1`, read by its `Special` key (shields) or `HitPoints` key (armour); an engine's `Special` is its thrust in kN and fills `thrust`. Its protection fills `shields` / `armor` **unless the class has them already** — set by itself or by what it inherits. A key other than `shield`, `armor` or `engine`, or a reference with no such value, is a load error (`fitted.engine: … gives no thrust (special)`). A campaign craft's own fit replaces both in battle ([Strategy layer › items](strategy.md#items-and-hulls)). |
+| `shield_recharge` | number | 5 | Shield points per second at full charge: per facing, or one stream shared by both facings with [`power.balance: share`](#power). |
+| `protection_scale` | `{shields, armor}` | 1, 1 | Multiplies every shield and every armour bank of the class (app 0.21.0): for a class that holds more than its fitted equipment gives. The original's Patton class holds three times its shield's protection and four times its armour's (verified); the `interceptor` pack does not set it yet. |
+| `mass` | number | 0 | Hull mass in kg before shields, missiles and systems (app 0.21.0, [`flight.drive`](#flightdrive)). `interceptor`: each hull's base mass from the original program (verified). |
+| `thrust` | number | 0, or the fitted engine's | Engine thrust in kN (app 0.21.0, [`flight.drive`](#flightdrive)); usually from `fitted: {engine: …}`. A class with none pushes with its `acceleration` instead. |
+| `ai_speed` | number or `{min, max, level_step}` | none | The AI drive factor S (app 0.21.0, [`flight.drive`](#flightdrive)): an AI-flown ship accelerates at `S × throttle` and so tops out at `S / drag`, with no mass and no speed cap. A range: each ship rolls a factor between `min` and `max` and adds `level_step` per difficulty level (0 = easiest); the result is held to `flight.drive.ai_speed_range`. Without it an AI ship flies by `thrust` and mass like the player, but without the `max_speed` cap. `interceptor`: the original's per-class factors (verified; a Wraith `{min: 350, max: 400, level_step: 40}`). |
+| `ai_turn` | `{pitch, yaw, roll}` | `flight.turning.ai_rates` | With [`flight.turning`](#flightturning): AI pilots of this class turn at these fixed rates, radians per second, with no damping (app 0.21.0). `interceptor`: the original's per-class table (verified; which axis is which is derived). |
 | `max_speed` | number | 400 | Top speed, m/s (0 for static kinds). |
-| `acceleration` | number | 150 | m/s². |
-| `roll_rate`, `pitch_rate`, `yaw_rate` | number | 120, 70, 70 | Degrees per second (pitch and yaw at rest). |
+| `acceleration` | number | 150 | m/s². Under `flight.drive`, only for a class with no `thrust` (its full push). |
+| `roll_rate`, `pitch_rate`, `yaw_rate` | number | 120, 70, 70 | Degrees per second (pitch and yaw at rest). With [`flight.turning`](#flightturning) they are the original's own units instead (a Lightning's roll 200 gives 5 rad/s). |
 | `angular_damp` | number | 3 | 0 tight … 10 loose. |
 | `lock_speed` | number | 1000 | Speed at which pitch and yaw rates fall to zero, m/s. |
 | `vct` | bool | `false` | Fitted with vector control thrusters (adds the `vct` system). |
@@ -142,8 +150,8 @@ The same keys; `objects` defaults to `kind: station`.
 | `lift` | number | 120 for `fighter`, else 0 | The forward speed, m/s, at which the wings carry the craft's weight; 0 = no wings. |
 | `hover` | bool | `false` | Hovers in an atmosphere: gravity does not pull it down (saucers). |
 | `atmospheric` | bool | `true` | Can enter an atmosphere. `false`: the Simulator refuses the craft in an environment with `physics: atmosphere` ("The … cannot enter an atmosphere", app 0.6.3); Stage 4 will also hide it from surface missions. |
-| `energy` | number | 500 | Beam capacitor. |
-| `energy_recharge` | number | 40 | Capacitor recharge per second at full beam charge. |
+| `energy` | number | `power.energy` (500) | The energy pool that beams and the afterburner draw on. |
+| `energy_recharge` | number | `power.energy_recharge` (40) | Pool recharge per second at the top beam level. |
 | `beams` | ids | none | One beam id per mount: `[laser, laser]`. |
 | `missiles` | mapping id: number | none | Racks: `{xwinder: 5, sidestep: 4}`. |
 | `systems` | ids | by `kind` | Fitted systems, **replacing** the default list; usually edit it instead: `systems+: [ecm]`, `systems-: [vct]`. |
@@ -171,6 +179,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `range` | distance | per kind | Tractor hold range, ECM radius, cloak detection range. |
 | `strength` | number | per kind | Tractor pull m/s²; ECM and cloak: chance per second, in %, that a homing missile loses its target. |
 | `repair_rate` | number | per kind (4 for damage control) | Damage control: repair speed multiplier. |
+| `mass` | number | 0 | Kilograms it adds to the ship under [`flight.drive`](#flightdrive) (app 0.21.0). `interceptor`: the original's table — damage control 100, VCT 450, cloak 550, each ECM pod 200, tractor 300 (verified). |
 
 Built-in values per kind: [Rulesets](rulesets.md#ship-systems-and-equipment).
 
@@ -268,8 +277,8 @@ Texture names match a model's textures by file name without folder or extension,
 |---|---|---|---|
 | `model` | `newtonian` / `assisted` | `newtonian` | Flight model ([Simulation](../implementation/architecture/sim.md#flight-model-simflight)). |
 | `arena_radius` | distance | 60 km | Ships are halted at this distance from the centre (0 = none). |
-| `boost` | number | 150 | Afterburner speed bonus, m/s. |
-| `cost` | number | 50 | Afterburner energy per second. |
+| `boost` | number | 150 | Afterburner speed bonus, m/s. Not used under `drive`, where the afterburner adds `drive.afterburner` of the full thrust. |
+| `cost` | number | 50 | Afterburner energy per second. `interceptor`: 100 (verified; the original file's `Afterburners` keys are only sent to multiplayer peers). |
 | `lock_angle` | angle | 10° | Missile lock cone half-angle. |
 | `radar_range` | distance | 6000 m | Mobile contacts beyond it are hidden from the radar. |
 | `hyperspace_time` | time | 10 s | Hyperdrive countdown (doubled while the hyperdrive is damaged). |
@@ -281,6 +290,72 @@ Texture names match a model's textures by file name without folder or extension,
 | `debrief_delay` | time | 30 s | After a mission's result the verdict shows and the computer voice speaks at once; the battle runs on this long before the debrief, with a countdown (Enter shows it now; a retreat shows it at once). `0s` = at once (app 0.7.4). |
 | `formation_gap` | number | 3 | A wingman's formation slot is at least this many × the two ships' combined radii from its leader; tighter slots in scenarios and missions are pushed out ([R-CMB-022](../specification/requirements/combat.md#r-cmb-022-wingmen-keep-their-distance)). |
 | `radar_colors` | map | see below | Radar blip and target-marker colours by relation to the player: `friendly` (own faction, default green), `hostile` (either side hostile, red), `neutral` (yellow), `objective` (objects with `protect: true`, cyan). Each is `[r, g, b]`, 0..1. |
+| `drive` | map | none | The original's motion model (app 0.21.0): thrust, mass and drag for the player, a drive factor for AI ships. Replaces `model` for every ship that is not on simple physics ([below](#flightdrive)). |
+| `turning` | map | none | The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates ([below](#flightturning)). |
+
+#### `flight.drive`
+
+Every ship is slowed by drag, `dv/dt = a − drag × v`, stepped exactly, so it settles at
+`a / drag` and a coasting ship comes to rest. **The player's craft** pushes along the nose with
+`a = thrust (kN) × thrust_scale × engine power × throttle / mass` and is then held to its
+`max_speed`. Engine power is `1 − power_cost × steps`, where the steps are the beam and shield
+levels (A = 0) plus every switched-on system's `power`; mass is the hull's `mass` plus
+`shield_mass` if it has shields, plus each carried missile's and each fitted system's `mass`.
+Reverse gives `reverse` of the push; the afterburner adds `afterburner × thrust ×
+thrust_scale / mass` at any throttle while it pays `flight.cost` per second; match speed (`M`)
+picks the throttle whose settling speed is the wanted one. **AI-flown ships** with an `ai_speed`
+push with `S × throttle` (throttle −0.25 … 1), with no mass and no speed cap; their behaviours'
+speed requests are read as a share of the class's `max_speed` (DEV-069). Engine damage scales
+the push (half when damaged, none when knocked out).
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `drag` | number | 2 | Per second: `dv/dt = a − drag × v`. 0 = no drag (thrust only). |
+| `thrust_scale` | number | 1000 | Newtons per kN of thrust at full throttle. The original multiplies by its throttle percentage, so the `interceptor` pack writes 100000. |
+| `power_cost` | fraction | 0 % | Engine power lost per beam or shield level and per switched-on system step. |
+| `reverse` | fraction | 50 % | Reverse thrust as a share of forward thrust. |
+| `afterburner` | fraction | 50 % | Afterburner thrust as a share of full thrust. |
+| `shield_mass` | number | 0 | Kilograms a fitted shield adds. |
+| `ai_speed_range` | 2 numbers | 100, 500 | AI drive factors are held to this range. |
+
+```yaml
+# packs/interceptor/rules/flight.yaml (the original's numbers, verified)
+flight:
+  cost: 100
+  drive: {drag: 2, thrust_scale: 100000, power_cost: 8.333%, reverse: 50%, afterburner: 50%, shield_mass: 250}
+```
+
+Worked example: a Lightning (75 kN, about 8,300 kg as fitted, beams and shields at C so engine
+power 2/3) settles at about 150 m/s at 50 % throttle and 300 m/s at full; with both settings at A
+about 450 m/s; `max_speed` 600 caps the afterburner. A campaign without `drive` keeps `model`.
+
+#### `flight.turning`
+
+Per axis the stick asks for `u = rate × gain × stick` (the hull's `roll_rate`, `pitch_rate` or
+`yaw_rate`; pitch and yaw fall linearly to zero at `lock_speed`, roll does not), and the turn
+rate approaches `u / k` with time constant `1 / k`, where
+`k = damping × (1 − damp_step × angular_damp) × q` and `q` is the manoeuvring system's
+efficiency (at least 1/40). AI pilots instead turn at their class's `ai_turn` rates, or
+`ai_rates`, with no smoothing. Without `turning`, rates are degrees per second smoothed by
+`angular_damp` ([Simulation](../implementation/architecture/sim.md#flight-model-simflight)).
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `gain` | number | 0.08 | Turn request per unit of hull rate at full stick. |
+| `damping` | number | 4 | Response `k` at `angular_damp` 0, per second. |
+| `damp_step` | number | 0.1 | How much each point of `angular_damp` slows the response. |
+| `ai_rates` | `{pitch, yaw, roll}` | 2, 2, 3 | AI turn rates in rad/s for classes without `ai_turn`. |
+
+```yaml
+flight:
+  turning: {gain: 0.08, damping: 4, damp_step: 0.1, ai_rates: {pitch: 2, yaw: 2, roll: 3}}
+ships:
+  wraith:
+    ai_turn: {pitch: 2.3, yaw: 2.1, roll: 3.75}
+```
+
+A Lightning (roll 200, pitch and yaw 100, `angular_damp` 2) gets `k = 3.2`: it rolls at
+5 rad/s (286°/s) and pitches at 2.5 rad/s (143°/s) at rest, settling with a 0.31 s time constant.
 
 ### `formations`
 
@@ -312,19 +387,70 @@ formations:
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `beam_recharge` | list of numbers | 0, 0.25, 0.5, 0.75, 1 | Per level A, B, …: fraction of the ship's `energy_recharge`. 1 to 26 levels. |
+| `energy` | number | 500 | The energy pool of every class without its own `energy` (app 0.21.0). `interceptor`: 1000. |
+| `energy_recharge` | number | 40 | The pool's recharge per second at the top beam level, for classes without their own (app 0.21.0). `interceptor`: 22. |
+| `balance` | `shift` / `share` | `shift` | What the shield balance (`S`) changes (app 0.21.0). `shift`: it moves *capacity* — the favoured facing holds more (`balance_shift`), and each facing recharges at the full rate. `share`: both facings hold the same, and the generator's one stream of points (`shield_recharge`) goes to the favoured facing first and the overflow to the other; *equal* gives each half (the original, verified). |
 | `shield_recharge` | list of numbers | 0, 0.25, 0.5, 0.75, 1 | Per level: fraction of the ship's `shield_recharge`. As many levels as `beam_recharge`. |
 | `budget` | number | 6 | Power steps shared by both settings (level index, A = 0) and switched-on systems. |
 | `start_beam` | number | 3 | Starting beam level (0 = A). |
 | `start_shield` | number | 3 | Starting shield level. |
-| `balance_shift` | fraction | 50 % | With shields balanced forward the fore shield holds `1 + shift` times its normal capacity and the aft `1 − shift`. |
+| `balance_shift` | fraction | 50 % | With `balance: shift` and shields balanced forward, the fore shield holds `1 + shift` times its normal capacity and the aft `1 − shift`. |
+
+```yaml
+# packs/interceptor/rules/systems.yaml (the original's pool, verified)
+power:
+  beam_recharge: [0, 0.318, 0.4545, 0.682, 1]   # 0, 7, 10, 15, 22 per second
+  shield_recharge: [0, 0.2, 0.4, 0.6, 1]        # 0, 1, 2, 3, 5 per second
+  energy: 1000
+  energy_recharge: 22
+  balance: share
+  budget: 20          # the original has no budget: settings cost engine power instead
+  start_beam: 2       # C
+  start_shield: 2     # C
+```
 
 ### `damage`
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `system_share` | fraction | 100 % | Share of the damage past the armour that also strikes one system. |
+| `spread` | fraction | 100 % | Each hit does between this share and all of its damage, rolled uniformly on the battle's seeded generator (app 0.21.0). `interceptor`: 75 % (verified). |
+| `armor` | `pool` / `per_side` | `pool` | One armour pool struck from any side, or a fore and an aft bank that each hold the full armour, struck by the side that was hit (app 0.21.0; `interceptor`: `per_side`, verified). The HUD shows both: `ARMOR 40/25`. |
+| `system_share` | fraction | 100 % | Share of the damage reaching the hull that strikes one system (before app 0.21.0: of the damage past the armour). |
+| `system_below` | fraction | 100 % | Systems are struck only while the hull is below this share of its maximum (app 0.21.0; 100 % = always). `interceptor`: 75 %. |
+| `system_divert` | bool | `false` | `true`: the system share is taken off the hull damage (the original); `false`: it is dealt to a system as well as the hull (app 0.21.0). |
+| `difficulty` | map | none | Protection and damage factors per difficulty level (app 0.21.0; below). |
 | `destroy_below` | fraction | 50 % | A system this far below zero hit points is destroyed for the battle. |
 | `repair_rate` | number | 2 | Default crew repair rate, hit points per second. |
+
+`damage.difficulty` holds lists with one factor per level, easiest first; a level beyond a short
+list uses 100 %. The bank maxima are set when a ship is placed (and when a campaign craft's fit is
+applied) and every bank starts full.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `side` | faction id | The faction whose ships use the `own_*` factors; every other ship uses `other_*`. |
+| `own_shields`, `own_armor` | list of fractions | That side's shield and armour bank maxima. |
+| `other_shields`, `other_armor` | list of fractions | Everyone else's. |
+| `player_hits` | list of fractions | Beam damage dealt by the player's own craft. |
+| `hits_on_player` | list of fractions | Beam damage the player's own craft takes. |
+
+```yaml
+# packs/interceptor/rules/systems.yaml (the original's pipeline, verified)
+damage:
+  spread: 75%
+  armor: per_side
+  system_share: 30%
+  system_below: 75%
+  system_divert: true
+  difficulty:
+    side: xcom
+    own_shields: [150%, 125%, 100%, 100%, 100%]
+    own_armor: [130%, 115%, 100%, 100%, 100%]
+    other_shields: [40%, 52%, 64%, 76%, 88%]
+    other_armor: [50%, 60%, 70%, 80%, 90%]
+    player_hits: [115%, 115%, 100%, 100%, 100%]
+    hits_on_player: [85%, 100%, 100%, 100%, 100%]
+```
 
 ### `sounds`
 
@@ -406,7 +532,7 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `rect` | 4 numbers | *required* | x, y, w, h in the screen's design space. |
 | `image` | asset | none | An `image`'s picture (a button's `up` image). |
 | `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
-| `action` | text | none | A button's action: `open(<screen>)` (the screen must exist), `back`, `speed(0-4)`, `save`, `menu`, `testbed`. Another is a load error. |
+| `action` | text | none | A button's action: `open(<screen>)` (the screen must exist), `back`, `speed(n)` (an index into the campaign's [`clock.speeds`](strategy.md#clock), 0 = the first; a number past the last picks the last), `save`, `menu`, `testbed`. Another is a load error. |
 | `value` | name | none | A `value`'s value: `date`, `date_long`, `weekday` (both app 0.17.1), `time`, `money` (or `funds`), `score`, `base`, `speed`, `selection`. Not checked: an unknown name shows as `?<name>`. |
 | `source` | name | none | A `list`'s list: `bases`, `research`, `build`, `market`, `factory`, `hangar`, `contacts`, `supply`, `archive`, `reports`, `messages`. On a `map`: `minimap`, the whole map small, without names (app 0.17.1). Not checked at load. |
 | `text` | text | none | A `text` widget's text (a `@key` is resolved), wrapped. |

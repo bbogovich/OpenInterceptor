@@ -739,6 +739,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `Evaluation`, `Topic::hidden`, `PilotRules::train_gain`, `train_cost` | `content/strategy.rs` | A monthly rating; a hidden topic; training (app 0.16.6 – 0.16.8). |
 | `Strikes`, `LogisticsDef::strikes` | `content/logistics.rs` | `logistics.construction_strikes` (app 0.16.4). |
 | `Date` | `content/strategy.rs` | A Gregorian calendar date (`parse`, `plus_days`). |
+| `ClockDef`, `StrategyDef::clock` | `content/strategy.rs` | App 0.21.0: the time controls (`clock:`) — `speeds` (campaign hours per real second), `labels`, `on_event`, `run`; `parse`, `short(hours)` (a button caption: the pause sign, `5s`, `30m`), `describe(hours)` (`5 secs/s`). `StrategyScreen` advances the campaign by `speeds[speed] × frame time` and drops to `on_event` on every event; it replaces the old `app::strategy::SPEEDS` constant. |
 | `MapKind`, `Travel`, `RaidTarget`, `ResearchMode` | `content/strategy.rs` | Fixed / generated maps; free / lane travel; base / system raids; download / labs. |
 | `Campaign` | `campaign/mod.rs` | One game in progress: `hours`, `money`, `systems`, `bases`, `known`, `progress`, `craft`, `pilots`, `recruits`, `contacts`, `deliveries`, flow and raid timers, score, flags, salvaged, messages, and `notices` (app 0.16.2, not saved). |
 | `Base`, `ModuleInst`, `Job`, `Craft`, `Pilot`, `Contact`, `Delivery` | `campaign/mod.rs` | The parts of the state, each referring to the others by index. |
@@ -777,7 +778,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 | `MONTH` | `campaign/mod.rs` | 720 hours: reports, salaries, maintenance. |
 | `save::write`, `save::read`, `save::PackRef`, `save::FORMAT` | `campaign/save.rs` | Saves and their pack header. |
 | `script::campaign::QUERIES`, `id`, `schema` | `script/campaign.rs` | The campaign context. |
-| `StrategyScreen`, `Tab` (eleven with `Reports` since 0.16.8, and the testbed's `Debug`), `SPEEDS`, `BattleReport` (with `cargo`), `save_path`, `slot_path`, `map_transform` | `app/strategy.rs` | The screen. |
+| `StrategyScreen`, `Tab` (eleven with `Reports` since 0.16.8, and the testbed's `Debug`), `BattleReport` (with `cargo`), `save_path`, `slot_path`, `map_transform` | `app/strategy.rs` | The screen. |
 | `Next::NewCampaign`, `LoadCampaign`, `LoadSlot` (0.16.14), `CampaignBattle` (with `stances`; `stand_in` since 0.20.0), `Strategy`; `AppContext::campaign`, `battle_report` | `app/mod.rs` | The screen changes around a campaign battle. |
 
 ## API Reference

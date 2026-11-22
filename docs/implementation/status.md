@@ -9,6 +9,7 @@ Updated as each stage progresses. Stage pages hold the detail; this page is the 
 | [2 Combat, objects and behaviours](plan/stage-2-combat.md) | **Complete** — app **0.3.0** (main `d7553f5`); deferred: XSPT explosions, model-set extras; manual passes outstanding | See [Stage 2 progress](#stage-2-progress) below |
 | [3 Missions, environments and conditions](plan/stage-3-missions.md) | **Done** — app **0.18.0** (2026-11-20; main `55999cb`): terrain detail textures and scatter (3.5) and Tier 2 scripts (3.10, decision (c)); manual passes outstanding, C5 deferred. Earlier: part 1 in app 0.3.0; interlude feedback items F.1–F.5 in app **0.3.1**; console C1 in app **0.4.0**, a shader fix in **0.4.1** and the `resources/` layout in **0.4.2**; console C2 – C4 and C2b in **0.4.11 – 0.5.0** (C5 later); hazards in **0.5.1**; environments, atmospheric flight, terrain and the atmosphere HUD in **0.6.0**; ground installations in **0.6.1**; radio voices in **0.6.2**; the simulator in **0.6.3**; five default missions in **0.6.4**; all 26 `interceptor` mission types in **0.6.5**; playtest fixes (ground to the horizon, textured console target, AI collision avoidance) in **0.6.7**; the battle runs on after its result in **0.7.4**; the condition console in **0.16.5**; terrain detail and scatter and Tier 2 scripts in **0.18.0** | See [Stage 3 progress](#stage-3-progress) below |
 | [4 Strategy layer](plan/stage-4-strategy.md) | **In progress** — MD1 formations in **0.6.6**; the campaign context in **0.6.7**; strategy data, the campaign runtime and saves in **0.7.0**; the default campaign's strategy layer and the strategy screen in **0.7.1**; fitting in **0.7.2**; lane travel in **0.7.3**; the `interceptor` strategy layer in **0.8.0**; testbed cheats in **0.8.1**; logistics in **0.9.0**; playtest changes (nebula, bulbous fighters, dreadnought) in **0.9.1**; flown supply-convoy battles in **0.9.2**; fitted shields and armour and `--balance` in **0.15.0**; the strategy screen rebuilt for the mouse in **0.16.0**; the issue-audit gaps in **0.16.1 – 0.16.14** (default shields and armour, logistics conditions and outcomes, construction strikes, `requires_any` and hidden topics, training, evaluations and the Reports list, base effects and dismantling, queue priorities and delivery losses, auto-resolve, save slots); fixes from the docs review in **0.16.15**; evaluation and plan texts as text keys in **0.18.1**; issue hygiene (Batch 4.0, 2026-11-20); bases and economy completeness (Batch 4.1: storage everywhere, wrecks and repair, dismantling a base, best-available templates, placement conditions) in **0.19.0**; logistics leftovers (Batch 4.2: cargo capacity, construction stages shown and standing in for the struck site, the survey battle and suitability, the logistics soak) in **0.20.0**. 4.1, 4.6, 4.9 and 4.11 done; 4.17 done; 4.4 done except markets per seller (Stage 5, #46); 4.10 done as the functional screen (leftovers in 6.9); 4.15 done except depots and capture (Stage 5, #46); 4.12 done as derived (not play-tested); 4.2, 4.3, 4.5, 4.7, 4.8, 4.13, 4.14 (upgrades), 4.16 (fighter pools) partial | See [Stage 4 progress](#stage-4-progress) below |
+| [Track A: combat-stat fidelity](plan/track-a-fidelity.md) | **In progress** — app **0.21.0** (main `cb79f45`, 2026-11-21): the original's damage pipeline, energy pool and shields, flight model (drive and turning) and strategy clock, as data the `interceptor` pack sets (A1, A2, A3, A6 largely done; B3 settled) | See [Track A progress](#track-a-progress) below |
 | [5 Campaigns](plan/stage-5-campaign.md) | **In progress** — the story core in **0.10.0**; the default campaign's serial in **0.10.1**; the X-COM Doomsday arc in **0.10.2**; relations in battle and the year soak in **0.10.3**; stance changes from missions announced in **0.16.2**; the event debugger and start-at-chapter in **0.16.13**. 5.1, 5.2, 5.6 (engine), 5.7 done; 5.3 – 5.5, 5.8, 5.9 partial; 5.10 and 5.11 not started; the testbed tools done (0.16.13); no play-through yet | See [Stage 5 progress](#stage-5-progress) below |
 | [6 Presentation](plan/stage-6-presentation.md) | **In progress** — fixes from the docs review in **0.14.1**; interactive music in **0.11.0**; skins in **0.11.1** and title cards; the Smacker decoder and player in **0.12.0**; volumes and the relation fix in **0.12.1**; endings' films; MD2 cutscenes in **0.13.0** and the X-COM opening film; MPSRC packs and the comms panel in **0.13.1**; the main menu and credits in **0.14.0**; menu values that fit in **0.14.2**; the ship status display in **0.15.1**; screen layouts and widgets in **0.16.0**; stingers, layout backgrounds, cutscene text keys and pad skipping in **0.16.2**; save slots, the ending screen and full screen in **0.16.14**; the default `good`/`bad` stingers in **0.16.15**; the screen-set framework in **0.17.0** and the `interceptor` campaign's original strategy screens, first pass, in **0.17.1**. 6.2 and 6.3 done; 6.1, 6.4, 6.6 (comms, ship status), 6.7, 6.8, **6.9** and MD2 partial; 6.5, MD3 not started; no manual pass yet | See [Stage 6 progress](#stage-6-progress) below |
 | [7 Modding toolkit and Remastered](plan/stage-7-modding.md) | Not started | |
@@ -293,6 +294,31 @@ both; at `9064f59` `default` 12 of 16 topics and 39 battles with the supply chai
 and `interceptor`, which has no logistics, within its capacity too), and the default campaign's run is a unit test with a save round trip
 (`the_default_campaign_runs_six_months`). Outstanding: the manual long run, the `interceptor`
 play-test and balance, and the open items above.
+
+## Track A progress
+
+App **0.21.0** (main `cb79f45`, 2026-11-21; #45), from the analysis of the player's own
+`Interceptor.exe` and `xcgen.dll` (`notes/re/flight`, facts only), all as data — the default
+campaign sets none of the new keys and plays as before:
+
+- **Strategy clock** (B3): `clock:` with `speeds`, `labels`, `on_event` and `run`; `speed(n)`
+  indexes it. `interceptor`: the dial's six speeds, 5 s to 1 day per second, no pause; the sixth
+  hole now selects the sixth speed.
+- **Energy and shields** (A3): `power.energy`, `energy_recharge`, `balance: share`.
+  `interceptor`: a 1000-point pool at 0 / 7 / 10 / 15 / 22 per second, start C / C, afterburner
+  100 per second.
+- **Damage** (A1, A2): `damage.spread`, `armor: per_side`, `system_below`, `system_divert`,
+  `difficulty`; the beam `shield_factor`; the class `protection_scale`; ships keep per-ship bank
+  maxima (`shield_max`, `armor_max`). The HUD shows both armour banks (`ARMOR f/a`).
+- **Flight** (A6): `flight.turning` (the original's damped turn model; per-class AI rates
+  `ai_turn`) and `flight.drive` (drag; thrust × engine power × throttle / mass for the player,
+  held to `MaxSpeed`; the per-class drive factor `ai_speed` for AI ships); ship, missile and
+  system `mass`; `fitted: {engine: …}` and `thrust`.
+
+Deviations revised: DEV-008 (confirmed), DEV-011, DEV-012, DEV-024, DEV-029, DEV-043, DEV-056;
+new DEV-064 – DEV-073 for what is still approximated. Manual cases MT-4-57 – MT-4-62. At
+`cb79f45`, **462** `#[test]` functions by a count of the sources (452 at `9064f59`). What remains:
+[Track A](plan/track-a-fidelity.md).
 
 ## Stage 5 progress
 

@@ -108,7 +108,8 @@ diamond.
 | `gauge_angle(fraction)`, `gauge_values(&Ruleset, &Ship) -> [f32; 4]` | Needle maths. |
 | `MfdPage`, `mfd_lines(&World, ShipId, page, nav) -> Vec<String>` | MFD content. |
 | `MessageLog` | Timestamped messages; `push`, `visible(now, n)`; bounded to 32. |
-| `PowerReadout`, `power_readout(&Ruleset, &Ship)` | What the `power` instrument shows: levels, steps used and budget, balance, fore/aft fractions. |
+| `PowerReadout`, `power_readout(&Ruleset, &Ship)` | What the `power` instrument shows: levels, steps used and budget, balance, fore/aft fractions (of `Ship::shield_max`; with `power.balance: share` both facings have the same capacity, app 0.21.0). |
+| `armor_text(&Ruleset, &Ship)`, `armor_short(&Ruleset, &Ship)` | App 0.21.0: the MFD Status page's `ARMOR 40  HULL 100` and the Target page's `ARM 40`; with `damage.armor: per_side` both banks, fore/aft (`ARMOR 40/25`, `ARM 40/25`). |
 | `Lamp`, `system_lamps(&Ship)`, `system_abbrev(SystemKind)` | The `systems` instrument's lamps. |
 | `status_flags(&Ship) -> Vec<String>` | The status-strip flags. |
 | `draw::drift_text(body_velocity)` | `X+45 Y-12`: the drift part of the status line. |

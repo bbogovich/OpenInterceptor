@@ -166,8 +166,9 @@ launcher:
 
 `app::strategy::StrategyScreen` (Stage 4.10) shows a `campaign::Campaign`. Since app 0.16.0
 (main `ac7ae62`) it is five widgets placed by the `screens.starmap` layout: the top bar (date,
-funds, score, base switcher, the clock's buttons — `SPEEDS`: paused, 1, 6, 24 and 120 campaign
-hours per real second — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
+funds, score, base switcher, the clock's buttons — one per speed of the campaign's
+`StrategyDef::clock` (`content::strategy::ClockDef`, app 0.21.0; by default paused, 1, 6, 24 and 120
+campaign hours per real second) — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
 panel for the selection (`Sel`) with its actions (up to six since app 0.16.1), the list buttons (`Tab`: eleven since app
 0.16.8 with **Reports**, twelve with the testbed's **Debug**; the **Supply** list, `Tab::Logistics`, since app 0.9.0) and the list panel whose rows carry their actions as
 buttons; notices, interceptions (with *Auto-resolve* since app 0.16.12), convoy ambushes,
@@ -249,7 +250,7 @@ the `default` campaign; `rocket-vs-saucer` takes its place in the manual tests.
 | `AppContext` | `content`, `renderer`, `sounds`, `bindings`, `devices`; since app 0.7.1 `campaign` (the strategy screen kept while one of its battles is flown) and `battle_report`. |
 | `Next` | `Stay`, `Launcher`, `Viewer`, `Assets`, `Controls`, `Reload { campaign, difficulty }`, `Fly { scenario, ship }`, `Mission { mission, ship }`, and since app 0.6.3 `Simulator` (the setup screen) and `Simulate { mission: Box<MissionDef>, ship }` (fly a modified mission), since app 0.7.1 `NewCampaign`, `LoadCampaign`, `Strategy` and `CampaignBattle { mission, ship, loadout }`, since app 0.16.14 `LoadSlot { slot }`, `Quit`. `Controls` returns to `Next::Menu` since app 0.16.14. |
 | `launcher::Entry` | `ContinueCampaign`, `NewCampaign` (app 0.7.1), `ModelViewer`, `AssetBrowser`, `Controls`, `Simulator`, `Scenario(i)`, `Mission(i)`. |
-| `strategy::StrategyScreen`, `Tab`, `SPEEDS`, `BattleReport`, `save_path`, `slot_path`, `SLOTS` | The strategy screen ([Campaign](campaign.md)); `from_campaign` (app 0.16.13) wraps a campaign made elsewhere. |
+| `strategy::StrategyScreen`, `Tab`, `BattleReport`, `save_path`, `slot_path`, `SLOTS` | The strategy screen ([Campaign](campaign.md)); `from_campaign` (app 0.16.13) wraps a campaign made elsewhere. |
 | `FlightSession::cond` | The condition console's text (app 0.16.5). |
 | `cli::Options::chapter` | `--chapter <N>` (app 0.16.13). |
 | `flight::debrief_due(ended_at, now, delay)` | Whether the debrief is due after the result (pure, tested; app 0.7.4). |

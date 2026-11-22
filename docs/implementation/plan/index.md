@@ -17,6 +17,12 @@ playtest one component at a time. Later stages add scenarios; none are removed.
 | [7 Modding toolkit and Remastered](stage-7-modding.md) | 0.8.0 | Full validator, recipes (upscale, mesh patch), `interceptor-remastered`, modding guide; the **Mod Designer** and **Cutscene Designer** (MD4–MD6) | Planned |
 | [8 Platforms and release](stage-8-release.md) | 1.0.0 | macOS app, Linux packages, Windows, release process; **game bundling** (MD7) | Planned |
 
+Cross-stage tracks:
+
+| Track | Delivers | Status |
+|---|---|---|
+| [A Combat-stat fidelity](track-a-fidelity.md) | The original's damage, energy, shields, flight and AI read from its program and turned into pack data (#45) | In progress — A1, A2, A3 and A6 largely done in app 0.21.0; the strategy clock (B3) settled |
+
 Items MD1–MD7 come from the [mod designer, cutscene designer and game bundling](../../specification/design/designer.md) design.
 
 ## Three campaigns

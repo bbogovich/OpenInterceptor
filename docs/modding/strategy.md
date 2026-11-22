@@ -389,6 +389,36 @@ sets them (`set_flag(x)` names in mission outcomes are added automatically).
 | `cost_scale` | number | 1 | Multiplies every item and hull `cost`, `sell_price`, hull `upkeep` and module `cost` and `maintenance` (app 0.8.0). The `interceptor` campaign sets 1000: the original's money is in thousands. |
 | `module_time` | `days` | — | Modules without `build_time` take their `prod_time` in days (app 0.8.0; the original's module times are days). |
 
+### `clock`
+
+The time controls (app 0.21.0): how much campaign time passes per real second at each speed,
+and what an event does to the clock. Without `clock:` a campaign keeps the engine's own: a pause
+and 1 hour, 6 hours, 1 day and 5 days per second.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `speeds` | list of times | `[0, 1h, 6h, 1d, 5d]` | Campaign time per real second at each speed, slowest first; `0` is a pause. |
+| `labels` | list of text | made from the rates | What the `speed` readout shows for each speed (`5 secs/s`, `1 hour/s`, `paused`); speeds without one get one made from their rate. |
+| `on_event` | number | 0 | The speed (0 = the first) an event, notice, prompt or return from a battle drops the clock to. |
+| `run` | number | 3 | The speed Space toggles to from `on_event`. |
+
+The screen-set action `speed(n)` picks speed `n` ([Screen layouts](screens.md#actions)); the
+testbed layout shows one button per speed (`||`, `5s`, `30m`, `1d` …); the number keys pick the
+speeds after `on_event` (with a pause first, 1 is the first running speed). Errors:
+`clock.speeds: 'fast' is not a time per second (e.g. 5s, 1h, 1d)`; `clock.run: 7 is not one of
+the 3 speeds (0–2)` (the index is then clamped to the last speed).
+
+```yaml
+# packs/interceptor/strategy/campaign.yaml — the original's dial (verified)
+clock:
+  speeds: [5s, 1min, 5min, 30min, 1h, 1d]   # six speeds and no pause
+  on_event: 0                               # events drop to 5 s per second
+  run: 3                                    # Space: 30 min per second
+```
+
+The original's dial has six holes and no pause: its slowest speed is five times real time, and
+its "(5 secs)" buttons select it.
+
 ### `tech_ids`
 
 `tech_ids: {<number>: <research id>}` (app 0.8.0) — for data inherited from a game that names
