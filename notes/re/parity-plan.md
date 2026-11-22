@@ -34,7 +34,8 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #120 D-09 bolts hit missiles (no PD), D-10 cloak drain/shields/missiles, D-12 original missile flight/fuse/blast, D-13 launcher rate and rounds, D-15 start throttle 50 %, RQ-C-15 Parallax/Doppelganger/PassiveCloaking, D-17 pirate/corporate hulls; D-18 open (Patton fit unknown) | 0.22.19 |
 | #121 D-31 --balance at the difficulty, start beam setting, energy pool and station pools; soaks report the first hit and hits on friends; D-42 re-measured (closed: matches perfect fire); D-43 (enemies engage the station / freighter) | 0.22.20 |
 | #120 follow-up: D-18 Patton fit (ShieldType3 x 3, ArmorType3 x 4, X-COM factors), interceptor break-off call dropped (message 7 is rejected) | 0.22.20 |
-| #130 RQ-S-07 sensor ranges 2,000/4,000/6,000 and hub 0, react_on_detect 25 + 10d %; planets per system (2-5 from the class table 0x662e60) | NEXT |
+| #130 RQ-S-07 sensor ranges 2,000/4,000/6,000 and hub 0, react_on_detect 25 + 10d %; planets per system (2-5 from the class table 0x662e60) | 0.22.24 |
+| #129 RQ-S-02 score by Level, RQ-S-03 artefact-gated topics (18 of 26; goodies tables, salvage_items; item map derived, DEV-097) | 0.22.25 |
 
 ## Issues
 
