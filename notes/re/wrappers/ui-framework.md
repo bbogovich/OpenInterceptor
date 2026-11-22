@@ -354,6 +354,25 @@ before the frame, and the frame pieces are drawn over it (`0x518604`), so with s
 reaches 36 / 50 px from the left / top box edge, under the 82 / 73 px bands, and shows only through
 the bands' keyed (transparent) pixels.
 
+### 4.9 Multi-row button boxes and captions (verified)
+
+* **Row filling:** buttons go to rows in order, **first row = bottom row**; a new row starts when the
+  running sum of (button width + 10) passes **box width − 70** (box = content + side edges). Buttons
+  flagged full-width (a `~` before the label key, e.g. research complete's
+  "(~S_ALLOCATERESEARCH)(~S_VIEWUFOPEDIA)") get width box − 70 and so sit alone in their row.
+* **Only rows with 1 or 2 buttons are positioned** (`0x51a51b`: one → centred, two → split at the
+  centre); a row with 3 or more buttons is left unplaced by this routine (no such dialog was found).
+* **Worked 2-row example**, style 1, five 100-px buttons, centred on (320, 240): the one-row sum 550
+  > 465 → content width 450 → (95, 190, 545, 290); + 82 + 82 → (13, 190, 627, 290); break at
+  614 − 70 = 544 → buttons 1–4 in row 0, button 5 in row 1 → **kit 242**; style 1 → (−7, 170, 657,
+  290) (the style padding is applied after the on-screen push, so it can overhang); top − 64 →
+  106, bottom + 75 → **final (−7, 106, 657, 365)**; row 0 top = 290 − 25 − 7 + 75 − 5 = 328, row 1
+  top = 311. Row 0 has four buttons and is therefore not positioned (see above): real dialogs use
+  `~` buttons instead.
+* **Captions:** the caption string (+0xf8) is drawn **only for style 3** (`0x518aa7`: client centre,
+  top + 54, font +0x614). Styles 0–2 draw no caption; their only text is the body (+0xfc), upper-
+  cased and centred in the text rect (§4.3).
+
 ### 4.6 Frame style per dialog (verified: the style argument at each call)
 
 `0x51aacd` (the common "message box" wrapper, 182 callers) and `0x51abc9` (with a check row, 8
