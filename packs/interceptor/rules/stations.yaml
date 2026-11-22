@@ -1,7 +1,17 @@
 # yaml-language-server: $schema=../../../schemas/rules.schema.json
 # Stations and other large static objects. Kind = station is the default for [object:*].
 # Hull points come from the player's GameSettings.ini: each station inherits its *HP
-# section, and its hull is that chart's HP1-HP4 summed (DERIVED).
+# section, and its hull is that chart's HP1 (VERIFIED: the original reads only HP1;
+# HP2-HP4 and SD are loaded and never used; notes/re/flight/README.md §8.1, RQ-C-01).
+#
+# Station hubs (the records of the original's base manager: X-COM, alien, pirate and
+# science stations) take hits pool -> hull, with no armour, no difficulty factor and no
+# system hits (damage_model: station; README §8.3, VERIFIED, RQ-C-04). The X-COM and alien
+# bases have one shield pool sized by their generator module (modules.yaml), recharging
+# 2 points per second (README §8.2, VERIFIED); when the last generator falls the pool keeps
+# its points but stops recharging (on_generator_lost: keep; README §8.5, DERIVED).
+# Outposts and ore plants are other managers in the original (their own shield and hull
+# routines, README §8.3) and keep the ship damage model here.
 #
 
 objects:
@@ -10,8 +20,9 @@ objects:
     name: X-COM Base
     faction: xcom
     model_set: xcom_base
-    inherit: original:GameSettings.ini/XCOMBaseHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
-    shields: 1000
+    inherit: original:GameSettings.ini/XCOMBaseHP   # hull = HP1 (VERIFIED)
+    damage_model: station
+    shield_pool: {recharge: 2, on_generator_lost: keep}   # README §8.2 / §8.5
     modules:
       - {slot: '0', class: xcom_beam_defense}
       - {slot: '1', class: xcom_beam_defense}
@@ -23,19 +34,20 @@ objects:
     name: Corporate Outpost
     faction: corporate
     model_set: xcom_outpost
-    inherit: original:GameSettings.ini/XCOMOutpostHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/XCOMOutpostHP   # hull = HP1 (VERIFIED)
   xcom_opp:
     name: Ore Processing Plant
     faction: corporate
     model_set: xcom_opp
-    inherit: original:GameSettings.ini/XCOMOPPHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/XCOMOPPHP   # hull = HP1 (VERIFIED)
   alien_base:
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Alien Base
     faction: alien
     model_set: alien_base
-    inherit: original:GameSettings.ini/AlienBaseHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
-    shields: 1500
+    inherit: original:GameSettings.ini/AlienBaseHP   # hull = HP1 (VERIFIED)
+    damage_model: station
+    shield_pool: {recharge: 2, on_generator_lost: keep}   # README §8.2 / §8.5
     modules:
       - {slot: '0', class: alien_beam_pod}
       - {slot: '1', class: alien_shield_pod}
@@ -47,33 +59,37 @@ objects:
     name: Alien Outpost
     faction: alien
     model_set: alien_outpost
-    inherit: original:GameSettings.ini/AlienOutpostHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/AlienOutpostHP   # hull = HP1 (VERIFIED)
   alien_opp:
     name: Alien Mining Platform
     faction: alien
     model_set: alien_opp
-    inherit: original:GameSettings.ini/AlienOPPHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/AlienOPPHP   # hull = HP1 (VERIFIED)
   pirate_base:
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Pirate Base
     faction: pirate
     model_set: pirate_base
-    inherit: original:GameSettings.ini/PirateBaseHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/PirateBaseHP   # hull = HP1 (VERIFIED)
+    damage_model: station
   arms_dealer:
     name: Arms Dealer Base
     faction: neutral
     model_set: arms_dealer
-    inherit: original:GameSettings.ini/PirateArmsHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/PirateArmsHP   # hull = HP1 (VERIFIED)
+    damage_model: station
   science_station:
     name: GSC Science Station
     faction: corporate
     model_set: science_station
-    inherit: original:GameSettings.ini/ScienceHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/ScienceHP   # hull = HP1 (VERIFIED)
+    damage_model: station
   nova_science:
     name: Nova Science Station
     faction: corporate
     model_set: nova_science
-    inherit: original:GameSettings.ini/NovaScienceHP   # hull = HP1+HP2+HP3+HP4 (DERIVED)
+    inherit: original:GameSettings.ini/NovaScienceHP   # hull = HP1 (VERIFIED)
+    damage_model: station
   asteroid:
     name: Asteroid
     faction: neutral

@@ -117,6 +117,13 @@
                 "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
               }}},
           "shield_generator": {"description": "modules: while one survives, its station's shields work", "type": "boolean"},
+          "shield_capacity": {"description": "generator modules: the hub's shield_pool maximum while it is the first standing generator", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "shield_pool": {"description": "stations: one shield pool instead of fore and aft banks", "type": "object", "additionalProperties": false, "properties": {
+              "recharge": {"description": "points per second while a generator stands (default 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "on_generator_lost": {"description": "keep the points without recharging, or drop to 0 (default drop)", "enum": ["keep", "drop"]}
+            }},
+          "shielded_by_hub": {"description": "modules: hits drain the hub's shield_pool while it holds points", "type": "boolean"},
+          "damage_model": {"description": "station: hits past the shields go straight to the hull (no armour, difficulty factor or system hits)", "enum": ["ship", "station"]},
           "point_defence": {"description": "guns that shoot down hostile missiles", "type": "object", "additionalProperties": false, "properties": {
               "range": {"description": "reach (default 800m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
               "rate": {"description": "shots per second (default 3)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -197,6 +204,13 @@
                 "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
               }}},
           "shield_generator": {"description": "modules: while one survives, its station's shields work", "type": "boolean"},
+          "shield_capacity": {"description": "generator modules: the hub's shield_pool maximum while it is the first standing generator", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "shield_pool": {"description": "stations: one shield pool instead of fore and aft banks", "type": "object", "additionalProperties": false, "properties": {
+              "recharge": {"description": "points per second while a generator stands (default 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "on_generator_lost": {"description": "keep the points without recharging, or drop to 0 (default drop)", "enum": ["keep", "drop"]}
+            }},
+          "shielded_by_hub": {"description": "modules: hits drain the hub's shield_pool while it holds points", "type": "boolean"},
+          "damage_model": {"description": "station: hits past the shields go straight to the hull (no armour, difficulty factor or system hits)", "enum": ["ship", "station"]},
           "point_defence": {"description": "guns that shoot down hostile missiles", "type": "object", "additionalProperties": false, "properties": {
               "range": {"description": "reach (default 800m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
               "rate": {"description": "shots per second (default 3)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},

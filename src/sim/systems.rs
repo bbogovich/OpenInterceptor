@@ -312,6 +312,11 @@ pub fn recharge(ship: &mut Ship, class: &ShipClass, p: &PowerRules, dt: f32) {
         let rate = class.energy_recharge * level(&p.beam_recharge, ship.power.beam);
         ship.energy = (ship.energy + rate * dt).min(class.energy);
     }
+    // A station's single pool has its own fixed rate (no power levels, no facings).
+    if let Some(pool) = class.shield_pool {
+        super::stations::recharge(ship, pool, dt);
+        return;
+    }
     if ship.shield_max <= 0.0 {
         return;
     }

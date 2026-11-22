@@ -3,6 +3,11 @@
 # (M_XCOM*/M_ALIEN* in GameSettings.ini); meshes are the original turret and pod meshes;
 # which attachment point of XBASE7 (33 points) and AL-BASE01 (28) holds what is DERIVED
 # (the original builds bases from the strategy layer, Stage 4).
+# Every module is covered by its hub's shield pool while the pool holds points: hits on it
+# drain the pool, and what gets through strikes the hub's hull (shielded_by_hub;
+# notes/re/flight/README.md §8.3, VERIFIED, RQ-C-03). A generator's shield_capacity is the
+# pool maximum the original hard-codes by module type (README §8.2, VERIFIED; the INI has
+# no key for it): X-COM Type1/2/3 = 2000/3000/4000, alien Type2/3 = 3000/4000.
 
 behaviours:
   station_turret:
@@ -32,17 +37,20 @@ objects:
     beams: [laser_cannon, laser_cannon]
     turret_arc: 180
     behaviour: station_turret
+    shielded_by_hub: true
   xcom_shield_generator:
     inherit: original:GameSettings.ini/M_XCOMShieldGeneratorType1
     name: Shield generator module
     model_set: xcom_module
     faction: xcom
-    shield_generator: true
+    shield_capacity: 2000   # M_XCOMShieldGeneratorType1 (VERIFIED)
+    shielded_by_hub: true
   xcom_hangar:
     inherit: original:GameSettings.ini/M_XCOMHangar
     name: Hangar module
     model_set: xcom_module
     faction: xcom
+    shielded_by_hub: true
   alien_beam_pod:
     inherit: original:GameSettings.ini/M_ALIENBeamDefense_PlasmaPulse
     name: Alien plasma pod
@@ -51,9 +59,11 @@ objects:
     beams: [plasma_cannon]
     turret_arc: 180
     behaviour: station_turret
+    shielded_by_hub: true
   alien_shield_pod:
     inherit: original:GameSettings.ini/M_ALIENShieldGeneratorType2
     name: Alien shield pod
     model_set: alien_pod
     faction: alien
-    shield_generator: true
+    shield_capacity: 3000   # M_ALIENShieldGeneratorType2 (VERIFIED)
+    shielded_by_hub: true

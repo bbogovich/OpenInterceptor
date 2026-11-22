@@ -267,6 +267,29 @@ fn ship() -> Ty {
         ),
         f("shield_generator", Ty::Bool, "modules: while one survives, its station's shields work"),
         f(
+            "shield_capacity",
+            Ty::Num,
+            "generator modules: the hub's shield_pool maximum while it is the first standing generator",
+        ),
+        f(
+            "shield_pool",
+            Ty::Struct(vec![
+                f("recharge", Ty::Num, "points per second while a generator stands (default 2)"),
+                f(
+                    "on_generator_lost",
+                    Ty::Enum(&["keep", "drop"]),
+                    "keep the points without recharging, or drop to 0 (default drop)",
+                ),
+            ]),
+            "stations: one shield pool instead of fore and aft banks",
+        ),
+        f("shielded_by_hub", Ty::Bool, "modules: hits drain the hub's shield_pool while it holds points"),
+        f(
+            "damage_model",
+            Ty::Enum(&["ship", "station"]),
+            "station: hits past the shields go straight to the hull (no armour, difficulty factor or system hits)",
+        ),
+        f(
             "point_defence",
             Ty::Struct(vec![
                 f("range", dist(), "reach (default 800m)"),

@@ -20,6 +20,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | Cockpit ship-status bands lie on the art's painted rings (playtest) | 0.22.2 |
 | D-01 / RQ-S-01: tech ids from `GameSettings.ini`'s numbered topic list (was a databank table, off by one) | 0.22.3 |
 | RQ-S-02 (part): research progress belongs to the topic (`switching: keep_progress`) | 0.22.3 |
+| #113 RQ-C-01 = D-16 (station hull is HP1), RQ-C-02/03 (one shield pool by generator type, covering the modules), RQ-C-04 (`damage_model: station`) | NEXT |
 
 ## Issues
 
