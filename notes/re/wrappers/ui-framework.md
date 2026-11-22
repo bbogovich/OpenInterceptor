@@ -324,6 +324,36 @@ same pattern elsewhere, derived). Dialogs that offer it:
 
 **Plain OK:** event **0xd** (pilot leaves the medical bay) and every other message box.
 
+### 4.8 Kit piece sizes, a worked one-line example, and the fill clip (verified)
+
+Piece sizes (WrappersDLL TARG headers; the exe's size getters return the loaded image size):
+
+| Kit | B+0 top | B+1 bottom | B+2 left | B+3 right | corners B+4…B+7 |
+|---|---|---|---|---|---|
+| style 1 (rows 163-170 = 6560-6567) | 10 × 73 | 10 × 73 | 82 × 16 | 82 × 16 | 82 × 73 each |
+| style 2 (179-186 = 6580-6587) | 10 × 49 | 10 × 66 | 89 × 20 | 89 × 20 | 89 × 49, 89 × 49, 89 × 66, 89 × 66 |
+| style 3 (190-197 = 6591-6598) | 18 × 99 | 18 × 73 | 49 × 17 | 227 × 17 | 49 × 99, 227 × 99, 227 × 73, 49 × 73 |
+| kit 242 (6530-6537) | 32 × 64 | 32 × 75 | 60 × 32 | 60 × 32 | 60 × 64, 60 × 64, 60 × 90, 60 × 90 |
+| kit 250 (6550-6557) | 32 × 64 | 32 × 118 | 60 × 32 | 60 × 32 | 60 × 64, 60 × 64, 60 × 130, 60 × 130 |
+
+**Style-1 one-line notice, one button row, centred on (320, 240):**
+1. Content 325 × 100 (text narrower than 325) → (158, 190, 483, 290).
+2. + left and right edge widths 82 + 82 → width 489, re-centred → (76, 190, 565, 290).
+3. Style 1: top − 20, 20 px wider each side, right + 10 → (56, 170, 595, 290).
+4. + top band 73 and bottom band 73 → **final box (56, 97, 595, 363), 539 × 266**.
+5. Text rect = box − (36, 50, 44, 45) → (92, 147, 551, 318).
+6. Button row: top = 363 − 25 − 7 = **331**, 14 tall.
+
+So a one-line style-1 box is **266 px tall**, not ~560: the 100 px content height is the only
+vertical term besides the 20 px style padding and the two 73 px bands.
+
+**Fill clip** (`0x51941f`): the body fill is drawn into `dirty ∩ text rect` (member +0xe0, which
+`0x5182b3` sets to the final box minus the kit insets), with the image centred on the text rect's
+centre. It is **clipped to the text rect**, not to the box or the frame's inner edge. It is drawn
+before the frame, and the frame pieces are drawn over it (`0x518604`), so with style 1 the fill
+reaches 36 / 50 px from the left / top box edge, under the 82 / 73 px bands, and shows only through
+the bands' keyed (transparent) pixels.
+
 ### 4.6 Frame style per dialog (verified: the style argument at each call)
 
 `0x51aacd` (the common "message box" wrapper, 182 callers) and `0x51abc9` (with a check row, 8
