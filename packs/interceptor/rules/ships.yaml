@@ -467,8 +467,13 @@ ships:
     name: Patton-class Research Cruiser
     model_set: patton
     kind: capital
-    shields: 1200   # DERIVED
-    armor: 1500   # DERIVED
+    # Built as an X-COM ship (owner 0) with a fixed fit: EngineType3, SensorTargetingSystem2,
+    # ShieldType3, ArmorType3 and a Dimension Jump Drive (flight README §3, VERIFIED). Its
+    # banks are the fit's shield x 3 and armour x 4 with the X-COM difficulty factors:
+    # 1,500 / 1,700 from Veteran up.
+    faction: xcom
+    fitted: {shield: original:GameSettings.ini/ShieldType3, armor: original:GameSettings.ini/ArmorType3, engine: original:GameSettings.ini/EngineType3}
+    protection_scale: {shields: 3, armor: 4}
     max_speed: 150
     acceleration: 15
     roll_rate: 8

@@ -82,8 +82,9 @@ sounds:
 
 # Pilot radio voices (notes/re/unknowns-2026-11.md §11, VERIFIED): radio wave n of voice set v
 # (1-5, male M / female F) plays SoundFX\\Chatter\\{M|F}Pilot{v}{nn}.wav, file number 100 v + n.
-# Which line most waves say is not known (R-MSN-007); waves 33-36 are the Nova bomb messages
-# 0x46-0x49, given here as the lines wave33-wave36. Which set a pilot speaks with comes from
+# Radio messages map to waves (flight README §12, VERIFIED; 59-74 -> 22-37), but what most
+# messages mean is not known (R-MSN-007), so only the Nova bomb's messages 0x46-0x49 (waves
+# 33-36) are given here, as the lines wave33-wave36. Which set a pilot speaks with comes from
 # its record; the X-COM craft use mpilot1 until pilot records reach battle (DERIVED).
 voices:
   mpilot1: {name: Male pilot 1, wave33: ["original:MPilot133.wav"], wave34: ["original:MPilot134.wav"], wave35: ["original:MPilot135.wav"], wave36: ["original:MPilot136.wav"]}
