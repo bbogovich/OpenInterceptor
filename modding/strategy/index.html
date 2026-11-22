@@ -4964,6 +4964,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#manufacture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manufacture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#outposts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7100,6 +7111,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#manufacture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manufacture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#outposts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7749,6 +7771,11 @@ names it. Difficulty level ids are constants as well (<code>difficulty &gt;= vet
 <td><code>base_distance(s)</code></td>
 <td>number</td>
 <td>Map units from system <code>s</code> to the player's nearest base, in a straight line; 1 000 000 000 with no base (app 0.19.0).</td>
+</tr>
+<tr>
+<td><code>centre_distance(s)</code></td>
+<td>number</td>
+<td>App NEXT: map units from system <code>s</code> to the map's centre — a generated map's middle, else the middle of the systems' bounding box. <code>interceptor</code>'s bases must be within 30,000 (5 ly) of it (<strong>verified</strong>).</td>
 </tr>
 </tbody>
 </table>
@@ -8420,6 +8447,30 @@ never refused. A whole base can be dismantled too (<a href="#dismantling-a-whole
 <td>none (anywhere)</td>
 <td>Where a base of this type may be built: a condition over the candidate <code>system</code> (app 0.19.0; <a href="#where-a-base-or-facility-may-be-built">below</a>). <code>base_distance(system) &lt;= 3500</code> is "within 3500 map units of one of your bases".</td>
 </tr>
+<tr>
+<td><code>price_share</code>, <code>hub_cost</code></td>
+<td>number</td>
+<td>0, 0</td>
+<td>App NEXT (RQ-S-08): when <code>price_share</code> is above 0, a new base costs <code>price_share</code> × (<code>hub_cost</code> + its <code>template</code>'s modules as they would be chosen now), in place of <code>cost</code>. <code>interceptor</code>: 0.75 and 1,500,000 (<strong>verified</strong>, README §3.1).</td>
+</tr>
+<tr>
+<td><code>hull</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: the hub's hull points (0: none). An unopposed strike takes <code>strike_damage</code>; <code>repair</code> mends them. <code>interceptor</code>: 6,000, the station chart's HP1 (<strong>verified</strong>); <code>default</code>: 4,000.</td>
+</tr>
+<tr>
+<td><code>repair</code></td>
+<td><code>{per_minute, min_step, boost}</code></td>
+<td>none</td>
+<td>App NEXT (RQ-S-16): <code>per_minute</code> hull points a game minute, at least <code>min_step</code> a step (an hour at most), times each <code>boost: {&lt;module&gt;: factor}</code> while one works. <code>interceptor</code>: 2, 5, Advanced Damage Control × 2 (<strong>verified</strong>, README §3.2).</td>
+</tr>
+<tr>
+<td><code>strike_damage</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: hull points an unopposed strike takes (<code>interceptor</code>: 1,500, <em>derived</em>).</td>
+</tr>
 </tbody>
 </table>
 <div class="admonition warning">
@@ -8529,6 +8580,16 @@ flies straight for its target; on a lane map it enters at a system and follows t
 amount (an expression) added or taken every period (<code>every</code>, default 30 days). Each payment is a line in the message log.
 Module <code>maintenance</code>, hull <code>upkeep</code> and pilot <code>salary</code> are charged monthly on their own; use
 <code>expenses</code> for anything else.</p>
+<h3 id="manufacture"><code>manufacture</code><a class="headerlink" href="#manufacture" title="Permanent link">&para;</a></h3>
+<p><code>manufacture: {per_outpost, per_opp}</code> (app 0.22.29, RQ-S-09) — production by the
+<a href="#outposts">outposts</a>' technicians instead of the bases' <code>production_rate</code>: the capacity is
+<code>per_outpost</code> + <code>per_opp</code> × its OPPs technicians for each outpost (default 10 and 10), and a job
+gains one work unit per technician-hour, so an item's <code>prod_time</code> is in technician-hours. The
+capacity is one pool taken in queue order across the bases (the first base's first job first);
+what a base leaves over goes on to the next. <code>interceptor</code> has it (README §2.5, <strong>verified</strong>: two
+outposts with two OPPs are 60 technicians, and a 500-hour item takes 8.3 hours); that the first
+job takes the whole capacity is <em>derived</em> (the exe gives each job a percentage share). <code>default</code>
+keeps its workshops.</p>
 <h3 id="outposts"><code>outposts</code><a class="headerlink" href="#outposts" title="Permanent link">&para;</a></h3>
 <p><code>outposts:</code> (app 0.22.26, RQ-S-04/05) — corporate outposts as campaign objects: they pay the
 player, and how well funded they are follows how the player does against the aliens where they
