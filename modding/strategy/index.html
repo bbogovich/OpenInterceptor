@@ -7881,6 +7881,12 @@ base_distance(system) &lt;= 3500                      # a placement: condition
 <td>Generated: system names to draw from (then numbered). An entry <code>original:&lt;file&gt;/&lt;section&gt;</code> (app 0.22.17) stands for the lines of <code>[section]</code> in a text file of the player's data — <code>interceptor</code> uses <code>original:starcorp1.txt/STAR NAMES</code>, the original's 101 star names. A missing file or section is a load warning.</td>
 </tr>
 <tr>
+<td><code>system_counts</code></td>
+<td>map of count → weight</td>
+<td>none</td>
+<td>Generated: the system count rolled from this table instead of <code>systems</code> (app 0.22.21). <code>interceptor</code>: <code>{65: 11, 70: 10, 75: 70, 80: 9}</code>, the original's roll (<strong>verified</strong>, <code>unknowns-2026-11.md</code> §13.5).</td>
+</tr>
+<tr>
 <td><code>seed</code></td>
 <td>number</td>
 <td>the campaign's</td>
@@ -7907,7 +7913,15 @@ a campaign with <a href="#logistics">logistics</a>, <code>deposits</code> and <c
 rolled). <code>icon</code> (asset, app 0.22.17) draws that image at its own size, centred on the star, instead
 of a dot; <code>interceptor</code> uses the CSD's 9 × 9 class icons (<code>original:sprite#893</code> – <code>#901</code>,
 <strong>verified</strong>; which original class each of its six classes stands for is <strong>derived</strong>). Generated systems are scattered at least a little apart, take a class by weight and a
-name from <code>names</code>.</p>
+name from <code>names</code>. <code>portrait</code> (asset) and <code>portrait_frames</code> (number, default 1; app
+NEXT) are the system picture a map with <a href="../screens/#zoom-levels">zoom levels</a> shows for a
+system of that class, animated through rows N … N + frames − 1.</p>
+<p>Since app 0.22.21 <code>interceptor</code> has the original's nine classes (red giant, blue giant, white
+dwarf, blue, white, yellow, orange, red dwarf, black hole) weighted by its class roll (<strong>verified</strong>,
+§13.5; black holes weigh 0 and are placed by <code>black_holes</code>), each with its CSD icon and a
+portrait: five 20-frame star pictures in rows 454 – 553 (yellow 454, orange 474, red 494, blue 514,
+white 534; which class takes which is <strong>derived</strong>). Planets per system (2 – 5 by a per-class
+table) are not generated.</p>
 <h3 id="research-and-research_model"><code>research</code> and <code>research_model</code><a class="headerlink" href="#research-and-research_model" title="Permanent link">&para;</a></h3>
 <p><code>research: {&lt;id&gt;: …}</code> — the research tree.</p>
 <table>

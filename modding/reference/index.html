@@ -9669,7 +9669,7 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code> (app 0.22.10), <code>anim</code> (app 0.22.15)</td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code> (app 0.22.10), <code>anim</code> (app 0.22.15), <code>graph</code> (app 0.22.21)</td>
 <td><code>image</code></td>
 <td>What it is; another kind is a load error.</td>
 </tr>
@@ -9878,10 +9878,16 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td>A map's hover labels, the original's way (app 0.22.17; <a href="../screens/#map-labels">Screens › Map labels</a>).</td>
 </tr>
 <tr>
-<td><code>slots</code>, <code>slot_size</code>, <code>slot_font</code></td>
-<td>list, <code>[w, h]</code>, name</td>
+<td><code>slots</code>, <code>slot_size</code>, <code>slot_icons</code>, <code>slot_unusable</code>, <code>slot_selected</code></td>
+<td>list, <code>[w, h]</code>, map, asset, asset</td>
 <td>none</td>
-<td>A compact list's sockets on the art (app 0.22.17; <a href="../screens/#widget-keys">Widget keys</a>).</td>
+<td>A hangar list's sockets on the art, icons only (app 0.22.21; <a href="../screens/#widget-keys">Widget keys</a>).</td>
+</tr>
+<tr>
+<td><code>zoom_levels</code>, <code>months</code>, <code>legend</code></td>
+<td>lists</td>
+<td>none</td>
+<td>A map's fixed zoom levels; a graph's month names and legend (app 0.22.21; <a href="../screens/#report-graphs">Screens</a>).</td>
 </tr>
 </tbody>
 </table>

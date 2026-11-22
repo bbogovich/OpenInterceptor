@@ -3738,6 +3738,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#report-graphs-appgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report graphs (app::graph)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6930,6 +6941,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#report-graphs-appgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report graphs (app::graph)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -7626,7 +7648,7 @@ play without it.</p>
 <td>Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7).</td>
 </tr>
 <tr>
-<td><code>msgbox::{layout, MsgBox, Kit, insets, base_size, button_rows, button_width, kit_pieces, fill_rect, knob_frame, slider_offset, ornament_on}</code>; <code>caption::kit_dialog</code>; <code>DialogStyle::{kits, styles, kit, style_for, fill_large, row}</code>; <code>msgbox::{KitChoice, kit_choice, row_change}</code>; <code>widgets::modal_kind</code>; <code>NoticeKind</code>, <code>ClockDef::{ask_for, asks}</code>, <code>StrategyScreen::banner_kind</code></td>
+<td><code>msgbox::{layout, MsgBox, Kit, insets, base_size, button_rows, button_width, kit_pieces, fill_rect, knob_frame, slider_offset, ornament_on}</code>; <code>caption::kit_dialog</code>; <code>DialogStyle::{kits, styles, kit, style_for, fill_large, row}</code>; <code>msgbox::{KitChoice, kit_choice, row_change, full_width}</code>; <code>widgets::modal_kind</code>; <code>NoticeKind</code>, <code>ClockDef::{ask_for, asks}</code>, <code>StrategyScreen::banner_kind</code></td>
 <td><code>app::msgbox</code>, <code>app::caption</code>, <code>content::skin</code>, <code>content::strategy</code>, <code>campaign</code>, <code>app::strategy</code></td>
 <td>The original's message box and which notices ask (app 0.22.15, #127 follow-up).</td>
 </tr>
@@ -7805,6 +7827,14 @@ it with <code>text::draw_text</code> / <code>Ui::draw_glyphs</code> in the widge
 pixels scaled by the text scale). Star-class icons are textures loaded once per frame through the
 keyed image cache (<code>star_icons</code>). Tests: <code>app::maplabel::tests</code>, <code>content::content tests</code>
 (<code>list_section</code>), <code>campaign::tests::readouts_never_show_negative_zero</code>.</p>
+<h3 id="report-graphs-appgraph">Report graphs (<code>app::graph</code>)<a class="headerlink" href="#report-graphs-appgraph" title="Permanent link">&para;</a></h3>
+<p><code>graph::layout(rect, margin, values, lines)</code> places a status report's line graph in design
+pixels — the plot area, the grid lines with their values (a 1 / 2 / 5 step from <code>nice_step</code>), the
+last 16 months' x positions and the series' points — and <code>activity_class(total, months)</code> picks an
+activity map's colour class. <code>StrategyScreen::draw_graph</code> and <code>draw_activity_map</code> draw them from
+<code>Campaign::history</code> (<code>MonthRecord</code>s closed each month), <code>this_month</code> and <code>activity</code> (per system,
+<code>count_activity</code>), which the campaign layer fills and saves. Tests: <code>app::graph::tests</code>,
+<code>campaign::tests</code> (records, <code>roll_count</code>), <code>campaign::save::tests</code> (the history round-trips).</p>
 
 
 

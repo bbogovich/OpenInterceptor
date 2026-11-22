@@ -4936,6 +4936,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#report-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zoom-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zoom levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#sprite-buttons-toggles-and-radio-groups" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6841,6 +6863,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#report-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Report graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zoom-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zoom levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#sprite-buttons-toggles-and-radio-groups" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7149,7 +7193,7 @@ and kept; one that cannot be loaded is reported on standard error once
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code></td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code>, <code>anim</code>, <code>graph</code></td>
 <td><code>image</code></td>
 <td>What the widget is (below).</td>
 </tr>
@@ -7298,16 +7342,34 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>A map's viewport: <code>round</code> clips it to the circle inside the rectangle.</td>
 </tr>
 <tr>
+<td><code>zoom_levels</code></td>
+<td>list of numbers</td>
+<td>none</td>
+<td>A <code>map</code>'s fixed zoom levels in map units per design pixel, in place of free zoom (app 0.22.21, <a href="#zoom-levels">Zoom levels</a>).</td>
+</tr>
+<tr>
+<td><code>months</code>, <code>legend</code></td>
+<td>list of text</td>
+<td>Jan … Dec, none</td>
+<td>A <code>graph</code>'s month names (January first), and the labels of a finance graph's low / high lines or of an activity map's four classes; text keys allowed (app 0.22.21).</td>
+</tr>
+<tr>
 <td><code>labels</code></td>
 <td><code>{font, colour, base_colour, rise, base_rise, box, cycle, margin}</code></td>
 <td>none</td>
 <td>A <code>map</code>'s labels the original's way (<a href="#map-labels">Map labels</a>, app 0.22.17). Without it every star's name is drawn beside it.</td>
 </tr>
 <tr>
-<td><code>slots</code>, <code>slot_size</code>, <code>slot_font</code></td>
-<td>list of <code>[x, y]</code>, <code>[w, h]</code>, name</td>
-<td>none, <code>[76, 75]</code>, the list's font</td>
-<td>A compact <code>list</code>'s sockets on the art: the rows that have cells (the hangar's craft) are also shown there, one per socket, name over second cell; a click selects the row (app 0.22.17).</td>
+<td><code>slots</code>, <code>slot_size</code></td>
+<td>list of <code>[x, y]</code>, <code>[w, h]</code></td>
+<td>none, <code>[76, 75]</code></td>
+<td>A hangar <code>list</code>'s sockets on the art (centres): the selected craft's hard points as icons only — the hull's slots in order, each with its fitted item's icon; a click selects a socket (app 0.22.17; icons only since app 0.22.21).</td>
+</tr>
+<tr>
+<td><code>slot_icons</code>, <code>slot_unusable</code>, <code>slot_selected</code></td>
+<td>map of item kind → asset, asset, asset</td>
+<td>none</td>
+<td>The sockets' images: a fitted item's icon by item kind, the image on sockets past the hull's hard points, and the selected socket's overlay drawn at (+1, +1) (app 0.22.21; replaces 0.22.17's <code>slot_font</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -7350,6 +7412,10 @@ and kept; one that cannot be loaded is reported on standard error once
 <tr>
 <td><code>check</code></td>
 <td>A check row (app 0.22.10): a lamp at its left that a click toggles — <code>images: {sprite, states: 2}</code> (off, on) or <code>{up, down}</code> — and its <code>label</code> 20 px to the right in the skin's text-button font.</td>
+</tr>
+<tr>
+<td><code>graph</code></td>
+<td>A status report's line graph of a month-by-month <code>source</code> (app 0.22.21, <a href="#report-graphs">Report graphs</a>).</td>
 </tr>
 </tbody>
 </table>
@@ -7569,10 +7635,18 @@ lists that fill columns, in this order:</p>
 <li>Purchase, Manufacture and Equip Ships use compact boxes with columns and their arrows. The
   arrows' positions and images are <strong>verified</strong>; Equip Ships' columns borrow the CSD's ship-list
   template (<strong>derived</strong>).</li>
-<li>Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Their arrows'
-  positions are not recovered yet, so they scroll with the wheel.</li>
-<li>Since app 0.22.17 Equip Ships' nine ring sockets (centres <strong>verified</strong>) show the craft, name over
-  pilot in the 6 px font (<strong>derived</strong>); a click on a socket selects that craft.</li>
+<li>Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Since app 0.22.21
+  their arrows are placed where the exe puts them (<code>unknowns-2026-11.md</code> §13.3, <strong>verified</strong>):
+  Bases' module scroll buttons 400 / 401 at (484, 247) and (580, 247) (sprite rows 1381 / 1379;
+  the pressed row N + 1 <strong>derived</strong>); Base Stats' arrows at (list right + 8, list top + 65) and
+  (list right + 8, list bottom − 20) (24 × 24 hot spots, <strong>derived</strong>); the UFOpedia topic list's
+  scroll anchor (616, 222), its upper and lower halves (<strong>derived</strong>). The article text's anchor
+  (616, 386) is not built.</li>
+<li>Equip Ships' nine ring sockets (centres <strong>verified</strong>) show the selected ship's hard points as
+  icons only, since app 0.22.21 (§13.2, <strong>verified</strong>): row 1237 where the hull has no hard point,
+  the selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the
+  body font (23011). The fitted items' icons come from a table by item kind whose rows are not
+  read yet, so <code>interceptor</code> has no <code>slot_icons</code>.</li>
 <li>Research keeps its rows on the art's slots.</li>
 </ul>
 <p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
@@ -7636,6 +7710,47 @@ several objects are in the box their labels take turns, one at a time, each for 
 <p>The testbed layout (<code>starmap</code>) takes a full <code>map</code> definition too, for its <code>labels</code>; its
 other keys are unused there. <code>--hover X,Y</code> puts the labels' cursor at a design-space point (for
 screenshots).</p>
+<h3 id="report-graphs">Report graphs<a class="headerlink" href="#report-graphs" title="Permanent link">&para;</a></h3>
+<p>A <code>graph</code> widget (app 0.22.21, D-27) charts a month-by-month figure as the original's status
+reports do (StatusReports.cpp, <code>unknowns-2026-11.md</code> §13.1, <strong>verified</strong>): 1 px lines, a grid of
+horizontal lines in RGB(0, 50, 0), ticks and axes in RGB(0, 100, 0), at most 16 months along the
+bottom and the values at the left in <code>font</code> in RGB(0, 200, 0), "NO DATA" before the first month
+closes.</p>
+<table>
+<thead>
+<tr>
+<th><code>source</code></th>
+<th>Series</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>income</code></td>
+<td>Money received each month, in $1000s.</td>
+</tr>
+<tr>
+<td><code>finance</code></td>
+<td>The series the screen's list picks: its rows are income, expenditure, maintenance, balance and score. Also draws the low and high lines of the months shown, labelled by <code>legend</code>.</td>
+</tr>
+<tr>
+<td><code>alien</code>, <code>xcom</code></td>
+<td>Alien contacts launched and interceptions sent each month.</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>map</code> with <code>source: activity_alien</code> or <code>activity_xcom</code> draws every system coloured by its
+average actions a month — none, 1 – 5, 6 – 15, 16 and more — with the four <code>legend</code> texts under
+it. The months come from the campaign's history, which saves keep since app 0.22.21.</p>
+<p><strong>Derived:</strong> the layout (where the parts and labels go, the value step), the series line's colour
+(<code>colour</code>, default green), the activity colours, single-letter months when they are closer than
+22 px, and what counts as alien and X-COM activity.</p>
+<h3 id="zoom-levels">Zoom levels<a class="headerlink" href="#zoom-levels" title="Permanent link">&para;</a></h3>
+<p><code>zoom_levels: [45, 30]</code> on a <code>map</code> (app 0.22.21) replaces free zoom by the original CSD's levels
+(<code>unknowns-2026-11.md</code> §1.1, §13.4, <strong>verified</strong>): level 0 shows 45 map units a pixel, level 1
+30, centred on the first base's system. The wheel steps between them in place of the original's
+view knob, whose control is not placed yet. Clicking a system whose star class has a
+<code>portrait</code> shows it (level 2), animated, centred in the map (<strong>derived</strong>); the wheel goes back.
+Clicking a system without one (a black hole) only centres it. A minimap ignores the levels.</p>
 <h3 id="sprite-buttons-toggles-and-radio-groups">Sprite buttons, toggles and radio groups<a class="headerlink" href="#sprite-buttons-toggles-and-radio-groups" title="Permanent link">&para;</a></h3>
 <p>Since app 0.22.10 (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
 (Interceptor.exe button base 0x65f420, <strong>verified</strong>):</p>
