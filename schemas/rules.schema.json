@@ -670,7 +670,7 @@
           "clock": {"description": "whether the campaign clock runs while this screen is on top (default run)", "enum": ["run", "pause"]},
           "history": {"description": "on the first screen: how many screens Back remembers (the original: 29)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "widgets": {"description": "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
-                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info", "check", "anim", "graph"]},
+                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info", "check", "anim", "graph", "knob"]},
                   "rect": {"description": "x, y, w, h in the design space", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
                   "image": {"description": "its picture", "type": "string"},
                   "images": {"description": "a button's states", "type": "object", "additionalProperties": false, "properties": {
@@ -681,7 +681,7 @@
                       "sprite": {"description": "a sprite's base image (original:sprite#N): state k is row N+k", "type": "string"},
                       "states": {"description": "how many states the sprite has (1: nothing drawn when up)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
                     }},
-                  "action": {"description": "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed", "type": "string"},
+                  "action": {"description": "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed, list(prev|next|act)", "type": "string"},
                   "value": {"description": "a value: date, time, money, score, base, speed, selection", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "source": {"description": "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "text": {"description": "fixed text (a text key)", "type": "string"},
@@ -726,7 +726,7 @@
                   "bar": {"description": "compact: the pulsing selection bar's colour (default green)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
                   "slots": {"description": "sockets (centres) showing the selected craft's hard points", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
                   "slot_size": {"description": "a socket's clickable size (default 76 x 75)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
-                  "slot_icons": {"description": "a fitted item's icon by item kind", "type": "object", "additionalProperties": {"type": "string"}},
+                  "slot_icons": {"description": "a fitted item's icon by item id, else by item kind", "type": "object", "additionalProperties": {"type": "string"}},
                   "slot_unusable": {"description": "drawn on sockets past the hull's hard points", "type": "string"},
                   "slot_selected": {"description": "the selected socket's overlay, at (+1, +1)", "type": "string"},
                   "up": {"description": "a list's scroll-up arrow", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
@@ -741,6 +741,19 @@
                       }}]},
                   "shape": {"description": "a map's viewport", "enum": ["rect", "round"]},
                   "months": {"description": "a graph's month names, January first", "type": "array", "items": {"type": "string"}},
+                  "y_range": {"description": "a graph's fixed y range (default: fitted to the values)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "y_steps": {"description": "a graph's y grid steps (fixed: default 18; fitted: about 6)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "base_portraits": {"description": "a map's level-2 picture of a system with a base: x-com, enemy", "type": "array", "items": {"type": "string"}},
+                  "base_portrait_frames": {"description": "the base pictures' animation frames", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "knob": {"description": "a view knob setting the map's zoom level", "type": "object", "additionalProperties": false, "properties": {
+                      "frames": {"description": "the first of the knob's turning frames", "type": "string"},
+                      "count": {"description": "how many frames", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                      "stops": {"description": "click points, one per level", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
+                      "reach": {"description": "px around a stop that selects it (default 14)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                      "lamps_off": {"description": "a lamp per stop, off", "type": "array", "items": {"type": "string"}},
+                      "lamps_on": {"description": "a lamp per stop, on", "type": "array", "items": {"type": "string"}},
+                      "unavailable": {"description": "the lamp of a stop that cannot be chosen", "type": "string"}
+                    }},
                   "zoom_levels": {"description": "a map's fixed zoom levels, map units per design pixel", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
                   "legend": {"description": "an activity map's legend: none, 1-5, 6-15, 16+ a month", "type": "array", "items": {"type": "string"}}
                 }}]}},
@@ -1061,7 +1074,8 @@
           "size": {"description": "generated: width and height, map units", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
           "names": {"description": "generated: system names to draw from", "type": "array", "items": {"type": "string"}},
           "seed": {"description": "generated: a fixed seed (default: new every campaign)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-          "black_holes": {"description": "generated: hidden black holes", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "black_holes": {"description": "generated: hidden black holes, a number or [min, max]", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}, {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}]},
+          "black_hole_spacing": {"description": "generated: black holes picked at random this far apart", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "unit_ly": {"description": "light years per map unit", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},

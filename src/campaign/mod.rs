@@ -440,14 +440,27 @@ impl Campaign {
                     hidden: s.hidden,
                 })
                 .collect(),
-            MapKind::Generated { size, count, count_table, names, seed: map_seed, black_holes } => {
+            MapKind::Generated {
+                size,
+                count,
+                count_table,
+                names,
+                seed: map_seed,
+                black_holes,
+                black_holes_max,
+                black_hole_spacing,
+            } => {
                 let mut r = map_seed.map_or(rng, |s| s.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
                 // A count table rolls the count; the range is then that one number.
                 let count = match roll_count(count_table, &mut r) {
                     Some(n) => (n, n),
                     None => *count,
                 };
-                generate_map(def, *size, count, names, *black_holes, &mut r)
+                let mut out = generate_map(def, *size, count, names, *black_holes, &mut r);
+                if *black_hole_spacing > 0.0 {
+                    place_black_holes(&mut out, (*black_holes, *black_holes_max), *black_hole_spacing, &mut r);
+                }
+                out
             }
         };
         let mut c = Campaign {
@@ -2229,6 +2242,36 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
     c
 }
 
+/// Turns `range` (min ≤ n ≤ max, rolled) existing systems into hidden black holes, each
+/// picked at random among the others at least `spacing` from every hole already placed
+/// (the original, `0x5da74e`: 4 or 5 of them, 7,500 units apart, `unknowns-2026-11.md`
+/// §14.6). The last systems' black holes from `generate_map` are undone first. Stops early
+/// when no system is far enough.
+fn place_black_holes(systems: &mut [StarSystem], range: (u32, u32), spacing: f32, rng: &mut u64) {
+    // Undo generate_map's last-systems holes: they become ordinary yellow stars.
+    for s in systems.iter_mut().filter(|s| s.class == "black_hole") {
+        s.class = "yellow".into();
+        s.hidden = false;
+    }
+    let (lo, hi) = (range.0.min(range.1), range.0.max(range.1));
+    let n = lo + ((next_random(rng) * (hi - lo + 1) as f32) as u32).min(hi - lo);
+    let mut placed: Vec<[f32; 2]> = Vec::new();
+    for _ in 0..n {
+        let candidates: Vec<usize> = (0..systems.len())
+            .filter(|&i| {
+                systems[i].class != "black_hole" && placed.iter().all(|p| distance(*p, systems[i].pos) >= spacing)
+            })
+            .collect();
+        if candidates.is_empty() {
+            break;
+        }
+        let k = candidates[((next_random(rng) * candidates.len() as f32) as usize).min(candidates.len() - 1)];
+        systems[k].class = "black_hole".into();
+        systems[k].hidden = true;
+        placed.push(systems[k].pos);
+    }
+}
+
 /// Rolls a system count from a weighted table (`None` when the table is empty).
 fn roll_count(table: &[(u32, f32)], rng: &mut u64) -> Option<u32> {
     let total: f32 = table.iter().map(|(_, w)| w.max(0.0)).sum();
@@ -2311,6 +2354,22 @@ mod tests {
 
     use super::*;
     use crate::content::strategy::tests::{build, SAMPLE};
+
+    #[test]
+    fn black_holes_are_spaced_systems_picked_at_random() {
+        let (d, _) = sample();
+        let mut rng = 11u64;
+        let mut out = generate_map(&d, [60000.0, 60000.0], (75, 75), &[], 1, &mut rng);
+        place_black_holes(&mut out, (4, 5), 7500.0, &mut rng);
+        let holes: Vec<[f32; 2]> = out.iter().filter(|s| s.class == "black_hole").map(|s| s.pos).collect();
+        assert!((4..=5).contains(&holes.len()), "{} holes", holes.len());
+        assert!(out.iter().filter(|s| s.class == "black_hole").all(|s| s.hidden));
+        for (i, a) in holes.iter().enumerate() {
+            for b in &holes[i + 1..] {
+                assert!(distance(*a, *b) >= 7500.0);
+            }
+        }
+    }
 
     #[test]
     fn system_counts_roll_from_their_table() {

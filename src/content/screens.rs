@@ -49,6 +49,25 @@ pub enum WidgetKind {
     /// A status report's line graph of a month-by-month `source` (`income`, `finance`,
     /// `alien`, `xcom`), labels in `font` (D-27).
     Graph,
+    /// The CSD's view knob (`knob:`): clicked at one of its stops, it sets the map's zoom
+    /// level (§14.5).
+    Knob,
+}
+
+/// A view knob (the CSD's control 101, `unknowns-2026-11.md` §14.5): its turning `frames`
+/// (rows N … N + count − 1) at the widget's `pos`; clicked within `reach` px of a stop,
+/// it turns to that stop and sets the map's level (stop k = level k; the last stop past
+/// the map's `zoom_levels` is the system picture). A lamp per stop (off / on rows,
+/// `unavailable` on a stop that cannot be chosen), centred on the stop.
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnobDef {
+    pub frames: String,
+    pub count: u32,
+    pub stops: Vec<[f32; 2]>,
+    pub reach: f32,
+    pub lamps_off: Vec<String>,
+    pub lamps_on: Vec<String>,
+    pub unavailable: Option<String>,
 }
 
 /// How a map labels its objects (the original's CSD, `notes/re/unknowns-2026-11.md` §1.3):
@@ -111,6 +130,18 @@ pub enum UiAction {
     Menu,
     /// Opens the testbed's single-screen layout.
     Testbed,
+    /// `list(prev)`, `list(next)`: moves the screen's list selection one row (the
+    /// original's one-at-a-time panels, Bases' 401 / 402); `list(act)` runs the selected
+    /// row's first action (Bases' 400, accept and close).
+    List(ListOp),
+}
+
+/// What `list(…)` does.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ListOp {
+    Prev,
+    Next,
+    Act,
 }
 
 impl UiAction {
@@ -133,8 +164,14 @@ impl UiAction {
             "save" => Ok(UiAction::Save),
             "menu" => Ok(UiAction::Menu),
             "testbed" => Ok(UiAction::Testbed),
+            "list" => match arg {
+                "prev" => Ok(UiAction::List(ListOp::Prev)),
+                "next" => Ok(UiAction::List(ListOp::Next)),
+                "act" => Ok(UiAction::List(ListOp::Act)),
+                _ => Err(format!("list({arg}): expected list(prev), list(next) or list(act)")),
+            },
             _ => Err(format!(
-                "'{s}' is not open(<screen>), menu(<screen>), replace(<screen>), back, speed(n), save, menu or testbed"
+                "'{s}' is not open(<screen>), menu(<screen>), replace(<screen>), back, speed(n), save, menu, testbed or list(prev|next|act)"
             )),
         }
     }
@@ -201,6 +238,16 @@ pub struct WidgetDef {
     /// A `map`'s labels the original's way (`labels:`): only for objects near the
     /// cursor, upper-cased, in a sheet font, taking turns. `None`: every star's name.
     pub labels: Option<MapLabels>,
+    /// A `knob`'s frames, stops and lamps.
+    pub knob: Option<KnobDef>,
+    /// A `map`'s picture for an opened system with a base: `[x-com, enemy]` portraits
+    /// (rows N … N + `portrait_frames` − 1), the enemy one for `enemy_factions`' bases.
+    pub base_portraits: Vec<String>,
+    /// A `graph`'s fixed y range and its steps (`y_range: [0, 18000]`, `y_steps: 18`, the
+    /// original's); without it the range fits the values.
+    pub y_range: Option<[f64; 2]>,
+    pub y_steps: usize,
+    pub base_portrait_frames: u32,
     /// A `map`'s fixed zoom levels in map units per design pixel (the CSD's 45 and 30):
     /// the wheel picks one, a click on a system with a portrait shows it (level 2).
     pub zoom_levels: Vec<f32>,
@@ -248,7 +295,7 @@ pub struct ListStyle {
     pub down: Option<Arrow>,
     /// Sockets on the art (centres) showing the selected craft's hard points as icons
     /// only (Equip Ships' ring of nine, `unknowns-2026-11.md` §13.2): the fitted item's
-    /// icon by item kind (`slot_icons`), `slot_unusable` on sockets past the hull's hard
+    /// icon by item id or kind (`slot_icons`), `slot_unusable` on sockets past the hull's hard
     /// points, `slot_selected` at (+1, +1) on the selected socket. A click selects one.
     pub slots: Vec<[f32; 2]>,
     pub slot_size: [f32; 2],
@@ -288,7 +335,7 @@ impl Arrow {
 }
 
 /// The widget kinds by name.
-pub const WIDGET_KINDS: [(&str, WidgetKind); 10] = [
+pub const WIDGET_KINDS: [(&str, WidgetKind); 11] = [
     ("image", WidgetKind::Image),
     ("button", WidgetKind::Button),
     ("value", WidgetKind::Value),
@@ -299,6 +346,7 @@ pub const WIDGET_KINDS: [(&str, WidgetKind); 10] = [
     ("check", WidgetKind::Check),
     ("anim", WidgetKind::Anim),
     ("graph", WidgetKind::Graph),
+    ("knob", WidgetKind::Knob),
 ];
 
 impl WidgetDef {
@@ -306,7 +354,7 @@ impl WidgetDef {
     pub fn parse(name: &str, g: Get) -> Result<WidgetDef, String> {
         let kind_name = g.str("kind").unwrap_or("image");
         let kind = WIDGET_KINDS.iter().find(|(n, _)| *n == kind_name).map(|(_, k)| *k).ok_or(format!(
-            "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check, anim, graph"
+            "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check, anim, graph, knob"
         ))?;
         let point = |k: &str| -> Result<Option<[f32; 2]>, String> {
             match g.node(k) {
@@ -389,6 +437,34 @@ impl WidgetDef {
             },
             with_clock: g.bool("with_clock").unwrap_or(false),
             months: g.list("months"),
+            base_portraits: g.list("base_portraits"),
+            y_range: match g.nums("y_range").as_deref() {
+                Some([lo, hi]) if hi > lo => Some([*lo as f64, *hi as f64]),
+                _ => None,
+            },
+            y_steps: g.num("y_steps").map_or(0, |v| v.max(1.0) as usize),
+            base_portrait_frames: g.num("base_portrait_frames").map_or(1, |v| v.max(1.0) as u32),
+            knob: match g.node("knob").map(Get) {
+                None => None,
+                Some(k) => Some(KnobDef {
+                    frames: k.str("frames").ok_or("knob: frames is required")?.to_string(),
+                    count: k.num("count").map_or(1, |v| v.max(1.0) as u32),
+                    stops: match k.node("stops").and_then(|n| n.as_seq()) {
+                        None => Vec::new(),
+                        Some(items) => items
+                            .iter()
+                            .map(|n| match numbers(n).as_deref() {
+                                Some([x, y]) => Ok([*x, *y]),
+                                _ => Err("knob: stops: expected [x, y] points".to_string()),
+                            })
+                            .collect::<Result<_, _>>()?,
+                    },
+                    reach: k.num("reach").unwrap_or(14.0),
+                    lamps_off: k.list("lamps_off"),
+                    lamps_on: k.list("lamps_on"),
+                    unavailable: k.str("unavailable").map(str::to_string),
+                }),
+            },
             zoom_levels: g.nums("zoom_levels").unwrap_or_default().into_iter().filter(|v| *v > 0.0).collect(),
             legend: g.list("legend"),
             labels: match g.node("labels").map(Get) {
@@ -606,7 +682,7 @@ pub fn schema() -> Ty {
             Ty::Dict(Box::new(Ty::Either(
                 Box::new(Ty::Numbers(4)),
                 Box::new(Ty::Struct(vec![
-                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check", "anim", "graph"]), "what it is"),
+                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check", "anim", "graph", "knob"]), "what it is"),
                     f("rect", Ty::Numbers(4), "x, y, w, h in the design space"),
                     f("image", Ty::Asset, "its picture"),
                     f(
@@ -624,7 +700,7 @@ pub fn schema() -> Ty {
                     f(
                         "action",
                         Ty::Text,
-                        "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed",
+                        "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed, list(prev|next|act)",
                     ),
                     f("value", Ty::Name, "a value: date, time, money, score, base, speed, selection"),
                     f("source", Ty::Name, "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages"),
@@ -674,7 +750,7 @@ pub fn schema() -> Ty {
                     f("bar", Ty::Numbers(3), "compact: the pulsing selection bar's colour (default green)"),
                     f("slots", Ty::List(Box::new(Ty::Numbers(2))), "sockets (centres) showing the selected craft's hard points"),
                     f("slot_size", Ty::Numbers(2), "a socket's clickable size (default 76 x 75)"),
-                    f("slot_icons", Ty::Dict(Box::new(Ty::Asset)), "a fitted item's icon by item kind"),
+                    f("slot_icons", Ty::Dict(Box::new(Ty::Asset)), "a fitted item's icon by item id, else by item kind"),
                     f("slot_unusable", Ty::Asset, "drawn on sockets past the hull's hard points"),
                     f("slot_selected", Ty::Asset, "the selected socket's overlay, at (+1, +1)"),
                     f(
@@ -703,6 +779,23 @@ pub fn schema() -> Ty {
                     ),
                     f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
                     f("months", Ty::List(Box::new(Ty::Text)), "a graph's month names, January first"),
+                    f("y_range", Ty::Numbers(2), "a graph's fixed y range (default: fitted to the values)"),
+                    f("y_steps", Ty::Num, "a graph's y grid steps (fixed: default 18; fitted: about 6)"),
+                    f("base_portraits", Ty::List(Box::new(Ty::Asset)), "a map's level-2 picture of a system with a base: x-com, enemy"),
+                    f("base_portrait_frames", Ty::Num, "the base pictures' animation frames"),
+                    f(
+                        "knob",
+                        Ty::Struct(vec![
+                            f("frames", Ty::Asset, "the first of the knob's turning frames"),
+                            f("count", Ty::Num, "how many frames"),
+                            f("stops", Ty::List(Box::new(Ty::Numbers(2))), "click points, one per level"),
+                            f("reach", Ty::Num, "px around a stop that selects it (default 14)"),
+                            f("lamps_off", Ty::List(Box::new(Ty::Asset)), "a lamp per stop, off"),
+                            f("lamps_on", Ty::List(Box::new(Ty::Asset)), "a lamp per stop, on"),
+                            f("unavailable", Ty::Asset, "the lamp of a stop that cannot be chosen"),
+                        ]),
+                        "a view knob setting the map's zoom level",
+                    ),
                     f("zoom_levels", Ty::List(Box::new(Ty::Num)), "a map's fixed zoom levels, map units per design pixel"),
                     f("legend", Ty::List(Box::new(Ty::Text)), "an activity map's legend: none, 1-5, 6-15, 16+ a month"),
                 ])),
@@ -751,6 +844,8 @@ mod tests {
         assert_eq!(UiAction::parse("back"), Ok(UiAction::Back));
         assert_eq!(UiAction::parse("menu(research)"), Ok(UiAction::MenuOpen("research".into())));
         assert_eq!(UiAction::parse("replace(csd)"), Ok(UiAction::Replace("csd".into())));
+        assert_eq!(UiAction::parse("list(next)"), Ok(UiAction::List(ListOp::Next)));
+        assert!(UiAction::parse("list(up)").is_err());
         assert_eq!(UiAction::parse("menu"), Ok(UiAction::Menu));
         let ck = yaml::parse("clock: pause\nhistory: 29\nwidgets: {}").unwrap();
         let ckl = ScreenLayout::parse("bases", Get(&ck), l.clone(), &[], 0).unwrap();

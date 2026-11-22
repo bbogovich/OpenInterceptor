@@ -76,6 +76,19 @@ pub fn button_rows(widths: &[i32], limit: i32) -> Vec<Vec<usize>> {
     rows
 }
 
+/// The content width when the buttons in one row pass `limit` (§14.1): the running sum of
+/// (10 + width) up to the button that makes it pass, + 10; `None` when they all fit.
+pub fn overflow_width(widths: &[i32], limit: i32) -> Option<i32> {
+    let mut sum = 0;
+    for w in widths {
+        if sum + 10 + w > limit {
+            return Some(sum + 10);
+        }
+        sum += 10 + w;
+    }
+    None
+}
+
 /// A button label's full-width flag: the exe's `~` before the label key (research
 /// complete's "(~S_ALLOCATERESEARCH)"). Returns the label without it.
 pub fn full_width(label: &str) -> (&str, bool) {
@@ -140,16 +153,20 @@ pub fn layout(
     full: &[bool],
 ) -> (MsgBox, KitChoice) {
     let is_full = |i: usize| full.get(i).copied().unwrap_or(false);
-    // 1. Content size and the buttons. The one-row sum is Σ(width + 10) over the normal
-    // buttons; past 465 the width is "set to fit": sum − 100 reproduces the RE's worked
-    // example (550 → 450; DERIVED from that one example).
+    // 1. Content size and the buttons. The one-row sum is Σ(10 + width) over the normal
+    // buttons; when adding a button makes it pass 465, the width becomes the buttons that
+    // fit plus 10 (§14.1); else a box narrower than the row is the row − 40.
     let (mut w, h) = base_size(caption_w, body_w, lh);
     let mut widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
-    let one_row: i32 = (0..widths.len()).filter(|i| !is_full(*i)).map(|i| widths[i] + 10).sum();
-    if one_row > 465 {
-        w = one_row - 100;
-    } else if w < one_row {
-        w = one_row - 40;
+    let normal: Vec<i32> = (0..widths.len()).filter(|i| !is_full(*i)).map(|i| widths[i]).collect();
+    match overflow_width(&normal, 465) {
+        Some(fit) => w = fit,
+        None => {
+            let one_row: i32 = normal.iter().map(|b| b + 10).sum();
+            if w < one_row {
+                w = one_row - 40;
+            }
+        }
     }
     // 2-3. Centred on (320, 240), the style kit's side edges added, re-centred and pushed
     // on screen. (The style's change and the bands come after the push, so the final box
@@ -228,8 +245,9 @@ pub fn layout(
                 buttons[row[1]] = [rl, y, rr - rl, 14];
             }
             _ => {
-                // Three or more in a row: the exe leaves them unplaced (§4.9, no such
-                // dialog in the game); the engine centres them 10 px apart (DEV-089).
+                // Three or more in a row: the exe leaves them unplaced (§4.9, §14.1; no
+                // such dialog in the game); the engine centres them 10 px apart so they
+                // can be clicked (an engine choice, DEV-089).
                 let rw: i32 = row.iter().map(|i| widths[*i]).sum::<i32>() + 10 * (row.len() as i32 - 1);
                 let mut x = cx - rw / 2;
                 for i in row {
@@ -351,6 +369,10 @@ mod tests {
         let (m, _) = layout(1, &style1, &k242, &k250, 30, 36, 14, &[20, 20], &[true, false]);
         assert_eq!((m.buttons[0][2], m.buttons[0][1] > m.buttons[1][1]), (489 - 70, true));
         assert_eq!(full_width("~View"), ("View", true));
+        // §14.1: the buttons that fit plus 10 (not "sum - 100"): 140-px buttons fit three.
+        assert_eq!(overflow_width(&[100; 5], 465), Some(450));
+        assert_eq!(overflow_width(&[140; 4], 465), Some(460));
+        assert_eq!(overflow_width(&[100, 100], 465), None);
     }
 
     use super::*;
