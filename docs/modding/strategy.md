@@ -401,7 +401,7 @@ and 1 hour, 6 hours, 1 day and 5 days per second.
 | `labels` | list of text | made from the rates | What the `speed` readout shows for each speed (`5 secs/s`, `1 hour/s`, `paused`); speeds without one get one made from their rate. |
 | `on_event` | number | 0 | The speed (0 = the first) an event, notice, prompt or return from a battle drops the clock to. |
 | `run` | number | 3 | The speed Space toggles to from `on_event`. |
-| `notices` | `drop`, `keep`, `ask` | `drop` | What a notice (a Report prompt) does to the speed (app NEXT): drop to `on_event`, keep it, or ask with two buttons — the first keeps it, the second drops to `on_event`. Battles, offers and choices still drop it. |
+| `notices` | `drop`, `keep`, `ask` | `drop` | What a notice (a Report prompt) does to the speed (app 0.22.12): drop to `on_event`, keep it, or ask with two buttons — the first keeps it, the second drops to `on_event`. Battles, offers and choices still drop it. |
 | `notice_buttons` | two captions | `[OK, "OK (slow)"]` | With `ask`: the Report's buttons (text or `@key`). `interceptor`: `[@orig.S_OK, @orig.S_OK5SECS]`, the original's "OK" and "OK (5 secs)" (RQ-S-18, **verified**: 0x46bdc4 → `SetSpeed(0)`). |
 
 The screen-set action `speed(n)` picks speed `n` ([Screen layouts](screens.md#actions)); the

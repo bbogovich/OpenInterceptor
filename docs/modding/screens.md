@@ -143,8 +143,8 @@ screens:
 | `design` | `[width, height]` | `[1280, 720]` | The space the rectangles are written in. |
 | `background` | asset | none | Drawn over the whole design space, under the widgets. Any asset reference: a pack file or `original:<file>#<id>`. |
 | `dialog` | bool | `false` | Drawn over the screen under it instead of on its own. |
-| `clock` | `run`, `pause` | `run` | Whether the campaign clock runs while this screen is on top (app NEXT). |
-| `history` | whole number | 29 | On the first screen: how many screens Back remembers (app NEXT). |
+| `clock` | `run`, `pause` | `run` | Whether the campaign clock runs while this screen is on top (app 0.22.12). |
+| `history` | whole number | 29 | On the first screen: how many screens Back remembers (app 0.22.12). |
 | `widgets` | map name → widget | none | Drawn in the order written. |
 
 A screen of a set **keeps its shape**: the design space is scaled by one factor to fit the window
@@ -196,8 +196,8 @@ and kept; one that cannot be loaded is reported on standard error once
 | Action | Does |
 |---|---|
 | `open(<screen>)` | Shows that screen and remembers this one for Back ([History and the clock](#history-and-the-clock)). A full screen closes any dialogs over the current one first; a dialog opens over it. The screen must exist (checked at load). |
-| `menu(<screen>)` | Since app NEXT: like `open`, but a run of menu switches remembers only the first screen left (the original's menu bar). Without a screen, `menu` returns to the main menu (below). |
-| `replace(<screen>)` | Since app NEXT: switches without remembering this screen (radio-style switches between screens). |
+| `menu(<screen>)` | Since app 0.22.12: like `open`, but a run of menu switches remembers only the first screen left (the original's menu bar). Without a screen, `menu` returns to the main menu (below). |
+| `replace(<screen>)` | Since app 0.22.12: switches without remembering this screen (radio-style switches between screens). |
 | `back` | Closes the top dialog, else returns to the last remembered screen. |
 | `speed(<n>)` | Sets the clock to speed `n` of the campaign's [`clock.speeds`](strategy.md#clock), 0 = the first (by default 0 paused, 1 – 4 the four speeds; `interceptor`: 0 – 5, the dial's six). A number past the last picks the last. |
 | `save` | The save prompt, as the testbed layout's *Save*. |
@@ -363,7 +363,7 @@ set yet.
 
 ### History and the clock
 
-Since app NEXT (plan M2 #127, RQ-UI-15/16) a screen set navigates as the original does
+Since app 0.22.12 (plan M2 #127, RQ-UI-15/16) a screen set navigates as the original does
 (Interceptor.exe 0x4b5bfe – 0x4b5e5b, **verified**):
 
 - **The first screen is home.** Opening it — from anywhere — clears the history.
@@ -378,7 +378,7 @@ Since app NEXT (plan M2 #127, RQ-UI-15/16) a screen set navigates as the origina
   CSD stops time and returning starts it again at the same speed. Prompts (an interception, a
   report …) always stop it while they are up. The testbed layout ignores `clock`.
 
-`interceptor` since app NEXT: every screen with the art's red close button in its top-left
+`interceptor` since app 0.22.12: every screen with the art's red close button in its top-left
 corner has `back` there, a 22 px hot spot centred on (16, 16), **derived** from the art. The old
 `[596, 440]` hot spot was wrong. The UFOpedia's art has no close button and its exit control is
 not recovered, so it keeps the old hot spot. Purchase and Manufacture switch between each other with
