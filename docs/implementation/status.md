@@ -620,3 +620,10 @@ artefact-gated topics (`requires_item`) open once a won battle recovers their it
 raid's `salvage_items` and a `goodies` chance (`interceptor` inherits the original's `*Goodies`
 tables), and close when the item leaves the stores; `requires_all` adds Nova Bomb's five extras.
 `default`: a Dominion power cell from saucer raids opens *Power cell analysis*. DEV-097.
+
+**#131** (app NEXT; RQ-S-04/05/06; strategy README §2.2 – §2.3): corporate outposts as campaign
+objects (`outposts:`, `campaign::outposts`, saved): monthly income from their OPPs at the
+exchange rate and funding, the funding drift by each system's month scores, withdrawal under 3 %,
+growth after a good month; every score goes to its system or a pool. `interceptor`: three
+starting outposts in place of its flat corporate income, the marker 916 on the map, the Outposts
+report lists them; `default`: one colony beside the stipend. DEV-098.

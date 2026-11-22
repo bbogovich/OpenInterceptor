@@ -182,6 +182,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app 0.22.15; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
 | `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
+| `outpost_marker` | asset | a small square | A `map`'s marker under a star with an outpost (app NEXT; `interceptor`: row 916, **verified**). |
 | `y_range`, `y_steps` | `[low, high]`, number | fitted, 18 / about 6 | A `graph`'s fixed y range in that many grid steps (the original's income report: `[0, 18000]`, 18); without it the range fits the values (app 0.22.22). |
 | `base_portraits`, `base_portrait_frames` | list of assets, number | none, 1 | A `map`'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app 0.22.22). |
 | `knob` | `{frames, count, stops, reach, lamps_off, lamps_on, unavailable}` | none | A `knob`'s turning frames (rows N … N + count − 1, at `pos`), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22). |
