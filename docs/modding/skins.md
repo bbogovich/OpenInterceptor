@@ -293,9 +293,45 @@ original's three frame kits) is #127.
 | `dialog.capsule` | asset | text buttons | The message-box capsule's base sprite (app 0.22.12): left cap, middle tiled to the width and right cap are rows N, N+1, N+2; pressed N+3 … N+5. The caption is in `title_font` at (centre x, centre y − 2), pressed (+1, +1) (**verified**). Capsules sit in a centred row, 25 px above the bottom, each its caption + its caps wide (**derived**). `interceptor`: `original:sprite#258`. |
 | `dialog.frame` | list of `{image, at, offset, tile}` | none | Frame pieces drawn around the box (app 0.22.12). `at` is one of `top_left`, `top`, `top_right`, `left`, `right`, `bottom_left`, `bottom`, `bottom_right`. A piece sits inside the box at that corner or side, or centred on it, and is moved by `offset`. `tile: x` (or `y`) repeats it along the side, inset by the offset at both ends, with the last copy cut to fit. |
 
-The original has three frame kits (sprite rows 163 – 178, 179 – 188 and 189 – 198, the third in
-red with an ornament at the top). Which piece goes where is not recovered yet, so `interceptor`
-draws no frame; a mod can assemble its own with `frame`. `--check` loads every dialog image.
+### The original's message box (`dialog.kit`)
+
+Since app NEXT a `kit` makes prompts the original's message boxes (MsgBox.cpp, **verified**,
+`ui-framework.md` §4):
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `dialog.kit` | asset | none | A frame kit's base sprite B: 8 rows from B (top, bottom, left and right edges; top-left, top-right, bottom-right and bottom-left corners). `interceptor`: `original:sprite#190` (style 3); the others are 163 (style 1) and 179 (style 2). |
+| `dialog.frame_style` | 0 – 3 | 0 | With a kit: the style's text insets (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61; 0: the kit's side sizes + 3), its padding, and its live pieces (1: the knob, rows B + 8 … B + 15; 2: the ornament and two sliders, B + 8 … B + 10; 3: the blinking ornament B + 8). |
+| `dialog.fill_large` | asset | `fill` | The fill for boxes bigger than `fill` (row 429, 640 × 480). |
+
+With a kit the box follows the exe:
+
+- **Size.** Width = max(325, the caption, the body), 100 tall. A body wider than 425 wraps: the
+  box is 425 wide and grows by (line height + 2) × body width / 425, at most 400 tall.
+- **Padding.** Style 1 grows 20 px up and to each side (10 more on the right); style 2 grows
+  20 px to each side.
+- **Height.** Styles 2 and 3 round the height so the side edge tile fits a whole number of times.
+- **Placement.** The box is centred on (320, 240).
+- **Frame.** Every edge is tiled at its natural size, never stretched, in the order top, bottom,
+  left, right; the corners go on last.
+- **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the box.
+- **Caption.** Upper-cased; style 3 draws it at (client centre, top + 54).
+- **Buttons.** Capsules, each max(100, caption + 20) × 14 and 10 px apart. A row wider than 465
+  wraps into up to 4 rows, 17 px apart. One button is centred; two sit 50 / 60, 90 / 90 or
+  20 / 20 px from the sides (styles 1, 2 and the others).
+
+With a kit, `width`, `title_y`, `body_top`, `button_step` and `frame` are not used. Engine choices
+(**derived**):
+
+- The fill is clipped to the text rect, not the whole box, so it does not show through the kit's
+  open margins.
+- The box grows when its wrapped text would leave the text rect.
+- The lowest button row ends 25 px above the box's bottom.
+- Captions of styles 1 and 2 sit 23 px above the text rect.
+- `interceptor` uses style 3 for every prompt, because which dialog uses which style is not
+  settled.
+
+A mod can still build its own frame from pieces with `frame`. `--check` loads every dialog image.
 
 The default campaign uses both, in its own colours, with `font_title` and `font_body`. To see a
 dialog, run `openinterceptor --no-original --strategy --notice "Hello"`.

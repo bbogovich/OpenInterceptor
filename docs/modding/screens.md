@@ -383,8 +383,8 @@ Since app 0.22.12 (plan M2 #127, RQ-UI-15/16) a screen set navigates as the orig
 
 `interceptor` since app 0.22.12: every screen with the art's red close button in its top-left
 corner has `back` there, a 22 px hot spot centred on (16, 16), **derived** from the art. The old
-`[596, 440]` hot spot was wrong. The UFOpedia's art has no close button and its exit control is
-not recovered, so it keeps the old hot spot. Purchase and Manufacture switch between each other with
+`[596, 440]` hot spot was wrong. The UFOpedia's exit is control 106 (**verified**): a 23 × 23
+sprite button (rows 4 / 5) centred at (619, 466), bottom right, which goes back. Purchase and Manufacture switch between each other with
 `replace`, as the original's category radios do.
 
 ### Sounds, hover help and animations

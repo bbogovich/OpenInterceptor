@@ -404,6 +404,7 @@ and 1 hour, 6 hours, 1 day and 5 days per second.
 | `notices` | `drop`, `keep`, `ask` | `drop` | What a notice (a Report prompt) does to the speed (app 0.22.12): drop to `on_event`, keep it, or ask with two buttons — the first keeps it, the second drops to `on_event`. Battles, offers and choices still drop it. |
 | `notice_buttons` | two captions | `[OK, "OK (slow)"]` | With `ask`: the Report's buttons (text or `@key`). `interceptor`: `[@orig.S_OK, @orig.S_OK5SECS]`, the original's "OK" and "OK (5 secs)" (RQ-S-18, **verified**: 0x46bdc4 → `SetSpeed(0)`). |
 | `first_key` | number | `on_event` + 1 | The speed the number key 1 picks; 2 the next, up to 6 (app NEXT). `interceptor`: 0 — keys 1 – 6 pick the six speeds (**verified**, OnCommand 49 – 54). |
+| `ask_for` | list of notice kinds | all | With `notices: ask`: the kinds of notice that offer the two buttons; the rest are a plain OK that keeps the speed (app NEXT). Kinds: `base_built`, `module_built`, `research_complete`, `delivery`, `report`, `contact`, `damage`, `other`. `interceptor`: all but `other` — the original offers "OK (5 secs)" for ships damaged, people killed, modules and bases built, research complete, the reports, deliveries and sightings, and a plain OK otherwise (**verified**, `ui-framework.md` §4.5). An unknown kind is an error. |
 
 The screen-set action `speed(n)` picks speed `n` ([Screen layouts](screens.md#actions)); the
 testbed layout shows one button per speed (`||`, `5s`, `30m`, `1d` …); the number keys pick the
@@ -421,6 +422,7 @@ clock:
   notices: ask                              # a Report offers OK and OK (5 secs)
   notice_buttons: ["@orig.S_OK", "@orig.S_OK5SECS"]
   first_key: 0                              # keys 1-6 pick the six speeds
+  ask_for: [base_built, module_built, research_complete, delivery, report, contact, damage]
 ```
 
 The original's dial has six holes and no pause: its slowest speed is five times real time, and
