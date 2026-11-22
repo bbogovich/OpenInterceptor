@@ -177,7 +177,7 @@ systems of one kind (`ecm`, `advanced_ecm`) with different numbers. Keys:
 | `manoeuvring` (or `maneuvering`) | Turn rates scale with its efficiency. | 100 / 0 / 0 / 0 |
 | `sensors` | Target lock builds at its efficiency's speed; its `lock_time`, `lock_angle` and `lock_range` set the lock ([Missile lock](#missile-lock), app 0.22.0). | 60 / 0 / 0 / 0 |
 | `shields` | Shield recharge and the fore/aft transfer scale with it. | 50 / 0 / 0 / 0 |
-| `hyperdrive` | Leaving the battle (`H`); a damaged drive takes twice as long. | 100 / 0 / 0 / 0 |
+| `hyperdrive` | Leaving the battle (`H`); a damaged drive takes twice as long (unless its `efficiency` is `ignore`). | 100 / 0 / 0 / 0 |
 | `vct` | Vector-control slides. | 150 / 0 / 0 / 0 |
 | `tractor` | Holds and drags the target; beams cannot fire while it is on. | 250 / 2 / 250 m / 60 |
 | `cloak` | Hidden from enemy sensors beyond `range`; firing drops it. | 100 / 3 / 400 m / 25 |
@@ -224,6 +224,27 @@ systems:
   working damage control computer multiplies it (by less when it is itself damaged).
 - A ship whose engines **and** manoeuvring are both out is **disabled**: it drifts, and if its
   class is `capturable` it can be towed away as a prize.
+
+**The original's rules** (app NEXT, issue #116; `interceptor`, flight notes §3 – §5, §11,
+**verified** unless marked) are data a campaign opts into:
+
+- **Per-system efficiency** (`efficiency:` on a system). `interceptor`: engines ×0.5 below 50 %,
+  ×0.25 below 25 %, nothing below 15 %; the shield generator's recharge ×0.5 below 50 % and none
+  below 25 %; flight control (40 points) in proportion, never below 1 (`min_hit_points`);
+  sensor and hyperdrive `ignore` — damage changes nothing, the lock and the jump never read them.
+- **Engine failure** (`disables_below: 15%` on the engine): below it the ship is disabled at
+  once — no thrust, afterburner and cloak off — and repair takes the hull first.
+- **The system table** (`damage.system_table`): the system share is dealt by up to five weighted
+  rolls, including **beam mounts** and **launchers**, which have hit points of their own (beam
+  `hit_points`, missile `launcher_hit_points`). A mount at 50 % or less fires at half rate, at
+  25 % or less not at all; a destroyed launcher loses its rounds (`damage.mounts`).
+- **Repair** (`damage.repair_order`): 2 points a second (4 with a damage control computer) go
+  to the first of engine, **hull**, shield generator, flight control, hyperdrive, sensor, beam
+  mounts, launchers, other systems that needs it; a system at 0 is never repaired
+  (`destroy_below: 0`).
+
+Stations (static kinds) never repair their hull (*derived*: the original's repair runs on its
+ship records). The default campaign sets none of these keys and keeps the table above.
 
 ## Power and damage rules
 
@@ -278,7 +299,8 @@ Every beam or missile hit goes through the same pipeline (`sim::combat::apply_hi
 3. **Armour**: the one pool, or with `damage.armor: per_side` the bank on that side.
 4. **Systems**: while the hull is below `system_below` of its maximum, `system_share` of what
    is left strikes one random working system — instead of the hull with `system_divert: true`,
-   or as well.
+   or as well. With `damage.system_table` it is shared out by the table's weighted rolls,
+   beam mounts and launchers included (app NEXT).
 5. **Hull.** At zero the ship is destroyed.
 
 A class with `damage_model: station` skips the difficulty factor, armour and systems: what gets

@@ -24,7 +24,7 @@ flowchart TD
     GC --> HZ["hazards::step<br/>black-hole pull, swallowed craft destroyed"]
     HZ --> E["combat::step<br/>lock → beams → missile controls → link mode<br/>→ point_defence → move_bolts → guidance::step"]
     E --> F["combat::ship_collisions"]
-    F --> S["systems::step<br/>recharge → repair → disabled check<br/>→ tractors → countermeasures → hyperdrives"]
+    F --> S["systems::step<br/>recharge → disabled check → repair<br/>→ tractors → countermeasures → hyperdrives"]
     S --> WR["destroyed modules with a destroyed look → wrecks"]
     WR --> MO["update_modules<br/>modules follow hubs, cascade, shield generators"]
     MO --> EX["expiring ships (doppelgangers) counted down"]
@@ -389,12 +389,12 @@ flowchart TD
     end
     subgraph step["step (after combat)"]
       S1["recharge(): energy × beam_recharge[level] (not while afterburning);<br/>shields × shield_recharge[level] × efficiency;<br/>shift: excess over a facing's cap flows to the other;<br/>share: share_recharge routes the stream by balance"]
-      S2["repair(): one system, worst first,<br/>repair_rate × damage-control multiplier"]
-      S3["disabled = engines and manoeuvring both at 0"]
+      S3["is_disabled(): engines and manoeuvring both at 0,<br/>or engines below disables_below"]
+      S2["repair(): one system, worst first, or<br/>repair_in_order() with damage.repair_order;<br/>repair_rate × damage-control multiplier"]
       S4["tractors(): collect Tow::Pull / Tow::Release, then apply"]
       S5["countermeasures(): sensors lose cloaked targets;<br/>missiles may lose cloaked / jamming targets"]
       S6["hyperdrives(): count down, 'JUMP IN n',<br/>depart(); a held disabled capturable ship is Captured"]
-      S1 --> S2 --> S3 --> S4 --> S5 --> S6
+      S1 --> S3 --> S2 --> S4 --> S5 --> S6
     end
 ```
 
@@ -406,13 +406,35 @@ flowchart TD
 straight back. A knocked-out switchable system switches off; a knocked-out hyperdrive aborts a
 countdown.
 
+**Efficiency** (app NEXT, #116). Each `SystemState` carries a copy of its definition's
+`efficiency: Efficiency` (a `Copy` enum with a fixed four-step array, so no allocation per
+ship) and its `min_hp`; `SystemState::efficiency()` applies it — `Standard` is the condition
+table above, `Steps` the first-below rule, `Linear` hit points ÷ maximum, `Ignore` always 1 —
+and `Ship::efficiency(kind)` reads it. `Ship::thrust_factor()` is 0 while the ship is
+`disabled` and is what `flight` multiplies thrust and the afterburner by (the AI's drive too).
+
 **Damage.** `damage_system` strikes one random non-destroyed system with the share of the hit
 that `combat::apply_hit` set aside (`system_share` of what reached the hull, below
-`system_below`), and emits `SystemChanged` when the condition changes.
+`system_below`), and emits `SystemChanged` when the condition changes. With
+`damage.system_table` it calls `damage_by_table` instead: up to `tries` rolls on the world's
+generator walk the cumulative `chance`s; a system kind, a random beam mount (`Ship::beam_hp`), a
+random rack (`Ship::rack_hp`; at 0 its rounds are cleared) or a random "special" system takes
+the damage, the rest carrying to the next try for `carry` entries. `strike_system` is the
+shared single-system step: `set_hp` (never below `min_hp`), destroyed below
+`−destroy_below × max` — or at 0 when `destroy_below` is 0 — switched off when it stops working.
+`combat::mount_rate` and `rack_rate` turn a mount's hit points into 1, ½ or 0 by `damage.mounts`
+for `fire_beams` (a mount out of action is dropped from its group; half rate doubles its
+cooldown) and `handle_missile_controls` (a wrecked rack is skipped, "LAUNCHER INOPERATIVE").
 
 **Repair.** `repair` keeps working on the current job; otherwise it takes the worst-off system
 (first in fitting order on a tie). Speed = class `repair_rate` × (1 + (`repair_rate` of the damage
-control computer − 1) × its efficiency); the computer does not speed up its own repair.
+control computer − 1) × its efficiency); the computer does not speed up its own repair. With
+`damage.repair_order`, `repair_in_order` gives the whole amount to the first `RepairItem` that
+needs it (`Hull`, `System(kind)`, `Beams`, `Launchers`, `Others`; a `Job` enum names what was
+found); nothing at 0 is repaired, a disabled ship's hull comes first, and static kinds never
+repair their hull. **Disabled** (`is_disabled`) is checked before repair, so a ship disabled by
+this tick's hit already repairs its hull first; on the change it drops the afterburner and the
+cloak.
 
 **Power.** `raise` and `cycle` work on a plain `Power` value and the `PowerRules`, not on the
 world, so they are tested exhaustively. With `power.balance: shift`, `shield_caps(shield_max,

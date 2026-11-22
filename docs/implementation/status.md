@@ -342,12 +342,25 @@ from `notes/re/flight` §8): a station's hull is its chart's `HP1` alone (the X-
 the alien base 5,000, outposts 3,500; DEV-056's sum resolved); `shield_pool` (one pool,
 `recharge`, `on_generator_lost: keep | drop`), generator `shield_capacity`, `shielded_by_hub`
 modules and `damage_model: station`, in the new `sim::stations`. `interceptor`: the X-COM and
-alien bases have one 2,000 / 3,000 pool at 2 per second that keeps its points when the
-generators fall; every base module is covered; the six station hubs take hull hits without
+alien bases have one 2,000 / 3,000 pool at 2 per second that drops to 0 when the last generator
+falls (`keep` in 0.22.4; corrected in app NEXT from `notes/re/unknowns-2026-11.md` §8, which also
+gives the outposts and ore plants pools of their chart's `SD`, 1,500 / 1,000, at 2 per second); every base module is covered; the six station hubs take hull hits without
 armour, difficulty factor or system hits. `default`: the Dominion outpost has a pool (its 3,600
 `shields`, 5 per second, `drop`) covering its pods; the Guard station is unchanged. Manual case
 MT-4-66; **474** `#[test]` functions. Not yet: the alien base's hard points (#114), the outposts'
 own shield routines, `--balance` showing pools (#121).
+
+**Parity M1, #116** (app NEXT; D-02, D-05, D-06, RQ-C-16, RQ-C-17 of the parity plan, facts from
+`notes/re/flight` §3 – §5, §11): system `efficiency` tables (steps, `linear`, `ignore`),
+`min_hit_points` and the engine's `disables_below`; beam `hit_points` and missile
+`launcher_hit_points` with `damage.mounts`; `damage.system_table` and `damage.repair_order`.
+`interceptor`: the original's engine, shield, flight-control, sensor and hyperdrive behaviour,
+its system table (mounts 20 %, launchers 30 %, …), its repair (2 per second, 4 with a damage
+control computer, hull second; nothing at 0 is repaired). `default`: unchanged. Soak
+`duel-wraith` with `--soak-pilot ai` (veteran): the Lightning now survives about 98 s instead of
+16 s — the Wraiths lose beam mounts to system hits (to re-measure in #121); passive runs
+are unchanged (about 10 s). Manual case MT-4-67; **482** `#[test]` functions. Not yet: pilot
+injury (D-08, with the pilots of #133), the flight-control wobble.
 
 ## Stage 5 progress
 

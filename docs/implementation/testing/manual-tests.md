@@ -1373,7 +1373,8 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-63 | `interceptor`: missile lock — 2.5 s in a 2.5° cone within 3 km, held at 5°, running down off target | `gunnery-range` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A5, sensor `lock_*`, `flight.lock_hold`, `lock_decay` |
 | MT-4-64 | `interceptor`: bolts do not drift with your own sideways motion | `gunnery-range` (`interceptor`), Lightning; `rocket-vs-saucer` (default) | not run | | | App 0.22.0; Track A A2, `flight.bolt_inherit: false` |
 | MT-4-65 | `interceptor`: the lead indicator | `gunnery-range` and `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A2/A7, the lead follows `bolt_inherit` |
-| MT-4-66 | Station shield pool and covered modules | `base-assault` (`interceptor`), Lightning; `outpost-strike` (default) | not run | | | App NEXT; #113, `shield_pool`, `shielded_by_hub`, `damage_model: station`, hull = `HP1` |
+| MT-4-66 | Station shield pool and covered modules | `base-assault` (`interceptor`), Lightning; `outpost-strike` (default) | not run | | | App 0.22.4; #113, `shield_pool`, `shielded_by_hub`, `damage_model: station`, hull = `HP1` |
+| MT-4-67 | `interceptor`: system damage, mounts and repair | `duel-wraith` (`interceptor`), Lightning | not run | | | App NEXT; #116, `system_table`, `repair_order`, `efficiency`, `disables_below` |
 
 ## Stage 4 cases
 
@@ -1897,9 +1898,18 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later. `openinterceptor --campaign interceptor --scenario base-assault --ship lightning` (the player's data); then `openinterceptor --campaign default --scenario outpost-strike`. Target the base (`T`) and read the target box. |
+| Preconditions | App 0.22.4 or later. `openinterceptor --campaign interceptor --scenario base-assault --ship lightning` (the player's data); then `openinterceptor --campaign default --scenario outpost-strike`. Target the base (`T`) and read the target box. |
 | Steps | 1. Target the alien base: note its shield and hull. 2. Fire at a plasma pod while the base's shields are up; watch the pod's and the base's readouts. 3. Fire at the base from the front, then from behind. 4. Wear the shields down to 0 and hit a pod again. 5. Destroy both shield pods, stop firing and watch the base's shields for 20 s. 6. Default campaign: repeat 2, 4 and 5 on the Dominion outpost. |
 | Expected | 1: hull **5,000** (an X-COM base: 6,000); shields **3,000** on both rings. 2: the pod does not lose hull; the base's shields fall instead. 3: both rings fall together, by the same amount, whichever side you hit. 4: once the shields are at 0 the pod takes the hits, and hits on the base go straight to its hull (no armour). 5: **interceptor**: the shields keep what they had and do not recharge; **default**: "STATION SHIELDS DOWN" and they go to 0 when the shield pod dies. While a generator stands the shields climb back at 2 points per second (interceptor) or 5 (default). |
+
+
+### MT-4-67 — `interceptor`: system damage, mounts and repair
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning`. The MFD Status page (systems) and the hull readout. |
+| Steps | 1. Let the Wraiths hit you until the hull is below 75 % and system messages appear; break off and fly clear. 2. Watch the hull and the systems for 30 s. 3. Fight on until a beam mount or launcher is reported destroyed; fire the guns and the missiles. 4. Keep taking hits until the engine is badly damaged. 5. Shoot a Wraith's systems down the same way and watch how it fights. |
+| Expected | 1: messages name beam mounts and launchers as well as systems. 2: the **hull climbs about 2 points a second** first if the engine is whole (the engine is repaired first when damaged); then the shield generator, flight control and so on; a system shown destroyed never comes back. 3: a destroyed mount no longer fires (one of two guns fires); a destroyed launcher's missiles are gone and the rack is skipped. 4: thrust falls to half, then a quarter; below 15 % the craft is **disabled** — no thrust, afterburner off — and the hull is repaired before the engine. Turning gets sluggish as flight control is hit but never stops. Missile lock and the hyperdrive work as usual however damaged the sensor and hyperdrive are. 5: a Wraith that lost its guns stops hurting you. |
 
 ## Stage 5 results
 

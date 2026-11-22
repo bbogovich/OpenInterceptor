@@ -76,7 +76,7 @@ Since app 0.22.4 a station can use the original game's station model instead of 
 objects:
   xcom_base:
     damage_model: station                               # hull hits: no armour, factor or system hits
-    shield_pool: {recharge: 2, on_generator_lost: keep} # one pool, 2 points a second
+    shield_pool: {recharge: 2, on_generator_lost: drop} # one pool, 2 points a second
     modules:
       - {slot: '3', class: xcom_shield_generator}
       - {slot: '0', class: xcom_beam_defense}
@@ -94,12 +94,14 @@ objects:
 - **Its size.** The pool's maximum is the `shield_capacity` of the **first** standing generator
   in the hub's `modules` list (a generator without one gives the hub's own `shields`);
   generators do not add up. A hub that lists no generator keeps its own `shields` as the maximum
-  for the whole battle. The pool starts full and takes no difficulty factor.
+  for the whole battle; a station with a pool and no `modules` that inherits an original
+  hit-point chart takes the chart's `SD` as its `shields` (app NEXT, the original's outposts
+  and ore plants, **verified**). The pool starts full and takes no difficulty factor.
 - **Recharge.** `recharge` points per second (default 2), up to the maximum. When the first
   generator falls the next one sets the maximum, and a pool above it comes down to it.
-- **The last generator.** `on_generator_lost: keep` — the pool keeps its points but no longer
-  recharges (the original, *derived*: its maximum becomes 0 and no code empties the pool);
-  `drop` — it empties at once ("STATION SHIELDS DOWN").
+- **The last generator.** `on_generator_lost: drop` — the pool empties at once ("STATION
+  SHIELDS DOWN"; the original, **verified** since app NEXT); `keep` — it keeps its points but no
+  longer recharges (an engine option; app 0.22.4 used it for `interceptor`).
 - **Covered modules.** A module with `shielded_by_hub: true` cannot be shot off through intact
   shields: while its hub's pool holds points, a hit on the module drains the hub's pool, and
   what gets through strikes the **hub's** hull, not the module. Once the pool is empty the
@@ -115,13 +117,14 @@ Absent keys keep the earlier behaviour: two banks, modules hit directly, the shi
 |---|---|---|---|---|
 | `default` | Guard station | — (banks) | — | ship |
 | `default` | Dominion outpost | 3,600 (its `shields`), 5 per second, `drop` | pods and shield pod | ship |
-| `interceptor` | X-COM base | 2,000 (Type1 generator), 2 per second, `keep` | all | station |
-| `interceptor` | Alien base | 3,000 (Type2 shield pod), 2 per second, `keep` | all | station |
+| `interceptor` | X-COM base | 2,000 (Type1 generator), 2 per second, `drop` | all | station |
+| `interceptor` | Alien base | 3,000 (Type2 shield pod), 2 per second, `drop` | all | station |
+| `interceptor` | Outposts and ore plants (X-COM, alien) | their chart's `SD`: 1,500 / 1,000, 2 per second, no generator | — | ship |
 | `interceptor` | Pirate base, arms dealer, science stations | — | — | station |
 
 In `default`'s `outpost-strike` the Dominion outpost's pods are covered: wear the pool down
 first, then the shield pod falls and the pool is gone for good. `interceptor`'s outposts and ore
-plants keep the ship model: the original handles them in other routines that are not traced yet.
+plants keep the ship damage model: the original's own hull routines for them are not traced.
 
 ## Cargo containers and moving hubs
 
