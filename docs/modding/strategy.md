@@ -143,7 +143,7 @@ How a new campaign begins. **Without `start:` the campaign has no strategy layer
 | `travel` | `free` / `lanes` | `free` | Straight lines anywhere (the original) or along the lanes (app 0.7.3; see [Travel](#travel)). |
 | `size` | `[w, h]` | `[60000, 60000]` | Generated: the rectangle, map units. |
 | `names` | list of text | none | Generated: system names to draw from (then numbered). An entry `original:<file>/<section>` (app 0.22.17) stands for the lines of `[section]` in a text file of the player's data — `interceptor` uses `original:starcorp1.txt/STAR NAMES`, the original's 101 star names. A missing file or section is a load warning. |
-| `system_counts` | map of count → weight | none | Generated: the system count rolled from this table instead of `systems` (app NEXT). `interceptor`: `{65: 11, 70: 10, 75: 70, 80: 9}`, the original's roll (**verified**, `unknowns-2026-11.md` §13.5). |
+| `system_counts` | map of count → weight | none | Generated: the system count rolled from this table instead of `systems` (app 0.22.21). `interceptor`: `{65: 11, 70: 10, 75: 70, 80: 9}`, the original's roll (**verified**, `unknowns-2026-11.md` §13.5). |
 | `seed` | number | the campaign's | Generated: a fixed seed, so every campaign gets the same map. |
 | `black_holes` | number | 1 | Generated: how many systems are hidden black holes. |
 | `unit_ly` | number | 0.001 | Light years per map unit (display only). |
@@ -160,7 +160,7 @@ name from `names`. `portrait` (asset) and `portrait_frames` (number, default 1; 
 NEXT) are the system picture a map with [zoom levels](screens.md#zoom-levels) shows for a
 system of that class, animated through rows N … N + frames − 1.
 
-Since app NEXT `interceptor` has the original's nine classes (red giant, blue giant, white
+Since app 0.22.21 `interceptor` has the original's nine classes (red giant, blue giant, white
 dwarf, blue, white, yellow, orange, red dwarf, black hole) weighted by its class roll (**verified**,
 §13.5; black holes weigh 0 and are placed by `black_holes`), each with its CSD icon and a
 portrait: five 20-frame star pictures in rows 454 – 553 (yellow 454, orange 474, red 494, blue 514,
