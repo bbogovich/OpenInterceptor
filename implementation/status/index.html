@@ -8073,6 +8073,11 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td><code>src/app/msgbox.rs</code>, <code>src/app/caption.rs</code></td>
 </tr>
 <tr>
+<td>#127 content width past 465 px of buttons: the buttons that fit + 10 (§14.1)</td>
+<td><strong>Done</strong> (app 0.22.22)</td>
+<td><code>src/app/msgbox.rs</code></td>
+</tr>
+<tr>
 <td>#128 D-39 map hover labels (<code>labels:</code>, <code>app::maplabel</code>), star-class icons (<code>star_classes.&lt;id&gt;.icon</code>), D-28 star names from <code>starcorp1.txt</code> (<code>names: [original:&lt;file&gt;/&lt;section&gt;]</code>), D-29 no negative zero (<code>campaign::shown</code>), D-26 the UFOpedia databank, D-27 the six status reports, D-30 Equip Ships' ring sockets (<code>slots</code>); default: hover labels on the starmap, six reports and databank in the grid</td>
 <td><strong>Done</strong> (app 0.22.17; DEV-094; MT-6-34). Not built: zoom levels 0 / 1 / 2 and the original's map transform, the reports' graphs, the Bases module plan</td>
 <td><code>src/app/maplabel.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/screens.rs</code>, <code>src/content/strategy.rs</code>, <code>src/content/mod.rs</code>, <code>src/campaign/mod.rs</code>, <code>packs/interceptor/rules/screens.yaml</code>, <code>packs/interceptor/strategy/campaign.yaml</code>, <code>resources/default/rules/screens.yaml</code></td>
@@ -8081,6 +8086,11 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td>#128 follow-up (§13): report graphs (<code>graph</code> widget, <code>app::graph</code>; campaign month history and activity, saved), activity maps, finance series; Equip Ships' sockets as icons only; the verified scroll arrows of Bases, Base Stats and the UFOpedia; the CSD's zoom levels 0 / 1 and the level-2 star picture; the original's galaxy (<code>system_counts</code>, nine star classes by the roll table, portraits)</td>
 <td><strong>Done</strong> (app 0.22.21; DEV-094 rewritten; MT-6-35). Not built: the view knob, the item icons' table, planets per system (#130), the UFOpedia article scroll</td>
 <td><code>src/app/graph.rs</code>, <code>src/app/strategy.rs</code>, <code>src/campaign/mod.rs</code>, <code>src/campaign/save.rs</code>, <code>src/content/screens.rs</code>, <code>src/content/strategy.rs</code>, <code>packs/interceptor/…</code></td>
+</tr>
+<tr>
+<td>#128 follow-up (§14): the CSD view knob (<code>knob</code> widget) and base pictures; Bases' three panel buttons (<code>list(prev|next|act)</code>) in place of arrows; item icons in the sockets; black holes placed as the original (<code>black_hole_spacing</code>); the report axes (<code>y_range</code>, 22 months, years); legends kept in their panel</td>
+<td><strong>Done</strong> (app 0.22.22; MT-6-36)</td>
+<td><code>src/app/graph.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/screens.rs</code>, <code>src/content/strategy.rs</code>, <code>src/campaign/mod.rs</code>, <code>packs/interceptor/…</code></td>
 </tr>
 </tbody>
 </table>

@@ -7193,7 +7193,7 @@ and kept; one that cannot be loaded is reported on standard error once
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code>, <code>anim</code>, <code>graph</code></td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code>, <code>anim</code>, <code>graph</code>, <code>knob</code></td>
 <td><code>image</code></td>
 <td>What the widget is (below).</td>
 </tr>
@@ -7342,6 +7342,24 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>A map's viewport: <code>round</code> clips it to the circle inside the rectangle.</td>
 </tr>
 <tr>
+<td><code>y_range</code>, <code>y_steps</code></td>
+<td><code>[low, high]</code>, number</td>
+<td>fitted, 18 / about 6</td>
+<td>A <code>graph</code>'s fixed y range in that many grid steps (the original's income report: <code>[0, 18000]</code>, 18); without it the range fits the values (app 0.22.22).</td>
+</tr>
+<tr>
+<td><code>base_portraits</code>, <code>base_portrait_frames</code></td>
+<td>list of assets, number</td>
+<td>none, 1</td>
+<td>A <code>map</code>'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app 0.22.22).</td>
+</tr>
+<tr>
+<td><code>knob</code></td>
+<td><code>{frames, count, stops, reach, lamps_off, lamps_on, unavailable}</code></td>
+<td>none</td>
+<td>A <code>knob</code>'s turning frames (rows N … N + count − 1, at <code>pos</code>), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22).</td>
+</tr>
+<tr>
 <td><code>zoom_levels</code></td>
 <td>list of numbers</td>
 <td>none</td>
@@ -7367,9 +7385,9 @@ and kept; one that cannot be loaded is reported on standard error once
 </tr>
 <tr>
 <td><code>slot_icons</code>, <code>slot_unusable</code>, <code>slot_selected</code></td>
-<td>map of item kind → asset, asset, asset</td>
+<td>map of item id or kind → asset, asset, asset</td>
 <td>none</td>
-<td>The sockets' images: a fitted item's icon by item kind, the image on sockets past the hull's hard points, and the selected socket's overlay drawn at (+1, +1) (app 0.22.21; replaces 0.22.17's <code>slot_font</code>).</td>
+<td>The sockets' images: a fitted item's icon by item id, else by item kind, the image on sockets past the hull's hard points, and the selected socket's overlay drawn at (+1, +1) (app 0.22.21; replaces 0.22.17's <code>slot_font</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -7417,6 +7435,10 @@ and kept; one that cannot be loaded is reported on standard error once
 <td><code>graph</code></td>
 <td>A status report's line graph of a month-by-month <code>source</code> (app 0.22.21, <a href="#report-graphs">Report graphs</a>).</td>
 </tr>
+<tr>
+<td><code>knob</code></td>
+<td>A view knob that sets a <code>map</code>'s zoom level (app 0.22.22, <a href="#zoom-levels">Zoom levels</a>).</td>
+</tr>
 </tbody>
 </table>
 <h3 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h3>
@@ -7459,6 +7481,10 @@ and kept; one that cannot be loaded is reported on standard error once
 <tr>
 <td><code>testbed</code></td>
 <td>Switches to the testbed layout.</td>
+</tr>
+<tr>
+<td><code>list(prev)</code>, <code>list(next)</code>, <code>list(act)</code></td>
+<td>Since app 0.22.22: moves the screen's list selection up or down a row, or runs the selected row's first action (the original's one-at-a-time panels: Bases' previous, next and close-panel buttons).</td>
 </tr>
 </tbody>
 </table>
@@ -7637,16 +7663,22 @@ lists that fill columns, in this order:</p>
   template (<strong>derived</strong>).</li>
 <li>Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Since app 0.22.21
   their arrows are placed where the exe puts them (<code>unknowns-2026-11.md</code> §13.3, <strong>verified</strong>):
-  Bases' module scroll buttons 400 / 401 at (484, 247) and (580, 247) (sprite rows 1381 / 1379;
-  the pressed row N + 1 <strong>derived</strong>); Base Stats' arrows at (list right + 8, list top + 65) and
+  Base Stats' arrows at (list right + 8, list top + 65) and
   (list right + 8, list bottom − 20) (24 × 24 hot spots, <strong>derived</strong>); the UFOpedia topic list's
   scroll anchor (616, 222), its upper and lower halves (<strong>derived</strong>). The article text's anchor
   (616, 386) is not built.</li>
+<li>Bases has no scroll arrows (since app 0.22.22; 0.22.21 placed its panel buttons as arrows): its
+  module panel shows one module at a time and steps with three 42 × 32 buttons (§14.2,
+  <strong>verified</strong>): previous 402 at (387, 247) (rows 1377 / 1378), close panel 400 at (484, 247)
+  (1381 / 1382, the check mark that accepts) and next 401 at (580, 247) (1379 / 1380).
+  <code>interceptor</code> keeps its list of modules and has the buttons step its selection (<code>list(prev)</code>,
+  <code>list(next)</code>) and build the selected module (<code>list(act)</code>) (<strong>derived</strong>); the wheel still
+  scrolls the list.</li>
 <li>Equip Ships' nine ring sockets (centres <strong>verified</strong>) show the selected ship's hard points as
-  icons only, since app 0.22.21 (§13.2, <strong>verified</strong>): row 1237 where the hull has no hard point,
-  the selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the
-  body font (23011). The fitted items' icons come from a table by item kind whose rows are not
-  read yet, so <code>interceptor</code> has no <code>slot_icons</code>.</li>
+  icons only, since app 0.22.21 (§13.2, <strong>verified</strong>): since app 0.22.22 the fitted item's icon
+  (§14.3, a launcher and its missile sharing one), row 1237 where the hull has no hard point, the
+  selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the body
+  font (23011). The probes' icons are not matched to <code>interceptor</code>'s probes yet.</li>
 <li>Research keeps its rows on the art's slots.</li>
 </ul>
 <p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
@@ -7711,11 +7743,19 @@ several objects are in the box their labels take turns, one at a time, each for 
 other keys are unused there. <code>--hover X,Y</code> puts the labels' cursor at a design-space point (for
 screenshots).</p>
 <h3 id="report-graphs">Report graphs<a class="headerlink" href="#report-graphs" title="Permanent link">&para;</a></h3>
-<p>A <code>graph</code> widget (app 0.22.21, D-27) charts a month-by-month figure as the original's status
-reports do (StatusReports.cpp, <code>unknowns-2026-11.md</code> §13.1, <strong>verified</strong>): 1 px lines, a grid of
-horizontal lines in RGB(0, 50, 0), ticks and axes in RGB(0, 100, 0), at most 16 months along the
-bottom and the values at the left in <code>font</code> in RGB(0, 200, 0), "NO DATA" before the first month
-closes.</p>
+<p>A <code>graph</code> widget (app 0.22.21, D-27) charts a month-by-month figure in its rect (the report's
+panel) as the original's status reports do (StatusReports.cpp; since app 0.22.22 the axes of the
+income report read in full, <code>unknowns-2026-11.md</code> §13.1, §14.8, <strong>verified</strong>):</p>
+<ul>
+<li>1 px lines. The plot runs from the panel's left + 60 to right − 15 and top + 30 to bottom − 40.</li>
+<li>The y axis: <code>y_range</code> in <code>y_steps</code> steps of round(plot height / steps) px, the top moved to
+  fit them (the income report: 0 – 18,000 in 18). A grid line in RGB(0, 50, 0) and a tick in
+  RGB(0, 100, 0) per step; the values right-aligned in <code>font</code> in RGB(0, 200, 0).</li>
+<li>The x axis: 22 months in columns round(plot width / 22) px wide, ending at the month running
+  now, a vertical grid line per column; each month's name (<code>months</code>) upper-cased, centred under
+  its column at bottom + 10; each year at bottom + 25 between bracket lines at bottom + 20.</li>
+<li>"NO DATA" before there is a month.</li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -7740,17 +7780,33 @@ closes.</p>
 </table>
 <p>A <code>map</code> with <code>source: activity_alien</code> or <code>activity_xcom</code> draws every system coloured by its
 average actions a month — none, 1 – 5, 6 – 15, 16 and more — with the four <code>legend</code> texts under
-it. The months come from the campaign's history, which saves keep since app 0.22.21.</p>
-<p><strong>Derived:</strong> the layout (where the parts and labels go, the value step), the series line's colour
-(<code>colour</code>, default green), the activity colours, single-letter months when they are closer than
-22 px, and what counts as alien and X-COM activity.</p>
+it, cut with "..." where one would pass the widget's right edge. The months come from the
+campaign's history, which saves keep since app 0.22.21.</p>
+<p><strong>Derived:</strong> the panels, the other graphs' fitted ranges, the series line's colour (<code>colour</code>,
+default green), the activity colours, and what counts as alien and X-COM activity (the exe's
+source for those arrays was not traced, §14.7).</p>
 <h3 id="zoom-levels">Zoom levels<a class="headerlink" href="#zoom-levels" title="Permanent link">&para;</a></h3>
 <p><code>zoom_levels: [45, 30]</code> on a <code>map</code> (app 0.22.21) replaces free zoom by the original CSD's levels
-(<code>unknowns-2026-11.md</code> §1.1, §13.4, <strong>verified</strong>): level 0 shows 45 map units a pixel, level 1
-30, centred on the first base's system. The wheel steps between them in place of the original's
-view knob, whose control is not placed yet. Clicking a system whose star class has a
-<code>portrait</code> shows it (level 2), animated, centred in the map (<strong>derived</strong>); the wheel goes back.
-Clicking a system without one (a black hole) only centres it. A minimap ignores the levels.</p>
+(<code>unknowns-2026-11.md</code> §1.1, §13.4, §14.4, <strong>verified</strong>): level 0 shows 45 map units a pixel,
+level 1 30, centred on the first base's system. Level 2 is the opened system's picture: its
+star class's <code>portrait</code>, or (app 0.22.22) <code>base_portraits</code> where the player has a base; a black hole
+cannot be opened (a click only centres it). Clicking a system opens it; the wheel also steps the
+levels (an engine extra). The picture's place (centred in the map) is <strong>derived</strong>. A minimap
+ignores the levels.</p>
+<p>A <code>knob</code> widget (app 0.22.22) picks the level as the CSD's view knob does (control 101, §14.5,
+<strong>verified</strong>):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/screens.yaml: the CSD's view knob</span>
+<span class="nt">view_knob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">knob</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">13</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">25</span><span class="p p-Indicator">],</span><span class="nt"> sound</span><span class="p">:</span><span class="w"> </span><span class="nv">ui_dial</span><span class="p p-Indicator">,</span>
+<span class="nt">            knob</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">frames</span><span class="p">:</span><span class="w"> </span><span class="s">"original:sprite#978"</span><span class="p p-Indicator">,</span><span class="nt"> count</span><span class="p">:</span><span class="w"> </span><span class="nv">13</span><span class="p p-Indicator">,</span><span class="nt"> stops</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">9</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">99</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">29</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">45</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">90</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">22</span><span class="p p-Indicator">]],</span><span class="nt"> reach</span><span class="p">:</span><span class="w"> </span><span class="nv">14</span><span class="p p-Indicator">,</span>
+<span class="nt">                   lamps_off</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"original:sprite#992"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:sprite#994"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:sprite#996"</span><span class="p p-Indicator">],</span>
+<span class="nt">                   lamps_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"original:sprite#993"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:sprite#995"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:sprite#997"</span><span class="p p-Indicator">],</span>
+<span class="nt">                   unavailable</span><span class="p">:</span><span class="w"> </span><span class="s">"original:sprite#991"</span><span class="p p-Indicator">}}</span>
+</code></pre></div>
+<p>A click within <code>reach</code> of stop k picks level k (the last stop: the system picture, only while a
+system that can be opened is selected) and plays the widget's <code>sound</code>; the knob turns through
+its frames to that stop (stop k at frame k × (count − 1) / (stops − 1)). A lamp per stop: on for
+the level shown, off for the others, <code>unavailable</code> on a stop that cannot be chosen. Where the
+lamps go (on the stops) and how fast the knob turns are <strong>derived</strong>.</p>
 <h3 id="sprite-buttons-toggles-and-radio-groups">Sprite buttons, toggles and radio groups<a class="headerlink" href="#sprite-buttons-toggles-and-radio-groups" title="Permanent link">&para;</a></h3>
 <p>Since app 0.22.10 (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
 (Interceptor.exe button base 0x65f420, <strong>verified</strong>):</p>

@@ -6823,6 +6823,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-36-the-view-knob-base-pictures-bases-panel-buttons-and-the-report-axes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-36 — The view knob, base pictures, Bases' panel buttons and the report axes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12494,6 +12505,17 @@
     <span class="md-ellipsis">
       
         MT-6-35 — Report graphs, activity maps, zoom levels, sockets and arrows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-36-the-view-knob-base-pictures-bases-panel-buttons-and-the-report-axes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-36 — The view knob, base pictures, Bases' panel buttons and the report axes
       
     </span>
   </a>
@@ -20812,6 +20834,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: green line graphs with a dark-green grid and month labels; the activity reports show a coloured system map and its legend; Outposts a table and a small map; Player status the pilots with their ranks. 2: the graph changes series, with LOW and HIGH lines. 3: the map shows a handful of stars around the base at 45 units a pixel, closer at 30; a star opens its animated picture; the wheel goes back. 4: the sockets show icons only; the unusable ones the dark sprite; the selected one an overlay. 5: each arrow scrolls its list one row and is greyed at the end.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-36-the-view-knob-base-pictures-bases-panel-buttons-and-the-report-axes">MT-6-36 — The view knob, base pictures, Bases' panel buttons and the report axes<a class="headerlink" href="#mt-6-36-the-view-knob-base-pictures-bases-panel-buttons-and-the-report-axes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code>. Click the view knob's three positions (lower left, middle, upper right) with and without a star selected. 2. Click the system with the base, then a black hole. 3. Open Bases; press previous, next and the check mark. 4. <code>--chapter 2 --screen reports</code>; look at the axes; step to Alien activity.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: each click turns the knob and plays the rotary sound; lower left = far view, middle = closer; upper right only with a star selected (its lamp shows unavailable otherwise) and shows the star's animated picture. 2: the base system shows the base picture; the black hole is only centred. 3: previous / next move the module selection; the check mark builds the selected module. 4: income 0 – 18,000 in 18 steps, 22 month columns with names under them and the years between brackets; the alien legend stays inside the panel.</td>
 </tr>
 </tbody>
 </table>

@@ -7828,9 +7828,11 @@ pixels scaled by the text scale). Star-class icons are textures loaded once per 
 keyed image cache (<code>star_icons</code>). Tests: <code>app::maplabel::tests</code>, <code>content::content tests</code>
 (<code>list_section</code>), <code>campaign::tests::readouts_never_show_negative_zero</code>.</p>
 <h3 id="report-graphs-appgraph">Report graphs (<code>app::graph</code>)<a class="headerlink" href="#report-graphs-appgraph" title="Permanent link">&para;</a></h3>
-<p><code>graph::layout(rect, margin, values, lines)</code> places a status report's line graph in design
-pixels — the plot area, the grid lines with their values (a 1 / 2 / 5 step from <code>nice_step</code>), the
-last 16 months' x positions and the series' points — and <code>activity_class(total, months)</code> picks an
+<p><code>graph::layout(panel, axes, values)</code> places a status report's line graph in design pixels
+(<code>Axes</code>: the original's margins 60 / 30 / 15 / 40, 22 months, a <code>Scale::Fixed</code> range in
+whole-pixel steps or <code>Scale::Auto</code>) — the plot area, the grid lines with their values, the month
+columns' centres and the series' points; <code>graph::years</code> groups the months for the year
+brackets; <code>activity_class(total, months)</code> picks an
 activity map's colour class. <code>StrategyScreen::draw_graph</code> and <code>draw_activity_map</code> draw them from
 <code>Campaign::history</code> (<code>MonthRecord</code>s closed each month), <code>this_month</code> and <code>activity</code> (per system,
 <code>count_activity</code>), which the campaign layer fills and saves. Tests: <code>app::graph::tests</code>,

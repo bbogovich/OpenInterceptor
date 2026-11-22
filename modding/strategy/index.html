@@ -7894,9 +7894,15 @@ base_distance(system) &lt;= 3500                      # a placement: condition
 </tr>
 <tr>
 <td><code>black_holes</code></td>
-<td>number</td>
+<td>number or <code>[min, max]</code></td>
 <td>1</td>
 <td>Generated: how many systems are hidden black holes.</td>
+</tr>
+<tr>
+<td><code>black_hole_spacing</code></td>
+<td>number</td>
+<td>0</td>
+<td>Generated: with a spacing (app 0.22.22), the black holes are <code>black_holes</code> (rolled in its range) existing systems picked at random, each at least this far from the others; without, the last systems become them. <code>interceptor</code>: <code>[4, 5]</code> and 7,500 (1.25 ly), the original's (<strong>verified</strong>, §14.6).</td>
 </tr>
 <tr>
 <td><code>unit_ly</code></td>
@@ -7919,8 +7925,9 @@ system of that class, animated through rows N … N + frames − 1.</p>
 <p>Since app 0.22.21 <code>interceptor</code> has the original's nine classes (red giant, blue giant, white
 dwarf, blue, white, yellow, orange, red dwarf, black hole) weighted by its class roll (<strong>verified</strong>,
 §13.5; black holes weigh 0 and are placed by <code>black_holes</code>), each with its CSD icon and a
-portrait: five 20-frame star pictures in rows 454 – 553 (yellow 454, orange 474, red 494, blue 514,
-white 534; which class takes which is <strong>derived</strong>). Planets per system (2 – 5 by a per-class
+portrait: five 20-frame star pictures (<strong>verified</strong> since app 0.22.22, §14.4): 454 yellow, 474
+orange, 494 red giant and red dwarf, 514 blue giant and blue, 534 white dwarf and white; black
+holes have none. Planets per system (2 – 5 by a per-class
 table) are not generated.</p>
 <h3 id="research-and-research_model"><code>research</code> and <code>research_model</code><a class="headerlink" href="#research-and-research_model" title="Permanent link">&para;</a></h3>
 <p><code>research: {&lt;id&gt;: …}</code> — the research tree.</p>
