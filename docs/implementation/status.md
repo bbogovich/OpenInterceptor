@@ -419,6 +419,11 @@ on hull damage), breaks off for 5 s − 0.5 s × level, and the `nova_bomb` goes
 launch with the battle over 60 s later. `default`: unchanged. Manual case MT-4-72; **549**
 `#[test]` functions.
 
+**#119 follow-up** (app NEXT; `notes/re/flight` §10, §12): the original's break-off (`reengage_beyond`,
+`reengage_chance`, `break_manoeuvre`, `break_call`); the Nova's warnings as wingman voice lines
+(`line`; waves 33 – 36); `RadioLine` events voiced by the speaker or a wingman; a battle ended by
+`battle_over` with no deciding objective is a draw.
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),

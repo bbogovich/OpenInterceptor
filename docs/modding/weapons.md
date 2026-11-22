@@ -89,10 +89,12 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 
 ## The Nova bomb
 
-A missile with a `fuse` (app 0.22.16) is a Nova bomb: it never goes off on contact; it flies on and
-detonates `fuse` after launch, sends its `warnings` over the radio at their times, sets the
-`nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll, and
-`ends_battle_after` later turns `battle_over` true:
+A missile with a `fuse` is a Nova bomb: it never goes off on contact; it flies on and detonates
+`fuse` after launch, doing no damage (the original's detonation damages nothing, **verified**); it
+sets the `nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll,
+and `ends_battle_after` later turns `battle_over` true — the battle then ends as a draw unless an
+objective decides it (app NEXT). Its `warnings` are voice lines of the launcher's wingmen and/or
+texts at given times:
 
 ```yaml
 missiles:
@@ -100,9 +102,11 @@ missiles:
     inherit: original:GameSettings.ini/NovaBomb
     fuse: 60s
     ends_battle_after: 60s
-    warnings: [{at: 30s, text: NOVA BOMB ARMED}, {at: 60s, text: NOVA BOMB DETONATED}]
+    warnings: [{at: 30s, line: wave33}, {at: 60s, line: wave34}, {at: 88s, line: wave35}, {at: 107s, line: wave36}]
 ```
 
-`interceptor` has it with the original's timing (**verified**); a campaign craft fitted with the
-Nova Bomb carries it. Its blast damages nothing yet, and no mission ends on `battle_over` yet —
-what the original's detonation does to the ships and the campaign is not traced.
+`interceptor` has it with the original's timing and messages (voice waves 33 – 36, **verified**;
+the clips are not mapped to its voice sets yet, so they are silent). A campaign craft fitted with
+the Nova Bomb carries it. The original's final missions count a fired Nova as a win when an X-COM
+Patton is still in the battle; what the strategy layer then records (the results `(5, 3)` and
+`(5, 1)`) is *unknown*.

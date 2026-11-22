@@ -120,7 +120,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
 | `fuse` | time | 0 | A Nova bomb (app 0.22.16): it never goes off on contact or by its proximity fuse; it flies on and detonates this long after launch, damaging nothing (what the original's blast does is not traced). 0 = an ordinary missile. `interceptor`: `nova_bomb`, 60 s (**verified**). |
 | `ends_battle_after` | time | 0 | With `fuse`: the battle is over this long after the detonation — the `battle_over` mission query turns true (app 0.22.16). `interceptor`: 60 s (**verified**). |
-| `warnings` | list of `{at, text}` | none | With `fuse`: radio lines this long after launch (app 0.22.16). `interceptor`: at 30 s, 60 s, 88 s and 107 s, in the engine's words (the original's message texts are not mapped). |
+| `warnings` | list of `{at, line, text}` | none | With `fuse`: this long after launch, one of the launcher's wingmen says voice `line` and/or `text` goes on the message display (app 0.22.16; `line` app NEXT). `interceptor`: voice waves 33 – 36 (`wave33` … `wave36`) at 30 s, 60 s, 88 s and 107 s (**verified**; silent until a voice set maps the clips). |
 
 ### `ships` and `objects`
 
@@ -268,7 +268,11 @@ A state:
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
 | `break_off` | distance | 0 | Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × `max_speed` with the target ahead. `interceptor`: 250 m (**verified**). |
-| `break_time` | time | 2 s | Attack (app 0.22.16): how long a break-off lasts before the pilot comes round again. `interceptor`: 5 s − 0.5 s × level (*derived* from the original's 5,000 − 500d ms). |
+| `break_time` | time | 2 s | Attack: how long a break-off lasts before the pilot comes round again; with `reengage_beyond`, how long before the `reengage_chance` roll may end it (app NEXT). `interceptor`: 5 s − 0.5 s × level (**verified**). |
+| `reengage_beyond` | distance | 0 | Attack (app NEXT): the original's break-off — it ends only when a `break_manoeuvre` ends; then the pilot comes round if the target is farther than this, or after `break_time` with `reengage_chance`, else flies another. 0 = the fixed `break_time`. `interceptor`: 1,200 m (**verified**). |
+| `reengage_chance` | fraction | 25 % | With `reengage_beyond`: the roll after `break_time`. |
+| `break_manoeuvre` | time | 2 s | With `reengage_beyond`: one break-off manoeuvre's length (`interceptor`: 2 s, *derived*). |
+| `break_call` | `{chance, from_level, line, text}` | none | Attack (app NEXT): on breaking off at anyone but the player's craft, from difficulty level index `from_level`, with `chance`: the pilot's voice set says `line` and/or `text` goes on the message display. `interceptor`: 25 % from level 2, line `radio_7` (the original's message 7; its clip is not mapped). |
 | `lock_cone` | angle | 0 | Attack (app 0.22.8): the pilot's **own missile lock**, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's `lock_time` (or the missile's) after it started, `missiles` seconds apart exactly, with `missile_chance` per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). `interceptor`: 5° (**verified** as the code reads; the window may be inverted in the original, *derived*). |
 | `aim` | `engine`, `fixed`, `gimballed` | `engine` | Turret (app 0.22.13): the original's fixed or gimballed turret instead of bursts and aim error ([Turret fire control](behaviours.md#turret-fire-control)). |
 | `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
@@ -868,7 +872,7 @@ actions each context adds for scripts:
 | `member_hull(role, m)` | query, number | battle | Its hull fraction (0 once gone). |
 | `member_distance(role, m)` | query, number | battle | Its distance from the player, m (very large once gone). |
 | `nova_time` | query, number | battle | Seconds since a Nova bomb went off; −1 before (app 0.22.16). |
-| `battle_over` | query, true/false | battle | A Nova bomb's `ends_battle_after` has run out (app 0.22.16). |
+| `battle_over` | query, true/false | battle | A Nova bomb's `ends_battle_after` has run out (app 0.22.16). If no objective decides the battle then, it ends as a draw (app NEXT). |
 | `script(file:function)` | action-list entry | battle, campaign | Hand over to a script function (not from inside a script). |
 
 The language, budget and errors: [Scripts (Tier 2)](scripts.md).

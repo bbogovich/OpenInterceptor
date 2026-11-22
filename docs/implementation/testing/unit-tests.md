@@ -8,6 +8,13 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#119 follow-up (app NEXT)** two more, so **551**: `sim::ai::tests::the_original_break_off_ends_with_its_manoeuvre_by_range_or_chance`
+(a break-off at 1,500 m ends with its first manoeuvre; at 800 m not before 5 s, then on a 25 %
+roll; breaking off at another ship sends the call) and
+`mission::tests::a_nova_battle_end_is_a_draw_unless_an_objective_decides` (a draw with no
+objective; `win: battle_over and alive(patton)` wins). **Changed:** the Nova test also checks the
+wingman voice line `wave33`.
+
 **Parity M1, #119 (app 0.22.16)** three more, so **549**:
 `content::behaviour::tests::retreat_chances_follow_rank_stats_and_clamps` (disarmed: rank 0 and
 Bravery 100 → 40 %, rank 3 → held to 5 %, Bravery 0 → held to 85 %, no pilot → the band; Nova:
