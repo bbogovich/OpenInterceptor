@@ -4,18 +4,18 @@
 //! (MsgBox.cpp; `notes/re/wrappers/ui-framework.md` §4, verified unless said), as pure
 //! functions over design-space rectangles. `app::caption::dialog` draws with them.
 //!
-//! * **Size** (0x519b16): width = max(325, caption, body); a body wider than 425 wraps —
-//!   width 425 and height 100 + (line height + 2) × body width / 425 (at most 400); else
-//!   height 100. Buttons are max(100, text + 20) × 14, 10 px apart; a row wider than 465
-//!   wraps into up to 4 rows; otherwise a narrower box grows to the row's width − 40. The
-//!   box is centred on (320, 240), its client inset 3 px each side; style 1 grows 20 px up
-//!   and to each side (10 more on the right), style 2 20 px to each side; styles 2 and 3
-//!   round the height so the side edge tile fits a whole number of times between its caps.
+//! * **Size** (0x519b16, §4.2): width = max(325, caption, body); a body wider than 425
+//!   wraps — width 425 and height 100 + (line height + 2) × body width / 425 (at most
+//!   400); else 100. The style kit's side edges are added, the box centred on (320, 240).
+//! * **Buttons**: max(100, text + 20) × 14, in rows breaking past the box's width − 70
+//!   (row 0 at the bottom); two or more rows switch every style to kit 242 / 250. Row k's
+//!   top = final bottom − 25 − 17k + the style's change − 5 × (rows − 1).
+//! * **Style changes**: style 1 grows 20 px up and to each side (10 more on the right),
+//!   style 2 20 px to each side; then the kit's top and bottom bands; styles 2 and 3 round
+//!   the height to whole side tiles. Text rect = final box minus the final kit's insets.
 //! * **Frame kit** (0x4c9a20): 8 rows from a base B — top, bottom, left and right edges,
 //!   then the corners top-left, top-right, bottom-right, bottom-left — every edge tiled at
 //!   its natural size, never stretched; corners drawn last.
-//! * **Buttons**: rows at bottom − 25, − 42, − 59, − 76, moved down by the kit's bottom
-//!   height; one button centred, two at the style's offsets from the sides.
 
 /// A design-space rectangle in whole pixels: x, y, w, h.
 pub type IRect = [i32; 4];
@@ -55,13 +55,15 @@ pub fn base_size(caption_w: i32, body_w: i32, lh: i32) -> (i32, i32) {
     }
 }
 
-/// Splits button widths into rows no wider than 465 (at most 4 rows), 10 px apart.
-pub fn button_rows(widths: &[i32]) -> Vec<Vec<usize>> {
+/// Splits button widths into rows: a row breaks when it would pass `limit` (the box's
+/// width − 70), buttons 10 px apart, at most 4 rows. Row 0 is the first (bottom) row.
+pub fn button_rows(widths: &[i32], limit: i32) -> Vec<Vec<usize>> {
     let mut rows: Vec<Vec<usize>> = vec![Vec::new()];
     let mut w = 0;
     for (i, bw) in widths.iter().enumerate() {
-        let add = if rows.last().is_some_and(|r| r.is_empty()) { *bw } else { bw + 10 };
-        if w + add > 465 && !rows.last().is_some_and(|r| r.is_empty()) && rows.len() < 4 {
+        let empty = rows.last().is_some_and(|r| r.is_empty());
+        let add = if empty { *bw } else { bw + 10 };
+        if w + add > limit && !empty && rows.len() < 4 {
             rows.push(Vec::new());
             w = *bw;
         } else {
@@ -79,123 +81,149 @@ pub fn button_width(text_w: i32) -> i32 {
     (text_w + 20).max(100)
 }
 
-/// Lays a message box out. `kit` gives the piece sizes; `style` 1-3 (0: a plain kit).
-///
-/// `extra_h` grows the box beyond the exe's height (the engine adds what its wrapped text
-/// needs when that does not fit the client rect: DERIVED).
+/// Which kit a box is framed with: its style's own, or the two- or three-row kits (242,
+/// 250) every style switches to when its buttons need more than one row.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KitChoice {
+    Own,
+    TwoRows,
+    MoreRows,
+}
+
+/// The kit for `rows` button rows (style 0 has no kit of its own: the two-row kit).
+pub fn kit_choice(style: u8, rows: usize) -> KitChoice {
+    match rows {
+        0 | 1 if style != 0 => KitChoice::Own,
+        0..=2 => KitChoice::TwoRows,
+        _ => KitChoice::MoreRows,
+    }
+}
+
+/// The row y change per style (the exe's net move of the rows against the final box).
+pub fn row_change(style: u8, rows: usize) -> i32 {
+    match (style, rows) {
+        (1, _) | (3, _) => -7,
+        (2, _) => -8,
+        (_, 3) => -7,
+        (_, 4) => 5,
+        _ => 0,
+    }
+}
+
+/// Lays a message box out as the exe does (0x519b16; ui-framework.md §4.2, verified):
+/// the content size, the style kit's side edges, the button rows (breaking at the box's
+/// width − 70), the kit chosen by the row count, the style's box change, the kit's top
+/// and bottom bands, styles 2/3 rounded to whole side tiles (the top moving up), the rows
+/// at final bottom − 25 − 17k + the style's change − 5 × (rows − 1), and the text rect
+/// = the final box minus the final kit's insets. `own`, `two`, `more` are the piece sizes
+/// of the style's kit and of kits 242 and 250. Nothing grows for long text: text taller
+/// than the rect runs onto the frame art, as in the exe.
+#[allow(clippy::too_many_arguments)]
 pub fn layout(
     style: u8,
-    kit: &Kit,
+    own: &Kit,
+    two: &Kit,
+    more: &Kit,
     caption_w: i32,
     body_w: i32,
     lh: i32,
     button_text_w: &[i32],
-    extra_h: i32,
-) -> MsgBox {
-    let (mut w, mut h) = base_size(caption_w, body_w, lh);
+) -> (MsgBox, KitChoice) {
+    // 1. Content size and the buttons.
+    let (mut w, h) = base_size(caption_w, body_w, lh);
     let widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
-    let rows = button_rows(&widths);
-    let row_w = |r: &Vec<usize>| r.iter().map(|i| widths[*i]).sum::<i32>() + 10 * (r.len() as i32 - 1).max(0);
-    if rows.len() == 1 {
-        let rw = row_w(&rows[0]);
-        if w < rw {
-            w = rw - 40;
-        }
+    let one_row: i32 = widths.iter().sum::<i32>() + 10 * (widths.len() as i32 - 1).max(0);
+    if one_row > 465 {
+        w = w.max(465);
+    } else if w < one_row {
+        w = one_row - 40;
     }
-    // Centred on the screen's middle.
-    let (mut x, mut y) = (320 - w / 2, 240 - h / 2);
-    // The style's extension of the frame around the box.
+    // 2-3. Centred on (320, 240), the style kit's side edges added and re-centred.
+    let w = w + own[2][0] + own[3][0];
+    let (mut l, mut t) = (320 - w / 2, 240 - h / 2);
+    let (mut r, mut b) = (l + w, t + h);
+    // 4. Rows (row 0 at the bottom), breaking past the box's width − 70.
+    let rows = if widths.is_empty() { Vec::new() } else { button_rows(&widths, w - 70) };
+    let n = rows.len();
+    let choice = kit_choice(style, n);
+    let kit = match choice {
+        KitChoice::Own => own,
+        KitChoice::TwoRows => two,
+        KitChoice::MoreRows => more,
+    };
+    // 5. The style's box change.
     match style {
         1 => {
-            x -= 20;
-            y -= 20;
-            w += 50;
-            h += 20;
+            t -= 20;
+            l -= 20;
+            r += 30;
         }
         2 => {
-            x -= 20;
-            w += 40;
+            l -= 20;
+            r += 20;
         }
         _ => {}
     }
-    // Styles 2 and 3: a whole number of side tiles between the right edge's caps.
-    let round = |h: i32| {
-        if style == 2 || style == 3 {
-            let tile = kit[2][1].max(1);
-            let caps = kit[5][1] + kit[6][1];
-            let inner = (h - caps).max(0);
-            caps + (inner + tile - 1) / tile * tile
-        } else {
-            h
-        }
-    };
-    h = round(h);
-    // The engine's growth for text and buttons that would not fit the text rect, added
-    // to the exe's (rounded) height and rounded again (DERIVED).
-    if extra_h > 0 {
-        h = round(h + extra_h);
+    // 6. The kit's top and bottom bands; styles 2 and 3 round the height (moving the top).
+    t -= kit[0][1];
+    b += kit[1][1];
+    if style == 2 || style == 3 {
+        let tile = kit[2][1].max(1);
+        let caps = kit[5][1] + kit[6][1];
+        let inner = (b - t - caps).max(0);
+        t = b - (caps + (inner + tile - 1) / tile * tile);
     }
     // Back on the screen.
-    x = x.clamp(0, (640 - w).max(0));
-    y = y.clamp(0, (480 - h).max(0));
-    let frame = [x, y, w, h];
-    let client = match insets(style) {
-        Some([l, t, r, b]) => [x + l, y + t, w - l - r, h - t - b],
-        // Any other kit: its side widths and heights + 3.
-        None => {
-            let (l, t, r, b) = (kit[2][0] + 3, kit[0][1] + 3, kit[3][0] + 3, kit[1][1] + 3);
-            [x + l, y + t, w - l - r, h - t - b]
-        }
+    let (fw, fh) = (r - l, b - t);
+    let fx = l.clamp(0, (640 - fw).max(0));
+    let fy = t.clamp(0, (480 - fh).max(0));
+    let (dx, dy) = (fx - l, fy - t);
+    let (l, t, r, b) = (l + dx, t + dy, r + dx, b + dy);
+    let frame = [l, t, r - l, b - t];
+    // 7. The text rect: the final kit's insets (fixed for the style kits; else each edge + 3).
+    let ins = match (choice, insets(style)) {
+        (KitChoice::Own, Some(i)) => i,
+        _ => [kit[2][0] + 3, kit[0][1] + 3, kit[3][0] + 3, kit[1][1] + 3],
     };
-    // Button rows from the bottom up, 17 px apart (the exe's bottom − 25, − 42, − 59, − 76
-    // pitch). Where the exe's rows land after "moved down by the kit's bottom height" is
-    // not settled, so the engine keeps them in the box's button area: the lowest row ends
-    // 4 px above the text rect's bottom, rows centred on the text rect, two buttons at the
-    // style's offsets kept inside it (DERIVED). `button_area` gives the height to reserve.
-    let bottom = client[1] + client[3] - 4 - 14;
-    let (cl, cr) = (client[0], client[0] + client[2]);
-    let n = rows.len() as i32;
+    let client = [l + ins[0], t + ins[1], r - l - ins[0] - ins[2], b - t - ins[1] - ins[3]];
+    // The buttons, row by row.
+    let cx = l + (r - l) / 2;
+    let change = row_change(style, n);
     let mut buttons = vec![[0; 4]; widths.len()];
-    for (r, row) in rows.iter().enumerate() {
-        let ry = bottom - 17 * (n - 1 - r as i32);
-        let place: Vec<i32> = match (row.len(), style) {
-            (1, _) => vec![cl + (cr - cl - widths[row[0]]) / 2],
-            (2, _) => {
-                let (lo, ro) = match style {
-                    1 => (50, 60),
-                    2 => (90, 90),
-                    _ => (20, 20),
+    for (k, row) in rows.iter().enumerate() {
+        let y = b - 25 - 17 * k as i32 + change - 5 * (n as i32 - 1);
+        match row.len() {
+            1 => buttons[row[0]] = [cx - widths[row[0]] / 2, y, widths[row[0]], 14],
+            2 => {
+                // Either side of the centre, then widened to the style's offsets (style 1
+                // also pulls the inner edges in by 5); with several rows the outer edges
+                // are kept 35 px from the box sides.
+                let (lo, ro, pull) = match style {
+                    1 => (50, 60, 5),
+                    2 => (90, 90, 0),
+                    _ => (20, 20, 0),
                 };
-                vec![(x + lo).max(cl), (x + w - ro).min(cr) - widths[row[1]]]
+                let (mut ll, lr) = (l + lo, cx - 1 - pull);
+                let (rl, mut rr) = (cx + 1 + pull, r - ro);
+                if n > 1 {
+                    ll = ll.min(l + 35);
+                    rr = rr.max(r - 35);
+                }
+                buttons[row[0]] = [ll, y, lr - ll, 14];
+                buttons[row[1]] = [rl, y, rr - rl, 14];
             }
             _ => {
-                let rw = row_w(row);
-                let mut bx = cl + (cr - cl - rw) / 2;
-                row.iter()
-                    .map(|i| {
-                        let v = bx;
-                        bx += widths[*i] + 10;
-                        v
-                    })
-                    .collect()
+                // Three or more in a row: centred, 10 px apart (not described; DERIVED).
+                let rw: i32 = row.iter().map(|i| widths[*i]).sum::<i32>() + 10 * (row.len() as i32 - 1);
+                let mut x = cx - rw / 2;
+                for i in row {
+                    buttons[*i] = [x, y, widths[*i], 14];
+                    x += widths[*i] + 10;
+                }
             }
-        };
-        for (i, bx) in row.iter().zip(place) {
-            buttons[*i] = [bx, ry, widths[*i], 14];
         }
     }
-    MsgBox { frame, client, buttons }
-}
-
-/// The height a message box's buttons take at the foot of its text rect: their rows,
-/// 17 px apart, 14 tall, and 4 px under them (DERIVED, see [`layout`]).
-pub fn button_area(button_text_w: &[i32]) -> i32 {
-    if button_text_w.is_empty() {
-        return 0;
-    }
-    let widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
-    let n = button_rows(&widths).len() as i32;
-    14 + 17 * (n - 1) + 4 + 6
+    (MsgBox { frame, client, buttons }, choice)
 }
 
 /// The pieces of a frame kit on `frame`, in drawing order: `(piece index, dest rect,
@@ -272,7 +300,7 @@ pub fn ornament_on(step: u64) -> bool {
 mod tests {
     use super::*;
 
-    /// A style-3-like kit: edges 10 px thick, corners 40 × 30.
+    /// A kit: edges 10 px thick, corners 40 × 30; side tiles 20 tall.
     fn kit() -> Kit {
         [[50, 10], [50, 10], [10, 20], [10, 20], [40, 30], [40, 30], [40, 30], [40, 30]]
     }
@@ -286,51 +314,64 @@ mod tests {
     }
 
     #[test]
-    fn buttons_are_100_wide_at_least_and_wrap_past_465() {
+    fn buttons_break_rows_at_the_box_width_less_70() {
         assert_eq!((button_width(30), button_width(120)), (100, 140));
-        assert_eq!(button_rows(&[100, 100, 100, 100]), vec![vec![0, 1, 2, 3]], "430 fits");
-        assert_eq!(button_rows(&[200, 200, 200]), vec![vec![0, 1], vec![2]], "410 then 200");
-        assert_eq!(button_rows(&[300; 6]).len(), 4, "never more than 4 rows");
+        assert_eq!(button_rows(&[100, 100, 100], 345), vec![vec![0, 1, 2]], "320 fits in 345");
+        assert_eq!(button_rows(&[200, 200, 200], 345), vec![vec![0], vec![1], vec![2]]);
+        assert_eq!(button_rows(&[100; 9], 120).len(), 4, "never more than 4 rows");
+        assert_eq!(
+            (kit_choice(1, 1), kit_choice(3, 2), kit_choice(2, 3), kit_choice(0, 1)),
+            (KitChoice::Own, KitChoice::TwoRows, KitChoice::MoreRows, KitChoice::TwoRows)
+        );
     }
 
     #[test]
-    fn styles_extend_and_round_the_box() {
+    fn the_rows_sit_on_the_final_box_bottom_by_style() {
         let k = kit();
-        let one = layout(1, &k, 0, 0, 14, &[20], 0);
-        assert_eq!(one.frame, [320 - 162 - 20, 190 - 20, 325 + 50, 120]);
-        assert_eq!(one.client, [one.frame[0] + 36, one.frame[1] + 50, 375 - 80, 120 - 95]);
-        let three = layout(3, &k, 0, 0, 14, &[20], 0);
-        // 100 tall: 60 of caps + 40 inner = two 20 px tiles exactly.
-        assert_eq!(three.frame[3], 100);
-        let three_odd = layout(
+        // One row, style 1: bottom − 32; style 0: bottom − 25; style 2: − 33.
+        let (one, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20]);
+        assert_eq!(one.buttons[0][1], one.frame[1] + one.frame[3] - 32);
+        let (zero, c0) = layout(0, &k, &k, &k, 0, 0, 14, &[20]);
+        assert_eq!((zero.buttons[0][1], c0), (zero.frame[1] + zero.frame[3] - 25, KitChoice::TwoRows));
+        let (two_style, _) = layout(2, &k, &k, &k, 0, 0, 14, &[20]);
+        assert_eq!(two_style.buttons[0][1], two_style.frame[1] + two_style.frame[3] - 33);
+        // Two rows, style 3: row 0 at bottom − 25 − 7 − 5, row 1 17 px higher; kit 242.
+        let (rows, c) = layout(3, &k, &k, &k, 0, 0, 14, &[300, 300]);
+        let bottom = rows.frame[1] + rows.frame[3];
+        assert_eq!((rows.buttons[0][1], rows.buttons[1][1], c), (bottom - 37, bottom - 54, KitChoice::TwoRows));
+    }
+
+    #[test]
+    fn styles_change_the_box_and_two_buttons_stretch_to_their_offsets() {
+        let k = kit();
+        let (one, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20]);
+        // 325 + the side edges (20) + style 1's 20 + 30; the top 20 higher plus the top band.
+        assert_eq!(one.frame[2], 325 + 20 + 50);
+        assert_eq!(one.frame[3], 100 + 20 + 10 + 10);
+        assert_eq!(one.client, [one.frame[0] + 36, one.frame[1] + 50, one.frame[2] - 80, one.frame[3] - 95]);
+        let (two, _) = layout(1, &k, &k, &k, 0, 0, 14, &[20, 20]);
+        let (l, r) = (two.frame[0], two.frame[0] + two.frame[2]);
+        let cx = l + two.frame[2] / 2;
+        assert_eq!(
+            (two.buttons[0][0], two.buttons[0][0] + two.buttons[0][2]),
+            (l + 50, cx - 6),
+            "style 1: inner edge pulled in by 5"
+        );
+        assert_eq!((two.buttons[1][0], two.buttons[1][0] + two.buttons[1][2]), (cx + 6, r - 60));
+        let (o, _) = layout(3, &k, &k, &k, 0, 0, 14, &[20, 20]);
+        assert_eq!(o.buttons[0][0], o.frame[0] + 20);
+        // Styles 2 and 3: whole side tiles between the caps (the top moves up).
+        let (t3, _) = layout(
             3,
             &[[50, 10], [50, 10], [10, 22], [10, 22], [40, 30], [40, 30], [40, 30], [40, 30]],
+            &k,
+            &k,
             0,
             0,
             14,
             &[20],
-            0,
         );
-        assert_eq!(three_odd.frame[3], 60 + 44, "rounded up to whole 22 px tiles");
-        assert_eq!(layout(2, &k, 0, 0, 14, &[], 0).frame[2], 365, "style 2: 20 px more each side");
-        assert_eq!(layout(3, &k, 0, 0, 14, &[20], 30).frame[3], 140, "extra height, rounded to whole tiles");
-    }
-
-    #[test]
-    fn one_button_is_centred_and_two_sit_at_the_styles_offsets() {
-        let k = kit();
-        let m = layout(3, &k, 0, 0, 14, &[20], 0);
-        let b = m.buttons[0];
-        assert_eq!((b[0] + b[2] / 2, b[2], b[3]), (m.client[0] + m.client[2] / 2, 100, 14), "centred on the text rect");
-        assert_eq!(b[1] + 14, m.client[1] + m.client[3] - 4, "inside the text rect, 4 px from its bottom");
-        let two = layout(2, &k, 0, 0, 14, &[20, 20], 0);
-        assert_eq!(two.buttons[0][0], (two.frame[0] + 90).max(two.client[0]));
-        assert!(two.buttons[1][0] + 100 <= two.client[0] + two.client[2], "kept inside the text rect");
-        assert_eq!(button_area(&[20]), 24);
-        assert_eq!(button_area(&[300, 300]), 41, "two rows");
-        assert_eq!(button_area(&[]), 0);
-        let rows = layout(3, &k, 0, 0, 14, &[300, 300], 0);
-        assert_eq!(rows.buttons[1][1] - rows.buttons[0][1], 17, "a second row 17 px lower");
+        assert_eq!((t3.frame[3] - 60) % 22, 0);
     }
 
     #[test]

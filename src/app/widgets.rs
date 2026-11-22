@@ -162,12 +162,18 @@ pub fn grid(r: Rect4, n: usize, cols: usize, gap: f32) -> Vec<Rect4> {
 /// A modal prompt over the whole screen: a title, wrapped text and a row of buttons.
 /// Returns the button clicked; Enter chooses the first, Esc the last.
 pub fn modal(ui: &Ui, input: &Input, title: &str, body: &str, buttons: &[&str]) -> Option<usize> {
+    modal_kind(ui, input, "default", title, body, buttons)
+}
+
+/// [`modal`] for a kind of prompt (`interception`, a notice kind such as `report` …),
+/// which picks the skin's message-box style for it (`dialog.styles`).
+pub fn modal_kind(ui: &Ui, input: &Input, kind: &str, title: &str, body: &str, buttons: &[&str]) -> Option<usize> {
     // A skin with a `dialog` style draws the original's message box instead (RQ-UI-06).
     let styled = ui
         .skin
         .dialog
         .as_ref()
-        .and_then(|d| super::caption::dialog(ui, d, input.mouse, input.clicked, title, body, buttons));
+        .and_then(|d| super::caption::dialog(ui, d, input.mouse, input.clicked, kind, title, body, buttons));
     if let Some(clicked) = styled {
         return clicked.or_else(|| keys(input, buttons));
     }

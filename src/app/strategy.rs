@@ -1090,7 +1090,7 @@ impl StrategyScreen {
     fn prompts(&mut self, ctx: &AppContext, def: &StrategyDef, input: &Input) -> Option<Next> {
         let ui = &ctx.ui;
         if let Some((title, text)) = self.card.clone() {
-            if ask(ctx, input, &title, &text, &["Continue"]).is_some() || input.clicked {
+            if ask(ctx, input, "card", &title, &text, &["Continue"]).is_some() || input.clicked {
                 self.card = None;
             }
             return Some(Next::Stay);
@@ -1108,7 +1108,14 @@ impl StrategyScreen {
                 "{name} is in range. {} of your craft can engage. Fly the battle yourself, or break off and let it pass.",
                 party.len()
             );
-            match ask(ctx, input, "Interception", &body, &["Fly the battle", "Auto-resolve", "Break off"]) {
+            match ask(
+                ctx,
+                input,
+                "interception",
+                "Interception",
+                &body,
+                &["Fly the battle", "Auto-resolve", "Break off"],
+            ) {
                 Some(1) => {
                     // Fought without the player: the odds from both sides' strength, the
                     // mission's own outcome actions for the result.
@@ -1220,7 +1227,7 @@ impl StrategyScreen {
             let keys = [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4, KeyCode::Key5];
             let typed = keys.iter().take(labels.len()).position(|k| is_key_pressed(*k));
             let no_keys = Input { enter: false, escape: false, ..*input };
-            if let Some(k) = ask(ctx, &no_keys, "A decision", "Choose:", &labels).or(typed) {
+            if let Some(k) = ask(ctx, &no_keys, "choice", "A decision", "Choose:", &labels).or(typed) {
                 self.choice = None;
                 for e in self.campaign.choose(def, ev, k) {
                     if let crate::campaign::Event::Ending { ending } = e {
@@ -1233,7 +1240,7 @@ impl StrategyScreen {
         if let Some(m) = self.offer.clone() {
             let name =
                 ctx.content.rules.missions.iter().find(|x| x.id == m).map(|x| x.name.clone()).unwrap_or(m.clone());
-            match ask(ctx, input, "Mission offered", &name, &["Fly it", "Decline"]) {
+            match ask(ctx, input, "offer", "Mission offered", &name, &["Fly it", "Decline"]) {
                 Some(0) => {
                     self.offer = None;
                     match self.ready_craft() {
@@ -1251,7 +1258,7 @@ impl StrategyScreen {
         }
         if let Some(v) = self.convoy {
             let body = "A supply convoy is under attack. Fly its escort, or let it fight through on its own.";
-            match ask(ctx, input, "Convoy ambushed", body, &["Fly the escort", "Let it fight"]) {
+            match ask(ctx, input, "convoy", "Convoy ambushed", body, &["Fly the escort", "Let it fight"]) {
                 Some(0) => {
                     self.convoy = None;
                     let mission = def.logistics.as_ref().and_then(|l| l.ambush_mission.clone());
@@ -1281,7 +1288,7 @@ impl StrategyScreen {
                 .unwrap_or_default();
             let body =
                 format!("The survey ship at {at} is under attack. Fly its escort, or let it try to get away alone.");
-            match ask(ctx, input, "Survey ship attacked", &body, &["Fly the escort", "Let it be"]) {
+            match ask(ctx, input, "survey", "Survey ship attacked", &body, &["Fly the escort", "Let it be"]) {
                 Some(0) => {
                     self.survey = None;
                     let mission = def.logistics.as_ref().and_then(|l| l.survey_mission.clone());
@@ -1312,7 +1319,7 @@ impl StrategyScreen {
                 .unwrap_or_default();
             let mission = def.logistics.as_ref().and_then(|l| l.strikes.as_ref()).and_then(|s| s.mission.clone());
             let body = format!("Enemy craft are striking the {what} under construction. Fly its defence, or let the strike set the work back.");
-            match ask(ctx, input, "Construction under attack", &body, &["Fly the defence", "Let it be"]) {
+            match ask(ctx, input, "strike", "Construction under attack", &body, &["Fly the defence", "Let it be"]) {
                 Some(0) => {
                     self.strike = None;
                     match (self.ready_craft(), mission) {
@@ -1339,6 +1346,7 @@ impl StrategyScreen {
             match ask(
                 ctx,
                 input,
+                "save",
                 "Save game",
                 "Choose a slot. (F5 and leaving the map save automatically.)",
                 &["Slot 1", "Slot 2", "Slot 3", "Cancel"],
@@ -1367,7 +1375,7 @@ impl StrategyScreen {
             let labels: Vec<String> =
                 if asks { clock.notice_buttons.iter().map(|t| caption(t)).collect() } else { vec!["OK".into()] };
             let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
-            if let Some(k) = ask(ctx, input, "Report", &b, &refs) {
+            if let Some(k) = ask(ctx, input, notice_name(self.banner_kind), "Report", &b, &refs) {
                 self.banner = None;
                 self.banner_kind = NoticeKind::Other;
                 if asks && k == 1 {
@@ -2841,8 +2849,8 @@ fn history_limit(rules: &crate::content::rules::Ruleset, first: &str) -> usize {
 
 /// A prompt (`widgets::modal`) that plays the skin's sound for its button when one is
 /// chosen by a click: a capsule's, else a text button's (RQ-UI-09).
-fn ask(ctx: &AppContext, input: &Input, title: &str, body: &str, buttons: &[&str]) -> Option<usize> {
-    let chosen = widgets::modal(&ctx.ui, input, title, body, buttons);
+fn ask(ctx: &AppContext, input: &Input, kind: &str, title: &str, body: &str, buttons: &[&str]) -> Option<usize> {
+    let chosen = widgets::modal_kind(&ctx.ui, input, kind, title, body, buttons);
     if chosen.is_some() && input.clicked {
         let s = &ctx.ui.skin.sounds;
         let capsule = ctx.ui.skin.dialog.as_ref().is_some_and(|d| d.capsule.is_some());
@@ -2850,6 +2858,11 @@ fn ask(ctx: &AppContext, input: &Input, title: &str, body: &str, buttons: &[&str
         play_ui(ctx, None, sound);
     }
     chosen
+}
+
+/// A notice kind's name (`dialog.styles` and `clock.ask_for` use these).
+fn notice_name(kind: NoticeKind) -> &'static str {
+    NoticeKind::NAMES.iter().find(|(_, k)| *k == kind).map_or("other", |(n, _)| n)
 }
 
 /// Plays a control's interface sound: its own (`none`: silent), else the skin's default.

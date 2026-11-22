@@ -147,12 +147,16 @@ pub struct DialogStyle {
     pub capsule: Option<String>,
     /// Frame pieces drawn around the dialog (RQ-UI-14).
     pub frame: Vec<FramePiece>,
-    /// The original's message box: a frame kit's base sprite (8 rows from B: edges,
-    /// then corners) and its style (1-3: insets, padding and live pieces, see
-    /// `app::msgbox`). With a kit the box is sized and laid out as the exe does, and
-    /// `width`, `title_y`, `body_top`, `button_step` and `frame` are not used.
-    pub kit: Option<String>,
-    pub frame_style: u8,
+    /// The original's message box (`kits`): each frame kit's base sprite (8 rows from B:
+    /// edges, then corners) by name — `style1`, `style2`, `style3` (the styles' own kits,
+    /// with their live pieces after them) and `rows2`, `rows3` (the kits every style uses
+    /// when its buttons take two, or three and more, rows). With kits the box is sized and
+    /// laid out as the exe does (`app::msgbox`) and `width`, `title_y`, `body_top`,
+    /// `button_step` and `frame` are not used.
+    pub kits: Vec<(String, String)>,
+    /// The style (0-3) of each kind of prompt (`styles`: a notice kind or a prompt name,
+    /// and `default`).
+    pub styles: Vec<(String, u8)>,
     /// The fill for boxes bigger than `fill` (the original: row 429, 640 × 480).
     pub fill_large: Option<String>,
 }
@@ -228,8 +232,8 @@ impl Default for DialogStyle {
             fill: None,
             capsule: None,
             frame: Vec::new(),
-            kit: None,
-            frame_style: 0,
+            kits: Vec::new(),
+            styles: Vec::new(),
             fill_large: None,
         }
     }
@@ -268,17 +272,29 @@ impl DialogStyle {
         }
         v.extend(self.frame.iter().map(|p| p.image.clone()));
         v.extend(self.fill_large.iter().cloned());
-        if let Some(k) = &self.kit {
-            // The 8 kit rows and the style's live pieces after them.
-            let extra = match self.frame_style {
-                1 => 8,
-                2 => 3,
-                3 => 1,
+        for (name, k) in &self.kits {
+            // The 8 kit rows and a style kit's live pieces after them.
+            let extra = match name.as_str() {
+                "style1" => 8,
+                "style2" => 3,
+                "style3" => 1,
                 _ => 0,
             };
             v.extend((0..8 + extra).map(|i| DialogStyle::row(k, i)));
         }
         v
+    }
+
+    /// A kit's base sprite by name (`style1`, `rows2` …).
+    pub fn kit(&self, name: &str) -> Option<&str> {
+        self.kits.iter().find(|(n, _)| n == name).map(|(_, k)| k.as_str())
+    }
+
+    /// The style of a kind of prompt: its own, else `default`, else 1 (the exe's common
+    /// message box).
+    pub fn style_for(&self, kind: &str) -> u8 {
+        let find = |k: &str| self.styles.iter().find(|(n, _)| n == k).map(|(_, s)| *s);
+        find(kind).or_else(|| find("default")).unwrap_or(1)
     }
 
     /// Row `i` after a sprite reference (`original:sprite#190`, 2 → `…#190+2`).
@@ -316,11 +332,25 @@ impl DialogStyle {
             button_step: int("button_step", d.button_step)?.max(20),
             fill: g.str("fill").map(str::to_string),
             capsule: g.str("capsule").map(str::to_string),
-            kit: g.str("kit").map(str::to_string),
-            frame_style: match g.num("frame_style") {
-                None => 0,
-                Some(v) if (0.0..=3.0).contains(&v) && v.fract() == 0.0 => v as u8,
-                Some(v) => return Err(format!("frame_style: {v} is not 0, 1, 2 or 3")),
+            kits: {
+                let mut v = Vec::new();
+                for (k, n) in g.map("kits") {
+                    if !["style1", "style2", "style3", "rows2", "rows3"].contains(&k.as_str()) {
+                        return Err(format!("kits.{k}: not one of style1, style2, style3, rows2, rows3"));
+                    }
+                    v.push((k.clone(), n.as_str().ok_or(format!("kits.{k}: expected a sprite"))?.to_string()));
+                }
+                v
+            },
+            styles: {
+                let mut v = Vec::new();
+                for (k, n) in g.map("styles") {
+                    match n.as_str().and_then(|s| s.parse::<u8>().ok()).filter(|s| *s <= 3) {
+                        Some(s) => v.push((k.clone(), s)),
+                        None => return Err(format!("styles.{k}: expected a style 0, 1, 2 or 3")),
+                    }
+                }
+                v
             },
             fill_large: g.str("fill_large").map(str::to_string),
             frame: match g.node("frame").and_then(|n| n.as_seq()) {
@@ -576,11 +606,21 @@ pub fn schema() -> Ty {
                     "message-box capsule buttons: the base sprite (left, middle, right; pressed +3..+5)",
                 ),
                 f(
-                    "kit",
-                    Ty::Asset,
-                    "the original's message box: a frame kit's base sprite (original:sprite#163 / 179 / 190)",
+                    "kits",
+                    Ty::Struct(vec![
+                        f("style1", Ty::Asset, "style 1's kit (original:sprite#163)"),
+                        f("style2", Ty::Asset, "style 2's kit (original:sprite#179)"),
+                        f("style3", Ty::Asset, "style 3's kit (original:sprite#190)"),
+                        f("rows2", Ty::Asset, "the kit for two button rows (original:sprite#242)"),
+                        f("rows3", Ty::Asset, "the kit for three or four rows (original:sprite#250)"),
+                    ]),
+                    "the original's message box: frame kits by name",
                 ),
-                f("frame_style", Ty::Num, "with kit: the style, 1-3 (insets, padding, live pieces), 0 plain"),
+                f(
+                    "styles",
+                    Ty::Dict(Box::new(Ty::Num)),
+                    "the style (0-3) per prompt kind (a notice kind, a prompt name, or default)",
+                ),
                 f("fill_large", Ty::Asset, "the fill for boxes bigger than fill (original: sprite#429)"),
                 f(
                     "frame",
@@ -680,12 +720,22 @@ mod tests {
         assert_eq!(fd.frame[1].at, Anchor::TopLeft);
         assert_eq!(fd.images().len(), 1 + 6 + 2);
         assert_eq!(fd.images()[2], "original:sprite#258+1");
-        let kd = yaml::parse("dialog: {kit: 'original:sprite#190', frame_style: 3, fill_large: big.png}").unwrap();
+        let kd = yaml::parse(
+            "dialog: {kits: {style3: 'original:sprite#190', rows2: 'original:sprite#242'}, styles: {default: 1, report: 2}, fill_large: big.png}",
+        )
+        .unwrap();
         let kk = Skin::parse("x", Get(&kd), 0).unwrap().dialog.unwrap();
-        assert_eq!((kk.frame_style, kk.images().len()), (3, 1 + 9), "fill_large, 8 kit rows and the ornament");
+        assert_eq!(kk.images().len(), 1 + 9 + 8, "fill_large, kit 190 with its ornament, kit 242");
         assert_eq!(kk.images()[9], "original:sprite#190+8");
-        let bk = yaml::parse("dialog: {frame_style: 5}").unwrap();
-        assert!(Skin::parse("x", Get(&bk), 0).unwrap_err().contains("frame_style"));
+        assert_eq!(
+            (kk.kit("rows2"), kk.style_for("report"), kk.style_for("damage")),
+            (Some("original:sprite#242"), 2, 1)
+        );
+        assert_eq!(DialogStyle::default().style_for("x"), 1, "the exe's common box: style 1");
+        let bk = yaml::parse("dialog: {styles: {report: 5}}").unwrap();
+        assert!(Skin::parse("x", Get(&bk), 0).unwrap_err().contains("styles.report"));
+        let bk2 = yaml::parse("dialog: {kits: {style9: a.png}}").unwrap();
+        assert!(Skin::parse("x", Get(&bk2), 0).unwrap_err().contains("kits.style9"));
         let badf = yaml::parse("dialog: {frame: [{image: a.png, at: middle}]}").unwrap();
         assert!(Skin::parse("x", Get(&badf), 0).unwrap_err().contains("frame[0]: at"));
         let snd = yaml::parse(

@@ -613,8 +613,14 @@
               "button_step": {"description": "spacing of the stacked buttons", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "fill": {"description": "an image tiled over the dialog's body", "type": "string"},
               "capsule": {"description": "message-box capsule buttons: the base sprite (left, middle, right; pressed +3..+5)", "type": "string"},
-              "kit": {"description": "the original's message box: a frame kit's base sprite (original:sprite#163 / 179 / 190)", "type": "string"},
-              "frame_style": {"description": "with kit: the style, 1-3 (insets, padding, live pieces), 0 plain", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "kits": {"description": "the original's message box: frame kits by name", "type": "object", "additionalProperties": false, "properties": {
+                  "style1": {"description": "style 1's kit (original:sprite#163)", "type": "string"},
+                  "style2": {"description": "style 2's kit (original:sprite#179)", "type": "string"},
+                  "style3": {"description": "style 3's kit (original:sprite#190)", "type": "string"},
+                  "rows2": {"description": "the kit for two button rows (original:sprite#242)", "type": "string"},
+                  "rows3": {"description": "the kit for three or four rows (original:sprite#250)", "type": "string"}
+                }},
+              "styles": {"description": "the style (0-3) per prompt kind (a notice kind, a prompt name, or default)", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
               "fill_large": {"description": "the fill for boxes bigger than fill (original: sprite#429)", "type": "string"},
               "frame": {"description": "frame pieces around the dialog", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                     "image": {"description": "the piece's image", "type": "string"},
