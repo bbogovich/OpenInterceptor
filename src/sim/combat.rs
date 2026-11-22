@@ -201,10 +201,12 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         s.next_mount = (s.next_mount + 1) % n;
         return;
     }
-    if !group.iter().all(|&(k, _)| s.beam_cooldown[k] <= 0.0) {
+    let free = s.controls.free_fire;
+    if !free && !group.iter().all(|&(k, _)| s.beam_cooldown[k] <= 0.0) {
         return;
     }
-    let cost: f32 = group.iter().map(|&(k, _)| rules.beam(class.beams[k]).energy_cost).sum();
+    // A free-firing turret (the original's station turrets) pays no energy.
+    let cost: f32 = if free { 0.0 } else { group.iter().map(|&(k, _)| rules.beam(class.beams[k]).energy_cost).sum() };
     if s.energy < cost {
         // Not enough energy: report it, and hold the mounts for half a second so the
         // warning is not repeated every tick while the trigger is held.

@@ -55,7 +55,7 @@
 
 use super::{targeting, Controls, Pilot, Ship, ShipId, SimEvent, World, TICK};
 use crate::content::behaviour::{
-    BehaviourDef, BehaviourId, Manoeuvre, Params, PilotStats, Selector, Skill, StateScript, Steer,
+    BehaviourDef, BehaviourId, Manoeuvre, Params, PilotStats, Selector, Skill, StateScript, Steer, TurretAim,
 };
 use crate::content::equipment::SystemKind;
 use crate::script::action::Action;
@@ -150,6 +150,10 @@ pub struct AiState {
     pub lock_start: Option<f64>,
     /// When this pilot last fired a missile (world time; −∞ = never).
     pub last_missile: f64,
+    /// Turrets: the accuracy (0..1) this turret rolled when it first fired.
+    pub turret_accuracy: Option<f32>,
+    /// Turrets with an `interval`: the world time of the next allowed shot.
+    pub next_shot: f64,
 }
 
 impl AiState {
@@ -180,6 +184,8 @@ impl AiState {
             pilot: None,
             lock_start: None,
             last_missile: f64::NEG_INFINITY,
+            turret_accuracy: None,
+            next_shot: 0.0,
         }
     }
 }
@@ -1098,6 +1104,9 @@ fn lock_time(w: &World, ship: &Ship) -> f32 {
 
 /// Station guns: no flying; swivelling beams track the target (the `turret` manoeuvre).
 fn turret(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, skill: &Skill) -> Controls {
+    if p.turret.aim != TurretAim::Engine {
+        return original_turret(w, me, target, st, p);
+    }
     let ship = w.get(me).expect("think only visits live ships");
     let class = w.rules.ship(ship.class);
     let bolt_speed = class.beams.first().map(|b| w.rules.beam(*b).speed).unwrap_or(2000.0);
@@ -1107,6 +1116,114 @@ fn turret(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     let dist = w.get(target).map(|t| t.position.distance(ship.position)).unwrap_or(f32::MAX);
     let firing = in_burst(st, p);
     Controls { aim: Some(dir), fire_beams: firing && dist < p.range.min(reach * 0.95), ..Default::default() }
+}
+
+/// How far a turret's line of sight reaches, metres (the original's 5,000 m check).
+pub const TURRET_SIGHT: f32 = 5000.0;
+
+/// The original's station and freighter turrets (`aim: fixed | gimballed`; flight README
+/// §8.6, §8.8 and notes/re/unknowns-2026-11.md §6, verified):
+///
+/// - **fixed**: the aim point is the target plus its velocity × (distance ÷ beam speed),
+///   the full lead; on a tick whose roll on the turret's accuracy fails, beyond
+///   `miss_beyond`, it moves up to `miss` along the target's x or y axis (50/50). It fires
+///   only when that point lies within `turret_arc` of the mount's facing.
+/// - **gimballed**: the lead assumes a `lead_speed` shot (2,000 m/s) and has no error; it
+///   fires only at targets in front of the mount.
+///
+/// Both fire one shot per interval (`interval` + up to `interval_jitter`, or one per beam
+/// `rate_of_fire`), with `line_of_sight` only when the line ahead meets nothing of their
+/// own side, and with `free_fire` at no energy cost. A turret with missiles launches them
+/// (homing) once a target has stayed in its arc and range for `lock_time`, one per
+/// interval, while rounds last.
+fn original_turret(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params) -> Controls {
+    let ship = w.get(me).expect("think only visits live ships");
+    let Some(t) = w.get(target) else { return Controls::default() };
+    let class = w.rules.ship(ship.class);
+    let tp = &p.turret;
+    let beam = class.beams.first().map(|b| w.rules.beam(*b));
+    let dist = ship.position.distance(t.position);
+    let lead_speed = match tp.aim {
+        TurretAim::Gimballed => tp.lead_speed,
+        _ => beam.map(|b| b.speed).unwrap_or(tp.lead_speed),
+    };
+    let mut aim = t.position + t.velocity * (dist / lead_speed.max(1.0));
+    if tp.aim == TurretAim::Fixed {
+        // The turret's accuracy, rolled once in its band (or from the pilot's record).
+        let acc = match st.turret_accuracy {
+            Some(a) => a,
+            None => {
+                let a = if tp.accuracy_from_pilot {
+                    // The turret's own record, else its carrier's; 25 with none.
+                    let hub = ship.mount.and_then(|m| w.get(m.0));
+                    let rec = st.pilot.or_else(|| match hub.map(|h| &h.pilot) {
+                        Some(Pilot::Ai(h)) => h.pilot,
+                        _ => None,
+                    });
+                    rec.map(|r| r.accuracy).unwrap_or(25.0) * tp.accuracy_factor
+                } else {
+                    let [lo, hi] = tp.accuracy;
+                    lo + (hi - lo) * next_random(&mut st.rng)
+                };
+                let a = (a / 100.0).clamp(0.01, 0.99); // the original holds it to 1–99 %
+                st.turret_accuracy = Some(a);
+                a
+            }
+        };
+        if dist > tp.miss_beyond && next_random(&mut st.rng) >= acc {
+            let side = (2.0 * next_random(&mut st.rng) - 1.0) * tp.miss;
+            let axis = if next_random(&mut st.rng) < 0.5 { t.right() } else { t.up() };
+            aim += axis * side;
+        }
+    }
+    let dir = (aim - ship.position).normalize_or(ship.forward());
+    let in_arc = match tp.aim {
+        TurretAim::Gimballed => dir.dot(ship.forward()) > 0.0,
+        _ => dir.dot(ship.forward()) >= class.turret_arc.to_radians().cos(),
+    };
+    let ready = in_arc && dist <= p.range && w.time >= st.next_shot;
+    let clear = !tp.line_of_sight || sight_clear(w, me, ship, target, dir);
+    let mut c = Controls { aim: Some(dir), free_fire: tp.free_fire, ..Default::default() };
+    let interval = |st: &mut AiState, rate: f32| -> f64 {
+        let base = if tp.interval_from_rate { 1.0 / rate.max(0.01) } else { tp.interval };
+        (base + tp.interval_jitter * next_random(&mut st.rng)) as f64
+    };
+    if let Some(b) = beam.filter(|_| ready && clear) {
+        c.fire_beams = true;
+        // One mount per shot: the barrels take turns.
+        c.link = Some(super::LinkMode::Unlinked);
+        st.next_shot = w.time + interval(st, b.rate_of_fire);
+    } else if beam.is_none() && !ship.missiles.is_empty() {
+        // A missile turret: the target must stay in arc and range for the lock time.
+        if in_arc && dist <= p.range {
+            let since = *st.lock_start.get_or_insert(w.time);
+            if w.time - since >= tp.lock_time as f64 && w.time >= st.next_shot && ship.missiles.iter().any(|r| r.1 > 0)
+            {
+                c.fire_missile = true;
+                c.guide_missile = true;
+                st.next_shot = w.time + interval(st, 1.0);
+            }
+        } else {
+            st.lock_start = None;
+        }
+    }
+    c
+}
+
+/// A turret's line of sight (the original's 5,000 m check): clear when the line from the
+/// muzzle along `dir` meets nothing, the target, or something not on the turret's side.
+fn sight_clear(w: &World, me: ShipId, ship: &Ship, target: ShipId, dir: Vec3) -> bool {
+    // Start just outside the turret itself, so the ray does not catch its own hull.
+    let from = ship.position + dir * (w.shapes[ship.class.0 as usize].radius + 1.0);
+    match super::combat::first_hit(w, from, from + dir * TURRET_SIGHT, me) {
+        None => true,
+        Some((j, _)) => {
+            let o = &w.ships[j];
+            w.id_of(j) == target
+                || (o.faction != ship.faction
+                    && !matches!(o.mount, Some((h, _, _)) if w.get(h).is_some_and(|h| h.faction == ship.faction)))
+        }
+    }
 }
 
 /// Tugs: close on a disabled enemy, tractor it, then jump out with it.
@@ -1479,6 +1596,137 @@ behaviours:
         w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, -240.0);
         attack(&w, me, t, &mut st, &p, &skill);
         assert!(st.break_timer > 0.0);
+    }
+
+    /// Turrets for #115: a fixed one (85° arc, accuracy band [0, 0] or as given), a
+    /// gimballed one, and a missile turret with five darts; all fire every 0.5 s with no
+    /// energy; the beam flies at 1,000 m/s.
+    fn turret_world(fixed: &str) -> World {
+        let rules = crate::sim::test_support::rules_with(
+            &format!(
+                "beams:
+  slow: {{damage: 10, energy_cost: 50, rate_of_fire: 2, speed: 1000, range: 5km}}
+objects:
+  fixed_gun: {{model: m, faction: red, hit_points: 100, beams: [slow, slow], turret_arc: 85, behaviour: fixed_t}}
+  gimbal_gun: {{model: m, faction: red, hit_points: 100, beams: [slow, slow], turret_arc: 180, behaviour: gimbal_t}}
+  launcher: {{model: m, faction: red, hit_points: 100, missiles: {{dart: 5}}, turret_arc: 85, behaviour: missile_t}}
+  wall: {{model: m, faction: red, hit_points: 1000}}
+behaviours:
+  fixed_t:
+    states: {{guns: {{do: turret, aim: fixed, range: 5km, {fixed}, interval: 0.5s, free_fire: true, line_of_sight: true}}}}
+  gimbal_t:
+    states: {{guns: {{do: turret, aim: gimballed, range: 5km, interval: 0.5s, free_fire: true}}}}
+  missile_t:
+    states: {{guns: {{do: turret, aim: fixed, range: 5km, interval: 2s, lock_time: 2s}}}}
+"
+            ),
+            &Default::default(),
+        );
+        let shapes = crate::sim::test_support::shapes(&rules);
+        World::new(rules, shapes, 3)
+    }
+
+    fn turret_params(w: &World, b: &str) -> Params {
+        w.rules.behaviours[w.rules.behaviour_id(b).unwrap().0 as usize].states[0].params
+    }
+
+    #[test]
+    fn fixed_turrets_lead_fully_and_miss_sideways_on_a_failed_roll() {
+        // Accuracy 99 % (the original's top) with no miss: the aim is the full lead.
+        let mut w = turret_world("accuracy: 100, miss: 0m");
+        let gun = spawn_ai(&mut w, "fixed_gun", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -1000.0), Behaviour::Idle, None);
+        w.get_mut(t).unwrap().velocity = Vec3::new(100.0, 0.0, 0.0);
+        let p = turret_params(&w, "fixed_t");
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        let c = original_turret(&w, gun, t, &mut st, &p);
+        let want = (Vec3::new(100.0, 0.0, -1000.0) - Vec3::ZERO).normalize(); // 1 s of flight
+        assert!((c.aim.unwrap() - want).length() < 1e-4, "{:?}", c.aim);
+        assert!(c.fire_beams && c.free_fire && c.link == Some(crate::sim::LinkMode::Unlinked));
+        // Accuracy 0 % (held to 1 %): at 300 m every look misses by at most 20 m along one
+        // of the target's axes; at 150 m it never misses.
+        let mut w = turret_world("accuracy: [0, 0]");
+        let gun = spawn_ai(&mut w, "fixed_gun", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -300.0), Behaviour::Idle, None);
+        let p = turret_params(&w, "fixed_t");
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        let mut missed = 0;
+        for _ in 0..50 {
+            let dir = original_turret(&w, gun, t, &mut st, &p).aim.unwrap();
+            let off = (dir * 300.0 / -dir.z) - Vec3::new(0.0, 0.0, -300.0); // where the line crosses the target's plane
+            assert!(off.x.abs() <= 20.0 + 1e-3 && off.y.abs() <= 20.0 + 1e-3 && (off.x == 0.0 || off.y.abs() < 1e-3));
+            missed += usize::from(off.length() > 1e-3);
+        }
+        assert!(missed > 40, "a 1 % turret nearly always misses: {missed}");
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, -150.0);
+        let dir = original_turret(&w, gun, t, &mut st, &p).aim.unwrap();
+        assert!((dir - Vec3::NEG_Z).length() < 1e-5, "no miss within 200 m");
+        // Outside the 85° arc it does not fire.
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, 300.0);
+        assert!(!original_turret(&w, gun, t, &mut st, &p).fire_beams);
+    }
+
+    #[test]
+    fn turrets_fire_on_their_interval_for_free_and_need_a_clear_line() {
+        let mut w = turret_world("accuracy: 100, miss: 0m");
+        let gun = spawn_ai(&mut w, "fixed_gun", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -2000.0), Behaviour::Idle, None);
+        w.get_mut(gun).unwrap().energy = 0.0;
+        let mut shots = 0;
+        for _ in 0..(3 * 60) {
+            w.step();
+            shots += w.events.iter().filter(|e| matches!(e, SimEvent::BeamFired { ship, .. } if *ship == gun)).count();
+        }
+        assert_eq!(shots, 6, "one shot every 0.5 s for 3 s, with no energy at all");
+        // A ship of its own side in the way: no shot.
+        let mut w = turret_world("accuracy: 100, miss: 0m");
+        let gun = spawn_ai(&mut w, "fixed_gun", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -2000.0), Behaviour::Idle, None);
+        spawn_ai(&mut w, "wall", 1, Vec3::new(0.0, 0.0, -1000.0), Behaviour::Idle, None);
+        let p = turret_params(&w, "fixed_t");
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        assert!(!original_turret(&w, gun, t, &mut st, &p).fire_beams, "blocked by its own side");
+    }
+
+    #[test]
+    fn gimballed_turrets_lead_at_two_thousand_with_no_error_in_front_only() {
+        let mut w = turret_world("accuracy: 100");
+        let gun = spawn_ai(&mut w, "gimbal_gun", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -2000.0), Behaviour::Idle, None);
+        w.get_mut(t).unwrap().velocity = Vec3::new(100.0, 0.0, 0.0);
+        let p = turret_params(&w, "gimbal_t");
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        // 2,000 m at 2,000 m/s: one second of lead, though the beam flies at 1,000.
+        let c = original_turret(&w, gun, t, &mut st, &p);
+        assert!((c.aim.unwrap() - Vec3::new(100.0, 0.0, -2000.0).normalize()).length() < 1e-5 && c.fire_beams);
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, 2000.0);
+        assert!(!original_turret(&w, gun, t, &mut st, &p).fire_beams, "behind the mount");
+    }
+
+    #[test]
+    fn missile_turrets_launch_after_the_lock_time_then_every_interval() {
+        let mut w = turret_world("accuracy: 100");
+        let gun = spawn_ai(&mut w, "launcher", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        // A sturdy target (5,000 hull) that the five darts cannot destroy.
+        spawn_ai(&mut w, "base", 0, Vec3::new(0.0, 0.0, -3000.0), Behaviour::Idle, None);
+        let mut launches = Vec::new();
+        for k in 0..(12 * 60) {
+            w.step();
+            if w.events.iter().any(|e| matches!(e, SimEvent::MissileLaunched { ship, .. } if *ship == gun)) {
+                launches.push(k as f32 / 60.0);
+            }
+        }
+        assert_eq!(launches.len(), 5, "until the rounds are spent: {launches:?}");
+        assert!(launches[0] >= 2.0 - 0.05 && launches[0] < 2.2, "after the 2 s lock: {launches:?}");
+        assert!(launches.windows(2).all(|p| p[1] - p[0] >= 2.0 - 0.02), "{launches:?}");
+        // Outside its arc it never launches.
+        let mut w = turret_world("accuracy: 100");
+        let gun = spawn_ai(&mut w, "launcher", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, 3000.0), Behaviour::Idle, None);
+        for _ in 0..(5 * 60) {
+            w.step();
+            assert!(!w.events.iter().any(|e| matches!(e, SimEvent::MissileLaunched { ship, .. } if *ship == gun)));
+        }
     }
 
     #[test]

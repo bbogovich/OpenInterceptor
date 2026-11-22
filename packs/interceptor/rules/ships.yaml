@@ -276,7 +276,11 @@ ships:
     roll_rate: 30
     pitch_rate: 20
     yaw_rate: 20
-    beams: [laser_cannon, laser_cannon]
+    # No beams of its own: two fixed laser turrets (0x593e13, VERIFIED), as modules; the
+    # model-space positions are the exe's with z negated.
+    modules:
+      - {at: [0, 4.27, -161.68], facing: [0, 0, -1], class: freighter_turret_fore}
+      - {at: [0, 40.937, 77], facing: [0, 0, 1], class: freighter_turret_aft}
     missiles: {xwinder: 4}
   corporate_lightning:
     inherit: lightning
@@ -318,7 +322,11 @@ ships:
     roll_rate: 30
     pitch_rate: 20
     yaw_rate: 20
-    beams: [laser_cannon]
+    # No beams of its own: two fixed laser turrets (0x593e13, VERIFIED), as modules; the
+    # model-space positions are the exe's with z negated.
+    modules:
+      - {at: [0, 4.27, -161.68], facing: [0, 0, -1], class: freighter_turret_fore}
+      - {at: [0, 40.937, 77], facing: [0, 0, 1], class: freighter_turret_aft}
   patton:
     point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_PattonClass

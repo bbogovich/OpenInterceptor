@@ -100,6 +100,9 @@ pub struct Controls {
     /// AI pilots with their own lock (`lock_cone`): a missile fired this tick homes on the
     /// target although the sensor has not locked.
     pub guide_missile: bool,
+    /// Turrets with `free_fire`: this tick's shot draws no energy and ignores the mounts'
+    /// cooldown (the turret's own interval decides when it fires).
+    pub free_fire: bool,
 }
 
 /// One-press requests to the ship's power and equipment, as pilots make them from the
