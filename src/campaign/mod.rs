@@ -39,6 +39,8 @@ pub struct StarSystem {
     pub class: String,
     /// Not shown until something of the player's has had it in sensor range.
     pub hidden: bool,
+    /// Its planets (generated from the star class's `planets`; 0 on a fixed map).
+    pub planets: u8,
 }
 
 /// One module at a base.
@@ -438,6 +440,7 @@ impl Campaign {
                     pos: s.pos,
                     class: s.class.clone(),
                     hidden: s.hidden,
+                    planets: 0,
                 })
                 .collect(),
             MapKind::Generated {
@@ -1603,10 +1606,27 @@ impl Campaign {
                 continue;
             }
             let pos = self.contacts[k].pos;
-            if (0..self.bases.len())
-                .any(|b| distance(self.systems[self.bases[b].system].pos, pos) <= self.sensor_range(def, b))
+            if let Some(seer) = (0..self.bases.len())
+                .find(|&b| distance(self.systems[self.bases[b].system].pos, pos) <= self.sensor_range(def, b))
             {
                 self.contacts[k].detected = true;
+                // `react_on_detect` (the original: 25 + 10 × level %): the contact turns
+                // on the base that saw it. A plan's shipment keeps its course.
+                let react = def.raids[self.contacts[k].raid].react_on_detect;
+                if react > 0.0 && self.contacts[k].plan.is_none() && self.roll() < react {
+                    let to = self.bases[seer].system;
+                    // On a lane map it follows the lanes from where it is.
+                    let route = match def.map.travel {
+                        Travel::Lanes => {
+                            let mut r = self.lane_route(def, self.nearest_system(pos), to);
+                            r.pop(); // the last stop is `dest` itself
+                            r
+                        }
+                        Travel::Free => Vec::new(),
+                    };
+                    let c = &mut self.contacts[k];
+                    (c.target_base, c.dest, c.route) = (Some(seer), self.systems[to].pos, route);
+                }
                 let raid = &def.raids[self.contacts[k].raid];
                 let what = match self.contacts[k].target_base {
                     Some(b) => format!(", heading for {}", self.bases[b].name),
@@ -2324,12 +2344,21 @@ fn generate_map(
             .unwrap_or_else(|| "yellow".into());
         let k = out.len();
         let name = names.get(k).cloned().unwrap_or_else(|| format!("System {}", k + 1));
-        out.push(StarSystem { id: format!("s{k}"), name, pos, class, hidden: false });
+        out.push(StarSystem { id: format!("s{k}"), name, pos, class, hidden: false, planets: 0 });
     }
     // The last few are black holes, hidden until found.
     for s in out.iter_mut().rev().take(black_holes as usize) {
         s.class = "black_hole".into();
         s.hidden = true;
+    }
+    // Planets last, so classes and positions come out as before. The original adds 1 to
+    // its class table's entry (rand % 10) and holds the result to 2–5; a pack lists the
+    // results directly. A class with no list draws nothing.
+    for s in out.iter_mut() {
+        if let Some(c) = def.star_classes.iter().find(|c| c.id == s.class).filter(|c| !c.planets.is_empty()) {
+            let k = ((next_random(rng) * c.planets.len() as f32) as usize).min(c.planets.len() - 1);
+            s.planets = c.planets[k];
+        }
     }
     out
 }
@@ -2627,6 +2656,58 @@ mod tests {
         // hull upkeep; 2 × 2000 salaries.
         assert_eq!(c.money - start, 120000.0 - 1000.0 - 500.0 - 2000.0 - 4000.0);
         assert!(c.messages.iter().any(|m| m.text.starts_with("Monthly report")));
+    }
+
+    #[test]
+    fn a_seen_contact_may_turn_on_the_base_that_saw_it() {
+        // A probe heading for system b, reacting with certainty; the home base at a sees
+        // 500 (hub) + 2,500 (radar) = 3,000 map units.
+        let text = SAMPLE.replace(
+            "raids:\n",
+            "raids:\n  probe: {mission: m1, faction: enemy, every: 24h, chance: 0%, target: system, speed: 10, react_on_detect: 100%}\n",
+        );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        assert_eq!(d.raids[0].react_on_detect, 1.0);
+        let mut c = Campaign::new(&d, 0, 7);
+        c.advance(&d, 48.0); // the radar is built
+        assert_eq!(c.sensor_range(&d, 0), 3000.0);
+        let probe = |pos: [f32; 2]| Contact {
+            id: 50,
+            raid: 0,
+            pos,
+            dest: [3000.0, 0.0],
+            target_base: None,
+            detected: false,
+            route: Vec::new(),
+            plan: None,
+        };
+        // Out of range: unseen, on course.
+        c.contacts.push(probe([0.0, 3500.0]));
+        c.advance(&d, 0.1);
+        assert!(!c.contacts[0].detected && c.contacts[0].target_base.is_none());
+        // Inside: seen, and it turns on the base.
+        c.contacts[0] = probe([0.0, 2900.0]);
+        c.advance(&d, 0.1);
+        let k = &c.contacts[0];
+        assert!(k.detected);
+        assert_eq!((k.target_base, k.dest), (Some(0), c.systems[c.bases[0].system].pos));
+    }
+
+    #[test]
+    fn generated_systems_draw_planets_from_their_class() {
+        let text = SAMPLE.to_string() + "star_classes: {yellow: {weight: 1, planets: [4]}, black_hole: {weight: 0}}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        assert_eq!(d.star_classes[0].planets, vec![4]);
+        let mut rng = 3;
+        let systems = generate_map(&d, [20000.0, 20000.0], (6, 6), &[], 1, &mut rng);
+        assert_eq!(systems.len(), 6);
+        for s in &systems {
+            assert_eq!(s.planets, if s.class == "black_hole" { 0 } else { 4 }, "{}", s.class);
+        }
     }
 
     #[test]

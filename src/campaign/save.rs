@@ -414,6 +414,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("pos", nums(&[x.pos[0] as f64, x.pos[1] as f64])),
                         ("class", s(&x.class)),
                         ("hidden", s(x.hidden)),
+                        ("planets", s(x.planets)),
                     ])
                 })
                 .collect()),
@@ -645,6 +646,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
                 pos: [p.first().copied().unwrap_or(0.0) as f32, p.get(1).copied().unwrap_or(0.0) as f32],
                 class: x.str("class").unwrap_or("").into(),
                 hidden: x.bool("hidden").unwrap_or(false),
+                planets: x.num("planets").map_or(0, |n| n.clamp(0.0, 255.0) as u8),
             }
         })
         .collect();
