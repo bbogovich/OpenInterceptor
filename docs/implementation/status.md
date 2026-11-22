@@ -422,7 +422,10 @@ launch with the battle over 60 s later. `default`: unchanged. Manual case MT-4-7
 **#119 follow-up** (app NEXT; `notes/re/flight` §10, §12): the original's break-off (`reengage_beyond`,
 `reengage_chance`, `break_manoeuvre`, `break_call`); the Nova's warnings as wingman voice lines
 (`line`; waves 33 – 36); `RadioLine` events voiced by the speaker or a wingman; a battle ended by
-`battle_over` with no deciding objective is a draw.
+`battle_over` with no deciding objective is a draw. Then (unknowns §11): `interceptor`'s voice sets
+`mpilot1` … `fpilot5` map waves 33 – 36 to the original's chatter clips (the X-COM craft speak with
+`mpilot1`); the final missions' (5, 3) / (5, 1) are music stingers, played as for any won or lost
+mission.
 
 ## Stage 5 progress
 

@@ -120,7 +120,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
 | `fuse` | time | 0 | A Nova bomb (app 0.22.16): it never goes off on contact or by its proximity fuse; it flies on and detonates this long after launch, damaging nothing (what the original's blast does is not traced). 0 = an ordinary missile. `interceptor`: `nova_bomb`, 60 s (**verified**). |
 | `ends_battle_after` | time | 0 | With `fuse`: the battle is over this long after the detonation — the `battle_over` mission query turns true (app 0.22.16). `interceptor`: 60 s (**verified**). |
-| `warnings` | list of `{at, line, text}` | none | With `fuse`: this long after launch, one of the launcher's wingmen says voice `line` and/or `text` goes on the message display (app 0.22.16; `line` app NEXT). `interceptor`: voice waves 33 – 36 (`wave33` … `wave36`) at 30 s, 60 s, 88 s and 107 s (**verified**; silent until a voice set maps the clips). |
+| `warnings` | list of `{at, line, text}` | none | With `fuse`: this long after launch, one of the launcher's wingmen says voice `line` and/or `text` goes on the message display (app 0.22.16; `line` app NEXT). `interceptor`: voice waves 33 – 36 (`wave33` … `wave36` of its `mpilot`/`fpilot` voice sets, the original's chatter clips) at 30 s, 60 s, 88 s and 107 s (**verified**). |
 
 ### `ships` and `objects`
 

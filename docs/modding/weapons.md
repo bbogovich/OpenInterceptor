@@ -105,8 +105,10 @@ missiles:
     warnings: [{at: 30s, line: wave33}, {at: 60s, line: wave34}, {at: 88s, line: wave35}, {at: 107s, line: wave36}]
 ```
 
-`interceptor` has it with the original's timing and messages (voice waves 33 – 36, **verified**;
-the clips are not mapped to its voice sets yet, so they are silent). A campaign craft fitted with
-the Nova Bomb carries it. The original's final missions count a fired Nova as a win when an X-COM
-Patton is still in the battle; what the strategy layer then records (the results `(5, 3)` and
-`(5, 1)`) is *unknown*.
+`interceptor` has it with the original's timing and messages: voice waves 33 – 36, which its
+`mpilot1` … `fpilot5` voice sets map to the original's chatter clips `{M|F}Pilot{v}{33–36}.wav`
+(**verified**; there is no subtitle). A campaign craft fitted with the Nova Bomb carries it. The
+original's final missions count a fired Nova as a win when an X-COM Patton is still in the battle;
+the win and loss only cue the victory and death music stingers (the original's `0x550fd5(5, 3)` and
+`(5, 1)`, which the engine plays for any won or lost mission) — nothing is recorded on the strategy
+layer.
