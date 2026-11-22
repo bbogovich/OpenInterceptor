@@ -1375,6 +1375,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-65 | `interceptor`: the lead indicator | `gunnery-range` and `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A2/A7, the lead follows `bolt_inherit` |
 | MT-4-66 | Station shield pool and covered modules | `base-assault` (`interceptor`), Lightning; `outpost-strike` (default) | not run | | | App 0.22.4; #113, `shield_pool`, `shielded_by_hub`, `damage_model: station`, hull = `HP1` |
 | MT-4-67 | `interceptor`: system damage, mounts and repair | `duel-wraith` (`interceptor`), Lightning | not run | | | App NEXT; #116, `system_table`, `repair_order`, `efficiency`, `disables_below` |
+| MT-4-68 | `interceptor`: AI flying and missiles | `duel-wraith`, `duel-pirate-lightning`, a scenario with wingmen (`interceptor`), Lightning | not run | | | App NEXT; #118, `steer`, `lock_cone`, `pilot_grades`, speed requests |
 
 ## Stage 4 cases
 
@@ -1910,6 +1911,15 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning`. The MFD Status page (systems) and the hull readout. |
 | Steps | 1. Let the Wraiths hit you until the hull is below 75 % and system messages appear; break off and fly clear. 2. Watch the hull and the systems for 30 s. 3. Fight on until a beam mount or launcher is reported destroyed; fire the guns and the missiles. 4. Keep taking hits until the engine is badly damaged. 5. Shoot a Wraith's systems down the same way and watch how it fights. |
 | Expected | 1: messages name beam mounts and launchers as well as systems. 2: the **hull climbs about 2 points a second** first if the engine is whole (the engine is repaired first when damaged); then the shield generator, flight control and so on; a system shown destroyed never comes back. 3: a destroyed mount no longer fires (one of two guns fires); a destroyed launcher's missiles are gone and the rack is skipped. 4: thrust falls to half, then a quarter; below 15 % the craft is **disabled** — no thrust, afterburner off — and the hull is repaired before the engine. Turning gets sluggish as flight control is hit but never stops. Missile lock and the hyperdrive work as usual however damaged the sensor and hyperdrive are. 5: a Wraith that lost its guns stops hurting you. |
+
+
+### MT-4-68 — `interceptor`: AI flying and missiles
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-pirate-lightning --ship lightning`, then `duel-wraith`, then a scenario with wingmen (`mixed-dogfight` or `escort`). |
+| Steps | 1. Fly straight and level, then jink, while the pirates attack; watch how they hold their aim. 2. Let a pirate close head-on. 3. In `duel-wraith`, count missile launches over a minute; note whether one comes while the Wraith's nose points well away from you. 4. Run away from the Wraiths, more than 3 km. 5. With wingmen, fly at about 200 m/s and watch them hold formation. |
+| Expected | 1: pirates track you tightly (their aim corrects within a frame or two), but half the time lead too little or too much. 2: they break off at about 250 m. 3: Wraiths fire missiles only just after swinging onto you (within about 2.5 s of the aim settling), never with the nose away; launches are at least 5 s apart. 4: pirates and Wraiths sprint after you (slightly faster than their normal top speed); they never light an afterburner. 5: wingmen hold their slots at your speed instead of falling behind; an AI ship never runs out of energy from burning. |
 
 ## Stage 5 results
 

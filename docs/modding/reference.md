@@ -163,6 +163,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `towable` | bool | `false` | Can be towed away even when not disabled — a cargo container; a mounted one is torn off its hub by the tractor (app 0.9.2, [Stations and modules](stations.md#cargo-containers-and-moving-hubs)). |
 | `cargo` | bool | `false` | A cargo container, counted by the mission query `cargo(role)` and the mission key `cargo:` (app 0.9.2). |
 | `behaviour` | id | none (armed AI ships fly `builtin_attack`) | AI behaviour ([Behaviours](behaviours.md)). |
+| `pilot_grade` | number | none | The grade of the pilot AI ships of this class carry (app NEXT; [`flight.pilot_grades`](#pilot-records-and-grades)); a scenario's `pilot: {grade}` overrides it. `interceptor`: X-COM 0, pirates 1, Wraith and Spectre 1, Phantasm 3, Shade 4 (**verified**; the alien grades that rise with the months are not modelled), corporate 0 (*derived*). |
 | `turret_arc` | angle | 0 | Beams can aim this far off the nose (turrets). |
 | `debris` | list of assets | none | Shorthand (with `model`): wreckage models. With a model set, its debris set is used instead. |
 | `modules` | list of `{slot, class}` | none | Stations (and, since app 0.9.2, any ship — they move and jump out with it): modules mounted at the model's attachment points — `slot` is an OBJ `slot_<name>` group's name or an original mesh's attachment index (quoted: `'0'`) ([Stations and modules](stations.md)). |
@@ -234,7 +235,7 @@ A cockpit needs an `image`, a `model`, or both. Guide: [Cockpits](cockpits.md).
 | `systems` | `{cloak, ecm, shields_first, beams_first}` | none | When the pilot uses its ship's systems: each a condition, checked with the transitions. `cloak` / `ecm` on while it holds, off otherwise (if fitted); `shields_first` moves power to shields one step at a time while it holds; else `beams_first` moves it to beams. |
 | `prefer` | mapping selector: weight | none | Target preferences: a hostile matching a selector counts as if `weight` times nearer when the AI picks a new target (several matches multiply). Selectors: `player`, a ship kind (`fighter`, `freighter`, `station`, …), `class:<id>`, `faction:<id>`; weights above 0. |
 | `transitions` | list of `{from, to, when}` | none | Tried in order; the first whose `from` matches and whose condition holds wins. `from` is a state name or `"*"` (any, the default); `when` is a [condition](behaviours.md#the-condition-language). |
-| `skill` | `{aim, reaction, accuracy, lead_range}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. `accuracy` (fraction, app 0.22.0): use the original's aim model instead of `aim` ([below](#the-accuracy-aim-model)). `lead_range` (distance, app 0.22.0, with `accuracy`): beyond it the pilot aims straight at the target, without lead; 0 = always leads. |
+| `skill` | `{aim, reaction, accuracy, lead_range, pilot_clamp, steer, fire_mode}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. `accuracy` (fraction, app 0.22.0): use the original's aim model instead of `aim` ([below](#the-accuracy-aim-model)); **`pilot`** (app NEXT): the same model at the pilot's own Accuracy ([pilot records](#pilot-records-and-grades)). `lead_range` (distance, app 0.22.0, with `accuracy`): beyond it the pilot aims straight at the target, without lead; 0 = always leads. `pilot_clamp: {below_level, own, others, per_level}` (app NEXT): below difficulty level index `below_level` (2) a pilot's Accuracy is held to `own` (pilots of the player's faction, [50, 100]) or `others` + `per_level` × level ([25, 50], 10). `steer` (app NEXT): `smooth` (default) or `original` — each axis turns at its angle error in degrees read as rad/s, up to the AI turn rate, closing a small error within about a tick; a sluggish frame turns at 6 % of it. `fire_mode: pilot` (app NEXT): within 5° of the aim in yaw, every mount fires together with the chance (Intelligence + Accuracy) / 2, otherwise one mount at a time. |
 | `vars` | ids | none | **Object variables** (app 0.18.0), at most 8: each ship flying the behaviour keeps a number per name, 0 at the start. Read with `var(name)` in transitions and scripts; set by a script's `set_var(name, value)` ([Scripts](scripts.md#object-context-behaviour-scripts)). |
 
 A state:
@@ -255,6 +256,48 @@ A state:
 | `missile_range` | distance | 2.5 × `range`, at least 2 km | Attack: launch missiles only this close to the target (app 0.22.0). |
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
+| `break_off` | distance | 0 | Attack (app NEXT): break off when closer than this; 0 = the engine's 120 m + 0.15 × `max_speed` with the target ahead. `interceptor`: 250 m (**verified**). |
+| `lock_cone` | angle | 0 | Attack (app NEXT): the pilot's **own missile lock**, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's `lock_time` (or the missile's) after it started, `missiles` seconds apart exactly, with `missile_chance` per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). `interceptor`: 5° (**verified** as the code reads; the window may be inverted in the original, *derived*). |
+| `missile_chance` | fraction | 100 % | With `lock_cone`: the chance per tick that a ready missile fires. `interceptor`: 5 + 2 × level % (**verified**). |
+
+#### Pilot records and grades
+
+Since app NEXT (issue #118) an AI pilot may carry a **record**, as the original's do (flight notes
+§5.1, §9, **verified**): a scenario object's `pilot: {accuracy, intelligence, flying, bravery,
+stamina, grade}`, or none. What reads it:
+
+- `skill: {accuracy: pilot}` — the aim model below at the pilot's Accuracy (50 % with no
+  record), held to `pilot_clamp` on the easy levels.
+- `skill: {fire_mode: pilot}` — all mounts together with the chance (Intelligence +
+  Accuracy) / 2 when the aim is within 5° in yaw.
+- `flight.pilot_grades` — the pilot's **grade** (its record's, else its class's `pilot_grade`):
+
+```yaml
+flight:
+  pilot_grades:
+    lookahead: 250m                      # no grade, or one not listed
+    grades: [{lookahead: 225m, sprint: false}, {lookahead: 250m}, {lookahead: 100m}]
+    sprint: {beyond: 3km, throttle: 106.25%, from_level: 3}
+```
+
+  `lookahead`: the pilot watches a line along its course this long; an object on it makes the
+  pilot turn away and slow to ½ of its top speed (nearer than half the look-ahead) or ¾. This
+  replaces the engine's predictive avoidance for every AI pilot of the campaign. `sprint`: a
+  pilot whose grade sprints (`sprint`, default true) flies at `throttle` × its full throttle
+  while its target is farther than `beyond`; from difficulty level index `from_level` every
+  pilot does.
+
+`interceptor` uses all of it; campaign pilots are not yet handed to battle (#133), so its
+ships fly with no record — 50 % — and their class's grade. The default campaign sets none of
+these keys.
+
+#### AI speed and the afterburner under `flight.drive`
+
+Since app NEXT the speeds AI manoeuvres ask for are metres per second against the ship's top
+speed under the drive — its drive factor S ÷ `drag` — and the drive turns a request into the
+throttle `v × drag ÷ S` (held to −0.25 … 1.25; before, the request was divided by `max_speed`,
+so formation and towing speeds came out 2 – 3 times too slow). An AI ship under the drive never
+burns its afterburner (the original's agents never do; it only drained their energy).
 
 #### The accuracy aim model
 
@@ -291,7 +334,16 @@ behaviours:
         pause: 0s
         missiles: 5s
         missile_range: {per_level: [1km, 1.0625km, 1.125km, 1.1875km, 1.25km]}
-    skill: {accuracy: 50%, lead_range: 1750m, reaction: 0.1s}
+        break_off: 250m
+        lock_cone: 5
+        missile_chance: {per_level: [5%, 7%, 9%, 11%, 13%]}
+    skill:
+      accuracy: pilot
+      pilot_clamp: {below_level: 2, own: [50, 100], others: [25, 50], per_level: 10}
+      steer: original
+      fire_mode: pilot
+      lead_range: 1750m
+      reaction: 0.1s
 
   drone:
     inherit: original_attack
@@ -364,6 +416,7 @@ Texture names match a model's textures by file name without folder or extension,
 | `radar_colors` | map | see below | Radar blip and target-marker colours by relation to the player: `friendly` (own faction, default green), `hostile` (either side hostile, red), `neutral` (yellow), `objective` (objects with `protect: true`, cyan). Each is `[r, g, b]`, 0..1. |
 | `drive` | map | none | The original's motion model (app 0.21.0): thrust, mass and drag for the player, a drive factor for AI ships. Replaces `model` for every ship that is not on simple physics ([below](#flightdrive)). |
 | `turning` | map | none | The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates ([below](#flightturning)). |
+| `pilot_grades` | `{lookahead, grades, sprint}` | none | AI pilot grades (app NEXT): obstacle look-ahead and the long-range sprint by grade ([Pilot records and grades](#pilot-records-and-grades)). Without it AI pilots use the engine's predictive collision avoidance and never sprint. |
 
 #### `flight.drive`
 
@@ -821,4 +874,5 @@ An object:
 | `protect` | bool | false | An objective the player must keep alive: drawn in the `objective` radar colour with a ring, labelled PROTECT on the target brackets and the MFD, and never picked by "nearest enemy" (R) for the player or the player's wingmen. T can still select it. |
 | `hull` | fraction | 100 % | Starting hull. |
 | `behaviour` | id | the class's | Behaviour to fly instead of the class's. |
+| `pilot` | `{accuracy, intelligence, flying, bravery, stamina, grade}` | none | The AI pilot's record (app NEXT): stats 0 – 100 (50 each when left out) and a grade (the class's `pilot_grade` when left out). Without it the ship has no record: 50 wherever a stat is read. See [Pilot records and grades](#pilot-records-and-grades). |
 | `state` | id | none | Model-set state to show it in (a construction stage such as `build_60`); an object placed in a state gets no modules or point defence. |

@@ -506,6 +506,23 @@ flowchart TD
   holding; guns fire only inside `fire_cone` and inside `range` (and 95 % of the first beam's
   reach). Missiles every `missiles` seconds (± 25 %) when locked and within `missile_range`
   (default 2.5 × `range`, at least 2 km; 0 = never).
+- **The original's AI (app NEXT, #118).** `top_speed(w, ship)` is S ÷ drag under
+  `flight.drive` (else `max_speed`), and every manoeuvre's `hold_speed` is m/s against it;
+  `flight::driven` turns it into the throttle `v × drag ÷ S` (−0.25 … 1.25) and refuses the
+  afterburner to AI ships under the drive. `pilot_skill` swaps in the pilot's Accuracy for
+  `accuracy: pilot` (`AiState::pilot: Option<PilotStats>`, from a scenario's `pilot:`; 50 % with
+  none; `PilotClamp::apply` on the easy levels, own side = the player's faction).
+  `steer_original` gives each axis the stick `error° × k ÷ max_rate` (k = 1, or `SLUGGISH` on a
+  failed roll), so the AI turn rate is the error in degrees as rad/s. `aim_errors` measures
+  pitch and yaw in their own planes, used for the 5° fire-mode test (`Controls::link`, applied
+  in `combat::fire_beams`) and the `lock_cone` timer (`AiState::lock_start`, the window from
+  `lock_time`: the sensor's, else the selected missile's, 0 with no sensor; `last_missile`,
+  `missile_chance`; `Controls::guide_missile` makes the launch home without a sensor lock).
+  `break_off` replaces the engine's break-off distance. `grade_of` is the record's grade or the
+  class's `pilot_grade`; `PilotGrades::of(grade, level)` gives its look-ahead and whether it
+  sprints (`hold_speed` = top × `sprint_throttle` beyond `sprint_beyond`); `avoid` picks
+  `avoid_ahead` (a ray along the velocity, `lookahead` long, against each object's sphere;
+  ½ or ¾ of top speed) over `avoid_collision` when the campaign has `pilot_grades`.
 - **Systems use.** At each transition check, `systems:` conditions of the behaviour are evaluated
   (`ObjectContext`) and turned into ordinary `Requests`: `cloak` / `ecm` switched to match their
   condition, `power_to_shields` while `shields_first` holds and shields are below the top level,
