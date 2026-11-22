@@ -328,8 +328,11 @@ With kits the box follows the exe step by step (§4.2):
   the side tile fits a whole number of times, moving the top.
 - **Frame.** Every edge is tiled at its natural size, never stretched, in the order top, bottom,
   left, right; the corners go on last.
-- **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the box and clipped to
-  it.
+- **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the text rect, clipped
+  to it and drawn before the frame (§4.8, **verified**; until app NEXT it was centred on the box and
+  clipped to the box, so it showed outside the art).
+- **Worked example** (§4.8): a one-line style-1 notice with one button is 539 × 266 at
+  (56, 97); its text rect is (92, 147) – (551, 318) and its button row's top is 331.
 - **Text.** The text rect is the final box minus the final kit's insets: fixed for the style kits
   (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61), each edge + 3 for 242 and 250. The text
   is centred in it, inset 5 px each side. Nothing grows or clips, so text taller than the rect runs
@@ -347,8 +350,6 @@ With kits, `width`, `title_y`, `body_top`, `button_step` and `frame` are not use
 
 - Only style 3 draws a caption: the exe's "title" routine draws the message itself.
 - A row of three or more buttons is centred, 10 px apart.
-- The fill shows inside the box wherever the kit's art is open, as the exe's clip to the box
-  implies.
 
 A mod can still build its own frame from pieces with `frame`. `--check` loads every dialog image.
 

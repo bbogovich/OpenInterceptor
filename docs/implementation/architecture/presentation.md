@@ -450,7 +450,7 @@ Tests:
 | `button_rows`, `button_width` | max(100, text + 20) × 14, 10 apart, rows of ≤ 465, up to 4. |
 | `layout` | The exe's order (§4.2): content size, the style kit's side edges, rows breaking past width − 70, the kit for the row count (`kit_choice`), the style's box change, the bands, styles 2/3 rounded; row k's top = final bottom − 25 − 17k + `row_change` − 5 × (rows − 1); the 1- or 2-button rules; the text rect from the final kit's insets. |
 | `kit_pieces` | The 8-row kit: edges tiled at natural size from the exe's start and end points, corners last. |
-| `fill_rect` | The fill centred and clipped. |
+| `fill_rect` | The fill centred on one rect and clipped to another (the exe: both the text rect). |
 | `step`, `knob_frame`, `slider_offset`, `ornament_on` | The live pieces on the 5-tick dialog counter (knob ping-pong; sliders one tile every 7 ticks, bouncing; ornament 4 of 8 steps). |
 
 `caption::kit_dialog` draws a prompt with them when the skin has `dialog.kits`, in the style `DialogStyle::style_for(kind)` gives for the prompt's kind (`widgets::modal_kind`, `strategy::ask`): the
