@@ -214,6 +214,10 @@ pub struct SheetFont {
     pub key: [u8; 4],
     /// Latin-1 code → glyph (0 = not drawn).
     pub map: [u8; 256],
+    /// Advances per Latin-1 code that replace the glyph widths (a font whose spacing
+    /// is given, like the built-in caption font's, which are the exe's). `Box`ed so a
+    /// sheet without one stays small.
+    pub advances: Option<Box<[u8; 256]>>,
 }
 
 impl SheetFont {
@@ -284,6 +288,7 @@ impl SheetFont {
             grid,
             key,
             map,
+            advances: None,
         })
     }
 
@@ -298,6 +303,14 @@ impl SheetFont {
         (g != 0 && (g as usize) <= self.glyphs.len()).then_some(g)
     }
 
+    /// The same font with its advances given per character (see [`SheetFont::advances`]);
+    /// the monospace cell becomes the widest advance.
+    pub fn with_advances(mut self, table: [u8; 256]) -> SheetFont {
+        self.max_width = table.iter().copied().max().unwrap_or(0) as u32;
+        self.advances = Some(Box::new(table));
+        self
+    }
+
     /// A glyph by number (1-based).
     pub fn glyph(&self, g: u8) -> Option<&Glyph> {
         (g as usize).checked_sub(1).and_then(|i| self.glyphs.get(i))
@@ -306,6 +319,9 @@ impl SheetFont {
     /// How far the pen moves after `c`: its glyph's width; the space moves by the width
     /// of glyph 31; anything not drawn moves 0 (as in the original's width table).
     pub fn advance(&self, c: char) -> u32 {
+        if let Some(table) = &self.advances {
+            return if (c as u32) < 256 { table[c as usize] as u32 } else { 0 };
+        }
         if c == ' ' {
             return self.glyph(SPACE_WIDTH_GLYPH).map_or(0, |g| g.width);
         }
@@ -395,6 +411,11 @@ pub mod tests {
         assert_eq!(f.advance(' '), f.glyph(31).unwrap().width);
         assert_eq!(f.advance('A'), 2);
         assert_eq!(f.advance('\u{1}'), 0, "unmapped characters do not move the pen");
+        let mut table = [0u8; 256];
+        table[b'A' as usize] = 9;
+        table[b' ' as usize] = 3;
+        let g = f.with_advances(table);
+        assert_eq!((g.advance('A'), g.advance(' '), g.advance('e'), g.max_width), (9, 3, 0, 9), "given advances win");
     }
 
     #[test]

@@ -109,10 +109,36 @@ pub struct WidgetDef {
     /// Every character in a cell as wide as the font's widest glyph (the original's
     /// clock readout).
     pub monospace: bool,
+    /// A `list` drawn in its sheet `font`: where its parts go (RQ-UI-06; the original
+    /// screens' lists, plan M2 #123). Ignored without `font`.
+    pub list: ListStyle,
     /// A label drawn on a button without images.
     pub label: Option<String>,
     /// Map: clipped to a circle.
     pub round: bool,
+}
+
+/// Where the parts of a list in a sheet font go (all in the screen's design space). The
+/// rows fill the widget's `rect` below its header; the selected row's full text and its
+/// actions go in rectangles of their own, so each part sits on the art made for it.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ListStyle {
+    /// Row pitch, pixels (default: the font's line height + 2, the original's list box).
+    pub row_height: Option<f32>,
+    /// A row's own height when it is less than the pitch (rows on separate slots of the
+    /// art, as Research's 25 px rows every 34 px); default: the pitch.
+    pub row_size: Option<f32>,
+    /// A strip this tall at the top of `rect` holds the list's title (0: no title).
+    pub header: f32,
+    /// The title's sheet font (default: the row font).
+    pub title_font: Option<String>,
+    /// Where the selected row's full text goes, wrapped (none: not shown).
+    pub detail: Option<[f32; 4]>,
+    /// The detail's sheet font (default: the row font).
+    pub detail_font: Option<String>,
+    /// Where the selected row's actions go, as text buttons (none: no buttons; a double
+    /// click still does the row's first action).
+    pub buttons: Option<[f32; 4]>,
 }
 
 /// The widget kinds by name.
@@ -166,6 +192,15 @@ impl WidgetDef {
                 None => None,
             },
             monospace: g.bool("monospace").unwrap_or(false),
+            list: ListStyle {
+                row_height: g.num("row_height").filter(|v| *v >= 4.0),
+                row_size: g.num("row_size").filter(|v| *v >= 4.0),
+                header: g.num("header").unwrap_or(0.0).max(0.0),
+                title_font: g.str("title_font").map(str::to_string),
+                detail: rect_of(&g, "detail")?,
+                detail_font: g.str("detail_font").map(str::to_string),
+                buttons: rect_of(&g, "buttons")?,
+            },
             label: g.str("label").map(str::to_string),
             round: g.str("shape") == Some("round"),
         })
@@ -254,6 +289,17 @@ impl ScreenLayout {
     }
 }
 
+/// An optional `[x, y, w, h]` key.
+fn rect_of(g: &Get, key: &str) -> Result<Option<[f32; 4]>, String> {
+    match g.node(key) {
+        None => Ok(None),
+        Some(n) => match numbers(n).as_deref() {
+            Some([x, y, w, h]) => Ok(Some([*x, *y, *w, *h])),
+            _ => Err(format!("{key}: expected [x, y, w, h]")),
+        },
+    }
+}
+
 fn numbers(n: &crate::formats::yaml::Node) -> Option<Vec<f32>> {
     n.as_seq()?.iter().map(|x| x.as_str()?.trim().parse().ok()).collect()
 }
@@ -293,6 +339,13 @@ pub fn schema() -> Ty {
                     f("font", Ty::Name, "a sheet font of the skin (skins.<id>.fonts): placed by the original's anchor rules"),
                     f("at", Ty::Numbers(2), "with font: the DrawText anchor [x, y] (glyph tops at y - the font's top)"),
                     f("monospace", Ty::Bool, "with font: every character in a cell of the widest glyph"),
+                    f("row_height", Ty::Num, "a list in a sheet font: row pitch (default line height + 2)"),
+                    f("row_size", Ty::Num, "a list in a sheet font: a row's own height when less than row_height"),
+                    f("header", Ty::Num, "a list in a sheet font: height of the title strip at the top of rect (0: no title)"),
+                    f("title_font", Ty::Name, "a list's title font (default: font)"),
+                    f("detail", Ty::Numbers(4), "a list in a sheet font: where the selected row's full text goes"),
+                    f("detail_font", Ty::Name, "the detail's font (default: font)"),
+                    f("buttons", Ty::Numbers(4), "a list in a sheet font: where the selected row's actions go, as text buttons"),
                     f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
                 ])),
             ))),
@@ -342,6 +395,17 @@ mod tests {
         let tl = ScreenLayout::parse("csd", Get(&t), l.clone(), &[], 0).unwrap();
         let tw = tl.items.iter().find(|w| w.name == "t").unwrap();
         assert_eq!((tw.font.as_deref(), tw.at, tw.monospace), (Some("readout"), Some([561.0, 370.0]), true));
+        let li = yaml::parse(
+            "widgets: {l: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, row_height: 16, header: 18, \
+             detail: [301, 42, 140, 123], buttons: [135, 42, 140, 123]}}",
+        )
+        .unwrap();
+        let ll = ScreenLayout::parse("p", Get(&li), l.clone(), &[], 0).unwrap();
+        let lw = &ll.items.iter().find(|w| w.name == "l").unwrap().list;
+        assert_eq!((lw.row_height, lw.header, lw.detail), (Some(16.0), 18.0, Some([301.0, 42.0, 140.0, 123.0])));
+        assert_eq!((lw.buttons, lw.title_font.as_deref()), (Some([135.0, 42.0, 140.0, 123.0]), None));
+        let bad_d = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], detail: [1, 2]}}").unwrap();
+        assert!(ScreenLayout::parse("p", Get(&bad_d), l.clone(), &[], 0).unwrap_err().contains("detail:"));
         let bad_at = yaml::parse("widgets: {t: {kind: value, rect: [0, 0, 1, 1], at: [1]}}").unwrap();
         assert!(ScreenLayout::parse("csd", Get(&bad_at), l.clone(), &[], 0).unwrap_err().contains("at:"));
         let bad = yaml::parse("widgets: {x: {kind: dial, rect: [0, 0, 1, 1]}}").unwrap();

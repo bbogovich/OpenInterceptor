@@ -162,6 +162,15 @@ pub fn grid(r: Rect4, n: usize, cols: usize, gap: f32) -> Vec<Rect4> {
 /// A modal prompt over the whole screen: a title, wrapped text and a row of buttons.
 /// Returns the button clicked; Enter chooses the first, Esc the last.
 pub fn modal(ui: &Ui, input: &Input, title: &str, body: &str, buttons: &[&str]) -> Option<usize> {
+    // A skin with a `dialog` style draws the original's message box instead (RQ-UI-06).
+    let styled = ui
+        .skin
+        .dialog
+        .as_ref()
+        .and_then(|d| super::caption::dialog(ui, d, input.mouse, input.clicked, title, body, buttons));
+    if let Some(clicked) = styled {
+        return clicked.or_else(|| keys(input, buttons));
+    }
     let (sw, sh) = (screen_width(), screen_height());
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.55));
     let w = (sw * 0.5).clamp(360.0, 760.0);
@@ -183,6 +192,11 @@ pub fn modal(ui: &Ui, input: &Input, title: &str, body: &str, buttons: &[&str]) 
     if clicked.is_some() {
         return clicked;
     }
+    keys(input, buttons)
+}
+
+/// A prompt's keys: Enter chooses the first button, Esc the last.
+fn keys(input: &Input, buttons: &[&str]) -> Option<usize> {
     if input.enter && !buttons.is_empty() {
         return Some(0);
     }

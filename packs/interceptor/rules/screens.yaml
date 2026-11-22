@@ -49,8 +49,10 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6105
     widgets:
-      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body}   # font DERIVED (23011, the body font)
-      modules: {kind: list, source: build, rect: [347, 39, 292, 227]}
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
+      # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
+      # row and its actions at the pane's foot (placement in the pane DERIVED).
+      modules: {kind: list, source: build, rect: [356, 104, 274, 112], font: body, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18]}
       purchase: {kind: button, rect: [492, 349, 24, 24], action: open(purchase)}
       equip_ships: {kind: button, rect: [492, 386, 24, 24], action: open(equip_ships)}
       stats: {kind: button, rect: [492, 423, 24, 24], action: open(base_stats)}
@@ -61,8 +63,10 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6100
     widgets:
-      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body}   # font DERIVED (23011, the body font)
-      ships: {kind: list, source: hangar, rect: [17, 397, 500, 60]}
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
+      # The docked-ships ListBox [17,397,517,457] (VERIFIED); the selected ship's text and
+      # actions in the stat panel [432,89,639,347] under its header (DERIVED).
+      ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 18: Equipment & Personnel - purchase, sell, transfer, manufacture.
@@ -70,9 +74,12 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6110
     widgets:
-      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body}   # font DERIVED (23011, the body font)
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
       funds: {kind: value, value: money, rect: [299, 229, 145, 22], font: value, align: centre}   # the readout slot (rect VERIFIED, wrappers/screens.yaml); font: E&P values (23013, DERIVED)
-      items: {kind: list, source: market, rect: [18, 272, 538, 188]}
+      # The ListBox [18,272,556,460] (VERIFIED) with its green header strip (DERIVED, the
+      # art); the selected item in info box 3 [301,42,441,165] and its actions in info box 2
+      # [135,42,275,165] (boxes VERIFIED, their use here DERIVED).
+      items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, header: 18, title_font: readout, detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115]}
       manufacture: {kind: button, rect: [575, 314, 24, 24], action: open(manufacture)}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
@@ -82,7 +89,7 @@ screens:
     background: original:WrappersDLL.dll#6110
     widgets:
       funds: {kind: value, value: money, rect: [299, 229, 145, 22], font: value, align: centre}   # the readout slot (rect VERIFIED, wrappers/screens.yaml); font: E&P values (23013, DERIVED)
-      jobs: {kind: list, source: factory, rect: [18, 272, 538, 188]}
+      jobs: {kind: list, source: factory, rect: [18, 272, 538, 188], font: body, header: 18, title_font: readout, detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 9: Research.
@@ -90,7 +97,10 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#5101
     widgets:
-      topics: {kind: list, source: research, rect: [330, 49, 250, 262]}
+      # The topic rows: 250x25 from [330,49,580,74], one every 34 px (VERIFIED, 0x4684a8),
+      # on the art's eight black slots; the selected topic in the description pane
+      # [20,368,444,466] (VERIFIED), its actions at the pane's foot (DERIVED).
+      topics: {kind: list, source: research, rect: [330, 49, 250, 264], font: body, row_height: 34, row_size: 25, detail: [26, 374, 412, 64], buttons: [26, 442, 412, 20]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 22: Base Stats (the Stat-O-Matic).
@@ -98,7 +108,8 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6330
     widgets:
-      stats: {kind: list, source: bases, rect: [26, 60, 345, 330]}
+      # The stats view [26,60,371,390] (VERIFIED): rows, then the selected row and its actions.
+      stats: {kind: list, source: bases, rect: [32, 64, 334, 256], font: body, detail: [32, 324, 334, 42], buttons: [32, 368, 334, 20]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 23: the UFOpedia (databank).
@@ -106,7 +117,8 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#5107
     widgets:
-      topics: {kind: list, source: archive, rect: [346, 105, 250, 170]}
+      # Topics ListBox [346,105,596,275] and the article ListBox [95,325,592,446] (VERIFIED).
+      topics: {kind: list, source: archive, rect: [346, 105, 250, 170], font: body, detail: [95, 325, 497, 121]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 32-37: the status reports.
@@ -114,5 +126,6 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#7700
     widgets:
-      report: {kind: list, source: reports, rect: [24, 58, 544, 389]}
+      # The report area [24,58,568,447] (VERIFIED).
+      report: {kind: list, source: reports, rect: [28, 62, 534, 326], font: body, detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED

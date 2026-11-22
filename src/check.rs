@@ -220,7 +220,8 @@ pub fn run(content: &Content) -> Report {
         rules.skins.first().map(|s| s.fonts.iter().map(|f| f.name.as_str()).collect()).unwrap_or_default();
     for screen in &rules.screens {
         for w in &screen.items {
-            if let Some(f) = w.font.as_deref().filter(|f| !skin_fonts.contains(f)) {
+            let named = [w.font.as_deref(), w.list.title_font.as_deref(), w.list.detail_font.as_deref()];
+            for f in named.into_iter().flatten().filter(|f| !skin_fonts.contains(f)) {
                 r.errors.push(format!(
                     "screens.{}.widgets.{}: font '{f}' is not a font of the campaign's skin",
                     screen.id, w.name

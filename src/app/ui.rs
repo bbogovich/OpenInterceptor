@@ -38,6 +38,7 @@ impl SheetFace {
             top: self.def.top.unwrap_or(self.font.line_height as i32 / 2),
             wrap_offset: self.def.wrap_offset,
             spacing: self.def.spacing,
+            centre_raise: self.def.centre_raise,
         }
     }
 }

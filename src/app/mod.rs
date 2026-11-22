@@ -29,6 +29,7 @@
 //! the loop starts.
 
 pub mod assets;
+pub mod caption;
 pub mod comms;
 pub mod controls;
 pub mod credits;
@@ -436,6 +437,9 @@ pub async fn run(options: Options) {
             Some(mut s) => {
                 if let Some(id) = &options.screen {
                     s.open_screen(&ctx, id);
+                }
+                if let Some(text) = &options.notice {
+                    s.notice(text);
                 }
                 Screen::Strategy(Box::new(s))
             }

@@ -32,6 +32,8 @@ OPTIONS:
     --strategy          Start a new campaign's strategy layer directly
     --chapter <N>       With --strategy: play the new campaign forward to story chapter N
     --screen <ID>       With --strategy: open this strategy screen (screens.<id>)
+    --notice <TEXT>     With --strategy: show TEXT in a prompt at start (to try the
+                        skin's dialog look)
     --credits           Show the campaign's credits roll
     --cutscene <ID>     Play a cutscene of the campaign
     --video <REF>       Play a video (original:<file>.smk or a pack path) and quit to the launcher
@@ -86,6 +88,8 @@ pub struct Options {
     pub chapter: Option<usize>,
     /// `--screen <id>`: with `--strategy`, open this screen of the campaign's set.
     pub screen: Option<String>,
+    /// `--notice <text>`: with `--strategy`, a prompt shown at start (testbed).
+    pub notice: Option<String>,
     /// `--video <ref>`: play a video first.
     pub video: Option<String>,
     /// `--cutscene <id>`: play a cutscene first.
@@ -130,6 +134,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--strategy" => o.strategy = true,
             "--credits" => o.credits = true,
             "--screen" => o.screen = Some(value("--screen")?),
+            "--notice" => o.notice = Some(value("--notice")?),
             "--chapter" => {
                 o.chapter = Some(value("--chapter")?.parse().map_err(|_| "--chapter: expected a number".to_string())?)
             }
@@ -286,6 +291,7 @@ mod tests {
         assert_eq!(o.campaign.as_deref(), Some("c"));
         let shot = parse(&args("--screenshot a.png --frames 30"), None).unwrap();
         assert_eq!((shot.screenshot, shot.frames), (Some(PathBuf::from("a.png")), Some(30)));
+        assert_eq!(parse(&args("--strategy --notice hello"), None).unwrap().notice.as_deref(), Some("hello"));
         assert!(parse(&args("--frames many"), None).is_err());
         assert!(parse(&args("--help"), None).unwrap().help);
         assert!(!parse(&args("--fullscreen --windowed"), None).unwrap().fullscreen);

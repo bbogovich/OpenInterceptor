@@ -27,6 +27,7 @@
 //! battle hands the screen to the app, which flies the mission and comes back here with
 //! the debrief (see `AppContext::campaign`).
 
+use super::caption;
 use super::text;
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
@@ -358,6 +359,12 @@ impl StrategyScreen {
     }
 
     /// Opens one of the campaign's screens over the first (the testbed's `--screen`).
+    /// Shows `text` in the Report prompt (`--notice`, to try a skin's dialog look).
+    pub fn notice(&mut self, text: &str) {
+        self.banner = Some(text.to_string());
+    }
+
+    /// Opens screen `id` of the campaign's set over its first screen (`--screen`).
     pub fn open_screen(&mut self, ctx: &AppContext, id: &str) {
         if let Some(first) = ctx.content.rules.strategy_screen.clone() {
             self.stack = vec![first];
@@ -1827,7 +1834,29 @@ impl StrategyScreen {
                                 DrawTextureParams { dest_size: Some(vec2(r[2], r[3])), ..Default::default() },
                             ),
                             None if wd.label.is_some() => {
-                                widgets::button(&ctx.ui, &Input::default(), r, wd.label.as_deref().unwrap_or(""), true);
+                                let label = wd.label.as_deref().unwrap_or("");
+                                match &ctx.ui.skin.text_button {
+                                    // The original's TextButton: its caption is placed from
+                                    // its own rect (RQ-UI-06).
+                                    Some(style) => {
+                                        let ir = wd.rect.map(|v| v as i32);
+                                        let down = is_mouse_button_down(MouseButton::Left);
+                                        caption::draw_text_button(
+                                            &ctx.ui,
+                                            style,
+                                            &layout,
+                                            ir,
+                                            label,
+                                            input.mouse,
+                                            false,
+                                            down,
+                                            &mut self.glyphs,
+                                        );
+                                    }
+                                    None => {
+                                        widgets::button(&ctx.ui, &Input::default(), r, label, true);
+                                    }
+                                }
                             }
                             // An invisible hot spot over the art (the art draws the button).
                             None if hover => {
@@ -1884,7 +1913,13 @@ impl StrategyScreen {
                             if self.tab != tab {
                                 self.open(tab);
                             }
-                            if let Some(a) = self.draw_panel(&ctx.ui, def, r, &input, layout.scale) {
+                            let art = wd.font.as_deref().and_then(|f| ctx.ui.sheet(f)).is_some();
+                            let hit = if art {
+                                self.draw_list_art(&ctx.ui, def, wd, &layout, &input)
+                            } else {
+                                self.draw_panel(&ctx.ui, def, r, &input, layout.scale)
+                            };
+                            if let Some(a) = hit {
                                 self.act(def, a);
                             }
                         }
@@ -2050,6 +2085,127 @@ impl StrategyScreen {
                 hit = Some(*act);
             }
         }
+        hit
+    }
+
+    /// A screen set's list in its sheet font (RQ-UI-06, audit D-32…D-38): every part is
+    /// placed from a rectangle of its own in the design space — the title in the
+    /// `header` strip, the rows below it at the row pitch and cut with "...", the selected
+    /// row's full text in `detail` and its actions as text buttons in `buttons` — so
+    /// nothing is drawn outside the art made for it.
+    fn draw_list_art(
+        &mut self,
+        ui: &Ui,
+        def: &StrategyDef,
+        wd: &crate::content::screens::WidgetDef,
+        layout: &crate::hud::Layout,
+        input: &Input,
+    ) -> Option<Act> {
+        let style = &wd.list;
+        let sheet = wd.font.as_deref().and_then(|f| ui.sheet(f))?;
+        let face = sheet.face();
+        let rows = self.rows(def);
+        let r = wd.rect.map(|v| v as i32);
+        let lh = sheet.font.line_height as i32;
+        let pitch = style.row_height.map_or(lh + 2, |v| v as i32).max(1);
+        let size = style.row_size.map_or(pitch, |v| v as i32).clamp(1, pitch);
+        let header = style.header as i32;
+        let body = [r[0], r[1] + header, r[2], (r[3] - header).max(0)];
+        let visible = caption::rows_that_fit(body[3], pitch, size);
+        self.list.fit(rows.len(), visible);
+        let screen_body = layout.rect(body.map(|v| v as f32));
+        if widgets::contains(screen_body, input.mouse) && input.wheel != 0.0 {
+            self.list.scroll(if input.wheel > 0.0 { -1 } else { 1 }, rows.len(), visible);
+        }
+        let mut glyphs = std::mem::take(&mut self.glyphs);
+        // The title, in its strip.
+        if header > 0 {
+            let t = style.title_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
+            glyphs.clear();
+            text::draw_text_rect(
+                &t.face(),
+                self.tab.name(),
+                [r[0] + 4, r[1], r[2] - 8, header],
+                text::Align::Left,
+                false,
+                &mut glyphs,
+            );
+            ui.draw_glyphs(t, &glyphs, layout, WHITE);
+        }
+        let scroll = rows.len() > visible;
+        let bar_w = if scroll { 4 } else { 0 };
+        let mut hit = None;
+        for (i, row) in rows.iter().enumerate().skip(self.list.first).take(visible) {
+            let y = body[1] + (i - self.list.first) as i32 * pitch;
+            let rr = [body[0], y, body[2] - bar_w - 1, size];
+            let sr = layout.rect(rr.map(|v| v as f32));
+            if i == self.list.selected {
+                draw_rectangle(sr[0], sr[1], sr[2], sr[3], ui.colour("highlight"));
+            }
+            if input.clicked_in(sr) {
+                // A second click on the same row soon after acts on it.
+                let now = get_time();
+                if self.last_click.0 == i && now - self.last_click.1 < 0.4 {
+                    hit = row.default_act();
+                }
+                self.last_click = (i, now);
+                self.list.selected = i;
+            }
+            let shown = caption::ellipsize(&face, &row.text, rr[2] - 6);
+            glyphs.clear();
+            text::draw_text_rect(
+                &face,
+                &shown,
+                [rr[0] + 3, rr[1], rr[2] - 6, rr[3]],
+                text::Align::Left,
+                false,
+                &mut glyphs,
+            );
+            let tint = if row.acts.is_empty() { Color::new(0.65, 0.65, 0.65, 1.0) } else { WHITE };
+            ui.draw_glyphs(sheet, &glyphs, layout, tint);
+        }
+        if scroll {
+            let track = [body[0] + body[2] - bar_w, body[1], bar_w, (visible as i32 - 1) * pitch + size];
+            let t = layout.rect(track.map(|v| v as f32));
+            draw_rectangle(t[0], t[1], t[2], t[3], ui.colour("panel"));
+            let (n, first) = (rows.len() as f32, self.list.first as f32);
+            draw_rectangle(t[0], t[1] + t[3] * first / n, t[2], t[3] * visible as f32 / n, ui.colour("border"));
+        }
+        let selected = rows.get(self.list.selected);
+        // The selected row in full, wrapped from the top of its own box; lines below the
+        // box are left out.
+        if let (Some(row), Some(d)) = (selected, style.detail) {
+            let df = style.detail_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
+            let d = d.map(|v| v as i32);
+            glyphs.clear();
+            text::draw_text_top(&df.face(), &row.text, d, &mut glyphs);
+            ui.draw_glyphs(df, &glyphs, layout, WHITE);
+        }
+        // Its actions as text buttons.
+        if let (Some(row), Some(b)) = (selected, style.buttons) {
+            let rects = caption::button_block(b.map(|v| v as i32), row.acts.len(), 150, 60, 6);
+            let down = is_mouse_button_down(MouseButton::Left);
+            for ((label, act), br) in row.acts.iter().zip(rects) {
+                let clicked = match &ui.skin.text_button {
+                    Some(st) => caption::draw_text_button(
+                        ui,
+                        st,
+                        layout,
+                        br,
+                        label,
+                        input.mouse,
+                        input.clicked,
+                        down,
+                        &mut glyphs,
+                    ),
+                    None => widgets::button(ui, input, layout.rect(br.map(|v| v as f32)), label, true),
+                };
+                if clicked {
+                    hit = Some(*act);
+                }
+            }
+        }
+        self.glyphs = glyphs;
         hit
     }
 

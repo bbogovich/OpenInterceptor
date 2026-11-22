@@ -40,6 +40,7 @@ pub mod scenario;
 pub mod schema;
 pub mod screens;
 pub mod skin;
+pub mod smallfont;
 pub mod story;
 pub mod strategy;
 pub mod text;
