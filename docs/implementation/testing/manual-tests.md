@@ -2320,3 +2320,12 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App NEXT or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --screen <id>` for `purchase`, `manufacture`, `research`, `bases`, `equip_ships`, `base_stats`, `ufopedia`, `reports`. 2. Click a row, then each action button; double-click a row; scroll with the wheel. 3. `--strategy --notice "Hello there"` with `interceptor`, then with `--no-original` (default). Press Enter. |
 | Expected | 1: every list in the white body font inside its art panel; nothing drawn across the art; Research's rows on the eight black slots; the selected row's text and its buttons in their black boxes; the base name centred on the top strip. 2: the selected row highlighted; a pressed button shows a green fill and acts on the click; a double click does the first action. 3: a message box with the caption in the readout font, the text wrapped and an OK text button 25 px above the bottom; default: the same in its gold and cream. Enter closes it. |
+
+### MT-6-30 — Compact list boxes: columns, pulsing bar, scroll arrows
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy --screen purchase`. 2. Watch the selected row for a few seconds. 3. Hold the mouse on a row. 4. Click the down arrow once; then hold it. 5. Scroll to the end; then to the top. 6. `--screen equip_ships`; `--screen manufacture`. |
+| Expected | 1: eleven rows in the white body font under the green strip, the strip showing PURCHASE, SIZE, COST, STORES and QUANTITY (no `#`), each cell under its header. 2: the bar's green brightens and dims smoothly about every 2.5 s. 3: the row flashes amber while held. 4: one row per click; held, a pause of about a third of a second, then about 12 rows a second. 5: at the end the down arrow shows its disabled image and does nothing; at the top the up arrow does. 6: Equip Ships shows three rows with SHIP, PILOT and STATUS columns and its own arrows; Manufacture its own header. |
+
