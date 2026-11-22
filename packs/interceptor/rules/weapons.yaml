@@ -152,8 +152,8 @@ missiles:
   # it detonates, doing no damage, and the battle is over 60 s later (the battle_over
   # mission query; with no objective deciding, a draw). Its messages at +30 s (0x46),
   # +60 s (0x47) and 32 s and 13 s before the end (0x48, 0x49) are wingman radio
-  # messages, voice waves 33-36: the wingmen's voice lines wave33-wave36 (the clips are
-  # not mapped yet, so they are silent until a voice set names them).
+  # messages, voice waves 33-36: the wingmen's voice lines wave33-wave36 (flight.yaml
+  # voices; there is no subtitle).
   nova_bomb:
     inherit: original:GameSettings.ini/NovaBomb
     name: Nova Bomb

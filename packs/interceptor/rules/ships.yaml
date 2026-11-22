@@ -28,6 +28,7 @@ ships:
   lightning:
     inherit: original:GameSettings.ini/Ship_IntType1
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
+    voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
     mass: 6700
     ai_speed: 500
     ai_turn: {pitch: 2.1, yaw: 2.0, roll: 2.55}
@@ -48,6 +49,7 @@ ships:
   firestar:
     inherit: original:GameSettings.ini/Ship_IntType2
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
+    voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
     mass: 12700
     ai_speed: 500
     ai_turn: {pitch: 1.7, yaw: 1.4, roll: 1.5}
@@ -67,6 +69,7 @@ ships:
   avenger:
     inherit: original:GameSettings.ini/Ship_IntType3
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
+    voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
     mass: 22700
     ai_speed: 500
     ai_turn: {pitch: 1.5, yaw: 1.3, roll: 1.5}
