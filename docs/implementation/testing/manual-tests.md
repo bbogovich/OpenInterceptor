@@ -1379,6 +1379,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-69 | `interceptor`: station layouts, the connection point and minefields | `base-assault`, `station-tour` (`interceptor`) | not run | | | App NEXT; #114, `hard_points`, `modules` by `at`, `minefields` |
 | MT-4-70 | `interceptor`: station and freighter turrets | `base-assault`, `station-tour`, `escort` (`interceptor`) | not run | | | App NEXT; #115, `aim: fixed`/`gimballed`, `interval`, `free_fire`, `line_of_sight` |
 | MT-4-71 | `interceptor`: accumulator shields, the Tachyon Pulser, link modes | `duel-shade`, `duel-harbinger`, `gunnery-range` (`interceptor`), Avenger | not run | | | App NEXT; #117 |
+| MT-4-72 | `interceptor`: retreat rolls, break-off, the Nova bomb | `duel-wraith` (`interceptor`), a campaign battle with the Nova Bomb fitted | not run | | | App NEXT; #119 |
 
 ## Stage 4 cases
 
@@ -1950,6 +1951,15 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App NEXT or later; the player's data. `--scenario duel-shade --ship avenger`, then `duel-harbinger`, then `gunnery-range --ship avenger`. |
 | Steps | 1. Fire beams at a Shade whose shields are up; watch its shield readout. 2. Bring its shields down with missiles, then fire beams. 3. Let the Harbinger's tachyon turrets hit you; watch hull, armour, systems and how fast they repair. 4. In `gunnery-range`, set linked (the Avenger mixes beam types) and fire; then full; hold the afterburner and watch the energy. |
 | Expected | 1: the Shade's shields **rise** under beam fire instead of falling. 2: once down, beams hurt it. 3: the shields drop, then only systems are damaged (mostly the engine) — hull and armour stay — and repair crawls (ten times slower) until everything is whole. 4: linked fires every mount of one beam type together; with little energy, full fires the mounts it can pay for rather than none; energy still recharges while burning, so it drains more slowly than 100 per second. |
+
+
+### MT-4-72 — `interceptor`: retreat rolls, break-off, the Nova bomb
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's data. `--scenario duel-wraith`, on Beginner and on Superhuman; a campaign craft with the Nova Bomb fitted. |
+| Steps | 1. Damage a Wraith badly without destroying its guns; note whether it jumps out. 2. Destroy its beam mounts (system hits) and watch it for 20 s. 3. Fly head-on past a Wraith and time how long it stays away before turning back, on both levels. 4. In a battle, launch the Nova Bomb and watch the radio and the enemies. |
+| Expected | 1: it never jumps out because of hull damage. 2: within about 5 – 10 s of losing its last gun it most likely (50 – 75 %) jumps out. 3: it breaks off under 250 m and comes round after about 5 s on Beginner, 3 s on Superhuman. 4: the bomb does not explode when it reaches a ship; "NOVA BOMB ARMED" at 30 s, "NOVA BOMB DETONATED" at 60 s (a flash, no damage), most enemies jump out soon after, then "BATTLE ENDS IN 32 SECONDS" and "… 13 SECONDS". |
 
 ## Stage 5 results
 

@@ -411,6 +411,14 @@ original`. `interceptor` uses all of them (the Shade and Harbinger accumulate; t
 hits systems and slows repair tenfold). `default`: unchanged (with its one armour pool `enveloping`
 lands as before). Manual case MT-4-71; **537** `#[test]` functions.
 
+**Parity M1, #119** (app NEXT; RQ-C-11 – RQ-C-14, facts from `notes/re/flight` §9, §10, §12):
+behaviour keys `retreat_when_disarmed`, `retreat_on_nova` and `break_time`; the pilot record's
+`rank`; missile keys `fuse`, `ends_battle_after` and `warnings`; mission queries `nova_time` and
+`battle_over`. `interceptor`: `original_attack` rolls the original's tables (and no longer flees
+on hull damage), breaks off for 5 s − 0.5 s × level, and the `nova_bomb` goes off 60 s after
+launch with the battle over 60 s later. `default`: unchanged. Manual case MT-4-72; **549**
+`#[test]` functions.
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),

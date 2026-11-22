@@ -86,3 +86,23 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 |---|---|
 | `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (`cloaked_wait`), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each. |
 | `default` | Seeker rockets, atomic torpedoes, cluster rockets (Thunderbolt), decoy rockets (Meteor), Dominion space-mine warheads (`dominion-raid`). |
+
+## The Nova bomb
+
+A missile with a `fuse` (app NEXT) is a Nova bomb: it never goes off on contact; it flies on and
+detonates `fuse` after launch, sends its `warnings` over the radio at their times, sets the
+`nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll, and
+`ends_battle_after` later turns `battle_over` true:
+
+```yaml
+missiles:
+  nova_bomb:
+    inherit: original:GameSettings.ini/NovaBomb
+    fuse: 60s
+    ends_battle_after: 60s
+    warnings: [{at: 30s, text: NOVA BOMB ARMED}, {at: 60s, text: NOVA BOMB DETONATED}]
+```
+
+`interceptor` has it with the original's timing (**verified**); a campaign craft fitted with the
+Nova Bomb carries it. Its blast damages nothing yet, and no mission ends on `battle_over` yet —
+what the original's detonation does to the ships and the campaign is not traced.
