@@ -659,7 +659,7 @@ keeps its shape (one scale factor, centred) instead of stretching.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info` | `image` | What it is; another kind is a load error. |
+| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info`, `check` (app NEXT) | `image` | What it is; another kind is a load error. |
 | `rect` | 4 numbers | *required* | x, y, w, h in the screen's design space. |
 | `image` | asset | none | An `image`'s picture (a button's `up` image). |
 | `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
@@ -681,7 +681,12 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `style` | `plain`, `compact` | `plain` | A `list` with `font` (app 0.22.9): `compact` is the original's list box — rows a line + 2 apart, `round((h − 7)/(lh + 2))` of them, a pulsing selection bar, a pressed row flashing amber ([Compact list boxes](screens.md#compact-list-boxes)). Another value is a load error. |
 | `columns` | text | none | A `list` with `font`: a header template (text or `@key`) split at `~`; each column as wide as its header text in `title_font`; `#` marks the editable column. Cells per source: `market`, `factory`, `hangar`. |
 | `bar` | 3 numbers | green | `compact`: the selection bar's colour at full level. |
-| `up`, `down` | `[x, y, w, h]` or `{rect, images}` | none | A `list` with `font`: scroll arrows — one row per press, repeating after 20 ticks every 5 while held, disabled at the ends; `images`: normal, pressed, disabled (sprite colour key transparent). `--check` loads the images. |
+| `up`, `down` | `[x, y, w, h]` or `{rect, images}` | none | A `list` with `font`: scroll arrows — one row per press, repeating after 20 ticks every 5 while held, disabled at the ends; `images`: normal, pressed, disabled (drawn with their corner colour transparent). `--check` loads the images. |
+| `centre`, `pos` | 2 numbers | none | A sprite placed by its image's size (app NEXT): centred on the point, or its top-left at it; `rect` may then be left out ([Sprite buttons](screens.md#sprite-buttons-toggles-and-radio-groups)). Not both. |
+| `images.sprite`, `images.states` | asset, number 1 – 8 | none, 2 | A button's states as consecutive sprites: `original:sprite#N` (row N of the original's sprite table) is state 0, `#N+k` state k; 1 state: nothing drawn when up. `--check` loads the first and last. |
+| `fire_on_press` | bool | `false` | A button fires when pressed, not when released (app NEXT: buttons fire on release). |
+| `repeat` | 2 numbers | none | A held button fires again after `[delay, interval]` ticks (1/60 s; interval at least 1). |
+| `group`, `selected` | name, bool | none, `false` | A radio group: the chosen member stays latched; `selected` (else the first) starts latched. On a `check`: starts on. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport; `round` clips it to the circle inside the rectangle. |
 
 ### `console`
