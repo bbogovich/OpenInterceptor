@@ -424,13 +424,17 @@ kills by type.
 |---|---|---|---|
 | `stats` | mapping stat: `[min, max]` | none | Each pilot's stats, rolled in the range. Any names. |
 | `ranks` | mapping rank: experience | none | Ranks in ascending order with the experience each needs. |
-| `salary` | number | 0 | Per month, per living pilot. |
+| `salary` | number or table | 0 | Per month, per living pilot. App NEXT: or the original's table `{base, rank, brackets, kills, max_health}` — a month's pay is `base` + (the rank's entry of `rank` + every bracket bonus) / 12, where `brackets: {<stat>: [[from, bonus], …]}`, `kills` and `max_health` give the bonus of the last entry whose `from` the value reaches (the first when none does). `interceptor`: 4,000 + the exe's rank and bracket tables (**verified**, `0x410297`). |
 | `recruit_fee` | number | 0 | Cost to hire one. |
 | `pool` | number | 6 | Recruits offered at a time (refreshed every month). |
 | `names` | list of text | none | Names to draw from. |
 | `heal_days` | number | 14 | Days an injured pilot is out. |
 | `survive` | fraction | 60 % | Chance that a pilot shot down ejects (injured) rather than dies. |
 | `training` | `{gain, cost}` | none | Pilot training (app 0.16.7): a ready pilot put into training gains `gain` points in **every** stat a day, up to the top of that stat's `stats` range, and costs `cost` money a day. Without it (or with `gain: 0`) the Hangar offers no *Train* button. Training continues until stopped; it is saved. |
+| `training` (periodic) | `{every, stats, factor, add, scale_by, capacity}` | — | App NEXT, the original's training: every `every` a pilot in training gains, in each of `stats`, `trunc(scale_by / 100 × stat × factor + add)` up to `stat_max`; at most the bases' `capacity` module effect train at once, the rest drop out. `interceptor`: every 5 days, Accuracy, Flying and Psionics, `trunc(Int / 100 × stat × 0.1 / 6 + 1)`, 5 per Training module (**verified**). |
+| `generate` | `{rank_roll, bonus}` | none | App NEXT, the original's recruit generator: a starting rank — the last of `rank_roll`'s thresholds a 1 – 100 roll reaches (the pilot gets that rank's experience) — and `bonus: {<stat>: [by rank]}` or `{<stat>: {add: [by rank], times: <stat>}}` (the bonus × that stat / 100, truncated) added up to `stat_max`. `interceptor`: thresholds 41/61/81/96; Stamina +0/3/6/9/12, Accuracy +0/5/10/15/20 and Flying +0/5/15/20/30 times Intelligence / 100, Aggressiveness −5/0/5/10/15 (**verified**, `0x40e8b6`). |
+| `health` | `{max, per_day, in_medical, medical, fly_from}` | none | App NEXT: pilots have health. `max: {base, per_rank}` (whole-number ranges) rolls a recruit's maximum (`base` + rank × `per_rank`) and the pilot starts at it; every day each hurt pilot heals `per_day`, or `in_medical` while the bases' `medical` module effect has room; a pilot below `fly_from` (100 %) of the maximum is grounded. A battle's injuries come back with the pilot ([`damage.pilot_injury`](reference.md#damage)); below 0 the pilot is dead. Without it, injuries last `heal_days`. `interceptor`: 5 – 15 + rank × 1 – 5, 1 a day, 2 in a medical bay (5 per Medical module, *derived*), grounded until whole (*derived*). |
+| `stat_max` | number | each range's maximum | App NEXT: the most training or a generator bonus raises a stat to. `interceptor`: 100. |
 
 `scores: {<name>: points}` — mission score names. A mission outcome's `score(<name>)` adds the
 points to the campaign score and the month's score; the name `undefended` is used when a raid
