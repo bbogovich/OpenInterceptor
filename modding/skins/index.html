@@ -7332,8 +7332,11 @@ original's three frame kits) is #127.</p>
   the side tile fits a whole number of times, moving the top.</li>
 <li><strong>Frame.</strong> Every edge is tiled at its natural size, never stretched, in the order top, bottom,
   left, right; the corners go on last.</li>
-<li><strong>Fill.</strong> <code>fill</code> (or <code>fill_large</code> when the box is bigger) is centred on the box and clipped to
-  it.</li>
+<li><strong>Fill.</strong> <code>fill</code> (or <code>fill_large</code> when the box is bigger) is centred on the text rect, clipped
+  to it and drawn before the frame (§4.8, <strong>verified</strong>; until app 0.22.18 it was centred on the box and
+  clipped to the box, so it showed outside the art).</li>
+<li><strong>Worked example</strong> (§4.8): a one-line style-1 notice with one button is 539 × 266 at
+  (56, 97); its text rect is (92, 147) – (551, 318) and its button row's top is 331.</li>
 <li><strong>Text.</strong> The text rect is the final box minus the final kit's insets: fixed for the style kits
   (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61), each edge + 3 for 242 and 250. The text
   is centred in it, inset 5 px each side. Nothing grows or clips, so text taller than the rect runs
@@ -7350,8 +7353,6 @@ original's three frame kits) is #127.</p>
 <ul>
 <li>Only style 3 draws a caption: the exe's "title" routine draws the message itself.</li>
 <li>A row of three or more buttons is centred, 10 px apart.</li>
-<li>The fill shows inside the box wherever the kit's art is open, as the exe's clip to the box
-  implies.</li>
 </ul>
 <p>A mod can still build its own frame from pieces with <code>frame</code>. <code>--check</code> loads every dialog image.</p>
 <p>The default campaign uses both, in its own colours, with <code>font_title</code> and <code>font_body</code>. To see a
