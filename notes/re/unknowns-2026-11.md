@@ -406,6 +406,74 @@ shows it.
   point damage spills to the hull.
 * **Mines:** rings by yaw steps; contact trigger (derived), INI `Range` 0.
 
+
+## 11. Follow-up pass 2 (2026-11-22, verified unless marked)
+
+### 11.1 `0x550fd5(a, b)` is the adaptive music cue, not a strategy record
+
+`0x550fd5(category, piece)` asks the in-flight music system (`imusset1-3.wtl` transition tables in
+`Loops\`, loaded by `0x550c9b` into a 6 × 13 slot table at 0x71c888) to switch to a piece, if that
+slot exists and sound is on. A category-5 cue is latched once (+0x484). Calls in use: (0, n), (1, n),
+(2, n) with n = the current intensity piece (`0x4a863d…0x4a8687`) — categories **0 cruise, 1 threat,
+2 battle** (five pieces each in the files); and **(5, 0…3)** stingers. The four stinger entries in the
+tables are, in order, bad reinforcements, death, good reinforcements, victory (derived from the file
+order): **(5, 3) = victory** (played on a won mission, `0x4dc3ec` etc.), **(5, 1) = death/defeat**
+(lost mission), (5, 0) and (5, 2) at `0x4a1396` / `0x4a13a9` (derived: enemy and friendly
+reinforcements). So the Nova endings record **nothing** on the strategy layer through this call; they
+only cue the victory or defeat music. The correction applies to `flight/README.md` §12.
+
+### 11.2 Mission event counters (0x71c240 + 4k; writers in `0x4dcc6a`, `0x4df404`, `0x4e01ef`)
+
+| k | Event |
+|---|---|
+| 1, 9–13 | alien craft in list B (derived: disabled/captured): AlienType6 and freighter → 1; AlienType1–5 → 9–13 |
+| 2–8 | alien craft destroyed (list A): freighter 2, AlienType1–3 → 3–5 (6–8 written by other paths) |
+| 15–20, 35 | stations destroyed by rt type (8 → 15, OPP 16, outpost 17, station 19, type 6 → 20 and 35) |
+| 21–25 | X-COM losses: freighters 21 (list A) / 22 (list B); IntType1–3 lost 23–25 |
+| 26–28 | X-COM IntType1–3 in list B |
+| **36–44** | **beam weapons salvaged**, by beam type: Laser 36, HeavyLaser 37, Gatling 39, Tracer 42, TrackingTracer 43, Phase 38, Plasma 40, PsiBlaster 44, Tachyon 41 (each also makes its research topic available, `0x40686b`, with the salvage chance from a `*Goodies` table) |
+| **45–64** | **missiles salvaged**, two counters per missile type (`0x4e006a` / `0x4e01bd`, derived: launcher and rounds): XWinder 45/46, Fusion 49/50, Permeator 57/58, Doppelganger 59/60, NovaBomb 64 (second table only), Elerium 47/48, Enveloping 53/54, Sidestep 61/62, PassiveCloaking 55/56, Parallax 51/52 |
+| **65–67** | engines salvaged: EngineType1–3 |
+| **68–70** | SensorTargetingSystem1–3 salvaged (ship +0x132 = 12/13/14) |
+| **71–74** | shields salvaged: ShieldType1–3, accumulator (26) |
+| **75–81** | special systems salvaged from the six special slots (+0x134…); 80/81 = ECM pod type 1/2 (ids 16/17); the slot → kind mapping of 75–79 is derived |
+| **82–86** | alien corpses recovered (topic made available): Aereon 82, Ethereal 83, Muton 84, Psilord 85, Sectoid 86 |
+| 88–90 | read as objective flags by the mission evaluator `0x4dd890` (meaning unknown) |
+| 91 | won-mission tally (`0x4dd558`, derived) |
+| 92–95 | pirate craft destroyed: PirateType1–3 → 92–94; 95 a pirate station/freighter (derived) |
+| 96–99 | pirate craft in list B: PirateType1–3, PirateFreighter |
+| **100–104** | **alien messages intercepted** after a won mission: MESSAGE_1…5 (topics 11–15), each in its month window and with the AlienMessage goodies chance |
+| 110–117 | pilots killed |
+| 134 | Nova endings (unscored) |
+
+Still unknown: 6–8 sources, 29–34, 87–90 meanings.
+
+### 11.3 Raid fleet size (`0x573998`, verified) and alien ship build time
+
+The raid's ship count (before the cap by the base's queued ships) by target kind (`0x44ccc0`) and
+difficulty d (rand[a, b) = a + rand % (b − a)):
+
+| Target | d 0 | d 1 | d 2 | d 3 | d 4 |
+|---|---|---|---|---|---|
+| X-COM base (kind 0) | [5, min(m/12 + 7, 8)) | [7, 9) | [5, 8) | [7, 9) | [9, 13) |
+| outpost (1) | [4, 6) | [5, 7) | [4, 6) | [5, 7) | [7, 10) |
+| OPP (2) | [3, 5) | [4, 6) | [3, 5) | [4, 6) | [5, 7) |
+| kinds 3 and 4 | [2, 4) | [3, 5) | [2, 4) | [3, 5) | [5, 7) |
+| a flight plan (5) | 1 when that plan is already in combat; a freighter rand[1, d/2 + 2); otherwise rand[2, d/2 + 3) | | | | |
+| other | [3, 5) | [4, 6) | [3, 5) | [4, 6) | [5, 7) |
+
+(The d 2 base row is smaller than d 1: a quirk of the table.) **Alien ship build time:** there is no
+separate build timer. A base's queue (§3.4) gains one ship per 6 hours; queued ships are created at
+launch (`0x4094d2`) — so the build rate is one ship per 6 h per variant-A base.
+
+### 11.4 Voice waves (`0x5b3876`, verified)
+
+A radio message's wave number n (1–60) plays `SoundFX\Chatter\{M|F}Pilot{v}{nn}.wav`: file number =
+100 × v + n, v = the speaking pilot's voice set 1–5, M or F by the pilot's gender (`0x4109fd`).
+So waves **33–36** (Nova messages 0x46–0x49) are clips **v33–v36** of the speaker's voice set. The
+computer voice (`Comp_*`) is separate (`soundfx.ini` keys). No subtitle `S_` id was found for waves
+(derived: voice only).
+
 ## 10. What remains unknown
 
 * Counter meanings 36–90 and 95–104 (objective events); the debrief field +0x30c.
