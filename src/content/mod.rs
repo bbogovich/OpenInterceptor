@@ -456,7 +456,12 @@ impl Content {
     /// images are `.png` or `.tga` files. `colour_key` makes the original cockpit cyan
     /// transparent.
     pub fn load_image(&self, reference: &str, pack: usize, colour_key: bool) -> Result<Image, String> {
-        let key = colour_key.then_some(tga::COCKPIT_KEY_555);
+        self.load_image_keyed(reference, pack, colour_key.then_some(tga::COCKPIT_KEY_555))
+    }
+
+    /// [`Content::load_image`] with any RGB555 colour key made transparent (`None`: none),
+    /// for art keyed with another colour than the cockpits' (the button sprites).
+    pub fn load_image_keyed(&self, reference: &str, pack: usize, key: Option<u16>) -> Result<Image, String> {
         match AssetRef::parse(reference)? {
             AssetRef::Original { file, resource } => {
                 // Replacement art in a pack wins (it carries its own alpha, so no colour key).

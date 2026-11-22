@@ -541,6 +541,17 @@
                   "detail": {"description": "a list in a sheet font: where the selected row's full text goes", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
                   "detail_font": {"description": "the detail's font (default: font)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "buttons": {"description": "a list in a sheet font: where the selected row's actions go, as text buttons", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                  "style": {"description": "a list in a sheet font: compact = the original's list box", "enum": ["plain", "compact"]},
+                  "columns": {"description": "a list's header template (text or @key): columns split at ~, # = editable", "type": "string"},
+                  "bar": {"description": "compact: the pulsing selection bar's colour (default green)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "up": {"description": "a list's scroll-up arrow", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
+                        "rect": {"description": "x, y, w, h", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                        "images": {"description": "normal, pressed, disabled", "type": "array", "items": {"type": "string"}}
+                      }}]},
+                  "down": {"description": "a list's scroll-down arrow", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
+                        "rect": {"description": "x, y, w, h", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                        "images": {"description": "normal, pressed, disabled", "type": "array", "items": {"type": "string"}}
+                      }}]},
                   "shape": {"description": "a map's viewport", "enum": ["rect", "round"]}
                 }}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},

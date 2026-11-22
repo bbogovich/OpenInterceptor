@@ -26,6 +26,10 @@ pub struct Image {
 /// The colour key used by the original cockpit art (RGB555 cyan).
 pub const COCKPIT_KEY_555: u16 = 0x03df;
 
+/// The colour key of the original's button sprites (the scroll arrows' border, for
+/// example): pure RGB555 cyan, `0x03FF` (read from the sprites' pixels; derived).
+pub const SPRITE_KEY_555: u16 = 0x03ff;
+
 /// Decodes a TGA. If `key555` is `Some`, 16-bit pixels with exactly that value become
 /// fully transparent.
 pub fn decode(data: &[u8], key555: Option<u16>) -> FResult<Image> {

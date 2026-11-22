@@ -28,6 +28,7 @@
 //! the debrief (see `AppContext::campaign`).
 
 use super::caption;
+use super::listbox;
 use super::text;
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
@@ -140,13 +141,16 @@ enum Act {
 struct Row {
     text: String,
     acts: Vec<(&'static str, Act)>,
+    /// The row's cells for a list with columns, in the source's documented order
+    /// (empty: the text spans the row).
+    cells: Vec<String>,
 }
 
 impl Row {
     /// A row with one action (none for `Act::None`), labelled by its kind.
     fn new(text: String, act: Act) -> Row {
         let label = match act {
-            Act::None => return Row { text, acts: Vec::new() },
+            Act::None => return Row { text, acts: Vec::new(), cells: Vec::new() },
             Act::SelectBase(_) => "Select",
             Act::NewBase(..) | Act::Build(_) | Act::BuildFacility(..) => "Build",
             Act::Research(_) => "Research",
@@ -169,7 +173,13 @@ impl Row {
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
         };
-        Row { text, acts: vec![(label, act)] }
+        Row { text, acts: vec![(label, act)], cells: Vec::new() }
+    }
+
+    /// Gives the row its cells (a list with `columns`).
+    fn cells(mut self, cells: Vec<String>) -> Row {
+        self.cells = cells;
+        self
     }
 
     /// What Enter or a double click does: the first action, unless it is destructive
@@ -249,6 +259,8 @@ pub struct StrategyScreen {
     images: std::collections::HashMap<String, Option<Texture2D>>,
     /// Glyph positions of the text being drawn (one buffer reused every frame).
     glyphs: Vec<text::Placed>,
+    /// The open list's scroll arrows' auto-repeat (up, down).
+    arrows: [listbox::Repeat; 2],
     /// Drawing over art: panels are not framed (the art frames them).
     art: bool,
     /// The map is clipped to a circle.
@@ -408,6 +420,7 @@ impl StrategyScreen {
             testbed: false,
             images: Default::default(),
             glyphs: Vec::new(),
+            arrows: Default::default(),
             art: false,
             map_round: false,
             minimap: false,
@@ -639,16 +652,29 @@ impl StrategyScreen {
                                 Act::Buy(Product::Item(i), 1),
                             )
                             .with("Buy 5", Act::Buy(Product::Item(i), 5))
-                            .with("Sell 1", Act::Sell(i)),
+                            .with("Sell 1", Act::Sell(i))
+                            .cells(vec![
+                                it.name.clone(),
+                                format!("{}", it.size),
+                                money(it.cost as f64),
+                                c.stock_of(i).to_string(),
+                            ]),
                         );
                     }
                 }
                 for (h, hu) in def.hulls.iter().enumerate() {
                     if c.available(def, &format!("hulls.{}", hu.id)) {
-                        rows.push(Row::new(
-                            format!("{} (craft) - {}", hu.id, money(hu.cost as f64)),
-                            Act::Buy(Product::Hull(h), 1),
-                        ));
+                        rows.push(
+                            Row::new(
+                                format!("{} (craft) - {}", hu.id, money(hu.cost as f64)),
+                                Act::Buy(Product::Hull(h), 1),
+                            )
+                            .cells(vec![
+                                format!("{} (craft)", hu.id),
+                                String::new(),
+                                money(hu.cost as f64),
+                            ]),
+                        );
                     }
                 }
             }
@@ -662,16 +688,29 @@ impl StrategyScreen {
                                 format!("{} - {:.0} units", it.name, it.prod_time),
                                 Act::Make(Product::Item(i), 1),
                             )
-                            .with("Make 5", Act::Make(Product::Item(i), 5)),
+                            .with("Make 5", Act::Make(Product::Item(i), 5))
+                            .cells(vec![
+                                it.name.clone(),
+                                format!("{}", it.size),
+                                format!("{:.0}", it.prod_time),
+                                c.stock_of(i).to_string(),
+                            ]),
                         );
                     }
                 }
                 for (h, hu) in def.hulls.iter().enumerate() {
                     if hu.prod_time > 0.0 && c.available(def, &format!("hulls.{}", hu.id)) {
-                        rows.push(Row::new(
-                            format!("{} (craft) - {:.0} units", hu.id, hu.prod_time),
-                            Act::Make(Product::Hull(h), 1),
-                        ));
+                        rows.push(
+                            Row::new(
+                                format!("{} (craft) - {:.0} units", hu.id, hu.prod_time),
+                                Act::Make(Product::Hull(h), 1),
+                            )
+                            .cells(vec![
+                                format!("{} (craft)", hu.id),
+                                String::new(),
+                                format!("{:.0}", hu.prod_time),
+                            ]),
+                        );
                     }
                 }
                 if let Some(b) = c.bases.get(base) {
@@ -704,7 +743,12 @@ impl StrategyScreen {
                             format!("{} at {} - {pilot}{state} [{fit}]", cr.name, c.bases[cr.base].name),
                             Act::AssignPilot(k),
                         )
-                        .with("Fit best", Act::FitBest(k)),
+                        .with("Fit best", Act::FitBest(k))
+                        .cells(vec![
+                            cr.name.clone(),
+                            pilot.clone(),
+                            format!("{}{}", c.bases[cr.base].name, state),
+                        ]),
                     );
                 }
                 let can_train = def.pilots.as_ref().is_some_and(|r| r.train_gain > 0.0);
@@ -1728,10 +1772,19 @@ impl StrategyScreen {
     /// An image by asset reference, loaded once and kept (`None`: it failed to load,
     /// reported once).
     fn image(&mut self, ctx: &AppContext, reference: &str, pack: usize) -> Option<Texture2D> {
-        if let Some(t) = self.images.get(reference) {
+        self.image_keyed(ctx, reference, pack, false)
+    }
+
+    /// An image, optionally with the original's sprite colour key (pure cyan) made
+    /// transparent (its button sprites, such as the scroll arrows, are drawn keyed).
+    fn image_keyed(&mut self, ctx: &AppContext, reference: &str, pack: usize, key: bool) -> Option<Texture2D> {
+        // The keyed and plain versions are different textures: cache them apart.
+        let cache = if key { format!("keyed:{reference}") } else { reference.to_string() };
+        if let Some(t) = self.images.get(&cache) {
             return t.clone();
         }
-        let t = match ctx.content.load_image(reference, pack, false) {
+        let colour_key = key.then_some(crate::formats::tga::SPRITE_KEY_555);
+        let t = match ctx.content.load_image_keyed(reference, pack, colour_key) {
             Ok(i) => {
                 let t = Texture2D::from_rgba8(i.width as u16, i.height as u16, &i.rgba);
                 t.set_filter(FilterMode::Linear);
@@ -1742,7 +1795,7 @@ impl StrategyScreen {
                 None
             }
         };
-        self.images.insert(reference.to_string(), t.clone());
+        self.images.insert(cache, t.clone());
         t
     }
 
@@ -1915,7 +1968,7 @@ impl StrategyScreen {
                             }
                             let art = wd.font.as_deref().and_then(|f| ctx.ui.sheet(f)).is_some();
                             let hit = if art {
-                                self.draw_list_art(&ctx.ui, def, wd, &layout, &input)
+                                self.draw_list_art(ctx, def, wd, screen.pack, &layout, &input)
                             } else {
                                 self.draw_panel(&ctx.ui, def, r, &input, layout.scale)
                             };
@@ -2089,18 +2142,23 @@ impl StrategyScreen {
     }
 
     /// A screen set's list in its sheet font (RQ-UI-06, audit D-32…D-38): every part is
-    /// placed from a rectangle of its own in the design space — the title in the
-    /// `header` strip, the rows below it at the row pitch and cut with "...", the selected
+    /// placed from a rectangle of its own in the design space — the title (or the column
+    /// headers) in the `header` strip, the rows below it cut with "...", the selected
     /// row's full text in `detail` and its actions as text buttons in `buttons` — so
-    /// nothing is drawn outside the art made for it.
+    /// nothing is drawn outside the art made for it. `style: compact` is the original's
+    /// list box (RQ-UI-13, `app::listbox`): its row count and pitch, the pulsing bar,
+    /// columns from a header template, scroll arrows that repeat while held.
+    #[allow(clippy::too_many_arguments)]
     fn draw_list_art(
         &mut self,
-        ui: &Ui,
+        ctx: &AppContext,
         def: &StrategyDef,
         wd: &crate::content::screens::WidgetDef,
+        pack: usize,
         layout: &crate::hud::Layout,
         input: &Input,
     ) -> Option<Act> {
+        let ui = &ctx.ui;
         let style = &wd.list;
         let sheet = wd.font.as_deref().and_then(|f| ui.sheet(f))?;
         let face = sheet.face();
@@ -2111,36 +2169,75 @@ impl StrategyScreen {
         let size = style.row_size.map_or(pitch, |v| v as i32).clamp(1, pitch);
         let header = style.header as i32;
         let body = [r[0], r[1] + header, r[2], (r[3] - header).max(0)];
-        let visible = caption::rows_that_fit(body[3], pitch, size);
+        // The compact box's rows sit 3 px below its top (its 7 px of margin split; DERIVED).
+        let (first_y, visible) = if style.compact {
+            (body[1] + 3, listbox::visible_rows(body[3], lh))
+        } else {
+            (body[1], caption::rows_that_fit(body[3], pitch, size))
+        };
         self.list.fit(rows.len(), visible);
         let screen_body = layout.rect(body.map(|v| v as f32));
         if widgets::contains(screen_body, input.mouse) && input.wheel != 0.0 {
             self.list.scroll(if input.wheel > 0.0 { -1 } else { 1 }, rows.len(), visible);
         }
         let mut glyphs = std::mem::take(&mut self.glyphs);
-        // The title, in its strip.
+        let title_sheet = style.title_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
+        // Columns from the header template (a text key is looked up), measured in the
+        // title font as the original measures them in its header font.
+        let template = style.columns.as_ref().map(|t| ctx.content.text.resolve(t).unwrap_or_else(|k| k));
+        let cols = template.as_deref().map(|t| listbox::columns(&title_sheet.face(), t)).unwrap_or_default();
+        // The title or the column headers, in the strip.
         if header > 0 {
-            let t = style.title_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
             glyphs.clear();
-            text::draw_text_rect(
-                &t.face(),
-                self.tab.name(),
-                [r[0] + 4, r[1], r[2] - 8, header],
-                text::Align::Left,
-                false,
-                &mut glyphs,
-            );
-            ui.draw_glyphs(t, &glyphs, layout, WHITE);
+            let strip = |x: i32, w: i32| [x, r[1], w, header];
+            if cols.is_empty() {
+                text::draw_text_rect(
+                    &title_sheet.face(),
+                    self.tab.name(),
+                    strip(r[0] + 4, r[2] - 8),
+                    text::Align::Left,
+                    false,
+                    &mut glyphs,
+                );
+            }
+            for (i, c) in cols.iter().enumerate() {
+                let w = listbox::column_width(&cols, i, r[2] - 2);
+                let t = caption::ellipsize(&title_sheet.face(), &c.title, w);
+                text::draw_text_rect(
+                    &title_sheet.face(),
+                    &t,
+                    strip(r[0] + 2 + c.x, w),
+                    text::Align::Left,
+                    false,
+                    &mut glyphs,
+                );
+            }
+            ui.draw_glyphs(title_sheet, &glyphs, layout, WHITE);
         }
         let scroll = rows.len() > visible;
-        let bar_w = if scroll { 4 } else { 0 };
+        let bar_w = if scroll && !style.compact { 4 } else { 0 };
+        let ticks = (get_time() * 60.0) as u64;
+        let held = is_mouse_button_down(MouseButton::Left);
         let mut hit = None;
         for (i, row) in rows.iter().enumerate().skip(self.list.first).take(visible) {
-            let y = body[1] + (i - self.list.first) as i32 * pitch;
+            let y = first_y + (i - self.list.first) as i32 * pitch;
             let rr = [body[0], y, body[2] - bar_w - 1, size];
             let sr = layout.rect(rr.map(|v| v as f32));
-            if i == self.list.selected {
-                draw_rectangle(sr[0], sr[1], sr[2], sr[3], ui.colour("highlight"));
+            let pressed = held && widgets::contains(sr, input.mouse);
+            if style.compact && pressed && ticks % 2 == 0 {
+                // A pressed row flashes amber on alternate frames.
+                let [cr, cg, cb] = listbox::PRESSED;
+                draw_rectangle(sr[0], sr[1], sr[2], sr[3], Color::new(cr, cg, cb, 1.0));
+            } else if i == self.list.selected {
+                let bar = if style.compact {
+                    // The original's pulsing green bar (its level 75-153 of 255).
+                    let k = listbox::pulse_level(listbox::pulse_step(ticks)) / 255.0;
+                    let [cr, cg, cb] = style.bar.unwrap_or([0.0, 1.0, 0.0]);
+                    Color::new(cr * k, cg * k, cb * k, 1.0)
+                } else {
+                    ui.colour("highlight")
+                };
+                draw_rectangle(sr[0], sr[1], sr[2], sr[3], bar);
             }
             if input.clicked_in(sr) {
                 // A second click on the same row soon after acts on it.
@@ -2151,25 +2248,75 @@ impl StrategyScreen {
                 self.last_click = (i, now);
                 self.list.selected = i;
             }
-            let shown = caption::ellipsize(&face, &row.text, rr[2] - 6);
             glyphs.clear();
-            text::draw_text_rect(
-                &face,
-                &shown,
-                [rr[0] + 3, rr[1], rr[2] - 6, rr[3]],
-                text::Align::Left,
-                false,
-                &mut glyphs,
-            );
+            if cols.is_empty() || row.cells.is_empty() {
+                let shown = caption::ellipsize(&face, &row.text, rr[2] - 6);
+                text::draw_text_rect(
+                    &face,
+                    &shown,
+                    [rr[0] + 3, rr[1], rr[2] - 6, rr[3]],
+                    text::Align::Left,
+                    false,
+                    &mut glyphs,
+                );
+            } else {
+                // One cell per column, each cut to its column.
+                for (c, cell) in cols.iter().enumerate().zip(&row.cells) {
+                    let (ci, col) = c;
+                    let w = listbox::column_width(&cols, ci, rr[2] - 2) - 2;
+                    let shown = caption::ellipsize(&face, cell, w);
+                    text::draw_text_rect(
+                        &face,
+                        &shown,
+                        [rr[0] + 2 + col.x, rr[1], w, rr[3]],
+                        text::Align::Left,
+                        false,
+                        &mut glyphs,
+                    );
+                }
+            }
             let tint = if row.acts.is_empty() { Color::new(0.65, 0.65, 0.65, 1.0) } else { WHITE };
             ui.draw_glyphs(sheet, &glyphs, layout, tint);
         }
-        if scroll {
-            let track = [body[0] + body[2] - bar_w, body[1], bar_w, (visible as i32 - 1) * pitch + size];
+        if scroll && bar_w > 0 {
+            let track = [body[0] + body[2] - bar_w, first_y, bar_w, (visible as i32 - 1) * pitch + size];
             let t = layout.rect(track.map(|v| v as f32));
             draw_rectangle(t[0], t[1], t[2], t[3], ui.colour("panel"));
             let (n, first) = (rows.len() as f32, self.list.first as f32);
             draw_rectangle(t[0], t[1] + t[3] * first / n, t[2], t[3] * visible as f32 / n, ui.colour("border"));
+        }
+        // The scroll arrows: one row per step, firing on press and repeating while held
+        // (20 ticks, then every 5); disabled at the ends.
+        for (k, arrow) in [&style.up, &style.down].into_iter().enumerate() {
+            let Some(arrow) = arrow else { continue };
+            let enabled = if k == 0 { self.list.first > 0 } else { self.list.first + visible < rows.len() };
+            let sr = layout.rect(arrow.rect);
+            let inside = widgets::contains(sr, input.mouse);
+            let fire = self.arrows[k].update(ticks, enabled && input.clicked && inside, held && inside, 20, 5);
+            if fire && enabled {
+                self.list.scroll(if k == 0 { -1 } else { 1 }, rows.len(), visible);
+            }
+            let state = if !enabled {
+                2
+            } else if held && inside {
+                1
+            } else {
+                0
+            };
+            let img = arrow.images.get(state).or(if state == 2 { None } else { arrow.images.first() }).cloned();
+            match img.and_then(|i| self.image_keyed(ctx, &i, pack, true)) {
+                Some(tex) => draw_texture_ex(
+                    &tex,
+                    sr[0],
+                    sr[1],
+                    WHITE,
+                    DrawTextureParams { dest_size: Some(vec2(sr[2], sr[3])), ..Default::default() },
+                ),
+                None if inside && enabled => {
+                    draw_rectangle_lines(sr[0], sr[1], sr[2], sr[3], 1.0, Color::new(1.0, 1.0, 0.6, 0.6))
+                }
+                None => {}
+            }
         }
         let selected = rows.get(self.list.selected);
         // The selected row in full, wrapped from the top of its own box; lines below the

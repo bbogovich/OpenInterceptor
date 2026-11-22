@@ -139,6 +139,37 @@ pub struct ListStyle {
     /// Where the selected row's actions go, as text buttons (none: no buttons; a double
     /// click still does the row's first action).
     pub buttons: Option<[f32; 4]>,
+    /// `style: compact`: the original's list box (RQ-UI-13) — rows a line + 2 apart,
+    /// `round((h − 7)/(lh + 2))` of them, a pulsing selection bar.
+    pub compact: bool,
+    /// A header template (text or `@key`): columns split at `~`, each as wide as its
+    /// header text in the title font; `#` marks the editable column.
+    pub columns: Option<String>,
+    /// The selection bar's colour at full level (compact; default green, the original's).
+    pub bar: Option<[f32; 3]>,
+    /// The scroll arrows (one row per step, repeating while held).
+    pub up: Option<Arrow>,
+    pub down: Option<Arrow>,
+}
+
+/// A list's scroll arrow: where it is and its images (normal, pressed, disabled; any may
+/// be left out — without images it is a hot spot over the art).
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct Arrow {
+    pub rect: [f32; 4],
+    pub images: Vec<String>,
+}
+
+impl Arrow {
+    /// Parses `[x, y, w, h]` or `{rect, images: [normal, pressed, disabled]}`.
+    fn parse(key: &str, n: &crate::formats::yaml::Node) -> Result<Arrow, String> {
+        if let Some([x, y, w, h]) = numbers(n).as_deref() {
+            return Ok(Arrow { rect: [*x, *y, *w, *h], images: Vec::new() });
+        }
+        let g = Get(n);
+        let rect = rect_of(&g, "rect")?.ok_or(format!("{key}: expected [x, y, w, h] or {{rect, images}}"))?;
+        Ok(Arrow { rect, images: g.list("images") })
+    }
 }
 
 /// The widget kinds by name.
@@ -200,6 +231,18 @@ impl WidgetDef {
                 detail: rect_of(&g, "detail")?,
                 detail_font: g.str("detail_font").map(str::to_string),
                 buttons: rect_of(&g, "buttons")?,
+                compact: match g.str("style") {
+                    None | Some("plain") => false,
+                    Some("compact") => true,
+                    Some(o) => return Err(format!("style: '{o}' is not plain or compact")),
+                },
+                columns: g.str("columns").map(str::to_string),
+                bar: g.node("bar").and_then(numbers).and_then(|v| match v.as_slice() {
+                    [r, gg, b] => Some([*r, *gg, *b]),
+                    _ => None,
+                }),
+                up: g.node("up").map(|n| Arrow::parse("up", n)).transpose()?,
+                down: g.node("down").map(|n| Arrow::parse("down", n)).transpose()?,
             },
             label: g.str("label").map(str::to_string),
             round: g.str("shape") == Some("round"),
@@ -346,6 +389,31 @@ pub fn schema() -> Ty {
                     f("detail", Ty::Numbers(4), "a list in a sheet font: where the selected row's full text goes"),
                     f("detail_font", Ty::Name, "the detail's font (default: font)"),
                     f("buttons", Ty::Numbers(4), "a list in a sheet font: where the selected row's actions go, as text buttons"),
+                    f("style", Ty::Enum(&["plain", "compact"]), "a list in a sheet font: compact = the original's list box"),
+                    f("columns", Ty::Text, "a list's header template (text or @key): columns split at ~, # = editable"),
+                    f("bar", Ty::Numbers(3), "compact: the pulsing selection bar's colour (default green)"),
+                    f(
+                        "up",
+                        Ty::Either(
+                            Box::new(Ty::Numbers(4)),
+                            Box::new(Ty::Struct(vec![
+                                f("rect", Ty::Numbers(4), "x, y, w, h"),
+                                f("images", Ty::List(Box::new(Ty::Asset)), "normal, pressed, disabled"),
+                            ])),
+                        ),
+                        "a list's scroll-up arrow",
+                    ),
+                    f(
+                        "down",
+                        Ty::Either(
+                            Box::new(Ty::Numbers(4)),
+                            Box::new(Ty::Struct(vec![
+                                f("rect", Ty::Numbers(4), "x, y, w, h"),
+                                f("images", Ty::List(Box::new(Ty::Asset)), "normal, pressed, disabled"),
+                            ])),
+                        ),
+                        "a list's scroll-down arrow",
+                    ),
                     f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
                 ])),
             ))),
@@ -404,6 +472,19 @@ mod tests {
         let lw = &ll.items.iter().find(|w| w.name == "l").unwrap().list;
         assert_eq!((lw.row_height, lw.header, lw.detail), (Some(16.0), 18.0, Some([301.0, 42.0, 140.0, 123.0])));
         assert_eq!((lw.buttons, lw.title_font.as_deref()), (Some([135.0, 42.0, 140.0, 123.0]), None));
+        let cl = yaml::parse(
+            "widgets: {l: {kind: list, rect: [0, 0, 100, 100], font: body, style: compact, columns: '@orig.HDR', \
+             up: [562, 290, 24, 24], down: {rect: [562, 314, 24, 24], images: [a.png, b.png]}}}",
+        )
+        .unwrap();
+        let cll = ScreenLayout::parse("p", Get(&cl), l.clone(), &[], 0).unwrap();
+        let cw = &cll.items.iter().find(|w| w.name == "l").unwrap().list;
+        assert!(cw.compact);
+        assert_eq!(cw.columns.as_deref(), Some("@orig.HDR"));
+        assert_eq!(cw.up.as_ref().unwrap().rect, [562.0, 290.0, 24.0, 24.0]);
+        assert_eq!(cw.down.as_ref().unwrap().images, vec!["a.png".to_string(), "b.png".to_string()]);
+        let bad_s = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], style: fancy}}").unwrap();
+        assert!(ScreenLayout::parse("p", Get(&bad_s), l.clone(), &[], 0).unwrap_err().contains("fancy"));
         let bad_d = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], detail: [1, 2]}}").unwrap();
         assert!(ScreenLayout::parse("p", Get(&bad_d), l.clone(), &[], 0).unwrap_err().contains("detail:"));
         let bad_at = yaml::parse("widgets: {t: {kind: value, rect: [0, 0, 1, 1], at: [1]}}").unwrap();
