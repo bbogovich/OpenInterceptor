@@ -1370,6 +1370,9 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-60 | `interceptor`: shield balance routes the recharge | `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.21.0; Track A A3, `power.balance: share` |
 | MT-4-61 | `interceptor`: per-side armour in the HUD (`ARMOR f/a`) | `duel-wraith` (`interceptor`), Lightning; `rocket-vs-saucer` (default) | not run | | | App 0.21.0; Track A A1, `damage.armor: per_side` |
 | MT-4-62 | `interceptor`: duel times against a Wraith, Beginner vs Veteran | `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.21.0; Track A A1, `damage.difficulty`; record the times for #45 |
+| MT-4-63 | `interceptor`: missile lock — 2.5 s in a 2.5° cone within 3 km, held at 5°, running down off target | `gunnery-range` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A5, sensor `lock_*`, `flight.lock_hold`, `lock_decay` |
+| MT-4-64 | `interceptor`: bolts do not drift with your own sideways motion | `gunnery-range` (`interceptor`), Lightning; `rocket-vs-saucer` (default) | not run | | | App 0.22.0; Track A A2, `flight.bolt_inherit: false` |
+| MT-4-65 | `interceptor`: the lead indicator | `gunnery-range` and `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A2/A7, the lead follows `bolt_inherit` |
 
 ## Stage 4 cases
 
@@ -1863,6 +1866,30 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App 0.21.0 or later; the player's data. A stopwatch. |
 | Steps | 1. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning --difficulty beginner`. Fight both Wraiths with beams only; time each kill from your first hit, and note your shields, armour and hull at the end. 2. The same with `--difficulty veteran`. 3. Repeat each once more. |
 | Expected | Beginner is **clearly shorter and less costly**: the Wraiths hold 40 % of their shield and 50 % of their armour protection (Veteran 64 % and 70 %), your hits do × 1.15 and theirs × 0.85, and your own banks hold 150 % / 130 % (Veteran 100 %). Expect kill times at Beginner of roughly two thirds of Veteran's or less. At Veteran the Wraiths are also faster (drive factor 430 – 480 against 350 – 400: top speeds about 215 – 240 m/s against 175 – 200 m/s). Record the times on #45 as the reference for later fidelity work. |
+
+### MT-4-63 — `interceptor`: missile lock — 2.5 s in a 2.5° cone within 3 km, held at 5°, running down off target
+
+| Field | |
+|---|---|
+| Preconditions | App 0.22.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario gunnery-range --ship lightning`; X-Winders selected (`W`). A stopwatch helps. |
+| Steps | 1. Target a drone (`T`) while it is **more than 3 km** away and hold it on the nose. 2. Close to under 3 km and hold the drone **dead centre**, timing from when the lock ring starts to `LOCK`. 3. With the lock held, let the drone drift a little off the nose — about the width of the reticle's centre, under 5° — and back. 4. Let it drift well off (10° or more) for about a second, then bring it back to centre. 5. Build a lock to about half, then swing off target and watch the ring. 6. Fire (`Space`) once locked, then once with no lock. 7. `openinterceptor --no-original --scenario rocket-vs-saucer`: build a lock. |
+| Expected | 1: no lock progress beyond 3 km. 2: `LOCK` after **about 2.5 s**, and only while the target is within a **small** cone (2.5°: a drone noticeably off the reticle's centre does not lock). 3: the lock **holds** (the cone doubles to 5° once locked). 4: `LOCK` goes out, but the ring has not emptied: back on target the lock returns after about as long as it was off, not a full 2.5 s. 5: the ring **shrinks** as fast as it grew, not at once. 6: the locked missile homes, turning hard (about 143°/s) and leading the drone; the unlocked one flies straight. 7: the default campaign locks as before — a wide 10° cone, each missile's own lock time, lost at once off target. |
+
+### MT-4-64 — `interceptor`: bolts do not drift with your own sideways motion
+
+| Field | |
+|---|---|
+| Preconditions | App 0.22.0 or later; the player's data; a ship with VCT, or any ship turned so that it moves sideways. `openinterceptor --campaign interceptor --scenario gunnery-range --ship lightning --view chase`. |
+| Steps | 1. Fly at full throttle, then turn the nose 90° without slowing so the ship slides sideways (or slide with the VCT keys). 2. Fire beams while sliding and watch the bolts in the chase view. 3. Fire straight ahead while flying fast forwards. 4. The same in `openinterceptor --no-original --scenario rocket-vs-saucer --view chase`. |
+| Expected | 2: bolts leave **straight along the nose** at their muzzle speed and do **not** drift sideways with the ship; the ship slides away from the stream. 3: bolts flying forward pull away from the ship at their muzzle speed only, so a fast ship seems to close on its own shots. 4: in the default campaign bolts carry the ship's velocity and drift with the slide (physics, as before). |
+
+### MT-4-65 — `interceptor`: the lead indicator
+
+| Field | |
+|---|---|
+| Preconditions | App 0.22.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario gunnery-range --ship lightning`. |
+| Steps | 1. Target a circling drone and watch the lead circle as you fly parallel to it at the drone's speed. 2. Aim at the lead circle at 1 – 1.5 km and fire short bursts. 3. Stop dead (throttle 0, wait) and fire at the lead circle again. 4. `--scenario duel-wraith`: watch where the Wraiths' bolts go when you fly straight, then when you jink. |
+| Expected | 1: the lead circle sits **ahead of the drone along its own course**, even when you match its speed (it no longer collapses onto the target as it would with relative velocity). 2 and 3: bolts aimed at the circle **hit** whether you are moving or stopped. 4: Wraith fire is close but not exact: about half the time it falls behind you and half the time ahead (a 50 % pilot leads half or one and a half times right), it tracks you less tightly when you jink, and it opens fire only within about 2 – 2.5 km. |
 
 ## Stage 5 results
 

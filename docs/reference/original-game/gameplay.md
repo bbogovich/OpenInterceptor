@@ -144,6 +144,64 @@ doubles; a shot fired before the lock flies unguided. Missile `Duration` is in s
 and `Penalty` are never read. Guided missiles turn at most 2.5 rad/s and lead a target as if it
 flew 200 m/s.
 
+**More from the program (verified, app 0.22.0 notes).** The `interceptor` campaign adopts the
+lock and the guidance turn and lead in app 0.22.0
+([Rulesets › Missile lock](../../modding/rulesets.md#missile-lock)).
+
+- **Lock.** Against stations and other non-ship objects the three sensors reach 5, 6 and 7 km.
+  With no sensor, or while cloaked, the lock time is 0, and a cloaked ship cannot fire missiles.
+  The lock timer runs for the player's ship only; AI ships keep their own (below).
+- **Launchers.** A launcher fires `RateOfFire` rounds per second, at half that rate at or below
+  50 % of its hit points and not at all at or below 25 %. Launchers of one type alternate.
+- **Guidance.** A missile flies straight for its first 250 ms. Within 100 m it aims at the
+  target itself (the Permeator always does); targets slower than 50 m/s get no lead. Each axis
+  turns by at most 2.5 rad/s, with roll at 0.3 × yaw (none for the Sidestep). More than 5° off
+  target (within 7.5 km) the missile throttles back, by more the further off it is; within 2°
+  it throttles up again. The lock is lost when the target is more than 170° off in both yaw and
+  pitch, except for the Enveloping and Passive Cloaking torpedoes. A cloaked target keeps a
+  missile's lock every 2 – 3 s with a chance of 50 + 2 d % for one side's launchers and
+  50 − 5 d % for the others (d the difficulty 0 – 4) — the only difficulty term in missiles. The
+  Sidestep adds a sideways push of 2.5 m/s² per degree of error beyond 10°.
+- **Fuse and blast.** A missile detonates on a collision, or within 25 m of its target when more
+  than 45° off it (passing). Every object within 15 m takes `ImpactDamage` and every object
+  within 15 – 200 m `ProximityDamage`, each × 75 – 100 %, with no fall-off with distance. An
+  expired missile disappears without a blast.
+- **Missile hit points** are `HitPoints` clamped to 10 – 500; beam bolts can shoot missiles down
+  (see point defence above).
+
+### AI fire control
+
+**From the program (verified, app 0.22.0 notes).** Every fighter class (the program's interceptor, pirate and
+corporate hulls, alien classes 1 – 4 and the drone) runs one attack routine; freighters, alien
+classes 5 and 6 and the Patton do not. With d the difficulty 0 (Beginner) – 4 (Superhuman):
+
+- **Aim.** Beyond 1,750 m the pilot flies straight at the target. Within it the pilot leads:
+  the aim point is the target's position plus its velocity × the bolt's flight time
+  (distance / the beam's `Speed`), and half the time that time is scaled by `A` and half the time
+  by `2 − A`, where `A` is the pilot's accuracy: the pilot under- or over-leads by `1 − A`. Below
+  50 %, a failed roll against `A` beyond 200 m also aims 15 – 25 m to one side, along the target's
+  x or y axis. On a failed roll the ship also turns in a sluggish mode.
+- **Accuracy.** A ship without a pilot uses 50. From Veteran up the pilot's Accuracy is used as
+  it is; on Beginner and Experienced it is clamped to 50 – 100 for X-COM pilots and to
+  25 + 10 d – 50 + 10 d for the others. Whether alien ships carry pilot records is not confirmed
+  (derived: they do not, so they use 50).
+- **Beam fire** when yaw and pitch are both within `2.5 − 0.25 (4 − d)` degrees (1.5° on
+  Beginner … 2.5° on Superhuman), the target is within `2500 − 125 (4 − d)` m (2,000 … 2,500), a
+  line of sight along the nose is clear, and the trigger interval has passed. The interval is 0
+  for every class except the drone (1.5 s + 50 ms × (4 − d)) and alien classes 1 and 2
+  (0.5 s + 60 ms × (4 − d); in `interceptor` the Wraith and Spectre, a derived mapping). The guns' own charge, energy cost and rate of fire still apply.
+  Within 5° of yaw, a roll on the mean of Intelligence and Accuracy fires all mounts of the
+  selected type together.
+- **Missiles** are tried first, in the same cone: within half the beam range, at least 5 s after
+  the last one, with a `5 + 2 d` % chance each frame, while the AI's own lock timer (started when
+  yaw and pitch are within ±5°, reset when either leaves) has not yet passed the sensor's lock
+  time — as read, which may be an inversion in the original.
+- **Breaking off** under 250 m.
+- **Weapon choice**, at most every 3 s: within 1,500 m the Gatling Laser or Phase Cannon is
+  preferred, beyond it the Heavy Laser or Phase Cannon; the chance follows 0.75 × Intelligence +
+  0.25 × Flying (25 without a pilot). An empty missile slot is replaced by the first launcher with
+  rounds left that is not a Nova Bomb. Alien classes 4 – 6 keep their first choice.
+
 ## Ships
 
 ### Player hulls

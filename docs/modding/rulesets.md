@@ -175,7 +175,7 @@ systems of one kind (`ecm`, `advanced_ecm`) with different numbers. Keys:
 |---|---|---|
 | `engines` | Thrust and afterburner scale with its efficiency. | 100 / 0 / 0 / 0 |
 | `manoeuvring` (or `maneuvering`) | Turn rates scale with its efficiency. | 100 / 0 / 0 / 0 |
-| `sensors` | Target lock builds at its efficiency's speed. | 60 / 0 / 0 / 0 |
+| `sensors` | Target lock builds at its efficiency's speed; its `lock_time`, `lock_angle` and `lock_range` set the lock ([Missile lock](#missile-lock), app 0.22.0). | 60 / 0 / 0 / 0 |
 | `shields` | Shield recharge and the fore/aft transfer scale with it. | 50 / 0 / 0 / 0 |
 | `hyperdrive` | Leaving the battle (`H`); a damaged drive takes twice as long. | 100 / 0 / 0 / 0 |
 | `vct` | Vector-control slides. | 150 / 0 / 0 / 0 |
@@ -304,6 +304,45 @@ ships:
     mass: 9000            # heavier hull: a lower speed at every throttle step
     thrust: 90            # kN, instead of its fitted engine's
 ```
+
+### Missile lock
+
+A ship locks a missile on its target by holding the target in a cone ahead of its nose, within
+range, for the lock time (`sim::combat::update_lock`). Since app 0.22.0 the ship's **sensor** may
+set all three: its `lock_time`, `lock_angle` and `lock_range` ([`systems`](reference.md#systems));
+a value left at 0 falls back to the missile's `lock_time`, `flight.lock_angle` and the missile's
+reach. Damaged sensors build the lock more slowly, a jamming target or an ion storm halves the
+rate, and knocked-out sensors cannot lock. Two `flight` switches shape how a lock is kept:
+
+- `lock_hold`: once locked, the cone is this many times wider, so a lock survives a small wobble.
+- `lock_decay`: off target, a part-built lock runs down as fast as it built up instead of
+  vanishing; a held lock drops at once to "not locked" but keeps its progress to run down.
+
+```yaml
+# packs/interceptor/rules/ — the original's first targeting system (verified)
+systems:
+  sensors: {lock_time: 2.5s, lock_angle: 2.5, lock_range: 3km}
+flight:
+  lock_angle: 2.5        # only for a ship without sensors
+  lock_decay: true
+  lock_hold: 2           # 5° once locked
+```
+
+The default campaign sets none of these and locks as before (a 10° cone, each missile's own lock
+time, lost at once off target). Homing missiles in `interceptor` turn at most 143.2° per second
+and lead their target as if it flew at 200 m/s (`lead_speed`, [`missiles`](reference.md#missiles)).
+
+### AI fire control
+
+How an AI pilot aims and when it fires are behaviour data. The `aim` skill gives a random angle
+error; the `accuracy` skill (app 0.22.0) instead reproduces the original's routine, which errs in
+**how far ahead** to aim, sometimes aims beside the target and turns sluggishly on a failed roll
+([reference › The accuracy aim model](reference.md#the-accuracy-aim-model)). The state's
+`fire_cone`, `range`, `burst`, `pause`, `missiles` and `missile_range` set when it pulls the
+trigger. `interceptor` sets the original's values once, in `original_attack` (cone 1.5° – 2.5° and
+range 2 – 2.5 km by level, missiles within half that range and at least 5 s apart, lead only
+within 1,750 m), and its fighter behaviours inherit it. Bolts in `interceptor` leave at their
+muzzle speed alone (`flight.bolt_inherit: false`), so pilots lead with the target's own velocity.
 
 ## Example: a small balance addon
 

@@ -130,10 +130,16 @@ limit. Default 60 000 m.
 
 ### Combat (`sim::combat`)
 
-- **Lock**: the target inside the cone `flight.lock_angle` and within
-  `missile speed × duration` for the selected missile's `lock_time` seconds → `locked`,
-  `SimEvent::LockAcquired`. Leaving the cone resets it. Lock builds at
-  `efficiency(Sensors)` speed, halved again while the target's ECM is on.
+- **Lock** (`update_lock`): the target inside a cone ahead of the nose and within range for
+  the lock time → `locked`, `SimEvent::LockAcquired`. Since app 0.22.0 the **sensor** sets the
+  three values: the fitted `Sensors` system's `SystemDef::lock_time`, `lock_angle` and
+  `lock_range`, each falling back when 0 to the selected missile's `lock_time`,
+  `flight.lock_angle` and the missile's reach `speed × duration` (a small closure `pick` does
+  the "0 means fall back" choice once for all three). Once locked the cone is
+  `flight.lock_hold` times wider (capped at 180°). Progress builds at `efficiency(Sensors)`
+  speed, halved while the target jams or an ion storm rages, and is **capped at the lock time**
+  (DEV-074). Off target it is reset — or, with `flight.lock_decay`, runs down by `dt` per tick
+  and clears `locked` while the progress is kept, as the original's timer does.
 - **Tractor and cloak**: while the tractor beam is on, beams do not fire ("BEAMS OFF-LINE:
   TRACTOR BEAM ON"); firing beams or a missile drops an active cloak ("CLOAK DROPPED").
 - **Beams**: `LinkMode::Linked` fires mounts in pairs, `Full` all at once, `Unlinked` one at a
@@ -145,7 +151,10 @@ limit. Default 60 000 m.
   ship's turn rate in world axes; `Ship::angular_velocity` is kept in body axes, so
   `ω = rotation × angular_velocity`. A gun on the right wing of a ship yawing left is swinging
   forwards, and its shot keeps that speed. After launch the bolt flies straight, whatever the
-  ship does (`flight.bolt_frame: world`, the default).
+  ship does (`flight.bolt_frame: world`, the default). With `flight.bolt_inherit: false`
+  (app 0.22.0, the original) the carried part `ship.velocity + ω × r` is dropped and the bolt
+  leaves at `dir × beam.speed` alone; the AI's `aim_point` and the HUD's lead indicator then
+  lead with the target's own velocity instead of its velocity relative to the shooter.
 - **`bolt_frame: ship`** (the arcade option): the bolt also stores its offset and velocity in
   the owner's body axes (`local_offset`, `local_velocity`, made with `rotation.conjugate()`)
   and a `carry` time from `flight.bolt_carry`. While `carry > 0` and the owner lives,
@@ -301,6 +310,13 @@ flowchart TD
     HIT --> BL["blasts → apply_damage_mode<br/>(normal / bypass_shields / enveloping)"]
 ```
 
+**Lead (app 0.22.0).** With a class `lead_speed` above 0, a homing missile that is not chasing a
+decoy aims at `guidance::lead_aim(target, target_velocity, distance, lead_speed, speed)` =
+`target + v̂ × lead_speed × distance / speed`: the original assumes the target flies at a fixed
+speed along its heading rather than at its real speed. Targets slower than `LEAD_MIN_SPEED`
+(50 m/s) or nearer than `LEAD_MIN_DISTANCE` (100 m) get no lead. Sidestep and the other kinds
+then steer as before towards that aim point at the class's `turn_rate`.
+
 `area_blast(world, at, radius, damage, except)` damages every ship in `radius`, falling off
 linearly, `enveloping`; mines use it (`systems::handle_requests` on a `detonate` request:
 radius = 4 × the warhead's `proximity_radius`, at least 100 m). The modder's view:
@@ -439,10 +455,20 @@ flowchart TD
   target (position and velocity) and draws a new aim error, uniform over a disc of radius
   `(1 − aim) × MAX_AIM_ERROR` (8°). Between looks it assumes the target flies straight on from
   the last sighting. The lead point uses the target's velocity relative to the shooter
-  (bolts carry the shooter's velocity).
+  (bolts carry the shooter's velocity), or the target's own with `flight.bolt_inherit: false`.
+- **The accuracy model (app 0.22.0).** With `skill.accuracy` set, `aim_point` reuses the
+  `aim_error: Vec2` slot for two different numbers — `x` the lead-time scale for this look
+  (`accuracy` or `2 − accuracy`, 50/50) and `y` a sideways miss in metres (15 – 25 m, either
+  sign, only when `accuracy < 0.5` and a roll fails). The aim point is then
+  `believed + velocity × (distance / bolt_speed × scale) + target.right() × miss` (no miss within
+  200 m), or the target itself beyond `skill.lead_range`. In `attack`, each tick a roll against
+  `accuracy` fails, the commanded pitch, yaw and roll are multiplied by `SLUGGISH` (0.06), the
+  original's sluggish turn. The rolls come from the ship's own `AiState::rng`, so a seeded battle
+  replays exactly.
 - **Fire discipline.** `in_burst` alternates `burst` seconds of firing with `pause` seconds of
   holding; guns fire only inside `fire_cone` and inside `range` (and 95 % of the first beam's
-  reach). Missiles every `missiles` seconds when locked (0 = never).
+  reach). Missiles every `missiles` seconds (± 25 %) when locked and within `missile_range`
+  (default 2.5 × `range`, at least 2 km; 0 = never).
 - **Systems use.** At each transition check, `systems:` conditions of the behaviour are evaluated
   (`ObjectContext`) and turned into ordinary `Requests`: `cloak` / `ecm` switched to match their
   condition, `power_to_shields` while `shields_first` holds and shields are below the top level,
@@ -545,6 +571,8 @@ current order, and `DISABLED` if so.
 | `Wreck`, `World::wrecks` | A destroyed module left on its hub. |
 | `Ship::mount`, `Ship::expires` | A module's hub and place on it; seconds left for a short-lived ship (a doppelganger). |
 | `guidance::LURE_RANGE`, `LURE_CHANCE` | 2 500 m, 0.8 per second. |
+| `guidance::lead_aim`, `LEAD_MIN_SPEED`, `LEAD_MIN_DISTANCE` | The original's missile lead (target + heading × `lead_speed × distance / speed`); no lead below 50 m/s or within 100 m (app 0.22.0). |
+| `combat::update_lock` | One ship's lock for one tick: sensor-set time, cone and range, `lock_hold`, `lock_decay` (app 0.22.0). |
 | `content::rules::Guidance`, `DamageMode` | The missile's steering kind and warhead mode. |
 | `Power`, `ShieldBalance` | Beam and shield level indices (0 = A) and `Equal` / `Forward` / `Aft`. |
 | `SystemState`, `Condition` | One fitted system: `id`, `kind`, `hp`, `max`, `destroyed`, `offline`, `on`; `set_hp`, `condition()`, `ONLINE_AT`. `Condition::{Ok, Damaged, Inoperative, Destroyed}` with `efficiency()` 1 / 0.5 / 0 / 0. |
@@ -552,6 +580,7 @@ current order, and `DISABLED` if so.
 | `ai::WingOrder`, `ai::EVASIVE_TIME` | Wingman orders (above). |
 | `ai::AiState` | Per-ship AI memory: role (`behaviour`), behaviour override `def`, leader, offset, order and order time; behaviour `state`, `state_time`, `check_clock`; app 0.18.0: `vars: [f32; MAX_VARS]` (object variables), `script_clock`, `script_warned`; `break_timer`, `missile_timer`, `burst_clock`; `reaction_clock`, `seen` (last sighting), `aim_error`; `home`; `rng`. |
 | `ai::ObjectContext` | Answers condition queries about one ship ([Conditions](script.md)). |
+| `ai::SLUGGISH` | 0.06: the share of the usual turn a pilot with `skill.accuracy` makes on a tick it fails its accuracy roll (app 0.22.0). |
 | `ai::CHECKS_PER_SECOND`, `MAX_AIM_ERROR`, `ENGAGE_RADIUS`, `HUNT_RADIUS` | 4, 8°, 3 km (wingmen engage near the leader), 8 km (enemies look for targets). |
 | `FlightModel` | `Newtonian` or `Assisted` (`flight.model`), in `FlightRules` with `arena_radius`. |
 | `content::rules::Drive`, `FlightRules::drive` | App 0.21.0: the original's motion model (`flight.drive`): `drag`, `thrust_scale`, `power_cost`, `reverse`, `afterburner`, `shield_mass`, `ai_speed_range`. |
@@ -566,6 +595,7 @@ current order, and `DISABLED` if so.
 | `SimEvent` | App 0.18.0: `Radio { ship, text }` (a behaviour script's `message`, shown on the message display) and `ScriptStopped { ship, call }` (a behaviour script used its whole operation budget; once per pilot). Earlier: `BeamFired`, `MissileLaunched`, `Hit`, `Destroyed`, `MissileExploded { position, effect }`, `LockAcquired`, `Collision`, `Message`, `NoEnergy`; Stage 2: `SystemChanged { ship, system, condition, repaired }`, `Disabled { ship }`, `Departed { ship, position }`, `Captured { captor, prize }`, `Switched { ship, kind, on }`, `PointDefence { ship, from, to, hit }`. |
 | `Bolt`, `Missile`, `Lock`, `LinkMode` | Projectiles and weapon state. `Bolt::carry`, `local_offset`, `local_velocity`: the `bolt_frame: ship` carry (above). |
 | `content::rules::BoltFrame`, `FlightRules::bolt_carry` | `World` (default) or `Ship`; the carry time (0.3 s). |
+| `FlightRules::bolt_inherit`, `lock_decay`, `lock_hold`; `MissileClass::lead_speed`; `SystemDef::lock_time`, `lock_angle`, `lock_range`; `behaviour::Skill::accuracy`, `lead_range`; `Params::missile_range` | App 0.22.0: the original's fire control as data (true / false / 1; 0; 0 = fall back; `None` / 0; 0 = 2.5 × `range`, at least 2 km). |
 | `collision::Shape`, `TriMesh` | Bounding radius plus optional triangle mesh. |
 | `TICK` | `1.0 / 60.0`. |
 | `hazards::ActiveHazards`, `World::hazards` | The field hazards acting every tick: `black_hole: Option<BlackHole>`, `ion_storm: Option<f32>` (the radar factor). |
@@ -594,7 +624,9 @@ current order, and `DISABLED` if so.
   &Controls) -> (Vec3, f32)` (app 0.21.0).
 - `combat::forget_ship(world, id)` — every ship targeting or towing `id` lets go.
 - `guidance::launch(&mut World, Missile)`, `guidance::step(&mut World, dt, &Ruleset)`,
-  `guidance::area_blast(world, at, radius, damage, except)`.
+  `guidance::area_blast(world, at, radius, damage, except)`,
+  `guidance::lead_aim(target, target_velocity, distance, lead_speed, missile_speed) -> Vec3`
+  (app 0.22.0).
 - `world.spawn_placement(&Placement, player) -> Result<ShipId, String>` (one scenario object or
   mission role member: class, faction, pilot, modules, starting damage and speed);
   `world.same_slot(id)`.

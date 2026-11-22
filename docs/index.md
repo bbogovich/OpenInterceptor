@@ -22,7 +22,7 @@ is in the repository, ever.
 
     The same order is in the repository's `CLAUDE.md` project rules.
 
-**Site version 0.30.0**; Definition and Specification **1.22.0** ([revision history](reference/revision-history.md)).
+**Site version 0.31.0**; Definition and Specification **1.22.0** ([revision history](reference/revision-history.md)).
 
 ## Sections
 

@@ -21,7 +21,7 @@ Cross-stage tracks:
 
 | Track | Delivers | Status |
 |---|---|---|
-| [A Combat-stat fidelity](track-a-fidelity.md) | The original's damage, energy, shields, flight and AI read from its program and turned into pack data (#45) | In progress — A1, A2, A3 and A6 largely done in app 0.21.0; the strategy clock (B3) settled |
+| [A Combat-stat fidelity](track-a-fidelity.md) | The original's damage, energy, shields, flight and AI read from its program and turned into pack data (#45) | In progress — A1, A2, A3 and A6 largely done in app 0.21.0; A5 and A7 largely done in app 0.22.0; the strategy clock (B3) settled |
 
 Items MD1–MD7 come from the [mod designer, cutscene designer and game bundling](../../specification/design/designer.md) design.
 

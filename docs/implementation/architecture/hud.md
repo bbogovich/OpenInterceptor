@@ -95,7 +95,9 @@ craft is actually going. With no drift it sits on the crosshair; sideways drift 
 the side.
 
 **Targeting** (forward views): a reticle; corner brackets sized by the target's angular size;
-name and range; a lead circle (where to aim beams); a lock-progress ring, then a red lock
+name and range; a lead circle (where to aim beams: `ai::lead_point` with the first beam's
+speed and the target's velocity relative to the player's — or the target's own velocity with
+`flight.bolt_inherit: false`, app 0.22.0); a lock-progress ring, then a red lock
 diamond and `LOCK`; an arrow on a ring when the target is off-screen. Nav points draw a blue
 diamond.
 

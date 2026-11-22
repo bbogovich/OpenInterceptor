@@ -68,7 +68,7 @@ All keys with types and defaults: [Mod file reference › behaviours](reference.
 | `idle` | Nothing (parked ships, unarmed stations). | — |
 | `circle` | A slow circle at 35 % of top speed; never shoots (practice targets). | — |
 | `patrol` | Circles its spawn point. | `range` (radius), `speed` |
-| `attack` | Pursues the target (its current one, else the nearest visible hostile within 8 km) with lead and aim error; fires in bursts inside `fire_cone` and `range` (and 95 % of its first beam's reach); launches a missile every `missiles` seconds when locked; breaks off for 2 s when about to ram; VCT hulls strafe when the target faces them. Without a target it cruises at half speed. | `range`, `fire_cone`, `burst`, `pause`, `missiles`, `speed` |
+| `attack` | Pursues the target (its current one, else the nearest visible hostile within 8 km) with lead and aim error; fires in bursts inside `fire_cone` and `range` (and 95 % of its first beam's reach); launches a missile every `missiles` seconds when locked and within `missile_range`; breaks off for 2 s when about to ram; VCT hulls strafe when the target faces them. Without a target it cruises at half speed. | `range`, `fire_cone`, `burst`, `pause`, `missiles`, `missile_range`, `speed` |
 | `evade` | Weaves unpredictably at top speed (VCT hulls also slide). Leave it with a transition on `time_in_state`. | `duration` |
 | `retreat` | Runs from the nearest hostile at top speed, afterburning while energy lasts. | `jump: true` also starts the hyperdrive |
 | `turret` | Stays put; beams that can swivel (`turret_arc` on the ship class) track hostiles within `range` (and 95 % of the first beam's reach) and fire in bursts. | `range`, `burst`, `pause` |
@@ -147,15 +147,19 @@ reaction 0.7 s. A pack may define its own `builtin_attack` to change it.
 | Setting | Effect |
 |---|---|
 | `skill.aim` (0 … 1) | Every `reaction` seconds the pilot picks a fresh aim error of up to **(1 − aim) × 8°** (`ai::MAX_AIM_ERROR`). At 0.2 the error is up to 6.4°, enough to miss a fighter at a kilometre; at 1 the pilot leads perfectly. |
-| `skill.reaction` | Seconds between the pilot's looks at its target: between looks the pilot assumes the target flies straight on from its last sighting, so a slow pilot leads where the target *was* going. Lead uses the target's velocity relative to the shooter (bolts carry the shooter's velocity). |
+| `skill.reaction` | Seconds between the pilot's looks at its target: between looks the pilot assumes the target flies straight on from its last sighting, so a slow pilot leads where the target *was* going. Lead uses the target's velocity relative to the shooter (bolts carry the shooter's velocity), or the target's own with [`flight.bolt_inherit: false`](reference.md#flight). |
 | `burst`, `pause` | Fire for `burst` seconds, then hold for `pause`: pilots do not hose a target continuously. |
 | `fire_cone` | Only fire when the aim point is within this angle of the nose. |
+| `skill.accuracy`, `skill.lead_range` | The original's aim model instead of `aim` (app 0.22.0): the pilot errs in **how far ahead** it aims — the lead time × `accuracy` or × `2 − accuracy` — misses by 15 – 25 m below 50 %, turns sluggishly on a failed roll, and flies straight at the target beyond `lead_range` ([reference › The accuracy aim model](reference.md#the-accuracy-aim-model)). |
+| `missile_range` | Launch missiles only this close (app 0.22.0; default 2.5 × `range`, at least 2 km). |
 
 Together with per-level values these make difficulty. Both campaigns ship behaviours for
 every enemy type in `rules/behaviours.yaml` — the default campaign's saucers, robots, gun
 platforms, tugs, hot-rods and Guard pilots; the `interceptor` Wraith, Spectre, Phantasm, Shade,
-Harbinger (tow), drones, pirate and corporate pilots and X-COM wingmen (derived from the strategy
-guide's descriptions; the original's AI is hard-coded). In the default campaign a cadet-level
+Harbinger (tow), drones, pirate and corporate pilots and X-COM wingmen. Since app 0.22.0 the
+`interceptor` fighters inherit one `original_attack` behaviour, the original's attack routine as
+data (verified: fire cone and range by level, missiles, trigger intervals, `accuracy: 50%`); when
+they break off, jink or flee is derived from the strategy guide's descriptions. In the default campaign a cadet-level
 saucer aims within about 6–7°, looks every 1.2–1.4 s and fires short bursts with long pauses; at
 space ace it aims within about 3°, looks every 0.5 s and fires long bursts.
 

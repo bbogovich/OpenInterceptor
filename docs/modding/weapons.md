@@ -24,7 +24,7 @@ missiles:
 
 | `guidance:` | Behaviour |
 |---|---|
-| `homing` (default) | Turns towards its locked target at `turn_rate`. |
+| `homing` (default) | Turns towards its locked target at `turn_rate`; with `lead_speed` (app 0.22.0) it aims ahead of the target as if it flew at that speed. |
 | `dumbfire` | Never steers. |
 | `sidestep` | Its own thrusters: turns twice as hard inside 600 m of the target and weaves, so it is hard to dodge. |
 | `parallax` | Homing; at launch releases `decoys` (default 2) that enemy missiles may chase instead of the launcher. |

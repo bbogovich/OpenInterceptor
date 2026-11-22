@@ -102,8 +102,9 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `impact_damage` | number | 300 | Damage on a direct hit. |
 | `proximity_damage` | number | 200 | Damage from the proximity fuse. |
 | `proximity_radius` | distance | 25 m | Proximity fuse radius. |
-| `turn_rate` | number | 90 | Degrees per second while homing. |
-| `lock_time` | time | 2 s | Seconds in the lock cone to lock on. |
+| `turn_rate` | number | 90 | Degrees per second while homing. `interceptor`: 143.2 for every type — the original's limit of 2.5 rad/s (verified, app 0.22.0). |
+| `lead_speed` | number | 0 | Homing leads the target as if it flew at this speed along its heading, m/s (app 0.22.0): the aim point is the target's position plus its heading × `lead_speed × distance / speed`. No lead for targets slower than 50 m/s or nearer than 100 m. 0 = pure pursuit of the target's position. `interceptor`: 200 for every type, the original's fixed figure (verified). |
+| `lock_time` | time | 2 s | Seconds in the lock cone to lock on, when the ship's sensor sets no [`lock_time`](#systems). |
 | `mass` | number | 0 | Kilograms per round carried (app 0.21.0): each round still in a rack adds this to the ship's mass under [`flight.drive`](#flightdrive). `interceptor`: the original's per-missile table (verified). |
 | `color` | RGB | 1, 0.8, 0.4 | Trail colour. |
 | `sound` | asset | none | Launch sound (or `cue:<Name>`). |
@@ -180,6 +181,14 @@ The same keys; `objects` defaults to `kind: station`.
 | `strength` | number | per kind | Tractor pull m/s²; ECM and cloak: chance per second, in %, that a homing missile loses its target. |
 | `repair_rate` | number | per kind (4 for damage control) | Damage control: repair speed multiplier. |
 | `mass` | number | 0 | Kilograms it adds to the ship under [`flight.drive`](#flightdrive) (app 0.21.0). `interceptor`: the original's table — damage control 100, VCT 450, cloak 550, each ECM pod 200, tractor 300 (verified). |
+| `lock_time` | time | 0 | Sensors only (app 0.22.0): missile lock time for a ship carrying this sensor; 0 = each missile's own `lock_time`. |
+| `lock_angle` | angle | 0 | Sensors only (app 0.22.0): lock cone half-angle; 0 = [`flight.lock_angle`](#flight). |
+| `lock_range` | distance | 0 | Sensors only (app 0.22.0): how far a target may be and still lock; 0 = the missile's reach (`speed × duration`). |
+
+The sensor's lock values let equipment decide how fast and how wide a ship locks on, as in the
+original, where the targeting system sets them. `interceptor` gives its `sensors` the values of the
+original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
+[Rulesets › Missile lock](rulesets.md#missile-lock).
 
 Built-in values per kind: [Rulesets](rulesets.md#ship-systems-and-equipment).
 
@@ -215,7 +224,7 @@ A cockpit needs an `image`, a `model`, or both. Guide: [Cockpits](cockpits.md).
 | `systems` | `{cloak, ecm, shields_first, beams_first}` | none | When the pilot uses its ship's systems: each a condition, checked with the transitions. `cloak` / `ecm` on while it holds, off otherwise (if fitted); `shields_first` moves power to shields one step at a time while it holds; else `beams_first` moves it to beams. |
 | `prefer` | mapping selector: weight | none | Target preferences: a hostile matching a selector counts as if `weight` times nearer when the AI picks a new target (several matches multiply). Selectors: `player`, a ship kind (`fighter`, `freighter`, `station`, …), `class:<id>`, `faction:<id>`; weights above 0. |
 | `transitions` | list of `{from, to, when}` | none | Tried in order; the first whose `from` matches and whose condition holds wins. `from` is a state name or `"*"` (any, the default); `when` is a [condition](behaviours.md#the-condition-language). |
-| `skill` | `{aim, reaction}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. |
+| `skill` | `{aim, reaction, accuracy, lead_range}` | aim 0.5, reaction 0.7 s | `aim`: fraction, 0 wild … 1 perfect; `reaction`: time between looks at the target. `accuracy` (fraction, app 0.22.0): use the original's aim model instead of `aim` ([below](#the-accuracy-aim-model)). `lead_range` (distance, app 0.22.0, with `accuracy`): beyond it the pilot aims straight at the target, without lead; 0 = always leads. |
 | `vars` | ids | none | **Object variables** (app 0.18.0), at most 8: each ship flying the behaviour keeps a number per name, 0 at the start. Read with `var(name)` in transitions and scripts; set by a script's `set_var(name, value)` ([Scripts](scripts.md#object-context-behaviour-scripts)). |
 
 A state:
@@ -233,8 +242,58 @@ A state:
 | `duration` | time | 3 s | Evade: how long. |
 | `speed` | fraction | 100 % | Fraction of top speed. |
 | `missiles` | time | 10 s | Seconds between missile launches (0 = none). |
+| `missile_range` | distance | 2.5 × `range`, at least 2 km | Attack: launch missiles only this close to the target (app 0.22.0). |
 | `jump` | bool | `false` | Retreat: start the hyperdrive. |
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
+
+#### The accuracy aim model
+
+With `skill.accuracy` set (app 0.22.0) the pilot aims as the original's fighters do (verified),
+instead of with an angle error from `aim`:
+
+- At each look at the target (every `reaction`), the lead time — distance ÷ bolt speed — is
+  scaled by `accuracy` or by `2 − accuracy`, half the time each. A 50 % pilot leads half or one
+  and a half times the right amount, never in between; a 100 % pilot leads exactly.
+- Below 50 %, a pilot who fails a roll against `accuracy` also aims 15 – 25 m to one side of the
+  target, along the target's own sideways axis (none within 200 m).
+- Beyond `lead_range` the pilot aims straight at the target.
+- Each tick the pilot fails a roll against `accuracy`, it turns at 6 % of its usual rate (a
+  *sluggish* frame), so a 50 % pilot tracks half as well.
+
+The lead uses the target's own velocity when [`flight.bolt_inherit`](#flight) is `false`, and its
+velocity relative to the shooter otherwise.
+
+`interceptor` sets this model once, in a behaviour `original_attack`, and every fighter behaviour
+(Wraith, Spectre, Phantasm, Shade, drone, human and X-COM pilots) takes it with
+`inherit: original_attack`, then changes only what differs:
+
+```yaml
+# packs/interceptor/rules/behaviours.yaml (the original's attack routine, verified)
+behaviours:
+  original_attack:
+    start: engage
+    states:
+      engage:
+        do: attack
+        range: {per_level: [2km, 2.125km, 2.25km, 2.375km, 2.5km]}
+        fire_cone: {per_level: [1.5, 1.75, 2, 2.25, 2.5]}
+        burst: 1s
+        pause: 0s
+        missiles: 5s
+        missile_range: {per_level: [1km, 1.0625km, 1.125km, 1.1875km, 1.25km]}
+    skill: {accuracy: 50%, lead_range: 1750m, reaction: 0.1s}
+
+  drone:
+    inherit: original_attack
+    states:
+      # one trigger pull every 1.5 s + 50 ms per level below superhuman; no missiles
+      engage: {burst: 0.02s, pause: {per_level: [1.7s, 1.65s, 1.6s, 1.55s, 1.5s]}, missiles: 0}
+```
+
+The Wraith (and the Spectre, which inherits it) and the drone wait between trigger pulls; the
+other classes fire whenever their guns are ready. Accuracy is 50 % because pilots carry no records
+into battle yet and the original's aliens have none ([Deviations](../implementation/deviations/index.md)).
+When a class breaks off, jinks or flees is still the pack's own (derived).
 
 ### `modelsets`
 
@@ -279,11 +338,14 @@ Texture names match a model's textures by file name without folder or extension,
 | `arena_radius` | distance | 60 km | Ships are halted at this distance from the centre (0 = none). |
 | `boost` | number | 150 | Afterburner speed bonus, m/s. Not used under `drive`, where the afterburner adds `drive.afterburner` of the full thrust. |
 | `cost` | number | 50 | Afterburner energy per second. `interceptor`: 100 (verified; the original file's `Afterburners` keys are only sent to multiplayer peers). |
-| `lock_angle` | angle | 10° | Missile lock cone half-angle. |
+| `lock_angle` | angle | 10° | Missile lock cone half-angle, for a ship whose sensor sets no [`lock_angle`](#systems). `interceptor`: 2.5°. |
+| `lock_decay` | bool | `false` | Off target, a part-built missile lock runs down as fast as it built up instead of being lost at once (app 0.22.0). `interceptor`: `true` (verified). |
+| `lock_hold` | number | 1 | Once locked, the lock cone is this many times wider (app 0.22.0; at least 1). `interceptor`: 2 (verified). |
 | `radar_range` | distance | 6000 m | Mobile contacts beyond it are hidden from the radar. |
 | `hyperspace_time` | time | 10 s | Hyperdrive countdown (doubled while the hyperdrive is damaged). |
 | `bolt_frame` | `world` / `ship` | `world` | How a beam shot moves once fired. `world` is physics: it leaves with the ship's velocity plus the muzzle's turn velocity plus its muzzle speed, then flies straight. `ship` (arcade): for `bolt_carry` it moves in the ship's frame, turning with the nose, then flies straight ([Simulation](../implementation/architecture/sim.md#combat-simcombat)). |
 | `bolt_carry` | time | 0.3 s | With `bolt_frame: ship`, how long a shot stays in the ship's frame. |
+| `bolt_inherit` | bool | `true` | `true`: a shot leaves with the firing ship's velocity (and the muzzle's turn velocity) plus its muzzle speed. `false`: with its muzzle speed alone, along the barrel (app 0.22.0). The AI's lead and the HUD's lead indicator follow it. `interceptor`: `false`, as the original (verified). |
 | `lighting` | map | see below | How ships are lit: `ambient` (light everywhere, 0.30), `sun` (extra light on faces towards the sun, 0.85), `rim` (extra light on edges seen side-on, outlining hulls against space, 0), `distant_dot` (pixels: a ship on the player's radar smaller than this on screen is drawn as a dot in its radar colour, 4; 0 = off). Keys left out keep their defaults ([Rendering](../implementation/architecture/rendering.md#lighting-rim-and-brightness-app-031)). |
 | `collision` | map | see below | How collisions feel: `restitution` (bounciness, 0 = the ships stop together … 1 = a perfect bounce; 0.5), `spin` (how strongly the angle of impact spins a ship; 1), `tumble` (time: the longest a hard hit leaves the pilot with reduced control; 2.5 s). Ships pressed together make one impact (sound and damage), not one per tick ([R-FLT-009](../specification/requirements/flight.md#r-flt-009-collisions)). |
 | `formation` | id | `vee` | The formation wingmen fly in when their mission role names none ([`formations`](#formations), app 0.6.6). |
