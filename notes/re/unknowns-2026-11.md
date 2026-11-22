@@ -556,7 +556,7 @@ sections without copying the byte layout.
 
 Each report is a title (DrawText) plus a **line graph** drawn with 1-px lines (`0x6354af`): a grid of
 horizontal lines every step in RGB(0,50,0) with RGB(0,100,0) ticks, the axes in RGB(0,100,0), x labels
-= month abbreviations `S_MONTH_ABREV_*` (up to 16 months) and y labels in the built-in 6 px font
+= month abbreviations `S_MONTH_ABREV_*` (22 months on the income graph, §14.8) and y labels in the built-in 6 px font
 (`0x5ffa81`) in RGB(0,200,0); "no data" text when empty.
 * **Income** (`0x490d4b`): `INCOMEREPORT_TITLE`, graph of monthly income (`INCOMEREPORT_GRAPHTITLE`).
 * **Finance** (`0x492125`): `FINANCEREPORT_TITLE`, graph with low / high / account lines
@@ -584,8 +584,7 @@ socket, and an overlay 1249 + n in a socket mode n. Names and stats are drawn in
   201/202) are placed relative to their list.
 * Base Stats (ids 401 up / 400 down, `0x501e0d`): up at (list right + 8, list top + 65), down at
   (list right + 8, list bottom − 20) — relative to the stats list rect (member +0x175c).
-* Bases: ids 400 / 401 at **(484, 247)** and **(580, 247)** (sprite rows 1381 / 1379, left/right module
-  scroll, `0x47d3bf`).
+* Bases: no list arrows (§14.2: close / next / previous panel buttons at (484, 247), (580, 247), (387, 247)).
 
 ### 13.4 CSD zoom switching and the level-2 picture
 
@@ -605,6 +604,73 @@ The original **generates the galaxy at random** for each new game (no fixed star
   A black-hole roll is re-drawn from the table (entries 1–7) — black holes are placed separately
   (a flag at `var_268`, derived).
 * Planets per system: 1 + a per-class table (0x662e60, 10 entries per class), clamped to 2–5.
+
+## 14. Track B questions, round 3 (2026-11-22, verified unless marked)
+
+### 14.1 Content width when the buttons overflow 465
+
+In `0x519b16` the running sum is Σ (10 + wᵢ) with wᵢ = max(100, text + 20). When adding button i
+makes it exceed 465, the content width becomes **that sum minus wᵢ** = Σ_{j<i}(10 + w_j) + 10 — the
+width of the buttons that fit plus 10. "Sum − 100" is right only when the overflowing button is 100
+px wide. Rows of 3 or more buttons are indeed not positioned (`0x51a51b` handles counts 1 and 2 only).
+
+### 14.2 Bases buttons 400-402 (`0x47d3bf`…)
+
+Not list arrows: three 42 × 32 two-state buttons on the base panel, all with callback `0x47f1d9`:
+**400 close panel** (`S_BASE_CLOSEPANEL`) at (484, 247), rows 1381 / 1382 (idle / pressed; the
+check-mark look); **401 next** (`S_NEXT`) at (580, 247), rows 1379 / 1380; **402 previous**
+(`S_PREV`) at (387, 247), rows 1377 / 1378. No disabled row is set for them.
+
+### 14.3 Item icons (catalogue 0x65f880 → icon table 0x690990)
+
+Equipment: ArmorType1-3 1413-1415, ShieldType1-3 1442-1444, damage control 1454, EngineType1-3
+1422-1424, VCT 1450, DimJump 1419, STS1-3 1439-1441, Cloak 1416, ECM1-2 1452-1453, Tractor 1449, probes
+19/20 → 1418/1417, 24 → 1429, 25 → 1438 (21-23 and accumulator shields: none). Beams: Laser 1430,
+Heavy 1428, Gatling 1427, Tracer 1447, TrackingTracer 1448, Phase 1435, Plasma 1436, Psi 1437,
+Tachyon 1446. Missiles and their launchers: XWinder 1451, Fusion 1426, Permeator 1434,
+Doppelganger 1420, Nova 1431, Elerium 1421, Enveloping 1425, Sidestep 1445, PassiveCloaking 1433,
+Parallax 1432. A socket's kind comes from a per-hull layout table (0x690a98, letters A-T: A armour,
+E engine, H shield, T targeting system, B/M/N/S weapon mounts).
+
+### 14.4 Level-2 portraits (`0x440a61`)
+
+Star portrait sets (20 frames each): **454** Yellow; **474** Orange; **494** Red Giant and Red Dwarf;
+**514** Blue Giant and Blue; **534** White Dwarf and White. A black hole cannot be opened (assert; a
+click only re-centres). Bases: **566-585** (20 frames, 80 × 71) for X-COM and others, **586-605**
+(20 frames, 80 × 80) for alien (side 9) and pirate (side 10) bases.
+
+### 14.5 The CSD view knob (`0x4cd8a4`, id 101)
+
+At **(13, 25)**, top-left anchored, image 96 × 91 (rows 978-990: 13 frames, the knob turning); hit
+rect = image + 10 px on each side from (3, 15). It has **three click positions** (not dragged):
+(9, 99) → level 0, (29, 45) → level 1, (90, 22) → level 2; a click within ±14 px of one selects it
+(sound 4, RotarySwitch). Position lamps: rows 992/994/996 off, 993/995/997 on; row 991 marks the
+level-2 position as unavailable. The CSD sets it to 2 when a system is opened (`0x4cdd20`).
+
+### 14.6 Black holes (`0x5da74e`)
+
+After the systems are placed, **rand[4, 6) = 4 or 5** existing systems are turned into black holes
+(class 8, planets cleared), each chosen at random among non-black-hole systems at least **7,500 map
+units (1.25 ly)** from every black hole already placed.
+
+### 14.7 Activity reports
+
+The history list (`gHistory`, 0x38-byte entries keyed by month) holds types 0 (outpost income),
+2 expenses, 3 maintenance, 4 sell income, 7 new outpost and 8 outpost lost (`0x413cb6`, `0x413eab`,
+`0x413db4`). The alien / X-COM activity graphs (`0x495187`) read arrays inside the report object
+whose source was **not traced**; what counts as an "incursion" or "mission" is still unknown.
+
+### 14.8 Report graph axes (income report `0x490d4b`, verified)
+
+* Plot area: panel left + 60 … panel right − 15, panel top + 30 … panel bottom − 40.
+* Y: fixed range **0 … 18,000 in 18 steps of 1,000**; step = round(plot height / 18) px; the top is
+  moved to bottom − 18 × step. A grid line (RGB(0,50,0)) and tick (RGB(0,100,0)) per step; labels
+  k × 1,000 in the 6 px font, right-aligned, RGB(0,200,0).
+* X: **22 months**, column width = round(plot width / 22); the window ends at the current month and
+  starts at Jan 2067 when the game is younger. Month labels: the 12 abbreviations `S_MONTH_ABREV_*`,
+  upper-cased, centred under each column at bottom + 10; vertical grid lines per month; the year
+  (month / 12 + 2066) is printed at bottom + 25 between bracket lines drawn at bottom + 20 across each
+  year's span.
 
 ## 10. What remains unknown
 
