@@ -6539,6 +6539,10 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>#121 (app 0.22.20)</strong> two more, so <strong>566</strong>: <code>balance::tests::protection_follows_the_difficulty_and_station_pools</code>
+and <code>soak::tests::default_scenarios_engage_the_players_friends</code>. <strong>Changed:</strong>
+<code>balance::tests::energy_limits_sustained_fire_and_kill_times_follow</code> checks the start beam setting
+and the pool (10 s of full fire, then the sustained rate).</p>
 <p><strong>#120 (app 0.22.19)</strong> seven more, so <strong>563</strong>: <code>sim::combat::tests::bolts_shoot_down_missiles_and_cloaks_cost_energy_shields_and_missiles</code>
 (a 30-damage bolt destroys a 20-point missile 80 – 97 times in 100; a cloaked hit skips the shields;
 no missile from cloak; −50 energy a second, no shield recharge, the cloak drops at 0),

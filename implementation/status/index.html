@@ -7570,6 +7570,200 @@ flight (<code>flight: original</code>, <code>pass_fuse</code>, <code>blast</code
 and the launchers' rounds; <code>flight.start_throttle</code>; Parallax <code>images</code>, Passive Cloaking <code>max_life</code>,
 Doppelganger <code>retarget_every</code>; the pirate and corporate hulls from their own sections. D-18 (the
 Patton's protection from its fit) is open: DEV-095.</p>
+<p><strong>#120 follow-up</strong> (app 0.22.20; <code>notes/re/flight</code> §3, §12): the Patton is an X-COM ship with its fit
+(ShieldType3, ArmorType3, EngineType3) and <code>protection_scale: {shields: 3, armor: 4}</code> — 1,500 / 1,700
+from Veteran up; <code>interceptor</code>'s <code>original_attack</code> has no <code>break_call</code> (message 7 is rejected).</p>
+<p><strong>#121</strong> (app 0.22.20; audit D-31, D-42, D-43): <code>--balance</code> fills the banks as the battle does
+(difficulty, <code>protection_scale</code>, station pools), spends the energy pool at the start beam setting
+before the sustained rate, and applies <code>player_hits</code>; a soak reports the first hit and hits on
+friends. Re-measured with <code>--soak &lt;duel&gt; --difficulty &lt;level&gt; --seconds 180</code> (<code>interceptor</code>, app 0.22.20):
+each cell is <em>destroyed at</em> (time under fire); enemies destroyed — or <em>lives</em> with the hull left.</p>
+<p><code>passive</code> pilot</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>beginner</th>
+<th>experienced</th>
+<th>veteran</th>
+<th>genius</th>
+<th>superhuman</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>duel-wraith</code></td>
+<td>43.5 s (35.8); 0/2</td>
+<td>49.2 s (42.0); 0/2</td>
+<td>21.2 s (14.4); 0/2</td>
+<td>10.6 s (4.3); 0/2</td>
+<td>10.1 s (3.8); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-spectre</code></td>
+<td>52.3 s (43.9); 0/2</td>
+<td>36.8 s (29.5); 0/2</td>
+<td>18.0 s (11.2); 0/2</td>
+<td>17.1 s (10.3); 0/2</td>
+<td>10.1 s (3.8); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-phantasm</code></td>
+<td>lives, 29 %; 4/4</td>
+<td>10.5 s (3.5); 0/4</td>
+<td>9.9 s (3.2); 0/4</td>
+<td>9.5 s (3.0); 0/4</td>
+<td>9.3 s (3.1); 0/4</td>
+</tr>
+<tr>
+<td><code>duel-shade</code></td>
+<td>83.8 s (76.8); 0/2</td>
+<td>10.5 s (3.7); 0/2</td>
+<td>9.4 s (2.9); 0/2</td>
+<td>9.2 s (2.9); 0/2</td>
+<td>8.9 s (2.8); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-drone</code></td>
+<td>lives, 100 %; 0/3</td>
+<td>lives, 100 %; 0/3</td>
+<td>lives, 100 %; 0/3</td>
+<td>lives, 100 %; 0/3</td>
+<td>lives, 100 %; 0/3</td>
+</tr>
+<tr>
+<td><code>duel-harbinger</code></td>
+<td>lives, 100 %; 0/4</td>
+<td>lives, 100 %; 0/4</td>
+<td>lives, 100 %; 0/4</td>
+<td>lives, 100 %; 0/4</td>
+<td>lives, 100 %; 0/4</td>
+</tr>
+<tr>
+<td><code>duel-pirate-lightning</code></td>
+<td>65.4 s (58.4); 0/2</td>
+<td>10.5 s (3.7); 0/2</td>
+<td>9.4 s (2.9); 0/2</td>
+<td>9.6 s (3.3); 0/2</td>
+<td>9.7 s (3.6); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-pirate-firestar</code></td>
+<td>9.6 s (2.6); 0/1</td>
+<td>8.6 s (1.8); 0/1</td>
+<td>8.1 s (1.6); 0/1</td>
+<td>7.9 s (1.6); 0/1</td>
+<td>7.7 s (1.7); 0/1</td>
+</tr>
+<tr>
+<td><code>duel-pirate-avenger</code></td>
+<td>10.9 s (3.4); 0/1</td>
+<td>10.1 s (2.6); 0/1</td>
+<td>9.6 s (2.1); 0/1</td>
+<td>9.6 s (2.1); 0/1</td>
+<td>9.6 s (2.1); 0/1</td>
+</tr>
+</tbody>
+</table>
+<p><code>ai</code> pilot</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>beginner</th>
+<th>experienced</th>
+<th>veteran</th>
+<th>genius</th>
+<th>superhuman</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>duel-wraith</code></td>
+<td>lives, 100 %; 2/2</td>
+<td>lives, 100 %; 2/2</td>
+<td>lives, 100 %; 2/2</td>
+<td>24.9 s (19.3); 1/2</td>
+<td>9.6 s (4.3); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-spectre</code></td>
+<td>25.2 s (18.3); 0/2</td>
+<td>35.6 s (29.1); 2/2</td>
+<td>11.2 s (5.1); 0/2</td>
+<td>17.9 s (12.2); 0/2</td>
+<td>12.8 s (7.1); 1/2</td>
+</tr>
+<tr>
+<td><code>duel-phantasm</code></td>
+<td>17.0 s (10.6); 0/4</td>
+<td>9.6 s (3.5); 0/4</td>
+<td>9.0 s (3.1); 0/4</td>
+<td>8.7 s (3.1); 0/4</td>
+<td>8.4 s (3.0); 0/4</td>
+</tr>
+<tr>
+<td><code>duel-shade</code></td>
+<td>18.6 s (12.5); 0/2</td>
+<td>9.7 s (3.7); 0/2</td>
+<td>18.8 s (13.0); 0/2</td>
+<td>9.1 s (3.6); 0/2</td>
+<td>9.1 s (3.8); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-drone</code></td>
+<td>lives, 100 %; 3/3</td>
+<td>lives, 100 %; 3/3</td>
+<td>lives, 100 %; 3/3</td>
+<td>lives, 100 %; 3/3</td>
+<td>lives, 100 %; 3/3</td>
+</tr>
+<tr>
+<td><code>duel-harbinger</code></td>
+<td>lives, 100 %; 4/4</td>
+<td>lives, 100 %; 0/4</td>
+<td>lives, 100 %; 4/4</td>
+<td>lives, 100 %; 0/4</td>
+<td>lives, 100 %; 4/4</td>
+</tr>
+<tr>
+<td><code>duel-pirate-lightning</code></td>
+<td>17.5 s (11.4); 1/2</td>
+<td>9.7 s (3.7); 1/2</td>
+<td>9.0 s (3.2); 0/2</td>
+<td>9.2 s (3.7); 0/2</td>
+<td>8.9 s (3.6); 0/2</td>
+</tr>
+<tr>
+<td><code>duel-pirate-firestar</code></td>
+<td>8.4 s (2.2); 0/1</td>
+<td>7.7 s (1.8); 0/1</td>
+<td>7.4 s (1.7); 0/1</td>
+<td>7.1 s (1.7); 0/1</td>
+<td>6.6 s (1.4); 0/1</td>
+</tr>
+<tr>
+<td><code>duel-pirate-avenger</code></td>
+<td>9.5 s (2.9); 0/1</td>
+<td>9.1 s (2.5); 0/1</td>
+<td>8.6 s (2.0); 0/1</td>
+<td>8.5 s (2.0); 0/1</td>
+<td>8.5 s (2.0); 0/1</td>
+</tr>
+</tbody>
+</table>
+<p><strong>D-42 closed.</strong> The time under fire matches perfect fire from <code>--balance</code>: a pirate Firestar
+(367 dps at full fire) takes a veteran Lightning's 650 points in 1.8 s by the report and 1.6 – 1.7 s
+in the soaks; a pirate Avenger 3.0 s and 2.0 – 2.1 s. The original's beams have no hit roll and its
+AI leads a target that does not move perfectly, so a pilot who does not evade dies this fast in the
+original too; most of the 6 – 7 s before the first hit is the approach. Alien fighters take longer
+by their refire interval (500 + 60 (4 − d) ms), and on Beginner and Experienced the protection
+factors stretch every fight. The <code>ai</code> pilot in the player's seat flies the enemy behaviour and dies
+about as fast; the drone and Harbinger duels do not hurt the player (the Harbinger runs no attack
+routine).</p>
+<p><strong>D-43 closed.</strong> <code>rocket-vs-saucer</code> and <code>black-comet-ambush</code> do engage: the saucers go for the guard
+station (257 hits in 60 s at cadet) and the hot-rods for the freighter (11), not the player; the
+soak now shows it (<code>soak::tests::default_scenarios_engage_the_players_friends</code>).</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and
