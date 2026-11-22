@@ -91,6 +91,7 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `facility_progress(s)` | number | The construction progress (0..1) of the least finished facility in system `s`; 1 when none is building (also when there is none). |
 | `construction_attacks(s)` | number | [Construction strikes](#construction-strikes) suffered by the facilities built in system `s`. |
 | `base_distance(s)` | number | Map units from system `s` to the player's nearest base, in a straight line; 1 000 000 000 with no base (app 0.19.0). |
+| `centre_distance(s)` | number | App NEXT: map units from system `s` to the map's centre — a generated map's middle, else the middle of the systems' bounding box. `interceptor`'s bases must be within 30,000 (5 ly) of it (**verified**). |
 
 Systems are named by their map id (`ajax`, `nebula_haven`) and are checked names like everything
 else, as are resource ids, feature tags and research-site ids (app 0.16.3).
@@ -316,6 +317,10 @@ never refused. A whole base can be dismantled too ([below](#dismantling-a-whole-
 | `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. The default Guard base houses 6 pilots (4 before app 0.16.15, which the opening crew filled). |
 | `storage` | number | 0 | The hub's store capacity in item `size`s (app 0.16.15). 0: no store limit at bases of this type; above 0, its `storage` modules add to it. |
 | `placement` | condition | none (anywhere) | Where a base of this type may be built: a condition over the candidate `system` (app 0.19.0; [below](#where-a-base-or-facility-may-be-built)). `base_distance(system) <= 3500` is "within 3500 map units of one of your bases". |
+| `price_share`, `hub_cost` | number | 0, 0 | App NEXT (RQ-S-08): when `price_share` is above 0, a new base costs `price_share` × (`hub_cost` + its `template`'s modules as they would be chosen now), in place of `cost`. `interceptor`: 0.75 and 1,500,000 (**verified**, README §3.1). |
+| `hull` | number | 0 | App NEXT: the hub's hull points (0: none). An unopposed strike takes `strike_damage`; `repair` mends them. `interceptor`: 6,000, the station chart's HP1 (**verified**); `default`: 4,000. |
+| `repair` | `{per_minute, min_step, boost}` | none | App NEXT (RQ-S-16): `per_minute` hull points a game minute, at least `min_step` a step (an hour at most), times each `boost: {<module>: factor}` while one works. `interceptor`: 2, 5, Advanced Damage Control × 2 (**verified**, README §3.2). |
+| `strike_damage` | number | 0 | App NEXT: hull points an unopposed strike takes (`interceptor`: 1,500, *derived*). |
 
 !!! warning "Breaking change in app 0.19.0: `max_distance` is gone"
     `base_types.<id>.max_distance` was removed in app 0.19.0; `placement:` replaces it. A mod
@@ -372,6 +377,18 @@ flies straight for its target; on a lane map it enters at a system and follows t
 amount (an expression) added or taken every period (`every`, default 30 days). Each payment is a line in the message log.
 Module `maintenance`, hull `upkeep` and pilot `salary` are charged monthly on their own; use
 `expenses` for anything else.
+
+### `manufacture`
+
+`manufacture: {per_outpost, per_opp}` (app NEXT, RQ-S-09) — production by the
+[outposts](#outposts)' technicians instead of the bases' `production_rate`: the capacity is
+`per_outpost` + `per_opp` × its OPPs technicians for each outpost (default 10 and 10), and a job
+gains one work unit per technician-hour, so an item's `prod_time` is in technician-hours. The
+capacity is one pool taken in queue order across the bases (the first base's first job first);
+what a base leaves over goes on to the next. `interceptor` has it (README §2.5, **verified**: two
+outposts with two OPPs are 60 technicians, and a 500-hour item takes 8.3 hours); that the first
+job takes the whole capacity is *derived* (the exe gives each job a percentage share). `default`
+keeps its workshops.
 
 ### `outposts`
 

@@ -634,6 +634,12 @@ report lists them; `default`: one colony beside the stipend. DEV-098.
 follows the destroyed ships' fits (`salvage_fits`; battles now report `destroyed(<class>)`); the
 saucer, probe and drone artefact items are gone. DEV-097 rewritten.
 
+**#132** (app NEXT; RQ-S-08/09/16; README §2.5, §3.1 – §3.2): a new base's price from its template
+(`price_share`, `hub_cost`), `centre_distance(s)` for placement, the hub's `hull` and its `repair`
+over time (`strike_damage` from unopposed strikes), production by outpost technicians
+(`manufacture:`). `interceptor`: 0.75 × (1.5M + the template), 29 days, 20 bases, within 5,850 of a
+base and 30,000 of the centre, 6,000 hull, technicians; `default`: a 4,000-point hull. DEV-100.
+
 **#133** (app 0.22.28; RQ-S-10, RQ-S-11, RQ-C-10's campaign link, RQ-C-23, D-08; strategy README §5,
 flight README §4.2, with the generator, salary and bracket tables read from the exe): `pilots.generate`,
 `pilots.health`, the periodic `pilots.training`, the salary table and `stat_max`; `damage.pilot_injury`
