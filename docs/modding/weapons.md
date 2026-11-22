@@ -46,8 +46,9 @@ sound — or a 25 m, 0.8 s fireball.
 | `damage:` | How the warhead's damage lands |
 |---|---|
 | `normal` (default) | On the shield facing that was hit, then armour, then hull. |
-| `bypass_shields` | Ignores shields: straight to armour and hull (the original's Permeator). |
-| `enveloping` | Spread over both shield facings, as if the whole surface were hit. |
+| `bypass_shields` | Ignores shields: straight to armour and hull. |
+| `enveloping` | Half the damage runs the fore chain (fore shield, fore armour, hull) and half the aft chain, whatever side was hit (the original's Enveloping torpedo, **verified**; until app NEXT both halves met the struck side's armour, which is the same with one armour pool). |
+| `permeator` | Half runs the struck side's normal chain, half skips the shield and goes armour → hull (app NEXT; the original's Permeator, **verified**). |
 
 ## Point defence
 
@@ -83,5 +84,5 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 
 | Campaign | Missiles |
 |---|---|
-| `interceptor` | X-Winder (homing), Sidestep, Permeator (`bypass_shields`), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (`cloaked_wait`), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each. |
+| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (`cloaked_wait`), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each. |
 | `default` | Seeker rockets, atomic torpedoes, cluster rockets (Thunderbolt), decoy rockets (Meteor), Dominion space-mine warheads (`dominion-raid`). |

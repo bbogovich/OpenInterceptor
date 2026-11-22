@@ -350,6 +350,18 @@ hull gets nothing — and emits `SimEvent::HardPointDestroyed { position, explos
 (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and `hard_hp`. A `mine` state
 with `range: 0` goes off when its hull touches a hostile's.
 
+**Damage modes** (app NEXT, #117). `combat::apply_hit` dispatches on `DamageMode`: `Normal` and
+`BypassShields` run one `hit_chain` (with or without the shield step); `Enveloping` runs two half
+chains with the side forced fore and aft (`front: Some(true/false)`) at the same impact point;
+`Permeator` a half with the shield and a half without; `Systems` calls `tachyon_hit` (shield 1:1,
+the rest to `systems::damage_by_table` with `damage.tachyon_table`, `Ship::repair_slow` raised to the
+beam's `repair_slowdown`; static objects ignore it). `hit_chain`'s `direct` flag marks the common
+path: only it accumulates on `accumulator_shields` banks and strikes `hits: direct` hard points. Bolts
+carry the beam's `mode` and `repair_slowdown`. Repair divides by `repair_slow` and resets it to 1 when
+nothing is left to repair. `fire_beams` with `flight.link_modes: original` builds the linked group
+from the selected mount's beam type and keeps only the mounts whose own cooldown has run out and
+whose shot the remaining energy pays (`charge > cost`), one by one.
+
 **Turret fire control** (app 0.22.13, #115). A `turret` state whose `Params::turret.aim` is not
 `Engine` runs `ai::original_turret`: the lead (`dist ÷ beam speed`, or `lead_speed` when
 gimballed), for fixed turrets an accuracy rolled once into `AiState::turret_accuracy` (band, or the

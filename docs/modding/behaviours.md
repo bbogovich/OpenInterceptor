@@ -272,13 +272,23 @@ behaviours:
 - **`line_of_sight`** — fires only when the line ahead (5 km) meets nothing, the target or an
   object of another side.
 - **`free_fire`** — shots draw no energy and ignore the mounts' own cooldown.
+- **Defaults** — with `aim: fixed` or `gimballed`, an unset `interval` is 0.5 s and an unset
+  `range` 2.5 km (the original's turret constructor). With `accuracy: pilot`, a turret with no
+  pilot record rolls its accuracy in `accuracy_unpiloted` (default `[25, 25]`); `accuracy_minus:
+  [5, 15]` takes a band rolled once off it (the original's `S − rand[5, 15)`).
 - **Missile turrets** — a turret class with `missiles` and no `beams` launches them, homing, once
   a target has stayed in its arc and range for `lock_time`, one every interval, while rounds
   last.
 
 `interceptor`: the X-COM base's beam turrets are gimballed (one shot per the laser's rate of
 fire, 5 km); the alien base's plasma pods fixed (85°, 5 km, accuracy rolled in 40 + 5 × level …
-75 + 5 × level %, 1 s − 25 ms × level + 0 – 50 ms); the pirate base's and arms dealer's turrets
-fixed with their table's accuracy, interval and line-of-sight flag; and the X-COM and rogue
-freighters carry two fixed laser turrets each (2 km, the pilot's Accuracy fore and ¾ of it aft,
-750 ms − 25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own.
+75 + 5 × level %, 1 s − 25 ms × level + 0 – 50 ms); both bases check their line of sight (app
+NEXT). The pirate base's and arms dealer's turrets are fixed with their table's accuracy,
+interval and line-of-sight flag; the X-COM and rogue freighters carry two fixed laser turrets
+each (2 km, the pilot's Accuracy fore and ¾ of it aft — 25 and 18 with no pilot — 750 ms −
+25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own. Since app NEXT the
+alien ships carry the original's fixed turrets too (flight notes §8.8, **verified**): the
+Phantasm a phase turret below, a plasma turret below and one above (besides its guns); the
+Shade a phase turret aft; the Harbinger two tachyon turrets ahead and a 275 m one behind (no
+guns of its own); the Spirit freighter a plasma turret below and one above (no guns of its own).
+The Phantasm's Psi Blaster turret is not built.

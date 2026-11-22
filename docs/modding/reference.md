@@ -90,6 +90,8 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `range` | distance | 3000 m | Reach (`2.4km`, `2400m`; a plain number is metres). An original `Range` inherited from `GameSettings.ini` is read as kilometres (DEV-008; confirmed from the original program in app 0.21.0). |
 | `shield_factor` | number | 1 | Shield points lost per point of damage the shields stop (app 0.21.0). A bank that holds `damage × shield_factor` stops the hit; one that holds less stops `bank / shield_factor` of it and falls ([Rulesets › How a hit lands](rulesets.md#how-a-hit-lands)). `interceptor`: the Phase Cannon 1.5 (verified). |
 | `color` | RGB | 1, 0.2, 0.2 | Bolt colour. |
+| `effect` | `normal`, `systems` | `normal` | `systems` (app NEXT): the struck shield bank absorbs the hit 1:1 (no shield factor); what is left skips armour and hull and strikes the systems through [`damage.tachyon_table`](#damage) (or one random system). Stations ignore it. `interceptor`: the Tachyon Pulser (**verified**). |
+| `repair_slowdown` | number | 1 | With `effect: systems`: the ship hit repairs this many times more slowly until nothing is left to repair (app NEXT). `interceptor`: 10 (the original repairs once every 10 s instead of every second, **verified**). |
 | `hit_points` | number | 0 | A mount's hit points (app 0.22.6), struck by [`damage.system_table`](#damage); damaged, it fires at half rate or not at all (`damage.mounts`). 0: it cannot be damaged. `interceptor`: the beam section's `HitPoints` (inherited; Laser Cannon 20, **verified**). |
 | `sound` | asset | none | Firing sound. |
 
@@ -112,7 +114,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `sound` | asset | none | Launch sound (or `cue:<Name>`). |
 | `explosion` | id | a 25 m, 0.8 s fireball | Effect of its detonation ([effects](#effects)); its `size` is in metres, and its `sound`, if any, plays instead of the `explosion` event sound. |
 | `guidance` | `homing`, `dumbfire`, `sidestep`, `parallax`, `cloaked_wait`, `cluster`, `doppelganger` | `homing` | How it steers ([Missiles and mines](weapons.md)). |
-| `damage` | `normal`, `bypass_shields`, `enveloping` | `normal` | How the warhead's damage lands. |
+| `damage` | `normal`, `bypass_shields`, `enveloping`, `permeator` | `normal` | How the warhead's damage lands ([Missiles and mines](weapons.md)); `permeator` app NEXT, `enveloping` splits fore/aft chains since app NEXT. The halves of `enveloping` and `permeator` take no shield factor and are not *direct* hits. |
 | `decoys` | number | 2 | `parallax`: decoys released at launch. |
 | `cluster` | `{missile, count, at}` | count 6, at 600 m | `cluster`: the submunition missile id, how many, and how close to the target it splits. |
 | `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
@@ -163,6 +165,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `towable` | bool | `false` | Can be towed away even when not disabled — a cargo container; a mounted one is torn off its hub by the tractor (app 0.9.2, [Stations and modules](stations.md#cargo-containers-and-moving-hubs)). |
 | `cargo` | bool | `false` | A cargo container, counted by the mission query `cargo(role)` and the mission key `cargo:` (app 0.9.2). |
 | `behaviour` | id | none (armed AI ships fly `builtin_attack`) | AI behaviour ([Behaviours](behaviours.md)). |
+| `accumulator_shields` | bool | `false` | App NEXT: while the struck shield bank holds points, an ordinary (direct) hit does no damage and adds a quarter of itself to that bank, up to its maximum (the original's ShieldType4, **verified**; the cap *derived*). `interceptor`: the Shade and the Harbinger. |
 | `pilot_grade` | number | none | The grade of the pilot AI ships of this class carry (app 0.22.8; [`flight.pilot_grades`](#pilot-records-and-grades)); a scenario's `pilot: {grade}` overrides it. `interceptor`: X-COM 0, pirates 1, Wraith and Spectre 1, Phantasm 3, Shade 4 (**verified**; the alien grades that rise with the months are not modelled), corporate 0 (*derived*). |
 | `turret_arc` | angle | 0 | Beams can aim this far off the nose (turrets). |
 | `debris` | list of assets | none | Shorthand (with `model`): wreckage models. With a model set, its debris set is used instead. |
@@ -265,8 +268,10 @@ A state:
 | `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
 | `accuracy` | `[from, to]`, number or `pilot` | 50 | Fixed turret: accuracy in %, a band rolled once per turret, or the pilot record's (25 with none). |
 | `accuracy_factor` | fraction | 100 % | With `accuracy: pilot`: times this. |
+| `accuracy_unpiloted` | `[from, to]` | 25, 25 | With `accuracy: pilot` and no pilot record: the band the turret rolls once (app NEXT). |
+| `accuracy_minus` | `[from, to]` | 0, 0 | Fixed turret: a band rolled once and taken off its accuracy (app NEXT; the original's `S − rand[5, 15)`). |
 | `miss`, `miss_beyond` | distance | 20 m, 200 m | Fixed turret: the largest sideways miss on a failed roll, and the range inside which it never misses. |
-| `interval` | time or `rate_of_fire` | 0 | Turret: seconds between shots (0 = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. |
+| `interval` | time or `rate_of_fire` | 0 (0.5 s with `aim`) | Turret: seconds between shots (0 without `aim` = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. With `aim: fixed`/`gimballed` an unset `range` is 2.5 km (app NEXT). |
 | `interval_jitter` | time | 0 | Turret: up to this much more per shot, at random. |
 | `line_of_sight` | bool | `false` | Turret: fire only when the 5 km line ahead meets nothing, the target or another side. |
 | `free_fire` | bool | `false` | Turret: shots draw no energy and ignore the mounts' cooldown. |
@@ -429,6 +434,7 @@ Texture names match a model's textures by file name without folder or extension,
 | `radar_colors` | map | see below | Radar blip and target-marker colours by relation to the player: `friendly` (own faction, default green), `hostile` (either side hostile, red), `neutral` (yellow), `objective` (objects with `protect: true`, cyan). Each is `[r, g, b]`, 0..1. |
 | `drive` | map | none | The original's motion model (app 0.21.0): thrust, mass and drag for the player, a drive factor for AI ships. Replaces `model` for every ship that is not on simple physics ([below](#flightdrive)). |
 | `turning` | map | none | The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates ([below](#flightturning)). |
+| `link_modes` | `engine`, `original` | `engine` | App NEXT: `original` — linked fires every mount of the selected mount's beam type, and every mode lets each mount fire on its own timer as far as the energy pays shot by shot (the original, **verified**); `engine` — linked fires the next two mounts and a group waits for all its mounts and its whole energy. `interceptor`: `original`. |
 | `pilot_grades` | `{lookahead, grades, sprint}` | none | AI pilot grades (app 0.22.8): obstacle look-ahead and the long-range sprint by grade ([Pilot records and grades](#pilot-records-and-grades)). Without it AI pilots use the engine's predictive collision avoidance and never sprint. |
 
 #### `flight.drive`
@@ -527,6 +533,7 @@ formations:
 | `beam_recharge` | list of numbers | 0, 0.25, 0.5, 0.75, 1 | Per level A, B, …: fraction of the ship's `energy_recharge`. 1 to 26 levels. |
 | `energy` | number | 500 | The energy pool of every class without its own `energy` (app 0.21.0). `interceptor`: 1000. |
 | `energy_recharge` | number | 40 | The pool's recharge per second at the top beam level, for classes without their own (app 0.21.0). `interceptor`: 22. |
+| `recharge_while_burning` | bool | `false` | App NEXT: the energy pool keeps recharging while the afterburner burns (the original's 1 s tick, **verified**); `false` stops it. `interceptor`: `true`. |
 | `balance` | `shift` / `share` | `shift` | What the shield balance (`S`) changes (app 0.21.0). `shift`: it moves *capacity* — the favoured facing holds more (`balance_shift`), and each facing recharges at the full rate. `share`: both facings hold the same, and the generator's one stream of points (`shield_recharge`) goes to the favoured facing first and the overflow to the other; *equal* gives each half (the original, verified). |
 | `shield_recharge` | list of numbers | 0, 0.25, 0.5, 0.75, 1 | Per level: fraction of the ship's `shield_recharge`. As many levels as `beam_recharge`. |
 | `budget` | number | 6 | Power steps shared by both settings (level index, A = 0) and switched-on systems. |
@@ -561,6 +568,7 @@ power:
 | `repair_rate` | number | 2 | Default crew repair rate, hit points per second. `interceptor`: 2 (**verified**). |
 | `repair_order` | list | none | The original's repair (app 0.22.6): the whole repair rate goes to the **first** item in the list that needs it — system kinds, `hull`, `beams` (the first damaged mount), `launchers`, `others` (any system the list does not name). Something at 0 hit points is never repaired; a disabled ship repairs its hull first. Without it: one system at a time, the worst first, never the hull. `interceptor`: `[engines, hull, shields, manoeuvring, hyperdrive, sensors, beams, launchers, others]` (**verified**). |
 | `system_table` | `{tries, rolls}` | none | The original's system hits (app 0.22.6): the system share of a hit is dealt by up to `tries` weighted `rolls`, each `{chance, hit, carry}` — `hit` a system kind, `beams` (a random mount), `launchers` (a random rack), `special` (a random system other than engines, manoeuvring, sensors, shields, hyperdrive) or `none`; chances left over strike nothing. A roll whose target is missing or at 0 uses up its try. Damage beyond what the target has left goes on to the next try with `carry: true`, otherwise it is lost. Without it: one random system takes it all. `interceptor`: 5 tries; mounts 20 %, launchers 30 %, shields, flight control, sensor, engine 10 % each, hyperdrive 5 %, special 3 % (**verified**). |
+| `tachyon_table` | `{tries, rolls}` | none | App NEXT: the table `effect: systems` beams strike with, the same shape as `system_table`. A `hit: none` roll with `carry: true` only uses up its try (the damage stays). `interceptor`: beam mounts 10 %, empty 10 %, shield generator 10 %, sensor 5 %, engine 50 %, hyperdrive 10 %, special 3 % (**verified**; tries and carries *derived*). |
 | `mounts` | `{half_rate, no_fire}` | 50 %, 25 % | A damaged beam mount or launcher at or below `half_rate` of its hit points fires at half rate, at or below `no_fire` not at all (app 0.22.6; **verified** for `interceptor`). |
 
 `damage.difficulty` holds lists with one factor per level, easiest first; a level beyond a short
