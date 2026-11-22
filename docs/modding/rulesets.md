@@ -225,7 +225,7 @@ systems:
 - A ship whose engines **and** manoeuvring are both out is **disabled**: it drifts, and if its
   class is `capturable` it can be towed away as a prize.
 
-**The original's rules** (app NEXT, issue #116; `interceptor`, flight notes §3 – §5, §11,
+**The original's rules** (app 0.22.6, issue #116; `interceptor`, flight notes §3 – §5, §11,
 **verified** unless marked) are data a campaign opts into:
 
 - **Per-system efficiency** (`efficiency:` on a system). `interceptor`: engines ×0.5 below 50 %,
@@ -300,7 +300,7 @@ Every beam or missile hit goes through the same pipeline (`sim::combat::apply_hi
 4. **Systems**: while the hull is below `system_below` of its maximum, `system_share` of what
    is left strikes one random working system — instead of the hull with `system_divert: true`,
    or as well. With `damage.system_table` it is shared out by the table's weighted rolls,
-   beam mounts and launchers included (app NEXT).
+   beam mounts and launchers included (app 0.22.6).
 5. **Hull.** At zero the ship is destroyed.
 
 A class with `damage_model: station` skips the difficulty factor, armour and systems: what gets

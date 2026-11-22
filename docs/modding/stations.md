@@ -95,12 +95,12 @@ objects:
   in the hub's `modules` list (a generator without one gives the hub's own `shields`);
   generators do not add up. A hub that lists no generator keeps its own `shields` as the maximum
   for the whole battle; a station with a pool and no `modules` that inherits an original
-  hit-point chart takes the chart's `SD` as its `shields` (app NEXT, the original's outposts
+  hit-point chart takes the chart's `SD` as its `shields` (app 0.22.6, the original's outposts
   and ore plants, **verified**). The pool starts full and takes no difficulty factor.
 - **Recharge.** `recharge` points per second (default 2), up to the maximum. When the first
   generator falls the next one sets the maximum, and a pool above it comes down to it.
 - **The last generator.** `on_generator_lost: drop` — the pool empties at once ("STATION
-  SHIELDS DOWN"; the original, **verified** since app NEXT); `keep` — it keeps its points but no
+  SHIELDS DOWN"; the original, **verified** since app 0.22.6); `keep` — it keeps its points but no
   longer recharges (an engine option; app 0.22.4 used it for `interceptor`).
 - **Covered modules.** A module with `shielded_by_hub: true` cannot be shot off through intact
   shields: while its hub's pool holds points, a hit on the module drains the hub's pool, and

@@ -406,7 +406,7 @@ flowchart TD
 straight back. A knocked-out switchable system switches off; a knocked-out hyperdrive aborts a
 countdown.
 
-**Efficiency** (app NEXT, #116). Each `SystemState` carries a copy of its definition's
+**Efficiency** (app 0.22.6, #116). Each `SystemState` carries a copy of its definition's
 `efficiency: Efficiency` (a `Copy` enum with a fixed four-step array, so no allocation per
 ship) and its `min_hp`; `SystemState::efficiency()` applies it — `Standard` is the condition
 table above, `Steps` the first-below rule, `Linear` hit points ÷ maximum, `Ignore` always 1 —
