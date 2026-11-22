@@ -8,7 +8,7 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
-**#130 (app NEXT)** two more: `campaign::tests::a_seen_contact_may_turn_on_the_base_that_saw_it`
+**#130 (app 0.22.24)** two more: `campaign::tests::a_seen_contact_may_turn_on_the_base_that_saw_it`
 (unseen beyond 3,000 map units, seen inside, then heading for the base) and
 `campaign::tests::generated_systems_draw_planets_from_their_class`.
 

@@ -168,7 +168,7 @@ portrait: five 20-frame star pictures (**verified** since app 0.22.22, §14.4): 
 orange, 494 red giant and red dwarf, 514 blue giant and blue, 534 white dwarf and white; black
 holes have none.
 
-`planets` (list of numbers, app NEXT): the planet counts a generated system of the class draws one
+`planets` (list of numbers, app 0.22.24): the planet counts a generated system of the class draws one
 from at random (empty: none; drawn after the positions and classes, so a map is otherwise the
 same). `interceptor` gives each class the original's results (**verified**, `0x5dab1e`): 1 plus the
 class's entry in a 10 × 9 table (row `rand % 10`), held to 2 – 5 — a yellow star `[3, 3, 3, 4, 4, 5,
@@ -283,7 +283,7 @@ never refused. A whole base can be dismantled too ([below](#dismantling-a-whole-
 | `max_bases` | number | 8 | The most bases of this type. |
 | `limits` | mapping group: count | none | The most modules of each group. |
 | `template` | ids | none | Modules a new base comes with. An entry names a module, or (app 0.19.0) a module **group**: then the best module of that group available when the base is ordered — the costliest whose `requires` holds, the later one in the file on a tie — and nothing while none is. A starting base's template is taken at the start, with the start's research known. |
-| `sensor_range` | number | 0 | The hub's own sensor range, map units (modules add to it). `interceptor`: 0 since app NEXT — the original's base sees only through its sensor module: SensorType1 – 3 scan 2,000 / 4,000 / 6,000 map units (⅓, ⅔, 1 ly; **verified**, strategy README §3.2). |
+| `sensor_range` | number | 0 | The hub's own sensor range, map units (modules add to it). `interceptor`: 0 since app 0.22.24 — the original's base sees only through its sensor module: SensorType1 – 3 scan 2,000 / 4,000 / 6,000 map units (⅓, ⅔, 1 ly; **verified**, strategy README §3.2). |
 | `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. The default Guard base houses 6 pilots (4 before app 0.16.15, which the opening crew filled). |
 | `storage` | number | 0 | The hub's store capacity in item `size`s (app 0.16.15). 0: no store limit at bases of this type; above 0, its `storage` modules add to it. |
 | `placement` | condition | none (anywhere) | Where a base of this type may be built: a condition over the candidate `system` (app 0.19.0; [below](#where-a-base-or-facility-may-be-built)). `base_distance(system) <= 3500` is "within 3500 map units of one of your bases". |

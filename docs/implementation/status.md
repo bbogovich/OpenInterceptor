@@ -608,7 +608,7 @@ screen set: its sheet fonts show in its dialogs only.
 
 ## Parity M3 progress: strategy logic
 
-**#130** (app NEXT; RQ-S-07; strategy README §3.2, §6.3; unknowns §13.5): `interceptor`'s sensors scan
+**#130** (app 0.22.24; RQ-S-07; strategy README §3.2, §6.3; unknowns §13.5): `interceptor`'s sensors scan
 2,000 / 4,000 / 6,000 map units and the hub nothing; `raids.<id>.react_on_detect` (alien raids 25 +
 10 × level %) turns a seen contact on the base that saw it; `star_classes.<id>.planets` gives
 generated systems their planets (the original's per-class table, read from the exe). A 90-day
