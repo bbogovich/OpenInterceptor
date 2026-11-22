@@ -7732,9 +7732,69 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 <tr>
 <td><code>warnings</code></td>
-<td>list of <code>{at, text}</code></td>
+<td>list of <code>{at, line, text}</code></td>
 <td>none</td>
-<td>With <code>fuse</code>: radio lines this long after launch (app 0.22.16). <code>interceptor</code>: at 30 s, 60 s, 88 s and 107 s, in the engine's words (the original's message texts are not mapped).</td>
+<td>With <code>fuse</code>: this long after launch, one of the launcher's wingmen says voice <code>line</code> and/or <code>text</code> goes on the message display (app 0.22.16; <code>line</code> app 0.22.19). <code>interceptor</code>: voice waves 33 – 36 (<code>wave33</code> … <code>wave36</code> of its <code>mpilot</code>/<code>fpilot</code> voice sets, the original's chatter clips) at 30 s, 60 s, 88 s and 107 s (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>launcher_rate</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: shots per second from its launcher; the next launch is ready after 1 / rate (twice that with the launcher at half health or less). 0 = the engine's fixed 0.6 s. <code>interceptor</code>: each <code>*Launcher</code>'s <code>RateOfFire</code> (X-Winder 4, Fusion 6, Elerium 1, …; <strong>verified</strong>); -1 in the file (Doppelganger, Nova) keeps the engine's refire.</td>
+</tr>
+<tr>
+<td><code>flight</code></td>
+<td><code>engine</code>, <code>original</code></td>
+<td><code>engine</code></td>
+<td>App NEXT: <code>original</code> — the original's missile flight: straight for 250 ms, then homing whose throttle falls while it is off target (−0.025 … −0.1 a frame beyond 5° / 10° / 15°) and recovers on target, pushing at least 250 m/s². <code>interceptor</code>: every missile but the Nova (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>pass_fuse</code></td>
+<td>distance</td>
+<td>0</td>
+<td>App NEXT: it also goes off this close to its target when it is more than 45° off it (passing). <code>interceptor</code>: 25 m.</td>
+</tr>
+<tr>
+<td><code>blast</code></td>
+<td><code>{impact, radius}</code></td>
+<td>none</td>
+<td>App NEXT: the warhead hits <strong>every object</strong> round it, either side, with no falloff: <code>impact_damage</code> within <code>impact</code> (15 m), <code>proximity_damage</code> out to <code>radius</code> (200 m). Without it, only the target takes the proximity damage. <code>interceptor</code>: 15 m / 200 m (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>dud_on_expiry</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>App NEXT: out of fuel it vanishes without a blast.</td>
+</tr>
+<tr>
+<td><code>lose_lock_beyond</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: degrees off the nose beyond which the lock is lost (0 = never). <code>interceptor</code>: 170, except the Enveloping and Passive Cloaking torpedoes.</td>
+</tr>
+<tr>
+<td><code>hit_points</code></td>
+<td>number</td>
+<td>10</td>
+<td>App NEXT: what a beam bolt's damage must beat to destroy it, held to 10 – 500 (<a href="#flight"><code>flight.beams_hit_missiles</code></a>). <code>interceptor</code>: the missile section's <code>HitPoints</code>.</td>
+</tr>
+<tr>
+<td><code>max_life</code></td>
+<td>time</td>
+<td>0</td>
+<td>App NEXT: its flight time is held to this (0 = <code>duration</code>). <code>interceptor</code>: Passive Cloaking torpedo 10 s (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>images</code></td>
+<td><code>{count, offset, after}</code></td>
+<td>none</td>
+<td>App NEXT: decoy images put out <code>after</code> launch, <code>offset</code> to either side. <code>interceptor</code>: Parallax torpedo, 2 at 20 m after 1 s (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>retarget_every</code></td>
+<td><code>[min, max]</code> (times)</td>
+<td>none</td>
+<td>App NEXT: <code>doppelganger</code> — while the launcher and its decoy live, hostile pilots turn to the decoy at a random interval in the band. <code>interceptor</code>: 5 – 6 s (the interval <strong>verified</strong>, the retarget <em>derived</em>).</td>
 </tr>
 </tbody>
 </table>
@@ -8072,7 +8132,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>point_defence</code></td>
 <td><code>{range, rate, chance, energy}</code></td>
 <td>none</td>
-<td>Guns that shoot down hostile missiles (and decoys): <code>range</code> (distance, default 800 m), <code>rate</code> (shots per second, default 3), <code>chance</code> (fraction a shot destroys the missile, default 35 %), <code>energy</code> (per shot, default 4).</td>
+<td>Guns that shoot down hostile missiles (and decoys; the original has none — <code>interceptor</code> uses <a href="#flight"><code>flight.beams_hit_missiles</code></a> since app 0.22.19): <code>range</code> (distance, default 800 m), <code>rate</code> (shots per second, default 3), <code>chance</code> (fraction a shot destroys the missile, default 35 %), <code>energy</code> (per shot, default 4).</td>
 </tr>
 <tr>
 <td><code>probe</code></td>
@@ -8134,6 +8194,24 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>number</td>
 <td>per kind</td>
 <td>Tractor pull m/s²; ECM and cloak: chance per second, in %, that a homing missile loses its target.</td>
+</tr>
+<tr>
+<td><code>drain</code></td>
+<td>number</td>
+<td>0</td>
+<td>Cloak (app 0.22.19): energy per second while on, <strong>instead of</strong> the shield recharge; at 0 energy the cloak drops. <code>interceptor</code>: 50 (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>shields_off</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Cloak (app 0.22.19): while on, hits skip the ship's shields. <code>interceptor</code>: <code>true</code> (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>no_missiles</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Cloak (app 0.22.19): while on, no missile can be fired. <code>interceptor</code>: <code>true</code> (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>repair_rate</code></td>
@@ -8457,7 +8535,31 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td><code>break_time</code></td>
 <td>time</td>
 <td>2 s</td>
-<td>Attack (app 0.22.16): how long a break-off lasts before the pilot comes round again. <code>interceptor</code>: 5 s − 0.5 s × level (<em>derived</em> from the original's 5,000 − 500d ms).</td>
+<td>Attack: how long a break-off lasts before the pilot comes round again; with <code>reengage_beyond</code>, how long before the <code>reengage_chance</code> roll may end it (app 0.22.19). <code>interceptor</code>: 5 s − 0.5 s × level (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>reengage_beyond</code></td>
+<td>distance</td>
+<td>0</td>
+<td>Attack (app 0.22.19): the original's break-off — it ends only when a <code>break_manoeuvre</code> ends; then the pilot comes round if the target is farther than this, or after <code>break_time</code> with <code>reengage_chance</code>, else flies another. 0 = the fixed <code>break_time</code>. <code>interceptor</code>: 1,200 m (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>reengage_chance</code></td>
+<td>fraction</td>
+<td>25 %</td>
+<td>With <code>reengage_beyond</code>: the roll after <code>break_time</code>.</td>
+</tr>
+<tr>
+<td><code>break_manoeuvre</code></td>
+<td>time</td>
+<td>2 s</td>
+<td>With <code>reengage_beyond</code>: one break-off manoeuvre's length (<code>interceptor</code>: 2 s, <em>derived</em>).</td>
+</tr>
+<tr>
+<td><code>break_call</code></td>
+<td><code>{chance, from_level, line, text}</code></td>
+<td>none</td>
+<td>Attack (app 0.22.19): on breaking off at anyone but the player's craft, from difficulty level index <code>from_level</code>, with <code>chance</code>: the pilot's voice set says <code>line</code> and/or <code>text</code> goes on the message display. <code>interceptor</code>: 25 % from level 2, line <code>radio_7</code> (the original's message 7; its clip is not mapped).</td>
 </tr>
 <tr>
 <td><code>lock_cone</code></td>
@@ -8913,6 +9015,18 @@ When a class breaks off, jinks or flees is still the pack's own (derived).</p>
 <td><code>engine</code>, <code>original</code></td>
 <td><code>engine</code></td>
 <td>App NEXT: <code>original</code> — linked fires every mount of the selected mount's beam type, and every mode lets each mount fire on its own timer as far as the energy pays shot by shot (the original, <strong>verified</strong>); <code>engine</code> — linked fires the next two mounts and a group waits for all its mounts and its whole energy. <code>interceptor</code>: <code>original</code>.</td>
+</tr>
+<tr>
+<td><code>start_throttle</code></td>
+<td>fraction</td>
+<td>0</td>
+<td>App NEXT: the throttle every ship starts at. <code>interceptor</code>: 50 % (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>beams_hit_missiles</code></td>
+<td><code>{chance, radius}</code></td>
+<td>none</td>
+<td>App NEXT: beam bolts strike hostile missiles passing within <code>radius</code> (3 m, <em>derived</em>); each applies its damage with <code>chance</code> (90 %), and a missile whose <code>hit_points</code> that beats is destroyed. <code>interceptor</code>: 90 % (<strong>verified</strong>); it has no <code>point_defence</code>.</td>
 </tr>
 <tr>
 <td><code>pilot_grades</code></td>
@@ -10345,7 +10459,7 @@ actions each context adds for scripts:</p>
 <td><code>battle_over</code></td>
 <td>query, true/false</td>
 <td>battle</td>
-<td>A Nova bomb's <code>ends_battle_after</code> has run out (app 0.22.16).</td>
+<td>A Nova bomb's <code>ends_battle_after</code> has run out (app 0.22.16). If no objective decides the battle then, it ends as a draw (app 0.22.19).</td>
 </tr>
 <tr>
 <td><code>script(file:function)</code></td>

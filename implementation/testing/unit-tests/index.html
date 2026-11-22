@@ -6539,6 +6539,19 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>#120 (app 0.22.19)</strong> seven more, so <strong>563</strong>: <code>sim::combat::tests::bolts_shoot_down_missiles_and_cloaks_cost_energy_shields_and_missiles</code>
+(a 30-damage bolt destroys a 20-point missile 80 – 97 times in 100; a cloaked hit skips the shields;
+no missile from cloak; −50 energy a second, no shield recharge, the cloak drops at 0),
+<code>launcher_rate_and_start_throttle_come_from_the_rules</code>, <code>sim::guidance::tests::original_missiles_fly_straight_first_and_slow_in_hard_turns</code>,
+<code>original_blasts_hit_everything_round_them_without_falloff</code>, <code>original_fuses_duds_and_lost_locks</code>,
+<code>decoy_images_life_caps_and_doppelganger_pulls</code> and
+<code>content::rules::tests::original_missile_flight_cloak_and_flight_keys_parse</code>.</p>
+<p><strong>#119 follow-up (app 0.22.19)</strong> two more, so <strong>551</strong>: <code>sim::ai::tests::the_original_break_off_ends_with_its_manoeuvre_by_range_or_chance</code>
+(a break-off at 1,500 m ends with its first manoeuvre; at 800 m not before 5 s, then on a 25 %
+roll; breaking off at another ship sends the call) and
+<code>mission::tests::a_nova_battle_end_is_a_draw_unless_an_objective_decides</code> (a draw with no
+objective; <code>win: battle_over and alive(patton)</code> wins). <strong>Changed:</strong> the Nova test also checks the
+wingman voice line <code>wave33</code>.</p>
 <p><strong>Parity M1, #119 (app 0.22.16)</strong> three more, so <strong>549</strong>:
 <code>content::behaviour::tests::retreat_chances_follow_rank_stats_and_clamps</code> (disarmed: rank 0 and
 Bravery 100 → 40 %, rank 3 → held to 5 %, Bravery 0 → held to 85 %, no pilot → the band; Nova:

@@ -4595,6 +4595,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-originals-missile-flight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's missile flight
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mines" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6547,6 +6558,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-originals-missile-flight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's missile flight
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mines" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6726,8 +6748,26 @@ missile in range</strong> — decoys included, since the guns cannot tell them a
 </tbody>
 </table>
 <p>Each shot draws a tracer and plays the <code>point_defence</code> event sound. Point defence is fitted to
-the Patton, the X-COM freighter and the bases (<code>interceptor</code>), and to the dreadnought and the
-stations (<code>default</code>); the numbers are derived (DEV-038).</p>
+the dreadnought and the stations (<code>default</code>); the numbers are derived (DEV-038). The original has
+no automatic point defence: since app 0.22.19 <code>interceptor</code> has none, and instead every beam bolt
+can strike a missile (<code>flight.beams_hit_missiles</code>, 90 % to apply its damage against the missile's
+<code>hit_points</code>).</p>
+<h2 id="the-originals-missile-flight">The original's missile flight<a class="headerlink" href="#the-originals-missile-flight" title="Permanent link">&para;</a></h2>
+<p>With <code>flight: original</code> (app 0.22.19) a missile flies as the original's: straight for 250 ms, then
+homing at most 2.5 rad/s, losing throttle while it is off target, so a hard turn slows it. Its
+warhead can hit everything round it:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">missiles</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">xwinder</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">inherit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original:GameSettings.ini/XWinderMissile</span>
+<span class="w">    </span><span class="nt">launcher_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w">                     </span><span class="c1"># shots a second from its launcher</span>
+<span class="w">    </span><span class="nt">flight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original</span>
+<span class="w">    </span><span class="nt">pass_fuse</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25m</span><span class="w">                       </span><span class="c1"># goes off passing within 25 m, &gt; 45 deg off</span>
+<span class="w">    </span><span class="nt">blast</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">impact</span><span class="p">:</span><span class="w"> </span><span class="nv">15m</span><span class="p p-Indicator">,</span><span class="nt"> radius</span><span class="p">:</span><span class="w"> </span><span class="nv">200m</span><span class="p p-Indicator">}</span><span class="w">   </span><span class="c1"># every object, either side, no falloff</span>
+<span class="w">    </span><span class="nt">dud_on_expiry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">lose_lock_beyond</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">170</span>
+</code></pre></div>
+<p><code>images</code>, <code>max_life</code> and <code>retarget_every</code> give the Parallax, Passive Cloaking and Doppelganger
+torpedoes their original behaviour; see the <a href="../reference/#missiles">reference</a>.</p>
 <h2 id="mines">Mines<a class="headerlink" href="#mines" title="Permanent link">&para;</a></h2>
 <p>An object with <code>kind: mine</code> and a behaviour whose state does <code>do: mine</code> waits until a hostile is
 within the state's <code>range</code>, then detonates its <strong>first missile rack</strong> as the warhead: an <strong>area
@@ -6745,7 +6785,7 @@ blast</strong> reaching four times the warhead's <code>proximity_radius</code> (
 <tbody>
 <tr>
 <td><code>interceptor</code></td>
-<td>X-Winder (homing), Sidestep, Permeator (<code>permeator</code>), Fusion, Enveloping torpedo, Parallax torpedo (2 decoys), Passive Cloaking torpedo (<code>cloaked_wait</code>), Doppelganger — the special behaviours follow the original's descriptions (derived); the Super Avenger's testbed load carries one of each.</td>
+<td>X-Winder (homing), Sidestep, Permeator (<code>permeator</code>), Fusion, Enveloping torpedo, Parallax torpedo (two images after 1 s), Passive Cloaking torpedo (<code>cloaked_wait</code>, 10 s), Doppelganger (hostiles turn to it every 5 – 6 s), all with the original's flight, fuse, blast, launcher rate and rounds (app 0.22.19, <strong>verified</strong>); the Super Avenger's testbed load carries one of each.</td>
 </tr>
 <tr>
 <td><code>default</code></td>
@@ -6754,20 +6794,26 @@ blast</strong> reaching four times the warhead's <code>proximity_radius</code> (
 </tbody>
 </table>
 <h2 id="the-nova-bomb">The Nova bomb<a class="headerlink" href="#the-nova-bomb" title="Permanent link">&para;</a></h2>
-<p>A missile with a <code>fuse</code> (app 0.22.16) is a Nova bomb: it never goes off on contact; it flies on and
-detonates <code>fuse</code> after launch, sends its <code>warnings</code> over the radio at their times, sets the
-<code>nova_time</code> mission query running, sends every pilot with <code>retreat_on_nova</code> to its roll, and
-<code>ends_battle_after</code> later turns <code>battle_over</code> true:</p>
+<p>A missile with a <code>fuse</code> is a Nova bomb: it never goes off on contact; it flies on and detonates
+<code>fuse</code> after launch, doing no damage (the original's detonation damages nothing, <strong>verified</strong>); it
+sets the <code>nova_time</code> mission query running, sends every pilot with <code>retreat_on_nova</code> to its roll,
+and <code>ends_battle_after</code> later turns <code>battle_over</code> true — the battle then ends as a draw unless an
+objective decides it (app 0.22.19). Its <code>warnings</code> are voice lines of the launcher's wingmen and/or
+texts at given times:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">missiles</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">nova_bomb</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">inherit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original:GameSettings.ini/NovaBomb</span>
 <span class="w">    </span><span class="nt">fuse</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
 <span class="w">    </span><span class="nt">ends_battle_after</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
-<span class="w">    </span><span class="nt">warnings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">30s</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="nv">NOVA BOMB ARMED</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">60s</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="nv">NOVA BOMB DETONATED</span><span class="p p-Indicator">}]</span>
+<span class="w">    </span><span class="nt">warnings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">30s</span><span class="p p-Indicator">,</span><span class="nt"> line</span><span class="p">:</span><span class="w"> </span><span class="nv">wave33</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">60s</span><span class="p p-Indicator">,</span><span class="nt"> line</span><span class="p">:</span><span class="w"> </span><span class="nv">wave34</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">88s</span><span class="p p-Indicator">,</span><span class="nt"> line</span><span class="p">:</span><span class="w"> </span><span class="nv">wave35</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">107s</span><span class="p p-Indicator">,</span><span class="nt"> line</span><span class="p">:</span><span class="w"> </span><span class="nv">wave36</span><span class="p p-Indicator">}]</span>
 </code></pre></div>
-<p><code>interceptor</code> has it with the original's timing (<strong>verified</strong>); a campaign craft fitted with the
-Nova Bomb carries it. Its blast damages nothing yet, and no mission ends on <code>battle_over</code> yet —
-what the original's detonation does to the ships and the campaign is not traced.</p>
+<p><code>interceptor</code> has it with the original's timing and messages: voice waves 33 – 36, which its
+<code>mpilot1</code> … <code>fpilot5</code> voice sets map to the original's chatter clips <code>{M|F}Pilot{v}{33–36}.wav</code>
+(<strong>verified</strong>; there is no subtitle). A campaign craft fitted with the Nova Bomb carries it. The
+original's final missions count a fired Nova as a win when an X-COM Patton is still in the battle;
+the win and loss only cue the victory and death music stingers (the original's <code>0x550fd5(5, 3)</code> and
+<code>(5, 1)</code>, which the engine plays for any won or lost mission) — nothing is recorded on the strategy
+layer.</p>
 
 
 

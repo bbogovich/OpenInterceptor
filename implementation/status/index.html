@@ -7556,6 +7556,20 @@ behaviour keys <code>retreat_when_disarmed</code>, <code>retreat_on_nova</code> 
 on hull damage), breaks off for 5 s − 0.5 s × level, and the <code>nova_bomb</code> goes off 60 s after
 launch with the battle over 60 s later. <code>default</code>: unchanged. Manual case MT-4-72; <strong>549</strong>
 <code>#[test]</code> functions.</p>
+<p><strong>#119 follow-up</strong> (app 0.22.19; <code>notes/re/flight</code> §10, §12): the original's break-off (<code>reengage_beyond</code>,
+<code>reengage_chance</code>, <code>break_manoeuvre</code>, <code>break_call</code>); the Nova's warnings as wingman voice lines
+(<code>line</code>; waves 33 – 36); <code>RadioLine</code> events voiced by the speaker or a wingman; a battle ended by
+<code>battle_over</code> with no deciding objective is a draw. Then (unknowns §11): <code>interceptor</code>'s voice sets
+<code>mpilot1</code> … <code>fpilot5</code> map waves 33 – 36 to the original's chatter clips (the X-COM craft speak with
+<code>mpilot1</code>); the final missions' (5, 3) / (5, 1) are music stingers, played as for any won or lost
+mission.</p>
+<p><strong>#120</strong> (app 0.22.19; audit D-09, D-10, D-12, D-13, D-15, D-17; <code>notes/re/flight</code> §3 – 5, §12):
+beam bolts strike missiles (<code>flight.beams_hit_missiles</code>, missile <code>hit_points</code>; <code>interceptor</code> has no
+point defence any more); the cloak's <code>drain</code>, <code>shields_off</code> and <code>no_missiles</code>; the original's missile
+flight (<code>flight: original</code>, <code>pass_fuse</code>, <code>blast</code>, <code>dud_on_expiry</code>, <code>lose_lock_beyond</code>); <code>launcher_rate</code>
+and the launchers' rounds; <code>flight.start_throttle</code>; Parallax <code>images</code>, Passive Cloaking <code>max_life</code>,
+Doppelganger <code>retarget_every</code>; the pirate and corporate hulls from their own sections. D-18 (the
+Patton's protection from its fit) is open: DEV-095.</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and
