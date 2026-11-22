@@ -150,7 +150,7 @@ The strategy screen clips each list row to its width by measuring it in the skin
 
 ## Sheet fonts (app 0.22.5)
 
-A skin can also carry **bitmap sheet fonts** by name, under `fonts:`. A [screen set](screens.md#text-in-sheet-fonts-app-next)
+A skin can also carry **bitmap sheet fonts** by name, under `fonts:`. A [screen set](screens.md#text-in-sheet-fonts-app-0225)
 widget that names one with `font: <name>` is drawn in it, placed by the original game's own text
 rules — the fix for the playtest finding that text on the strategy screens was *sized differently
 and not aligned with the UI elements it belongs to* (plan M2, issue #122, RQ-UI-03/04).
@@ -171,6 +171,11 @@ skins:
 | `fonts.<name>.top` | whole number | half the line height | How far **above** the anchor's y the glyph tops sit. The original: 5, and 7 for its four small fonts. |
 | `fonts.<name>.wrap_offset` | whole number | 0 | Extra pixels down for the first line of wrapped text. The original: 4 for its four small fonts. |
 | `fonts.<name>.spacing` | whole number | 0 | Extra pixels after every character (the original's glyphs carry their own gap). |
+| `fonts.<name>.centre_raise` | whole number | 0 | How far a line centred on an anchor moves up (app NEXT). The original's 6-pixel font: 2. |
+
+`sheet: "builtin:small"` (app NEXT) names the engine's own **6-pixel caption font**, available
+to every campaign: our own design, drawn with the original's advances so a caption is exactly as
+wide as the original's (below).
 
 ### The grid sheet format
 
@@ -222,14 +227,78 @@ run time from the player's own `SpritesDLL.dll` — nothing is copied:
 | `highlight` | 23015 | 7 (4) | Equip Ships, Production, Bases highlights (yellow). |
 | `title` | 23014 | 5 | Base Stats page titles (large yellow). |
 
-The original also has a tenth, small 6-pixel font compiled into the program for text-button
-captions; it is not a sheet and is not available yet (plan M2, #123).
+| `caption` | `builtin:small` | 0 (`centre_raise` 2) | Text-button captions (since app NEXT). |
+
+The original's tenth font, a small 6-pixel one, is compiled into the program, not stored as a
+sheet (`PortDrawString` 0x5ffa81). Its glyphs are original art and are **not** copied:
+`builtin:small` is this project's own 6-row design, with capitals and digits on rows 0–4 and
+descenders on row 5. Its **advances** are the original's own, read from the width routine
+(0x617487, **verified**; for example `I` 2, `A` 6, `W` 8, space 3, and `/` 0). The text is white
+and takes the colour it is drawn in. `y` is the glyph top, and a centred line moves up 2.
+
+## Text buttons and dialogs (app NEXT)
+
+Two skin styles draw controls the way the original does. Each control places its caption **from
+its own rectangle** (plan M2, #123, RQ-UI-06):
+
+```yaml
+# packs/interceptor/rules/skin.yaml
+skins:
+  xcom:
+    fonts:
+      caption: {sheet: "builtin:small", top: 0, centre_raise: 2}
+    text_button: {font: caption, colour: [0.784, 0.784, 0.784], line: [0, 0.588, 0], fill: [0, 0.784, 0, 0.5]}
+    dialog: {width: 300, title_font: readout, body_font: body, title_y: 18, body_top: 28}
+```
+
+**`text_button`** is the original's TextButton (paint 0x41932d, **verified**). Each part is
+placed from the button's rectangle:
+
+- the caption is centred on the rectangle's centre, in `font`;
+- two frame lines run 5 px in from each side, 2 px above and below the rectangle;
+- while pressed, a translucent `fill` covers the rectangle less 4 px top and bottom.
+
+Screens use it for a screen-set `button` with a `label`, a list's action buttons and dialog
+buttons. Without `text_button`, those buttons are the skin's plain buttons. The end caps (sprites)
+come with the sprite work (#125).
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `text_button.font` | name | the TrueType font | A sheet font of this skin for the caption. |
+| `text_button.colour` | colour | 200, 200, 200 | Caption colour (tints the font). |
+| `text_button.line` | colour | 0, 150, 0 | The frame lines. |
+| `text_button.fill` | colour | 0, 200, 0 at 50 % | The pressed fill (the original's level 50, read as half: **derived**). |
+
+**`dialog`** draws every strategy prompt as the original's message box: an interception, an offer,
+a choice, a report. The box is laid out in its own design space, scaled to the window and centred:
+
+- the caption is centred on the box at `title_y`, in `title_font`;
+- the text is wrapped from `body_top`, in `body_font`;
+- the buttons are text buttons 20 px tall and the box's width − 20 wide, stacked up from 25 px
+  above the bottom (the exe's Interceptor Orders dialog, **verified**), `button_step` apart.
+
+The box's height follows from its text and buttons. Enter chooses the first button, Esc the last.
+Without `dialog`, or when its fonts are missing, prompts keep the plain look. The frame art (the
+original's three frame kits) is #127.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `dialog.design` | `[w, h]` | 640, 480 | The design space. |
+| `dialog.width` | whole number | 320 | The box's width (at least 60). |
+| `dialog.title_font`, `dialog.body_font` | name | *required for the look* | Sheet fonts of this skin. |
+| `dialog.title_y` | whole number | 20 | The caption's anchor below the top (the original's frame style 3: 54, with its ornament). |
+| `dialog.body_top` | whole number | 32 | Where the text starts. |
+| `dialog.button_step` | whole number | 22 | The buttons' spacing (**derived**). |
+
+The default campaign uses both, in its own colours, with `font_title` and `font_body`. To see a
+dialog, run `openinterceptor --no-original --strategy --notice "Hello"`.
 
 ## Not built yet
 
 - Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used
-  by screen-set `value` and `text` widgets only (app 0.22.5); lists, buttons, the map labels and the
-  testbed layout still draw with `font` (the TrueType font). Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
+  by screen-set `value` and `text` widgets (app 0.22.5) and, since app NEXT, `list` widgets, text
+  buttons and dialogs. The map labels, the menus and the testbed layout's panels still draw with
+  `font` (the TrueType font). Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
 - Main menu option values too long for their room are drawn smaller (down to half size, app
   0.14.2), not wrapped.
 - A full graphics options page (the menu has *Full screen* since app 0.16.14; brightness is in
@@ -246,4 +315,7 @@ captions; it is not a sheet and is not available yet (plan M2, #123).
 | `skins.x: fonts.y: sheet: expected the font sheet image` | A font without `sheet`. |
 | `skins.x: fonts.y: top: 2.5 is not a whole number of pixels` | `top`, `wrap_offset` or `spacing` not a whole number. |
 | `skins.x.fonts.y: <sheet>: font sheet: no grid line found in column 1 …` (`--check`; at start on standard error as `skin x: font y: …`) | The image is not in the grid layout, or the grid and key colours are the same. The font is left out and its widgets fall back to the TrueType path. |
-| `screens.s.widgets.w: font 'y' is not a font of the campaign's skin` (`--check`) | A widget names a font the campaign's skin does not define. |
+| `screens.s.widgets.w: font 'y' is not a font of the campaign's skin` (`--check`) | A widget's `font`, `title_font` or `detail_font` names a font the campaign's skin does not define. |
+| `skins.x: text_button.font: 'y' is not one of this skin's fonts` (also `dialog.title_font`, `dialog.body_font`) | A style names a font the skin does not define. |
+| `skins.x: dialog: width: 1.5 is not a whole number of pixels` | A `dialog` size not a whole number (also `title_y`, `body_top`, `button_step`), or `design` not `[w, h]`. |
+| `skins.x: text_button: line: expected [r, g, b] or [r, g, b, a]` | A colour with the wrong number of values. |

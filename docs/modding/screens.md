@@ -167,9 +167,10 @@ and kept; one that cannot be loaded is reported on standard error once
 | `size` | number | 12 | Text size in design pixels (at least 4). |
 | `colour` | `[r, g, b]` or `[r, g, b, a]` | the skin's `text` colour | Text colour, 0 – 1. |
 | `align` | `left`, `centre`, `right` | `left` | Text alignment in the rectangle. |
-| `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-next) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-next)) and `size` is unused (app 0.22.5). |
+| `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-0225) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-0225)) and `size` is unused (app 0.22.5). |
 | `at` | `[x, y]` | none | With `font`: an anchor point instead of the rectangle. |
 | `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
+| `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-next), app NEXT). |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
 | `kind` | Draws / does |
@@ -211,7 +212,7 @@ A name the engine does not know shows as `?<name>`.
 
 ### Text in sheet fonts (app 0.22.5)
 
-A `value` or `text` widget with `font: <name>` is drawn in that [sheet font](skins.md#sheet-fonts-app-next)
+A `value` or `text` widget with `font: <name>` is drawn in that [sheet font](skins.md#sheet-fonts-app-0225)
 of the skin and placed by the two routines the original game uses for all its screen text
 (Interceptor.exe, **verified**):
 
@@ -237,6 +238,31 @@ time:   {kind: value, value: time, rect: [495, 365, 133, 15], font: readout, at:
 funds:  {kind: value, value: money, rect: [495, 426, 133, 15], font: readout, at: [561, 430], align: centre}
 status: {kind: value, value: selection, rect: [344, 457, 276, 15], font: readout, align: centre}
 ```
+
+### Lists in sheet fonts (app NEXT)
+
+A `list` with `font: <name>` is laid out from rectangles of its own instead of the testbed panel's
+fixed layout. The fixed layout had put the title, the selected row's text and the buttons over
+the art (audit D-32 – D-38). Each part goes where the art has room for it:
+
+| Part | Placed |
+|---|---|
+| Title | In a strip `header` pixels tall at the top of `rect`, left, in `title_font` (no strip, no title). |
+| Rows | Below the strip, one every `row_height` (default: the font's line height + 2, the original's list box), each `row_size` tall, text centred in it and cut with "..." to fit. The selected row has the skin's `highlight` behind it. Rows with no action are dimmed. A thin scroll bar shows when there are more rows than fit; the wheel scrolls by one. |
+| Selected row in full | Wrapped from the top of `detail`, in `detail_font`; lines that would end below it are left out. |
+| Its actions | Text buttons ([skin `text_button`](skins.md#text-buttons-and-dialogs-app-next)) in `buttons`: a row of equal buttons when each is at least 60 px wide (at most 150), else a column of 20 px buttons. |
+
+A double click on a row still does its first action. The compact list style of the original
+(columns, the pulsing bar, scroll arrows) is plan M2 #124.
+
+```yaml
+# packs/interceptor/rules/screens.yaml: Research's topics on the art's eight slots
+topics: {kind: list, source: research, rect: [330, 49, 250, 264], font: body, row_height: 34, row_size: 25,
+         detail: [26, 374, 412, 64], buttons: [26, 442, 412, 20]}
+```
+
+A `button` with a `label` and no images is drawn as a **text button** when the skin has
+`text_button`: its caption is centred on its own rectangle in the caption font.
 
 ### The testbed layout and `--screen`
 
@@ -265,8 +291,13 @@ original has one, its links and a back button.
 - **Since app 0.22.5** the readouts, the status bar, the base names and the Equipment & Personnel
   funds use the original's sheet fonts and anchors: the four readouts in 23010 centred on x 561 at
   y 370, 390, 410 and 430 (the time monospaced), the status bar centred in its bar, and the funds
-  centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34). Lists,
-  button captions and map labels are still in the TrueType font (plan M2, #123 – #128).
+  centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34).
+- **Since app NEXT** every list is in the body font (23011) on the art's own panels (D-32 – D-38).
+  Research's topics sit on its eight slots, 25-px rows every 34 px (**verified**). The selected
+  row's text and actions go in a nearby black box (**derived**): E&P's info boxes 2 and 3, the
+  Equip Ships stat panel, the Research description pane, the UFOpedia article box. The base names
+  are centred on the drop-down strip (D-40). Prompts are message boxes in 23010 and 23011 with text
+  buttons. The map labels are still in the TrueType font (#128).
 - **Unknown**: the buttons' own state images, which live in the original's sprite table
   (`SpritesDLL`), not yet read; until then the buttons are hot spots over the art.
 

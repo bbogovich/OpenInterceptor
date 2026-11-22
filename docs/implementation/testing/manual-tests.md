@@ -2302,3 +2302,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App NEXT or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy` (the CSD). 2. Look at the four green readouts and the status bar. 3. `--screen purchase`, then `--screen manufacture`. 4. `--screen bases`, `equip_ships`. 5. `--no-original --check`. |
 | Expected | 2: time, weekday, date and funds in the original's white-and-green font, each centred in its bar (the time with evenly spaced digits); the status bar's text centred in it. 3: the funds in yellow, centred in the dark slot under the shelf (not above it). 4: the base name in the white body font on the title strip. 5: no errors (the default skin's generated fonts load). Screenshots of app 0.22.5 are in the parity M2 report. |
+
+### MT-6-29 — Lists, text buttons and dialogs on the original screens
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy --screen <id>` for `purchase`, `manufacture`, `research`, `bases`, `equip_ships`, `base_stats`, `ufopedia`, `reports`. 2. Click a row, then each action button; double-click a row; scroll with the wheel. 3. `--strategy --notice "Hello there"` with `interceptor`, then with `--no-original` (default). Press Enter. |
+| Expected | 1: every list in the white body font inside its art panel; nothing drawn across the art; Research's rows on the eight black slots; the selected row's text and its buttons in their black boxes; the base name centred on the top strip. 2: the selected row highlighted; a pressed button shows a green fill and acts on the click; a double click does the first action. 3: a message box with the caption in the readout font, the text wrapped and an OK text button 25 px above the bottom; default: the same in its gold and cream. Enter closes it. |
