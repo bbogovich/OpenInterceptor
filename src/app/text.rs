@@ -34,6 +34,9 @@ pub struct Face<'a> {
     /// Extra pixels after every character (0 in the original; for mod fonts drawn
     /// without a built-in gap).
     pub spacing: i32,
+    /// A centred line moves up this much (the original's 6 px font: `y −= 2` with flag 1,
+    /// PortDrawString 0x5ffa81).
+    pub centre_raise: i32,
 }
 
 /// Horizontal alignment: the DrawText flags (none, 1, 4).
@@ -86,6 +89,7 @@ pub fn draw_text(face: &Face, s: &str, x: i32, y: i32, align: Align, mono: bool,
         Align::Centre => x - w / 2,
         Align::Right => x - w,
     };
+    let y = if align == Align::Centre { y - face.centre_raise } else { y };
     for c in s.chars() {
         if let Some(g) = face.font.glyph_of(c) {
             let gw = face.font.glyph(g).map_or(0, |g| g.width as i32);
@@ -167,6 +171,23 @@ pub fn draw_text_rect(face: &Face, s: &str, rect: [i32; 4], align: Align, mono: 
     }
 }
 
+/// Wrapped text from the **top** of a rectangle (an engine layout, not one of the exe's
+/// routines: used for a list's detail box, which the original screens do not have):
+/// glyph tops of the first line at the rect's top, then one line every `lh + lh/3`;
+/// lines that would end below the rect are left out.
+pub fn draw_text_top(face: &Face, s: &str, rect: [i32; 4], out: &mut Vec<Placed>) {
+    let lh = face.font.line_height as i32;
+    let step = lh + lh / 3;
+    let bottom = rect[1] + rect[3];
+    for (i, l) in wrap(face, s, rect[2], false).iter().enumerate() {
+        let top = rect[1] + i as i32 * step;
+        if top + lh > bottom {
+            break;
+        }
+        draw_text(face, l, rect[0], top + face.top, Align::Left, false, out);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,7 +201,7 @@ mod tests {
     }
 
     fn face(f: &SheetFont) -> Face<'_> {
-        Face { font: f, top: 7, wrap_offset: 4, spacing: 0 }
+        Face { font: f, top: 7, wrap_offset: 4, spacing: 0, centre_raise: 0 }
     }
 
     #[test]
@@ -199,6 +220,12 @@ mod tests {
         let mut acc = Vec::new();
         draw_text(&Face { top: 5, ..face(&f) }, "Eé", 0, 10, Align::Left, false, &mut acc);
         assert_eq!((acc[0].y, acc[1].y), (5, 6));
+        // The small font: y is the glyph top, and a centred line moves up 2 (flag 1).
+        let small = Face { top: 0, centre_raise: 2, ..face(&f) };
+        let mut c = Vec::new();
+        draw_text(&small, "A", 50, 10, Align::Centre, false, &mut c);
+        draw_text(&small, "A", 50, 10, Align::Left, false, &mut c);
+        assert_eq!((c[0].y, c[1].y), (8, 10));
     }
 
     #[test]
@@ -247,5 +274,10 @@ mod tests {
         draw_text_rect(&fc, "aaa~bbb", [0, 0, 200, 100], Align::Centre, false, &mut c);
         assert_eq!((c[0].y, c[3].y), (36 - 7, 54 - 7));
         assert_eq!(c[0].x, 100 - 9);
+        // From the top: tops at 0 and 18; a third line would end below 40 and is left out.
+        let mut t = Vec::new();
+        draw_text_top(&fc, "aaa~bbb~ccc", [0, 0, 200, 40], &mut t);
+        let tops: Vec<i32> = t.iter().map(|p| p.y).collect();
+        assert_eq!(tops, vec![0, 0, 0, 18, 18, 18]);
     }
 }

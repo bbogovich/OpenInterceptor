@@ -474,8 +474,24 @@
                   "sheet": {"description": "the grid sheet image (e.g. original:SpritesDLL.dll#23010)", "type": "string"},
                   "top": {"description": "glyph top = anchor y - top, pixels (default: half the line height)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "wrap_offset": {"description": "extra drop of wrapped text's first line, pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-                  "spacing": {"description": "extra pixels after each character", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+                  "spacing": {"description": "extra pixels after each character", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "centre_raise": {"description": "pixels a line centred on an anchor moves up (the original's small font: 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
                 }}]}},
+          "text_button": {"description": "the original's text button: list actions, labelled buttons, dialog buttons", "type": "object", "additionalProperties": false, "properties": {
+              "font": {"description": "a sheet font of this skin for the caption", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "colour": {"description": "caption colour, RGB or RGBA (original: 200,200,200)", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+              "line": {"description": "frame lines (original: 0,150,0)", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
+              "fill": {"description": "pressed fill, RGBA (original: 0,200,0 translucent)", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
+            }},
+          "dialog": {"description": "prompts in sheet fonts with stacked text buttons", "type": "object", "additionalProperties": false, "properties": {
+              "design": {"description": "the design space the dialog is laid out in", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+              "width": {"description": "dialog width, design pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "title_font": {"description": "a sheet font of this skin for the caption", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "body_font": {"description": "a sheet font of this skin for the text", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "title_y": {"description": "the caption's anchor y below the top", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "body_top": {"description": "where the text starts below the top", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "button_step": {"description": "spacing of the stacked buttons", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -505,6 +521,13 @@
                   "font": {"description": "a sheet font of the skin (skins.<id>.fonts): placed by the original's anchor rules", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "at": {"description": "with font: the DrawText anchor [x, y] (glyph tops at y - the font's top)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                   "monospace": {"description": "with font: every character in a cell of the widest glyph", "type": "boolean"},
+                  "row_height": {"description": "a list in a sheet font: row pitch (default line height + 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "row_size": {"description": "a list in a sheet font: a row's own height when less than row_height", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "header": {"description": "a list in a sheet font: height of the title strip at the top of rect (0: no title)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "title_font": {"description": "a list's title font (default: font)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "detail": {"description": "a list in a sheet font: where the selected row's full text goes", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                  "detail_font": {"description": "the detail's font (default: font)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "buttons": {"description": "a list in a sheet font: where the selected row's actions go, as text buttons", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
                   "shape": {"description": "a map's viewport", "enum": ["rect", "round"]}
                 }}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},

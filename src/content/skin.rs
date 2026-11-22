@@ -49,7 +49,121 @@ pub struct Skin {
     pub font: Option<String>,
     /// Grid sheet fonts by name (`fonts.<name>`).
     pub fonts: Vec<SheetFontDef>,
+    /// How text buttons look (`text_button`): the original's TextButton. `None`: the
+    /// skin's plain buttons.
+    pub text_button: Option<TextButtonStyle>,
+    /// How prompts look over a screen set (`dialog`). `None`: the skin's plain prompts.
+    pub dialog: Option<DialogStyle>,
     pub pack: usize,
+}
+
+/// `text_button`: the original's TextButton (Interceptor.exe paint 0x41932d): a caption
+/// centred on the button, two frame lines, a translucent fill while pressed.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TextButtonStyle {
+    /// A sheet font of the skin for the caption (`None`: the TrueType font).
+    pub font: Option<String>,
+    /// Caption colour (tints the font). The original: RGB(200, 200, 200).
+    pub colour: [f32; 4],
+    /// The frame lines. The original: RGB(0, 150, 0).
+    pub line: [f32; 4],
+    /// The pressed fill. The original: RGB(0, 200, 0), translucent.
+    pub fill: [f32; 4],
+}
+
+impl Default for TextButtonStyle {
+    fn default() -> Self {
+        TextButtonStyle {
+            font: None,
+            colour: [200.0 / 255.0, 200.0 / 255.0, 200.0 / 255.0, 1.0],
+            line: [0.0, 150.0 / 255.0, 0.0, 1.0],
+            fill: [0.0, 200.0 / 255.0, 0.0, 0.5],
+        }
+    }
+}
+
+/// `dialog`: prompts drawn in a design space with sheet fonts and text buttons (the
+/// original's message boxes; their frame art is plan M2 #127).
+#[derive(Debug, Clone, PartialEq)]
+pub struct DialogStyle {
+    /// The design space the dialog is laid out in (scaled to the window, centred).
+    pub design: [f32; 2],
+    /// The dialog's width, design pixels.
+    pub width: i32,
+    /// Sheet fonts of the skin for the caption and the text.
+    pub title_font: Option<String>,
+    pub body_font: Option<String>,
+    /// The caption's anchor y below the dialog's top (DrawText, centred on the dialog).
+    pub title_y: i32,
+    /// Where the text starts below the dialog's top.
+    pub body_top: i32,
+    /// The spacing of the stacked text buttons.
+    pub button_step: i32,
+}
+
+impl Default for DialogStyle {
+    fn default() -> Self {
+        DialogStyle {
+            design: [640.0, 480.0],
+            width: 320,
+            title_font: None,
+            body_font: None,
+            title_y: 20,
+            body_top: 32,
+            button_step: 22,
+        }
+    }
+}
+
+/// A colour `[r, g, b]` or `[r, g, b, a]`, 0 to 1.
+fn colour(n: &crate::formats::yaml::Node) -> Option<[f32; 4]> {
+    let v: Vec<f32> = n.as_seq()?.iter().filter_map(|x| x.as_str()?.trim().parse().ok()).collect();
+    match v.as_slice() {
+        [r, g, b] => Some([*r, *g, *b, 1.0]),
+        [r, g, b, a] => Some([*r, *g, *b, *a]),
+        _ => None,
+    }
+}
+
+impl TextButtonStyle {
+    /// Parses `text_button: {font, colour, line, fill}` over the original's look.
+    pub fn parse(g: Get) -> Result<TextButtonStyle, String> {
+        let mut s = TextButtonStyle { font: g.str("font").map(str::to_string), ..Default::default() };
+        for (k, slot) in [("colour", &mut s.colour), ("line", &mut s.line), ("fill", &mut s.fill)] {
+            if let Some(n) = g.node(k) {
+                *slot = colour(n).ok_or(format!("{k}: expected [r, g, b] or [r, g, b, a]"))?;
+            }
+        }
+        Ok(s)
+    }
+}
+
+impl DialogStyle {
+    /// Parses `dialog: {design, width, title_font, body_font, title_y, body_top, button_step}`.
+    pub fn parse(g: Get) -> Result<DialogStyle, String> {
+        let d = DialogStyle::default();
+        let int = |k: &str, dflt: i32| -> Result<i32, String> {
+            match g.num(k) {
+                Some(v) if v.fract() == 0.0 && (0.0..10000.0).contains(&v) => Ok(v as i32),
+                Some(v) => Err(format!("{k}: {v} is not a whole number of pixels")),
+                None => Ok(dflt),
+            }
+        };
+        let design = match g.nums("design").as_deref() {
+            Some([w, h]) if *w > 0.0 && *h > 0.0 => [*w, *h],
+            Some(_) => return Err("design: expected [width, height]".into()),
+            None => d.design,
+        };
+        Ok(DialogStyle {
+            design,
+            width: int("width", d.width)?.max(60),
+            title_font: g.str("title_font").map(str::to_string),
+            body_font: g.str("body_font").map(str::to_string),
+            title_y: int("title_y", d.title_y)?,
+            body_top: int("body_top", d.body_top)?,
+            button_step: int("button_step", d.button_step)?.max(20),
+        })
+    }
 }
 
 /// A named grid sheet font of a skin (`fonts.<name>`).
@@ -65,6 +179,8 @@ pub struct SheetFontDef {
     pub wrap_offset: i32,
     /// Extra pixels after every character.
     pub spacing: i32,
+    /// How far a line centred on an anchor moves up (the original's small font: 2).
+    pub centre_raise: i32,
 }
 
 impl SheetFontDef {
@@ -84,6 +200,7 @@ impl SheetFontDef {
             top: int("top")?,
             wrap_offset: int("wrap_offset")?.unwrap_or(0),
             spacing: int("spacing")?.unwrap_or(0),
+            centre_raise: int("centre_raise")?.unwrap_or(0),
         })
     }
 }
@@ -105,6 +222,8 @@ impl Skin {
             panel: None,
             font: None,
             fonts: Vec::new(),
+            text_button: None,
+            dialog: None,
             pack: 0,
         }
     }
@@ -135,6 +254,22 @@ impl Skin {
         for (name, n) in g.map("fonts") {
             s.fonts.push(SheetFontDef::parse(name, Get(n)).map_err(|e| format!("fonts.{name}: {e}"))?);
         }
+        if let Some(n) = g.node("text_button") {
+            s.text_button = Some(TextButtonStyle::parse(Get(n)).map_err(|e| format!("text_button: {e}"))?);
+        }
+        if let Some(n) = g.node("dialog") {
+            s.dialog = Some(DialogStyle::parse(Get(n)).map_err(|e| format!("dialog: {e}"))?);
+        }
+        // A style naming a font the skin does not define is a mistake worth stopping on.
+        let named = |f: &Option<String>| f.as_ref().filter(|f| !s.fonts.iter().any(|d| &d.name == *f)).cloned();
+        let missing = [
+            s.text_button.as_ref().and_then(|t| named(&t.font)).map(|f| ("text_button.font", f)),
+            s.dialog.as_ref().and_then(|d| named(&d.title_font)).map(|f| ("dialog.title_font", f)),
+            s.dialog.as_ref().and_then(|d| named(&d.body_font)).map(|f| ("dialog.body_font", f)),
+        ];
+        if let Some((k, f)) = missing.into_iter().flatten().next() {
+            return Err(format!("{k}: '{f}' is not one of this skin's fonts"));
+        }
         Ok(s)
     }
 }
@@ -146,9 +281,18 @@ pub fn load_sheet(
     def: &SheetFontDef,
     pack: usize,
 ) -> Result<(crate::formats::sheetfont::SheetFont, crate::formats::tga::Image), String> {
+    use crate::formats::sheetfont::SheetFont;
+    // The engine's own caption font is built in memory, not read from a file.
+    if def.sheet == super::smallfont::REFERENCE {
+        let mut img = super::smallfont::sheet();
+        let font = SheetFont::parse(img.width, img.height, &img.rgba)
+            .map_err(|e| format!("{}: {e}", def.sheet))?
+            .with_advances(super::smallfont::advances());
+        font.clear_background(&mut img.rgba);
+        return Ok((font, img));
+    }
     let mut img = content.load_image(&def.sheet, pack, false)?;
-    let font = crate::formats::sheetfont::SheetFont::parse(img.width, img.height, &img.rgba)
-        .map_err(|e| format!("{}: {e}", def.sheet))?;
+    let font = SheetFont::parse(img.width, img.height, &img.rgba).map_err(|e| format!("{}: {e}", def.sheet))?;
     font.clear_background(&mut img.rgba);
     Ok((font, img))
 }
@@ -179,9 +323,37 @@ pub fn schema() -> Ty {
                     f("top", Ty::Num, "glyph top = anchor y - top, pixels (default: half the line height)"),
                     f("wrap_offset", Ty::Num, "extra drop of wrapped text's first line, pixels"),
                     f("spacing", Ty::Num, "extra pixels after each character"),
+                    f(
+                        "centre_raise",
+                        Ty::Num,
+                        "pixels a line centred on an anchor moves up (the original's small font: 2)",
+                    ),
                 ])),
             ))),
             "grid sheet bitmap fonts by name, for screen widgets' font:",
+        ),
+        f(
+            "text_button",
+            Ty::Struct(vec![
+                f("font", Ty::Name, "a sheet font of this skin for the caption"),
+                f("colour", Ty::List(Box::new(Ty::Num)), "caption colour, RGB or RGBA (original: 200,200,200)"),
+                f("line", Ty::List(Box::new(Ty::Num)), "frame lines (original: 0,150,0)"),
+                f("fill", Ty::List(Box::new(Ty::Num)), "pressed fill, RGBA (original: 0,200,0 translucent)"),
+            ]),
+            "the original's text button: list actions, labelled buttons, dialog buttons",
+        ),
+        f(
+            "dialog",
+            Ty::Struct(vec![
+                f("design", Ty::Numbers(2), "the design space the dialog is laid out in"),
+                f("width", Ty::Num, "dialog width, design pixels"),
+                f("title_font", Ty::Name, "a sheet font of this skin for the caption"),
+                f("body_font", Ty::Name, "a sheet font of this skin for the text"),
+                f("title_y", Ty::Num, "the caption's anchor y below the top"),
+                f("body_top", Ty::Num, "where the text starts below the top"),
+                f("button_step", Ty::Num, "spacing of the stacked buttons"),
+            ]),
+            "prompts in sheet fonts with stacked text buttons",
         ),
     ])
 }
@@ -210,13 +382,41 @@ mod tests {
         let s = Skin::parse("x", Get(&n), 0).unwrap();
         assert_eq!(
             s.fonts[0],
-            SheetFontDef { name: "body".into(), sheet: "a.png".into(), top: Some(7), wrap_offset: 4, spacing: 0 }
+            SheetFontDef {
+                name: "body".into(),
+                sheet: "a.png".into(),
+                top: Some(7),
+                wrap_offset: 4,
+                spacing: 0,
+                centre_raise: 0
+            }
         );
         assert_eq!((s.fonts[1].sheet.as_str(), s.fonts[1].top), ("b.png", None));
         let bad = yaml::parse("fonts: {x: {sheet: a.png, top: 2.5}}").unwrap();
         assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("fonts.x: top"));
         let none = yaml::parse("fonts: {x: {top: 2}}").unwrap();
         assert!(Skin::parse("x", Get(&none), 0).is_err());
+    }
+
+    #[test]
+    fn text_button_and_dialog_styles_parse_over_the_originals_look() {
+        let n = yaml::parse(
+            "fonts: {small: builtin:small, body: b.png}\ntext_button: {font: small, line: [0, 1, 0]}\n\
+             dialog: {width: 280, title_font: body, body_font: body, title_y: 54}",
+        )
+        .unwrap();
+        let s = Skin::parse("x", Get(&n), 0).unwrap();
+        let t = s.text_button.unwrap();
+        assert_eq!(
+            (t.font.as_deref(), t.line, t.colour),
+            (Some("small"), [0.0, 1.0, 0.0, 1.0], TextButtonStyle::default().colour)
+        );
+        let d = s.dialog.unwrap();
+        assert_eq!((d.width, d.title_y, d.body_top, d.design), (280, 54, 32, [640.0, 480.0]));
+        let bad = yaml::parse("text_button: {font: nope}").unwrap();
+        assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("text_button.font: 'nope'"));
+        let bad = yaml::parse("dialog: {width: 1.5}").unwrap();
+        assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("dialog: width"));
     }
 
     #[test]
