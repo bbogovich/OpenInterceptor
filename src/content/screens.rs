@@ -58,8 +58,13 @@ pub enum Place {
 /// What a button does.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UiAction {
-    /// Opens another screen (or dialog) of the set.
+    /// Opens another screen (or dialog) of the set, remembering this one for Back.
     Open(String),
+    /// `menu(<screen>)`: a menu-bar switch — a run of them remembers only the first
+    /// screen left (RQ-UI-15).
+    MenuOpen(String),
+    /// `replace(<screen>)`: switch without remembering this screen.
+    Replace(String),
     /// Closes this screen or dialog (back to the one under it).
     Back,
     /// Sets the campaign clock's speed: an index into `clock.speeds` (0 = the first).
@@ -80,6 +85,8 @@ impl UiAction {
         };
         match name {
             "open" if !arg.is_empty() => Ok(UiAction::Open(arg.to_string())),
+            "menu" if !arg.is_empty() => Ok(UiAction::MenuOpen(arg.to_string())),
+            "replace" if !arg.is_empty() => Ok(UiAction::Replace(arg.to_string())),
             "back" => Ok(UiAction::Back),
             "speed" => arg
                 .parse()
@@ -88,7 +95,9 @@ impl UiAction {
             "save" => Ok(UiAction::Save),
             "menu" => Ok(UiAction::Menu),
             "testbed" => Ok(UiAction::Testbed),
-            _ => Err(format!("'{s}' is not open(<screen>), back, speed(n), save, menu or testbed")),
+            _ => Err(format!(
+                "'{s}' is not open(<screen>), menu(<screen>), replace(<screen>), back, speed(n), save, menu or testbed"
+            )),
         }
     }
 }
@@ -332,6 +341,12 @@ pub struct ScreenLayout {
     pub items: Vec<WidgetDef>,
     /// Drawn over the screen under it (a dialog), not on its own.
     pub dialog: bool,
+    /// Whether the campaign clock runs while this screen (or dialog) is on top
+    /// (`clock: run | pause`; RQ-UI-16). `None`: runs (as before).
+    pub clock_runs: Option<bool>,
+    /// The history's size while navigating from this screen as home (`history: N`; the
+    /// original's 29). Read from the first screen.
+    pub history: Option<usize>,
     pub pack: usize,
 }
 
@@ -353,11 +368,29 @@ pub fn default_starmap() -> ScreenLayout {
         ],
         items: Vec::new(),
         dialog: false,
+        clock_runs: None,
+        history: None,
         pack: 0,
     }
 }
 
 impl ScreenLayout {
+    /// An empty screen of a set in the engine's 1280 × 720 design space (what a pack's
+    /// `screens.<id>` is read over).
+    pub fn empty(id: &str, pack: usize) -> ScreenLayout {
+        ScreenLayout {
+            id: id.to_string(),
+            design: [1280.0, 720.0],
+            background: None,
+            widgets: Vec::new(),
+            items: Vec::new(),
+            dialog: false,
+            clock_runs: None,
+            history: None,
+            pack,
+        }
+    }
+
     /// A widget's rectangle in the design space.
     pub fn widget(&self, name: &str) -> Option<[f32; 4]> {
         self.widgets.iter().find(|(n, _)| n == name).map(|(_, r)| *r)
@@ -376,6 +409,18 @@ impl ScreenLayout {
         }
         l.background = g.str("background").map(str::to_string).or(l.background);
         l.dialog = g.bool("dialog").unwrap_or(l.dialog);
+        l.clock_runs = match g.str("clock") {
+            None => l.clock_runs,
+            Some("run") => Some(true),
+            Some("pause") => Some(false),
+            Some(o) => return Err(format!("clock: '{o}' is not run or pause")),
+        };
+        if let Some(n) = g.num("history") {
+            if n < 1.0 || n.fract() != 0.0 {
+                return Err(format!("history: {n} is not a whole number of screens (at least 1)"));
+            }
+            l.history = Some(n as usize);
+        }
         for (name, n) in g.map("widgets") {
             // A full widget definition (an original-style screen's).
             if n.as_map().is_some() {
@@ -421,6 +466,8 @@ pub fn schema() -> Ty {
         f("design", Ty::Numbers(2), "the design space the rectangles are written in"),
         f("background", Ty::Asset, "an image over the whole design space"),
         f("dialog", Ty::Bool, "drawn over the screen under it"),
+        f("clock", Ty::Enum(&["run", "pause"]), "whether the campaign clock runs while this screen is on top (default run)"),
+        f("history", Ty::Num, "on the first screen: how many screens Back remembers (the original: 29)"),
         f(
             "widgets",
             Ty::Dict(Box::new(Ty::Either(
@@ -441,7 +488,11 @@ pub fn schema() -> Ty {
                         ]),
                         "a button's states",
                     ),
-                    f("action", Ty::Text, "open(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed"),
+                    f(
+                        "action",
+                        Ty::Text,
+                        "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed",
+                    ),
                     f("value", Ty::Name, "a value: date, time, money, score, base, speed, selection"),
                     f("source", Ty::Name, "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages"),
                     f("text", Ty::Text, "fixed text (a text key)"),
@@ -519,6 +570,8 @@ mod tests {
             widgets: vec![],
             items: vec![],
             dialog: false,
+            clock_runs: None,
+            history: None,
             pack: 0,
         };
         let l = ScreenLayout::parse("csd", Get(&n), base, &[], 0).unwrap();
@@ -534,6 +587,14 @@ mod tests {
         );
         assert_eq!(UiAction::parse("speed(3)"), Ok(UiAction::Speed(3)));
         assert_eq!(UiAction::parse("back"), Ok(UiAction::Back));
+        assert_eq!(UiAction::parse("menu(research)"), Ok(UiAction::MenuOpen("research".into())));
+        assert_eq!(UiAction::parse("replace(csd)"), Ok(UiAction::Replace("csd".into())));
+        assert_eq!(UiAction::parse("menu"), Ok(UiAction::Menu));
+        let ck = yaml::parse("clock: pause\nhistory: 29\nwidgets: {}").unwrap();
+        let ckl = ScreenLayout::parse("bases", Get(&ck), l.clone(), &[], 0).unwrap();
+        assert_eq!((ckl.clock_runs, ckl.history), (Some(false), Some(29)));
+        let bad_ck = yaml::parse("clock: slow").unwrap();
+        assert!(ScreenLayout::parse("bases", Get(&bad_ck), l.clone(), &[], 0).is_err());
         assert!(UiAction::parse("fly(away)").is_err());
         assert_eq!((l.items[2].font.as_deref(), l.items[2].at, l.items[2].monospace), (None, None, false));
         let t = yaml::parse("widgets: {t: {kind: value, value: time, rect: [0, 0, 1, 1], font: readout, at: [561, 370], monospace: true}}").unwrap();
@@ -602,6 +663,8 @@ mod tests {
             widgets: vec![],
             items: vec![],
             dialog: false,
+            clock_runs: None,
+            history: None,
             pack: 0,
         };
         assert!(ScreenLayout::parse("csd", Get(&bad), base, &[], 0).unwrap_err().contains("dial"));

@@ -49,6 +49,8 @@ pub struct Ui {
     font: Option<Font>,
     panel: Option<Texture2D>,
     sheets: Vec<SheetFace>,
+    /// The skin's other images by reference (its dialog's fill, capsules and frame).
+    images: Vec<(String, Texture2D)>,
 }
 
 /// One piece of a nine-slice draw: source rectangle in the image, destination on screen.
@@ -124,7 +126,31 @@ impl Ui {
                 }
             })
             .collect();
-        Ui { skin, font, panel, sheets }
+        let images = skin
+            .dialog
+            .as_ref()
+            .map(|d| d.images())
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|r| match content.load_image(&r, skin.pack, false) {
+                Ok(img) => {
+                    let t = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
+                    // Interface art: pixel for pixel, no smoothing of keyed edges.
+                    t.set_filter(FilterMode::Nearest);
+                    Some((r, t))
+                }
+                Err(e) => {
+                    eprintln!("skin {}: dialog image {r}: {e}", skin.id);
+                    None
+                }
+            })
+            .collect();
+        Ui { skin, font, panel, sheets, images }
+    }
+
+    /// An image of the skin (loaded at start) by its reference.
+    pub fn image(&self, reference: &str) -> Option<&Texture2D> {
+        self.images.iter().find(|(r, _)| r == reference).map(|(_, t)| t)
     }
 
     /// A sheet font of the skin by name.

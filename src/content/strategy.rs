@@ -273,6 +273,8 @@ pub fn protection_of(kind: &str, g: Get) -> Option<f32> {
 ///   labels: [paused, 1 hour/s, 6 hours/s, 1 day/s, 5 days/s]
 ///   on_event: 0                  # the speed an event or prompt drops the clock to
 ///   run: 3                       # the speed the Space key toggles to
+///   notices: drop                # drop | keep | ask: what a notice (a Report) does to it
+///   notice_buttons: [OK, "OK (slow)"]   # with ask: keep the speed, or drop to on_event
 /// ```
 ///
 /// The original Interceptor's dial has six speeds and no pause (5 s, 1 min, 5 min,
@@ -287,6 +289,23 @@ pub struct ClockDef {
     pub on_event: usize,
     /// The speed Space toggles to from `on_event`.
     pub run: usize,
+    /// What a notice (a Report prompt) does to the speed (RQ-S-18).
+    pub notices: NoticeClock,
+    /// With `NoticeClock::Ask`: the Report's two buttons — keep the speed, or drop it
+    /// to `on_event` (the original: "OK" and "OK (5 secs)").
+    pub notice_buttons: [String; 2],
+}
+
+/// What a notice does to the clock (`clock.notices`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NoticeClock {
+    /// Drop to `on_event` (the engine's behaviour so far).
+    Drop,
+    /// Leave the speed alone.
+    Keep,
+    /// Ask: the Report's second button drops to `on_event`, its first keeps the speed
+    /// (the original's queued-event dialogs, 0x46bdc4 → SetSpeed(0), verified).
+    Ask,
 }
 
 impl Default for ClockDef {
@@ -297,6 +316,8 @@ impl Default for ClockDef {
             labels: ["paused", "1 hour/s", "6 hours/s", "1 day/s", "5 days/s"].iter().map(|s| s.to_string()).collect(),
             on_event: 0,
             run: 3,
+            notices: NoticeClock::Drop,
+            notice_buttons: ["OK".into(), "OK (slow)".into()],
         }
     }
 }
@@ -338,7 +359,22 @@ impl ClockDef {
         };
         let on_event = index("on_event", 0, errors);
         let run = index("run", 3, errors);
-        ClockDef { speeds, labels, on_event, run }
+        let notices = match g.str("notices") {
+            None | Some("drop") => NoticeClock::Drop,
+            Some("keep") => NoticeClock::Keep,
+            Some("ask") => NoticeClock::Ask,
+            Some(o) => {
+                errors.push(format!("clock.notices: '{o}' is not drop, keep or ask"));
+                NoticeClock::Drop
+            }
+        };
+        let mut notice_buttons = d.notice_buttons.clone();
+        match g.list("notice_buttons").as_slice() {
+            [] => {}
+            [ok, slow] => notice_buttons = [ok.clone(), slow.clone()],
+            _ => errors.push("clock.notice_buttons: expected two captions [keep, slow]".into()),
+        }
+        ClockDef { speeds, labels, on_event, run, notices, notice_buttons }
     }
 
     /// A short button caption for a rate of `hours` per second ("||", "5s", "30m", "1d").
@@ -1453,6 +1489,8 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("labels", Ty::List(Box::new(Ty::Text)), "what the speed readout shows for each speed"),
                 f("on_event", Ty::Num, "the speed (0 = first) an event or alert drops the clock to"),
                 f("run", Ty::Num, "the speed the Space key toggles to"),
+                f("notices", Ty::Enum(&["drop", "keep", "ask"]), "what a notice does to the speed: drop to on_event (default), keep it, or ask with two buttons"),
+                f("notice_buttons", Ty::List(Box::new(Ty::Text)), "with ask: the two captions [keep the speed, drop to on_event]"),
             ]),
             "the time controls (default: a pause, then 1 h, 6 h, 1 d and 5 d per second)",
         ),
@@ -1497,6 +1535,12 @@ pub(crate) mod tests {
         assert_eq!(c.labels[5], "1 day/s");
         assert_eq!(ClockDef::short(c.speeds[3]), "30m");
         assert_eq!(ClockDef::short(0.0), "||");
+        assert_eq!(c.notices, NoticeClock::Drop, "notices drop the speed unless told otherwise");
+        let a = ClockDef::parse(Some(&g("notices: ask\nnotice_buttons: [Fine, Slow down]")), &mut errors);
+        assert_eq!((a.notices, a.notice_buttons[1].as_str()), (NoticeClock::Ask, "Slow down"));
+        let mut e2 = Vec::new();
+        ClockDef::parse(Some(&g("notices: sometimes\nnotice_buttons: [one]")), &mut e2);
+        assert_eq!(e2.len(), 2, "{e2:?}");
         // Own labels win; a bad speed or index is an error naming the key.
         let n = g("speeds: [0, 2h, fast]\nlabels: [stop]\nrun: 7");
         let c = ClockDef::parse(Some(&n), &mut errors);

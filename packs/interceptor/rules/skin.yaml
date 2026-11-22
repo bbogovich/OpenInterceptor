@@ -39,4 +39,10 @@ skins:
     # Prompts as the original's message boxes: caption in 23010, text in 23011, text
     # buttons stacked up from the bottom (MsgBox.cpp, VERIFIED). The width and offsets
     # are DERIVED until the frame art (#127) gives the caption its verified top + 54.
-    dialog: {width: 300, title_font: readout, body_font: body, title_y: 18, body_top: 28}
+    # Since #127: the body is the message boxes' fill surface (sprite row 430 = WrappersDLL
+    # 5006, VERIFIED; tiled here, DERIVED) and the buttons are message-box capsules
+    # (rows 258-260 left/middle/right, pressed 261-263, caption in 23010 at (cx, cy-2),
+    # pressed (+1,+1): VERIFIED; their placement in the box DERIVED). The three frame kits
+    # (rows 163-198) are not drawn: which piece goes where is not recovered yet.
+    dialog: {width: 300, title_font: readout, body_font: body, title_y: 18, body_top: 28,
+             fill: "original:WrappersDLL.dll#5006", capsule: "original:sprite#258"}
