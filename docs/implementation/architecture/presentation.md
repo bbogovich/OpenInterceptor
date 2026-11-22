@@ -340,6 +340,33 @@ advances, every design narrower than its advance, the sheet reads),
 detail text), `content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look`,
 `content::screens::tests` (list keys), `cli::tests` (`--notice`).
 
+### The compact list box (`app::listbox`)
+
+*App NEXT, branch `parity/m2` (plan M2, issue #124; RQ-UI-13).* `app::listbox` holds the original
+ListBox's rules (0x51b7c6) as pure functions:
+
+- `visible_rows(h, lh)`: rounds in integers.
+- `columns(face, template)`: the exe's 0x51c46b. Each column starts where the previous `~` token
+  ends, measured in the header font, `#` marking the editable one. The token split also takes
+  newlines, since the text tables turn `~` into them.
+- `column_width`.
+- `pulse_step(ticks)` and `pulse_level(n)`: the selection bar.
+- `Repeat`: a held button's fire-on-press and 20/5-tick auto-repeat (0x41767b).
+
+`StrategyScreen::draw_list_art` uses them when `ListStyle::compact` is set:
+
+- It fills `Row::cells` (market, factory, hangar) under the template's columns.
+- It keeps one `Repeat` per arrow in `StrategyScreen::arrows`.
+- It loads arrow images through `image_keyed`, which uses `Content::load_image_keyed` and
+  `tga::SPRITE_KEY_555`. The arrows' cyan key is `0x03FF`, not the cockpits' `0x03DF`.
+
+Tests:
+
+- `app::listbox::tests`: rounding, columns from a synthetic font, the pulse curve and period, the
+  repeat timeline 0/20/25/30/35.
+- `content::screens::tests`: `style`, `columns`, `up`, `down`.
+- `check::tests`: a missing arrow image.
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -414,6 +441,7 @@ play without it.
 | `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5). |
 | `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
 | `caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}`; `StrategyScreen::draw_list_art`, `notice` | `app::caption`, `app::strategy` | Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7). |
+| `listbox::{visible_rows, columns, Column, column_width, pulse_step, pulse_level, PRESSED, Repeat}`; `Row::cells`; `StrategyScreen::arrows`, `image_keyed`; `Content::load_image_keyed`; `tga::SPRITE_KEY_555`; `ListStyle::{compact, columns, bar, up, down}`, `Arrow` | `app::listbox`, `app::strategy`, `content`, `formats::tga`, `content::screens` | The original's compact list box (app NEXT). |
 | `smallfont::{REFERENCE, advances, sheet}`; `SheetFont::with_advances`; `TextButtonStyle`, `DialogStyle`, `ListStyle` | `content::smallfont`, `formats::sheetfont`, `content::skin`, `content::screens` | The built-in 6 px caption font; the skin's `text_button` and `dialog`; a list's part rectangles. |
 | `text::{Face, Placed, Align, draw_text, draw_text_rect, draw_text_top, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app 0.22.5). |
 | `SheetFace`, `Ui::sheet`, `Ui::draw_glyphs`; `strategy::sheet_text`; `WidgetDef::{font, at, monospace}` | `app::ui`, `app::strategy`, `content::screens` | Loaded sheet fonts and their drawing; a widget's text in its sheet font. |

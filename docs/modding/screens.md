@@ -170,7 +170,8 @@ and kept; one that cannot be loaded is reported on standard error once
 | `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-0225) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-0225)) and `size` is unused (app 0.22.5). |
 | `at` | `[x, y]` | none | With `font`: an anchor point instead of the rectangle. |
 | `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
-| `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-next), app 0.22.7). |
+| `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-0227), app 0.22.7). |
+| `style`, `columns`, `bar`, `up`, `down` | | | A `list` in a sheet font as the original's list box: rows, columns, the pulsing bar, scroll arrows ([Compact list boxes](#compact-list-boxes), app NEXT). |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
 | `kind` | Draws / does |
@@ -250,7 +251,7 @@ the art (audit D-32 – D-38). Each part goes where the art has room for it:
 | Title | In a strip `header` pixels tall at the top of `rect`, left, in `title_font` (no strip, no title). |
 | Rows | Below the strip, one every `row_height` (default: the font's line height + 2, the original's list box), each `row_size` tall, text centred in it and cut with "..." to fit. The selected row has the skin's `highlight` behind it. Rows with no action are dimmed. A thin scroll bar shows when there are more rows than fit; the wheel scrolls by one. |
 | Selected row in full | Wrapped from the top of `detail`, in `detail_font`; lines that would end below it are left out. |
-| Its actions | Text buttons ([skin `text_button`](skins.md#text-buttons-and-dialogs-app-next)) in `buttons`: a row of equal buttons when each is at least 60 px wide (at most 150), else a column of 20 px buttons. |
+| Its actions | Text buttons ([skin `text_button`](skins.md#text-buttons-and-dialogs-app-0227)) in `buttons`: a row of equal buttons when each is at least 60 px wide (at most 150), else a column of 20 px buttons. |
 
 A double click on a row still does its first action. The compact list style of the original
 (columns, the pulsing bar, scroll arrows) is plan M2 #124.
@@ -260,6 +261,44 @@ A double click on a row still does its first action. The compact list style of t
 topics: {kind: list, source: research, rect: [330, 49, 250, 264], font: body, row_height: 34, row_size: 25,
          detail: [26, 374, 412, 64], buttons: [26, 442, 412, 20]}
 ```
+
+#### Compact list boxes
+
+`style: compact` (app NEXT, plan M2 #124, RQ-UI-13) draws a list in a sheet font as the
+original's list box (ListBox.cpp, **verified** unless marked):
+
+| Rule | |
+|---|---|
+| Rows | One row-font line + 2 px apart (the body font 23011: 16 px). A box `h` tall below its header strip shows `round((h − 7) / (line height + 2))` rows; the first sits 3 px below the strip (**derived**). |
+| Columns | `columns: <template>` — text or a `@key`, such as `@orig.S_S6B_PURCHASE_HDR`. It splits at `~` and each column starts where the previous header text ends, trailing spaces included, measured in the `title_font`. So the template's padding sets the layout. A `#` before a header marks the editable column and is not shown. The headers are drawn in the `header` strip. A cell wider than its column is cut with "...". |
+| Selection bar | The full row in `bar` (default green) at a pulsing level: 150 · (1 − n/74) falling to 75, then back up to 150, as `n` counts 0 – 74 every 2 ticks (2.5 s). A pressed row flashes amber, RGB(200, 150, 0), on alternate frames. |
+| Scroll arrows | `up` and `down`: `[x, y, w, h]` or `{rect, images: [normal, pressed, disabled]}`. An arrow moves the list one row when pressed, then again after 20 ticks and every 5 ticks while held. At the ends it is disabled and shows its third image. Images are drawn with the original's sprite colour key (pure cyan) transparent. Without images an arrow is a hot spot over the art. The mouse wheel also scrolls one row. |
+
+Without `columns`, or for a row the engine gives no cells, the row's text spans the row. The
+lists that fill columns, in this order:
+
+| `source` | Cells |
+|---|---|
+| `market` | name, size, cost, stores (craft: name, —, cost) |
+| `factory` | name, size, build time (production units), stores (craft: name, —, units) |
+| `hangar` | craft, pilot, base and state (pilots and recruits span the row) |
+
+```yaml
+# packs/interceptor/rules/screens.yaml: Equipment & Personnel's list box
+items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style: compact, header: 18, title_font: readout,
+        columns: "@orig.S_S6B_PURCHASE_HDR", detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115],
+        up: {rect: [562, 290, 24, 24], images: ["original:WrappersDLL.dll#6911", "original:WrappersDLL.dll#6912", "original:WrappersDLL.dll#6913"]},
+        down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
+```
+
+`interceptor` (app NEXT):
+
+- Purchase, Manufacture and Equip Ships use compact boxes with columns and their arrows. The
+  arrows' positions and images are **verified**; Equip Ships' columns borrow the CSD's ship-list
+  template (**derived**).
+- Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Their arrows'
+  positions are not recovered yet, so they scroll with the wheel.
+- Research keeps its rows on the art's slots.
 
 A `button` with a `label` and no images is drawn as a **text button** when the skin has
 `text_button`: its caption is centred on its own rectangle in the caption font.
