@@ -7009,6 +7009,12 @@ one looks like a bug.</p>
 <td>Data.</td>
 <td></td>
 </tr>
+<tr>
+<td>DEV-097</td>
+<td><strong>Artefacts come from raid tables, not from what the destroyed ships carried.</strong> The original makes an artefact topic available when a mission salvages that item, by what the destroyed alien ships carried, with the <code>*Goodies</code> chance (§11.2, <strong>verified</strong> tables), and keeps it only while the item is in stores (§4.2, <strong>verified</strong>). The engine rolls each of the raid's <code>salvage_items</code> on a win. Derived: which item each topic needs (the exe's table at 0x66f768 is not extracted), which raid yields which artefact, the probe and saucer tables, and Level 0's score. The mines, the Doomsday pieces, Poltergeist and Shade are not gated yet.</td>
+<td>The flight layer does not report the destroyed ships' fits to the campaign.</td>
+<td>M3 (#129)</td>
+</tr>
 </tbody>
 </table>
 

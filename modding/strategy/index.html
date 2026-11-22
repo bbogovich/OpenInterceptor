@@ -7995,6 +7995,24 @@ yet.</p>
 <td>The original's numeric prerequisites, read through inheritance; with a <a href="#tech_ids"><code>tech_ids</code></a> table and no <code>requires</code>, they become <code>research(a) and research(b)</code> (app 0.8.0).</td>
 </tr>
 <tr>
+<td><code>requires_all</code></td>
+<td>list of topic ids</td>
+<td>none</td>
+<td>App NEXT: topics that must <strong>all</strong> be known as well — <code>research(a) and research(b)</code> joined to <code>requires</code> (and to the translated <code>prereq*</code>). <code>interceptor</code>: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: the original's <code>Level</code> (read through inheritance); a finished topic earns <code>research_model.score_by_level</code> at its level.</td>
+</tr>
+<tr>
+<td><code>requires_item</code></td>
+<td>item id</td>
+<td>none</td>
+<td>App NEXT: an <strong>artefact-gated</strong> topic (the original's Prereq 127, RQ-S-03): offered only once that item has been <em>recovered</em> by salvage (raids' <a href="#raids"><code>salvage_items</code></a>) and only while one stays in some base's stores. When it is gone (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error.</td>
+</tr>
+<tr>
 <td><code>lab</code>, <code>site</code>, <code>start_cost</code></td>
 <td></td>
 <td>none</td>
@@ -8031,10 +8049,48 @@ yet.</p>
 <td><code>keep_progress</code></td>
 <td>Whether switching a base to another topic keeps the work done on the old one (with <code>lose_progress</code> it is lost unless another base is still working on it).</td>
 </tr>
+<tr>
+<td><code>score_by_level</code></td>
+<td>list of numbers</td>
+<td>none</td>
+<td>App NEXT: the score a finished topic earns, by its <code>level</code> (a level past the list takes the last). <code>interceptor</code>: <code>[250, 250, 500, 750]</code> (<strong>verified</strong> +250 / +500 / +750 for Levels 1 – 3; Level 0 taking 250 is <em>derived</em>). <code>default</code>: <code>[100, 200, 300]</code>.</td>
+</tr>
 </tbody>
 </table>
-<p>A topic finishes when its work reaches <code>size</code>; every base working on it stops, and a message
-says so.</p>
+<p>A topic finishes when its work reaches <code>size</code>; every base working on it stops, a message
+says so, and its <code>score_by_level</code> score is added to the month's.</p>
+<p><code>goodies: {&lt;id&gt;: …}</code> (app 0.22.25) — salvage chances for raids' <code>salvage_items</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chances</code></td>
+<td>list of numbers</td>
+<td>none</td>
+<td>Per cent by difficulty level, easiest first; a level past the list takes the last.</td>
+</tr>
+<tr>
+<td><code>beginner</code> … <code>superhuman</code></td>
+<td>number</td>
+<td>none</td>
+<td>The same as the original's keys, read through inheritance: <code>interceptor</code> inherits <code>original:GameSettings.ini/BeamGoodies</code>, <code>MissileGoodies</code>, <code>FreighterGoodies</code> and <code>AlienCorpseGoodies</code> (<strong>verified</strong> tables, <code>unknowns-2026-11.md</code> §11.2).</td>
+</tr>
+</tbody>
+</table>
+<p><code>interceptor</code> (app 0.22.25) gates its alien topics on artefacts: the alien weapons on their own items
+(Phase Cannon, Plasma Cannon, Psi Blaster, Elerium, Enveloping and Parallax torpedoes), the five
+alien races on corpse items, the three saucer examinations on wreckage items, and the alien
+probes and drone on their own artefacts. Which item a topic needs (the exe's table at
+0x66f768 is not extracted), which raid yields which artefact, and the probe and saucer tables are
+<em>derived</em>. The mines, the Doomsday component pieces (#135), Poltergeist and Shade stay open as
+before, having no source yet.</p>
 <h3 id="items-and-hulls"><code>items</code> and <code>hulls</code><a class="headerlink" href="#items-and-hulls" title="Permanent link">&para;</a></h3>
 <p><code>items: {&lt;id&gt;: …}</code> — equipment, ammunition and goods.</p>
 <table>
@@ -8409,6 +8465,12 @@ its <code>cargo</code> modules limit nothing: the original hub's own cargo room 
 <td>number</td>
 <td>600</td>
 <td>Map units per hour.</td>
+</tr>
+<tr>
+<td><code>salvage_items</code></td>
+<td>list of <code>{item, goodies}</code></td>
+<td>none</td>
+<td>App NEXT: artefacts a <strong>won</strong> battle with this raid may recover: each is rolled once with its <a href="#research-and-research_model"><code>goodies</code></a> table's chance at the campaign's difficulty and goes to the home base of the first craft in the battle (base 0 if none), opening the topics whose <code>requires_item</code> it is. Unknown item or table: load error.</td>
 </tr>
 <tr>
 <td><code>react_on_detect</code></td>
