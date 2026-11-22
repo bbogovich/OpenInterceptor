@@ -152,7 +152,13 @@ impl Content {
         found.retain(|p| {
             let keep = !p.requires_original || original.is_some();
             if !keep {
-                warnings.push(format!("pack '{}' skipped: it needs the original Interceptor data (--data)", p.id));
+                // Name every place the data is looked for, so a player whose app cannot
+                // find it knows where to put it (see `settings::resolve_original`).
+                warnings.push(format!(
+                    "pack '{}' skipped: it needs the original Interceptor data. Give it with --data, set \
+                     paths.original in settings.yaml, or copy the CD to the user data folder's original/",
+                    p.id
+                ));
             }
             keep
         });

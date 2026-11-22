@@ -5,6 +5,7 @@
     python3 tools/build_bundle.py --data /Volumes/CD # settings point at another copy
     python3 tools/build_bundle.py --install-data     # also clone the CD into the user data folder
     python3 tools/build_bundle.py --no-settings      # leave settings.yaml alone
+    python3 tools/build_bundle.py --zip              # also write dist/OpenInterceptor-<version>-macos.zip
 
 The app contains the engine, resources/default and the bundled mods (packs/), never any original data, so the
 app itself is safe to share. The player's data lives in the user data folder, as in a
@@ -97,6 +98,7 @@ def main():
     parser.add_argument("--install-data", action="store_true", help="clone the CD into the user data folder's original/")
     parser.add_argument("--no-settings", action="store_true", help="do not touch settings.yaml")
     parser.add_argument("--skip-build", action="store_true", help="reuse the last release build")
+    parser.add_argument("--zip", action="store_true", help="also archive the app for sharing (holds no original data)")
     args = parser.parse_args()
 
     cargo, path = find_cargo()
@@ -142,6 +144,11 @@ def main():
     run("xattr", "-cr", app)
     run("codesign", "--force", "--sign", "-", app)
     run("codesign", "--verify", "--strict", app)
+    if args.zip:
+        # ditto keeps the bundle's signature and extended attributes intact (zip(1) would not).
+        archive = DIST / f"OpenInterceptor-{number}-macos.zip"
+        archive.unlink(missing_ok=True)
+        run("ditto", "-c", "-k", "--keepParent", app, archive)
 
     if not args.no_settings:
         data = args.data.resolve()
@@ -160,6 +167,7 @@ def main():
             update_settings(data)
         else:
             print(f"No original data at {data}; settings.yaml not changed (only original-free packs will load)")
+            print("  To play the X-COM campaign, rerun with --data <CD or install> --install-data")
     (USER_DATA / "mods").mkdir(parents=True, exist_ok=True)
     print(f"Built {app}")
 
