@@ -291,7 +291,8 @@ Priority: **P1** = changes how often battles are won or lost, **P2** = visible i
 ### RQ-C-12 AI retreat from a Nova detonation (P3)
 
 * **Original** (§9, §12). Once per ship, when a Nova bomb detonates, the AI rolls, with
-  `b = 100 − Brav`, `i = 100 − Int` and `s = 100 − Sta`, clamped to [5, 95]:
+  `b = 100 − Brav`, `i = 100 − Int` and `s = 100 − Sta`; the resulting **p** is clamped to [5, 95]
+  (verified, `0x587949`: the clamp is on p, not on b, i, s):
 
   | Rank | p |
   |---|---|
@@ -305,22 +306,27 @@ Priority: **P1** = changes how often battles are won or lost, **P2** = visible i
 * **Where.** `sim::ai`, an event hook on the Nova detonation (RQ-C-14).
 * **Pack data.** Behaviour `on_event: {nova_detonated: {retreat_chance: <table as RQ-C-11>}}`.
 * **Test.** Forced detonation: a rank-0 pilot with all stats 100 gets p = 50, and one with all
-  stats 0 gets p = 95 (clamped).
+  stats 0 gets p = 0.25·100 + 0.1·100 + 0.05·100 + 50 = **90** (the table was right; the old example's
+  95 was wrong). A rank-4 pilot with all stats 100 gets −25 → clamped to 5.
 
 ### RQ-C-13 Break-off and re-engage timing (P3)
 
 * **Original** (§10).
-  * Under 250 m the AI breaks off (state 3). It re-engages when the manoeuvre ends and more than
-    `5000 − 500d` ms have passed (derived).
-  * On break-off, with `chance(25)` and d > 1, it makes a radio call.
+  * Under 250 m the AI breaks off (state 3). A break-off ends **only when its manoeuvre ends**
+    (verified, `0x592730`): with no target → search; otherwise re-engage if the target is more
+    than **1,200 m** away, or, once more than `5000 − 500d` ms have passed in state 3, with
+    `chance(25)` at any range; else it flies another break-off manoeuvre.
+  * On entering break-off (`0x59262d`), with `chance(25)`, d > 1, and only when the target is
+    **not the player's ship**, it sends radio message 7 for 4,000 ms (`0x5862be`).
   * States: 1 search, 2 attack, 3 break off, 4 re-evaluate, 5 jump out.
 * **Engine now.** The interceptor behaviour has `evade → engage when time_in_state > 2.5s` (or
   similar).
 * **Where.** `packs/interceptor/rules/behaviours.yaml` only. The condition language already has
   `time_in_state` and `difficulty`.
-* **Pack data.** `time_in_state > per_level([5s, 4.5s, 4s, 3.5s, 3s])`; break-off trigger
-  `target_distance < 250m`.
-* **Test.** A behaviour test with level 0 stays in evade for 5 s, and level 4 for 3 s.
+* **Pack data.** re-engage when `manoeuvre_done and (target_distance > 1200m or (time_in_state >
+  per_level([5s, 4.5s, 4s, 3.5s, 3s]) and chance(25)))`; break-off trigger `target_distance < 250m`.
+* **Test.** After the manoeuvre a target at 1,500 m re-engages at once; at 800 m it re-engages only
+  after the per-level time and a seeded 25 % roll.
 
 ---
 
