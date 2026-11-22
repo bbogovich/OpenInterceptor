@@ -167,7 +167,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `size` | number | 12 | Text size in design pixels (at least 4). |
 | `colour` | `[r, g, b]` or `[r, g, b, a]` | the skin's `text` colour | Text colour, 0 – 1. |
 | `align` | `left`, `centre`, `right` | `left` | Text alignment in the rectangle. |
-| `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-next) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-next)) and `size` is unused (app NEXT). |
+| `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-next) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-next)) and `size` is unused (app 0.22.5). |
 | `at` | `[x, y]` | none | With `font`: an anchor point instead of the rectangle. |
 | `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
@@ -209,7 +209,7 @@ and kept; one that cannot be loaded is reported on standard error once
 
 A name the engine does not know shows as `?<name>`.
 
-### Text in sheet fonts (app NEXT)
+### Text in sheet fonts (app 0.22.5)
 
 A `value` or `text` widget with `font: <name>` is drawn in that [sheet font](skins.md#sheet-fonts-app-next)
 of the skin and placed by the two routines the original game uses for all its screen text
@@ -262,7 +262,7 @@ original has one, its links and a back button.
   readouts' order (from the original running) and the back buttons' positions. Since app 0.21.0
   the dial's six holes select the original's six speeds (`speed(0)` – `speed(5)`, verified from the
   program's clock table; see [`clock`](strategy.md#clock)).
-- **Since app NEXT** the readouts, the status bar, the base names and the Equipment & Personnel
+- **Since app 0.22.5** the readouts, the status bar, the base names and the Equipment & Personnel
   funds use the original's sheet fonts and anchors: the four readouts in 23010 centred on x 561 at
   y 370, 390, 410 and 430 (the time monospaced), the status bar centred in its bar, and the funds
   centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34). Lists,

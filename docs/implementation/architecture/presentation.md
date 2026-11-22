@@ -379,9 +379,9 @@ play without it.
 | `Event::Card`, `Event::Video`, `Event::Cutscene` | `campaign` | Story events for the screen to present. |
 | `Next::Video`, `Next::Cutscene`, `Screen::Video`, `Screen::Cutscene` | `app` | The routing above. |
 | `AppContext::ui`, `AppContext::music` | `app` | The skin and the music player, shared by every screen. |
-| `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app NEXT). |
+| `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5). |
 | `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
-| `text::{Face, Placed, Align, draw_text, draw_text_rect, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app NEXT). |
+| `text::{Face, Placed, Align, draw_text, draw_text_rect, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app 0.22.5). |
 | `SheetFace`, `Ui::sheet`, `Ui::draw_glyphs`; `strategy::sheet_text`; `WidgetDef::{font, at, monospace}` | `app::ui`, `app::strategy`, `content::screens` | Loaded sheet fonts and their drawing; a widget's text in its sheet font. |
 | `widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}` | `app::widgets` | Immediate-mode widgets for the strategy screen (app 0.16.0); the arithmetic pure and tested. |
 | `ScreenLayout`, `default_starmap`, `STARMAP_WIDGETS`, `screens::schema` | `content::screens` | `screens.<id>`: design space, background, widget rectangles; the engine's strategy-screen layout. |

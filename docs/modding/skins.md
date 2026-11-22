@@ -148,7 +148,7 @@ the screens still draw, with colours and the built-in font.
 The strategy screen clips each list row to its width by measuring it in the skin's font (app
 0.16.0) and shows the selected row in full beneath the list, so a wide font costs only room.
 
-## Sheet fonts (app NEXT)
+## Sheet fonts (app 0.22.5)
 
 A skin can also carry **bitmap sheet fonts** by name, under `fonts:`. A [screen set](screens.md#text-in-sheet-fonts-app-next)
 widget that names one with `font: <name>` is drawn in it, placed by the original game's own text
@@ -228,7 +228,7 @@ captions; it is not a sheet and is not available yet (plan M2, #123).
 ## Not built yet
 
 - Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used
-  by screen-set `value` and `text` widgets only (app NEXT); lists, buttons, the map labels and the
+  by screen-set `value` and `text` widgets only (app 0.22.5); lists, buttons, the map labels and the
   testbed layout still draw with `font` (the TrueType font). Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
 - Main menu option values too long for their room are drawn smaller (down to half size, app
   0.14.2), not wrapped.

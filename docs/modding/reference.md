@@ -577,7 +577,7 @@ section: `skins: {<skin id>: {…}}`; `campaign.skin` chooses one.
 | `panel.image` | asset | none | A nine-slice frame image for panels and title cards. |
 | `panel.slice` | number | 16 | Its corner size, pixels. |
 | `font` | asset | the built-in font | A TrueType font for every skinned text. |
-| `fonts.<name>` | asset or `{sheet, top, wrap_offset, spacing}` | none | Grid sheet bitmap fonts for screen-set widgets' `font:` (app NEXT; [Skins › Sheet fonts](skins.md#sheet-fonts-app-next)). `sheet`: the image; `top`: glyph top = anchor y − `top` (default half the line height); `wrap_offset`: extra drop of wrapped text; `spacing`: extra pixels per character. `interceptor`: the original's nine SpritesDLL fonts. |
+| `fonts.<name>` | asset or `{sheet, top, wrap_offset, spacing}` | none | Grid sheet bitmap fonts for screen-set widgets' `font:` (app 0.22.5; [Skins › Sheet fonts](skins.md#sheet-fonts-app-next)). `sheet`: the image; `top`: glyph top = anchor y − `top` (default half the line height); `wrap_offset`: extra drop of wrapped text; `spacing`: extra pixels per character. `interceptor`: the original's nine SpritesDLL fonts. |
 
 ### `screens`
 
@@ -608,7 +608,7 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `size` | number | 12 | Text size in design pixels (at least 4). |
 | `colour` | 3 or 4 numbers | the skin's `text` | Text colour, 0 – 1. |
 | `align` | `left`, `centre`, `right` | `left` | Text alignment. |
-| `font` | name | none | A sheet font of the campaign's skin (app NEXT): the text is placed by the original's rules ([Screen layouts › Text in sheet fonts](screens.md#text-in-sheet-fonts-app-next)); `size` is then unused. An unknown name is a `--check` error. |
+| `font` | name | none | A sheet font of the campaign's skin (app 0.22.5): the text is placed by the original's rules ([Screen layouts › Text in sheet fonts](screens.md#text-in-sheet-fonts-app-next)); `size` is then unused. An unknown name is a `--check` error. |
 | `at` | 2 numbers | none | With `font`: the anchor `[x, y]` — the line's left, centre or right (by `align`) at x, glyph tops at y − the font's `top`. Without it the text is placed in `rect`. |
 | `monospace` | bool | `false` | With `font`: every character in a cell as wide as the font's widest glyph (the original's clock). |
 | `shape` | `rect`, `round` | `rect` | A map's viewport; `round` clips it to the circle inside the rectangle. |
