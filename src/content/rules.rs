@@ -338,6 +338,9 @@ pub struct BeamClass {
     /// Shields lose this many points per point of damage they stop (the original's
     /// Phase Cannon: 1.5).
     pub shield_factor: f32,
+    /// A mount's hit points (`hit_points`; the original's beam `HitPoints`). 0: the
+    /// mount cannot be damaged.
+    pub hit_points: f32,
     pub color: [f32; 3],
     /// Sound asset reference, if any.
     pub sound: Option<String>,
@@ -362,6 +365,9 @@ pub struct MissileClass {
     /// Homing leads its target as if it flew at this speed along its heading, m/s (the
     /// original assumes 200); 0 = pure pursuit of the target's position.
     pub lead_speed: f32,
+    /// A launcher's hit points (`launcher_hit_points`; the original's `*Launcher`
+    /// `HitPoints`). 0: the launcher cannot be damaged.
+    pub launcher_hit_points: f32,
     /// Turn rate while homing, degrees per second.
     pub turn_rate: f32,
     /// Seconds the target must stay in the lock cone before launch locks on.
@@ -1336,6 +1342,7 @@ pub fn build_with(
                 speed: g.num("speed").unwrap_or(2000.0).max(1.0),
                 range: g.qty("range", Unit::Distance).unwrap_or(3000.0),
                 shield_factor: g.num("shield_factor").unwrap_or(1.0).max(0.01),
+                hit_points: g.num("hit_points").unwrap_or(0.0).max(0.0),
                 color: rgb(g, "color", [1.0, 0.2, 0.2]),
                 sound: g.str("sound").map(|x| sound_ref(x, &format!("beams.{id}.sound"))),
                 pack: e.pack,
@@ -1355,6 +1362,7 @@ pub fn build_with(
                 proximity_radius: g.qty("proximity_radius", Unit::Distance).unwrap_or(25.0),
                 mass: g.num("mass").unwrap_or(0.0).max(0.0),
                 lead_speed: g.num("lead_speed").unwrap_or(0.0).max(0.0),
+                launcher_hit_points: g.num("launcher_hit_points").unwrap_or(0.0).max(0.0),
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),
                 lock_time: g.qty("lock_time", Unit::Time).unwrap_or(2.0),
                 color: rgb(g, "color", [1.0, 0.8, 0.4]),

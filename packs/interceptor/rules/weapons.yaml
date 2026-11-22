@@ -42,6 +42,9 @@ beams:
     sound: cue:Beam8
 
 missiles:
+  # Beam mounts take the beam section's HitPoints as their hit_points (inherited), and
+  # each rack its launcher's HitPoints: both are struck by damage.system_table
+  # (systems.yaml; README §4.1, VERIFIED).
   # Missiles: speed, duration, impact and proximity damage from the original. Homing
   # (Interceptor.exe, verified): every type turns at most 2.5 rad/s (143 deg/s) and leads
   # its target as if it flew at 200 m/s. The lock time, cone and range come from the
@@ -49,6 +52,7 @@ missiles:
   # the guide's descriptions (DERIVED).
   xwinder:
     inherit: original:GameSettings.ini/XWinderMissile
+    launcher_hit_points: 25   # XWinderMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 85   # kg per round (Interceptor.exe)
     name: X-Winder
     turn_rate: 143.2
@@ -57,6 +61,7 @@ missiles:
     sound: cue:Missile1
   permeator:
     inherit: original:GameSettings.ini/PermeatorMissile
+    launcher_hit_points: 25   # PermeatorMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 370   # kg per round (Interceptor.exe)
     name: Permeator
     damage: bypass_shields   # "bypasses shields"
@@ -66,6 +71,7 @@ missiles:
     sound: cue:Missile3
   sidestep:
     inherit: original:GameSettings.ini/SidestepMissile
+    launcher_hit_points: 25   # SidestepMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 230   # kg per round (Interceptor.exe)
     name: Sidestep
     guidance: sidestep       # its own thrusters
@@ -75,6 +81,7 @@ missiles:
     sound: cue:Missile1
   fusion:
     inherit: original:GameSettings.ini/FusionMissile
+    launcher_hit_points: 25   # FusionMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 940   # kg per round (Interceptor.exe)
     name: Fusion Missile
     turn_rate: 143.2
@@ -83,6 +90,7 @@ missiles:
     sound: cue:Missile2
   elerium_torpedo:
     inherit: original:GameSettings.ini/EleriumTorpedo
+    launcher_hit_points: 25   # EleriumTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 70   # kg per round (Interceptor.exe)
     name: Elerium Torpedo
     turn_rate: 143.2
@@ -91,6 +99,7 @@ missiles:
     sound: cue:Missile6
   enveloping_torpedo:
     inherit: original:GameSettings.ini/EnvelopingFusionTorpedo
+    launcher_hit_points: 25   # EnvelopingFusionTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 670   # kg per round (Interceptor.exe)
     name: Enveloping Fusion Torpedo
     damage: enveloping       # damage spread over the whole surface
@@ -100,6 +109,7 @@ missiles:
     sound: cue:Missile2
   parallax_torpedo:
     inherit: original:GameSettings.ini/ParallaxTorpedo
+    launcher_hit_points: 25   # ParallaxTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 210   # kg per round (Interceptor.exe)
     name: Parallax Torpedo
     guidance: parallax       # two decoys
@@ -110,6 +120,7 @@ missiles:
     sound: cue:Missile6
   cloaking_torpedo:
     inherit: original:GameSettings.ini/PassiveCloakingTorpedo
+    launcher_hit_points: 25   # PassiveCloakingTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 440   # kg per round (Interceptor.exe)
     name: Passive Cloaking Torpedo
     guidance: cloaked_wait   # dropped; waits cloaked
@@ -120,6 +131,7 @@ missiles:
     sound: cue:MissileCloak
   doppelganger:
     inherit: original:GameSettings.ini/DoppelgangerMissile
+    launcher_hit_points: 25   # DoppelgangerMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 1145   # kg per round (Interceptor.exe)
     name: Doppelganger
     guidance: doppelganger   # a decoy copy of your ship

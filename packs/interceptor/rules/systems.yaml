@@ -12,12 +12,30 @@
 # are the exe's special-system table (verified).
 #
 
+# How damage affects each system (notes/re/flight/README.md, VERIFIED unless marked):
+# the engine gives x0.5 thrust below 50 % of its HitPoints, x0.25 below 25 % and none
+# below 15 %, where the ship is disabled (no thrust, afterburner and cloak off; §5, §11);
+# the shield generator recharges at half below 50 % and not at all below 25 % (§3);
+# flight control (40 points) turns at HP / 40 and a hit never takes it below 1 (§4.1,
+# §5); damage to the sensor and the hyperdrive (80 points) changes nothing (§11).
+# Which systems a hull carries and the other systems' damage effects are DERIVED.
 systems:
   engines:
     hit_points: 100
+    efficiency: [{below: 50%, factor: 0.5}, {below: 25%, factor: 0.25}, {below: 15%, factor: 0}]
+    disables_below: 15%
+  manoeuvring:
+    name: Flight control
+    hit_points: 40
+    efficiency: linear
+    min_hit_points: 1
+  hyperdrive:
+    hit_points: 80
+    efficiency: ignore
   sensors:
     name: Targeting/sensors
     hit_points: 60
+    efficiency: ignore
     # SensorTargetingSystem1 (setting A; Interceptor.exe, verified): LockTime 2500 ms,
     # LockAngle 2500 millidegrees, 3 km against ships. Which sensor a hull carries by
     # default is DERIVED.
@@ -27,6 +45,7 @@ systems:
   shields:
     name: Shield generator
     hit_points: 50
+    efficiency: [{below: 50%, factor: 0.5}, {below: 25%, factor: 0}]
   vct:
     name: Vector control thrusters
     hit_points: 150
@@ -64,7 +83,7 @@ systems:
     name: Ship damage control computer
     hit_points: 150
     mass: 100
-    repair_rate: 4
+    repair_rate: 2   # x2: 4 points a second instead of 2 (README §4.3, VERIFIED)
 
 # The beam and shield charge settings A-E (Interceptor.exe, verified). Once a second a
 # ship's energy pool (0-1000, starting full) gains BeamRechargeRate[setting] = 0, 7, 10,
@@ -89,14 +108,38 @@ power:
 # side (each holds the armour's full HitPoints), then the hull. Below 75 % hull, 30 % of
 # what reaches the hull goes to the ship's systems instead. (The original also rolls a
 # min(damage, 100) % chance of injuring the pilot; not modelled yet.)
+#
+# System damage (README §4.1, VERIFIED): up to 5 rolls of rand(100)+1; beam mounts 20 %
+# (rolls 1-10, 26-35), launchers 30 % (11-25, 36-50), shield generator, flight control,
+# sensor and engine 10 % each, hyperdrive 5 %, special systems 3 %, nothing 2 %. The
+# shield generator, sensor and engine pass damage beyond their hit points on to the next
+# roll; whether the hyperdrive does is not traced (here: no). Repair (§4.3, VERIFIED):
+# 2 points a second to the first of engine, hull, shield generator, flight control,
+# hyperdrive, sensor, beam mounts, launchers, special systems that needs it; a system
+# at 0 is never repaired (destroy_below: 0). A damaged mount or launcher fires at half
+# rate at 50 % or less and not at all at 25 % or less (§3, §5.2).
 damage:
   spread: 75%
   armor: per_side
   system_share: 30%
   system_below: 75%
   system_divert: true
-  destroy_below: 0.5   # DERIVED
-  repair_rate: 2       # DERIVED
+  destroy_below: 0
+  repair_rate: 2
+  repair_order: [engines, hull, shields, manoeuvring, hyperdrive, sensors, beams, launchers, others]
+  system_table:
+    tries: 5
+    rolls:
+      - {chance: 20%, hit: beams}
+      - {chance: 30%, hit: launchers}
+      - {chance: 10%, hit: shields, carry: true}
+      - {chance: 10%, hit: manoeuvring}
+      - {chance: 10%, hit: sensors, carry: true}
+      - {chance: 10%, hit: engines, carry: true}
+      - {chance: 5%, hit: hyperdrive}
+      - {chance: 3%, hit: special}
+      - {chance: 2%, hit: none}
+  mounts: {half_rate: 50%, no_fire: 25%}
   # Bank maxima by difficulty (Beginner ... Superhuman): X-COM's own and everyone else's.
   # The player's own beam hits x 1.15 on the two easiest levels; hits on the player
   # x 0.85 on Beginner.

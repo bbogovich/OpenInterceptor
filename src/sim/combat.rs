@@ -188,21 +188,30 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         }
         LinkMode::Unlinked => vec![s.next_mount % n],
     };
-    if !group.iter().all(|&k| s.beam_cooldown[k] <= 0.0) {
+    // Damaged mounts (`damage.mounts`): at half health or less a mount fires at half
+    // rate, at a quarter or less not at all (the original, flight README §3).
+    let group: Vec<(usize, f32)> =
+        group.into_iter().map(|k| (k, mount_rate(&rules, class, s, k))).filter(|&(_, r)| r > 0.0).collect();
+    if group.is_empty() {
+        // Every mount of this group is out: move on to the next one.
+        s.next_mount = (s.next_mount + 1) % n;
         return;
     }
-    let cost: f32 = group.iter().map(|&k| rules.beam(class.beams[k]).energy_cost).sum();
+    if !group.iter().all(|&(k, _)| s.beam_cooldown[k] <= 0.0) {
+        return;
+    }
+    let cost: f32 = group.iter().map(|&(k, _)| rules.beam(class.beams[k]).energy_cost).sum();
     if s.energy < cost {
         // Not enough energy: report it, and hold the mounts for half a second so the
         // warning is not repeated every tick while the trigger is held.
-        for &k in &group {
+        for &(k, _) in &group {
             s.beam_cooldown[k] = 0.5;
         }
         w.events.push(SimEvent::NoEnergy { ship: id });
         return;
     }
     s.energy -= cost;
-    s.next_mount = (group.last().copied().unwrap_or(0) + 1) % n;
+    s.next_mount = (group.last().map(|g| g.0).unwrap_or(0) + 1) % n;
     drop_cloak(s, id, &mut w.events);
     let (pos, rot, vel, faction) = (s.position, s.rotation, s.velocity, s.faction);
     // The ship's turn rate in world axes. `angular_velocity` is kept in the ship's own
@@ -221,9 +230,9 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         }
         _ => fwd,
     };
-    for &k in &group {
+    for &(k, rate) in &group {
         let beam = rules.beam(class.beams[k]);
-        s.beam_cooldown[k] = 1.0 / beam.rate_of_fire;
+        s.beam_cooldown[k] = 1.0 / (beam.rate_of_fire * rate);
         let offset = rot * mount_offset(k, n, radius);
         // A point on a turning body moves at ω × r, where r is its offset from the
         // centre: a gun on the right wing of a ship yawing left is swinging forwards.
@@ -253,29 +262,66 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     w.events.push(SimEvent::BeamFired { ship: id, position: pos });
 }
 
+/// How often beam mount `k` of `ship` fires: 1, 0.5 or 0 by its hit points
+/// (`damage.mounts`); always 1 for a beam without `hit_points`.
+pub fn mount_rate(
+    rules: &crate::content::rules::Ruleset,
+    class: &crate::content::rules::ShipClass,
+    ship: &super::Ship,
+    k: usize,
+) -> f32 {
+    let max = rules.beam(class.beams[k]).hit_points;
+    match ship.beam_hp.get(k) {
+        Some(hp) if max > 0.0 => rules.damage.mounts.rate(hp / max),
+        _ => 1.0,
+    }
+}
+
+/// How often missile rack `k` of `ship` fires, like [`mount_rate`] (the original's
+/// launcher fires above a quarter of its `HitPoints` and twice as slowly at half or less).
+pub fn rack_rate(rules: &crate::content::rules::Ruleset, ship: &super::Ship, k: usize) -> f32 {
+    let Some((m, _)) = ship.missiles.get(k) else { return 0.0 };
+    let max = rules.missile(*m).launcher_hit_points;
+    match ship.rack_hp.get(k) {
+        Some(hp) if max > 0.0 => rules.damage.mounts.rate(hp / max),
+        _ => 1.0,
+    }
+}
+
 fn handle_missile_controls(w: &mut World, i: usize, id: ShipId, dt: f32) {
+    let rules = w.rules.clone();
     let s = &mut w.ships[i];
     s.missile_cooldown -= dt;
     if s.controls.cycle_missile && !s.missiles.is_empty() {
         s.selected_rack = (s.selected_rack + 1) % s.missiles.len();
         s.lock = Default::default();
     }
-    // Skip empty racks automatically.
-    if s.missiles.get(s.selected_rack).is_some_and(|(_, n)| *n == 0) {
-        if let Some(r) = s.missiles.iter().position(|(_, n)| *n > 0) {
+    // Skip empty (or wrecked) racks automatically.
+    let usable = |s: &super::Ship, r: usize| s.missiles[r].1 > 0 && rack_rate(&rules, s, r) > 0.0;
+    if s.selected_rack < s.missiles.len() && !usable(s, s.selected_rack) {
+        if let Some(r) = (0..s.missiles.len()).find(|&r| usable(s, r)) {
             s.selected_rack = r;
         }
     }
     if !s.controls.fire_missile || s.missile_cooldown > 0.0 {
         return;
     }
-    let Some(rack) = s.missiles.get_mut(s.selected_rack).filter(|(_, n)| *n > 0) else {
+    let rack_index = s.selected_rack;
+    if rack_index < s.missiles.len() && s.missiles[rack_index].1 > 0 && rack_rate(&rules, s, rack_index) <= 0.0 {
+        // Held for half a second so the message is not repeated every tick.
+        s.missile_cooldown = 0.5;
+        w.events.push(SimEvent::Message { ship: id, text: "LAUNCHER INOPERATIVE".into() });
+        return;
+    }
+    let rate = rack_rate(&rules, s, rack_index);
+    let Some(rack) = s.missiles.get_mut(rack_index).filter(|(_, n)| *n > 0) else {
         w.events.push(SimEvent::Message { ship: id, text: "NO MISSILES".into() });
         return;
     };
     rack.1 -= 1;
     let class = rack.0;
-    s.missile_cooldown = MISSILE_REFIRE;
+    // A launcher at half health or less reloads twice as slowly.
+    s.missile_cooldown = MISSILE_REFIRE / rate.max(0.5);
     let target = if s.lock.locked { s.target } else { None };
     let speed = w.rules.missile(class).speed;
     let duration = w.rules.missile(class).duration;

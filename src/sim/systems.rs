@@ -6,8 +6,8 @@
 //! |---|---|
 //! | **Power** | Two settings, beam charge and shield charge, each one of the `[power]` levels (A–E). Together with every switched-on system they may not exceed the `Budget`. |
 //! | **Shield balance** | Equal, forward or aft: the favoured facing holds more, the other less; points above a facing's capacity flow to the other one. |
-//! | **Systems** | Each fitted system has hit points. Damage that gets past the armour also strikes one system at random. Above half its hit points a system works fully, at half or below it works at half effect, at zero it stops until repaired, and far below zero it is destroyed for the battle. |
-//! | **Repair** | The crew repairs one system at a time, worst first; a damage control computer multiplies the speed. |
+//! | **Systems** | Each fitted system has hit points. Damage that gets past the armour also strikes one system at random — or, with `damage.system_table`, is shared out by weighted rolls that also hit beam mounts and launchers. How well a damaged system works is its `efficiency` table (by default: fully above half its hit points, half at or below, nothing at zero until repaired; far below zero it is destroyed). Engines below `disables_below` disable the ship. |
+//! | **Repair** | The crew repairs one system at a time, worst first; a damage control computer multiplies the speed. With `damage.repair_order`, the whole rate goes to the first item in the order that needs it, hull included. |
 //! | **Tractor beam** | Holds the target at a distance and drags it along; while it is on, beams cannot fire. A disabled ship held when you jump out is *captured*. |
 //! | **Cloak** | Hides the ship from enemy sensors beyond the cloak's range; firing drops it. Missiles homing on a cloaked ship may lose it. |
 //! | **ECM** | Incoming missiles within range may lose their lock each second. |
@@ -23,7 +23,7 @@
 
 use super::flight::approach_vec;
 use super::{Condition, Power, Requests, ShieldBalance, Ship, ShipId, SimEvent, World};
-use crate::content::equipment::{BalanceMode, PowerRules, SystemKind};
+use crate::content::equipment::{BalanceMode, PowerRules, RepairItem, SystemHit, SystemKind};
 use crate::content::rules::{Ruleset, ShipClass};
 
 /// Which of the two power settings a request changes.
@@ -268,7 +268,7 @@ fn toggle(
         }
         return (format!("{name} OFF"), Some(false));
     }
-    let eff = sys.condition().efficiency();
+    let eff = sys.efficiency();
     if eff <= 0.0 {
         return (format!("{name} INOPERATIVE"), None);
     }
@@ -378,9 +378,15 @@ pub fn share_recharge(ship: &mut Ship, gain: f32) {
     }
 }
 
-/// Repairs one system for one tick. Returns `(system index, condition before, after)`
-/// when the repaired system's condition changed.
+/// Repairs for one tick. Returns `(system index, condition before, after)` when a
+/// repaired system's condition changed.
+///
+/// With `damage.repair_order` the original's rule applies ([`repair_in_order`]);
+/// otherwise the engine's own: one system at a time, the worst first, never the hull.
 pub fn repair(ship: &mut Ship, class: &ShipClass, rules: &Ruleset, dt: f32) -> Option<(usize, Condition, Condition)> {
+    if let Some(order) = &rules.damage.repair_order {
+        return repair_in_order(ship, class, rules, order, dt);
+    }
     let needs = |s: &super::SystemState| !s.destroyed && s.hp < s.max;
     // Keep working on the current job; otherwise take the worst-off system (first in
     // fitting order on a tie).
@@ -394,11 +400,7 @@ pub fn repair(ship: &mut Ship, class: &ShipClass, rules: &Ruleset, dt: f32) -> O
     });
     ship.repairing = idx;
     let i = idx?;
-    let dc = ship
-        .system(SystemKind::DamageControl)
-        .filter(|(di, _)| *di != i)
-        .map(|(_, d)| 1.0 + (rules.system(d.id).repair_rate - 1.0).max(0.0) * d.condition().efficiency())
-        .unwrap_or(1.0);
+    let dc = damage_control_factor(ship, rules, Some(i));
     let s = &mut ship.systems[i];
     let before = s.condition();
     s.set_hp(s.hp + class.repair_rate * dc * dt);
@@ -406,10 +408,99 @@ pub fn repair(ship: &mut Ship, class: &ShipClass, rules: &Ruleset, dt: f32) -> O
     (before != after).then_some((i, before, after))
 }
 
-/// Strikes one random working system of `id` with `amount` damage (the caller has
-/// already taken `damage.system_share` of the hit).
+/// The damage control computer's speed-up: its `repair_rate` multiplier, scaled by its
+/// own efficiency; 1 without one, or while it is the system being repaired (`skip`).
+fn damage_control_factor(ship: &Ship, rules: &Ruleset, skip: Option<usize>) -> f32 {
+    ship.system(SystemKind::DamageControl)
+        .filter(|(di, _)| Some(*di) != skip)
+        .map(|(_, d)| 1.0 + (rules.system(d.id).repair_rate - 1.0).max(0.0) * d.efficiency())
+        .unwrap_or(1.0)
+}
+
+/// The original's repair (`0x458534`, flight README §4.3, verified): the whole repair rate
+/// goes to the **first** item in `order` that needs it — hull included. A system or mount
+/// at 0 hit points is never repaired. A disabled ship repairs its hull first.
+///
+/// The original adds its 2 points once a second; adding `rate × dt` every tick gives the
+/// same total.
+pub fn repair_in_order(
+    ship: &mut Ship,
+    class: &ShipClass,
+    rules: &Ruleset,
+    order: &[RepairItem],
+    dt: f32,
+) -> Option<(usize, Condition, Condition)> {
+    // Only systems still standing and short of their maximum can be worked on.
+    let needs = |s: &super::SystemState| !s.destroyed && s.hp > 0.0 && s.hp < s.max;
+    // `Others` covers the systems whose kind the order does not name.
+    let named = |k: SystemKind| order.contains(&RepairItem::System(k));
+    // A disabled ship (rt flag 0x8 in the original) takes a branch that repairs the hull
+    // first; the rest keeps its order. `chain` puts that one item in front without
+    // building a new list.
+    let first = ship.disabled.then_some(RepairItem::Hull);
+    let items = first.into_iter().chain(order.iter().copied().filter(|i| !(ship.disabled && *i == RepairItem::Hull)));
+    let mut job = None;
+    for item in items {
+        let found = match item {
+            RepairItem::Hull => (!class.kind.is_static() && ship.hull < class.hull).then_some(Job::Hull),
+            RepairItem::System(k) => ship.systems.iter().position(|s| s.kind == k && needs(s)).map(Job::System),
+            RepairItem::Others => ship.systems.iter().position(|s| !named(s.kind) && needs(s)).map(Job::System),
+            RepairItem::Beams => {
+                let max = |k: usize| rules.beam(class.beams[k]).hit_points;
+                (0..ship.beam_hp.len()).find(|&k| ship.beam_hp[k] > 0.0 && ship.beam_hp[k] < max(k)).map(Job::Beam)
+            }
+            RepairItem::Launchers => {
+                let max = |k: usize| rules.missile(ship.missiles[k].0).launcher_hit_points;
+                (0..ship.rack_hp.len()).find(|&k| ship.rack_hp[k] > 0.0 && ship.rack_hp[k] < max(k)).map(Job::Rack)
+            }
+        };
+        if found.is_some() {
+            job = found;
+            break;
+        }
+    }
+    let skip = match job {
+        Some(Job::System(i)) => Some(i),
+        _ => None,
+    };
+    let amount = class.repair_rate * damage_control_factor(ship, rules, skip) * dt;
+    ship.repairing = skip;
+    match job? {
+        Job::Hull => ship.hull = (ship.hull + amount).min(class.hull),
+        Job::Beam(k) => ship.beam_hp[k] = (ship.beam_hp[k] + amount).min(rules.beam(class.beams[k]).hit_points),
+        Job::Rack(k) => {
+            let max = rules.missile(ship.missiles[k].0).launcher_hit_points;
+            ship.rack_hp[k] = (ship.rack_hp[k] + amount).min(max);
+        }
+        Job::System(i) => {
+            let s = &mut ship.systems[i];
+            let before = s.condition();
+            s.set_hp(s.hp + amount);
+            let after = s.condition();
+            return (before != after).then_some((i, before, after));
+        }
+    }
+    None
+}
+
+/// What [`repair_in_order`] works on this tick.
+#[derive(Debug, Clone, Copy)]
+enum Job {
+    Hull,
+    System(usize),
+    Beam(usize),
+    Rack(usize),
+}
+
+/// Deals `amount` of system damage to `id` (the caller has already taken
+/// `damage.system_share` of the hit): with `damage.system_table`, by the original's
+/// weighted rolls ([`damage_by_table`]); otherwise to one random fitted system.
 pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
     if amount <= 0.0 {
+        return;
+    }
+    if w.rules.damage.system_table.is_some() {
+        damage_by_table(w, id, amount);
         return;
     }
     let Some(ship) = w.get(id) else { return };
@@ -418,16 +509,120 @@ pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
         return;
     }
     let pick = candidates[((w.random() * candidates.len() as f32) as usize).min(candidates.len() - 1)];
+    strike_system(w, id, pick, amount);
+}
+
+/// The original's system damage (`0x44ddee`, flight README §4.1, verified): up to
+/// `tries` rolls on the weighted table. A roll whose system is missing or already at 0
+/// uses up its try. When the damage is more than the system has left, the system goes
+/// to 0 (or to its `min_hit_points`) and, for a `carry` entry, the rest goes on to the
+/// next try; otherwise the rest is lost.
+pub fn damage_by_table(w: &mut World, id: ShipId, amount: f32) {
+    let rules = w.rules.clone();
+    let Some(table) = &rules.damage.system_table else { return };
+    let mut left = amount;
+    for _ in 0..table.tries {
+        if left <= 0.0 {
+            break;
+        }
+        // Pick an entry: walk the cumulative chances; past the end strikes nothing.
+        let roll = w.random();
+        let mut acc = 0.0;
+        let entry = table.rolls.iter().find(|r| {
+            acc += r.chance;
+            roll < acc
+        });
+        let Some(entry) = entry.copied() else {
+            left = 0.0;
+            continue;
+        };
+        let Some(ship) = w.get(id) else { return };
+        // A uniform pick among `n` things, from the world's seeded generator.
+        let pick = |w: &mut World, n: usize| ((w.random() * n as f32) as usize).min(n.saturating_sub(1));
+        match entry.hit {
+            SystemHit::None => left = 0.0,
+            SystemHit::System(kind) => {
+                let Some((i, sys)) = ship.system(kind) else { continue };
+                if sys.destroyed || sys.hp <= 0.0 {
+                    continue;
+                }
+                let had = sys.hp;
+                strike_system(w, id, i, left);
+                left = if entry.carry { (left - had).max(0.0) } else { 0.0 };
+            }
+            SystemHit::Special => {
+                let specials = ship.systems.iter().filter(|s| is_special(s.kind)).count();
+                if specials == 0 {
+                    continue;
+                }
+                let n = pick(w, specials);
+                let Some(ship) = w.get(id) else { return };
+                let i = (0..ship.systems.len()).filter(|&i| is_special(ship.systems[i].kind)).nth(n).unwrap_or(0);
+                let sys = ship.systems[i];
+                if sys.destroyed || sys.hp <= 0.0 {
+                    continue;
+                }
+                strike_system(w, id, i, left);
+                left = if entry.carry { (left - sys.hp).max(0.0) } else { 0.0 };
+            }
+            SystemHit::Beams | SystemHit::Launchers => {
+                let beams = entry.hit == SystemHit::Beams;
+                let n = if beams { ship.beam_hp.len() } else { ship.rack_hp.len() };
+                if n == 0 {
+                    continue;
+                }
+                let k = pick(w, n);
+                let Some(ship) = w.get_mut(id) else { return };
+                let hp = if beams { &mut ship.beam_hp[k] } else { &mut ship.rack_hp[k] };
+                let had = *hp;
+                // A mount with no hit points (a class whose weapon gives none, or one
+                // already at 0) cannot be struck: the try is used up.
+                if had <= 0.0 {
+                    continue;
+                }
+                *hp = (had - left).max(0.0);
+                if *hp <= 0.0 {
+                    let text = if beams { "BEAM MOUNT DESTROYED" } else { "LAUNCHER DESTROYED" };
+                    if !beams {
+                        // A destroyed launcher loses its rounds (the original clears +0x50).
+                        ship.missiles[k].1 = 0;
+                    }
+                    w.events.push(SimEvent::Message { ship: id, text: text.into() });
+                }
+                left = if entry.carry { (left - had).max(0.0) } else { 0.0 };
+            }
+        }
+    }
+}
+
+/// The original's "special systems": everything but the five core systems.
+fn is_special(kind: SystemKind) -> bool {
+    !matches!(
+        kind,
+        SystemKind::Engines
+            | SystemKind::Manoeuvring
+            | SystemKind::Sensors
+            | SystemKind::Shields
+            | SystemKind::Hyperdrive
+    )
+}
+
+/// Takes `amount` off system `pick` of ship `id` (never below its `min_hit_points`),
+/// destroys it past `damage.destroy_below` (at 0 when that is 0), switches it off when it
+/// stops working, and reports a change of condition.
+fn strike_system(w: &mut World, id: ShipId, pick: usize, amount: f32) {
     let destroy_below = w.rules.damage.destroy_below;
     let Some(ship) = w.get_mut(id) else { return };
     let s = &mut ship.systems[pick];
     let before = s.condition();
     s.set_hp(s.hp - amount);
-    if s.hp < -destroy_below * s.max {
+    // `destroy_below: 0` makes 0 hit points final (the original never repairs a system
+    // at 0); a floored system (`min_hit_points`) never gets there.
+    if s.hp < -destroy_below * s.max || (destroy_below <= 0.0 && s.hp <= 0.0) {
         s.destroyed = true;
     }
     let after = s.condition();
-    if after.efficiency() <= 0.0 {
+    if s.efficiency() <= 0.0 {
         // A knocked-out system switches off.
         s.on = false;
         match s.kind {
@@ -443,6 +638,18 @@ pub fn damage_system(w: &mut World, id: ShipId, amount: f32) {
     }
 }
 
+/// Whether a ship is disabled: engines and manoeuvring both out (the engine's rule), or
+/// its engines below their `disables_below` share or destroyed (the original's engine
+/// failure below 15 %, flight README §11, verified).
+pub fn is_disabled(s: &Ship, rules: &Ruleset) -> bool {
+    let both_out = s.efficiency(SystemKind::Engines) <= 0.0 && s.efficiency(SystemKind::Manoeuvring) <= 0.0;
+    let engine_failed = s.system(SystemKind::Engines).is_some_and(|(_, e)| {
+        let below = rules.system(e.id).disables_below;
+        below > 0.0 && (e.destroyed || e.hp < below * e.max)
+    });
+    both_out || engine_failed
+}
+
 /// Runs one tick of the systems (see the module docs).
 pub fn step(w: &mut World, dt: f32) {
     let rules = w.rules.clone();
@@ -455,15 +662,24 @@ pub fn step(w: &mut World, dt: f32) {
         let class = rules.ship(w.ships[i].class);
         let s = &mut w.ships[i];
         recharge(s, class, &rules.power, dt);
+        // The disabled check comes before repair: the original disables a ship at the
+        // moment of the engine hit, so its next repair already puts the hull first.
+        let disabled = is_disabled(s, &rules);
+        if disabled && !s.disabled {
+            w.events.push(SimEvent::Disabled { ship: id });
+            // The original's engine-off routine (`0x44d874`): the afterburner stops and
+            // the cloak drops (thrust follows `Ship::disabled` in `flight`).
+            s.afterburning = false;
+            if let Some((k, _)) = s.system(SystemKind::Cloak).filter(|(_, c)| c.on) {
+                s.systems[k].on = false;
+                w.events.push(SimEvent::Switched { ship: id, kind: SystemKind::Cloak, on: false });
+            }
+        }
+        let s = &mut w.ships[i];
+        s.disabled = disabled;
         if let Some((sys, _, after)) = repair(s, class, &rules, dt) {
             w.events.push(SimEvent::SystemChanged { ship: id, system: sys, condition: after, repaired: true });
         }
-        let s = &mut w.ships[i];
-        let disabled = s.efficiency(SystemKind::Engines) <= 0.0 && s.efficiency(SystemKind::Manoeuvring) <= 0.0;
-        if disabled && !s.disabled {
-            w.events.push(SimEvent::Disabled { ship: id });
-        }
-        s.disabled = disabled;
     }
     tractors(w, dt);
     countermeasures(w, dt);
@@ -487,7 +703,7 @@ fn tractors(w: &mut World, dt: f32) {
         let s = &w.ships[i];
         let Some((_, sys)) = s.system(SystemKind::Tractor).filter(|(_, t)| t.on && s.alive) else { continue };
         let def = w.rules.system(sys.id);
-        let eff = sys.condition().efficiency();
+        let eff = sys.efficiency();
         match s.towing.and_then(|t| w.get(t).map(|o| (t, o))) {
             Some((t, o)) if o.position.distance(s.position) <= def.range * 1.5 && eff > 0.0 => {
                 // Hold the target on its current bearing, inside the beam's range and
@@ -597,7 +813,7 @@ fn countermeasures(w: &mut World, dt: f32) {
         let mut chance = 0.0;
         for st in t.systems.iter().filter(|s| s.on) {
             let def = w.rules.system(st.id);
-            let eff = st.condition().efficiency();
+            let eff = st.efficiency();
             chance += match st.kind {
                 SystemKind::Ecm if dist <= def.range => def.strength / 100.0 * eff,
                 SystemKind::Cloak => def.strength / 100.0 * eff,
@@ -906,6 +1122,248 @@ mod tests {
         let s = w.get(me).unwrap();
         assert!(s.disabled);
         assert!(s.velocity.length() < 1e-3, "no thrust without engines");
+    }
+
+    /// The test world with the original's damage and repair rules (synthetic numbers in
+    /// the original's shape, flight README §4.1, §4.3, §5, §11): repair order, the system
+    /// table, step efficiencies, a floored flight control, 20-point beam mounts and
+    /// 25-point launchers. `change` may edit the rules further before anything spawns.
+    fn original_world(change: impl Fn(&mut Ruleset)) -> (World, ShipId) {
+        use crate::content::equipment::{Efficiency, RepairItem as R, SystemRoll, SystemTable};
+        let mut w = world();
+        let mut r = (*w.rules).clone();
+        r.damage.repair_order = Some(vec![
+            R::System(SystemKind::Engines),
+            R::Hull,
+            R::System(SystemKind::Shields),
+            R::System(SystemKind::Manoeuvring),
+            R::System(SystemKind::Hyperdrive),
+            R::System(SystemKind::Sensors),
+            R::Beams,
+            R::Launchers,
+            R::Others,
+        ]);
+        r.damage.destroy_below = 0.0;
+        r.damage.repair_rate = 2.0;
+        let steps = |t: &[(f32, f32)]| {
+            let mut steps = [(0.0, 0.0); Efficiency::MAX_STEPS];
+            steps[..t.len()].copy_from_slice(t);
+            Efficiency::Steps { steps, len: t.len() as u8 }
+        };
+        for d in &mut r.systems {
+            match d.kind {
+                SystemKind::Engines => {
+                    d.efficiency = steps(&[(0.5, 0.5), (0.25, 0.25), (0.15, 0.0)]);
+                    d.disables_below = 0.15;
+                }
+                SystemKind::Shields => d.efficiency = steps(&[(0.5, 0.5), (0.25, 0.0)]),
+                SystemKind::Manoeuvring => {
+                    (d.hit_points, d.efficiency, d.min_hit_points) = (40.0, Efficiency::Linear, 1.0);
+                }
+                SystemKind::Sensors | SystemKind::Hyperdrive => d.efficiency = Efficiency::Ignore,
+                _ => {}
+            }
+        }
+        for b in &mut r.beams {
+            b.hit_points = 20.0;
+        }
+        for m in &mut r.missiles {
+            m.launcher_hit_points = 25.0;
+        }
+        r.damage.system_table = Some(SystemTable {
+            tries: 5,
+            rolls: vec![SystemRoll { chance: 1.0, hit: SystemHit::Beams, carry: false }],
+        });
+        change(&mut r);
+        w.rules = std::sync::Arc::new(r);
+        let me = fighter(&mut w);
+        (w, me)
+    }
+
+    fn sys(w: &World, id: ShipId, kind: SystemKind) -> crate::sim::SystemState {
+        *w.get(id).unwrap().system(kind).unwrap().1
+    }
+
+    #[test]
+    fn repair_follows_the_order_hull_included_at_two_a_second() {
+        let (mut w, me) = original_world(|_| {});
+        {
+            let s = w.get_mut(me).unwrap();
+            s.hull = 50.0;
+            for x in &mut s.systems {
+                if x.kind == SystemKind::Shields {
+                    x.set_hp(10.0);
+                }
+            }
+        }
+        for _ in 0..60 {
+            w.step();
+        }
+        // D-02: the hull comes before the shield generator, 2 points a second.
+        let s = w.get(me).unwrap();
+        assert!((s.hull - 52.0).abs() < 1e-2, "{}", s.hull);
+        assert_eq!(sys(&w, me, SystemKind::Shields).hp, 10.0, "waits for the hull");
+        // A damage control computer doubles it: 4 a second (repair_rate 2 as a factor).
+        let (mut w, me) = original_world(|r| {
+            let id = r.system_id("damage_control").unwrap();
+            r.systems[id.0 as usize].repair_rate = 2.0;
+        });
+        let dc = w.rules.system_id("damage_control").unwrap();
+        let def = w.rules.system(dc).clone();
+        w.get_mut(me).unwrap().systems.push(crate::sim::SystemState::from_def(dc, &def));
+        w.get_mut(me).unwrap().hull = 50.0;
+        for _ in 0..60 {
+            w.step();
+        }
+        assert!((w.get(me).unwrap().hull - 54.0).abs() < 1e-2);
+        // The engine comes first of all; a system at 0 is never repaired.
+        let (mut w, me) = original_world(|_| {});
+        {
+            let s = w.get_mut(me).unwrap();
+            s.hull = 50.0;
+            s.systems.iter_mut().filter(|x| x.kind == SystemKind::Engines).for_each(|x| x.set_hp(90.0));
+            s.systems.iter_mut().filter(|x| x.kind == SystemKind::Sensors).for_each(|x| x.set_hp(0.0));
+        }
+        for _ in 0..60 {
+            w.step();
+        }
+        assert!((sys(&w, me, SystemKind::Engines).hp - 92.0).abs() < 1e-2);
+        assert_eq!(w.get(me).unwrap().hull, 50.0);
+        w.get_mut(me).unwrap().hull = 100.0;
+        for _ in 0..600 {
+            w.step();
+        }
+        assert_eq!(sys(&w, me, SystemKind::Sensors).hp, 0.0, "never repaired from 0");
+    }
+
+    #[test]
+    fn efficiency_steps_and_the_engine_failure_below_fifteen_percent() {
+        let (mut w, me) = original_world(|_| {});
+        let set = |w: &mut World, kind, hp| {
+            let s = w.get_mut(me).unwrap();
+            s.systems.iter_mut().filter(|x| x.kind == kind).for_each(|x| x.set_hp(hp));
+        };
+        // D-06: engine 100 hp → ×0.5 below 50, ×0.25 below 25, none below 15.
+        for (hp, eff) in [(60.0, 1.0), (49.0, 0.5), (24.0, 0.25), (16.0, 0.25), (14.0, 0.0)] {
+            set(&mut w, SystemKind::Engines, hp);
+            assert_eq!(w.get(me).unwrap().efficiency(SystemKind::Engines), eff, "engine at {hp}");
+        }
+        // Flight control works in proportion (q = HP / 40).
+        set(&mut w, SystemKind::Manoeuvring, 10.0);
+        assert_eq!(w.get(me).unwrap().efficiency(SystemKind::Manoeuvring), 0.25);
+        // RQ-C-16: at 16 % the ship still flies; at 14 % it is disabled, the cloak drops.
+        set(&mut w, SystemKind::Engines, 16.0);
+        w.step();
+        assert!(!w.get(me).unwrap().disabled);
+        let cloak = w.rules.system_id("cloak").unwrap();
+        let def = w.rules.system(cloak).clone();
+        let s = w.get_mut(me).unwrap();
+        s.systems.push(crate::sim::SystemState { on: true, ..crate::sim::SystemState::from_def(cloak, &def) });
+        (s.throttle, s.velocity, s.hull) = (1.0, Vec3::ZERO, 50.0);
+        set(&mut w, SystemKind::Engines, 14.0);
+        w.step();
+        let s = w.get(me).unwrap();
+        assert!(s.disabled && !s.cloaked() && !s.afterburning);
+        assert!(w.events.iter().any(|e| matches!(e, SimEvent::Disabled { .. })));
+        assert!(s.velocity.length() < 1e-3, "no thrust");
+        // A disabled ship repairs its hull before the engine.
+        let hull = s.hull;
+        for _ in 0..60 {
+            w.step();
+        }
+        assert!((w.get(me).unwrap().hull - hull - 2.0).abs() < 1e-2);
+        assert_eq!(sys(&w, me, SystemKind::Engines).hp, 14.0);
+    }
+
+    #[test]
+    fn damaged_sensors_and_hyperdrives_change_nothing_when_set_to_ignore() {
+        let (mut w, me) = original_world(|_| {});
+        let s = w.get_mut(me).unwrap();
+        for x in &mut s.systems {
+            if matches!(x.kind, SystemKind::Sensors | SystemKind::Hyperdrive) {
+                x.set_hp(x.max * 0.1);
+            }
+        }
+        // RQ-C-17: full lock speed and a normal jump time at 10 %.
+        assert_eq!((s.efficiency(SystemKind::Sensors), s.efficiency(SystemKind::Hyperdrive)), (1.0, 1.0));
+        let rules = w.rules.clone();
+        let msg = toggle_hyperspace(w.get_mut(me).unwrap(), &rules);
+        assert!(msg.contains(&format!("{:.0}", w.rules.flight.hyperspace_time)), "{msg}");
+    }
+
+    #[test]
+    fn the_system_table_strikes_mounts_and_carries_over() {
+        use crate::content::equipment::{SystemRoll, SystemTable};
+        // Every roll hits beam mounts: 30 damage wrecks one 20-point mount; no carry.
+        let (mut w, me) = original_world(|_| {});
+        damage_system(&mut w, me, 30.0);
+        let s = w.get(me).unwrap();
+        assert_eq!(s.beam_hp.iter().filter(|h| **h == 0.0).count(), 1, "{:?}", s.beam_hp);
+        assert_eq!(s.beam_hp.iter().filter(|h| **h == 20.0).count(), 1, "the rest is lost");
+        // The wrecked mount no longer fires; the other fires alone.
+        let k = s.beam_hp.iter().position(|h| *h == 0.0).unwrap();
+        let class = w.rules.ship(s.class).clone();
+        assert_eq!(crate::sim::combat::mount_rate(&w.rules, &class, s, k), 0.0);
+        let s = w.get_mut(me).unwrap();
+        s.beam_hp[k] = 8.0; // 40 %: half rate
+        assert_eq!(crate::sim::combat::mount_rate(&w.rules, &class, w.get(me).unwrap(), k), 0.5);
+        // A launcher destroyed loses its rounds.
+        let (mut w, me) = original_world(|r| {
+            r.damage.system_table = Some(SystemTable {
+                tries: 5,
+                rolls: vec![SystemRoll { chance: 1.0, hit: SystemHit::Launchers, carry: false }],
+            });
+        });
+        damage_system(&mut w, me, 30.0);
+        let s = w.get(me).unwrap();
+        assert_eq!((s.rack_hp[0], s.missiles[0].1), (0.0, 0));
+        // Shields carry: 70 on a 50-point generator → 0, and 20 goes on to the next roll
+        // (the generator again, now at 0: a used-up try), so the shields end at 0 and
+        // nothing else is touched.
+        let (mut w, me) = original_world(|r| {
+            r.damage.system_table = Some(SystemTable {
+                tries: 5,
+                rolls: vec![SystemRoll { chance: 1.0, hit: SystemHit::System(SystemKind::Shields), carry: true }],
+            });
+        });
+        damage_system(&mut w, me, 70.0);
+        let sh = sys(&w, me, SystemKind::Shields);
+        assert!(sh.destroyed && sh.hp <= 0.0, "0 is final with destroy_below 0");
+        // Flight control is floored at 1 hit point.
+        let (mut w, me) = original_world(|r| {
+            r.damage.system_table = Some(SystemTable {
+                tries: 1,
+                rolls: vec![SystemRoll { chance: 1.0, hit: SystemHit::System(SystemKind::Manoeuvring), carry: false }],
+            });
+        });
+        damage_system(&mut w, me, 500.0);
+        let m = sys(&w, me, SystemKind::Manoeuvring);
+        assert_eq!((m.hp, m.destroyed), (1.0, false));
+    }
+
+    #[test]
+    fn the_system_table_rolls_follow_their_weights() {
+        use crate::content::equipment::{SystemRoll, SystemTable};
+        // 50 % engines, 30 % sensors, 20 % nothing: count where 10,000 rolls land.
+        let (mut w, me) = original_world(|r| {
+            r.damage.system_table = Some(SystemTable {
+                tries: 1,
+                rolls: vec![
+                    SystemRoll { chance: 0.5, hit: SystemHit::System(SystemKind::Engines), carry: false },
+                    SystemRoll { chance: 0.3, hit: SystemHit::System(SystemKind::Sensors), carry: false },
+                ],
+            });
+        });
+        let (mut e, mut se) = (0.0, 0.0);
+        for _ in 0..10_000 {
+            let s = w.get_mut(me).unwrap();
+            s.systems.iter_mut().for_each(|x| x.hp = x.max);
+            damage_system(&mut w, me, 1.0);
+            e += f32::from(sys(&w, me, SystemKind::Engines).hp < 100.0);
+            se += f32::from(sys(&w, me, SystemKind::Sensors).hp < 60.0);
+        }
+        assert!((e / 10_000.0 - 0.5).abs() < 0.03, "engines {e}");
+        assert!((se / 10_000.0 - 0.3).abs() < 0.03, "sensors {se}");
     }
 
     #[test]

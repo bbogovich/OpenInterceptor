@@ -62,6 +62,7 @@ fn beam() -> Ty {
         f("speed", Ty::Num, "bolt speed, m/s"),
         f("range", dist(), "reach (2.4km, 2400m; a plain number is metres)"),
         f("shield_factor", Ty::Num, "shield points lost per point of damage they stop (1)"),
+        f("hit_points", Ty::Num, "a mount's hit points, struck by damage.system_table (0 = cannot be damaged)"),
         f("color", rgb(), "bolt colour"),
         f("sound", Ty::Asset, "firing sound"),
     ])
@@ -76,6 +77,11 @@ fn missile() -> Ty {
         f("proximity_damage", Ty::Num, "damage from the proximity fuse"),
         f("proximity_radius", dist(), "proximity fuse radius"),
         f("mass", Ty::Num, "kg per round carried (flight.drive)"),
+        f(
+            "launcher_hit_points",
+            Ty::Num,
+            "a launcher's hit points, struck by damage.system_table (0 = cannot be damaged)",
+        ),
         f("lead_speed", Ty::Num, "homing leads the target as if it flew at this speed, m/s (0 = pure pursuit)"),
         f("turn_rate", Ty::Num, "degrees per second while homing"),
         f("lock_time", time(), "seconds in the lock cone to lock on"),
@@ -388,6 +394,23 @@ fn system() -> Ty {
         f("lock_time", time(), "sensors: missile lock time (0 = each missile's lock_time)"),
         f("lock_angle", Ty::Qty(Unit::Angle), "sensors: lock cone half-angle (0 = flight.lock_angle)"),
         f("lock_range", dist(), "sensors: lock range (0 = the missile's reach)"),
+        f(
+            "efficiency",
+            Ty::Either(
+                Box::new(Ty::Enum(&["standard", "linear", "ignore"])),
+                Box::new(Ty::List(Box::new(Ty::Struct(vec![
+                    f("below", Ty::Qty(Unit::Fraction), "below this share of its hit points"),
+                    f("factor", Ty::Num, "it works at this factor (0..1)"),
+                ])))),
+            ),
+            "how it works when damaged: up to four steps, linear, or ignore (default standard)",
+        ),
+        f("min_hit_points", Ty::Num, "hits never take it below this; it is never destroyed (0)"),
+        f(
+            "disables_below",
+            Ty::Qty(Unit::Fraction),
+            "engines: below this share of hit points the ship is disabled (0 = off)",
+        ),
     ])
 }
 
@@ -751,6 +774,35 @@ fn damage() -> Ty {
         ),
         f("destroy_below", Ty::Qty(Unit::Fraction), "a system this far below zero is destroyed"),
         f("repair_rate", Ty::Num, "default crew repair rate, hit points per second"),
+        f(
+            "repair_order",
+            names(),
+            "the whole repair rate goes to the first that needs it: system kinds, hull, beams, launchers, others",
+        ),
+        f(
+            "system_table",
+            Ty::Struct(vec![
+                f("tries", Ty::Num, "rolls per hit (default 1)"),
+                f(
+                    "rolls",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("chance", Ty::Qty(Unit::Fraction), "share of the rolls"),
+                        f("hit", Ty::Text, "a system kind, beams, launchers, special or none"),
+                        f("carry", Ty::Bool, "damage beyond what the system has left goes to the next try"),
+                    ]))),
+                    "weighted entries; what the chances leave out strikes nothing",
+                ),
+            ]),
+            "the system share is shared out by weighted rolls",
+        ),
+        f(
+            "mounts",
+            Ty::Struct(vec![
+                f("half_rate", Ty::Qty(Unit::Fraction), "at or below this share a mount fires at half rate (50 %)"),
+                f("no_fire", Ty::Qty(Unit::Fraction), "at or below this share it cannot fire (25 %)"),
+            ]),
+            "how damaged beam mounts and launchers fire",
+        ),
     ])
 }
 

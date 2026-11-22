@@ -115,7 +115,7 @@ pub fn step(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, dt: f32) {
 
     // --- Afterburner ---------------------------------------------------------------------
     let burn_cost = rules.afterburner_cost * dt;
-    let engines = ship.efficiency(SystemKind::Engines);
+    let engines = ship.thrust_factor();
     ship.afterburning = c.afterburner && !ship.reverse && !c.brake && ship.energy >= burn_cost && engines > 0.0;
     if ship.afterburning {
         ship.energy -= burn_cost;
@@ -199,7 +199,7 @@ fn newtonian(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Contro
     // Damaged engines give half thrust; knocked-out engines none (the ship coasts). The
     // speed limit's bleed-off still uses the full figure: it stands for drag-free
     // trimming by the flight computer, not for engine thrust.
-    let accel = class.acceleration * ship.efficiency(SystemKind::Engines);
+    let accel = class.acceleration * ship.thrust_factor();
     let bleed = class.acceleration;
     let fwd = ship.forward();
     let cap = class.max_speed + if ship.afterburning { rules.afterburner_boost } else { 0.0 };
@@ -256,12 +256,13 @@ fn driven(ship: &mut Ship, class: &ShipClass, d: &Drive, c: &Controls, dt: f32) 
         // in the original's range −0.25..1; `a = S × throttle`.
         let wanted = c.hold_speed.or(ship.speed_hold).map(|v| v / class.max_speed.max(1.0));
         let throttle = wanted.unwrap_or(if ship.reverse { -ship.throttle } else { ship.throttle });
-        ship.drive_factor * throttle.clamp(-0.25, 1.0)
+        // A disabled ship's thrust is zeroed (the original's `0x44d874`).
+        ship.drive_factor * throttle.clamp(-0.25, 1.0) * if ship.disabled { 0.0 } else { 1.0 }
     } else {
         // Full forward push in m/s² at this power, engines and mass. A class with no
         // thrust figure uses its `acceleration` as that push instead.
         let push = if class.thrust > 0.0 { class.thrust * d.thrust_scale / ship.mass } else { class.acceleration };
-        let full = push * ship.engine_power * ship.efficiency(SystemKind::Engines);
+        let full = push * ship.engine_power * ship.thrust_factor();
         let throttle = match c.hold_speed.or(ship.speed_hold) {
             // Match speed: the throttle whose terminal speed is the wanted speed.
             Some(v) if full > 0.0 => (v * d.drag / full).clamp(-d.reverse, 1.0),
@@ -270,7 +271,7 @@ fn driven(ship: &mut Ship, class: &ShipClass, d: &Drive, c: &Controls, dt: f32) 
             None if ship.reverse => -ship.throttle * d.reverse,
             None => ship.throttle,
         };
-        let boost = if ship.afterburning { push * d.afterburner * ship.efficiency(SystemKind::Engines) } else { 0.0 };
+        let boost = if ship.afterburning { push * d.afterburner * ship.thrust_factor() } else { 0.0 };
         full * throttle + boost
     };
     // dv/dt = a·fwd − drag·v has the exact solution v(t) = target + (v₀ − target)·e^(−drag·t),
@@ -304,7 +305,7 @@ fn assisted(ship: &mut Ship, class: &ShipClass, rules: &FlightRules, c: &Control
     }
     let inv = ship.rotation.inverse();
     let mut local = inv * ship.velocity; // x right, y up, -z forward
-    let accel = class.acceleration * ship.efficiency(SystemKind::Engines) * dt;
+    let accel = class.acceleration * ship.thrust_factor() * dt;
     local.z = approach(local.z, -target_forward, accel * if ship.afterburning { 2.0 } else { 1.0 });
     let slide = if class.vct {
         c.slide.clamp_length_max(1.0) * class.max_speed * VCT_SPEED_FRACTION * ship.efficiency(SystemKind::Vct)
