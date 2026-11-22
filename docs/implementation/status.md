@@ -404,6 +404,13 @@ Phantasm, Shade, Harbinger and Spirit carry the original's turrets (the Harbinge
 guns of their own); the freighter accuracies are S and int(S × 0.75) (the RE table's "25" and "from
 the pilot" are that S's no-pilot value and factor; both readings on #115).
 
+**Parity M1, #117** (app NEXT; D-03, D-04, D-07, D-11, D-14): `accumulator_shields`; beam `effect:
+systems` and `repair_slowdown` with `damage.tachyon_table`; missile `damage: permeator` and
+`enveloping` as the original's fore/aft chains; `power.recharge_while_burning`; `flight.link_modes:
+original`. `interceptor` uses all of them (the Shade and Harbinger accumulate; the Tachyon Pulser
+hits systems and slows repair tenfold). `default`: unchanged (with its one armour pool `enveloping`
+lands as before). Manual case MT-4-71; **537** `#[test]` functions.
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),

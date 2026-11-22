@@ -1378,6 +1378,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-68 | `interceptor`: AI flying and missiles | `duel-wraith`, `duel-pirate-lightning`, a scenario with wingmen (`interceptor`), Lightning | not run | | | App NEXT; #118, `steer`, `lock_cone`, `pilot_grades`, speed requests |
 | MT-4-69 | `interceptor`: station layouts, the connection point and minefields | `base-assault`, `station-tour` (`interceptor`) | not run | | | App NEXT; #114, `hard_points`, `modules` by `at`, `minefields` |
 | MT-4-70 | `interceptor`: station and freighter turrets | `base-assault`, `station-tour`, `escort` (`interceptor`) | not run | | | App NEXT; #115, `aim: fixed`/`gimballed`, `interval`, `free_fire`, `line_of_sight` |
+| MT-4-71 | `interceptor`: accumulator shields, the Tachyon Pulser, link modes | `duel-shade`, `duel-harbinger`, `gunnery-range` (`interceptor`), Avenger | not run | | | App NEXT; #117 |
 
 ## Stage 4 cases
 
@@ -1940,6 +1941,15 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario base-assault`, then `station-tour`, then `escort`. |
 | Steps | 1. Approach the alien base from 5 km and fly across its front, then hold still at 3 km. 2. Watch an X-COM base's turrets engage an enemy (`station-tour` or a base defence mission). 3. Fly round the pirate base at 2 – 3 km. 4. In `escort`, watch the X-COM freighters' guns when enemies close. |
 | Expected | 1: the plasma pods open fire from about 5 km, steadily (about one shot a second each, not bursts), and hit a still target most of the time but miss by up to 20 m sideways now and then; they do not fire at you from behind their facing. 2: X-COM turrets fire at the laser's rate and almost never miss a target in front of them. 3: pirate turrets fire singly at a steady pace, some stop when part of the station is between you and them. 4: each freighter fires from a nose turret and a tail turret (no longer from its own beams), within 2 km. |
+
+
+### MT-4-71 — `interceptor`: accumulator shields, the Tachyon Pulser, link modes
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's data. `--scenario duel-shade --ship avenger`, then `duel-harbinger`, then `gunnery-range --ship avenger`. |
+| Steps | 1. Fire beams at a Shade whose shields are up; watch its shield readout. 2. Bring its shields down with missiles, then fire beams. 3. Let the Harbinger's tachyon turrets hit you; watch hull, armour, systems and how fast they repair. 4. In `gunnery-range`, set linked (the Avenger mixes beam types) and fire; then full; hold the afterburner and watch the energy. |
+| Expected | 1: the Shade's shields **rise** under beam fire instead of falling. 2: once down, beams hurt it. 3: the shields drop, then only systems are damaged (mostly the engine) — hull and armour stay — and repair crawls (ten times slower) until everything is whole. 4: linked fires every mount of one beam type together; with little energy, full fires the mounts it can pay for rather than none; energy still recharges while burning, so it drains more slowly than 100 per second. |
 
 ## Stage 5 results
 
