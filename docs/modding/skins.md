@@ -171,9 +171,9 @@ skins:
 | `fonts.<name>.top` | whole number | half the line height | How far **above** the anchor's y the glyph tops sit. The original: 5, and 7 for its four small fonts. |
 | `fonts.<name>.wrap_offset` | whole number | 0 | Extra pixels down for the first line of wrapped text. The original: 4 for its four small fonts. |
 | `fonts.<name>.spacing` | whole number | 0 | Extra pixels after every character (the original's glyphs carry their own gap). |
-| `fonts.<name>.centre_raise` | whole number | 0 | How far a line centred on an anchor moves up (app NEXT). The original's 6-pixel font: 2. |
+| `fonts.<name>.centre_raise` | whole number | 0 | How far a line centred on an anchor moves up (app 0.22.7). The original's 6-pixel font: 2. |
 
-`sheet: "builtin:small"` (app NEXT) names the engine's own **6-pixel caption font**, available
+`sheet: "builtin:small"` (app 0.22.7) names the engine's own **6-pixel caption font**, available
 to every campaign: our own design, drawn with the original's advances so a caption is exactly as
 wide as the original's (below).
 
@@ -227,7 +227,7 @@ run time from the player's own `SpritesDLL.dll` — nothing is copied:
 | `highlight` | 23015 | 7 (4) | Equip Ships, Production, Bases highlights (yellow). |
 | `title` | 23014 | 5 | Base Stats page titles (large yellow). |
 
-| `caption` | `builtin:small` | 0 (`centre_raise` 2) | Text-button captions (since app NEXT). |
+| `caption` | `builtin:small` | 0 (`centre_raise` 2) | Text-button captions (since app 0.22.7). |
 
 The original's tenth font, a small 6-pixel one, is compiled into the program, not stored as a
 sheet (`PortDrawString` 0x5ffa81). Its glyphs are original art and are **not** copied:
@@ -236,7 +236,7 @@ descenders on row 5. Its **advances** are the original's own, read from the widt
 (0x617487, **verified**; for example `I` 2, `A` 6, `W` 8, space 3, and `/` 0). The text is white
 and takes the colour it is drawn in. `y` is the glyph top, and a centred line moves up 2.
 
-## Text buttons and dialogs (app NEXT)
+## Text buttons and dialogs (app 0.22.7)
 
 Two skin styles draw controls the way the original does. Each control places its caption **from
 its own rectangle** (plan M2, #123, RQ-UI-06):
@@ -296,7 +296,7 @@ dialog, run `openinterceptor --no-original --strategy --notice "Hello"`.
 ## Not built yet
 
 - Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used
-  by screen-set `value` and `text` widgets (app 0.22.5) and, since app NEXT, `list` widgets, text
+  by screen-set `value` and `text` widgets (app 0.22.5) and, since app 0.22.7, `list` widgets, text
   buttons and dialogs. The map labels, the menus and the testbed layout's panels still draw with
   `font` (the TrueType font). Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
 - Main menu option values too long for their room are drawn smaller (down to half size, app

@@ -170,7 +170,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-0225) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-0225)) and `size` is unused (app 0.22.5). |
 | `at` | `[x, y]` | none | With `font`: an anchor point instead of the rectangle. |
 | `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
-| `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-next), app NEXT). |
+| `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-next), app 0.22.7). |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
 | `kind` | Draws / does |
@@ -239,7 +239,7 @@ funds:  {kind: value, value: money, rect: [495, 426, 133, 15], font: readout, at
 status: {kind: value, value: selection, rect: [344, 457, 276, 15], font: readout, align: centre}
 ```
 
-### Lists in sheet fonts (app NEXT)
+### Lists in sheet fonts (app 0.22.7)
 
 A `list` with `font: <name>` is laid out from rectangles of its own instead of the testbed panel's
 fixed layout. The fixed layout had put the title, the selected row's text and the buttons over
@@ -292,7 +292,7 @@ original has one, its links and a back button.
   funds use the original's sheet fonts and anchors: the four readouts in 23010 centred on x 561 at
   y 370, 390, 410 and 430 (the time monospaced), the status bar centred in its bar, and the funds
   centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34).
-- **Since app NEXT** every list is in the body font (23011) on the art's own panels (D-32 – D-38).
+- **Since app 0.22.7** every list is in the body font (23011) on the art's own panels (D-32 – D-38).
   Research's topics sit on its eight slots, 25-px rows every 34 px (**verified**). The selected
   row's text and actions go in a nearby black box (**derived**): E&P's info boxes 2 and 3, the
   Equip Ships stat panel, the Research description pane, the UFOpedia article box. The base names
