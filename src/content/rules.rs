@@ -121,7 +121,7 @@ pub struct ProbeDef {
 /// so the HUD and the AI, which read `shield_fore` and `shield_aft`, keep working.
 ///
 /// ```yaml
-/// shield_pool: {recharge: 2, on_generator_lost: keep}
+/// shield_pool: {recharge: 2, on_generator_lost: drop}
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ShieldPool {
@@ -145,10 +145,10 @@ impl ShieldPool {
 /// What a station's shield pool does when its last generator is destroyed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GeneratorLost {
-    /// The pool keeps its points but no longer recharges (the original, derived:
-    /// its maximum becomes 0, flight README §8.5).
+    /// The pool keeps its points but no longer recharges (an engine option).
     Keep,
-    /// The pool empties at once ("STATION SHIELDS DOWN"; the engine's banks always did).
+    /// The pool empties at once ("STATION SHIELDS DOWN"): the original (`0x4244ff`,
+    /// notes/re/unknowns-2026-11.md §8, verified), and what the engine's banks always did.
     Drop,
 }
 
@@ -2392,7 +2392,11 @@ fn ship_class(
         })
         .collect::<Result<Vec<_>, String>>()?;
     let is_static = kind.is_static();
-    let shields = g.num("shields").unwrap_or(0.0);
+    // A station pool with no modules to power it (the original's outposts and ore plants)
+    // takes its maximum from its hit-point chart's `SD` (verified, notes/re/unknowns-2026-11.md
+    // §8): the `*HP` charts give HP1 as the hull and SD as the shields.
+    let self_powered_pool = g.node("shield_pool").is_some() && g.node("modules").is_none();
+    let shields = g.num("shields").or_else(|| g.num("sd").filter(|_| self_powered_pool)).unwrap_or(0.0);
     let system_ids = class_systems(g, kind, shields > 0.0, g.bool("vct").unwrap_or(false), systems)?;
     let vct = system_ids.iter().any(|i| systems[i.0 as usize].kind == SystemKind::Vct);
     Ok(ShipClass {
@@ -2494,7 +2498,7 @@ mod tests {
     const ORIGINAL: &str = "[Ship_IntType1]\nSide=XCOM\nHitPoints=100\nRollRate=200\nMaxSpeed=600\n\
                             [LaserCannon]\nRange=4\nDamage=30\nEnergyCost=10\nRateOfFire=2\nSpeed=2000\n\
                             [ShieldX]\nSpecial=321\nHitPoints=50\n[ArmorX]\nHitPoints=77\n\
-                            [StationHP]\nHP1=10\nHP2=20\nHP3=30\nHP4=0\n";
+                            [StationHP]\nHP1=10\nHP2=20\nHP3=30\nHP4=0\nSD=7\n";
 
     fn original_lookup() -> impl Fn(&str, &str) -> Option<Section> {
         let ini = Ini::parse(ORIGINAL);
@@ -2563,6 +2567,8 @@ ships:
   copy: {inherit: craft}
 objects:
   station: {faction: xcom, model: m, inherit: 'original:GameSettings.ini/StationHP'}
+  outpost: {faction: xcom, model: m, inherit: 'original:GameSettings.ini/StationHP', shield_pool: {}}
+  based: {inherit: outpost, modules: [{slot: '0', class: station}]}
 ";
         let (rules, errors) = build(&[source(0, text)], &original_lookup());
         assert!(errors.is_empty(), "{errors:?}");
@@ -2573,6 +2579,9 @@ objects:
         assert_eq!(get("copy").shields, 321.0, "inherited with the class");
         // RQ-C-01: the original reads only HP1 of a station's chart (flight README §8.1).
         assert_eq!(get("station").hull, 10.0, "hull = HP1; HP2-HP4 are never read");
+        // An outpost's pool is its chart's SD (the original copies HP1 and SD at load,
+        // unknowns-2026-11 §8); only a pool with no modules takes it.
+        assert_eq!((get("outpost").shields, get("station").shields, get("based").shields), (7.0, 0.0, 0.0));
         let bad = "factions: {xcom: {}}\nships:\n  c: {faction: xcom, model: m, fitted: {wings: x}}\n";
         let (_, errors) = build(&[source(0, bad)], &original_lookup());
         assert!(errors.iter().any(|e| e.contains("fitted.wings")), "{errors:?}");

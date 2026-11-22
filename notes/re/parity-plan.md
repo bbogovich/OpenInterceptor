@@ -22,6 +22,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | RQ-S-02 (part): research progress belongs to the topic (`switching: keep_progress`) | 0.22.3 |
 | #113 RQ-C-01 = D-16 (station hull is HP1), RQ-C-02/03 (one shield pool by generator type, covering the modules), RQ-C-04 (`damage_model: station`) | 0.22.4 |
 | #116 D-02 (repair order, hull, 2/4 per s, 0 is final), D-05 (system table, mounts and launchers), D-06 (per-system efficiency), RQ-C-16 (engine fails below 15 %), RQ-C-17 (sensor/hyperdrive damage inert); D-08 deferred to #133 | NEXT |
+| #113 follow-up: the pool drops to 0 when the last generator falls; outposts/OPPs pooled by their chart's SD (unknowns-2026-11 §8) | NEXT |
 
 ## Issues
 

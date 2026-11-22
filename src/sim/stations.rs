@@ -12,8 +12,10 @@
 //!   verified). The station has a single pool with no facings. Its maximum is the
 //!   `shield_capacity` of its first standing generator (generators do not add up), it
 //!   recharges at `shield_pool.recharge` points per second (2 in the original), and when
-//!   the last generator falls the pool either keeps its points without recharging
-//!   (`on_generator_lost: keep`, the original) or empties (`drop`).
+//!   the last generator falls the pool either empties (`on_generator_lost: drop`, the
+//!   original: `0x4244ff` clears it, notes/re/unknowns-2026-11.md §8) or keeps its points
+//!   without recharging (`keep`, an engine option). A pool whose class lists no
+//!   generators powers itself (the original's outposts and ore plants).
 //!
 //! A pool is stored in **both** of the hub's banks (`shield_fore == shield_aft`), so code
 //! that reads the banks (the HUD's target box, the AI's shield readings) keeps working
@@ -226,7 +228,7 @@ objects:
 
     #[test]
     fn the_pool_starts_full_at_the_first_generators_capacity() {
-        let (w, hub, _) = citadel("keep");
+        let (w, hub, _) = citadel("drop");
         assert_eq!(pool(&w, hub), (3000.0, 3000.0), "the first generator counts; they do not add up");
     }
 
@@ -275,6 +277,25 @@ objects:
             .events
             .iter()
             .any(|e| matches!(e, SimEvent::Message { ship, text } if *ship == hub && text == "STATION SHIELDS DOWN")));
+    }
+
+    #[test]
+    fn a_pool_without_generators_recharges_to_its_own_shields() {
+        // The original's outposts and ore plants: a pool of their chart's SD, +2 a second,
+        // no generator (unknowns-2026-11 §8).
+        let r = rules_with("objects:\n  plant: {model: m, faction: red, hit_points: 2800, shields: 1000, shield_pool: {recharge: 2}}\n", &Default::default());
+        let s = Arc::new(r.ships.iter().map(|_| Shape::sphere(5.0)).collect());
+        let mut w = World::new(r.clone(), s, 1);
+        let red = w.rules.faction_id("red").unwrap();
+        let idle = Pilot::Ai(ai::AiState::new(ai::Behaviour::Idle, None, Vec3::ZERO));
+        let plant = w.spawn(r.ship_id("plant").unwrap(), red, "plant", Vec3::ZERO, Quat::IDENTITY, idle);
+        assert_eq!(pool(&w, plant), (1000.0, 1000.0));
+        combat::apply_damage(&mut w, plant, 1200.0, Vec3::new(0.0, 0.0, -10.0));
+        assert_eq!((pool(&w, plant).0, w.get(plant).unwrap().hull), (0.0, 2600.0), "never below 0");
+        for _ in 0..(5 * 60) {
+            w.step();
+        }
+        assert!((pool(&w, plant).0 - 10.0).abs() < 0.05, "{:?}", pool(&w, plant));
     }
 
     #[test]
