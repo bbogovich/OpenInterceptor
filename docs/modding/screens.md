@@ -157,7 +157,7 @@ and kept; one that cannot be loaded is reported on standard error once
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info` | `image` | What the widget is (below). |
+| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info`, `check`, `anim`, `graph` | `image` | What the widget is (below). |
 | `rect` | `[x, y, w, h]` | *required* | Where it goes, in the design space. |
 | `image` | asset | none | An `image` widget's picture; a button's `up` image. |
 | `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
@@ -182,8 +182,11 @@ and kept; one that cannot be loaded is reported on standard error once
 | `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app 0.22.15; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
 | `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
+| `zoom_levels` | list of numbers | none | A `map`'s fixed zoom levels in map units per design pixel, in place of free zoom (app NEXT, [Zoom levels](#zoom-levels)). |
+| `months`, `legend` | list of text | Jan … Dec, none | A `graph`'s month names (January first), and the labels of a finance graph's low / high lines or of an activity map's four classes; text keys allowed (app NEXT). |
 | `labels` | `{font, colour, base_colour, rise, base_rise, box, cycle, margin}` | none | A `map`'s labels the original's way ([Map labels](#map-labels), app 0.22.17). Without it every star's name is drawn beside it. |
-| `slots`, `slot_size`, `slot_font` | list of `[x, y]`, `[w, h]`, name | none, `[76, 75]`, the list's font | A compact `list`'s sockets on the art: the rows that have cells (the hangar's craft) are also shown there, one per socket, name over second cell; a click selects the row (app 0.22.17). |
+| `slots`, `slot_size` | list of `[x, y]`, `[w, h]` | none, `[76, 75]` | A hangar `list`'s sockets on the art (centres): the selected craft's hard points as icons only — the hull's slots in order, each with its fitted item's icon; a click selects a socket (app 0.22.17; icons only since app NEXT). |
+| `slot_icons`, `slot_unusable`, `slot_selected` | map of item kind → asset, asset, asset | none | The sockets' images: a fitted item's icon by item kind, the image on sockets past the hull's hard points, and the selected socket's overlay drawn at (+1, +1) (app NEXT; replaces 0.22.17's `slot_font`). |
 
 | `kind` | Draws / does |
 |---|---|
@@ -195,6 +198,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `map` | The star map: pick, hover, zoom and pan as in the testbed layout. With `source: minimap` it is a small overview of the whole map instead — no names, no legend, not zoomed or panned. |
 | `info` | The selected object's details and its action buttons. |
 | `check` | A check row (app 0.22.10): a lamp at its left that a click toggles — `images: {sprite, states: 2}` (off, on) or `{up, down}` — and its `label` 20 px to the right in the skin's text-button font. |
+| `graph` | A status report's line graph of a month-by-month `source` (app NEXT, [Report graphs](#report-graphs)). |
 
 ### Actions
 
@@ -310,10 +314,18 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
 - Purchase, Manufacture and Equip Ships use compact boxes with columns and their arrows. The
   arrows' positions and images are **verified**; Equip Ships' columns borrow the CSD's ship-list
   template (**derived**).
-- Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Their arrows'
-  positions are not recovered yet, so they scroll with the wheel.
-- Since app 0.22.17 Equip Ships' nine ring sockets (centres **verified**) show the craft, name over
-  pilot in the 6 px font (**derived**); a click on a socket selects that craft.
+- Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Since app NEXT
+  their arrows are placed where the exe puts them (`unknowns-2026-11.md` §13.3, **verified**):
+  Bases' module scroll buttons 400 / 401 at (484, 247) and (580, 247) (sprite rows 1381 / 1379;
+  the pressed row N + 1 **derived**); Base Stats' arrows at (list right + 8, list top + 65) and
+  (list right + 8, list bottom − 20) (24 × 24 hot spots, **derived**); the UFOpedia topic list's
+  scroll anchor (616, 222), its upper and lower halves (**derived**). The article text's anchor
+  (616, 386) is not built.
+- Equip Ships' nine ring sockets (centres **verified**) show the selected ship's hard points as
+  icons only, since app NEXT (§13.2, **verified**): row 1237 where the hull has no hard point,
+  the selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the
+  body font (23011). The fitted items' icons come from a table by item kind whose rows are not
+  read yet, so `interceptor` has no `slot_icons`.
 - Research keeps its rows on the art's slots.
 
 A `button` with a `label` and no images is drawn as a **text button** when the skin has
@@ -350,6 +362,37 @@ starmap:
 The testbed layout (`starmap`) takes a full `map` definition too, for its `labels`; its
 other keys are unused there. `--hover X,Y` puts the labels' cursor at a design-space point (for
 screenshots).
+
+### Report graphs
+
+A `graph` widget (app NEXT, D-27) charts a month-by-month figure as the original's status
+reports do (StatusReports.cpp, `unknowns-2026-11.md` §13.1, **verified**): 1 px lines, a grid of
+horizontal lines in RGB(0, 50, 0), ticks and axes in RGB(0, 100, 0), at most 16 months along the
+bottom and the values at the left in `font` in RGB(0, 200, 0), "NO DATA" before the first month
+closes.
+
+| `source` | Series |
+|---|---|
+| `income` | Money received each month, in $1000s. |
+| `finance` | The series the screen's list picks: its rows are income, expenditure, maintenance, balance and score. Also draws the low and high lines of the months shown, labelled by `legend`. |
+| `alien`, `xcom` | Alien contacts launched and interceptions sent each month. |
+
+A `map` with `source: activity_alien` or `activity_xcom` draws every system coloured by its
+average actions a month — none, 1 – 5, 6 – 15, 16 and more — with the four `legend` texts under
+it. The months come from the campaign's history, which saves keep since app NEXT.
+
+**Derived:** the layout (where the parts and labels go, the value step), the series line's colour
+(`colour`, default green), the activity colours, single-letter months when they are closer than
+22 px, and what counts as alien and X-COM activity.
+
+### Zoom levels
+
+`zoom_levels: [45, 30]` on a `map` (app NEXT) replaces free zoom by the original CSD's levels
+(`unknowns-2026-11.md` §1.1, §13.4, **verified**): level 0 shows 45 map units a pixel, level 1
+30, centred on the first base's system. The wheel steps between them in place of the original's
+view knob, whose control is not placed yet. Clicking a system whose star class has a
+`portrait` shows it (level 2), animated, centred in the map (**derived**); the wheel goes back.
+Clicking a system without one (a black hole) only centres it. A minimap ignores the levels.
 
 ### Sprite buttons, toggles and radio groups
 
