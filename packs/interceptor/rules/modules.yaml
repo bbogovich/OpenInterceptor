@@ -44,10 +44,10 @@ behaviours:
   dealer_turret_side:    # rows 3-4: 3,000 m, 90 deg, accuracy 65 + 5d, 1,000 - 10d ms
     states: {guns: {do: turret, range: 3km, burst: 0.02s, pause: {per_level: [1s, 0.99s, 0.98s, 0.97s, 0.96s]}}}
     skill: {aim: {per_level: [0.3, 0.45, 0.6, 0.7, 0.8]}, reaction: 0.5s}
-  # Alien base mines: they wait and go off when a hostile comes near. What the original's
-  # mines do is not traced (DERIVED: the engine's mine manoeuvre at 150 m).
+  # Alien base mines go off on contact: collidable objects of radius 10 whose INI Range
+  # is 0 (unknowns §9, DERIVED).
   alien_mine:
-    states: {wait: {do: mine, range: 150m}}
+    states: {wait: {do: mine, range: 0}}
 
 modelsets:
   xcom_turret: {intact: original:GUNTURRET2, debris: xcom_base, destroyed_effect: explosion_fighter}

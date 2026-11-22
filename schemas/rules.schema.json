@@ -127,7 +127,9 @@
                 "hit_points": {"description": "its own hit points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "at": {"description": "centre in model space, metres (engine axes)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
                 "radius": {"description": "direct hits landing within this distance strike it", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
-                "message": {"description": "said when it is destroyed (@key allowed)", "type": "string"}
+                "message": {"description": "said when it is destroyed (@key allowed)", "type": "string"},
+                "hits": {"description": "direct: only direct beam and missile hits (default); any: every hit", "enum": ["direct", "any"]},
+                "explosion": {"description": "radius of the blast shown when it falls (0 = none)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
               }}},
           "destroyed_when": {"description": "what destroys it: hull at 0 (default), all hard points at 0, or either", "enum": ["hull", "hard_points", "either"]},
           "minefields": {"description": "mines laid around the object when it is placed", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
@@ -234,7 +236,9 @@
                 "hit_points": {"description": "its own hit points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "at": {"description": "centre in model space, metres (engine axes)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
                 "radius": {"description": "direct hits landing within this distance strike it", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
-                "message": {"description": "said when it is destroyed (@key allowed)", "type": "string"}
+                "message": {"description": "said when it is destroyed (@key allowed)", "type": "string"},
+                "hits": {"description": "direct: only direct beam and missile hits (default); any: every hit", "enum": ["direct", "any"]},
+                "explosion": {"description": "radius of the blast shown when it falls (0 = none)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
               }}},
           "destroyed_when": {"description": "what destroys it: hull at 0 (default), all hard points at 0, or either", "enum": ["hull", "hard_points", "either"]},
           "minefields": {"description": "mines laid around the object when it is placed", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {

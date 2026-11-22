@@ -283,6 +283,12 @@ fn ship() -> Ty {
                 f("at", Ty::Numbers(3), "centre in model space, metres (engine axes)"),
                 f("radius", dist(), "direct hits landing within this distance strike it"),
                 f("message", Ty::Text, "said when it is destroyed (@key allowed)"),
+                f(
+                    "hits",
+                    Ty::Enum(&["direct", "any"]),
+                    "direct: only direct beam and missile hits (default); any: every hit",
+                ),
+                f("explosion", dist(), "radius of the blast shown when it falls (0 = none)"),
             ]))),
             "stations: weak points that take direct hits while the shields are down",
         ),

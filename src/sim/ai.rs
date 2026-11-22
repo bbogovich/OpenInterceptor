@@ -570,9 +570,14 @@ fn fly(
         Manoeuvre::Escort => escort(w, me, st, p, skill),
         Manoeuvre::Travel => (travel(w, me, st, p), None),
         Manoeuvre::Mine => {
-            // Detonate when a hostile is inside the trigger distance.
-            let close = targeting::nearest_hostile(w, me)
-                .is_some_and(|t| w.ships[t.index as usize].position.distance(ship.position) < p.range);
+            // Detonate when a hostile is inside the trigger distance; `range: 0` means on
+            // contact — the two hulls' radii touching (the original's mines, derived).
+            let my_r = w.shapes[ship.class.0 as usize].radius;
+            let close = targeting::nearest_hostile(w, me).is_some_and(|t| {
+                let o = &w.ships[t.index as usize];
+                let reach = if p.range > 0.0 { p.range } else { my_r + w.shapes[o.class.0 as usize].radius };
+                o.position.distance(ship.position) < reach
+            });
             let mut c = Controls::default();
             c.requests.detonate = close;
             (c, None)
