@@ -291,9 +291,55 @@ pub struct ClockDef {
     pub run: usize,
     /// What a notice (a Report prompt) does to the speed (RQ-S-18).
     pub notices: NoticeClock,
+    /// With `NoticeClock::Ask`: the notice kinds that ask (`ask_for`; empty: all).
+    pub ask_for: Vec<NoticeKind>,
+    /// The speed the number key 1 picks (2 the next …). Default: the one after
+    /// `on_event` (with a pause first, 1 is the first running speed); the original's
+    /// keys 1-6 pick its six speeds from the first (`first_key: 0`).
+    pub first_key: usize,
     /// With `NoticeClock::Ask`: the Report's two buttons — keep the speed, or drop it
     /// to `on_event` (the original: "OK" and "OK (5 secs)").
     pub notice_buttons: [String; 2],
+}
+
+/// What a notice is about (`clock.ask_for` names these: `base_built`, `module_built`, …).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NoticeKind {
+    /// A base finished building (the original's queued event 0xc).
+    BaseBuilt,
+    /// A module or facility finished building (event 0xb).
+    ModuleBuilt,
+    /// A research topic is complete.
+    ResearchComplete,
+    /// A delivery arrived, or waits for room.
+    Delivery,
+    /// The monthly report, or a survey's.
+    Report,
+    /// A contact detected on the sensors (the original's sightings).
+    Contact,
+    /// Base modules wrecked or people lost in a raid (events 2 and 6).
+    Damage,
+    /// Anything else (story, stances, raids beaten off …).
+    Other,
+}
+
+impl NoticeKind {
+    /// The kinds by name, for `clock.ask_for`.
+    pub const NAMES: [(&'static str, NoticeKind); 8] = [
+        ("base_built", NoticeKind::BaseBuilt),
+        ("module_built", NoticeKind::ModuleBuilt),
+        ("research_complete", NoticeKind::ResearchComplete),
+        ("delivery", NoticeKind::Delivery),
+        ("report", NoticeKind::Report),
+        ("contact", NoticeKind::Contact),
+        ("damage", NoticeKind::Damage),
+        ("other", NoticeKind::Other),
+    ];
+
+    /// A kind by name.
+    pub fn parse(s: &str) -> Option<NoticeKind> {
+        NoticeKind::NAMES.iter().find(|(n, _)| *n == s).map(|(_, k)| *k)
+    }
 }
 
 /// What a notice does to the clock (`clock.notices`).
@@ -318,6 +364,8 @@ impl Default for ClockDef {
             run: 3,
             notices: NoticeClock::Drop,
             notice_buttons: ["OK".into(), "OK (slow)".into()],
+            first_key: 1,
+            ask_for: Vec::new(),
         }
     }
 }
@@ -374,7 +422,24 @@ impl ClockDef {
             [ok, slow] => notice_buttons = [ok.clone(), slow.clone()],
             _ => errors.push("clock.notice_buttons: expected two captions [keep, slow]".into()),
         }
-        ClockDef { speeds, labels, on_event, run, notices, notice_buttons }
+        let first_key = index("first_key", on_event + 1, errors);
+        let mut ask_for = Vec::new();
+        for k in g.list("ask_for") {
+            match NoticeKind::parse(&k) {
+                Some(kind) => ask_for.push(kind),
+                None => errors.push(format!(
+                    "clock.ask_for: '{k}' is not one of {}",
+                    NoticeKind::NAMES.iter().map(|(n, _)| *n).collect::<Vec<_>>().join(", ")
+                )),
+            }
+        }
+        ClockDef { speeds, labels, on_event, run, notices, notice_buttons, first_key, ask_for }
+    }
+
+    /// Whether a notice of this kind asks (`notices: ask` and in `ask_for`, or `ask_for`
+    /// empty).
+    pub fn asks(&self, kind: NoticeKind) -> bool {
+        self.notices == NoticeClock::Ask && (self.ask_for.is_empty() || self.ask_for.contains(&kind))
     }
 
     /// A short button caption for a rate of `hours` per second ("||", "5s", "30m", "1d").
@@ -1491,6 +1556,12 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("run", Ty::Num, "the speed the Space key toggles to"),
                 f("notices", Ty::Enum(&["drop", "keep", "ask"]), "what a notice does to the speed: drop to on_event (default), keep it, or ask with two buttons"),
                 f("notice_buttons", Ty::List(Box::new(Ty::Text)), "with ask: the two captions [keep the speed, drop to on_event]"),
+                f("first_key", Ty::Num, "the speed the number key 1 picks (default: the one after on_event)"),
+                f(
+                    "ask_for",
+                    Ty::List(Box::new(Ty::Enum(&["base_built", "module_built", "research_complete", "delivery", "report", "contact", "damage", "other"]))),
+                    "with ask: the notice kinds that ask (default: all)",
+                ),
             ]),
             "the time controls (default: a pause, then 1 h, 6 h, 1 d and 5 d per second)",
         ),
@@ -1536,6 +1607,16 @@ pub(crate) mod tests {
         assert_eq!(ClockDef::short(c.speeds[3]), "30m");
         assert_eq!(ClockDef::short(0.0), "||");
         assert_eq!(c.notices, NoticeClock::Drop, "notices drop the speed unless told otherwise");
+        assert_eq!(c.first_key, 1, "key 1: the speed after on_event");
+        assert_eq!(ClockDef::parse(Some(&g("speeds: [5s, 1min]\nfirst_key: 0")), &mut errors).first_key, 0);
+        let af = ClockDef::parse(Some(&g("notices: ask\nask_for: [base_built, report]")), &mut errors);
+        assert!(af.asks(NoticeKind::BaseBuilt) && af.asks(NoticeKind::Report));
+        assert!(!af.asks(NoticeKind::Other), "an unlisted kind is a plain OK");
+        let all = ClockDef::parse(Some(&g("notices: ask")), &mut errors);
+        assert!(all.asks(NoticeKind::Other), "no list: every notice asks");
+        let mut e3 = Vec::new();
+        ClockDef::parse(Some(&g("ask_for: [lunch]")), &mut e3);
+        assert!(e3[0].contains("lunch"), "{e3:?}");
         let a = ClockDef::parse(Some(&g("notices: ask\nnotice_buttons: [Fine, Slow down]")), &mut errors);
         assert_eq!((a.notices, a.notice_buttons[1].as_str()), (NoticeClock::Ask, "Slow down"));
         let mut e2 = Vec::new();

@@ -24,3 +24,10 @@ skins:
     # Text buttons and prompts drawn like the original's, in the deco colours.
     text_button: {font: small, colour: [0.96, 0.91, 0.78], line: [0.86, 0.70, 0.34], fill: [0.85, 0.20, 0.15, 0.45]}
     dialog: {width: 320, title_font: title, body_font: body, title_y: 22, body_top: 34}
+    # Interface sounds (names of the sounds: below): a click for buttons and list arrows,
+    # the radio blip when a prompt opens.
+    sounds: {button: ui_click, text_button: ui_click, arrow: ui_click, box_open: ui_open}
+
+sounds:
+  ui_click: sounds/ui_click.wav
+  ui_open: sounds/radio_status.wav

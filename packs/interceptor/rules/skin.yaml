@@ -39,10 +39,17 @@ skins:
     # Prompts as the original's message boxes: caption in 23010, text in 23011, text
     # buttons stacked up from the bottom (MsgBox.cpp, VERIFIED). The width and offsets
     # are DERIVED until the frame art (#127) gives the caption its verified top + 54.
-    # Since #127: the body is the message boxes' fill surface (sprite row 430 = WrappersDLL
-    # 5006, VERIFIED; tiled here, DERIVED) and the buttons are message-box capsules
-    # (rows 258-260 left/middle/right, pressed 261-263, caption in 23010 at (cx, cy-2),
-    # pressed (+1,+1): VERIFIED; their placement in the box DERIVED). The three frame kits
-    # (rows 163-198) are not drawn: which piece goes where is not recovered yet.
-    dialog: {width: 300, title_font: readout, body_font: body, title_y: 18, body_top: 28,
-             fill: "original:WrappersDLL.dll#5006", capsule: "original:sprite#258"}
+    # The original's message box (MsgBox.cpp, VERIFIED - ui-framework.md §4): frame kit
+    # style 3 (8 rows from 190: edges tiled, corners last; the blinking ornament row 198 at
+    # (right - 47, bottom - 54); caption at top + 54), the body fill row 430 (row 429 for big
+    # boxes) centred and clipped, sized by its text (325 wide at least, wrapped at 425,
+    # 100 tall up to 400) with capsule buttons (rows 258-263, 100+ x 14, 10 px apart).
+    # Which style each kind of dialog uses is not settled: style 3 for every prompt here
+    # (DERIVED).
+    dialog: {title_font: readout, body_font: body, kit: "original:sprite#190", frame_style: 3,
+             fill: "original:sprite#430", fill_large: "original:sprite#429", capsule: "original:sprite#258"}
+    # Interface sounds by control (names of the sounds: in screens.yaml) and the hover
+    # help box: font 23011, fill RGB(0,0,100) at level 75 (read as 75 %: DERIVED), frame,
+    # kept left of x = 630 (Floaters.cpp, VERIFIED).
+    sounds: {button: ui_click, text_button: ui_beep29b, capsule: ui_box_button, box_open: ui_box_open, arrow: ui_beep8}
+    tooltip: {font: body}

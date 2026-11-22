@@ -17,11 +17,14 @@ clock:
   speeds: [5s, 1min, 5min, 30min, 1h, 1d]
   on_event: 0
   run: 3
-  # The queued-event message boxes (base or module built, pilot healed, ship damaged,
-  # people killed) keep the speed with OK and drop to the slowest with "OK (5 secs)"
-  # (RQ-S-18, VERIFIED: 0x46bdc4 -> SetSpeed(0)). The engine asks on every notice.
+  # "OK" keeps the speed, "OK (5 secs)" drops it to the slowest (RQ-S-18, VERIFIED -
+  # ui-framework.md §4.5): offered by the queued events 2 (ship damaged), 6 (people
+  # killed), 0xb (module built) and 0xc (base built), research complete, the reports,
+  # deliveries, sightings and the like; every other box is a plain OK.
   notices: ask
   notice_buttons: ["@orig.S_OK", "@orig.S_OK5SECS"]
+  ask_for: [base_built, module_built, research_complete, delivery, report, contact, damage]
+  first_key: 0                              # keys 1-6 pick the six speeds (VERIFIED, OnCommand 49-54)
 
 start:
   date: 2067-01-01                          # DERIVED from the manual's opening

@@ -19,7 +19,7 @@
 //! script in the campaign context ([`CampaignHost`]); each action it takes is applied
 //! at once, through the same `apply_actions`, so later lines of the script see it.
 
-use super::{Campaign, Contact, Cx, Event, Message};
+use super::{Campaign, Contact, Cx, Event, Message, NoticeKind};
 use crate::content::story::Check;
 use crate::content::strategy::StrategyDef;
 use crate::script::action::Action;
@@ -149,7 +149,7 @@ impl Campaign {
                 "message" => {
                     let t = arg(0).to_string();
                     self.log(t.clone());
-                    events.push(Event::Notice(t));
+                    events.push(Event::Notice(t, NoticeKind::Other));
                 }
                 "news" => self.log(format!("News: {}", arg(0))),
                 "video" => events.push(Event::Video { reference: arg(0).to_string() }),
@@ -189,7 +189,7 @@ impl Campaign {
                         if let Some(t) = def.topic(arg(0)) {
                             let text = format!("New research possible: {}", def.research[t].name);
                             self.log(text.clone());
-                            events.push(Event::Notice(text));
+                            events.push(Event::Notice(text, NoticeKind::Other));
                         }
                     }
                 }
@@ -235,7 +235,7 @@ impl Campaign {
         if old != new {
             let t = format!("Relations: {faction} are now {new} (were {old})");
             self.log(t.clone());
-            events.push(Event::Notice(t));
+            events.push(Event::Notice(t, NoticeKind::Other));
         }
     }
 
@@ -475,7 +475,7 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         // act_two's condition holds from day 1, but it is the arc's second step.
         assert!(!events.iter().any(|e| matches!(e, Event::Mission { .. })), "not before act one");
         let events = run(&mut c, &d, 48.0);
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t == "Act one")));
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t, _) if t == "Act one")));
         assert!(events.iter().any(|e| matches!(e, Event::Mission { mission } if mission == "m1")), "{events:?}");
         assert_eq!(c.story.arc_step[0], 2);
         let bribe = d.story.event("bribe").unwrap();
@@ -517,7 +517,7 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         let events = run(&mut c, &d, 24.0 * 4.0);
         assert_eq!(c.money, money + 5.0);
         assert!(c.flags.iter().any(|f| f == "done"));
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t == "Chain complete")), "{events:?}");
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t, _) if t == "Chain complete")), "{events:?}");
         // A script that uses another context's action is an error on the event.
         let bad = text.replace("chain.ois:step", "chain.ois:wrong");
         let (_, errors) = build_with(&bad, &lib);
@@ -535,7 +535,7 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
         c.flags.push("built".into()); // starts the plan (the sample's own raids stay off)
         let events = run(&mut c, &d, 24.0 * 20.0);
         assert!(c.story.plan_started[0]);
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t == "Half built")), "{events:?}");
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t, _) if t == "Half built")), "{events:?}");
         assert_eq!(c.story.ending, d.story.ending("lit"), "two shipments got through: the engine is lit");
         assert!(events.iter().any(|e| matches!(e, Event::Ending { .. })));
     }

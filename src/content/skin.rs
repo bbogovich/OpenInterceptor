@@ -54,7 +54,47 @@ pub struct Skin {
     pub text_button: Option<TextButtonStyle>,
     /// How prompts look over a screen set (`dialog`). `None`: the skin's plain prompts.
     pub dialog: Option<DialogStyle>,
+    /// The interface sounds by control (`sounds`: `sounds:` names). RQ-UI-09.
+    pub sounds: UiSounds,
+    /// How hover help looks (`tooltip`). `None`: no hover help.
+    pub tooltip: Option<TooltipStyle>,
     pub pack: usize,
+}
+
+/// The interface sounds a skin plays by default, each a name in the rules' `sounds:`
+/// (`None`: silent). A widget's own `sound` wins.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct UiSounds {
+    /// A sprite or plain button (the original: Click).
+    pub button: Option<String>,
+    /// A text button (the original: sndBeep29b).
+    pub text_button: Option<String>,
+    /// A message-box capsule (the original: MsgBoxBtn).
+    pub capsule: Option<String>,
+    /// A message box opening (the original: MsgBoxOpen).
+    pub box_open: Option<String>,
+    /// A list's scroll arrow (the original: Beep8).
+    pub arrow: Option<String>,
+}
+
+/// `tooltip`: the original's floating help box (Floaters.cpp 0x4b2ed5): text in `font`,
+/// lines 16 px apart, the box the widest line + 20 wide, over a translucent fill with a
+/// 1 px frame.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TooltipStyle {
+    pub font: Option<String>,
+    /// The fill's colour (the original: RGB(0, 0, 100)) and how opaque (its level 75).
+    pub fill: [f32; 4],
+    /// The frame's colour.
+    pub frame: [f32; 4],
+    /// The rightmost x the box may reach (the original: 630).
+    pub right: i32,
+}
+
+impl Default for TooltipStyle {
+    fn default() -> Self {
+        TooltipStyle { font: None, fill: [0.0, 0.0, 100.0 / 255.0, 0.75], frame: [0.6, 0.6, 0.6, 1.0], right: 630 }
+    }
 }
 
 /// `text_button`: the original's TextButton (Interceptor.exe paint 0x41932d): a caption
@@ -107,6 +147,14 @@ pub struct DialogStyle {
     pub capsule: Option<String>,
     /// Frame pieces drawn around the dialog (RQ-UI-14).
     pub frame: Vec<FramePiece>,
+    /// The original's message box: a frame kit's base sprite (8 rows from B: edges,
+    /// then corners) and its style (1-3: insets, padding and live pieces, see
+    /// `app::msgbox`). With a kit the box is sized and laid out as the exe does, and
+    /// `width`, `title_y`, `body_top`, `button_step` and `frame` are not used.
+    pub kit: Option<String>,
+    pub frame_style: u8,
+    /// The fill for boxes bigger than `fill` (the original: row 429, 640 × 480).
+    pub fill_large: Option<String>,
 }
 
 /// Where a frame piece sits on its dialog's rectangle.
@@ -180,6 +228,9 @@ impl Default for DialogStyle {
             fill: None,
             capsule: None,
             frame: Vec::new(),
+            kit: None,
+            frame_style: 0,
+            fill_large: None,
         }
     }
 }
@@ -216,7 +267,27 @@ impl DialogStyle {
             v.extend((0..6).map(|k| if k == 0 { c.clone() } else { format!("{c}+{k}") }));
         }
         v.extend(self.frame.iter().map(|p| p.image.clone()));
+        v.extend(self.fill_large.iter().cloned());
+        if let Some(k) = &self.kit {
+            // The 8 kit rows and the style's live pieces after them.
+            let extra = match self.frame_style {
+                1 => 8,
+                2 => 3,
+                3 => 1,
+                _ => 0,
+            };
+            v.extend((0..8 + extra).map(|i| DialogStyle::row(k, i)));
+        }
         v
+    }
+
+    /// Row `i` after a sprite reference (`original:sprite#190`, 2 → `…#190+2`).
+    pub fn row(base: &str, i: usize) -> String {
+        if i == 0 {
+            base.to_string()
+        } else {
+            format!("{base}+{i}")
+        }
     }
 
     /// Parses `dialog: {design, width, title_font, body_font, title_y, body_top, button_step,
@@ -245,6 +316,13 @@ impl DialogStyle {
             button_step: int("button_step", d.button_step)?.max(20),
             fill: g.str("fill").map(str::to_string),
             capsule: g.str("capsule").map(str::to_string),
+            kit: g.str("kit").map(str::to_string),
+            frame_style: match g.num("frame_style") {
+                None => 0,
+                Some(v) if (0.0..=3.0).contains(&v) && v.fract() == 0.0 => v as u8,
+                Some(v) => return Err(format!("frame_style: {v} is not 0, 1, 2 or 3")),
+            },
+            fill_large: g.str("fill_large").map(str::to_string),
             frame: match g.node("frame").and_then(|n| n.as_seq()) {
                 None => Vec::new(),
                 Some(items) => items
@@ -315,6 +393,8 @@ impl Skin {
             fonts: Vec::new(),
             text_button: None,
             dialog: None,
+            sounds: UiSounds::default(),
+            tooltip: None,
             pack: 0,
         }
     }
@@ -351,12 +431,37 @@ impl Skin {
         if let Some(n) = g.node("dialog") {
             s.dialog = Some(DialogStyle::parse(Get(n)).map_err(|e| format!("dialog: {e}"))?);
         }
+        if let Some(n) = g.node("sounds") {
+            let sg = Get(n);
+            let name = |k: &str| sg.str(k).filter(|v| *v != "none").map(str::to_string);
+            s.sounds = UiSounds {
+                button: name("button"),
+                text_button: name("text_button"),
+                capsule: name("capsule"),
+                box_open: name("box_open"),
+                arrow: name("arrow"),
+            };
+        }
+        if let Some(n) = g.node("tooltip") {
+            let tg = Get(n);
+            let mut t = TooltipStyle { font: tg.str("font").map(str::to_string), ..Default::default() };
+            for (k, slot) in [("fill", &mut t.fill), ("frame", &mut t.frame)] {
+                if let Some(c) = tg.node(k) {
+                    *slot = colour(c).ok_or(format!("tooltip.{k}: expected [r, g, b] or [r, g, b, a]"))?;
+                }
+            }
+            if let Some(r) = tg.num("right") {
+                t.right = r as i32;
+            }
+            s.tooltip = Some(t);
+        }
         // A style naming a font the skin does not define is a mistake worth stopping on.
         let named = |f: &Option<String>| f.as_ref().filter(|f| !s.fonts.iter().any(|d| &d.name == *f)).cloned();
         let missing = [
             s.text_button.as_ref().and_then(|t| named(&t.font)).map(|f| ("text_button.font", f)),
             s.dialog.as_ref().and_then(|d| named(&d.title_font)).map(|f| ("dialog.title_font", f)),
             s.dialog.as_ref().and_then(|d| named(&d.body_font)).map(|f| ("dialog.body_font", f)),
+            s.tooltip.as_ref().and_then(|t| named(&t.font)).map(|f| ("tooltip.font", f)),
         ];
         if let Some((k, f)) = missing.into_iter().flatten().next() {
             return Err(format!("{k}: '{f}' is not one of this skin's fonts"));
@@ -434,6 +539,27 @@ pub fn schema() -> Ty {
             "the original's text button: list actions, labelled buttons, dialog buttons",
         ),
         f(
+            "sounds",
+            Ty::Struct(vec![
+                f("button", Ty::Name, "a sprite or plain button (a sounds: name, or none)"),
+                f("text_button", Ty::Name, "a text button"),
+                f("capsule", Ty::Name, "a message-box capsule"),
+                f("box_open", Ty::Name, "a message box opening"),
+                f("arrow", Ty::Name, "a list's scroll arrow"),
+            ]),
+            "the interface sounds by control (names in the rules' sounds:)",
+        ),
+        f(
+            "tooltip",
+            Ty::Struct(vec![
+                f("font", Ty::Name, "a sheet font of this skin"),
+                f("fill", Ty::List(Box::new(Ty::Num)), "the box's fill, RGBA (original: 0,0,100 at 75 %)"),
+                f("frame", Ty::List(Box::new(Ty::Num)), "the box's 1 px frame"),
+                f("right", Ty::Num, "the rightmost x the box may reach (original: 630)"),
+            ]),
+            "hover help boxes (widgets' tip)",
+        ),
+        f(
             "dialog",
             Ty::Struct(vec![
                 f("design", Ty::Numbers(2), "the design space the dialog is laid out in"),
@@ -449,6 +575,13 @@ pub fn schema() -> Ty {
                     Ty::Asset,
                     "message-box capsule buttons: the base sprite (left, middle, right; pressed +3..+5)",
                 ),
+                f(
+                    "kit",
+                    Ty::Asset,
+                    "the original's message box: a frame kit's base sprite (original:sprite#163 / 179 / 190)",
+                ),
+                f("frame_style", Ty::Num, "with kit: the style, 1-3 (insets, padding, live pieces), 0 plain"),
+                f("fill_large", Ty::Asset, "the fill for boxes bigger than fill (original: sprite#429)"),
                 f(
                     "frame",
                     Ty::List(Box::new(Ty::Struct(vec![
@@ -547,8 +680,22 @@ mod tests {
         assert_eq!(fd.frame[1].at, Anchor::TopLeft);
         assert_eq!(fd.images().len(), 1 + 6 + 2);
         assert_eq!(fd.images()[2], "original:sprite#258+1");
+        let kd = yaml::parse("dialog: {kit: 'original:sprite#190', frame_style: 3, fill_large: big.png}").unwrap();
+        let kk = Skin::parse("x", Get(&kd), 0).unwrap().dialog.unwrap();
+        assert_eq!((kk.frame_style, kk.images().len()), (3, 1 + 9), "fill_large, 8 kit rows and the ornament");
+        assert_eq!(kk.images()[9], "original:sprite#190+8");
+        let bk = yaml::parse("dialog: {frame_style: 5}").unwrap();
+        assert!(Skin::parse("x", Get(&bk), 0).unwrap_err().contains("frame_style"));
         let badf = yaml::parse("dialog: {frame: [{image: a.png, at: middle}]}").unwrap();
         assert!(Skin::parse("x", Get(&badf), 0).unwrap_err().contains("frame[0]: at"));
+        let snd = yaml::parse(
+            "fonts: {body: b.png}\nsounds: {button: ui_click, arrow: none}\ntooltip: {font: body, right: 600}",
+        )
+        .unwrap();
+        let ss = Skin::parse("x", Get(&snd), 0).unwrap();
+        assert_eq!((ss.sounds.button.as_deref(), ss.sounds.arrow.as_deref()), (Some("ui_click"), None));
+        let tt = ss.tooltip.unwrap();
+        assert_eq!((tt.font.as_deref(), tt.right, tt.fill), (Some("body"), 600, TooltipStyle::default().fill));
         let bad = yaml::parse("dialog: {width: 1.5}").unwrap();
         assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("dialog: width"));
     }

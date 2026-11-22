@@ -175,11 +175,15 @@ pub struct Message {
     pub text: String,
 }
 
+pub use crate::content::strategy::NoticeKind;
+
 /// What happened during [`Campaign::advance`] that the screen should react to.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
-    /// A message worth stopping the clock for (also in the log).
-    Notice(String),
+    /// A message worth stopping the clock for (also in the log), and what it is about
+    /// (a campaign may treat kinds differently: the original offers "OK (5 secs)" on
+    /// some of its message boxes only).
+    Notice(String, NoticeKind),
     /// An interception has reached its contact: fly the battle.
     Battle { contact: u32 },
     /// A supply convoy (index into `logistics.convoys`) has been ambushed: fly its escort
@@ -817,7 +821,7 @@ impl Campaign {
             t += &format!("; lost: {}", lost.join(", "));
         }
         self.log(t.clone());
-        events.push(Event::Notice(t));
+        events.push(Event::Notice(t, NoticeKind::Damage));
     }
 
     /// Repairs a wrecked module: `economy.repair` (50 %) of its cost now, and the same
@@ -1255,9 +1259,9 @@ impl Campaign {
     fn step(&mut self, def: &StrategyDef, dt: f64, events: &mut Vec<Event>) {
         self.hours += dt;
         let now = self.hours;
-        let notice = |c: &mut Campaign, text: String, events: &mut Vec<Event>| {
+        let notice = |c: &mut Campaign, text: String, kind: NoticeKind, events: &mut Vec<Event>| {
             c.log(text.clone());
-            events.push(Event::Notice(text));
+            events.push(Event::Notice(text, kind));
         };
         // Construction finished.
         for b in 0..self.bases.len() {
@@ -1269,11 +1273,11 @@ impl Campaign {
                 .collect();
             for d in done {
                 let t = format!("{}: {d} is complete", self.bases[b].name);
-                notice(self, t, events);
+                notice(self, t, NoticeKind::ModuleBuilt, events);
             }
             if self.bases[b].ready_at > now - dt && self.bases[b].ready_at <= now {
                 let t = format!("{} is complete", self.bases[b].name);
-                notice(self, t, events);
+                notice(self, t, NoticeKind::BaseBuilt, events);
             }
         }
         // Research: each base works on its topic at its rate.
@@ -1292,7 +1296,12 @@ impl Campaign {
                         base.research = None;
                     }
                 }
-                notice(self, format!("Research complete: {}", def.research[t].name), events);
+                notice(
+                    self,
+                    format!("Research complete: {}", def.research[t].name),
+                    NoticeKind::ResearchComplete,
+                    events,
+                );
             }
         }
         // Manufacturing: each base's production rate, first job first.
@@ -1364,6 +1373,7 @@ impl Campaign {
                 notice(
                     self,
                     format!("A delivery of {} x {what} to {} was lost", d.count, self.bases[d.base].name),
+                    NoticeKind::Delivery,
                     events,
                 );
                 continue;
@@ -1389,7 +1399,7 @@ impl Campaign {
                             "{}: no room in store for {} x {}; it waits until there is",
                             self.bases[d.base].name, d.count, def.items[i].name
                         );
-                        notice(self, t, events);
+                        notice(self, t, NoticeKind::Delivery, events);
                     }
                     self.deliveries.push(d);
                     continue;
@@ -1452,7 +1462,7 @@ impl Campaign {
             );
             self.month_score = 0.0;
             self.refresh_recruits(def);
-            notice(self, t, events);
+            notice(self, t, NoticeKind::Report, events);
         }
         // Pilots heal.
         for p in &mut self.pilots {
@@ -1511,7 +1521,7 @@ impl Campaign {
                     Some(b) => format!(", heading for {}", self.bases[b].name),
                     None => String::new(),
                 };
-                notice(self, format!("Contact: {}{what}", raid.name), events);
+                notice(self, format!("Contact: {}{what}", raid.name), NoticeKind::Contact, events);
             }
         }
         self.reveal(def);
@@ -1695,7 +1705,7 @@ impl Campaign {
         let place = c.target_base.map(|b| self.bases[b].name.clone()).unwrap_or_else(|| "a system".into());
         let text = format!("{} struck {place} unopposed", raid.name);
         self.log(text.clone());
-        events.push(Event::Notice(text));
+        events.push(Event::Notice(text, NoticeKind::Other));
         // Losing a base's module: the raid damaged it (the newest finished module) —
         // unless the base's `defence` turns it away: each point of its modules' defence
         // drives off 15 % of raids on its own (1 - 0.85^points in all).
@@ -1707,7 +1717,7 @@ impl Campaign {
         if defended {
             let t = format!("{place}'s defences drove the raid off");
             self.log(t.clone());
-            events.push(Event::Notice(t));
+            events.push(Event::Notice(t, NoticeKind::Other));
             return;
         }
         if let Some(b) = c.target_base {
@@ -1836,7 +1846,7 @@ impl Campaign {
                         let mut events = Vec::new();
                         self.change_standing(def, f.trim(), by, &mut events);
                         for e in events {
-                            if let Event::Notice(t) = e {
+                            if let Event::Notice(t, _) = e {
                                 self.notices.push(t);
                             }
                         }
@@ -2093,7 +2103,7 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
         c.notices.clear();
         for e in c.advance(def, 24.0) {
             match e {
-                Event::Notice(t) if t.starts_with("Contact") => {
+                Event::Notice(t, _) if t.starts_with("Contact") => {
                     if let Some(id) = c.contacts.iter().rev().find(|x| x.detected).map(|x| x.id) {
                         let free: Vec<usize> = (0..c.craft.len()).filter(|&k| c.craft[k].away.is_none()).collect();
                         let _ = c.intercept(def, id, &free[..free.len().min(1)]);
@@ -2228,7 +2238,10 @@ mod tests {
         c.start_research(&d, 0, plasma).unwrap();
         // 5 + 1 lab × 10 = 15 work units an hour: 1000 takes 67 hours.
         let events = c.advance(&d, 100.0);
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("Research complete"))), "{events:?}");
+        assert!(
+            events.iter().any(|e| matches!(e, Event::Notice(t, _) if t.contains("Research complete"))),
+            "{events:?}"
+        );
         assert!(c.hours > 66.0 && c.hours < 68.0, "stopped at completion: {}", c.hours);
         assert!(c.known[plasma] && c.available(&d, "items.plasma"));
         assert!(c.start_research(&d, 0, plasma).is_err(), "already known");
@@ -2252,7 +2265,7 @@ mod tests {
         let discover = crate::script::action::parse("discover(secret)", crate::script::action::EVENT_ACTIONS).unwrap();
         c.apply_actions(&d, &[discover], &mut events);
         assert!(open(&mut c, "secret"), "discovered");
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("New research"))));
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t, _) if t.contains("New research"))));
     }
 
     #[test]
@@ -2427,7 +2440,7 @@ mod tests {
         for _ in 0..200 {
             for e in c.advance(&d, 24.0) {
                 match e {
-                    Event::Notice(t) if t.starts_with("Contact") => {
+                    Event::Notice(t, _) if t.starts_with("Contact") => {
                         detected = true;
                         let id = c.contacts.iter().find(|x| x.detected).unwrap().id;
                         c.intercept(&d, id, &[0]).unwrap();
@@ -2668,7 +2681,7 @@ mod tests {
         let k = c.bases[0].modules.iter().position(|m| m.module == depot).unwrap();
         c.bases[0].modules[k].wrecked = true; // the depot is lost before they arrive
         let events = c.advance(&d, d.delivery as f64 + 1.0);
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("no room"))), "{events:?}");
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t, _) if t.contains("no room"))), "{events:?}");
         assert_eq!(c.deliveries.len(), 1);
         assert!(c.deliveries[0].held);
         assert!(c.over_capacity(&d).is_empty());
@@ -2699,7 +2712,7 @@ mod tests {
         let bunk = c.bases[0].modules.iter().position(|m| def_id(&d, m) == "bunk").unwrap();
         c.wreck_module(&d, 0, bunk, &mut events);
         assert_eq!(c.pilots.iter().filter(|p| p.state == PilotState::Dead).count(), 1, "one bunk fewer");
-        assert!(events.iter().any(|e| matches!(e, Event::Notice(t) if t.contains("wrecked") && t.contains("lost"))));
+        assert!(events.iter().any(|e| matches!(e, Event::Notice(t, _) if t.contains("wrecked") && t.contains("lost"))));
         // Repair: half the cost now, half the build time.
         let money = c.money;
         c.repair_module(&d, 0, bay).unwrap();

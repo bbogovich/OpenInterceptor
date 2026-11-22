@@ -44,6 +44,8 @@ pub enum WidgetKind {
     /// A check row (the original's TextButton2): a lamp that toggles, its label 20 px
     /// to the right.
     Check,
+    /// An animation: its `frames` in turn, one every `interval` ticks (RQ-UI-12).
+    Anim,
 }
 
 /// Where a sprite widget is placed (the size comes from its image).
@@ -149,6 +151,17 @@ pub struct WidgetDef {
     pub group: Option<String>,
     /// Latched at the start (a radio group's member, a check row).
     pub selected: bool,
+    /// The interface sound played when pressed (a `sounds:` name; `none`: silent;
+    /// absent: the skin's default for the kind). RQ-UI-09.
+    pub sound: Option<String>,
+    /// Hover help (text or `@key`): a floating box after the cursor rests (RQ-UI-10).
+    pub tip: Option<String>,
+    /// An `anim`'s frames (images), drawn in turn.
+    pub frames: Vec<String>,
+    /// An `anim`'s step, ticks (1/60 s).
+    pub interval: u32,
+    /// An `anim` that only moves while the campaign clock runs.
+    pub with_clock: bool,
     /// A label drawn on a button without images.
     pub label: Option<String>,
     /// Map: clipped to a circle.
@@ -210,7 +223,7 @@ impl Arrow {
 }
 
 /// The widget kinds by name.
-pub const WIDGET_KINDS: [(&str, WidgetKind); 8] = [
+pub const WIDGET_KINDS: [(&str, WidgetKind); 9] = [
     ("image", WidgetKind::Image),
     ("button", WidgetKind::Button),
     ("value", WidgetKind::Value),
@@ -219,16 +232,16 @@ pub const WIDGET_KINDS: [(&str, WidgetKind); 8] = [
     ("map", WidgetKind::Map),
     ("info", WidgetKind::Info),
     ("check", WidgetKind::Check),
+    ("anim", WidgetKind::Anim),
 ];
 
 impl WidgetDef {
     /// Parses one `widgets.<name>: {kind, rect, …}` entry.
     pub fn parse(name: &str, g: Get) -> Result<WidgetDef, String> {
         let kind_name = g.str("kind").unwrap_or("image");
-        let kind =
-            WIDGET_KINDS.iter().find(|(n, _)| *n == kind_name).map(|(_, k)| *k).ok_or(format!(
-                "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check"
-            ))?;
+        let kind = WIDGET_KINDS.iter().find(|(n, _)| *n == kind_name).map(|(_, k)| *k).ok_or(format!(
+            "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check, anim"
+        ))?;
         let point = |k: &str| -> Result<Option<[f32; 2]>, String> {
             match g.node(k) {
                 None => Ok(None),
@@ -300,6 +313,15 @@ impl WidgetDef {
             repeat,
             group: g.str("group").map(str::to_string),
             selected: g.bool("selected").unwrap_or(false),
+            sound: g.str("sound").map(str::to_string),
+            tip: g.str("tip").map(str::to_string),
+            frames: g.list("frames"),
+            interval: match g.num("interval") {
+                None => 6,
+                Some(v) if v >= 1.0 && v.fract() == 0.0 => v as u32,
+                Some(v) => return Err(format!("interval: {v} is not a whole number of ticks (at least 1)")),
+            },
+            with_clock: g.bool("with_clock").unwrap_or(false),
             list: ListStyle {
                 row_height: g.num("row_height").filter(|v| *v >= 4.0),
                 row_size: g.num("row_size").filter(|v| *v >= 4.0),
@@ -473,7 +495,7 @@ pub fn schema() -> Ty {
             Ty::Dict(Box::new(Ty::Either(
                 Box::new(Ty::Numbers(4)),
                 Box::new(Ty::Struct(vec![
-                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check"]), "what it is"),
+                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check", "anim"]), "what it is"),
                     f("rect", Ty::Numbers(4), "x, y, w, h in the design space"),
                     f("image", Ty::Asset, "its picture"),
                     f(
@@ -510,6 +532,11 @@ pub fn schema() -> Ty {
                     f("repeat", Ty::Numbers(2), "a held button fires again after [delay, interval] ticks"),
                     f("group", Ty::Name, "a radio group: the chosen member stays latched"),
                     f("selected", Ty::Bool, "latched at the start"),
+                    f("sound", Ty::Text, "the interface sound when pressed: a sounds: name, or none"),
+                    f("tip", Ty::Text, "hover help (text or @key): a floating box after the cursor rests"),
+                    f("frames", Ty::List(Box::new(Ty::Asset)), "an anim's frames, in turn"),
+                    f("interval", Ty::Num, "an anim's step, ticks (1/60 s; default 6)"),
+                    f("with_clock", Ty::Bool, "an anim that moves only while the campaign clock runs"),
                     f("row_height", Ty::Num, "a list in a sheet font: row pitch (default line height + 2)"),
                     f("row_size", Ty::Num, "a list in a sheet font: a row's own height when less than row_height"),
                     f("header", Ty::Num, "a list in a sheet font: height of the title strip at the top of rect (0: no title)"),
@@ -651,6 +678,18 @@ mod tests {
             let n = yaml::parse(&format!("widgets: {{x: {bad}}}")).unwrap();
             assert!(ScreenLayout::parse("p", Get(&n), l.clone(), &[], 0).is_err(), "{bad}");
         }
+        let an = yaml::parse(
+            "widgets: {lamp: {kind: anim, pos: [59, 70], frames: [a.png, b.png], interval: 4}, \
+             b: {kind: button, rect: [0, 0, 1, 1], sound: ui_click, tip: '@orig.S_CSD_BASES'}}",
+        )
+        .unwrap();
+        let anl = ScreenLayout::parse("p", Get(&an), l.clone(), &[], 0).unwrap();
+        let lamp = anl.items.iter().find(|w| w.name == "lamp").unwrap();
+        assert_eq!((lamp.kind, lamp.frames.len(), lamp.interval, lamp.with_clock), (WidgetKind::Anim, 2, 4, false));
+        let b = anl.items.iter().find(|w| w.name == "b").unwrap();
+        assert_eq!((b.sound.as_deref(), b.tip.as_deref()), (Some("ui_click"), Some("@orig.S_CSD_BASES")));
+        let bad_i = yaml::parse("widgets: {a: {kind: anim, rect: [0, 0, 1, 1], interval: 0}}").unwrap();
+        assert!(ScreenLayout::parse("p", Get(&bad_i), l.clone(), &[], 0).unwrap_err().contains("interval"));
         let bad_d = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], detail: [1, 2]}}").unwrap();
         assert!(ScreenLayout::parse("p", Get(&bad_d), l.clone(), &[], 0).unwrap_err().contains("detail:"));
         let bad_at = yaml::parse("widgets: {t: {kind: value, rect: [0, 0, 1, 1], at: [1]}}").unwrap();

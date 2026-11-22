@@ -31,6 +31,9 @@ pub enum SoundKey {
     Music(u16, u16, u16),
     /// A music stinger: set, stinger.
     Stinger(u16, u16),
+    /// Any other sound of the rules' `sounds:` section (the interface's: a button's
+    /// click, a message box opening), by its index in [`SoundBank::ui_names`].
+    Ui(u16),
 }
 
 /// Volume falls off with distance: full within 50 m, half at ~350 m.
@@ -138,6 +141,9 @@ pub struct SoundBank {
     /// The effects volume from the settings (music has its own, on the player).
     pub effects_volume: f32,
     pub errors: Vec<String>,
+    /// The names of the `sounds:` entries that are not engine event sounds ([`NAMED`]),
+    /// in the order of their [`SoundKey::Ui`] index.
+    pub ui_names: Vec<String>,
 }
 
 impl SoundBank {
@@ -150,6 +156,15 @@ impl SoundBank {
             if let Some((r, p)) = rules.sounds.get(name) {
                 wanted.push((SoundKey::Named(name), r.clone(), *p));
             }
+        }
+        // Every other named sound is an interface sound a screen may play by name. The
+        // names are sorted so the indices do not depend on the map's order.
+        let mut ui: Vec<(&String, &(String, usize))> =
+            rules.sounds.iter().filter(|(n, _)| !NAMED.contains(&n.as_str())).collect();
+        ui.sort_by(|a, b| a.0.cmp(b.0));
+        for (i, (name, (r, p))) in ui.into_iter().enumerate() {
+            bank.ui_names.push(name.clone());
+            wanted.push((SoundKey::Ui(i as u16), r.clone(), *p));
         }
         // Effect sounds: an event name from `sounds:`, or an asset in the effect's pack.
         for (i, fx) in rules.effects.iter().enumerate() {
@@ -202,6 +217,14 @@ impl SoundBank {
     pub fn play_named(&self, name: &str, volume: f32) {
         if let Some(n) = NAMED.iter().find(|n| **n == name) {
             self.play(&SoundKey::Named(n), volume);
+        }
+    }
+
+    /// Plays an interface sound by its `sounds:` name (`none`, or a name not loaded, plays
+    /// nothing).
+    pub fn play_ui(&self, name: &str) {
+        if let Some(i) = self.ui_names.iter().position(|n| n == name) {
+            self.play(&SoundKey::Ui(i as u16), 1.0);
         }
     }
 
