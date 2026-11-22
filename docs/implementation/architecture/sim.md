@@ -506,7 +506,7 @@ flowchart TD
   holding; guns fire only inside `fire_cone` and inside `range` (and 95 % of the first beam's
   reach). Missiles every `missiles` seconds (± 25 %) when locked and within `missile_range`
   (default 2.5 × `range`, at least 2 km; 0 = never).
-- **The original's AI (app NEXT, #118).** `top_speed(w, ship)` is S ÷ drag under
+- **The original's AI (app 0.22.8, #118).** `top_speed(w, ship)` is S ÷ drag under
   `flight.drive` (else `max_speed`), and every manoeuvre's `hold_speed` is m/s against it;
   `flight::driven` turns it into the throttle `v × drag ÷ S` (−0.25 … 1.25) and refuses the
   afterburner to AI ships under the drive. `pilot_skill` swaps in the pilot's Accuracy for

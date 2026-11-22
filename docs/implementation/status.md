@@ -362,7 +362,7 @@ control computer, hull second; nothing at 0 is repaired). `default`: unchanged. 
 are unchanged (about 10 s). Manual case MT-4-67; **482** `#[test]` functions. Not yet: pilot
 injury (D-08, with the pilots of #133), the flight-control wobble.
 
-**Parity M1, #118** (app NEXT; D-19 – D-23, RQ-C-10 and RQ-C-23, facts from `notes/re/flight`
+**Parity M1, #118** (app 0.22.8; D-19 – D-23, RQ-C-10 and RQ-C-23, facts from `notes/re/flight`
 §5, §5.1, §9 and `notes/re/unknowns-2026-11.md` §5): AI speed requests are m/s against the drive
 factor (`ai::top_speed`; throttle `v × drag ÷ S`), no AI afterburner under the drive; behaviour
 keys `break_off`, `lock_cone`, `missile_chance`; skill keys `accuracy: pilot`, `pilot_clamp`,
