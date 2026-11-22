@@ -36,7 +36,9 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #120 follow-up: D-18 Patton fit (ShieldType3 x 3, ArmorType3 x 4, X-COM factors), interceptor break-off call dropped (message 7 is rejected) | 0.22.20 |
 | #130 RQ-S-07 sensor ranges 2,000/4,000/6,000 and hub 0, react_on_detect 25 + 10d %; planets per system (2-5 from the class table 0x662e60) | 0.22.24 |
 | #129 RQ-S-02 score by Level, RQ-S-03 artefact-gated topics (18 of 26; goodies tables, salvage_items; item map derived, DEV-097) | 0.22.25 |
-| #133 RQ-S-10 healing 1/2 a day and training every 5 d, RQ-S-11 salary table, the generator (start rank, rank bonuses, health), D-08 pilot injury in battle, campaign pilot hand-off (RQ-C-10 link), RQ-C-23 grade 2 from month 2 | NEXT |
+| #131 RQ-S-04/05/06 outposts as objects: monthly income, funding drift, withdrawal, scores by system (DEV-098) | 0.22.26 |
+| #129 follow-up: item gating per exe table 0x66f768 (11 topics), unlock_on/complete_on battle events (§15), salvage_fits from destroyed ships | 0.22.27 |
+| #133 RQ-S-10 healing 1/2 a day and training every 5 d, RQ-S-11 salary table, the generator (start rank, rank bonuses, health), D-08 pilot injury in battle, campaign pilot hand-off (RQ-C-10 link), RQ-C-23 grade 2 from month 2 | 0.22.28 |
 
 ## Issues
 
