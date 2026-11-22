@@ -30,11 +30,16 @@ screens:
       - {kind: lamp, what: 4 animated red map-corner lamps, images: "spr:1900-1909",
          pos: [[59, 70], [348, 70], [348, 354], [59, 354]], conf: verified}
       - {kind: lamp, what: status lamp, images: [5060, 5061, 5062, 5063, 5064], pos: [618, 453], conf: verified}
-      - {kind: text, what: status/help line, rect: [344, 457, 620, 472], conf: verified,
-         note: "member rect +0x556c; art bar measures [343,460,612,475]"}
-      - {kind: text, what: four readouts (date / time / funds / ...), conf: derived,
-         rects: [[495, 365, 628, 380], [495, 385, 628, 401], [495, 406, 628, 421], [495, 426, 628, 441]],
-         note: "measured from the green bars in 5030; which readout is which is not yet recovered"}
+      - {kind: text, what: status line = name of the map object under the cursor, rect: [344, 457, 620, 472], conf: verified,
+         font: 23010, align: centre, valign: centre, draw: "DrawTextRect flag 1 (0x447921)",
+         note: "member rect +0x556c; art bar measures [343,460,612,475]; not a control help line (controls use tooltips)"}
+      - {kind: text, what: four readouts, conf: verified, font: 23010, align: centre, anchor_x: 561,
+         note: "0x43fb0f: x = centre of member rect +0x5dec [493,363,629,442]; DrawText y = anchor, glyph top = y - 7",
+         lines: [{value: time, format: "HH:MM:SS", anchor_y: 370, glyph_top: 363, monospace: true},
+                 {value: weekday, anchor_y: 390, glyph_top: 383, note: "(days + 5) mod 7"},
+                 {value: date_long, anchor_y: 410, glyph_top: 403, note: "format per language (0x412642)"},
+                 {value: money, key: S_DOLLARS, anchor_y: 430, glyph_top: 423}],
+         bars_measured: [[495, 365, 628, 380], [495, 385, 628, 401], [495, 406, 628, 421], [495, 426, 628, 441]]}
       - {kind: clock, what: time-speed dial, id: 100, widget: TimeDial 0x4cca65, center: [562, 304],
          rect: [507, 250, 617, 358], conf: verified,
          holes: [[523, 322], [536, 336], [554, 344], [574, 344], [592, 335], [605, 322]],
@@ -49,6 +54,7 @@ screens:
     panel_modes:      # member +0x5d54; the six nav buttons are rebuilt by 0x4416dc for each mode
       - mode: 0  # normal
         buttons:
+          - {note: "S=1 buttons: nothing drawn when up (the art), the sprite is the pressed image (ui-framework.md 2.1)", conf: verified}
           - {id: 504, center: [516, 194], images: "spr:18000", action: "open Bases (screen 6)", conf: verified}
           - {id: 515, center: [563, 194], images: "spr:18008", action: "open Equip Ships (screen 8)", conf: verified}
           - {id: 500, center: [609, 194], images: "spr:18010", action: "open status-report panel (mode 1, image 5057)", conf: verified}
@@ -80,6 +86,15 @@ screens:
     other_rects:
       - {rect: [588, 404, 640, 433], member: 0x5ddc, conf: verified, what: unknown hot zone}
       - {rect: [493, 363, 629, 442], member: 0x5dec, conf: verified, what: "readout block (covers the four green bars)", what_conf: derived}
+    tooltips:   # Window::AddTip 0x48cf19 keys (ui-framework.md 2.7); CSD-local ids
+      {0: S_CSD_PANCONTROL, 1: S_CSD_VIEW, 8: S_CSD_LAUNCHPROBE, 9: S_CSD_LAUNCHMISSION, 12: S_CSD_MINIMAP,
+       7: S_CSD_BASES, 5: S_CSD_RESEARCH, 3: S_CSD_STATUSREPORTS, 6: S_CSD_DATABANK, 2: S_CSD_EQUIPSHIP,
+       11: S_CSD_EQUIPPERS, 50: S_CSD_CLOSEPANEL,
+       reports: [S_CSD_INCOME_REPORT, S_CSD_FINANCE_REPORT, S_CSD_ALIEN_REPORT, S_CSD_XCOM_REPORT, S_CSD_OUTPOST_REPORT, S_CSD_PLAYER_REPORT],
+       ufopedia: "DATABANK_CATEGORY1..9", dial_holes: [S_TIME_5SECS, S_TIME_1MIN, S_TIME_5MIN, S_TIME_30MIN, S_TIME_1HOUR, S_TIME_24HOUR],
+       conf: verified}
+    sounds: {nav_buttons: 17, launch_buttons: 18, dial: 4, panel_buttons: 0, conf: verified}
+    lamps: {status: {ids: "5060-5064", interval_ticks: 6, conf: verified}, corners: {interval: unknown}}
     hover_info_box: {builder: 0x5e9507, fields: [S_MBS9_OBJECT, S_MBS9_NAME, S_MBS9_CLASS, S_MBS9_OWNER, S_MBS9_DESCRIPTION], conf: verified}
     keys: {"1-6": "time speed 0..5 (OnCommand 0x4474f0, ids 49..54)", "A (65)": "case exists", "D (68)": "case exists"}
 
@@ -478,3 +493,37 @@ dialogs:
   - name: Pick list (choose probe, choose base ...)
     builder: 0x51c46b (caption key, column header key)
     conf: verified
+
+# ----------------------------------------------------------------------------------------
+# Framework facts shared by all screens (ui-framework.md; 2026-11-22). conf: verified unless marked.
+ui_framework:
+  sprite_table: {signature: "20-byte rows, row i has index i", rows: 1527, va_cd: 0x69bc18, va_patch12: 0x69b598,
+                 fields: [index, resource, hot_x, hot_y, keep_format_u8, surface_u8, pad_u16],
+                 hot: {-1: "0 (left/top)", -2: "-size/2 (centre)", other: "pixel offset"},
+                 groups: [[0, 433], [434, 1034], [1035, 1068], [1069, 1152], [1153, 1272], [1273, 1340], [1341, 1412], [1413, 1499], [1500, 1525]]}
+  button_states: {up: "index+0 (nothing when S=1)", down: "index+S-1 when pressed and inside, or latched",
+                  disabled: "disabled sprite (0x417e58) else index+0", hover: none,
+                  click: "fires on release (fire_on_press widgets on press)", rect: "sprite size + 1 px border"}
+  scroll_arrows: {up: {index: 60, images: "spr:27500/27501", disabled: "spr:27502"}, down: {index: 63, images: "spr:27503/27504", disabled: "spr:27505"},
+                  left_right: "indices 66-71 (spr:27506-27511)", sound: 11, fire_on_press: true, repeat_ticks: [20, 5]}
+  ticks_per_second: 60
+  sounds: {0: Click, 1: MsgBoxOpen, 2: MsgBoxOpen2, 3: MsgBoxBtn, 4: RotarySwitch, 11: Beep8, 15: Beep13,
+           17: sndBeep22, 18: sndBeep29b, 19: sndBeep3025, 22: none, note: "keys of soundfx.ini; full table in ui-framework.md 2.6"}
+  fonts:
+    sheets: [23000, 23006, 23007, 23008, 23010, 23011, 23013, 23015, 23014]   # metrics: fonts.yaml
+    builtin_small: {height: 6, note: "compiled into the exe; advances 2-9 px; any colour"}
+    draw_text: {align_flags: {1: centre, 4: right}, glyph_top: "y - 5 (y - 7 for 23010/23011/23013/23015)"}
+    draw_text_rect: {one_line: "x = left (+w/2 if centred), y = top + h/2", wrap: "spaces, '~' forces", line_step: "lh + lh/3"}
+  text_button: {font: builtin_small, colour: [200, 200, 200], align: centre, label_rect: "widget rect inflated (0,-1)",
+                frame: {lines: [0, 150, 0], pressed_fill: [0, 200, 0], caps: {left: "spr row 151/154", right: "spr row 158/161"}},
+                sound: 18, open_animation: "caps slide 10 px / 2 ticks from the centre"}
+  msgbox_button: {sprite_rows: "258 left, 259 middle (tiled), 260 right; pressed 261-263", font: 23010,
+                  caption: "centre, centre_y - 2 (pressed +1,+1)", sound: 3}
+  check_row: {lamp_rows: [431, 432], label_x: "left + 20", font: builtin_small, colour: [200, 200, 200]}
+  list: {row_font: 23011, header_font: 23010, row_pitch: "line height + 2", visible_rows: "round((h - 7) / (lh + 2))",
+         truncate: "...", selection: "green fill pulsing 75..150 over ~2.5 s", pressed_row: [200, 150, 0], blink_ms: 500}
+  tooltip: {font: 23011, line_px: 16, pad_w: 20, bg: [0, 0, 100], bg_level: 75, pos: "cursor x, rect.top - 19", clamp_right: 630,
+            trigger: "cursor still over the rect, no button down"}
+  dialog_frames: {1: "rows 163-178 (6560-6575)", 2: "rows 179-188 (6580-6589)", 3: "rows 189-198 (6590-6599), caption at top+54",
+                  body: "surface row 430 (5006)", clock: "paused while open (derived)"}
+  history: {max: 29, csd_clears: true, dedupe: true, menu_run_pushes_once: true, switch_pauses_clock: true}

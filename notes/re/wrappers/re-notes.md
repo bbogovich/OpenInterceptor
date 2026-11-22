@@ -65,7 +65,7 @@ The UI DLL (`WrappersDLL.dll`) holds no code: only 581 `TARG` image resources.
 
   After Create the screen calls, on the same widget object:
   `0x44c4c0(sprite_table)` (which sprite group to use, usually `0x722890`),
-  `0x41765a(n)` (sound / tooltip index, *derived*), and
+  `0x41765a(n)` (interface sound index, verified 2026-11-22: ui-framework.md §2.6), and
   `0x44c490(callback)` -- **callback(parent, id)** receives every click.
   Typical callback bodies are a `switch(id)` (MSVC compare tree + jump table, sometimes with a
   byte index table), e.g. CSD `0x4476eb` -> `0x445291`.
@@ -82,9 +82,10 @@ The UI DLL (`WrappersDLL.dll`) holds no code: only 581 `TARG` image resources.
   from whichever resource DLL owns it (Wrappers 5000-8132, Sprites 900-29xxx, Cockpit 12000+).
   949 call sites; loops use `base + i` (e.g. `5112 + i`, `7601 + i`).
 * **Sprite table**: static array at VA **0x69bc18** (file 0x29a018), 20-byte records
-  `{int32 index, int32 resource_id, int32 hot_x, int32 hot_y, int8 flag_a, int8 flag_b, pad}`,
+  `{int32 index, int32 resource_id, int32 hot_x, int32 hot_y, u8 keep_format, u8 surface, u16 pad}`,
   1527 entries (index == position; terminated where index != position). -2 hot spot = centre,
-  -1 = top-left. It is split into 9 groups loaded per screen by `0x56e729(group)`:
+  -1 = top-left, other values = pixel offsets. Fully decoded in `ui-framework.md` §1
+  (2026-11-22; `tools/uikit.py` finds it by content in both builds). It is split into 9 groups loaded per screen by `0x56e729(group)`:
 
   | Group | Index range | Table object | Loaded by |
   |---|---|---|---|

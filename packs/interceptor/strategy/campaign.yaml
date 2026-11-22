@@ -45,11 +45,12 @@ star_classes:
   black_hole: {color: [0.5, 0.2, 0.7], weight: 0}
 
 # Research is downloaded from Earth through each base's downlinks (30/35/40 work units an
-# hour by type; switching topics loses progress).
+# hour by type). Progress belongs to the topic, so switching away keeps it (verified:
+# notes/re/strategy/README.md section 4.1).
 research_model:
   mode: download
   rate: module_count(downlink_type1) * 30 + module_count(downlink_type2) * 35 + module_count(downlink_type3) * 40
-  switching: lose_progress
+  switching: keep_progress
 
 hulls:
   # One shield and one armour slot beside the original's mount counts (DERIVED).
