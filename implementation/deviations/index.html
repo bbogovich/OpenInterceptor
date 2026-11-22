@@ -6957,7 +6957,7 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-088</td>
-<td><strong>Station layouts as built</strong> (app 0.22.11, #114). The pirate turrets are modules with the X-COM laser turret's mesh and hit points (in the original they are gun points on the station's own model, <em>derived</em>), their arc is read as a half-angle off their facing (<em>derived</em>), and they aim and fire like the station turrets until #115 brings the original's turret fire control (accuracy <code>a + b·d</code>, full lead, a 20 m miss, the line-of-sight check, the 0–50 ms jitter). The alien base's three tendrils are not placed — where they are is not traced — so it falls to its hull only; a hit that overflows a hard point goes to the hull (<em>derived</em>). The alien base's mine rings are in the planes the original's angles give when read as yaw, pitch and roll (<em>derived</em>), and the mines are ordinary proximity mines with the INI warhead damage and a 150 m trigger (<em>derived</em>: their behaviour is not traced).</td>
+<td><strong>Station layouts as built</strong> (app 0.22.11, #114). The pirate turrets are modules with the X-COM laser turret's mesh and hit points (in the original they are gun points on the station's own model, <em>derived</em>), their arc is read as a half-angle off their facing (<em>derived</em>), and they aim and fire like the station turrets until #115 brings the original's turret fire control (accuracy <code>a + b·d</code>, full lead, a 20 m miss, the line-of-sight check, the 0–50 ms jitter). Since app 0.22.13 the hard points take hits whole and the base falls to its hull or all four points (<strong>verified</strong>); the tendrils sit at the <code>AL-BASE01</code> attachment points with ids 1 – 3 (<em>derived</em>: the original gives them no position, they are hit through their own geometry) with a 100 m sphere (an assumption), and a fallen one shows a 100 m explosion but stays drawn on the base (the original removes the part). The mines go off on contact (<em>derived</em>), in rings built as the original builds them (<strong>verified</strong>).</td>
 <td>Everything verified is data (<code>modules</code> with <code>at</code>/<code>facing</code>/<code>chance</code>, <code>hard_points</code>, <code>minefields</code>); the derived parts are one value or one key away from the original once traced.</td>
 <td>4 (A4; #114)</td>
 </tr>
@@ -6966,6 +6966,12 @@ one looks like a bug.</p>
 <td><strong>Message boxes are partly the original's.</strong> Built (<strong>verified</strong>): the fill surface, capsule buttons and their captions, the history stack, the clock running on the CSD only, and "OK (5 secs)". Not built: the three frame kits (which piece goes where is not recovered, so <code>interceptor</code> boxes have no frame), MsgBoxOpen/capsule sounds (#126), per-dialog sizes and the frame-style-3 caption at top + 54. The fill's tiling, the capsules' row and widths, the box's width and the close buttons' hot spots are <strong>derived</strong>. Every notice asks, where the original asks only for its queued-event dialogs. The UFOpedia's exit is not recovered.</td>
 <td>The frame layout needs more reading of MsgBox.cpp (0x51941f, 0x518604; RE #136).</td>
 <td>M2 (#127)</td>
+</tr>
+<tr>
+<td>DEV-090</td>
+<td><strong>Turret fire control as built</strong> (app 0.22.13, #115). The original's fixed and gimballed turrets are <code>turret</code> states (<strong>verified</strong> rules); still different: the gimballed turret's slew (90° a frame) is instant here and its two barrels alternate as the module's two mounts; the miss roll runs every tick; whether the X-COM and alien bases check their line of sight is not traced (<em>derived</em>: no); the freighters' turrets are modules with the X-COM turret's mesh and hit points (<em>derived</em>) and replace the freighters' own beams; no base carries missile-defence modules yet (their layout comes from the strategy layer, DEV-035), though missile turrets work; the capital ships' turrets (AlienType3 – 5, the alien freighter, the Patton) are not placed — their positions are not tabulated.</td>
+<td>The rules are data on the <code>turret</code> state; the derived parts are layout and look.</td>
+<td>4 (A7; #115)</td>
 </tr>
 </tbody>
 </table>

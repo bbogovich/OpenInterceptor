@@ -6539,6 +6539,23 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>Parity M1, #115 (app 0.22.13)</strong> four more, so <strong>530</strong>: in <code>sim::ai</code>
+<code>fixed_turrets_lead_fully_and_miss_sideways_on_a_failed_roll</code> (the aim is the target plus 1 s of its
+velocity at 1 km and a 1,000 m/s beam; at 1 % accuracy and 300 m every miss is within 20 m along one
+target axis, none at 150 m; no shot outside the 85° arc),
+<code>turrets_fire_on_their_interval_for_free_and_need_a_clear_line</code> (six shots in 3 s at a 0.5 s
+interval with an empty energy pool; none with a ship of its own side in the line),
+<code>gimballed_turrets_lead_at_two_thousand_with_no_error_in_front_only</code> (one second of lead at 2 km
+whatever the beam's speed; no shot behind the mount) and
+<code>missile_turrets_launch_after_the_lock_time_then_every_interval</code> (five launches, the first after 2 s,
+at least 2 s apart; none outside the arc).</p>
+<p><strong>#114 follow-up (app 0.22.13)</strong> one more, so <strong>526</strong>: <code>sim::stations::tests::mines_with_no_range_go_off_on_contact</code> (a
+<code>range: 0</code> mine stays put with a hostile 150 m off and goes off when the two 50 m hulls touch).
+<strong>Changed:</strong> <code>hard_points_take_hits_whole_behind_the_shields</code> (was <code>…_only_with_the_shields_down</code>: a
+1,500 hit on the 1,400-point connection point leaves it at −400 and the hull untouched; a tendril with
+<code>hits: any</code> takes an enveloping hit and shows its 100 m explosion; hits on a fallen tendril reach the
+hull) and <code>turrets_by_position_and_chance_and_minefields_by_level</code> (mine 0 at the unit X vector turned
+by the ring, times the radius).</p>
 <p><strong>Parity M1, #114 (app 0.22.11)</strong> three more, so <strong>519</strong> <code>#[test]</code> functions:
 <code>content::rules::tests::hard_points_placed_modules_and_minefields_parse</code> (<code>destroyed_when</code>, a hard
 point, modules by <code>at</code>/<code>facing</code>/<code>chance</code> beside a slot, a minefield; a module with neither slot
@@ -7099,8 +7116,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::ai</code></td>
-<td>22</td>
-<td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong>; <strong>escorts hold formation until a hostile comes close</strong> (app 0.9.2); <strong>a scripted state runs its script every interval</strong> and <strong>a runaway script is stopped and reported once</strong> (app 0.18.0); <strong>the original's steering, pilot accuracy bands, grades (look-ahead, sprint), the pilot's own missile lock and break-off</strong> (app 0.22.8, #118)</td>
+<td>26</td>
+<td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong>; <strong>escorts hold formation until a hostile comes close</strong> (app 0.9.2); <strong>a scripted state runs its script every interval</strong> and <strong>a runaway script is stopped and reported once</strong> (app 0.18.0); <strong>the original's steering, pilot accuracy bands, grades (look-ahead, sprint), the pilot's own missile lock and break-off</strong> (app 0.22.8, #118); <strong>the original's fixed, gimballed and missile turrets</strong> (app 0.22.13, #115)</td>
 </tr>
 <tr>
 <td><code>sim::systems</code></td>
@@ -7119,8 +7136,8 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::stations</code></td>
-<td>9</td>
-<td><strong>A station's one shield pool</strong> starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; <strong>a pool without generators recharges to its own <code>shields</code></strong>; <strong>covered modules</strong> pass hits to the hub's pool and the overflow to the hub's hull; <strong><code>damage_model: station</code></strong> skips armour, systems and the difficulty factor (app 0.22.4, #113); <strong>hard points and destruction by them; modules by position and chance; minefields by level</strong> (app 0.22.11, #114)</td>
+<td>10</td>
+<td><strong>A station's one shield pool</strong> starts full at its first generator's capacity, recharges 2 per second to its maximum, follows the next generator and keeps or drops its points when the last falls, and takes fore and aft hits alike; <strong>a pool without generators recharges to its own <code>shields</code></strong>; <strong>covered modules</strong> pass hits to the hub's pool and the overflow to the hub's hull; <strong><code>damage_model: station</code></strong> skips armour, systems and the difficulty factor (app 0.22.4, #113); <strong>hard points and destruction by them; modules by position and chance; minefields by level</strong> (app 0.22.11, #114); <strong>mines go off on contact</strong> (app 0.22.13)</td>
 </tr>
 <tr>
 <td><code>sim::targeting</code></td>

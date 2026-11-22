@@ -6206,6 +6206,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-4-70-interceptor-station-and-freighter-turrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-70 — interceptor: station and freighter turrets
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11811,6 +11822,17 @@
     <span class="md-ellipsis">
       
         MT-4-69 — interceptor: station layouts, the connection point and minefields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-70-interceptor-station-and-freighter-turrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-70 — interceptor: station and freighter turrets
       
     </span>
   </a>
@@ -17532,6 +17554,15 @@ pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>);
 <td></td>
 <td>App NEXT; #114, <code>hard_points</code>, <code>modules</code> by <code>at</code>, <code>minefields</code></td>
 </tr>
+<tr>
+<td>MT-4-70</td>
+<td><code>interceptor</code>: station and freighter turrets</td>
+<td><code>base-assault</code>, <code>station-tour</code>, <code>escort</code> (<code>interceptor</code>)</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App NEXT; #115, <code>aim: fixed</code>/<code>gimballed</code>, <code>interval</code>, <code>free_fire</code>, <code>line_of_sight</code></td>
+</tr>
 </tbody>
 </table>
 <h2 id="stage-4-cases">Stage 4 cases<a class="headerlink" href="#stage-4-cases" title="Permanent link">&para;</a></h2>
@@ -19080,6 +19111,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: the arms dealer has five laser turrets — on top, two on the underside angled down, and one on each side; the pirate base up to six — top, bottom and on its mid-ring — each standing on the hull and firing outwards. 2: the pirate base's turret count varies (each is there 75 % of the time on Beginner). 3: mines ring the base (most likely: two rings of four missile mines 4 km out and two of nine explosive mines 2 km out); they go off when you fly near. 4: shots at the underside drain the connection point first (the hull does not drop); "Connection Point Destroyed" appears; the base is not destroyed by it alone. 5: no minefields on Beginner.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-70-interceptor-station-and-freighter-turrets">MT-4-70 — <code>interceptor</code>: station and freighter turrets<a class="headerlink" href="#mt-4-70-interceptor-station-and-freighter-turrets" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's data. <code>openinterceptor --campaign interceptor --scenario base-assault</code>, then <code>station-tour</code>, then <code>escort</code>.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Approach the alien base from 5 km and fly across its front, then hold still at 3 km. 2. Watch an X-COM base's turrets engage an enemy (<code>station-tour</code> or a base defence mission). 3. Fly round the pirate base at 2 – 3 km. 4. In <code>escort</code>, watch the X-COM freighters' guns when enemies close.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the plasma pods open fire from about 5 km, steadily (about one shot a second each, not bursts), and hit a still target most of the time but miss by up to 20 m sideways now and then; they do not fire at you from behind their facing. 2: X-COM turrets fire at the laser's rate and almost never miss a target in front of them. 3: pirate turrets fire singly at a steady pace, some stop when part of the station is between you and them. 4: each freighter fires from a nose turret and a tail turret (no longer from its own beams), within 2 km.</td>
 </tr>
 </tbody>
 </table>

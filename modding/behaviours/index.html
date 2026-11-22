@@ -4582,6 +4582,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#turret-fire-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turret fire control
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6657,6 +6668,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#turret-fire-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turret fire control
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6770,8 +6792,8 @@ sets how well the pilot aims and how fast it reacts.</p>
 </tr>
 <tr>
 <td><code>turret</code></td>
-<td>Stays put; beams that can swivel (<code>turret_arc</code> on the ship class) track hostiles within <code>range</code> (and 95 % of the first beam's reach) and fire in bursts.</td>
-<td><code>range</code>, <code>burst</code>, <code>pause</code></td>
+<td>Stays put; beams that can swivel (<code>turret_arc</code> on the ship class) track hostiles within <code>range</code> (and 95 % of the first beam's reach) and fire in bursts — or, with <code>aim: fixed</code> or <code>gimballed</code>, fire as the original's turrets do (<a href="#turret-fire-control">Turret fire control</a>); a turret with missiles and no beams launches them.</td>
+<td><code>range</code>, <code>burst</code>, <code>pause</code>; <code>aim</code>, <code>lead_speed</code>, <code>accuracy</code>, <code>accuracy_factor</code>, <code>miss</code>, <code>miss_beyond</code>, <code>interval</code>, <code>interval_jitter</code>, <code>line_of_sight</code>, <code>free_fire</code>, <code>lock_time</code></td>
 </tr>
 <tr>
 <td><code>mine</code></td>
@@ -7156,6 +7178,46 @@ Cloak lock-break chance by difficulty (Stage 2 item 2.7) is still a fixed <code>
 </tr>
 </tbody>
 </table>
+<h2 id="turret-fire-control">Turret fire control<a class="headerlink" href="#turret-fire-control" title="Permanent link">&para;</a></h2>
+<p>Since app 0.22.13 (issue #115) a <code>turret</code> state can fire as the original's station and freighter
+turrets do (flight notes §8.6, §8.8, <strong>verified</strong>):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">behaviours</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">station_turret_alien</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">states</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">guns</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">turret</span>
+<span class="w">        </span><span class="nt">aim</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fixed</span><span class="w">                 </span><span class="c1"># or gimballed; engine (the default) keeps bursts and aim error</span>
+<span class="w">        </span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5km</span>
+<span class="w">        </span><span class="nt">accuracy</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">40</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">75</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">45</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">80</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">85</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">55</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">90</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">60</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">95</span><span class="p p-Indicator">]]}</span>
+<span class="w">        </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.975s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.95s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.925s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.9s</span><span class="p p-Indicator">]}</span>
+<span class="w">        </span><span class="nt">interval_jitter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05s</span>
+<span class="w">        </span><span class="nt">line_of_sight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">        </span><span class="nt">free_fire</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<ul>
+<li><strong><code>aim: fixed</code></strong> — the turret leads fully with its beam's speed. On each tick a roll on its
+  accuracy fails and the target is beyond <code>miss_beyond</code> (200 m), it aims up to <code>miss</code> (20 m) to
+  one side, along the target's sideways or vertical axis. <code>accuracy</code> is a band in % rolled once
+  per turret (<code>[40, 75]</code>), one value (<code>65</code>), or <code>pilot</code> — the pilot record's Accuracy of the turret
+  or the craft it is mounted on (25 with none), times <code>accuracy_factor</code>; it is held to 1 – 99 %.
+  It fires only when the aim lies within the class's <code>turret_arc</code> of the mount's facing.</li>
+<li><strong><code>aim: gimballed</code></strong> — it leads as if its shot flew at <code>lead_speed</code> (2,000 m/s), with no error,
+  and fires only at targets in front of the mount.</li>
+<li><strong><code>interval</code></strong> — one shot every <code>interval</code> seconds plus up to <code>interval_jitter</code> at random, one
+  mount at a time; <code>interval: rate_of_fire</code> fires once per beam <code>rate_of_fire</code>.</li>
+<li><strong><code>line_of_sight</code></strong> — fires only when the line ahead (5 km) meets nothing, the target or an
+  object of another side.</li>
+<li><strong><code>free_fire</code></strong> — shots draw no energy and ignore the mounts' own cooldown.</li>
+<li><strong>Missile turrets</strong> — a turret class with <code>missiles</code> and no <code>beams</code> launches them, homing, once
+  a target has stayed in its arc and range for <code>lock_time</code>, one every interval, while rounds
+  last.</li>
+</ul>
+<p><code>interceptor</code>: the X-COM base's beam turrets are gimballed (one shot per the laser's rate of
+fire, 5 km); the alien base's plasma pods fixed (85°, 5 km, accuracy rolled in 40 + 5 × level …
+75 + 5 × level %, 1 s − 25 ms × level + 0 – 50 ms); the pirate base's and arms dealer's turrets
+fixed with their table's accuracy, interval and line-of-sight flag; and the X-COM and rogue
+freighters carry two fixed laser turrets each (2 km, the pilot's Accuracy fore and ¾ of it aft,
+750 ms − 25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own.</p>
 
 
 

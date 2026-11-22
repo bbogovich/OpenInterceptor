@@ -7133,14 +7133,23 @@ maximum from its first standing generator (<code>Ruleset::pool_capacity</code>) 
 <code>spawn_modules</code> rolls <code>World::random</code> only for entries with a chance below 1 (so worlds without
 them draw the same numbers as before). <code>World::spawn_minefields(hub)</code> (after <code>spawn_modules</code> in
 <code>spawn_placement</code>) lays each <code>rules::Minefield</code> its <code>chance</code> allows: per ring
-(<code>euler(yaw, pitch, roll)</code>) <code>count</code> mines at <code>center + ring × rot_y(2πk/count) × (0, 0, radius)</code>,
-named <code>&lt;hub&gt;.mine&lt;n&gt;</code>. <code>rules::HardPoint</code>s give each ship <code>hard_hp: Vec&lt;f32&gt;</code>; in
-<code>combat::apply_hit</code> a <code>DamageMode::Normal</code> hit on a class with hard points notes whether the
-struck shields (or pool) were already down, and after armour and systems the first standing
-hard point whose sphere holds the impact point takes the rest (overflow to the hull) and emits
-<code>SimEvent::HardPointDestroyed</code> when it falls (<code>app::flight::event_messages</code> shows its text).
-<code>DestroyedWhen</code> (<code>Hull</code>, <code>HardPoints</code>, <code>Either</code>) decides destruction from the hull and
-<code>hard_hp</code>.</p>
+(<code>euler(yaw, pitch, roll)</code>) <code>count</code> mines at <code>center + ring × rot_y(2πk/count) × X × radius</code>,
+named <code>&lt;hub&gt;.mine&lt;n&gt;</code>. <code>rules::HardPoint</code>s give each ship <code>hard_hp: Vec&lt;f32&gt;</code>; in <code>combat::apply_hit</code>, after armour and
+systems, the first standing hard point whose sphere holds the impact point (<code>direct_only</code> points
+only for a <code>DamageMode::Normal</code> hit) takes all of what is left — its points may go below 0 and the
+hull gets nothing — and emits <code>SimEvent::HardPointDestroyed { position, explosion, … }</code> when it falls
+(<code>app::flight::event_messages</code> shows its text, <code>render::effects</code> the explosion). <code>DestroyedWhen</code>
+(<code>Hull</code>, <code>HardPoints</code>, <code>Either</code>) decides destruction from the hull and <code>hard_hp</code>. A <code>mine</code> state
+with <code>range: 0</code> goes off when its hull touches a hostile's.</p>
+<p><strong>Turret fire control</strong> (app 0.22.13, #115). A <code>turret</code> state whose <code>Params::turret.aim</code> is not
+<code>Engine</code> runs <code>ai::original_turret</code>: the lead (<code>dist ÷ beam speed</code>, or <code>lead_speed</code> when
+gimballed), for fixed turrets an accuracy rolled once into <code>AiState::turret_accuracy</code> (band, or the
+pilot record's of the turret or its carrier) and a per-tick miss along the target's <code>right()</code> or
+<code>up()</code>; the arc test (<code>turret_arc</code> off the mount's forward, or in front for gimballed); the
+interval gate <code>AiState::next_shot</code>; <code>sight_clear</code> (<code>combat::first_hit</code> along 5 km); and the
+controls <code>aim</code>, <code>link: Unlinked</code>, <code>free_fire</code> (read by <code>combat::fire_beams</code>: no energy, no
+cooldown). A turret class with missiles and no beams starts <code>AiState::lock_start</code> in arc and range
+and launches homing (<code>guide_missile</code>) after <code>lock_time</code>, one per interval.</p>
 <p><strong><code>sim::stations</code></strong> (app 0.22.4, #113) holds the station shield rules. A pool is stored in both
 banks (<code>shield_fore == shield_aft</code>), so the HUD, the remote console and the AI read it without
 knowing pools exist; only <code>stations::absorb</code>, <code>stations::recharge</code> and <code>update_shields</code> change

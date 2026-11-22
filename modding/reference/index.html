@@ -7986,9 +7986,9 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 <tr>
 <td><code>hard_points</code></td>
-<td>list of <code>{name, hit_points, at, radius, message}</code></td>
+<td>list of <code>{name, hit_points, at, radius, hits, explosion, message}</code></td>
 <td>none</td>
-<td>Stations (app 0.22.11): weak points that take direct hits landing within <code>radius</code> of <code>at</code> while the shields are down; <code>message</code> is said when one falls (<a href="../stations/#hard-points">Hard points</a>). <code>interceptor</code>: the alien base's connection point (<strong>verified</strong>).</td>
+<td>Stations (app 0.22.11; <code>hits</code>, <code>explosion</code> and whole-hit absorption app 0.22.13): weak points that take whole what gets past the shields and lands within <code>radius</code> of <code>at</code> (<code>hits: direct</code> — direct hits only, the default — or <code>any</code>); nothing reaches the hull; <code>message</code> is said and an <code>explosion</code> of that radius shown when one falls (<a href="../stations/#hard-points">Hard points</a>). <code>interceptor</code>: the alien base's connection point and three tendrils (<strong>verified</strong>; tendril positions <em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>destroyed_when</code></td>
@@ -8343,7 +8343,7 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td><code>range</code></td>
 <td>distance</td>
 <td>2000 m</td>
-<td>Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance.</td>
+<td>Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance (<code>0</code>: on contact, when the two hulls touch — app 0.22.13).</td>
 </tr>
 <tr>
 <td><code>fire_cone</code></td>
@@ -8410,6 +8410,66 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td>angle</td>
 <td>0</td>
 <td>Attack (app 0.22.8): the pilot's <strong>own missile lock</strong>, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's <code>lock_time</code> (or the missile's) after it started, <code>missiles</code> seconds apart exactly, with <code>missile_chance</code> per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). <code>interceptor</code>: 5° (<strong>verified</strong> as the code reads; the window may be inverted in the original, <em>derived</em>).</td>
+</tr>
+<tr>
+<td><code>aim</code></td>
+<td><code>engine</code>, <code>fixed</code>, <code>gimballed</code></td>
+<td><code>engine</code></td>
+<td>Turret (app 0.22.13): the original's fixed or gimballed turret instead of bursts and aim error (<a href="../behaviours/#turret-fire-control">Turret fire control</a>).</td>
+</tr>
+<tr>
+<td><code>lead_speed</code></td>
+<td>number</td>
+<td>2000</td>
+<td>Gimballed turret: the shot speed its lead assumes, m/s.</td>
+</tr>
+<tr>
+<td><code>accuracy</code></td>
+<td><code>[from, to]</code>, number or <code>pilot</code></td>
+<td>50</td>
+<td>Fixed turret: accuracy in %, a band rolled once per turret, or the pilot record's (25 with none).</td>
+</tr>
+<tr>
+<td><code>accuracy_factor</code></td>
+<td>fraction</td>
+<td>100 %</td>
+<td>With <code>accuracy: pilot</code>: times this.</td>
+</tr>
+<tr>
+<td><code>miss</code>, <code>miss_beyond</code></td>
+<td>distance</td>
+<td>20 m, 200 m</td>
+<td>Fixed turret: the largest sideways miss on a failed roll, and the range inside which it never misses.</td>
+</tr>
+<tr>
+<td><code>interval</code></td>
+<td>time or <code>rate_of_fire</code></td>
+<td>0</td>
+<td>Turret: seconds between shots (0 = <code>burst</code> and <code>pause</code>); <code>rate_of_fire</code> = once per beam rate of fire.</td>
+</tr>
+<tr>
+<td><code>interval_jitter</code></td>
+<td>time</td>
+<td>0</td>
+<td>Turret: up to this much more per shot, at random.</td>
+</tr>
+<tr>
+<td><code>line_of_sight</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Turret: fire only when the 5 km line ahead meets nothing, the target or another side.</td>
+</tr>
+<tr>
+<td><code>free_fire</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Turret: shots draw no energy and ignore the mounts' cooldown.</td>
+</tr>
+<tr>
+<td><code>lock_time</code></td>
+<td>time</td>
+<td>0</td>
+<td>Missile turret: seconds a target must stay in arc and range before the first launch.</td>
 </tr>
 <tr>
 <td><code>missile_chance</code></td>
