@@ -218,6 +218,9 @@ pub struct StarClass {
     /// animation frames follow it (`portrait_frames`, rows N … N + frames − 1).
     pub portrait: Option<String>,
     pub portrait_frames: u32,
+    /// Planet counts a generated system of this class draws from, one at random
+    /// (`planets: [2, 2, 3, ...]`; the original: ten entries per class). Empty: none.
+    pub planets: Vec<u8>,
 }
 
 /// `research.<id>`.
@@ -593,6 +596,9 @@ pub struct Raid {
     pub target: RaidTarget,
     /// Map units per hour.
     pub speed: f32,
+    /// The chance that a contact, once a base's sensors see it, turns on that base
+    /// (`react_on_detect`, per level; the original: 25 + 10 × level %). 0: never.
+    pub react_on_detect: f32,
 }
 
 /// `incomes.<id>` and `expenses.<id>`: an amount every so often.
@@ -925,6 +931,7 @@ impl StrategyDef {
                     icon: g.str("icon").map(str::to_string),
                     portrait: g.str("portrait").map(str::to_string),
                     portrait_frames: g.num("portrait_frames").map_or(1, |v| v.max(1.0) as u32),
+                    planets: g.nums("planets").unwrap_or_default().iter().map(|&n| n.clamp(0.0, 255.0) as u8).collect(),
                 }
             })
             .collect();
@@ -1057,6 +1064,7 @@ impl StrategyDef {
                     _ => RaidTarget::Base,
                 },
                 speed: g.num("speed").unwrap_or(600.0).max(1.0),
+                react_on_detect: g.qty("react_on_detect", Unit::Fraction).unwrap_or(0.0).clamp(0.0, 1.0),
             })
             .collect();
         let flows = |s: &str, errors: &mut Vec<String>| -> Vec<Flow> {
@@ -1422,6 +1430,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("icon", Ty::Asset, "an image for the star on the map instead of a dot"),
                 f("portrait", Ty::Asset, "the system picture of a map's zoom level 2"),
                 f("portrait_frames", Ty::Num, "the portrait's animation frames (rows N, N+1, ...)"),
+                f("planets", Ty::List(Box::new(Ty::Num)), "generated: planet counts to draw one from at random"),
             ])),
             "star classes",
         ),
@@ -1539,6 +1548,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("chance", Ty::Qty(Unit::Fraction), "chance per roll"),
                 f("requires", expr(), "only while this holds"),
                 f("target", Ty::Enum(&["base", "system"]), "what it heads for"),
+                f("react_on_detect", Ty::Qty(Unit::Fraction), "chance it turns on the base whose sensors see it (per_level allowed)"),
                 f("speed", Ty::Num, "map units per hour"),
             ])),
             "enemy flights the campaign launches",
