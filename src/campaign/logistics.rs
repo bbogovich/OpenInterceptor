@@ -25,7 +25,7 @@
 //!
 //! The state lives in [`Logistics`] inside the campaign; [`step`] runs one slice of time.
 
-use super::{distance, travel, Campaign, Event, Message};
+use super::{distance, travel, Campaign, Event, Message, NoticeKind};
 use crate::content::logistics::{LogisticsDef, Role};
 use crate::content::strategy::StrategyDef;
 
@@ -403,7 +403,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
         if fac.ready_at > now - dt && fac.ready_at <= now {
             let t = format!("{} at {} is complete", l.facility_types[fac.ftype].name, c.systems[fac.system].name);
             c.messages.push(Message { hour: now, text: t.clone() });
-            events.push(Event::Notice(t));
+            events.push(Event::Notice(t, NoticeKind::ModuleBuilt));
         }
     }
     // Strikes on construction sites (R-STR-023): from `from` progress, at most `max`
@@ -528,7 +528,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                         c.logistics.facilities[f].project = None;
                         let t = format!("Research complete: {}", def.research[topic].name);
                         c.messages.push(Message { hour: now, text: t.clone() });
-                        events.push(Event::Notice(t));
+                        events.push(Event::Notice(t, NoticeKind::ResearchComplete));
                     }
                 }
             }
@@ -636,7 +636,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                     cv.cargo.iter().map(|(g, a)| format!("{a:.0} {}", l.goods_name(g))).collect::<Vec<_>>().join(", ");
                 let t = format!("Supply convoy ({what}) ambushed: {lost} of {n} vessels lost");
                 c.messages.push(Message { hour: now, text: t.clone() });
-                events.push(Event::Notice(t));
+                events.push(Event::Notice(t, NoticeKind::Damage));
             }
         }
         if at_end {
@@ -703,7 +703,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
         let lost = sv.attacked && c.roll() < l.survey_loss;
         let t = c.survey_report(def, &sv, lost);
         c.messages.push(Message { hour: now, text: t.clone() });
-        events.push(Event::Notice(t));
+        events.push(Event::Notice(t, NoticeKind::Report));
     }
 }
 

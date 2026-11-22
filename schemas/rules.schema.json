@@ -578,6 +578,9 @@
               "button_step": {"description": "spacing of the stacked buttons", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "fill": {"description": "an image tiled over the dialog's body", "type": "string"},
               "capsule": {"description": "message-box capsule buttons: the base sprite (left, middle, right; pressed +3..+5)", "type": "string"},
+              "kit": {"description": "the original's message box: a frame kit's base sprite (original:sprite#163 / 179 / 190)", "type": "string"},
+              "frame_style": {"description": "with kit: the style, 1-3 (insets, padding, live pieces), 0 plain", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "fill_large": {"description": "the fill for boxes bigger than fill (original: sprite#429)", "type": "string"},
               "frame": {"description": "frame pieces around the dialog", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                     "image": {"description": "the piece's image", "type": "string"},
                     "at": {"description": "where on the dialog", "enum": ["top_left", "top", "top_right", "left", "right", "bottom_left", "bottom", "bottom_right"]},
@@ -1107,7 +1110,8 @@
         "run": {"description": "the speed the Space key toggles to", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "notices": {"description": "what a notice does to the speed: drop to on_event (default), keep it, or ask with two buttons", "enum": ["drop", "keep", "ask"]},
         "notice_buttons": {"description": "with ask: the two captions [keep the speed, drop to on_event]", "type": "array", "items": {"type": "string"}},
-        "first_key": {"description": "the speed the number key 1 picks (default: the one after on_event)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+        "first_key": {"description": "the speed the number key 1 picks (default: the one after on_event)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "ask_for": {"description": "with ask: the notice kinds that ask (default: all)", "type": "array", "items": {"enum": ["base_built", "module_built", "research_complete", "delivery", "report", "contact", "damage", "other"]}}
       }},
     "economy": {"description": "economy settings", "type": "object", "additionalProperties": false, "properties": {
         "delivery": {"description": "time for a purchase to arrive", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},

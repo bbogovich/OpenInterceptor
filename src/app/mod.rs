@@ -42,6 +42,7 @@ pub mod history;
 pub mod launcher;
 pub mod listbox;
 pub mod menu;
+pub mod msgbox;
 pub mod simulator;
 pub mod strategy;
 pub mod text;

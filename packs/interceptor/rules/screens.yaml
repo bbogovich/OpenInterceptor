@@ -195,7 +195,9 @@ screens:
     widgets:
       # Topics ListBox [346,105,596,275] and the article ListBox [95,325,592,446] (VERIFIED).
       topics: {kind: list, source: archive, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121]}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED: the UFOpedia's exit control is not recovered (no close button in its art)
+      # The exit, control 106 (VERIFIED, 0x530d66): a 23x23 sprite button (rows 4/5,
+      # WrappersDLL 4000/4001) centred at (619, 466); it goes back.
+      back: {kind: button, centre: [619, 466], images: {sprite: "original:sprite#4", states: 2}, action: back}
 
   # 32-37: the status reports.
   reports:

@@ -37,7 +37,7 @@ use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
 use super::{AppContext, Next};
 use crate::campaign::{save, Campaign, Event, PilotState, Product};
-use crate::content::strategy::{NoticeClock, StrategyDef};
+use crate::content::strategy::{NoticeClock, NoticeKind, StrategyDef};
 use macroquad::prelude::*;
 
 /// The panel's tabs.
@@ -291,6 +291,8 @@ pub struct StrategyScreen {
     system: Option<usize>,
     /// A message shown until dismissed (Enter / Esc / click).
     banner: Option<String>,
+    /// What the banner's notice is about (which ones offer "OK (5 secs)").
+    banner_kind: NoticeKind,
     /// An interception waiting for the player's choice.
     battle: Option<u32>,
     /// An ambushed convoy waiting for the player's choice.
@@ -456,6 +458,7 @@ impl StrategyScreen {
             base: 0,
             system: None,
             banner: None,
+            banner_kind: NoticeKind::Other,
             battle: None,
             convoy: None,
             strike: None,
@@ -1020,7 +1023,10 @@ impl StrategyScreen {
             Act::FireEvent(e) => {
                 for ev in c.fire_event(def, e) {
                     match ev {
-                        Event::Notice(t) => self.banner = Some(t),
+                        Event::Notice(t, k) => {
+                            self.banner = Some(t);
+                            self.banner_kind = k;
+                        }
                         Event::Choice { event } => self.choice = Some(event),
                         Event::Mission { mission } => self.offer = Some(mission),
                         Event::Card { title, text } => self.card = Some((title, text)),
@@ -1354,12 +1360,16 @@ impl StrategyScreen {
             // to the slowest (its "OK (5 secs)"). Captions may be text keys.
             let clock = &def.clock;
             let caption = |t: &str| ctx.content.text.resolve(t).unwrap_or_else(|k| k);
-            let asks = clock.notices == NoticeClock::Ask;
+            // Only the kinds the campaign lists ask (the original: base and module built,
+            // research complete, deliveries, reports, sightings, damage); the rest are a
+            // plain OK that keeps the speed.
+            let asks = clock.notices == NoticeClock::Ask && clock.asks(self.banner_kind);
             let labels: Vec<String> =
                 if asks { clock.notice_buttons.iter().map(|t| caption(t)).collect() } else { vec!["OK".into()] };
             let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
             if let Some(k) = ask(ctx, input, "Report", &b, &refs) {
                 self.banner = None;
+                self.banner_kind = NoticeKind::Other;
                 if asks && k == 1 {
                     self.speed = clock.on_event;
                 }
@@ -1613,15 +1623,16 @@ impl StrategyScreen {
             for e in self.campaign.advance(def, dt) {
                 // A notice drops the clock unless the campaign keeps it or asks (RQ-S-18);
                 // every other event (a battle, a choice …) drops it.
-                if !matches!(e, Event::Notice(_)) || def.clock.notices == NoticeClock::Drop {
+                if !matches!(e, Event::Notice(..)) || def.clock.notices == NoticeClock::Drop {
                     self.speed = def.clock.on_event;
                 }
                 match e {
-                    Event::Notice(t) => {
+                    Event::Notice(t, kind) => {
                         if t.starts_with("Research complete") {
                             ctx.music.stinger(&ctx.sounds, &ctx.content.rules, "good");
                         }
                         self.banner = Some(t);
+                        self.banner_kind = kind;
                     }
                     Event::Battle { contact } => {
                         self.banner = None;
