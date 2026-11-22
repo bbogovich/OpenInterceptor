@@ -115,9 +115,28 @@
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
           "engine_color": {"description": "engine glow colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
-          "modules": {"description": "stations: modules mounted at the model's attachment points", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+          "modules": {"description": "stations: modules mounted at the model's attachment points or at given positions", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                 "slot": {"description": "attachment point: its index (original meshes) or slot name (OBJ slot_<name>)", "type": "string"},
-                "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+                "at": {"description": "instead of slot: model-space position, metres (engine axes)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "facing": {"description": "with at: the direction the module's front faces ([0, 0, -1])", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "chance": {"description": "the chance it is there when the station is placed (100 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+              }}},
+          "hard_points": {"description": "stations: weak points that take direct hits while the shields are down", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "name": {"description": "its id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "hit_points": {"description": "its own hit points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "at": {"description": "centre in model space, metres (engine axes)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "radius": {"description": "direct hits landing within this distance strike it", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "message": {"description": "said when it is destroyed (@key allowed)", "type": "string"}
+              }}},
+          "destroyed_when": {"description": "what destroys it: hull at 0 (default), all hard points at 0, or either", "enum": ["hull", "hard_points", "either"]},
+          "minefields": {"description": "mines laid around the object when it is placed", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "mine": {"description": "the mine's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "count": {"description": "mines per ring", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "radius": {"description": "ring radius (1km)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "center": {"description": "ring centre in model space ([0, 0, 0])", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "rings": {"description": "each ring's yaw, pitch, roll in degrees ([[0, 0, 0]])", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}},
+                "chance": {"description": "the chance the field is laid (100 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
               }}},
           "shield_generator": {"description": "modules: while one survives, its station's shields work", "type": "boolean"},
           "shield_capacity": {"description": "generator modules: the hub's shield_pool maximum while it is the first standing generator", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -203,9 +222,28 @@
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
           "engine_color": {"description": "engine glow colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
-          "modules": {"description": "stations: modules mounted at the model's attachment points", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+          "modules": {"description": "stations: modules mounted at the model's attachment points or at given positions", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                 "slot": {"description": "attachment point: its index (original meshes) or slot name (OBJ slot_<name>)", "type": "string"},
-                "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+                "at": {"description": "instead of slot: model-space position, metres (engine axes)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "facing": {"description": "with at: the direction the module's front faces ([0, 0, -1])", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "class": {"description": "the module's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "chance": {"description": "the chance it is there when the station is placed (100 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+              }}},
+          "hard_points": {"description": "stations: weak points that take direct hits while the shields are down", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "name": {"description": "its id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "hit_points": {"description": "its own hit points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "at": {"description": "centre in model space, metres (engine axes)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "radius": {"description": "direct hits landing within this distance strike it", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "message": {"description": "said when it is destroyed (@key allowed)", "type": "string"}
+              }}},
+          "destroyed_when": {"description": "what destroys it: hull at 0 (default), all hard points at 0, or either", "enum": ["hull", "hard_points", "either"]},
+          "minefields": {"description": "mines laid around the object when it is placed", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                "mine": {"description": "the mine's object id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                "count": {"description": "mines per ring", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "radius": {"description": "ring radius (1km)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "center": {"description": "ring centre in model space ([0, 0, 0])", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                "rings": {"description": "each ring's yaw, pitch, roll in degrees ([[0, 0, 0]])", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}},
+                "chance": {"description": "the chance the field is laid (100 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
               }}},
           "shield_generator": {"description": "modules: while one survives, its station's shields work", "type": "boolean"},
           "shield_capacity": {"description": "generator modules: the hub's shield_pool maximum while it is the first standing generator", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},

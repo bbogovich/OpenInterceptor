@@ -40,8 +40,8 @@ use crate::content::rules::{GeneratorLost, Ruleset, ShieldPool, ShipClassId};
 pub fn initial_capacity(rules: &Ruleset, class: ShipClassId) -> f32 {
     let c = rules.ship(class);
     // `find` stops at the first match: only one generator counts, as in the original.
-    match c.modules.iter().find(|(_, m)| rules.ship(*m).shield_generator) {
-        Some((_, m)) => rules.pool_capacity(class, *m),
+    match c.modules.iter().find(|m| rules.ship(m.class).shield_generator) {
+        Some(m) => rules.pool_capacity(class, m.class),
         None => c.shields,
     }
 }
@@ -130,7 +130,7 @@ pub fn update_shields(w: &mut World) {
             continue;
         }
         let class = rules.ship(w.ships[i].class);
-        let has_generators = class.modules.iter().any(|(_, m)| rules.ship(*m).shield_generator);
+        let has_generators = class.modules.iter().any(|m| rules.ship(m.class).shield_generator);
         if !has_generators {
             // A pool with no generators in its list powers itself; banks with none are
             // a ship's own shields. Either way there is nothing to follow.
@@ -296,6 +296,148 @@ objects:
             w.step();
         }
         assert!((pool(&w, plant).0 - 10.0).abs() < 0.05, "{:?}", pool(&w, plant));
+    }
+
+    /// A synthetic alien base for #114: a pool of 1,000 (no generators), hull 5,000, a
+    /// 1,400-point "connection" 124 m round at (0, −217, 0) and three 550-point points,
+    /// destroyed by its hull or all four; ten turrets placed by position (half of them
+    /// uncertain), and two minefields whose counts and chances depend on the level.
+    const HIVE: &str = "\
+objects:
+  hive:
+    model: m
+    faction: red
+    hit_points: 5000
+    shields: 1000
+    damage_model: station
+    shield_pool: {recharge: 2}
+    destroyed_when: either
+    hard_points:
+      - {name: connection, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: Connection Point Destroyed}
+      - {name: t1, hit_points: 550, at: [400, 0, 0], radius: 60m}
+      - {name: t2, hit_points: 550, at: [-400, 0, 0], radius: 60m}
+      - {name: t3, hit_points: 550, at: [0, 0, 400], radius: 60m}
+    modules:
+      - {at: [0, 188, 0], facing: [0, 1, 0], class: laser}
+      - {at: [0, -188, 0], facing: [0, -1, 0], class: laser}
+      - {at: [91, 0, 0], facing: [1, 0, 0], class: laser, chance: CHANCE}
+      - {at: [-91, 0, 0], facing: [-1, 0, 0], class: laser, chance: CHANCE}
+      - {at: [0, 0, 91], facing: [0, 0, 1], class: laser, chance: CHANCE}
+    minefields:
+      - {mine: boom, count: {per_level: [0, 0, 0, 0, 4]}, radius: 4km, rings: [[90, 0, 90], [90, 0, -90]], chance: {per_level: [0%, 0%, 0%, 0%, 100%]}}
+      - {mine: boom, count: {per_level: [0, 6, 7, 8, 9]}, radius: 2km, center: [0, 500, 0], rings: [[45, 0, 0], [-45, 0, 0]]}
+  laser: {model: m, faction: red, hit_points: 100, beams: [laser], turret_arc: 85, behaviour: gunner}
+  boom: {model: m, faction: red, kind: mine, hit_points: 10, missiles: {dart: 1}, behaviour: mine}
+";
+
+    /// The hive at difficulty `level`, its turrets' chance `chance`, and world seed `seed`.
+    fn hive(level: usize, chance: &str, seed: u64) -> (World, ShipId) {
+        let r = {
+            // Difficulty levels pick `per_level` values when the rules are built, so the
+            // test rules are built at the wanted level (a campaign with five levels).
+            let doc = crate::formats::yaml::parse(&HIVE.replace("CHANCE", chance)).unwrap();
+            let base = crate::content::rules::RulesSource {
+                pack: 0,
+                file: "test.yaml".into(),
+                doc: crate::formats::yaml::parse(super::super::test_support::RULES).unwrap(),
+            };
+            let extra = crate::content::rules::RulesSource { pack: 0, file: "hive.yaml".into(), doc };
+            let levels = ["l0", "l1", "l2", "l3", "l4"].map(String::from);
+            let campaign = format!("campaign: {{difficulty: [{}]}}\n", levels.join(", "));
+            let c = crate::content::rules::RulesSource {
+                pack: 0,
+                file: "c.yaml".into(),
+                doc: crate::formats::yaml::parse(&campaign).unwrap(),
+            };
+            let (mut built, errors) = crate::content::rules::build_with(
+                &[base, extra, c],
+                &Default::default(),
+                &|_: &str, _: &str| None,
+                Some(levels[level].as_str()),
+            );
+            assert!(errors.is_empty(), "{errors:?}");
+            built.difficulty = level;
+            Arc::new(built)
+        };
+        let s = Arc::new(r.ships.iter().map(|_| Shape::sphere(50.0)).collect());
+        let mut w = World::new(r.clone(), s, seed);
+        let red = w.rules.faction_id("red").unwrap();
+        let idle = Pilot::Ai(ai::AiState::new(ai::Behaviour::Idle, None, Vec3::ZERO));
+        let hub = w.spawn(r.ship_id("hive").unwrap(), red, "hive", Vec3::ZERO, Quat::IDENTITY, idle);
+        w.spawn_modules(hub, 0).unwrap();
+        w.spawn_minefields(hub);
+        (w, hub)
+    }
+
+    fn count(w: &World, class: &str) -> usize {
+        let c = w.rules.ship_id(class).unwrap();
+        w.ships.iter().filter(|s| s.alive && s.class == c).count()
+    }
+
+    #[test]
+    fn hard_points_take_direct_hits_only_with_the_shields_down() {
+        let (mut w, hub) = hive(0, "100%", 1);
+        let at = Vec3::new(0.0, -217.0, 0.0);
+        // Shields up: the pool takes it, the point is untouched.
+        combat::apply_damage(&mut w, hub, 300.0, at);
+        let s = w.get(hub).unwrap();
+        assert_eq!((s.shield_fore, s.hard_hp[0], s.hull), (700.0, 1400.0, 5000.0));
+        // Shields down: a direct hit inside the sphere lowers the point, not the hull.
+        w.get_mut(hub).unwrap().shield_fore = 0.0;
+        w.get_mut(hub).unwrap().shield_aft = 0.0;
+        combat::apply_damage(&mut w, hub, 300.0, at + Vec3::new(100.0, 0.0, 0.0));
+        let s = w.get(hub).unwrap();
+        assert_eq!((s.hard_hp[0], s.hull), (1100.0, 5000.0));
+        // Outside it, or an enveloping half-path inside it: the hull.
+        combat::apply_damage(&mut w, hub, 100.0, at + Vec3::new(200.0, 0.0, 0.0));
+        combat::apply_damage_mode(&mut w, hub, 100.0, at, crate::content::rules::DamageMode::Enveloping);
+        let s = w.get(hub).unwrap();
+        assert_eq!((s.hard_hp[0], s.hull), (1100.0, 4800.0));
+        // All four down: the base is destroyed with hull to spare.
+        for (k, p) in [(0, at), (1, Vec3::new(400.0, 0.0, 0.0)), (2, Vec3::new(-400.0, 0.0, 0.0))] {
+            let hp = w.get(hub).unwrap().hard_hp[k];
+            combat::apply_damage(&mut w, hub, hp, p);
+        }
+        assert!(w
+            .events
+            .iter()
+            .any(|e| matches!(e, SimEvent::HardPointDestroyed { text, .. } if text == "Connection Point Destroyed")));
+        assert!(w.get(hub).is_some(), "one point still stands");
+        combat::apply_damage(&mut w, hub, 550.0, Vec3::new(0.0, 0.0, 400.0));
+        assert!(w.get(hub).is_none(), "all four down: destroyed with hull 4,800");
+    }
+
+    #[test]
+    fn turrets_by_position_and_chance_and_minefields_by_level() {
+        // Every turret at 100 %: five, each facing out along its `facing`.
+        let (w, _) = hive(0, "100%", 1);
+        assert_eq!(count(&w, "laser"), 5);
+        let top = w.ships.iter().find(|s| s.name == "hive.0").unwrap();
+        assert!((top.position - Vec3::new(0.0, 188.0, 0.0)).length() < 1e-3);
+        assert!((top.forward() - Vec3::Y).length() < 1e-4);
+        // At 0 % the uncertain three never come; at 50 % a seeded roll decides.
+        assert_eq!(count(&hive(0, "0%", 1).0, "laser"), 2);
+        let some: Vec<usize> = (1..20).map(|seed| count(&hive(0, "50%", seed).0, "laser")).collect();
+        assert!(some.iter().any(|n| *n > 2) && some.iter().any(|n| *n < 5), "{some:?}");
+        // Level 0: no mines. Level 4: 2 × 4 = 8 at 4 km and 2 × 9 = 18 at 2 km round
+        // (0, 500, 0).
+        assert_eq!(count(&hive(0, "100%", 1).0, "boom"), 0);
+        let (w, _) = hive(4, "100%", 1);
+        assert_eq!(count(&w, "boom"), 26);
+        let far = w
+            .ships
+            .iter()
+            .filter(|s| s.name.starts_with("hive.mine") && (s.position.length() - 4000.0).abs() < 1.0)
+            .count();
+        let near = w
+            .ships
+            .iter()
+            .filter(|s| {
+                s.name.starts_with("hive.mine")
+                    && ((s.position - Vec3::new(0.0, 500.0, 0.0)).length() - 2000.0).abs() < 1.0
+            })
+            .count();
+        assert_eq!((far, near), (8, 18));
     }
 
     #[test]

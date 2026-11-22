@@ -678,6 +678,40 @@ from `0x598251` (module type → missile).
 | Pirate raider / pirate base (subtypes 2, 5) | `0x59d8fc` | 10 Laser turrets, table 0x67d548, some only with `chance(25 + 5d)` | 2,250–3,000 m, 75–125° | 50–60 + 7d | 800–950 − 15–25·d, + rand[0, 50) |
 | Science stations (3, 4) | — | none | | | |
 
+**Pirate turret tables** (read for #114 from the player's exe, Track A, 2026-11-22; verified). Rows of
+0x38 bytes: beam type, position xyz, facing xyz (model space, the original's axes), range m, arc°,
+accuracy base, per d, interval base ms, per d, LOS flag. Every row is Laser (0).
+
+| Table | Row | Position | Facing | Range | Arc | Acc | Interval |  LOS |
+|---|---|---|---|---|---|---|---|---|
+| 0x67d430 arms dealer | 0 | (0, 188, 0) | (0, 1, 0) | 3,000 | 125 | 75 + 5d | 950 + 25d | 0 |
+| | 1 | (77.119, −101.5, 0) | (0.70711, −0.70711, 0) | 2,000 | 85 | 65 + 5d | 1,250 − 25d | 1 |
+| | 2 | (−72.997, −101.5, 0) | (−0.70711, −0.70711, 0) | 2,000 | 85 | 65 + 5d | 1,250 − 25d | 1 |
+| | 3 | (0, 82.587, 74.832) | (0, 0, 1) | 3,000 | 90 | 65 + 5d | 1,000 − 10d | 0 |
+| | 4 | (0, 82.587, −75.168) | (0, 0, −1) | 3,000 | 90 | 65 + 5d | 1,000 − 10d | 0 |
+| 0x67d548 pirate raider / base | 0 | (0, 337, 0) | (0, 1, 0) | 3,000 | 125 | 50 + 7d | 950 − 25d | 0 |
+| | 1 | (0, −287, 0) | (0, −1, 0) | 3,000 | 125 | 50 + 7d | 950 − 25d | 0 |
+| | 2–9 | (0, ±115.443, ±91) and (±91, ±115.443, 0) | outward along x or z | 2,250 | 75 | 60 + 7d | 800 − 15d | 1 |
+
+(Rows 2–9 in order: (0, 115.443, 91) +z; (91, 115.443, 0) +x; (−91, 115.443, 0) −x; (0, 115.443, −91) −z; then the
+same four at y −115.443.) The positions lie on the `ARMS4` and `PBASE3` meshes' surfaces (their bounding
+boxes reach y 188 and y 337). The dispatcher `0x59db90` calls the arms dealer builder `0x59d6c9`
+for subtype 1 (all 5 rows), and `0x59d8fc(arg)` for subtype 2 with arg 0 and subtype 5 with arg 1
+(jump table 0x59df3a; subtypes 3–4 build nothing). `0x59d8fc` **never builds rows 3, 5, 6 and 8**
+(it skips them before creating the turret), and with arg 1 skips each remaining row when
+`chance(25 + 5d)` **succeeds** (`0x405070` returns 1 when `rand % 100 < p`). So the raider has 6
+turrets and the pirate base 6, each present with 75 − 5d %. *This corrects "10 turrets, some only
+with chance(25 + 5d)" above.*
+
+**Mine rings** (`0x4d12fe(type, ?, centre, orientation, count, radius)`, verified): mine `k` of
+`count` is placed at `centre + R × rotate(orientation · angle(k × 0x10000 / count, 0, 0)) · (0, 0, 1)`,
+so a ring of evenly spaced mines `radius` out, in the plane the orientation sets. Mesh by type
+(table 0x73f4ac and the names it loads): 0 `albeam3` (beam mine), 1 `a_expmin` (explosive), 2
+`missmine` (missile). The alien base lays type 2 at radius 4,000 m round its centre with
+orientations (0x4000, 0, ±0x4000), and type 1 at 2,000 m round its centre + its rotation × (0, 500, 0)
+with orientations (±0x2000, 0, 0). Which axis each angle of `0x49a811` turns about, the mines'
+trigger and what a missile mine does are not traced.
+
 The alien base also gets **mines** (`0x4d12fe`, mine table 0x73f4ac):
 
 * With d > 3 and `chance(50 + 5d)`: two lines of `d/2 + 2` missile mines, 4,000 m apart.

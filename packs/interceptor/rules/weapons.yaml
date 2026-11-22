@@ -139,3 +139,7 @@ missiles:
     lock_time: 0.5
     color: [1.0, 1.0, 1.0]
     sound: cue:Missile4
+  # Alien base mine warheads: ExplosiveMine Damage 300, MissileMine Damage 250 (VERIFIED);
+  # the blast radius is DERIVED (as the default campaign's mines).
+  alien_mine_explosive: {name: Explosive mine, guidance: dumbfire, speed: 0, impact_damage: 0, proximity_damage: 300, proximity_radius: 40m}
+  alien_mine_missile: {name: Missile mine, guidance: dumbfire, speed: 0, impact_damage: 0, proximity_damage: 250, proximity_radius: 40m}

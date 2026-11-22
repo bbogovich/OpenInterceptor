@@ -163,6 +163,69 @@ pub enum DamageModel {
     Station,
 }
 
+/// One `modules:` entry: a module class mounted on a station.
+///
+/// ```yaml
+/// modules:
+///   - {slot: '3', class: xcom_shield_generator}            # a model attachment point
+///   - {at: [0, 188, 0], facing: [0, 1, 0], class: pirate_laser, chance: 75%}
+/// ```
+#[derive(Debug, Clone, PartialEq)]
+pub struct ModuleSlot {
+    /// The attachment point (an index for original meshes, a name for OBJ `slot_<name>`);
+    /// empty when `at` places it.
+    pub slot: String,
+    /// Model-space position (engine axes, metres) instead of an attachment point.
+    pub at: Option<[f32; 3]>,
+    /// With `at`: the direction its front (−Z) faces, in model space.
+    pub facing: [f32; 3],
+    pub class: ShipClassId,
+    /// The chance it is there at all when the station is placed (1 = always).
+    pub chance: f32,
+}
+
+/// A weak point of a station (`hard_points:`; the original's alien base, flight README
+/// §8.4, verified): a sphere in model space with hit points of its own. A *direct* hit
+/// (beam or missile, not a shield-bypassing or enveloping one) that lands inside a
+/// standing hard point while the station's shields are down damages the hard point
+/// instead of the hull.
+#[derive(Debug, Clone, PartialEq)]
+pub struct HardPoint {
+    pub name: String,
+    pub hit_points: f32,
+    /// Centre in model space (engine axes, metres).
+    pub at: [f32; 3],
+    pub radius: f32,
+    /// Said when it is destroyed (a text, `@key` allowed).
+    pub message: String,
+}
+
+/// What destroys a station (`destroyed_when:`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DestroyedWhen {
+    /// Its hull reaching 0 (every object).
+    #[default]
+    Hull,
+    /// All its hard points at 0 (the hull alone does not).
+    HardPoints,
+    /// Whichever comes first (the original's alien base).
+    Either,
+}
+
+/// One `minefields:` entry: `count` mines of class `mine`, evenly spaced on a ring of
+/// `radius` around `center` (model space) in each of `rings` (each ring a rotation, yaw,
+/// pitch and roll in degrees, of the horizontal circle), laid with `chance` when the
+/// object is placed. `count` and `chance` may differ per difficulty level.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Minefield {
+    pub mine: ShipClassId,
+    pub count: u32,
+    pub radius: f32,
+    pub center: [f32; 3],
+    pub rings: Vec<[f32; 3]>,
+    pub chance: f32,
+}
+
 /// What sort of object a ship class is. Affects defaults and how the HUD lists it./// What sort of object a ship class is. Affects defaults and how the HUD lists it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShipKind {
@@ -296,8 +359,15 @@ pub struct ShipClass {
     pub behaviour: Option<BehaviourId>,
     /// Beam mounts can aim this many degrees off the nose (turrets; 0 = fixed guns).
     pub turret_arc: f32,
-    /// Stations: modules mounted at attachment points: `(slot, module class)`.
-    pub modules: Vec<(String, ShipClassId)>,
+    /// Stations: modules mounted at attachment points or at given positions.
+    pub modules: Vec<ModuleSlot>,
+    /// Weak points that take direct hits inside their sphere while the shields are down
+    /// (`hard_points:`; the original's alien base).
+    pub hard_points: Vec<HardPoint>,
+    /// What destroys this object: its hull, its hard points, or either (`destroyed_when:`).
+    pub destroyed_when: DestroyedWhen,
+    /// Mines laid around the object when it is placed (`minefields:`).
+    pub minefields: Vec<Minefield>,
     /// Modules: keeps its station's shields working while it survives.
     pub shield_generator: bool,
     /// Generator modules: the hub's pool maximum while this is its first standing
@@ -1544,13 +1614,67 @@ pub fn build_with(
             let mut modules = Vec::new();
             for m in list {
                 let g = Get(m);
-                let (Some(slot), Some(class)) = (g.str("slot"), g.str("class")) else { continue };
+                let Some(class) = g.str("class") else { continue };
+                let at = g.nums("at").filter(|v| v.len() == 3).map(|v| [v[0], v[1], v[2]]);
+                let slot = g.str("slot").map(str::to_ascii_lowercase);
+                if slot.is_none() && at.is_none() {
+                    errors.push(format!("{}: {section}.{id}.modules: '{class}' needs slot: or at:", e.origin));
+                    continue;
+                }
                 match ships.iter().position(|c| c.id.eq_ignore_ascii_case(class)) {
-                    Some(k) => modules.push((slot.to_ascii_lowercase(), ShipClassId(k as u16))),
+                    Some(k) => modules.push(ModuleSlot {
+                        slot: slot.unwrap_or_default(),
+                        at,
+                        facing: g
+                            .nums("facing")
+                            .filter(|v| v.len() == 3)
+                            .map(|v| [v[0], v[1], v[2]])
+                            .unwrap_or([0.0, 0.0, -1.0]),
+                        class: ShipClassId(k as u16),
+                        chance: g.qty("chance", Unit::Fraction).unwrap_or(1.0).clamp(0.0, 1.0),
+                    }),
                     None => errors.push(format!("{}: {section}.{id}.modules: unknown class '{class}'", e.origin)),
                 }
             }
             ships[me].modules = modules;
+        }
+    }
+    // Minefields name mine classes.
+    for section in ["ships", "objects"] {
+        for (_, id, e) in of(&resolved, section) {
+            let Some(list) = Get(&e.node).node("minefields").and_then(|n| n.as_seq()) else { continue };
+            let Some(me) = ships.iter().position(|c: &ShipClass| c.id == *id) else { continue };
+            let mut fields = Vec::new();
+            for m in list {
+                let g = Get(m);
+                let Some(mine) = g.str("mine") else { continue };
+                let Some(k) = ships.iter().position(|c| c.id.eq_ignore_ascii_case(mine)) else {
+                    errors.push(format!("{}: {section}.{id}.minefields: unknown class '{mine}'", e.origin));
+                    continue;
+                };
+                let rings = g
+                    .node("rings")
+                    .and_then(|n| n.as_seq())
+                    .map(|items| {
+                        items
+                            .iter()
+                            .filter_map(|r| {
+                                let v: Vec<f32> = r.as_seq()?.iter().filter_map(|x| x.as_str()?.parse().ok()).collect();
+                                (v.len() == 3).then(|| [v[0], v[1], v[2]])
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_else(|| vec![[0.0; 3]]);
+                fields.push(Minefield {
+                    mine: ShipClassId(k as u16),
+                    count: g.num("count").unwrap_or(0.0).max(0.0) as u32,
+                    radius: g.qty("radius", Unit::Distance).unwrap_or(1000.0).max(0.0),
+                    center: g.nums("center").filter(|v| v.len() == 3).map(|v| [v[0], v[1], v[2]]).unwrap_or([0.0; 3]),
+                    rings,
+                    chance: g.qty("chance", Unit::Fraction).unwrap_or(1.0).clamp(0.0, 1.0),
+                });
+            }
+            ships[me].minefields = fields;
         }
     }
     let mut cockpits = Vec::new();
@@ -2522,6 +2646,31 @@ fn ship_class(
         behaviour,
         turret_arc: g.qty("turret_arc", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
         modules: Vec::new(), // resolved once every class is known
+        hard_points: g
+            .node("hard_points")
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .enumerate()
+            .map(|(k, item)| {
+                let h = Get(item);
+                let at = h.nums("at").filter(|v| v.len() == 3).map(|v| [v[0], v[1], v[2]]).unwrap_or([0.0; 3]);
+                HardPoint {
+                    name: h.str("name").map(str::to_string).unwrap_or_else(|| format!("hard_point{k}")),
+                    hit_points: h.num("hit_points").unwrap_or(0.0).max(0.0),
+                    at,
+                    radius: h.qty("radius", Unit::Distance).unwrap_or(0.0).max(0.0),
+                    message: h.str("message").unwrap_or("").to_string(),
+                }
+            })
+            .collect(),
+        destroyed_when: match g.str("destroyed_when") {
+            None | Some("hull") => DestroyedWhen::Hull,
+            Some("hard_points") => DestroyedWhen::HardPoints,
+            Some("either") => DestroyedWhen::Either,
+            Some(other) => return Err(format!("destroyed_when: '{other}' is not hull, hard_points or either")),
+        },
+        minefields: Vec::new(), // resolved once every class is known
         // A capacity makes the module a generator without also writing `shield_generator`.
         shield_generator: g.bool("shield_generator").unwrap_or(false) || g.num("shield_capacity").unwrap_or(0.0) > 0.0,
         shield_capacity: g.num("shield_capacity").unwrap_or(0.0).max(0.0),
@@ -2703,6 +2852,51 @@ objects:
             rules.ship(rules.ship_id("s").unwrap()).shield_pool,
             Some(ShieldPool { recharge: 2.0, on_generator_lost: GeneratorLost::Drop })
         );
+    }
+
+    #[test]
+    fn hard_points_placed_modules_and_minefields_parse() {
+        let text = "\
+factions: {red: {}}
+objects:
+  hive:
+    faction: red
+    model: m
+    destroyed_when: either
+    hard_points: [{name: core, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: '@x'}]
+    modules: [{at: [1, 2, 3], facing: [0, 1, 0], class: gun, chance: 75%}, {slot: '4', class: gun}, {class: gun}]
+    minefields: [{mine: boom, count: 4, radius: 4km, rings: [[90, 0, 90], [90, 0, -90]], chance: 55%}, {mine: nothing}]
+  gun: {faction: red, model: m}
+  boom: {faction: red, model: m, kind: mine}
+  bad: {faction: red, model: m, destroyed_when: never}
+";
+        let (rules, errors) = build(&[source(0, text)], &original_lookup());
+        assert!(errors.iter().any(|e| e.contains("needs slot: or at:")), "{errors:?}");
+        assert!(errors.iter().any(|e| e.contains("unknown class 'nothing'")), "{errors:?}");
+        assert!(errors.iter().any(|e| e.contains("destroyed_when")), "{errors:?}");
+        let hive = rules.ship(rules.ship_id("hive").unwrap());
+        assert_eq!(hive.destroyed_when, DestroyedWhen::Either);
+        assert_eq!(
+            hive.hard_points,
+            vec![HardPoint {
+                name: "core".into(),
+                hit_points: 1400.0,
+                at: [0.0, -217.0, 0.0],
+                radius: 124.0,
+                message: "@x".into()
+            }]
+        );
+        assert_eq!(hive.modules.len(), 2, "the entry with neither slot nor at is dropped");
+        assert_eq!(
+            (hive.modules[0].at, hive.modules[0].facing, hive.modules[0].chance),
+            (Some([1.0, 2.0, 3.0]), [0.0, 1.0, 0.0], 0.75)
+        );
+        assert_eq!((hive.modules[1].slot.as_str(), hive.modules[1].at, hive.modules[1].chance), ("4", None, 1.0));
+        let f = &hive.minefields[0];
+        assert_eq!((f.count, f.radius, f.rings.len(), f.chance), (4, 4000.0, 2, 0.55));
+        // Absent keys: no hard points, the hull decides.
+        let gun = rules.ship(rules.ship_id("gun").unwrap());
+        assert!(gun.hard_points.is_empty() && gun.minefields.is_empty() && gun.destroyed_when == DestroyedWhen::Hull);
     }
 
     #[test]

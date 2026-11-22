@@ -49,6 +49,30 @@ objects:
     faction: alien
     model_set: alien_base
     inherit: original:GameSettings.ini/AlienBaseHP   # hull = HP1 (VERIFIED)
+    # The connection point: 1,400 points in a 124 m sphere at model (0, -217, 0); direct
+    # hits inside it with the shields down strike it instead of the hull, and its fall is
+    # announced (README §8.4, VERIFIED). The three 550-point tendrils (sub-objects 1-3 of
+    # the model) are not placed: where they are is not traced, and the base is destroyed
+    # by its hull until they are (the original: hull, or all four points).
+    hard_points:
+      - {name: connection_point, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: "@orig.S_GREP_363"}
+    # Mines (0x59dc04 / 0x4d12fe, VERIFIED but for the ring planes): from Superhuman, with
+    # chance 50 + 5d %, two rings of d/2 + 2 missile mines 4 km round the base; from
+    # Experienced, with chance 25 + 5d %, two rings of d + 5 explosive mines 2 km round a
+    # point 500 m above it. Each ring is the original's angles (0x4000 = 90 deg) read as
+    # yaw, pitch, roll (DERIVED).
+    minefields:
+      - mine: alien_missile_mine
+        count: {per_level: [0, 0, 0, 0, 4]}
+        chance: {per_level: [0%, 0%, 0%, 0%, 70%]}
+        radius: 4km
+        rings: [[90, 0, 90], [90, 0, -90]]
+      - mine: alien_explosive_mine
+        count: {per_level: [0, 6, 7, 8, 9]}
+        chance: {per_level: [0%, 30%, 35%, 40%, 45%]}
+        radius: 2km
+        center: [0, 500, 0]
+        rings: [[45, 0, 0], [-45, 0, 0]]
     damage_model: station
     shield_pool: {recharge: 2, on_generator_lost: drop}   # README §8.2, unknowns §8
     modules:
@@ -77,12 +101,30 @@ objects:
     model_set: pirate_base
     inherit: original:GameSettings.ini/PirateBaseHP   # hull = HP1 (VERIFIED)
     damage_model: station
+    # Laser turrets from the exe's table 0x67d548 (VERIFIED): position and facing in model
+    # space (engine axes: the original's z negated). The pirate base (subtype 5) builds
+    # rows 0, 1, 2, 4, 7 and 9 (rows 3, 5, 6 and 8 never) and loses each with chance
+    # 25 + 5d %, so each stands with 75 - 5d % (0x59d8fc, VERIFIED).
+    modules:
+      - {at: [0, 337, 0], facing: [0, 1, 0], class: pirate_turret_long, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
+      - {at: [0, -287, 0], facing: [0, -1, 0], class: pirate_turret_long, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
+      - {at: [0, 115.443, -91], facing: [0, 0, -1], class: pirate_turret_short, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
+      - {at: [-91, 115.443, 0], facing: [-1, 0, 0], class: pirate_turret_short, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
+      - {at: [91, -115.443, 0], facing: [1, 0, 0], class: pirate_turret_short, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
+      - {at: [0, -115.443, 91], facing: [0, 0, 1], class: pirate_turret_short, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
   arms_dealer:
     name: Arms Dealer Base
     faction: neutral
     model_set: arms_dealer
     inherit: original:GameSettings.ini/PirateArmsHP   # hull = HP1 (VERIFIED)
     damage_model: station
+    # Five Laser turrets from the exe's table 0x67d430, always built (0x59d6c9, VERIFIED).
+    modules:
+      - {at: [0, 188, 0], facing: [0, 1, 0], class: dealer_turret_top}
+      - {at: [77.119, -101.5, 0], facing: [0.70711, -0.70711, 0], class: dealer_turret_low}
+      - {at: [-72.997, -101.5, 0], facing: [-0.70711, -0.70711, 0], class: dealer_turret_low}
+      - {at: [0, 82.587, -74.832], facing: [0, 0, -1], class: dealer_turret_side}
+      - {at: [0, 82.587, 75.168], facing: [0, 0, 1], class: dealer_turret_side}
   science_station:
     name: GSC Science Station
     faction: corporate
