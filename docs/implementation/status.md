@@ -628,7 +628,7 @@ growth after a good month; every score goes to its system or a pool. `intercepto
 starting outposts in place of its flat corporate income, the marker 916 on the map, the Outposts
 report lists them; `default`: one colony beside the stipend. DEV-098.
 
-**#129 follow-up** (app NEXT; unknowns §15): the exe's artefact table — eleven topics need an item
+**#129 follow-up** (app 0.22.27; unknowns §15): the exe's artefact table — eleven topics need an item
 (`requires_item` may list a launcher and its torpedoes), the others open on battle events
 (`unlock_on`, `complete_on`: `destroyed(<class>)`, `captured(<class>)`, `won(<raid>#<n>)`), salvage
 follows the destroyed ships' fits (`salvage_fits`; battles now report `destroyed(<class>)`); the

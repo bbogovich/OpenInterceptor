@@ -191,7 +191,7 @@ yet.
 | `prereq1`, `prereq2`, `prereq3` | numbers | none | The original's numeric prerequisites, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become `research(a) and research(b)` (app 0.8.0). |
 | `requires_all` | list of topic ids | none | App NEXT: topics that must **all** be known as well — `research(a) and research(b)` joined to `requires` (and to the translated `prereq*`). `interceptor`: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (**verified**). |
 | `level` | number | 0 | App NEXT: the original's `Level` (read through inheritance); a finished topic earns `research_model.score_by_level` at its level. |
-| `requires_item` | item id or list | none | App 0.22.25: an **artefact-gated** topic (the original's Prereq 127, RQ-S-03): offered only once one of these items has been *recovered* by salvage (the destroyed ships' [`salvage_fits`](#research-and-research_model), raids' [`salvage_items`](#raids)) and only while one stays in some base's stores. A list (app NEXT) accepts any of them — the original takes a launcher or its torpedoes. When none is left (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error. |
+| `requires_item` | item id or list | none | App 0.22.25: an **artefact-gated** topic (the original's Prereq 127, RQ-S-03): offered only once one of these items has been *recovered* by salvage (the destroyed ships' [`salvage_fits`](#research-and-research_model), raids' [`salvage_items`](#raids)) and only while one stays in some base's stores. A list (app 0.22.27) accepts any of them — the original takes a launcher or its torpedoes. When none is left (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error. |
 | `unlock_on` | list of events | none | App NEXT: an **event-gated** special topic, offered once any of these battle events has happened: `destroyed(<class>)` (an enemy of that class destroyed), `captured(<class>)` (captured or disabled), `won(<raid>)` or `won(<raid>#<n>)` (that raid's n-th won battle). It stays open. |
 | `complete_on` | list of events | none | App NEXT: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5). |
 | `lab`, `site`, `start_cost` | | none | A **station-only** topic: see [Logistics › research stations](#research-stations-and-station-only-topics) (app 0.9.0). |
@@ -215,7 +215,7 @@ says so, and its `score_by_level` score is added to the month's.
 | `chances` | list of numbers | none | Per cent by difficulty level, easiest first; a level past the list takes the last. |
 | `beginner` … `superhuman` | number | none | The same as the original's keys, read through inheritance: `interceptor` inherits `original:GameSettings.ini/BeamGoodies`, `MissileGoodies`, `FreighterGoodies` and `AlienCorpseGoodies` (**verified** tables, `unknowns-2026-11.md` §11.2). |
 
-`interceptor` (app NEXT, `unknowns-2026-11.md` §15, **verified** unless marked) follows the exe's
+`interceptor` (app 0.22.27, `unknowns-2026-11.md` §15, **verified** unless marked) follows the exe's
 table at 0x66f768: eleven special topics need an item — the five corpses, the three torpedoes (the
 launcher or its torpedoes) and the Phase, Plasma and Psi beams. The others open on an event: the
 saucer examinations on `captured(wraith | spectre | phantasm)`, Shade on `captured(shade)`, the
@@ -224,7 +224,7 @@ the Doomsday pieces on `won(doomsday_convoy#1 | #2 | #3)` (the n-th convoy carry
 *derived*). Still open as before: the mines (the flight layer does not report destroyed mines
 yet), Poltergeist and the Drone (no source known). Topics 74 and 75 are not in this pack's tree.
 
-`salvage_fits: {<ship class>: [{item, goodies}]}` (app NEXT) — what a destroyed enemy of that
+`salvage_fits: {<ship class>: [{item, goodies}]}` (app 0.22.27) — what a destroyed enemy of that
 class may yield: after a **won** battle each enemy destroyed (reported by the battle as
 `destroyed(<class>)`) rolls each item of its class with the goodies chance, into the home base
 of the first craft in the battle. `interceptor`: the special topics' weapons each alien class
