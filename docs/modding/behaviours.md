@@ -241,7 +241,7 @@ Cloak lock-break chance by difficulty (Stage 2 item 2.7) is still a fixed `stren
 
 ## Turret fire control
 
-Since app NEXT (issue #115) a `turret` state can fire as the original's station and freighter
+Since app 0.22.13 (issue #115) a `turret` state can fire as the original's station and freighter
 turrets do (flight notes §8.6, §8.8, **verified**):
 
 ```yaml

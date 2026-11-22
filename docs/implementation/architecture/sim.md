@@ -350,7 +350,7 @@ hull gets nothing — and emits `SimEvent::HardPointDestroyed { position, explos
 (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and `hard_hp`. A `mine` state
 with `range: 0` goes off when its hull touches a hostile's.
 
-**Turret fire control** (app NEXT, #115). A `turret` state whose `Params::turret.aim` is not
+**Turret fire control** (app 0.22.13, #115). A `turret` state whose `Params::turret.aim` is not
 `Engine` runs `ai::original_turret`: the lead (`dist ÷ beam speed`, or `lead_speed` when
 gimballed), for fixed turrets an accuracy rolled once into `AiState::turret_accuracy` (band, or the
 pilot record's of the turret or its carrier) and a per-tick miss along the target's `right()` or
