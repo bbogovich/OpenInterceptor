@@ -679,6 +679,13 @@ pub enum SimEvent {
         ship: ShipId,
         call: String,
     },
+    /// A voice line on the radio: `ship`'s own voice set says `line` — or, with `wingmen`,
+    /// one of the player's wingmen does (the original's wingman radio messages).
+    RadioLine {
+        ship: ShipId,
+        line: String,
+        wingmen: bool,
+    },
     /// A Nova bomb (`fuse`) launched by `ship` went off at `position`.
     NovaDetonated {
         ship: ShipId,
@@ -785,8 +792,9 @@ pub struct World {
     /// When the battle is over (a Nova's `ends_battle_after`); the `battle_over` mission
     /// query turns true then.
     pub battle_over_at: Option<f64>,
-    /// Radio lines due at a world time (a Nova's `warnings`): `(time, speaker, text)`.
-    pub timed_lines: Vec<(f64, ShipId, String)>,
+    /// Radio lines due at a world time (a Nova's `warnings`): `(time, speaker, voice line,
+    /// text)`.
+    pub timed_lines: Vec<(f64, ShipId, Option<String>, String)>,
 }
 
 impl World {
@@ -1157,7 +1165,14 @@ impl World {
             let (due, later): (Vec<_>, Vec<_>) =
                 std::mem::take(&mut self.timed_lines).into_iter().partition(|l| l.0 <= now);
             self.timed_lines = later;
-            self.events.extend(due.into_iter().map(|(_, ship, text)| SimEvent::Radio { ship, text }));
+            for (_, ship, line, text) in due {
+                if let Some(line) = line {
+                    self.events.push(SimEvent::RadioLine { ship, line, wingmen: true });
+                }
+                if !text.is_empty() {
+                    self.events.push(SimEvent::Radio { ship, text });
+                }
+            }
         }
         // Decoys that have run their time vanish in a puff.
         for i in 0..self.ships.len() {

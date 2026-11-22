@@ -121,7 +121,8 @@ fn missile() -> Ty {
             "warnings",
             Ty::List(Box::new(Ty::Struct(vec![
                 f("at", time(), "seconds after launch"),
-                f("text", Ty::Text, "the radio line (@key allowed)"),
+                f("line", Ty::Name, "a voice line of the launcher's wingmen (their voice set)"),
+                f("text", Ty::Text, "a line for the message display (@key allowed)"),
             ]))),
             "with fuse: radio lines on the way",
         ),
@@ -598,7 +599,32 @@ fn behaviour() -> Ty {
         f("missile_range", dist(), "launch missiles only this close (default 2.5 × range, at least 2 km)"),
         f("jump", Ty::Bool, "retreat: start the hyperdrive"),
         f("escape", dist(), "tow: haul the prize this far before jumping out (2.5 km)"),
-        f("break_time", time(), "attack: how long a break-off lasts before coming round again (2s)"),
+        f(
+            "break_time",
+            time(),
+            "attack: how long a break-off lasts (2s); with reengage_beyond, when the chance starts",
+        ),
+        f(
+            "reengage_beyond",
+            dist(),
+            "attack: the original's break-off: come round when the target is farther than this (0 = off)",
+        ),
+        f(
+            "reengage_chance",
+            Ty::Qty(Unit::Fraction),
+            "with reengage_beyond: after break_time, the chance per manoeuvre (25 %)",
+        ),
+        f("break_manoeuvre", time(), "with reengage_beyond: how long one break-off manoeuvre lasts (2s)"),
+        f(
+            "break_call",
+            Ty::Struct(vec![
+                f("chance", Ty::Qty(Unit::Fraction), "the chance of the call (100 %)"),
+                f("from_level", Ty::Num, "from this difficulty level index (0)"),
+                f("line", Ty::Name, "a voice line of the pilot's voice set"),
+                f("text", Ty::Text, "a line for the message display"),
+            ]),
+            "attack: a radio call on breaking off (never when the target is the player)",
+        ),
         f("break_off", dist(), "attack: break off closer than this (0 = 120 m + 0.15 × max_speed)"),
         f(
             "lock_cone",

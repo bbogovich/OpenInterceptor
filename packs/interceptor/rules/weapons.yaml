@@ -149,10 +149,11 @@ missiles:
   alien_mine_explosive: {name: Explosive mine, guidance: dumbfire, speed: 0, impact_damage: 0, proximity_damage: 300, proximity_radius: 40m}
   alien_mine_missile: {name: Missile mine, guidance: dumbfire, speed: 0, impact_damage: 0, proximity_damage: 250, proximity_radius: 40m}
   # The Nova bomb (README §12, VERIFIED): it does not go off on contact; 60 s after launch
-  # it detonates, and the battle is over 60 s later (the battle_over mission query). Its
-  # messages at +30 s (0x46), +60 s (0x47) and 32 s and 13 s before the end (0x48, 0x49)
-  # are given here in the engine's words (DERIVED: the message texts are not mapped). What
-  # its blast does to ships is not traced: it damages nothing here.
+  # it detonates, doing no damage, and the battle is over 60 s later (the battle_over
+  # mission query; with no objective deciding, a draw). Its messages at +30 s (0x46),
+  # +60 s (0x47) and 32 s and 13 s before the end (0x48, 0x49) are wingman radio
+  # messages, voice waves 33-36: the wingmen's voice lines wave33-wave36 (the clips are
+  # not mapped yet, so they are silent until a voice set names them).
   nova_bomb:
     inherit: original:GameSettings.ini/NovaBomb
     name: Nova Bomb
@@ -163,8 +164,8 @@ missiles:
     fuse: 60s
     ends_battle_after: 60s
     warnings:
-      - {at: 30s, text: NOVA BOMB ARMED}
-      - {at: 60s, text: NOVA BOMB DETONATED}
-      - {at: 88s, text: BATTLE ENDS IN 32 SECONDS}
-      - {at: 107s, text: BATTLE ENDS IN 13 SECONDS}
+      - {at: 30s, line: wave33}
+      - {at: 60s, line: wave34}
+      - {at: 88s, line: wave35}
+      - {at: 107s, line: wave36}
     color: [0.9, 0.9, 1.0]

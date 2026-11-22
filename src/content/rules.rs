@@ -461,8 +461,9 @@ pub struct MissileClass {
     /// With `fuse`: the battle is over this many seconds after the detonation (the
     /// `battle_over` mission query; 0 = never).
     pub ends_battle_after: f32,
-    /// With `fuse`: radio lines at these seconds after launch (`warnings: [{at, text}]`).
-    pub warnings: Vec<(f32, String)>,
+    /// With `fuse`: radio lines at these seconds after launch (`warnings: [{at, line,
+    /// text}]`): a voice line of the launcher's wingmen and/or a text.
+    pub warnings: Vec<(f32, Option<String>, String)>,
     /// Turn rate while homing, degrees per second.
     pub turn_rate: f32,
     /// Seconds the target must stay in the lock cone before launch locks on.
@@ -1558,7 +1559,11 @@ pub fn build_with(
                     .iter()
                     .filter_map(|item| {
                         let w = Get(item);
-                        Some((w.qty("at", Unit::Time)?.max(0.0), w.str("text")?.to_string()))
+                        let (line, text) = (w.str("line").map(str::to_string), w.str("text").unwrap_or("").to_string());
+                        if line.is_none() && text.is_empty() {
+                            return None;
+                        }
+                        Some((w.qty("at", Unit::Time)?.max(0.0), line, text))
                     })
                     .collect(),
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),

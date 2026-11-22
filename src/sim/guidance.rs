@@ -67,8 +67,8 @@ pub fn launch(w: &mut World, mut m: Missile) {
             // A Nova bomb: its life is its fuse, and its warnings are scheduled now.
             m.life = class.fuse;
             let now = w.time;
-            for (at, text) in &class.warnings {
-                w.timed_lines.push((now + *at as f64, m.owner, text.clone()));
+            for (at, line, text) in &class.warnings {
+                w.timed_lines.push((now + *at as f64, m.owner, line.clone(), text.clone()));
             }
             w.missiles.push(m);
         }
@@ -467,7 +467,7 @@ mod tests {
         let mut r = (*w.rules).clone();
         let mut nova = r.missiles[0].clone();
         (nova.id, nova.fuse, nova.ends_battle_after, nova.speed) = ("nova".into(), 60.0, 60.0, 175.0);
-        nova.warnings = vec![(30.0, "ARMED".into()), (88.0, "32 S".into())];
+        nova.warnings = vec![(30.0, Some("wave33".into()), "ARMED".into()), (88.0, None, "32 S".into())];
         r.missiles.push(nova);
         w.rules = std::sync::Arc::new(r);
         let class = MissileId(w.rules.missiles.len() as u16 - 1);
@@ -485,7 +485,7 @@ mod tests {
             0.0,
         );
         launch(&mut w, m);
-        let (mut went, mut lines) = (None, Vec::new());
+        let (mut went, mut lines, mut voices) = (None, Vec::new(), Vec::new());
         for k in 1..=(125 * 60) {
             w.step();
             let t = k as f32 / 60.0;
@@ -493,6 +493,7 @@ mod tests {
                 match e {
                     SimEvent::NovaDetonated { .. } => went = Some(t),
                     SimEvent::Radio { text, .. } => lines.push((t, text.clone())),
+                    SimEvent::RadioLine { line, wingmen: true, .. } => voices.push((t, line.clone())),
                     _ => {}
                 }
             }
@@ -506,5 +507,6 @@ mod tests {
         assert!((w.battle_over_at.unwrap() - w.nova_at.unwrap() - 60.0).abs() < 1e-6);
         assert_eq!(lines.iter().map(|l| l.1.as_str()).collect::<Vec<_>>(), ["ARMED", "32 S"]);
         assert!((lines[0].0 - 30.0).abs() < 0.05 && (lines[1].0 - 88.0).abs() < 0.05);
+        assert_eq!(voices.iter().map(|v| v.1.as_str()).collect::<Vec<_>>(), ["wave33"], "a wingman's voice line");
     }
 }

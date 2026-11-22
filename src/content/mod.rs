@@ -699,7 +699,7 @@ fn resolve_text(t: &text::TextTable, rules: &mut rules::Ruleset, scenarios: &mut
     }
     for m in &mut rules.missiles {
         fix(&mut m.name, &format!("missiles.{}.name", m.id));
-        for (k, (_, text)) in m.warnings.iter_mut().enumerate() {
+        for (k, (_, _, text)) in m.warnings.iter_mut().enumerate() {
             fix(text, &format!("missiles.{}.warnings[{k}]", m.id));
         }
     }
