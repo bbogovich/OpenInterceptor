@@ -317,11 +317,16 @@ With kits the box follows the exe step by step (§4.2):
 
 - **Content size.** Width = max(325, caption, body), 100 tall. A body wider than 425 wraps: the
   box is 425 wide and (line height + 2) × body width / 425 taller, at most 400 tall.
-- **Width from the buttons.** If the buttons in one row would pass 465, the box is at least 465
-  wide; if the box is narrower than that row, it becomes the row's width − 40.
-- **Side edges.** The style kit's side edges are added and the box is centred on (320, 240).
-- **Button rows.** Buttons fill rows from the bottom, a row breaking when it would pass the box's
-  width − 70. Two or more rows switch the box to `rows2` or `rows3`.
+- **Width from the buttons.** The one-row sum is Σ(button width + 10). Past 465 the content
+  width becomes the sum − 100 (**derived** from the RE's one worked example, 550 → 450); if the box
+  is narrower than the sum, it becomes the sum − 40.
+- **Side edges.** The style kit's side edges are added, the box is centred on (320, 240) and
+  pushed on screen. The style's change and the bands come after the push, so a wide box can
+  overhang the screen, as in the exe.
+- **Button rows.** Buttons go to rows in order, row 0 at the bottom; a new row starts when the
+  running sum of (width + 10) passes the box's width − 70 (§4.9). A label starting with `~` is a
+  full-width button (the exe's `~` before a label key): it is the box's width − 70 wide and sits
+  alone in its row; the `~` is not shown. Two or more rows switch the box to `rows2` or `rows3`.
 - **Style change.** Style 1 grows 20 px up and to each side, 10 more on the right; style 2 grows
   20 px to each side.
 - **Bands.** The kit's top and bottom bands are added outside. Styles 2 and 3 round the height so
@@ -331,8 +336,9 @@ With kits the box follows the exe step by step (§4.2):
 - **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the text rect, clipped
   to it and drawn before the frame (§4.8, **verified**; until app 0.22.18 it was centred on the box and
   clipped to the box, so it showed outside the art).
-- **Worked example** (§4.8): a one-line style-1 notice with one button is 539 × 266 at
-  (56, 97); its text rect is (92, 147) – (551, 318) and its button row's top is 331.
+- **Worked examples** (§4.8, §4.9): a one-line style-1 notice with one button is 539 × 266 at
+  (56, 97); its text rect is (92, 147) – (551, 318) and its button row's top is 331. With five
+  100 px buttons it takes kit 242 and is (−7, 106) – (657, 365), rows at 328 and 311.
 - **Text.** The text rect is the final box minus the final kit's insets: fixed for the style kits
   (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61), each edge + 3 for 242 and 250. The text
   is centred in it, inset 5 px each side. Nothing grows or clips, so text taller than the rect runs
@@ -349,7 +355,8 @@ With kits, `width`, `title_y`, `body_top`, `button_step` and `frame` are not use
 **Derived:**
 
 - Only style 3 draws a caption: the exe's "title" routine draws the message itself.
-- A row of three or more buttons is centred, 10 px apart.
+- A row of three or more buttons is centred, 10 px apart. The exe positions only rows of one or
+  two buttons and leaves larger rows unplaced (§4.9); its dialogs use `~` buttons instead.
 
 A mod can still build its own frame from pieces with `frame`. `--check` loads every dialog image.
 
