@@ -101,7 +101,7 @@ Playback uses macroquad's `audio` feature (quad-snd: CoreAudio on macOS, ALSA on
 
 | Symbol | What it is |
 |---|---|
-| `SoundKey` | `Named(&'static str)`, `Beam(u16)`, `Missile(u16)`, `Effect(u16)`, since app 0.6.2 `Voice(u32)` (an index into `Ruleset::voice_clips`), and since app 0.11.0 `Music(set, state, segment)` and `Stinger(set, stinger)` (indices into `Ruleset::music`); since app NEXT `Ui(u16)`: every other `sounds:` entry (interface sounds), by its index in the sorted `SoundBank::ui_names`, played with `SoundBank::play_ui(name)`. |
+| `SoundKey` | `Named(&'static str)`, `Beam(u16)`, `Missile(u16)`, `Effect(u16)`, since app 0.6.2 `Voice(u32)` (an index into `Ruleset::voice_clips`), and since app 0.11.0 `Music(set, state, segment)` and `Stinger(set, stinger)` (indices into `Ruleset::music`); since app 0.22.15 `Ui(u16)`: every other `sounds:` entry (interface sounds), by its index in the sorted `SoundBank::ui_names`, played with `SoundBank::play_ui(name)`. |
 | `content::music::MusicSet`, `battle_state` | A music set (`states`, `stingers`, ranges, volume, pack); the battle state from the hostiles' distances (pure, tested). |
 | `MusicPlayer`, `next_segment` | Plays one segment at a time and changes state only at a segment's end; the next segment's key (pure, tested). `volume` is the player's music volume. |
 | `NAMED` | The eighteen named sounds: since app 0.6.2 `mission_accomplished` and `mission_failed` (the computer voice at the debrief), and the event names `explosion`, `big_explosion`, `shield_hit`, `hull_hit`, `lock`, `missile_launch`, `afterburner`, `target`, `denied`, `collision`, and since Stage 2 `system_damage`, `tractor`, `cloak`, `ecm`, `hyperspace`, `point_defence`. |

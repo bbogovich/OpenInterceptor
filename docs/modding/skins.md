@@ -295,7 +295,7 @@ original's three frame kits) is #127.
 
 ### The original's message box (`dialog.kit`)
 
-Since app NEXT a `kit` makes prompts the original's message boxes (MsgBox.cpp, **verified**,
+Since app 0.22.15 a `kit` makes prompts the original's message boxes (MsgBox.cpp, **verified**,
 `ui-framework.md` §4):
 
 | Key | Type | Default | Meaning |
@@ -338,7 +338,7 @@ dialog, run `openinterceptor --no-original --strategy --notice "Hello"`.
 
 ## Interface sounds and hover help
 
-Since app NEXT (plan M2 #126, RQ-UI-09/10) a skin names the sounds its controls make and how
+Since app 0.22.15 (plan M2 #126, RQ-UI-09/10) a skin names the sounds its controls make and how
 hover help looks:
 
 ```yaml

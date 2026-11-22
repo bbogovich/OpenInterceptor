@@ -178,8 +178,8 @@ and kept; one that cannot be loaded is reported on standard error once
 | `images.sprite`, `images.states` | asset, 1 – 8 | none, 2 | A button's states as consecutive sprites: `original:sprite#N` is state 0, `#N+k` state k. With 1 state nothing is drawn when up. |
 | `fire_on_press`, `repeat` | bool, `[delay, interval]` | `false`, none | A button fires when pressed instead of released; held, it fires again after `delay` ticks every `interval` (1/60 s). |
 | `group`, `selected` | name, bool | none, `false` | A radio group: the chosen member stays latched (pressed image); `selected` (else the first) starts latched. On a `check`: starts on. |
-| `sound` | name | the skin's for the kind | The interface sound when pressed: a name in the rules' `sounds:`, or `none` (app NEXT). |
-| `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app NEXT; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
+| `sound` | name | the skin's for the kind | The interface sound when pressed: a name in the rules' `sounds:`, or `none` (app 0.22.15). |
+| `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app 0.22.15; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
 | `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
@@ -389,7 +389,7 @@ sprite button (rows 4 / 5) centred at (619, 466), bottom right, which goes back.
 
 ### Sounds, hover help and animations
 
-Since app NEXT (plan M2 #126, RQ-UI-09 – 12):
+Since app 0.22.15 (plan M2 #126, RQ-UI-09 – 12):
 
 - **Sounds.** A widget's `sound` (or its skin's default for its kind) plays when it is pressed;
   prompts play the skin's `box_open` when they appear and its `capsule` (or `text_button`)
@@ -405,7 +405,7 @@ Since app NEXT (plan M2 #126, RQ-UI-09 – 12):
 - **Speed buttons light up.** A button whose action is `speed(n)` shows its pressed (lit) state
   while the clock runs at speed `n` — the time dial's hole lamps.
 
-`interceptor` (app NEXT):
+`interceptor` (app 0.22.15):
 
 - The CSD's screen buttons, minimap and dial holes carry the original's help keys
   (`S_CSD_BASES` … `S_TIME_5SECS` … `S_TIME_24HOUR`, **verified**).
