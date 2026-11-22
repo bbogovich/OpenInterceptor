@@ -7718,6 +7718,24 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>800 m</td>
 <td><code>cloaked_wait</code>: it wakes when a hostile comes this close.</td>
 </tr>
+<tr>
+<td><code>fuse</code></td>
+<td>time</td>
+<td>0</td>
+<td>A Nova bomb (app 0.22.16): it never goes off on contact or by its proximity fuse; it flies on and detonates this long after launch, damaging nothing (what the original's blast does is not traced). 0 = an ordinary missile. <code>interceptor</code>: <code>nova_bomb</code>, 60 s (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>ends_battle_after</code></td>
+<td>time</td>
+<td>0</td>
+<td>With <code>fuse</code>: the battle is over this long after the detonation — the <code>battle_over</code> mission query turns true (app 0.22.16). <code>interceptor</code>: 60 s (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>warnings</code></td>
+<td>list of <code>{at, text}</code></td>
+<td>none</td>
+<td>With <code>fuse</code>: radio lines this long after launch (app 0.22.16). <code>interceptor</code>: at 30 s, 60 s, 88 s and 107 s, in the engine's words (the original's message texts are not mapped).</td>
+</tr>
 </tbody>
 </table>
 <h3 id="ships-and-objects"><code>ships</code> and <code>objects</code><a class="headerlink" href="#ships-and-objects" title="Permanent link">&para;</a></h3>
@@ -8291,6 +8309,18 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td>Manoeuvre and parameters (below).</td>
 </tr>
 <tr>
+<td><code>retreat_when_disarmed</code></td>
+<td><code>{to, every, settle, rows, clamp, no_pilot}</code></td>
+<td>none</td>
+<td>App NEXT: when every beam mount is gone, the pilot rolls — at most every <code>every</code> (5 s), <code>settle</code> (5 s) after its last change of state — to switch to state <code>to</code>, with the chance its record gives (<a href="../behaviours/#retreat-rolls">Retreat rolls</a>).</td>
+</tr>
+<tr>
+<td><code>retreat_on_nova</code></td>
+<td><code>{to, rows, clamp, no_pilot}</code></td>
+<td>none</td>
+<td>App NEXT: one roll per pilot when a Nova bomb goes off.</td>
+</tr>
+<tr>
 <td><code>systems</code></td>
 <td><code>{cloak, ecm, shields_first, beams_first}</code></td>
 <td>none</td>
@@ -8422,6 +8452,12 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td>distance</td>
 <td>0</td>
 <td>Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × <code>max_speed</code> with the target ahead. <code>interceptor</code>: 250 m (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>break_time</code></td>
+<td>time</td>
+<td>2 s</td>
+<td>Attack (app 0.22.16): how long a break-off lasts before the pilot comes round again. <code>interceptor</code>: 5 s − 0.5 s × level (<em>derived</em> from the original's 5,000 − 500d ms).</td>
 </tr>
 <tr>
 <td><code>lock_cone</code></td>
@@ -10286,6 +10322,18 @@ actions each context adds for scripts:</p>
 <td>query, number</td>
 <td>battle</td>
 <td>Its distance from the player, m (very large once gone).</td>
+</tr>
+<tr>
+<td><code>nova_time</code></td>
+<td>query, number</td>
+<td>battle</td>
+<td>Seconds since a Nova bomb went off; −1 before (app 0.22.16).</td>
+</tr>
+<tr>
+<td><code>battle_over</code></td>
+<td>query, true/false</td>
+<td>battle</td>
+<td>A Nova bomb's <code>ends_battle_after</code> has run out (app 0.22.16).</td>
 </tr>
 <tr>
 <td><code>script(file:function)</code></td>

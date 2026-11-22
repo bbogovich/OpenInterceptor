@@ -4616,6 +4616,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#the-nova-bomb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Nova bomb
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6557,6 +6568,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#the-nova-bomb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Nova bomb
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6731,6 +6753,21 @@ blast</strong> reaching four times the warhead's <code>proximity_radius</code> (
 </tr>
 </tbody>
 </table>
+<h2 id="the-nova-bomb">The Nova bomb<a class="headerlink" href="#the-nova-bomb" title="Permanent link">&para;</a></h2>
+<p>A missile with a <code>fuse</code> (app 0.22.16) is a Nova bomb: it never goes off on contact; it flies on and
+detonates <code>fuse</code> after launch, sends its <code>warnings</code> over the radio at their times, sets the
+<code>nova_time</code> mission query running, sends every pilot with <code>retreat_on_nova</code> to its roll, and
+<code>ends_battle_after</code> later turns <code>battle_over</code> true:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">missiles</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">nova_bomb</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">inherit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original:GameSettings.ini/NovaBomb</span>
+<span class="w">    </span><span class="nt">fuse</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
+<span class="w">    </span><span class="nt">ends_battle_after</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
+<span class="w">    </span><span class="nt">warnings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">30s</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="nv">NOVA BOMB ARMED</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">at</span><span class="p">:</span><span class="w"> </span><span class="nv">60s</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="nv">NOVA BOMB DETONATED</span><span class="p p-Indicator">}]</span>
+</code></pre></div>
+<p><code>interceptor</code> has it with the original's timing (<strong>verified</strong>); a campaign craft fitted with the
+Nova Bomb carries it. Its blast damages nothing yet, and no mission ends on <code>battle_over</code> yet —
+what the original's detonation does to the ships and the campaign is not traced.</p>
 
 
 

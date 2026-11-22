@@ -6539,6 +6539,15 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>Parity M1, #119 (app 0.22.16)</strong> three more, so <strong>549</strong>:
+<code>content::behaviour::tests::retreat_chances_follow_rank_stats_and_clamps</code> (disarmed: rank 0 and
+Bravery 100 → 40 %, rank 3 → held to 5 %, Bravery 0 → held to 85 %, no pilot → the band; Nova:
+rank 0 with all stats 100 → 50 %, with all 0 → 90 %, rank 4 → held to 5 %; an unknown state is an
+error), <code>sim::ai::tests::disarmed_pilots_and_a_nova_send_ships_home</code> (a ship with one mount left
+never rolls; with none it flees after its 5 s; a Nova sends an armed ship home once) and
+<code>sim::guidance::tests::a_nova_bomb_goes_off_on_its_fuse_and_ends_the_battle_a_minute_later</code> (no
+detonation at 59 s and none on contact, one at 60 s, the battle over 60 s later, the warnings at
+30 s and 88 s).</p>
 <p><strong>Parity M1, #117 (app 0.22.14)</strong> six more, so <strong>537</strong>: <code>content::equipment::tests::tachyon_table_and_recharge_while_burning_parse</code>
 and in <code>sim::combat</code> <code>accumulator_shields_turn_ordinary_hits_into_shield</code> (40 on a raised 20-point bank:
 no damage, the bank 30; held to 40; a bank at 0 takes it; a Permeator's halves do not accumulate),
@@ -7094,7 +7103,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>content::behaviour</code></td>
-<td>5</td>
+<td>6</td>
 <td>States, transitions and skill parsed (units, per-state parameters); mistakes reported (no <code>do</code>, unknown manoeuvre or state, bad condition); the built-in attack behaviour is valid; <strong>target preferences parse and reject unknown selectors</strong>; <strong>scripted states compile and check what they name</strong> (<code>call</code>, <code>every</code>, <code>fly</code>, <code>vars</code>; <code>goto</code> and <code>set_var</code> targets; context mistakes — app 0.18.0)</td>
 </tr>
 <tr>
@@ -7129,7 +7138,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::ai</code></td>
-<td>27</td>
+<td>28</td>
 <td>Steering, lead point, wingman closing on its slot, enemy hunting and damaging, wing orders, evasive ending and retreat jumping out, <strong>aim skill decides accuracy</strong>, <strong>transitions switch states on conditions</strong>, <strong>turrets fire off the nose</strong>, <strong>tugs tow disabled enemies away</strong>, disabled ships drift, target and idle behaviours; <strong>mines go off when an enemy comes near</strong>; <strong>predictive collision avoidance</strong> (head-on: break and slow; passing wide or beyond the horizon: nothing); <strong>the formation order cycles the campaign's formations</strong>; <strong>escorts hold formation until a hostile comes close</strong> (app 0.9.2); <strong>a scripted state runs its script every interval</strong> and <strong>a runaway script is stopped and reported once</strong> (app 0.18.0); <strong>the original's steering, pilot accuracy bands, grades (look-ahead, sprint), the pilot's own missile lock and break-off</strong> (app 0.22.8, #118); <strong>the original's fixed, gimballed and missile turrets</strong> (app 0.22.13, #115)</td>
 </tr>
 <tr>
@@ -7139,7 +7148,7 @@ playback, the sky dome, planet disc, fog and terrain drawing, the black hole's l
 </tr>
 <tr>
 <td><code>sim::guidance</code></td>
-<td>7</td>
+<td>8</td>
 <td>Homing hits and dumbfire misses an offset target; sidestep still arrives; parallax decoys lure enemy missiles; cloaked wait sleeps until prey comes near; cluster splits into submunitions; doppelganger launches a decoy ship that expires; damage modes</td>
 </tr>
 <tr>

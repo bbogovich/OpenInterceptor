@@ -4593,6 +4593,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#retreat-rolls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retreat rolls
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6679,6 +6690,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#retreat-rolls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retreat rolls
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -7228,6 +7250,38 @@ Phantasm a phase turret below, a plasma turret below and one above (besides its 
 Shade a phase turret aft; the Harbinger two tachyon turrets ahead and a 275 m one behind (no
 guns of its own); the Spirit freighter a plasma turret below and one above (no guns of its own).
 The Phantasm's Psi Blaster turret is not built.</p>
+<h2 id="retreat-rolls">Retreat rolls<a class="headerlink" href="#retreat-rolls" title="Permanent link">&para;</a></h2>
+<p>Since app 0.22.16 (issue #119) a behaviour can send its pilot home the way the original does
+(flight notes §9, <strong>verified</strong>) — not on hull damage, but when it is <strong>disarmed</strong> or when a
+<strong>Nova bomb</strong> goes off:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">behaviours</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">original_attack</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">states</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">engage</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">attack</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">flee</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="nv">retreat</span><span class="p p-Indicator">,</span><span class="nt"> jump</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">retreat_when_disarmed</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flee</span>
+<span class="w">      </span><span class="nt">every</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span><span class="w">                </span><span class="c1"># roll at most this often</span>
+<span class="w">      </span><span class="nt">settle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span><span class="w">               </span><span class="c1"># and only this long after the last change of state</span>
+<span class="w">      </span><span class="nt">rows</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">ranks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">],</span><span class="nt"> bravery</span><span class="p">:</span><span class="w"> </span><span class="nv">0.7</span><span class="p p-Indicator">,</span><span class="nt"> add</span><span class="p">:</span><span class="w"> </span><span class="nv">40</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">ranks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">],</span><span class="nt"> bravery</span><span class="p">:</span><span class="w"> </span><span class="nv">0.6</span><span class="p p-Indicator">,</span><span class="nt"> add</span><span class="p">:</span><span class="w"> </span><span class="nv">25</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">ranks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9</span><span class="p p-Indicator">],</span><span class="nt"> bravery</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">}]</span>
+<span class="w">      </span><span class="nt">clamp</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">85</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">no_pilot</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">75</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">retreat_on_nova</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flee</span>
+<span class="w">      </span><span class="nt">rows</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">ranks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">],</span><span class="nt"> bravery</span><span class="p">:</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="nt"> intelligence</span><span class="p">:</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">,</span><span class="nt"> stamina</span><span class="p">:</span><span class="w"> </span><span class="nv">0.05</span><span class="p p-Indicator">,</span><span class="nt"> add</span><span class="p">:</span><span class="w"> </span><span class="nv">50</span><span class="p p-Indicator">}]</span>
+<span class="w">      </span><span class="nt">clamp</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">95</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<ul>
+<li><strong>Disarmed</strong> means the class has beam mounts and every one of them has been destroyed (mounts
+  without <code>hit_points</code> never are).</li>
+<li><strong>The chance</strong>, in %, comes from the pilot's record (a scenario object's <code>pilot:</code> with
+  <code>rank</code>): with <code>b = 100 − Bravery</code>, <code>i = 100 − Intelligence</code>, <code>s = 100 − Stamina</code>, the first row
+  whose <code>ranks</code> hold the pilot's rank gives <code>bravery·b + intelligence·i + stamina·s + add</code>, held to
+  <code>clamp</code>. A ship with no record rolls its chance in <code>no_pilot</code>.</li>
+<li>On success the pilot switches to state <code>to</code>; a Nova roll happens once per pilot.</li>
+</ul>
+<p><code>interceptor</code>'s <code>original_attack</code> uses the original's tables and no longer flees on hull damage;
+its break-off lasts 5 s − 0.5 s × level (<code>break_time</code>) before the pilot comes round again.</p>
 
 
 

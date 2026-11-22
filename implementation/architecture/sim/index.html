@@ -7141,6 +7141,15 @@ hull gets nothing — and emits <code>SimEvent::HardPointDestroyed { position, e
 (<code>app::flight::event_messages</code> shows its text, <code>render::effects</code> the explosion). <code>DestroyedWhen</code>
 (<code>Hull</code>, <code>HardPoints</code>, <code>Either</code>) decides destruction from the hull and <code>hard_hp</code>. A <code>mine</code> state
 with <code>range: 0</code> goes off when its hull touches a hostile's.</p>
+<p><strong>Retreat rolls and the Nova</strong> (app 0.22.16, #119). <code>ai::retreat_rolls</code> runs in <code>run_behaviour</code>
+after the transition check: with <code>retreat_when_disarmed</code>, a <code>disarmed</code> ship (all damageable beam
+mounts at 0) rolls <code>RetreatRule::chance</code> (its record, or the <code>no_pilot</code> band) at most every
+<code>every</code> and <code>settle</code> after its last change of state (<code>AiState::last_retreat_roll</code>); with
+<code>retreat_on_nova</code>, every pilot rolls once after <code>World::nova_at</code> is set (<code>AiState::nova_rolled</code>).
+<code>guidance::launch</code> gives a <code>fuse</code> missile its fuse as life and schedules its <code>warnings</code> in
+<code>World::timed_lines</code> (emitted as <code>Radio</code> events by <code>World::step</code>); <code>guidance::step</code> skips its
+contact and proximity checks and, when the fuse runs out, sets <code>nova_at</code> and <code>battle_over_at</code>
+and emits <code>NovaDetonated</code>. The mission queries <code>nova_time</code> and <code>battle_over</code> read them.</p>
 <p><strong>Damage modes</strong> (app 0.22.14, #117). <code>combat::apply_hit</code> dispatches on <code>DamageMode</code>: <code>Normal</code> and
 <code>BypassShields</code> run one <code>hit_chain</code> (with or without the shield step); <code>Enveloping</code> runs two half
 chains with the side forced fore and aft (<code>front: Some(true/false)</code>) at the same impact point;
