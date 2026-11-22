@@ -293,43 +293,62 @@ original's three frame kits) is #127.
 | `dialog.capsule` | asset | text buttons | The message-box capsule's base sprite (app 0.22.12): left cap, middle tiled to the width and right cap are rows N, N+1, N+2; pressed N+3 … N+5. The caption is in `title_font` at (centre x, centre y − 2), pressed (+1, +1) (**verified**). Capsules sit in a centred row, 25 px above the bottom, each its caption + its caps wide (**derived**). `interceptor`: `original:sprite#258`. |
 | `dialog.frame` | list of `{image, at, offset, tile}` | none | Frame pieces drawn around the box (app 0.22.12). `at` is one of `top_left`, `top`, `top_right`, `left`, `right`, `bottom_left`, `bottom`, `bottom_right`. A piece sits inside the box at that corner or side, or centred on it, and is moved by `offset`. `tile: x` (or `y`) repeats it along the side, inset by the offset at both ends, with the last copy cut to fit. |
 
-### The original's message box (`dialog.kit`)
+### The original's message box (`dialog.kits`)
 
-Since app 0.22.15 a `kit` makes prompts the original's message boxes (MsgBox.cpp, **verified**,
-`ui-framework.md` §4):
+Since app 0.22.15 frame kits make prompts the original's message boxes (MsgBox.cpp, **verified**,
+`ui-framework.md` §4). In app NEXT, `kits` and `styles` replace 0.22.15's `kit` and `frame_style`:
+
+```yaml
+# packs/interceptor/rules/skin.yaml
+dialog: {title_font: readout, body_font: body,
+         kits: {style1: "original:sprite#163", style2: "original:sprite#179", style3: "original:sprite#190",
+                rows2: "original:sprite#242", rows3: "original:sprite#250"},
+         styles: {default: 1, research_complete: 0, report: 2, delivery: 2, contact: 3, interception: 3, offer: 3},
+         fill: "original:sprite#430", fill_large: "original:sprite#429", capsule: "original:sprite#258"}
+```
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `dialog.kit` | asset | none | A frame kit's base sprite B: 8 rows from B (top, bottom, left and right edges; top-left, top-right, bottom-right and bottom-left corners). `interceptor`: `original:sprite#190` (style 3); the others are 163 (style 1) and 179 (style 2). |
-| `dialog.frame_style` | 0 – 3 | 0 | With a kit: the style's text insets (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61; 0: the kit's side sizes + 3), its padding, and its live pieces (1: the knob, rows B + 8 … B + 15; 2: the ornament and two sliders, B + 8 … B + 10; 3: the blinking ornament B + 8). |
+| `dialog.kits` | `{style1, style2, style3, rows2, rows3}` | none | Frame kits' base sprites. A kit is 8 rows from its base B: top, bottom, left and right edges, then the top-left, top-right, bottom-right and bottom-left corners. `style1` – `style3` are the styles' own kits, with their live pieces after them: style 1's knob is rows B + 8 … B + 15; style 2's ornament and two sliders are B + 8 … B + 10; style 3's blinking ornament is B + 8. `rows2` is the kit every style switches to when its buttons take two rows, `rows3` the one for three or four rows. Style 0 has no kit of its own and uses `rows2`. |
+| `dialog.styles` | map of kind → 0 – 3 | 1 | The style per kind of prompt: a notice kind (`base_built`, `module_built`, `research_complete`, `delivery`, `report`, `contact`, `damage`, `other`) or a prompt (`interception`, `offer`, `choice`, `convoy`, `survey`, `strike`, `card`, `save`), and `default`. `interceptor` follows the exe (§4.6, **verified**): the common box and the queued events use 1, research complete 0, reports and deliveries 2, and sightings and side-mission offers 3. |
 | `dialog.fill_large` | asset | `fill` | The fill for boxes bigger than `fill` (row 429, 640 × 480). |
 
-With a kit the box follows the exe:
+With kits the box follows the exe step by step (§4.2):
 
-- **Size.** Width = max(325, the caption, the body), 100 tall. A body wider than 425 wraps: the
-  box is 425 wide and grows by (line height + 2) × body width / 425, at most 400 tall.
-- **Padding.** Style 1 grows 20 px up and to each side (10 more on the right); style 2 grows
+- **Content size.** Width = max(325, caption, body), 100 tall. A body wider than 425 wraps: the
+  box is 425 wide and (line height + 2) × body width / 425 taller, at most 400 tall.
+- **Width from the buttons.** If the buttons in one row would pass 465, the box is at least 465
+  wide; if the box is narrower than that row, it becomes the row's width − 40.
+- **Side edges.** The style kit's side edges are added and the box is centred on (320, 240).
+- **Button rows.** Buttons fill rows from the bottom, a row breaking when it would pass the box's
+  width − 70. Two or more rows switch the box to `rows2` or `rows3`.
+- **Style change.** Style 1 grows 20 px up and to each side, 10 more on the right; style 2 grows
   20 px to each side.
-- **Height.** Styles 2 and 3 round the height so the side edge tile fits a whole number of times.
-- **Placement.** The box is centred on (320, 240).
+- **Bands.** The kit's top and bottom bands are added outside. Styles 2 and 3 round the height so
+  the side tile fits a whole number of times, moving the top.
 - **Frame.** Every edge is tiled at its natural size, never stretched, in the order top, bottom,
   left, right; the corners go on last.
-- **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the box.
-- **Caption.** Upper-cased; style 3 draws it at (client centre, top + 54).
-- **Buttons.** Capsules, each max(100, caption + 20) × 14 and 10 px apart. A row wider than 465
-  wraps into up to 4 rows, 17 px apart. One button is centred; two sit 50 / 60, 90 / 90 or
-  20 / 20 px from the sides (styles 1, 2 and the others).
+- **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the box and clipped to
+  it.
+- **Text.** The text rect is the final box minus the final kit's insets: fixed for the style kits
+  (1: 36, 50, 44, 45; 2: 51, 42, 51, 54; 3: 28, 77, 55, 61), each edge + 3 for 242 and 250. The text
+  is centred in it, inset 5 px each side. Nothing grows or clips, so text taller than the rect runs
+  onto the frame art, as in the exe.
+- **Caption.** Only style 3 draws one, upper-cased, at (text centre, top + 54).
+- **Buttons.** Capsules, max(100, caption + 20) × 14. Row k's top = final bottom − 25 − 17k + the
+  style's change − 5 × (rows − 1). The style's change is −7 for styles 1 and 3, −8 for style 2, and
+  for style 0 −7 with 3 rows and +5 with 4. One button is centred. Two stretch from either side of
+  the centre to 50 / 60 (style 1, whose inner edges are also pulled in by 5), 90 / 90 (style 2) or
+  20 / 20 px from the sides. With several rows their outer edges are kept 35 px from the sides.
 
-With a kit, `width`, `title_y`, `body_top`, `button_step` and `frame` are not used. Engine choices
-(**derived**):
+With kits, `width`, `title_y`, `body_top`, `button_step` and `frame` are not used.
 
-- The fill is clipped to the text rect, not the whole box, so it does not show through the kit's
-  open margins.
-- The box grows when its wrapped text would leave the text rect.
-- The lowest button row ends 25 px above the box's bottom.
-- Captions of styles 1 and 2 sit 23 px above the text rect.
-- `interceptor` uses style 3 for every prompt, because which dialog uses which style is not
-  settled.
+**Derived:**
+
+- Only style 3 draws a caption: the exe's "title" routine draws the message itself.
+- A row of three or more buttons is centred, 10 px apart.
+- The fill shows inside the box wherever the kit's art is open, as the exe's clip to the box
+  implies.
 
 A mod can still build its own frame from pieces with `frame`. `--check` loads every dialog image.
 

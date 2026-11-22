@@ -182,6 +182,8 @@ and kept; one that cannot be loaded is reported on standard error once
 | `tip` | text or `@key` | none | Hover help: a floating box after the cursor rests on the widget (app 0.22.15; [Sounds, hover help and animations](#sounds-hover-help-and-animations)). |
 | `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
+| `labels` | `{font, colour, base_colour, rise, base_rise, box, cycle, margin}` | none | A `map`'s labels the original's way ([Map labels](#map-labels), app NEXT). Without it every star's name is drawn beside it. |
+| `slots`, `slot_size`, `slot_font` | list of `[x, y]`, `[w, h]`, name | none, `[76, 75]`, the list's font | A compact `list`'s sockets on the art: the rows that have cells (the hangar's craft) are also shown there, one per socket, name over second cell; a click selects the row (app NEXT). |
 
 | `kind` | Draws / does |
 |---|---|
@@ -189,7 +191,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `button` | Its state image, else its `label` as a skin button, else nothing — an invisible **hot spot** over art that already shows the button, outlined while the mouse is over it. A click runs its `action`. |
 | `value` | A live value as one line of text. |
 | `text` | Fixed text, wrapped to the rectangle; a value starting with `@` is a [text key](text.md). |
-| `list` | One of the strategy screen's lists with its rows and buttons, as in the testbed layout: `bases`, `research`, `build`, `market`, `factory`, `hangar`, `contacts`, `supply`, `archive`, `reports`, `messages`. |
+| `list` | One of the strategy screen's lists with its rows and buttons, as in the testbed layout: `bases`, `research`, `build`, `market`, `factory`, `hangar`, `contacts`, `supply`, `archive`, `reports`, `messages`; since app NEXT also `databank` (the topics researched, each with its description, then the encyclopaedia's unlocked entries) and the six status reports `report_income`, `report_finance`, `report_alien`, `report_xcom`, `report_outpost`, `report_player`. |
 | `map` | The star map: pick, hover, zoom and pan as in the testbed layout. With `source: minimap` it is a small overview of the whole map instead — no names, no legend, not zoomed or panned. |
 | `info` | The selected object's details and its action buttons. |
 | `check` | A check row (app 0.22.10): a lamp at its left that a click toggles — `images: {sprite, states: 2}` (off, on) or `{up, down}` — and its `label` 20 px to the right in the skin's text-button font. |
@@ -310,10 +312,44 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
   template (**derived**).
 - Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Their arrows'
   positions are not recovered yet, so they scroll with the wheel.
+- Since app NEXT Equip Ships' nine ring sockets (centres **verified**) show the craft, name over
+  pilot in the 6 px font (**derived**); a click on a socket selects that craft.
 - Research keeps its rows on the art's slots.
 
 A `button` with a `label` and no images is drawn as a **text button** when the skin has
 `text_button`: its caption is centred on its own rectangle in the caption font.
+
+### Map labels
+
+`labels:` on a `map` (app NEXT, plan M2 #128, D-39) labels it as the original's CSD does
+(`notes/re/unknowns-2026-11.md` §1.3, **verified**): only the stars and bases inside a `box` × `box`
+square around the cursor — and, on a round map, only while the cursor is inside the circle — are
+labelled. The name is upper-cased, in `font` (a sheet font of the skin), centred on the object's x
+and `rise` px above a star (`base_rise` above a base, with " BUILDING" while it is built). On a
+round map the label is pushed sideways to stay `margin` px inside the circle at its row. When
+several objects are in the box their labels take turns, one at a time, each for `cycle` ticks.
+
+| Key | Default | The original's |
+|---|---|---|
+| `font` | none (required: without the font, every name is drawn) | the 6 px font |
+| `colour`, `base_colour` | `[0.63, 0.63, 0]`, `[0.47, 0.47, 0]` | RGB(160, 160, 0), RGB(120, 120, 0) |
+| `rise`, `base_rise` | 20, 8 | 20, 8 |
+| `box` | 30 | 30 |
+| `cycle` | 60 | 15 map-counter steps of 4 ticks |
+| `margin` | 3 | 3 |
+
+```yaml
+# packs/interceptor/rules/screens.yaml: the CSD's star map
+map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}}
+# resources/default/rules/screens.yaml: the default starmap, its 5x9 body font
+starmap:
+  widgets:
+    map: {kind: map, rect: [8, 52, 790, 660], labels: {font: body, rise: 16, base_rise: 12, box: 40}}
+```
+
+The testbed layout (`starmap`) takes a full `map` definition too, for its `labels`; its
+other keys are unused there. `--hover X,Y` puts the labels' cursor at a design-space point (for
+screenshots).
 
 ### Sprite buttons, toggles and radio groups
 
@@ -436,8 +472,10 @@ original art **by reference** into the player's own `WrappersDLL.dll` (for examp
 640 × 480. The first screen is `csd` (the Command and Strategic Display): the round star map, the
 minimap, the time, weekday, date and funds readouts, the six screen buttons, the time dial's six
 holes and the help line. The others are `bases`, `equip_ships`, `purchase`, `manufacture`,
-`research`, `base_stats`, `ufopedia` and `reports`, each its background, its list where the
-original has one, its links and a back button.
+`research`, `base_stats`, `ufopedia` and the six status reports (`reports` is income, then
+`report_finance`, `report_alien`, `report_xcom`, `report_outpost`, `report_player`, linked by the
+art's next and previous buttons, app NEXT), each its background, its list where the original has
+one, its links and a back button.
 
 - **Verified**: the positions read from `Interceptor.exe`'s screen setup code (each screen's
   widgets, the button and dial centres).
@@ -454,12 +492,12 @@ original has one, its links and a back button.
   row's text and actions go in a nearby black box (**derived**): E&P's info boxes 2 and 3, the
   Equip Ships stat panel, the Research description pane, the UFOpedia article box. The base names
   are centred on the drop-down strip (D-40). Prompts are message boxes in 23010 and 23011 with text
-  buttons. The map labels are still in the TrueType font (#128).
+  buttons. Since app NEXT the map labels are the original's hover labels in the 6 px font, the stars are drawn with the class icons and named from `starcorp1.txt`, and the UFOpedia lists the `databank`.
 - **Unknown**: the buttons' own state images, which live in the original's sprite table
   (`SpritesDLL`), not yet read; until then the buttons are hot spots over the art.
 
 The file's comments name the original's own screen numbers. The `default` campaign has no set yet
-(6.9.13) and uses the testbed layout.
+(6.9.13) and uses the testbed layout, whose map has hover labels in its body font (app NEXT).
 
 ### How the set differs from the format design
 
