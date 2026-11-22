@@ -61,6 +61,9 @@ pub struct Debrief {
     pub kills: u32,
     pub losses: u32,
     pub seconds: f32,
+    /// The class ids of the enemy craft destroyed, one per craft (the campaign's salvage
+    /// and research triggers read them as `destroyed(<class>)`).
+    pub destroyed: Vec<String>,
 }
 
 /// A mission in progress.
@@ -76,6 +79,8 @@ pub struct MissionRun {
     start: f64,
     rng: u64,
     kills: u32,
+    /// The classes of the enemy craft destroyed so far.
+    destroyed: Vec<String>,
     losses: u32,
     /// Set when the battle ends.
     pub debrief: Option<Debrief>,
@@ -271,6 +276,7 @@ impl MissionRun {
             start: 0.0,
             rng: def.starfield_seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1,
             kills: 0,
+            destroyed: Vec::new(),
             losses: 0,
             debrief: None,
             voices: Vec::new(),
@@ -431,6 +437,7 @@ impl MissionRun {
             }
         }
         let (mut kills, mut losses) = (0, 0);
+        let mut destroyed_classes = Vec::new();
         for r in &mut self.roles {
             let (mut destroyed, mut departed) = (0u32, 0u32);
             for m in &r.members {
@@ -446,6 +453,7 @@ impl MissionRun {
                     destroyed += 1;
                     if w.rules.hostile(me, s.faction) {
                         kills += 1;
+                        destroyed_classes.push(w.rules.ship(s.class).id.clone());
                     } else if s.faction == me {
                         losses += 1;
                     }
@@ -455,6 +463,7 @@ impl MissionRun {
             r.retreated = departed.saturating_sub(r.captured);
         }
         (self.kills, self.losses) = (kills, losses);
+        self.destroyed = destroyed_classes;
         // 2. Arrivals, waves, chatter and optional objectives.
         let check = |run: &mut MissionRun, w: &World, e: &crate::script::Expr| {
             let cx = BattleCx { world: w, run, rng: Cell::new(run.rng) };
@@ -580,6 +589,7 @@ impl MissionRun {
                 kills: self.kills,
                 losses: self.losses,
                 seconds: time,
+                destroyed: self.destroyed.clone(),
             });
         }
         lines
@@ -708,6 +718,7 @@ mod tests {
         assert_eq!(d.optional, vec![("quick".to_string(), true)]);
         assert!(lines.contains(&"Well flown".to_string()) && lines.contains(&"MISSION ACCOMPLISHED".to_string()));
         assert_eq!(d.kills, 3);
+        assert_eq!(d.destroyed.len(), 3, "one class id per enemy destroyed");
     }
 
     #[test]

@@ -289,6 +289,8 @@ pub struct Campaign {
     /// those outside any outpost system.
     pub system_scores: Vec<[f64; 2]>,
     pub pool_scores: [f64; 2],
+    /// Battles won against each raid (`won(<raid>#<n>)` research triggers).
+    pub raid_wins: Vec<u32>,
 }
 
 /// The activity grid's size: 16 × 16 cells over the galaxy (the original's, 3,750 map units
@@ -538,6 +540,7 @@ impl Campaign {
             outposts: Vec::new(),
             system_scores: Vec::new(),
             pool_scores: [0.0, 0.0],
+            raid_wins: Vec::new(),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -1928,18 +1931,49 @@ impl Campaign {
         }
     }
 
-    /// Whether an artefact-gated topic is open (RQ-S-03, §4.2): its artefact has been
-    /// recovered (flag `artefact.<topic>`) and is still in some base's stores; when the
-    /// artefact is gone the flag is cleared, as the original's `0x40689e` does. A topic
-    /// without `requires_item` is always open.
+    /// Whether a special topic is open (RQ-S-03, §4.2, §15): an artefact-gated one once its
+    /// artefact has been recovered (flag `artefact.<topic>`) and while one is in some base's
+    /// stores — when the artefact is gone the flag is cleared, as the original's `0x40689e`
+    /// does; an event-gated one (`unlock_on`) once its event happened (the same flag). Other
+    /// topics are always open.
     fn artefact_open(&mut self, def: &StrategyDef, t: usize) -> bool {
-        let Some(item) = &def.research[t].requires_item else { return true };
-        let flag = format!("artefact.{}", def.research[t].id);
-        let present = def.items.iter().position(|i| &i.id == item).is_some_and(|i| self.stock_of(i) > 0);
+        let topic = &def.research[t];
+        let flag = format!("artefact.{}", topic.id);
+        if topic.requires_item.is_empty() {
+            return topic.unlock_on.is_empty() || self.flags.contains(&flag);
+        }
+        let present = topic
+            .requires_item
+            .iter()
+            .any(|item| def.items.iter().position(|i| &i.id == item).is_some_and(|i| self.stock_of(i) > 0));
         if !present {
             self.flags.retain(|f| *f != flag);
         }
         present && self.flags.contains(&flag)
+    }
+
+    /// A battle's events (§15.3) — `destroyed(<class>)`, `captured(<class>)`, `won(<raid>)`,
+    /// `won(<raid>#<n>)` — open the topics they `unlock_on` and finish those they
+    /// `complete_on`.
+    pub fn battle_events(&mut self, def: &StrategyDef, events: &[String]) {
+        for (t, topic) in def.research.iter().enumerate() {
+            if self.known[t] {
+                continue;
+            }
+            if topic.complete_on.iter().any(|e| events.contains(e)) {
+                self.known[t] = true;
+                self.research_score(def, t);
+                let text = format!("Research complete: {}", topic.name);
+                self.log(text.clone());
+                self.notices.push(text);
+                continue;
+            }
+            let flag = format!("artefact.{}", topic.id);
+            if topic.unlock_on.iter().any(|e| events.contains(e)) && !self.flags.contains(&flag) {
+                self.flags.push(flag);
+                self.log(format!("New research possible: {}", topic.name));
+            }
+        }
     }
 
     /// Puts a recovered artefact into base `base`'s stores and opens the topics that
@@ -1949,7 +1983,7 @@ impl Campaign {
             return;
         }
         self.add_stock(base, item, 1);
-        for t in def.research.iter().filter(|t| t.requires_item.as_deref() == Some(def.items[item].id.as_str())) {
+        for t in def.research.iter().filter(|t| t.requires_item.contains(&def.items[item].id)) {
             let flag = format!("artefact.{}", t.id);
             if !self.flags.contains(&flag) {
                 self.flags.push(flag);
@@ -2007,10 +2041,26 @@ impl Campaign {
         // Artefacts (RQ-S-03, the salvage counters of §11.2): on a won battle, each of the
         // raid's salvage items is rolled with its goodies chance at this difficulty and
         // goes to the party's home base.
+        let raid = self.contacts.iter().find(|c| c.id == contact).map(|c| c.raid);
+        // The battle's events for the special topics (§15.3): what was destroyed and
+        // captured (or disabled), and a won raid with its win count.
+        let mut tokens: Vec<String> =
+            actions.iter().filter(|a| a.starts_with("destroyed(") || a.starts_with("captured(")).cloned().collect();
         if result == "win" {
-            let raid = self.contacts.iter().find(|c| c.id == contact).map(|c| c.raid);
             let home = party.first().map(|&k| self.craft[k].base).unwrap_or(0);
-            for (item, table) in raid.map(|r| def.raids[r].salvage_items.clone()).unwrap_or_default() {
+            // Salvage by what was destroyed: each destroyed class's fitted items (§15.2,
+            // `salvage_fits`), then the raid's own list (`salvage_items`), each rolled with
+            // its goodies chance at this difficulty.
+            let mut rolls: Vec<(String, String)> = Vec::new();
+            for a in actions {
+                if let Some(class) = a.strip_prefix("destroyed(").and_then(|r| r.strip_suffix(')')) {
+                    if let Some((_, fit)) = def.salvage_fits.iter().find(|(c, _)| c == class) {
+                        rolls.extend(fit.iter().cloned());
+                    }
+                }
+            }
+            rolls.extend(raid.map(|r| def.raids[r].salvage_items.clone()).unwrap_or_default());
+            for (item, table) in rolls {
                 let chance = def.goodies.iter().find(|g| g.id == table).map_or(0.0, |g| g.chance(self.difficulty));
                 if let Some(i) = def.items.iter().position(|x| x.id == item) {
                     if next_random(&mut self.rng) < chance {
@@ -2018,7 +2068,17 @@ impl Campaign {
                     }
                 }
             }
+            if let Some(r) = raid {
+                if self.raid_wins.len() < def.raids.len() {
+                    self.raid_wins.resize(def.raids.len(), 0);
+                }
+                self.raid_wins[r] += 1;
+                let id = &def.raids[r].id;
+                tokens.push(format!("won({id})"));
+                tokens.push(format!("won({id}#{})", self.raid_wins[r]));
+            }
         }
+        self.battle_events(def, &tokens);
         for a in actions {
             let (name, arg) = match a.split_once('(') {
                 Some((n, rest)) => (n.trim(), rest.trim_end_matches(')').trim()),
@@ -2586,6 +2646,45 @@ mod tests {
         // Unknown items and tables are load errors.
         let bad = text.replace("goodies: always", "goodies: never");
         assert!(build(&bad).1.iter().any(|e| e.contains("no goodies table 'never'")));
+    }
+
+    #[test]
+    fn battle_events_open_special_topics_and_fits_drive_salvage() {
+        // Event-gated topics, a launcher-or-torpedo topic, a destroyed class's fit.
+        let text = SAMPLE
+            .replace("  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}", "  plasma: {size: 1000, unlock_on: [\"captured(saucer)\", \"won(raid#2)\"]}\n  rays: {size: 1000, requires_item: [ray_launcher, ray_round]}\n  wreck_study: {size: 1000, complete_on: [\"captured(freighter)\"]}")
+            .replace("items:\n", "items:\n  ray_launcher: {kind: launcher, cost: 0}\n  ray_round: {kind: missile, cost: 0}\n")
+            + "goodies:\n  always: {chances: [100]}\nsalvage_fits:\n  saucer: [{item: ray_round, goodies: always}]\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 1);
+        let (plasma, rays, study) =
+            (d.topic("plasma").unwrap(), d.topic("rays").unwrap(), d.topic("wreck_study").unwrap());
+        let open = |c: &mut Campaign, t| c.researchable(&d).contains(&t);
+        assert!(!open(&mut c, plasma) && !open(&mut c, rays));
+        let contact = |id| Contact {
+            id,
+            raid: 0,
+            pos: [0.0, 0.0],
+            dest: [0.0, 0.0],
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+            plan: None,
+        };
+        // A won battle where a saucer was destroyed: its fit yields the torpedo round, which
+        // opens the launcher-or-round topic. The first win of the raid opens nothing else.
+        c.contacts.push(contact(1));
+        c.battle_result(&d, 1, "win", &["destroyed(saucer)".into()], 1);
+        assert!(open(&mut c, rays), "the round counts as well as the launcher");
+        assert!(!open(&mut c, plasma));
+        // The raid's second win opens the event-gated topic; a capture finishes another.
+        c.contacts.push(contact(2));
+        c.battle_result(&d, 2, "win", &["captured(freighter)".into()], 1);
+        assert!(open(&mut c, plasma), "won(raid#2)");
+        assert!(c.known[study], "complete_on: finished outright");
+        assert_eq!(c.raid_wins, vec![2]);
     }
 
     #[test]

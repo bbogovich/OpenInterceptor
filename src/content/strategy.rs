@@ -239,9 +239,16 @@ pub struct Topic {
     /// The original's Level (0 – 3): the score its completion earns
     /// (`research_model.score_by_level`).
     pub level: u32,
-    /// An artefact-gated topic (the original's Prereq 127, RQ-S-03): offered only once the
-    /// artefact item has been recovered, and only while it stays in some base's stores.
-    pub requires_item: Option<String>,
+    /// An artefact-gated topic (the original's Prereq 127, RQ-S-03): offered only once one
+    /// of these items has been recovered, and only while one stays in some base's stores
+    /// (a launcher or its torpedoes both count in the original). Empty: no item.
+    pub requires_item: Vec<String>,
+    /// A special topic opened by a battle event instead (§15.3): offered once any of these
+    /// happened — `destroyed(<class>)`, `captured(<class>)` (captured or disabled),
+    /// `won(<raid>)`, `won(<raid>#<n>)` (that raid's n-th win).
+    pub unlock_on: Vec<String>,
+    /// Finished outright by any of these events (the original's topics 74 / 75).
+    pub complete_on: Vec<String>,
 }
 
 /// How research progresses.
@@ -729,6 +736,9 @@ pub struct StrategyDef {
     pub modules: Vec<ModuleDef>,
     pub base_types: Vec<BaseType>,
     pub raids: Vec<Raid>,
+    /// Salvage by destroyed class (`salvage_fits: {<class>: [{item, goodies}]}`, §15.2):
+    /// what a destroyed enemy of that class may yield.
+    pub salvage_fits: Vec<(String, Vec<(String, String)>)>,
     /// Salvage chance tables (`goodies:`).
     pub goodies: Vec<Goodies>,
     pub incomes: Vec<Flow>,
@@ -1040,7 +1050,13 @@ impl StrategyDef {
                 hidden: g.bool("hidden").unwrap_or(false),
                 // `level` is the original's `Level`, read by inheritance.
                 level: g.num("level").map_or(0, |v| v.max(0.0) as u32),
-                requires_item: g.str("requires_item").map(str::to_string),
+                // One item or a list (any of them).
+                requires_item: match g.str("requires_item") {
+                    Some(one) => vec![one.to_string()],
+                    None => g.list("requires_item"),
+                },
+                unlock_on: g.list("unlock_on"),
+                complete_on: g.list("complete_on"),
             })
             .collect();
         let rm = global("research_model");
@@ -1278,6 +1294,30 @@ impl StrategyDef {
                     .collect(),
             })
             .collect();
+        // `salvage_fits: {<ship class>: [{item, goodies}]}`.
+        let item_pairs = |n: &Node| -> Vec<(String, String)> {
+            n.as_seq()
+                .unwrap_or(&[])
+                .iter()
+                .filter_map(|e| {
+                    let e = Get(e);
+                    Some((e.str("item")?.to_string(), e.str("goodies")?.to_string()))
+                })
+                .collect()
+        };
+        let salvage_fits: Vec<(String, Vec<(String, String)>)> = global("salvage_fits")
+            .map(|n| n.as_map().unwrap_or(&[]).iter().map(|(k, v)| (k.clone(), item_pairs(v))).collect())
+            .unwrap_or_default();
+        for (class, list) in &salvage_fits {
+            for (item, table) in list {
+                if !items.iter().any(|i| &i.id == item) {
+                    errors.push(format!("salvage_fits.{class}: no item '{item}'"));
+                }
+                if !goodies.iter().any(|g| &g.id == table) {
+                    errors.push(format!("salvage_fits.{class}: no goodies table '{table}'"));
+                }
+            }
+        }
         // Every raid's salvage names an item and a goodies table.
         for r in &raids {
             for (item, table) in &r.salvage_items {
@@ -1290,7 +1330,7 @@ impl StrategyDef {
             }
         }
         for t in &research {
-            if let Some(item) = t.requires_item.as_ref().filter(|i| !items.iter().any(|x| &x.id == *i)) {
+            for item in t.requires_item.iter().filter(|i| !items.iter().any(|x| &x.id == *i)) {
                 errors.push(format!("research.{}.requires_item: no item '{item}'", t.id));
             }
         }
@@ -1439,6 +1479,7 @@ impl StrategyDef {
             base_types,
             raids,
             goodies,
+            salvage_fits,
             incomes,
             expenses,
             pilots,
@@ -1689,7 +1730,13 @@ fn sections_core() -> Vec<super::schema::Field> {
                 ),
                 f("hidden", Ty::Bool, "not offered until an event's discover(<topic>)"),
                 f("level", Ty::Num, "the original's Level: the score its completion earns"),
-                f("requires_item", Ty::Name, "an artefact item: offered once recovered, while it is in a base's stores"),
+                f(
+                    "requires_item",
+                    Ty::Either(Box::new(Ty::Name), Box::new(Ty::List(Box::new(Ty::Name)))),
+                    "artefact items (any of them): offered once one is recovered, while one is in a base's stores",
+                ),
+                f("unlock_on", Ty::List(Box::new(Ty::Text)), "battle events that open it: destroyed(class), captured(class), won(raid), won(raid#n)"),
+                f("complete_on", Ty::List(Box::new(Ty::Text)), "battle events that finish it outright"),
                 f("requires_all", Ty::List(Box::new(Ty::Name)), "topics that must all be known as well"),
                 f("description", Ty::Text, "encyclopaedia text"),
                 f("lab", Ty::Name, "logistics: only this facility type may research it"),
@@ -1697,6 +1744,14 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("start_cost", nums(), "logistics: materials delivered once to begin"),
             ])),
             "research topics",
+        ),
+        f(
+            "salvage_fits",
+            dict(Ty::List(Box::new(Ty::Struct(vec![
+                f("item", Ty::Name, "an item the class carries"),
+                f("goodies", Ty::Name, "the goodies table giving its chance"),
+            ])))),
+            "what a destroyed enemy of each class may yield",
         ),
         f(
             "outposts",

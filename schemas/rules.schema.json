@@ -1113,7 +1113,9 @@
           "requires_any": {"description": "any one of these topics (joined to requires: with and)", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
           "hidden": {"description": "not offered until an event's discover(<topic>)", "type": "boolean"},
           "level": {"description": "the original's Level: the score its completion earns", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-          "requires_item": {"description": "an artefact item: offered once recovered, while it is in a base's stores", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "requires_item": {"description": "artefact items (any of them): offered once one is recovered, while one is in a base's stores", "anyOf": [{"type": "string", "pattern": "^[a-z0-9_.-]+$"}, {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}}]},
+          "unlock_on": {"description": "battle events that open it: destroyed(class), captured(class), won(raid), won(raid#n)", "type": "array", "items": {"type": "string"}},
+          "complete_on": {"description": "battle events that finish it outright", "type": "array", "items": {"type": "string"}},
           "requires_all": {"description": "topics that must all be known as well", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
           "description": {"description": "encyclopaedia text", "type": "string"},
           "lab": {"description": "logistics: only this facility type may research it", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -1123,6 +1125,10 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "salvage_fits": {"description": "what a destroyed enemy of each class may yield", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+            "item": {"description": "an item the class carries", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+            "goodies": {"description": "the goodies table giving its chance", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+          }}}},
     "outposts": {"description": "corporate outposts as campaign objects", "type": "object", "additionalProperties": false, "properties": {
         "exchange_rate": {"description": "credits per yield point", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "exchange_rate_from": {"description": "original:<file>/<key>: the exchange rate from the difficulty level's section", "type": "string"},
