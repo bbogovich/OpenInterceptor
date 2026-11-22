@@ -243,25 +243,51 @@ the ornament). Style 0 dialogs use kit 242 when the buttons need 2 rows and 250 
 **Body fill** (`0x51941f`): row 430 (524 × 275) if the box fits in it, else row 429 (640 × 480),
 **centred on the box** and clipped to it; drawn before the frame.
 
-### 4.2 Box size and buttons (`0x519b16`)
+### 4.2 Box size and buttons (`0x519b16`, re-read from the machine code 2026-11-22)
 
-* Width = max(**325**, caption text width, body text width). A body wider than **425** wraps: width
-  425 and height = 100 + (line height + 2) × body width / 425 (asserted ≤ 400). Default height
-  **100**; +20 when the box has a progress/check row. An explicit rect from the caller overrides.
-* Buttons: each `max(100, text width + 20)` × 14, 10 px apart. If the row is wider than 465 they
-  wrap into up to 4 rows; otherwise a box narrower than the row grows to row width − 40.
-* Centred on the requested point, else on (320, 240); the client rect is inset 3 px horizontally;
-  then pushed back on-screen.
-* Style adjustments: style 1 extends the box 20 px up and 20 px on each side (+10 more on the right);
-  style 2 extends 20 px on each side. Style 2 and 3 heights are rounded so the side edge tile (rows
-  181 / 192) fits a whole number of times between its end caps (181 between 184 and 185; 192
-  between 195 and 196).
-* Button rows sit at bottom − 25, − 42, − 59, − 76 (17 px pitch) and are then moved down by the
-  kit's bottom height. A single button is centred. Two buttons sit either side of the centre (1 px
-  gap), the left one starting at l + 50 (style 1, right edge − 5), l + 90 (style 2) or l + 20 (others),
-  the right one ending at r − 60 / r − 90 / r − 20, but never further in than 35 px from the edge.
-* A progress/check row: width = (member rect +0x1c0 width) − 20, height 20, at (client left + 10,
-  bottom − 40).
+Order of work (all in screen co-ordinates):
+
+1. **Content size.** w = max(**325**, caption width, body width); a body wider than **425** wraps:
+   w = 425, h = 100 + (line height + 2) × body width / 425 (asserted ≤ 400); default h **100**;
+   +20 with a progress/check row (+0x580 > 0). Buttons: each `max(100, text + 20)` × 14; buttons
+   flagged full-width (+0x178) are box width − 70 wide; if the buttons laid in one row (10 px gaps)
+   exceed 465 the width is set to fit; if narrower than the row, w = row − 40. A caller rect
+   overrides w / h.
+2. **Box** B0 = (0, 0, w, h) centred on the request point (else (320, 240)); the text rect is set to
+   the same and inset 3 px horizontally (it is recomputed in step 7). The check row is placed at
+   (text left + 10, text bottom − 40), size (rect +0x1c0 width − 20) × 20.
+3. **Side edges added:** B0.right += w(kit+2) + w(kit+3) (the style's own kit), re-centred, pushed
+   on-screen.
+4. **Row baselines from this box's bottom (before the top/bottom edges are added):**
+   y0 = bottom − 25, y1 = bottom − 42, y2 = bottom − 59, y3 = bottom − 76. **Row 0 is the bottom
+   row**; buttons fill rows in order, a row breaking when its width would pass box width − 70.
+5. **Per style** (rows = number of button rows):
+
+   | Style | Kit override | Box change | Row y change |
+   |---|---|---|---|
+   | 0 | 2 rows → kit 242, 3 or 4 → 250 | — | 3 rows −7, 4 rows +5 |
+   | 1 | 2 → 242, 3 → 250 | top −20; 20 px wider each side; right +10 | −7 |
+   | 2 | 2 → 242, 3 → 250 | 20 px wider each side | −8 |
+   | 3 | 2 → 242, 3 → 250 | — | −7 |
+
+   (So multi-row dialogs of every style lose their style kit for kit 242/250.)
+6. **Top and bottom edges added:** top −= h(final kit+0); the bottom edge height e = h(final kit+1).
+   Buttons are placed with their **top** at the row's y: one button centred; two buttons either side
+   of the centre (left ends at centre − 1, right starts at centre + 1), then widened: left button's
+   left edge = l + 50 (style 1, and its right edge −5), l + 90 (style 2), l + 20 (others); right
+   button's right edge = r − 60 (style 1, left edge −5), r − 90 (style 2), r − 20 (others). **Only
+   when there is more than one row**, the outer edges are then forced to at most 35 px from the box
+   side (`left = l + 35` if it was further in; `right = r − 35` likewise), which overrides the 50 /
+   90 offsets; with a single row they stand.
+   Then bottom += e, styles 2 and 3 round the height (moving the **top** up) so their side tile fits
+   whole, and **every button moves down by e − 5 × (rows − 1)**.
+   **Net result against the final box:** row k's top = final bottom − 25 − 17k + style change −
+   5 × (rows − 1) (e.g. one row, style 1: bottom − 32; style 0: bottom − 25).
+7. **Text rect** = final box minus the kit insets (§4.1, `0x4c9d84` on the *final* kit: fixed insets
+   for 163/179/190; for 242/250 each side's edge size + 3). The text is drawn by `0x5fed2b` into
+   that rect inset 5 px horizontally, centred; **no clip and no growth** was found: the height comes
+   from the text alone (step 1) and the kit's top and bottom bands are added outside it (step 6), so
+   text that is taller than the space between the insets runs onto the frame art (derived).
 
 ### 4.3 Per-style live pieces (`0x518604`, `0x518bdd`, `0x518dda`)
 
@@ -298,7 +324,32 @@ same pattern elsewhere, derived). Dialogs that offer it:
 
 **Plain OK:** event **0xd** (pilot leaves the medical bay) and every other message box.
 
-### 4.6 UFOpedia exit (verified, `0x530d66`, `0x53421d`)
+### 4.6 Frame style per dialog (verified: the style argument at each call)
+
+`0x51aacd` (the common "message box" wrapper, 182 callers) and `0x51abc9` (with a check row, 8
+callers) always use **style 1**. Every queued-event notice in the main loop (`0x552f90`: events 2, 6,
+0xc, 0xd) and the plain OK boxes go through `0x51aacd` → style 1. Direct `0x5182b3` callers:
+
+| Dialog | Caller | Style |
+|---|---|---|
+| Research complete | `0x4bc0ba` | 0 |
+| Research prompt (from `0x4bc4ad`) | `0x4bc648` | 3 |
+| Monthly report | `0x4bcb39` | 2 |
+| Weekly report | `0x4c38fa` | 2 |
+| Module built (event 0xb) | `0x4c4ec0` | 1 |
+| Downlink offline | `0x4c6f64` | 1 |
+| Deliveries | `0x4bb05e` | 2 |
+| Allocate research | `0x4be26e` | 2 |
+| Rearm | `0x4c2dee` | 1 |
+| Side-mission offer | `0x4c5aa8` | 3 |
+| Alien sightings / unusual freighters (`0x5e2a30`, `0x5e48c8`, `0x5e7beb`, `0x5e88f9`) | | 3 |
+| Pilot / base / CSD dialogs at `0x465b7f`–`0x477d0a`, `0x4acabd`, `0x50ce5d`, `0x5f5bd7` | | 2 |
+| Mission-briefing dialogs at `0x5ddeb3`–`0x5de8b9` | | 0 |
+
+Note: row 189 (WrappersDLL 6590) is style 2's right slider, not part of the style-3 kit; the style-3
+kit is rows 190-197 (6591-6598) and its ornament 198 (6599).
+
+### 4.7 UFOpedia exit (verified, `0x530d66`, `0x53421d`)
 
 The exit is **control 106 (EXIT_ID)**, a standard kind-2 sprite button (table 0x670c40: rows 4/5,
 WrappersDLL 4000/4001, 23 × 23, idle/pressed) centred at **(619, 466)**, bottom-right. Its handler
