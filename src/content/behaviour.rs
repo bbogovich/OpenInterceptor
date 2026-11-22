@@ -165,6 +165,12 @@ pub struct TurretParams {
     /// times this factor (`accuracy_factor`); 25 with no record.
     pub accuracy_from_pilot: bool,
     pub accuracy_factor: f32,
+    /// With `accuracy: pilot`: the accuracy band rolled when there is no pilot record
+    /// (`accuracy_unpiloted: [50, 75]`; default 25).
+    pub accuracy_unpiloted: [f32; 2],
+    /// Subtracted from the accuracy, a band rolled once per turret (`accuracy_minus:
+    /// [5, 15]`, the original's `S − rand[5, 15)`).
+    pub accuracy_minus: [f32; 2],
     /// Fixed: the largest sideways miss, metres, and the distance below which it does
     /// not miss.
     pub miss: f32,
@@ -214,6 +220,7 @@ impl Default for Params {
                 lead_speed: 2000.0,
                 accuracy: [50.0, 50.0],
                 accuracy_factor: 1.0,
+                accuracy_unpiloted: [25.0, 25.0],
                 miss: 20.0,
                 miss_beyond: 200.0,
                 ..TurretParams::default()
@@ -524,7 +531,10 @@ impl BehaviourDef {
                 turret: {
                     let t = d.turret;
                     let band = sg.nums("accuracy").filter(|v| v.len() == 2).map(|v| [v[0], v[1]]);
+                    let pair = |k: &str| sg.nums(k).filter(|v| v.len() == 2).map(|v| [v[0], v[1]]);
                     TurretParams {
+                        accuracy_unpiloted: pair("accuracy_unpiloted").unwrap_or(t.accuracy_unpiloted),
+                        accuracy_minus: pair("accuracy_minus").unwrap_or([0.0, 0.0]),
                         aim: match sg.str("aim") {
                             None | Some("engine") => TurretAim::Engine,
                             Some("fixed") => TurretAim::Fixed,
@@ -548,6 +558,17 @@ impl BehaviourDef {
                     }
                 },
             };
+            // The original's turret constructor (`0x598347`, flight README §8.8): a 500 ms
+            // interval and a 2,500 m range unless the turret says otherwise.
+            let mut params = params;
+            if params.turret.aim != TurretAim::Engine {
+                if sg.node("interval").is_none() {
+                    params.turret.interval = 0.5;
+                }
+                if sg.node("range").is_none() {
+                    params.range = 2500.0;
+                }
+            }
             states.push(StateDef { name: name.to_ascii_lowercase(), manoeuvre, params, script: None });
         }
         if states.is_empty() {

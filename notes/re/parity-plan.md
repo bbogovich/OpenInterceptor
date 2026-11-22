@@ -25,8 +25,10 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #113 follow-up: the pool drops to 0 when the last generator falls; outposts/OPPs pooled by their chart's SD (unknowns-2026-11 §8) | 0.22.6 |
 | #118 D-19 (AI speed in m/s), D-20 (no AI afterburner), D-21 (original steering), D-22 (AI's own missile lock), D-23 (sprint, 250 m break-off; weapon choice and wobble open), RQ-C-10 (pilot Accuracy/Intelligence via records; campaign hand-off → #133), RQ-C-23 (grades: look-ahead, sprint) | 0.22.8 |
 | #114 RQ-C-05 (hard points: the connection point; tendrils untraced), RQ-C-07 (modules by position and chance: pirate base and arms dealer turret tables; alien base minefields) | 0.22.11 |
-| #114 follow-up: hard points take hits whole, either destruction, tendrils at the model's attachment points 1-3 (derived), contact mines, ring construction (unknowns §9) | NEXT |
-| #115 RQ-C-06 (station turrets: fixed/gimballed, 5 km, intervals, free fire, LOS), RQ-C-08 (missile turrets, not placed), RQ-C-09 (freighter turrets; capital ships open), RQ-C-22 (gimballed lead 2,000 m/s, no error) | NEXT |
+| #114 follow-up: hard points take hits whole, either destruction, tendrils at the model's attachment points 1-3 (derived), contact mines, ring construction (unknowns §9) | 0.22.13 |
+| #115 RQ-C-06 (station turrets: fixed/gimballed, 5 km, intervals, free fire, LOS), RQ-C-08 (missile turrets, not placed), RQ-C-09 (freighter turrets; capital ships open), RQ-C-22 (gimballed lead 2,000 m/s, no error) | 0.22.13 |
+| #115 follow-up: base turrets check line of sight; capital-ship turrets (AlienType3/4/5, alien freighter); turret defaults 500 ms / 2,500 m; freighter accuracy S and int(S x 0.75) | NEXT |
+| #117 D-03 (accumulator shields), D-04 (Tachyon Pulser), D-07 (Permeator/Enveloping split), D-11 (recharge while burning), D-14 (link modes) | NEXT |
 
 ## Issues
 

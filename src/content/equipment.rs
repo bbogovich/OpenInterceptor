@@ -322,6 +322,9 @@ pub struct PowerRules {
     pub balance_shift: f32,
     /// What the shield balance setting changes (`balance: shift | share`).
     pub balance: BalanceMode,
+    /// The energy pool keeps recharging while the afterburner burns (the original; the
+    /// engine's default stops it: `recharge_while_burning: true`).
+    pub recharge_while_burning: bool,
     /// The energy pool of every class that gives no `energy` of its own.
     pub energy: f32,
     /// The pool's recharge at the top beam level, per second, for classes without
@@ -353,6 +356,7 @@ impl Default for PowerRules {
             balance: BalanceMode::Shift,
             energy: 500.0,
             energy_recharge: 40.0,
+            recharge_while_burning: false,
         }
     }
 }
@@ -398,6 +402,7 @@ impl PowerRules {
             },
             energy: g.num("energy").unwrap_or(d.energy).max(0.0),
             energy_recharge: g.num("energy_recharge").unwrap_or(d.energy_recharge).max(0.0),
+            recharge_while_burning: g.bool("recharge_while_burning").unwrap_or(false),
             beam_recharge,
             shield_recharge,
         })
@@ -435,6 +440,9 @@ pub struct DamageRules {
     /// The original's weighted system-hit table (`system_table:`). `None`: the system
     /// share strikes one fitted system at random.
     pub system_table: Option<SystemTable>,
+    /// The table `effect: systems` beams (the Tachyon Pulser) strike with
+    /// (`tachyon_table:`, the same shape); `None`: `system_table`, else one random system.
+    pub tachyon_table: Option<SystemTable>,
     /// How a damaged beam mount or missile launcher fires (`mounts:`).
     pub mounts: MountRules,
 }
@@ -576,6 +584,7 @@ impl Default for DamageRules {
             difficulty: None,
             repair_order: None,
             system_table: None,
+            tachyon_table: None,
             mounts: MountRules { half_rate: 0.5, no_fire: 0.25 },
         }
     }
@@ -635,7 +644,8 @@ impl DamageRules {
                 })
                 .collect()
         });
-        let system_table = g.node("system_table").map(|n| {
+        let table = |key: &str, errors: &mut Vec<String>| {
+            g.node(key).map(|n| {
             let t = Get(n);
             let rolls = t
                 .node("rolls")
@@ -653,7 +663,7 @@ impl DamageRules {
                         k => match SystemKind::parse(k) {
                             Some(kind) => SystemHit::System(kind),
                             None => {
-                                errors.push(format!("damage.system_table.rolls: '{what}' is not a system kind, beams, launchers, special or none"));
+                                errors.push(format!("damage.{key}.rolls: '{what}' is not a system kind, beams, launchers, special or none"));
                                 return None;
                             }
                         },
@@ -666,10 +676,13 @@ impl DamageRules {
                 })
                 .collect::<Vec<_>>();
             if rolls.iter().map(|r| r.chance).sum::<f32>() > 1.0001 {
-                errors.push("damage.system_table.rolls: the chances add up to more than 100 %".into());
+                errors.push(format!("damage.{key}.rolls: the chances add up to more than 100 %"));
             }
             SystemTable { tries: t.num("tries").unwrap_or(1.0).clamp(1.0, 20.0) as u32, rolls }
-        });
+        })
+        };
+        let system_table = table("system_table", errors);
+        let tachyon_table = table("tachyon_table", errors);
         let mounts = match g.node("mounts") {
             None => d.mounts,
             Some(n) => {
@@ -683,6 +696,7 @@ impl DamageRules {
         DamageRules {
             repair_order,
             system_table,
+            tachyon_table,
             mounts,
             system_share: frac("system_share", d.system_share).max(0.0),
             system_below: frac("system_below", d.system_below).clamp(0.0, 1.0),
@@ -814,6 +828,18 @@ mounts: {half_rate: 50%, no_fire: 25%}
             &mut errors,
         );
         assert!(errors.iter().any(|e| e.contains("more than 100")), "{errors:?}");
+    }
+
+    #[test]
+    fn tachyon_table_and_recharge_while_burning_parse() {
+        let mut errors = Vec::new();
+        let n = doc("tachyon_table: {tries: 5, rolls: [{chance: 50%, hit: engines, carry: true}, {chance: 10%, hit: none, carry: true}]}\n");
+        let d = DamageRules::parse(Some(Get(&n)), &mut errors);
+        let t = d.tachyon_table.unwrap();
+        assert_eq!((t.tries, t.rolls.len(), t.rolls[1].hit, t.rolls[1].carry), (5, 2, SystemHit::None, true));
+        assert!(errors.is_empty(), "{errors:?}");
+        let p = PowerRules::parse(Some(Get(&doc("recharge_while_burning: true\n")))).unwrap();
+        assert!(p.recharge_while_burning && !PowerRules::default().recharge_while_burning);
     }
 
     #[test]

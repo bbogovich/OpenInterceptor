@@ -428,6 +428,9 @@ pub struct Ship {
     pub systems: Vec<SystemState>,
     /// Index into `systems` of the system being repaired.
     pub repairing: Option<usize>,
+    /// Repair runs this many times more slowly (a Tachyon Pulser hit) until nothing is
+    /// left to repair; 1 = normal.
+    pub repair_slow: f32,
     /// The ship held by this ship's tractor beam.
     pub towing: Option<ShipId>,
     /// Seconds left in the hyperdrive countdown, while one is running.
@@ -529,6 +532,10 @@ pub struct Bolt {
     pub damage: f32,
     /// Shield points lost per point of damage the shields stop (the beam's `shield_factor`).
     pub shield_factor: f32,
+    /// How its hit lands (`effect: systems` for the Tachyon Pulser).
+    pub mode: crate::content::rules::DamageMode,
+    /// With `effect: systems`: the struck ship's repair slowdown.
+    pub repair_slowdown: f32,
     pub color: [f32; 3],
     /// Seconds the bolt still moves in its owner's frame (`flight: {bolt_frame: ship}`);
     /// 0 for an ordinary bolt that flies in a straight line.
@@ -871,6 +878,7 @@ impl World {
             power: Power { beam: p.start_beam, shield: p.start_shield, balance: ShieldBalance::Equal },
             systems,
             repairing: None,
+            repair_slow: 1.0,
             towing: None,
             hyperspace: None,
             disabled: false,

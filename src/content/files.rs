@@ -63,6 +63,12 @@ fn beam() -> Ty {
         f("range", dist(), "reach (2.4km, 2400m; a plain number is metres)"),
         f("shield_factor", Ty::Num, "shield points lost per point of damage they stop (1)"),
         f("hit_points", Ty::Num, "a mount's hit points, struck by damage.system_table (0 = cannot be damaged)"),
+        f(
+            "effect",
+            Ty::Enum(&["normal", "systems"]),
+            "systems: the struck shield absorbs 1:1 and the rest strikes systems only (the Tachyon Pulser)",
+        ),
+        f("repair_slowdown", Ty::Num, "effect: systems: the target repairs this many times more slowly (1)"),
         f("color", rgb(), "bolt colour"),
         f("sound", Ty::Asset, "firing sound"),
     ])
@@ -93,7 +99,11 @@ fn missile() -> Ty {
             Ty::Enum(&["homing", "dumbfire", "sidestep", "parallax", "cloaked_wait", "cluster", "doppelganger"]),
             "how it steers (default homing)",
         ),
-        f("damage", Ty::Enum(&["normal", "bypass_shields", "enveloping"]), "how the warhead's damage lands"),
+        f(
+            "damage",
+            Ty::Enum(&["normal", "bypass_shields", "enveloping", "permeator"]),
+            "how the warhead's damage lands",
+        ),
         f("decoys", Ty::Num, "parallax: decoys released at launch (default 2)"),
         f(
             "cluster",
@@ -261,6 +271,11 @@ fn ship() -> Ty {
         f("cargo", Ty::Bool, "a cargo container: counted by the cargo(role) mission query"),
         f("behaviour", name(), "AI behaviour id"),
         f("pilot_grade", Ty::Num, "AI ships of this class: their pilot's grade (flight.pilot_grades)"),
+        f(
+            "accumulator_shields",
+            Ty::Bool,
+            "an ordinary hit on a raised shield bank does no damage and adds a quarter of itself to it",
+        ),
         f("turret_arc", Ty::Qty(Unit::Angle), "beams can aim this far off the nose (turrets)"),
         f("debris", Ty::List(Box::new(Ty::Asset)), "wreckage models"),
         f("engine_color", rgb(), "engine glow colour"),
@@ -595,6 +610,12 @@ fn behaviour() -> Ty {
             "fixed turret: accuracy %, a [from, to] band rolled once per turret, or pilot",
         ),
         f("accuracy_factor", Ty::Qty(Unit::Fraction), "with accuracy: pilot, times this (100 %)"),
+        f(
+            "accuracy_unpiloted",
+            Ty::Numbers(2),
+            "with accuracy: pilot and no pilot record: a band rolled once ([25, 25])",
+        ),
+        f("accuracy_minus", Ty::Numbers(2), "fixed turret: a band rolled once and taken off the accuracy ([0, 0])"),
         f("miss", dist(), "fixed turret: largest sideways miss on a failed accuracy roll (20m)"),
         f("miss_beyond", dist(), "fixed turret: no miss closer than this (200m)"),
         f(
@@ -735,6 +756,11 @@ fn flight() -> Ty {
         f("formation", Ty::Name, "the formation wingmen fly in when a role names none (formations.<id>; vee)"),
         f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
         f(
+            "link_modes",
+            Ty::Enum(&["engine", "original"]),
+            "original: linked fires every mount of the selected type, and each mount fires on its own timer and energy",
+        ),
+        f(
             "pilot_grades",
             Ty::Struct(vec![
                 f("lookahead", dist(), "obstacle look-ahead with no grade or one not listed (250m)"),
@@ -844,6 +870,7 @@ fn power() -> Ty {
             Ty::Num,
             "pool recharge at the top beam level, per second, for classes without their own (40)",
         ),
+        f("recharge_while_burning", Ty::Bool, "the energy pool keeps recharging while the afterburner burns (false)"),
     ])
 }
 
@@ -909,6 +936,22 @@ fn damage() -> Ty {
                 ),
             ]),
             "the system share is shared out by weighted rolls",
+        ),
+        f(
+            "tachyon_table",
+            Ty::Struct(vec![
+                f("tries", Ty::Num, "rolls per hit (default 1)"),
+                f(
+                    "rolls",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("chance", Ty::Qty(Unit::Fraction), "share of the rolls"),
+                        f("hit", Ty::Text, "a system kind, beams, launchers, special or none"),
+                        f("carry", Ty::Bool, "damage beyond what the system has left goes to the next try"),
+                    ]))),
+                    "weighted entries; what the chances leave out strikes nothing",
+                ),
+            ]),
+            "what effect: systems beams (the Tachyon Pulser) strike: the same shape as system_table",
         ),
         f(
             "mounts",

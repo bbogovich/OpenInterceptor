@@ -99,6 +99,7 @@ power:
   energy: 1000
   energy_recharge: 22
   balance: share
+  recharge_while_burning: true   # the 1 s tick recharges regardless (README §3, VERIFIED)
   budget: 20
   start_beam: 2
   start_shield: 2
@@ -140,6 +141,20 @@ damage:
       - {chance: 3%, hit: special}
       - {chance: 2%, hit: none}
   mounts: {half_rate: 50%, no_fire: 25%}
+  # The Tachyon Pulser's own table (0x44fe59, README §4.4, VERIFIED): beam mounts 10 %,
+  # empty tries 10 %, shield generator 10 %, sensor 5 %, engine 50 %, hyperdrive 10 %,
+  # special systems 3 %. The number of tries and which entries carry are not traced
+  # (DERIVED: as the system table).
+  tachyon_table:
+    tries: 5
+    rolls:
+      - {chance: 10%, hit: beams}
+      - {chance: 10%, hit: none, carry: true}
+      - {chance: 10%, hit: shields, carry: true}
+      - {chance: 5%, hit: sensors, carry: true}
+      - {chance: 50%, hit: engines, carry: true}
+      - {chance: 10%, hit: hyperdrive}
+      - {chance: 3%, hit: special}
   # Bank maxima by difficulty (Beginner ... Superhuman): X-COM's own and everyone else's.
   # The player's own beam hits x 1.15 on the two easiest levels; hits on the player
   # x 0.85 on Beginner.

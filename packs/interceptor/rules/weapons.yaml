@@ -38,6 +38,11 @@ beams:
   tachyon_pulser:
     inherit: original:GameSettings.ini/TachyonPulser
     name: Tachyon Pulser
+    # The struck shield takes it 1:1, the rest strikes systems only (damage.tachyon_table),
+    # and the target repairs once every 10 s instead of every 1 s until it is whole
+    # (README §4.4, VERIFIED).
+    effect: systems
+    repair_slowdown: 10
     color: [0.9, 0.3, 1.0]
     sound: cue:Beam8
 
@@ -64,7 +69,7 @@ missiles:
     launcher_hit_points: 25   # PermeatorMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 370   # kg per round (Interceptor.exe)
     name: Permeator
-    damage: bypass_shields   # "bypasses shields"
+    damage: permeator   # half the normal chain, half past the shield (README §5.2, VERIFIED)
     turn_rate: 143.2
     lead_speed: 200
     color: [0.6, 1.0, 0.6]
@@ -102,7 +107,7 @@ missiles:
     launcher_hit_points: 25   # EnvelopingFusionTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
     mass: 670   # kg per round (Interceptor.exe)
     name: Enveloping Fusion Torpedo
-    damage: enveloping       # damage spread over the whole surface
+    damage: enveloping       # half the fore chain, half the aft chain (README §5.2, VERIFIED)
     turn_rate: 143.2
     lead_speed: 200
     color: [1.0, 0.6, 0.9]

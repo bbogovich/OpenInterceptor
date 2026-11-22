@@ -783,6 +783,13 @@ own LOS byte per row (+0x34).
 
 Both positions lie inside the `XFRE98-5` / `P-FRE98-5` meshes (z −176 … 179, y −55 … 55).
 
+*Reconciling the two freighter readings (Track A, #115 follow-up):* in both `0x593e13` and the alien
+freighter's `0x591527` the value passed to `0x598574` for turret 1 is the local at ebp−0x10, which is
+the pilot record's +0x2c byte when a pilot exists and `0x19` (25) only when it does not; turret 2 passes
+`(int)(that × 0.75)` (`fild` / `fmul [0x662098]` = 0.75 / `0x64d888`). So turret 1 = S (25 with no
+pilot) and turret 2 = int(S × 0.75): the table above's "25" and "from the pilot" are the no-pilot value
+and the 0.75 factor of the same S. The engine follows this reading.
+
 ## 9. Pilot stats in battle (verified)
 
 Pilot record: Intelligence +0x2a, Stamina +0x2b, Accuracy +0x2c, Flying +0x2d, Aggressiveness

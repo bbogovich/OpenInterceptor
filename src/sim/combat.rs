@@ -184,13 +184,17 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         return;
     }
     // Which mounts fire this tick depends on the link mode.
+    let original = rules.flight.link_modes == crate::content::rules::LinkModes::Original;
+    let selected = s.next_mount % n;
     let group: Vec<usize> = match s.link_mode {
         LinkMode::Full => (0..n).collect(),
+        // The original: every mount of the selected mount's beam type (flight README §3).
+        LinkMode::Linked if original => (0..n).filter(|&k| class.beams[k] == class.beams[selected]).collect(),
         LinkMode::Linked => {
             let start = s.next_mount % n;
             (start..(start + 2).min(n)).collect()
         }
-        LinkMode::Unlinked => vec![s.next_mount % n],
+        LinkMode::Unlinked => vec![selected],
     };
     // Damaged mounts (`damage.mounts`): at half health or less a mount fires at half
     // rate, at a quarter or less not at all (the original, flight README §3).
@@ -202,6 +206,30 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         return;
     }
     let free = s.controls.free_fire;
+    // The original's mounts fire each on their own: those whose timer has run out, as
+    // far as the energy pays for them one by one. The engine's group waits for all.
+    let group: Vec<(usize, f32)> = if original && !free {
+        let mut energy = s.energy;
+        let ready: Vec<(usize, f32)> = group
+            .into_iter()
+            .filter(|&(k, _)| s.beam_cooldown[k] <= 0.0)
+            .filter(|&(k, _)| {
+                let cost = rules.beam(class.beams[k]).energy_cost;
+                // `charge > EnergyCost` in the original; each shot then pays its own.
+                let pays = energy > cost;
+                if pays {
+                    energy -= cost;
+                }
+                pays
+            })
+            .collect();
+        if ready.is_empty() {
+            return;
+        }
+        ready
+    } else {
+        group
+    };
     if !free && !group.iter().all(|&(k, _)| s.beam_cooldown[k] <= 0.0) {
         return;
     }
@@ -257,6 +285,8 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
             muzzle_speed: beam.speed,
             damage: beam.damage,
             shield_factor: beam.shield_factor,
+            mode: beam.damage_mode,
+            repair_slowdown: beam.repair_slowdown,
             color: beam.color,
             carry,
             // `conjugate` undoes a rotation (for a unit quaternion it is the inverse):
@@ -371,8 +401,9 @@ pub fn first_hit(w: &World, a: Vec3, b: Vec3, owner: ShipId) -> Option<(usize, f
 
 fn move_bolts(w: &mut World, dt: f32) {
     // Phase 1: move bolts and find hits (only reads ships).
-    // (ship index, where, damage, shield factor, who fired)
-    let mut hits: Vec<(usize, Vec3, f32, f32, ShipId)> = Vec::new();
+    // (ship index, where, damage, shield factor, who fired, how it lands, repair slowdown)
+    #[allow(clippy::type_complexity)]
+    let mut hits: Vec<(usize, Vec3, f32, f32, ShipId, DamageMode, f32)> = Vec::new();
     let mut keep = Vec::with_capacity(w.bolts.len());
     for mut b in std::mem::take(&mut w.bolts) {
         // A bolt still carried in its owner's frame (`bolt_frame: ship`) is placed from
@@ -394,7 +425,7 @@ fn move_bolts(w: &mut World, dt: f32) {
             // A harmless owner's bolt still hits (for the effect) but does no damage.
             Some((j, t)) => {
                 let dmg = if w.harmless.contains(&b.owner) { 0.0 } else { b.damage };
-                hits.push((j, b.position.lerp(next, t), dmg, b.shield_factor, b.owner))
+                hits.push((j, b.position.lerp(next, t), dmg, b.shield_factor, b.owner, b.mode, b.repair_slowdown))
             }
             None if b.life > dt => keep.push(Bolt { position: next, life: b.life - dt, age: b.age + dt, ..b }),
             None => {}
@@ -403,10 +434,14 @@ fn move_bolts(w: &mut World, dt: f32) {
     w.bolts = keep;
     // Phase 2: apply damage (mutates ships).
     // Each hit rolls its damage (`damage.spread`) and takes the difficulty factors.
-    for (j, pos, dmg, factor, owner) in hits {
+    for (j, pos, dmg, factor, owner, mode, slowdown) in hits {
         let id = w.id_of(j);
         let dmg = roll_damage(w, dmg) * beam_factor(w, owner, id);
-        apply_hit(w, id, dmg, pos, DamageMode::Normal, factor);
+        if mode == DamageMode::Systems {
+            tachyon_hit(w, id, dmg, pos, slowdown);
+        } else {
+            apply_hit(w, id, dmg, pos, mode, factor);
+        }
     }
 }
 
@@ -476,6 +511,69 @@ pub fn beam_factor(w: &World, owner: ShipId, target: ShipId) -> f32 {
 pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageMode, shield_factor: f32) {
     // A module covered by its hub's shield pool passes the hit to the hub (RQ-C-03).
     let id = super::stations::hit_target(w, id);
+    match mode {
+        DamageMode::Normal => hit_chain(w, id, amount, at, None, true, true, shield_factor),
+        DamageMode::BypassShields => hit_chain(w, id, amount, at, None, false, false, shield_factor),
+        // Half on each facing's whole chain, whatever side was struck; no shield factor.
+        DamageMode::Enveloping => {
+            hit_chain(w, id, amount * 0.5, at, Some(true), true, false, 1.0);
+            hit_chain(w, id, amount * 0.5, at, Some(false), true, false, 1.0);
+        }
+        // Half the normal chain on the struck side, half past the shield.
+        DamageMode::Permeator => {
+            hit_chain(w, id, amount * 0.5, at, None, true, false, 1.0);
+            hit_chain(w, id, amount * 0.5, at, None, false, false, 1.0);
+        }
+        DamageMode::Systems => tachyon_hit(w, id, amount, at, 1.0),
+    }
+}
+
+/// A Tachyon Pulser hit (`effect: systems`; the original's `0x451b1e`, flight README §4.4,
+/// verified): the struck shield bank absorbs it 1:1; what is left skips armour and hull
+/// and strikes the ship's systems through `damage.tachyon_table` (or one random system),
+/// and the ship repairs `slowdown` times more slowly until nothing is left to repair. It
+/// affects ships only: a static object (a station) shrugs it off.
+pub fn tachyon_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, slowdown: f32) {
+    let id = super::stations::hit_target(w, id);
+    let rules = w.rules.clone();
+    let Some(s) = w.get_mut(id) else { return };
+    let class = rules.ship(s.class);
+    if class.kind.is_static() {
+        w.events.push(SimEvent::Hit { ship: id, position: at, shield: true });
+        return;
+    }
+    let from_front = (at - s.position).dot(s.forward()) >= 0.0;
+    let bank = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
+    let stopped = amount.min(*bank);
+    *bank -= stopped;
+    let rest = amount - stopped;
+    s.since_hit = 0.0;
+    s.repair_slow = s.repair_slow.max(slowdown);
+    w.events.push(SimEvent::Hit { ship: id, position: at, shield: rest <= 0.0 });
+    if rest > 0.0 {
+        match &rules.damage.tachyon_table {
+            Some(t) => super::systems::damage_by_table(w, id, rest, t),
+            None => super::systems::damage_system(w, id, rest),
+        }
+    }
+}
+
+/// One run of the damage chain (see [`apply_hit`]): the shield bank on the side `at` is
+/// on — or the side `front` names (fore when `Some(true)`) — or the station's pool, when
+/// `shields`; then armour, systems and hull. `direct`
+/// marks the original's common path (beams and ordinary missiles): only such hits are
+/// stopped whole by accumulator shields and strike `hits: direct` hard points.
+#[allow(clippy::too_many_arguments)]
+fn hit_chain(
+    w: &mut World,
+    id: ShipId,
+    amount: f32,
+    at: Vec3,
+    front: Option<bool>,
+    shields: bool,
+    direct: bool,
+    shield_factor: f32,
+) {
     let radius = match w.get(id) {
         Some(s) => w.shapes[s.class.0 as usize].radius,
         None => return,
@@ -487,7 +585,7 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     };
     let m = shield_factor.max(0.01);
     let Some(s) = w.get_mut(id) else { return };
-    let from_front = (at - s.position).dot(s.forward()) >= 0.0;
+    let from_front = front.unwrap_or_else(|| (at - s.position).dot(s.forward()) >= 0.0);
     // Stops what it can of `amount` with one shield bank; returns the damage it stopped.
     let stop = |shield: &mut f32, amount: f32| -> f32 {
         if *shield >= amount * m {
@@ -502,32 +600,34 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     let mut absorbed = 0.0;
     let mut downed: Vec<&str> = Vec::new();
     let class = rules.ship(s.class);
-    match mode {
-        DamageMode::BypassShields => {}
-        // A station's one pool takes the whole hit, from any side and in either mode.
-        DamageMode::Normal | DamageMode::Enveloping if class.shield_pool.is_some() => {
+    match shields {
+        false => {}
+        // A station's one pool takes the whole hit, from any side.
+        true if class.shield_pool.is_some() => {
             let was_up = super::stations::pool_points(s) > 0.0;
             absorbed = super::stations::absorb(s, amount, m);
             if was_up && s.shield_fore <= 0.0 {
                 downed.push("STATION SHIELDS DOWN");
             }
         }
-        DamageMode::Normal => {
+        // Accumulator shields: an ordinary hit on a raised bank does no damage and adds a
+        // quarter of itself to the bank (flight README §4, verified; held to the bank's
+        // maximum, derived).
+        true if direct
+            && class.accumulator_shields
+            && (if from_front { s.shield_fore } else { s.shield_aft }) > 0.0 =>
+        {
+            let max = s.shield_max;
+            let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
+            *shield = (*shield + amount * 0.25).min(max.max(*shield));
+            absorbed = amount;
+        }
+        true => {
             let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
             let was_up = *shield > 0.0;
             absorbed = stop(shield, amount);
             if was_up && *shield <= 0.0 {
                 downed.push(if from_front { "FORE SHIELD DOWN" } else { "AFT SHIELD DOWN" });
-            }
-        }
-        DamageMode::Enveloping => {
-            // Half the blast on each facing; what a facing cannot hold goes through.
-            for (shield, label) in [(&mut s.shield_fore, "FORE SHIELD DOWN"), (&mut s.shield_aft, "AFT SHIELD DOWN")] {
-                let was_up = *shield > 0.0;
-                absorbed += stop(shield, amount * 0.5);
-                if was_up && *shield <= 0.0 {
-                    downed.push(label);
-                }
             }
         }
     }
@@ -561,7 +661,6 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     let mut fallen: Option<usize> = None;
     if rest > 0.0 && !class.hard_points.is_empty() {
         let (pos, rot) = (s.position, s.rotation);
-        let direct = mode == DamageMode::Normal;
         let inside = |k: usize| {
             let h = &class.hard_points[k];
             s.hard_hp[k] > 0.0 && (direct || !h.direct_only) && at.distance(pos + rot * Vec3::from(h.at)) <= h.radius
@@ -777,6 +876,156 @@ mod tests {
         let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
         let foe = w.spawn(r, FactionId(1), "foe", Vec3::new(0.0, 0.0, -300.0), Quat::IDENTITY, Pilot::External);
         (w, me, foe)
+    }
+
+    /// The foe's front (−Z) and back, as impact points.
+    fn ahead_of(w: &World, id: ShipId) -> Vec3 {
+        let s = w.get(id).unwrap();
+        s.position + s.forward() * 5.0
+    }
+    fn behind(w: &World, id: ShipId) -> Vec3 {
+        let s = w.get(id).unwrap();
+        s.position - s.forward() * 5.0
+    }
+
+    #[test]
+    fn accumulator_shields_turn_ordinary_hits_into_shield() {
+        let (mut w, _, foe) = duel();
+        let front = ahead_of(&w, foe);
+        let mut r = (*w.rules).clone();
+        r.ships[w.get(foe).unwrap().class.0 as usize].accumulator_shields = true;
+        w.rules = Arc::new(r);
+        w.get_mut(foe).unwrap().shield_fore = 20.0;
+        // D-03: a 40-point hit on the raised bank does no damage and adds 10 (a quarter).
+        apply_damage(&mut w, foe, 40.0, front);
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_fore, s.armor, s.hull), (30.0, 50.0, 100.0));
+        // Never above the bank's maximum (40).
+        apply_damage(&mut w, foe, 400.0, front);
+        assert_eq!(w.get(foe).unwrap().shield_fore, 40.0);
+        // A bank at 0 takes the hit as usual; a Permeator's halves are not ordinary hits.
+        w.get_mut(foe).unwrap().shield_fore = 0.0;
+        apply_damage(&mut w, foe, 30.0, front);
+        assert_eq!(w.get(foe).unwrap().armor, 20.0);
+        w.get_mut(foe).unwrap().shield_fore = 40.0;
+        apply_damage_mode(&mut w, foe, 20.0, front, DamageMode::Permeator);
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_fore, s.armor), (30.0, 10.0), "10 to the shield, 10 past it to the armour");
+    }
+
+    #[test]
+    fn permeator_and_enveloping_split_their_damage_as_the_original() {
+        // Per-side armour: a fore and an aft bank of 50 each.
+        let (mut w, _, foe) = duel_with(|d| d.armor = ArmorMode::PerSide);
+        let (front, back) = (ahead_of(&w, foe), behind(&w, foe));
+        // D-07 Permeator from ahead, 60: 30 into the fore shield (40 → 10), 30 past it into
+        // the fore armour (50 → 20).
+        apply_damage_mode(&mut w, foe, 60.0, front, DamageMode::Permeator);
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_fore, s.armor, s.shield_aft, s.armor_aft, s.hull), (10.0, 20.0, 40.0, 50.0, 100.0));
+        // Enveloping from behind, 120: 60 runs the fore chain (shield 10, armour 20, hull 30)
+        // and 60 the aft chain (shield 40, armour 20), whatever side was struck.
+        apply_damage_mode(&mut w, foe, 120.0, back, DamageMode::Enveloping);
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_fore, s.armor, s.shield_aft, s.armor_aft, s.hull), (0.0, 0.0, 0.0, 30.0, 70.0));
+    }
+
+    #[test]
+    fn tachyon_hits_skip_armour_and_hull_and_slow_the_repair() {
+        use crate::content::equipment::{SystemHit, SystemRoll, SystemTable};
+        let (mut w, _, foe) = duel_with(|d| {
+            d.tachyon_table = Some(SystemTable {
+                tries: 5,
+                rolls: vec![SystemRoll { chance: 1.0, hit: SystemHit::System(SystemKind::Engines), carry: false }],
+            })
+        });
+        let front = ahead_of(&w, foe);
+        let engine = |w: &World| w.get(foe).unwrap().system(SystemKind::Engines).unwrap().1.hp;
+        // D-04: 50 at a 40-point bank: the bank stops 40 (1:1), the 10 left strike the
+        // engine; armour and hull are untouched.
+        tachyon_hit(&mut w, foe, 50.0, front, 10.0);
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_fore, s.armor, s.hull, s.repair_slow), (0.0, 50.0, 100.0, 10.0));
+        assert_eq!(engine(&w), 90.0);
+        // Repair runs ten times more slowly while there is anything to repair, then the
+        // slowdown wears off.
+        let rules = w.rules.clone();
+        let class = rules.ship(w.get(foe).unwrap().class).clone();
+        crate::sim::systems::repair(w.get_mut(foe).unwrap(), &class, &rules, 1.0);
+        assert!((engine(&w) - (90.0 + class.repair_rate / 10.0)).abs() < 1e-4);
+        for _ in 0..200 {
+            crate::sim::systems::repair(w.get_mut(foe).unwrap(), &class, &rules, 1.0);
+        }
+        assert_eq!((engine(&w), w.get(foe).unwrap().repair_slow), (100.0, 1.0));
+        // A beam with `effect: systems` fires them; stations shrug them off.
+        let mut r = (*w.rules).clone();
+        r.beams[0].damage_mode = DamageMode::Systems;
+        w.rules = Arc::new(r);
+        let base = w.spawn(
+            w.rules.ship_id("base").unwrap(),
+            FactionId(1),
+            "b",
+            Vec3::new(0.0, 0.0, -900.0),
+            Quat::IDENTITY,
+            Pilot::External,
+        );
+        tachyon_hit(&mut w, base, 500.0, Vec3::new(0.0, 0.0, -890.0), 10.0);
+        assert_eq!(w.get(base).unwrap().hull, 5000.0);
+    }
+
+    #[test]
+    fn original_link_modes_fire_by_type_and_each_mount_on_its_own() {
+        let (mut w, me, _) = duel();
+        let mut r = (*w.rules).clone();
+        r.flight.link_modes = crate::content::rules::LinkModes::Original;
+        // A mixed fit: laser, heavy, laser (the heavy costs 40 a shot).
+        let mut heavy = r.beams[0].clone();
+        heavy.id = "heavy".into();
+        heavy.energy_cost = 40.0;
+        r.beams.push(heavy);
+        let h = crate::content::rules::BeamId(r.beams.len() as u16 - 1);
+        let c = w.get(me).unwrap().class.0 as usize;
+        r.ships[c].beams = vec![r.ships[c].beams[0], h, r.ships[c].beams[0]];
+        w.rules = Arc::new(r);
+        let s = w.get_mut(me).unwrap();
+        s.beam_cooldown = vec![0.0; 3];
+        s.beam_hp = vec![0.0; 3];
+        let fire = |w: &mut World, mode: LinkMode| {
+            let s = w.get_mut(me).unwrap();
+            (s.link_mode, s.controls.fire_beams, s.next_mount) = (mode, true, 0);
+            s.beam_cooldown.iter_mut().for_each(|c| *c = 0.0);
+            let before = w.bolts.len();
+            step(w, TICK);
+            w.get_mut(me).unwrap().controls.fire_beams = false;
+            w.bolts.len() - before
+        };
+        // D-14: linked fires every mount of the selected mount's type (the two lasers).
+        assert_eq!(fire(&mut w, LinkMode::Linked), 2);
+        // Full with energy for 60: each mount pays for itself in order — laser 10, heavy
+        // 40 — and the second laser's 10 is still there (60 > 50 + 10 is not; it waits).
+        w.get_mut(me).unwrap().energy = 60.0;
+        assert_eq!(fire(&mut w, LinkMode::Full), 2, "the group does not wait for its whole energy");
+        // The engine's rule fires nothing at all with too little for the whole group.
+        let mut r = (*w.rules).clone();
+        r.flight.link_modes = crate::content::rules::LinkModes::Engine;
+        w.rules = Arc::new(r);
+        w.get_mut(me).unwrap().energy = 55.0;
+        assert_eq!(fire(&mut w, LinkMode::Full), 0);
+    }
+
+    #[test]
+    fn energy_recharges_through_the_afterburner_when_the_rules_say_so() {
+        let (mut w, me, _) = duel();
+        let rules = w.rules.clone();
+        let class = rules.ship(w.get(me).unwrap().class).clone();
+        let s = w.get_mut(me).unwrap();
+        (s.energy, s.afterburning) = (0.0, true);
+        crate::sim::systems::recharge(s, &class, &rules.power, 1.0);
+        assert_eq!(w.get(me).unwrap().energy, 0.0, "the engine's default: no recharge while burning");
+        let mut p = rules.power.clone();
+        p.recharge_while_burning = true;
+        crate::sim::systems::recharge(w.get_mut(me).unwrap(), &class, &p, 1.0);
+        assert!(w.get(me).unwrap().energy > 0.0, "D-11: the original keeps recharging");
     }
 
     #[test]

@@ -19,6 +19,8 @@
           "range": {"description": "reach (2.4km, 2400m; a plain number is metres)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "shield_factor": {"description": "shield points lost per point of damage they stop (1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "hit_points": {"description": "a mount's hit points, struck by damage.system_table (0 = cannot be damaged)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "effect": {"description": "systems: the struck shield absorbs 1:1 and the rest strikes systems only (the Tachyon Pulser)", "enum": ["normal", "systems"]},
+          "repair_slowdown": {"description": "effect: systems: the target repairs this many times more slowly (1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "color": {"description": "bolt colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
           "sound": {"description": "firing sound", "type": "string"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
@@ -41,7 +43,7 @@
           "sound": {"description": "launch sound", "type": "string"},
           "explosion": {"description": "effect id of its detonation", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "guidance": {"description": "how it steers (default homing)", "enum": ["homing", "dumbfire", "sidestep", "parallax", "cloaked_wait", "cluster", "doppelganger"]},
-          "damage": {"description": "how the warhead's damage lands", "enum": ["normal", "bypass_shields", "enveloping"]},
+          "damage": {"description": "how the warhead's damage lands", "enum": ["normal", "bypass_shields", "enveloping", "permeator"]},
           "decoys": {"description": "parallax: decoys released at launch (default 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "cluster": {"description": "cluster: what it splits into", "type": "object", "additionalProperties": false, "properties": {
               "missile": {"description": "submunition missile id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -112,6 +114,7 @@
           "cargo": {"description": "a cargo container: counted by the cargo(role) mission query", "type": "boolean"},
           "behaviour": {"description": "AI behaviour id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "pilot_grade": {"description": "AI ships of this class: their pilot's grade (flight.pilot_grades)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "accumulator_shields": {"description": "an ordinary hit on a raised shield bank does no damage and adds a quarter of itself to it", "type": "boolean"},
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
           "engine_color": {"description": "engine glow colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
@@ -221,6 +224,7 @@
           "cargo": {"description": "a cargo container: counted by the cargo(role) mission query", "type": "boolean"},
           "behaviour": {"description": "AI behaviour id", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "pilot_grade": {"description": "AI ships of this class: their pilot's grade (flight.pilot_grades)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "accumulator_shields": {"description": "an ordinary hit on a raised shield bank does no damage and adds a quarter of itself to it", "type": "boolean"},
           "turret_arc": {"description": "beams can aim this far off the nose (turrets)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(deg)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "debris": {"description": "wreckage models", "type": "array", "items": {"type": "string"}},
           "engine_color": {"description": "engine glow colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
@@ -348,6 +352,8 @@
                 "lead_speed": {"description": "gimballed turret: the shot speed its lead assumes, m/s (2000)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "accuracy": {"description": "fixed turret: accuracy %, a [from, to] band rolled once per turret, or pilot", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}, {"anyOf": [{"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}, {"enum": ["pilot"]}]}]},
                 "accuracy_factor": {"description": "with accuracy: pilot, times this (100 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                "accuracy_unpiloted": {"description": "with accuracy: pilot and no pilot record: a band rolled once ([25, 25])", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                "accuracy_minus": {"description": "fixed turret: a band rolled once and taken off the accuracy ([0, 0])", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                 "miss": {"description": "fixed turret: largest sideways miss on a failed accuracy roll (20m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "miss_beyond": {"description": "fixed turret: no miss closer than this (200m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
                 "interval": {"description": "turret: seconds between shots (0 = burst and pause), or rate_of_fire", "anyOf": [{"anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}, {"enum": ["rate_of_fire"]}]},
@@ -738,6 +744,7 @@
         "debrief_delay": {"description": "the battle runs on this long after the result before the debrief; 30s", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
         "formation": {"description": "the formation wingmen fly in when a role names none (formations.<id>; vee)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
         "formation_gap": {"description": "wingman slots are at least this many x the combined radii from the leader; 3", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "link_modes": {"description": "original: linked fires every mount of the selected type, and each mount fires on its own timer and energy", "enum": ["engine", "original"]},
         "pilot_grades": {"description": "AI pilot grades: obstacle look-ahead and the sprint (with the original's AI rules)", "type": "object", "additionalProperties": false, "properties": {
             "lookahead": {"description": "obstacle look-ahead with no grade or one not listed (250m)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(m|km)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
             "grades": {"description": "per grade, from 0", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
@@ -818,6 +825,7 @@
         "balance": {"description": "shift: balance moves shield capacity; share: it sends the recharge to one facing first (the original)", "enum": ["shift", "share"]},
         "energy": {"description": "energy pool of classes without their own energy (500)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "energy_recharge": {"description": "pool recharge at the top beam level, per second, for classes without their own (40)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "recharge_while_burning": {"description": "the energy pool keeps recharging while the afterburner burns (false)", "type": "boolean"},
         "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
         "delete": {"type": "boolean"},
         "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -841,6 +849,14 @@
         "repair_rate": {"description": "default crew repair rate, hit points per second", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "repair_order": {"description": "the whole repair rate goes to the first that needs it: system kinds, hull, beams, launchers, others", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
         "system_table": {"description": "the system share is shared out by weighted rolls", "type": "object", "additionalProperties": false, "properties": {
+            "tries": {"description": "rolls per hit (default 1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "rolls": {"description": "weighted entries; what the chances leave out strikes nothing", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                  "chance": {"description": "share of the rolls", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "hit": {"description": "a system kind, beams, launchers, special or none", "type": "string"},
+                  "carry": {"description": "damage beyond what the system has left goes to the next try", "type": "boolean"}
+                }}}
+          }},
+        "tachyon_table": {"description": "what effect: systems beams (the Tachyon Pulser) strike: the same shape as system_table", "type": "object", "additionalProperties": false, "properties": {
             "tries": {"description": "rolls per hit (default 1)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
             "rolls": {"description": "weighted entries; what the chances leave out strikes nothing", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
                   "chance": {"description": "share of the rolls", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
