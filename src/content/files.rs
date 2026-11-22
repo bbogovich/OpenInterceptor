@@ -319,6 +319,21 @@ fn cockpit() -> Ty {
             ]),
             "wide screens: the side bands beside a narrower cockpit (R-HUD-013)",
         ),
+        f(
+            "ship_status",
+            Ty::Struct(vec![
+                f(
+                    "rings",
+                    Ty::Numbers(3),
+                    "radius of each shield band's centre, in lighting order (fractions of the half-size)",
+                ),
+                f("width", Ty::Num, "band thickness (fraction of the half-size)"),
+                f("tilt", Ty::Num, "counter-clockwise rotation of the display in degrees"),
+                f("arc", Ty::Num, "degrees each half (fore, aft) spans; 180 = no side gaps"),
+                f("craft", Ty::Num, "size of the craft silhouette (fraction of the half-size)"),
+            ]),
+            "where the ship_status instrument's shield bands lie on the cockpit art",
+        ),
     ])
 }
 

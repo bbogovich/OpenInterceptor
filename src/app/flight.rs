@@ -358,6 +358,8 @@ pub struct FlightSession {
     /// The cockpit's design space (instrument coordinates).
     design: Vec2,
     instruments: HashMap<String, [f32; 4]>,
+    /// Where the cockpit art paints the ship status display's shield rings.
+    ship_status_look: crate::content::rules::ShipStatusLook,
     scenario_id: String,
     ship_choice: Option<String>,
     /// The wingman menu, while open: the highlighted entry.
@@ -575,6 +577,7 @@ impl FlightSession {
             Some(c) => (c.instruments.clone(), Vec2::from(c.design)),
             None => (hud::default_instruments(), hud::DESIGN),
         };
+        let ship_status_look = cockpit_def.filter(|_| has_cockpit).map(|c| c.ship_status).unwrap_or_default();
         let mut messages = MessageLog::default();
         messages.push(0.0, scenario.title.to_uppercase());
         // Tell the pilot about an ion storm (it shortens their radar).
@@ -619,6 +622,7 @@ impl FlightSession {
             cockpit_model,
             design,
             instruments,
+            ship_status_look,
             scenario_id: scenario.id.clone(),
             ship_choice: ship.map(str::to_string),
             wing_menu: None,
@@ -1018,6 +1022,8 @@ impl FlightSession {
             forward_view: alive && matches!(view, View::Cockpit | View::Forward | View::Chase),
             anchored: &anchored,
             text_scale: 1.0,
+            // The built-in layout has no painted rings to match: the engine's own look.
+            ship_status: if custom { self.ship_status_look } else { Default::default() },
         };
         if alive && !anchored.is_empty() {
             let offset = self.cockpit_model.as_ref().map(|(_, o)| *o).unwrap_or_default();

@@ -753,6 +753,38 @@ pub struct CockpitDef {
     pub anchors: HashMap<String, Anchor>,
     /// How the screen beside a narrower-than-the-screen cockpit is filled (R-HUD-013).
     pub wide: WideFill,
+    /// How the `ship_status` instrument's shield bands sit on this cockpit's art.
+    pub ship_status: ShipStatusLook,
+}
+
+/// The geometry of the `ship_status` instrument's shield bands, so they can lie exactly on
+/// rings painted into the cockpit art: `cockpits: {a: {ship_status: {rings: [0.84, 0.59,
+/// 0.33], width: 0.09, tilt: 6.5, arc: 140, craft: 0.28}}}`.
+///
+/// Lengths are fractions of the instrument's half-size (its rectangle sets the centre and
+/// the scale), so the same look works at any screen resolution.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ShipStatusLook {
+    /// Radius of each band's centre line, in the order the bands light up (the first is
+    /// lit even at the lowest shield level).
+    pub rings: [f32; 3],
+    /// Band thickness.
+    pub width: f32,
+    /// Counter-clockwise rotation of the whole display in degrees, for art drawn at an
+    /// angle (the fore/aft split then follows the painted divider).
+    pub tilt: f32,
+    /// How many degrees each half's arc spans (180 = no gap at the sides).
+    pub arc: f32,
+    /// Size of the craft silhouette in the middle.
+    pub craft: f32,
+}
+
+impl Default for ShipStatusLook {
+    /// The engine's own look, used when a cockpit says nothing: three bands just inside
+    /// the instrument's edge.
+    fn default() -> Self {
+        ShipStatusLook { rings: [0.989, 0.8405, 0.692], width: 0.11, tilt: 0.0, arc: 140.0, craft: 0.42 }
+    }
 }
 
 /// The side bands beside a 2D cockpit on a screen wider than its design (a 4:3 cockpit
@@ -1429,7 +1461,29 @@ pub fn build_with(
             },
             None => WideFill::default(),
         };
+        let ship_status = match g.node("ship_status").map(Get) {
+            Some(s) => {
+                let d = ShipStatusLook::default();
+                let rings = match s.nums("rings") {
+                    Some(v) if v.len() == 3 && v.iter().all(|r| *r > 0.0) => [v[0], v[1], v[2]],
+                    Some(_) => {
+                        errors.push(format!("cockpit {id}: ship_status.rings needs three positive radii"));
+                        d.rings
+                    }
+                    None => d.rings,
+                };
+                ShipStatusLook {
+                    rings,
+                    width: s.num("width").unwrap_or(d.width).max(0.0),
+                    tilt: s.num("tilt").unwrap_or(d.tilt),
+                    arc: s.num("arc").unwrap_or(d.arc).clamp(0.0, 180.0),
+                    craft: s.num("craft").unwrap_or(d.craft).max(0.0),
+                }
+            }
+            None => ShipStatusLook::default(),
+        };
         cockpits.push(CockpitDef {
+            ship_status,
             wide,
             image,
             image_pack: e.pack,
@@ -2393,7 +2447,7 @@ ships:
 objects:
   base: {model: models/base.obj, faction: xcom, hit_points: 5000}
 cockpits:
-  a: {image: 'original:CockpitA.dll#12000', instruments: {radar: [10, 20, 30, 40]}, wide: {blackout: true, from: 305, left: images/l.png}}
+  a: {image: 'original:CockpitA.dll#12000', instruments: {radar: [10, 20, 30, 40]}, wide: {blackout: true, from: 305, left: images/l.png}, ship_status: {rings: [0.8, 0.6, 0.3], tilt: 6.8, arc: 166}}
   vr:
     image: none
     model: models/pit.obj
@@ -2466,6 +2520,10 @@ objects:
             a.wide,
             WideFill { blackout: true, color: [0.0; 3], from: 305.0, left: Some("images/l.png".into()), right: None }
         );
+        // The ship status look: given keys replace the engine's, the rest keep its defaults.
+        let d = ShipStatusLook::default();
+        assert_eq!(a.ship_status, ShipStatusLook { rings: [0.8, 0.6, 0.3], tilt: 6.8, arc: 166.0, ..d });
+        assert_eq!(rules.cockpit("vr").unwrap().ship_status, d, "no key: the engine's own look");
         assert_eq!((rules.flight.bolt_frame, rules.flight.bolt_carry), (BoltFrame::Ship, 0.2));
         let v = &rules.voices[0];
         assert_eq!((v.id.as_str(), v.clips("acknowledge"), v.clips("down")), ("radio", &[0u32, 1][..], &[2u32][..]));

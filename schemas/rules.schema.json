@@ -246,6 +246,13 @@
               "left": {"description": "extension art stretched over the left band (your own image)", "type": "string"},
               "right": {"description": "extension art stretched over the right band (your own image)", "type": "string"}
             }},
+          "ship_status": {"description": "where the ship_status instrument's shield bands lie on the cockpit art", "type": "object", "additionalProperties": false, "properties": {
+              "rings": {"description": "radius of each shield band's centre, in lighting order (fractions of the half-size)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+              "width": {"description": "band thickness (fraction of the half-size)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "tilt": {"description": "counter-clockwise rotation of the display in degrees", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "arc": {"description": "degrees each half (fore, aft) spans; 180 = no side gaps", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "craft": {"description": "size of the craft silhouette (fraction of the half-size)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

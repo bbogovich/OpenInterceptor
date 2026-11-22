@@ -39,6 +39,8 @@ pub struct HudFrame<'a> {
     pub anchored: &'a std::collections::HashSet<String>,
     /// Text size limit multiplier (instrument textures are drawn larger than the screen).
     pub text_scale: f32,
+    /// Where the cockpit art paints the ship status display's rings (pack data).
+    pub ship_status: crate::content::rules::ShipStatusLook,
 }
 
 fn col(c: [f32; 4]) -> Color {
@@ -451,40 +453,55 @@ pub fn hull_color(frac: f32) -> Color {
 /// The ship status display (`ship_status`): your craft seen from above, tinted by its
 /// hull, inside a fore arc (the top half) and an aft arc (the bottom half) of up to three
 /// bands each, one per third of that shield — the way X-Wing shows shields. A shield
-/// that is down blinks its innermost band.
+/// that is down blinks its first band. The bands' radii, width and tilt come from the
+/// cockpit (`ShipStatusLook`) so they can lie on rings painted into the art.
 fn draw_ship_status(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
+    let look = f.ship_status;
     let c = Vec2::new(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5);
     let radius = r[2].min(r[3]) * 0.5;
     let p = power_readout(&f.world.rules, me);
     let blink = (f.now * 4.0) as i64 % 2 == 0;
-    let band = (radius * 0.11).max(1.5);
-    // Arcs: macroquad's `draw_arc` takes degrees clockwise from +x on screen, so the top
-    // half (fore) is 200°..340° and the bottom half (aft) 20°..160°.
-    for (frac, start) in [(p.fore, 200.0), (p.aft, 20.0)] {
+    let band = (radius * look.width).max(1.5);
+    for (frac, start) in [(p.fore, 0.0), (p.aft, 180.0)] {
         let lit = shield_bands(frac);
         let colour = shield_ring_color(frac, blink);
-        for k in 0..3 {
-            let rad = radius - band * (0.6 + k as f32 * 1.35);
+        for (k, ring) in look.rings.iter().enumerate() {
             let on = k < lit || (lit == 0 && k == 0);
             let col = match (on, colour) {
                 (true, Some(c)) => c,
                 _ => Color::new(0.2, 0.35, 0.25, 0.35),
             };
-            draw_arc(c.x, c.y, 24, rad, start, band, 140.0, col);
+            // macroquad's `draw_arc` takes the inner radius (thickness grows outward), so
+            // the band is centred on the ring by starting half a band inside it.
+            let (from, span) = band_arc(start, look.arc, look.tilt);
+            draw_arc(c.x, c.y, 48, radius * ring - band * 0.5, from, band, span, col);
         }
     }
-    // The craft from above: a simple fuselage, wings and tail, nose up.
+    // The craft from above: a simple fuselage, wings and tail, nose up — turned with the
+    // display's tilt. Screen y points down, so a counter-clockwise turn by `a` maps
+    // (x, y) to (x cos a + y sin a, -x sin a + y cos a).
     let class = f.world.rules.ship(me.class);
     let hull = if class.hull > 0.0 { me.hull / class.hull } else { 1.0 };
-    let s = radius * 0.42;
+    let s = radius * look.craft;
     let col = hull_color(hull);
-    let pt = |x: f32, y: f32| Vec2::new(c.x + x * s, c.y + y * s);
+    let (sin, cos) = look.tilt.to_radians().sin_cos();
+    let pt = |x: f32, y: f32| Vec2::new(c.x + (x * cos + y * sin) * s, c.y + (-x * sin + y * cos) * s);
     draw_triangle(pt(0.0, -1.0), pt(-0.22, 0.5), pt(0.22, 0.5), col); // fuselage
     draw_triangle(pt(0.0, -0.1), pt(-0.95, 0.45), pt(0.95, 0.45), col); // wings
     draw_triangle(pt(0.0, 0.35), pt(-0.4, 0.85), pt(0.4, 0.85), col); // tail
     if f.glass {
         draw_circle_lines(c.x, c.y, radius, f.text_scale, HUD_DIM);
     }
+}
+
+/// Where one half's arc starts and how far it runs, in macroquad's `draw_arc` degrees
+/// (clockwise from +x on screen). `half` is 0 for the fore (top) half and 180 for the
+/// aft; each half is centred on straight up or down, `span` wide, then turned
+/// counter-clockwise by `tilt` (which on screen means subtracting it).
+pub fn band_arc(half: f32, span: f32, tilt: f32) -> (f32, f32) {
+    // The top half's middle is at 270° clockwise from +x (screen y points down).
+    let middle = 270.0 + half;
+    ((middle - span * 0.5 - tilt).rem_euclid(360.0), span)
 }
 
 fn shield_ring_color(frac: f32, blink: bool) -> Option<Color> {
@@ -681,6 +698,18 @@ pub fn draw_caption(s: &str, corner_right: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn band_arcs_centre_each_half_and_follow_the_tilt() {
+        // Untilted: the fore half runs 200°..340° (the top), the aft 20°..160°.
+        assert_eq!(band_arc(0.0, 140.0, 0.0), (200.0, 140.0));
+        assert_eq!(band_arc(180.0, 140.0, 0.0), (20.0, 140.0));
+        // A counter-clockwise tilt moves both halves the other way in clockwise degrees.
+        let (from, _) = band_arc(0.0, 140.0, 6.5);
+        assert!((from - 193.5).abs() < 1e-4);
+        let (from, _) = band_arc(180.0, 180.0, 10.0);
+        assert!((from - 350.0).abs() < 1e-4, "wraps below zero: {from}");
+    }
 
     #[test]
     fn ship_status_bands_follow_thirds_of_the_shield() {
