@@ -167,6 +167,9 @@ and kept; one that cannot be loaded is reported on standard error once
 | `size` | number | 12 | Text size in design pixels (at least 4). |
 | `colour` | `[r, g, b]` or `[r, g, b, a]` | the skin's `text` colour | Text colour, 0 – 1. |
 | `align` | `left`, `centre`, `right` | `left` | Text alignment in the rectangle. |
+| `font` | name | none | A [sheet font](skins.md#sheet-fonts-app-next) of the skin: the text is placed by the original's rules ([below](#text-in-sheet-fonts-app-next)) and `size` is unused (app NEXT). |
+| `at` | `[x, y]` | none | With `font`: an anchor point instead of the rectangle. |
+| `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 
 | `kind` | Draws / does |
@@ -206,6 +209,35 @@ and kept; one that cannot be loaded is reported on standard error once
 
 A name the engine does not know shows as `?<name>`.
 
+### Text in sheet fonts (app NEXT)
+
+A `value` or `text` widget with `font: <name>` is drawn in that [sheet font](skins.md#sheet-fonts-app-next)
+of the skin and placed by the two routines the original game uses for all its screen text
+(Interceptor.exe, **verified**):
+
+- **An anchor point** (`at: [x, y]`, the original's `DrawText`): the line starts at x (`align:
+  left`), is centred on x (`centre`) or ends at x (`right`). **y is not the top of the text**: the
+  glyph tops sit at y − the font's `top`. With the original's 14-pixel fonts and their `top` of 7,
+  y is the middle of the line.
+- **A rectangle** (no `at`, the original's `DrawTextRect`): a line that fits the width and has no
+  `~` is drawn at the rectangle's left (or centre) and at y = its top + height / 2 — **centred
+  vertically**. Longer text wraps at spaces, a `~` forces a new line, and lines step by the line
+  height + a third. Centred text is centred as a block; left text starts at top + line height / 2
+  + line height (+ the font's `wrap_offset`). Wrapped text is not clipped. `align: right` in a
+  rectangle (one line, ending at its right edge) is an engine extension
+  ([DEV-081](../implementation/deviations/index.md)).
+
+All of it is whole pixels in the design space, so on a 640 × 480 screen the text lands on the
+same pixels as in the original, then the whole screen is scaled. Without `font` (or with a name
+the skin lacks) the widget keeps the TrueType path: `size`, `colour`, `align` in its rectangle.
+
+```yaml
+# packs/interceptor/rules/screens.yaml: the CSD's readouts and status bar
+time:   {kind: value, value: time, rect: [495, 365, 133, 15], font: readout, at: [561, 370], align: centre, monospace: true}
+funds:  {kind: value, value: money, rect: [495, 426, 133, 15], font: readout, at: [561, 430], align: centre}
+status: {kind: value, value: selection, rect: [344, 457, 276, 15], font: readout, align: centre}
+```
+
 ### The testbed layout and `--screen`
 
 **Ctrl+T** switches between the screen set and the testbed layout at any time; a `testbed`
@@ -230,6 +262,11 @@ original has one, its links and a back button.
   readouts' order (from the original running) and the back buttons' positions. Since app 0.21.0
   the dial's six holes select the original's six speeds (`speed(0)` – `speed(5)`, verified from the
   program's clock table; see [`clock`](strategy.md#clock)).
+- **Since app NEXT** the readouts, the status bar, the base names and the Equipment & Personnel
+  funds use the original's sheet fonts and anchors: the four readouts in 23010 centred on x 561 at
+  y 370, 390, 410 and 430 (the time monospaced), the status bar centred in its bar, and the funds
+  centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34). Lists,
+  button captions and map labels are still in the TrueType font (plan M2, #123 – #128).
 - **Unknown**: the buttons' own state images, which live in the original's sprite table
   (`SpritesDLL`), not yet read; until then the buttons are hot spots over the art.
 

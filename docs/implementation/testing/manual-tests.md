@@ -2284,3 +2284,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App 0.16.14 or later. |
 | Steps | 1. Options › *Full screen*: Left, Right or Enter. 2. Quit and start again. 3. Start with `--windowed`. 4. Set *Full screen* Off; restart. 5. Options › *Controls...*; Esc. 6. Battles & tools › the launcher's controls entry; Esc. |
 | Expected | 1: the window goes full screen at once; the row reads *On*; `settings.yaml` has `graphics: fullscreen: true`. 2: starts full screen. 3: starts in a window (the setting stays on). 4: *Off*; starts in a window. 5: the controls screen; leaving it returns to the main menu. 6: since 0.16.14 leaving it also returns to the main menu, not the launcher (record whether that is wanted). |
+
+### MT-6-28 — Sheet fonts on the original screens
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy` (the CSD). 2. Look at the four green readouts and the status bar. 3. `--screen purchase`, then `--screen manufacture`. 4. `--screen bases`, `equip_ships`. 5. `--no-original --check`. |
+| Expected | 2: time, weekday, date and funds in the original's white-and-green font, each centred in its bar (the time with evenly spaced digits); the status bar's text centred in it. 3: the funds in yellow, centred in the dark slot under the shelf (not above it). 4: the base name in the white body font on the title strip. 5: no errors (the default skin's generated fonts load). Screenshots of app NEXT are in the parity M2 report. |

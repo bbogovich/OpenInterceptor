@@ -148,10 +148,88 @@ the screens still draw, with colours and the built-in font.
 The strategy screen clips each list row to its width by measuring it in the skin's font (app
 0.16.0) and shows the selected row in full beneath the list, so a wide font costs only room.
 
+## Sheet fonts (app NEXT)
+
+A skin can also carry **bitmap sheet fonts** by name, under `fonts:`. A [screen set](screens.md#text-in-sheet-fonts-app-next)
+widget that names one with `font: <name>` is drawn in it, placed by the original game's own text
+rules — the fix for the playtest finding that text on the strategy screens was *sized differently
+and not aligned with the UI elements it belongs to* (plan M2, issue #122, RQ-UI-03/04).
+
+```yaml
+# resources/default/rules/skin.yaml
+skins:
+  deco:
+    fonts:
+      body: {sheet: textures/font_body.png, top: 4}
+      title: {sheet: textures/font_title.png, top: 7}
+```
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `fonts.<name>` | asset, or the mapping below | none | A sheet font. A bare asset is the same as `{sheet: <asset>}`. |
+| `fonts.<name>.sheet` | asset | *required* | The sheet image: a pack PNG/TGA, or `original:SpritesDLL.dll#<id>` for one of the original's. |
+| `fonts.<name>.top` | whole number | half the line height | How far **above** the anchor's y the glyph tops sit. The original: 5, and 7 for its four small fonts. |
+| `fonts.<name>.wrap_offset` | whole number | 0 | Extra pixels down for the first line of wrapped text. The original: 4 for its four small fonts. |
+| `fonts.<name>.spacing` | whole number | 0 | Extra pixels after every character (the original's glyphs carry their own gap). |
+
+### The grid sheet format
+
+A sheet is one image with the glyphs in a grid of square cells. The engine reads it the way the
+original's font loader does (Interceptor.exe 0x5fd750, **verified**):
+
+```text
+ (0,0) = grid colour          one cell = pitch × pitch
+ ┌──┬──┬──┬──┬──┬── … 26 cells per row (any number works: cols = width / pitch)
+ │A │B │C │D │E │
+ ├──┼──┼──┼──┼──┼──   the first grid line in column 1 sets the pitch
+ │a │b │c │d │e │
+ └──┴──┴──┴──┴──┴──
+                    bottom-right pixel = key colour (transparent)
+```
+
+- Pixel (0, 0) has the **grid colour**, the bottom-right pixel the **key colour**; both are drawn
+  transparent. The **pitch** is the first row below the top whose column-1 pixel is the grid colour.
+- Glyph *g* (1 to 154) sits in cell *g* − 1, left to right, top to bottom; its **box** is
+  pitch − 2 pixels square, inside the 1-pixel grid line.
+- A glyph's **width** is its rightmost painted column + 1 (paint each glyph from the left of its box
+  and leave column 0 empty if you want a gap between letters). The pen moves on by that width; a
+  **space** moves by the width of glyph 31 (`e`). The **line height** is the lowest painted row + 1
+  over all glyphs.
+- Characters map to glyphs as in the original: `A`–`Z` 1–26, `a`–`z` 27–52, `1`–`9` 53–61, `0` 62,
+  then `, . / ; '` 63–67 (`` ` `` also 67), 68 unused, `< > ? : " ~ ! @ # $ % ^ & * ( ) - = + [ ] \ { }`
+  69–92, and accented Latin-1 letters 93–141 (an accented capital shares the small letter's glyph).
+  Accented glyphs (93 and later) are drawn one pixel lower. A character with no glyph draws nothing
+  and does not move the pen.
+- The colours are the image's own: the text is drawn as painted. A widget's `colour` tints it
+  (multiplies), so a white sheet can be any colour.
+
+`tools/default_assets/fonts.py` draws the default campaign's two sheets (`font_body.png`, a
+5 × 9 dot-matrix in cream with a brown shadow, and `font_title.png`, the same at double size in
+gold) in this layout: read it as a worked example of making your own.
+
+### The original's fonts (`interceptor`)
+
+`packs/interceptor/rules/skin.yaml` names the nine sheet fonts the original loads at start, read at
+run time from the player's own `SpritesDLL.dll` — nothing is copied:
+
+| Name | Sheet | `top` | Used for (the exe's call sites) |
+|---|---|---|---|
+| `topic` | 23000 | 5 | Research topic texts (cream). |
+| `map`, `map_small`, `map_large` | 23006, 23007, 23008 | 5 | CSD map labels (**derived**). |
+| `readout` | 23010 | 7 (`wrap_offset` 4) | CSD readouts and status bar, list headers, message-box captions (white with green edges). |
+| `body` | 23011 | 7 (4) | The body font: list rows, tooltips, dialogs, Bases info (white and grey). |
+| `value` | 23013 | 7 (4) | Research values, Bases view labels, Equipment & Personnel (yellow). |
+| `highlight` | 23015 | 7 (4) | Equip Ships, Production, Bases highlights (yellow). |
+| `title` | 23014 | 5 | Base Stats page titles (large yellow). |
+
+The original also has a tenth, small 6-pixel font compiled into the program for text-button
+captions; it is not a sheet and is not available yet (plan M2, #123).
+
 ## Not built yet
 
-- Custom panels bound to queries, buttons with hover images, skin sounds, several fonts per
-  skin. Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
+- Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used
+  by screen-set `value` and `text` widgets only (app NEXT); lists, buttons, the map labels and the
+  testbed layout still draw with `font` (the TrueType font). Screen layouts are built for the strategy screen only ([Screen layouts](screens.md)).
 - Main menu option values too long for their room are drawn smaller (down to half size, app
   0.14.2), not wrapped.
 - A full graphics options page (the menu has *Full screen* since app 0.16.14; brightness is in
@@ -165,3 +243,7 @@ The strategy screen clips each list row to its width by measuring it in the skin
 | `skins.x: colours.y: not one of background, panel, border, text, dim, accent, highlight` | An unknown colour role. |
 | `skins.x: colours.y: expected [r, g, b] or [r, g, b, a]` | A colour with the wrong number of values. |
 | `campaign.skin: unknown skin 'x'` | `campaign.skin` names no defined skin. |
+| `skins.x: fonts.y: sheet: expected the font sheet image` | A font without `sheet`. |
+| `skins.x: fonts.y: top: 2.5 is not a whole number of pixels` | `top`, `wrap_offset` or `spacing` not a whole number. |
+| `skins.x.fonts.y: <sheet>: font sheet: no grid line found in column 1 …` (`--check`; at start on standard error as `skin x: font y: …`) | The image is not in the grid layout, or the grid and key colours are the same. The font is left out and its widgets fall back to the TrueType path. |
+| `screens.s.widgets.w: font 'y' is not a font of the campaign's skin` (`--check`) | A widget names a font the campaign's skin does not define. |
