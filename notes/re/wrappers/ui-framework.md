@@ -343,8 +343,8 @@ callers) always use **style 1**. Every queued-event notice in the main loop (`0x
 | Rearm | `0x4c2dee` | 1 |
 | Side-mission offer | `0x4c5aa8` | 3 |
 | Alien sightings / unusual freighters (`0x5e2a30`, `0x5e48c8`, `0x5e7beb`, `0x5e88f9`) | | 3 |
-| Pilot / base / CSD dialogs at `0x465b7f`–`0x477d0a`, `0x4acabd`, `0x50ce5d`, `0x5f5bd7` | | 2 |
-| Mission-briefing dialogs at `0x5ddeb3`–`0x5de8b9` | | 0 |
+| Other screen dialogs at `0x465b7f`–`0x477d0a`, `0x4acabd`, `0x50ce5d`, `0x5f5bd7` (not identified) | | 2 |
+| Dialogs at `0x5ddeb3`–`0x5de8b9` (not identified) | | 0 |
 
 Note: row 189 (WrappersDLL 6590) is style 2's right slider, not part of the style-3 kit; the style-3
 kit is rows 190-197 (6591-6598) and its ornament 198 (6599).
