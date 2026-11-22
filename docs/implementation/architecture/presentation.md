@@ -438,6 +438,64 @@ Tests:
 - `content::screens::tests`: `clock`, `history`, `menu(x)`, `replace(x)`.
 - `check::tests`: a missing dialog image.
 
+### The original's message box (`app::msgbox`)
+
+*App NEXT, branch `parity/m2` (follow-up to #127; `ui-framework.md` §4).*
+
+`app::msgbox` holds the exe's message-box rules as pure functions:
+
+| Function | Rule |
+|---|---|
+| `base_size` | Width max(325, caption, body); wrap at 425; height 100 → ≤ 400. |
+| `button_rows`, `button_width` | max(100, text + 20) × 14, 10 apart, rows of ≤ 465, up to 4. |
+| `layout` | Centred on (320, 240); style padding; styles 2/3 rounded to whole side tiles; per-style insets (`insets`); button rows and the 1- or 2-button offsets. |
+| `kit_pieces` | The 8-row kit: edges tiled at natural size from the exe's start and end points, corners last. |
+| `fill_rect` | The fill centred and clipped. |
+| `step`, `knob_frame`, `slider_offset`, `ornament_on` | The live pieces on the 5-tick dialog counter (knob ping-pong; sliders one tile every 7 ticks, bouncing; ornament 4 of 8 steps). |
+
+`caption::kit_dialog` draws a prompt with them when the skin's `dialog.kit` is set: the
+`DialogStyle::images` (kit rows, live pieces, `fill`, `fill_large`, capsules) are loaded by
+`Ui` at start. The campaign tags each notice with a `NoticeKind`
+(`campaign::Event::Notice(text, kind)`); `ClockDef::asks(kind)` decides whether the Report
+offers "OK (5 secs)" (`clock.ask_for`).
+
+Tests:
+
+- `app::msgbox::tests`: size and wrapping; buttons and their rows; the style extensions and
+  rounding; centred and offset buttons; kit tiling with corners last; fill clipping; the knob,
+  sliders and ornament timings.
+- The clock tests: `ask_for`.
+- `content::skin::tests`: `kit`, `frame_style`, `fill_large`.
+
+### Sounds, hover help, the dial and lamps (`app::floater`)
+
+*App NEXT, branch `parity/m2` (plan M2, issue #126; RQ-UI-09 – 12).*
+
+- **Sounds.** The `SoundBank` loads every non-event `sounds:` entry as `SoundKey::Ui`.
+  `strategy::play_ui(ctx, own, default)` plays a widget's `sound` (`none` silences it), else the
+  skin's `UiSounds` default for its kind. It plays on the press, in `draw_set` for buttons and
+  check rows and in `draw_list_art` for arrows and action buttons. Prompts go through
+  `strategy::ask`, which plays the capsule or text-button sound on a click. The box-opening
+  sound plays when a prompt appears (`StrategyScreen::prompt_up`).
+- **Hover help.** `floater::tip_box(widths, rect, cursor_x, right)` places the box and its
+  lines (Floaters.cpp rules). `floater::Floater<K>` opens it when the cursor rests with no
+  button down and closes it when the hovered control changes. `draw_set` records the hovered
+  widget with a `tip`; `draw_floater` draws it in the skin's `TooltipStyle`.
+- **Animations.** `floater::anim_frame(ticks, interval, n)` gives the frame. `with_clock`
+  animations use `StrategyScreen::clock_seconds`, which advances only while time runs.
+  Original frames are keyed by their corner colour.
+- **The dial.** Speed buttons latch while `self.speed` is theirs. `ClockDef::first_key` maps
+  the number keys.
+
+Tests:
+
+- `app::floater::tests`: box placement over, under and pushed left, multi-line; open and close
+  on rest, leaving and a held button; lamp frames at 4 ticks × 10 and 6 ticks × 5.
+- `content::screens::tests`: `anim`, `sound`, `tip`, `interval`.
+- `content::skin::tests`: `sounds`, `tooltip`.
+- The clock tests: `first_key`.
+- `check::tests`: an unknown widget sound.
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -512,6 +570,8 @@ play without it.
 | `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5). |
 | `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
 | `caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}`; `StrategyScreen::draw_list_art`, `notice` | `app::caption`, `app::strategy` | Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7). |
+| `msgbox::{layout, MsgBox, Kit, insets, base_size, button_rows, button_width, kit_pieces, fill_rect, knob_frame, slider_offset, ornament_on}`; `caption::kit_dialog`; `DialogStyle::{kit, frame_style, fill_large, row}`; `NoticeKind`, `ClockDef::{ask_for, asks}`, `StrategyScreen::banner_kind` | `app::msgbox`, `app::caption`, `content::skin`, `content::strategy`, `campaign`, `app::strategy` | The original's message box and which notices ask (app NEXT, #127 follow-up). |
+| `floater::{tip_box, Floater, anim_frame, LINE}`; `strategy::{play_ui, ask, draw_floater}`; `SoundKey::Ui`, `SoundBank::{ui_names, play_ui}`; `UiSounds`, `TooltipStyle`; `WidgetDef::{sound, tip, frames, interval, with_clock}`, `WidgetKind::Anim`; `ClockDef::first_key` | `app::floater`, `app::strategy`, `audio`, `content::skin`, `content::screens`, `content::strategy` | Interface sounds, hover help, animations and the dial (app NEXT). |
 | `history::{History, DEFAULT_LIMIT}`; `UiAction::{MenuOpen, Replace}`; `ScreenLayout::{clock_runs, history, empty}`; `StrategyScreen::{history, screen_holds_clock}`; `NoticeClock`, `ClockDef::{notices, notice_buttons}`; `caption::{frame_piece, capsule_parts, capsule_row}`; `DialogStyle::{fill, capsule, frame, images}`, `FramePiece`, `Anchor`; `Ui::image` | `app::history`, `content::screens`, `app::strategy`, `content::strategy`, `app::caption`, `content::skin`, `app::ui` | The history stack, the clock by screen and notice, message-box fills, capsules and frames (app 0.22.12). |
 | `spritetable::{SpriteRow, parse, hot_offset, parse_index}`; `Content::sprite`; `tga::key_corner`; `button::{look, Look, Press, sprite_rect, latch}`; `Place`, `WidgetKind::Check`, `WidgetDef::{sprite, states, place, fire_on_press, repeat, group, selected}`; `StrategyScreen::{presses, radios, checks}`, `widget_rect`, `draw_widget_image` | `formats`, `content`, `app::button`, `content::screens`, `app::strategy` | Sprite references, button states, press semantics, toggles and radio groups (app 0.22.10). |
 | `listbox::{visible_rows, columns, Column, column_width, pulse_step, pulse_level, PRESSED, Repeat}`; `Row::cells`; `StrategyScreen::arrows`, `image_keyed`; `Content::load_image_keyed`; `ListStyle::{compact, columns, bar, up, down}`, `Arrow` | `app::listbox`, `app::strategy`, `content`, `formats::tga`, `content::screens` | The original's compact list box (app 0.22.9). |
