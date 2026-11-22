@@ -7739,6 +7739,29 @@ of the cutscene format, including <code>harmless</code> per action;
 the main menu, the launcher and the prompts (only the strategy screens are laid out as data), and custom cockpit instruments bound to queries;
 skipping from the tablet console (the default music has <code>good</code> and <code>bad</code> stingers since 0.16.15). Since
 0.16.14 the Controls screen returns to the main menu also when opened from the launcher. No Stage 6 manual test has been run.</p>
+<h2 id="parity-m2-progress-text-and-widgets-on-the-original-screens">Parity M2 progress: text and widgets on the original screens<a class="headerlink" href="#parity-m2-progress-text-and-widgets-on-the-original-screens" title="Permanent link">&para;</a></h2>
+<p>From the X-COM parity plan (<code>notes/re/parity-plan.md</code>, issues #122 – #128) and the playtest's
+finding that text on the strategy screens was <em>sized differently and not aligned with the UI
+elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>#122 RQ-UI-03/04: grid sheet fonts (<code>skins.&lt;id&gt;.fonts</code>, <code>formats::sheetfont</code>), the original's DrawText / DrawTextRect anchor rules (<code>app::text</code>), widget <code>font</code>, <code>at</code>, <code>monospace</code>; <code>interceptor</code>'s nine SpritesDLL fonts; the CSD readouts (D-41) and status bar in 23010 at the exe's anchors, base names in 23011, the E&amp;P funds in its slot (D-34); the default campaign's generated <code>font_body</code> / <code>font_title</code> sheets (<code>tools/default_assets/fonts.py</code>) checked by <code>--check</code></td>
+<td><strong>Done</strong> (app 0.22.5; MT-6-28 not yet run; DEV-081, DEV-082)</td>
+<td><code>src/formats/sheetfont.rs</code>, <code>src/app/text.rs</code>, <code>src/app/ui.rs</code>, <code>src/content/skin.rs</code>, <code>src/content/screens.rs</code>, <code>src/app/strategy.rs</code>, <code>packs/interceptor/rules/skin.yaml</code>, <code>screens.yaml</code>, <code>resources/default/rules/skin.yaml</code></td>
+</tr>
+</tbody>
+</table>
+<p>Not yet: the exe's built-in 6-pixel caption font (text buttons, #123); lists, button captions and
+map labels still draw in the TrueType font (#123, #124, #128); the default campaign has no screen
+set, so its sheet fonts are loaded and checked but not yet shown.</p>
 
 
 

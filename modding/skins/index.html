@@ -4835,6 +4835,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sheet-fonts-app-0225" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sheet fonts (app 0.22.5)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sheet fonts (app 0.22.5)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-grid-sheet-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The grid sheet format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-originals-fonts-interceptor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's fonts (interceptor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#not-built-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6624,6 +6663,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sheet-fonts-app-0225" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sheet fonts (app 0.22.5)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sheet fonts (app 0.22.5)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-grid-sheet-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The grid sheet format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-originals-fonts-interceptor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's fonts (interceptor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#not-built-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6829,10 +6907,155 @@ load is reported on standard error (<code>skin &lt;id&gt;: font: …</code>, <co
 the screens still draw, with colours and the built-in font.</p>
 <p>The strategy screen clips each list row to its width by measuring it in the skin's font (app
 0.16.0) and shows the selected row in full beneath the list, so a wide font costs only room.</p>
+<h2 id="sheet-fonts-app-0225">Sheet fonts (app 0.22.5)<a class="headerlink" href="#sheet-fonts-app-0225" title="Permanent link">&para;</a></h2>
+<p>A skin can also carry <strong>bitmap sheet fonts</strong> by name, under <code>fonts:</code>. A <a href="../screens/#text-in-sheet-fonts-app-next">screen set</a>
+widget that names one with <code>font: &lt;name&gt;</code> is drawn in it, placed by the original game's own text
+rules — the fix for the playtest finding that text on the strategy screens was <em>sized differently
+and not aligned with the UI elements it belongs to</em> (plan M2, issue #122, RQ-UI-03/04).</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># resources/default/rules/skin.yaml</span>
+<span class="nt">skins</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">deco</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">fonts</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">sheet</span><span class="p">:</span><span class="w"> </span><span class="nv">textures/font_body.png</span><span class="p p-Indicator">,</span><span class="nt"> top</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">sheet</span><span class="p">:</span><span class="w"> </span><span class="nv">textures/font_title.png</span><span class="p p-Indicator">,</span><span class="nt"> top</span><span class="p">:</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fonts.&lt;name&gt;</code></td>
+<td>asset, or the mapping below</td>
+<td>none</td>
+<td>A sheet font. A bare asset is the same as <code>{sheet: &lt;asset&gt;}</code>.</td>
+</tr>
+<tr>
+<td><code>fonts.&lt;name&gt;.sheet</code></td>
+<td>asset</td>
+<td><em>required</em></td>
+<td>The sheet image: a pack PNG/TGA, or <code>original:SpritesDLL.dll#&lt;id&gt;</code> for one of the original's.</td>
+</tr>
+<tr>
+<td><code>fonts.&lt;name&gt;.top</code></td>
+<td>whole number</td>
+<td>half the line height</td>
+<td>How far <strong>above</strong> the anchor's y the glyph tops sit. The original: 5, and 7 for its four small fonts.</td>
+</tr>
+<tr>
+<td><code>fonts.&lt;name&gt;.wrap_offset</code></td>
+<td>whole number</td>
+<td>0</td>
+<td>Extra pixels down for the first line of wrapped text. The original: 4 for its four small fonts.</td>
+</tr>
+<tr>
+<td><code>fonts.&lt;name&gt;.spacing</code></td>
+<td>whole number</td>
+<td>0</td>
+<td>Extra pixels after every character (the original's glyphs carry their own gap).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-grid-sheet-format">The grid sheet format<a class="headerlink" href="#the-grid-sheet-format" title="Permanent link">&para;</a></h3>
+<p>A sheet is one image with the glyphs in a grid of square cells. The engine reads it the way the
+original's font loader does (Interceptor.exe 0x5fd750, <strong>verified</strong>):</p>
+<div class="highlight"><pre><span></span><code> (0,0) = grid colour          one cell = pitch × pitch
+ ┌──┬──┬──┬──┬──┬── … 26 cells per row (any number works: cols = width / pitch)
+ │A │B │C │D │E │
+ ├──┼──┼──┼──┼──┼──   the first grid line in column 1 sets the pitch
+ │a │b │c │d │e │
+ └──┴──┴──┴──┴──┴──
+                    bottom-right pixel = key colour (transparent)
+</code></pre></div>
+<ul>
+<li>Pixel (0, 0) has the <strong>grid colour</strong>, the bottom-right pixel the <strong>key colour</strong>; both are drawn
+  transparent. The <strong>pitch</strong> is the first row below the top whose column-1 pixel is the grid colour.</li>
+<li>Glyph <em>g</em> (1 to 154) sits in cell <em>g</em> − 1, left to right, top to bottom; its <strong>box</strong> is
+  pitch − 2 pixels square, inside the 1-pixel grid line.</li>
+<li>A glyph's <strong>width</strong> is its rightmost painted column + 1 (paint each glyph from the left of its box
+  and leave column 0 empty if you want a gap between letters). The pen moves on by that width; a
+  <strong>space</strong> moves by the width of glyph 31 (<code>e</code>). The <strong>line height</strong> is the lowest painted row + 1
+  over all glyphs.</li>
+<li>Characters map to glyphs as in the original: <code>A</code>–<code>Z</code> 1–26, <code>a</code>–<code>z</code> 27–52, <code>1</code>–<code>9</code> 53–61, <code>0</code> 62,
+  then <code>, . / ; '</code> 63–67 (<code>`</code> also 67), 68 unused, <code>&lt; &gt; ? : " ~ ! @ # $ % ^ &amp; * ( ) - = + [ ] \ { }</code>
+  69–92, and accented Latin-1 letters 93–141 (an accented capital shares the small letter's glyph).
+  Accented glyphs (93 and later) are drawn one pixel lower. A character with no glyph draws nothing
+  and does not move the pen.</li>
+<li>The colours are the image's own: the text is drawn as painted. A widget's <code>colour</code> tints it
+  (multiplies), so a white sheet can be any colour.</li>
+</ul>
+<p><code>tools/default_assets/fonts.py</code> draws the default campaign's two sheets (<code>font_body.png</code>, a
+5 × 9 dot-matrix in cream with a brown shadow, and <code>font_title.png</code>, the same at double size in
+gold) in this layout: read it as a worked example of making your own.</p>
+<h3 id="the-originals-fonts-interceptor">The original's fonts (<code>interceptor</code>)<a class="headerlink" href="#the-originals-fonts-interceptor" title="Permanent link">&para;</a></h3>
+<p><code>packs/interceptor/rules/skin.yaml</code> names the nine sheet fonts the original loads at start, read at
+run time from the player's own <code>SpritesDLL.dll</code> — nothing is copied:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Sheet</th>
+<th><code>top</code></th>
+<th>Used for (the exe's call sites)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>topic</code></td>
+<td>23000</td>
+<td>5</td>
+<td>Research topic texts (cream).</td>
+</tr>
+<tr>
+<td><code>map</code>, <code>map_small</code>, <code>map_large</code></td>
+<td>23006, 23007, 23008</td>
+<td>5</td>
+<td>CSD map labels (<strong>derived</strong>).</td>
+</tr>
+<tr>
+<td><code>readout</code></td>
+<td>23010</td>
+<td>7 (<code>wrap_offset</code> 4)</td>
+<td>CSD readouts and status bar, list headers, message-box captions (white with green edges).</td>
+</tr>
+<tr>
+<td><code>body</code></td>
+<td>23011</td>
+<td>7 (4)</td>
+<td>The body font: list rows, tooltips, dialogs, Bases info (white and grey).</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>23013</td>
+<td>7 (4)</td>
+<td>Research values, Bases view labels, Equipment &amp; Personnel (yellow).</td>
+</tr>
+<tr>
+<td><code>highlight</code></td>
+<td>23015</td>
+<td>7 (4)</td>
+<td>Equip Ships, Production, Bases highlights (yellow).</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>23014</td>
+<td>5</td>
+<td>Base Stats page titles (large yellow).</td>
+</tr>
+</tbody>
+</table>
+<p>The original also has a tenth, small 6-pixel font compiled into the program for text-button
+captions; it is not a sheet and is not available yet (plan M2, #123).</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Custom panels bound to queries, buttons with hover images, skin sounds, several fonts per
-  skin. Screen layouts are built for the strategy screen only (<a href="../screens/">Screen layouts</a>).</li>
+<li>Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used
+  by screen-set <code>value</code> and <code>text</code> widgets only (app 0.22.5); lists, buttons, the map labels and the
+  testbed layout still draw with <code>font</code> (the TrueType font). Screen layouts are built for the strategy screen only (<a href="../screens/">Screen layouts</a>).</li>
 <li>Main menu option values too long for their room are drawn smaller (down to half size, app
   0.14.2), not wrapped.</li>
 <li>A full graphics options page (the menu has <em>Full screen</em> since app 0.16.14; brightness is in
@@ -6859,6 +7082,22 @@ the screens still draw, with colours and the built-in font.</p>
 <tr>
 <td><code>campaign.skin: unknown skin 'x'</code></td>
 <td><code>campaign.skin</code> names no defined skin.</td>
+</tr>
+<tr>
+<td><code>skins.x: fonts.y: sheet: expected the font sheet image</code></td>
+<td>A font without <code>sheet</code>.</td>
+</tr>
+<tr>
+<td><code>skins.x: fonts.y: top: 2.5 is not a whole number of pixels</code></td>
+<td><code>top</code>, <code>wrap_offset</code> or <code>spacing</code> not a whole number.</td>
+</tr>
+<tr>
+<td><code>skins.x.fonts.y: &lt;sheet&gt;: font sheet: no grid line found in column 1 …</code> (<code>--check</code>; at start on standard error as <code>skin x: font y: …</code>)</td>
+<td>The image is not in the grid layout, or the grid and key colours are the same. The font is left out and its widgets fall back to the TrueType path.</td>
+</tr>
+<tr>
+<td><code>screens.s.widgets.w: font 'y' is not a font of the campaign's skin</code> (<code>--check</code>)</td>
+<td>A widget names a font the campaign's skin does not define.</td>
 </tr>
 </tbody>
 </table>

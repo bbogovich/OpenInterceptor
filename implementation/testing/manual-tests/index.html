@@ -6669,6 +6669,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-28-sheet-fonts-on-the-original-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-28 — Sheet fonts on the original screens
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12186,6 +12197,17 @@
     <span class="md-ellipsis">
       
         MT-6-27 — Options: Full screen and Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-28-sheet-fonts-on-the-original-screens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-28 — Sheet fonts on the original screens
       
     </span>
   </a>
@@ -20128,6 +20150,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: the window goes full screen at once; the row reads <em>On</em>; <code>settings.yaml</code> has <code>graphics: fullscreen: true</code>. 2: starts full screen. 3: starts in a window (the setting stays on). 4: <em>Off</em>; starts in a window. 5: the controls screen; leaving it returns to the main menu. 6: since 0.16.14 leaving it also returns to the main menu, not the launcher (record whether that is wanted).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-28-sheet-fonts-on-the-original-screens">MT-6-28 — Sheet fonts on the original screens<a class="headerlink" href="#mt-6-28-sheet-fonts-on-the-original-screens" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code> (the CSD). 2. Look at the four green readouts and the status bar. 3. <code>--screen purchase</code>, then <code>--screen manufacture</code>. 4. <code>--screen bases</code>, <code>equip_ships</code>. 5. <code>--no-original --check</code>.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>2: time, weekday, date and funds in the original's white-and-green font, each centred in its bar (the time with evenly spaced digits); the status bar's text centred in it. 3: the funds in yellow, centred in the dark slot under the shelf (not above it). 4: the base name in the white body font on the title strip. 5: no errors (the default skin's generated fonts load). Screenshots of app 0.22.5 are in the parity M2 report.</td>
 </tr>
 </tbody>
 </table>

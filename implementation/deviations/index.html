@@ -6913,6 +6913,18 @@ one looks like a bug.</p>
 <td>Needs pilot records in battle (A8) and a per-ship selected beam type for the AI; not built yet (Track A, A7).</td>
 <td>4 (A7)</td>
 </tr>
+<tr>
+<td>DEV-081</td>
+<td><strong>Two small additions to the original's text placement.</strong> A rectangle's text with <code>align: right</code> (one line) ends at the rectangle's right edge; the original has no right-aligned rectangle text (its flag 4 would put the line left of the rectangle). And a word too wide for the rectangle that comes first does not leave an empty line above it, as the original's wrap does (<strong>verified</strong>, DrawTextRect 0x5fed2b).</td>
+<td>Mods need right-aligned numbers; the empty line is a quirk no original text triggers. Everything else follows the exe's DrawText and DrawTextRect pixel for pixel.</td>
+<td>M2 (#122)</td>
+</tr>
+<tr>
+<td>DEV-082</td>
+<td><strong><code>ß</code> is drawn with its own glyph.</strong> The engine maps every character through the exe's char table (<code>ß</code> → glyph 123). The exe's text routine writes <code>ß</code> as <code>SS</code> when its language setting is 3 (<strong>verified</strong>, 0x5fe2e6; derived: German).</td>
+<td>The language-specific rewrite belongs to text loading, not the font; not built.</td>
+<td>M2 (#122)</td>
+</tr>
 </tbody>
 </table>
 

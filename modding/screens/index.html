@@ -4886,6 +4886,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#text-in-sheet-fonts-app-0225" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text in sheet fonts (app 0.22.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6708,6 +6719,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#text-in-sheet-fonts-app-0225" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text in sheet fonts (app 0.22.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7042,6 +7064,24 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>Text alignment in the rectangle.</td>
 </tr>
 <tr>
+<td><code>font</code></td>
+<td>name</td>
+<td>none</td>
+<td>A <a href="../skins/#sheet-fonts-app-next">sheet font</a> of the skin: the text is placed by the original's rules (<a href="#text-in-sheet-fonts-app-next">below</a>) and <code>size</code> is unused (app 0.22.5).</td>
+</tr>
+<tr>
+<td><code>at</code></td>
+<td><code>[x, y]</code></td>
+<td>none</td>
+<td>With <code>font</code>: an anchor point instead of the rectangle.</td>
+</tr>
+<tr>
+<td><code>monospace</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>With <code>font</code>: every character in a cell of the widest glyph.</td>
+</tr>
+<tr>
 <td><code>shape</code></td>
 <td><code>rect</code>, <code>round</code></td>
 <td><code>rect</code></td>
@@ -7170,6 +7210,31 @@ and kept; one that cannot be loaded is reported on standard error once
 </tbody>
 </table>
 <p>A name the engine does not know shows as <code>?&lt;name&gt;</code>.</p>
+<h3 id="text-in-sheet-fonts-app-0225">Text in sheet fonts (app 0.22.5)<a class="headerlink" href="#text-in-sheet-fonts-app-0225" title="Permanent link">&para;</a></h3>
+<p>A <code>value</code> or <code>text</code> widget with <code>font: &lt;name&gt;</code> is drawn in that <a href="../skins/#sheet-fonts-app-next">sheet font</a>
+of the skin and placed by the two routines the original game uses for all its screen text
+(Interceptor.exe, <strong>verified</strong>):</p>
+<ul>
+<li><strong>An anchor point</strong> (<code>at: [x, y]</code>, the original's <code>DrawText</code>): the line starts at x (<code>align:
+  left</code>), is centred on x (<code>centre</code>) or ends at x (<code>right</code>). <strong>y is not the top of the text</strong>: the
+  glyph tops sit at y − the font's <code>top</code>. With the original's 14-pixel fonts and their <code>top</code> of 7,
+  y is the middle of the line.</li>
+<li><strong>A rectangle</strong> (no <code>at</code>, the original's <code>DrawTextRect</code>): a line that fits the width and has no
+  <code>~</code> is drawn at the rectangle's left (or centre) and at y = its top + height / 2 — <strong>centred
+  vertically</strong>. Longer text wraps at spaces, a <code>~</code> forces a new line, and lines step by the line
+  height + a third. Centred text is centred as a block; left text starts at top + line height / 2</li>
+<li>line height (+ the font's <code>wrap_offset</code>). Wrapped text is not clipped. <code>align: right</code> in a
+  rectangle (one line, ending at its right edge) is an engine extension
+  (<a href="../../implementation/deviations/">DEV-081</a>).</li>
+</ul>
+<p>All of it is whole pixels in the design space, so on a 640 × 480 screen the text lands on the
+same pixels as in the original, then the whole screen is scaled. Without <code>font</code> (or with a name
+the skin lacks) the widget keeps the TrueType path: <code>size</code>, <code>colour</code>, <code>align</code> in its rectangle.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/screens.yaml: the CSD's readouts and status bar</span>
+<span class="nt">time</span><span class="p">:</span><span class="w">   </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">time</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">495</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">365</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">133</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span><span class="nt"> at</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">561</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">370</span><span class="p p-Indicator">],</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">,</span><span class="nt"> monospace</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="nt">funds</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">money</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">495</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">426</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">133</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span><span class="nt"> at</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">561</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">430</span><span class="p p-Indicator">],</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
+<span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">selection</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">344</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">457</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">276</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
+</code></pre></div>
 <h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>
 <p><strong>Ctrl+T</strong> switches between the screen set and the testbed layout at any time; a <code>testbed</code>
 button does the same one way. A campaign without <code>strategy_screen</code> uses the testbed layout only.
@@ -7191,6 +7256,11 @@ original has one, its links and a back button.</p>
   readouts' order (from the original running) and the back buttons' positions. Since app 0.21.0
   the dial's six holes select the original's six speeds (<code>speed(0)</code> – <code>speed(5)</code>, verified from the
   program's clock table; see <a href="../strategy/#clock"><code>clock</code></a>).</li>
+<li><strong>Since app 0.22.5</strong> the readouts, the status bar, the base names and the Equipment &amp; Personnel
+  funds use the original's sheet fonts and anchors: the four readouts in 23010 centred on x 561 at
+  y 370, 390, 410 and 430 (the time monospaced), the status bar centred in its bar, and the funds
+  centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34). Lists,
+  button captions and map labels are still in the TrueType font (plan M2, #123 – #128).</li>
 <li><strong>Unknown</strong>: the buttons' own state images, which live in the original's sprite table
   (<code>SpritesDLL</code>), not yet read; until then the buttons are hot spots over the art.</li>
 </ul>

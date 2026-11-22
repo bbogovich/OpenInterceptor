@@ -6627,7 +6627,8 @@ test itself — never with original game files. Plan: Stage 1 (formats needed fo
     TXT["&amp;str"] --&gt; INI["ini::Ini::parse&lt;br/&gt;(original INI; legacy settings)"]
     TXT --&gt; YML["yaml::parse → Node&lt;br/&gt;(mod files, settings, bindings)"]
     TXT --&gt; OBJ["obj::parse → ObjMesh&lt;br/&gt;obj::parse_mtl"]
-    RGBA["RGBA pixels"] --&gt; PNG["png::downscale, png::encode_rgba → PNG bytes&lt;br/&gt;(encoding by the image crate since 2ed1149)"]</code></pre>
+    RGBA["RGBA pixels"] --&gt; SF["sheetfont::SheetFont::parse&lt;br/&gt;(grid sheet bitmap fonts)"]
+    RGBA --&gt; PNG["png::downscale, png::encode_rgba → PNG bytes&lt;br/&gt;(encoding by the image crate since 2ed1149)"]</code></pre>
 <p>Logic flow of a typical reader: check the signature (<code>BadMagic</code> if wrong) → read the header
 with <code>Reader</code> (every read returns <code>FResult</code>, so <code>?</code> propagates a <code>Truncated</code> error) → read the
 tables the header points to → validate cross-references (edge and vertex indices, palette
@@ -6690,6 +6691,11 @@ indices) → return owned data.</p>
 <td><code>formats::mpsrc</code></td>
 <td>MPSRC packs (<code>.mps</code>)</td>
 <td>Main <code>319a31b</code>. The bundle <code>mfdanim.mps</code> (113 talking-head Smacker clips): <a href="#mpsrc-formatsmpsrc">below</a>.</td>
+</tr>
+<tr>
+<td><code>formats::sheetfont</code></td>
+<td>Grid sheet bitmap fonts (from decoded RGBA)</td>
+<td>App NEXT. The original's SpritesDLL fonts and mods' PNG fonts: grid colour at (0,0), key colour bottom-right, pitch from the first grid line in column 1, glyphs trimmed on the right, the exe's char → glyph table. Metrics only; drawing is <code>app::ui</code> (<a href="../presentation/#sheet-fonts-and-text-anchors-formatssheetfont-apptext">Presentation › Sheet fonts</a>).</td>
 </tr>
 <tr>
 <td><code>formats::obj</code></td>
@@ -6806,6 +6812,10 @@ test: the table, a case-insensitive lookup, a missing member, a foreign file).</
 <td>The LSB-first bit reader; a big Huffman tree with its escape cache.</td>
 </tr>
 <tr>
+<td><code>sheetfont::SheetFont</code>, <code>sheetfont::Glyph</code>, <code>CHAR_MAP</code></td>
+<td>A sheet font's pitch, box size, columns, glyph boxes and widths, line height, widest mapped glyph, grid and key colours, char table; <code>glyph_of</code>, <code>glyph</code>, <code>advance</code>, <code>clear_background</code>.</td>
+</tr>
+<tr>
 <td><code>obj::ObjMesh</code>, <code>obj::ObjMaterial</code></td>
 <td>Positions, uvs, normals, faces (as corner ranges), material names, <code>slots</code> (attachment points).</td>
 </tr>
@@ -6824,12 +6834,13 @@ test: the table, a case-insensitive lookup, a missing member, a foreign file).</
   <code>ini.section(name)</code>, <code>ini.get(section, key)</code>, <code>ini.merge_from(&amp;other)</code>.</li>
 <li><code>smacker::Smacker::new(&amp;[u8]) -&gt; Result&lt;Smacker, SmkError&gt;</code>, <code>.next_frame() -&gt; Result&lt;Option&lt;FrameAudio&gt;, SmkError&gt;</code>,
   <code>.rgba()</code>, <code>.out_height()</code>, <code>.skip_to(n)</code>; <code>smacker::decode_palette(&amp;[u8], &amp;old)</code>, <code>smacker::decode_audio(&amp;[u8], AudioTrack)</code>.</li>
+<li><code>sheetfont::SheetFont::parse(width, height, &amp;[u8] rgba) -&gt; FResult&lt;SheetFont&gt;</code>; <code>sheetfont::char_table() -&gt; [u8; 256]</code>.</li>
 <li><code>obj::parse(&amp;str) -&gt; FResult&lt;ObjMesh&gt;</code>, <code>obj::parse_mtl(&amp;str) -&gt; Vec&lt;ObjMaterial&gt;</code>.</li>
 <li><code>yaml::parse(&amp;str) -&gt; Result&lt;Node, YamlError&gt;</code>; <code>Node::null(line)</code>, <code>Node::text(s, line)</code>,
   <code>node.get(key)</code>, <code>as_str</code>, <code>as_map</code>, <code>as_seq</code>, <code>is_null</code>, <code>to_yaml()</code>.</li>
 </ul>
 <p>Test-only builders (<code>#[cfg(test)]</code>, crate-visible): <code>pe::build_test_pe</code>,
-<code>xmsh::build_test_xmsh</code>, <code>xtxr::build_test_xtxr</code>, <code>tga::build_test_tga</code> — so other modules'
+<code>xmsh::build_test_xmsh</code>, <code>xtxr::build_test_xtxr</code>, <code>tga::build_test_tga</code>, <code>sheetfont::tests::synthetic_sheet</code> — so other modules'
 tests can make fake DLLs and meshes.</p>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
 <ul>

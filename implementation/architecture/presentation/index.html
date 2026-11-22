@@ -3590,6 +3590,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sheet-fonts-and-text-anchors-formatssheetfont-apptext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sheet fonts and text anchors (formats::sheetfont, app::text)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6688,6 +6699,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sheet-fonts-and-text-anchors-formatssheetfont-apptext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sheet fonts and text anchors (formats::sheetfont, app::text)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7025,6 +7047,45 @@ collected during the draw and applied after it, so the stack is not changed whil
 walked. <code>value()</code> maps a value name to text; <code>weekday</code> uses <code>Date::weekday</code> (Zeller's congruence,
 0 = Monday; tested by <code>weekdays_follow_the_calendar</code>). <code>--screen &lt;id&gt;</code> calls
 <code>StrategyScreen::open_screen</code>, which puts that screen over the first.</p>
+<h3 id="sheet-fonts-and-text-anchors-formatssheetfont-apptext">Sheet fonts and text anchors (<code>formats::sheetfont</code>, <code>app::text</code>)<a class="headerlink" href="#sheet-fonts-and-text-anchors-formatssheetfont-apptext" title="Permanent link">&para;</a></h3>
+<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #122; RQ-UI-03/04).</em> The original strategy
+screens draw text with bitmap <strong>sheet fonts</strong> placed by two routines; the engine had guessed
+TrueType baselines (<code>r[1] + r[3]/2 + 0.35·size</code>), which is why text looked mis-sized and off its
+controls. Three layers now reproduce the original:</p>
+<pre class="mermaid"><code>flowchart LR
+    Y["skins.&amp;lt;id&amp;gt;.fonts.&amp;lt;name&amp;gt;&lt;br/&gt;content::skin::SheetFontDef"] --&gt; L["skin::load_sheet&lt;br/&gt;Content::load_image → RGBA"]
+    L --&gt; P["formats::sheetfont::SheetFont::parse&lt;br/&gt;pitch, glyph rects, widths, char map"]
+    P --&gt; U["app::ui::SheetFace&lt;br/&gt;texture (grid + key → alpha 0, Nearest)"]
+    W["screens.&amp;lt;id&amp;gt;.widgets.&amp;lt;w&amp;gt;&lt;br/&gt;font, at, align, monospace"] --&gt; T["app::text::draw_text / draw_text_rect&lt;br/&gt;→ Vec&amp;lt;Placed&amp;gt; (design pixels)"]
+    U --&gt; T
+    T --&gt; D["Ui::draw_glyphs&lt;br/&gt;Layout::rect per glyph"]</code></pre>
+<ul>
+<li><strong><code>formats::sheetfont</code></strong> turns a sheet's RGBA pixels into metrics only: the grid colour
+  (pixel 0,0), the key colour (bottom-right), the pitch (first grid line in column 1), each
+  glyph's box and trimmed width, the line height, the widest <em>mapped</em> glyph (the monospace cell)
+  and the fixed char → glyph table <code>CHAR_MAP</code> (the exe's table at 0x6af488).</li>
+<li><strong><code>app::text</code></strong> is pure layout in <code>i32</code>, so its divisions truncate toward zero exactly like the
+  exe's <code>cdq; sub; sar</code> idiom: <code>draw_text</code> (DrawText 0x5fe4ad: x by flag, glyph top = y − <code>top</code>,
+  accented glyphs +1), <code>draw_text_rect</code> (DrawTextRect 0x5fed2b: one fitting line at the rect's
+  vertical centre, else <code>wrap</code> and a block whose first y is centred or <code>top + lh/2 + lh</code>, plus
+  <code>wrap_offset</code>, step <code>lh + lh/3</code>), <code>width</code> and <code>wrap</code> (words split at spaces and <code>~</code>; a <code>~</code>
+  just before a word forces the break, as the exe tests the byte before each <code>strtok</code> token).</li>
+<li><strong><code>app::ui</code></strong> loads each skin font once (<code>Ui::load</code>), uploads it with <code>FilterMode::Nearest</code> (a
+  pixel font must not be smoothed) and draws <code>Placed</code> glyphs through the screen's <code>Layout</code>.</li>
+<li><strong><code>StrategyScreen::draw_set</code></strong> calls <code>sheet_text</code> for <code>value</code> and <code>text</code> widgets; it returns
+  <code>false</code> when the widget has no (loaded) sheet font, and the old TrueType path runs. The glyph
+  list is a <code>Vec</code> owned by the screen and cleared each time, so drawing text allocates nothing
+  per frame once it has grown.</li>
+<li><code>--check</code> loads every skin's fonts through the same reader and reports a widget naming a font
+  the campaign's skin lacks.</li>
+</ul>
+<p>Tests: <code>formats::sheetfont::tests</code> (a synthetic sheet built in the test: pitch, trim, char map,
+space rule, a short sheet, the key cleared), <code>app::text::tests</code> (the CSD time centred on x 561 at
+y 370 → tops at 363; right alignment; accented drop; monospace cells; a fitting line centred in
+the status bar; wrapping, forced breaks and both block placements),
+<code>content::skin::tests::sheet_fonts_parse_with_their_anchor_rules</code> and
+<code>the_default_campaigns_generated_fonts_are_grid_sheets</code>, and <code>check::tests</code> (bad sheet, unknown
+widget font).</p>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -7160,6 +7221,26 @@ play without it.</p>
 <td><code>AppContext::ui</code>, <code>AppContext::music</code></td>
 <td><code>app</code></td>
 <td>The skin and the music player, shared by every screen.</td>
+</tr>
+<tr>
+<td><code>SheetFont</code>, <code>Glyph</code>, <code>CHAR_MAP</code>, <code>char_table</code>, <code>ACCENTED_FIRST</code></td>
+<td><code>formats::sheetfont</code></td>
+<td>A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5).</td>
+</tr>
+<tr>
+<td><code>SheetFontDef</code>, <code>skin::load_sheet</code>, <code>Skin::fonts</code></td>
+<td><code>content::skin</code></td>
+<td><code>skins.&lt;id&gt;.fonts.&lt;name&gt;</code>; reading a sheet with its background made transparent.</td>
+</tr>
+<tr>
+<td><code>text::{Face, Placed, Align, draw_text, draw_text_rect, wrap, width}</code></td>
+<td><code>app::text</code></td>
+<td>The original's DrawText and DrawTextRect as pure layout (app 0.22.5).</td>
+</tr>
+<tr>
+<td><code>SheetFace</code>, <code>Ui::sheet</code>, <code>Ui::draw_glyphs</code>; <code>strategy::sheet_text</code>; <code>WidgetDef::{font, at, monospace}</code></td>
+<td><code>app::ui</code>, <code>app::strategy</code>, <code>content::screens</code></td>
+<td>Loaded sheet fonts and their drawing; a widget's text in its sheet font.</td>
 </tr>
 <tr>
 <td><code>widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}</code></td>

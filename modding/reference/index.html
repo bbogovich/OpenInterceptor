@@ -9133,6 +9133,12 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 <td>the built-in font</td>
 <td>A TrueType font for every skinned text.</td>
 </tr>
+<tr>
+<td><code>fonts.&lt;name&gt;</code></td>
+<td>asset or <code>{sheet, top, wrap_offset, spacing}</code></td>
+<td>none</td>
+<td>Grid sheet bitmap fonts for screen-set widgets' <code>font:</code> (app 0.22.5; <a href="../skins/#sheet-fonts-app-next">Skins › Sheet fonts</a>). <code>sheet</code>: the image; <code>top</code>: glyph top = anchor y − <code>top</code> (default half the line height); <code>wrap_offset</code>: extra drop of wrapped text; <code>spacing</code>: extra pixels per character. <code>interceptor</code>: the original's nine SpritesDLL fonts.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="screens"><code>screens</code><a class="headerlink" href="#screens" title="Permanent link">&para;</a></h3>
@@ -9257,6 +9263,24 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td><code>left</code>, <code>centre</code>, <code>right</code></td>
 <td><code>left</code></td>
 <td>Text alignment.</td>
+</tr>
+<tr>
+<td><code>font</code></td>
+<td>name</td>
+<td>none</td>
+<td>A sheet font of the campaign's skin (app 0.22.5): the text is placed by the original's rules (<a href="../screens/#text-in-sheet-fonts-app-next">Screen layouts › Text in sheet fonts</a>); <code>size</code> is then unused. An unknown name is a <code>--check</code> error.</td>
+</tr>
+<tr>
+<td><code>at</code></td>
+<td>2 numbers</td>
+<td>none</td>
+<td>With <code>font</code>: the anchor <code>[x, y]</code> — the line's left, centre or right (by <code>align</code>) at x, glyph tops at y − the font's <code>top</code>. Without it the text is placed in <code>rect</code>.</td>
+</tr>
+<tr>
+<td><code>monospace</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>With <code>font</code>: every character in a cell as wide as the font's widest glyph (the original's clock).</td>
 </tr>
 <tr>
 <td><code>shape</code></td>
