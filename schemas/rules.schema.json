@@ -514,14 +514,16 @@
           "background": {"description": "an image over the whole design space", "type": "string"},
           "dialog": {"description": "drawn over the screen under it", "type": "boolean"},
           "widgets": {"description": "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
-                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info"]},
+                  "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info", "check"]},
                   "rect": {"description": "x, y, w, h in the design space", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
                   "image": {"description": "its picture", "type": "string"},
                   "images": {"description": "a button's states", "type": "object", "additionalProperties": false, "properties": {
                       "up": {"description": "normal", "type": "string"},
                       "down": {"description": "pressed", "type": "string"},
                       "hover": {"description": "under the mouse", "type": "string"},
-                      "disabled": {"description": "unavailable", "type": "string"}
+                      "disabled": {"description": "unavailable", "type": "string"},
+                      "sprite": {"description": "a sprite's base image (original:sprite#N): state k is row N+k", "type": "string"},
+                      "states": {"description": "how many states the sprite has (1: nothing drawn when up)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
                     }},
                   "action": {"description": "open(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed", "type": "string"},
                   "value": {"description": "a value: date, time, money, score, base, speed, selection", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
@@ -534,6 +536,13 @@
                   "font": {"description": "a sheet font of the skin (skins.<id>.fonts): placed by the original's anchor rules", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "at": {"description": "with font: the DrawText anchor [x, y] (glyph tops at y - the font's top)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                   "monospace": {"description": "with font: every character in a cell of the widest glyph", "type": "boolean"},
+                  "centre": {"description": "a sprite centred on this point (its size from the image)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "pos": {"description": "a sprite with its top-left at this point", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "states": {"description": "how many states the sprite has", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "fire_on_press": {"description": "a button fires when pressed, not when released", "type": "boolean"},
+                  "repeat": {"description": "a held button fires again after [delay, interval] ticks", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "group": {"description": "a radio group: the chosen member stays latched", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "selected": {"description": "latched at the start", "type": "boolean"},
                   "row_height": {"description": "a list in a sheet font: row pitch (default line height + 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "row_size": {"description": "a list in a sheet font: a row's own height when less than row_height", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "header": {"description": "a list in a sheet font: height of the title strip at the top of rect (0: no title)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},

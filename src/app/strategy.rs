@@ -27,6 +27,7 @@
 //! battle hands the screen to the app, which flies the mission and comes back here with
 //! the debrief (see `AppContext::campaign`).
 
+use super::button;
 use super::caption;
 use super::listbox;
 use super::text;
@@ -261,6 +262,12 @@ pub struct StrategyScreen {
     glyphs: Vec<text::Placed>,
     /// The open list's scroll arrows' auto-repeat (up, down).
     arrows: [listbox::Repeat; 2],
+    /// Each screen-set button's press and repeat, by (screen, widget) index.
+    presses: std::collections::HashMap<(usize, usize), (button::Press, listbox::Repeat)>,
+    /// The latched member of each radio group, by (screen, group).
+    radios: std::collections::HashMap<(usize, String), String>,
+    /// Check rows that are on, by (screen, widget) index.
+    checks: std::collections::HashMap<(usize, usize), bool>,
     /// Drawing over art: panels are not framed (the art frames them).
     art: bool,
     /// The map is clipped to a circle.
@@ -421,6 +428,9 @@ impl StrategyScreen {
             images: Default::default(),
             glyphs: Vec::new(),
             arrows: Default::default(),
+            presses: Default::default(),
+            radios: Default::default(),
+            checks: Default::default(),
             art: false,
             map_round: false,
             minimap: false,
@@ -1775,19 +1785,24 @@ impl StrategyScreen {
         self.image_keyed(ctx, reference, pack, false)
     }
 
-    /// An image, optionally with the original's sprite colour key (pure cyan) made
-    /// transparent (its button sprites, such as the scroll arrows, are drawn keyed).
+    /// An image, optionally keyed by its corner colour (the original's button sprites,
+    /// such as the scroll arrows, carry their key colour in their corners).
     fn image_keyed(&mut self, ctx: &AppContext, reference: &str, pack: usize, key: bool) -> Option<Texture2D> {
         // The keyed and plain versions are different textures: cache them apart.
         let cache = if key { format!("keyed:{reference}") } else { reference.to_string() };
         if let Some(t) = self.images.get(&cache) {
             return t.clone();
         }
-        let colour_key = key.then_some(crate::formats::tga::SPRITE_KEY_555);
-        let t = match ctx.content.load_image_keyed(reference, pack, colour_key) {
-            Ok(i) => {
+        let t = match ctx.content.load_image(reference, pack, false) {
+            Ok(mut i) => {
+                if key {
+                    crate::formats::tga::key_corner(&mut i);
+                }
                 let t = Texture2D::from_rgba8(i.width as u16, i.height as u16, &i.rgba);
-                t.set_filter(FilterMode::Linear);
+                // A keyed sprite is sampled pixel by pixel: smoothing would blend its
+                // (transparent) key colour into a visible fringe.
+                let sprite = key || reference.contains("sprite#");
+                t.set_filter(if sprite { FilterMode::Nearest } else { FilterMode::Linear });
                 Some(t)
             }
             Err(e) => {
@@ -1822,8 +1837,10 @@ impl StrategyScreen {
         let mut k = 1.0;
         let mut next = None;
         let mut action: Option<UiAction> = None;
+        let ticks = (get_time() * 60.0) as u64;
         for (depth, id) in open.iter().enumerate() {
-            let Some(screen) = rules.screens.iter().find(|s| &s.id == id).cloned() else { continue };
+            let Some(si) = rules.screens.iter().position(|s| &s.id == id) else { continue };
+            let screen = rules.screens[si].clone();
             let layout = crate::hud::Layout::new(vec2(w, h), vec2(screen.design[0], screen.design[1]));
             k = layout.scale;
             let top = depth + 1 == open.len();
@@ -1840,7 +1857,7 @@ impl StrategyScreen {
                     );
                 }
             }
-            for wd in &screen.items {
+            for (wi, wd) in screen.items.iter().enumerate() {
                 let r = layout.rect(wd.rect);
                 let size = wd.size * layout.scale;
                 let colour = wd.colour.map_or(ctx.ui.colour("text"), |c| Color::new(c[0], c[1], c[2], c[3]));
@@ -1855,54 +1872,89 @@ impl StrategyScreen {
                 };
                 match wd.kind {
                     WidgetKind::Image => {
-                        if let Some(img) = &wd.images[0] {
-                            if let Some(tex) = self.image(ctx, img, screen.pack) {
-                                draw_texture_ex(
-                                    &tex,
-                                    r[0],
-                                    r[1],
-                                    WHITE,
-                                    DrawTextureParams { dest_size: Some(vec2(r[2], r[3])), ..Default::default() },
-                                );
-                            }
+                        let img = wd.sprite.clone().or_else(|| wd.images[0].clone());
+                        if let Some(tex) = img.and_then(|i| self.image(ctx, &i, screen.pack)) {
+                            draw_widget_image(&tex, wd, &layout);
                         }
                     }
                     WidgetKind::Button => {
-                        let hover = widgets::contains(r, input.mouse);
-                        let down = hover && is_mouse_button_down(MouseButton::Left);
-                        let state = if down {
-                            1
-                        } else if hover {
-                            2
-                        } else {
-                            0
+                        // The rect: placed sprites take their size from their up image.
+                        let base = wd.sprite.clone().or_else(|| wd.images[0].clone());
+                        let base_tex = base.and_then(|i| self.image(ctx, &i, screen.pack));
+                        let dr = widget_rect(wd, base_tex.as_ref());
+                        let r = layout.rect(dr);
+                        let inside = widgets::contains(r, input.mouse);
+                        let key = (si, wi);
+                        let (press, repeat) = self.presses.entry(key).or_default();
+                        let went_down = input.clicked;
+                        let went_up = top && is_mouse_button_released(MouseButton::Left);
+                        let mut fire = press.update(inside, went_down, went_up, wd.fire_on_press);
+                        if let Some([delay, interval]) = wd.repeat {
+                            // Auto-repeat while held inside (its own first firing is the press).
+                            let held = press.held && inside;
+                            fire |= repeat.update(ticks, went_down && inside, held, delay as u64, interval as u64)
+                                && !(went_down && inside);
+                        }
+                        let pressed_inside = press.held && inside;
+                        // A radio group's member stays latched once chosen.
+                        let latched = match &wd.group {
+                            Some(g) => {
+                                let members: Vec<(&str, bool)> = screen
+                                    .items
+                                    .iter()
+                                    .filter(|w| w.group.as_ref() == Some(g))
+                                    .map(|w| (w.name.as_str(), w.selected))
+                                    .collect();
+                                let chosen = self.radios.get(&(si, g.clone())).map(String::as_str);
+                                button::latch(chosen, &members) == Some(wd.name.as_str())
+                            }
+                            None => false,
                         };
-                        let img = wd.images[state].clone().or_else(|| wd.images[0].clone());
-                        match img.and_then(|i| self.image(ctx, &i, screen.pack)) {
-                            Some(tex) => draw_texture_ex(
-                                &tex,
-                                r[0],
-                                r[1],
-                                WHITE,
-                                DrawTextureParams { dest_size: Some(vec2(r[2], r[3])), ..Default::default() },
-                            ),
+                        if fire {
+                            if let Some(g) = &wd.group {
+                                self.radios.insert((si, g.clone()), wd.name.clone());
+                            }
+                        }
+                        let has_disabled = wd.images[3].is_some();
+                        let states = if wd.sprite.is_some() { wd.states } else { 2 };
+                        let chosen_image = match button::look(
+                            true,
+                            pressed_inside,
+                            latched || (fire && wd.group.is_some()),
+                            states,
+                            has_disabled,
+                        ) {
+                            button::Look::Nothing => None,
+                            button::Look::Disabled => wd.images[3].clone(),
+                            button::Look::State(k) => match &wd.sprite {
+                                Some(s) if k > 0 => Some(format!("{s}+{k}")),
+                                Some(s) => Some(s.clone()),
+                                // Plain images: up, down, and hover when a pack gives one
+                                // (the original has none).
+                                None if k > 0 => wd.images[1].clone().or_else(|| wd.images[0].clone()),
+                                None if inside && wd.images[2].is_some() => wd.images[2].clone(),
+                                None => wd.images[0].clone(),
+                            },
+                        };
+                        let has_images = wd.sprite.is_some() || wd.images.iter().any(Option::is_some);
+                        match chosen_image.and_then(|i| self.image(ctx, &i, screen.pack)) {
+                            Some(tex) => draw_widget_image(&tex, wd, &layout),
+                            None if has_images => {}
                             None if wd.label.is_some() => {
                                 let label = wd.label.as_deref().unwrap_or("");
                                 match &ctx.ui.skin.text_button {
                                     // The original's TextButton: its caption is placed from
                                     // its own rect (RQ-UI-06).
                                     Some(style) => {
-                                        let ir = wd.rect.map(|v| v as i32);
-                                        let down = is_mouse_button_down(MouseButton::Left);
                                         caption::draw_text_button(
                                             &ctx.ui,
                                             style,
                                             &layout,
-                                            ir,
+                                            wd.rect.map(|v| v as i32),
                                             label,
                                             input.mouse,
                                             false,
-                                            down,
+                                            pressed_inside,
                                             &mut self.glyphs,
                                         );
                                     }
@@ -1912,12 +1964,76 @@ impl StrategyScreen {
                                 }
                             }
                             // An invisible hot spot over the art (the art draws the button).
-                            None if hover => {
+                            None if inside => {
                                 draw_rectangle_lines(r[0], r[1], r[2], r[3], 1.0, Color::new(1.0, 1.0, 0.6, 0.6))
                             }
                             None => {}
                         }
-                        if input.clicked_in(r) {
+                        if fire {
+                            action = wd.action.clone();
+                        }
+                    }
+                    WidgetKind::Check => {
+                        // A check row: a lamp that toggles (latched = on), its label 20 px to
+                        // the right in the caption font (the original's TextButton2).
+                        let r = layout.rect(wd.rect);
+                        let inside = widgets::contains(r, input.mouse);
+                        let went_up = top && is_mouse_button_released(MouseButton::Left);
+                        let (press, _) = self.presses.entry((si, wi)).or_default();
+                        let fire = press.update(inside, input.clicked, went_up, wd.fire_on_press);
+                        let on = self.checks.entry((si, wi)).or_insert(wd.selected);
+                        if fire {
+                            *on = !*on;
+                        }
+                        let on = *on;
+                        let lamp = match (&wd.sprite, on) {
+                            (Some(s), true) => Some(format!("{s}+{}", wd.states.max(2) - 1)),
+                            (Some(s), false) => Some(s.clone()),
+                            (None, true) => wd.images[1].clone(),
+                            (None, false) => wd.images[0].clone(),
+                        };
+                        let ir = wd.rect.map(|v| v as i32);
+                        if let Some(tex) = lamp.and_then(|i| self.image(ctx, &i, screen.pack)) {
+                            // The lamp at the left of the row, centred on its line.
+                            let ly = ir[1] + (ir[3] - tex.height() as i32) / 2;
+                            let lr = layout.rect([ir[0] as f32, ly as f32, tex.width(), tex.height()]);
+                            draw_texture_ex(
+                                &tex,
+                                lr[0],
+                                lr[1],
+                                WHITE,
+                                DrawTextureParams { dest_size: Some(vec2(lr[2], lr[3])), ..Default::default() },
+                            );
+                        }
+                        let label = wd.label.as_deref().unwrap_or("");
+                        let tb = ctx.ui.skin.text_button.clone().unwrap_or_default();
+                        let tint =
+                            wd.colour.map_or(Color::new(tb.colour[0], tb.colour[1], tb.colour[2], tb.colour[3]), |c| {
+                                Color::new(c[0], c[1], c[2], c[3])
+                            });
+                        match tb.font.as_deref().and_then(|f| ctx.ui.sheet(f)) {
+                            Some(sheet) => caption::caption(
+                                &ctx.ui,
+                                sheet,
+                                &layout,
+                                label,
+                                caption::check_label(ir),
+                                text::Align::Left,
+                                tint,
+                                &mut self.glyphs,
+                            ),
+                            None => {
+                                let size = (r[3] * 0.6).max(8.0);
+                                ctx.ui.text_in(
+                                    label,
+                                    r[0] + 20.0 * layout.scale,
+                                    r[1] + r[3] * 0.5 + size * 0.35,
+                                    size,
+                                    tint,
+                                );
+                            }
+                        }
+                        if fire {
                             action = wd.action.clone();
                         }
                     }
@@ -2582,6 +2698,36 @@ impl StrategyScreen {
             );
         }
     }
+}
+
+/// A widget's rect in its design space: a placed sprite's from its image's size
+/// (`app::button::sprite_rect`), else its `rect`.
+fn widget_rect(wd: &crate::content::screens::WidgetDef, tex: Option<&Texture2D>) -> [f32; 4] {
+    match (wd.place, tex) {
+        (Some(p), Some(t)) => button::sprite_rect(p, t.width(), t.height()),
+        _ => wd.rect,
+    }
+}
+
+/// Draws a widget's image: a placed sprite at its own size centred on its rect (state
+/// images are drawn centred, as the exe draws them), anything else stretched over it.
+fn draw_widget_image(tex: &Texture2D, wd: &crate::content::screens::WidgetDef, layout: &crate::hud::Layout) {
+    let d = match wd.place {
+        Some(p) => {
+            let r = button::sprite_rect(p, tex.width(), tex.height());
+            // Centred: the rect is the image plus 1 px all round.
+            [r[0] + 1.0, r[1] + 1.0, tex.width(), tex.height()]
+        }
+        None => wd.rect,
+    };
+    let s = layout.rect(d);
+    draw_texture_ex(
+        tex,
+        s[0],
+        s[1],
+        WHITE,
+        DrawTextureParams { dest_size: Some(vec2(s[2], s[3])), ..Default::default() },
+    );
 }
 
 /// Draws a widget's text in its sheet font by the original's anchor rules (RQ-UI-04):

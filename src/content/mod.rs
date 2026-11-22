@@ -116,6 +116,10 @@ pub struct Content {
     /// Problems in the mod files themselves (bad YAML, schema violations, unknown ids):
     /// the definition concerned was skipped. `--check` fails on these.
     pub errors: Vec<String>,
+    /// The original's sprite table, read from `Interceptor.exe` the first time a
+    /// `original:sprite#N` reference is loaded. `OnceLock` lets a `&self` method fill it
+    /// exactly once (it is also safe to share between threads).
+    sprites: std::sync::OnceLock<Result<Vec<crate::formats::spritetable::SpriteRow>, String>>,
 }
 
 /// An RGBA image decoded on the CPU.
@@ -328,6 +332,7 @@ impl Content {
             text,
             warnings,
             errors,
+            sprites: std::sync::OnceLock::new(),
         };
         // Terrains from heightmap images (generated ones were built with the rules).
         let mut fields = Vec::new();
@@ -354,6 +359,22 @@ impl Content {
         }
         content.warnings.extend(content.errors.iter().cloned());
         Ok(content)
+    }
+
+    /// A row of the original's sprite table by its reference part (`372`, `372+1`).
+    pub fn sprite(&self, index: &str) -> Result<crate::formats::spritetable::SpriteRow, String> {
+        use crate::formats::spritetable;
+        let i = spritetable::parse_index(index)?;
+        let table = self.sprites.get_or_init(|| {
+            let exe = self.original()?.read_file("Interceptor.exe")?;
+            spritetable::parse(&exe).map_err(|e| format!("Interceptor.exe: {e}"))
+        });
+        let rows = table.as_ref().map_err(String::clone)?;
+        match rows.get(i as usize) {
+            Some(r) if r.resource != 0 => Ok(*r),
+            Some(_) => Err(format!("sprite#{index}: row {i} has no image (it ends a group)")),
+            None => Err(format!("sprite#{index}: the table has {} rows", rows.len())),
+        }
     }
 
     fn original(&self) -> Result<&OriginalData, String> {
@@ -467,6 +488,18 @@ impl Content {
                 // Replacement art in a pack wins (it carries its own alpha, so no colour key).
                 if let Some((p, rel)) = self.find_override(AssetKind::Image, file.as_deref(), resource.as_deref()) {
                     return decode_image_file(&rel, &self.read_pack_file(p, &rel)?, None);
+                }
+                // `original:sprite#N` (or `#N+k`): row N(+k) of the exe's sprite table, an
+                // image in any resource DLL, keyed by its corner colour.
+                if file.as_deref().is_some_and(|f| f.eq_ignore_ascii_case("sprite")) {
+                    let row = self.sprite(&resource.unwrap_or_default())?;
+                    let data = self
+                        .original()?
+                        .resource("TARG", None, &row.resource.to_string())
+                        .ok_or(format!("{reference}: image {} not found", row.resource))?;
+                    let mut img = tga::decode(data, None).map_err(|e| format!("{reference}: {e}"))?;
+                    tga::key_corner(&mut img);
+                    return Ok(img);
                 }
                 let o = self.original()?;
                 let data = match resource {

@@ -24,13 +24,15 @@ screens:
       weekday: {kind: value, value: weekday, rect: [495, 385, 133, 16], font: readout, at: [561, 390], align: centre}
       date: {kind: value, value: date_long, rect: [495, 406, 133, 15], font: readout, at: [561, 410], align: centre}
       funds: {kind: value, value: money, rect: [495, 426, 133, 15], font: readout, at: [561, 430], align: centre}
-      # The six screen buttons (centres verified; their 40x28 size DERIVED from the art).
-      bases: {kind: button, rect: [496, 180, 40, 28], action: open(bases)}
-      equip_ships: {kind: button, rect: [543, 180, 40, 28], action: open(equip_ships)}
-      reports: {kind: button, rect: [589, 180, 40, 28], action: open(reports)}
-      research: {kind: button, rect: [496, 212, 40, 28], action: open(research)}
-      purchase: {kind: button, rect: [543, 212, 40, 28], action: open(purchase)}
-      ufopedia: {kind: button, rect: [589, 212, 40, 28], action: open(ufopedia)}
+      # The six screen buttons (VERIFIED, sprite-states.md): SpriteButtonC on these
+      # centres, one state each (S = 1: the art shows them up; the sprite - 45x32, rows
+      # 372-382 of the exe's sprite table - is the pressed image). They fire on release.
+      bases: {kind: button, centre: [516, 194], images: {sprite: "original:sprite#372", states: 1}, action: open(bases)}
+      equip_ships: {kind: button, centre: [563, 194], images: {sprite: "original:sprite#380", states: 1}, action: open(equip_ships)}
+      reports: {kind: button, centre: [609, 194], images: {sprite: "original:sprite#382", states: 1}, action: open(reports)}
+      research: {kind: button, centre: [516, 226], images: {sprite: "original:sprite#378", states: 1}, action: open(research)}
+      purchase: {kind: button, centre: [563, 226], images: {sprite: "original:sprite#376", states: 1}, action: open(purchase)}
+      ufopedia: {kind: button, centre: [609, 226], images: {sprite: "original:sprite#374", states: 1}, action: open(ufopedia)}
       # The time dial's six holes (centres verified): the original's six speeds, slowest
       # first (no pause; see clock: in strategy/campaign.yaml).
       speed0: {kind: button, rect: [516, 315, 14, 14], action: speed(0)}
@@ -53,9 +55,11 @@ screens:
       # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
       # row and its actions at the pane's foot (placement in the pane DERIVED).
       modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18]}
-      purchase: {kind: button, rect: [492, 349, 24, 24], action: open(purchase)}
-      equip_ships: {kind: button, rect: [492, 386, 24, 24], action: open(equip_ships)}
-      stats: {kind: button, rect: [492, 423, 24, 24], action: open(base_stats)}
+      # The side buttons 204/206/208 (VERIFIED): SpriteButtonTL with their top-left at
+      # these points, two states (rows 1345/1347/1349: up, then pressed).
+      purchase: {kind: button, pos: [504, 361], images: {sprite: "original:sprite#1345", states: 2}, action: open(purchase)}
+      equip_ships: {kind: button, pos: [504, 398], images: {sprite: "original:sprite#1347", states: 2}, action: open(equip_ships)}
+      stats: {kind: button, pos: [504, 435], images: {sprite: "original:sprite#1349", states: 2}, action: open(base_stats)}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 7/8: Equip Ships - the ship ring, its pilot and fit; the docked ships below.
@@ -75,6 +79,11 @@ screens:
               detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20],
               up: {rect: [518, 413, 24, 24], images: ["original:SpritesDLL.dll#27500", "original:SpritesDLL.dll#27501", "original:SpritesDLL.dll#27502"]},
               down: {rect: [518, 434, 24, 24], images: ["original:SpritesDLL.dll#27503", "original:SpritesDLL.dll#27504", "original:SpritesDLL.dll#27505"]}}
+      # The three tabs 302/304/306 (VERIFIED SpriteButtonC, two states, a radio group with
+      # the first latched); weapons / equipment / pilot pages are not built, so they only latch.
+      tab_weapons: {kind: button, centre: [479, 57], images: {sprite: "original:sprite#1153", states: 2}, group: tabs, selected: true}
+      tab_equipment: {kind: button, centre: [533, 57], images: {sprite: "original:sprite#1155", states: 2}, group: tabs}
+      tab_pilot: {kind: button, centre: [587, 57], images: {sprite: "original:sprite#1157", states: 2}, group: tabs}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 18: Equipment & Personnel - purchase, sell, transfer, manufacture.
@@ -98,7 +107,12 @@ screens:
               columns: "@orig.S_S6B_PURCHASE_HDR", detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115],
               up: {rect: [562, 290, 24, 24], images: ["original:WrappersDLL.dll#6911", "original:WrappersDLL.dll#6912", "original:WrappersDLL.dll#6913"]},
               down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
-      manufacture: {kind: button, rect: [575, 314, 24, 24], action: open(manufacture)}
+      # The category radios 300 (purchase, latched here) and 303 (manufacture): VERIFIED
+      # SpriteButtonTL, two states (rows 1053/1059); sell and transfer (301/302) are not
+      # built. Button 106 opens production (row 1061).
+      cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, selected: true, action: open(purchase)}
+      cat_manufacture: {kind: button, pos: [234, 226], images: {sprite: "original:sprite#1059", states: 2}, group: category, action: open(manufacture)}
+      manufacture: {kind: button, pos: [587, 326], images: {sprite: "original:sprite#1061", states: 2}, action: open(manufacture)}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 18 in its manufacture mode: the same art, the production list.
@@ -111,6 +125,9 @@ screens:
              columns: "@orig.S_S6B_MANUFACTURE_HDR", detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115],
              up: {rect: [562, 290, 24, 24], images: ["original:WrappersDLL.dll#6911", "original:WrappersDLL.dll#6912", "original:WrappersDLL.dll#6913"]},
              down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
+      # The category radios, with manufacture (303) latched on this screen.
+      cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, action: open(purchase)}
+      cat_manufacture: {kind: button, pos: [234, 226], images: {sprite: "original:sprite#1059", states: 2}, group: category, selected: true, action: open(manufacture)}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 9: Research.

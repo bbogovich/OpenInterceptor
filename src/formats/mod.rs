@@ -14,6 +14,7 @@
 //! | [`wav`] | RIFF WAVE audio, including Microsoft ADPCM |
 //! | [`ini`] | INI text files (the original rules, and our own rules and scenarios) |
 //! | [`obj`] | Wavefront OBJ meshes, the model format for mods |
+//! | [`spritetable`] | The original's interface sprite table inside `Interceptor.exe` |
 //! | [`sheetfont`] | Grid sheet bitmap fonts (the original's SpritesDLL fonts, and mods') |
 //!
 //! ## Rust idea: borrowing a byte slice
@@ -31,6 +32,7 @@ pub mod pe;
 pub mod png;
 pub mod sheetfont;
 pub mod smacker;
+pub mod spritetable;
 pub mod tga;
 pub mod wav;
 pub mod xmsh;
