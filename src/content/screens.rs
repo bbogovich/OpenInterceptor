@@ -41,6 +41,18 @@ pub enum WidgetKind {
     Map,
     /// The selected object's details and actions.
     Info,
+    /// A check row (the original's TextButton2): a lamp that toggles, its label 20 px
+    /// to the right.
+    Check,
+}
+
+/// Where a sprite widget is placed (the size comes from its image).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Place {
+    /// Centred on a point (the original's SpriteButtonC).
+    Centre([f32; 2]),
+    /// The image's top-left at a point (SpriteButtonTL).
+    TopLeft([f32; 2]),
 }
 
 /// What a button does.
@@ -112,6 +124,22 @@ pub struct WidgetDef {
     /// A `list` drawn in its sheet `font`: where its parts go (RQ-UI-06; the original
     /// screens' lists, plan M2 #123). Ignored without `font`.
     pub list: ListStyle,
+    /// A sprite button's base image (`images.sprite`, e.g. `original:sprite#372`): state
+    /// `k` is the sprite `k` rows on (`…#372+1`). RQ-UI-02.
+    pub sprite: Option<String>,
+    /// How many states the sprite has (`images.states`; 1: nothing drawn when up).
+    pub states: u8,
+    /// Placed by its image's size at a point (`centre: [x, y]` or `pos: [x, y]`) instead
+    /// of stretched over `rect`.
+    pub place: Option<Place>,
+    /// Fires when pressed instead of when released (RQ-UI-07).
+    pub fire_on_press: bool,
+    /// While held: fire again after `[delay, interval]` ticks (1/60 s).
+    pub repeat: Option<[u32; 2]>,
+    /// A radio group: the chosen member stays latched, the others not (RQ-UI-08).
+    pub group: Option<String>,
+    /// Latched at the start (a radio group's member, a check row).
+    pub selected: bool,
     /// A label drawn on a button without images.
     pub label: Option<String>,
     /// Map: clipped to a circle.
@@ -173,7 +201,7 @@ impl Arrow {
 }
 
 /// The widget kinds by name.
-pub const WIDGET_KINDS: [(&str, WidgetKind); 7] = [
+pub const WIDGET_KINDS: [(&str, WidgetKind); 8] = [
     ("image", WidgetKind::Image),
     ("button", WidgetKind::Button),
     ("value", WidgetKind::Value),
@@ -181,18 +209,50 @@ pub const WIDGET_KINDS: [(&str, WidgetKind); 7] = [
     ("list", WidgetKind::List),
     ("map", WidgetKind::Map),
     ("info", WidgetKind::Info),
+    ("check", WidgetKind::Check),
 ];
 
 impl WidgetDef {
     /// Parses one `widgets.<name>: {kind, rect, …}` entry.
     pub fn parse(name: &str, g: Get) -> Result<WidgetDef, String> {
         let kind_name = g.str("kind").unwrap_or("image");
-        let kind = WIDGET_KINDS
-            .iter()
-            .find(|(n, _)| *n == kind_name)
-            .map(|(_, k)| *k)
-            .ok_or(format!("kind: '{kind_name}' is not one of image, button, value, text, list, map, info"))?;
-        let r = g.node("rect").and_then(numbers).filter(|v| v.len() == 4).ok_or("rect: expected [x, y, w, h]")?;
+        let kind =
+            WIDGET_KINDS.iter().find(|(n, _)| *n == kind_name).map(|(_, k)| *k).ok_or(format!(
+                "kind: '{kind_name}' is not one of image, button, value, text, list, map, info, check"
+            ))?;
+        let point = |k: &str| -> Result<Option<[f32; 2]>, String> {
+            match g.node(k) {
+                None => Ok(None),
+                Some(n) => match numbers(n).as_deref() {
+                    Some([x, y]) => Ok(Some([*x, *y])),
+                    _ => Err(format!("{k}: expected [x, y]")),
+                },
+            }
+        };
+        let place = match (point("centre")?, point("pos")?) {
+            (Some(_), Some(_)) => return Err("give centre or pos, not both".into()),
+            (Some(c), None) => Some(Place::Centre(c)),
+            (None, Some(p)) => Some(Place::TopLeft(p)),
+            (None, None) => None,
+        };
+        // A placed sprite takes its size from its image: its rect is only a placeholder.
+        let r = match (g.node("rect").and_then(numbers).filter(|v| v.len() == 4), place) {
+            (Some(r), _) => r,
+            (None, Some(Place::Centre([x, y]) | Place::TopLeft([x, y]))) => vec![x, y, 0.0, 0.0],
+            (None, None) => return Err("rect: expected [x, y, w, h] (or centre/pos for a sprite)".into()),
+        };
+        let images = g.node("images").map(Get);
+        let states = images.and_then(|i| i.num("states")).or_else(|| g.num("states")).unwrap_or(2.0);
+        if !(1.0..=8.0).contains(&states) || states.fract() != 0.0 {
+            return Err(format!("states: {states} is not a whole number from 1 to 8"));
+        }
+        let repeat = match g.node("repeat") {
+            None => None,
+            Some(n) => match numbers(n).as_deref() {
+                Some([d, i]) if *d >= 0.0 && *i >= 1.0 => Some([*d as u32, *i as u32]),
+                _ => return Err("repeat: expected [delay, interval] in ticks (interval at least 1)".into()),
+            },
+        };
         let img = |k: &str| g.node("images").map(Get).and_then(|i| i.str(k)).map(str::to_string);
         let colour = g.node("colour").and_then(numbers).map(|v| match v.as_slice() {
             [r, gg, b] => [*r, *gg, *b, 1.0],
@@ -223,6 +283,14 @@ impl WidgetDef {
                 None => None,
             },
             monospace: g.bool("monospace").unwrap_or(false),
+            sprite: images.and_then(|i| i.str("sprite")).map(str::to_string),
+            // Checked to be 1-8 above: the cast is exact.
+            states: states as u8,
+            place,
+            fire_on_press: g.bool("fire_on_press").unwrap_or(false),
+            repeat,
+            group: g.str("group").map(str::to_string),
+            selected: g.bool("selected").unwrap_or(false),
             list: ListStyle {
                 row_height: g.num("row_height").filter(|v| *v >= 4.0),
                 row_size: g.num("row_size").filter(|v| *v >= 4.0),
@@ -358,7 +426,7 @@ pub fn schema() -> Ty {
             Ty::Dict(Box::new(Ty::Either(
                 Box::new(Ty::Numbers(4)),
                 Box::new(Ty::Struct(vec![
-                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info"]), "what it is"),
+                    f("kind", Ty::Enum(&["image", "button", "value", "text", "list", "map", "info", "check"]), "what it is"),
                     f("rect", Ty::Numbers(4), "x, y, w, h in the design space"),
                     f("image", Ty::Asset, "its picture"),
                     f(
@@ -368,6 +436,8 @@ pub fn schema() -> Ty {
                             f("down", Ty::Asset, "pressed"),
                             f("hover", Ty::Asset, "under the mouse"),
                             f("disabled", Ty::Asset, "unavailable"),
+                            f("sprite", Ty::Asset, "a sprite's base image (original:sprite#N): state k is row N+k"),
+                            f("states", Ty::Num, "how many states the sprite has (1: nothing drawn when up)"),
                         ]),
                         "a button's states",
                     ),
@@ -382,6 +452,13 @@ pub fn schema() -> Ty {
                     f("font", Ty::Name, "a sheet font of the skin (skins.<id>.fonts): placed by the original's anchor rules"),
                     f("at", Ty::Numbers(2), "with font: the DrawText anchor [x, y] (glyph tops at y - the font's top)"),
                     f("monospace", Ty::Bool, "with font: every character in a cell of the widest glyph"),
+                    f("centre", Ty::Numbers(2), "a sprite centred on this point (its size from the image)"),
+                    f("pos", Ty::Numbers(2), "a sprite with its top-left at this point"),
+                    f("states", Ty::Num, "how many states the sprite has"),
+                    f("fire_on_press", Ty::Bool, "a button fires when pressed, not when released"),
+                    f("repeat", Ty::Numbers(2), "a held button fires again after [delay, interval] ticks"),
+                    f("group", Ty::Name, "a radio group: the chosen member stays latched"),
+                    f("selected", Ty::Bool, "latched at the start"),
                     f("row_height", Ty::Num, "a list in a sheet font: row pitch (default line height + 2)"),
                     f("row_size", Ty::Num, "a list in a sheet font: a row's own height when less than row_height"),
                     f("header", Ty::Num, "a list in a sheet font: height of the title strip at the top of rect (0: no title)"),
@@ -485,6 +562,34 @@ mod tests {
         assert_eq!(cw.down.as_ref().unwrap().images, vec!["a.png".to_string(), "b.png".to_string()]);
         let bad_s = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], style: fancy}}").unwrap();
         assert!(ScreenLayout::parse("p", Get(&bad_s), l.clone(), &[], 0).unwrap_err().contains("fancy"));
+        let sp = yaml::parse(
+            "widgets: {b: {kind: button, centre: [516, 194], images: {sprite: 'original:sprite#372', states: 1}, action: open(bases)}, \
+             r: {kind: button, pos: [81, 226], images: {sprite: 'original:sprite#1053'}, group: category, selected: true, \
+             fire_on_press: true, repeat: [20, 5]}, c: {kind: check, rect: [0, 0, 100, 16], label: Sound}}",
+        )
+        .unwrap();
+        let spl = ScreenLayout::parse("p", Get(&sp), l.clone(), &[], 0).unwrap();
+        let b = spl.items.iter().find(|w| w.name == "b").unwrap();
+        assert_eq!(
+            (b.sprite.as_deref(), b.states, b.place),
+            (Some("original:sprite#372"), 1, Some(Place::Centre([516.0, 194.0])))
+        );
+        let r = spl.items.iter().find(|w| w.name == "r").unwrap();
+        assert_eq!(
+            (r.states, r.group.as_deref(), r.selected, r.fire_on_press, r.repeat),
+            (2, Some("category"), true, true, Some([20, 5]))
+        );
+        assert_eq!(r.place, Some(Place::TopLeft([81.0, 226.0])));
+        assert_eq!(spl.items.iter().find(|w| w.name == "c").unwrap().kind, WidgetKind::Check);
+        for bad in [
+            "{kind: button, centre: [1, 2], pos: [1, 2]}",
+            "{kind: button, rect: [0, 0, 1, 1], states: 0}",
+            "{kind: button}",
+            "{kind: button, rect: [0, 0, 1, 1], repeat: [1]}",
+        ] {
+            let n = yaml::parse(&format!("widgets: {{x: {bad}}}")).unwrap();
+            assert!(ScreenLayout::parse("p", Get(&n), l.clone(), &[], 0).is_err(), "{bad}");
+        }
         let bad_d = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], detail: [1, 2]}}").unwrap();
         assert!(ScreenLayout::parse("p", Get(&bad_d), l.clone(), &[], 0).unwrap_err().contains("detail:"));
         let bad_at = yaml::parse("widgets: {t: {kind: value, rect: [0, 0, 1, 1], at: [1]}}").unwrap();

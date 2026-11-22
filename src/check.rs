@@ -220,6 +220,15 @@ pub fn run(content: &Content) -> Report {
         rules.skins.first().map(|s| s.fonts.iter().map(|f| f.name.as_str()).collect()).unwrap_or_default();
     for screen in &rules.screens {
         for w in &screen.items {
+            // A sprite widget's first and last state must load (`original:sprite#N`).
+            if let Some(sp) = &w.sprite {
+                let last = format!("{sp}+{}", w.states.max(1) - 1);
+                for img in [sp.as_str(), last.as_str()] {
+                    if let Err(e) = content.load_image(img, screen.pack, false) {
+                        r.errors.push(format!("screens.{}.widgets.{}: sprite {img}: {e}", screen.id, w.name));
+                    }
+                }
+            }
             // A list's scroll-arrow images must load.
             for img in [&w.list.up, &w.list.down].into_iter().flatten().flat_map(|a| a.images.iter()) {
                 if let Err(e) = content.load_image(img, screen.pack, false) {
@@ -359,7 +368,8 @@ mod tests {
              u: {generate: {kind: hills}, scatter: [{model: models/rock.obj, max_slope: 95}]}\n\
              skins: {k: {fonts: {f: fonts/none.png}}}\n\
              screens: {s: {widgets: {w: {kind: value, value: time, rect: [0, 0, 1, 1], font: nope}, \
-             l: {kind: list, rect: [0, 0, 1, 1], up: {rect: [0, 0, 1, 1], images: [img/gone.png]}}}}}\n",
+             l: {kind: list, rect: [0, 0, 1, 1], up: {rect: [0, 0, 1, 1], images: [img/gone.png]}}, \
+             b: {kind: button, centre: [1, 1], images: {sprite: img/none.png, states: 1}}}}}\n",
         )
         .unwrap();
         std::fs::write(dir.join("scenarios/s.yaml"), "id: s\nobjects:\n  o: {class: ghost}\n").unwrap();
@@ -384,6 +394,7 @@ mod tests {
             "skins.k.fonts.f",
             "screens.s.widgets.w: font 'nope'",
             "screens.s.widgets.l: arrow image img/gone.png",
+            "screens.s.widgets.b: sprite img/none.png",
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }

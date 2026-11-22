@@ -26,9 +26,21 @@ pub struct Image {
 /// The colour key used by the original cockpit art (RGB555 cyan).
 pub const COCKPIT_KEY_555: u16 = 0x03df;
 
-/// The colour key of the original's button sprites (the scroll arrows' border, for
-/// example): pure RGB555 cyan, `0x03FF` (read from the sprites' pixels; derived).
-pub const SPRITE_KEY_555: u16 = 0x03ff;
+/// Makes every pixel of the top-left pixel's colour transparent. The original's
+/// interface sprites each carry their own key colour in their corners — red `0x7C00`,
+/// magenta `0x7C1F`, cyan `0x03DF` or `0x03FF` (read from the sprites' pixels; that the
+/// corner is the key is derived) — so a sprite is keyed by its own corner.
+pub fn key_corner(img: &mut Image) {
+    if img.rgba.len() < 4 {
+        return;
+    }
+    let key = [img.rgba[0], img.rgba[1], img.rgba[2], img.rgba[3]];
+    for p in img.rgba.chunks_exact_mut(4) {
+        if p == key {
+            p[3] = 0;
+        }
+    }
+}
 
 /// Decodes a TGA. If `key555` is `Some`, 16-bit pixels with exactly that value become
 /// fully transparent.
@@ -226,5 +238,12 @@ mod tests {
         d[1] = 1;
         assert!(matches!(decode(&d, None), Err(FormatError::Invalid(_))), "map present but true-colour type");
         assert!(decode(&build_test_tga(4, 4, 24, true, &[0; 5]), None).is_err());
+    }
+
+    #[test]
+    fn a_sprite_is_keyed_by_its_corner_colour() {
+        let mut img = Image { width: 2, height: 1, rgba: vec![255, 0, 0, 255, 9, 9, 9, 255] };
+        key_corner(&mut img);
+        assert_eq!((img.rgba[3], img.rgba[7]), (0, 255));
     }
 }
