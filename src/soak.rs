@@ -61,6 +61,12 @@ pub struct SoakReport {
     pub enemies: usize,
     /// The player's hull fraction at the end.
     pub hull: f32,
+    /// When the first hit landed on the player: `destroyed_at` minus this is the time
+    /// under fire, the figure to compare with `--balance`'s kill times.
+    pub first_hit: Option<f32>,
+    /// Hits on the player's friends (wingmen, a defended station or freighter): a
+    /// scenario whose enemies go for those shows its fight here, not in `hits_taken`.
+    pub friends_hit: usize,
 }
 
 impl SoakReport {
@@ -69,7 +75,15 @@ impl SoakReport {
             Some(t) => format!("destroyed at {t:.1} s"),
             None => format!("survived {:.0} s with {:.0}% hull", self.seconds, self.hull * 100.0),
         };
-        format!("{fate}; {} hits taken; {}/{} enemies destroyed", self.hits_taken, self.kills, self.enemies)
+        let mut out = format!("{fate}; {} hits taken", self.hits_taken);
+        if let Some(t) = self.first_hit {
+            out.push_str(&format!(" (the first at {t:.1} s)"));
+        }
+        out.push_str(&format!(
+            "; {} hits on friends; {}/{} enemies destroyed",
+            self.friends_hit, self.kills, self.enemies
+        ));
+        out
     }
 }
 
@@ -127,6 +141,8 @@ pub fn run_mission(
         kills: run.kills() as usize,
         enemies: 0,
         hull: (s.hull / rules.ship(s.class).hull.max(1.0)).clamp(0.0, 1.0),
+        first_hit: None,
+        friends_hit: 0,
     };
     Ok((report, d.map(|d| d.result)))
 }
@@ -179,14 +195,29 @@ pub fn run(
             s.pilot = Pilot::Ai(ai::AiState::new(ai::Behaviour::Enemy, None, glam::Vec3::ZERO));
         }
     }
-    let mut report = SoakReport { destroyed_at: None, seconds, hits_taken: 0, kills: 0, enemies, hull: 1.0 };
+    let mut report = SoakReport {
+        destroyed_at: None,
+        seconds,
+        hits_taken: 0,
+        kills: 0,
+        enemies,
+        hull: 1.0,
+        first_hit: None,
+        friends_hit: 0,
+    };
     let ticks = (seconds / TICK) as usize;
     for k in 0..ticks {
         drive(&mut w, player, pilot);
         w.step();
         for e in &w.events {
             match e {
-                SimEvent::Hit { ship, .. } if *ship == player => report.hits_taken += 1,
+                SimEvent::Hit { ship, .. } if *ship == player => {
+                    report.first_hit.get_or_insert((k + 1) as f32 * TICK);
+                    report.hits_taken += 1
+                }
+                SimEvent::Hit { ship, .. } if !rules.hostile(me, w.ships[ship.index as usize].faction) => {
+                    report.friends_hit += 1
+                }
                 SimEvent::Destroyed { ship, .. } if *ship == player => {
                     report.destroyed_at = Some((k + 1) as f32 * TICK);
                 }
@@ -240,6 +271,17 @@ mod tests {
     /// The balance promise for defence missions: at the easiest level the defended
     /// station holds for at least 150 s with nobody defending it, so a player always has
     /// time to engage more than one attacker.
+    /// D-43: in the two default scenarios where the player is never hit, the enemies
+    /// do engage: they go for the guard station and the freighter.
+    #[test]
+    fn default_scenarios_engage_the_players_friends() {
+        let content = content("cadet");
+        for sc in ["rocket-vs-saucer", "black-comet-ambush"] {
+            let r = run(&content, sc, None, 60.0, SoakPilot::Ai).unwrap();
+            assert!(r.friends_hit > 0, "{sc}: {}", r.summary());
+        }
+    }
+
     #[test]
     fn at_cadet_an_undefended_station_holds_for_150_seconds() {
         let (r, result) = run_mission(&content("cadet"), "defend_station", None, 150.0, SoakPilot::Idle).unwrap();

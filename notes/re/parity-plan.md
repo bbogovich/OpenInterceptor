@@ -30,8 +30,9 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #115 follow-up: base turrets check line of sight; capital-ship turrets (AlienType3/4/5, alien freighter); turret defaults 500 ms / 2,500 m; freighter accuracy S and int(S x 0.75) | 0.22.14 |
 | #117 D-03 (accumulator shields), D-04 (Tachyon Pulser), D-07 (Permeator/Enveloping split), D-11 (recharge while burning), D-14 (link modes) | 0.22.14 |
 | #119 RQ-C-11 (retreat when disarmed), RQ-C-12 (retreat on a Nova), RQ-C-13 (250 m break-off, 5 - 0.5d s), RQ-C-14 (Nova fuse 60 s, battle over 60 s later) | 0.22.16 |
-| #119 follow-up: break-off ends with its manoeuvre (1,200 m / 25 % after 5 - 0.5d s), break-off radio call, Nova messages as wingman voice waves 33-36, battle_over draw | NEXT |
-| #120 D-09 bolts hit missiles (no PD), D-10 cloak drain/shields/missiles, D-12 original missile flight/fuse/blast, D-13 launcher rate and rounds, D-15 start throttle 50 %, RQ-C-15 Parallax/Doppelganger/PassiveCloaking, D-17 pirate/corporate hulls; D-18 open (Patton fit unknown) | NEXT |
+| #119 follow-up: break-off ends with its manoeuvre (1,200 m / 25 % after 5 - 0.5d s), break-off radio call, Nova messages as wingman voice waves 33-36, battle_over draw | 0.22.19 |
+| #120 D-09 bolts hit missiles (no PD), D-10 cloak drain/shields/missiles, D-12 original missile flight/fuse/blast, D-13 launcher rate and rounds, D-15 start throttle 50 %, RQ-C-15 Parallax/Doppelganger/PassiveCloaking, D-17 pirate/corporate hulls; D-18 open (Patton fit unknown) | 0.22.19 |
+| #121 D-31 --balance at the difficulty, start beam setting, energy pool and station pools; soaks report the first hit and hits on friends; D-42 re-measured (closed: matches perfect fire); D-43 (enemies engage the station / freighter) | NEXT |
 
 ## Issues
 
