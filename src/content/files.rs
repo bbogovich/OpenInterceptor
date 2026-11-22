@@ -316,6 +316,16 @@ fn ship() -> Ty {
         f("behaviour", name(), "AI behaviour id"),
         f("pilot_grade", Ty::Num, "AI ships of this class: their pilot's grade (flight.pilot_grades)"),
         f(
+            "grade_rise",
+            Ty::Struct(vec![
+                f("from_month", Ty::Num, "campaign month (0 = the first) it starts"),
+                f("chance", Ty::Qty(Unit::Fraction), "chance at month 0"),
+                f("per_month", Ty::Qty(Unit::Fraction), "added per month"),
+                f("grade", Ty::Num, "the grade"),
+            ]),
+            "campaign battles: AI pilots of the class may fly at a higher grade later on",
+        ),
+        f(
             "accumulator_shields",
             Ty::Bool,
             "an ordinary hit on a raised shield bank does no damage and adds a quarter of itself to it",
@@ -1072,6 +1082,23 @@ fn damage() -> Ty {
             "what effect: systems beams (the Tachyon Pulser) strike: the same shape as system_table",
         ),
         f(
+            "pilot_injury",
+            Ty::Struct(vec![
+                f("amount", Ty::Numbers(2), "health a hit on the hull takes, [min, max] ([1, 3])"),
+                f("collision", Ty::Numbers(2), "health a collision takes ([5, 10])"),
+                f(
+                    "health",
+                    Ty::Struct(vec![
+                        f("base", Ty::Numbers(2), "whole-number range ([5, 15])"),
+                        f("per_rank", Ty::Numbers(2), "added per rank, whole-number range ([0, 0])"),
+                        f("rank_roll", Ty::List(Box::new(Ty::Num)), "rank thresholds on a 1-100 roll"),
+                    ]),
+                    "the health of a pilot without a record",
+                ),
+            ]),
+            "pilots get hurt by hull hits and collisions; 0 = unconscious, below 0 = dead",
+        ),
+        f(
             "mounts",
             Ty::Struct(vec![
                 f("half_rate", Ty::Qty(Unit::Fraction), "at or below this share a mount fires at half rate (50 %)"),
@@ -1195,6 +1222,7 @@ pub fn scenario() -> Ty {
                 f("stamina", Ty::Num, "0–100 (50)"),
                 f("grade", Ty::Num, "the pilot's grade (flight.pilot_grades; default the class's)"),
                 f("rank", Ty::Num, "the pilot's rank, 0 upwards (retreat rolls)"),
+                f("health", Ty::Num, "the pilot's health (damage.pilot_injury; default rolled)"),
             ]),
             "the AI pilot's record",
         ),

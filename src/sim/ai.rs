@@ -2487,4 +2487,32 @@ behaviours:
         assert!(w.get(t).unwrap().forward().x.abs() > 0.01, "turning");
         assert_eq!(w.get(i).unwrap().position, Vec3::new(500.0, 0.0, 0.0));
     }
+
+    #[test]
+    fn alien_grades_rise_with_the_campaign_month() {
+        let mut w = world();
+        let mut r = (*w.rules).clone();
+        let raider = r.ship_id("raider").unwrap();
+        r.ships[raider.0 as usize].grade_rise =
+            Some(crate::content::rules::GradeRise { from_month: 2, chance: 0.5, per_month: 0.25, grade: 2 });
+        w.rules = std::sync::Arc::new(r);
+        let ids: Vec<ShipId> = (0..20)
+            .map(|k| {
+                let st = AiState::new(Behaviour::Idle, None, Vec3::ZERO);
+                w.spawn(raider, FactionId(1), "r", Vec3::new(k as f32 * 100.0, 0.0, 0.0), Quat::IDENTITY, Pilot::Ai(st))
+            })
+            .collect();
+        let grades = |w: &World| -> usize {
+            ids.iter()
+                .filter(|&&id| {
+                    let s = w.get(id).unwrap();
+                    matches!(&s.pilot, Pilot::Ai(st) if grade_of(w, s, st) == Some(2))
+                })
+                .count()
+        };
+        w.campaign_month(1);
+        assert_eq!(grades(&w), 0, "before its month");
+        w.campaign_month(2); // 50 % + 2 x 25 % = certain
+        assert_eq!(grades(&w), 20);
+    }
 }

@@ -150,6 +150,10 @@ pub enum Next {
         /// A campaign object standing in for the mission's first protected role (a
         /// struck construction site, an attacked survey ship).
         stand_in: Option<crate::content::mission::StandIn>,
+        /// The craft's pilot record (its health with `damage.pilot_injury`).
+        pilot: Option<crate::content::behaviour::PilotStats>,
+        /// The campaign month (0 = the first), for classes with `grade_rise`.
+        month: u32,
     },
     /// Fly a simulator mission: a modified copy of a mission (see `simulator::apply`).
     Simulate {
@@ -678,7 +682,7 @@ pub async fn run(options: Options) {
                     }
                 }
             }
-            Next::CampaignBattle { mission, ship, loadout, stances, stand_in } => {
+            Next::CampaignBattle { mission, ship, loadout, stances, stand_in, pilot, month } => {
                 // Keep the strategy screen (and its campaign) while the battle is flown.
                 let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
                 if let Screen::Strategy(s) = old {
@@ -702,6 +706,13 @@ pub async fn run(options: Options) {
                         f.campaign_battle = true;
                         f.apply_loadout(&loadout);
                         flight::apply_stances(&mut f.world, f.player, &stances);
+                        f.world.campaign_month(month);
+                        // The campaign pilot's health in the player's seat.
+                        if let (Some(h), Some(s)) = (pilot.and_then(|p| p.health), f.world.get_mut(f.player)) {
+                            if s.pilot_health.is_some() {
+                                s.pilot_health = Some(h);
+                            }
+                        }
                         screen = Screen::Flight(Box::new(f));
                     }
                     Err(e) => {
@@ -712,6 +723,7 @@ pub async fn run(options: Options) {
                             actions: Vec::new(),
                             kills: 0,
                             cargo: None,
+                            pilot_health: None,
                         });
                         if let Some(mut s) = ctx.campaign.take() {
                             if let Some(r) = ctx.battle_report.take() {

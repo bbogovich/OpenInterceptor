@@ -400,6 +400,20 @@ pub struct ShipClass {
     /// The grade of the pilot an AI ship of this class carries (`pilot_grade:`), unless a
     /// scenario gives it a pilot of its own ([`crate::content::behaviour::PilotStats`]).
     pub pilot_grade: Option<u8>,
+    /// A higher grade later in a campaign (`grade_rise:`; RQ-C-23).
+    pub grade_rise: Option<GradeRise>,
+}
+
+/// `grade_rise: {from_month: 2, chance: 50%, per_month: 2%, grade: 2}`: in a campaign
+/// battle from that month on, an AI pilot of the class flies at `grade` with a chance of
+/// `chance + per_month × month` (the original's AlienType1/2: 50 + 2m % from month 2,
+/// `../notes/re/unknowns-2026-11.md` §5).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct GradeRise {
+    pub from_month: u32,
+    pub chance: f32,
+    pub per_month: f32,
+    pub grade: u8,
 }
 
 /// A beam (energy) weapon.
@@ -2855,6 +2869,15 @@ fn ship_class(
         towable: g.bool("towable").unwrap_or(false),
         cargo: g.bool("cargo").unwrap_or(false),
         pilot_grade: g.num("pilot_grade").map(|n| n.clamp(0.0, 255.0) as u8),
+        grade_rise: g.node("grade_rise").map(|n| {
+            let r = Get(n);
+            GradeRise {
+                from_month: r.num("from_month").unwrap_or(0.0).max(0.0) as u32,
+                chance: r.qty("chance", Unit::Fraction).unwrap_or(0.0),
+                per_month: r.qty("per_month", Unit::Fraction).unwrap_or(0.0),
+                grade: r.num("grade").unwrap_or(0.0).clamp(0.0, 255.0) as u8,
+            }
+        }),
         accumulator_shields: g.bool("accumulator_shields").unwrap_or(false),
     })
 }

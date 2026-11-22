@@ -123,6 +123,11 @@ pub struct Pilot {
     pub craft: Option<usize>,
     /// In training: stats grow each day (`pilots.training`), at a cost.
     pub training: bool,
+    /// Health and its maximum (`pilots.health`; both 0 without it).
+    pub health: f32,
+    pub max_health: f32,
+    /// Hours in training towards the next gain (`pilots.training.every`).
+    pub trained: f32,
 }
 
 /// A craft.
@@ -701,16 +706,101 @@ impl Campaign {
             .cloned()
             .unwrap_or_else(|| format!("Pilot {}", self.pilots.len() + self.recruits.len() + 1));
         let ranges: Vec<[f32; 2]> = rules.map(|p| p.stats.iter().map(|(_, r)| *r).collect()).unwrap_or_default();
-        let stats = ranges.iter().map(|[lo, hi]| (lo + (hi - lo) * self.roll()).round()).collect();
+        let mut stats: Vec<f32> = ranges.iter().map(|[lo, hi]| (lo + (hi - lo) * self.roll()).round()).collect();
+        // The original's generator (`pilots.generate`): a starting rank, and the rank's
+        // bonus on some stats (some scaled by another stat, truncated), up to the maximum.
+        let (mut experience, mut rank) = (0.0, 0);
+        if let Some((r, g)) = rules.and_then(|r| r.generate.as_ref().map(|g| (r, g))) {
+            rank = crate::content::behaviour::HealthRoll {
+                base: [0.0; 2],
+                per_rank: [0.0; 2],
+                rank_roll: g.rank_roll.clone(),
+            }
+            .rank(self.roll());
+            experience = r.ranks.get(rank.min(r.ranks.len().saturating_sub(1))).map_or(0.0, |(_, need)| *need);
+            let index = |name: &str| r.stats.iter().position(|(n, _)| n == name);
+            for (stat, add, times) in &g.bonus {
+                let Some(k) = index(stat) else { continue };
+                let mut b = add.get(rank).copied().unwrap_or(0.0);
+                if let Some(t) = times.as_deref().and_then(index) {
+                    b = (stats[t] / 100.0 * b).trunc();
+                }
+                stats[k] = (stats[k] + b).min(r.ceiling(k));
+            }
+        }
+        let max_health = match rules.and_then(|r| r.health.as_ref()) {
+            Some(h) => h.max.health(rank, self.roll(), self.roll()),
+            None => 0.0,
+        };
         Pilot {
             name,
             stats,
-            experience: 0.0,
+            experience,
             kills: 0,
             missions: 0,
             state: PilotState::Ready,
             craft: None,
             training: false,
+            health: max_health,
+            max_health,
+            trained: 0.0,
+        }
+    }
+
+    /// A pilot's month of pay: the flat `salary`, or the original's table (base plus a
+    /// twelfth of the year's rank and bracket bonuses).
+    pub fn salary(def: &StrategyDef, p: &Pilot) -> f32 {
+        let Some(r) = def.pilots.as_ref() else { return 0.0 };
+        let Some(t) = &r.salary_table else { return r.salary };
+        let mut year = t.rank.get(Self::rank(def, p)).copied().unwrap_or(0.0);
+        for (stat, list) in &t.brackets {
+            if let Some(k) = r.stats.iter().position(|(n, _)| n == stat) {
+                year += crate::content::strategy::SalaryTable::bracket(list, p.stats.get(k).copied().unwrap_or(0.0));
+            }
+        }
+        year += crate::content::strategy::SalaryTable::bracket(&t.kills, p.kills as f32);
+        year += crate::content::strategy::SalaryTable::bracket(&t.max_health, p.max_health);
+        t.base + year / 12.0
+    }
+
+    /// The pilot record the craft `k`'s pilot flies a battle with: the stats the sim
+    /// reads (by name: accuracy, intelligence, flying, bravery, stamina), the rank and,
+    /// with `pilots.health`, the health. `None` when nobody flies it.
+    pub fn battle_pilot(&self, def: &StrategyDef, k: usize) -> Option<crate::content::behaviour::PilotStats> {
+        let p = self.pilots.iter().find(|p| p.craft == Some(k))?;
+        let r = def.pilots.as_ref()?;
+        let n = crate::content::behaviour::PilotStats::NONE;
+        let stat = |name: &str, d: f32| {
+            r.stats.iter().position(|(s, _)| s == name).and_then(|i| p.stats.get(i)).copied().unwrap_or(d)
+        };
+        Some(crate::content::behaviour::PilotStats {
+            accuracy: stat("accuracy", n.accuracy),
+            intelligence: stat("intelligence", n.intelligence),
+            flying: stat("flying", n.flying),
+            bravery: stat("bravery", n.bravery),
+            stamina: stat("stamina", n.stamina),
+            grade: Some(0),
+            rank: Some(Self::rank(def, p).min(255) as u8),
+            health: r.health.is_some().then_some(p.health),
+        })
+    }
+
+    /// The craft `k`'s pilot comes back from a battle with `health` (call before
+    /// [`Campaign::battle_result`]): below 0 they are dead; grounded while hurt.
+    pub fn pilot_back(&mut self, def: &StrategyDef, k: usize, health: f32) {
+        let Some(h) = def.pilots.as_ref().and_then(|r| r.health.as_ref()) else { return };
+        let Some(i) = self.pilots.iter().position(|p| p.craft == Some(k)) else { return };
+        let p = &mut self.pilots[i];
+        p.health = health.min(p.max_health);
+        if health < 0.0 {
+            p.state = PilotState::Dead;
+            p.craft = None;
+            let t = format!("{} was killed", p.name);
+            self.log(t);
+        } else if p.health < h.fly_from * p.max_health {
+            p.state = PilotState::Injured(self.hours + 24.0 * ((p.max_health - p.health) / h.per_day.max(0.01)) as f64);
+            let t = format!("{} is injured", p.name);
+            self.log(t);
         }
     }
 
@@ -1568,6 +1658,60 @@ impl Campaign {
             }
             self.money -= paid as f64;
         }
+        // The original's training (`pilots.training.every`): up to the bases' capacity of
+        // trainees, each gains in its stats every period.
+        if let Some((r, t)) = def.pilots.as_ref().and_then(|r| r.training.as_ref().map(|t| (r, t))) {
+            let room = match &t.capacity {
+                Some(e) => (0..self.bases.len()).map(|b| self.effect(def, b, e)).sum::<f32>() as usize,
+                None => usize::MAX,
+            };
+            let index = |name: &str| r.stats.iter().position(|(n, _)| n == name);
+            let mut count = 0;
+            let mut dropped = Vec::new();
+            for p in self.pilots.iter_mut().filter(|p| p.training && p.state == PilotState::Ready) {
+                count += 1;
+                if count > room {
+                    p.training = false;
+                    dropped.push(p.name.clone());
+                    continue;
+                }
+                p.trained += dt as f32;
+                while p.trained >= t.every {
+                    p.trained -= t.every;
+                    let scale = t.scale_by.as_deref().and_then(index).map_or(100.0, |k| p.stats[k]);
+                    for stat in &t.stats {
+                        if let Some(k) = index(stat) {
+                            let v = p.stats[k];
+                            p.stats[k] = (v + (scale / 100.0 * v * t.factor + t.add).trunc()).min(r.ceiling(k));
+                        }
+                    }
+                }
+            }
+            for name in dropped {
+                self.log(format!("{name} left training: no room"));
+            }
+        }
+        // Pilot health (`pilots.health`): healing, faster in a medical bay while it has
+        // room; a pilot back over `fly_from` of the maximum flies again.
+        if let Some(h) = def.pilots.as_ref().and_then(|r| r.health.as_ref()) {
+            let mut beds = match &h.medical {
+                Some(e) => (0..self.bases.len()).map(|b| self.effect(def, b, e)).sum::<f32>() as usize,
+                None => 0,
+            };
+            let day = (dt / 24.0) as f32;
+            for p in self.pilots.iter_mut().filter(|p| p.state != PilotState::Dead && p.health < p.max_health) {
+                let rate = if beds > 0 {
+                    beds -= 1;
+                    h.in_medical
+                } else {
+                    h.per_day
+                };
+                p.health = (p.health + rate * day).min(p.max_health);
+                if matches!(p.state, PilotState::Injured(_)) && p.health >= h.fly_from * p.max_health {
+                    p.state = PilotState::Ready;
+                }
+            }
+        }
         // The month: maintenance, upkeep and salaries; the report; new recruits.
         if now >= self.next_month {
             self.next_month += MONTH;
@@ -1579,8 +1723,8 @@ impl Campaign {
                 .map(|m| def.modules[m.module].maintenance)
                 .sum();
             let upkeep: f32 = self.craft.iter().map(|c| def.hulls[c.hull].upkeep).sum();
-            let living = self.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as f32;
-            let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
+            let salaries: f32 =
+                self.pilots.iter().filter(|p| p.state != PilotState::Dead).map(|p| Self::salary(def, p)).sum();
             let total = (maintenance + upkeep + salaries) as f64;
             self.money -= total;
             // The outposts: their income, the funding drift, withdrawals and growth.
@@ -1611,8 +1755,9 @@ impl Campaign {
             self.refresh_recruits(def);
             notice(self, t, NoticeKind::Report, events);
         }
-        // Pilots heal.
-        for p in &mut self.pilots {
+        // Pilots heal (with `pilots.health`, by their health above).
+        let by_health = def.pilots.as_ref().is_some_and(|r| r.health.is_some());
+        for p in self.pilots.iter_mut().filter(|_| !by_health) {
             if let PilotState::Injured(until) = p.state {
                 if now >= until {
                     p.state = PilotState::Ready;
@@ -2170,7 +2315,7 @@ impl Campaign {
                     self.pilots[p].kills += kills;
                     self.pilots[p].experience += kills as f32 + 1.0;
                 }
-                if n == 0 && result == "killed" {
+                if n == 0 && result == "killed" && self.pilots[p].state != PilotState::Dead {
                     let lives = self.roll() < survive;
                     self.pilots[p].state =
                         if lives { PilotState::Injured(self.hours + heal) } else { PilotState::Dead };
@@ -2267,7 +2412,7 @@ impl Campaign {
 
     /// Puts pilot `p` into training, or takes them out.
     pub fn set_training(&mut self, def: &StrategyDef, p: usize, on: bool) -> Result<(), String> {
-        if def.pilots.as_ref().is_none_or(|r| r.train_gain <= 0.0) {
+        if def.pilots.as_ref().is_none_or(|r| r.train_gain <= 0.0 && r.training.is_none()) {
             return Err("this campaign has no pilot training".into());
         }
         let pilot = self.pilots.get_mut(p).ok_or("no such pilot")?;
@@ -2954,6 +3099,77 @@ mod tests {
         // hull upkeep; 2 × 2000 salaries.
         assert_eq!(c.money - start, 120000.0 - 1000.0 - 500.0 - 2000.0 - 4000.0);
         assert!(c.messages.iter().any(|m| m.text.starts_with("Monthly report")));
+    }
+
+    /// The sample with the original's pilot rules (RQ-S-10, RQ-S-11).
+    fn original_pilots() -> (StrategyDef, Campaign) {
+        let text = SAMPLE.replace(
+            "pilots: {stats: {flying: [25, 100]}, ranks: {rookie: 0, ensign: 3}, salary: 2000, recruit_fee: 5000, pool: 3, names: [Ann, Bo]}",
+            "pilots:
+  stats: {intelligence: [75, 75], accuracy: [60, 60], flying: [25, 25], psionics: [0, 0]}
+  stat_max: 100
+  ranks: {rookie: 0, ensign: 2, lieutenant: 10, lt_commander: 24, commander: 38}
+  generate: {rank_roll: [0, 41, 61, 81, 96], bonus: {accuracy: {add: [0, 5, 10, 15, 20], times: intelligence}}}
+  health: {max: {base: [10, 10], per_rank: [1, 1]}, per_day: 1, in_medical: 2, medical: medical}
+  training: {every: 5d, stats: [accuracy, flying, psionics], factor: 0.0166667, add: 1, scale_by: intelligence, capacity: training}
+  salary: {base: 4000, rank: [-1000, -500, 0, 750, 1500], brackets: {accuracy: [[25, -300], [96, 800]]}, kills: [[0, 0], [1, 50]]}
+  recruit_fee: 5000
+  pool: 3
+  names: [Ann, Bo]",
+        )
+        .replace(
+            "  radar: {group: sensor",
+            "  bay: {group: medical, cost: 1, build_time: 1h, effects: {medical: 5, training: 5}}\n  radar: {group: sensor",
+        )
+        .replace("template: [radar, lab]", "template: [radar, lab, bay]");
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let c = Campaign::new(&d, 0, 9);
+        (d, c)
+    }
+
+    #[test]
+    fn pilots_heal_train_and_are_paid_as_the_original() {
+        let (d, mut c) = original_pilots();
+        c.advance(&d, 2.0); // the bay is built
+                            // Generated: a starting rank, its Accuracy bonus x Int / 100, health 10 + rank.
+        for p in &c.pilots {
+            let rank = Campaign::rank(&d, p);
+            assert_eq!(p.stats[1], 60.0 + ([0.0, 5.0, 10.0, 15.0, 20.0][rank] * 0.75f32).trunc(), "{rank}");
+            assert_eq!((p.max_health, p.health), (10.0 + rank as f32, 10.0 + rank as f32));
+        }
+        // Healing: 2 a day in the bay, so 4 -> 10+ in a few days, then flying again.
+        let k = 0;
+        c.pilots[k].craft = Some(0);
+        let full = c.pilots[k].max_health;
+        c.pilot_back(&d, 0, 4.0);
+        assert!(matches!(c.pilots[k].state, PilotState::Injured(_)));
+        c.advance(&d, 24.0 * 2.0);
+        assert!((c.pilots[k].health - 8.0).abs() < 0.01, "{}", c.pilots[k].health);
+        c.advance(&d, 24.0 * (full - 8.0) as f64 / 2.0 + 1.0);
+        assert_eq!((c.pilots[k].health, c.pilots[k].state), (full, PilotState::Ready));
+        // Training: a 75-Int pilot's Accuracy 60 gains trunc(0.75 x 60 x 0.1 / 6 + 1) = 1
+        // in 5 days (Flying 25: +1).
+        c.pilots[k].stats[1] = 60.0;
+        c.set_training(&d, k, true).unwrap();
+        c.advance(&d, 24.0 * 5.0);
+        assert_eq!((c.pilots[k].stats[1], c.pilots[k].stats[2]), (61.0, 26.0));
+        // Salary: a commander with 96 Accuracy and a kill: 4,000 + (1,500 + 800 + 50) / 12.
+        c.pilots[k].experience = 40.0;
+        c.pilots[k].stats[1] = 96.0;
+        c.pilots[k].kills = 1;
+        assert!((Campaign::salary(&d, &c.pilots[k]) - (4000.0 + 2350.0 / 12.0)).abs() < 0.01);
+        // Below 0 health in battle: dead.
+        c.pilot_back(&d, 0, -1.0);
+        assert_eq!(c.pilots[k].state, PilotState::Dead);
+        // The battle record carries the health.
+        c.pilots[1].craft = Some(1);
+        let rec = c.battle_pilot(&d, 1).unwrap();
+        assert_eq!(
+            (rec.health, rec.accuracy, rec.intelligence),
+            (Some(c.pilots[1].health), c.pilots[1].stats[1], 75.0)
+        );
     }
 
     #[test]

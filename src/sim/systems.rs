@@ -668,7 +668,9 @@ pub fn is_disabled(s: &Ship, rules: &Ruleset) -> bool {
         let below = rules.system(e.id).disables_below;
         below > 0.0 && (e.destroyed || e.hp < below * e.max)
     });
-    both_out || engine_failed
+    // A pilot out cold or dead (`damage.pilot_injury`) flies nothing either.
+    let pilot_out = s.pilot_health.is_some_and(|h| h <= 0.0);
+    both_out || engine_failed || pilot_out
 }
 
 /// Runs one tick of the systems (see the module docs).

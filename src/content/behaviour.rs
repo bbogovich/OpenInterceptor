@@ -407,6 +407,9 @@ pub struct PilotStats {
     pub grade: Option<u8>,
     /// The pilot's rank, 0 (rookie) upwards (`rank:`; 0 when unset).
     pub rank: Option<u8>,
+    /// The pilot's health (`health:`): with `damage.pilot_injury`, hits take it down; at 0
+    /// the pilot is unconscious, below 0 dead. `None`: rolled by the rule.
+    pub health: Option<f32>,
 }
 
 impl PilotStats {
@@ -419,6 +422,7 @@ impl PilotStats {
         stamina: 50.0,
         grade: None,
         rank: None,
+        health: None,
     };
 
     /// Parses `pilot: {accuracy: 80, intelligence: 60, flying: 50, bravery: 50, stamina: 50, grade: 1}`.
@@ -433,7 +437,49 @@ impl PilotStats {
             stamina: stat("stamina", n.stamina),
             grade: g.num("grade").map(|v| v.clamp(0.0, 255.0) as u8),
             rank: g.num("rank").map(|v| v.clamp(0.0, 255.0) as u8),
+            health: g.num("health"),
         }
+    }
+}
+
+/// A whole number drawn uniformly from `[lo, hi]` with `r` in 0..1 (the original's
+/// `lo + rand % (hi − lo + 1)`).
+pub fn whole_in(range: [f32; 2], r: f32) -> f32 {
+    let (lo, hi) = (range[0].min(range[1]), range[0].max(range[1]));
+    (lo + (r * (hi - lo + 1.0)).floor()).min(hi)
+}
+
+/// How a generated pilot's rank and maximum health come out (the original's pilot
+/// generator `0x40e8b6`, verified): the rank is the last of `rank_roll`'s thresholds a roll
+/// of 1–100 reaches; the health is `base` plus the rank times `per_rank`, each a whole
+/// number drawn from its range (`(rand % 5 + 1) × rank + rand % 11 + 5`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct HealthRoll {
+    pub base: [f32; 2],
+    pub per_rank: [f32; 2],
+    pub rank_roll: Vec<f32>,
+}
+
+impl HealthRoll {
+    /// Parses `{base: [5, 15], per_rank: [1, 5], rank_roll: [0, 41, 61, 81, 96]}`.
+    pub fn parse(g: Get) -> HealthRoll {
+        let pair = |k: &str, d: [f32; 2]| g.nums(k).filter(|v| v.len() == 2).map_or(d, |v| [v[0], v[1]]);
+        HealthRoll {
+            base: pair("base", [5.0, 15.0]),
+            per_rank: pair("per_rank", [0.0, 0.0]),
+            rank_roll: g.nums("rank_roll").unwrap_or_default(),
+        }
+    }
+
+    /// The rank a roll `r` in 0..1 gives: the last threshold that 1 + floor(100 r) reaches.
+    pub fn rank(&self, r: f32) -> usize {
+        let roll = whole_in([1.0, 100.0], r);
+        self.rank_roll.iter().rposition(|&t| roll >= t).unwrap_or(0)
+    }
+
+    /// The maximum health of a pilot of `rank`, from two rolls in 0..1.
+    pub fn health(&self, rank: usize, r1: f32, r2: f32) -> f32 {
+        whole_in(self.per_rank, r1) * rank as f32 + whole_in(self.base, r2)
     }
 }
 
@@ -1028,5 +1074,15 @@ retreat_on_nova: {to: flee, rows: [{ranks: [4, 9], bravery: 0.5, intelligence: 0
         assert!((n.chance(Some(&rec(0, 0.0)), 0.0) - 0.90).abs() < 1e-6);
         assert!((n.chance(Some(&rec(4, 100.0)), 0.0) - 0.05).abs() < 1e-6, "−25, held to 5");
         assert!(parse("states: {go: {do: attack}}\nretreat_on_nova: {to: nowhere}\n").unwrap_err().contains("nowhere"));
+    }
+
+    #[test]
+    fn health_rolls_follow_the_original_generator() {
+        let h = HealthRoll { base: [5.0, 15.0], per_rank: [1.0, 5.0], rank_roll: vec![0.0, 41.0, 61.0, 81.0, 96.0] };
+        // A roll of 1 + floor(100 r): 40 is rank 0, 41 rank 1, 96 rank 4.
+        assert_eq!((h.rank(0.39), h.rank(0.40), h.rank(0.95), h.rank(0.999)), (0, 1, 4, 4));
+        // (rand % 5 + 1) x rank + rand % 11 + 5: the extremes at rank 4.
+        assert_eq!((h.health(4, 0.0, 0.0), h.health(4, 0.999, 0.999)), (9.0, 35.0));
+        assert_eq!(whole_in([1.0, 3.0], 0.5), 2.0);
     }
 }
