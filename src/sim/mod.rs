@@ -36,7 +36,7 @@ pub mod stations;
 pub mod systems;
 pub mod targeting;
 
-use crate::content::equipment::{SystemId, SystemKind};
+use crate::content::equipment::{Efficiency, SystemId, SystemKind};
 use crate::content::rules::{FactionId, MissileId, Ruleset, ShipClassId};
 use crate::content::scenario::{AiRole, Scenario};
 use collision::Shape;
@@ -255,20 +255,58 @@ pub struct SystemState {
     pub offline: bool,
     /// Switched on (tractor, cloak, ECM).
     pub on: bool,
+    /// How it works when damaged, copied from its definition (`efficiency:`). A copy per
+    /// ship keeps [`SystemState::efficiency`] free of any lookup into the rules.
+    pub curve: Efficiency,
+    /// Hits never take it below this (`min_hit_points:`).
+    pub min_hp: f32,
 }
 
 impl SystemState {
     /// A knocked-out system works again once repaired to this fraction of its hit points.
     pub const ONLINE_AT: f32 = 0.25;
 
-    /// An undamaged, switched-off system.
+    /// An undamaged, switched-off system with the engine's standard damage table.
     pub fn new(id: SystemId, kind: SystemKind, max: f32) -> SystemState {
-        SystemState { id, kind, hp: max, max, destroyed: false, offline: false, on: false }
+        SystemState {
+            id,
+            kind,
+            hp: max,
+            max,
+            destroyed: false,
+            offline: false,
+            on: false,
+            curve: Efficiency::Standard,
+            min_hp: 0.0,
+        }
     }
 
-    /// Sets the hit points and updates the knocked-out flag.
+    /// An undamaged system built from its definition.
+    pub fn from_def(id: SystemId, d: &crate::content::equipment::SystemDef) -> SystemState {
+        SystemState {
+            curve: d.efficiency,
+            min_hp: d.min_hit_points.min(d.hit_points),
+            ..SystemState::new(id, d.kind, d.hit_points)
+        }
+    }
+
+    /// The fraction of its normal effect it delivers now: its `efficiency` table at its
+    /// share of hit points. The standard table also honours the knocked-out state.
+    pub fn efficiency(&self) -> f32 {
+        match self.curve {
+            Efficiency::Ignore => 1.0,
+            Efficiency::Standard => self.condition().efficiency(),
+            _ if self.destroyed || self.hp <= 0.0 => 0.0,
+            curve => curve.factor(self.hp / self.max.max(1e-6)),
+        }
+    }
+
+    /// Sets the hit points (never below `min_hp`) and updates the knocked-out flag.
     pub fn set_hp(&mut self, hp: f32) {
-        self.hp = hp.min(self.max);
+        // Without a floor the hit points may go negative, down to the destruction
+        // threshold (`damage.destroy_below`).
+        let floored = if self.min_hp > 0.0 { hp.max(self.min_hp) } else { hp };
+        self.hp = floored.min(self.max);
         if self.hp <= 0.0 {
             self.offline = true;
         } else if self.hp >= self.max * Self::ONLINE_AT {
@@ -360,8 +398,13 @@ pub struct Ship {
     pub beam_cooldown: Vec<f32>,
     /// Next mount to fire in unlinked mode.
     pub next_mount: usize,
+    /// Hit points of each beam mount (the class's beam `hit_points`; struck only by
+    /// `damage.system_table`).
+    pub beam_hp: Vec<f32>,
     /// Remaining missiles per rack.
     pub missiles: Vec<(MissileId, u32)>,
+    /// Hit points of each missile launcher (rack), in `missiles` order.
+    pub rack_hp: Vec<f32>,
     pub selected_rack: usize,
     pub missile_cooldown: f32,
     pub lock: Lock,
@@ -432,9 +475,19 @@ impl Ship {
     /// are simply not modelled; any other missing system does not work at all.
     pub fn efficiency(&self, kind: SystemKind) -> f32 {
         match self.system(kind) {
-            Some((_, s)) => s.condition().efficiency(),
+            Some((_, s)) => s.efficiency(),
             None if matches!(kind, SystemKind::Engines | SystemKind::Manoeuvring | SystemKind::Sensors) => 1.0,
             None => 0.0,
+        }
+    }
+
+    /// The share of engine thrust the ship has: none while it is disabled, otherwise its
+    /// engines' efficiency.
+    pub fn thrust_factor(&self) -> f32 {
+        if self.disabled {
+            0.0
+        } else {
+            self.efficiency(SystemKind::Engines)
         }
     }
 
@@ -746,14 +799,7 @@ impl World {
             state.rng = (state.rng ^ salt ^ self.rng.wrapping_mul(0xBF58_476D_1CE4_E5B9)) | 1;
         }
         let c = self.rules.ship(class);
-        let systems = c
-            .systems
-            .iter()
-            .map(|&sid| {
-                let d = self.rules.system(sid);
-                SystemState::new(sid, d.kind, d.hit_points)
-            })
-            .collect();
+        let systems = c.systems.iter().map(|&sid| SystemState::from_def(sid, self.rules.system(sid))).collect();
         let p = &self.rules.power;
         let ship = Ship {
             class,
@@ -793,7 +839,9 @@ impl World {
             link_mode: LinkMode::Linked,
             beam_cooldown: vec![0.0; c.beams.len()],
             next_mount: 0,
+            beam_hp: c.beams.iter().map(|b| self.rules.beam(*b).hit_points).collect(),
             missiles: c.missiles.clone(),
+            rack_hp: c.missiles.iter().map(|(m, _)| self.rules.missile(*m).launcher_hit_points).collect(),
             selected_rack: 0,
             missile_cooldown: 0.0,
             lock: Lock::default(),

@@ -8,10 +8,11 @@
 # science stations) take hits pool -> hull, with no armour, no difficulty factor and no
 # system hits (damage_model: station; README §8.3, VERIFIED, RQ-C-04). The X-COM and alien
 # bases have one shield pool sized by their generator module (modules.yaml), recharging
-# 2 points per second (README §8.2, VERIFIED); when the last generator falls the pool keeps
-# its points but stops recharging (on_generator_lost: keep; README §8.5, DERIVED).
-# Outposts and ore plants are other managers in the original (their own shield and hull
-# routines, README §8.3) and keep the ship damage model here.
+# 2 points per second (README §8.2, VERIFIED); when the last generator falls the pool drops
+# to 0 (on_generator_lost: drop; notes/re/unknowns-2026-11.md §8, VERIFIED).
+# Outposts and ore plants have pools of their own with no generator: +2 per second up to
+# their chart's SD (a pool with no modules takes SD as its shields; unknowns §8, VERIFIED).
+# Their own hull routines are not traced, so they keep the ship damage model here.
 #
 
 objects:
@@ -22,7 +23,7 @@ objects:
     model_set: xcom_base
     inherit: original:GameSettings.ini/XCOMBaseHP   # hull = HP1 (VERIFIED)
     damage_model: station
-    shield_pool: {recharge: 2, on_generator_lost: keep}   # README §8.2 / §8.5
+    shield_pool: {recharge: 2, on_generator_lost: drop}   # README §8.2, unknowns §8
     modules:
       - {slot: '0', class: xcom_beam_defense}
       - {slot: '1', class: xcom_beam_defense}
@@ -35,11 +36,13 @@ objects:
     faction: corporate
     model_set: xcom_outpost
     inherit: original:GameSettings.ini/XCOMOutpostHP   # hull = HP1 (VERIFIED)
+    shield_pool: {recharge: 2}   # shields = the chart's SD (VERIFIED)
   xcom_opp:
     name: Ore Processing Plant
     faction: corporate
     model_set: xcom_opp
     inherit: original:GameSettings.ini/XCOMOPPHP   # hull = HP1 (VERIFIED)
+    shield_pool: {recharge: 2}   # shields = the chart's SD (VERIFIED)
   alien_base:
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Alien Base
@@ -47,7 +50,7 @@ objects:
     model_set: alien_base
     inherit: original:GameSettings.ini/AlienBaseHP   # hull = HP1 (VERIFIED)
     damage_model: station
-    shield_pool: {recharge: 2, on_generator_lost: keep}   # README §8.2 / §8.5
+    shield_pool: {recharge: 2, on_generator_lost: drop}   # README §8.2, unknowns §8
     modules:
       - {slot: '0', class: alien_beam_pod}
       - {slot: '1', class: alien_shield_pod}
@@ -60,11 +63,13 @@ objects:
     faction: alien
     model_set: alien_outpost
     inherit: original:GameSettings.ini/AlienOutpostHP   # hull = HP1 (VERIFIED)
+    shield_pool: {recharge: 2}   # shields = the chart's SD (VERIFIED)
   alien_opp:
     name: Alien Mining Platform
     faction: alien
     model_set: alien_opp
     inherit: original:GameSettings.ini/AlienOPPHP   # hull = HP1 (VERIFIED)
+    shield_pool: {recharge: 2}   # shields = the chart's SD (VERIFIED)
   pirate_base:
     point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Pirate Base

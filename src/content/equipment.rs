@@ -110,6 +110,90 @@ impl SystemKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SystemId(pub u16);
 
+/// How well a damaged system works, by the share of its hit points left
+/// (`systems.<id>.efficiency`).
+///
+/// ```yaml
+/// efficiency: [{below: 50%, factor: 0.5}, {below: 25%, factor: 0.25}, {below: 15%, factor: 0}]
+/// efficiency: linear    # factor = hit points / maximum (the original's flight control)
+/// efficiency: ignore    # damage changes nothing (the original's sensor and hyperdrive)
+/// ```
+///
+/// The type is `Copy` and holds a fixed-size array rather than a `Vec`, so every fitted
+/// [`crate::sim::SystemState`] can carry its own copy without a heap allocation; four
+/// steps cover every table the original uses.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Efficiency {
+    /// The engine's default: full above half its hit points, half at or below, none at 0
+    /// (and a knocked-out system stays off until repaired to a quarter).
+    Standard,
+    /// Up to four `(below, factor)` steps, highest `below` first: below that share of its
+    /// hit points the system works at `factor`. Above every step it works fully; at zero
+    /// hit points it does not work at all.
+    Steps { steps: [(f32, f32); Efficiency::MAX_STEPS], len: u8 },
+    /// Works in proportion to its hit points.
+    Linear,
+    /// Damage never changes what it does, even when it is destroyed.
+    Ignore,
+}
+
+impl Efficiency {
+    /// The most steps a table may have.
+    pub const MAX_STEPS: usize = 4;
+
+    /// The factor a system works at with `share` (0..=1) of its hit points left. The
+    /// `Standard` table is applied by the caller, which also knows the knocked-out flag.
+    pub fn factor(&self, share: f32) -> f32 {
+        match *self {
+            Efficiency::Ignore => 1.0,
+            _ if share <= 0.0 => 0.0,
+            Efficiency::Standard => {
+                if share <= 0.5 {
+                    0.5
+                } else {
+                    1.0
+                }
+            }
+            Efficiency::Linear => share.min(1.0),
+            Efficiency::Steps { steps, len } => {
+                // Steps are sorted highest first, so the last one that applies wins.
+                let mut f = 1.0;
+                for &(below, factor) in &steps[..len as usize] {
+                    if share < below {
+                        f = factor;
+                    }
+                }
+                f
+            }
+        }
+    }
+
+    fn parse(n: &crate::formats::yaml::Node) -> Result<Efficiency, String> {
+        if let Some(word) = n.as_str() {
+            return match word {
+                "standard" => Ok(Efficiency::Standard),
+                "linear" => Ok(Efficiency::Linear),
+                "ignore" => Ok(Efficiency::Ignore),
+                other => Err(format!("efficiency: '{other}' is not standard, linear, ignore or a list of steps")),
+            };
+        }
+        let items = n.as_seq().ok_or("efficiency: give a word or a list of {below, factor}")?;
+        if items.is_empty() || items.len() > Efficiency::MAX_STEPS {
+            return Err(format!("efficiency: give 1 to {} steps", Efficiency::MAX_STEPS));
+        }
+        let mut steps = [(0.0, 0.0); Efficiency::MAX_STEPS];
+        for (k, item) in items.iter().enumerate() {
+            let g = Get(item);
+            let below = g.qty("below", Unit::Fraction).ok_or("efficiency: each step needs below: (a share)")?;
+            let factor = g.num("factor").ok_or("efficiency: each step needs factor:")?;
+            steps[k] = (below.clamp(0.0, 1.0), factor.clamp(0.0, 1.0));
+        }
+        // Highest threshold first, whatever order the modder wrote them in.
+        steps[..items.len()].sort_by(|a, b| b.0.total_cmp(&a.0));
+        Ok(Efficiency::Steps { steps, len: items.len() as u8 })
+    }
+}
+
 /// One kind of fitted system, with its numbers.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SystemDef {
@@ -135,6 +219,15 @@ pub struct SystemDef {
     pub lock_angle: f32,
     /// Sensors only: lock range, metres; 0 = the missile's own reach.
     pub lock_range: f32,
+    /// How it works when damaged (`efficiency:`).
+    pub efficiency: Efficiency,
+    /// Hits never take it below this many hit points, so it is never destroyed
+    /// (`min_hit_points: 1`; the original's flight control).
+    pub min_hit_points: f32,
+    /// Engines: below this share of its hit points the ship is disabled — no thrust, the
+    /// afterburner and cloak off (`disables_below: 15%`; 0 = only the engine's built-in
+    /// rule, engines and manoeuvring both out).
+    pub disables_below: f32,
 }
 
 impl SystemDef {
@@ -169,6 +262,9 @@ impl SystemDef {
             lock_time: 0.0,
             lock_angle: 0.0,
             lock_range: 0.0,
+            efficiency: Efficiency::Standard,
+            min_hit_points: 0.0,
+            disables_below: 0.0,
         }
     }
 
@@ -193,6 +289,12 @@ impl SystemDef {
             lock_time: g.qty("lock_time", Unit::Time).unwrap_or(0.0).max(0.0),
             lock_angle: g.qty("lock_angle", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
             lock_range: g.qty("lock_range", Unit::Distance).unwrap_or(0.0).max(0.0),
+            efficiency: match g.node("efficiency") {
+                Some(n) => Efficiency::parse(n)?,
+                None => Efficiency::Standard,
+            },
+            min_hit_points: g.num("min_hit_points").unwrap_or(0.0).max(0.0),
+            disables_below: g.qty("disables_below", Unit::Fraction).unwrap_or(0.0).clamp(0.0, 1.0),
         })
     }
 }
@@ -326,6 +428,98 @@ pub struct DamageRules {
     pub armor: ArmorMode,
     /// Factors by difficulty level, if the campaign has them.
     pub difficulty: Option<DifficultyFactors>,
+    /// The original's repair: the whole repair rate goes to the first item in this order
+    /// that needs it, hull included (`repair_order:`). `None`: the engine's own rule
+    /// (systems only, the worst first).
+    pub repair_order: Option<Vec<RepairItem>>,
+    /// The original's weighted system-hit table (`system_table:`). `None`: the system
+    /// share strikes one fitted system at random.
+    pub system_table: Option<SystemTable>,
+    /// How a damaged beam mount or missile launcher fires (`mounts:`).
+    pub mounts: MountRules,
+}
+
+/// One entry of `damage.repair_order`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RepairItem {
+    /// The fitted system of this kind.
+    System(SystemKind),
+    /// The ship's hull.
+    Hull,
+    /// The first damaged beam mount.
+    Beams,
+    /// The first damaged missile launcher.
+    Launchers,
+    /// Any other fitted system, in fitting order.
+    Others,
+}
+
+impl RepairItem {
+    fn parse(s: &str) -> Option<RepairItem> {
+        Some(match s {
+            "hull" => RepairItem::Hull,
+            "beams" => RepairItem::Beams,
+            "launchers" => RepairItem::Launchers,
+            "others" => RepairItem::Others,
+            k => RepairItem::System(SystemKind::parse(k)?),
+        })
+    }
+}
+
+/// What one roll of the system table strikes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SystemHit {
+    /// The fitted system of this kind.
+    System(SystemKind),
+    /// A random beam mount.
+    Beams,
+    /// A random missile launcher (its rounds are lost when it is destroyed).
+    Launchers,
+    /// A random fitted system other than engines, manoeuvring, sensors, shields and
+    /// hyperdrive (the original's "special systems").
+    Special,
+    /// Nothing: the damage is lost.
+    None,
+}
+
+/// One entry of the system table: `{chance: 10%, hit: shields, carry: true}`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SystemRoll {
+    pub chance: f32,
+    pub hit: SystemHit,
+    /// When the damage is more than the system has left, the rest goes on to the next
+    /// try; otherwise it is lost.
+    pub carry: bool,
+}
+
+/// `damage.system_table`: up to `tries` rolls share out the system damage of one hit
+/// (the original's `0x44ddee`). A roll that finds its system missing, or at 0, still uses
+/// up a try.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SystemTable {
+    pub tries: u32,
+    pub rolls: Vec<SystemRoll>,
+}
+
+/// `damage.mounts`: how a damaged beam mount or launcher fires. At or below `half_rate`
+/// of its hit points it fires at half rate; at or below `no_fire` it cannot fire.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MountRules {
+    pub half_rate: f32,
+    pub no_fire: f32,
+}
+
+impl MountRules {
+    /// How often a mount with `share` of its hit points fires: 1, 0.5 or 0.
+    pub fn rate(&self, share: f32) -> f32 {
+        if share <= self.no_fire {
+            0.0
+        } else if share <= self.half_rate {
+            0.5
+        } else {
+            1.0
+        }
+    }
 }
 
 /// How armour is held (`damage.armor`).
@@ -380,6 +574,9 @@ impl Default for DamageRules {
             spread: 1.0,
             armor: ArmorMode::Pool,
             difficulty: None,
+            repair_order: None,
+            system_table: None,
+            mounts: MountRules { half_rate: 0.5, no_fire: 0.25 },
         }
     }
 }
@@ -424,7 +621,69 @@ impl DamageRules {
                 hits_on_player: table("hits_on_player", errors),
             }
         });
+        let repair_order = g.node("repair_order").map(|_| {
+            g.list("repair_order")
+                .iter()
+                .filter_map(|k| {
+                    let item = RepairItem::parse(k);
+                    if item.is_none() {
+                        errors.push(format!(
+                            "damage.repair_order: '{k}' is not hull, beams, launchers, others or a system kind"
+                        ));
+                    }
+                    item
+                })
+                .collect()
+        });
+        let system_table = g.node("system_table").map(|n| {
+            let t = Get(n);
+            let rolls = t
+                .node("rolls")
+                .and_then(|r| r.as_seq())
+                .unwrap_or(&[])
+                .iter()
+                .filter_map(|item| {
+                    let r = Get(item);
+                    let what = r.str("hit").unwrap_or("");
+                    let hit = match what {
+                        "beams" => SystemHit::Beams,
+                        "launchers" => SystemHit::Launchers,
+                        "special" => SystemHit::Special,
+                        "none" => SystemHit::None,
+                        k => match SystemKind::parse(k) {
+                            Some(kind) => SystemHit::System(kind),
+                            None => {
+                                errors.push(format!("damage.system_table.rolls: '{what}' is not a system kind, beams, launchers, special or none"));
+                                return None;
+                            }
+                        },
+                    };
+                    Some(SystemRoll {
+                        chance: r.qty("chance", Unit::Fraction).unwrap_or(0.0).max(0.0),
+                        hit,
+                        carry: r.bool("carry").unwrap_or(false),
+                    })
+                })
+                .collect::<Vec<_>>();
+            if rolls.iter().map(|r| r.chance).sum::<f32>() > 1.0001 {
+                errors.push("damage.system_table.rolls: the chances add up to more than 100 %".into());
+            }
+            SystemTable { tries: t.num("tries").unwrap_or(1.0).clamp(1.0, 20.0) as u32, rolls }
+        });
+        let mounts = match g.node("mounts") {
+            None => d.mounts,
+            Some(n) => {
+                let m = Get(n);
+                MountRules {
+                    half_rate: m.qty("half_rate", Unit::Fraction).unwrap_or(d.mounts.half_rate).clamp(0.0, 1.0),
+                    no_fire: m.qty("no_fire", Unit::Fraction).unwrap_or(d.mounts.no_fire).clamp(0.0, 1.0),
+                }
+            }
+        };
         DamageRules {
+            repair_order,
+            system_table,
+            mounts,
             system_share: frac("system_share", d.system_share).max(0.0),
             system_below: frac("system_below", d.system_below).clamp(0.0, 1.0),
             system_divert: g.bool("system_divert").unwrap_or(d.system_divert),
@@ -486,6 +745,75 @@ x: {}
         let p = PowerRules::parse(Some(Get(&doc("balance: share\nenergy: 1000\nenergy_recharge: 22\n")))).unwrap();
         assert_eq!((p.balance, p.energy, p.energy_recharge), (BalanceMode::Share, 1000.0, 22.0));
         assert!(PowerRules::parse(Some(Get(&doc("balance: sideways\n")))).is_err());
+    }
+
+    #[test]
+    fn efficiency_tables_follow_the_share_of_hit_points() {
+        let d = doc("engines: {efficiency: [{below: 25%, factor: 0.25}, {below: 50%, factor: 0.5}, {below: 15%, factor: 0}], disables_below: 15%}
+manoeuvring: {hit_points: 40, efficiency: linear, min_hit_points: 1}
+sensors: {efficiency: ignore}
+shields: {}
+bad: {kind: vct, efficiency: sometimes}
+");
+        let sys = |id: &str| SystemDef::parse(id, Get(d.get(id).unwrap()));
+        // The original's engine (README §5): ×0.5 below 50 %, ×0.25 below 25 %, nothing below 15 %.
+        let e = sys("engines").unwrap();
+        let f = |share| e.efficiency.factor(share);
+        assert_eq!((f(0.6), f(0.5), f(0.49), f(0.24), f(0.15), f(0.14), f(0.0)), (1.0, 1.0, 0.5, 0.25, 0.25, 0.0, 0.0));
+        assert_eq!(e.disables_below, 0.15);
+        let m = sys("manoeuvring").unwrap();
+        assert_eq!((m.efficiency.factor(0.25), m.min_hit_points, m.hit_points), (0.25, 1.0, 40.0));
+        assert_eq!(sys("sensors").unwrap().efficiency.factor(0.0), 1.0, "ignore: even at 0");
+        // Absent: the engine's standard table.
+        let s = sys("shields").unwrap();
+        assert_eq!(
+            (s.efficiency, s.efficiency.factor(0.5), s.efficiency.factor(0.51)),
+            (Efficiency::Standard, 0.5, 1.0)
+        );
+        assert!(sys("bad").unwrap_err().contains("efficiency"));
+    }
+
+    #[test]
+    fn repair_order_system_table_and_mounts_parse() {
+        let mut errors = Vec::new();
+        let n = doc("repair_order: [engines, hull, shields, beams, launchers, others, warp]
+system_table:
+  tries: 5
+  rolls:
+    - {chance: 20%, hit: beams}
+    - {chance: 10%, hit: shields, carry: true}
+    - {chance: 2%, hit: none}
+    - {chance: 1%, hit: phaser}
+mounts: {half_rate: 50%, no_fire: 25%}
+");
+        let d = DamageRules::parse(Some(Get(&n)), &mut errors);
+        assert_eq!(
+            d.repair_order.unwrap(),
+            vec![
+                RepairItem::System(SystemKind::Engines),
+                RepairItem::Hull,
+                RepairItem::System(SystemKind::Shields),
+                RepairItem::Beams,
+                RepairItem::Launchers,
+                RepairItem::Others
+            ]
+        );
+        let t = d.system_table.unwrap();
+        assert_eq!(t.tries, 5);
+        assert_eq!(t.rolls.len(), 3, "the unknown entry is dropped");
+        assert_eq!(t.rolls[1], SystemRoll { chance: 0.1, hit: SystemHit::System(SystemKind::Shields), carry: true });
+        assert_eq!((d.mounts.rate(0.6), d.mounts.rate(0.5), d.mounts.rate(0.25)), (1.0, 0.5, 0.0));
+        assert!(errors.iter().any(|e| e.contains("warp")), "{errors:?}");
+        assert!(errors.iter().any(|e| e.contains("phaser")), "{errors:?}");
+        // Absent keys: today's rules.
+        let d = DamageRules::parse(None, &mut errors);
+        assert_eq!((d.repair_order, d.system_table), (None, None));
+        let mut errors = Vec::new();
+        DamageRules::parse(
+            Some(Get(&doc("system_table: {rolls: [{chance: 80%, hit: beams}, {chance: 30%, hit: shields}]}\n"))),
+            &mut errors,
+        );
+        assert!(errors.iter().any(|e| e.contains("more than 100")), "{errors:?}");
     }
 
     #[test]
