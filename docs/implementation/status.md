@@ -462,7 +462,8 @@ elements it belongs to*. Branch `parity/m2`.
 | Item | Status | Where |
 |---|---|---|
 | #122 RQ-UI-03/04: grid sheet fonts (`skins.<id>.fonts`, `formats::sheetfont`), the original's DrawText / DrawTextRect anchor rules (`app::text`), widget `font`, `at`, `monospace`; `interceptor`'s nine SpritesDLL fonts; the CSD readouts (D-41) and status bar in 23010 at the exe's anchors, base names in 23011, the E&P funds in its slot (D-34); the default campaign's generated `font_body` / `font_title` sheets (`tools/default_assets/fonts.py`) checked by `--check` | **Done** (app 0.22.5; MT-6-28 not yet run; DEV-081, DEV-082) | `src/formats/sheetfont.rs`, `src/app/text.rs`, `src/app/ui.rs`, `src/content/skin.rs`, `src/content/screens.rs`, `src/app/strategy.rs`, `packs/interceptor/rules/skin.yaml`, `screens.yaml`, `resources/default/rules/skin.yaml` |
+| #123 RQ-UI-05/06, D-32 – D-40: captions from their control's rect (`app::caption`: TextButton, capsule, check row, dialog stacking); the engine's 6 px caption font `builtin:small` with the exe's advances; skin `text_button` and `dialog`; lists in sheet fonts with their own title, row, detail and button rectangles (`draw_list_art` replaces `draw_panel` on the original screens; Research on its 34 px slots); base names centred; prompts as message boxes in both campaigns; `--notice` | **Done** (app NEXT; MT-6-29 not yet run; DEV-083, DEV-084) | `src/app/caption.rs`, `src/content/smallfont.rs`, `src/app/strategy.rs`, `src/app/widgets.rs`, `src/content/skin.rs`, `src/content/screens.rs`, `packs/interceptor/rules/{skin,screens}.yaml`, `resources/default/rules/skin.yaml` |
 
-Not yet: the exe's built-in 6-pixel caption font (text buttons, #123); lists, button captions and
-map labels still draw in the TrueType font (#123, #124, #128); the default campaign has no screen
-set, so its sheet fonts are loaded and checked but not yet shown.
+Not yet: map labels in the TrueType font (#128); the compact list's columns, pulsing bar and
+arrows (#124); button sprites and caps (#125); dialog frame art (#127). The default campaign has no
+screen set: its sheet fonts show in its dialogs only.

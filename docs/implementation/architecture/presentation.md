@@ -308,6 +308,38 @@ the status bar; wrapping, forced breaks and both block placements),
 `the_default_campaigns_generated_fonts_are_grid_sheets`, and `check::tests` (bad sheet, unknown
 widget font).
 
+### Captions, text buttons, lists and dialogs (`app::caption`, `content::smallfont`)
+
+*App NEXT, branch `parity/m2` (plan M2, issue #123; RQ-UI-05/06, audit D-32 – D-40).* In the
+original every caption is drawn by its control's paint routine from the control's rectangle.
+`app::caption` holds those rules as pure functions over integer design-space rectangles:
+
+| Function | Rule (Interceptor.exe) |
+|---|---|
+| `text_button(rect)` | Caption anchor at the centre (flag 1 with the 6 px font: y − 2), lines on the rect inflated (−5, +2), pressed fill on (0, −4) (0x41932d). |
+| `capsule_caption(rect, pressed)` | (cx, cy − 2), pressed (cx + 1, cy − 1), font 23010 (0x41835a). Used by the dialog frames (#127). |
+| `check_label(rect)` | left + 20 on the centre line (0x419997). |
+| `stack_buttons(dialog, n, step)` | 20 px buttons, width − 20, the last at bottom − 25 − 20 (MsgBox.cpp). |
+| `dialog_layout`, `button_block`, `rows_that_fit`, `ellipsize` | A prompt's parts; a list's action buttons as a row or a column; rows by pitch and size; "..." cutting. |
+
+`draw_text_button` and `dialog` draw them through the skin. `widgets::modal` asks for
+`caption::dialog` first when the skin has a `dialog` style. `StrategyScreen::draw_list_art`
+replaces `draw_panel` for a list with a sheet font. It places the title, rows, detail and buttons
+from the widget's `ListStyle` rectangles, clamped to them, and reuses the screen's glyph buffer.
+
+**`builtin:small`** (`content::smallfont`) is the engine's own 6-row pixel font, with the exe's
+per-character advances (`advances()`, read from the width routine 0x617487's jump table). It is
+built in memory as a grid sheet (`sheet()`), so it goes through `SheetFont::parse` and the same
+texture path as any sheet. `SheetFont::with_advances` makes the given advances replace the glyph
+widths. `Face::centre_raise` is the font's `y −= 2` when centred.
+
+Tests: `app::caption::tests` (the parts of a TextButton, capsule and check-row anchors, dialog
+stacking and layout, rows that fit, button blocks, "..."), `content::smallfont::tests` (the exe's
+advances, every design narrower than its advance, the sheet reads),
+`formats::sheetfont::tests` (given advances win), `app::text::tests` (centre raise, top-aligned
+detail text), `content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look`,
+`content::screens::tests` (list keys), `cli::tests` (`--notice`).
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -381,7 +413,9 @@ play without it.
 | `AppContext::ui`, `AppContext::music` | `app` | The skin and the music player, shared by every screen. |
 | `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5). |
 | `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
-| `text::{Face, Placed, Align, draw_text, draw_text_rect, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app 0.22.5). |
+| `caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}`; `StrategyScreen::draw_list_art`, `notice` | `app::caption`, `app::strategy` | Captions from their control's rect; text buttons, lists and dialogs in the original's look (app NEXT). |
+| `smallfont::{REFERENCE, advances, sheet}`; `SheetFont::with_advances`; `TextButtonStyle`, `DialogStyle`, `ListStyle` | `content::smallfont`, `formats::sheetfont`, `content::skin`, `content::screens` | The built-in 6 px caption font; the skin's `text_button` and `dialog`; a list's part rectangles. |
+| `text::{Face, Placed, Align, draw_text, draw_text_rect, draw_text_top, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app 0.22.5). |
 | `SheetFace`, `Ui::sheet`, `Ui::draw_glyphs`; `strategy::sheet_text`; `WidgetDef::{font, at, monospace}` | `app::ui`, `app::strategy`, `content::screens` | Loaded sheet fonts and their drawing; a widget's text in its sheet font. |
 | `widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}` | `app::widgets` | Immediate-mode widgets for the strategy screen (app 0.16.0); the arithmetic pure and tested. |
 | `ScreenLayout`, `default_starmap`, `STARMAP_WIDGETS`, `screens::schema` | `content::screens` | `screens.<id>`: design space, background, widget rectangles; the engine's strategy-screen layout. |
