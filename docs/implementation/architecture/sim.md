@@ -336,7 +336,7 @@ modules survives ("STATION SHIELDS DOWN") or, for a `shield_pool` station, sets 
 maximum from its first standing generator (`Ruleset::pool_capacity`) and clears
 `Ship::pool_powered` (and, with `drop`, the points) when none stands.
 
-**`sim::stations`** (app NEXT, #113) holds the station shield rules. A pool is stored in both
+**`sim::stations`** (app 0.22.4, #113) holds the station shield rules. A pool is stored in both
 banks (`shield_fore == shield_aft`), so the HUD, the remote console and the AI read it without
 knowing pools exist; only `stations::absorb`, `stations::recharge` and `update_shields` change
 it, and they write both banks together. `fill_protection` sizes it with

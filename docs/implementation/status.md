@@ -337,7 +337,7 @@ Deviations revised: DEV-009, DEV-013 (resolved in `interceptor`), DEV-032, DEV-0
 `2bc263b`, **466** `#[test]` functions by a count of the sources. What remains:
 [Track A](plan/track-a-fidelity.md).
 
-**Parity M1** (app NEXT; issue #113, RQ-C-01 – 04 and D-16 of `notes/re/parity-plan.md`, facts
+**Parity M1** (app 0.22.4; issue #113, RQ-C-01 – 04 and D-16 of `notes/re/parity-plan.md`, facts
 from `notes/re/flight` §8): a station's hull is its chart's `HP1` alone (the X-COM base 6,000,
 the alien base 5,000, outposts 3,500; DEV-056's sum resolved); `shield_pool` (one pool,
 `recharge`, `on_generator_lost: keep | drop`), generator `shield_capacity`, `shielded_by_hub`

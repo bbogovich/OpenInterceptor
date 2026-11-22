@@ -69,7 +69,7 @@ turret, force-field generator, death-ray pod, shield pod) stand on their bases a
 
 ## Shield pools and covered modules
 
-Since app NEXT a station can use the original game's station model instead of a ship's (issue
+Since app 0.22.4 a station can use the original game's station model instead of a ship's (issue
 #113; facts from the player's own program, flight notes §8, **verified** unless marked):
 
 ```yaml
