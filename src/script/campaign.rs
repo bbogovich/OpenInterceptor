@@ -51,6 +51,7 @@ pub mod id {
     pub const FACILITY_PROGRESS: u16 = 27;
     pub const CONSTRUCTION_ATTACKS: u16 = 28;
     pub const BASE_DISTANCE: u16 = 29;
+    pub const CENTRE_DISTANCE: u16 = 30;
 }
 
 /// Names with a meaning of their own as a system query's argument: in a `placement:`
@@ -153,6 +154,13 @@ pub const QUERIES: &[QueryDef] = &[
         result: Type::Num,
         doc: "map units from the system to the player's nearest base (1e9 with no base)",
     },
+    QueryDef {
+        name: "centre_distance",
+        args: &[Arg::Num],
+        result: Type::Num,
+        doc:
+            "map units from the system to the map's centre (a generated map's middle, else the systems' bounding box's)",
+    },
 ];
 
 /// The campaign schema: every id in `names` is a constant (its index), then the
@@ -205,6 +213,7 @@ mod tests {
             (id::FACILITY_PROGRESS, "facility_progress"),
             (id::CONSTRUCTION_ATTACKS, "construction_attacks"),
             (id::BASE_DISTANCE, "base_distance"),
+            (id::CENTRE_DISTANCE, "centre_distance"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

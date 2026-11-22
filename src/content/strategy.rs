@@ -656,6 +656,29 @@ pub struct BaseType {
     /// Where a base may be built: a campaign condition over the candidate `system`
     /// (`base_distance(system) <= 9000`); `None` = anywhere.
     pub placement: Option<Expr>,
+    /// The price from the template (RQ-S-08, README §3.1): when above 0, a new base costs
+    /// this share of `hub_cost` + the template's modules (the original: 0.75); else `cost`.
+    pub price_share: f32,
+    pub hub_cost: f32,
+    /// The hub's hull points (the original: the station chart's HP1), 0 = no hull.
+    pub hull: f32,
+    /// Hull repair (RQ-S-16): `per_minute` points a game minute, at least `min_step` a step,
+    /// times each `boost` module's factor while one works (the original: 2, 5,
+    /// AdvancedDamageControl × 2).
+    pub repair_per_minute: f32,
+    pub repair_min_step: f32,
+    pub repair_boost: Vec<(String, f32)>,
+    /// Hull points an unopposed strike takes.
+    pub strike_damage: f32,
+}
+
+/// `manufacture:` — production by outpost technicians (RQ-S-09, README §2.5): capacity is
+/// `per_outpost` + `per_opp` × its OPPs technicians for each outpost; a job gains one work
+/// unit per technician-hour, queue order across bases taking the capacity first.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ManufactureRules {
+    pub per_outpost: f32,
+    pub per_opp: f32,
 }
 
 /// What a raid heads for.
@@ -808,6 +831,8 @@ pub struct StrategyDef {
     pub star_classes: Vec<StarClass>,
     pub research: Vec<Topic>,
     pub research_model: ResearchModel,
+    /// Production by outpost technicians (`manufacture:`), if the campaign has it.
+    pub manufacture: Option<ManufactureRules>,
     /// Outposts as campaign objects (`outposts:`), if the campaign has them.
     pub outposts: Option<OutpostRules>,
     pub items: Vec<Item>,
@@ -1343,8 +1368,22 @@ impl StrategyDef {
                 quarters: g.num("quarters").unwrap_or(0.0),
                 storage: g.num("storage").unwrap_or(0.0),
                 placement: cond(g.str("placement"), &format!("base_types.{id}.placement"), errors),
+                price_share: g.num("price_share").unwrap_or(0.0).max(0.0),
+                hub_cost: g.num("hub_cost").unwrap_or(0.0),
+                hull: g.num("hull").unwrap_or(0.0).max(0.0),
+                repair_per_minute: g.node("repair").map(Get).and_then(|r| r.num("per_minute")).unwrap_or(0.0),
+                repair_min_step: g.node("repair").map(Get).and_then(|r| r.num("min_step")).unwrap_or(0.0),
+                repair_boost: g.node("repair").map(Get).map(|r| pairs(r, "boost")).unwrap_or_default(),
+                strike_damage: g.num("strike_damage").unwrap_or(0.0),
             })
             .collect();
+        let manufacture = global("manufacture").map(|n| {
+            let g = Get(&n);
+            ManufactureRules {
+                per_outpost: g.num("per_outpost").unwrap_or(10.0),
+                per_opp: g.num("per_opp").unwrap_or(10.0),
+            }
+        });
         // 5. Raids, incomes, expenses.
         let raids: Vec<Raid> = of(defs, "raids")
             .map(|(id, g)| Raid {
@@ -1621,6 +1660,7 @@ impl StrategyDef {
             research,
             research_model,
             outposts,
+            manufacture,
             items,
             hulls,
             modules,
@@ -1894,6 +1934,14 @@ fn sections_core() -> Vec<super::schema::Field> {
             "research topics",
         ),
         f(
+            "manufacture",
+            Ty::Struct(vec![
+                f("per_outpost", Ty::Num, "technicians an outpost gives (10)"),
+                f("per_opp", Ty::Num, "technicians each of its OPPs adds (10)"),
+            ]),
+            "production by outpost technicians",
+        ),
+        f(
             "salvage_fits",
             dict(Ty::List(Box::new(Ty::Struct(vec![
                 f("item", Ty::Name, "an item the class carries"),
@@ -2017,6 +2065,19 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("storage", Ty::Num, "store capacity of the hub (item sizes; 0 = no limit at this base type)"),
                 f("quarters", Ty::Num, "pilots the hub houses"),
                 f("placement", expr(), "where a base may be built: a condition over the candidate system (anywhere)"),
+                f("price_share", Ty::Num, "a new base costs this share of hub_cost + its template's modules (0: cost)"),
+                f("hub_cost", Ty::Num, "the hub's cost, for price_share"),
+                f("hull", Ty::Num, "the hub's hull points (0: none)"),
+                f(
+                    "repair",
+                    Ty::Struct(vec![
+                        f("per_minute", Ty::Num, "hull points a game minute"),
+                        f("min_step", Ty::Num, "at least this many a step"),
+                        f("boost", nums(), "module: factor while one works"),
+                    ]),
+                    "hull repair",
+                ),
+                f("strike_damage", Ty::Num, "hull points an unopposed strike takes"),
             ])),
             "base types",
         ),

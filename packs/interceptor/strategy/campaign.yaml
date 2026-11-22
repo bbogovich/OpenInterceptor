@@ -184,36 +184,50 @@ base_modules:
   ecmtype1: {group: ecm}
   ecmtype2: {group: ecm}
   advanced_damage_control: {group: special}
-  beam_defense_laser: {group: weapon}
-  beam_defense_heavy_laser: {group: weapon}
-  beam_defense_gatling_laser: {group: weapon}
-  beam_defense_tracer_cannon: {group: weapon}
-  beam_defense_tracking_tracer: {group: weapon}
-  beam_defense_phase: {group: weapon}
-  beam_defense_plasma_pulse: {group: weapon}
-  beam_defense_tachyon_pulser: {group: weapon}
-  missile_defense_xwinder: {group: weapon}
-  missile_defense_permeator: {group: weapon}
-  missile_defense_elerium_torp: {group: weapon}
-  missile_defense_enveloping_torp: {group: weapon}
-  missile_defense_sidestep: {group: weapon}
-  missile_defense_parallax: {group: weapon}
+  beam_defense_laser: {group: beam_defense}
+  beam_defense_heavy_laser: {group: beam_defense}
+  beam_defense_gatling_laser: {group: beam_defense}
+  beam_defense_tracer_cannon: {group: beam_defense}
+  beam_defense_tracking_tracer: {group: beam_defense}
+  beam_defense_phase: {group: beam_defense}
+  beam_defense_plasma_pulse: {group: beam_defense}
+  beam_defense_tachyon_pulser: {group: beam_defense}
+  missile_defense_xwinder: {group: missile_defense}
+  missile_defense_permeator: {group: missile_defense}
+  missile_defense_elerium_torp: {group: missile_defense}
+  missile_defense_enveloping_torp: {group: missile_defense}
+  missile_defense_sidestep: {group: missile_defense}
+  missile_defense_parallax: {group: missile_defense}
 
 base_types:
   xcom:
     name: X-COM base
-    cost: 1500000                   # DERIVED (the guide: 1.5M plus modules, less 25%)
-    build_time: 7d
-    max_bases: 8                    # the game's own limit (the executable allows 20)
-    placement: base_distance(system) <= 9000   # 1.5 light years from one of your bases
+    # A new base (RQ-S-08, strategy README §3.1, VERIFIED): 0.75 x (the hub, M_XCOMCentralHub
+    # 1,500 thousand, + the best shield, downlink and sensor + hangar, personnel, cargo,
+    # communications and probe launch + 2 x the best beam defence); 29 days; at most 20.
+    price_share: 0.75
+    hub_cost: 1500000
+    build_time: 29d
+    max_bases: 20
+    # Within 130 screen px of a base at the CSD's level 0 (45 units a px: 5,850 units; the
+    # zoom level DERIVED) and 30,000 units (5 ly) of the map's centre (VERIFIED).
+    placement: base_distance(system) <= 5850 and centre_distance(system) <= 30000
     sensor_range: 0                 # the hub sees nothing itself (README §3.2, VERIFIED)
-    limits: {shield: 1, sensor: 1, comms: 1, hangar: 3, downlink: 3, weapon: 10}
-    # The guide: a new base comes with the best available downlink, shield and sensor
-    # (groups), and two beam defence lasers. DERIVED.
-    template: [beam_defense_laser, beam_defense_laser, downlink, shield, sensor]
+    limits: {shield: 1, sensor: 1, comms: 1, hangar: 3, downlink: 3, beam_defense: 10, missile_defense: 10}   # DERIVED (the exe's limits are not traced)
+    # The new base gets the priced template ("best" = the costliest available: DERIVED,
+    # the exe picks by research).
+    template: [shield, downlink, sensor, hangar, personnel, cargo, communications, probe_launch, beam_defense, beam_defense]
+    # The hub's hull, the station chart's HP1 (XCOMBaseHP, VERIFIED), repaired by
+    # max(5, 2 a minute), doubled with Advanced Damage Control (RQ-S-16, README §3.2, VERIFIED).
+    hull: 6000
+    repair: {per_minute: 2, min_step: 5, boost: {advanced_damage_control: 2}}
+    strike_damage: 1500             # DERIVED: an unopposed strike's hull damage
 
-# The corporations' funding (DERIVED: the original's monthly evaluation per outpost
-# system arrives with relations in Stage 5).
+# Manufacturing by the outposts' technicians (RQ-S-09, README §2.5, VERIFIED): 10 per outpost
+# and 10 per OPP; a job gains a work unit (the INI's ProdTime is in technician-hours) per
+# technician-hour.
+manufacture: {per_outpost: 10, per_opp: 10}
+
 # The corporate outposts pay the player (RQ-S-04/05/06; strategy README §2.2 - §2.3, VERIFIED):
 # round(ExchangeRate x sum of OPP yields x funding) a month once 0.95 x 28 days old; funding
 # starts at 0.75, drifts with the month's scores in its system (the step table), is capped at

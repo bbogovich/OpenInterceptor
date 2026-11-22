@@ -1146,6 +1146,10 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "manufacture": {"description": "production by outpost technicians", "type": "object", "additionalProperties": false, "properties": {
+        "per_outpost": {"description": "technicians an outpost gives (10)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "per_opp": {"description": "technicians each of its OPPs adds (10)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+      }},
     "salvage_fits": {"description": "what a destroyed enemy of each class may yield", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
             "item": {"description": "an item the class carries", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
             "goodies": {"description": "the goodies table giving its chance", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
@@ -1229,6 +1233,15 @@
           "storage": {"description": "store capacity of the hub (item sizes; 0 = no limit at this base type)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "quarters": {"description": "pilots the hub houses", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "placement": {"description": "where a base may be built: a condition over the candidate system (anywhere)", "type": "string"},
+          "price_share": {"description": "a new base costs this share of hub_cost + its template's modules (0: cost)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hub_cost": {"description": "the hub's cost, for price_share", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "hull": {"description": "the hub's hull points (0: none)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "repair": {"description": "hull repair", "type": "object", "additionalProperties": false, "properties": {
+              "per_minute": {"description": "hull points a game minute", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "min_step": {"description": "at least this many a step", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "boost": {"description": "module: factor while one works", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}
+            }},
+          "strike_damage": {"description": "hull points an unopposed strike takes", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}

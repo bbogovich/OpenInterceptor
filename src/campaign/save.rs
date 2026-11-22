@@ -433,6 +433,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("type", n(b.base_type as f64)),
                         ("system", n(b.system as f64)),
                         ("ready_at", n(b.ready_at)),
+                        ("hull", n(b.hull as f64)),
                         // `[module, ready_at]`, with a third number 1 for a wreck.
                         (
                             "modules",
@@ -730,6 +731,8 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             jobs,
             stock,
             ready_at: f(b, "ready_at"),
+            // The hub's hull (app NEXT; older saves: whole).
+            hull: b.num("hull").unwrap_or_else(|| def.base_types.get(f(b, "type") as usize).map_or(0.0, |t| t.hull)),
         });
     }
     let known: Vec<bool> = list("known").iter().map(|k| k.as_str() == Some("true")).collect();

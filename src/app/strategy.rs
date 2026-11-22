@@ -673,8 +673,9 @@ impl StrategyScreen {
                 }
                 if let Some(s) = self.system.filter(|s| !c.bases.iter().any(|b| b.system == *s)) {
                     for (t, bt) in def.base_types.iter().enumerate() {
+                        let price = c.base_price(def, t);
                         rows.push(Row::new(
-                            format!("Build a {} at {} ({})", bt.name, c.systems[s].name, money(bt.cost as f64)),
+                            format!("Build a {} at {} ({})", bt.name, c.systems[s].name, money(price)),
                             Act::NewBase(t, s),
                         ));
                     }
@@ -1552,7 +1553,9 @@ impl StrategyScreen {
                     }
                     None => {
                         for (t, bt) in def.base_types.iter().enumerate() {
-                            acts.push((format!("Build {} ({})", bt.name, money(bt.cost as f64)), Act::NewBase(t, s)));
+                            // (The price checks research, which needs the campaign mutably.)
+                            let price = self.campaign.clone().base_price(def, t);
+                            acts.push((format!("Build {} ({})", bt.name, money(price)), Act::NewBase(t, s)));
                         }
                     }
                 }

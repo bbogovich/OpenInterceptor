@@ -98,6 +98,8 @@ pub struct Base {
     pub stock: Vec<(usize, u32)>,
     /// Campaign hour the hub is finished (a new base is under construction until then).
     pub ready_at: f64,
+    /// The hub's hull points (`base_types.<id>.hull`; repaired over time, RQ-S-16).
+    pub hull: f32,
 }
 
 /// A pilot's state.
@@ -453,7 +455,8 @@ impl Context for Cx<'_> {
             | q::LANE_DISTANCE
             | q::FACILITY_PROGRESS
             | q::CONSTRUCTION_ATTACKS
-            | q::BASE_DISTANCE => {
+            | q::BASE_DISTANCE
+            | q::CENTRE_DISTANCE => {
                 let arg = |k: usize| -> &str {
                     let n = args.get(k).and_then(|i| self.def.names.get(*i as usize)).map(String::as_str).unwrap_or("");
                     let sys = match n {
@@ -464,6 +467,9 @@ impl Context for Cx<'_> {
                     sys.map_or("", |s| c.systems[s].id.as_str())
                 };
                 let Some(s) = c.systems.iter().position(|x| x.id == arg(0)) else { return Value::Num(0.0) };
+                if id == q::CENTRE_DISTANCE {
+                    return Value::Num(distance(c.systems[s].pos, c.map_centre(self.def)));
+                }
                 c.logistics_query(self.def, id, s, arg(1))
             }
             _ => Value::Num(0.0),
@@ -575,6 +581,7 @@ impl Campaign {
                 jobs: Vec::new(),
                 stock: Vec::new(),
                 ready_at: 0.0,
+                hull: def.base_types[bt].hull,
             });
         }
         if !c.bases.is_empty() {
@@ -970,6 +977,37 @@ impl Campaign {
         out
     }
 
+    /// The map's centre: a generated map's middle (the original's (30000, 30000) on its
+    /// 60,000-unit map), else the middle of the systems' bounding box.
+    pub fn map_centre(&self, def: &StrategyDef) -> [f32; 2] {
+        if let MapKind::Generated { size, .. } = &def.map.kind {
+            return [size[0] / 2.0, size[1] / 2.0];
+        }
+        let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
+        for s in &self.systems {
+            for k in 0..2 {
+                lo[k] = lo[k].min(s.pos[k]);
+                hi[k] = hi[k].max(s.pos[k]);
+            }
+        }
+        if self.systems.is_empty() {
+            return [0.0, 0.0];
+        }
+        [(lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0]
+    }
+
+    /// The price of a new base of `base_type` (RQ-S-08): `price_share` × (`hub_cost` + the
+    /// template's modules as they would be chosen now), or the type's `cost`.
+    pub fn base_price(&mut self, def: &StrategyDef, base_type: usize) -> f64 {
+        let bt = &def.base_types[base_type];
+        if bt.price_share <= 0.0 {
+            return bt.cost as f64;
+        }
+        let (share, hub) = (bt.price_share, bt.hub_cost);
+        let modules: f32 = self.template_modules(def, base_type).iter().map(|&m| def.modules[m].cost).sum();
+        (share * (hub + modules)) as f64
+    }
+
     /// A raid wrecks module `m` of base `base`: it stops working, and what it held that
     /// now has no room is lost, as its `on_destroyed` says (craft, pilots, stock).
     fn wreck_module(&mut self, def: &StrategyDef, base: usize, m: usize, events: &mut Vec<Event>) {
@@ -1322,10 +1360,11 @@ impl Campaign {
         if !self.placement_ok(def, bt.placement.as_ref(), system) {
             return Err(format!("{} cannot be built at {}", bt.name, self.systems[system].name));
         }
-        if self.money < bt.cost as f64 {
-            return Err(format!("A {} base costs {:.0}; there is {:.0}", bt.name, bt.cost, self.money));
+        let price = self.base_price(def, base_type);
+        if self.money < price {
+            return Err(format!("A {} base costs {price:.0}; there is {:.0}", bt.name, self.money));
         }
-        self.money -= bt.cost as f64;
+        self.money -= price;
         let ready_at = self.hours + bt.build_time as f64;
         let modules = self
             .template_modules(def, base_type)
@@ -1341,6 +1380,7 @@ impl Campaign {
             jobs: Vec::new(),
             stock: Vec::new(),
             ready_at,
+            hull: bt.hull,
         });
         Ok(())
     }
@@ -1523,9 +1563,32 @@ impl Campaign {
                 );
             }
         }
-        // Manufacturing: each base's production rate, first job first.
+        // Hull repair (RQ-S-16, README §3.2): `per_minute` points a game minute, at least
+        // `min_step` a step, times each working `boost` module's factor, up to the hull.
         for b in 0..self.bases.len() {
-            let mut work = self.effect(def, b, "production_rate") * dt as f32;
+            let bt = &def.base_types[self.bases[b].base_type];
+            if bt.hull <= 0.0 || self.bases[b].hull >= bt.hull || self.bases[b].ready_at > now {
+                continue;
+            }
+            let boost: f32 = bt
+                .repair_boost
+                .iter()
+                .filter(|(m, _)| self.bases[b].modules.iter().any(|x| def.modules[x.module].id == *m && x.working(now)))
+                .map(|(_, f)| *f)
+                .product();
+            let gain = (dt as f32 * 60.0 * bt.repair_per_minute).max(bt.repair_min_step) * boost;
+            self.bases[b].hull = (self.bases[b].hull + gain).min(bt.hull);
+        }
+        // Manufacturing: each base's production rate, first job first. With `manufacture:`
+        // the outposts' technicians are one pool, taken in queue order across the bases
+        // (RQ-S-09; the original shares it by each job's percentage: DERIVED, the first
+        // job takes it all).
+        let mut pool = def.manufacture.as_ref().map(|m| self.technicians(m) * dt as f32);
+        for b in 0..self.bases.len() {
+            let mut work = match pool {
+                Some(p) => p,
+                None => self.effect(def, b, "production_rate") * dt as f32,
+            };
             while work > 0.0 && !self.bases[b].jobs.is_empty() {
                 // Each unit is paid for as it starts (the docs' promise); with logistics a
                 // hull instead waits for its components (see `logistics::step`).
@@ -1575,6 +1638,10 @@ impl Campaign {
                     }
                     self.receive(def, b, product, 1);
                 }
+            }
+            // What the base left over goes on to the next (the technician pool).
+            if let Some(p) = pool.as_mut() {
+                *p = work;
             }
         }
         // Deliveries.
@@ -2061,6 +2128,9 @@ impl Campaign {
             if let Some(m) = self.bases[b].modules.iter().rposition(|m| m.working(now)) {
                 self.wreck_module(def, b, m, events);
             }
+            // And the hub's hull takes the strike (repaired over time, RQ-S-16).
+            let damage = def.base_types[self.bases[b].base_type].strike_damage;
+            self.bases[b].hull = (self.bases[b].hull - damage).max(0.0);
         }
         let at = self.nearest_system(c.pos);
         self.add_score(def, "undefended", Some(at));
@@ -2841,6 +2911,52 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         let g = &d.unwrap().goodies[0];
         assert_eq!((g.chance(0), g.chance(4), g.chance(9)), (0.3, 0.07, 0.07));
+    }
+
+    #[test]
+    fn bases_price_from_the_template_repair_and_technicians_manufacture() {
+        let text = SAMPLE
+            .replace("template: [radar, lab],", "template: [radar, lab], price_share: 0.75, hub_cost: 100000, hull: 1000, repair: {per_minute: 2, min_step: 5, boost: {works: 2}},")
+            .replace("  laser: {kind: beam, cost: 1000, sell_price: 500}", "  laser: {kind: beam, cost: 1000, sell_price: 500, prod_time: 500}")
+            + "manufacture: {per_outpost: 10, per_opp: 10}\noutposts: {yield_table: [[100]]}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 1);
+        // RQ-S-08: 0.75 x (hub 100,000 + radar 5,000 + lab 10,000).
+        assert_eq!(c.base_price(&d, 0), 86_250.0);
+        // RQ-S-16: 600 points in 300 game minutes; twice as fast with the boost module.
+        c.bases[0].hull = 400.0;
+        c.advance(&d, 5.0);
+        assert_eq!(c.bases[0].hull, 1000.0);
+        c.bases[0].hull = 400.0;
+        let works = d.module("works").unwrap();
+        c.bases[0].modules.push(ModuleInst { module: works, ready_at: 0.0, wrecked: false });
+        c.advance(&d, 2.5);
+        assert_eq!(c.bases[0].hull, 1000.0, "150 minutes with the boost");
+        // RQ-S-09: two outposts with two OPPs each are 60 technicians; a 500-hour item at
+        // the whole capacity takes 500 / 60 = 8.3 hours.
+        let rules = d.outposts.clone().unwrap();
+        c.outposts.clear();
+        for s in [1, 2] {
+            c.outposts.push(super::outposts::Outpost { system: s, funding: 0.75, founded: 0.0, opps: vec![(1, 0); 2] });
+        }
+        let _ = rules;
+        assert_eq!(c.technicians(d.manufacture.as_ref().unwrap()), 60.0);
+        let laser = d.item("laser").unwrap();
+        let before = c.stock_of(laser);
+        c.manufacture(&d, 0, Product::Item(laser), 1).unwrap();
+        c.advance(&d, 8.0);
+        assert_eq!(c.stock_of(laser), before, "not yet after 8 hours");
+        c.advance(&d, 0.5);
+        assert_eq!(c.stock_of(laser), before + 1, "done after 8.3 hours");
+    }
+
+    #[test]
+    fn centre_distance_is_from_the_maps_middle() {
+        let (d, c) = sample();
+        // The sample's systems span (0, 0) - (3000, 4000): the middle is (1500, 2000).
+        assert_eq!(c.map_centre(&d), [1500.0, 2000.0]);
     }
 
     #[test]
