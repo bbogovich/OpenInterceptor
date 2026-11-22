@@ -7790,10 +7790,15 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td><strong>Done</strong> (app 0.22.9; MT-6-30 not yet run; DEV-086)</td>
 <td><code>src/app/listbox.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/screens.rs</code>, <code>src/content/mod.rs</code>, <code>src/formats/tga.rs</code>, <code>src/check.rs</code>, <code>packs/interceptor/rules/screens.yaml</code></td>
 </tr>
+<tr>
+<td>#125 RQ-UI-01/02/07/08: <code>original:sprite#N(+k)</code> from the exe's sprite table (<code>formats::spritetable</code>, <code>Content::sprite</code>), corner-colour keying; buttons with consecutive state sprites (<code>images.sprite</code>, <code>states</code>), <code>centre</code>/<code>pos</code> placement, firing on release (<code>fire_on_press</code>, <code>repeat</code>), radio <code>group</code>/<code>selected</code>, <code>kind: check</code>; <code>interceptor</code>: CSD screen buttons, Bases side buttons, E&amp;P category radios and production button, Equip Ships tabs</td>
+<td><strong>Done</strong> (app 0.22.10; MT-6-31 not yet run; DEV-087)</td>
+<td><code>src/formats/spritetable.rs</code>, <code>src/app/button.rs</code>, <code>src/content/mod.rs</code>, <code>src/content/screens.rs</code>, <code>src/formats/tga.rs</code>, <code>src/app/strategy.rs</code>, <code>src/check.rs</code>, <code>packs/interceptor/rules/screens.yaml</code></td>
+</tr>
 </tbody>
 </table>
 <p>Not yet: map labels in the TrueType font (#128); the list box's spinners, row icons, blinking
-rows and sounds (DEV-086); button sprites and caps (#125); dialog frame art (#127). The default campaign has no
+rows and sounds (DEV-086); the TextButton end caps and <code>enabled_when</code> (DEV-087); dialog frame art (#127). The default campaign has no
 screen set: its sheet fonts show in its dialogs only.</p>
 
 

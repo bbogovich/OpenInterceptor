@@ -6724,6 +6724,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-31-sprite-buttons-release-semantics-and-radio-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-31 — Sprite buttons, release semantics and radio groups
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12296,6 +12307,17 @@
     <span class="md-ellipsis">
       
         MT-6-30 — Compact list boxes: columns, pulsing bar, scroll arrows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-31-sprite-buttons-release-semantics-and-radio-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-31 — Sprite buttons, release semantics and radio groups
       
     </span>
   </a>
@@ -20371,6 +20393,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: eleven rows in the white body font under the green strip, the strip showing PURCHASE, SIZE, COST, STORES and QUANTITY (no <code>#</code>), each cell under its header. 2: the bar's green brightens and dims smoothly about every 2.5 s. 3: the row flashes amber while held. 4: one row per click; held, a pause of about a third of a second, then about 12 rows a second. 5: at the end the down arrow shows its disabled image and does nothing; at the top the up arrow does. 6: Equip Ships shows three rows with SHIP, PILOT and STATUS columns and its own arrows; Manufacture its own header.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-31-sprite-buttons-release-semantics-and-radio-groups">MT-6-31 — Sprite buttons, release semantics and radio groups<a class="headerlink" href="#mt-6-31-sprite-buttons-release-semantics-and-radio-groups" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code> (the CSD). Press and hold the Bases button; move the cursor off it and back; release outside it. 2. Press Research and release on it. 3. On Bases, press each side button. 4. On Purchase, click the manufacture radio; then on Manufacture the purchase radio. 5. On Equip Ships, click each tab.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: while held inside, the button shows its pressed sprite; outside, the art's up look; releasing outside still opens Bases. 2: Research opens on release, not on press. 3: each shows its pressed image while held and opens its screen on release. 4: the radios switch screens; the current screen's radio shows pressed. 5: the clicked tab stays pressed and the others are released. No coloured box around any sprite.</td>
 </tr>
 </tbody>
 </table>

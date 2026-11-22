@@ -4925,6 +4925,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sprite-buttons-toggles-and-radio-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprite buttons, toggles and radio groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6786,6 +6797,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sprite-buttons-toggles-and-radio-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprite buttons, toggles and radio groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7150,6 +7172,30 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>A <code>list</code> in a sheet font as the original's list box: rows, columns, the pulsing bar, scroll arrows (<a href="#compact-list-boxes">Compact list boxes</a>, app 0.22.9).</td>
 </tr>
 <tr>
+<td><code>centre</code>, <code>pos</code></td>
+<td><code>[x, y]</code></td>
+<td>none</td>
+<td>A sprite widget placed by its image's size: centred on the point, or its top-left at it (then <code>rect</code> may be left out). <a href="#sprite-buttons-toggles-and-radio-groups">Sprite buttons</a>, app 0.22.10.</td>
+</tr>
+<tr>
+<td><code>images.sprite</code>, <code>images.states</code></td>
+<td>asset, 1 – 8</td>
+<td>none, 2</td>
+<td>A button's states as consecutive sprites: <code>original:sprite#N</code> is state 0, <code>#N+k</code> state k. With 1 state nothing is drawn when up.</td>
+</tr>
+<tr>
+<td><code>fire_on_press</code>, <code>repeat</code></td>
+<td>bool, <code>[delay, interval]</code></td>
+<td><code>false</code>, none</td>
+<td>A button fires when pressed instead of released; held, it fires again after <code>delay</code> ticks every <code>interval</code> (1/60 s).</td>
+</tr>
+<tr>
+<td><code>group</code>, <code>selected</code></td>
+<td>name, bool</td>
+<td>none, <code>false</code></td>
+<td>A radio group: the chosen member stays latched (pressed image); <code>selected</code> (else the first) starts latched. On a <code>check</code>: starts on.</td>
+</tr>
+<tr>
 <td><code>shape</code></td>
 <td><code>rect</code>, <code>round</code></td>
 <td><code>rect</code></td>
@@ -7192,6 +7238,10 @@ and kept; one that cannot be loaded is reported on standard error once
 <tr>
 <td><code>info</code></td>
 <td>The selected object's details and its action buttons.</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td>A check row (app 0.22.10): a lamp at its left that a click toggles — <code>images: {sprite, states: 2}</code> (off, on) or <code>{up, down}</code> — and its <code>label</code> 20 px to the right in the skin's text-button font.</td>
 </tr>
 </tbody>
 </table>
@@ -7364,7 +7414,7 @@ original's list box (ListBox.cpp, <strong>verified</strong> unless marked):</p>
 </tr>
 <tr>
 <td>Scroll arrows</td>
-<td><code>up</code> and <code>down</code>: <code>[x, y, w, h]</code> or <code>{rect, images: [normal, pressed, disabled]}</code>. An arrow moves the list one row when pressed, then again after 20 ticks and every 5 ticks while held. At the ends it is disabled and shows its third image. Images are drawn with the original's sprite colour key (pure cyan) transparent. Without images an arrow is a hot spot over the art. The mouse wheel also scrolls one row.</td>
+<td><code>up</code> and <code>down</code>: <code>[x, y, w, h]</code> or <code>{rect, images: [normal, pressed, disabled]}</code>. An arrow moves the list one row when pressed, then again after 20 ticks and every 5 ticks while held. At the ends it is disabled and shows its third image. Images are drawn with their corner colour transparent, the original sprites' key (since app 0.22.10; before, pure cyan only). Without images an arrow is a hot spot over the art. The mouse wheel also scrolls one row.</td>
 </tr>
 </tbody>
 </table>
@@ -7409,6 +7459,50 @@ lists that fill columns, in this order:</p>
 </ul>
 <p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
 <code>text_button</code>: its caption is centred on its own rectangle in the caption font.</p>
+<h3 id="sprite-buttons-toggles-and-radio-groups">Sprite buttons, toggles and radio groups<a class="headerlink" href="#sprite-buttons-toggles-and-radio-groups" title="Permanent link">&para;</a></h3>
+<p>Since app 0.22.10 (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
+(Interceptor.exe button base 0x65f420, <strong>verified</strong>):</p>
+<ul>
+<li><strong>States are consecutive sprites.</strong> <code>images: {sprite: "original:sprite#1345", states: 2}</code> uses
+  row 1345 of the original's sprite table when up and row 1346 when pressed. With <code>states: 1</code>
+  nothing is drawn when up — the background art already shows the button — and the one sprite is
+  its pressed image (the CSD's screen buttons). There is no hover image unless a pack gives
+  <code>images.hover</code> (plain image buttons only). A button with only <code>images: {up, down, disabled}</code>
+  works as before.</li>
+<li><strong>Placement.</strong> <code>centre: [x, y]</code> centres the image on the point; <code>pos: [x, y]</code> puts its top-left
+  there. The clickable rect is the image plus 1 px all round. State images are drawn at their own
+  size, centred. Without <code>centre</code>/<code>pos</code> the image is stretched over <code>rect</code> as before.</li>
+<li><strong>Buttons fire on release.</strong> A press inside arms the button and shows its pressed image while
+  the cursor stays inside; the release — anywhere — runs its <code>action</code>. <code>fire_on_press: true</code> runs
+  it on the press instead; <code>repeat: [20, 5]</code> runs it again while held (the scroll arrows' timing).
+  This applies to every screen-set button, labelled text buttons included.</li>
+<li><strong>Radio groups.</strong> Buttons with the same <code>group</code> latch: the chosen one shows its pressed image
+  until another member is chosen; <code>selected: true</code> marks the one latched at the start (else the
+  first). The choice is kept per screen while the game runs.</li>
+<li><strong>Check rows</strong> (<code>kind: check</code>) toggle a lamp — the original's TextButton2, lamps 431/432 — with
+  the label 20 px to the right.</li>
+</ul>
+<p><code>original:sprite#N</code> is an asset reference to <strong>row N of the original's sprite table</strong>: the
+engine reads the table from the player's <code>Interceptor.exe</code> (found by its content, any build) and
+loads the row's image from whichever resource DLL holds it. <code>#N+k</code> is row N + k. A sprite is
+drawn with its corner colour transparent (the original's sprites carry their key colour, red,
+magenta or cyan, in their corners; <strong>derived</strong>) and without smoothing. <code>--check</code> loads each
+sprite widget's first and last state.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/screens.yaml: the CSD's Bases button and E&amp;P's category radios</span>
+<span class="nt">bases</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">button</span><span class="p p-Indicator">,</span><span class="nt"> centre</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">516</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">194</span><span class="p p-Indicator">],</span><span class="nt"> images</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">sprite</span><span class="p">:</span><span class="w"> </span><span class="s">"original:sprite#372"</span><span class="p p-Indicator">,</span><span class="nt"> states</span><span class="p">:</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">},</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">open(bases)</span><span class="p p-Indicator">}</span>
+<span class="nt">cat_purchase</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">button</span><span class="p p-Indicator">,</span><span class="nt"> pos</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">81</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">226</span><span class="p p-Indicator">],</span><span class="nt"> images</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">sprite</span><span class="p">:</span><span class="w"> </span><span class="s">"original:sprite#1053"</span><span class="p p-Indicator">,</span><span class="nt"> states</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">},</span><span class="nt"> group</span><span class="p">:</span><span class="w"> </span><span class="nv">category</span><span class="p p-Indicator">,</span><span class="nt"> selected</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> action</span><span class="p">:</span><span class="w"> </span><span class="nv">open(purchase)</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p><code>interceptor</code> since app 0.22.10:</p>
+<ul>
+<li>The CSD's six screen buttons are sprite buttons on their <strong>verified</strong> centres (rows 372–382).</li>
+<li>Bases' three side buttons are sprite buttons (rows 1345/1347/1349).</li>
+<li>Purchase and Manufacture have the category radios purchase/manufacture (rows 1053/1059, the
+  screen's own one latched) and the production button (row 1061).</li>
+<li>Equip Ships has its three tabs as a radio group (rows 1153/1155/1157). Their pages are not built,
+  so the tabs only latch.</li>
+</ul>
+<p>A pack's own PNG buttons use <code>images: {up, down, disabled}</code>; the <code>default</code> campaign has no screen
+set yet.</p>
 <h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>
 <p><strong>Ctrl+T</strong> switches between the screen set and the testbed layout at any time; a <code>testbed</code>
 button does the same one way. A campaign without <code>strategy_screen</code> uses the testbed layout only.

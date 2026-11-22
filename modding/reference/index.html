@@ -9369,7 +9369,7 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code></td>
+<td><code>image</code>, <code>button</code>, <code>value</code>, <code>text</code>, <code>list</code>, <code>map</code>, <code>info</code>, <code>check</code> (app 0.22.10)</td>
 <td><code>image</code></td>
 <td>What it is; another kind is a load error.</td>
 </tr>
@@ -9503,7 +9503,37 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td><code>up</code>, <code>down</code></td>
 <td><code>[x, y, w, h]</code> or <code>{rect, images}</code></td>
 <td>none</td>
-<td>A <code>list</code> with <code>font</code>: scroll arrows — one row per press, repeating after 20 ticks every 5 while held, disabled at the ends; <code>images</code>: normal, pressed, disabled (sprite colour key transparent). <code>--check</code> loads the images.</td>
+<td>A <code>list</code> with <code>font</code>: scroll arrows — one row per press, repeating after 20 ticks every 5 while held, disabled at the ends; <code>images</code>: normal, pressed, disabled (drawn with their corner colour transparent). <code>--check</code> loads the images.</td>
+</tr>
+<tr>
+<td><code>centre</code>, <code>pos</code></td>
+<td>2 numbers</td>
+<td>none</td>
+<td>A sprite placed by its image's size (app 0.22.10): centred on the point, or its top-left at it; <code>rect</code> may then be left out (<a href="../screens/#sprite-buttons-toggles-and-radio-groups">Sprite buttons</a>). Not both.</td>
+</tr>
+<tr>
+<td><code>images.sprite</code>, <code>images.states</code></td>
+<td>asset, number 1 – 8</td>
+<td>none, 2</td>
+<td>A button's states as consecutive sprites: <code>original:sprite#N</code> (row N of the original's sprite table) is state 0, <code>#N+k</code> state k; 1 state: nothing drawn when up. <code>--check</code> loads the first and last.</td>
+</tr>
+<tr>
+<td><code>fire_on_press</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>A button fires when pressed, not when released (app 0.22.10: buttons fire on release).</td>
+</tr>
+<tr>
+<td><code>repeat</code></td>
+<td>2 numbers</td>
+<td>none</td>
+<td>A held button fires again after <code>[delay, interval]</code> ticks (1/60 s; interval at least 1).</td>
+</tr>
+<tr>
+<td><code>group</code>, <code>selected</code></td>
+<td>name, bool</td>
+<td>none, <code>false</code></td>
+<td>A radio group: the chosen member stays latched; <code>selected</code> (else the first) starts latched. On a <code>check</code>: starts on.</td>
 </tr>
 <tr>
 <td><code>shape</code></td>
