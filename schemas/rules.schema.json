@@ -541,7 +541,15 @@
               "body_font": {"description": "a sheet font of this skin for the text", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
               "title_y": {"description": "the caption's anchor y below the top", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "body_top": {"description": "where the text starts below the top", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-              "button_step": {"description": "spacing of the stacked buttons", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+              "button_step": {"description": "spacing of the stacked buttons", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "fill": {"description": "an image tiled over the dialog's body", "type": "string"},
+              "capsule": {"description": "message-box capsule buttons: the base sprite (left, middle, right; pressed +3..+5)", "type": "string"},
+              "frame": {"description": "frame pieces around the dialog", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                    "image": {"description": "the piece's image", "type": "string"},
+                    "at": {"description": "where on the dialog", "enum": ["top_left", "top", "top_right", "left", "right", "bottom_left", "bottom", "bottom_right"]},
+                    "offset": {"description": "moved by [x, y]", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                    "tile": {"description": "repeated along the side (inset by offset)", "enum": ["none", "x", "y"]}
+                  }}}
             }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
@@ -551,6 +559,8 @@
           "design": {"description": "the design space the rectangles are written in", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
           "background": {"description": "an image over the whole design space", "type": "string"},
           "dialog": {"description": "drawn over the screen under it", "type": "boolean"},
+          "clock": {"description": "whether the campaign clock runs while this screen is on top (default run)", "enum": ["run", "pause"]},
+          "history": {"description": "on the first screen: how many screens Back remembers (the original: 29)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "widgets": {"description": "widget → [x, y, w, h] (the testbed layout) or {kind, rect, …} (a screen of the set)", "type": "object", "additionalProperties": {"anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
                   "kind": {"description": "what it is", "enum": ["image", "button", "value", "text", "list", "map", "info", "check"]},
                   "rect": {"description": "x, y, w, h in the design space", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
@@ -563,7 +573,7 @@
                       "sprite": {"description": "a sprite's base image (original:sprite#N): state k is row N+k", "type": "string"},
                       "states": {"description": "how many states the sprite has (1: nothing drawn when up)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
                     }},
-                  "action": {"description": "open(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed", "type": "string"},
+                  "action": {"description": "open(<screen>), menu(<screen>), replace(<screen>), back, speed(n) (an index into clock.speeds), save, menu, testbed", "type": "string"},
                   "value": {"description": "a value: date, time, money, score, base, speed, selection", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "source": {"description": "a list: bases, research, build, market, factory, hangar, contacts, supply, archive, reports, messages", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "text": {"description": "fixed text (a text key)", "type": "string"},
@@ -1045,7 +1055,9 @@
         "speeds": {"description": "game time per real second at each speed; 0 is a pause", "type": "array", "items": {"anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}},
         "labels": {"description": "what the speed readout shows for each speed", "type": "array", "items": {"type": "string"}},
         "on_event": {"description": "the speed (0 = first) an event or alert drops the clock to", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-        "run": {"description": "the speed the Space key toggles to", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+        "run": {"description": "the speed the Space key toggles to", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "notices": {"description": "what a notice does to the speed: drop to on_event (default), keep it, or ask with two buttons", "enum": ["drop", "keep", "ask"]},
+        "notice_buttons": {"description": "with ask: the two captions [keep the speed, drop to on_event]", "type": "array", "items": {"type": "string"}}
       }},
     "economy": {"description": "economy settings", "type": "object", "additionalProperties": false, "properties": {
         "delivery": {"description": "time for a purchase to arrive", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},

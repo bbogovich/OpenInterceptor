@@ -99,6 +99,72 @@ pub struct DialogStyle {
     pub body_top: i32,
     /// The spacing of the stacked text buttons.
     pub button_step: i32,
+    /// An image tiled over the dialog's body (the original: WrappersDLL 5006).
+    pub fill: Option<String>,
+    /// The message-box capsule's base sprite (the original: `original:sprite#258`): left
+    /// cap, a middle tiled to the width, right cap; pressed the next three rows. `None`:
+    /// text buttons.
+    pub capsule: Option<String>,
+    /// Frame pieces drawn around the dialog (RQ-UI-14).
+    pub frame: Vec<FramePiece>,
+}
+
+/// Where a frame piece sits on its dialog's rectangle.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Anchor {
+    TopLeft,
+    Top,
+    TopRight,
+    Left,
+    Right,
+    BottomLeft,
+    Bottom,
+    BottomRight,
+}
+
+/// The anchors by name.
+pub const ANCHORS: [(&str, Anchor); 8] = [
+    ("top_left", Anchor::TopLeft),
+    ("top", Anchor::Top),
+    ("top_right", Anchor::TopRight),
+    ("left", Anchor::Left),
+    ("right", Anchor::Right),
+    ("bottom_left", Anchor::BottomLeft),
+    ("bottom", Anchor::Bottom),
+    ("bottom_right", Anchor::BottomRight),
+];
+
+/// One piece of a dialog frame: an image at an anchor of the dialog's rectangle, moved
+/// by `offset`, optionally repeated along the side it sits on.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FramePiece {
+    pub image: String,
+    pub at: Anchor,
+    pub offset: [i32; 2],
+    /// Repeated across the width (`x`) or height (`y`), inset by `offset` at each end.
+    pub tile: Option<char>,
+}
+
+impl FramePiece {
+    fn parse(g: Get) -> Result<FramePiece, String> {
+        let image = g.str("image").ok_or("image: expected an asset")?.to_string();
+        let at_name = g.str("at").unwrap_or("top_left");
+        let at = ANCHORS.iter().find(|(n, _)| *n == at_name).map(|(_, a)| *a).ok_or(format!(
+            "at: '{at_name}' is not one of top_left, top, top_right, left, right, bottom_left, bottom, bottom_right"
+        ))?;
+        let offset = match g.nums("offset").as_deref() {
+            None => [0, 0],
+            Some([x, y]) => [*x as i32, *y as i32],
+            Some(_) => return Err("offset: expected [x, y]".into()),
+        };
+        let tile = match g.str("tile") {
+            None | Some("none") => None,
+            Some("x") => Some('x'),
+            Some("y") => Some('y'),
+            Some(o) => return Err(format!("tile: '{o}' is not none, x or y")),
+        };
+        Ok(FramePiece { image, at, offset, tile })
+    }
 }
 
 impl Default for DialogStyle {
@@ -111,6 +177,9 @@ impl Default for DialogStyle {
             title_y: 20,
             body_top: 32,
             button_step: 22,
+            fill: None,
+            capsule: None,
+            frame: Vec::new(),
         }
     }
 }
@@ -139,7 +208,19 @@ impl TextButtonStyle {
 }
 
 impl DialogStyle {
-    /// Parses `dialog: {design, width, title_font, body_font, title_y, body_top, button_step}`.
+    /// Every image the style draws (for loading them once): the fill, the capsule's six
+    /// sprites and the frame pieces.
+    pub fn images(&self) -> Vec<String> {
+        let mut v: Vec<String> = self.fill.iter().cloned().collect();
+        if let Some(c) = &self.capsule {
+            v.extend((0..6).map(|k| if k == 0 { c.clone() } else { format!("{c}+{k}") }));
+        }
+        v.extend(self.frame.iter().map(|p| p.image.clone()));
+        v
+    }
+
+    /// Parses `dialog: {design, width, title_font, body_font, title_y, body_top, button_step,
+    /// fill, capsule, frame}`.
     pub fn parse(g: Get) -> Result<DialogStyle, String> {
         let d = DialogStyle::default();
         let int = |k: &str, dflt: i32| -> Result<i32, String> {
@@ -162,6 +243,16 @@ impl DialogStyle {
             title_y: int("title_y", d.title_y)?,
             body_top: int("body_top", d.body_top)?,
             button_step: int("button_step", d.button_step)?.max(20),
+            fill: g.str("fill").map(str::to_string),
+            capsule: g.str("capsule").map(str::to_string),
+            frame: match g.node("frame").and_then(|n| n.as_seq()) {
+                None => Vec::new(),
+                Some(items) => items
+                    .iter()
+                    .enumerate()
+                    .map(|(i, n)| FramePiece::parse(Get(n)).map_err(|e| format!("frame[{i}]: {e}")))
+                    .collect::<Result<_, _>>()?,
+            },
         })
     }
 }
@@ -352,6 +443,35 @@ pub fn schema() -> Ty {
                 f("title_y", Ty::Num, "the caption's anchor y below the top"),
                 f("body_top", Ty::Num, "where the text starts below the top"),
                 f("button_step", Ty::Num, "spacing of the stacked buttons"),
+                f("fill", Ty::Asset, "an image tiled over the dialog's body"),
+                f(
+                    "capsule",
+                    Ty::Asset,
+                    "message-box capsule buttons: the base sprite (left, middle, right; pressed +3..+5)",
+                ),
+                f(
+                    "frame",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("image", Ty::Asset, "the piece's image"),
+                        f(
+                            "at",
+                            Ty::Enum(&[
+                                "top_left",
+                                "top",
+                                "top_right",
+                                "left",
+                                "right",
+                                "bottom_left",
+                                "bottom",
+                                "bottom_right",
+                            ]),
+                            "where on the dialog",
+                        ),
+                        f("offset", Ty::Numbers(2), "moved by [x, y]"),
+                        f("tile", Ty::Enum(&["none", "x", "y"]), "repeated along the side (inset by offset)"),
+                    ]))),
+                    "frame pieces around the dialog",
+                ),
             ]),
             "prompts in sheet fonts with stacked text buttons",
         ),
@@ -415,6 +535,20 @@ mod tests {
         assert_eq!((d.width, d.title_y, d.body_top, d.design), (280, 54, 32, [640.0, 480.0]));
         let bad = yaml::parse("text_button: {font: nope}").unwrap();
         assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("text_button.font: 'nope'"));
+        let fr = yaml::parse(
+            "dialog: {fill: f.png, capsule: 'original:sprite#258', frame: [{image: t.png, at: top, offset: [0, -10], tile: x}, {image: c.png}]}",
+        )
+        .unwrap();
+        let fd = Skin::parse("x", Get(&fr), 0).unwrap().dialog.unwrap();
+        assert_eq!(
+            fd.frame[0],
+            FramePiece { image: "t.png".into(), at: Anchor::Top, offset: [0, -10], tile: Some('x') }
+        );
+        assert_eq!(fd.frame[1].at, Anchor::TopLeft);
+        assert_eq!(fd.images().len(), 1 + 6 + 2);
+        assert_eq!(fd.images()[2], "original:sprite#258+1");
+        let badf = yaml::parse("dialog: {frame: [{image: a.png, at: middle}]}").unwrap();
+        assert!(Skin::parse("x", Get(&badf), 0).unwrap_err().contains("frame[0]: at"));
         let bad = yaml::parse("dialog: {width: 1.5}").unwrap();
         assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("dialog: width"));
     }

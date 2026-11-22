@@ -29,13 +29,14 @@
 
 use super::button;
 use super::caption;
+use super::history::History;
 use super::listbox;
 use super::text;
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
 use super::{AppContext, Next};
 use crate::campaign::{save, Campaign, Event, PilotState, Product};
-use crate::content::strategy::StrategyDef;
+use crate::content::strategy::{NoticeClock, StrategyDef};
 use macroquad::prelude::*;
 
 /// The panel's tabs.
@@ -253,7 +254,11 @@ pub struct StrategyScreen {
     /// The save-slot prompt is up.
     saving: bool,
     /// The original-style screens open, bottom first (dialogs over screens).
-    stack: Vec<String>,
+    /// Where the screen set is: the current screen, Back's history and open dialogs
+    /// (RQ-UI-15). `None` until the set is first drawn.
+    history: Option<History>,
+    /// The top screen of the set holds the clock (`clock: pause`, RQ-UI-16).
+    screen_holds_clock: bool,
     /// The testbed's single-screen layout instead (Ctrl+T, or a `testbed` button).
     testbed: bool,
     /// Images loaded for the screens, by reference.
@@ -385,11 +390,14 @@ impl StrategyScreen {
 
     /// Opens screen `id` of the campaign's set over its first screen (`--screen`).
     pub fn open_screen(&mut self, ctx: &AppContext, id: &str) {
-        if let Some(first) = ctx.content.rules.strategy_screen.clone() {
-            self.stack = vec![first];
-            if self.stack[0] != id {
-                self.stack.push(id.to_string());
+        let rules = &ctx.content.rules;
+        if let Some(first) = rules.strategy_screen.clone() {
+            let mut h = History::new(&first, history_limit(rules, &first));
+            match rules.screens.iter().find(|s| s.id == id) {
+                Some(s) if s.dialog => h.open_dialog(id),
+                _ => h.push(id),
             }
+            self.history = Some(h);
         }
     }
 
@@ -423,7 +431,8 @@ impl StrategyScreen {
             last_click: (usize::MAX, 0.0),
             debug: false,
             saving: false,
-            stack: Vec::new(),
+            history: None,
+            screen_holds_clock: false,
             testbed: false,
             images: Default::default(),
             glyphs: Vec::new(),
@@ -1331,8 +1340,19 @@ impl StrategyScreen {
             return Some(Next::Stay);
         }
         if let Some(b) = self.banner.clone() {
-            if widgets::modal(ui, input, "Report", &b, &["OK"]).is_some() {
+            // `clock.notices: ask`: the original's two buttons — keep the speed, or drop
+            // to the slowest (its "OK (5 secs)"). Captions may be text keys.
+            let clock = &def.clock;
+            let caption = |t: &str| ctx.content.text.resolve(t).unwrap_or_else(|k| k);
+            let ask = clock.notices == NoticeClock::Ask;
+            let labels: Vec<String> =
+                if ask { clock.notice_buttons.iter().map(|t| caption(t)).collect() } else { vec!["OK".into()] };
+            let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+            if let Some(k) = widgets::modal(ui, input, "Report", &b, &refs) {
                 self.banner = None;
+                if ask && k == 1 {
+                    self.speed = clock.on_event;
+                }
             }
             return Some(Next::Stay);
         }
@@ -1488,7 +1508,9 @@ impl StrategyScreen {
         // Notices raised outside the clock (a debrief's change of stance), one at a time.
         if self.banner.is_none() && !self.campaign.notices.is_empty() {
             self.banner = Some(self.campaign.notices.remove(0));
-            self.speed = def.clock.on_event;
+            if def.clock.notices == NoticeClock::Drop {
+                self.speed = def.clock.on_event;
+            }
         }
         let prompting = self.card.is_some()
             || self.battle.is_some()
@@ -1565,11 +1587,18 @@ impl StrategyScreen {
         // so a stalled frame does not jump the campaign ahead).
         let rate = def.clock.speeds.get(self.speed).copied().unwrap_or(0.0);
         let dt = rate * get_frame_time().min(0.1) as f64;
-        if dt > 0.0 && !prompting {
+        // A screen of the set that holds the clock (the original: every screen but the
+        // CSD) stops it while it is on top; the testbed layout never does.
+        let held = self.screen_holds_clock && set_mode;
+        if dt > 0.0 && !prompting && !held {
             let mut video: Option<String> = None;
             let mut cutscene: Option<String> = None;
             for e in self.campaign.advance(def, dt) {
-                self.speed = def.clock.on_event;
+                // A notice drops the clock unless the campaign keeps it or asks (RQ-S-18);
+                // every other event (a battle, a choice …) drops it.
+                if !matches!(e, Event::Notice(_)) || def.clock.notices == NoticeClock::Drop {
+                    self.speed = def.clock.on_event;
+                }
                 match e {
                     Event::Notice(t) => {
                         if t.starts_with("Research complete") {
@@ -1821,17 +1850,17 @@ impl StrategyScreen {
     fn draw_set(&mut self, ctx: &AppContext, def: &StrategyDef, live: &Input) -> ([f32; 4], f32, Option<Next>) {
         use crate::content::screens::{UiAction, WidgetKind};
         let rules = &ctx.content.rules;
-        if self.stack.is_empty() {
-            self.stack.push(rules.strategy_screen.clone().unwrap_or_default());
-        }
+        let history = self.history.get_or_insert_with(|| {
+            let first = rules.strategy_screen.clone().unwrap_or_default();
+            History::new(&first, history_limit(rules, &first))
+        });
         self.art = true;
-        // From the last full screen up through the dialogs over it.
-        let from = self
-            .stack
-            .iter()
-            .rposition(|id| rules.screens.iter().find(|s| &s.id == id).is_none_or(|s| !s.dialog))
-            .unwrap_or(0);
-        let open: Vec<String> = self.stack[from..].to_vec();
+        // The current screen and the dialogs over it, bottom first.
+        let open: Vec<String> = history.shown().map(str::to_string).collect();
+        // The top screen decides whether the campaign clock runs (the original runs it on
+        // the CSD only, RQ-UI-16; a screen without `clock:` lets it run).
+        self.screen_holds_clock =
+            rules.screens.iter().find(|s| s.id == history.top()).is_some_and(|s| s.clock_runs == Some(false));
         let (w, h) = (screen_width(), screen_height());
         let mut map_rect = [0.0f32; 4];
         let mut k = 1.0;
@@ -2097,23 +2126,31 @@ impl StrategyScreen {
             }
         }
         match action {
-            Some(UiAction::Open(to)) => {
-                let dialog = rules.screens.iter().find(|s| s.id == to).is_some_and(|s| s.dialog);
-                if !dialog {
-                    // A full screen replaces the dialogs over the current one.
-                    while self.stack.len() > 1
-                        && rules.screens.iter().any(|s| Some(&s.id) == self.stack.last() && s.dialog)
-                    {
-                        self.stack.pop();
-                    }
+            Some(UiAction::Open(to)) | Some(UiAction::MenuOpen(to)) | Some(UiAction::Replace(to))
+                if rules.screens.iter().any(|s| s.id == to && s.dialog) =>
+            {
+                if let Some(h) = self.history.as_mut() {
+                    h.open_dialog(&to);
                 }
-                if self.stack.last() != Some(&to) {
-                    self.stack.push(to);
+            }
+            Some(UiAction::Open(to)) => {
+                if let Some(h) = self.history.as_mut() {
+                    h.push(&to);
+                }
+            }
+            Some(UiAction::MenuOpen(to)) => {
+                if let Some(h) = self.history.as_mut() {
+                    h.menu(&to);
+                }
+            }
+            Some(UiAction::Replace(to)) => {
+                if let Some(h) = self.history.as_mut() {
+                    h.replace(&to);
                 }
             }
             Some(UiAction::Back) => {
-                if self.stack.len() > 1 {
-                    self.stack.pop();
+                if let Some(h) = self.history.as_mut() {
+                    h.back();
                 }
             }
             Some(UiAction::Speed(n)) => self.speed = n.min(def.clock.speeds.len().saturating_sub(1)),
@@ -2698,6 +2735,11 @@ impl StrategyScreen {
             );
         }
     }
+}
+
+/// The history size of a screen set: the first screen's `history`, else the original's 29.
+fn history_limit(rules: &crate::content::rules::Ruleset, first: &str) -> usize {
+    rules.screens.iter().find(|s| s.id == first).and_then(|s| s.history).unwrap_or(super::history::DEFAULT_LIMIT)
 }
 
 /// A widget's rect in its design space: a placed sprite's from its image's size

@@ -1983,18 +1983,7 @@ pub fn build_with(
     for (_, id, e) in of(&resolved, "screens") {
         let (base, known): (_, &[&str]) = match id.as_str() {
             "starmap" => (super::screens::default_starmap(), &super::screens::STARMAP_WIDGETS),
-            _ => (
-                super::screens::ScreenLayout {
-                    id: id.clone(),
-                    design: [1280.0, 720.0],
-                    background: None,
-                    widgets: Vec::new(),
-                    items: Vec::new(),
-                    dialog: false,
-                    pack: e.pack,
-                },
-                &[],
-            ),
+            _ => (super::screens::ScreenLayout::empty(id, e.pack), &[]),
         };
         match super::screens::ScreenLayout::parse(id, Get(&e.node), base, known, e.pack) {
             Ok(l) => {
@@ -2007,7 +1996,12 @@ pub fn build_with(
     // Every open(<screen>) names a screen of the set.
     for s in &screens {
         for w in &s.items {
-            if let Some(super::screens::UiAction::Open(to)) = &w.action {
+            if let Some(
+                super::screens::UiAction::Open(to)
+                | super::screens::UiAction::MenuOpen(to)
+                | super::screens::UiAction::Replace(to),
+            ) = &w.action
+            {
                 if !screens.iter().any(|x| &x.id == to) {
                     errors.push(format!("screens.{}.widgets.{}: open({to}): no such screen", s.id, w.name));
                 }

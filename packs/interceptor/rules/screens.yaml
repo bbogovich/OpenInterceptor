@@ -13,6 +13,10 @@ screens:
   # 17: the Command and Strategic Display - the round star map.
   csd:
     design: [640, 480]
+    # The campaign clock runs on the CSD only; every other screen holds it (RQ-UI-16,
+    # VERIFIED: switching away pauses, the CSD resumes). Back remembers 29 screens.
+    clock: run
+    history: 29
     background: original:WrappersDLL.dll#5030
     widgets:
       map: {kind: map, shape: round, rect: [66, 61, 333, 333]}
@@ -49,6 +53,7 @@ screens:
   # 6: Bases - the base, its modules and the module list.
   bases:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#6105
     widgets:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
@@ -60,11 +65,14 @@ screens:
       purchase: {kind: button, pos: [504, 361], images: {sprite: "original:sprite#1345", states: 2}, action: open(purchase)}
       equip_ships: {kind: button, pos: [504, 398], images: {sprite: "original:sprite#1347", states: 2}, action: open(equip_ships)}
       stats: {kind: button, pos: [504, 435], images: {sprite: "original:sprite#1349", states: 2}, action: open(base_stats)}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
   # 7/8: Equip Ships - the ship ring, its pilot and fit; the docked ships below.
   equip_ships:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#6100
     widgets:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
@@ -84,11 +92,14 @@ screens:
       tab_weapons: {kind: button, centre: [479, 57], images: {sprite: "original:sprite#1153", states: 2}, group: tabs, selected: true}
       tab_equipment: {kind: button, centre: [533, 57], images: {sprite: "original:sprite#1155", states: 2}, group: tabs}
       tab_pilot: {kind: button, centre: [587, 57], images: {sprite: "original:sprite#1157", states: 2}, group: tabs}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
   # 18: Equipment & Personnel - purchase, sell, transfer, manufacture.
   purchase:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#6110
     widgets:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
@@ -110,14 +121,17 @@ screens:
       # The category radios 300 (purchase, latched here) and 303 (manufacture): VERIFIED
       # SpriteButtonTL, two states (rows 1053/1059); sell and transfer (301/302) are not
       # built. Button 106 opens production (row 1061).
-      cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, selected: true, action: open(purchase)}
-      cat_manufacture: {kind: button, pos: [234, 226], images: {sprite: "original:sprite#1059", states: 2}, group: category, action: open(manufacture)}
+      cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, selected: true, action: replace(purchase)}
+      cat_manufacture: {kind: button, pos: [234, 226], images: {sprite: "original:sprite#1059", states: 2}, group: category, action: replace(manufacture)}
       manufacture: {kind: button, pos: [587, 326], images: {sprite: "original:sprite#1061", states: 2}, action: open(manufacture)}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
   # 18 in its manufacture mode: the same art, the production list.
   manufacture:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#6110
     widgets:
       funds: {kind: value, value: money, rect: [299, 229, 145, 22], font: value, align: centre}   # the readout slot (rect VERIFIED, wrappers/screens.yaml); font: E&P values (23013, DERIVED)
@@ -126,44 +140,56 @@ screens:
              up: {rect: [562, 290, 24, 24], images: ["original:WrappersDLL.dll#6911", "original:WrappersDLL.dll#6912", "original:WrappersDLL.dll#6913"]},
              down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
       # The category radios, with manufacture (303) latched on this screen.
-      cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, action: open(purchase)}
-      cat_manufacture: {kind: button, pos: [234, 226], images: {sprite: "original:sprite#1059", states: 2}, group: category, selected: true, action: open(manufacture)}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, action: replace(purchase)}
+      cat_manufacture: {kind: button, pos: [234, 226], images: {sprite: "original:sprite#1059", states: 2}, group: category, selected: true, action: replace(manufacture)}
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
   # 9: Research.
   research:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#5101
     widgets:
       # The topic rows: 250x25 from [330,49,580,74], one every 34 px (VERIFIED, 0x4684a8),
       # on the art's eight black slots; the selected topic in the description pane
       # [20,368,444,466] (VERIFIED), its actions at the pane's foot (DERIVED).
       topics: {kind: list, source: research, rect: [330, 49, 250, 264], font: body, row_height: 34, row_size: 25, detail: [26, 374, 412, 64], buttons: [26, 442, 412, 20]}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
   # 22: Base Stats (the Stat-O-Matic).
   base_stats:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#6330
     widgets:
       # The stats view [26,60,371,390] (VERIFIED): rows, then the selected row and its actions.
       stats: {kind: list, source: bases, rect: [32, 64, 334, 256], font: body, style: compact, detail: [32, 324, 334, 42], buttons: [32, 368, 334, 20]}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}
 
   # 23: the UFOpedia (databank).
   ufopedia:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#5107
     widgets:
       # Topics ListBox [346,105,596,275] and the article ListBox [95,325,592,446] (VERIFIED).
       topics: {kind: list, source: archive, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121]}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED: the UFOpedia's exit control is not recovered (no close button in its art)
 
   # 32-37: the status reports.
   reports:
     design: [640, 480]
+    clock: pause
     background: original:WrappersDLL.dll#7700
     widgets:
       # The report area [24,58,568,447] (VERIFIED).
       report: {kind: list, source: reports, rect: [28, 62, 534, 326], font: body, style: compact, detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
-      back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
+      # The red close button in the art's top-left corner (measured: centre (16, 16), radius 10;
+      # DERIVED from the art); it goes back (the history, RQ-UI-15).
+      back: {kind: button, rect: [5, 5, 22, 22], action: back}

@@ -209,6 +209,13 @@ pub fn run(content: &Content) -> Report {
     // Skins' sheet fonts must read as grid sheets, and every screen widget's `font:`
     // must name one of the campaign skin's fonts.
     for skin in &rules.skins {
+        // The dialog style's fill, capsule sprites and frame pieces must load.
+        for img in skin.dialog.as_ref().map(|d| d.images()).unwrap_or_default() {
+            match content.load_image(&img, skin.pack, false) {
+                Ok(_) => r.images += 1,
+                Err(e) => r.errors.push(format!("skins.{}.dialog: {img}: {e}", skin.id)),
+            }
+        }
         for f in &skin.fonts {
             match crate::content::skin::load_sheet(content, f, skin.pack) {
                 Ok(_) => r.images += 1,
@@ -366,7 +373,7 @@ mod tests {
              sounds: {boom: s/boom.wav}\n\
              terrains:\n  t: {generate: {kind: hills}, detail: textures/none.png, scatter: [{model: models/nope.obj, count: 3}]}\n  \
              u: {generate: {kind: hills}, scatter: [{model: models/rock.obj, max_slope: 95}]}\n\
-             skins: {k: {fonts: {f: fonts/none.png}}}\n\
+             skins: {k: {fonts: {f: fonts/none.png}, dialog: {fill: img/fill.png}}}\n\
              screens: {s: {widgets: {w: {kind: value, value: time, rect: [0, 0, 1, 1], font: nope}, \
              l: {kind: list, rect: [0, 0, 1, 1], up: {rect: [0, 0, 1, 1], images: [img/gone.png]}}, \
              b: {kind: button, centre: [1, 1], images: {sprite: img/none.png, states: 1}}}}}\n",
@@ -392,6 +399,7 @@ mod tests {
             "terrains.t: scatter models/nope.obj",
             "terrains.u: scatter[0]: max_slope 95",
             "skins.k.fonts.f",
+            "skins.k.dialog: img/fill.png",
             "screens.s.widgets.w: font 'nope'",
             "screens.s.widgets.l: arrow image img/gone.png",
             "screens.s.widgets.b: sprite img/none.png",

@@ -37,6 +37,7 @@ pub mod credits;
 pub mod cutscene;
 pub mod devices;
 pub mod flight;
+pub mod history;
 pub mod launcher;
 pub mod listbox;
 pub mod menu;
